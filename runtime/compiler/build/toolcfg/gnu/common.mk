@@ -477,3 +477,15 @@ endif
 SOLINK_EXTRA_ARGS+=-Wl,--version-script=$(SOLINK_VERSION_SCRIPT)
 
 SOLINK_FLAGS+=$(SOLINK_FLAGS_EXTRA)
+
+#
+# Setup protobuf
+#
+PROTO_CMD?=protoc
+GRPC_CPP?=$(shell which grpc_cpp_plugin)
+
+# link grpc libraries
+SOLINK_SLINK+=grpc++ grpc gpr protobuf
+
+SOLINK_FLAGS+=-std=c++11
+CXX_DEFINES+=GOOGLE_PROTOBUF_NO_RTTI

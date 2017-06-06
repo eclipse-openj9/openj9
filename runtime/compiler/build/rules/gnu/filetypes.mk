@@ -24,6 +24,22 @@
 #
 
 #
+# Compile .proto files to .cpp files
+#
+PROTO_GEN_DIR=$(FIXED_SRCBASE)/compiler/trj9/rpc/gen
+PROTO_DIR=$(FIXED_SRCBASE)/compiler/trj9/rpc/protos
+JIT_DIR_LIST+=$(PROTO_GEN_DIR)
+
+$(PROTO_GEN_DIR)/%.pb.cc: $(PROTO_DIR)/%.proto
+	$(PROTO_CMD) --cpp_out=$(PROTO_GEN_DIR) --plugin=protoc-gen-grpc="$(GRPC_CPP)" -I $(PROTO_DIR)  $<
+
+$(PROTO_GEN_DIR)/%.grpc.pb.cc: $(PROTO_DIR)/%.proto $(PROTO_GEN_DIR)/%.pb.cc
+	$(PROTO_CMD) --grpc_out=$(PROTO_GEN_DIR) --plugin=protoc-gen-grpc="$(GRPC_CPP)" -I $(PROTO_DIR)  $<
+
+$(PROTO_GEN_DIR)/%.pb.cpp: $(PROTO_GEN_DIR)/%.pb.cc
+	mv $< $@
+
+#
 # Compile .c file into .o file
 #
 define DEF_RULE.c
@@ -130,7 +146,7 @@ endif # ($(HOST_ARCH),x)
 ##### END X SPECIFIC RULES #####
 
 ##### START PPC SPECIFIC RULES #####
-ifeq ($(HOST_ARCH),p) 
+ifeq ($(HOST_ARCH),p)
 
 #
 # Compile .ipp file into .o file
@@ -166,7 +182,7 @@ endef # DEF_RULE.spp
 
 RULE.spp=$(eval $(DEF_RULE.spp))
 
-endif # ($(HOST_ARCH),p) 
+endif # ($(HOST_ARCH),p)
 ##### END PPC SPECIFIC RULES #####
 
 ##### START Z SPECIFIC RULES #####

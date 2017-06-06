@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package J9JIT;
+
+message CompileSCCRequest
+   {
+   reserved 1; // Reserve for request type
+   uint32 offset = 2;
+   }
+
+message CompileSCCReply
+   {
+   bool success = 1;
+   }
+
+// Use a simple req-rep for first attempt
+// May have to switch to a duplex stream later
+service CompileSCCService
+   {
+   rpc Compile (CompileSCCRequest) returns (CompileSCCReply);
+   }
