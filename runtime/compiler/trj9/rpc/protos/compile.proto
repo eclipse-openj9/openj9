@@ -1,11 +1,12 @@
 syntax = "proto3";
 
-package J9JIT;
+package RPC;
 
 message CompileSCCRequest
    {
-   reserved 1; // Reserve for request type
-   uint32 offset = 2;
+   reserved 1;
+   uint32 methodOffset = 2;
+   uint32 classOffset = 3;
    }
 
 message CompileSCCReply
