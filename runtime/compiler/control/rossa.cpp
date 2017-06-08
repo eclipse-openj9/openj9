@@ -1551,6 +1551,18 @@ onLoadInternal(
             TR::Options::getCmdLineOptions()->getOption(TR_InhibitRecompilation)))
          persistentMemory->getPersistentInfo()->setRuntimeInstrumentationRecompilationEnabled(true);
       }
+   
+   if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   {
+      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener = TR_LISTENER::allocate();
+      if (!((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener)
+      {
+        // warn that Listener was not allocated
+        j9tty_printf(PORTLIB, "Jaas Listener not allocated, abort.\n");
+        return -1; 
+      }
+
+   }
 
 #if defined(TR_HOST_S390)
    if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
@@ -1722,12 +1734,24 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          {
          javaVM->sharedClassConfig->runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_AOT;
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+         if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+            {
+            // TODO: Format the error message to use j9nls_printf
+            fprintf(stderr, "Aborting Compilation: SCC/AOT must be enabled and can be stored in Jaas Server Mode.");
+            return -1;
+            }
          }
       else if ((javaVM->sharedClassConfig->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_AOT) == 0)
          {
          TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
-         }
+         if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+            {
+            // TODO: Format the error message to use j9nls_printf
+            fprintf(stderr, "Aborting Compilation: SCC/AOT must be enabled and can be stored in Jaas Server Mode.");
+            return -1;
+            }
+         }        
       }
 #endif
 

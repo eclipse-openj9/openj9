@@ -1941,6 +1941,36 @@ J9::Options::fePreProcess(void * base)
          }
       }
 
+   // Check for option -XX:jaasClient and/or -XX:jaasServer
+   static bool jaasAlreadyParsed = false;
+   if (!jaasAlreadyParsed) // avoid processing twice for AOT and JIT and produce duplicate messages
+      {
+      jaasAlreadyParsed = true;
+      char *xxJaasClientOption = "-XX:jaasClient";
+      char *xxJaasServerOption = "-XX:jaasServer";
+      int32_t xxJaasClientArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJaasClientOption, 0);
+      int32_t xxJaasServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJaasServerOption, 0);
+      // Check if option is at all specified
+      if (xxJaasClientArgIndex >= 0 || xxJaasServerArgIndex >= 0)
+         {
+         if (xxJaasClientArgIndex > xxJaasServerArgIndex)   // client mode
+            {
+            compInfo->getPersistentInfo()->setJaasMode(CLIENT_MODE);
+            // TODO: message to verbose log for which mode
+            fprintf(stdout, "Jaas Client Mode.\n");
+            fflush(stdout);
+            }
+         else                                               // server mode
+            {
+            compInfo->getPersistentInfo()->setJaasMode(SERVER_MODE);
+            // TODO: message to verbose log for which mode
+            fprintf(stdout, "Jaas Server Mode.\n");
+            fflush(stdout);
+            }
+         }
+      }
+
+
    return true;
    }
 
@@ -2396,7 +2426,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    if (!iProfiler || !iProfiler->getIProfilerThread())
       self()->setOption(TR_UseIdleTime, false);
 
-
    // If NoResumableTrapHandler is set, disable packed decimal intrinsics inlining because
    // PD instructions exceptions can't be handled without the handler.
    // Add a new option to disable traps explicitly so DAA and trap instructions can be disabled separately
@@ -2418,7 +2447,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       {
       self()->setOption(TR_DisableIntrinsics);
       }
-
+ 
    return true;
    }
 

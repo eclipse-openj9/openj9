@@ -7736,6 +7736,96 @@ foundJ9SharedDataForMethod(TR_OpaqueMethodBlock *method, TR::Compilation *comp, 
    return store ? true : false;
    }
 
+// Helper function to perform AOT Load process
+void TR::CompilationInfoPerThreadBase::performAOTLoad(
+   J9VMThread * vmThread,
+   TR::Compilation * compiler,
+   TR_ResolvedMethod * compilee,
+   TR_J9VMBase *vm,
+   TR_MethodMetaData * metaData,
+   J9Method * method
+   )
+   {
+   TR_FilterBST *filterInfo = NULL;
+   TR_ASSERT(methodCanBeCompiled(compiler->trMemory(), vm, compilee, filterInfo), "This should already have failed in wrappedCompile");
+
+   // Perform an AOT load
+   //
+   // Load the AOT body using a non shared cache VM (don't use vm because it's J9SharedCacheVM for the compile)
+   TR_J9VMBase *loadvm = TR_J9VMBase::get(jitConfig, vmThread);
+   if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+      {
+      TR_VerboseLog::writeLineLocked(
+         TR_Vlog_DISPATCH,
+         "Loading previously AOT compiled body for %s @ %s",
+         compiler->signature(),
+         compiler->getHotnessName()
+         );
+      }
+   metaData = installAotCachedMethod(
+      vmThread,
+      _methodBeingCompiled->_aotCodeToBeRelocated,
+      method,
+      loadvm,
+      compiler->getOptions(),
+      compilee,
+      _methodBeingCompiled,
+      compiler
+      );
+   _methodBeingCompiled->_newStartPC = metaData ? reinterpret_cast<void *>(metaData->startPC) : 0;
+
+   if (!metaData) // Failed to relocate!
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+         {
+         TR_VerboseLog::writeLineLocked(
+            TR_Vlog_DISPATCH,
+            "Failed to load previously AOT compiled body for %s @ %s",
+            compiler->signature(),
+            compiler->getHotnessName()
+            );
+         }
+
+      compiler->failCompilation<J9::AOTRelocationFailed>("Failed to relocate");
+      }
+   else
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+         {
+         TR_VerboseLog::writeLineLocked(
+            TR_Vlog_DISPATCH,
+            "Successfully loaded previously AOT compiled body for %s @ %s",
+            compiler->signature(),
+            compiler->getHotnessName()
+            );
+         }
+      // if we delayed relocation, persist iprofiler info here
+      if (!compiler->getOption(TR_DisableDelayRelocationForAOTCompilations))
+         {
+         TR_SharedCache *sc = compiler->fej9()->sharedCache();
+         if (sc && !foundJ9SharedDataForMethod(compilee->getPersistentIdentifier(), compiler, _jitConfig))
+            {
+            sc->persistIprofileInfo(NULL, compilee, compiler);
+            TR_MethodMetaData *metaData = _methodBeingCompiled->_compInfoPT->getMetadata();
+            U_32 numCallSites = getNumInlinedCallSites(metaData);
+            TR::StackMemoryRegion stackMemoryRegion(*compiler->trMemory());
+            for (int32_t i = 0; i < numCallSites; i++)
+               {
+               U_8 * inlinedCallSite = getInlinedCallSiteArrayElement(metaData, i);
+               TR_OpaqueMethodBlock* j9method = (TR_OpaqueMethodBlock *)getInlinedMethod(inlinedCallSite);
+               if(!isPatchedValue((J9Method *)j9method))
+                  {
+                  TR_ResolvedJ9Method resolvedj9method = TR_ResolvedJ9Method(j9method, compiler->fej9(), compiler->trMemory());
+                  TR_ResolvedMethod *method = &resolvedj9method;
+                  sc->persistIprofileInfo(NULL, method, compiler);
+                  }
+               }
+            }
+         }
+      }
+   }
+
+
 // This routine should only be called from wrappedCompile
 TR_MethodMetaData *
 TR::CompilationInfoPerThreadBase::compile(
@@ -7963,135 +8053,87 @@ TR::CompilationInfoPerThreadBase::compile(
 
       intptr_t rtn = 0;
 
-      if (!_methodBeingCompiled->_aotCodeToBeRelocated )
-         {
-         if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
-            {
-            TR_VerboseLog::writeLineLocked(
-               TR_Vlog_DISPATCH,
-               "Compiling %s @ %s",
-               compiler->signature(),
-               compiler->getHotnessName()
-               );
-            }
-
-         if (compiler->getOption(TR_AlwaysSafeFatal)) {
-            TR_ASSERT_SAFE_FATAL(false, "alwaysSafeFatal set");
-             TR_VerboseLog::writeLineLocked(
-               TR_Vlog_INFO ,
-               "Bypassed TR_ASSERT_SAFE_FATAL %s @ %s",
-               compiler->signature(),
-               compiler->getHotnessName()
-               );
-         }
-
-         if (compiler->getOption(TR_AlwaysFatalAssert)) {
-            TR_ASSERT_FATAL(false, "alwaysFatalAssert set");
-         }
-
-         rtn = compiler->compile();
-
-         if ( TR::Options::getVerboseOption(TR_VerboseCompilationDispatch) && !rtn)
-            {
-            TR_VerboseLog::vlogAcquire();
-
-            TR_VerboseLog::writeLine(
-               TR_Vlog_DISPATCH,
-               "Successfully created compiled body [" POINTER_PRINTF_FORMAT "-",
-               compiler->cg()->getCodeStart()
-               );
-
-            TR_VerboseLog::write(
-               POINTER_PRINTF_FORMAT "] for %s @ %s",
-               compiler->cg()->getCodeEnd(),
-               compiler->signature(),
-               compiler->getHotnessName()
-               );
-
-            TR_VerboseLog::vlogRelease();
-            }
-         }
-      else
-         {
-         TR_FilterBST *filterInfo = NULL;
-         TR_ASSERT(methodCanBeCompiled(compiler->trMemory(), &vm, compilee, filterInfo), "This should already have failed in wrappedCompile");
-
-         // Perform an AOT load
-         //
-         // Load the AOT body using a non shared cache VM (don't use vm because it's J9SharedCacheVM for the compile)
-         TR_J9VMBase *loadvm = TR_J9VMBase::get(jitConfig, vmThread);
-         if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
-            {
-            TR_VerboseLog::writeLineLocked(
-               TR_Vlog_DISPATCH,
-               "Loading previously AOT compiled body for %s @ %s",
-               compiler->signature(),
-               compiler->getHotnessName()
-               );
-            }
-         metaData = installAotCachedMethod(
-            vmThread,
-            _methodBeingCompiled->_aotCodeToBeRelocated,
-            method,
-            loadvm,
-            compiler->getOptions(),
-            compilee,
-            _methodBeingCompiled,
-            compiler
-            );
-         _methodBeingCompiled->_newStartPC = metaData ? reinterpret_cast<void *>(metaData->startPC) : 0;
-
-         if (!metaData) // Failed to relocate!
+      if (_compInfo.getPersistentInfo()->getJaasMode() == NONJAAS_MODE) // NonJaas Mode
+      {
+         if (!_methodBeingCompiled->_aotCodeToBeRelocated )
             {
             if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
                {
                TR_VerboseLog::writeLineLocked(
                   TR_Vlog_DISPATCH,
-                  "Failed to load previously AOT compiled body for %s @ %s",
+                  "Compiling %s @ %s",
                   compiler->signature(),
                   compiler->getHotnessName()
                   );
                }
 
-            compiler->failCompilation<J9::AOTRelocationFailed>("Failed to relocate");
+            if (compiler->getOptions()->getOption(TR_AlwaysSafeFatal)) {
+               TR_ASSERT_SAFE_FATAL(false, "alwaysSafeFatal set");
+                TR_VerboseLog::writeLineLocked(
+                  TR_Vlog_INFO ,
+                  "Bypassed TR_ASSERT_SAFE_FATAL %s @ %s",
+                  compiler->signature(),
+                  compiler->getHotnessName()
+                  );
+            }
+
+            if (compiler->getOptions()->getOption(TR_AlwaysFatalAssert)) {
+               TR_ASSERT_FATAL(false, "alwaysFatalAssert set");
+            }
+
+            rtn = compiler->compile();
+
+            if ( TR::Options::getVerboseOption(TR_VerboseCompilationDispatch) && !rtn)
+               {
+               TR_VerboseLog::vlogAcquire();
+
+               TR_VerboseLog::writeLine(
+                  TR_Vlog_DISPATCH,
+                  "Successfully created compiled body [" POINTER_PRINTF_FORMAT "-",
+                  compiler->cg()->getCodeStart()
+                  );
+
+               TR_VerboseLog::write(
+                  POINTER_PRINTF_FORMAT "] for %s @ %s",
+                  compiler->cg()->getCodeEnd(),
+                  compiler->signature(),
+                  compiler->getHotnessName()
+                  );
+
+               TR_VerboseLog::vlogRelease();
+               }
             }
          else
             {
+            performAOTLoad(vmThread, compiler, compilee, &vm, metaData, method);   
+            }
+         }
+      else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE) // Jaas Client Mode
+         {
+         if (TR::Options::sharedClassCache() && 
+            _compInfo.reloRuntime()->isRomClassForMethodInSharedCache((method, _jitConfig->javaVM)) // if ROM method exists in SCC
+            {
             if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
                {
                TR_VerboseLog::writeLineLocked(
                   TR_Vlog_DISPATCH,
-                  "Successfully loaded previously AOT compiled body for %s @ %s",
+                  "Sending AOT Compilation Request to Server for Method %s @ %s",
                   compiler->signature(),
                   compiler->getHotnessName()
                   );
                }
-            // if we delayed relocation, persist iprofiler info here
-            if (!compiler->getOption(TR_DisableDelayRelocationForAOTCompilations))
-               {
-               TR_SharedCache *sc = compiler->fej9()->sharedCache();
-               if (sc && !foundJ9SharedDataForMethod(compilee->getPersistentIdentifier(), compiler, _jitConfig))
-                  {
-                  sc->persistIprofileInfo(NULL, compilee, compiler);
-                  TR_MethodMetaData *metaData = _methodBeingCompiled->_compInfoPT->getMetadata();
-                  U_32 numCallSites = getNumInlinedCallSites(metaData);
-
-                  TR::StackMemoryRegion stackMemoryRegion(*compiler->trMemory());
-                  for (int32_t i = 0; i < numCallSites; i++)
-                     {
-                     U_8 * inlinedCallSite = getInlinedCallSiteArrayElement(metaData, i);
-                     TR_OpaqueMethodBlock* j9method = (TR_OpaqueMethodBlock *)getInlinedMethod(inlinedCallSite);
-                     if(!isPatchedValue((J9Method *)j9method))
-                        {
-                        TR_ResolvedJ9Method resolvedj9method = TR_ResolvedJ9Method(j9method, compiler->fej9(), compiler->trMemory());
-                        TR_ResolvedMethod *method = &resolvedj9method;
-                        sc->persistIprofileInfo(NULL, method, compiler);
-                        }
-                     }
-                  }
-               }
+            // TODO: update real communication
+            J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
+            J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+            //SomeType *reply = sendRequestToServer(_jitConfig, vmThread, romClass, romMethod); // send remote request to server side for AOT compilation
+            // TODO: update real communication
+            //if (reply->someFuncParseMessage() == TR_yes) // if receive reply as yes or something similar to say AOT body is in the SCC
+            {
+            //performAOTLoad(vmThread, compiler, compilee, &vm, metaData, method);   
             }
          }
+      }
+
 
       // Re-acquire VM access if needed
       //

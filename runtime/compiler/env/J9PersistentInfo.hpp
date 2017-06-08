@@ -61,6 +61,11 @@ enum IprofilerStates {
    IPROFILING_STATE_OFF,
 };
 
+enum JaasModes {
+   NONJAAS_MODE = 0,
+   CLIENT_MODE,
+   SERVER_MODE,
+};
 
 #define MAX_SUPERCLASSES (20000)
 namespace J9
@@ -118,6 +123,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _gpuInitMonitor(NULL),
          _runtimeInstrumentationEnabled(false),
          _runtimeInstrumentationRecompilationEnabled(false),
+         _jaasMode(NONJAAS_MODE),
       OMR::PersistentInfoConnector(pm)
       {}
 
@@ -277,6 +283,9 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint8_t _paddingBefore[128];
    int32_t _countForRecompile;
 
+   JaasModes getJaasMode() const { return _jaasMode;}
+   void setJaasMode(JaasModes m) { _jaasMode = m; }
+
 
    private:
    TR_AddressSet *_unloadedClassAddresses;
@@ -360,6 +369,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
 
    int32_t _numLoadedClasses; ///< always increasing
+   JaasModes _jaasMode; // NONJAAS_MODE, CLIENT_MODE, SERVER_MODE
    };
 
 }
