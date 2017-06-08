@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package RPC;
+package JAAS;
 
 message CompileSCCRequest
    {

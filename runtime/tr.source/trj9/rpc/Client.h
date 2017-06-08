@@ -1,12 +1,12 @@
-#ifndef CLIENT_H
+#ifndef RPC_CLIENT_H
 #define RPC_CLIENT_H
 
 #include <grpc++/grpc++.h>
 #include "rpc/types.h"
 
-using RPC::CompileSCCService;
+using JAAS::CompileSCCService;
 
-namespace RPC
+namespace JAAS
 {
 
 class CompilationClient

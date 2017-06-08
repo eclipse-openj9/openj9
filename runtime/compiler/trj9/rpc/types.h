@@ -4,7 +4,7 @@
 #include <grpc++/grpc++.h>
 #include "rpc/gen/compile.grpc.pb.h"
 
-namespace RPC
+namespace JAAS
 {
    typedef grpc::ServerContext ServerContext;
    typedef grpc::Server Server;

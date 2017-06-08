@@ -12,22 +12,23 @@ using grpc::ServerBuilder;
 // In listening thread, create the service and service manager.
 // Call buildServer which will return a server, then call server->Wait()
 
-namespace RPC
+namespace JAAS
 {
 
-class ServiceManager
+class SyncServer
    {
 public:
-   ServiceManager()
+   SyncServer()
       {
       std::string endpoint = "0.0.0.0:38400";
       _builder.AddListeningPort(endpoint, grpc::InsecureServerCredentials());
       }
 
-   std::unique_ptr<Server> buildServer(BaseService *service)
+   void runService(BaseService *service)
       {
       _builder.RegisterService(service);
-      return _builder.BuildAndStart();
+      auto server = _builder.BuildAndStart();
+      server->Wait();
       }
 private:
    ServerBuilder _builder;
