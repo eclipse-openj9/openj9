@@ -92,6 +92,7 @@
 #include "env/J9SegmentCache.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
+#include "rpc/Client.h"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -6329,7 +6330,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       // Decide if we want an AOT vm or not
       if (sharedClassTest)
          {
-         if (TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT))
+         if (TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT) ||
+             _compInfo.getPersistentInfo()->getJaasMode() == SERVER_MODE) 
             {
             canDoRelocatableCompile = true;
             }
@@ -8122,14 +8124,18 @@ TR::CompilationInfoPerThreadBase::compile(
                   compiler->getHotnessName()
                   );
                }
-            // TODO: update real communication
             J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
             J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-            //SomeType *reply = sendRequestToServer(_jitConfig, vmThread, romClass, romMethod); // send remote request to server side for AOT compilation
-            // TODO: update real communication
-            //if (reply->someFuncParseMessage() == TR_yes) // if receive reply as yes or something similar to say AOT body is in the SCC
+            UDATA sccPtr = ((TR_J9SharedCache *)vm.sharedCache())->getCacheStartAddress();
+            JAAS::CompilationClient client;
+            client.requestCompilation((UDATA)romClass - sccPtr, (UDATA)romMethod - sccPtr);
+            if (client.wasCompilationSuccessful())
             {
-            //performAOTLoad(vmThread, compiler, compilee, &vm, metaData, method);   
+            performAOTLoad(vmThread, compiler, compilee, &vm, metaData, method);   
+            }
+            else
+            {
+            j9tty_printf(PORTLIB, "Error: Compilation Failed for Method %s", compiler->signature());            
             }
          }
       }
