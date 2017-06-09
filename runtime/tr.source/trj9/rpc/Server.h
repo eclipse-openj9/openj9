@@ -7,13 +7,32 @@
 namespace JAAS
 {
 
+class CompileCallData;
+
+class AsyncCompileService
+   {
+   public:
+
+   // Inherited class MUST call callData.finish to respond and cleanup
+   virtual void compile(CompileCallData *callData) = 0;
+
+   void requestCompile(ServerContext *ctx, CompileSCCRequest *req, CompilationResponder *res, grpc::ServerCompletionQueue *cq, void *tag)
+      {
+      _service.RequestCompile(ctx, req, res, cq, cq, tag);
+      }
+
+   CompileSCCService::AsyncService *getInnerSerice() { return &_service; }
+private:
+   CompileSCCService::AsyncService _service;
+   };
+
 class CompileCallData
    {
 public:
    CompileCallData(AsyncCompileService *service, grpc::ServerCompletionQueue *cq)
-      : _done(false), _service(service), _cq(cq), _writer(&ctx)
+      : _done(false), _service(service), _cq(cq), _writer(&_ctx)
       {
-      _service->requestCompile(this, _cq, _writer);
+      _service->requestCompile(&_ctx, &_req, &_writer, _cq, this);
       }
 
    void finish(const CompileSCCReply &reply, const Status &status)
@@ -46,23 +65,6 @@ public:
    CompilationResponder _writer;
    };
 
-class AsyncCompileService
-   {
-public:
-
-   // Inherited class MUST call callData.finish to respond and cleanup
-   virtual void compile(CompileCallData *callData) = 0;
-
-   void requestCompile(CompileCallData *data, grpc::ServerCompletionQueue *cq, CompilationResponder *res)
-      {
-      _service.RequestCompile(data->getContext(), data->getRequest(), res, cq, cq, data);
-      }
-
-   CompileSCCService::AsyncService *getInnerSerice() { return &_service; }
-private:
-   CompileSCCService::AsyncService _service;
-   };
-
 // To create the async server:
 // Inherit from AsyncCompileService and override the method:
 // Compile(CompileData *) create the service and server; then call runService.
@@ -71,7 +73,7 @@ class AsyncServer
 public:
    ~AsyncServer()
       {
-      _queue->Shutdown();
+      _cq->Shutdown();
       _server->Shutdown();
       }
 
@@ -84,7 +86,8 @@ public:
 
    void runService(AsyncCompileService *service)
       {
-      _builder.RegisterService(_service.getInnerSerice());
+      _service = service;
+      _builder.RegisterService(_service->getInnerSerice());
       _server = _builder.BuildAndStart();
       wait();
       }
@@ -95,7 +98,7 @@ private:
       {
       void *tag;
       bool ok;
-      new CompileCallData(-service, _cq);
+      new CompileCallData(_service, _cq.get());
       // no exit logic currently
       while (true)
          {
@@ -107,7 +110,7 @@ private:
 
    grpc::ServerBuilder _builder;
    std::unique_ptr<grpc::Server> _server;
-   AsyncCompileService _service;
+   AsyncCompileService *_service;
    std::unique_ptr<grpc::ServerCompletionQueue> _cq;
    };
 
