@@ -11,8 +11,8 @@ namespace JAAS
    typedef grpc::Service BaseService;
    typedef grpc::Status Status;
 
-   // Inherit from this
    typedef CompileSCCService::Service BaseCompileService;
+   typedef grpc::ServerAsyncResponseWriter<CompileSCCReply> CompilationResponder;
 }
 
 #endif // RPC_TYPES_H

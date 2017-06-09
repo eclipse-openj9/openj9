@@ -4,20 +4,126 @@
 #include <grpc++/grpc++.h>
 #include "rpc/types.h"
 
-using grpc::ServerBuilder;
+namespace JAAS
+{
+
+class CompileCallData
+   {
+public:
+   CompileCallData(AsyncCompileService *service, grpc::ServerCompletionQueue *cq)
+      : _done(false), _service(service), _cq(cq), _writer(&ctx)
+      {
+      _service->requestCompile(this, _cq, _writer);
+      }
+
+   void finish(const CompileSCCReply &reply, const Status &status)
+      {
+      _done = true;
+      _writer.Finish(reply, status, this);
+      }
+
+   void proceed()
+      {
+      if (!_done)
+         {
+         new CompileCallData(_service, _cq);
+         _service->compile(this);
+         return;
+         }
+      else
+         delete this;
+      }
+
+   CompileSCCRequest *getRequest() { return &_req; }
+   ServerContext *getContext() { return &_ctx; }
+
+   private:
+   bool _done;
+   ServerContext _ctx;
+   AsyncCompileService *_service;
+   grpc::ServerCompletionQueue *_cq;
+   CompileSCCRequest _req;
+   CompilationResponder _writer;
+   };
+
+class AsyncCompileService
+   {
+public:
+
+   // Inherited class MUST call callData.finish to respond and cleanup
+   virtual void compile(CompileCallData *callData) = 0;
+
+   void requestCompile(CompileCallData *data, grpc::ServerCompletionQueue *cq, CompilationResponder *res)
+      {
+      _service.RequestCompile(data->getContext(), data->getRequest(), res, cq, cq, data);
+      }
+
+   CompileSCCService::AsyncService *getInnerSerice() { return &_service; }
+private:
+   CompileSCCService::AsyncService _service;
+   };
+
+// To create the async server:
+// Inherit from AsyncCompileService and override the method:
+// Compile(CompileData *) create the service and server; then call runService.
+class AsyncServer
+   {
+public:
+   ~AsyncServer()
+      {
+      _queue->Shutdown();
+      _server->Shutdown();
+      }
+
+   AsyncServer()
+      {
+      std::string endpoint = "0.0.0.0:38400";
+      _builder.AddListeningPort(endpoint, grpc::InsecureServerCredentials());
+      _cq = _builder.AddCompletionQueue();
+      }
+
+   void runService(AsyncCompileService *service)
+      {
+      _builder.RegisterService(_service.getInnerSerice());
+      _server = _builder.BuildAndStart();
+      wait();
+      }
+
+private:
+
+   void wait()
+      {
+      void *tag;
+      bool ok;
+      new CompileCallData(-service, _cq);
+      // no exit logic currently
+      while (true)
+         {
+         if (!_cq->Next(&tag, &ok) && !ok)
+            break;
+         static_cast<CompileCallData *>(tag)->proceed();
+         }
+      }
+
+   grpc::ServerBuilder _builder;
+   std::unique_ptr<grpc::Server> _server;
+   AsyncCompileService _service;
+   std::unique_ptr<grpc::ServerCompletionQueue> _cq;
+   };
+
 
 // To create the server:
 // Inherit from BaseCompileService and override the method:
 // Compile(RPC::ServerContext *, RPC::CompileSCCRequest *, RPC::CompileSCCReply *)
-// In listening thread, create the service and service manager.
-// Call buildServer which will return a server, then call server->Wait()
-
-namespace JAAS
-{
-
+// In listening thread, create the service and server; then call runService.
 class SyncServer
    {
 public:
+   ~SyncServer()
+      {
+      _server->Shutdown();
+      }
+
    SyncServer()
       {
       std::string endpoint = "0.0.0.0:38400";
@@ -27,11 +133,13 @@ public:
    void runService(BaseService *service)
       {
       _builder.RegisterService(service);
-      auto server = _builder.BuildAndStart();
-      server->Wait();
+      _server = _builder.BuildAndStart();
+      _server->Wait();
       }
+
 private:
-   ServerBuilder _builder;
+   grpc::ServerBuilder _builder;
+   std::unique_ptr<grpc::Server> _server;
    };
 
 }
