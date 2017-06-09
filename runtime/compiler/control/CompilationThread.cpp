@@ -8130,19 +8130,28 @@ TR::CompilationInfoPerThreadBase::compile(
                }
             J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
             J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-            UDATA sccPtr = ((TR_J9SharedCache *)vm.sharedCache())->getCacheStartAddress();
+            j9tty_printf(PORTLIB, "JaaS: Client sending request for method %s.\n",
+                &(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature))));
+            //UDATA sccPtr = ((TR_J9SharedCache *)vm.sharedCache())->getCacheStartAddress();
+            //UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->sharedClassCache;
+            UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
             JAAS::CompilationClient client;
-            client.requestCompilation((UDATA)romClass - sccPtr, (UDATA)romMethod - sccPtr);
-            if (client.wasCompilationSuccessful())
-            {
-            performAOTLoad(vmThread, compiler, compilee, &vm, metaData, method);   
-            }
+            j9tty_printf(PORTLIB, "romClass %p romMethod %p", ((UDATA)romClass) - sccPtr, ((UDATA)romMethod) - sccPtr);
+            JAAS::Status status = client.requestCompilation(((UDATA)romClass) - sccPtr, ((UDATA)romMethod) - sccPtr);
+            if (status.ok() && client.wasCompilationSuccessful())
+               {
+               performAOTLoad(vmThread, compiler, compilee, &vm, metaData, method);
+               }
             else
+               {
+               j9tty_printf(PORTLIB, "Error: Compilation Failed for Method %s. Reason: %d %s", compiler->signature(), status.error_code(), status.error_message());
+               }
+            }
+         else
             {
-            j9tty_printf(PORTLIB, "Error: Compilation Failed for Method %s", compiler->signature());            
+            j9tty_printf(PORTLIB, "Error: Rom class not in SCC - cannot send compilation request for method %s", compiler->signature());
             }
          }
-      }
 
 
       // Re-acquire VM access if needed

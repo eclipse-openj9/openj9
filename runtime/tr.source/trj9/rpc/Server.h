@@ -6,7 +6,6 @@
 
 namespace JAAS
 {
-
 class CompileCallData;
 
 class AsyncCompileService

@@ -39,7 +39,7 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
 
    j9thread_set_name(j9thread_self(), "JaaS Server Listener");
 
-   JAAS::SyncServer server;
+   JAAS::AsyncServer server;
    CompileService compileService(jitConfig, listenerThread);
    server.runService(&compileService);
 

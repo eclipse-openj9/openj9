@@ -13,8 +13,6 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                   J9ROMClass* romClass, const J9ROMMethod* romMethod)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-   j9tty_printf(PORTLIB, "JaaS: Server received request for method %s %s.\n",
-                romMethod->nameAndSignature.name, romMethod->nameAndSignature.signature);
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
    if (!(compInfo->reloRuntime()->isROMClassInSharedCaches((UDATA)romClass, jitConfig->javaVM))) 
       { 
@@ -28,11 +26,14 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          }
       else // do AOT compilation
          {
+         j9tty_printf(PORTLIB, "JaaS: Server doing AOT compile for method %s.\n",
+               &(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature))));
          bool queued = false;
          TR_YesNoMaybe async = TR_no;
          TR_MethodEvent event;
+         J9Method *method = getNewInstancePrototype(vmThread);
          event._eventType = TR_MethodEvent::InterpreterCounterTripped;
-         event._j9method = (J9Method*)romMethod;
+         event._j9method = method;
          event._oldStartPC = 0;
          event._vmThread = vmThread;
          event._classNeedingThunk = 0;
@@ -77,19 +78,25 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       }
    }
 
-class CompileService : public JAAS::BaseCompileService
+class CompileService : public JAAS::AsyncCompileService
 {
    public:
    CompileService(J9JITConfig *jitConfig, J9VMThread *vmThread) : _jitConfig(jitConfig), _vmThread(vmThread) { }
 
-   JAAS::Status Compile(JAAS::ServerContext *serverContext, JAAS::CompileSCCRequest *req, JAAS::CompileSCCReply *reply)
+   void compile(JAAS::CompileCallData *ccd) override
       {
+      auto req = ccd->getRequest();
+      PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
+      //UDATA sccPtr = ((TR_J9SharedCache *)_jitConfig->javaVM->sharedCache())->getCacheStartAddress();
+      //UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->sharedClassCache;
       J9ROMClass *romClass = (J9ROMClass*)(sccPtr + req->classoffset());
       J9ROMMethod *romMethod = (J9ROMMethod*)(sccPtr + req->methodoffset());
+      j9tty_printf(PORTLIB, "romClass %p romMethod %p", req->classoffset(), req->methodoffset());
       bool result = doAOTCompile(_jitConfig, _vmThread, romClass, romMethod);
-      reply->set_success(result);
-      return JAAS::Status::OK;
+      JAAS::CompileSCCReply reply;
+      reply.set_success(result);
+      ccd->finish(reply, JAAS::Status::OK); 
       }
 
    private:
