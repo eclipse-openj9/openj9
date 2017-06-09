@@ -13,6 +13,8 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                   J9ROMClass* romClass, const J9ROMMethod* romMethod)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+   j9tty_printf(PORTLIB, "JaaS: Server received request for method %s %s.\n",
+                romMethod->nameAndSignature.name, romMethod->nameAndSignature.signature);
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
    if (!(compInfo->reloRuntime()->isROMClassInSharedCaches((UDATA)romClass, jitConfig->javaVM))) 
       { 
@@ -82,7 +84,7 @@ class CompileService : public JAAS::BaseCompileService
 
    JAAS::Status Compile(JAAS::ServerContext *serverContext, JAAS::CompileSCCRequest *req, JAAS::CompileSCCReply *reply)
       {
-      void *sccPtr = _jitConfig->javaVM->sharedClassConfig->sharedClassCache;
+      UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
       J9ROMClass *romClass = (J9ROMClass*)(sccPtr + req->classoffset());
       J9ROMMethod *romMethod = (J9ROMMethod*)(sccPtr + req->methodoffset());
       bool result = doAOTCompile(_jitConfig, _vmThread, romClass, romMethod);
