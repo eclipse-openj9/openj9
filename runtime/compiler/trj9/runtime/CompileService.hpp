@@ -30,7 +30,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          TR_YesNoMaybe async = TR_no;
          TR_MethodEvent event;
          event._eventType = TR_MethodEvent::InterpreterCounterTripped;
-         event._j9method = (J9Method*)romMethod; //TODO this cast is probably wrong
+         event._j9method = (J9Method*)romMethod;
          event._oldStartPC = 0;
          event._vmThread = vmThread;
          event._classNeedingThunk = 0;
@@ -62,7 +62,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                }        
             else
                {
-                  //TODO???
+                  j9tty_printf(PORTLIB, "Compilation was queued or a new plan could not be created.\n");
                   return false;
                }
             }

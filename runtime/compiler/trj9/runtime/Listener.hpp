@@ -5,13 +5,11 @@
 #include "infra/Monitor.hpp"  // TR::Monitor
 
 class TR_Listener
-{
+   {
 public:
    TR_Listener();
    static TR_Listener* allocate();
    void startListenerThread(J9JavaVM *javaVM);
-   //void stopListenerThread(); //TODO: for iprofilerthread and hwprofilerthread,    
-   //void shutdown(); //TODO: these functions are called in HookedByTheJit.cpp, line 4697, 4714
    void setAttachAttempted(bool b) { _listenerThreadAttachAttempted = b; }
    bool getAttachAttempted() { return _listenerThreadAttachAttempted; }
 
@@ -29,7 +27,7 @@ private:
    j9thread_t _listenerOSThread;
    volatile bool _listenerThreadAttachAttempted;
    volatile uint32_t _listenerThreadExitFlag;
-};
+   };
 
 #endif
 

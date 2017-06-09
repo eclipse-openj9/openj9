@@ -8054,7 +8054,7 @@ TR::CompilationInfoPerThreadBase::compile(
       intptr_t rtn = 0;
 
       if (_compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE) // NonJaas Mode
-      {
+         {
          if (!_methodBeingCompiled->_aotCodeToBeRelocated )
             {
             if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))

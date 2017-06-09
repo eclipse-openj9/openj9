@@ -6,19 +6,14 @@
 TR_Listener::TR_Listener()
    : _listenerThread(NULL), _listenerMonitor(NULL), _listenerOSThread(NULL), 
    _listenerThreadAttachAttempted(false), _listenerThreadExitFlag(false)
-{}
-
-
+   {
+   }
 
 TR_Listener * TR_Listener::allocate()
    {
    TR_Listener * listener = new (PERSISTENT_NEW) TR_Listener();
    return listener;
    }
-
-
-                             
-
 
 static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
    {
@@ -57,8 +52,6 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
 
    return 0;
    }
-
-
 
 void TR_Listener::startListenerThread(J9JavaVM *javaVM)
    {
