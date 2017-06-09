@@ -8053,7 +8053,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
       intptr_t rtn = 0;
 
-      if (_compInfo.getPersistentInfo()->getJaasMode() == NONJAAS_MODE) // NonJaas Mode
+      if (_compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE) // NonJaas Mode
       {
          if (!_methodBeingCompiled->_aotCodeToBeRelocated )
             {
