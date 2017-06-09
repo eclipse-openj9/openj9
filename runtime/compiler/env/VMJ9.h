@@ -44,6 +44,7 @@
 #include "env/J9SharedCache.hpp"
 #include "infra/Array.hpp"
 #include "env/CompilerEnv.hpp"
+#include "runtime/Listener.hpp"
 
 class TR_CallStack;
 namespace TR { class CompilationInfo; }

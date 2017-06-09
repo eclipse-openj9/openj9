@@ -1554,7 +1554,7 @@ onLoadInternal(
    
    if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
    {
-      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener = TR_LISTENER::allocate();
+      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener = TR_Listener::allocate();
       if (!((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener)
       {
         // warn that Listener was not allocated

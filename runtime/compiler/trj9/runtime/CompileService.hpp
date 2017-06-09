@@ -1,37 +1,20 @@
 #ifndef COMPILE_SERVICE_H
 #define COMPILE_SERVICE_H
 
-#include "trj9/rpc/Server.h"
+
 #include "j9.h"
+#include "trj9/rpc/Server.h"
+#include "j9nonbuilder.h"
 #include "infra/Monitor.hpp"  // TR::Monitor
+#include "control/CompilationRuntime.hpp"
+#include "control/CompilationController.hpp"
 
-
-class CompileService : public BaseCompileService
-{
-   public:
-   CompileService(J9JITConfig *jitConfig, J9VMThread *vmThread) : _jitConfig(jitConfig), _vmThread(vmThread) { }
-
-   RPC::Status Compile(RPC::ServerContext *serverContext, RPC::CompileSCCRequest *req, RPC::CompileSCCReply *reply)
-      {
-      void *sccPtr = _jitConfig->javaVM->sharedClassConfig->sharedClassCache;
-      J9ROMClass *romClass = (J9ROMClass)(sccPtr + req.classOffset());
-      J9ROMMethod *romMethod = (J9ROMMethod)(sccPtr + req.methodOffset());
-      bool result = doAOTCompile(_jitConfig, _vmThread, romClass, romMethod);
-      reply->set_success(result);
-      return RPC::Status::OK;
-      }
-
-   private:
-   J9JITConfig *_jitConfig;
-   J9VMThread *_vmThread;
-};
-
-
-bool doAOTCompile(J9JITconfig* jitConfig, J9VMThread* vmThread, 
+bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread, 
                   J9ROMClass* romClass, const J9ROMMethod* romMethod)
    {
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
-   if (!(compInfo->reloRuntime()->isRomClassInSharedCaches((UDATA)romClass, jitConfig->javaVM))) 
+   if (!(compInfo->reloRuntime()->isROMClassInSharedCaches((UDATA)romClass, jitConfig->javaVM))) 
       { 
       return false;
       }
@@ -47,7 +30,7 @@ bool doAOTCompile(J9JITconfig* jitConfig, J9VMThread* vmThread,
          TR_YesNoMaybe async = TR_no;
          TR_MethodEvent event;
          event._eventType = TR_MethodEvent::InterpreterCounterTripped;
-         event._j9method = method;
+         event._j9method = (J9Method*)romMethod; //TODO this cast is probably wrong
          event._oldStartPC = 0;
          event._vmThread = vmThread;
          event._classNeedingThunk = 0;
@@ -73,10 +56,15 @@ bool doAOTCompile(J9JITconfig* jitConfig, J9VMThread* vmThread,
                else
                   {
                   j9tty_printf(PORTLIB, "Compilation for method %s %s failed.\n", 
-                               romMethod->nameAngSignature.name, romMethod->nameAndSignature.signature); 
+                               romMethod->nameAndSignature.name, romMethod->nameAndSignature.signature); 
                   return false;
                   }
                }        
+            else
+               {
+                  //TODO???
+                  return false;
+               }
             }
          else 
             {
@@ -86,6 +74,28 @@ bool doAOTCompile(J9JITconfig* jitConfig, J9VMThread* vmThread,
          }
       }
    }
+
+class CompileService : public JAAS::BaseCompileService
+{
+   public:
+   CompileService(J9JITConfig *jitConfig, J9VMThread *vmThread) : _jitConfig(jitConfig), _vmThread(vmThread) { }
+
+   JAAS::Status Compile(JAAS::ServerContext *serverContext, JAAS::CompileSCCRequest *req, JAAS::CompileSCCReply *reply)
+      {
+      void *sccPtr = _jitConfig->javaVM->sharedClassConfig->sharedClassCache;
+      J9ROMClass *romClass = (J9ROMClass*)(sccPtr + req->classoffset());
+      J9ROMMethod *romMethod = (J9ROMMethod*)(sccPtr + req->methodoffset());
+      bool result = doAOTCompile(_jitConfig, _vmThread, romClass, romMethod);
+      reply->set_success(result);
+      return JAAS::Status::OK;
+      }
+
+   private:
+   J9JITConfig *_jitConfig;
+   J9VMThread *_vmThread;
+};
+
+
 
 
 #endif

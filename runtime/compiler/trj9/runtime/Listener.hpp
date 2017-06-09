@@ -4,13 +4,11 @@
 #include "j9.h"
 #include "infra/Monitor.hpp"  // TR::Monitor
 
-
-
-class TR_LISTENER
+class TR_Listener
 {
 public:
-   TR_LISTENER();
-   TR_LISTENER* allocate();
+   TR_Listener();
+   static TR_Listener* allocate();
    void startListenerThread(J9JavaVM *javaVM);
    //void stopListenerThread(); //TODO: for iprofilerthread and hwprofilerthread,    
    //void shutdown(); //TODO: these functions are called in HookedByTheJit.cpp, line 4697, 4714
@@ -31,7 +29,7 @@ private:
    j9thread_t _listenerOSThread;
    volatile bool _listenerThreadAttachAttempted;
    volatile uint32_t _listenerThreadExitFlag;
-}
+};
 
 #endif
 
