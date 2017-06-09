@@ -33,6 +33,10 @@
 #define snprintf _snprintf
 #endif
 
+// This needs to go first because OMR redefines null and gRPC doesn't like that.
+// TODO maybe we can move the gRPC include into a Client.cpp
+#include "rpc/Client.h"
+
 #include "control/CompilationThread.hpp"
 
 #include <exception>

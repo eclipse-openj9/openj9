@@ -1,5 +1,5 @@
-#ifndef RPC_CLIENT_H
-#define RPC_CLIENT_H
+#ifndef JAAS_CLIENT_H
+#define JAAS_CLIENT_H
 
 #include <grpc++/grpc++.h>
 #include "rpc/types.h"
@@ -32,11 +32,11 @@ public:
       }
 
 private:
-   std::unique_ptr<RPC::CompileSCCService::Stub> _stub;
-   RPC::CompileSCCRequest _request;
-   RPC::CompileSCCReply _reply;
+   std::unique_ptr<JAAS::CompileSCCService::Stub> _stub;
+   JAAS::CompileSCCRequest _request;
+   JAAS::CompileSCCReply _reply;
    };
 
 }
 
-#endif // RPC_CLIENT_H
+#endif // JAAS_CLIENT_H
