@@ -9,6 +9,23 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationController.hpp"
 
+J9Method *ramMethodFromRomMethod(J9JITConfig* jitConfig, J9VMThread* vmThread, const J9ROMClass* romClass, const J9ROMMethod* romMethod)
+   {
+   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
+   J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+   bool isVettedForAOT = false; // TODO what should this be?
+   J9Class *ramClass = (J9Class*) fe->getSystemClassFromClassName((const char*) className->data, className->length, isVettedForAOT);
+   J9Method *ramMethods = ramClass->ramMethods;
+   for (int32_t i = 0; i < romClass->romMethodCount; i++)
+      {
+      J9Method *curMethod = ramMethods + i;
+      J9ROMMethod *curROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(curMethod);
+      if (curROMMethod == romMethod)
+         return curMethod;
+      }
+   return NULL;
+   }
+
 bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread, 
                   J9ROMClass* romClass, const J9ROMMethod* romMethod)
    {
@@ -31,9 +48,8 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          bool queued = false;
          TR_YesNoMaybe async = TR_no;
          TR_MethodEvent event;
-         J9Method *method = getNewInstancePrototype(vmThread);
          event._eventType = TR_MethodEvent::InterpreterCounterTripped;
-         event._j9method = method;
+         event._j9method = ramMethodFromRomMethod(jitConfig, vmThread, romClass, romMethod);
          event._oldStartPC = 0;
          event._vmThread = vmThread;
          event._classNeedingThunk = 0;
