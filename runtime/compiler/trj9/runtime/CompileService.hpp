@@ -33,18 +33,18 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
    const char* className = (const char*)&(J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)));
    acquireVMAccess(vmThread);
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-   j9tty_printf(PORTLIB, "JaaS: doAOTCompile class %s, method %s.", className, methodName);
+   j9tty_printf(PORTLIB, "JaaS: doAOTCompile class %s, method %s.\n", className, methodName);
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
    if (!(compInfo->reloRuntime()->isROMClassInSharedCaches((UDATA)romClass, jitConfig->javaVM))) 
       { 
-      j9tty_printf(PORTLIB, "JaaS: Class %s is not in SCC so we cannot compile method %s AOT. Aborting compilation.", className, methodName);
+      j9tty_printf(PORTLIB, "JaaS: Class %s is not in SCC so we cannot compile method %s AOT. Aborting compilation.\n", className, methodName);
       return false;
       }
    else 
       {
       if (jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod)) 
          {
-         j9tty_printf(PORTLIB, "JaaS: Method %s already exists in SCC, aborting compilation.", methodName);
+         j9tty_printf(PORTLIB, "JaaS: Method %s already exists in SCC, aborting compilation.\n", methodName);
          return true;
          }
       else // do AOT compilation
@@ -66,7 +66,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          // if the controller decides to compile this method, trigger the compilation
          if (plan)
             {
-            TR::IlGeneratorMethodDetails details((J9Method*)romMethod); 
+            TR::IlGeneratorMethodDetails details(method); 
             result = (IDATA)compInfo->compileMethod(vmThread, details, 0, async, NULL, &queued, plan);
             
             if (!queued && newPlanCreated)
@@ -85,7 +85,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                }        
             else
                {
-                  j9tty_printf(PORTLIB, "Compilation was queued or a new plan could not be created.\n");
+                  j9tty_printf(PORTLIB, "Compilation was queued or a new plan could not be created %d %d.\n", queued, newPlanCreated);
                   return false;
                }
             }
