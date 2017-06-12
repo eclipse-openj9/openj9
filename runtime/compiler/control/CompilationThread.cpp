@@ -8136,7 +8136,6 @@ TR::CompilationInfoPerThreadBase::compile(
             //UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->sharedClassCache;
             UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
             JAAS::CompilationClient client;
-            j9tty_printf(PORTLIB, "romClass %p romMethod %p", ((UDATA)romClass) - sccPtr, ((UDATA)romMethod) - sccPtr);
             JAAS::Status status = client.requestCompilation(((UDATA)romClass) - sccPtr, ((UDATA)romMethod) - sccPtr);
             if (status.ok() && client.wasCompilationSuccessful())
                {

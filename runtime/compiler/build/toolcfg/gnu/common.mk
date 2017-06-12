@@ -98,10 +98,11 @@ C_FLAGS+=\
 
 CX_FLAGS+=\
     -pthread \
-    -fomit-frame-pointer \
     -fasynchronous-unwind-tables \
     -Wreturn-type \
     -fno-dollars-in-identifiers
+
+    #-fomit-frame-pointer \
 
 CXX_FLAGS+=\
     -std=c++0x \
