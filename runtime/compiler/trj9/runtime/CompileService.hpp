@@ -14,7 +14,7 @@ J9Method *ramMethodFromRomMethod(J9JITConfig* jitConfig, J9VMThread* vmThread, c
    {
    TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
    J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
-   J9Class *ramClass = (J9Class*) fe->getSystemClassFromClassName((const char*) className->data, className->length);
+   J9Class *ramClass = (J9Class*) fe->getSystemClassFromClassName((const char*) className->data, className->length, true);
    J9Method *ramMethods = ramClass->ramMethods;
    for (int32_t i = 0; i < romClass->romMethodCount; i++)
       {
@@ -50,7 +50,10 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       else // do AOT compilation
          {
          J9Method *method = ramMethodFromRomMethod(jitConfig, vmThread, romClass, romMethod);
-         j9tty_printf(PORTLIB, "JaaS: Server doing compile for method %s.\n", methodName);
+         TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
+         char sig[1000];
+         fe->printTruncatedSignature(sig, 1000, (TR_OpaqueMethodBlock*)method);
+         j9tty_printf(PORTLIB, "JaaS: Server doing compile for method %s %s.\n", sig, methodName);
          bool queued = false;
          TR_YesNoMaybe async = TR_no;
          TR_MethodEvent event;
@@ -69,9 +72,10 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             TR::IlGeneratorMethodDetails details(method); 
             result = (IDATA)compInfo->compileMethod(vmThread, details, 0, async, NULL, &queued, plan);
             
-            if (!queued && newPlanCreated)
+            if (newPlanCreated)
                {
-               TR_OptimizationPlan::freeOptimizationPlan(plan); 
+               if (!queued)
+                  TR_OptimizationPlan::freeOptimizationPlan(plan);
                if (result)
                   {
                   j9tty_printf(PORTLIB, "Compilation for method %s is done.\n", methodName); // types are int32_t, meaningful?
@@ -85,7 +89,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                }        
             else
                {
-                  j9tty_printf(PORTLIB, "Compilation was queued or a new plan could not be created %d %d.\n", queued, newPlanCreated);
+                  j9tty_printf(PORTLIB, "A new plan could not be created %d.\n");
                   return false;
                }
             }

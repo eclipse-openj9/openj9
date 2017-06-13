@@ -4234,7 +4234,6 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
    // Move the entry to the right place in the queue
    //
    queueEntry(cur);
-
    return cur;
    }
 
@@ -5145,6 +5144,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          )
       )
       {
+      TR_ASSERT(0, "Unexpected path");
       bool shouldReturn = true;
 
       // Fail the compilation, unless this is on the queue (maybe even in progress)
@@ -5603,6 +5603,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       // thread has been stopped or suspended).
       //
       startPC = entry->_newStartPC;
+      printf("startPC after compilation %p\n", startPC);
       // For HCR should we return 0 or oldStartPC?
       if (startPC && startPC != oldStartPC)
          debugPrint("\tcompile request succeeded", entry->getMethodDetails(), vmThread);
@@ -6593,7 +6594,8 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
                }
             else
                {
-               TR_ASSERT(false, "Unexpected value for method->extra = %p (method=%p)\n", TR::CompilationInfo::getJ9MethodExtra(method), method);
+               if (_compInfo.getPersistentInfo()->getJaasMode() != SERVER_MODE)
+                  TR_ASSERT(false, "Unexpected value for method->extra = %p (method=%p)\n", TR::CompilationInfo::getJ9MethodExtra(method), method);
                }
             }
          }
@@ -7968,8 +7970,10 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       // If we want to compile without VM access, now it's the time to release it
-      //
-      if (!compiler->getOption(TR_DisableNoVMAccess) && !_methodBeingCompiled->_aotCodeToBeRelocated)
+      // For the JaaS client we must not enter this path. _aotCodeToBeRelocated is normally set for AOT but
+      // with the client it is null, causing VM access to be released early.
+      if (!compiler->getOption(TR_DisableNoVMAccess) && !_methodBeingCompiled->_aotCodeToBeRelocated &&
+          _compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE)
          {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
          bool doAcquireClassUnloadMonitor = true;
@@ -8130,16 +8134,19 @@ TR::CompilationInfoPerThreadBase::compile(
                }
             J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
             J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-            j9tty_printf(PORTLIB, "JaaS: Client sending request for method %s.\n",
-                &(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature))));
-            //UDATA sccPtr = ((TR_J9SharedCache *)vm.sharedCache())->getCacheStartAddress();
-            //UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->sharedClassCache;
+            j9tty_printf(PORTLIB, "JaaS: Client sending request for method %s.\n", compiler->signature());
             UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
             JAAS::CompilationClient client;
             JAAS::Status status = client.requestCompilation(((UDATA)romClass) - sccPtr, ((UDATA)romMethod) - sccPtr);
             if (status.ok() && client.wasCompilationSuccessful())
                {
+               UDATA flags = 0;
+               const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
+               _methodBeingCompiled->setAotCodeToBeRelocated(compiledMethod);
+               //TODO we should check flags here, similar to elsewhere
+
                performAOTLoad(vmThread, compiler, compilee, &vm, metaData, method);
+               j9tty_printf(PORTLIB, "JaaS: Client sucessfully loaded method %s.\n", compiler->signature());
                }
             else
                {
