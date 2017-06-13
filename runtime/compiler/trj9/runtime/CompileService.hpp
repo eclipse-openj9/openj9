@@ -29,22 +29,35 @@ J9Method *ramMethodFromRomMethod(J9JITConfig* jitConfig, J9VMThread* vmThread, c
 bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread, 
                   J9ROMClass* romClass, const J9ROMMethod* romMethod)
    {
-   const char* methodName = (const char*)&(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature)));
-   const char* className = (const char*)&(J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)));
+   J9UTF8 *methodNameUTF = J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature);
+   std::string methodNameStr((const char*)methodNameUTF->data, (size_t)methodNameUTF->length);
+   const char *methodName = methodNameStr.c_str();
+   J9UTF8 *classNameUTF = J9ROMCLASS_CLASSNAME(romClass);
+   std::string classNameStr((const char*)classNameUTF->data, (size_t)classNameUTF->length);
+   const char *className = classNameStr.c_str();
+
    acquireVMAccess(vmThread);
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-   j9tty_printf(PORTLIB, "JaaS: doAOTCompile class %s, method %s.\n", className, methodName);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJaas))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+            "Server received request to compile %s.%s", className, methodName);
+
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
    if (!(compInfo->reloRuntime()->isROMClassInSharedCaches((UDATA)romClass, jitConfig->javaVM))) 
       { 
-      j9tty_printf(PORTLIB, "JaaS: Class %s is not in SCC so we cannot compile method %s AOT. Aborting compilation.\n", className, methodName);
+      if (TR::Options::getVerboseOption(TR_VerboseJaas))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+               "ROMClass for %s is not in SCC so we cannot compile method %s. Aborting compilation", className, methodName);
       return false;
       }
    else 
       {
       if (jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod)) 
          {
-         j9tty_printf(PORTLIB, "JaaS: Method %s already exists in SCC, aborting compilation.\n", methodName);
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                  "Method %s.%s already exists in SCC, aborting compilation.", className, methodName);
          return true;
          }
       else // do AOT compilation
@@ -53,7 +66,6 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
          char sig[1000];
          fe->printTruncatedSignature(sig, 1000, (TR_OpaqueMethodBlock*)method);
-         j9tty_printf(PORTLIB, "JaaS: Server doing compile for method %s %s.\n", sig, methodName);
          bool queued = false;
          TR_YesNoMaybe async = TR_no;
          TR_MethodEvent event;
@@ -78,24 +90,32 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                   TR_OptimizationPlan::freeOptimizationPlan(plan);
                if (result)
                   {
-                  j9tty_printf(PORTLIB, "Compilation for method %s is done.\n", methodName); // types are int32_t, meaningful?
+                  if (TR::Options::getVerboseOption(TR_VerboseJaas))
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                           "Server sucessfully compiled %s.%s", className, methodName);
                   return true;
                   } 
                else
                   {
-                  j9tty_printf(PORTLIB, "Compilation for method %s %s failed.\n", methodName);
+                  if (TR::Options::getVerboseOption(TR_VerboseJaas))
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                           "Server failed to compile %s.%s", className, methodName);
                   return false;
                   }
                }        
             else
                {
-                  j9tty_printf(PORTLIB, "A new plan could not be created %d.\n");
-                  return false;
+               if (TR::Options::getVerboseOption(TR_VerboseJaas))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                        "Server failed to compile %s.%s because a new plan could not be created.", className, methodName);
+               return false;
                }
             }
          else 
             {
-            j9tty_printf(PORTLIB, "No memory available to create an optimization plan.\n");
+            if (TR::Options::getVerboseOption(TR_VerboseJaas))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                     "Server failed to compile %s.%s because no memory was available to create an optimization plan.", className, methodName);
             return false; 
             }
          }
@@ -104,7 +124,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
 
 class CompileService : public JAAS::AsyncCompileService
 {
-   public:
+public:
    CompileService(J9JITConfig *jitConfig, J9VMThread *vmThread) : _jitConfig(jitConfig), _vmThread(vmThread) { }
 
    void compile(JAAS::CompileCallData *ccd) override
@@ -112,8 +132,6 @@ class CompileService : public JAAS::AsyncCompileService
       auto req = ccd->getRequest();
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
-      //UDATA sccPtr = ((TR_J9SharedCache *)_jitConfig->javaVM->sharedCache())->getCacheStartAddress();
-      //UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->sharedClassCache;
       J9ROMClass *romClass = (J9ROMClass*)(sccPtr + req->classoffset());
       J9ROMMethod *romMethod = (J9ROMMethod*)(sccPtr + req->methodoffset());
       bool result = doAOTCompile(_jitConfig, _vmThread, romClass, romMethod);
@@ -122,7 +140,7 @@ class CompileService : public JAAS::AsyncCompileService
       ccd->finish(reply, JAAS::Status::OK); 
       }
 
-   private:
+private:
    J9JITConfig *_jitConfig;
    J9VMThread *_vmThread;
 };

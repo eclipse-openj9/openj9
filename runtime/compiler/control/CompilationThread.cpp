@@ -5603,7 +5603,6 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       // thread has been stopped or suspended).
       //
       startPC = entry->_newStartPC;
-      printf("startPC after compilation %p\n", startPC);
       // For HCR should we return 0 or oldStartPC?
       if (startPC && startPC != oldStartPC)
          debugPrint("\tcompile request succeeded", entry->getMethodDetails(), vmThread);
@@ -8123,18 +8122,17 @@ TR::CompilationInfoPerThreadBase::compile(
          if (TR::Options::sharedClassCache() && 
             _compInfo.reloRuntime()->isRomClassForMethodInSharedCache(method, _jitConfig->javaVM)) // if ROM method exists in SCC
             {
-            if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+            if (TR::Options::getVerboseOption(TR_VerboseJaas))
                {
                TR_VerboseLog::writeLineLocked(
-                  TR_Vlog_DISPATCH,
-                  "Sending AOT Compilation Request to Server for Method %s @ %s",
+                  TR_Vlog_JAAS,
+                  "Client sending compilation request to server for method %s @ %s",
                   compiler->signature(),
                   compiler->getHotnessName()
                   );
                }
             J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
             J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-            j9tty_printf(PORTLIB, "JaaS: Client sending request for method %s.\n", compiler->signature());
             UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
             JAAS::CompilationClient client;
             JAAS::Status status = client.requestCompilation(((UDATA)romClass) - sccPtr, ((UDATA)romMethod) - sccPtr);
@@ -8146,16 +8144,26 @@ TR::CompilationInfoPerThreadBase::compile(
                //TODO we should check flags here, similar to elsewhere
 
                performAOTLoad(vmThread, compiler, compilee, &vm, metaData, method);
-               j9tty_printf(PORTLIB, "JaaS: Client sucessfully loaded method %s.\n", compiler->signature());
+               if (TR::Options::getVerboseOption(TR_VerboseJaas))
+                  {
+                  TR_VerboseLog::writeLineLocked(
+                     TR_Vlog_JAAS,
+                     "Client sucessfully loaded method %s @ %s from SCC following compilation request.",
+                     compiler->signature(),
+                     compiler->getHotnessName()
+                     );
+                  }
                }
             else
                {
-               j9tty_printf(PORTLIB, "Error: Compilation Failed for Method %s. Reason: %d %s", compiler->signature(), status.error_code(), status.error_message());
+               j9tty_printf(PORTLIB, "Error: Compilation Failed for Method %s @ %s. Reason: %d %s", compiler->signature(), status.error_code(), status.error_message().c_str());
+               // TODO recover gracefully
                }
             }
          else
             {
             j9tty_printf(PORTLIB, "Error: Rom class not in SCC - cannot send compilation request for method %s", compiler->signature());
+            // TODO recover gracefully
             }
          }
 
