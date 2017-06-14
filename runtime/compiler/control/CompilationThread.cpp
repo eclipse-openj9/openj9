@@ -8156,14 +8156,12 @@ TR::CompilationInfoPerThreadBase::compile(
                }
             else
                {
-               j9tty_printf(PORTLIB, "Error: Compilation Failed for Method %s @ %s. Reason: %d %s", compiler->signature(), status.error_code(), status.error_message().c_str());
-               // TODO recover gracefully
+               compiler->failCompilation<TR::CompilationException>("JaaS compilation failed");
                }
             }
          else
             {
-            j9tty_printf(PORTLIB, "Error: Rom class not in SCC - cannot send compilation request for method %s", compiler->signature());
-            // TODO recover gracefully
+            compiler->failCompilation<TR::CompilationException>("ROMClass not in SCC; cannot send JaaS request.");
             }
          }
 
