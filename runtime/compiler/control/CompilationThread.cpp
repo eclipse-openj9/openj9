@@ -8119,6 +8119,9 @@ TR::CompilationInfoPerThreadBase::compile(
          }
       else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE) // Jaas Client Mode
          {
+         if (_methodBeingCompiled->isJNINative())
+            compiler->failCompilation<TR::CompilationException>("JaaS cannot handle native methods");
+
          if (TR::Options::sharedClassCache() && 
             _compInfo.reloRuntime()->isRomClassForMethodInSharedCache(method, _jitConfig->javaVM)) // if ROM method exists in SCC
             {
