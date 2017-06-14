@@ -72,8 +72,8 @@ class AsyncServer
 public:
    ~AsyncServer()
       {
-      _cq->Shutdown();
       _server->Shutdown();
+      _cq->Shutdown();
       }
 
    AsyncServer()
@@ -99,11 +99,17 @@ private:
       bool ok;
       new CompileCallData(_service, _cq.get());
       // no exit logic currently
-      while (true)
+      while (_cq->Next(&tag, &ok))
          {
-         if (!_cq->Next(&tag, &ok) && !ok)
-            break;
-         static_cast<CompileCallData *>(tag)->proceed();
+         auto ccd = static_cast<CompileCallData *>(tag);
+         if (!ok)
+            {
+            delete ccd;
+            }
+         else
+            {
+            ccd->proceed();
+            }
          }
       }
 
