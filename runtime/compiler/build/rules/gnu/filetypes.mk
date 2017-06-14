@@ -39,6 +39,10 @@ $(PROTO_GEN_DIR)/%.grpc.pb.cc: $(PROTO_DIR)/%.proto $(PROTO_GEN_DIR)/%.pb.cc
 $(PROTO_GEN_DIR)/%.pb.cpp: $(PROTO_GEN_DIR)/%.pb.cc
 	mv $< $@
 
+# Cleanup generated .pb.{h,cpp} files directory
+jit_cleandeps::
+	rm -rf $(PROTO_GEN_DIR)
+
 #
 # Compile .c file into .o file
 #
