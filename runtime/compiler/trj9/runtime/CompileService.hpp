@@ -49,6 +49,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       if (TR::Options::getVerboseOption(TR_VerboseJaas))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                "ROMClass for %s is not in SCC so we cannot compile method %s. Aborting compilation", className, methodName);
+      releaseVMAccess(vmThread);
       return false;
       }
    else 
@@ -58,6 +59,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                   "Method %s.%s already exists in SCC, aborting compilation.", className, methodName);
+         releaseVMAccess(vmThread);
          return true;
          }
       else // do AOT compilation
@@ -93,6 +95,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                   if (TR::Options::getVerboseOption(TR_VerboseJaas))
                      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                            "Server sucessfully compiled %s.%s", className, methodName);
+                  releaseVMAccess(vmThread);
                   return true;
                   } 
                else
@@ -100,6 +103,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                   if (TR::Options::getVerboseOption(TR_VerboseJaas))
                      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                            "Server failed to compile %s.%s", className, methodName);
+                  releaseVMAccess(vmThread);
                   return false;
                   }
                }        
@@ -108,6 +112,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                if (TR::Options::getVerboseOption(TR_VerboseJaas))
                   TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                         "Server failed to compile %s.%s because a new plan could not be created.", className, methodName);
+               releaseVMAccess(vmThread);
                return false;
                }
             }
@@ -116,6 +121,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             if (TR::Options::getVerboseOption(TR_VerboseJaas))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                      "Server failed to compile %s.%s because no memory was available to create an optimization plan.", className, methodName);
+            releaseVMAccess(vmThread);
             return false; 
             }
          }
