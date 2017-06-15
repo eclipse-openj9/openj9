@@ -146,9 +146,9 @@ class CompileService : public JAAS::AsyncCompileService
 public:
    CompileService(J9JITConfig *jitConfig, J9VMThread *vmThread) : _jitConfig(jitConfig), _vmThread(vmThread) { }
 
-   void compile(JAAS::CompileCallData *ccd) override
+   void compile(JAAS::CompileRPCInfo *rpc) override
       {
-      auto req = ccd->getRequest();
+      auto req = rpc->getRequest();
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
       J9ROMClass *romClass = (J9ROMClass*)(sccPtr + req->classoffset());
@@ -156,7 +156,7 @@ public:
       bool result = doAOTCompile(_jitConfig, _vmThread, romClass, romMethod);
       JAAS::CompileSCCReply reply;
       reply.set_success(result);
-      ccd->finish(reply, JAAS::Status::OK); 
+      rpc->finish(reply, JAAS::Status::OK);
       }
 
 private:

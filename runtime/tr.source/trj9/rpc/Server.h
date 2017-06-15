@@ -6,14 +6,14 @@
 
 namespace JAAS
 {
-class CompileCallData;
+class CompileRPCInfo;
 
 class AsyncCompileService
    {
    public:
 
    // Inherited class MUST call callData.finish to respond and cleanup
-   virtual void compile(CompileCallData *callData) = 0;
+   virtual void compile(CompileRPCInfo *callData) = 0;
 
    void requestCompile(ServerContext *ctx, CompileSCCRequest *req, CompilationResponder *res, grpc::ServerCompletionQueue *cq, void *tag)
       {
@@ -25,10 +25,10 @@ private:
    CompileSCCService::AsyncService _service;
    };
 
-class CompileCallData
+class CompileRPCInfo
    {
 public:
-   CompileCallData(AsyncCompileService *service, grpc::ServerCompletionQueue *cq)
+   CompileRPCInfo(AsyncCompileService *service, grpc::ServerCompletionQueue *cq)
       : _done(false), _service(service), _cq(cq), _writer(&_ctx)
       {
       _service->requestCompile(&_ctx, &_req, &_writer, _cq, this);
@@ -44,7 +44,7 @@ public:
       {
       if (!_done)
          {
-         new CompileCallData(_service, _cq);
+         new CompileRPCInfo(_service, _cq);
          _service->compile(this);
          return;
          }
@@ -97,18 +97,18 @@ private:
       {
       void *tag;
       bool ok;
-      new CompileCallData(_service, _cq.get());
+      new CompileRPCInfo(_service, _cq.get());
       // no exit logic currently
       while (_cq->Next(&tag, &ok))
          {
-         auto ccd = static_cast<CompileCallData *>(tag);
+         auto rpc = static_cast<CompileRPCInfo *>(tag);
          if (!ok)
             {
-            delete ccd;
+            delete rpc;
             }
          else
             {
-            ccd->proceed();
+            rpc->proceed();
             }
          }
       }
