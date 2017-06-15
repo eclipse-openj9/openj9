@@ -145,7 +145,7 @@ class CompilationInfoPerThreadBase
    void *compile(J9VMThread *context, TR_MethodToBeCompiled *entry, J9::J9SegmentProvider &scratchSegmentProvider);
    TR_MethodMetaData *compile(J9VMThread *context, TR::Compilation *,
                  TR_ResolvedMethod *compilee, TR_J9VMBase &, TR_OptimizationPlan*, TR::SegmentAllocator const &scratchSegmentProvider);
-   void performAOTLoad(J9VMThread *context, TR::Compilation *, TR_ResolvedMethod *compilee, TR_J9VMBase *vm, TR_MethodMetaData *metaData, J9Method *method);
+   TR_MethodMetaData *performAOTLoad(J9VMThread *context, TR::Compilation *, TR_ResolvedMethod *compilee, TR_J9VMBase *vm, J9Method *method);
 
    void preCompilationTasks(J9VMThread * vmThread,
                             J9JavaVM *javaVM,

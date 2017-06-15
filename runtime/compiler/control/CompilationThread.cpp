@@ -7744,12 +7744,12 @@ foundJ9SharedDataForMethod(TR_OpaqueMethodBlock *method, TR::Compilation *comp, 
    }
 
 // Helper function to perform AOT Load process
-void TR::CompilationInfoPerThreadBase::performAOTLoad(
+TR_MethodMetaData *
+TR::CompilationInfoPerThreadBase::performAOTLoad(
    J9VMThread * vmThread,
    TR::Compilation * compiler,
    TR_ResolvedMethod * compilee,
    TR_J9VMBase *vm,
-   TR_MethodMetaData * metaData,
    J9Method * method
    )
    {
@@ -7769,7 +7769,7 @@ void TR::CompilationInfoPerThreadBase::performAOTLoad(
          compiler->getHotnessName()
          );
       }
-   metaData = installAotCachedMethod(
+   TR_MethodMetaData *metaData = installAotCachedMethod(
       vmThread,
       _methodBeingCompiled->_aotCodeToBeRelocated,
       method,
@@ -7830,6 +7830,7 @@ void TR::CompilationInfoPerThreadBase::performAOTLoad(
             }
          }
       }
+   return metaData;
    }
 
 
@@ -8114,7 +8115,7 @@ TR::CompilationInfoPerThreadBase::compile(
             }
          else
             {
-            performAOTLoad(vmThread, compiler, compilee, &vm, metaData, method);   
+            metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);   
             }
          }
       else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE) // Jaas Client Mode
@@ -8146,15 +8147,27 @@ TR::CompilationInfoPerThreadBase::compile(
                _methodBeingCompiled->setAotCodeToBeRelocated(compiledMethod);
                //TODO we should check flags here, similar to elsewhere
 
-               performAOTLoad(vmThread, compiler, compilee, &vm, metaData, method);
+               metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
                if (TR::Options::getVerboseOption(TR_VerboseJaas))
-                  {
-                  TR_VerboseLog::writeLineLocked(
-                     TR_Vlog_JAAS,
-                     "Client sucessfully loaded method %s @ %s from SCC following compilation request.",
-                     compiler->signature(),
-                     compiler->getHotnessName()
-                     );
+                  { 
+                  if (metaData)
+                     {
+                     TR_VerboseLog::writeLineLocked(
+                        TR_Vlog_JAAS,
+                        "Client successfully loaded method %s @ %s from SCC following compilation request.",
+                        compiler->signature(),
+                        compiler->getHotnessName()
+                        );
+                     }
+                  else
+                     {
+                     TR_VerboseLog::writeLineLocked(
+                        TR_Vlog_JAAS,
+                        "Client failed to load method %s @ %s from SCC following compilation request.",
+                        compiler->signature(),
+                        compiler->getHotnessName()
+                        );
+                     }
                   }
                }
             else
