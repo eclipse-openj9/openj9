@@ -40,6 +40,11 @@ public:
       _writer.Finish(reply, status, this);
       }
 
+   void finish(const CompileSCCReply &reply)
+      {
+      finish(reply, Status::OK);
+      }
+
    void proceed()
       {
       if (!_done)

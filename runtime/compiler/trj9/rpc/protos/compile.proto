@@ -11,7 +11,7 @@ message CompileSCCRequest
 
 message CompileSCCReply
    {
-   bool success = 1;
+   uint32 compilation_code = 1;
    }
 
 // Use a simple req-rep for first attempt

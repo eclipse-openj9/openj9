@@ -166,10 +166,11 @@ public:
       UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
       J9ROMClass *romClass = (J9ROMClass*)(sccPtr + req->classoffset());
       J9ROMMethod *romMethod = (J9ROMMethod*)(sccPtr + req->methodoffset());
-      bool result = doAOTCompile(_jitConfig, _vmThread, romClass, romMethod);
+      bool success = doAOTCompile(_jitConfig, _vmThread, romClass, romMethod);
+
       JAAS::CompileSCCReply reply;
-      reply.set_success(result);
-      rpc->finish(reply, JAAS::Status::OK);
+      reply.set_compilation_code( (success) ? compilationOK : compilationFailure );
+      rpc->finish(reply);
       }
 
 private:

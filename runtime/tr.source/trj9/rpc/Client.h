@@ -22,13 +22,18 @@ public:
       _request.set_methodoffset(mOffset);
 
       grpc::ClientContext ctx;
-      _reply.set_success(false);
+      _reply.set_compilation_code(0);
       return _stub->Compile(&ctx, _request, &_reply);
       }
 
    bool wasCompilationSuccessful()
       {
-      return _reply.success();
+      return _reply.compilation_code() == 0;
+      }
+
+   uint32_t getReplyCode()
+      {
+      return _reply.compilation_code();
       }
 
 private:
