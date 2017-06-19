@@ -32,13 +32,16 @@ J9Method *ramMethodFromRomMethod(J9JITConfig* jitConfig, J9VMThread* vmThread, c
    TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
    J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
    J9Class *ramClass = (J9Class*) fe->getSystemClassFromClassName((const char*) className->data, className->length, true);
-   J9Method *ramMethods = ramClass->ramMethods;
-   for (int32_t i = 0; i < romClass->romMethodCount; i++)
+   if (ramClass)
       {
-      J9Method *curMethod = ramMethods + i;
-      J9ROMMethod *curROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(curMethod);
-      if (curROMMethod == romMethod)
-         return curMethod;
+      J9Method *ramMethods = ramClass->ramMethods;
+      for (int32_t i = 0; i < romClass->romMethodCount; i++)
+         {
+         J9Method *curMethod = ramMethods + i;
+         J9ROMMethod *curROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(curMethod);
+         if (curROMMethod == romMethod)
+            return curMethod;
+         }
       }
    return NULL;
    }
@@ -82,60 +85,70 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       else // do AOT compilation
          {
          J9Method *method = ramMethodFromRomMethod(jitConfig, vmThread, romClass, romMethod);
-         TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
-         char sig[1000];
-         fe->printTruncatedSignature(sig, 1000, (TR_OpaqueMethodBlock*)method);
-         bool queued = false;
-         TR_YesNoMaybe async = TR_no;
-         TR_MethodEvent event;
-         event._eventType = TR_MethodEvent::InterpreterCounterTripped;
-         event._j9method = method;
-         event._oldStartPC = 0;
-         event._vmThread = vmThread;
-         event._classNeedingThunk = 0;
-         bool newPlanCreated;
-         IDATA result = 0;
-         TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
-
-         // if the controller decides to compile this method, trigger the compilation
-         if (plan)
+         if (method)
             {
-            TR::IlGeneratorMethodDetails details(method); 
-            result = (IDATA)compInfo->compileMethod(vmThread, details, 0, async, NULL, &queued, plan);
-            
-            if (newPlanCreated)
+            TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
+            char sig[1000];
+            fe->printTruncatedSignature(sig, 1000, (TR_OpaqueMethodBlock*)method);
+            bool queued = false;
+            TR_YesNoMaybe async = TR_no;
+            TR_MethodEvent event;
+            event._eventType = TR_MethodEvent::InterpreterCounterTripped;
+            event._j9method = method;
+            event._oldStartPC = 0;
+            event._vmThread = vmThread;
+            event._classNeedingThunk = 0;
+            bool newPlanCreated;
+            IDATA result = 0;
+            TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
+
+            // if the controller decides to compile this method, trigger the compilation
+            if (plan)
                {
-               if (!queued)
-                  TR_OptimizationPlan::freeOptimizationPlan(plan);
-               if (result)
+               TR::IlGeneratorMethodDetails details(method);
+               result = (IDATA)compInfo->compileMethod(vmThread, details, 0, async, NULL, &queued, plan);
+
+               if (newPlanCreated)
                   {
-                  if (TR::Options::getVerboseOption(TR_VerboseJaas))
-                     TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                  if (!queued)
+                     TR_OptimizationPlan::freeOptimizationPlan(plan);
+                  if (result)
+                     {
+                     if (TR::Options::getVerboseOption(TR_VerboseJaas))
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                            "Server sucessfully compiled %s.%s", className, methodName);
-                  return true;
-                  } 
+                     return true;
+                     }
+                  else
+                     {
+                     if (TR::Options::getVerboseOption(TR_VerboseJaas))
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                           "Server failed to compile %s.%s", className, methodName);
+                     return false;
+                     }
+                  }
                else
                   {
                   if (TR::Options::getVerboseOption(TR_VerboseJaas))
                      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-                           "Server failed to compile %s.%s", className, methodName);
+                        "Server failed to compile %s.%s because a new plan could not be created.", className, methodName);
                   return false;
                   }
-               }        
+               }
             else
                {
                if (TR::Options::getVerboseOption(TR_VerboseJaas))
                   TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-                        "Server failed to compile %s.%s because a new plan could not be created.", className, methodName);
+                     "Server failed to compile %s.%s because no memory was available to create an optimization plan.", className, methodName);
                return false;
                }
             }
-         else 
+         else // !method
             {
             if (TR::Options::getVerboseOption(TR_VerboseJaas))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-                     "Server failed to compile %s.%s because no memory was available to create an optimization plan.", className, methodName);
-            return false; 
+                  "Server couldn't find ramMethod for romMethod %s.%s .", className, methodName);
+            return false;
             }
          }
       }
