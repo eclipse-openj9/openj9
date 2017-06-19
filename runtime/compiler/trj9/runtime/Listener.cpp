@@ -43,6 +43,9 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
    CompileService compileService(jitConfig, listenerThread);
    server.runService(&compileService);
 
+   if (TR::Options::getVerboseOption(TR_VerboseJaas))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Detaching JaasServer listening thread");
+
    vm->internalVMFunctions->DetachCurrentThread((JavaVM *) vm);
    listener->setListenerThread(NULL);
    listener->getListenerMonitor()->enter();
@@ -74,8 +77,8 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
                                                                J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
          { // cannot create the listener thread
          j9tty_printf(PORTLIB, "Error: Unable to create JaaS Listener Thread.\n"); 
-         _listenerMonitor = NULL;
          TR::Monitor::destroy(_listenerMonitor);
+         _listenerMonitor = NULL;
          }
       else // must wait here until the thread gets created; otherwise an early shutdown
          { // does not know whether or not to destroy the thread
@@ -83,7 +86,7 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
          while (!getAttachAttempted())
             _listenerMonitor->wait();
          _listenerMonitor->exit();
-         if (!_listenerOSThread)
+         if (!getListenerThread())
             {
             j9tty_printf(PORTLIB, "Error: JaaS Listener Thread attach failed.\n");
             }
