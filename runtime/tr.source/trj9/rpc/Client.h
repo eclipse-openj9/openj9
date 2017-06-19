@@ -26,11 +26,6 @@ public:
       return _stub->Compile(&ctx, _request, &_reply);
       }
 
-   bool wasCompilationSuccessful()
-      {
-      return _reply.compilation_code() == 0;
-      }
-
    uint32_t getReplyCode()
       {
       return _reply.compilation_code();

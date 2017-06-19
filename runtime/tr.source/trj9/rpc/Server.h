@@ -10,7 +10,7 @@ class CompileRPCInfo;
 
 class AsyncCompileService
    {
-   public:
+public:
 
    // Inherited class MUST call callData.finish to respond and cleanup
    virtual void compile(CompileRPCInfo *callData) = 0;
@@ -29,7 +29,7 @@ class CompileRPCInfo
    {
 public:
    CompileRPCInfo(AsyncCompileService *service, grpc::ServerCompletionQueue *cq)
-      : _done(false), _service(service), _cq(cq), _writer(&_ctx)
+      : _done(false), _service(service), _cq(cq), _writer(&_ctx), _next(nullptr)
       {
       _service->requestCompile(&_ctx, &_req, &_writer, _cq, this);
       }
@@ -45,6 +45,13 @@ public:
       finish(reply, Status::OK);
       }
 
+   void finishWithOnlyCode(const uint32_t &code)
+      {
+      CompileSCCReply rep;
+      rep.set_compilation_code(code);
+      finish(rep);
+      }
+
    void proceed()
       {
       if (!_done)
@@ -54,13 +61,16 @@ public:
          return;
          }
       else
+         {
          delete this;
+         }
       }
 
    CompileSCCRequest *getRequest() { return &_req; }
    ServerContext *getContext() { return &_ctx; }
 
-   private:
+   CompileRPCInfo *_next;
+private:
    bool _done;
    ServerContext _ctx;
    AsyncCompileService *_service;

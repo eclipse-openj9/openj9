@@ -38,6 +38,7 @@
 
 namespace TR { class CompilationInfoPerThreadBase; }
 class TR_OptimizationPlan;
+namespace JAAS { class CompileRPCInfo; }
 namespace TR { class Monitor; }
 struct J9JITConfig;
 struct J9VMThread;
@@ -114,6 +115,7 @@ struct TR_MethodToBeCompiled
    uint8_t                _weight; // Up to 256 levels of weight
    bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
    uint8_t                _jitStateWhenQueued;
+   JAAS::CompileRPCInfo  *_rpcHead = nullptr;
    }; // TR_MethodToBeCompiled
 
 

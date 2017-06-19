@@ -1,9 +1,8 @@
 #ifndef COMPILE_SERVICE_H
 #define COMPILE_SERVICE_H
 
-
+#include "rpc/Server.h"
 #include "j9.h"
-#include "trj9/rpc/Server.h"
 #include "j9nonbuilder.h"
 #include "vmaccess.h"
 #include "infra/Monitor.hpp"  // TR::Monitor
@@ -47,7 +46,7 @@ J9Method *ramMethodFromRomMethod(J9JITConfig* jitConfig, J9VMThread* vmThread, c
    }
 
 bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread, 
-                  J9ROMClass* romClass, const J9ROMMethod* romMethod)
+                  J9ROMClass* romClass, const J9ROMMethod* romMethod, JAAS::CompileRPCInfo *rpc)
    {
    J9UTF8 *methodNameUTF = J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature);
    std::string methodNameStr((const char*)methodNameUTF->data, (size_t)methodNameUTF->length);
@@ -71,6 +70,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       if (TR::Options::getVerboseOption(TR_VerboseJaas))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                "ROMClass for %s is not in SCC so we cannot compile method %s. Aborting compilation", className, methodName);
+      rpc->finishWithOnlyCode(compilationFailure);
       return false;
       }
    else 
@@ -80,6 +80,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                   "Method %s.%s already exists in SCC, aborting compilation.", className, methodName);
+         rpc->finishWithOnlyCode(compilationNotNeeded);
          return true;
          }
       else // do AOT compilation
@@ -91,7 +92,8 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             char sig[1000];
             fe->printTruncatedSignature(sig, 1000, (TR_OpaqueMethodBlock*)method);
             bool queued = false;
-            TR_YesNoMaybe async = TR_no;
+            TR_CompilationErrorCode compErrCode = compilationFailure;
+            TR_YesNoMaybe async = TR_yes;
             TR_MethodEvent event;
             event._eventType = TR_MethodEvent::InterpreterCounterTripped;
             event._j9method = method;
@@ -106,24 +108,28 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             if (plan)
                {
                TR::IlGeneratorMethodDetails details(method);
-               result = (IDATA)compInfo->compileMethod(vmThread, details, 0, async, NULL, &queued, plan);
+               result = (IDATA)compInfo->compileMethod(vmThread, details, 0, async, &compErrCode, &queued, plan, rpc);
 
                if (newPlanCreated)
                   {
                   if (!queued)
                      TR_OptimizationPlan::freeOptimizationPlan(plan);
-                  if (result)
+
+                  // If the responder has been handed over to the compilation thread, the compErrCode should be compilationInProgress
+                  if (compErrCode == compilationInProgress)
                      {
+                     // This should be the only path in which we do not call finish (the compilation thread will do that instead)
                      if (TR::Options::getVerboseOption(TR_VerboseJaas))
                         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-                           "Server sucessfully compiled %s.%s", className, methodName);
+                           "Server queued compilation for %s.%s", className, methodName);
                      return true;
                      }
                   else
                      {
+                     rpc->finishWithOnlyCode(compErrCode);
                      if (TR::Options::getVerboseOption(TR_VerboseJaas))
                         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-                           "Server failed to compile %s.%s", className, methodName);
+                           "Server failed to queue compilation for %s.%s", className, methodName);
                      return false;
                      }
                   }
@@ -132,6 +138,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                   if (TR::Options::getVerboseOption(TR_VerboseJaas))
                      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                         "Server failed to compile %s.%s because a new plan could not be created.", className, methodName);
+                  rpc->finishWithOnlyCode(compilationFailure);
                   return false;
                   }
                }
@@ -140,6 +147,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                if (TR::Options::getVerboseOption(TR_VerboseJaas))
                   TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                      "Server failed to compile %s.%s because no memory was available to create an optimization plan.", className, methodName);
+               rpc->finishWithOnlyCode(compilationFailure);
                return false;
                }
             }
@@ -148,6 +156,7 @@ bool doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             if (TR::Options::getVerboseOption(TR_VerboseJaas))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                   "Server couldn't find ramMethod for romMethod %s.%s .", className, methodName);
+            rpc->finishWithOnlyCode(compilationFailure);
             return false;
             }
          }
@@ -166,11 +175,7 @@ public:
       UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
       J9ROMClass *romClass = (J9ROMClass*)(sccPtr + req->classoffset());
       J9ROMMethod *romMethod = (J9ROMMethod*)(sccPtr + req->methodoffset());
-      bool success = doAOTCompile(_jitConfig, _vmThread, romClass, romMethod);
-
-      JAAS::CompileSCCReply reply;
-      reply.set_compilation_code( (success) ? compilationOK : compilationFailure );
-      rpc->finish(reply);
+      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, rpc);
       }
 
 private:

@@ -35,6 +35,7 @@
 
 // This needs to go first because OMR redefines null and gRPC doesn't like that.
 // TODO maybe we can move the gRPC include into a Client.cpp
+#include "rpc/Server.h"
 #include "rpc/Client.h"
 
 #include "control/CompilationThread.hpp"
@@ -144,6 +145,32 @@ void setThreadAffinity(unsigned _int64 handle, unsigned long mask)
       }
    }
 #endif
+
+// TODO: Maybe make the following two functions members of TR_MethodToBeCompiled?
+// Reply to all compile requests for a given method
+static void replyMethodRPCs(TR_MethodToBeCompiled *method, const JAAS::CompileSCCReply &reply)
+   {
+   // We need a prev pointer to call finish so that the cur pointer can safely grab next before finish is called.
+   // After finish() is called, the RPCInfo can be cleared in the Service Thread at any time.
+   JAAS::CompileRPCInfo *prev = nullptr;
+   JAAS::CompileRPCInfo *cur = method->_rpcHead;
+   method->_rpcHead = nullptr; // TODO: what if rpcHead is changed in a seperate thread in between this and the previous line
+
+   while (cur)
+      {
+      prev = cur;
+      cur = prev->_next;
+      prev->finish(reply, JAAS::Status::OK);
+      }
+   }
+
+// Reply to all compile requests for a given method, sending only a TR_CompilationErrorCode.
+static void replyMethodRPCs(TR_MethodToBeCompiled *method, const TR_CompilationErrorCode &code)
+   {
+   JAAS::CompileSCCReply reply;
+   reply.set_compilation_code(static_cast<uint32_t>(code));
+   replyMethodRPCs(method, reply);
+   }
 
 void
 TR::CompilationInfoPerThreadBase::setCompilation(TR::Compilation *compiler)
@@ -3939,11 +3966,21 @@ TR::CompilationInfoPerThread::shouldPerformCompilation(TR_MethodToBeCompiled &en
    return true;
    }
 
+static void addRPCInfoToMethod(TR_MethodToBeCompiled *method, JAAS::CompileRPCInfo *rpc)
+   {
+   if (rpc)
+      {
+      if (method->_rpcHead)
+         rpc->_next = method->_rpcHead;
+      method->_rpcHead = rpc;
+      }
+   }
+
 TR_MethodToBeCompiled *
 TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & details, void *pc,
                                           CompilationPriority priority, bool async,
                                           TR_OptimizationPlan *optimizationPlan, bool *queued,
-                                          TR_YesNoMaybe methodIsInSharedCache)
+                                          TR_YesNoMaybe methodIsInSharedCache, void *extra)
    {
    // Make sure the entry is consistent
    //
@@ -3955,6 +3992,8 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          TR_ASSERT(details.getMethod() == (J9Method *)methodInfo->getMethodInfo(), "assertion failure");
       }
 #endif
+
+   JAAS::CompileRPCInfo *rpc = static_cast<JAAS::CompileRPCInfo *>(extra);
 
    // Add this method to the queue of methods waiting to be compiled.
    TR_MethodToBeCompiled *cur = NULL, *prev = NULL;
@@ -3972,18 +4011,22 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
 
-      if (curCompThreadInfoPT->getMethodBeingCompiled())
+      TR_MethodToBeCompiled *compMethod = curCompThreadInfoPT->getMethodBeingCompiled();
+      if (compMethod)
          {
-         queueWeight += curCompThreadInfoPT->getMethodBeingCompiled()->_weight; // QW
-         if (curCompThreadInfoPT->getMethodBeingCompiled()->getMethodDetails().sameAs(details, fe))
+         queueWeight += compMethod->_weight; // QW
+         if (compMethod->getMethodDetails().sameAs(details, fe))
             {
-            if (!curCompThreadInfoPT->getMethodBeingCompiled()->_unloadedMethod) // Redefinition; see cmvc 192606 and RTC 36898
+            if (!compMethod->_unloadedMethod) // Redefinition; see cmvc 192606 and RTC 36898
                {
+               if (rpc)
+                  addRPCInfoToMethod(compMethod, rpc);
+
                // If the priority has increased, use the new priority.
                //
-               if (curCompThreadInfoPT->getMethodBeingCompiled()->_priority < priority)
-                  curCompThreadInfoPT->getMethodBeingCompiled()->_priority = priority;
-               return curCompThreadInfoPT->getMethodBeingCompiled();
+               if (compMethod->_priority < priority)
+                  compMethod->_priority = priority;
+               return compMethod;
                }
             }
          }
@@ -4004,6 +4047,9 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
 
    if (cur)
       {
+      if (rpc)
+         addRPCInfoToMethod(cur, rpc);
+
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
          TR_VerboseLog::writeLineLocked(TR_Vlog_CR,"%p     Already present in compilation queue. OldPriority=%x NewPriority=%x entry=%p",
             _jitConfig->javaVM->internalVMFunctions->currentVMThread(_jitConfig->javaVM), cur->_priority, priority, cur);
@@ -4066,6 +4112,11 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
 
       cur->initialize(details, pc, priority, optimizationPlan);
       cur->_jitStateWhenQueued = getPersistentInfo()->getJitState();
+
+      // add rpc info, if available and compiling async, to new method to be compiled
+      // if no rpc info is available, set list head to NULL
+      if (rpc)
+         addRPCInfoToMethod(cur, rpc);
 
       bool isJNINativeMethodRequest = false;
       if (pc)
@@ -4854,10 +4905,13 @@ static void deleteMethodHandleRef(J9::MethodHandleThunkDetails & details, J9VMTh
 void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details, void *oldStartPC,
                                         TR_YesNoMaybe requireAsyncCompile,
                                         TR_CompilationErrorCode *compErrCode,
-                                        bool *queued, TR_OptimizationPlan * optimizationPlan)
+                                        bool *queued, TR_OptimizationPlan * optimizationPlan, void *extra)
    {
-   TR_J9VMBase * fe = TR_J9VMBase::get(_jitConfig, vmThread);;
+   TR_J9VMBase * fe = TR_J9VMBase::get(_jitConfig, vmThread);
 
+   TR_ASSERT(!(extra && requireAsyncCompile != TR_yes), "If RPC info is passed, an async compile should be requested");
+   TR_ASSERT(!(extra && (details.isNewInstanceThunk() || details.isMethodHandleThunk() || details.isMethodInProgress())),
+             "In server mode, we should not be receiving requests of detail NewInstanceThunk, MethodHandleThunk and MethodInProgress.");
    TR_ASSERT(!fe->isAOT_DEPRECATED_DO_NOT_USE(), "We need a non-AOT vm here.");
 
    J9Method *method = details.getMethod();
@@ -4957,7 +5011,6 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
 
          if (methodHandleThunkDetails)
             deleteMethodHandleRef(*methodHandleThunkDetails, vmThread, fe);
-
          return NULL;
          }
 
@@ -5046,7 +5099,7 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
       {
       // AOT goes to application thread?
       if (useSeparateCompilationThread() && !fe->isAOT_DEPRECATED_DO_NOT_USE())
-         startPC = compileOnSeparateThread(vmThread, details, oldStartPC, requireAsyncCompile, compErrCode, queued, optimizationPlan);
+         startPC = compileOnSeparateThread(vmThread, details, oldStartPC, requireAsyncCompile, compErrCode, queued, optimizationPlan, extra);
       else
          startPC = compileOnApplicationThread(vmThread, details, oldStartPC, compErrCode, optimizationPlan);
       }
@@ -5091,7 +5144,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
                                                   void *oldStartPC, TR_YesNoMaybe requireAsyncCompile,
                                                   TR_CompilationErrorCode *compErrCode,
                                                   bool *queued,
-                                                  TR_OptimizationPlan * optimizationPlan)
+                                                  TR_OptimizationPlan * optimizationPlan, void *extra)
    {
    void *startPC = NULL;
 
@@ -5142,7 +5195,6 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          )
       )
       {
-      TR_ASSERT(0, "Unexpected path");
       bool shouldReturn = true;
 
       // Fail the compilation, unless this is on the queue (maybe even in progress)
@@ -5446,8 +5498,8 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
 
 
    TR_MethodToBeCompiled *entry =
-      addMethodToBeCompiled(details, oldStartPC, compPriority,
-                            async, optimizationPlan, queued, methodIsInSharedCache);
+      addMethodToBeCompiled(details, oldStartPC, compPriority, async,
+                            optimizationPlan, queued, methodIsInSharedCache, extra);
 
    if (entry == NULL)
       {
@@ -8142,7 +8194,7 @@ TR::CompilationInfoPerThreadBase::compile(
             UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
             JAAS::CompilationClient client;
             JAAS::Status status = client.requestCompilation(((UDATA)romClass) - sccPtr, ((UDATA)romMethod) - sccPtr);
-            if (status.ok() && client.wasCompilationSuccessful())
+            if (status.ok() && client.getReplyCode() == compilationOK)
                {
                UDATA flags = 0;
                const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
@@ -9023,6 +9075,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
    TR_DataCache *dataCache = NULL;
 
+   // In JAAS Server mode, we currently do not need to reply when details include NewInstanceThunk/MethodInProgress/MethodHandleThunk
+   // as the server will not see these types of requests.
    if (details.isNewInstanceThunk())
       {
       J9::NewInstanceThunkDetails &mhDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
@@ -9497,6 +9551,17 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
          TR::Recompilation::methodHasBeenRecompiled(oldStartPC, startPC, trvm);
          }
+
+      if (entry && entry->_rpcHead)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                  "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
+            }
+         entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
+         replyMethodRPCs(entry, compilationOK);
+         }
       }
    else if (!oldStartPC)
       {
@@ -9504,6 +9569,16 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       //
       if (vmThread)
          jitMethodFailedTranslation(vmThread, method);
+
+      if (entry && entry->_rpcHead)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                  "Server has failed to compile %s", entry->_compInfoPT->getCompilation()->signature());
+            }
+         replyMethodRPCs(entry, compilationFailure);
+         }
       }
    else
       {
@@ -9513,6 +9588,15 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       //
       TR::Recompilation::methodCannotBeRecompiled(oldStartPC, trvm);
       startPC = oldStartPC;
+
+      if (TR::Options::getVerboseOption(TR_VerboseJaas))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+               "Server has failed to recompile %s", entry->_compInfoPT->getCompilation()->signature());
+         }
+
+      if (entry)
+         replyMethodRPCs(entry, compilationFailure); // maybe send compilationNotNeeded here instead?
       }
 
    if ((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && comp && (dataCache = (TR_DataCache *)comp->getReservedDataCache()))
