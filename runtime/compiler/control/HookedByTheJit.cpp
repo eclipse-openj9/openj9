@@ -7042,6 +7042,9 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       {
       TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener; 
       listener->startListenerThread(javaVM);
+
+      if (TR::Options::getVerboseOption(TR_VerboseJaas))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Started JaasServer listener thread: %p ", listener->getListenerThread());
       }
  
    if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_START, jitHookLocalGCStart, OMR_GET_CALLSITE(), NULL) ||

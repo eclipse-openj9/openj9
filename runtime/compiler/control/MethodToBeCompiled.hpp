@@ -59,7 +59,7 @@ struct TR_MethodToBeCompiled
    void acquireSlotMonitor(J9VMThread *vmThread);
    void releaseSlotMonitor(J9VMThread *vmThread);
    void setAotCodeToBeRelocated(const void *m);
-
+   bool isAotLoad() const { return _doAotLoad; }
 
    TR_MethodToBeCompiled *_next;
    TR::IlGeneratorMethodDetails _methodDetailsStorage;
@@ -75,6 +75,7 @@ struct TR_MethodToBeCompiled
 
    uint16_t /*CompilationPriority*/_priority;
    int16_t                _numThreadsWaiting;
+   int16_t                _index;
    int8_t                 _compilationAttemptsLeft;
    int8_t                 _compErrCode;
    int8_t                 _methodIsInSharedCache;/*TR_YesNoMaybe*/
@@ -84,7 +85,8 @@ struct TR_MethodToBeCompiled
    bool                   _reqFromJProfilingQueue;
    bool                   _unloadedMethod; // flag set by the GC thread during unloading
                                            // need to have vmaccess for accessing this flag
-   bool                   _useAotCompilation;// used for AOT shared cache
+   bool                   _doAotLoad;// used for AOT shared cache
+   bool                   _useAotCompilation;// used for debugging purposes
    bool                   _doNotUseAotCodeFromSharedCache;
    bool                   _tryCompilingAgain;
 
@@ -108,7 +110,6 @@ struct TR_MethodToBeCompiled
                                        // The flag in methodInfo is not enough because it may indicate true when
                                        // the entry is queued, but change afterwards if method receives samples
                                        // to be upgraded to hot or scorching
-   int16_t                _index;
    uint8_t                _freeTag; // temporary to catch a nasty bug
    uint8_t                _weight; // Up to 256 levels of weight
    bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;

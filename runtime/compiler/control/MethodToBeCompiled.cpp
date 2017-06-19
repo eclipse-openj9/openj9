@@ -60,6 +60,7 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _compErrCode = compilationOK;
    _compilationAttemptsLeft = MAX_COMPILE_ATTEMPTS;
    _unloadedMethod = false;
+   _doAotLoad = false;
    _useAotCompilation = false;
    _doNotUseAotCodeFromSharedCache = false;
    _tryCompilingAgain = false;

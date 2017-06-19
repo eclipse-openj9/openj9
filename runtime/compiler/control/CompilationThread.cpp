@@ -1965,8 +1965,6 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                      tryCompilingAgain = true;
                      // If we were doing an AOT warm compilation, we will refrain from doing an AOT-hot
                      // because we do not allow AOT compilations as retrials
-                     // (see entry->_useAotCompilation = false; at the end of this method)
-                     // This is what we probably want
                      }
                   }
                break;
@@ -1996,9 +1994,9 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
          }
       }//  if (entry->_compErrCode != compilationOK)
 
-   // don't carry the decision to generate AOT code to the next compilation
-   // because it may no longer be the right thing to do at that point
-   if (tryCompilingAgain)
+    // don't carry the decision to generate AOT code to the next compilation
+    // because it may no longer be the right thing to do at that point
+    if (tryCompilingAgain)
       entry->_useAotCompilation = false;
 
    return tryCompilingAgain;
@@ -2716,14 +2714,14 @@ void TR::CompilationInfo::stopCompilationThreads()
    if (printCompMem)
       {
       int32_t codeCacheAllocated = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() * _jitConfig->codeCacheKB;
-      fprintf(stderr, "Allocated memory for code cache = %d KB\tLimit = %d KB\n",
-         codeCacheAllocated, _jitConfig->codeCacheTotalKB);
+      fprintf(stderr, "Allocated memory for code cache = %d KB\tLimit = %u KB\n",
+         codeCacheAllocated, (uint32_t)_jitConfig->codeCacheTotalKB);
 
       TR::CodeCacheManager::instance()->printMccStats();
 
       fprintf(stderr, "Allocated memory for data cache = %d KB\tLimit = %d KB\n",
          TR_DataCacheManager::getManager()->getTotalSegmentMemoryAllocated()/1024,
-          _jitConfig->dataCacheTotalKB);
+          (uint32_t)_jitConfig->dataCacheTotalKB);
 
       if (getJProfilerThread())
          fprintf(stderr, "Allocated memory for profile info = %d KB\n", getJProfilerThread()->getProfileInfoFootprint()/1024);
@@ -5879,6 +5877,11 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
    setMetadata(metaData);
    returnCode = reloRuntime()->returnCode();
 
+   if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
+         "prepareRelocateAOTCodeAndData results: j9method=%p metaData=%p returnCode=%d method=%s", 
+         method, metaData, returnCode, compiler->signature());
+
    if (_compInfo.getPersistentInfo()->isRuntimeInstrumentationEnabled())
       {
       reloRuntime()->resetIsLoading();
@@ -6181,6 +6184,52 @@ TR::CompilationInfoPerThreadBase::generatePerfToolEntry()
 #endif
    }
 
+const void*
+findAotBodyInSCC(J9VMThread *vmThread, J9Method *method)
+   {
+#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+   UDATA flags = 0;
+   const void *aotCachedMethod = vmThread->javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method), &flags);
+   if (!(flags & J9SHR_AOT_METHOD_FLAG_INVALIDATED))
+      return aotCachedMethod; // possibly NULL
+   else
+#endif
+      return NULL;
+   }
+
+bool isMethodIneligibleForAot(J9Method *method)
+   {
+   J9ROMClass *declaringClazz = J9_CLASS_FROM_METHOD((J9Method *)method)->romClass;
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(declaringClazz);
+
+   // Don't AOT-compile anything in j/l/i for now
+   if (strncmp(utf8Data(className), "java/lang/invoke/", sizeof("java/lang/invoke/") - 1) == 0)
+      return true;
+    
+   if (J9UTF8_LENGTH(className) == 36 &&
+      0 == memcmp(utf8Data(className), "com/ibm/rmi/io/FastPathForCollocated", 36))
+      {
+      J9UTF8 *utf8 = J9ROMMETHOD_GET_NAME(declaringClazz, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+      if (J9UTF8_LENGTH(utf8) == 21 &&
+         0 == memcmp(J9UTF8_DATA(utf8), "isVMDeepCopySupported", 21))
+         return true;
+      }
+   // don't AOT compile BigD methods, just JIT compile them
+   if ((!TR::Options::getCmdLineOptions()->getOption(TR_DisableDFP) && !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableDFP))
+      &&
+      (TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
+#ifdef TR_TARGET_S390
+       || TR::Compiler->target.cpu.getS390SupportsDFP()
+#endif
+      ) 
+      && TR_J9MethodBase::isBigDecimalMethod(method)
+      )
+      return true;
+   return false;
+   }
+
+
+
 /**
  * @brief TR::CompilationInfoPerThreadBase::preCompilationTasks
  * @param vmThread Pointer to the current J9VMThread (input)
@@ -6210,70 +6259,61 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    {
    // Check to see if we find an AOT version in the shared cache
    //
-#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    entry->setAotCodeToBeRelocated(NULL);  // make sure decision to load AOT comes from below and not previous compilation/relocation pass
+   entry->_doAotLoad = false;
 
-   if (entry->_methodIsInSharedCache == TR_yes &&
-       !TR::CompilationInfo::isCompiled(method) &&
+   if (entry->_methodIsInSharedCache == TR_yes &&    // possible AOT load
+       !TR::CompilationInfo::isCompiled(method) &&   // first time compilation
        !entry->_doNotUseAotCodeFromSharedCache &&
        !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) &&
        !(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
       {
-/*      if ((getPersistentInfo()->isClassLoadingPhase() || TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceLoadAOT))) // use relocated code only during class load phase */
+      // Determine whether the compilation filters allows me to relocate
+      //
+      TR_Debug *debug = TR::Options::getDebug();
+      bool canRelocateMethod = true;
+      if (debug)
          {
-         TR_Debug *debug = TR::Options::getDebug();
-         bool canRelocateMethod = false;
-         if (debug)
-            {
-            setCompilationShouldBeInterrupted(0); // zero the flag because createResolvedMethod calls
-                                                  // acquire/releaseVMaccessIfNeeded and may see the flag set by previous compilation
+         setCompilationShouldBeInterrupted(0); // zero the flag because createResolvedMethod calls
+                                               // acquire/releaseVMaccessIfNeeded and may see the flag set by previous compilation
 
-            TR_J9VMBase *vm = TR_J9VMBase::get(_jitConfig, vmThread);
-            if (NULL == vm)
-               {
-               throw std::bad_alloc();
-               }
-
-            TR_FilterBST *filter = NULL;
-            TR_ResolvedMethod *resolvedMethod = vm->createResolvedMethod(&trMemory, (TR_OpaqueMethodBlock *)method);
-            if (debug->methodCanBeRelocated(&trMemory, resolvedMethod, filter) &&
-                debug->methodCanBeCompiled(&trMemory, resolvedMethod, filter))
-               canRelocateMethod = true;
-            }
-         else
+         TR_J9VMBase *vm = TR_J9VMBase::get(_jitConfig, vmThread);
+         if (NULL == vm)
             {
-            canRelocateMethod = true;
+            throw std::bad_alloc();
             }
 
-         if (canRelocateMethod && !entry->_oldStartPC)
+         TR_FilterBST *filter = NULL;
+         TR_ResolvedMethod *resolvedMethod = vm->createResolvedMethod(&trMemory, (TR_OpaqueMethodBlock *)method);
+         if (!debug->methodCanBeRelocated(&trMemory, resolvedMethod, filter) ||
+             !debug->methodCanBeCompiled(&trMemory, resolvedMethod, filter))
+            canRelocateMethod = false;
+         }
+  
+      if (canRelocateMethod && !entry->_oldStartPC)
+         {
+         // Find the AOT body in the SCC
+         //
+         *aotCachedMethod = findAotBodyInSCC(vmThread, method);
+         if (*aotCachedMethod)
             {
-            UDATA flags = 0;
-            *aotCachedMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method), &flags);
-            if (!(flags & J9SHR_AOT_METHOD_FLAG_INVALIDATED))
-               {
-               entry->setAotCodeToBeRelocated(*aotCachedMethod);
-               reloRuntime->setReloStartTime(getTimeWhenCompStarted());
-
-               }
-            else
-               {
-               canRelocateMethod = false;
-               *aotCachedMethod = NULL;
-               }
+            entry->_doAotLoad = true;
+            entry->setAotCodeToBeRelocated(*aotCachedMethod);
+            reloRuntime->setReloStartTime(getTimeWhenCompStarted());
             }
-         else if (entry->_oldStartPC)
+         }
+      else if (entry->_oldStartPC)
+         {
+         J9JITExceptionTable *oldMetaData = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA)entry->_oldStartPC);
+         if (oldMetaData)
             {
-            J9JITExceptionTable *oldMetaData = jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA)entry->_oldStartPC);
-            if (oldMetaData)
-               {
-               TR_PersistentJittedBodyInfo *oldBodyInfo = (TR_PersistentJittedBodyInfo *)oldMetaData->bodyInfo;
-               TR_ASSERT(oldBodyInfo && oldBodyInfo->getIsInvalidated(), "entry is interpreted and has a non-NULL _oldStartPC but the old body has not been invalidated.");
-               }
+            TR_PersistentJittedBodyInfo *oldBodyInfo = (TR_PersistentJittedBodyInfo *)oldMetaData->bodyInfo;
+            TR_ASSERT(oldBodyInfo && oldBodyInfo->getIsInvalidated(), "entry is interpreted and has a non-NULL _oldStartPC but the old body has not been invalidated.");
             }
          }
       }
 
-   if (!entry->_aotCodeToBeRelocated) // We don't/can't relocate this method
+   if (!entry->isAotLoad()) // We don't/can't relocate this method
       {
       if (TR::Options::getCmdLineOptions()->getOption(TR_ActivateCompThreadWhenHighPriReqIsBlocked))
          {
@@ -6295,7 +6335,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          }
       }
 
-   if (!entry->_aotCodeToBeRelocated)
+   if (!entry->isAotLoad())
       {
       // Determine if we need to perform an AOT compilation
       // If yes, then change the type of the method and generate an AOT cookie
@@ -6310,112 +6350,70 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          !entry->isDLTCompile() &&
          !entry->_doNotUseAotCodeFromSharedCache &&
          reloRuntime->isRomClassForMethodInSharedCache(method, javaVM) &&
+         !isMethodIneligibleForAot(method) &&
          (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
-           TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
+            TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
 
-      bool sharedClassTest = eligibleForRelocatableCompile &&
-                             !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT);
-
-      bool isSecondAOTRun =
-         !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoAotSecondRunDetection) &&
-         TR::Options::sharedClassCache() &&
-         _compInfo.numMethodsFoundInSharedCache() >= TR::Options::_aotMethodThreshold &&
-         _compInfo._statNumAotedMethods <= TR::Options::_aotMethodCompilesThreshold;
-
-      if (!TR::Options::canJITCompile() && isSecondAOTRun) // detect second AOT run
+      // For JAAS_CLIENT, if the method is eligible for AOT compilation,
+      // transform this compilation request into an AOT load because
+      // the server will be performing the AOT compilation and the client
+      // will just load the code from SCC
+      if (eligibleForRelocatableCompile && _compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE)
          {
-         if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT))
-            {
-            TR::CompilationInfo::disableAOTCompilations();
-            }
-         TR::Options::getCmdLineOptions()->setOption(TR_DisableInterpreterProfiling, true);
+         entry->_doAotLoad = true;
          }
-
-      // Decide if we want an AOT vm or not
-      if (sharedClassTest)
+      else
          {
-         if (TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT) ||
-             _compInfo.getPersistentInfo()->getJaasMode() == SERVER_MODE) 
+         bool sharedClassTest = eligibleForRelocatableCompile &&
+            !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT);
+
+         bool isSecondAOTRun =
+            !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoAotSecondRunDetection) &&
+            TR::Options::sharedClassCache() &&
+            _compInfo.numMethodsFoundInSharedCache() >= TR::Options::_aotMethodThreshold &&
+            _compInfo._statNumAotedMethods <= TR::Options::_aotMethodCompilesThreshold;
+
+         if (!TR::Options::canJITCompile() && isSecondAOTRun) // detect second AOT run
             {
-            canDoRelocatableCompile = true;
+            if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT))
+               TR::CompilationInfo::disableAOTCompilations();
+            TR::Options::getCmdLineOptions()->setOption(TR_DisableInterpreterProfiling, true);
             }
-         else
+
+         // Decide if we want an AOT vm or not
+         if (sharedClassTest)
             {
-            if (!isSecondAOTRun) // detect second AOT run
+            if (TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT) ||
+               _compInfo.getPersistentInfo()->getJaasMode() == SERVER_MODE)
                {
-               // Check for classLoadPhase (enter AOT mode if so or enter JIT mode if not)
-               //
-               if (entry->_optimizationPlan->isOptLevelDowngraded())
+               canDoRelocatableCompile = true;
+               }
+            else
+               {
+               // Heuristic: generate AOT only for downgraded compilations in the second run
+               if (!isSecondAOTRun &&
+                  entry->_optimizationPlan->isOptLevelDowngraded())
                   canDoRelocatableCompile = true;
                }
             }
          }
-
-      // don't AOT compile BigD methods, just JIT compile them
-      if (canDoRelocatableCompile)
-         {
-         bool isORB = false;
-         J9ROMClass *declaringClazz = J9_CLASS_FROM_METHOD((J9Method *) method)->romClass;
-         J9UTF8 * className = J9ROMCLASS_CLASSNAME(declaringClazz);
-         if (
-            J9UTF8_LENGTH(className) == 36 &&
-            0 == memcmp(utf8Data(className), "com/ibm/rmi/io/FastPathForCollocated", 36)
-            )
-            {
-            J9UTF8 *utf8 = J9ROMMETHOD_GET_NAME(declaringClazz, J9_ROM_METHOD_FROM_RAM_METHOD(method));
-            if (
-               J9UTF8_LENGTH(utf8)==21 &&
-               0 == memcmp(J9UTF8_DATA(utf8), "isVMDeepCopySupported", 21)
-               )
-               {
-               isORB = true;
-               }
-            }
-
-         if (
-               (
-                  (
-                  !TR::Options::getCmdLineOptions()->getOption(TR_DisableDFP) &&
-                  !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableDFP)
-                  ) &&
-                  (
-                  TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
-#ifdef TR_TARGET_S390
-                  || TR::Compiler->target.cpu.getS390SupportsDFP()
-#endif
-                  ) &&
-                  TR_J9MethodBase::isBigDecimalMethod(method)
-               ) ||
-            isORB
-            )
-            {
-            canDoRelocatableCompile = false;
-            }
-         }
-
-      // Don't AOT-compile anything in j/l/i for now
-      if (canDoRelocatableCompile)
-         {
-         J9ROMClass *declaringClazz = J9_CLASS_FROM_METHOD((J9Method *) method)->romClass;
-         J9UTF8 *className = J9ROMCLASS_CLASSNAME(declaringClazz);
-         bool isJLI = strncmp(utf8Data(className), "java/lang/invoke/", sizeof("java/lang/invoke/") - 1) == 0;
-
-         canDoRelocatableCompile = !isJLI;
-         }
       }
-#endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-
+   
    if (canDoRelocatableCompile)
+      {
       _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
+      entry->_useAotCompilation = true;
+      }
    else
+      {
       _vm = TR_J9VMBase::get(_jitConfig, vmThread); // This is used for JIT compilations and AOT loads
+      entry->_useAotCompilation = false;
+      }
 
    // For AOT compilation generate method cookie to pass into compiler
    //
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
    if (_vm->isAOT_DEPRECATED_DO_NOT_USE())
       {
-      entry->_useAotCompilation = true;
       // In some circumstances AOT compilations are performed at warm
       if (TR::Options::getCmdLineOptions()->getAggressivityLevel() == TR::Options::AGGRESSIVE_AOT &&
           entry->_optimizationPlan->isOptLevelDowngraded() &&
@@ -6425,7 +6423,6 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          entry->_optimizationPlan->setOptLevelDowngraded(false);
          }
       }
-#endif /* J9VM_INTERP_AOT_COMPILE_SUPPORT && J9VM_OPT_SHARED_CLASSES && TR_HOST_X86 */
    }
 
 /**
@@ -6459,7 +6456,6 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
                                                        TR_RelocationRuntime *reloRuntime)
    {
    void *startPC = NULL;
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableUpdateAOTBytesSize) &&
        metaData &&                                                            // Compilation succeeded
        !canDoRelocatableCompile &&                                            // Non-AOT Compilation
@@ -6474,7 +6470,6 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       int32_t codeSize = _compInfo.calculateCodeSize(metaData);
       _compInfo.increaseUnstoredBytes(codeSize, 0);
       }
-#endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
 
    // We may want to track the CPU time spent by compilation threads periodically
    if (_onSeparateThread)
@@ -6559,12 +6554,15 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          _vm,
          entry,
          _compiler);
+
+      if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "CompilationEnd returning startPC=%p  metadata=%p", startPC, metaData);
       // AOT compilations can fail on purpose because we want to load
       // the AOT body later on. This case is signalled by having a metaData != 0
       // but a startPC == entry->_oldStartPC == 0
       if (metaData && !entry->_oldStartPC && !startPC)
          {
-         TR_ASSERT(canDoRelocatableCompile, "compilationEnd() can fail only for relocating AOT compilations\n");
+         TR_ASSERT(_vm->isAOT_DEPRECATED_DO_NOT_USE(), "compilationEnd() can fail only for relocating AOT compilations\n");
          TR_ASSERT(!entry->_oldStartPC, "We expect compilationEnd() to fail only for AOT compilations which are first time compilations\n");
 
          // Replenish the counts of the method
@@ -6621,7 +6619,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
             }
          }
 
-      if (aotCachedMethod && entry->_oldStartPC == 0 && startPC != 0) // AOT load that succeeded
+      if (entry->isAotLoad() && entry->_oldStartPC == 0 && startPC != 0) // AOT load that succeeded
          {
          // We know this is a first time compilation (otherwise we would not attempt an AOT load)
          // Before grabbing the compilation monitor and loading the AOT body
@@ -6662,15 +6660,13 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
 
    // compilation success can be detected by checking startPC && startPC != _oldStartPC
 
-#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-   if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTRelocationTiming) && aotCachedMethod)
+   if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableAOTRelocationTiming) && entry->isAotLoad())
       {
       PORT_ACCESS_FROM_JITCONFIG(jitConfig);
       UDATA reloTime = j9time_usec_clock() - reloRuntime->reloStartTime();
       // We have the comp monitor, so the add does not run into sync issues
       _compInfo.setAotRelocationTime(_compInfo.getAotRelocationTime() + reloTime);
       }
-#endif
 
    // Check to see if we need to print compilation information for perf tool on Linux
    if (TR::Options::getCmdLineOptions()->getOption(TR_PerfTool) && _compiler &&
@@ -6811,10 +6807,15 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
          TR::CompileIlGenRequest(entry->getMethodDetails())
          );
 
+   if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
+         "Compilation thread executing compile(): j9method=%p isAotLoad=%d canDoRelocatableCompile=%d eligibleForRelocatableCompile=%d _doNotUseAotCodeFromSharedCache=%d AOTfe=%d", 
+          method, entry->isAotLoad(), canDoRelocatableCompile, eligibleForRelocatableCompile, entry->_doNotUseAotCodeFromSharedCache, _vm->isAOT_DEPRECATED_DO_NOT_USE());
+
       if (
           (TR::Options::canJITCompile()
            || canDoRelocatableCompile
-           || entry->_aotCodeToBeRelocated
+           || entry->isAotLoad()
           )
 #if defined(TR_HOST_ARM)
           && !TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)
@@ -6870,10 +6871,6 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
       else
          {
          entry->_compErrCode = compilationRestrictedMethod;
-         // can't compile this method: mark it appropriately
-         //if (!entry->isDLTCompile())
-         //   startPC = compilationEnd(vmThread, jitConfig, method,
-         //                            0, entry->_oldStartPC, entry->_classForNewInstance, vm);
          }
 
       // This method has to be called from within the try block,
@@ -6989,6 +6986,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       TR::IlGeneratorMethodDetails & details = that->_methodBeingCompiled->getMethodDetails();
       TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) details.getMethod();
 
+      // Create the compilee
       if (details.isMethodHandleThunk())
          {
          J9::MethodHandleThunkDetails &mhDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
@@ -7015,7 +7013,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
          jitConfig->totalMethodsNotTranslated++;
          TR::Options *options = TR::Options::getJITCmdLineOptions();
-         if (that->_methodBeingCompiled->_useAotCompilation)
+         if (vm->isAOT_DEPRECATED_DO_NOT_USE())
             options = TR::Options::getAOTCmdLineOptions();
          if (options->getVerboseOption(TR_VerboseCompileExclude))
             {
@@ -7065,11 +7063,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                compilee,
                that->_methodBeingCompiled->_oldStartPC,
                p->_optimizationPlan,
-               (that->_methodBeingCompiled->_useAotCompilation || that->_methodBeingCompiled->_aotCodeToBeRelocated),
+               (vm->isAOT_DEPRECATED_DO_NOT_USE() || that->_methodBeingCompiled->isAotLoad()),
                that->getCompThreadId());
 
          // Determine if known annotations exist and if so, keep annotations enabled
-         if (!that->_methodBeingCompiled->_aotCodeToBeRelocated && !vm->isAOT_DEPRECATED_DO_NOT_USE() && options->getOption(TR_EnableAnnotations)) // KEN
+         if (!that->_methodBeingCompiled->isAotLoad() && !vm->isAOT_DEPRECATED_DO_NOT_USE() && options->getOption(TR_EnableAnnotations))
             {
             if (!TR_AnnotationBase::scanForKnownAnnotationsAndRecord(&that->_compInfo, details.getMethod(), vmThread->javaVM, vm))
                options->setOption(TR_EnableAnnotations,false);
@@ -7102,7 +7100,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             }
 
          // Adjust Options for AOT compilation
-         if (that->_methodBeingCompiled->_useAotCompilation)
+         if (vm->isAOT_DEPRECATED_DO_NOT_USE())
             {
             options->setOption(TR_AOT);
 
@@ -7118,6 +7116,10 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_DisableDelayRelocationForAOTCompilations, true);
 
             TR_ASSERT(vm->isAOT_DEPRECATED_DO_NOT_USE(), "assertion failure");
+
+            // Do not delay relocations for JAAS_SERVER
+            if (that->getCompilationInfo()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+               options->setOption(TR_DisableDelayRelocationForAOTCompilations);
             }
 
          if (that->_methodBeingCompiled->_optimizationPlan->disableCHOpts())
@@ -7139,7 +7141,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             }
 
          // The following tweaks only apply for java compilations
-         if (!that->_methodBeingCompiled->_aotCodeToBeRelocated) // exclude AOT loads
+         if (!that->_methodBeingCompiled->isAotLoad()) // exclude AOT loads
             {
             J9Method *method = details.getMethod();
             // See if we need to profile first level compilations and if we can do it, change the optimization plan
@@ -7611,10 +7613,10 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
       }
 #ifndef PUBLIC_BUILD
-
+   // Store hints in the SCC
    TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
    if (metaData  && !that->_methodBeingCompiled->isDLTCompile() &&
-      !that->_methodBeingCompiled->_aotCodeToBeRelocated && sc)
+      !that->_methodBeingCompiled->isAotLoad() && sc) // skip AOT loads
       {
       J9Method *method = that->_methodBeingCompiled->getMethodDetails().getMethod();
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(compiler->fej9());
@@ -7972,8 +7974,7 @@ TR::CompilationInfoPerThreadBase::compile(
       // If we want to compile without VM access, now it's the time to release it
       // For the JaaS client we must not enter this path. _aotCodeToBeRelocated is normally set for AOT but
       // with the client it is null, causing VM access to be released early.
-      if (!compiler->getOption(TR_DisableNoVMAccess) && !_methodBeingCompiled->_aotCodeToBeRelocated &&
-          _compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE)
+      if (!compiler->getOption(TR_DisableNoVMAccess) && !_methodBeingCompiled->isAotLoad())
          {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
          bool doAcquireClassUnloadMonitor = true;
@@ -8063,9 +8064,10 @@ TR::CompilationInfoPerThreadBase::compile(
 
       intptr_t rtn = 0;
 
-      if (_compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE) // NonJaas Mode
+      if (_compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE || 
+         !_methodBeingCompiled->isAotLoad()) // Remote compilation requests appear as AOT loads
          {
-         if (!_methodBeingCompiled->_aotCodeToBeRelocated )
+         if (!_methodBeingCompiled->isAotLoad())
             {
             if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
                {
@@ -8113,7 +8115,7 @@ TR::CompilationInfoPerThreadBase::compile(
                TR_VerboseLog::vlogRelease();
                }
             }
-         else
+         else // AOT load
             {
             metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);   
             }
@@ -8148,6 +8150,7 @@ TR::CompilationInfoPerThreadBase::compile(
                //TODO we should check flags here, similar to elsewhere
 
                metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
+               
                if (TR::Options::getVerboseOption(TR_VerboseJaas))
                   { 
                   if (metaData)
@@ -8161,6 +8164,7 @@ TR::CompilationInfoPerThreadBase::compile(
                      }
                   else
                      {
+                     // This path should not be entered because performAotLoad throws if metaData cannot be created
                      TR_VerboseLog::writeLineLocked(
                         TR_Vlog_JAAS,
                         "Client failed to load method %s @ %s from SCC following compilation request.",
@@ -8235,7 +8239,7 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       _methodBeingCompiled->_compErrCode = compilationOK;
-      if (!_methodBeingCompiled->_aotCodeToBeRelocated)
+      if (!_methodBeingCompiled->isAotLoad())
          {
          class TraceMethodMetadata
             {
@@ -9313,6 +9317,11 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
                      if (relocatedMetaData)
                         {
+                        if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+                           {
+                           TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Successfully relocated metadata for %s", comp->signature());
+                           }
+
                         startPC = reinterpret_cast<void *>(relocatedMetaData->startPC);
 
                         if (J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
@@ -9368,7 +9377,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                      else
                         {
                         entry->_doNotUseAotCodeFromSharedCache = true;
-                        entry->_useAotCompilation = false;
                         entry->_compErrCode = returnCode;
                         startPC = NULL;
 
@@ -9451,7 +9459,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 #endif
                   TR_ASSERT(0, "shared classes flag not enabled yet we got an AOT compilation"); // This is a branch that is never expected to enter
                   entry->_doNotUseAotCodeFromSharedCache = true;
-                  entry->_useAotCompilation = false;
                   startPC = NULL;
 
                   if (entry->_compilationAttemptsLeft > 0)
@@ -9624,7 +9631,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
    TR_OptimizationPlan * optimizationPlan
    )
    {
-   if (!_methodBeingCompiled->_aotCodeToBeRelocated)
+   if (!_methodBeingCompiled->isAotLoad())
       {
       J9JavaVM * javaVM = _jitConfig->javaVM;
       // Dump mixed mode disassembly listing.
@@ -10391,7 +10398,7 @@ void TR::CompilationInfo::printCompQueue()
    fprintf(stderr, "\nQueue:");
    for (TR_MethodToBeCompiled *cur = _methodQueue; cur; cur = cur->_next)
       {
-      fprintf(stderr, " %x", cur);
+      fprintf(stderr, " %p", cur);
       }
    fprintf(stderr, "\n");
    }
