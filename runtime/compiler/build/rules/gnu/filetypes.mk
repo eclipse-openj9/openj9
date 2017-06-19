@@ -30,10 +30,10 @@ PROTO_GEN_DIR=$(FIXED_SRCBASE)/compiler/trj9/rpc/gen
 PROTO_DIR=$(FIXED_SRCBASE)/compiler/trj9/rpc/protos
 JIT_DIR_LIST+=$(PROTO_GEN_DIR)
 
-$(PROTO_GEN_DIR)/%.pb.cc: $(PROTO_DIR)/%.proto
+$(PROTO_GEN_DIR)/%.pb.cc $(PROTO_GEN_DIR)/%.pb.h: $(PROTO_DIR)/%.proto
 	$(PROTO_CMD) --cpp_out=$(PROTO_GEN_DIR) --plugin=protoc-gen-grpc="$(GRPC_CPP)" -I $(PROTO_DIR)  $<
 
-$(PROTO_GEN_DIR)/%.grpc.pb.cc: $(PROTO_DIR)/%.proto $(PROTO_GEN_DIR)/%.pb.cc
+$(PROTO_GEN_DIR)/%.grpc.pb.cc $(PROTO_GEN_DIR)/%.grpc.pb.h: $(PROTO_DIR)/%.proto $(PROTO_GEN_DIR)/%.pb.cc
 	$(PROTO_CMD) --grpc_out=$(PROTO_GEN_DIR) --plugin=protoc-gen-grpc="$(GRPC_CPP)" -I $(PROTO_DIR)  $<
 
 $(PROTO_GEN_DIR)/%.pb.cpp: $(PROTO_GEN_DIR)/%.pb.cc
