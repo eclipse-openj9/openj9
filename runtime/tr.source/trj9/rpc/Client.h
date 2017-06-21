@@ -16,10 +16,12 @@ public:
       : _stub(CompileSCCService::NewStub(grpc::CreateChannel("localhost:38400", grpc::InsecureChannelCredentials())))
       {}
 
-   Status requestCompilation(uint32_t cOffset, uint32_t mOffset)
+   Status requestCompilation(uint32_t cOffset, uint32_t mOffset, uint32_t ccCOffset, uint32_t ccCLOffset)
       {
       _request.set_classoffset(cOffset);
       _request.set_methodoffset(mOffset);
+      _request.set_classchaincoffset(ccCOffset);
+      _request.set_classchaincloffset(ccCLOffset);
 
       grpc::ClientContext ctx;
       _reply.set_compilation_code(1);

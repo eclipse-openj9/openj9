@@ -98,6 +98,7 @@
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
 #include "rpc/Client.h"
+#include "env/ClassLoaderTable.hpp"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -8174,9 +8175,6 @@ TR::CompilationInfoPerThreadBase::compile(
          }
       else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE) // Jaas Client Mode
          {
-         if (_methodBeingCompiled->isJNINative())
-            compiler->failCompilation<TR::CompilationException>("JaaS cannot handle native methods");
-
          if (TR::Options::sharedClassCache() && 
             _compInfo.reloRuntime()->isRomClassForMethodInSharedCache(method, _jitConfig->javaVM)) // if ROM method exists in SCC
             {
@@ -8184,53 +8182,73 @@ TR::CompilationInfoPerThreadBase::compile(
                {
                TR_VerboseLog::writeLineLocked(
                   TR_Vlog_JAAS,
-                  "Client sending compilation request to server for method %s @ %s",
+                  "Client sending compilation request to server for method %s @ %s.",
                   compiler->signature(),
                   compiler->getHotnessName()
                   );
                }
-            J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
+            TR_J9SharedCache *cache = vm.sharedCache(); 
+            J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+            J9ROMClass *romClass = methodClass->romClass;
+            uint32_t romClassOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romClass)));
             J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-            UDATA sccPtr = (UDATA)_jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->cacheStartAddress;
-            JAAS::CompilationClient client;
-            JAAS::Status status = client.requestCompilation(((UDATA)romClass) - sccPtr, ((UDATA)romMethod) - sccPtr);
-            if (status.ok() && client.getReplyCode() == compilationOK)
+            uint32_t romMethodOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romMethod)));
+            void *ccc = cache->rememberClass(methodClass, true);
+            if (ccc)
                {
-               UDATA flags = 0;
-               const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
-               _methodBeingCompiled->setAotCodeToBeRelocated(compiledMethod);
-               //TODO we should check flags here, similar to elsewhere
-
-               metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
-               
-               if (TR::Options::getVerboseOption(TR_VerboseJaas))
-                  { 
-                  if (metaData)
+               uint32_t classChainCOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(ccc)));
+               J9ClassLoader *CL = methodClass->classLoader;
+               void *cc = cache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(CL);
+               if (cc)
+                  {
+                  uint32_t classChainCLOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(cc)));
+                  JAAS::CompilationClient client;
+                  JAAS::Status status = client.requestCompilation(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset);
+                  if (status.ok() && (client.getReplyCode() == compilationOK || client.getReplyCode() == compilationNotNeeded))
                      {
-                     TR_VerboseLog::writeLineLocked(
-                        TR_Vlog_JAAS,
-                        "Client successfully loaded method %s @ %s from SCC following compilation request.",
-                        compiler->signature(),
-                        compiler->getHotnessName()
-                        );
+                     UDATA flags = 0;
+                     const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
+                     _methodBeingCompiled->setAotCodeToBeRelocated(compiledMethod);
+                     //TODO we should check flags here, similar to elsewhere
+                     metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
+                     if (TR::Options::getVerboseOption(TR_VerboseJaas))
+                        { 
+                        if (metaData)
+                           {
+                           TR_VerboseLog::writeLineLocked(
+                              TR_Vlog_JAAS,
+                              "Client successfully loaded method %s @ %s from SCC following compilation request.",
+                              compiler->signature(),
+                              compiler->getHotnessName()
+                              );
+                           }
+                        else
+                           {
+                           // This path should not be entered because performAotLoad throws if metaData cannot be created
+                           TR_VerboseLog::writeLineLocked(
+                              TR_Vlog_JAAS,
+                              "Client failed to load method %s @ %s from SCC following compilation request.",
+                              compiler->signature(),
+                              compiler->getHotnessName()
+                              );
+                           }
+                        }
                      }
                   else
                      {
-                     // This path should not be entered because performAotLoad throws if metaData cannot be created
-                     TR_VerboseLog::writeLineLocked(
-                        TR_Vlog_JAAS,
-                        "Client failed to load method %s @ %s from SCC following compilation request.",
-                        compiler->signature(),
-                        compiler->getHotnessName()
-                        );
+                     compiler->failCompilation<TR::CompilationException>("JaaS compilation failed.");
                      }
+                  }
+               else
+                  {
+                  compiler->failCompilation<TR::CompilationException>("Class Chain for Class Loader not found."); 
                   }
                }
             else
                {
-               compiler->failCompilation<TR::CompilationException>("JaaS compilation failed");
+               compiler->failCompilation<TR::CompilationException>("Class Chain for J9Method 'C' not found."); 
                }
-            }
+            } 
          else
             {
             compiler->failCompilation<TR::CompilationException>("ROMClass not in SCC; cannot send JaaS request.");

@@ -1956,16 +1956,14 @@ J9::Options::fePreProcess(void * base)
          if (xxJaasClientArgIndex > xxJaasServerArgIndex)   // client mode
             {
             compInfo->getPersistentInfo()->setJaasMode(CLIENT_MODE);
-            // TODO: message to verbose log for which mode
-            fprintf(stdout, "Jaas Client Mode.\n");
-            fflush(stdout);
+            if (TR::Options::getVerboseOption(TR_VerboseJaas))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Jaas Client Mode.\n");
             }
          else                                               // server mode
             {
             compInfo->getPersistentInfo()->setJaasMode(SERVER_MODE);
-            // TODO: message to verbose log for which mode
-            fprintf(stdout, "Jaas Server Mode.\n");
-            fflush(stdout);
+            if (TR::Options::getVerboseOption(TR_VerboseJaas))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Jaas Server Mode.\n");
             }
          }
       }
