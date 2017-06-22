@@ -9589,14 +9589,15 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       TR::Recompilation::methodCannotBeRecompiled(oldStartPC, trvm);
       startPC = oldStartPC;
 
-      if (TR::Options::getVerboseOption(TR_VerboseJaas))
+      if (entry && entry->_rpcHead)
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-               "Server has failed to recompile %s", entry->_compInfoPT->getCompilation()->signature());
-         }
-
-      if (entry)
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                  "Server has failed to recompile %s", entry->_compInfoPT->getCompilation()->signature());
+            }
          replyMethodRPCs(entry, compilationFailure); // maybe send compilationNotNeeded here instead?
+         }
       }
 
    if ((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && comp && (dataCache = (TR_DataCache *)comp->getReservedDataCache()))
