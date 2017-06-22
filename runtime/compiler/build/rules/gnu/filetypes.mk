@@ -39,9 +39,19 @@ $(PROTO_GEN_DIR)/%.grpc.pb.cc $(PROTO_GEN_DIR)/%.grpc.pb.h: $(PROTO_DIR)/%.proto
 $(PROTO_GEN_DIR)/%.pb.cpp: $(PROTO_GEN_DIR)/%.pb.cc
 	mv $< $@
 
-# Cleanup generated .pb.{h,cpp} files directory
-jit_cleandeps::
+proto_clean:
 	rm -rf $(PROTO_GEN_DIR)
+
+# Hardcode this for emergencies
+protoc:
+	mkdir -p $(PROTO_GEN_DIR) && \
+	$(PROTO_CMD) --cpp_out=$(PROTO_GEN_DIR) --plugin=protoc-gen-grpc="$(GRPC_CPP)" -I $(PROTO_DIR)  $(PROTO_DIR)/compile.proto && \
+	$(PROTO_CMD) --grpc_out=$(PROTO_GEN_DIR) --plugin=protoc-gen-grpc="$(GRPC_CPP)" -I $(PROTO_DIR)  $(PROTO_DIR)/compile.proto && \
+	mv $(PROTO_GEN_DIR)/compile.pb.cc $(PROTO_GEN_DIR)/compile.pb.cpp && \
+	mv $(PROTO_GEN_DIR)/compile.grpc.pb.cc $(PROTO_GEN_DIR)/compile.grpc.pb.cpp
+
+# Cleanup generated .pb.{h,cpp} files directory
+jit_cleandeps:: proto_clean
 
 #
 # Compile .c file into .o file
