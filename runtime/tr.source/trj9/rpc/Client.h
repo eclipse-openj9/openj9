@@ -22,7 +22,7 @@ public:
       _request.set_methodoffset(mOffset);
 
       grpc::ClientContext ctx;
-      _reply.set_compilation_code(0);
+      _reply.set_compilation_code(1);
       return _stub->Compile(&ctx, _request, &_reply);
       }
 
