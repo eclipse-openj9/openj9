@@ -39,14 +39,17 @@ J9Method *ramMethodFromRomMethod(J9JITConfig *jitConfig, J9VMThread *vmThread,
    J9ClassLoader *CL = (J9ClassLoader*) cache->persistentClassLoaderTable()->lookupClassLoaderAssociatedWithClassChain(classChainCL);
    if (CL)
       {
-      J9Class *ramClass = (J9Class*) cache->lookupClassFromChainAndLoader((uintptrj_t *) classChainC, CL);
-      J9Method *ramMethods = ramClass->ramMethods;
-      for (int32_t i = 0; i < romClass->romMethodCount; i++)
+      J9Class *ramClass = (J9Class*)cache->lookupClassFromChainAndLoader((uintptrj_t *)classChainC, CL);
+      if (ramClass)
          {
-         J9Method *curMethod = ramMethods + i;
-         J9ROMMethod *curROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(curMethod);
-         if (curROMMethod == romMethod)
-            return curMethod;
+         J9Method *ramMethods = ramClass->ramMethods;
+         for (int32_t i = 0; i < romClass->romMethodCount; i++)
+            {
+            J9Method *curMethod = ramMethods + i;
+            J9ROMMethod *curROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(curMethod);
+            if (curROMMethod == romMethod)
+               return curMethod;
+            }
          }
       }
    return NULL;
