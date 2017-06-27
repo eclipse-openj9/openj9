@@ -155,7 +155,7 @@ static void replyMethodRPCs(TR_MethodToBeCompiled *method, const JAAS::CompileSC
    // After finish() is called, the RPCInfo can be cleared in the Service Thread at any time.
    JAAS::CompileRPCInfo *prev = nullptr;
    JAAS::CompileRPCInfo *cur = method->_rpcHead;
-   method->_rpcHead = nullptr; // TODO: what if rpcHead is changed in a seperate thread in between this and the previous line
+   method->_rpcHead = nullptr;
 
    while (cur)
       {
