@@ -4,8 +4,6 @@
 #include <grpc++/grpc++.h>
 #include "rpc/types.h"
 
-using JAAS::CompileSCCService;
-
 namespace JAAS
 {
 
@@ -13,30 +11,42 @@ class CompilationClient
    {
 public:
    CompilationClient()
-      : _stub(CompileSCCService::NewStub(grpc::CreateChannel("localhost:38400", grpc::InsecureChannelCredentials())))
+      : _stub(J9CompileService::NewStub(grpc::CreateChannel("localhost:38400", grpc::InsecureChannelCredentials())))
       {}
 
-   Status requestCompilation(uint32_t cOffset, uint32_t mOffset, uint32_t ccCOffset, uint32_t ccCLOffset)
+   // TODO: should maybe return a const JAAS::ServerMessage& instead of having to call getReplyCode?
+   void requestCompilation(uint32_t cOffset, uint32_t mOffset, uint32_t ccCOffset, uint32_t ccCLOffset)
       {
-      _request.set_classoffset(cOffset);
-      _request.set_methodoffset(mOffset);
-      _request.set_classchaincoffset(ccCOffset);
-      _request.set_classchaincloffset(ccCLOffset);
+      _ctx.reset(new grpc::ClientContext);
+      _stream = _stub->Compile(_ctx.get());
 
-      grpc::ClientContext ctx;
-      _reply.set_compilation_code(1);
-      return _stub->Compile(&ctx, _request, &_reply);
+      _clientMsg.set_classoffset(cOffset);
+      _clientMsg.set_methodoffset(mOffset);
+      _clientMsg.set_classchaincoffset(ccCOffset);
+      _clientMsg.set_classchaincloffset(ccCLOffset);
+
+      _stream->Write(_clientMsg);
+      _stream->Read(&_serverMsg);
       }
 
-   uint32_t getReplyCode()
+   Status waitForFinish()
       {
-      return _reply.compilation_code();
+      return _stream->Finish();
+      }
+
+   uint32_t getReplyCode() const
+      {
+      return _serverMsg.compilation_code();
       }
 
 private:
-   std::unique_ptr<JAAS::CompileSCCService::Stub> _stub;
-   JAAS::CompileSCCRequest _request;
-   JAAS::CompileSCCReply _reply;
+   std::unique_ptr<JAAS::J9CompileService::Stub> _stub;
+   std::unique_ptr<grpc::ClientContext> _ctx;
+   std::unique_ptr<JAAS::J9ClientStream> _stream;
+
+   // re-useable message objects
+   JAAS::J9ClientMessage _clientMsg;
+   JAAS::J9ServerMessage _serverMsg;
    };
 
 }

@@ -2,23 +2,20 @@ syntax = "proto3";
 
 package JAAS;
 
-message CompileSCCRequest
+message J9ClientMessage
    {
-   reserved 1;
-   uint32 methodOffset = 2;
-   uint32 classOffset = 3;
-   uint32 classChainCOffset = 4; 
-   uint32 classChainCLOffset = 5;
+   uint32 methodOffset = 1;
+   uint32 classOffset = 2;
+   uint32 classChainCOffset = 3;
+   uint32 classChainCLOffset = 4;
    }
 
-message CompileSCCReply
+message J9ServerMessage
    {
    uint32 compilation_code = 1;
    }
 
-// Use a simple req-rep for first attempt
-// May have to switch to a duplex stream later
-service CompileSCCService
+service J9CompileService
    {
-   rpc Compile (CompileSCCRequest) returns (CompileSCCReply);
+   rpc Compile (stream J9ClientMessage) returns (stream J9ServerMessage);
    }

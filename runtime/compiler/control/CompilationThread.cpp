@@ -147,32 +147,6 @@ void setThreadAffinity(unsigned _int64 handle, unsigned long mask)
    }
 #endif
 
-// TODO: Maybe make the following two functions members of TR_MethodToBeCompiled?
-// Reply to all compile requests for a given method
-static void replyMethodRPCs(TR_MethodToBeCompiled *method, const JAAS::CompileSCCReply &reply)
-   {
-   // We need a prev pointer to call finish so that the cur pointer can safely grab next before finish is called.
-   // After finish() is called, the RPCInfo can be cleared in the Service Thread at any time.
-   JAAS::CompileRPCInfo *prev = nullptr;
-   JAAS::CompileRPCInfo *cur = method->_rpcHead;
-   method->_rpcHead = nullptr;
-
-   while (cur)
-      {
-      prev = cur;
-      cur = prev->_next;
-      prev->finish(reply, JAAS::Status::OK);
-      }
-   }
-
-// Reply to all compile requests for a given method, sending only a TR_CompilationErrorCode.
-static void replyMethodRPCs(TR_MethodToBeCompiled *method, const TR_CompilationErrorCode &code)
-   {
-   JAAS::CompileSCCReply reply;
-   reply.set_compilation_code(static_cast<uint32_t>(code));
-   replyMethodRPCs(method, reply);
-   }
-
 void
 TR::CompilationInfoPerThreadBase::setCompilation(TR::Compilation *compiler)
    {
@@ -3967,16 +3941,6 @@ TR::CompilationInfoPerThread::shouldPerformCompilation(TR_MethodToBeCompiled &en
    return true;
    }
 
-static void addRPCInfoToMethod(TR_MethodToBeCompiled *method, JAAS::CompileRPCInfo *rpc)
-   {
-   if (rpc)
-      {
-      if (method->_rpcHead)
-         rpc->_next = method->_rpcHead;
-      method->_rpcHead = rpc;
-      }
-   }
-
 TR_MethodToBeCompiled *
 TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & details, void *pc,
                                           CompilationPriority priority, bool async,
@@ -3994,7 +3958,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       }
 #endif
 
-   JAAS::CompileRPCInfo *rpc = static_cast<JAAS::CompileRPCInfo *>(extra);
+   JAAS::J9CompileStream *rpc = static_cast<JAAS::J9CompileStream *>(extra);
 
    // Add this method to the queue of methods waiting to be compiled.
    TR_MethodToBeCompiled *cur = NULL, *prev = NULL;
@@ -4020,8 +3984,8 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
             {
             if (!compMethod->_unloadedMethod) // Redefinition; see cmvc 192606 and RTC 36898
                {
-               if (rpc)
-                  addRPCInfoToMethod(compMethod, rpc);
+               // We should not yet receive a request to compile something already being compiled
+               TR_ASSERT(!rpc, "Received request to compile a method already being compiled\n");
 
                // If the priority has increased, use the new priority.
                //
@@ -4048,8 +4012,8 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
 
    if (cur)
       {
-      if (rpc)
-         addRPCInfoToMethod(cur, rpc);
+      // We should not yet receive a request to compile something already being compiled
+      TR_ASSERT(!rpc, "Received request to compile a method already queued for compilation\n");
 
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
          TR_VerboseLog::writeLineLocked(TR_Vlog_CR,"%p     Already present in compilation queue. OldPriority=%x NewPriority=%x entry=%p",
@@ -4114,10 +4078,8 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       cur->initialize(details, pc, priority, optimizationPlan);
       cur->_jitStateWhenQueued = getPersistentInfo()->getJitState();
 
-      // add rpc info, if available and compiling async, to new method to be compiled
-      // if no rpc info is available, set list head to NULL
       if (rpc)
-         addRPCInfoToMethod(cur, rpc);
+         cur->_stream = rpc; // Add the stream to the entry
 
       bool isJNINativeMethodRequest = false;
       if (pc)
@@ -8203,7 +8165,8 @@ TR::CompilationInfoPerThreadBase::compile(
                   {
                   uint32_t classChainCLOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(cc)));
                   JAAS::CompilationClient client;
-                  JAAS::Status status = client.requestCompilation(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset);
+                  client.requestCompilation(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset);
+                  JAAS::Status status = client.waitForFinish();
                   if (status.ok() && (client.getReplyCode() == compilationOK || client.getReplyCode() == compilationNotNeeded))
                      {
                      UDATA flags = 0;
@@ -9570,7 +9533,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          TR::Recompilation::methodHasBeenRecompiled(oldStartPC, startPC, trvm);
          }
 
-      if (entry && entry->_rpcHead)
+      if (entry && entry->_stream)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             {
@@ -9578,7 +9541,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
             }
          entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
-         replyMethodRPCs(entry, compilationOK);
+         entry->_stream->finishWithOnlyCode(compilationOK);
          }
       }
    else if (!oldStartPC)
@@ -9588,14 +9551,14 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       if (vmThread)
          jitMethodFailedTranslation(vmThread, method);
 
-      if (entry && entry->_rpcHead)
+      if (entry && entry->_stream)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                   "Server has failed to compile %s", entry->_compInfoPT->getCompilation()->signature());
             }
-         replyMethodRPCs(entry, compilationFailure);
+         entry->_stream->finishWithOnlyCode(compilationFailure);
          }
       }
    else
@@ -9607,14 +9570,14 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       TR::Recompilation::methodCannotBeRecompiled(oldStartPC, trvm);
       startPC = oldStartPC;
 
-      if (entry && entry->_rpcHead)
+      if (entry && entry->_stream)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                   "Server has failed to recompile %s", entry->_compInfoPT->getCompilation()->signature());
             }
-         replyMethodRPCs(entry, compilationFailure); // maybe send compilationNotNeeded here instead?
+         entry->_stream->finishWithOnlyCode(compilationNotNeeded);
          }
       }
 

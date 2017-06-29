@@ -57,7 +57,7 @@ J9Method *ramMethodFromRomMethod(J9JITConfig *jitConfig, J9VMThread *vmThread,
 
 void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread, 
                   J9ROMClass* romClass, const J9ROMMethod* romMethod, 
-                  J9Method* ramMethod, JAAS::CompileRPCInfo *rpc)
+                  J9Method* ramMethod, JAAS::J9CompileStream *rpc)
    {
    J9UTF8 *methodNameUTF = J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature);
    std::string methodNameStr((const char*)methodNameUTF->data, (size_t)methodNameUTF->length);
@@ -166,23 +166,24 @@ void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       }
    }
 
-class CompileService : public JAAS::AsyncCompileService
+class J9CompileDispatcher : public JAAS::J9BaseCompileDispatcher
 {
 public:
-   CompileService(J9JITConfig *jitConfig, J9VMThread *vmThread) : _jitConfig(jitConfig), _vmThread(vmThread) { }
+   J9CompileDispatcher(J9JITConfig *jitConfig, J9VMThread *vmThread) : _jitConfig(jitConfig), _vmThread(vmThread) { }
 
-   void compile(JAAS::CompileRPCInfo *rpc) override
+   void compile(JAAS::J9CompileStream *stream) override
       {
-      auto req = rpc->getRequest();
+      stream->readBlocking();
+      auto req = stream->clientMessage();
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
       TR_J9SharedCache *cache = fej9->sharedCache();
-      J9ROMClass *romClass = (J9ROMClass*) cache->pointerFromOffsetInSharedCache((void*) req->classoffset());
-      J9ROMMethod *romMethod = (J9ROMMethod*) cache->pointerFromOffsetInSharedCache((void*) req->methodoffset());
-      void *classChainC = cache->pointerFromOffsetInSharedCache((void*) req->classchaincoffset());
-      void *classChainCL = cache->pointerFromOffsetInSharedCache((void*) req->classchaincloffset());
+      J9ROMClass *romClass = (J9ROMClass*) cache->pointerFromOffsetInSharedCache((void*) req.classoffset());
+      J9ROMMethod *romMethod = (J9ROMMethod*) cache->pointerFromOffsetInSharedCache((void*) req.methodoffset());
+      void *classChainC = cache->pointerFromOffsetInSharedCache((void*) req.classchaincoffset());
+      void *classChainCL = cache->pointerFromOffsetInSharedCache((void*) req.classchaincloffset());
       J9Method *ramMethod = ramMethodFromRomMethod(_jitConfig, _vmThread, romClass, romMethod, classChainC, classChainCL);
-      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, rpc);
+      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, stream);
       }
 
 private:

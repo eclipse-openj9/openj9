@@ -6,13 +6,9 @@
 
 namespace JAAS
 {
-   typedef grpc::ServerContext ServerContext;
-   typedef grpc::Server Server;
-   typedef grpc::Service BaseService;
    typedef grpc::Status Status;
-
-   typedef CompileSCCService::Service BaseCompileService;
-   typedef grpc::ServerAsyncResponseWriter<CompileSCCReply> CompilationResponder;
+   typedef grpc::ClientReaderWriter<J9ClientMessage, J9ServerMessage> J9ClientStream;
+   typedef grpc::ServerAsyncReaderWriter<J9ServerMessage, J9ClientMessage> J9AsyncServerStream;
 }
 
 #endif // RPC_TYPES_H

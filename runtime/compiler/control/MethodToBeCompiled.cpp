@@ -78,7 +78,7 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _entryIsCountedAsInvRequest = false;
    _GCRrequest = false;
 
-   _rpcHead = nullptr;
+   _stream = nullptr;
    _methodIsInSharedCache = TR_maybe;
 
    TR_ASSERT_FATAL(_freeTag & ENTRY_IN_POOL_FREE, "initializing an entry which is not free");

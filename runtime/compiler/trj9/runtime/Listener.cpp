@@ -39,9 +39,9 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
 
    j9thread_set_name(j9thread_self(), "JaaS Server Listener");
 
-   JAAS::AsyncServer server;
-   CompileService compileService(jitConfig, listenerThread);
-   server.runService(&compileService);
+   JAAS::J9CompileServer server;
+   J9CompileDispatcher handler(jitConfig, listenerThread);
+   server.buildAndServe(&handler);
 
    if (TR::Options::getVerboseOption(TR_VerboseJaas))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Detaching JaasServer listening thread");

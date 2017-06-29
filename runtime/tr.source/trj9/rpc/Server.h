@@ -6,163 +6,144 @@
 
 namespace JAAS
 {
-class CompileRPCInfo;
 
-class AsyncCompileService
+class J9CompileStream
    {
 public:
-
-   // Inherited class MUST call callData.finish to respond and cleanup
-   virtual void compile(CompileRPCInfo *callData) = 0;
-
-   void requestCompile(ServerContext *ctx, CompileSCCRequest *req, CompilationResponder *res, grpc::ServerCompletionQueue *cq, void *tag)
+   J9CompileStream(size_t streamNum,
+                   J9CompileService::AsyncService *service,
+                   grpc::ServerCompletionQueue *notif)
+      : _streamNum(streamNum), _service(service), _notif(notif)
       {
-      _service.RequestCompile(ctx, req, res, cq, cq, tag);
+      acceptNewRPC();
       }
 
-   CompileSCCService::AsyncService *getInnerSerice() { return &_service; }
-private:
-   CompileSCCService::AsyncService _service;
-   };
-
-class CompileRPCInfo
-   {
-public:
-   CompileRPCInfo(AsyncCompileService *service, grpc::ServerCompletionQueue *cq)
-      : _done(false), _service(service), _cq(cq), _writer(&_ctx), _next(nullptr)
+   ~J9CompileStream()
       {
-      _service->requestCompile(&_ctx, &_req, &_writer, _cq, this);
+      _cq.Shutdown();
       }
 
-   void finish(const CompileSCCReply &reply, const Status &status)
+   bool readBlocking()
       {
-      _done = true;
-      _writer.Finish(reply, status, this);
+      auto tag = (void *)_streamNum;
+      bool ok;
+
+      _stream->Read(&_cMsg, tag);
+      return _cq.Next(&tag, &ok) && ok;
       }
 
-   void finish(const CompileSCCReply &reply)
+   bool writeBlocking()
       {
-      finish(reply, Status::OK);
+      auto tag = (void *)_streamNum;
+      bool ok;
+
+      _stream->Write(_sMsg, tag);
+      return _cq.Next(&tag, &ok) && ok;
       }
 
+   // TODO: add checks for when Next fails
+   void finish()
+      {
+      auto tag = (void *)_streamNum;
+      bool ok;
+      _stream->Finish(Status::OK, tag);
+      _cq.Next(&tag, &ok);
+      acceptNewRPC();
+      }
+
+   // Hopefully temporary
    void finishWithOnlyCode(const uint32_t &code)
       {
-      CompileSCCReply rep;
-      rep.set_compilation_code(code);
-      finish(rep);
+      _sMsg.set_compilation_code(code);
+      writeBlocking();
+      finish();
       }
 
-   void proceed()
+   // For reading after calling readBlocking
+   const J9ClientMessage& clientMessage()
       {
-      if (!_done)
-         {
-         new CompileRPCInfo(_service, _cq);
-         _service->compile(this);
-         return;
-         }
-      else
-         {
-         delete this;
-         }
+      return _cMsg;
       }
 
-   CompileSCCRequest *getRequest() { return &_req; }
-   ServerContext *getContext() { return &_ctx; }
+   // For setting up the message before calling writeBlocking
+   J9ServerMessage* serverMessage()
+      {
+      return &_sMsg;
+      }
 
-   CompileRPCInfo *_next;
+   void acceptNewRPC()
+      {
+      _ctx.reset(new grpc::ServerContext);
+      _stream.reset(new J9AsyncServerStream(_ctx.get()));
+      _service->RequestCompile(_ctx.get(), _stream.get(), &_cq, _notif, (void *)_streamNum);
+      }
+
 private:
-   bool _done;
-   ServerContext _ctx;
-   AsyncCompileService *_service;
-   grpc::ServerCompletionQueue *_cq;
-   CompileSCCRequest _req;
-   CompilationResponder _writer;
+   const size_t _streamNum; // tagging for notification loop, used to identify associated CompletionQueue in vector
+   grpc::ServerCompletionQueue *_notif;
+   grpc::CompletionQueue _cq;
+   J9CompileService::AsyncService *const _service;
+   std::unique_ptr<J9AsyncServerStream> _stream;
+   std::unique_ptr<grpc::ServerContext> _ctx;
+
+   // re-usable message objects
+   J9ServerMessage _sMsg;
+   J9ClientMessage _cMsg;
    };
 
-// To create the async server:
-// Inherit from AsyncCompileService and override the method:
-// Compile(CompileData *) create the service and server; then call runService.
-class AsyncServer
+//
+// Inherited class is starting point for the received compilation request
+//
+class J9BaseCompileDispatcher
    {
 public:
-   ~AsyncServer()
+   virtual void compile(J9CompileStream *stream) = 0;
+   };
+
+class J9CompileServer
+   {
+public:
+   ~J9CompileServer()
       {
       _server->Shutdown();
-      _cq->Shutdown();
+      _notificationQueue->Shutdown();
       }
 
-   AsyncServer()
+   void buildAndServe(J9BaseCompileDispatcher *compiler)
       {
-      std::string endpoint = "0.0.0.0:38400";
-      _builder.AddListeningPort(endpoint, grpc::InsecureServerCredentials());
-      _cq = _builder.AddCompletionQueue();
-      }
+      grpc::ServerBuilder builder;
+      builder.AddListeningPort("0.0.0.0:38400", grpc::InsecureServerCredentials());
+      builder.RegisterService(&_service);
+      _notificationQueue = builder.AddCompletionQueue();
 
-   void runService(AsyncCompileService *service)
-      {
-      _service = service;
-      _builder.RegisterService(_service->getInnerSerice());
-      _server = _builder.BuildAndStart();
-      wait();
+      _server = builder.BuildAndStart();
+      serve(compiler);
       }
 
 private:
-
-   void wait()
+   void serve(J9BaseCompileDispatcher *compiler)
       {
+      bool ok = false;
       void *tag;
-      bool ok;
-      new CompileRPCInfo(_service, _cq.get());
-      // no exit logic currently
-      while (_cq->Next(&tag, &ok))
+
+      // TODO: make this nicer
+      for (size_t i = 0; i < 7; ++i)
          {
-         auto rpc = static_cast<CompileRPCInfo *>(tag);
-         if (!ok)
-            {
-            delete rpc;
-            }
-         else
-            {
-            rpc->proceed();
-            }
+         _streams.push_back(std::unique_ptr<J9CompileStream>(new J9CompileStream(i, &_service, _notificationQueue.get())));
+         }
+
+      while (true)
+         {
+         _notificationQueue->Next(&tag, &ok);
+         compiler->compile(_streams[(size_t)tag].get());
          }
       }
 
-   grpc::ServerBuilder _builder;
+
    std::unique_ptr<grpc::Server> _server;
-   AsyncCompileService *_service;
-   std::unique_ptr<grpc::ServerCompletionQueue> _cq;
-   };
-
-
-// To create the server:
-// Inherit from BaseCompileService and override the method:
-// Compile(RPC::ServerContext *, RPC::CompileSCCRequest *, RPC::CompileSCCReply *)
-// In listening thread, create the service and server; then call runService.
-class SyncServer
-   {
-public:
-   ~SyncServer()
-      {
-      _server->Shutdown();
-      }
-
-   SyncServer()
-      {
-      std::string endpoint = "0.0.0.0:38400";
-      _builder.AddListeningPort(endpoint, grpc::InsecureServerCredentials());
-      }
-
-   void runService(BaseService *service)
-      {
-      _builder.RegisterService(service);
-      _server = _builder.BuildAndStart();
-      _server->Wait();
-      }
-
-private:
-   grpc::ServerBuilder _builder;
-   std::unique_ptr<grpc::Server> _server;
+   J9CompileService::AsyncService _service;
+   std::unique_ptr<grpc::ServerCompletionQueue> _notificationQueue;
+   std::vector<std::unique_ptr<J9CompileStream>> _streams;
    };
 
 }
