@@ -14,8 +14,7 @@ public:
       : _stub(J9CompileService::NewStub(grpc::CreateChannel("localhost:38400", grpc::InsecureChannelCredentials())))
       {}
 
-   // TODO: should maybe return a const JAAS::ServerMessage& instead of having to call getReplyCode?
-   void requestCompilation(uint32_t cOffset, uint32_t mOffset, uint32_t ccCOffset, uint32_t ccCLOffset)
+   bool requestCompilation(uint32_t cOffset, uint32_t mOffset, uint32_t ccCOffset, uint32_t ccCLOffset)
       {
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->Compile(_ctx.get());
@@ -25,8 +24,9 @@ public:
       _clientMsg.set_classchaincoffset(ccCOffset);
       _clientMsg.set_classchaincloffset(ccCLOffset);
 
-      _stream->Write(_clientMsg);
-      _stream->Read(&_serverMsg);
+      if (!_stream->Write(_clientMsg))
+         return false;
+      return _stream->Read(&_serverMsg);
       }
 
    Status waitForFinish()

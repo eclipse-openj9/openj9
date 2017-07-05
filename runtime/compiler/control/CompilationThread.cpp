@@ -8165,9 +8165,13 @@ TR::CompilationInfoPerThreadBase::compile(
                   {
                   uint32_t classChainCLOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(cc)));
                   JAAS::CompilationClient client;
-                  client.requestCompilation(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset);
-                  JAAS::Status status = client.waitForFinish();
-                  if (status.ok() && (client.getReplyCode() == compilationOK || client.getReplyCode() == compilationNotNeeded))
+                  bool rc = client.requestCompilation(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset);
+                  if (rc)
+                     {
+                     JAAS::Status status = client.waitForFinish();
+                     rc = status.ok();
+                     }
+                  if (rc && (client.getReplyCode() == compilationOK || client.getReplyCode() == compilationNotNeeded))
                      {
                      UDATA flags = 0;
                      const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);

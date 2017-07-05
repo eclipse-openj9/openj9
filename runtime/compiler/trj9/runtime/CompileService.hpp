@@ -173,7 +173,11 @@ public:
 
    void compile(JAAS::J9CompileStream *stream) override
       {
-      stream->readBlocking();
+      if (!stream->readBlocking())
+         {
+         stream->finishWithOnlyCode(compilationFailure); // the connection has broken down
+         return;
+         }
       auto req = stream->clientMessage();
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
