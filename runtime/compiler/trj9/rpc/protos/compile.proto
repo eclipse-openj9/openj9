@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package JAAS;
 
-message J9ClientMessage
+message J9CompileRequest
    {
    uint32 methodOffset = 1;
    uint32 classOffset = 2;
@@ -10,9 +10,27 @@ message J9ClientMessage
    uint32 classChainCLOffset = 4;
    }
 
+message J9ClientMessage
+   {
+   oneof MessageKind
+      {
+      J9CompileRequest compile_request = 1;
+      bool single_bool = 2;
+      }
+   }
+
+enum J9InformationType
+   {
+   canMethodEnterEventBeHooked = 0;
+   }
+
 message J9ServerMessage
    {
-   uint32 compilation_code = 1;
+   oneof MessageKind
+      {
+      uint32 compilation_code = 1;
+      J9InformationType info_0 = 2;
+      }
    }
 
 service J9CompileService

@@ -19,10 +19,12 @@ public:
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->Compile(_ctx.get());
 
-      _clientMsg.set_classoffset(cOffset);
-      _clientMsg.set_methodoffset(mOffset);
-      _clientMsg.set_classchaincoffset(ccCOffset);
-      _clientMsg.set_classchaincloffset(ccCLOffset);
+      J9CompileRequest *req = _clientMsg.mutable_compile_request();
+
+      req->set_classoffset(cOffset);
+      req->set_methodoffset(mOffset);
+      req->set_classchaincoffset(ccCOffset);
+      req->set_classchaincloffset(ccCLOffset);
 
       if (!_stream->Write(_clientMsg))
          return false;

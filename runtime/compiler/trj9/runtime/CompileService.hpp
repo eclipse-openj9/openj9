@@ -178,7 +178,9 @@ public:
          stream->finishWithOnlyCode(compilationFailure); // the connection has broken down
          return;
          }
-      auto req = stream->clientMessage();
+      TR_ASSERT(stream->clientMessage().has_compile_request(), "Initial read should always be for a compile request\n");
+      auto req = stream->clientMessage().compile_request();
+
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
       TR_J9SharedCache *cache = fej9->sharedCache();
