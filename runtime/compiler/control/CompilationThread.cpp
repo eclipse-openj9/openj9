@@ -257,6 +257,29 @@ jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, v
    return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
    }
 
+static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
+   {
+   using JAAS::J9ServerMessage;
+
+   bool done = false;
+   switch (client->serverMessage().MessageKind_case())
+      {
+      case J9ServerMessage::kCompilationCode:
+         done = true;
+         break;
+
+      case J9ServerMessage::kInfo0:
+         switch (client->serverMessage().info_0())
+            {
+            case JAAS::J9InformationType::canMethodEnterEventBeHooked:
+               client->clientMessage()->set_single_bool(fe->canMethodEnterEventBeHooked());
+               break;
+            }
+         break;
+      }
+   return done;
+   }
+
 inline void
 TR::CompilationInfo::incrementMethodQueueSize()
    {
@@ -3958,7 +3981,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       }
 #endif
 
-   JAAS::J9CompileStream *rpc = static_cast<JAAS::J9CompileStream *>(extra);
+   JAAS::J9ServerStream *rpc = static_cast<JAAS::J9ServerStream *>(extra);
 
    // Add this method to the queue of methods waiting to be compiled.
    TR_MethodToBeCompiled *cur = NULL, *prev = NULL;
@@ -8164,14 +8187,23 @@ TR::CompilationInfoPerThreadBase::compile(
                if (cc)
                   {
                   uint32_t classChainCLOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(cc)));
-                  JAAS::CompilationClient client;
-                  bool rc = client.requestCompilation(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset);
-                  if (rc)
+                  JAAS::J9ClientStream client;
+                  bool done = false;
+                  client.buildCompileRequest(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset);
+                  while(!done)
+                     {
+                     if (!client.writeBlocking())
+                        break;
+                     if (!client.readBlocking())
+                        break;
+                     done = handleServerMessage(&client, compiler->fej9());
+                     }
+                  if (done)
                      {
                      JAAS::Status status = client.waitForFinish();
-                     rc = status.ok();
+                     done = status.ok();
                      }
-                  if (rc && (client.getReplyCode() == compilationOK || client.getReplyCode() == compilationNotNeeded))
+                  if (done && (client.getReplyCode() == compilationOK || client.getReplyCode() == compilationNotNeeded))
                      {
                      UDATA flags = 0;
                      const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);

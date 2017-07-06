@@ -7,10 +7,10 @@
 namespace JAAS
 {
 
-class J9CompileStream
+class J9ServerStream
    {
 public:
-   J9CompileStream(size_t streamNum,
+   J9ServerStream(size_t streamNum,
                    J9CompileService::AsyncService *service,
                    grpc::ServerCompletionQueue *notif)
       : _streamNum(streamNum), _service(service), _notif(notif)
@@ -18,7 +18,7 @@ public:
       acceptNewRPC();
       }
 
-   ~J9CompileStream()
+   ~J9ServerStream()
       {
       _cq.Shutdown();
       }
@@ -74,7 +74,7 @@ public:
    void acceptNewRPC()
       {
       _ctx.reset(new grpc::ServerContext);
-      _stream.reset(new J9AsyncServerStream(_ctx.get()));
+      _stream.reset(new J9ServerReaderWriter(_ctx.get()));
       _service->RequestCompile(_ctx.get(), _stream.get(), &_cq, _notif, (void *)_streamNum);
       }
 
@@ -83,7 +83,7 @@ private:
    grpc::ServerCompletionQueue *_notif;
    grpc::CompletionQueue _cq;
    J9CompileService::AsyncService *const _service;
-   std::unique_ptr<J9AsyncServerStream> _stream;
+   std::unique_ptr<J9ServerReaderWriter> _stream;
    std::unique_ptr<grpc::ServerContext> _ctx;
 
    // re-usable message objects
@@ -97,7 +97,7 @@ private:
 class J9BaseCompileDispatcher
    {
 public:
-   virtual void compile(J9CompileStream *stream) = 0;
+   virtual void compile(J9ServerStream *stream) = 0;
    };
 
 class J9CompileServer
@@ -129,7 +129,7 @@ private:
       // TODO: make this nicer
       for (size_t i = 0; i < 7; ++i)
          {
-         _streams.push_back(std::unique_ptr<J9CompileStream>(new J9CompileStream(i, &_service, _notificationQueue.get())));
+         _streams.push_back(std::unique_ptr<J9ServerStream>(new J9ServerStream(i, &_service, _notificationQueue.get())));
          }
 
       while (true)
@@ -143,7 +143,7 @@ private:
    std::unique_ptr<grpc::Server> _server;
    J9CompileService::AsyncService _service;
    std::unique_ptr<grpc::ServerCompletionQueue> _notificationQueue;
-   std::vector<std::unique_ptr<J9CompileStream>> _streams;
+   std::vector<std::unique_ptr<J9ServerStream>> _streams;
    };
 
 }

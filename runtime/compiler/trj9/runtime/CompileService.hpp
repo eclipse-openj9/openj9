@@ -57,7 +57,7 @@ J9Method *ramMethodFromRomMethod(J9JITConfig *jitConfig, J9VMThread *vmThread,
 
 void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread, 
                   J9ROMClass* romClass, const J9ROMMethod* romMethod, 
-                  J9Method* ramMethod, JAAS::J9CompileStream *rpc)
+                  J9Method* ramMethod, JAAS::J9ServerStream *rpc)
    {
    J9UTF8 *methodNameUTF = J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature);
    std::string methodNameStr((const char*)methodNameUTF->data, (size_t)methodNameUTF->length);
@@ -171,7 +171,7 @@ class J9CompileDispatcher : public JAAS::J9BaseCompileDispatcher
 public:
    J9CompileDispatcher(J9JITConfig *jitConfig, J9VMThread *vmThread) : _jitConfig(jitConfig), _vmThread(vmThread) { }
 
-   void compile(JAAS::J9CompileStream *stream) override
+   void compile(JAAS::J9ServerStream *stream) override
       {
       if (!stream->readBlocking())
          {

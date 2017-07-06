@@ -7,14 +7,14 @@
 namespace JAAS
 {
 
-class CompilationClient
+class J9ClientStream
    {
 public:
-   CompilationClient()
+   J9ClientStream()
       : _stub(J9CompileService::NewStub(grpc::CreateChannel("localhost:38400", grpc::InsecureChannelCredentials())))
       {}
 
-   bool requestCompilation(uint32_t cOffset, uint32_t mOffset, uint32_t ccCOffset, uint32_t ccCLOffset)
+   bool buildCompileRequest(uint32_t cOffset, uint32_t mOffset, uint32_t ccCOffset, uint32_t ccCLOffset)
       {
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->Compile(_ctx.get());
@@ -25,10 +25,6 @@ public:
       req->set_methodoffset(mOffset);
       req->set_classchaincoffset(ccCOffset);
       req->set_classchaincloffset(ccCLOffset);
-
-      if (!_stream->Write(_clientMsg))
-         return false;
-      return _stream->Read(&_serverMsg);
       }
 
    Status waitForFinish()
@@ -41,10 +37,26 @@ public:
       return _serverMsg.compilation_code();
       }
 
+   const JAAS::J9ServerMessage & serverMessage()
+      { return _serverMsg; }
+
+   JAAS::J9ClientMessage * clientMessage()
+      { return &_clientMsg; }
+
+   bool readBlocking()
+      {
+      return _stream->Read(&_serverMsg);
+      }
+
+   bool writeBlocking()
+      {
+      return _stream->Write(_clientMsg);
+      }
+
 private:
    std::unique_ptr<JAAS::J9CompileService::Stub> _stub;
    std::unique_ptr<grpc::ClientContext> _ctx;
-   std::unique_ptr<JAAS::J9ClientStream> _stream;
+   std::unique_ptr<JAAS::J9ClientReaderWriter> _stream;
 
    // re-useable message objects
    JAAS::J9ClientMessage _clientMsg;

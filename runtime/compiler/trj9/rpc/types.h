@@ -7,8 +7,8 @@
 namespace JAAS
 {
    typedef grpc::Status Status;
-   typedef grpc::ClientReaderWriter<J9ClientMessage, J9ServerMessage> J9ClientStream;
-   typedef grpc::ServerAsyncReaderWriter<J9ServerMessage, J9ClientMessage> J9AsyncServerStream;
+   typedef grpc::ClientReaderWriter<J9ClientMessage, J9ServerMessage> J9ClientReaderWriter;
+   typedef grpc::ServerAsyncReaderWriter<J9ServerMessage, J9ClientMessage> J9ServerReaderWriter;
 }
 
 #endif // RPC_TYPES_H
