@@ -373,7 +373,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/runtime/OMRCodeCacheManager.cpp \
     omr/compiler/runtime/OMRCodeCacheMemorySegment.cpp \
     omr/compiler/runtime/OMRRuntimeAssumptions.cpp \
-    compiler/trj9/runtime/Listener.cpp
+    compiler/trj9/runtime/Listener.cpp \
+    compiler/trj9/env/VMJ9Server.cpp
 
 -include $(JIT_MAKE_DIR)/files/extra.mk
 include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk
