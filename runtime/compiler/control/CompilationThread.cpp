@@ -274,8 +274,20 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
             case JAAS::J9InformationType::canMethodEnterEventBeHooked:
                client->clientMessage()->set_single_bool(fe->canMethodEnterEventBeHooked());
                break;
+            case JAAS::J9InformationType::canMethodExitEventBeHooked:
+               client->clientMessage()->set_single_bool(fe->canMethodExitEventBeHooked());
+               break;
             }
          break;
+
+      case J9ServerMessage::kInfo1:
+         switch (client->serverMessage().info_1().info())
+            {  
+            case JAAS::J9InformationType::isInterfaceClass:
+               TR_OpaqueClassBlock *clazzPointer = (TR_OpaqueClassBlock*) fe->sharedCache()->pointerFromOffsetInSharedCache((void*)client->serverMessage().info_1().param_1());
+               client->clientMessage()->set_single_bool(fe->isInterfaceClass(clazzPointer));
+               break;
+            }
       }
    return done;
    }
