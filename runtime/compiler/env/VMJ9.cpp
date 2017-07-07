@@ -22,6 +22,7 @@
 
 #define J9_EXTERNAL_TO_VM
 
+#include "env/VMJ9Server.hpp"
 #include "env/VMJ9.h"
 
 #include <algorithm>
@@ -840,10 +841,17 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
          if (!aotVMWithThreadInfo)
             {
             PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-            void * alloc = j9mem_allocate_memory(sizeof(TR_J9SharedCacheVM), J9MEM_CATEGORY_JIT);
+            void *alloc = nullptr;
+            if (vmWithoutThreadInfo->_compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+               alloc = j9mem_allocate_memory(sizeof(TR_J9ServerVM), J9MEM_CATEGORY_JIT);
+            else
+               alloc = j9mem_allocate_memory(sizeof(TR_J9SharedCacheVM), J9MEM_CATEGORY_JIT);
             if (alloc)
                {
-               aotVMWithThreadInfo =  new (alloc) TR_J9SharedCacheVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
+               if (vmWithoutThreadInfo->_compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+                  aotVMWithThreadInfo = new (alloc) TR_J9ServerVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
+               else
+                  aotVMWithThreadInfo = new (alloc) TR_J9SharedCacheVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
                }
             if (aotVMWithThreadInfo)
                {
