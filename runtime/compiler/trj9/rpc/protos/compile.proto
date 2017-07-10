@@ -23,13 +23,6 @@ enum J9InformationType
    {
    canMethodEnterEventBeHooked = 0;
    canMethodExitEventBeHooked = 1;
-   isInterfaceClass = 2;
-   }
-
-message J9InformationType_Param_1
-   {
-   J9InformationType info = 1;
-   uint32 param_1 = 2;
    }
 
 message J9ServerMessage
@@ -38,7 +31,6 @@ message J9ServerMessage
       {
       uint32 compilation_code = 1;
       J9InformationType info_0 = 2;
-      J9InformationType_Param_1 info_1 = 3;
       }
    }
 

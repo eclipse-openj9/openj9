@@ -12,7 +12,6 @@ public:
 
    virtual bool canMethodEnterEventBeHooked() override;
    virtual bool canMethodExitEventBeHooked() override;
-   virtual bool isInterfaceClass(TR_OpaqueClassBlock *) override;
    };
 
 #endif // VMJ9SERVER_H
