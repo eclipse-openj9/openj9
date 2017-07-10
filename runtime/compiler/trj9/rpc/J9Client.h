@@ -1,5 +1,5 @@
-#ifndef JAAS_CLIENT_H
-#define JAAS_CLIENT_H
+#ifndef J9_CLIENT_H
+#define J9_CLIENT_H
 
 #include <grpc++/grpc++.h>
 #include "rpc/types.h"
@@ -65,4 +65,4 @@ private:
 
 }
 
-#endif // JAAS_CLIENT_H
+#endif // J9_CLIENT_H

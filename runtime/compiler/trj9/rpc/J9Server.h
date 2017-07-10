@@ -1,5 +1,5 @@
-#ifndef RPC_SERVER_H
-#define RPC_SERVER_H
+#ifndef J9_SERVER_H
+#define J9_SERVER_H
 
 #include <grpc++/grpc++.h>
 #include "rpc/types.h"
@@ -148,4 +148,4 @@ private:
 
 }
 
-#endif // RPC_SERVER_H
+#endif // J9_SERVER_H

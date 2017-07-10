@@ -35,8 +35,8 @@
 
 // This needs to go first because OMR redefines null and gRPC doesn't like that.
 // TODO maybe we can move the gRPC include into a Client.cpp
-#include "rpc/Server.h"
-#include "rpc/Client.h"
+#include "rpc/J9Server.h"
+#include "rpc/J9Client.h"
 
 #include "control/CompilationThread.hpp"
 
