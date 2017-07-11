@@ -2,7 +2,7 @@
 #define J9_SERVER_H
 
 #include <grpc++/grpc++.h>
-#include "rpc/Types.h"
+#include "rpc/types.h"
 
 namespace JAAS
 {
