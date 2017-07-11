@@ -173,23 +173,28 @@ public:
 
    void compile(JAAS::J9ServerStream *stream) override
       {
-      if (!stream->readBlocking())
+      try
          {
-         stream->finishWithOnlyCode(compilationFailure); // the connection has broken down
-         return;
-         }
-      TR_ASSERT(stream->clientMessage().has_compile_request(), "Initial read should always be for a compile request\n");
-      auto req = stream->clientMessage().compile_request();
+         stream->readBlocking();
+         TR_ASSERT(stream->clientMessage().has_compile_request(), "Initial read should always be for a compile request\n");
+         auto req = stream->clientMessage().compile_request();
 
-      PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
-      TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
-      TR_J9SharedCache *cache = fej9->sharedCache();
-      J9ROMClass *romClass = (J9ROMClass*) cache->pointerFromOffsetInSharedCache((void*) req.classoffset());
-      J9ROMMethod *romMethod = (J9ROMMethod*) cache->pointerFromOffsetInSharedCache((void*) req.methodoffset());
-      void *classChainC = cache->pointerFromOffsetInSharedCache((void*) req.classchaincoffset());
-      void *classChainCL = cache->pointerFromOffsetInSharedCache((void*) req.classchaincloffset());
-      J9Method *ramMethod = ramMethodFromRomMethod(_jitConfig, _vmThread, romClass, romMethod, classChainC, classChainCL);
-      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, stream);
+         PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+         TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
+         TR_J9SharedCache *cache = fej9->sharedCache();
+         J9ROMClass *romClass = (J9ROMClass*) cache->pointerFromOffsetInSharedCache((void*) req.classoffset());
+         J9ROMMethod *romMethod = (J9ROMMethod*) cache->pointerFromOffsetInSharedCache((void*) req.methodoffset());
+         void *classChainC = cache->pointerFromOffsetInSharedCache((void*) req.classchaincoffset());
+         void *classChainCL = cache->pointerFromOffsetInSharedCache((void*) req.classchaincloffset());
+         J9Method *ramMethod = ramMethodFromRomMethod(_jitConfig, _vmThread, romClass, romMethod, classChainC, classChainCL);
+         doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, stream);
+         }
+      catch (const JAAS::StreamFailure &e)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Stream failed in server compilation dispatcher thread.");
+         stream->cancel();
+         }
       }
 
 private:

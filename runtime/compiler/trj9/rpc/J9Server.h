@@ -3,6 +3,8 @@
 
 #include <grpc++/grpc++.h>
 #include "rpc/types.h"
+#include "control/Options.hpp"
+#include "env/VerboseLog.hpp"
 
 namespace JAAS
 {
@@ -23,22 +25,24 @@ public:
       _cq.Shutdown();
       }
 
-   bool readBlocking()
+   void readBlocking()
       {
       auto tag = (void *)_streamNum;
       bool ok;
 
       _stream->Read(&_cMsg, tag);
-      return _cq.Next(&tag, &ok) && ok;
+      if (!_cq.Next(&tag, &ok) || !ok)
+         throw JAAS::StreamFailure();
       }
 
-   bool writeBlocking()
+   void writeBlocking()
       {
       auto tag = (void *)_streamNum;
       bool ok;
 
       _stream->Write(_sMsg, tag);
-      return _cq.Next(&tag, &ok) && ok;
+      if (!_cq.Next(&tag, &ok) || !ok)
+         throw JAAS::StreamFailure();
       }
 
    // TODO: add checks for when Next fails
@@ -51,12 +55,33 @@ public:
       acceptNewRPC();
       }
 
+   // Same as finish, but with Status::CANCELLED
+   void cancel()
+      {
+      auto tag = (void *)_streamNum;
+      bool ok;
+      _stream->Finish(Status::CANCELLED, tag);
+      _cq.Next(&tag, &ok);
+      acceptNewRPC();
+      }
+
    // Hopefully temporary
    void finishWithOnlyCode(const uint32_t &code)
       {
       _sMsg.set_compilation_code(code);
-      writeBlocking();
-      finish();
+      try
+         {
+         writeBlocking();
+         finish();
+         }
+
+      catch (const JAAS::StreamFailure &e)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server-Client stream failed before finishing");
+         // Cleanup using cancel instead of finish
+         cancel();
+         }
       }
 
    // For reading after calling readBlocking
