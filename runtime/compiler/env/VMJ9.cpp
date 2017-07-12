@@ -844,27 +844,29 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
             TR_J9VMBase * vmWithThreadInfo = static_cast<TR_J9VMBase *>(vmThread->jitVMwithThreadInfo);
             compInfoPT = vmWithThreadInfo->_compInfoPT;
             }
-         else if (vmWithoutThreadInfo->_compInfo)
+         if (!compInfoPT && vmWithoutThreadInfo->_compInfo)
             {
             compInfoPT = vmWithoutThreadInfo->_compInfo->getCompInfoForThread(vmThread);
             }
          TR_ASSERT(compInfoPT, "Tried to create a TR_J9ServerVM without compInfoPT");
 
-         if (!compInfoPT->serverVMwithThreadInfo)
+         TR_J9ServerVM *serverVM = compInfoPT->getServerVM();
+         if (!serverVM)
             {
             PORT_ACCESS_FROM_JITCONFIG(jitConfig);
             void * alloc = j9mem_allocate_memory(sizeof(TR_J9ServerVM), J9MEM_CATEGORY_JIT);
             if (alloc)
-               compInfoPT->serverVMwithThreadInfo = new (alloc) TR_J9ServerVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
-            if (compInfoPT->serverVMwithThreadInfo)
+               serverVM = new (alloc) TR_J9ServerVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
+            if (serverVM)
                {
-               compInfoPT->serverVMwithThreadInfo->_vmThreadIsCompilationThread = TR_yes;
-               compInfoPT->serverVMwithThreadInfo->_compInfoPT = compInfoPT;
+               serverVM->_vmThreadIsCompilationThread = TR_yes;
+               serverVM->_compInfoPT = compInfoPT;
+               compInfoPT->setServerVM(serverVM);
                }
             else
                throw std::bad_alloc();
             }
-         return compInfoPT->serverVMwithThreadInfo;
+         return serverVM;
          }
       if (vmType==AOT_VM)
          {

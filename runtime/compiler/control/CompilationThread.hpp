@@ -351,12 +351,13 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    void                   setLastCompilationDuration(int32_t t) { _lastCompilationDuration = t; }
    bool                   isDiagnosticThread() const { return _isDiagnosticThread; }
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
-
-   TR_J9ServerVM         *serverVMwithThreadInfo;
+   TR_J9ServerVM         *getServerVM() { return _serverVM; }
+   void                   setServerVM(TR_J9ServerVM *vm) { _serverVM = vm; }
 
    private:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
 
+   TR_J9ServerVM         *_serverVM;
    j9thread_t             _osThread;
    J9VMThread            *_compilationThread;
    int32_t                _compThreadPriority; // to reduce number of checks

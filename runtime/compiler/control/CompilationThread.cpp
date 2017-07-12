@@ -814,6 +814,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    _numJITCompilations = 0;
    _lastTimeThreadWasSuspended = 0;
    _lastTimeThreadWentToSleep = 0;
+   _serverVM = nullptr;
    }
 
 TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :

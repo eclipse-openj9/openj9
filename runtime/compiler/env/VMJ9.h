@@ -219,7 +219,7 @@ public:
       , J9_VM
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
       , AOT_VM
-      , J9_SERVER_VM
+      , J9_SERVER_VM                          // for jit-as-a-service
 #endif
       };
 
