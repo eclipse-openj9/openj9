@@ -66,7 +66,7 @@ public:
       }
 
    // Hopefully temporary
-   void finishWithOnlyCode(const uint32_t &code)
+   void finishWithOnlyCode(uint32_t code)
       {
       _sMsg.set_compilation_code(code);
       try
