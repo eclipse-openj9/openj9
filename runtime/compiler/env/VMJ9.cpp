@@ -834,6 +834,38 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
       // Check if this thread has cached the frontend inside
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
+      if (vmType==J9_SERVER_VM)
+         {
+         TR::CompilationInfoPerThread *compInfoPT = nullptr;
+         // Get the compInfoPT from the cached J9_VM with thread info
+         // or search using the compInfo from the J9_VM without thread info
+         if (vmThread->jitVMwithThreadInfo)
+            {
+            TR_J9VMBase * vmWithThreadInfo = static_cast<TR_J9VMBase *>(vmThread->jitVMwithThreadInfo);
+            compInfoPT = vmWithThreadInfo->_compInfoPT;
+            }
+         else if (vmWithoutThreadInfo->_compInfo)
+            {
+            compInfoPT = vmWithoutThreadInfo->_compInfo->getCompInfoForThread(vmThread);
+            }
+         TR_ASSERT(compInfoPT, "Tried to create a TR_J9ServerVM without compInfoPT");
+
+         if (!compInfoPT->serverVMwithThreadInfo)
+            {
+            PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+            void * alloc = j9mem_allocate_memory(sizeof(TR_J9ServerVM), J9MEM_CATEGORY_JIT);
+            if (alloc)
+               compInfoPT->serverVMwithThreadInfo = new (alloc) TR_J9ServerVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
+            if (compInfoPT->serverVMwithThreadInfo)
+               {
+               compInfoPT->serverVMwithThreadInfo->_vmThreadIsCompilationThread = TR_yes;
+               compInfoPT->serverVMwithThreadInfo->_compInfoPT = compInfoPT;
+               }
+            else
+               throw std::bad_alloc();
+            }
+         return compInfoPT->serverVMwithThreadInfo;
+         }
       if (vmType==AOT_VM)
          {
          TR_J9VMBase * aotVMWithThreadInfo = static_cast<TR_J9VMBase *>(vmThread->aotVMwithThreadInfo);
@@ -841,17 +873,10 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
          if (!aotVMWithThreadInfo)
             {
             PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-            void *alloc = nullptr;
-            if (vmWithoutThreadInfo->_compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
-               alloc = j9mem_allocate_memory(sizeof(TR_J9ServerVM), J9MEM_CATEGORY_JIT);
-            else
-               alloc = j9mem_allocate_memory(sizeof(TR_J9SharedCacheVM), J9MEM_CATEGORY_JIT);
+            void * alloc = j9mem_allocate_memory(sizeof(TR_J9SharedCacheVM), J9MEM_CATEGORY_JIT);
             if (alloc)
                {
-               if (vmWithoutThreadInfo->_compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
-                  aotVMWithThreadInfo = new (alloc) TR_J9ServerVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
-               else
-                  aotVMWithThreadInfo = new (alloc) TR_J9SharedCacheVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
+               aotVMWithThreadInfo = new (alloc) TR_J9SharedCacheVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
                }
             if (aotVMWithThreadInfo)
                {

@@ -44,6 +44,7 @@
 #include "env/IO.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "env/J9SegmentCache.hpp"
+#include "env/VMJ9Server.hpp"
 
 #define METHOD_POOL_SIZE_THRESHOLD 64
 #define MAX_SAMPLING_FREQUENCY     0x7FFFFFFF
@@ -350,6 +351,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    void                   setLastCompilationDuration(int32_t t) { _lastCompilationDuration = t; }
    bool                   isDiagnosticThread() const { return _isDiagnosticThread; }
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
+
+   TR_J9ServerVM         *serverVMwithThreadInfo;
 
    private:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);

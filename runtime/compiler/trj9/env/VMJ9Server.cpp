@@ -9,8 +9,6 @@ TR_J9ServerVM::canMethodEnterEventBeHooked()
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
 
-   if (!stream)
-      return TR_J9VMBase::canMethodEnterEventBeHooked();
    stream->serverMessage()->set_info_0(JAAS::J9InformationType::canMethodEnterEventBeHooked);
    stream->writeBlocking();
    stream->readBlocking();
@@ -19,11 +17,9 @@ TR_J9ServerVM::canMethodEnterEventBeHooked()
 
 bool
 TR_J9ServerVM::canMethodExitEventBeHooked()
-   {   
+   {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
 
-   if (!stream)
-      return TR_J9VMBase::canMethodExitEventBeHooked();
    stream->serverMessage()->set_info_0(JAAS::J9InformationType::canMethodExitEventBeHooked);
    stream->writeBlocking();
    stream->readBlocking();

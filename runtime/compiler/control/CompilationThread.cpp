@@ -6439,8 +6439,13 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             }
          }
       }
-   
-   if (canDoRelocatableCompile)
+
+   if (canDoRelocatableCompile && entry->_stream)
+      {
+      vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM);
+      entry->_useAotCompilation = true;
+      }
+   else if (canDoRelocatableCompile)
       {
       _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
       entry->_useAotCompilation = true;
