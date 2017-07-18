@@ -8334,11 +8334,11 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    TR::CompilationInfoPerThreadBase *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
    _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
 
-   // this pointer is only valid on the client!
-   // beware!
-   _ramMethod = (J9Method *)aMethod;
+   // set _ramMethod to null so it's easy to catch uses of it
+   _ramMethod = nullptr;
+   _clientRamMethod = (J9ClientRAMMethod *)aMethod;
 
-   _stream->serverMessage()->set_get_rom_class_and_method_from_ram_method((uint64_t) _ramMethod);
+   _stream->serverMessage()->set_get_rom_class_and_method_from_ram_method((uint64_t) _clientRamMethod);
    _stream->writeBlocking();
    _stream->readBlocking();
    const JAAS::ROMClassAndMethod &romClassAndMethod = _stream->clientMessage().rom_class_and_method();
@@ -8356,7 +8356,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _romLiterals = (J9ROMConstantPoolItem *) ((UDATA)romClassPtr() + sizeof(J9ROMClass));
 
    _vTableSlot = vTableSlot;
-   _j9classForNewInstance = NULL;
+   _j9classForNewInstance = nullptr;
    
    // JAAS TODO For now we assume there's no fast JNI
    if (false && supportsFastJNI(fe))
@@ -8380,30 +8380,15 @@ TR_ResolvedJ9JAASServerMethod::romClassPtr()
    return _romClass;
    }
 
-J9Class *
-TR_ResolvedJ9JAASServerMethod::constantPoolHdr()
-   {
-   // JAAS TODO
-   return nullptr;
-   }
 
-J9RAMConstantPoolItem *
-TR_ResolvedJ9JAASServerMethod::literals()
-   {
-   // JAAS TODO
-   return nullptr;
-   }
-
-// JAAS TODO: can probably just return null
-//char *
+// JAAS TODO methods
+// these all use RAM data in some way
+// 
 //TR_ResolvedJ9Method::localName(U_32 slotNumber, U_32 bcIndex, I_32 &len, TR_Memory *trMemory)
 //
 //romCPBase
 //
-//
-//I_32
-//TR_ResolvedJ9MethodBase::exceptionData(
-   //J9ExceptionHandler * eh, I_32 bcOffset, I_32 exceptionNumber, I_32 * startIndex, I_32 * endIndex, I_32 * catchType)
+//TR_ResolvedJ9MethodBase::exceptionData(J9ExceptionHandler * eh, I_32 bcOffset, I_32 exceptionNumber, I_32 * startIndex, I_32 * endIndex, I_32 * catchType)
 //
 // TR_ResolvedJ9MethodBase::isInlineable(TR::Compilation *comp)
 //
