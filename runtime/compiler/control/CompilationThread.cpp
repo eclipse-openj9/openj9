@@ -279,6 +279,18 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
                break;
             }
          break;
+      case J9ServerMessage::kGetRomClassAndMethodFromRamMethod:
+            {
+            uint64_t reqRamMethod = client->serverMessage().get_rom_class_and_method_from_ram_method();
+            J9Method *ramMethod = (J9Method*) reqRamMethod;
+            J9Class *methodClass = J9_CLASS_FROM_METHOD(ramMethod);
+            J9ROMClass *romClass = methodClass->romClass;
+            uint64_t methodIndex = getMethodIndexUnchecked(ramMethod);
+            std::string romClassStr((char *) romClass, romClass->romSize);
+            client->clientMessage()->mutable_rom_class_and_method()->set_rom_class(romClassStr);
+            client->clientMessage()->mutable_rom_class_and_method()->set_method_index(methodIndex);
+            }
+         break;
       }
    return done;
    }
