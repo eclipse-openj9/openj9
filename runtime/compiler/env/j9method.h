@@ -23,6 +23,7 @@
 #ifndef j9method_h
 #define j9method_h
 
+#include "rpc/J9Server.h"
 #include "codegen/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
@@ -241,17 +242,19 @@ public:
 
    };
 
-
 class TR_ResolvedJ9Method : public TR_J9Method, public TR_ResolvedJ9MethodBase
    {
 public:
    TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
+   // JAAS: make virtual
+   //
+   // JAAS TODO: make protected, returning Opaque versions
    J9Method *              ramMethod() { return _ramMethod; }
    J9ROMMethod *           romMethod() { return _romMethod; }
-   J9Class *               constantPoolHdr();
-   J9ROMClass *            romClassPtr();
-   J9RAMConstantPoolItem * literals();   // address of 1st CP entry (with type being an entry for array indexing)
+   virtual J9Class *               constantPoolHdr();
+   virtual J9ROMClass *            romClassPtr();
+   virtual J9RAMConstantPoolItem * literals();   // address of 1st CP entry (with type being an entry for array indexing)
 
 
    uint32_t                methodModifiers();
@@ -460,8 +463,11 @@ public:
 
 protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }
+   TR_ResolvedJ9Method(TR_FrontEnd *, TR_OpaqueMethodBlock *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0);
+   virtual void construct(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot = 0);
 
-private:
+// JAAS TODO
+//private:
    virtual TR_ResolvedMethod *createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
 
    virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
@@ -562,5 +568,19 @@ private:
    J9ExceptionHandler * exceptionHandler();
    };
 #endif
+
+class TR_ResolvedJ9JAASServerMethod : public TR_ResolvedJ9Method
+   {
+public:
+   TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
+
+   virtual J9ROMClass *romClassPtr();
+   virtual J9Class *constantPoolHdr();
+   virtual J9RAMConstantPoolItem *literals();
+
+private:
+   JAAS::J9ServerStream *_stream;
+   J9ROMClass *_romClass;
+   };
 
 #endif

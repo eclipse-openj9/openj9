@@ -60,6 +60,7 @@
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "runtime/IProfiler.hpp"
 #include "ras/DebugCounter.hpp"
+#include "control/MethodToBeCompiled.hpp"
 
 #if defined(_MSC_VER)
 #include <malloc.h>
@@ -2266,6 +2267,18 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       _jniTargetAddress = NULL;
       }
 
+   construct(aMethod, fe, trMemory, owner, vTableSlot);
+   }
+
+// protected constructor to be used by JAAS
+// had to reorder arguments to prevent ambiguity with above constructor (because the way constructors work in C++ is awful)
+TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_OpaqueMethodBlock * aMethod, TR_Memory * trMemory, TR_ResolvedMethod * owner)
+   : TR_J9Method(fe, trMemory, aMethod), TR_ResolvedJ9MethodBase(fe, owner), _pendingPushSlots(-1)
+   {
+   }
+
+void TR_ResolvedJ9Method::construct(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot)
+   {
 #define x(a, b, c) a, sizeof(b) - 1, b, (int16_t)strlen(c), c
 
    struct X
@@ -2275,7 +2288,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       const char * _name;
       int16_t _sigLen;
       const char * _sig;
-   };
+      };
 
    static X ArrayListMethods[] =
       {
@@ -8305,3 +8318,237 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
 
    return result;
    }
+
+//
+//
+// JAAS
+//
+//
+
+TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
+   : TR_ResolvedJ9Method(fe, aMethod, trMemory, owningMethod)
+   {
+
+   TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(j9fe->getJ9JITConfig());
+   TR::CompilationInfoPerThreadBase *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
+   _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
+
+   // this pointer is only valid on the client!
+   // beware!
+   _ramMethod = (J9Method *)aMethod;
+
+   _stream->serverMessage()->set_get_rom_class_and_method_from_ram_method((uint64_t) _ramMethod);
+   _stream->writeBlocking();
+   _stream->readBlocking();
+   const JAAS::ROMClassAndMethod &romClassAndMethod = _stream->clientMessage().rom_class_and_method();
+   const std::string &romClassStr = romClassAndMethod.rom_class();
+
+   _romClass = (J9ROMClass*) trMemory->allocateHeapMemory(romClassStr.size());
+   memcpy(_romClass, &romClassStr[0], romClassStr.size());
+
+   // get rom method
+   uint64_t methodIndex = romClassAndMethod.method_index();
+   TR_ASSERT(methodIndex < UDATA_MAX, "method not in class!!!");
+   _romMethod = J9ROMCLASS_ROMMETHODS(_romClass);
+   while (methodIndex--) _romMethod = nextROMMethod(_romMethod);
+
+   _romLiterals = (J9ROMConstantPoolItem *) ((UDATA)romClassPtr() + sizeof(J9ROMClass));
+
+   _vTableSlot = vTableSlot;
+   _j9classForNewInstance = NULL;
+   
+   // JAAS TODO For now we assume there's no fast JNI
+   if (false && supportsFastJNI(fe))
+      {
+      // a non-NULL target address is returned for both JNI natives and non-JNI natives with FastJNI replacements, NULL otherwise
+      // properties will be non-zero IFF the target address points to a FastJNI replacement
+      _jniTargetAddress = j9fe->getJ9JITConfig()->javaVM->internalVMFunctions->jniNativeMethodProperties(j9fe->vmThread(), _ramMethod, &_jniProperties);
+      }
+   else
+      {
+      _jniProperties = 0;
+      _jniTargetAddress = NULL;
+      }
+
+   construct(aMethod, fe, trMemory, owningMethod, vTableSlot);
+   }
+
+J9ROMClass *
+TR_ResolvedJ9JAASServerMethod::romClassPtr()
+   {
+   return _romClass;
+   }
+
+J9Class *
+TR_ResolvedJ9JAASServerMethod::constantPoolHdr()
+   {
+   // JAAS TODO
+   return nullptr;
+   }
+
+J9RAMConstantPoolItem *
+TR_ResolvedJ9JAASServerMethod::literals()
+   {
+   // JAAS TODO
+   return nullptr;
+   }
+
+// JAAS TODO: can probably just return null
+//char *
+//TR_ResolvedJ9Method::localName(U_32 slotNumber, U_32 bcIndex, I_32 &len, TR_Memory *trMemory)
+//
+//romCPBase
+//
+//
+//I_32
+//TR_ResolvedJ9MethodBase::exceptionData(
+   //J9ExceptionHandler * eh, I_32 bcOffset, I_32 exceptionNumber, I_32 * startIndex, I_32 * endIndex, I_32 * catchType)
+//
+// TR_ResolvedJ9MethodBase::isInlineable(TR::Compilation *comp)
+//
+// TR_ResolvedJ9MethodBase::_genMethodILForPeeking(TR::ResolvedMethodSymbol *methodSymbol, TR::Compilation *c, bool resetVisitCount,  TR_PrexArgInfo* argInfo)
+//
+// TR_ResolvedRelocatableJ9Method::getClassFromConstantPool(TR::Compilation *comp, uint32_t cpIndex, bool returnClassForAOT)
+//
+// TR_ResolvedRelocatableJ9Method::getUnresolvedFieldInCP(I_32 cpIndex)
+//
+// bool storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass)
+//
+// TR_ResolvedRelocatableJ9Method::staticAttributes(TR::Compilation * comp,
+//
+// TR_ResolvedRelocatableJ9Method::getUnresolvedMethodInCP(TR_OpaqueMethodBlock *aMethod)
+//
+//TR_ResolvedRelocatableJ9Method::getUnresolvedStaticMethodInCP(I_32 cpIndex)
+//
+//`static bool doResolveAtRuntime(J9Method *method, I_32 cpIndex, TR::Compilation *comp)
+//
+// TR_ResolvedRelocatableJ9Method::getUnresolvedSpecialMethodInCP(I_32 cpIndex)
+//
+// TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation *comp, I_32 cpIndex, uint32_t vTableSlot, J9Method *j9method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats)
+//
+// TR_ResolvedRelocatableJ9Method::getNonPersistentIdentifier()
+//
+// TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
+//
+// TR_ResolvedJ9Method::getInvocationCount()
+//
+// TR_ResolvedJ9Method::setInvocationCount(intptrj_t oldCount, intptrj_t newCount)
+//
+// TR_ResolvedJ9Method::isSameMethod(TR_ResolvedMethod * m2)
+//
+// bool TR_ResolvedJ9Method::isSubjectToPhaseChange(TR::Compilation *comp)
+//
+// TR_ResolvedJ9Method::containingClass()
+//
+// TR_ResolvedJ9Method::archetypeArgPlaceholderSlot(TR_Memory *mem)
+//
+// TR_ResolvedJ9Method::ramConstantPool()
+//
+// TR_ResolvedJ9Method::constantPool()
+//
+// TR_ResolvedJ9Method::getClassLoader()
+//
+// TR_ResolvedJ9Method::cp()
+//
+// TR_ResolvedJ9Method::isInterpreted()
+//
+// TR_ResolvedJ9Method::getPersistentIdentifier()
+//
+// TR_ResolvedJ9Method::startAddressForJittedMethod()
+//
+// bool TR_ResolvedJ9Method::isWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *comp)
+//
+// void TR_ResolvedJ9Method::setWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *comp)
+//
+// TR_ResolvedJ9Method::startAddressForInterpreterOfJittedMethod()
+// 
+// TR_ResolvedJ9Method::virtualMethodIsOverridden()
+//
+// TR_ResolvedJ9Method::setVirtualMethodIsOverridden()
+//
+// TR_ResolvedJ9Method::addressContainingIsOverriddenBit()
+//
+// TR_ResolvedJ9Method::isJNINative()
+//
+// TR_ResolvedJ9Method::methodIsNotzAAPEligible()
+//
+// TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
+//
+// TR_ResolvedJ9Method::classOfStatic(I_32 cpIndex, bool returnClassForAOT)
+//
+// TR_ResolvedJ9Method::classOfMethod()
+//
+// TR_ResolvedJ9Method::addressOfClassOfMethod()
+//
+// TR_ResolvedJ9Method::getLDCType(I_32 cpIndex)
+//
+// TR_ResolvedJ9Method::isClassConstant(int32_t cpIndex)
+//
+// TR_ResolvedJ9Method::isStringConstant(int32_t cpIndex)
+//
+// TR_ResolvedJ9Method::isMethodTypeConstant(int32_t cpIndex)
+//
+// TR_ResolvedJ9Method::isMethodHandleConstant(int32_t cpIndex)
+//
+// TR_ResolvedJ9Method::isUnresolvedString(I_32 cpIndex, bool optimizeForAOT)
+//
+// TR_ResolvedJ9Method::stringConstant(I_32 cpIndex)
+//
+// TR_ResolvedJ9Method::methodTypeConstant(I_32 cpIndex)
+//
+// TR_ResolvedJ9Method::methodHandleConstant(I_32 cpIndex)
+//
+// TR_ResolvedJ9Method::callSiteTableEntryAddress(int32_t callSiteIndex)
+//
+// TR_ResolvedJ9Method::varHandleMethodTypeTableEntryAddress(int32_t cpIndex)
+//
+// TR_ResolvedJ9Method::methodTypeTableEntryAddress(int32_t cpIndex)
+//
+// TR_ResolvedJ9Method::getClassFromConstantPool(TR::Compilation * comp, uint32_t cpIndex, bool)
+//
+// TR_ResolvedJ9Method::newInstancePrototypeSignature(TR_Memory * m, TR_AllocationKind allocKind)
+//
+// TR_ResolvedJ9Method::startAddressForJNIMethod(TR::Compilation * comp)
+//
+// TR_ResolvedJ9Method::isCompilable(TR_Memory * trMemory)
+//
+// TR_ResolvedJ9Method::getResolvedInterfaceMethod(I_32 cpIndex, UDATA *pITableIndex)
+//
+// TR_ResolvedJ9Method::getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, I_32 cpIndex)
+//
+// TR_ResolvedJ9Method::getResolvedInterfaceMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
+//
+// TR_ResolvedJ9Method::getResolvedStaticMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP)
+//
+// TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP)
+//
+// TR_ResolvedJ9Method::getResolvedVirtualMethod(TR::Compilation * comp, I_32 cpIndex, bool ignoreRtResolve, bool * unresolvedInCP)
+//
+// TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callSiteIndex, bool * unresolvedInCP)
+//
+// TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP)
+//
+// TR_ResolvedJ9Method::getResolvedHandleMethodWithSignature(TR::Compilation * comp, I_32 cpIndex, char *signature)
+//
+// TR_ResolvedJ9Method::getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve)
+//
+// TR_ResolvedJ9Method::staticsAreSame(I_32 cpIndex1, TR_ResolvedMethod * m2, I_32 cpIndex2, bool &sigSame)
+//
+// TR_ResolvedJ9Method::fieldAttributes(TR::Compilation * comp, I_32 cpIndex, U_32 * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation)
+//
+// TR_ResolvedJ9Method::staticAttributes(TR::Compilation * comp, I_32 cpIndex, void * * address, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation)
+//
+// TR_J9VMBase::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
+//
+// TR_J9VMBase::getResolvedInterfaceMethod(TR_OpaqueMethodBlock *interfaceMethod, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
+//
+// J9Class * getRAMClassFromTR_ResolvedVMMethod(TR_OpaqueMethodBlock *vmMethod)
+//
+// TR_OpaqueClassBlock * TR_J9MethodParameterIterator::getOpaqueClass()
+//
+// TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
+//
+// TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver)
+//
+// TR_ResolvedJ9MethodBase::getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex)

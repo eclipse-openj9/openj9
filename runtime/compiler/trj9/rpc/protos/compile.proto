@@ -8,6 +8,13 @@ message J9CompileRequest
    uint32 classOffset = 2;
    uint32 classChainCOffset = 3;
    uint32 classChainCLOffset = 4;
+   //bytes romClassVerify = 5;
+   }
+
+message ROMClassAndMethod
+   {
+   bytes rom_class = 3;
+   uint64 method_index = 4;
    }
 
 message J9ClientMessage
@@ -16,6 +23,7 @@ message J9ClientMessage
       {
       J9CompileRequest compile_request = 1;
       bool single_bool = 2;
+      ROMClassAndMethod rom_class_and_method = 3;
       }
    }
 
@@ -31,6 +39,7 @@ message J9ServerMessage
       {
       uint32 compilation_code = 1;
       J9InformationType info_0 = 2;
+      fixed64 get_rom_class_and_method_from_ram_method = 3;
       }
    }
 
