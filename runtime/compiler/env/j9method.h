@@ -182,6 +182,11 @@ class TR_J9Method : public TR_J9MethodBase
 public:
    TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, J9Class * aClazz, uintptr_t cpIndex);
    TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, TR_OpaqueMethodBlock * aMethod);
+
+protected:
+   // To be used by JAAS.
+   // Warning: some initialization must be done manually after calling this constructor
+   TR_J9Method();
    };
 
 class TR_ResolvedJ9MethodBase : public TR_ResolvedMethod
@@ -463,7 +468,7 @@ public:
 
 protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }
-   TR_ResolvedJ9Method(TR_FrontEnd *, TR_OpaqueMethodBlock *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0);
+   TR_ResolvedJ9Method(TR_FrontEnd *, TR_ResolvedMethod * owningMethod = 0);
    virtual void construct(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot = 0);
    virtual bool isMethodInValidLibrary();
 

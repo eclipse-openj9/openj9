@@ -2215,6 +2215,10 @@ TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, TR_OpaqueMethod
    _fullSignature = NULL;
    }
 
+TR_J9Method::TR_J9Method()
+   {
+   }
+
 //////////////////////////////
 //
 //  TR_ResolvedMethod
@@ -2272,8 +2276,8 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
 
 // protected constructor to be used by JAAS
 // had to reorder arguments to prevent ambiguity with above constructor (because the way constructors work in C++ is awful)
-TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_OpaqueMethodBlock * aMethod, TR_Memory * trMemory, TR_ResolvedMethod * owner)
-   : TR_J9Method(fe, trMemory, aMethod), TR_ResolvedJ9MethodBase(fe, owner), _pendingPushSlots(-1)
+TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * owner)
+   : TR_J9Method(), TR_ResolvedJ9MethodBase(fe, owner), _pendingPushSlots(-1)
    {
    }
 
@@ -8326,7 +8330,7 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
 //
 
 TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
-   : TR_ResolvedJ9Method(fe, aMethod, trMemory, owningMethod)
+   : TR_ResolvedJ9Method(fe, owningMethod)
    {
 
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
@@ -8372,6 +8376,13 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
       _jniProperties = 0;
       _jniTargetAddress = NULL;
       }
+
+   // initialization from TR_J9Method constructor
+   _className = J9ROMCLASS_CLASSNAME(_romClass);
+   _name = J9ROMMETHOD_GET_NAME(_romClass, _romMethod);
+   _signature = J9ROMMETHOD_GET_SIGNATURE(_romClass, _romMethod);
+   parseSignature(trMemory);
+   _fullSignature = NULL;
 
    construct(aMethod, fe, trMemory, owningMethod, vTableSlot);
    }
