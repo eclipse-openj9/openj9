@@ -6461,7 +6461,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 
    if (canDoRelocatableCompile && entry->_stream)
       {
-      vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM);
+      // JAAS TODO: use a Server VM here once frontend changes are stable
+      vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
       entry->_useAotCompilation = true;
       }
    else if (canDoRelocatableCompile)
