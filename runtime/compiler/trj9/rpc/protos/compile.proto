@@ -11,6 +11,17 @@ message J9CompileRequest
    //bytes romClassVerify = 5;
    }
 
+// anything that has an associated J9Class (ram class)
+// this allows us to pass a method instead of a class and get the conversion for free
+message IntoJ9Class
+   {
+   oneof MessageKind
+      {
+      uint64 j9_class = 1;
+      uint64 j9_method = 2;
+      }
+   }
+
 message ROMClassAndMethod
    {
    bytes rom_class = 3;
@@ -40,6 +51,7 @@ message J9ServerMessage
       uint32 compilation_code = 1;
       J9InformationType info_0 = 2;
       fixed64 get_rom_class_and_method_from_ram_method = 3;
+      IntoJ9Class is_class_library_class = 4;
       }
    }
 

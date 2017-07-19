@@ -12,6 +12,8 @@ public:
 
    virtual bool canMethodEnterEventBeHooked() override;
    virtual bool canMethodExitEventBeHooked() override;
+   virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT) override;
+   virtual bool isClassLibraryClass(TR_OpaqueClassBlock *clazz) override;
    };
 
 #endif // VMJ9SERVER_H

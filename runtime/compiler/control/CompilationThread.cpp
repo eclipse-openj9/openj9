@@ -99,6 +99,7 @@
 #include "env/DebugSegmentProvider.hpp"
 #include "rpc/Client.h"
 #include "env/ClassLoaderTable.hpp"
+#include "rpc/J9Convert.hpp"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -291,6 +292,11 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
             client->clientMessage()->mutable_rom_class_and_method()->set_method_index(methodIndex);
             }
          break;
+      case J9ServerMessage::kIsClassLibraryClass:
+            {
+            J9Class *clazz = J9Convert::from(client->serverMessage().is_class_library_class());
+            client->clientMessage()->set_single_bool(fe->isClassLibraryClass((TR_OpaqueClassBlock *) clazz));
+            }
       }
    return done;
    }

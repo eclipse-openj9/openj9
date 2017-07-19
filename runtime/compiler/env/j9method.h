@@ -465,6 +465,7 @@ protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }
    TR_ResolvedJ9Method(TR_FrontEnd *, TR_OpaqueMethodBlock *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0);
    virtual void construct(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot = 0);
+   virtual bool isMethodInValidLibrary();
 
 // JAAS TODO
 //private:
@@ -578,7 +579,7 @@ class TR_ResolvedJ9JAASServerMethod : public TR_ResolvedJ9Method
 public:
    TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
-   virtual J9ROMClass *romClassPtr();
+   virtual J9ROMClass *romClassPtr() override;
 
 private:
    JAAS::J9ServerStream *_stream;

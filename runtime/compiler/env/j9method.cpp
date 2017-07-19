@@ -268,41 +268,41 @@ static char *utf82str(J9UTF8 *utf8, TR_Memory *trMemory, TR_AllocationKind alloc
    return string;
    }
 
-static bool isMethodInValidLibrary(TR_FrontEnd *fe, TR_ResolvedJ9Method *method)
+bool TR_ResolvedJ9Method::isMethodInValidLibrary()
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
-   if (fej9->isClassLibraryMethod(method->getPersistentIdentifier(), true))
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
+   if (fej9->isClassLibraryMethod(getPersistentIdentifier(), true))
       return true;
 
    // this is a work-around because DAA library is not part of class library yet.
    // TODO: to be cleaned up after DAA library packaged into class library
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/dataaccess/", 19))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/dataaccess/", 19))
       return true;
    // For WebSphere methods
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/ws/", 11))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/ws/", 11))
       return true;
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/gpu/Kernel", 18))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/gpu/Kernel", 18))
       return true;
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    // For IBMJCE Crypto
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/jit/Crypto", 18))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/jit/Crypto", 18))
       return true;
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/jit/crypto/JITFullHardwareCrypt", 39))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/jit/crypto/JITFullHardwareCrypt", 39))
       return true;
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/jit/crypto/JITFullHardwareDigest", 40))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/jit/crypto/JITFullHardwareDigest", 40))
       return true;
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/P224PrimeField", 38))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/P224PrimeField", 38))
       return true;
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/P256PrimeField", 38))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/P256PrimeField", 38))
       return true;
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/P384PrimeField", 38))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/P384PrimeField", 38))
       return true;
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/AESCryptInHardware", 42))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/AESCryptInHardware", 42))
       return true;
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/ByteArrayMarshaller", 43))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/ByteArrayMarshaller", 43))
       return true;
-   if (!strncmp(method->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/ByteArrayUnmarshaller", 45))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/crypto/provider/ByteArrayUnmarshaller", 45))
       return true;
 #endif
 
@@ -4474,7 +4474,7 @@ void TR_ResolvedJ9Method::construct(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd 
       class17
       };
 
-   if (isMethodInValidLibrary(fe, this))
+   if (isMethodInValidLibrary())
       {
       char *className    = convertToMethod()->classNameChars();
       int   classNameLen = convertToMethod()->classNameLength();
@@ -4666,7 +4666,7 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
          }
       }
 
-   if ( isMethodInValidLibrary(fej9(),this) &&
+   if ( isMethodInValidLibrary() &&
         !failBecauseOfHCR) // With HCR, non-native methods can change, so we shouldn't "recognize" them
       {
       /*
@@ -5762,7 +5762,7 @@ TR_OpaqueClassBlock *
 TR_ResolvedJ9Method::classOfMethod()
    {
    if (isNewInstanceImplThunk())
-      {
+      { // JAAS TODO: branch not taken in hello world
       TR_ASSERT(_j9classForNewInstance, "Must have the class for the newInstance");
       //J9Class * clazz = (J9Class *)((intptrj_t)ramMethod()->extra & ~J9_STARTPC_NOT_TRANSLATED);
       return _fe->convertClassPtrToClassOffset(_j9classForNewInstance);//(TR_OpaqueClassBlock *&)(rc);
