@@ -8345,6 +8345,8 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    const std::string &romClassStr = romClassAndMethod.rom_class();
 
    _romClass = (J9ROMClass*) trMemory->allocateHeapMemory(romClassStr.size());
+   if (!_romClass)
+      throw std::bad_alloc();
    memcpy(_romClass, &romClassStr[0], romClassStr.size());
 
    // get rom method
