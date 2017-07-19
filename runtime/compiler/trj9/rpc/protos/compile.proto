@@ -8,7 +8,6 @@ message J9CompileRequest
    uint32 classOffset = 2;
    uint32 classChainCOffset = 3;
    uint32 classChainCLOffset = 4;
-   //bytes romClassVerify = 5;
    }
 
 // anything that has an associated J9Class (ram class)
