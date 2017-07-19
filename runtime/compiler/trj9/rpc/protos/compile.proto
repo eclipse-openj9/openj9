@@ -53,6 +53,7 @@ message J9ServerMessage
       fixed64 get_rom_class_and_method_from_ram_method = 3;
       IntoJ9Class is_class_library_class = 4;
       fixed64 get_constant_pool_from_method = 5;
+      fixed64 get_class_from_constant_pool = 6;
       }
    }
 

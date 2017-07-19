@@ -305,6 +305,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
             client->clientMessage()->set_single_pointer((uint64_t) J9_CP_FROM_METHOD(method));
             }
          break;
+      case J9ServerMessage::kGetClassFromConstantPool:
+            {
+            J9RAMConstantPoolItem *cp = (J9RAMConstantPoolItem *) client->serverMessage().get_class_from_constant_pool();
+            client->clientMessage()->set_single_pointer((uint64_t) J9_CLASS_FROM_CP(cp));
+            }
+         break;
       default:;
       }
    return done;
