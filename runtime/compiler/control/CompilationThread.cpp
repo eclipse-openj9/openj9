@@ -278,6 +278,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
             case JAAS::J9InformationType::canMethodExitEventBeHooked:
                client->clientMessage()->set_single_bool(fe->canMethodExitEventBeHooked());
                break;
+            default:;
             }
          break;
       case J9ServerMessage::kGetRomClassAndMethodFromRamMethod:
@@ -297,6 +298,14 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
             J9Class *clazz = J9Convert::from(client->serverMessage().is_class_library_class());
             client->clientMessage()->set_single_bool(fe->isClassLibraryClass((TR_OpaqueClassBlock *) clazz));
             }
+         break;
+      case J9ServerMessage::kGetConstantPoolFromMethod:
+            {
+            J9Method *method = (J9Method *) client->serverMessage().get_constant_pool_from_method();
+            client->clientMessage()->set_single_pointer((uint64_t) J9_CP_FROM_METHOD(method));
+            }
+         break;
+      default:;
       }
    return done;
    }

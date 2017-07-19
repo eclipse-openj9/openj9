@@ -575,21 +575,18 @@ private:
    };
 #endif
 
-struct J9ClientRAMMethod
-   {
-   };
-
 class TR_ResolvedJ9JAASServerMethod : public TR_ResolvedJ9Method
    {
 public:
    TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
    virtual J9ROMClass *romClassPtr() override;
+   virtual J9RAMConstantPoolItem *literals() override;
 
 private:
    JAAS::J9ServerStream *_stream;
    J9ROMClass *_romClass;
-   J9ClientRAMMethod *_clientRamMethod;
+   J9RAMConstantPoolItem *_literals;
    };
 
 #endif

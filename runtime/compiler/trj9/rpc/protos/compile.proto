@@ -34,6 +34,7 @@ message J9ClientMessage
       J9CompileRequest compile_request = 1;
       bool single_bool = 2;
       ROMClassAndMethod rom_class_and_method = 3;
+      fixed64 single_pointer = 4;
       }
    }
 
@@ -51,6 +52,7 @@ message J9ServerMessage
       J9InformationType info_0 = 2;
       fixed64 get_rom_class_and_method_from_ram_method = 3;
       IntoJ9Class is_class_library_class = 4;
+      fixed64 get_constant_pool_from_method = 5;
       }
    }
 

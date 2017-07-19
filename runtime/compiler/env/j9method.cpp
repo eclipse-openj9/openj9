@@ -8338,11 +8338,17 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    TR::CompilationInfoPerThreadBase *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
    _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
 
-   // set _ramMethod to null so it's easy to catch uses of it
-   _ramMethod = nullptr;
-   _clientRamMethod = (J9ClientRAMMethod *)aMethod;
+   // JAAS TODO: automatically tag/untag remote pointers
+   _ramMethod = (J9Method *)aMethod;
 
-   _stream->serverMessage()->set_get_rom_class_and_method_from_ram_method((uint64_t) _clientRamMethod);
+   // get remote constant pool ptr from client
+   _stream->serverMessage()->set_get_constant_pool_from_method((uint64_t) ramMethod());
+   _stream->writeBlocking();
+   _stream->readBlocking();
+   _literals = (J9RAMConstantPoolItem *) _stream->clientMessage().single_pointer();
+
+   // copy rom class and rom method from client
+   _stream->serverMessage()->set_get_rom_class_and_method_from_ram_method((uint64_t) _ramMethod);
    _stream->writeBlocking();
    _stream->readBlocking();
    const JAAS::ROMClassAndMethod &romClassAndMethod = _stream->clientMessage().rom_class_and_method();
@@ -8393,6 +8399,11 @@ TR_ResolvedJ9JAASServerMethod::romClassPtr()
    return _romClass;
    }
 
+J9RAMConstantPoolItem *
+TR_ResolvedJ9JAASServerMethod::literals()
+   {
+   return _literals;
+   }
 
 // JAAS TODO methods
 // these all use RAM data in some way
