@@ -8355,11 +8355,11 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _stream->readBlocking();
    _literals = (J9RAMConstantPoolItem *) _stream->clientMessage().single_pointer();
 
-   // get remote constant pool class ptr from client
+   // get remote ram class ptr from client via constant pool
    _stream->serverMessage()->set_get_class_from_constant_pool((uint64_t) literals());
    _stream->writeBlocking();
    _stream->readBlocking();
-   _literalsClass = (J9Class *) _stream->clientMessage().single_pointer();
+   _ramClass = (J9Class *) _stream->clientMessage().single_pointer();
 
    // copy rom class and rom method from client
    _stream->serverMessage()->set_get_rom_class_and_method_from_ram_method((uint64_t) _ramMethod);
@@ -8422,7 +8422,7 @@ TR_ResolvedJ9JAASServerMethod::literals()
 J9Class *
 TR_ResolvedJ9JAASServerMethod::constantPoolHdr()
    {
-   return _literalsClass;
+   return _ramClass;
    }
 
 // JAAS TODO methods

@@ -586,9 +586,9 @@ public:
 
 private:
    JAAS::J9ServerStream *_stream;
-   J9ROMClass *_romClass;
-   J9RAMConstantPoolItem *_literals;
-   J9Class *_literalsClass;
+   J9ROMClass *_romClass; // cached copy of ROM class from client
+   J9RAMConstantPoolItem *_literals; // client pointer to constant pool
+   J9Class *_ramClass; // client pointer to RAM class
    TR_ResolvedJ9Method *_remoteMirror;
    };
 
