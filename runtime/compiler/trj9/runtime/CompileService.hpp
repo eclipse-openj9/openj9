@@ -103,7 +103,7 @@ void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             TR_CompilationErrorCode compErrCode = compilationFailure;
             TR_YesNoMaybe async = TR_yes;
             TR_MethodEvent event;
-            event._eventType = TR_MethodEvent::InterpreterCounterTripped;
+            event._eventType = TR_MethodEvent::RemoteCompilationRequest;
             event._j9method = ramMethod;
             event._oldStartPC = 0;
             event._vmThread = vmThread;

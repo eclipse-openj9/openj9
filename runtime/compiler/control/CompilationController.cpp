@@ -262,6 +262,15 @@ TR_OptimizationPlan *TR::DefaultCompilationStrategy::processEvent(TR_MethodEvent
          plan = processHWPSample(event);
          }
          break;
+      case TR_MethodEvent::RemoteCompilationRequest:
+         //compInfo->_stats._methodsCompiledOnCount++; // JAAS TODO: add a new statistic
+
+         // JAAS TODO: get the opt level from client
+         hotnessLevel = noOpt;
+         // JAAS TODO: allow the creation of a profiling body
+         plan = TR_OptimizationPlan::alloc(hotnessLevel);
+         *newPlanCreated = true;
+         break;
       default:
          TR_ASSERT(0, "Bad event type %d", event->_eventType);
       }
