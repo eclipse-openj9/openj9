@@ -97,7 +97,6 @@
 #include "env/J9SegmentCache.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
-#include "rpc/Client.h"
 #include "env/ClassLoaderTable.hpp"
 #include "rpc/J9Convert.hpp"
 
