@@ -23,8 +23,8 @@ message IntoJ9Class
 
 message ROMClassAndMethod
    {
-   bytes rom_class = 3;
-   uint64 method_index = 4;
+   bytes rom_class = 1;
+   uint64 method_index = 2;
    }
 
 message J9ClientMessage
@@ -44,16 +44,23 @@ enum J9InformationType
    canMethodExitEventBeHooked = 1;
    }
 
+message NewTRResolvedJ9MethodArgs
+   {
+   fixed64 j9_method = 1;
+   uint32 vtable_slot = 2;
+   }
+
 message J9ServerMessage
    {
    oneof MessageKind
       {
       uint32 compilation_code = 1;
       J9InformationType info_0 = 2;
-      fixed64 get_rom_class_and_method_from_ram_method = 3;
-      IntoJ9Class is_class_library_class = 4;
-      fixed64 get_constant_pool_from_method = 5;
-      fixed64 get_class_from_constant_pool = 6;
+      fixed64 get_rom_class_and_method_from_ram_method = 3; // returns rom_class_and_method
+      IntoJ9Class is_class_library_class = 4; // returns single_bool
+      fixed64 get_constant_pool_from_method = 5; // returns single_pointer
+      fixed64 get_class_from_constant_pool = 6; // returns single_pointer
+      NewTRResolvedJ9MethodArgs new_TR_resolved_j9_method = 7; // returns single_pointer
       }
    }
 

@@ -8338,6 +8338,14 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    TR::CompilationInfoPerThreadBase *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
    _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
 
+   // Make client copy of this class
+   _stream->serverMessage()->mutable_new_tr_resolved_j9_method()->set_j9_method((uint64_t) aMethod);
+   _stream->serverMessage()->mutable_new_tr_resolved_j9_method()->set_vtable_slot(vTableSlot);
+   TR_ASSERT(owningMethod == NULL, "For now owningMethod must be null for this to work");
+   _stream->writeBlocking();
+   _stream->readBlocking();
+   _remoteMirror = (TR_ResolvedJ9Method*) _stream->clientMessage().single_pointer();
+
    // JAAS TODO: automatically tag/untag remote pointers
    _ramMethod = (J9Method *)aMethod;
 

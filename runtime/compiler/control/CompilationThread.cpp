@@ -262,6 +262,8 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
    {
    using JAAS::J9ServerMessage;
 
+   TR_Memory *trMemory = fe->_compInfoPT->getCompilation()->trMemory();
+
    bool done = false;
    switch (client->serverMessage().MessageKind_case())
       {
@@ -278,7 +280,9 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
             case JAAS::J9InformationType::canMethodExitEventBeHooked:
                client->clientMessage()->set_single_bool(fe->canMethodExitEventBeHooked());
                break;
-            default:;
+            default:
+               // JAAS TODO more specific exception here
+               throw JAAS::StreamFailure();
             }
          break;
       case J9ServerMessage::kGetRomClassAndMethodFromRamMethod:
@@ -311,7 +315,19 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
             client->clientMessage()->set_single_pointer((uint64_t) J9_CLASS_FROM_CP(cp));
             }
          break;
-      default:;
+         case J9ServerMessage::kNewTRResolvedJ9Method:
+            {
+            // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
+            // easily done on the client side.
+            TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) client->serverMessage().new_tr_resolved_j9_method().j9_method();
+            TR_ResolvedJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9Method(method, fe, trMemory);
+            if (!resolvedMethod) throw std::bad_alloc();
+            client->clientMessage()->set_single_pointer((uint64_t) resolvedMethod);
+            }
+         break;
+      default:
+         // JAAS TODO more specific exception here
+         throw JAAS::StreamFailure();
       }
    return done;
    }

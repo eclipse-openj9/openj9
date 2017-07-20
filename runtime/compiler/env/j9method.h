@@ -589,6 +589,7 @@ private:
    J9ROMClass *_romClass;
    J9RAMConstantPoolItem *_literals;
    J9Class *_literalsClass;
+   TR_ResolvedJ9Method *_remoteMirror;
    };
 
 #endif
