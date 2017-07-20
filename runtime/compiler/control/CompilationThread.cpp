@@ -268,7 +268,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
       case J9ServerMessageType::compilationCode:
          done = true;
          break;
-
+ 
       case J9ServerMessageType::VM_isClassLibraryClass:
          {
          bool rv = fe->isClassLibraryClass(std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>()));
@@ -312,7 +312,27 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          client->write(method->isInterpreted());
          break;
          }
-      default:
+         break;
+      case J9ServerMessageType::get_params_to_construct_TR_j9method:
+         {
+         auto recv = client->getRecvData<J9Class *, uintptr_t>();
+         J9Class * aClazz = std::get<0>(recv);
+         uintptr_t cpIndex = std::get<1>(recv);
+         J9ROMClass * romClass = aClazz->romClass;
+         uintptr_t realCPIndex = jitGetRealCPIndex(fe->vmThread(), romClass, cpIndex);
+         J9ROMMethodRef * romRef = &J9ROM_CP_BASE(romClass, J9ROMMethodRef)[realCPIndex];
+         J9ROMClassRef * classRef = &J9ROM_CP_BASE(romClass, J9ROMClassRef)[romRef->classRefCPIndex];
+         J9ROMNameAndSignature * nameAndSignature = J9ROMMETHODREF_NAMEANDSIGNATURE(romRef);
+         J9UTF8 * className = J9ROMCLASSREF_NAME(classRef);
+         J9UTF8 * name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
+         J9UTF8 * signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
+         std::string classNameStr(utf8Data(className), J9UTF8_LENGTH(className));
+         std::string nameStr(utf8Data(name), J9UTF8_LENGTH(name));
+         std::string signatureStr(utf8Data(signature), J9UTF8_LENGTH(signature));
+         client->write(classNameStr, nameStr, signatureStr);
+         }
+         break;
+     default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();
       }

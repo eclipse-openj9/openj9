@@ -39,6 +39,7 @@ enum J9ServerMessageType
    isInterpreted = 3;
    VM_isClassLibraryClass = 4;
    VM_isClassLibraryMethod = 5;
+   get_params_to_construct_TR_j9method = 6;
    }
 
 message J9ServerMessage

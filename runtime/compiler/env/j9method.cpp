@@ -253,7 +253,7 @@ TR_J9VMBase::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMe
 
 static J9UTF8 *str2utf8(char *string, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
    {
-   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length+sizeof(J9UTF8), allocKind);
+   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length+sizeof(J9UTF8), allocKind); // This allocates more memory than it needs.
    J9UTF8_SET_LENGTH(utf8, length);
    memcpy(J9UTF8_DATA(utf8), string, length);
    return utf8;
@@ -2191,6 +2191,25 @@ TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClaz
    _className = J9ROMCLASSREF_NAME(classRef);
    _name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
    _signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
+
+   parseSignature(trMemory);
+   _fullSignature = NULL;
+   }
+
+TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClazz, uintptr_t cpIndex, bool isJaasServerMode)
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+
+   TR_J9ServerVM *fej9 = (TR_J9ServerVM *)fe;
+   JAAS::J9ServerStream *stream = fej9->_compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::get_params_to_construct_TR_j9method, aClazz, cpIndex);
+   const auto recv = stream->read<std::string, std::string, std::string>();
+   const std::string &str_className = std::get<0>(recv);
+   const std::string &str_name = std::get<1>(recv);
+   const std::string &str_signature = std::get<2>(recv);
+   _className = str2utf8((char*)&str_className[0], str_className.length(), trMemory, heapAlloc);
+   _name = str2utf8((char*)&str_name[0], str_name.length(), trMemory, heapAlloc);
+   _signature = str2utf8((char*)&str_signature[0], str_signature.length(), trMemory, heapAlloc);
 
    parseSignature(trMemory);
    _fullSignature = NULL;
