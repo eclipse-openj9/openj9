@@ -65,6 +65,8 @@ namespace JAAS
    template <typename... Args>
    void setArgs(AnyData *message, Args... args)
       {
+      if (sizeof...(Args) != message->data_size())
+         throw StreamFailure(); // JAAS TODO more specific error
       SetArgs<Args...>::setArgs(message, args...);
       }
 
@@ -91,7 +93,7 @@ namespace JAAS
             }
          else
             {
-            // TODO more specific error
+            // JAAS TODO more specific error
             throw StreamFailure();
             }
          }
@@ -99,6 +101,8 @@ namespace JAAS
    template <typename... Args>
    std::tuple<Args...> getArgs(AnyData *message)
       {
+      if (sizeof...(Args) != message->data_size())
+         throw StreamFailure(); // JAAS TODO more specific error
       return GetArgs<Args...>::getArgs(message, 0);
       }
 
