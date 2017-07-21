@@ -98,7 +98,6 @@
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
 #include "env/ClassLoaderTable.hpp"
-#include "rpc/J9Convert.hpp"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
