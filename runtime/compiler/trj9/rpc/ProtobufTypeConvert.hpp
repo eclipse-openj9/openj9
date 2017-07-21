@@ -15,35 +15,27 @@ namespace JAAS
       static T onRecv(ProtoType in) { return in; }
       static ProtoType onSend(T in) { return in; }
       };
-   template <>
-   struct ProtobufTypeConvert<uint64_t>
+
+   template <typename Primitive, typename Proto>
+   struct PrimitiveTypeConvert
       {
-      using ProtoType = UInt64;
-      static uint64_t onRecv(ProtoType in) { return in.val(); }
-      static ProtoType onSend(uint64_t in)
+      using ProtoType = Proto;
+      static Primitive onRecv(ProtoType in) { return in.val(); }
+      static ProtoType onSend(Primitive in)
          {
          ProtoType val;
          val.set_val(in);
          return val;
          }
       };
-   template <>
-   struct ProtobufTypeConvert<uint32_t>
-      {
-      using ProtoType = UInt32;
-      static uint32_t onRecv(ProtoType in) { return in.val(); }
-      static ProtoType onSend(uint32_t in)
-         {
-         ProtoType val;
-         val.set_val(in);
-         return val;
-         }
-      };
+   template <> struct ProtobufTypeConvert<uint64_t> : PrimitiveTypeConvert<uint64_t, UInt64> { };
+   template <> struct ProtobufTypeConvert<uint32_t> : PrimitiveTypeConvert<uint32_t, UInt32> { };
+
    template <typename T>
    struct ProtobufTypeConvert<T*> 
       {
       using ProtoType = Pointer;
-      static T* onRecv(ProtoType in) { return (T*) in.val(); }
+      static T* onRecv(ProtoType in) { return (T*) ~in.val(); }
       static ProtoType onSend(T* in)
          {
          ProtoType val;
