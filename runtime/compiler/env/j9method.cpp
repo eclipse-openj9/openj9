@@ -8346,7 +8346,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
 
    // get ROM data from client
    _stream->write(JAAS::J9ServerMessageType::get_rom_class_and_method_from_ram_method, aMethod);
-   const auto &romClassAndMethod = _stream->read<std::string, uint32_t>();
+   const auto &romClassAndMethod = _stream->read<std::string, uint64_t>();
    const std::string &romClassStr = std::get<0>(romClassAndMethod);
 
    // copy ROM class
