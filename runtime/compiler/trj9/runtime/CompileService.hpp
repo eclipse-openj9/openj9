@@ -97,11 +97,8 @@ void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          if (ramMethod)
             {
             TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
-            char sig[1000];
-            fe->printTruncatedSignature(sig, 1000, (TR_OpaqueMethodBlock*)ramMethod);
             bool queued = false;
             TR_CompilationErrorCode compErrCode = compilationFailure;
-            TR_YesNoMaybe async = TR_yes;
             TR_MethodEvent event;
             event._eventType = TR_MethodEvent::RemoteCompilationRequest;
             event._j9method = ramMethod;
@@ -116,7 +113,7 @@ void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             if (plan)
                {
                TR::IlGeneratorMethodDetails details(ramMethod);
-               result = (IDATA)compInfo->compileMethod(vmThread, details, 0, async, &compErrCode, &queued, plan, rpc);
+               result = (IDATA)compInfo->compileRemoteMethod(vmThread, details, romMethod, romClass, 0, &compErrCode, &queued, plan, rpc);
 
                if (newPlanCreated)
                   {

@@ -4940,6 +4940,108 @@ static void deleteMethodHandleRef(J9::MethodHandleThunkDetails & details, J9VMTh
    }
 
 
+void *TR::CompilationInfo::compileRemoteMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details,
+                                               const J9ROMMethod *romMethod, const J9ROMClass* romClass,
+                                               void *oldStartPC, TR_CompilationErrorCode *compErrCode,
+                                               bool *queued, TR_OptimizationPlan * optimizationPlan, void *extra)
+   {
+   TR_ASSERT(!(extra && (details.isNewInstanceThunk() || details.isMethodHandleThunk() || details.isMethodInProgress())),
+      "In server mode, we should not be receiving requests of detail NewInstanceThunk, MethodHandleThunk and MethodInProgress.");
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
+      {
+      TR_J9VMBase * fe = TR_J9VMBase::get(_jitConfig, vmThread);
+      J9Method *method = details.getMethod();
+      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::writeLine(TR_Vlog_CR, "%p   Compile request %s", vmThread, details.name());
+      char buf[500];
+      fe->printTruncatedSignature(buf, sizeof(buf), (TR_OpaqueMethodBlock *)method);
+      TR_VerboseLog::write(" j9method=%p %s optLevel=%d", method, buf, optimizationPlan->getOptLevel());
+      TR_VerboseLog::vlogRelease();
+      }
+
+   // Grab the compilation monitor
+   //
+   debugPrint(vmThread, "\tapplication thread acquiring compilation monitor\n");
+   acquireCompMonitor(vmThread);
+   debugPrint(vmThread, "+CM\n");
+   addCompilationTraceEntry(vmThread, OP_CompileOnSeparateThreadEnter);
+
+   debugPrint(vmThread, "\tQueuing ");
+
+   bool async = true;
+
+   TR_YesNoMaybe methodIsInSharedCache = TR_no;
+#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+   // Check to see if we find the method in the shared cache
+   // If yes, raise the priority to be processed ahead of other methods
+   //
+   if (TR::Options::sharedClassCache() && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) && details.isOrdinaryMethod())
+      {
+      if (!oldStartPC)
+         {
+         // If the method is in shared cache but we decide not to take it from there
+         // we must bump the count, because this is a method whose count was decreased to scount
+         // We can get the answer wrong if the method was not in the cache to start with, but other
+         // other JVM added the method to the cache meanwhile. The net effect is that the said
+         // method may have its count bumped up and compiled later
+         //
+         J9JavaVM *javaVM = vmThread->javaVM;
+         if (javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod))
+            {
+            TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *)TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
+            if (
+               static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
+               || (
+                  static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
+                  && _reloRuntime.validateAOTHeader(javaVM, fe, vmThread)
+                  )
+               )
+               {
+               methodIsInSharedCache = TR_yes;
+               }
+            }
+         }
+      }
+#endif // defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+
+    
+   CompilationPriority compPriority = CP_SYNC_NORMAL; // JAAS TODO: priority should come from the client
+  
+   TR_MethodToBeCompiled *entry =
+      addMethodToBeCompiled(details, oldStartPC, compPriority, async,
+         optimizationPlan, queued, methodIsInSharedCache, extra);
+
+   if (entry == NULL)
+      {
+      if (compErrCode)
+         *compErrCode = compilationFailure;
+      return 0;  // We couldn't add a method entry to be compiled.
+      }
+
+   entry->_async = async;
+   printQueue();
+   debugPrint(vmThread, "\tnotifying the compilation thread of the compile request\n");
+   getCompilationMonitor()->notifyAll();
+   debugPrint(vmThread, "ntfy-CM\n");
+
+   // Release the compilation monitor
+   //
+   debugPrint(vmThread, "\tapplication thread releasing compilation monitor\n");
+   debugPrint(vmThread, "-CM\n");
+   releaseCompMonitor(vmThread);
+
+   if (compErrCode)
+      *compErrCode = compilationInProgress;
+  
+   return 0;
+   }
+
+
+
+
+
+
 void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details, void *oldStartPC,
                                         TR_YesNoMaybe requireAsyncCompile,
                                         TR_CompilationErrorCode *compErrCode,

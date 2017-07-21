@@ -584,7 +584,10 @@ public:
    void purgeMethodQueue(TR_CompilationErrorCode errorCode);
    void *compileMethod(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
       TR_YesNoMaybe async, TR_CompilationErrorCode *, bool *queued, TR_OptimizationPlan *optPlan, void *extra=NULL);
-
+   void *compileRemoteMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details,
+                             const J9ROMMethod *romMethod, const J9ROMClass* romClass,
+                             void *oldStartPC, TR_CompilationErrorCode *compErrCode,
+                             bool *queued, TR_OptimizationPlan * optimizationPlan, void *extra);
    void *compileOnApplicationThread(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
                                     TR_CompilationErrorCode *,
                                     TR_OptimizationPlan *optPlan);
