@@ -45,10 +45,9 @@ JAAS::J9ServerStream::cancel()
 void
 JAAS::J9ServerStream::finishWithOnlyCode(uint32_t code)
    {
-   _sMsg.set_compilation_code(code);
    try
       {
-      writeBlocking();
+      write(J9ServerMessageType::compilation_code, code);
       finish();
       }
 

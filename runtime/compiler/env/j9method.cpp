@@ -8338,6 +8338,10 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    TR::CompilationInfoPerThreadBase *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
    _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
 
+   _stream->write(JAAS::J9ServerMessageType::new_TR_resolved_j9_method, aMethod, vTableSlot);
+   _remoteMirror = std::get<0>(_stream->read<TR_ResolvedJ9Method*>());
+
+   /*
    // Make client copy of this class
    _stream->serverMessage()->mutable_new_tr_resolved_j9_method()->set_j9_method((uint64_t) aMethod);
    _stream->serverMessage()->mutable_new_tr_resolved_j9_method()->set_vtable_slot(vTableSlot);
@@ -8378,6 +8382,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    TR_ASSERT(methodIndex < UDATA_MAX, "method not in class!!!");
    _romMethod = J9ROMCLASS_ROMMETHODS(_romClass);
    while (methodIndex--) _romMethod = nextROMMethod(_romMethod);
+   */
 
    _romLiterals = (J9ROMConstantPoolItem *) ((UDATA)romClassPtr() + sizeof(J9ROMClass));
 

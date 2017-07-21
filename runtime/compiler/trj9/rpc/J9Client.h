@@ -3,6 +3,7 @@
 
 #include <grpc++/grpc++.h>
 #include "rpc/types.h"
+#include "rpc/ProtobufTypeConvert.hpp"
 
 namespace JAAS
 {
@@ -19,12 +20,7 @@ public:
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->Compile(_ctx.get());
 
-      J9CompileRequest *req = _clientMsg.mutable_compile_request();
-
-      req->set_classoffset(cOffset);
-      req->set_methodoffset(mOffset);
-      req->set_classchaincoffset(ccCOffset);
-      req->set_classchaincloffset(ccCLOffset);
+      write(cOffset, mOffset, ccCOffset, ccCLOffset);
       }
 
    Status waitForFinish()
@@ -32,25 +28,19 @@ public:
       return _stream->Finish();
       }
 
-   uint32_t getReplyCode() const
+   template <typename ...T>
+   void write(T... args)
       {
-      return _serverMsg.compilation_code();
+      setArgs<T...>(_clientMsg.mutable_data(), args...);
+      if (!_stream->Write(_clientMsg))
+         throw StreamFailure();
       }
-
-   const JAAS::J9ServerMessage & serverMessage()
-      { return _serverMsg; }
-
-   JAAS::J9ClientMessage * clientMessage()
-      { return &_clientMsg; }
-
-   bool readBlocking()
+   template <typename ...T>
+   std::tuple<T...> read()
       {
-      return _stream->Read(&_serverMsg);
-      }
-
-   bool writeBlocking()
-      {
-      return _stream->Write(_clientMsg);
+      if (!_stream->Read(&_serverMsg))
+         throw StreamFailure();
+      return getArgs<T...>(_serverMsg.mutable_data());
       }
 
 private:

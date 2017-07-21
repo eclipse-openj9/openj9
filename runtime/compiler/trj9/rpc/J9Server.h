@@ -3,6 +3,7 @@
 
 #include <grpc++/grpc++.h>
 #include "rpc/types.h"
+#include "rpc/ProtobufTypeConvert.hpp"
 
 namespace JAAS
 {
@@ -23,21 +24,28 @@ public:
       _cq.Shutdown();
       }
 
-   void readBlocking();
-   void writeBlocking();
+   template <typename ...T>
+   void write(J9ServerMessageType type, T... args)
+      {
+      setArgs<T...>(_sMsg.mutable_data(), args...);
+      writeBlocking();
+      }
+   template <typename ...T>
+   std::tuple<T...> read()
+      {
+      readBlocking();
+      return getArgs<T...>(_cMsg.mutable_data());
+      }
 
    void finish();
    void cancel();   // Same as finish, but with Status::CANCELLED
    void finishWithOnlyCode(uint32_t code);
    void acceptNewRPC();
 
-   // For reading after calling readBlocking
-   const J9ClientMessage& clientMessage() { return _cMsg; }
-
-   // For setting up the message before calling writeBlocking
-   J9ServerMessage* serverMessage() { return &_sMsg; }
-
 private:
+   void readBlocking();
+   void writeBlocking();
+
    const size_t _streamNum; // tagging for notification loop, used to identify associated CompletionQueue in vector
    grpc::ServerCompletionQueue *_notif;
    grpc::CompletionQueue _cq;

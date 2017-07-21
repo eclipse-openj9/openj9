@@ -259,6 +259,7 @@ jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, v
 
 static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
    {
+   /*
    using JAAS::J9ServerMessage;
 
    TR_Memory *trMemory = fe->_compInfoPT->getCompilation()->trMemory();
@@ -329,6 +330,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          throw JAAS::StreamFailure();
       }
    return done;
+   */
    }
 
 inline void
@@ -8358,22 +8360,23 @@ TR::CompilationInfoPerThreadBase::compile(
                   {
                   uint32_t classChainCLOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(cc)));
                   JAAS::J9ClientStream client;
-                  bool done = false;
+                  bool done = true;
                   client.buildCompileRequest(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset);
-                  while(!done)
+                  uint32_t code = std::get<0>(client.read<uint32_t>());
+                  /*while(!done)
                      {
                      if (!client.writeBlocking())
                         break;
                      if (!client.readBlocking())
                         break;
                      done = handleServerMessage(&client, compiler->fej9());
-                     }
+                     }*/
                   if (done)
                      {
                      JAAS::Status status = client.waitForFinish();
                      done = status.ok();
                      }
-                  if (done && (client.getReplyCode() == compilationOK || client.getReplyCode() == compilationNotNeeded))
+                  if (done && (code == compilationOK || code == compilationNotNeeded))
                      {
                      UDATA flags = 0;
                      const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);

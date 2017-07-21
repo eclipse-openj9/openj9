@@ -4,6 +4,7 @@
 #include "trj9/control/CompilationThread.hpp"
 #include "trj9/control/MethodToBeCompiled.hpp"
 
+/*
 bool
 TR_J9ServerVM::canMethodEnterEventBeHooked()
    {
@@ -47,3 +48,4 @@ TR_J9ServerVM::isClassLibraryClass(TR_OpaqueClassBlock *clazz)
    stream->readBlocking();
    return stream->clientMessage().single_bool();
    }
+   */

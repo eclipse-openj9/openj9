@@ -1,6 +1,7 @@
 #include "j9.h"
 #include "rpc/types.h"
 
+/*
 namespace J9Convert
    {
    J9Class *from(const JAAS::IntoJ9Class &x)
@@ -16,3 +17,4 @@ namespace J9Convert
       return nullptr;
       }
    }
+   */

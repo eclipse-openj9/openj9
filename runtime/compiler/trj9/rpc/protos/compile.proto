@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/any.proto";
+
 package JAAS;
 
 message J9CompileRequest
@@ -10,58 +12,40 @@ message J9CompileRequest
    uint32 classChainCLOffset = 4;
    }
 
-// anything that has an associated J9Class (ram class)
-// this allows us to pass a method instead of a class and get the conversion for free
-message IntoJ9Class
+message UInt64
    {
-   oneof MessageKind
-      {
-      uint64 j9_class = 1;
-      uint64 j9_method = 2;
-      }
+   uint64 val = 1;
+   }
+message UInt32
+   {
+   uint64 val = 1;
+   }
+message Pointer
+   {
+   fixed64 val = 1;
    }
 
-message ROMClassAndMethod
+message AnyData
    {
-   bytes rom_class = 1;
-   uint64 method_index = 2;
+   repeated google.protobuf.Any data = 1;
    }
 
-message J9ClientMessage
+enum J9ServerMessageType
    {
-   oneof MessageKind
-      {
-      J9CompileRequest compile_request = 1;
-      bool single_bool = 2;
-      ROMClassAndMethod rom_class_and_method = 3;
-      fixed64 single_pointer = 4;
-      }
-   }
-
-enum J9InformationType
-   {
-   canMethodEnterEventBeHooked = 0;
-   canMethodExitEventBeHooked = 1;
-   }
-
-message NewTRResolvedJ9MethodArgs
-   {
-   fixed64 j9_method = 1;
-   uint32 vtable_slot = 2;
+   compilation_code = 0;
+   get_rom_class_and_method_from_ram_method = 1;
+   new_TR_resolved_j9_method = 2;
    }
 
 message J9ServerMessage
    {
-   oneof MessageKind
-      {
-      uint32 compilation_code = 1;
-      J9InformationType info_0 = 2;
-      fixed64 get_rom_class_and_method_from_ram_method = 3; // returns rom_class_and_method
-      IntoJ9Class is_class_library_class = 4; // returns single_bool
-      fixed64 get_constant_pool_from_method = 5; // returns single_pointer
-      fixed64 get_class_from_constant_pool = 6; // returns single_pointer
-      NewTRResolvedJ9MethodArgs new_TR_resolved_j9_method = 7; // returns single_pointer
-      }
+   J9ServerMessageType type = 1;
+   AnyData data = 2;
+   }
+
+message J9ClientMessage
+   {
+   AnyData data = 2;
    }
 
 service J9CompileService
