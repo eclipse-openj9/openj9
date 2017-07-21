@@ -24,6 +24,10 @@ message Pointer
    {
    fixed64 val = 1;
    }
+message Bytes
+   {
+   bytes val = 1;
+   }
 
 message AnyData
    {

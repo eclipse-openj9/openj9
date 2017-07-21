@@ -30,6 +30,7 @@ namespace JAAS
       };
    template <> struct ProtobufTypeConvert<uint64_t> : PrimitiveTypeConvert<uint64_t, UInt64> { };
    template <> struct ProtobufTypeConvert<uint32_t> : PrimitiveTypeConvert<uint32_t, UInt32> { };
+   template <> struct ProtobufTypeConvert<std::string> : PrimitiveTypeConvert<std::string, Bytes> { };
 
    template <typename T>
    struct ProtobufTypeConvert<T*> 
@@ -85,7 +86,7 @@ namespace JAAS
          if (data.Is<T>())
             {
             T msg;
-            data.UnpackTo((google::protobuf::Message *) &msg);
+            data.UnpackTo(static_cast<google::protobuf::Message*>(&msg));
             return std::make_tuple(ProtobufTypeConvert<Arg>::onRecv(msg));
             }
          else

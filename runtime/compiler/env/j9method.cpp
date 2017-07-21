@@ -8338,51 +8338,28 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    TR::CompilationInfoPerThreadBase *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
    _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
 
+   _ramMethod = nullptr;
+
+   // Create client side mirror of this object to use for calls involving RAM data
    _stream->write(JAAS::J9ServerMessageType::new_TR_resolved_j9_method, aMethod, vTableSlot);
    _remoteMirror = std::get<0>(_stream->read<TR_ResolvedJ9Method*>());
 
-   /*
-   // Make client copy of this class
-   _stream->serverMessage()->mutable_new_tr_resolved_j9_method()->set_j9_method((uint64_t) aMethod);
-   _stream->serverMessage()->mutable_new_tr_resolved_j9_method()->set_vtable_slot(vTableSlot);
-   TR_ASSERT(owningMethod == NULL, "For now owningMethod must be null for this to work");
-   _stream->writeBlocking();
-   _stream->readBlocking();
-   _remoteMirror = (TR_ResolvedJ9Method*) _stream->clientMessage().single_pointer();
+   // get ROM data from client
+   _stream->write(JAAS::J9ServerMessageType::get_rom_class_and_method_from_ram_method, aMethod);
+   const auto &romClassAndMethod = _stream->read<std::string, uint32_t>();
+   const std::string &romClassStr = std::get<0>(romClassAndMethod);
 
-   // JAAS TODO: automatically tag/untag remote pointers
-   _ramMethod = (J9Method *)aMethod;
-
-   // get remote constant pool ptr from client
-   _stream->serverMessage()->set_get_constant_pool_from_method((uint64_t) ramMethod());
-   _stream->writeBlocking();
-   _stream->readBlocking();
-   _literals = (J9RAMConstantPoolItem *) _stream->clientMessage().single_pointer();
-
-   // get remote ram class ptr from client via constant pool
-   _stream->serverMessage()->set_get_class_from_constant_pool((uint64_t) literals());
-   _stream->writeBlocking();
-   _stream->readBlocking();
-   _ramClass = (J9Class *) _stream->clientMessage().single_pointer();
-
-   // copy rom class and rom method from client
-   _stream->serverMessage()->set_get_rom_class_and_method_from_ram_method((uint64_t) _ramMethod);
-   _stream->writeBlocking();
-   _stream->readBlocking();
-   const JAAS::ROMClassAndMethod &romClassAndMethod = _stream->clientMessage().rom_class_and_method();
-   const std::string &romClassStr = romClassAndMethod.rom_class();
-
+   // copy ROM class
    _romClass = (J9ROMClass*) trMemory->allocateHeapMemory(romClassStr.size());
    if (!_romClass)
       throw std::bad_alloc();
    memcpy(_romClass, &romClassStr[0], romClassStr.size());
 
-   // get rom method
-   uint64_t methodIndex = romClassAndMethod.method_index();
+   // copy ROM method
+   uint64_t methodIndex = std::get<1>(romClassAndMethod);
    TR_ASSERT(methodIndex < UDATA_MAX, "method not in class!!!");
    _romMethod = J9ROMCLASS_ROMMETHODS(_romClass);
    while (methodIndex--) _romMethod = nextROMMethod(_romMethod);
-   */
 
    _romLiterals = (J9ROMConstantPoolItem *) ((UDATA)romClassPtr() + sizeof(J9ROMClass));
 
