@@ -28,6 +28,7 @@ public:
    void write(J9ServerMessageType type, T... args)
       {
       setArgs<T...>(_sMsg.mutable_data(), args...);
+      _sMsg.set_type(type);
       writeBlocking();
       }
    template <typename ...T>
