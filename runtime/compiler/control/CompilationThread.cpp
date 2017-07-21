@@ -1333,6 +1333,17 @@ void TR::CompilationInfo::printMethodNameToVlog(J9Method *method)
                                          J9UTF8_LENGTH(signature), (char *) J9UTF8_DATA(signature));
    }
 
+void TR::CompilationInfo::printMethodNameToVlog(const J9ROMClass* romClass, const J9ROMMethod* romMethod)
+   {
+   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
+   J9UTF8 * name = J9ROMMETHOD_NAME(romMethod);
+   J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(romMethod);
+   TR_VerboseLog::write("%.*s.%.*s%.*s", J9UTF8_LENGTH(className), (char *)J9UTF8_DATA(className),
+      J9UTF8_LENGTH(name), (char *)J9UTF8_DATA(name),
+      J9UTF8_LENGTH(signature), (char *)J9UTF8_DATA(signature));
+   }
+
+
 //----------------------- Must hide these in TR::CompilationInfo ------
 #include "env/CpuUtilization.hpp"
 #include "infra/Statistics.hpp"
@@ -4950,13 +4961,12 @@ void *TR::CompilationInfo::compileRemoteMethod(J9VMThread * vmThread, TR::IlGene
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
       {
-      TR_J9VMBase * fe = TR_J9VMBase::get(_jitConfig, vmThread);
       J9Method *method = details.getMethod();
       TR_VerboseLog::vlogAcquire();
       TR_VerboseLog::writeLine(TR_Vlog_CR, "%p   Compile request %s", vmThread, details.name());
-      char buf[500];
-      fe->printTruncatedSignature(buf, sizeof(buf), (TR_OpaqueMethodBlock *)method);
-      TR_VerboseLog::write(" j9method=%p %s optLevel=%d", method, buf, optimizationPlan->getOptLevel());
+      TR_VerboseLog::write(" j9method=%p ", method);
+      CompilationInfo::printMethodNameToVlog(romClass, romMethod);
+      TR_VerboseLog::write("  optLevel=%d", optimizationPlan->getOptLevel());
       TR_VerboseLog::vlogRelease();
       }
 
@@ -6105,7 +6115,7 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
 
          TR_VerboseLog::vlogAcquire();
          TR_VerboseLog::writeLine(TR_Vlog_COMP,"(AOT load) ");
-         _compInfo.printMethodNameToVlog(method);
+         CompilationInfo::printMethodNameToVlog(method);
          TR_VerboseLog::write(" @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT, metaData->startPC, metaData->endWarmPC);
          TR_VerboseLog::write(" Q_SZ=%d Q_SZI=%d QW=%d j9m=%p bcsz=%u", _compInfo.getMethodQueueSize(), _compInfo.getNumQueuedFirstTimeCompilations(),
                                 _compInfo.getQueueWeight(), method, _compInfo.getMethodBytecodeSize(method));
@@ -6801,7 +6811,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
             {
             TR_VerboseLog::vlogAcquire();
             TR_VerboseLog::writeLine(TR_Vlog_COMP, "Method ");
-            getCompilationInfo()->printMethodNameToVlog(method);
+            CompilationInfo::printMethodNameToVlog(method);
             TR_VerboseLog::write(" will continue as interpreted");
             TR_VerboseLog::vlogRelease();
             }

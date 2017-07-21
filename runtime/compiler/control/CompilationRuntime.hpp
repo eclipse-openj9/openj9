@@ -732,7 +732,8 @@ public:
    bool useMultipleCompilationThreads() { return (getNumUsableCompilationThreads() + _numDiagnosticThreads) > 1; }
    bool getRampDownMCT() const { return _rampDownMCT; }
    void setRampDownMCT() { _rampDownMCT = true; } // cannot be reset
-   void printMethodNameToVlog(J9Method *method);
+   static void printMethodNameToVlog(J9Method *method);
+   static void printMethodNameToVlog(const J9ROMClass* romClass, const J9ROMMethod* romMethod);
 
    void queueForcedAOTUpgrade(TR_MethodToBeCompiled *originalEntry);
 
