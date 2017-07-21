@@ -36,7 +36,7 @@ message AnyData
 
 enum J9ServerMessageType
    {
-   compilation_code = 0;
+   compilationCode = 0;
    get_rom_class_and_method_from_ram_method = 1;
    new_TR_resolved_j9_method = 2;
    }

@@ -47,7 +47,7 @@ JAAS::J9ServerStream::finishWithOnlyCode(uint32_t code)
    {
    try
       {
-      write(J9ServerMessageType::compilation_code, code);
+      write(J9ServerMessageType::compilationCode, code);
       finish();
       }
 

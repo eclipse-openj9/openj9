@@ -35,11 +35,17 @@ public:
       if (!_stream->Write(_clientMsg))
          throw StreamFailure();
       }
-   template <typename ...T>
-   std::tuple<T...> read()
+
+   J9ServerMessageType read()
       {
       if (!_stream->Read(&_serverMsg))
          throw StreamFailure();
+      return _serverMsg.type();
+      }
+
+   template <typename ...T>
+   std::tuple<T...> getRecvData()
+      {
       return getArgs<T...>(_serverMsg.mutable_data());
       }
 

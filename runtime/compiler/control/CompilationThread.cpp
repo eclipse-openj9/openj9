@@ -258,78 +258,49 @@ jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, v
 
 static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
    {
-   /*
-   using JAAS::J9ServerMessage;
+   using JAAS::J9ServerMessageType;
 
    TR_Memory *trMemory = fe->_compInfoPT->getCompilation()->trMemory();
 
    bool done = false;
-   switch (client->serverMessage().MessageKind_case())
+   switch (client->read())
       {
-      case J9ServerMessage::kCompilationCode:
+      case J9ServerMessageType::compilationCode:
          done = true;
          break;
 
-      case J9ServerMessage::kInfo0:
-         switch (client->serverMessage().info_0())
-            {
-            case JAAS::J9InformationType::canMethodEnterEventBeHooked:
-               client->clientMessage()->set_single_bool(fe->canMethodEnterEventBeHooked());
-               break;
-            case JAAS::J9InformationType::canMethodExitEventBeHooked:
-               client->clientMessage()->set_single_bool(fe->canMethodExitEventBeHooked());
-               break;
-            default:
-               // JAAS TODO more specific exception here
-               throw JAAS::StreamFailure();
-            }
+      case J9ServerMessageType::get_rom_class_and_method_from_ram_method:
+         {
+         uint64_t reqRamMethod = std::get<0>(client->getRecvData<uint64_t>());
+         J9Method *ramMethod = (J9Method*) reqRamMethod;
+         J9Class *methodClass = J9_CLASS_FROM_METHOD(ramMethod);
+         J9ROMClass *romClass = methodClass->romClass;
+         uint64_t methodIndex = getMethodIndexUnchecked(ramMethod);
+         std::string romClassStr((char *) romClass, romClass->romSize);
+         client->write(romClassStr, methodIndex);
+         }
          break;
-      case J9ServerMessage::kGetRomClassAndMethodFromRamMethod:
-            {
-            uint64_t reqRamMethod = client->serverMessage().get_rom_class_and_method_from_ram_method();
-            J9Method *ramMethod = (J9Method*) reqRamMethod;
-            J9Class *methodClass = J9_CLASS_FROM_METHOD(ramMethod);
-            J9ROMClass *romClass = methodClass->romClass;
-            uint64_t methodIndex = getMethodIndexUnchecked(ramMethod);
-            std::string romClassStr((char *) romClass, romClass->romSize);
-            client->clientMessage()->mutable_rom_class_and_method()->set_rom_class(romClassStr);
-            client->clientMessage()->mutable_rom_class_and_method()->set_method_index(methodIndex);
-            }
-         break;
-      case J9ServerMessage::kIsClassLibraryClass:
-            {
-            J9Class *clazz = J9Convert::from(client->serverMessage().is_class_library_class());
-            client->clientMessage()->set_single_bool(fe->isClassLibraryClass((TR_OpaqueClassBlock *) clazz));
-            }
-         break;
-      case J9ServerMessage::kGetConstantPoolFromMethod:
-            {
-            J9Method *method = (J9Method *) client->serverMessage().get_constant_pool_from_method();
-            client->clientMessage()->set_single_pointer((uint64_t) J9_CP_FROM_METHOD(method));
-            }
-         break;
-      case J9ServerMessage::kGetClassFromConstantPool:
-            {
-            J9RAMConstantPoolItem *cp = (J9RAMConstantPoolItem *) client->serverMessage().get_class_from_constant_pool();
-            client->clientMessage()->set_single_pointer((uint64_t) J9_CLASS_FROM_CP(cp));
-            }
-         break;
-         case J9ServerMessage::kNewTRResolvedJ9Method:
-            {
-            // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
-            // easily done on the client side.
-            TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) client->serverMessage().new_tr_resolved_j9_method().j9_method();
-            TR_ResolvedJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9Method(method, fe, trMemory);
-            if (!resolvedMethod) throw std::bad_alloc();
-            client->clientMessage()->set_single_pointer((uint64_t) resolvedMethod);
-            }
+//      case J9ServerMessage::kIsClassLibraryClass:
+//            {
+//            J9Class *clazz = J9Convert::from(client->serverMessage().is_class_library_class());
+//            client->clientMessage()->set_single_bool(fe->isClassLibraryClass((TR_OpaqueClassBlock *) clazz));
+//            }
+//         break;
+      case J9ServerMessageType::new_TR_resolved_j9_method:
+         {
+         // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
+         // easily done on the client side.
+         TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
+         TR_ResolvedJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9Method(method, fe, trMemory);
+         if (!resolvedMethod) throw std::bad_alloc();
+         client->write(resolvedMethod);
+         }
          break;
       default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();
       }
    return done;
-   */
    }
 
 inline void
@@ -8359,23 +8330,19 @@ TR::CompilationInfoPerThreadBase::compile(
                   {
                   uint32_t classChainCLOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(cc)));
                   JAAS::J9ClientStream client;
-                  bool done = true;
+                  bool done = false;
                   client.buildCompileRequest(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset);
-                  uint32_t code = std::get<0>(client.read<uint32_t>());
-                  /*while(!done)
+                  while(!done)
                      {
-                     if (!client.writeBlocking())
-                        break;
-                     if (!client.readBlocking())
-                        break;
                      done = handleServerMessage(&client, compiler->fej9());
-                     }*/
+                     }
                   if (done)
                      {
                      JAAS::Status status = client.waitForFinish();
-                     done = status.ok();
+                     uint32_t code = std::get<0>(client.getRecvData<uint32_t>());
+                     done = status.ok() && (code == compilationOK || code == compilationNotNeeded);
                      }
-                  if (done && (code == compilationOK || code == compilationNotNeeded))
+                  if (done)
                      {
                      UDATA flags = 0;
                      const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
