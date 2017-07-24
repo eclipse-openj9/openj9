@@ -29,6 +29,11 @@ message Bytes
    bytes val = 1;
    }
 
+message Bool
+   {
+   bool val = 1;
+   }
+
 message AnyData
    {
    repeated google.protobuf.Any data = 1;
@@ -39,6 +44,7 @@ enum J9ServerMessageType
    compilationCode = 0;
    get_rom_class_and_method_from_ram_method = 1;
    new_TR_resolved_j9_method = 2;
+   isJNINative = 3;
    }
 
 message J9ServerMessage

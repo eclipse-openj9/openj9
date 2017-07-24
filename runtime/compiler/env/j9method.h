@@ -583,6 +583,7 @@ public:
    virtual J9ROMClass *romClassPtr() override;
    virtual J9RAMConstantPoolItem *literals() override;
    virtual J9Class *constantPoolHdr() override;
+   virtual bool isJNINative() override;
 
 private:
    JAAS::J9ServerStream *_stream;

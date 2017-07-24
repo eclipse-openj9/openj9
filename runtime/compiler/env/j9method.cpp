@@ -8407,6 +8407,13 @@ TR_ResolvedJ9JAASServerMethod::constantPoolHdr()
    return _ramClass;
    }
 
+bool
+TR_ResolvedJ9JAASServerMethod::isJNINative()
+   {
+   _stream->write(JAAS::J9ServerMessageType::isJNINative, _remoteMirror);
+   return std::get<0>(_stream->read<bool>());
+   }
+
 // JAAS TODO methods
 // these all use RAM data in some way
 // 
