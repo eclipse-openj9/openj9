@@ -8342,7 +8342,10 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
 
    // Create client side mirror of this object to use for calls involving RAM data
    _stream->write(JAAS::J9ServerMessageType::new_TR_resolved_j9_method, aMethod, vTableSlot);
-   _remoteMirror = std::get<0>(_stream->read<TR_ResolvedJ9Method*>());
+   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*>();
+   _remoteMirror = std::get<0>(recv);
+   _literals = std::get<1>(recv);
+   _ramClass = std::get<2>(recv);
 
    // get ROM data from client
    _stream->write(JAAS::J9ServerMessageType::get_rom_class_and_method_from_ram_method, aMethod);

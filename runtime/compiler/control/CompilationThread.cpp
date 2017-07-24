@@ -293,7 +293,9 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          TR_ResolvedJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9Method(method, fe, trMemory);
          if (!resolvedMethod) throw std::bad_alloc();
-         client->write(resolvedMethod);
+         J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *)(J9_CP_FROM_METHOD(resolvedMethod->ramMethod()));
+         J9Class *cpHdr = J9_CLASS_FROM_CP(literals);
+         client->write(resolvedMethod, literals, cpHdr);
          }
          break;
       case J9ServerMessageType::isJNINative:
