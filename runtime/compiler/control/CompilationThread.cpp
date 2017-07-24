@@ -269,6 +269,19 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          done = true;
          break;
 
+      case J9ServerMessageType::VM_isClassLibraryClass:
+         {
+         bool rv = fe->isClassLibraryClass(std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>()));
+         client->write(rv);
+         }
+         break;
+      case J9ServerMessageType::VM_isClassLibraryMethod:
+         {
+         auto tup = client->getRecvData<TR_OpaqueMethodBlock*, bool>();
+         bool rv = fe->isClassLibraryMethod(std::get<0>(tup), std::get<1>(tup));
+         client->write(rv);
+         }
+         break;
       case J9ServerMessageType::get_rom_class_and_method_from_ram_method:
          {
          uint64_t reqRamMethod = std::get<0>(client->getRecvData<uint64_t>());
@@ -280,12 +293,6 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          client->write(romClassStr, methodIndex);
          }
          break;
-//      case J9ServerMessage::kIsClassLibraryClass:
-//            {
-//            J9Class *clazz = J9Convert::from(client->serverMessage().is_class_library_class());
-//            client->clientMessage()->set_single_bool(fe->isClassLibraryClass((TR_OpaqueClassBlock *) clazz));
-//            }
-//         break;
       case J9ServerMessageType::new_TR_resolved_j9_method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only

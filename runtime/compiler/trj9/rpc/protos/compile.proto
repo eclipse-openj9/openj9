@@ -45,6 +45,8 @@ enum J9ServerMessageType
    get_rom_class_and_method_from_ram_method = 1;
    new_TR_resolved_j9_method = 2;
    isJNINative = 3;
+   VM_isClassLibraryClass = 4;
+   VM_isClassLibraryMethod = 5;
    }
 
 message J9ServerMessage
