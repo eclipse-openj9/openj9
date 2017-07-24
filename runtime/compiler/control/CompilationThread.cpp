@@ -1856,9 +1856,6 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
       {
       if (entry->_compilationAttemptsLeft > 0)
          {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-         TR_J9SharedCache *sc = (TR_J9SharedCache *) (((TR_J9VMBase *)comp->fej9())->sharedCache());
-#endif
 
          TR_PersistentJittedBodyInfo *bodyInfo;
          switch (entry->_compErrCode)
@@ -1907,39 +1904,27 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                   comp->phaseMemProfiler().DumpSummary(*comp);
                   }
 
-               if (!((TR_J9VMBase *)comp->fej9())->isAOT_DEPRECATED_DO_NOT_USE()
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-                   && sc
-#endif
-                  )
+               if (!((TR_J9VMBase *)comp->fej9())->isAOT_DEPRECATED_DO_NOT_USE())
                   {
-                  switch (entry->_optimizationPlan->getOptLevel())
+                  TR_J9SharedCache *sc = (TR_J9SharedCache *) (((TR_J9VMBase *)comp->fej9())->sharedCache());
+                  if (sc)
                      {
-                     case cold:
-                     case warm:
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-                        sc->addHint(method, TR_HintFailedWarm);
-#else
-                        ((TR_J9VMBase *)comp->fej9())->addSharedCacheHint(method, TR_HintFailedWarm);
-#endif
-                        break;
-                     case hot:
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-                        sc->addHint(method, TR_HintFailedHot);
-#else
-                        ((TR_J9VMBase *)comp->fej9())->addSharedCacheHint(method, TR_HintFailedHot);
-#endif
-                        break;
-                     case scorching:
-                     case veryHot:
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-                        sc->addHint(method, TR_HintFailedScorching);
-#else
-                        ((TR_J9VMBase *)comp->fej9())->addSharedCacheHint(method, TR_HintFailedScorching);
-#endif
-                        break;
-                     default:
-                        break;
+                     switch (entry->_optimizationPlan->getOptLevel())
+                        {
+                        case cold:
+                        case warm:
+                           sc->addHint(method, TR_HintFailedWarm);
+                           break;
+                        case hot:
+                           sc->addHint(method, TR_HintFailedHot);
+                           break;
+                        case scorching:
+                        case veryHot:
+                           sc->addHint(method, TR_HintFailedScorching);
+                           break;
+                        default:
+                           break;
+                        }
                      }
                   }
 
@@ -6168,12 +6153,8 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
                if ((options->getInitialBCount() != 0) &&
                    (options->getInitialCount() != 0))
                   {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                   TR_J9SharedCache *sc = (TR_J9SharedCache *) (compiler->fej9()->sharedCache());
                   sc->addHint(method, TR_HintFailedValidation);
-#else
-                  ((TR_J9VMBase *)fe)->addSharedCacheHint(method, TR_HintFailedValidation);
-#endif
                   }
                 break;
             }
@@ -6821,13 +6802,8 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          if (_onSeparateThread && entry->_async &&  // KEN need to pass in onSeparateThread?
          (TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags() & (TR_HintUpgrade | TR_HintHot | TR_HintScorching)))
             {
-            uint16_t hints =
             // read all hints at once because we may rely on more than just one type
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-               _vm->sharedCache()->getAllEnabledHints(method) & (TR_HintUpgrade | TR_HintHot | TR_HintScorching);
-#else
-               _vm->getAllSharedCacheHints(method) & (TR_HintUpgrade | TR_HintHot | TR_HintScorching);
-#endif
+            uint16_t hints = _vm->sharedCache()->getAllEnabledHints(method) & (TR_HintUpgrade | TR_HintHot | TR_HintScorching);
             // Now let's see if we need to schedule an AOT upgrade
             if (hints)
                {
@@ -7147,15 +7123,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
    that->setCompilationShouldBeInterrupted(0);
 
    if (that->_methodBeingCompiled->isDLTCompile())
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
       {
       TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
       if (sc)
         sc->addHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintDLT);
       }
-#else
-      vm->addSharedCacheHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintDLT);
-#endif
 
    if (that->_methodBeingCompiled->_optimizationPlan->isUpgradeRecompilation())
       {
@@ -7163,13 +7135,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(that->_methodBeingCompiled->_oldStartPC);
       if (bodyInfo->getIsAotedBody() || bodyInfo->getHotness() <= cold)
          {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
          TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
          if (sc)
             sc->addHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintUpgrade);
-#else
-         vm->addSharedCacheHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintUpgrade);
-#endif
          }
       }
 
@@ -7821,11 +7789,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          if (profileInfo && profileInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
             {
             isEDOCompilation = true;
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
             sc->addHint(method, TR_HintEDO);
-#else
-            fej9->addSharedCacheHint(method, TR_HintEDO);
-#endif
             }
 
          // There is the possibility that a hot/scorching compilation happened outside
@@ -7838,28 +7802,16 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             if (hotness == hot)
                {
                if (!isEDOCompilation)
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                   sc->addHint(method, TR_HintHot);
-#else
-                  fej9->addSharedCacheHint(method, TR_HintHot);
-#endif
                }
             else if (hotness == scorching)
                {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                sc->addHint(method, TR_HintScorching);
-#else
-               fej9->addSharedCacheHint(method, TR_HintScorching);
-#endif
                }
             // We also want to add a hint about methods compiled (not AOTed) during startup
             // In subsequent runs we should give such method lower counts the idea being
             // that if I take the time to compile method, why not do it sooner
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
             sc->addHint(method, TR_HintMethodCompiledDuringStartup);
-#else
-            fej9->addSharedCacheHint(method, TR_HintMethodCompiledDuringStartup);
-#endif
             }
          }
 
@@ -7875,19 +7827,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
             if (hotness <= cold)
                {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                sc->addHint(method, TR_HintLargeMemoryMethodC);
-#else
-               fej9->addSharedCacheHint(method, TR_HintLargeMemoryMethodC);
-#endif
                }
             else if (hotness == warm)
                {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                sc->addHint(method, TR_HintLargeMemoryMethodW);
-#else
-               fej9->addSharedCacheHint(method, TR_HintLargeMemoryMethodW);
-#endif
                }
             }
 
@@ -7896,19 +7840,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
             if (hotness <= cold)
                {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                sc->addHint(method, TR_HintLargeCompCPUC);
-#else
-               fej9->addSharedCacheHint(method, TR_HintLargeCompCPUC);
-#endif
                }
             else if (hotness == warm)
                {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                sc->addHint(method, TR_HintLargeCompCPUW);
-#else
-               fej9->addSharedCacheHint(method, TR_HintLargeCompCPUW);
-#endif
                }
             }
          }
@@ -8578,15 +8514,11 @@ TR::CompilationInfoPerThreadBase::compile(
                }
 
             if (!compiler->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                {
                TR_J9SharedCache *sc = (TR_J9SharedCache *) (compiler->fej9()->sharedCache());
                if (sc)
                   sc->addHint(compiler->getCurrentMethod(), TR_HintFailedCHTable);
                }
-#else
-               vm.addSharedCacheHint(compiler->getCurrentMethod(), TR_HintFailedCHTable);
-#endif
             compiler->failCompilation<J9::CHTableCommitFailure>("CHTable commit failure");
             }
          }

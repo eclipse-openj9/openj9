@@ -23,8 +23,6 @@
 #ifndef SHARED_CACHE_HPP
 #define SHARED_CACHE_HPP
 
-//#define HINTS_IN_SHAREDCACHE_OBJECT
-
 #include "env/jittypes.h"
 
 class TR_PersistentClassLoaderTable;

@@ -469,11 +469,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                {
                int32_t scount = optionsAOT->getInitialSCount();
                uint16_t newScount = 0;
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                if ((TR_J9SharedCache *)(((TR_J9VMBase *) fe)->sharedCache())->isHint(method, TR_HintFailedValidation, &newScount))
-#else
-               if (((TR_J9VMBase *) fe)->isSharedCacheHint(method, TR_HintFailedValidation, &newScount))
-#endif
                   {
                   if ((scount == TR_QUICKSTART_INITIAL_SCOUNT) || (scount == TR_INITIAL_SCOUNT))
                      { // If scount is not user specified (coarse way due to info being lost from options parsing)
@@ -525,11 +521,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                    jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
                    (TR_HintMethodCompiledDuringStartup & TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags()))
                   {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                   bool wasCompiledDuringStartup = (TR_J9SharedCache *)(fe->sharedCache())->isHint(method, TR_HintMethodCompiledDuringStartup);
-#else
-                  bool wasCompiledDuringStartup = fe->isSharedCacheHint(method, TR_HintMethodCompiledDuringStartup);
-#endif
                   if (wasCompiledDuringStartup)
                      {
                      // Lower the counts for any method that doesn't have an AOT body,

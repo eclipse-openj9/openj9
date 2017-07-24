@@ -946,14 +946,6 @@ public:
    static char            x86VendorID[13];
    static bool            x86VendorIDInitialized;
 
-#if !defined(HINTS_IN_SHAREDCACHE_OBJECT)
-   bool isSharedCacheHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
-   void addSharedCacheHint(TR_ResolvedMethod *, TR_SharedCacheHint);
-   virtual uint16_t getAllSharedCacheHints(J9Method *method);
-   bool isSharedCacheHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL);
-   void addSharedCacheHint(J9Method *, TR_SharedCacheHint);
-#endif
-
    virtual J9Class * matchRAMclassFromROMclass(J9ROMClass * clazz,  TR::Compilation * comp);
    virtual J9VMThread * getCurrentVMThread();
 
@@ -1012,13 +1004,6 @@ public:
 #if defined(TR_TARGET_S390)
    int32_t getS390MachineName(TR_S390MachineType machine, char* processorName, int32_t stringLength);
 #endif
-
-   private:
-#if !defined(HINTS_IN_SHAREDCACHE_OBJECT)
-   uint32_t     getSharedCacheHint(J9VMThread * vmThread, J9Method *romMethod, J9SharedClassConfig * scConfig);
-#endif
-
-protected:
 
    enum // _flags
       {
