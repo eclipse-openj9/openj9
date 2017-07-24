@@ -126,7 +126,6 @@ inline void getClassNameSignatureFromMethod(J9Method *method, J9UTF8 *& methodCl
    methodSignature = J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
    }
 
-
 typedef struct TR_JitPrivateConfig
    {
    TR::FILE      *vLogFile;
@@ -915,6 +914,7 @@ public:
    bool shouldSleep() { _shouldSleep = !_shouldSleep; return _shouldSleep; } // no need for virtual; we need this per thread
 
    virtual bool isAnonymousClass(TR_OpaqueClassBlock *j9clazz) { return (J9_ARE_ALL_BITS_SET(((J9Class*)j9clazz)->romClass->extraModifiers, J9AccClassAnonClass)); }
+   virtual bool isAnonymousClass(J9ROMClass *romClass) { return (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass)); }
    virtual int64_t getCpuTimeSpentInCompThread(TR::Compilation * comp); // resolution is 0.5 sec or worse. Returns -1 if unavailable
 
    virtual void *             getClassLoader(TR_OpaqueClassBlock * classPointer);

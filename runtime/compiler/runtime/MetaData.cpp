@@ -1607,7 +1607,7 @@ createMethodMetaData(
          {
          // Insert trace point here for insertion failure
          }
-      if (vm->isAnonymousClass( (TR_OpaqueClassBlock*) ((TR_ResolvedJ9Method*)vmMethod)->constantPoolHdr()))
+      if (vm->isAnonymousClass( ((TR_ResolvedJ9Method*)vmMethod)->romClassPtr()))
          {
          J9Class *j9clazz = ((TR_ResolvedJ9Method*)vmMethod)->constantPoolHdr();
          J9CLASS_EXTENDED_FLAGS_SET(j9clazz, J9ClassContainsJittedMethods);

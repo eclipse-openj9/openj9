@@ -44,8 +44,11 @@ public:
 
    bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
    bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL);
+   bool isHint(J9ROMMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
    uint16_t getAllEnabledHints(J9Method *method);
+   uint16_t getAllEnabledHints(J9ROMMethod *method);
    void addHint(J9Method *, TR_SharedCacheHint);
+   void addHint(J9ROMMethod *, TR_SharedCacheHint);
    void addHint(TR_ResolvedMethod *, TR_SharedCacheHint);
    bool isMostlyFull();
 
@@ -54,8 +57,6 @@ public:
 
    void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp);
    void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp);
-
-   J9Class * matchRAMclassFromROMclass(J9ROMClass * clazz, TR::Compilation * comp);
 
    bool canRememberClass(TR_OpaqueClassBlock *classPtr)
       {
@@ -117,6 +118,7 @@ private:
    void log(char *format, ...);
 
    uint32_t getHint(J9VMThread * vmThread, J9Method *method);
+   uint32_t getHint(J9VMThread * vmThread, J9ROMMethod *method);
 
    void convertUnsignedOffsetToASCII(UDATA offset, char *myBuffer);
    void createClassKey(UDATA classOffsetInCache, char *key, uint32_t & keyLength);

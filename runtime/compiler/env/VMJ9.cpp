@@ -487,6 +487,7 @@ TR_J9VMBase::acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(TR::Compilation
       }
    }
 
+// JAAS TODO: all of the SharedCache related methods appear to be copy/paste from J9SharedCache.cpp!
 #if !defined(HINTS_IN_SHAREDCACHE_OBJECT)
 uint32_t TR_J9VMBase::getSharedCacheHint(J9VMThread * vmThread, J9Method *method, J9SharedClassConfig * scConfig)
    {

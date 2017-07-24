@@ -144,11 +144,15 @@ TR_J9SharedCache::log(char *format, ...)
 uint32_t
 TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
    {
+   return getHint(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+   }
+
+uint32_t
+TR_J9SharedCache::getHint(J9VMThread * vmThread, J9ROMMethod *romMethod)
+   {
    uint32_t result = 0;
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-   J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-
    unsigned char storeBuffer[4];
    uint32_t bufferLength = 4;
    J9SharedDataDescriptor descriptor;
@@ -169,13 +173,18 @@ TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
 uint16_t
 TR_J9SharedCache::getAllEnabledHints(J9Method *method)
    {
+   return getAllEnabledHints(J9_ROM_METHOD_FROM_RAM_METHOD(method));
+   }
+uint16_t
+TR_J9SharedCache::getAllEnabledHints(J9ROMMethod *romMethod)
+   {
    uint16_t hintFlags = 0;
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    if (_hintsEnabledMask)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       J9VMThread * vmThread = fej9->getCurrentVMThread();
-      uint32_t scHints = getHint(vmThread, method);
+      uint32_t scHints = getHint(vmThread, romMethod);
       hintFlags = *((uint16_t *)&scHints) & _hintsEnabledMask;
       }
 #endif // defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
@@ -186,6 +195,12 @@ TR_J9SharedCache::getAllEnabledHints(J9Method *method)
 bool
 TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t *dataField)
    {
+   return isHint(J9_ROM_METHOD_FROM_RAM_METHOD(method), theHint, dataField);
+   }
+
+bool
+TR_J9SharedCache::isHint(J9ROMMethod *romMethod, TR_SharedCacheHint theHint, uint16_t *dataField)
+   {
    bool isHint = false;
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
@@ -193,9 +208,8 @@ TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t 
    if (hint != 0)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-      J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
       J9VMThread * vmThread = fej9->getCurrentVMThread();
-      uint32_t scHints = getHint(vmThread, method);
+      uint32_t scHints = getHint(vmThread, romMethod);
       uint16_t hintFlags = *((uint16_t *)&scHints);
 
       if (dataField)
@@ -203,10 +217,11 @@ TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t 
 
       if (_verboseHints)
          {
-         char methodSignature[500];
+         // JAAS TODO
+         /*char methodSignature[500];
          int32_t maxSignatureLength = 500;
          fej9->printTruncatedSignature(methodSignature, maxSignatureLength, (TR_OpaqueMethodBlock *) method);
-         TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"is hint %x(%x) %s", hintFlags, hint, methodSignature);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"is hint %x(%x) %s", hintFlags, hint, methodSignature);*/
          }
       isHint = (hintFlags & hint) != 0;
       }
@@ -217,11 +232,17 @@ TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t 
 bool
 TR_J9SharedCache::isHint(TR_ResolvedMethod *method, TR_SharedCacheHint hint, uint16_t *dataField)
    {
-   return isHint(((TR_ResolvedJ9Method *) method)->ramMethod(), hint, dataField);
+   return isHint(((TR_ResolvedJ9Method *) method)->romMethod(), hint, dataField);
    }
 
 void
 TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
+   {
+   addHint(J9_ROM_METHOD_FROM_RAM_METHOD(method), theHint);
+   }
+
+void
+TR_J9SharedCache::addHint(J9ROMMethod * romMethod, TR_SharedCacheHint theHint)
    {
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    static bool SCfull = false;
@@ -229,7 +250,6 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
    if (newHint)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-      J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
       J9VMThread * vmThread = fej9->getCurrentVMThread();
 
       char methodSignature[500];
@@ -239,8 +259,9 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
 
       if (_verboseHints)
          {
-         fej9->printTruncatedSignature(methodSignature, maxSignatureLength, (TR_OpaqueMethodBlock *) method);
-         TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"adding hint 0x%x %s", newHint, methodSignature);
+         // JAAS TODO
+         /*fej9->printTruncatedSignature(methodSignature, maxSignatureLength, (TR_OpaqueMethodBlock *) method);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"adding hint 0x%x %s", newHint, methodSignature);*/
          }
 
       // There is only one scenario where concurrency *may* matter, so we don't get a lock
@@ -249,7 +270,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
       // won't be registered. The affect, however is minimal, and likely to correct itself in the current run
       // (if the inlining hint is missed) or a subsequent run (if the other hint is missed).
 
-      uint32_t scHintData = getHint(vmThread, method);
+      uint32_t scHintData = getHint(vmThread, romMethod);
       uint16_t *hintFlags = (uint16_t *)&scHintData;
       uint16_t *hintCount = ((uint16_t *)&scHintData) + 1; // Flags and new count field needs to be in contiguous location to be stored into sharecache
 
@@ -274,8 +295,9 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
             TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig());
             if (store == 0)
                {
-               if (_verboseHints)
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint added 0x%x, key = %s, scount: %d", *hintFlags, methodSignature, *hintCount);
+               // JAAS TODO
+               //if (_verboseHints)
+                  //TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint added 0x%x, key = %s, scount: %d", *hintFlags, methodSignature, *hintCount);
                }
             else if (store != J9SHR_RESOURCE_STORE_FULL)
                {
@@ -349,7 +371,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
 void
 TR_J9SharedCache::addHint(TR_ResolvedMethod * method, TR_SharedCacheHint hint)
    {
-   addHint(((TR_ResolvedJ9Method *) method)->ramMethod(), hint);
+   addHint(((TR_ResolvedJ9Method *) method)->romMethod(), hint);
    }
 
 void
@@ -371,30 +393,6 @@ bool
 TR_J9SharedCache::isMostlyFull()
    {
    return (double) sharedCacheConfig()->getFreeSpaceBytes(_javaVM) / sharedCacheConfig()->getCacheSizeBytes(_javaVM) < 0.8;
-   }
-
-J9Class *
-TR_J9SharedCache::matchRAMclassFromROMclass(J9ROMClass * clazz, TR::Compilation * comp)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   J9VMThread *vmThread = fej9->getCurrentVMThread();
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz);
-   J9Class *ramClass = NULL;
-
-      {
-      TR::VMAccessCriticalSection matchRAMclassFromROMclass(fej9);
-      ramClass = jitGetClassInClassloaderFromUTF8(vmThread,
-                                                  ((TR_ResolvedJ9Method *)comp->getCurrentMethod())->getClassLoader(),
-                                                  (char *) J9UTF8_DATA(className),
-                                                  J9UTF8_LENGTH(className));
-      if (!ramClass)
-         {
-         ramClass = jitGetClassInClassloaderFromUTF8(vmThread, (J9ClassLoader *) javaVM()->systemClassLoader,
-            (char *) J9UTF8_DATA(className), J9UTF8_LENGTH(className));
-         }
-      }
-
-   return ramClass;
    }
 
 void *

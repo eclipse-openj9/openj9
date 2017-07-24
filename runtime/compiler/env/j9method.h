@@ -255,20 +255,21 @@ public:
    // JAAS: make virtual
    //
    // JAAS TODO: make protected, returning Opaque versions
-   J9Method *              ramMethod() { return _ramMethod; }
    J9ROMMethod *           romMethod() { return _romMethod; }
-   virtual J9Class *               constantPoolHdr();
    virtual J9ROMClass *            romClassPtr();
+protected:
    virtual J9RAMConstantPoolItem * literals();   // address of 1st CP entry (with type being an entry for array indexing)
+   virtual J9ConstantPool *      cp();
+public:
+   J9Method *              ramMethod() { return _ramMethod; }
+   virtual J9Class *               constantPoolHdr();
+   J9ClassLoader *         getClassLoader();
 
 
    uint32_t                methodModifiers();
    uint32_t                classModifiers();
    uint32_t                classExtraModifiers();
 
-   J9ClassLoader *         getClassLoader();
-
-   virtual J9ConstantPool *      cp();
    virtual TR_Method *           convertToMethod();
 
    virtual uint32_t              numberOfParameters();
