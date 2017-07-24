@@ -187,7 +187,8 @@ public:
       catch (const JAAS::StreamFailure &e)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Stream failed in server compilation dispatcher thread.");
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Stream failed in server compilation dispatcher thread:");
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, e.what());
          stream->cancel();
          }
       }

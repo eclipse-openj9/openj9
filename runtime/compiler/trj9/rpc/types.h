@@ -15,6 +15,24 @@ namespace JAAS
    public:
       virtual const char* what() const throw() { return "stream failed, closed or disconnected"; }
       };
+
+   class StreamTypeMismatch: public virtual StreamFailure
+      {
+   public:
+      StreamTypeMismatch(std::string message) : _message(message) { }
+      virtual const char* what() const throw() { return _message.c_str(); }
+   private:
+      std::string _message;
+      };
+
+   class StreamArityMismatch: public virtual StreamFailure
+      {
+   public:
+      StreamArityMismatch(std::string message) : _message(message) { }
+      virtual const char* what() const throw() { return _message.c_str(); }
+   private:
+      std::string _message;
+      };
 }
 
 #endif // RPC_TYPES_H

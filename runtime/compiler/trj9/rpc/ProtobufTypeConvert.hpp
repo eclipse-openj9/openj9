@@ -91,8 +91,7 @@ namespace JAAS
             }
          else
             {
-            // JAAS TODO more specific error
-            throw StreamFailure();
+            throw StreamTypeMismatch("Expected " + data.type_url() + " for argument " + std::to_string(n));
             }
          }
       };
@@ -100,7 +99,7 @@ namespace JAAS
    std::tuple<Args...> getArgs(AnyData *message)
       {
       if (sizeof...(Args) != message->data_size())
-         throw StreamFailure(); // JAAS TODO more specific error
+         throw StreamArityMismatch("Expected " + std::to_string(message->data_size()) + " args to unpack but got " + std::to_string(sizeof...(Args)) + "-tuple");
       return GetArgs<Args...>::getArgs(message, 0);
       }
 
