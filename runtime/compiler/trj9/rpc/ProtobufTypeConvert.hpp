@@ -65,8 +65,6 @@ namespace JAAS
    template <typename... Args>
    void setArgs(AnyData *message, Args... args)
       {
-      if (sizeof...(Args) != message->data_size())
-         throw StreamFailure(); // JAAS TODO more specific error
       SetArgs<Args...>::setArgs(message, args...);
       }
 
