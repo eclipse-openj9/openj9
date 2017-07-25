@@ -66,6 +66,7 @@ namespace JAAS
    template <typename... Args>
    void setArgs(AnyData *message, Args... args)
       {
+      message->clear_data();
       SetArgs<Args...>::setArgs(message, args...);
       }
 
