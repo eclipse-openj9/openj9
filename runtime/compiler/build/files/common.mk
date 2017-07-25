@@ -336,6 +336,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/ArtifactManager.cpp \
     compiler/runtime/ClassUnloadAssumption.cpp \
     compiler/runtime/CRuntimeImpl.cpp \
+    compiler/runtime/CompileService.cpp \
     compiler/runtime/DataCache.cpp \
     compiler/runtime/GPUHelpers.cpp \
     compiler/runtime/HWProfiler.cpp \
