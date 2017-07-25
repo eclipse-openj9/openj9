@@ -41,6 +41,8 @@ namespace J9 { typedef J9::IlGeneratorMethodDetails IlGeneratorMethodDetailsConn
 
 class J9Class;
 class J9Method;
+class J9ROMClass;
+class J9ROMMethod;
 class TR_FrontEnd;
 class TR_IlGenerator;
 class TR_InlineBlocks;
@@ -81,6 +83,7 @@ public:
    virtual const char * name() const { return "OrdinaryMethod"; }
 
    virtual bool isOrdinaryMethod()     const { return true; }
+   virtual bool isRemoteMethod()       const { return false; }
    virtual bool isDumpMethod()         const { return false; }
    virtual bool isNewInstanceThunk()   const { return false; }
    virtual bool isMethodInProgress()   const { return false; }
@@ -90,6 +93,8 @@ public:
 
    J9Method *getMethod() const { return _method; }
    virtual J9Class *getClass() const;
+   virtual const J9ROMClass *getRomClass() const;
+   virtual const J9ROMMethod *getRomMethod() const;
 
    virtual TR_IlGenerator *getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
                                           TR_FrontEnd * fe,
@@ -123,6 +128,11 @@ protected:
          uintptrj_t *_handleRef;
          uintptrj_t *_argRef;
          } _methodHandleData;
+      struct
+         {
+         const J9ROMClass *_romClass;
+         const J9ROMMethod *_romMethod;
+         } _romData;
       } _data;
 
    };

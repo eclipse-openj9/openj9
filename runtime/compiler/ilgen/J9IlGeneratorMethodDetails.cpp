@@ -48,6 +48,8 @@ IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR:
 
    if (other.isOrdinaryMethod())
       return new (&storage) TR::IlGeneratorMethodDetails(static_cast<const TR::IlGeneratorMethodDetails &>(other));
+   else if (other.isRemoteMethod())
+      return new *&storage) RemoteMethodDetails(static_cast<const RemoteMethodDetails &>(other));
    else if (other.isDumpMethod())
       return new (&storage) DumpMethodDetails(static_cast<const DumpMethodDetails &>(other));
    else if (other.isNewInstanceThunk())
@@ -162,6 +164,17 @@ IlGeneratorMethodDetails::getClass() const
    return J9_CLASS_FROM_METHOD(self()->getMethod());
    }
 
+const J9ROMClass *
+IlGeneratorMethodDetails::getRomClass() const
+   {
+   return self()->getClass()->romClass;
+   }
+
+const J9ROMMethod *
+IlGeneratorMethodDetails::getRomMethod() const
+   {
+   return J9_ROM_METHOD_FROM_RAM_METHOD(self()->getMethod());
+   }
 
 void
 IlGeneratorMethodDetailsOverrideForReplay::changeMethod(

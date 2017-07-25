@@ -81,6 +81,44 @@ public:
    virtual bool supportsInvalidation() { return false; }
    };
 
+// This class is used for remote compilation requests (from a different process)
+class RemoteMethodDetails : public TR::IlGeneratorMethodDetails
+   {
+   // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
+
+   public:
+      //RemoteMethodDetails(J9Method * const method) : TR::IlGeneratorMethodDetails(method) { }
+      //RemoteMethodDetails(TR_ResolvedMethod *method) : TR::IlGeneratorMethodDetails(method) { }
+      RemoteMethodDetails(const RemoteMethodDetails & other) : TR::IlGeneratorMethodDetails(other.getMethod()) 
+         {
+         _data._romData._romClass = other.getRomClass();
+         _data._romData._romMethod = other.getRomMethod();
+         }
+      RemoteMethodDetails(J9Method * const method, const J9ROMClass *romClass, const J9ROMMethod *romMethod) : TR::IlGeneratorMethodDetails(method) 
+         {
+         _data._romData._romClass = romClass;
+         _data._romData._romMethod = romMethod;
+         }
+      const J9ROMClass  *getRomClass()  const { return _data._romData._romClass; }
+      const J9ROMMethod *getRomMethod() const { return _data._romData._romMethod; }
+      J9Class *getClass() const // JAAS TODO: make this inquire the client, or maybe cache it 
+         {
+         return nullptr; // J9_CLASS_FROM_METHOD(self()->getMethod());
+         }
+
+      virtual const char * name()        const { return "RemoteMethod"; }
+
+      virtual bool isOrdinaryMethod()    const { return false; }
+      virtual bool isRemoteMethod()      const { return true; }
+
+
+      virtual bool sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
+         {
+         return false; // JAAS TODO: two requests from two clients should be considered different
+         }
+
+      //virtual bool supportsInvalidation() const { return false; }
+   };
 
 class MethodInProgressDetails : public TR::IlGeneratorMethodDetails
    {
