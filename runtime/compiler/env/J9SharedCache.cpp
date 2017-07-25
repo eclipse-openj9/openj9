@@ -244,7 +244,6 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
 void
 TR_J9SharedCache::addHint(J9ROMMethod * romMethod, TR_SharedCacheHint hint)
    {
-   TR_ASSERT(this, "need this");
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    static bool SCfull = false;
    if (SCfull && TR::Options::getCmdLineOptions()->getOption(TR_DisableUpdateJITBytesSize))
@@ -257,9 +256,6 @@ TR_J9SharedCache::addHint(J9ROMMethod * romMethod, TR_SharedCacheHint hint)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       J9VMThread * vmThread = fej9->getCurrentVMThread();
-      TR_ASSERT(fej9, "need frontend");
-      TR_ASSERT(vmThread, "need vmThread");
-      TR_ASSERT(jitConfig(), "need jitConfig");
 
       // JAAS TODO
       //char myBuffer[500];

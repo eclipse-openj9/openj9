@@ -6154,7 +6154,8 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
                    (options->getInitialCount() != 0))
                   {
                   TR_J9SharedCache *sc = (TR_J9SharedCache *) (compiler->fej9()->sharedCache());
-                  sc->addHint(method, TR_HintFailedValidation);
+                  if (sc)
+                     sc->addHint(method, TR_HintFailedValidation);
                   }
                 break;
             }
@@ -6800,7 +6801,8 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          // Before grabbing the compilation monitor and loading the AOT body
          // let's check the AOT hints (optimistically assuming that the AOT load will succeed)
          if (_onSeparateThread && entry->_async &&  // KEN need to pass in onSeparateThread?
-         (TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags() & (TR_HintUpgrade | TR_HintHot | TR_HintScorching)))
+         (TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags() & (TR_HintUpgrade | TR_HintHot | TR_HintScorching)) &&
+         _vm->sharedCache())
             {
             // read all hints at once because we may rely on more than just one type
             uint16_t hints = _vm->sharedCache()->getAllEnabledHints(method) & (TR_HintUpgrade | TR_HintHot | TR_HintScorching);

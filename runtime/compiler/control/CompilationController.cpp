@@ -1051,7 +1051,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
                         if (cmdLineOptions->getOption(TR_UpgradeBootstrapAtWarm) && fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)j9method))
                            {
 #ifndef PUBLIC_BUILD
-                           bool expensiveComp = (TR_J9SharedCache *)(((TR_J9VMBase *) fe)->sharedCache())->isHint(j9method, TR_HintLargeMemoryMethodW);
+                           bool expensiveComp = fe->sharedCache() && (TR_J9SharedCache *)(((TR_J9VMBase *) fe)->sharedCache())->isHint(j9method, TR_HintLargeMemoryMethodW);
                            if (!expensiveComp)
 #endif //!PUBLIC_BUILD
                               nextOptLevel = warm;
