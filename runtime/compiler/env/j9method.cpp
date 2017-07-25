@@ -8415,6 +8415,13 @@ TR_ResolvedJ9JAASServerMethod::isJNINative()
    return std::get<0>(_stream->read<bool>());
    }
 
+bool
+TR_ResolvedJ9JAASServerMethod::isInterpreted()
+   {
+   _stream->write(JAAS::J9ServerMessageType::isInterpreted, _remoteMirror);
+   return std::get<0>(_stream->read<bool>());
+   }
+
 // JAAS TODO methods
 // these all use RAM data in some way
 // 

@@ -4,14 +4,6 @@ import "google/protobuf/any.proto";
 
 package JAAS;
 
-message J9CompileRequest
-   {
-   uint32 methodOffset = 1;
-   uint32 classOffset = 2;
-   uint32 classChainCOffset = 3;
-   uint32 classChainCLOffset = 4;
-   }
-
 message UInt64
    {
    uint64 val = 1;
@@ -44,8 +36,9 @@ enum J9ServerMessageType
    compilationCode = 0;
    mirrorResolvedJ9Method = 1;
    isJNINative = 2;
-   VM_isClassLibraryClass = 3;
-   VM_isClassLibraryMethod = 4;
+   isInterpreted = 3;
+   VM_isClassLibraryClass = 4;
+   VM_isClassLibraryMethod = 5;
    }
 
 message J9ServerMessage

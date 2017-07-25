@@ -585,6 +585,7 @@ public:
    virtual J9RAMConstantPoolItem *literals() override;
    virtual J9Class *constantPoolHdr() override;
    virtual bool isJNINative() override;
+   virtual bool isInterpreted() override;
 
 private:
    JAAS::J9ServerStream *_stream;
