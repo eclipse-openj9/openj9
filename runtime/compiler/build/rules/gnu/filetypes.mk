@@ -37,7 +37,7 @@ $(PROTO_GEN_DIR)/%.grpc.pb.cc $(PROTO_GEN_DIR)/%.grpc.pb.h: $(PROTO_DIR)/%.proto
 	$(PROTO_CMD) --grpc_out=$(PROTO_GEN_DIR) --plugin=protoc-gen-grpc="$(GRPC_CPP)" -I $(PROTO_DIR)  $<
 
 $(PROTO_GEN_DIR)/%.pb.cpp: $(PROTO_GEN_DIR)/%.pb.cc
-	mv $< $@
+	cp $< $@
 
 proto_clean:
 	rm -rf $(PROTO_GEN_DIR)
