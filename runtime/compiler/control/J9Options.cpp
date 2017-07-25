@@ -2088,6 +2088,17 @@ J9::Options::fePostProcessJIT(void * base)
          TR::Options::getDebug()->printFilters();
          }
       }
+
+   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+   if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE ||
+       compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+      {
+      self()->setOption(TR_DisableSamplingJProfiling);
+      self()->setOption(TR_DisableInterpreterProfiling);
+      self()->setOption(TR_DisableCHOpts);
+      self()->setFixedOptLevel(noOpt);
+      self()->setOption(TR_DisableSharedCacheHints);
+      }
    return true;
    }
 
@@ -2108,6 +2119,18 @@ J9::Options::fePostProcessAOT(void * base)
          TR::Options::getDebug()->printFilters();
          }
       }
+   
+   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+   if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE ||
+       compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+      {
+      self()->setOption(TR_DisableSamplingJProfiling);
+      self()->setOption(TR_DisableInterpreterProfiling);
+      self()->setOption(TR_DisableCHOpts);
+      self()->setFixedOptLevel(noOpt);
+      self()->setOption(TR_DisableSharedCacheHints);
+      }
+
    return true;
    }
 
