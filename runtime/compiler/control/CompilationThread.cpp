@@ -304,6 +304,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          {
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(method->isJNINative());
+         break;
          }
       default:
          // JAAS TODO more specific exception here
