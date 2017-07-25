@@ -42,11 +42,10 @@ message AnyData
 enum J9ServerMessageType
    {
    compilationCode = 0;
-   get_rom_class_and_method_from_ram_method = 1;
-   new_TR_resolved_j9_method = 2;
-   isJNINative = 3;
-   VM_isClassLibraryClass = 4;
-   VM_isClassLibraryMethod = 5;
+   mirrorResolvedJ9Method = 1;
+   isJNINative = 2;
+   VM_isClassLibraryClass = 3;
+   VM_isClassLibraryMethod = 4;
    }
 
 message J9ServerMessage

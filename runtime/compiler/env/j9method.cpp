@@ -8341,25 +8341,23 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _ramMethod = nullptr;
 
    // Create client side mirror of this object to use for calls involving RAM data
-   _stream->write(JAAS::J9ServerMessageType::new_TR_resolved_j9_method, aMethod, vTableSlot);
-   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*>();
+   _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod);
+   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, std::string, uint64_t>();
    _remoteMirror = std::get<0>(recv);
+
+   // Cache the constantPool and constantPoolHeader
    _literals = std::get<1>(recv);
    _ramClass = std::get<2>(recv);
 
-   // get ROM data from client
-   _stream->write(JAAS::J9ServerMessageType::get_rom_class_and_method_from_ram_method, aMethod);
-   const auto &romClassAndMethod = _stream->read<std::string, uint64_t>();
-   const std::string &romClassStr = std::get<0>(romClassAndMethod);
-
    // copy ROM class
+   const std::string &romClassStr = std::get<3>(recv);
    _romClass = (J9ROMClass*) trMemory->allocateHeapMemory(romClassStr.size());
    if (!_romClass)
       throw std::bad_alloc();
    memcpy(_romClass, &romClassStr[0], romClassStr.size());
 
    // copy ROM method
-   uint64_t methodIndex = std::get<1>(romClassAndMethod);
+   uint64_t methodIndex = std::get<4>(recv);
    TR_ASSERT(methodIndex < UDATA_MAX, "method not in class!!!");
    _romMethod = J9ROMCLASS_ROMMETHODS(_romClass);
    while (methodIndex--) _romMethod = nextROMMethod(_romMethod);

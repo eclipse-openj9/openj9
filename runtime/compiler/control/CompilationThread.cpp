@@ -282,27 +282,22 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          client->write(rv);
          }
          break;
-      case J9ServerMessageType::get_rom_class_and_method_from_ram_method:
-         {
-         uint64_t reqRamMethod = std::get<0>(client->getRecvData<uint64_t>());
-         J9Method *ramMethod = (J9Method*) reqRamMethod;
-         J9Class *methodClass = J9_CLASS_FROM_METHOD(ramMethod);
-         J9ROMClass *romClass = methodClass->romClass;
-         uint64_t methodIndex = getMethodIndexUnchecked(ramMethod);
-         std::string romClassStr((char *) romClass, romClass->romSize);
-         client->write(romClassStr, methodIndex);
-         }
-         break;
-      case J9ServerMessageType::new_TR_resolved_j9_method:
+      case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
          // easily done on the client side.
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          TR_ResolvedJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9Method(method, fe, trMemory);
          if (!resolvedMethod) throw std::bad_alloc();
+
          J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *)(J9_CP_FROM_METHOD(resolvedMethod->ramMethod()));
          J9Class *cpHdr = J9_CLASS_FROM_CP(literals);
-         client->write(resolvedMethod, literals, cpHdr);
+
+         J9Method *j9ResolvedMethod = (J9Method *)resolvedMethod;
+         J9ROMClass *romClass = J9_CLASS_FROM_METHOD(j9ResolvedMethod)->romClass;
+         uint64_t methodIndex = getMethodIndexUnchecked(j9ResolvedMethod);
+         std::string romClassStr((char *) romClass, romClass->romSize);
+         client->write(resolvedMethod, literals, cpHdr, romClassStr, methodIndex);
          }
          break;
       case J9ServerMessageType::isJNINative:
