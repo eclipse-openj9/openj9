@@ -140,7 +140,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       }
    }
 
-void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream) override
+void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
    {
    try
       {
