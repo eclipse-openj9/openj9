@@ -8282,19 +8282,21 @@ TR::CompilationInfoPerThreadBase::compile(
                   {
                   uint32_t classChainCLOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(cc)));
                   JAAS::J9ClientStream client;
-                  bool done = false;
                   client.buildCompileRequest(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset);
-                  while(!done)
+                  uint32_t code = compilationFailure;
+                  try
                      {
-                     done = handleServerMessage(&client, compiler->fej9());
+                     while(!handleServerMessage(&client, compiler->fej9()));
+                     code = std::get<0>(client.getRecvData<uint32_t>());
                      }
-                  if (done)
+                  catch (const JAAS::StreamFailure &e)
                      {
-                     JAAS::Status status = client.waitForFinish();
-                     uint32_t code = std::get<0>(client.getRecvData<uint32_t>());
-                     done = status.ok() && (code == compilationOK || code == compilationNotNeeded);
+                     if (TR::Options::getVerboseOption(TR_VerboseJaas))
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, e.what());
+                     compiler->failCompilation<JAAS::StreamFailure>(e.what());
                      }
-                  if (done)
+                  JAAS::Status status = client.waitForFinish();
+                  if (status.ok() && (code == compilationOK || code == compilationNotNeeded))
                      {
                      UDATA flags = 0;
                      const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
@@ -8302,7 +8304,7 @@ TR::CompilationInfoPerThreadBase::compile(
                      //TODO we should check flags here, similar to elsewhere
                      metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
                      if (TR::Options::getVerboseOption(TR_VerboseJaas))
-                        { 
+                        {
                         if (metaData)
                            {
                            TR_VerboseLog::writeLineLocked(
