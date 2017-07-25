@@ -61,6 +61,7 @@ struct TR_MethodToBeCompiled
    void releaseSlotMonitor(J9VMThread *vmThread);
    void setAotCodeToBeRelocated(const void *m);
    bool isAotLoad() const { return _doAotLoad; }
+   bool isRemoteCompReq() const { return _stream != nullptr; }
 
    TR_MethodToBeCompiled *_next;
    TR::IlGeneratorMethodDetails _methodDetailsStorage;
@@ -115,7 +116,7 @@ struct TR_MethodToBeCompiled
    uint8_t                _weight; // Up to 256 levels of weight
    bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
    uint8_t                _jitStateWhenQueued;
-   JAAS::J9ServerStream  *_stream;
+   JAAS::J9ServerStream  *_stream; // a non-NULL field denotes a remote compilation request
    }; // TR_MethodToBeCompiled
 
 

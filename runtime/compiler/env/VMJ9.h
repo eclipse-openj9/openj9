@@ -216,10 +216,8 @@ public:
       {
       DEFAULT_VM = 0
       , J9_VM
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
       , AOT_VM
       , J9_SERVER_VM                          // for jit-as-a-service
-#endif
       };
 
    TR_J9VMBase(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, J9VMThread * vmContext);

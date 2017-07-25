@@ -449,6 +449,7 @@ public:
    static bool createCompilationInfo(J9JITConfig * jitConfig);
    static void freeCompilationInfo(J9JITConfig *jitConfig);
    static TR::CompilationInfo *get(J9JITConfig * = 0) { return _compilationRuntime; }
+   static bool shouldAbortCompilation(TR_MethodToBeCompiled *entry, TR::PersistentInfo *persistentInfo);
    static bool shouldRetryCompilation(TR_MethodToBeCompiled *entry, TR::Compilation *comp);
    static bool useSeparateCompilationThread();
    static int computeCompilationThreadPriority(J9JavaVM *vm);
@@ -534,6 +535,7 @@ public:
    static uint32_t getMethodBytecodeSize(J9ROMMethod * romMethod);
    static uint32_t getMethodBytecodeSize(J9Method* method);
 
+   static bool isJSR292(const J9ROMMethod *romMethod); // Check to see if the J9AccMethodHasMethodHandleInvokes flag is set
    static bool isJSR292(J9Method *j9method); // Check to see if the J9AccMethodHasMethodHandleInvokes flag is set
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
