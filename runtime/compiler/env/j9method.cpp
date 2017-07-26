@@ -8449,3 +8449,10 @@ TR_ResolvedJ9JAASServerMethod::setRecognizedMethodInfo(TR::RecognizedMethod rm)
    _stream->read<JAAS::Void>();
    }
 
+uint32_t
+TR_ResolvedJ9JAASServerMethod::classModifiers()
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_classModifiers, _remoteMirror);
+   return std::get<0>(_stream->read<uint32_t>());
+   }
+

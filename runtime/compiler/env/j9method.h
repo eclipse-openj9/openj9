@@ -268,8 +268,8 @@ public:
 
 
    uint32_t                methodModifiers();
-   uint32_t                classModifiers();
-   uint32_t                classExtraModifiers();
+   virtual uint32_t              classModifiers();
+   virtual uint32_t              classExtraModifiers();
 
    virtual TR_Method *           convertToMethod();
 
@@ -589,6 +589,7 @@ public:
    virtual bool isJNINative() override;
    virtual bool isInterpreted() override;
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm) override;
+   virtual uint32_t classModifiers() override;
 
 private:
    JAAS::J9ServerStream *_stream;
