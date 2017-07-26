@@ -264,7 +264,7 @@ protected:
 public:
    J9Method *              ramMethod() { return _ramMethod; }
    virtual J9Class *               constantPoolHdr();
-   J9ClassLoader *         getClassLoader();
+   virtual J9ClassLoader *         getClassLoader();
 
 
    uint32_t                methodModifiers();
@@ -590,6 +590,7 @@ public:
    virtual bool isInterpreted() override;
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm) override;
    virtual uint32_t classModifiers() override;
+   virtual J9ClassLoader *getClassLoader() override;
 
 private:
    JAAS::J9ServerStream *_stream;
