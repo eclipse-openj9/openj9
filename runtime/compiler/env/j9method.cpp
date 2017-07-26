@@ -8430,14 +8430,14 @@ TR_ResolvedJ9JAASServerMethod::constantPoolHdr()
 bool
 TR_ResolvedJ9JAASServerMethod::isJNINative()
    {
-   _stream->write(JAAS::J9ServerMessageType::isJNINative, _remoteMirror);
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isJNINative, _remoteMirror);
    return std::get<0>(_stream->read<bool>());
    }
 
 bool
 TR_ResolvedJ9JAASServerMethod::isInterpreted()
    {
-   _stream->write(JAAS::J9ServerMessageType::isInterpreted, _remoteMirror);
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isInterpreted, _remoteMirror);
    return std::get<0>(_stream->read<bool>());
    }
 

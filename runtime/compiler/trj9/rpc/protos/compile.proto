@@ -35,11 +35,15 @@ enum J9ServerMessageType
    {
    compilationCode = 0;
    mirrorResolvedJ9Method = 1;
-   isJNINative = 2;
-   isInterpreted = 3;
-   VM_isClassLibraryClass = 4;
-   VM_isClassLibraryMethod = 5;
-   get_params_to_construct_TR_j9method = 6;
+   get_params_to_construct_TR_j9method = 2;
+
+   // For TR_ResolvedJ9JAASServerMethod methods
+   ResolvedMethod_isJNINative = 100;
+   ResolvedMethod_isInterpreted = 101;
+
+   // For TR_J9ServerVM methods
+   VM_isClassLibraryClass = 200;
+   VM_isClassLibraryMethod = 201;
    }
 
 message J9ServerMessage
