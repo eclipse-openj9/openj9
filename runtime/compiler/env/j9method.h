@@ -468,6 +468,8 @@ public:
    char *fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);
    char *fieldOrStaticSignatureChars (int32_t cpIndex, int32_t & len);
 
+   virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm);
+
 protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }
    TR_ResolvedJ9Method(TR_FrontEnd *, TR_ResolvedMethod * owningMethod = 0);
@@ -482,7 +484,6 @@ protected:
    virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
    virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
 
-   void setRecognizedMethodInfo(TR::RecognizedMethod rm);
    void setQuadClassSeen();
 
    J9Method *              _ramMethod;
@@ -587,6 +588,7 @@ public:
    virtual J9Class *constantPoolHdr() override;
    virtual bool isJNINative() override;
    virtual bool isInterpreted() override;
+   virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm) override;
 
 private:
    JAAS::J9ServerStream *_stream;

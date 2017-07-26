@@ -331,7 +331,16 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          client->write(classNameStr, nameStr, signatureStr);
          }
          break;
-     default:
+      case J9ServerMessageType::ResolvedMethod_setRecognizedMethodInfo:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, TR::RecognizedMethod>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         TR::RecognizedMethod rm = std::get<1>(recv);
+         method->setRecognizedMethodInfo(rm);
+         client->write(JAAS::Void());
+         }
+         break;
+      default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();
       }

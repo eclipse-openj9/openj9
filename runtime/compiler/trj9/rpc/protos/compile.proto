@@ -10,7 +10,7 @@ message UInt64
    }
 message UInt32
    {
-   uint64 val = 1;
+   uint32 val = 1;
    }
 message Pointer
    {
@@ -20,10 +20,16 @@ message Bytes
    {
    bytes val = 1;
    }
-
 message Bool
    {
    bool val = 1;
+   }
+message Enum
+   {
+   int32 val = 1;
+   }
+message Void
+   {
    }
 
 message AnyData
@@ -40,6 +46,7 @@ enum J9ServerMessageType
    // For TR_ResolvedJ9JAASServerMethod methods
    ResolvedMethod_isJNINative = 100;
    ResolvedMethod_isInterpreted = 101;
+   ResolvedMethod_setRecognizedMethodInfo = 102;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;

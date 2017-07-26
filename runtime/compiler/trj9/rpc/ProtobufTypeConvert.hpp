@@ -3,12 +3,13 @@
 
 #include <cstdint>
 #include <utility>
+#include <type_traits>
 #include "types.h"
 
 namespace JAAS
    {
 
-   template <typename T>
+   template <typename T, typename = void>
    struct ProtobufTypeConvert
       {
       using ProtoType = T;
@@ -20,11 +21,15 @@ namespace JAAS
    struct PrimitiveTypeConvert
       {
       using ProtoType = Proto;
-      static Primitive onRecv(ProtoType in) { return in.val(); }
+      static Primitive onRecv(ProtoType in) {
+         static_assert(sizeof(decltype(in.val())) == sizeof(Primitive), "Size of primitive types must be the same");
+         return static_cast<Primitive>(in.val());
+      }
       static ProtoType onSend(Primitive in)
          {
          ProtoType val;
-         val.set_val(in);
+         static_assert(sizeof(decltype(val.val())) == sizeof(Primitive), "Size of primitive types must be the same");
+         val.set_val(static_cast<decltype(val.val())>(in));
          return val;
          }
       };
@@ -32,6 +37,9 @@ namespace JAAS
    template <> struct ProtobufTypeConvert<uint64_t> : PrimitiveTypeConvert<uint64_t, UInt64> { };
    template <> struct ProtobufTypeConvert<uint32_t> : PrimitiveTypeConvert<uint32_t, UInt32> { };
    template <> struct ProtobufTypeConvert<std::string> : PrimitiveTypeConvert<std::string, Bytes> { };
+
+   // Implement conversion for all enums
+   template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type> : PrimitiveTypeConvert<T, Enum> { };
 
    template <typename T>
    struct ProtobufTypeConvert<T*> 
