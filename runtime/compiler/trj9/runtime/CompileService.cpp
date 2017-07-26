@@ -159,7 +159,7 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
    catch (const JAAS::StreamFailure &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJaas))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Stream failed in server compilation dispatcher thread.");
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Stream failed in server compilation dispatcher thread: %s", e.what());
       stream->cancel();
       }
    }
