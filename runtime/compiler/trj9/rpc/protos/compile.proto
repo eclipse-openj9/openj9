@@ -7,26 +7,27 @@ package JAAS;
 message UInt64
    {
    uint64 val = 1;
+   uint64 type = 2;
    }
 message UInt32
    {
    uint32 val = 1;
-   }
-message Pointer
-   {
-   fixed64 val = 1;
+   uint64 type = 2;
    }
 message Bytes
    {
    bytes val = 1;
+   uint64 type = 2;
    }
 message Bool
    {
    bool val = 1;
+   uint64 type = 2;
    }
-message Enum
+message Int32
    {
    int32 val = 1;
+   uint64 type = 2;
    }
 message Void
    {

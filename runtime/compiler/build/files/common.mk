@@ -376,7 +376,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/runtime/OMRRuntimeAssumptions.cpp \
     compiler/trj9/runtime/Listener.cpp \
     compiler/trj9/env/VMJ9Server.cpp \
-    compiler/trj9/rpc/J9Server.cpp
+    compiler/trj9/rpc/J9Server.cpp \
+    compiler/trj9/rpc/ProtobufTypeConvert.cpp
 
 -include $(JIT_MAKE_DIR)/files/extra.mk
 include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk

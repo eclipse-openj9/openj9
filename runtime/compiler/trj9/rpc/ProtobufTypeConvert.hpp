@@ -9,6 +9,17 @@
 namespace JAAS
    {
 
+   extern uint64_t typeCount;
+
+   struct TypeID
+      {
+      uint64_t id;
+      TypeID()
+         {
+         id = typeCount++;
+         }
+      };
+
    template <typename T, typename = void>
    struct ProtobufTypeConvert
       {
@@ -20,37 +31,42 @@ namespace JAAS
    template <typename Primitive, typename Proto>
    struct PrimitiveTypeConvert
       {
+      static TypeID type;
       using ProtoType = Proto;
-      static Primitive onRecv(ProtoType in) {
+      static Primitive onRecv(ProtoType in)
+         {
+         if (type.id != in.type())
+            throw StreamTypeMismatch("Primitive type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in.type()));
          static_assert(sizeof(decltype(in.val())) == sizeof(Primitive), "Size of primitive types must be the same");
-         return static_cast<Primitive>(in.val());
-      }
+         return (Primitive)in.val();
+         }
       static ProtoType onSend(Primitive in)
          {
          ProtoType val;
          static_assert(sizeof(decltype(val.val())) == sizeof(Primitive), "Size of primitive types must be the same");
-         val.set_val(static_cast<decltype(val.val())>(in));
+         val.set_val((decltype(val.val()))in);
+         val.set_type(type.id);
          return val;
          }
       };
+   template <typename Primitive, typename Proto> TypeID PrimitiveTypeConvert<Primitive, Proto>::type;
+
    template <> struct ProtobufTypeConvert<bool> : PrimitiveTypeConvert<bool, Bool> { };
    template <> struct ProtobufTypeConvert<uint64_t> : PrimitiveTypeConvert<uint64_t, UInt64> { };
    template <> struct ProtobufTypeConvert<uint32_t> : PrimitiveTypeConvert<uint32_t, UInt32> { };
    template <> struct ProtobufTypeConvert<std::string> : PrimitiveTypeConvert<std::string, Bytes> { };
 
    // Implement conversion for all enums
-   template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type> : PrimitiveTypeConvert<T, Enum> { };
+   template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type> : PrimitiveTypeConvert<T, Int32> { };
 
    template <typename T>
-   struct ProtobufTypeConvert<T*> 
+   struct ProtobufTypeConvert<T*> : PrimitiveTypeConvert<T*, UInt64>
       {
-      using ProtoType = Pointer;
-      static T* onRecv(ProtoType in) { return (T*) ~in.val(); }
-      static ProtoType onSend(T* in)
+      static T* onRecv(UInt64 in)
          {
-         ProtoType val;
-         val.set_val((uint64_t) in);
-         return val;
+         UInt64 flipped(in);
+         flipped.set_val(~flipped.val());
+         return PrimitiveTypeConvert<T*, UInt64>::onRecv(flipped);
          }
       };
 
