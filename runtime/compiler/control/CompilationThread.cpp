@@ -8380,6 +8380,8 @@ TR::CompilationInfoPerThreadBase::compile(
                      {
                      while(!handleServerMessage(&client, compiler->fej9()));
                      code = std::get<0>(client.getRecvData<uint32_t>());
+                     if (code >= compilationMaxError)
+                        throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
                      }
                   catch (const JAAS::StreamFailure &e)
                      {
