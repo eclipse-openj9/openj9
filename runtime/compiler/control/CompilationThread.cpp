@@ -363,7 +363,17 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          client->write(JAAS::Void());
          }
          break;
-      default:
+       case J9ServerMessageType::ResolvedMethod_allocateException:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         uint32_t numBytes = std::get<1>(recv);
+         AllocateDataCacheStatus statusCode = AllocateDataCacheStatus::UNDEFINED;
+         U_8 *eTbl = method->allocateException(numBytes, TR::comp(), &statusCode);
+         client->write(statusCode, eTbl);
+         }
+         break;
+     default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();
       }

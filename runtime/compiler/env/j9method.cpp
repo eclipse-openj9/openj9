@@ -5678,7 +5678,7 @@ TR_ResolvedJ9Method::methodIsNotzAAPEligible()
    }
 
 U_8 *
-TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
+TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp, AllocateDataCacheStatus *statusCode)
    {
    J9JITExceptionTable *eTbl;
    uint32_t size = 0;
@@ -5689,10 +5689,11 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
       {
       if (shouldRetryAllocation)
          {
-         // force a retry
-         comp->failCompilation<J9::RecoverableDataCacheError>("Failed to allocate exception table");
+         *statusCode = AllocateDataCacheStatus::RECOVERABLE_DATA_CACHE_ERROR;
+         return nullptr;
          }
-      comp->failCompilation<J9::DataCacheError>("Failed to allocate exception table");
+      *statusCode = AllocateDataCacheStatus::DATA_CACHE_ERROR;
+      return nullptr;
       }
    memset((uint8_t *)eTbl, 0, size);
 
@@ -5723,9 +5724,31 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
    // fill in the reserved slots in the newly allocated table
    eTbl->constantPool = cpool;
    eTbl->ramMethod = _ramMethod;
-
+   *statusCode = AllocateDataCacheStatus::SUCCESS;
    return (U_8 *) eTbl;
    }
+
+U_8 *
+TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
+   {
+   AllocateDataCacheStatus statusCode = AllocateDataCacheStatus::UNDEFINED;
+   U_8 *eTbl = allocateException(numBytes, comp, &statusCode);
+   switch(statusCode)
+      {
+      case AllocateDataCacheStatus::SUCCESS:
+         return eTbl;
+         break;
+      case AllocateDataCacheStatus::RECOVERABLE_DATA_CACHE_ERROR:
+         // force a retry
+         comp->failCompilation<J9::RecoverableDataCacheError>("Failed to allocate exception table");
+         break;
+      case AllocateDataCacheStatus::DATA_CACHE_ERROR:
+         comp->failCompilation<J9::DataCacheError>("Failed to allocate exception table");
+         break;
+      default:;
+      }
+   }
+
 
 extern "C" J9Method * getNewInstancePrototype(J9VMThread * context);
 
@@ -8454,5 +8477,25 @@ TR_ResolvedJ9JAASServerMethod::getClassLoader()
    {
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getClassLoader, _remoteMirror);
    return std::get<0>(_stream->read<J9ClassLoader *>());
+   }
+
+U_8 *
+TR_ResolvedJ9JAASServerMethod::allocateException(uint32_t numBytes, TR::Compilation *comp)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_allocateException, _remoteMirror, numBytes);
+   auto reply = _stream->read<AllocateDataCacheStatus, U_8*>();
+   switch(std::get<0>(reply))
+      {
+      case AllocateDataCacheStatus::SUCCESS:
+         return (U_8 *)std::get<1>(reply);
+      case AllocateDataCacheStatus::RECOVERABLE_DATA_CACHE_ERROR:
+         // force a retry
+         comp->failCompilation<J9::RecoverableDataCacheError>("Failed to allocate exception table");
+         break;
+      case AllocateDataCacheStatus::DATA_CACHE_ERROR:
+         comp->failCompilation<J9::DataCacheError>("Failed to allocate exception table");
+         break;
+      default:;
+      }
    }
 
