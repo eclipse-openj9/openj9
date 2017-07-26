@@ -20,6 +20,14 @@ TR_J9ServerVM::isClassLibraryClass(TR_OpaqueClassBlock *clazz)
    return std::get<0>(stream->read<bool>());
    }
 
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *classPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getSuperClass, classPointer);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }
+
 TR_Method *
 TR_J9ServerVM::createMethod(TR_Memory * trMemory, TR_OpaqueClassBlock * clazz, int32_t refOffset)
    {
