@@ -256,7 +256,7 @@ jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, v
    return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
    }
 
-static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
+static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
    {
    using JAAS::J9ServerMessageType;
 
@@ -8482,7 +8482,7 @@ TR::CompilationInfoPerThreadBase::compile(
                   uint32_t code = compilationFailure;
                   try
                      {
-                     while(!handleServerMessage(&client, compiler->fej9()));
+                     while(!handleServerMessage(&client, compiler->fej9vm()));
                      code = std::get<0>(client.getRecvData<uint32_t>());
                      if (code >= compilationMaxError)
                         throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
