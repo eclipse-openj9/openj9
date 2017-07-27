@@ -61,6 +61,8 @@ enum J9ServerMessageType
    VM_isClassFinal = 206;
    VM_isAbstractClass = 207;
    VM_getSystemClassFromClassName = 208;
+   VM_isMethodEnterTracingEnabled = 209;
+   VM_isMethodExitTracingEnabled = 210;
    }
 
 message J9ServerMessage

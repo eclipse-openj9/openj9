@@ -20,6 +20,8 @@ public:
    virtual bool isClassFinal(TR_OpaqueClassBlock *) override;
    virtual bool isAbstractClass(TR_OpaqueClassBlock *clazzPointer) override;
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT) override;
+   virtual bool isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method) override;
+   virtual bool isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method) override;
    };
 
 #endif // VMJ9SERVER_H

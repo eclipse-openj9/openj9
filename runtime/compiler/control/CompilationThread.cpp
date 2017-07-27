@@ -331,6 +331,18 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          client->write(fe->getSystemClassFromClassName(name.c_str(), name.length(), isVettedForAOT));
          }
          break;
+      case J9ServerMessageType::VM_isMethodEnterTracingEnabled:
+         {
+         auto method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
+         client->write(fe->isMethodEnterTracingEnabled(method));
+         }
+         break;
+      case J9ServerMessageType::VM_isMethodExitTracingEnabled:
+         {
+         auto method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
+         client->write(fe->isMethodExitTracingEnabled(method));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only

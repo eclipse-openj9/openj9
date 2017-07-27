@@ -81,3 +81,19 @@ TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bo
    stream->write(JAAS::J9ServerMessageType::VM_getSystemClassFromClassName, std::string(name, length), isVettedForAOT);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
+
+bool
+TR_J9ServerVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isMethodEnterTracingEnabled, method);
+   return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isMethodExitTracingEnabled, method);
+   return std::get<0>(stream->read<bool>());
+   }
