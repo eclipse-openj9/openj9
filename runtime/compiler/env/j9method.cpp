@@ -8454,6 +8454,7 @@ TR_ResolvedJ9JAASServerMethod::classModifiers()
    {
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_classModifiers, _remoteMirror);
    return std::get<0>(_stream->read<uint32_t>());
+   }
 
 J9ClassLoader *
 TR_ResolvedJ9JAASServerMethod::getClassLoader()
