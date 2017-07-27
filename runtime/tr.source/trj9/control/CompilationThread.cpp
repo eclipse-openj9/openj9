@@ -885,12 +885,12 @@ bool TR::CompilationInfo::initializeCompilationOnApplicationThread()
    return true;
    }
 
-TR::CompilationInfoPerThreadBase *TR::CompilationInfo::getCompInfoWithID(int32_t ID)
+TR::CompilationInfoPerThreadBase *TR::CompilationInfo::getCompInfoWithID(size_t ID)
    {
    if (_compInfoForCompOnAppThread)
       return _compInfoForCompOnAppThread;
 
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (size_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -923,7 +923,7 @@ TR::CompilationInfoPerThread *TR::CompilationInfo::getFirstSuspendedCompilationT
    return NULL;
    }
 
-TR::Compilation *TR::CompilationInfo::getCompilationWithID(int32_t ID)
+TR::Compilation *TR::CompilationInfo::getCompilationWithID(size_t ID)
    {
    TR::CompilationInfoPerThreadBase *ciptb = getCompInfoWithID(ID);
    return ciptb ? ciptb->getCompilation() : NULL;

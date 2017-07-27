@@ -26,12 +26,14 @@
 #include <algorithm>                       // for std::max, etc
 #include <stddef.h>                        // for NULL
 #include <stdint.h>                        // for int32_t, uint8_t, etc
+#include <bitset>
 #include "env/RuntimeAssumptionTable.hpp"  // for TR_RuntimeAssumptionKind, etc
 #include "env/TRMemory.hpp"                // for TR_Memory, etc
 #include "env/jittypes.h"                  // for uintptrj_t
 #include "infra/Flags.hpp"                 // for flags8_t
 #include "infra/Link.hpp"                  // for TR_LinkHead0, TR_Link0
 #include "runtime/OMRRuntimeAssumptions.hpp"  // for OMR::RuntimeAssumption
+#include "env/MaxCompilationThreads.hpp"
 
 
 class TR_FrontEnd;
@@ -127,12 +129,12 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    void setReservable(bool v = true)              { _flags.set(_isReservable, v); }
    bool isReservable()                            { return _flags.testAny(_isReservable); }
 
-   void setShouldNotBeNewlyExtended(int32_t ID) { _shouldNotBeNewlyExtended.set(1 << ID); }
-   void resetShouldNotBeNewlyExtended(int32_t ID){ _shouldNotBeNewlyExtended.reset(1 << ID); }
-   void clearShouldNotBeNewlyExtended()          { _shouldNotBeNewlyExtended.clear(); }
-   bool shouldNotBeNewlyExtended()               { return _shouldNotBeNewlyExtended.testAny(0xff); }
-   bool shouldNotBeNewlyExtended(int32_t ID)     { return _shouldNotBeNewlyExtended.testAny(1 << ID); }
-   flags8_t getShouldNotBeNewlyExtendedMask() const { return _shouldNotBeNewlyExtended; }
+   void setShouldNotBeNewlyExtended(size_t ID)   { _shouldNotBeNewlyExtended.set(ID); }
+   void resetShouldNotBeNewlyExtended(size_t ID) { _shouldNotBeNewlyExtended.reset(ID); }
+   void clearShouldNotBeNewlyExtended()          { _shouldNotBeNewlyExtended.reset(); }
+   bool shouldNotBeNewlyExtended()               { return _shouldNotBeNewlyExtended.any(); }
+   bool shouldNotBeNewlyExtended(size_t ID)      { return _shouldNotBeNewlyExtended[ID]; }
+   std::bitset<MAX_TOTAL_COMP_THREADS> getShouldNotBeNewlyExtendedMask() const { return _shouldNotBeNewlyExtended; }
 
    void setHasRecognizedAnnotations(bool v = true){ _flags.set(_containsRecognizedAnnotations, v); }
    bool hasRecognizedAnnotations()                { return _flags.testAny(_containsRecognizedAnnotations); }
@@ -179,7 +181,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    uint16_t                            _timeStamp;
    int32_t                             _nameLength;
    flags8_t                            _flags;
-   flags8_t                            _shouldNotBeNewlyExtended; // one bit for each possible compilation thread
+   std::bitset<MAX_TOTAL_COMP_THREADS> _shouldNotBeNewlyExtended; // one bit for each possible compilation thread
    };
 
 class TR_AddressRange

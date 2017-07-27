@@ -226,10 +226,10 @@ TR_PersistentCHTable::classGotExtended(
    if (cl->shouldNotBeNewlyExtended())
       {
       TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
-      uint8_t mask = cl->getShouldNotBeNewlyExtendedMask().getValue();
-      for (int32_t ID = 0; mask; mask>>=1, ++ID)
+      auto mask = cl->getShouldNotBeNewlyExtendedMask();
+      for (size_t ID = 0; ID < mask.size(); ++ID)
          {
-         if (mask & 0x1)
+         if (mask[ID])
             {
             // Determine the compilation thread that has this ID
             // and set the fail flag into its corresponding compilation object
