@@ -67,6 +67,7 @@ enum J9ServerMessageType
    VM_getClassLoader = 212;
    VM_getClassOfMethod = 213;
    VM_getBaseComponentClass = 214;
+   VM_getLeafComponentClassFromArrayClass = 215;
    }
 
 message J9ServerMessage

@@ -26,6 +26,7 @@ public:
    virtual void * getClassLoader(TR_OpaqueClassBlock * classPointer) override;
    virtual TR_OpaqueClassBlock * getClassOfMethod(TR_OpaqueMethodBlock *method) override;
    virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims) override;
+   virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override;
    };
 
 #endif // VMJ9SERVER_H

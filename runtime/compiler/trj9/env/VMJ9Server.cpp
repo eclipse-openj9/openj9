@@ -131,3 +131,11 @@ TR_J9ServerVM::getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numD
    numDims = std::get<1>(recv);
    return std::get<0>(recv);
    }
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getLeafComponentClassFromArrayClass, arrayClass);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }

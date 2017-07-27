@@ -370,6 +370,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(outClass, numDims);
          };
          break;
+      case J9ServerMessageType::VM_getLeafComponentClassFromArrayClass:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
+         client->write(fe->getLeafComponentClassFromArrayClass(clazz));
+         };
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
