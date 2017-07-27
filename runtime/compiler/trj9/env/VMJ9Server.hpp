@@ -19,6 +19,7 @@ public:
    virtual bool isClassArray(TR_OpaqueClassBlock *) override;
    virtual bool isClassFinal(TR_OpaqueClassBlock *) override;
    virtual bool isAbstractClass(TR_OpaqueClassBlock *clazzPointer) override;
+   virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT) override;
    };
 
 #endif // VMJ9SERVER_H

@@ -60,6 +60,7 @@ enum J9ServerMessageType
    VM_isClassArray = 205;
    VM_isClassFinal = 206;
    VM_isAbstractClass = 207;
+   VM_getSystemClassFromClassName = 208;
    }
 
 message J9ServerMessage

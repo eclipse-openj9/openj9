@@ -73,3 +73,11 @@ TR_J9ServerVM::isAbstractClass(TR_OpaqueClassBlock *clazzPointer)
    stream->write(JAAS::J9ServerMessageType::VM_isAbstractClass, clazzPointer);
    return std::get<0>(stream->read<bool>());
    }
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getSystemClassFromClassName, std::string(name, length), isVettedForAOT);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }

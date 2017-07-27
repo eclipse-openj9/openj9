@@ -323,6 +323,14 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          client->write(fe->isAbstractClass(clazz));
          }
          break;
+      case J9ServerMessageType::VM_getSystemClassFromClassName:
+         {
+         auto recv = client->getRecvData<std::string, bool>();
+         const std::string& name = std::get<0>(recv);
+         bool isVettedForAOT = std::get<1>(recv);
+         client->write(fe->getSystemClassFromClassName(name.c_str(), name.length(), isVettedForAOT));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
