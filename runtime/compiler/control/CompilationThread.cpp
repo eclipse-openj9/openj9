@@ -396,6 +396,27 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(clazz);
          }
          break;
+      case J9ServerMessageType::VM_jitFieldsAreSame:
+         {
+         auto recv = client->getRecvData<TR_ResolvedMethod*, int32_t, TR_ResolvedMethod *, int32_t, int32_t>();
+         TR_ResolvedMethod *method1 = std::get<0>(recv);
+         int32_t cpIndex1 = std::get<1>(recv);
+         TR_ResolvedMethod *method2 = std::get<2>(recv);
+         int32_t cpIndex2 = std::get<3>(recv);
+         int32_t isStatic = std::get<4>(recv);
+         client->write(fe->jitFieldsAreSame(method1, cpIndex1, method2, cpIndex2, isStatic));
+         };
+         break;
+      case J9ServerMessageType::VM_jitStaticsAreSame:
+         {
+         auto recv = client->getRecvData<TR_ResolvedMethod*, int32_t, TR_ResolvedMethod *, int32_t>();
+         TR_ResolvedMethod *method1 = std::get<0>(recv);
+         int32_t cpIndex1 = std::get<1>(recv);
+         TR_ResolvedMethod *method2 = std::get<2>(recv);
+         int32_t cpIndex2 = std::get<3>(recv);
+         client->write(fe->jitStaticsAreSame(method1, cpIndex1, method2, cpIndex2));
+         };
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only

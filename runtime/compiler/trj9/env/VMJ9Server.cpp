@@ -140,6 +140,7 @@ TR_J9ServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayCl
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
+TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT)
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
@@ -155,4 +156,34 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_OpaqueM
    std::string str(sig, length);
    stream->write(JAAS::J9ServerMessageType::VM_getClassFromSignature_1, str, method, isVettedForAOT);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }
+
+bool
+TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_ResolvedMethod * method2, I_32 cpIndex2, int32_t isStatic)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+
+   // Pass pointers to client mirrors of the ResolvedMethod objects instead of local objects
+   TR_ResolvedJ9JAASServerMethod *serverMethod1 = static_cast<TR_ResolvedJ9JAASServerMethod*>(method1);
+   TR_ResolvedJ9JAASServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JAASServerMethod*>(method2);
+   TR_ResolvedMethod *clientMethod1 = serverMethod1->getRemoteMirror();
+   TR_ResolvedMethod *clientMethod2 = serverMethod2->getRemoteMirror();
+
+   stream->write(JAAS::J9ServerMessageType::VM_jitFieldsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2, isStatic);
+   return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_ResolvedMethod *method2, I_32 cpIndex2)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+
+   // Pass pointers to client mirrors of the ResolvedMethod objects instead of local objects
+   TR_ResolvedJ9JAASServerMethod *serverMethod1 = static_cast<TR_ResolvedJ9JAASServerMethod*>(method1);
+   TR_ResolvedJ9JAASServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JAASServerMethod*>(method2);
+   TR_ResolvedMethod *clientMethod1 = serverMethod1->getRemoteMirror();
+   TR_ResolvedMethod *clientMethod2 = serverMethod2->getRemoteMirror();
+
+   stream->write(JAAS::J9ServerMessageType::VM_jitStaticsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2);
+   return std::get<0>(stream->read<bool>());
    }

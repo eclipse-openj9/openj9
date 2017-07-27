@@ -70,6 +70,8 @@ enum J9ServerMessageType
    VM_getLeafComponentClassFromArrayClass = 215;
    VM_getClassFromSignature_0 = 216;
    VM_getClassFromSignature_1 = 217;
+   VM_jitFieldsAreSame = 218;
+   VM_jitStaticsAreSame = 219;
    }
 
 message J9ServerMessage
