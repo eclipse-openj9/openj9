@@ -15,6 +15,10 @@ public:
    virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override;
    virtual TR_Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t) override;
    virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed, bool optimizeForAOT) override;
+   virtual bool isInterfaceClass(TR_OpaqueClassBlock *clazzPointer) override;
+   virtual bool isClassArray(TR_OpaqueClassBlock *) override;
+   virtual bool isClassFinal(TR_OpaqueClassBlock *) override;
+   virtual bool isAbstractClass(TR_OpaqueClassBlock *clazzPointer) override;
    };
 
 #endif // VMJ9SERVER_H

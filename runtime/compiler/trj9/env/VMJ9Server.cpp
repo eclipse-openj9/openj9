@@ -41,3 +41,35 @@ TR_J9ServerVM::isInstanceOf(TR_OpaqueClassBlock *a, TR_OpaqueClassBlock *b, bool
    stream->write(JAAS::J9ServerMessageType::VM_isInstanceOf, a, b, objectTypeIsFixed, castTypeIsFixed, optimizeForAOT);
    return std::get<0>(stream->read<TR_YesNoMaybe>());
    }
+
+bool
+TR_J9ServerVM::isInterfaceClass(TR_OpaqueClassBlock *clazzPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isInterfaceClass, clazzPointer);
+   return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::isClassArray(TR_OpaqueClassBlock *clazzPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isClassArray, clazzPointer);
+   return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::isClassFinal(TR_OpaqueClassBlock *clazzPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isClassFinal, clazzPointer);
+   return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::isAbstractClass(TR_OpaqueClassBlock *clazzPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isAbstractClass, clazzPointer);
+   return std::get<0>(stream->read<bool>());
+   }

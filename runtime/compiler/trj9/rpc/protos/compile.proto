@@ -56,6 +56,10 @@ enum J9ServerMessageType
    VM_isClassLibraryMethod = 201;
    VM_getSuperClass = 202;
    VM_isInstanceOf = 203;
+   VM_isInterfaceClass = 204;
+   VM_isClassArray = 205;
+   VM_isClassFinal = 206;
+   VM_isAbstractClass = 207;
    }
 
 message J9ServerMessage

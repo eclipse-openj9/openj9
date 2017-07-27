@@ -299,6 +299,30 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          client->write(fe->isInstanceOf(a, b, objectTypeIsFixed, castTypeIsFixed, optimizeForAOT));
          }
          break;
+      case J9ServerMessageType::VM_isInterfaceClass:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->isInterfaceClass(clazz));
+         }
+         break;
+      case J9ServerMessageType::VM_isClassArray:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->isClassArray(clazz));
+         }
+         break;
+      case J9ServerMessageType::VM_isClassFinal:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->isClassFinal(clazz));
+         }
+         break;
+      case J9ServerMessageType::VM_isAbstractClass:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->isAbstractClass(clazz));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
