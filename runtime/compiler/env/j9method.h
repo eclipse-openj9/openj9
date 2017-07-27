@@ -589,7 +589,6 @@ public:
    virtual bool isJNINative() override;
    virtual bool isInterpreted() override;
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm) override;
-   virtual uint32_t classModifiers() override;
    virtual J9ClassLoader *getClassLoader() override;
 
 private:
