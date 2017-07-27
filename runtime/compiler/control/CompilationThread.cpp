@@ -288,6 +288,17 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          client->write(fe->getSuperClass(clazz));
          }
          break;
+      case J9ServerMessageType::VM_isInstanceOf:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, bool, bool, bool>();
+         TR_OpaqueClassBlock *a = std::get<0>(recv);
+         TR_OpaqueClassBlock *b = std::get<1>(recv);
+         bool objectTypeIsFixed = std::get<2>(recv);
+         bool castTypeIsFixed = std::get<3>(recv);
+         bool optimizeForAOT = std::get<4>(recv);
+         client->write(fe->isInstanceOf(a, b, objectTypeIsFixed, castTypeIsFixed, optimizeForAOT));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
