@@ -54,6 +54,7 @@ namespace JAAS
    template <> struct ProtobufTypeConvert<bool> : PrimitiveTypeConvert<bool, Bool> { };
    template <> struct ProtobufTypeConvert<uint64_t> : PrimitiveTypeConvert<uint64_t, UInt64> { };
    template <> struct ProtobufTypeConvert<uint32_t> : PrimitiveTypeConvert<uint32_t, UInt32> { };
+   template <> struct ProtobufTypeConvert<int32_t> : PrimitiveTypeConvert<int32_t, Int32> { };
    template <> struct ProtobufTypeConvert<std::string> : PrimitiveTypeConvert<std::string, Bytes> { };
 
    // Implement conversion for all enums

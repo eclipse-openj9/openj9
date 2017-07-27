@@ -97,3 +97,37 @@ TR_J9ServerVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
    stream->write(JAAS::J9ServerMessageType::VM_isMethodExitTracingEnabled, method);
    return std::get<0>(stream->read<bool>());
    }
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getClassClassPointer, objectClassPointer);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }
+
+void *
+TR_J9ServerVM::getClassLoader(TR_OpaqueClassBlock * classPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getClassLoader, classPointer);
+   return std::get<0>(stream->read<void *>());
+   }
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getClassOfMethod, method);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getBaseComponentClass, clazz, numDims);
+   auto recv = stream->read<TR_OpaqueClassBlock *, int32_t>();
+   numDims = std::get<1>(recv);
+   return std::get<0>(recv);
+   }

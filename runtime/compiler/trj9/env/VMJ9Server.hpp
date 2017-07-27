@@ -22,6 +22,10 @@ public:
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT) override;
    virtual bool isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method) override;
    virtual bool isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method) override;
+   virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer) override;
+   virtual void * getClassLoader(TR_OpaqueClassBlock * classPointer) override;
+   virtual TR_OpaqueClassBlock * getClassOfMethod(TR_OpaqueMethodBlock *method) override;
+   virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims) override;
    };
 
 #endif // VMJ9SERVER_H

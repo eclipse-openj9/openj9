@@ -343,6 +343,33 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VMBase *fe)
          client->write(fe->isMethodExitTracingEnabled(method));
          }
          break;
+      case J9ServerMessageType::VM_getClassClassPointer:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
+         client->write(fe->getClassClassPointer(clazz));
+         };
+         break;
+      case J9ServerMessageType::VM_getClassLoader:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
+         client->write(fe->getClassLoader(clazz));
+         };
+         break;
+      case J9ServerMessageType::VM_getClassOfMethod:
+         {
+         auto method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock*>());
+         client->write(fe->getClassOfMethod(method));
+         };
+         break;
+      case J9ServerMessageType::VM_getBaseComponentClass:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock*, int32_t>();
+         auto clazz = std::get<0>(recv);
+         int32_t numDims = std::get<1>(recv);
+         auto outClass = fe->getBaseComponentClass(clazz, numDims);
+         client->write(outClass, numDims);
+         };
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
