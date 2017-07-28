@@ -73,6 +73,8 @@ enum J9ServerMessageType
    VM_jitFieldsAreSame = 218;
    VM_jitStaticsAreSame = 219;
    VM_getComponentClassFromArrayClass = 220;
+   VM_classHasBeenReplaced = 221;
+   VM_classHasBeenExtended = 222;
    }
 
 message J9ServerMessage

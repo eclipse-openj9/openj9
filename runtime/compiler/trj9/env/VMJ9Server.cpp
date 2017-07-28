@@ -195,3 +195,19 @@ TR_J9ServerVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass)
    stream->write(JAAS::J9ServerMessageType::VM_getComponentClassFromArrayClass, arrayClass);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
+
+bool
+TR_J9ServerVM::classHasBeenReplaced(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_classHasBeenReplaced, clazz);
+   return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::classHasBeenExtended(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_classHasBeenExtended, clazz);
+   return std::get<0>(stream->read<bool>());
+   }
