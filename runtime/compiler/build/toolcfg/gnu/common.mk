@@ -105,7 +105,7 @@ CX_FLAGS+=\
     #-fomit-frame-pointer \
 
 CXX_FLAGS+=\
-    -std=c++0x \
+    -std=c++11 \
     -fno-rtti \
     -fno-threadsafe-statics \
     -Wno-deprecated \
@@ -488,5 +488,4 @@ GRPC_CPP?=$(shell which grpc_cpp_plugin)
 # link grpc libraries
 SOLINK_SLINK+=grpc++ grpc gpr protobuf ssl
 
-SOLINK_FLAGS+=-std=c++11
 CXX_DEFINES+=GOOGLE_PROTOBUF_NO_RTTI
