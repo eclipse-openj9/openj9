@@ -34,6 +34,7 @@ public:
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass) override;
    virtual bool classHasBeenReplaced(TR_OpaqueClassBlock *) override;
    virtual bool classHasBeenExtended(TR_OpaqueClassBlock *) override;
+   virtual bool compiledAsDLTBefore(TR_ResolvedMethod *) override;
    };
 
 #endif // VMJ9SERVER_H

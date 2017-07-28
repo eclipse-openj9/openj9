@@ -75,6 +75,7 @@ enum J9ServerMessageType
    VM_getComponentClassFromArrayClass = 220;
    VM_classHasBeenReplaced = 221;
    VM_classHasBeenExtended = 222;
+   VM_compiledAsDLTBefore = 223;
    }
 
 message J9ServerMessage
