@@ -187,3 +187,11 @@ TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_R
    stream->write(JAAS::J9ServerMessageType::VM_jitStaticsAreSame, clientMethod1, cpIndex1, clientMethod2, cpIndex2);
    return std::get<0>(stream->read<bool>());
    }
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getComponentClassFromArrayClass, arrayClass);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }
