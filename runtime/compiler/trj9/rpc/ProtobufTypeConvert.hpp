@@ -9,8 +9,11 @@
 namespace JAAS
    {
 
+   // This struct and global is used as a hacky replacement for run-time type information (rtti), which is not enabled in our build.
+   // Every instance of this struct gets a unique identifier assigned to it (assuming constructors run in serial)
+   // It is inteneded to be used by holding a static instance of it within a templated class, so that each template instantiation
+   // gets a different unique ID.
    extern uint64_t typeCount;
-
    struct TypeID
       {
       uint64_t id;
@@ -20,6 +23,11 @@ namespace JAAS
          }
       };
 
+   // The ProtobufTypeConvert struct is intended to allow custom conversions to happen automatically before protobuf serialization
+   // and after protobuf deserialization. We use specialization to implement it for specific types.
+   //
+   // The base implementation here simply does nothing to any types that have not been specialized.
+   // It will be used if you pass a protobuf type through directly such as JAAS::Void.
    template <typename T, typename = void>
    struct ProtobufTypeConvert
       {
@@ -28,6 +36,8 @@ namespace JAAS
       static ProtoType onSend(T in) { return in; }
       };
 
+   // This struct is used as a base for conversions that can be done by a simple cast between data types of the same size.
+   // It uses a type id mechanism to verify that the types match at runtime upon deserialization.
    template <typename Primitive, typename Proto>
    struct PrimitiveTypeConvert
       {
@@ -51,15 +61,20 @@ namespace JAAS
       };
    template <typename Primitive, typename Proto> TypeID PrimitiveTypeConvert<Primitive, Proto>::type;
 
+   // Specialize ProtobufTypeConvert for various primitive types by inheriting from a specifically instantiated PrimitiveTypeConvert
    template <> struct ProtobufTypeConvert<bool> : PrimitiveTypeConvert<bool, Bool> { };
    template <> struct ProtobufTypeConvert<uint64_t> : PrimitiveTypeConvert<uint64_t, UInt64> { };
    template <> struct ProtobufTypeConvert<uint32_t> : PrimitiveTypeConvert<uint32_t, UInt32> { };
    template <> struct ProtobufTypeConvert<int32_t> : PrimitiveTypeConvert<int32_t, Int32> { };
    template <> struct ProtobufTypeConvert<std::string> : PrimitiveTypeConvert<std::string, Bytes> { };
 
-   // Implement conversion for all enums
+   // Specialize conversion for all enums
    template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type> : PrimitiveTypeConvert<T, Int32> { };
 
+   // Specialize conversion for pointer types
+   // When recieving a pointer, we flip all of the bits as a signal to indicate that it should not be dereferenced.
+   // This is intended to make violations of this rule easy to spot in a debugger.
+   // The exception is if the value is null, in which case we do not flip the bits to prevent breaking null checks.
    template <typename T>
    struct ProtobufTypeConvert<T*> : PrimitiveTypeConvert<T*, UInt64>
       {
@@ -72,6 +87,8 @@ namespace JAAS
          }
       };
 
+   // setArgs fills out a protobuf AnyData message with values from a variadic argument list.
+   // It calls ProtobufTypeConvert::onSend for each argument.
    template <typename Arg1, typename... Args>
    struct SetArgs
       {
@@ -96,6 +113,8 @@ namespace JAAS
       SetArgs<Args...>::setArgs(message, args...);
       }
 
+   // getArgs returns a tuple of values which are extracted from a protobuf AnyData message.
+   // It calls ProtobufTypeConvert::onRecv for each value extracted.
    template <typename Arg1, typename... Args>
    struct GetArgs
       {
