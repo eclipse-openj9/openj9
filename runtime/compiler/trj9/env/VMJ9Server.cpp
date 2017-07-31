@@ -246,3 +246,27 @@ TR_J9ServerVM::isThunkArchetype(J9Method * method)
    stream->write(JAAS::J9ServerMessageType::VM_isThunkArchetype, method);
    return std::get<0>(stream->read<bool>());
    }
+
+static J9UTF8 *str2utf8(char *string, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
+   {
+   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length, allocKind);
+   J9UTF8_SET_LENGTH(utf8, length);
+   memcpy(J9UTF8_DATA(utf8), string, length);
+   return utf8;
+   }
+
+int32_t
+TR_J9ServerVM::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_printTruncatedSignature, method);
+   auto recv = stream->read<std::string, std::string, std::string>();
+   const std::string classNameStr = std::get<0>(recv);
+   const std::string nameStr = std::get<1>(recv);
+   const std::string signatureStr = std::get<2>(recv);
+   TR_Memory *trMemory = _compInfoPT->getCompilation()->trMemory();
+   J9UTF8 * className = str2utf8((char*)&classNameStr[0], classNameStr.length(), trMemory, heapAlloc);
+   J9UTF8 * name = str2utf8((char*)&nameStr[0], nameStr.length(), trMemory, heapAlloc);
+   J9UTF8 * signature = str2utf8((char*)&signatureStr[0], signatureStr.length(), trMemory, heapAlloc);
+   return printTruncatedSignature(sigBuf, bufLen, className, name, signature);
+   }

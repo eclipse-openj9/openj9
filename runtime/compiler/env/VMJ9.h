@@ -708,6 +708,7 @@ public:
    virtual char *             getClassSignature_DEPRECATED(TR_OpaqueClassBlock * clazz, int32_t & length, TR_Memory *);
    virtual char *             getClassSignature(TR_OpaqueClassBlock * clazz, TR_Memory *);
    virtual int32_t            printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method);
+   virtual int32_t            printTruncatedSignature(char *sigBuf, int32_t bufLen, J9UTF8 *className, J9UTF8 *name, J9UTF8 *signature);
 
    virtual bool               isClassFinal(TR_OpaqueClassBlock *);
    virtual bool               isClassArray(TR_OpaqueClassBlock *);

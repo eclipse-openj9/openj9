@@ -79,6 +79,7 @@ enum J9ServerMessageType
    VM_getClassNameChars = 224;
    VM_getOverflowSafeAllocSize = 225;
    VM_isThunkArchetype = 226;
+   VM_printTruncatedSignature = 227;
    }
 
 message J9ServerMessage

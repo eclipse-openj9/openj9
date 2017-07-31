@@ -2501,14 +2501,8 @@ TR_J9VMBase::getClassSignature(TR_OpaqueClassBlock * clazz, TR_Memory * trMemory
 
 
 int32_t
-TR_J9VMBase::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method)
+TR_J9VMBase::printTruncatedSignature(char *sigBuf, int32_t bufLen, J9UTF8 *className, J9UTF8 *name, J9UTF8 *signature)
    {
-   // avoid using sampleSignature due to malloc
-   J9Method *j9method = (J9Method *)method;
-   J9UTF8 * className;
-   J9UTF8 * name;
-   J9UTF8 * signature;
-   getClassNameSignatureFromMethod(j9method, className, name, signature);
    int32_t sigLen = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature)+2;
    if (sigLen < bufLen)
       {
@@ -2534,6 +2528,19 @@ TR_J9VMBase::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMeth
          }
       }
    return sigLen;
+   }
+
+
+int32_t
+TR_J9VMBase::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method)
+   {
+   // avoid using sampleSignature due to malloc
+   J9Method *j9method = (J9Method *)method;
+   J9UTF8 * className;
+   J9UTF8 * name;
+   J9UTF8 * signature;
+   getClassNameSignatureFromMethod(j9method, className, name, signature);
+   return printTruncatedSignature(sigBuf, bufLen, className, name, signature);
    }
 
 

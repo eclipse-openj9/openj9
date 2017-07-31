@@ -458,6 +458,19 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->isThunkArchetype(method));
          }
          break;
+      case J9ServerMessageType::VM_printTruncatedSignature:
+         {
+         J9Method *method = (J9Method *) std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
+         J9UTF8 * className;
+         J9UTF8 * name;
+         J9UTF8 * signature;
+         getClassNameSignatureFromMethod(method, className, name, signature);
+         std::string classNameStr(utf8Data(className), J9UTF8_LENGTH(className));
+         std::string nameStr(utf8Data(name), J9UTF8_LENGTH(name));
+         std::string signatureStr(utf8Data(signature), J9UTF8_LENGTH(signature));
+         client->write(classNameStr, nameStr, signatureStr);
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
