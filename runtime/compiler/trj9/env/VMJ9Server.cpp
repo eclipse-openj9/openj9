@@ -268,5 +268,5 @@ TR_J9ServerVM::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMe
    J9UTF8 * className = str2utf8((char*)&classNameStr[0], classNameStr.length(), trMemory, heapAlloc);
    J9UTF8 * name = str2utf8((char*)&nameStr[0], nameStr.length(), trMemory, heapAlloc);
    J9UTF8 * signature = str2utf8((char*)&signatureStr[0], signatureStr.length(), trMemory, heapAlloc);
-   return printTruncatedSignature(sigBuf, bufLen, className, name, signature);
+   return TR_J9VMBase::printTruncatedSignature(sigBuf, bufLen, className, name, signature);
    }
