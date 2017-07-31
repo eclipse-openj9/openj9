@@ -225,7 +225,7 @@ TR_J9ServerVM::getClassNameChars(TR_OpaqueClassBlock * ramClass, int32_t & lengt
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_getClassNameChars, ramClass);
-   const std::string &className = std::get<0>(stream->read<std::string>());
+   const std::string className = std::get<0>(stream->read<std::string>());
    char * classNameChars = (char*) _compInfoPT->getCompilation()->trMemory()->allocateMemory(className.length(), heapAlloc);
    memcpy(classNameChars, &className[0], className.length());
    return classNameChars;

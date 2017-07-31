@@ -326,7 +326,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::VM_getSystemClassFromClassName:
          {
          auto recv = client->getRecvData<std::string, bool>();
-         const std::string& name = std::get<0>(recv);
+         const std::string name = std::get<0>(recv);
          bool isVettedForAOT = std::get<1>(recv);
          client->write(fe->getSystemClassFromClassName(name.c_str(), name.length(), isVettedForAOT));
          }

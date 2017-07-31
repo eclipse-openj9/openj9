@@ -2204,9 +2204,9 @@ TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClaz
    JAAS::J9ServerStream *stream = fej9->_compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::get_params_to_construct_TR_j9method, aClazz, cpIndex);
    const auto recv = stream->read<std::string, std::string, std::string>();
-   const std::string &str_className = std::get<0>(recv);
-   const std::string &str_name = std::get<1>(recv);
-   const std::string &str_signature = std::get<2>(recv);
+   const std::string str_className = std::get<0>(recv);
+   const std::string str_name = std::get<1>(recv);
+   const std::string str_signature = std::get<2>(recv);
    _className = str2utf8((char*)&str_className[0], str_className.length(), trMemory, heapAlloc);
    _name = str2utf8((char*)&str_name[0], str_name.length(), trMemory, heapAlloc);
    _signature = str2utf8((char*)&str_signature[0], str_signature.length(), trMemory, heapAlloc);
@@ -8392,7 +8392,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _ramClass = std::get<2>(recv);
 
    // copy ROM class
-   const std::string &romClassStr = std::get<3>(recv);
+   const std::string romClassStr = std::get<3>(recv);
    _romClass = (J9ROMClass*) trMemory->allocateHeapMemory(romClassStr.size());
    if (!_romClass)
       throw std::bad_alloc();
