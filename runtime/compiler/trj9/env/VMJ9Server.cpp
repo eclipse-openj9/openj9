@@ -231,3 +231,10 @@ TR_J9ServerVM::getClassNameChars(TR_OpaqueClassBlock * ramClass, int32_t & lengt
    return classNameChars;
    }
 
+uintptrj_t
+TR_J9ServerVM::getOverflowSafeAllocSize()
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getOverflowSafeAllocSize, JAAS::Void());
+   return static_cast<uintptrj_t>(std::get<0>(stream->read<uint64_t>()));
+   }

@@ -36,6 +36,7 @@ public:
    virtual bool classHasBeenExtended(TR_OpaqueClassBlock *) override;
    virtual bool compiledAsDLTBefore(TR_ResolvedMethod *) override;
    virtual char * getClassNameChars(TR_OpaqueClassBlock *ramClass, int32_t & length) override;
+   virtual uintptrj_t getOverflowSafeAllocSize() override;
    };
 
 #endif // VMJ9SERVER_H

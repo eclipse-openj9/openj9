@@ -449,6 +449,9 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->classHasBeenExtended(clazz));
          }
          break;
+      case J9ServerMessageType::VM_getOverflowSafeAllocSize:
+         client->write(static_cast<uint64_t>(fe->getOverflowSafeAllocSize()));
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
