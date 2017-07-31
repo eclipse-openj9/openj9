@@ -238,3 +238,11 @@ TR_J9ServerVM::getOverflowSafeAllocSize()
    stream->write(JAAS::J9ServerMessageType::VM_getOverflowSafeAllocSize, JAAS::Void());
    return static_cast<uintptrj_t>(std::get<0>(stream->read<uint64_t>()));
    }
+
+bool
+TR_J9ServerVM::isThunkArchetype(J9Method * method)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isThunkArchetype, method);
+   return std::get<0>(stream->read<bool>());
+   }

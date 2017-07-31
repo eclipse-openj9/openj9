@@ -287,7 +287,7 @@ public:
    bool stringEquals(TR::Compilation * comp, uintptrj_t* stringLocation1, uintptrj_t* stringLocation2, int32_t& result);
    bool getStringHashCode(TR::Compilation * comp, uintptrj_t* stringLocation, int32_t& result);
 
-   bool isThunkArchetype(J9Method * method);
+   virtual bool isThunkArchetype(J9Method * method);
 
    J9VMThread * vmThread();
 

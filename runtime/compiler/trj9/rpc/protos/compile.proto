@@ -78,6 +78,7 @@ enum J9ServerMessageType
    VM_compiledAsDLTBefore = 223;
    VM_getClassNameChars = 224;
    VM_getOverflowSafeAllocSize = 225;
+   VM_isThunkArchetype = 226;
    }
 
 message J9ServerMessage
