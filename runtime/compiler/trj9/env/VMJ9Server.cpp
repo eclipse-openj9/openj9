@@ -286,3 +286,11 @@ TR_J9ServerVM::isClassInitialized(TR_OpaqueClassBlock * clazz)
    stream->write(JAAS::J9ServerMessageType::VM_isClassInitialized, clazz);
    return std::get<0>(stream->read<bool>());
    }
+
+UDATA
+TR_J9ServerVM::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getOSRFrameSizeInBytes, method);
+   return std::get<0>(stream->read<UDATA>());
+   }

@@ -41,6 +41,7 @@ public:
    virtual int32_t printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method) override;
    virtual bool isPrimitiveClass(TR_OpaqueClassBlock * clazz) override;
    virtual bool isClassInitialized(TR_OpaqueClassBlock * clazz) override;
+   virtual UDATA getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method) override;
    };
 
 #endif // VMJ9SERVER_H

@@ -82,6 +82,7 @@ enum J9ServerMessageType
    VM_printTruncatedSignature = 227;
    VM_isPrimitiveClass = 228;
    VM_isClassInitialized = 229;
+   VM_getOSRFrameSizeInBytes = 230;
    }
 
 message J9ServerMessage
