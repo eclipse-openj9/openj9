@@ -4429,7 +4429,11 @@ void TR_ResolvedJ9Method::construct(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd 
       {
       { "java/util/concurrent/atomic/AtomicReference", JavaUtilConcurrentAtomicReferenceMethods },
       { "java/util/concurrent/atomic/AtomicLongArray", JavaUtilConcurrentAtomicLongArrayMethods },
+<<<<<<< HEAD:runtime/tr.source/trj9/env/j9method.cpp
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
+=======
+#ifndef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
+>>>>>>> 146ea52faf... Alias com/ibm/crypto/provider with com/ibm/dataaccess:trj9/env/j9method.cpp
       { "com/ibm/crypto/provider/ByteArrayMarshaller", DataAccessByteArrayMarshallerMethods },
 #endif
       { 0 }
@@ -4437,7 +4441,11 @@ void TR_ResolvedJ9Method::construct(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd 
 
    static Y class45[] =
       {
+<<<<<<< HEAD:runtime/tr.source/trj9/env/j9method.cpp
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
+=======
+#ifndef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
+>>>>>>> 146ea52faf... Alias com/ibm/crypto/provider with com/ibm/dataaccess:trj9/env/j9method.cpp
       { "com/ibm/crypto/provider/ByteArrayUnmarshaller", DataAccessByteArrayUnmarshallerMethods },
 #endif
       { 0 }
