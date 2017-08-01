@@ -28,10 +28,11 @@ TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *classPointer)
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
-TR_Method *
-TR_J9ServerVM::createMethod(TR_Memory * trMemory, TR_OpaqueClassBlock * clazz, int32_t refOffset)
+TR_ResolvedMethod *
+TR_J9ServerVM::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod,
+                                  TR_ResolvedMethod * owningMethod, TR_OpaqueClassBlock *classForNewInstance)
    {
-   return new (trMemory->trHeapMemory()) TR_J9Method(this, trMemory, TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), refOffset, true);
+   return new (trMemory->trHeapMemory()) TR_ResolvedJ9JAASServerMethod(aMethod, this, trMemory, owningMethod);
    }
 
 TR_YesNoMaybe
