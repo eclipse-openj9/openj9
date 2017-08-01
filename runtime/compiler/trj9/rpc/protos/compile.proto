@@ -83,6 +83,7 @@ enum J9ServerMessageType
    VM_isPrimitiveClass = 228;
    VM_isClassInitialized = 229;
    VM_getOSRFrameSizeInBytes = 230;
+   VM_getByteOffsetToLockword = 231;
    }
 
 message J9ServerMessage

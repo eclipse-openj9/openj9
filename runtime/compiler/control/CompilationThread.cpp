@@ -489,6 +489,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getOSRFrameSizeInBytes(method));
          }
          break;
+      case J9ServerMessageType::VM_getByteOffsetToLockword:
+         {
+         TR_OpaqueClassBlock * clazzPointer = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getByteOffsetToLockword(clazzPointer));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only

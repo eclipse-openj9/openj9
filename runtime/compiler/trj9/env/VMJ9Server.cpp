@@ -294,3 +294,11 @@ TR_J9ServerVM::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method)
    stream->write(JAAS::J9ServerMessageType::VM_getOSRFrameSizeInBytes, method);
    return std::get<0>(stream->read<UDATA>());
    }
+
+int32_t
+TR_J9ServerVM::getByteOffsetToLockword(TR_OpaqueClassBlock * clazzPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getByteOffsetToLockword, clazzPointer);
+   return std::get<0>(stream->read<int32_t>());
+   }
