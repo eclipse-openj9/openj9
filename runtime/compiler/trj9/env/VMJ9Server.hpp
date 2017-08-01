@@ -38,7 +38,9 @@ public:
    virtual char * getClassNameChars(TR_OpaqueClassBlock *ramClass, int32_t & length) override;
    virtual uintptrj_t getOverflowSafeAllocSize() override;
    virtual bool isThunkArchetype(J9Method * method) override;
-   virtual int32_t printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method);
+   virtual int32_t printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method) override;
+   virtual bool isPrimitiveClass(TR_OpaqueClassBlock * clazz) override;
+   virtual bool isClassInitialized(TR_OpaqueClassBlock * clazz) override;
    };
 
 #endif // VMJ9SERVER_H

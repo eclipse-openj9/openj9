@@ -270,3 +270,19 @@ TR_J9ServerVM::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMe
    J9UTF8 * signature = str2utf8((char*)&signatureStr[0], signatureStr.length(), trMemory, heapAlloc);
    return TR_J9VMBase::printTruncatedSignature(sigBuf, bufLen, className, name, signature);
    }
+
+bool
+TR_J9ServerVM::isPrimitiveClass(TR_OpaqueClassBlock * clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isPrimitiveClass, clazz);
+   return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::isClassInitialized(TR_OpaqueClassBlock * clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isClassInitialized, clazz);
+   return std::get<0>(stream->read<bool>());
+   }
