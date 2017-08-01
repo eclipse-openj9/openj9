@@ -501,6 +501,24 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->isString(clazz));
          }
          break;
+      case J9ServerMessageType::VM_getMethods:
+         {
+         TR_OpaqueClassBlock *classPointer = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getMethods(classPointer));
+         }
+         break;
+      case J9ServerMessageType::VM_getNumMethods:
+         {
+         TR_OpaqueClassBlock *classPointer = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getNumMethods(classPointer));
+         }
+         break;
+      case J9ServerMessageType::VM_getNumInnerClasses:
+         {
+         TR_OpaqueClassBlock *classPointer = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getNumInnerClasses(classPointer));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only

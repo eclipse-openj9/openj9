@@ -311,3 +311,27 @@ TR_J9ServerVM::isString(TR_OpaqueClassBlock * clazz)
    stream->write(JAAS::J9ServerMessageType::VM_isString1, clazz);
    return std::get<0>(stream->read<bool>());
    }
+
+void *
+TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * classPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getMethods, classPointer);
+   return std::get<0>(stream->read<void *>());
+   }
+
+uint32_t
+TR_J9ServerVM::getNumMethods(TR_OpaqueClassBlock * classPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getNumMethods, classPointer);
+   return std::get<0>(stream->read<uint32_t>());
+   }
+
+uint32_t
+TR_J9ServerVM::getNumInnerClasses(TR_OpaqueClassBlock * classPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getNumInnerClasses, classPointer);
+   return std::get<0>(stream->read<uint32_t>());
+   }

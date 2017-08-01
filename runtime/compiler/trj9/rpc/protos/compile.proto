@@ -85,6 +85,9 @@ enum J9ServerMessageType
    VM_getOSRFrameSizeInBytes = 230;
    VM_getByteOffsetToLockword = 231;
    VM_isString1 = 232;
+   VM_getMethods = 233;
+   VM_getNumMethods = 234;
+   VM_getNumInnerClasses = 235;
    }
 
 message J9ServerMessage

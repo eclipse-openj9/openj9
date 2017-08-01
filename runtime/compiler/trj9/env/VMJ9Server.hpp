@@ -44,6 +44,9 @@ public:
    virtual UDATA getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method) override;
    virtual int32_t getByteOffsetToLockword(TR_OpaqueClassBlock * clazzPointer) override;
    virtual bool isString(TR_OpaqueClassBlock * clazz) override;
+   virtual void * getMethods(TR_OpaqueClassBlock * classPointer) override;
+   virtual uint32_t getNumMethods(TR_OpaqueClassBlock * classPointer) override;
+   virtual uint32_t getNumInnerClasses(TR_OpaqueClassBlock * classPointer) override;
    };
 
 #endif // VMJ9SERVER_H

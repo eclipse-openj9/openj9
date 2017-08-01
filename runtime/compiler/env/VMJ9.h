@@ -399,9 +399,9 @@ public:
    virtual int32_t            getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex);
    virtual bool               isJavaOffloadEnabled();
    uint32_t                   getMethodSize(TR_OpaqueMethodBlock *method);
-   void *                     getMethods(TR_OpaqueClassBlock *classPointer);
-   uint32_t                   getNumInnerClasses(TR_OpaqueClassBlock *classPointer);
-   uint32_t                   getNumMethods(TR_OpaqueClassBlock *classPointer);
+   virtual void *             getMethods(TR_OpaqueClassBlock *classPointer);
+   virtual uint32_t           getNumInnerClasses(TR_OpaqueClassBlock *classPointer);
+   virtual uint32_t           getNumMethods(TR_OpaqueClassBlock *classPointer);
 
    virtual uint8_t *          allocateCodeMemory( TR::Compilation *, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t **coldCode, bool isMethodHeaderNeeded=true);
    virtual void               resizeCodeMemory( TR::Compilation *, uint8_t *, uint32_t numBytes);
