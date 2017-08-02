@@ -347,7 +347,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
          client->write(fe->getClassClassPointer(clazz));
-         };
+         }
          break;
       case J9ServerMessageType::VM_getClassLoader:
          {
@@ -359,7 +359,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          auto method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock*>());
          client->write(fe->getClassOfMethod(method));
-         };
+         }
          break;
       case J9ServerMessageType::VM_getBaseComponentClass:
          {
@@ -530,9 +530,9 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *)(J9_CP_FROM_METHOD(resolvedMethod->ramMethod()));
          J9Class *cpHdr = J9_CLASS_FROM_CP(literals);
 
-         J9Method *j9ResolvedMethod = (J9Method *)resolvedMethod;
-         J9ROMClass *romClass = J9_CLASS_FROM_METHOD(j9ResolvedMethod)->romClass;
-         uint64_t methodIndex = getMethodIndexUnchecked(j9ResolvedMethod);
+         J9Method *ramMethod = (J9Method *)method;
+         J9ROMClass *romClass = J9_CLASS_FROM_METHOD(ramMethod)->romClass;
+         uint64_t methodIndex = getMethodIndexUnchecked(ramMethod);
          std::string romClassStr((char *) romClass, romClass->romSize);
          client->write(resolvedMethod, literals, cpHdr, romClassStr, methodIndex);
          }
@@ -583,7 +583,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(JAAS::Void());
          }
          break;
-       case J9ServerMessageType::ResolvedMethod_allocateException:
+      case J9ServerMessageType::ResolvedMethod_allocateException:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
