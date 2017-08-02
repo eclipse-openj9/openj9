@@ -533,6 +533,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getAllocationSize(classSym, clazz));
          }
          break;
+      case J9ServerMessageType::VM_getObjectClass:
+         {
+         uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
+         client->write(fe->getObjectClass(objectPointer));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only

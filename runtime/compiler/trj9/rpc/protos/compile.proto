@@ -90,6 +90,7 @@ enum J9ServerMessageType
    VM_getNumInnerClasses = 235;
    VM_isPrimitiveArray = 236;
    VM_getAllocationSize = 237;
+   VM_getObjectClass = 238;
    }
 
 message J9ServerMessage

@@ -351,3 +351,11 @@ TR_J9ServerVM::getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock
    stream->write(JAAS::J9ServerMessageType::VM_getAllocationSize, classSym, clazz);
    return std::get<0>(stream->read<uint32_t>());
    }
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getObjectClass(uintptrj_t objectPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getObjectClass, objectPointer);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }
