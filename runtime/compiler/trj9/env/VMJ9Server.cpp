@@ -359,3 +359,11 @@ TR_J9ServerVM::getObjectClass(uintptrj_t objectPointer)
    stream->write(JAAS::J9ServerMessageType::VM_getObjectClass, objectPointer);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
+
+bool
+TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_stackWalkerMaySkipFrames, method, clazz);
+   return std::get<0>(stream->read<bool>());
+   }

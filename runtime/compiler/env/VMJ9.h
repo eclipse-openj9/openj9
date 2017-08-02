@@ -311,7 +311,7 @@ public:
    // Not implemented
    virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *) { return 0; }
 
-   bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass);
+   virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass);
 
    virtual bool supportsEmbeddedHeapBounds()  { return true; }
    virtual bool supportsFastNanoTime();

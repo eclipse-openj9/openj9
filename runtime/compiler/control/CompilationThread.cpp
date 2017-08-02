@@ -539,6 +539,14 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getObjectClass(objectPointer));
          }
          break;
+      case J9ServerMessageType::VM_stackWalkerMaySkipFrames:
+         {
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *>();
+         TR_OpaqueMethodBlock *method = std::get<0>(recv);
+         TR_OpaqueClassBlock *clazz = std::get<1>(recv);
+         client->write(fe->stackWalkerMaySkipFrames(method, clazz));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only

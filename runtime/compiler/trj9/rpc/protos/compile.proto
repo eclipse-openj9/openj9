@@ -91,6 +91,7 @@ enum J9ServerMessageType
    VM_isPrimitiveArray = 236;
    VM_getAllocationSize = 237;
    VM_getObjectClass = 238;
+   VM_stackWalkerMaySkipFrames = 239;
    }
 
 message J9ServerMessage
