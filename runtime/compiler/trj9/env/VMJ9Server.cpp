@@ -297,10 +297,10 @@ TR_J9ServerVM::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method)
    }
 
 int32_t
-TR_J9ServerVM::getByteOffsetToLockword(TR_OpaqueClassBlock * clazzPointer)
+TR_J9ServerVM::getByteOffsetToLockword(TR_OpaqueClassBlock * clazz)
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_getByteOffsetToLockword, clazzPointer);
+   stream->write(JAAS::J9ServerMessageType::VM_getByteOffsetToLockword, clazz);
    return std::get<0>(stream->read<int32_t>());
    }
 
@@ -313,25 +313,33 @@ TR_J9ServerVM::isString(TR_OpaqueClassBlock * clazz)
    }
 
 void *
-TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * classPointer)
+TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * clazz)
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_getMethods, classPointer);
+   stream->write(JAAS::J9ServerMessageType::VM_getMethods, clazz);
    return std::get<0>(stream->read<void *>());
    }
 
 uint32_t
-TR_J9ServerVM::getNumMethods(TR_OpaqueClassBlock * classPointer)
+TR_J9ServerVM::getNumMethods(TR_OpaqueClassBlock * clazz)
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_getNumMethods, classPointer);
+   stream->write(JAAS::J9ServerMessageType::VM_getNumMethods, clazz);
    return std::get<0>(stream->read<uint32_t>());
    }
 
 uint32_t
-TR_J9ServerVM::getNumInnerClasses(TR_OpaqueClassBlock * classPointer)
+TR_J9ServerVM::getNumInnerClasses(TR_OpaqueClassBlock * clazz)
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_getNumInnerClasses, classPointer);
+   stream->write(JAAS::J9ServerMessageType::VM_getNumInnerClasses, clazz);
    return std::get<0>(stream->read<uint32_t>());
+   }
+
+bool
+TR_J9ServerVM::isPrimitiveArray(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isPrimitiveArray, clazz);
+   return std::get<0>(stream->read<bool>());
    }

@@ -491,8 +491,8 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getByteOffsetToLockword:
          {
-         TR_OpaqueClassBlock * clazzPointer = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(fe->getByteOffsetToLockword(clazzPointer));
+         TR_OpaqueClassBlock * clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getByteOffsetToLockword(clazz));
          }
          break;
       case J9ServerMessageType::VM_isString1:
@@ -503,20 +503,26 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getMethods:
          {
-         TR_OpaqueClassBlock *classPointer = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(fe->getMethods(classPointer));
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getMethods(clazz));
          }
          break;
       case J9ServerMessageType::VM_getNumMethods:
          {
-         TR_OpaqueClassBlock *classPointer = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(fe->getNumMethods(classPointer));
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getNumMethods(clazz));
          }
          break;
       case J9ServerMessageType::VM_getNumInnerClasses:
          {
-         TR_OpaqueClassBlock *classPointer = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(fe->getNumInnerClasses(classPointer));
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getNumInnerClasses(clazz));
+         }
+         break;
+      case J9ServerMessageType::VM_isPrimitiveArray:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->isPrimitiveArray(clazz));
          }
          break;
       case J9ServerMessageType::mirrorResolvedJ9Method:

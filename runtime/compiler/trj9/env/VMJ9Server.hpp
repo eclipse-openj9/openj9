@@ -42,11 +42,12 @@ public:
    virtual bool isPrimitiveClass(TR_OpaqueClassBlock * clazz) override;
    virtual bool isClassInitialized(TR_OpaqueClassBlock * clazz) override;
    virtual UDATA getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method) override;
-   virtual int32_t getByteOffsetToLockword(TR_OpaqueClassBlock * clazzPointer) override;
+   virtual int32_t getByteOffsetToLockword(TR_OpaqueClassBlock * clazz) override;
    virtual bool isString(TR_OpaqueClassBlock * clazz) override;
-   virtual void * getMethods(TR_OpaqueClassBlock * classPointer) override;
-   virtual uint32_t getNumMethods(TR_OpaqueClassBlock * classPointer) override;
-   virtual uint32_t getNumInnerClasses(TR_OpaqueClassBlock * classPointer) override;
+   virtual void * getMethods(TR_OpaqueClassBlock * clazz) override;
+   virtual uint32_t getNumMethods(TR_OpaqueClassBlock * clazz) override;
+   virtual uint32_t getNumInnerClasses(TR_OpaqueClassBlock * clazz) override;
+   virtual bool isPrimitiveArray(TR_OpaqueClassBlock *clazz) override;
    };
 
 #endif // VMJ9SERVER_H
