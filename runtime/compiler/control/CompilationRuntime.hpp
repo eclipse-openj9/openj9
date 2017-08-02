@@ -455,9 +455,19 @@ public:
    static int computeCompilationThreadPriority(J9JavaVM *vm);
    static void *compilationEnd(J9VMThread *context, TR::IlGeneratorMethodDetails & details, J9JITConfig *jitConfig, void * startPC,
                                void *oldStartPC, TR_FrontEnd *vm=0, TR_MethodToBeCompiled *entry=NULL, TR::Compilation *comp=NULL);
+   
+   thread_local static JAAS::J9ServerStream  *_stream; // a non-NULL field denotes a remote compilation request is active
    static bool isInterpreted(J9Method *method) { return !isCompiled(method); }
    static bool isCompiled(J9Method *method) {
-      return (((uintptrj_t)method->extra) & J9_STARTPC_NOT_TRANSLATED) == 0;
+      if (_stream)
+         {
+         _stream->write(JAAS::J9ServerMessageType::CompInfo_isCompiled, method);
+         return std::get<0>(_stream->read<bool>());
+         }
+      else
+         {
+         return (((uintptrj_t)method->extra) & J9_STARTPC_NOT_TRANSLATED) == 0;
+         }
       }
    static bool isJNINative(J9Method *method) {
       // Note: This query is only concerned with the method to be compiled

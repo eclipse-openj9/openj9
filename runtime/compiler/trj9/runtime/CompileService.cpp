@@ -144,7 +144,7 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
    {
    try
       {
-      auto req = stream->read<uint32_t, uint32_t, uint32_t, uint32_t>();
+      auto req = stream->read<uint32_t, uint32_t, uint32_t, uint32_t, J9Method *>();
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
@@ -153,7 +153,8 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       J9ROMMethod *romMethod = (J9ROMMethod*)cache->pointerFromOffsetInSharedCache((void*)std::get<1>(req));
       void *classChainC = cache->pointerFromOffsetInSharedCache((void*)std::get<2>(req));
       void *classChainCL = cache->pointerFromOffsetInSharedCache((void*)std::get<3>(req));
-      J9Method *ramMethod = ramMethodFromRomMethod(_jitConfig, _vmThread, romClass, romMethod, classChainC, classChainCL);
+      J9Method *ramMethod = std::get<4>(req);
+      //J9Method *ramMethod = ramMethodFromRomMethod(_jitConfig, _vmThread, romClass, romMethod, classChainC, classChainCL);
       doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, stream);
       }
    catch (const JAAS::StreamFailure &e)

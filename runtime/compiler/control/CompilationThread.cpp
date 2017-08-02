@@ -621,12 +621,20 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(statusCode, eTbl);
          }
          break;
+      case J9ServerMessageType::CompInfo_isCompiled:
+         {
+         J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
+         client->write(TR::CompilationInfo::isCompiled(method));
+         }
+         break;
      default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();
       }
    return done;
    }
+
+thread_local JAAS::J9ServerStream *TR::CompilationInfo::_stream;
 
 inline void
 TR::CompilationInfo::incrementMethodQueueSize()
@@ -3932,6 +3940,9 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    J9Method *method = details.getMethod();
 
    setMethodBeingCompiled(&entry); // must have compilation monitor
+   
+   if (entry._stream)
+      CompilationInfo::_stream = entry._stream;
 
    // Increase main queue weight while still holding compilation monitor
    if (entry._reqFromSecondaryQueue || entry._reqFromJProfilingQueue)
@@ -6957,7 +6968,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    if (canDoRelocatableCompile && entry->_stream)
       {
       // JAAS TODO: use a Server VM here once frontend changes are stable
-      vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
+      vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM);
       entry->_useAotCompilation = true;
       }
    else if (canDoRelocatableCompile)
@@ -8655,7 +8666,7 @@ TR::CompilationInfoPerThreadBase::compile(
                   {
                   uint32_t classChainCLOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(cc)));
                   JAAS::J9ClientStream client;
-                  client.buildCompileRequest(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset);
+                  client.buildCompileRequest(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset, method);
                   uint32_t code = compilationFailure;
                   try
                      {

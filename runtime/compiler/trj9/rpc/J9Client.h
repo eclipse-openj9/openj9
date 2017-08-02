@@ -15,12 +15,13 @@ public:
       : _stub(J9CompileService::NewStub(grpc::CreateChannel("localhost:38400", grpc::InsecureChannelCredentials())))
       {}
 
-   void buildCompileRequest(uint32_t cOffset, uint32_t mOffset, uint32_t ccCOffset, uint32_t ccCLOffset)
+   template<typename... T>
+   void buildCompileRequest(T... args)
       {
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->Compile(_ctx.get());
 
-      write(cOffset, mOffset, ccCOffset, ccCLOffset);
+      write(args...);
       }
 
    Status waitForFinish()
