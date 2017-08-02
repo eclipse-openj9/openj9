@@ -343,3 +343,11 @@ TR_J9ServerVM::isPrimitiveArray(TR_OpaqueClassBlock *clazz)
    stream->write(JAAS::J9ServerMessageType::VM_isPrimitiveArray, clazz);
    return std::get<0>(stream->read<bool>());
    }
+
+uint32_t
+TR_J9ServerVM::getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getAllocationSize, classSym, clazz);
+   return std::get<0>(stream->read<uint32_t>());
+   }

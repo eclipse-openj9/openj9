@@ -516,7 +516,7 @@ public:
    virtual void                 emitNewPseudoRandomStringVerbose(char *);
    virtual void                 emitNewPseudoRandomStringVerboseLine(char *);
 
-   uint32_t                   getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock * clazz);
+   virtual uint32_t             getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock * clazz);
 
    TR_OpaqueClassBlock *getObjectClass(uintptrj_t objectPointer);
    uintptrj_t           getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
