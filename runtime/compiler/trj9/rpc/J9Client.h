@@ -4,6 +4,7 @@
 #include <grpc++/grpc++.h>
 #include "rpc/types.h"
 #include "rpc/ProtobufTypeConvert.hpp"
+#include "j9.h"
 
 namespace JAAS
 {
@@ -15,13 +16,12 @@ public:
       : _stub(J9CompileService::NewStub(grpc::CreateChannel("localhost:38400", grpc::InsecureChannelCredentials())))
       {}
 
-   template<typename... T>
-   void buildCompileRequest(T... args)
+   void buildCompileRequest(uint32_t cOffset, uint32_t mOffset, uint32_t ccCOffset, uint32_t ccCLOffset, J9Method *method)
       {
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->Compile(_ctx.get());
 
-      write(args...);
+      write(cOffset, mOffset, ccCOffset, ccCLOffset, method);
       }
 
    Status waitForFinish()
