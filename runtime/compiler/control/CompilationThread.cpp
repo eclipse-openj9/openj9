@@ -9754,7 +9754,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                         reinterpret_cast<uintptr_t>(
                            jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
                               vmThread,
-                              J9_ROM_METHOD_FROM_RAM_METHOD(method),
+                              ((TR_ResolvedJ9JAASServerMethod*)comp->getCurrentMethod())->romMethod(),
                               dataStart,
                               dataSize,
                               codeStart,
@@ -9800,7 +9800,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   if (debug)
                      {
                      TR_FilterBST *filter = NULL;
-                     J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
                      J9UTF8 *className;
                      J9UTF8 *name;
                      J9UTF8 *signature;
