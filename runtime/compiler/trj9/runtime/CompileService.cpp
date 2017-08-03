@@ -149,10 +149,10 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
       TR_J9SharedCache *cache = fej9->sharedCache();
-      J9ROMClass *romClass = (J9ROMClass*)cache->pointerFromOffsetInSharedCache((void*)std::get<0>(req));
-      J9ROMMethod *romMethod = (J9ROMMethod*)cache->pointerFromOffsetInSharedCache((void*)std::get<1>(req));
-      void *classChainC = cache->pointerFromOffsetInSharedCache((void*)std::get<2>(req));
-      void *classChainCL = cache->pointerFromOffsetInSharedCache((void*)std::get<3>(req));
+      J9ROMClass *romClass = (J9ROMClass*)cache->pointerFromOffsetInSharedCache((void*)(uint64_t)std::get<0>(req));
+      J9ROMMethod *romMethod = (J9ROMMethod*)cache->pointerFromOffsetInSharedCache((void*)(uint64_t)std::get<1>(req));
+      void *classChainC = cache->pointerFromOffsetInSharedCache((void*)(uint64_t)std::get<2>(req));
+      void *classChainCL = cache->pointerFromOffsetInSharedCache((void*)(uint64_t)std::get<3>(req));
       J9Method *ramMethod = std::get<4>(req);
       //J9Method *ramMethod = ramMethodFromRomMethod(_jitConfig, _vmThread, romClass, romMethod, classChainC, classChainCL);
       doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, stream);
