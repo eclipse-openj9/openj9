@@ -31,6 +31,7 @@ namespace JAAS
    template <typename T, typename = void>
    struct ProtobufTypeConvert
       {
+      static_assert(std::is_base_of<google::protobuf::Message, T>::value, "Fell back to base impl of ProtobufTypeConvert but not given protobuf type: did you forget to implement ProtobufTypeConvert for the type you are sending?");
       using ProtoType = T;
       static T onRecv(ProtoType in) { return in; }
       static ProtoType onSend(T in) { return in; }
@@ -43,17 +44,16 @@ namespace JAAS
       {
       static TypeID type;
       using ProtoType = Proto;
+      static_assert(sizeof(decltype(std::declval<ProtoType>().val())) == sizeof(Primitive), "Size of primitive types must be the same");
       static Primitive onRecv(ProtoType in)
          {
          if (type.id != in.type())
             throw StreamTypeMismatch("Primitive type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in.type()));
-         static_assert(sizeof(decltype(in.val())) == sizeof(Primitive), "Size of primitive types must be the same");
          return (Primitive)in.val();
          }
       static ProtoType onSend(Primitive in)
          {
          ProtoType val;
-         static_assert(sizeof(decltype(val.val())) == sizeof(Primitive), "Size of primitive types must be the same");
          val.set_val((decltype(val.val()))in);
          val.set_type(type.id);
          return val;
