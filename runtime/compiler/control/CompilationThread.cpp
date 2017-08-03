@@ -562,7 +562,18 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          J9ROMClass *romClass = J9_CLASS_FROM_METHOD(ramMethod)->romClass;
          uint64_t methodIndex = getMethodIndexUnchecked(ramMethod);
          std::string romClassStr((char *) romClass, romClass->romSize);
-         client->write(resolvedMethod, literals, cpHdr, romClassStr, methodIndex);
+
+         J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+         for (size_t i = methodIndex; i; --i)
+            {
+            romMethod = nextROMMethod(romMethod);
+            }
+         J9UTF8 *name = J9ROMMETHOD_GET_NAME(romClass, romMethod);
+         J9UTF8 *signature = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+         std::string nameStr((char *)name, name->length + sizeof(U_16));
+         std::string sigStr((char *)signature, signature->length + sizeof(U_16));
+
+         client->write(resolvedMethod, literals, cpHdr, romClassStr, methodIndex, nameStr, sigStr);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isJNINative:
@@ -8686,7 +8697,7 @@ TR::CompilationInfoPerThreadBase::compile(
                   {
                   uint32_t classChainCLOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(cc)));
                   JAAS::J9ClientStream client;
-                  client.buildCompileRequest(romClassOffset, romMethodOffset, classChainCOffset, classChainCLOffset, method);
+                  client.buildCompileRequest(romClassOffset, romMethodOffset, method);
                   uint32_t code = compilationFailure;
                   try
                      {
