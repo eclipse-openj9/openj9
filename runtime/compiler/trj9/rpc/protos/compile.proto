@@ -98,6 +98,9 @@ enum J9ServerMessageType
    CompInfo_getInvocationCount = 301;
    CompInfo_setInvocationCount = 302;
    CompInfo_getJ9MethodExtra = 303;
+   CompInfo_isJNINative = 304;
+   CompInfo_isJSR292 = 305;
+   CompInfo_getMethodBytecodeSize = 306;
    }
 
 message J9ServerMessage

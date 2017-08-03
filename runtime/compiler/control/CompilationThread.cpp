@@ -648,6 +648,24 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(TR::CompilationInfo::setInvocationCount(method, count));
          }
          break;
+      case J9ServerMessageType::CompInfo_isJNINative:
+         {
+         J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
+         client->write(TR::CompilationInfo::isJNINative(method));
+         }
+         break;
+      case J9ServerMessageType::CompInfo_isJSR292:
+         {
+         J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
+         client->write(TR::CompilationInfo::isJSR292(method));
+         }
+         break;
+      case J9ServerMessageType::CompInfo_getMethodBytecodeSize:
+         {
+         J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
+         client->write(TR::CompilationInfo::getMethodBytecodeSize(method));
+         }
+         break;
      default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();
@@ -1608,6 +1626,11 @@ TR::CompilationInfo::getMethodBytecodeSize(J9ROMMethod * romMethod)
 uint32_t
 TR::CompilationInfo::getMethodBytecodeSize(J9Method* method)
    {
+   if (_stream)
+      {
+      _stream->write(JAAS::J9ServerMessageType::CompInfo_getMethodBytecodeSize, method);
+      return std::get<0>(_stream->read<uint32_t>());
+      }
    return getMethodBytecodeSize(J9_ROM_METHOD_FROM_RAM_METHOD(method));
    }
 
@@ -1620,6 +1643,11 @@ TR::CompilationInfo::isJSR292(const J9ROMMethod *romMethod) // Check to see if t
 bool
 TR::CompilationInfo::isJSR292(J9Method *j9method) // Check to see if the J9AccMethodHasMethodHandleInvokes flag is set
    {
+   if (_stream)
+      {
+      _stream->write(JAAS::J9ServerMessageType::CompInfo_isJSR292, j9method);
+      return std::get<0>(_stream->read<bool>());
+      }
    return isJSR292(J9_ROM_METHOD_FROM_RAM_METHOD(j9method));
    }
 
