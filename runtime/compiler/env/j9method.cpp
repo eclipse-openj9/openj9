@@ -8380,7 +8380,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    TR::CompilationInfoPerThreadBase *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
    _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
 
-   _ramMethod = nullptr;
+   _ramMethod = (J9Method *)aMethod;
 
    // Create client side mirror of this object to use for calls involving RAM data
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod);
