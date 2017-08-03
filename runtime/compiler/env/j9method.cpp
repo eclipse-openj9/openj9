@@ -8493,7 +8493,7 @@ TR_ResolvedJ9JAASServerMethod::getClassLoader()
    return std::get<0>(_stream->read<J9ClassLoader *>());
    }
 
-U_8 *
+/*U_8 *
 TR_ResolvedJ9JAASServerMethod::allocateException(uint32_t numBytes, TR::Compilation *comp)
    {
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_allocateException, _remoteMirror, numBytes);
@@ -8511,5 +8511,5 @@ TR_ResolvedJ9JAASServerMethod::allocateException(uint32_t numBytes, TR::Compilat
          break;
       default:;
       }
-   }
+   }*/
 

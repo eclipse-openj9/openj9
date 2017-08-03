@@ -599,7 +599,7 @@ public:
    virtual bool isInterpreted() override;
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm) override;
    virtual J9ClassLoader *getClassLoader() override;
-   virtual U_8 *allocateException(uint32_t, TR::Compilation*) override;
+   //virtual U_8 *allocateException(uint32_t, TR::Compilation*) override;
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
 
 private:
