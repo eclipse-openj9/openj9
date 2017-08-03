@@ -514,7 +514,15 @@ public:
       return (void *)method->extra;
       }
    static void setJ9MethodExtra(J9Method *method, intptrj_t newValue) {
-      method->extra = (void *)newValue;
+      if (_stream)
+         {
+         _stream->write(JAAS::J9ServerMessageType::CompInfo_setJ9MethodExtra, method, (uint64_t) newValue);
+         std::get<0>(_stream->read<JAAS::Void>());
+         }
+      else
+         {
+         method->extra = (void *)newValue;
+         }
       }
    static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t oldValue, intptrj_t newValue) {
       return oldValue == VM_AtomicSupport::lockCompareExchange((UDATA*)&method->extra, oldValue, newValue);

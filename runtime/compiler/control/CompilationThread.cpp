@@ -666,6 +666,15 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(TR::CompilationInfo::getMethodBytecodeSize(method));
          }
          break;
+      case J9ServerMessageType::CompInfo_setJ9MethodExtra:
+         {
+         auto recv = client->getRecvData<J9Method *, uint64_t>();
+         J9Method *method = std::get<0>(recv);
+         uint64_t count = std::get<1>(recv);
+         TR::CompilationInfo::setJ9MethodExtra(method, count);
+         client->write(JAAS::Void());
+         }
+         break;
      default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();
@@ -9800,10 +9809,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   if (debug)
                      {
                      TR_FilterBST *filter = NULL;
-                     J9UTF8 *className;
-                     J9UTF8 *name;
-                     J9UTF8 *signature;
-                     getClassNameSignatureFromMethod(method, className, name, signature);
+                     J9UTF8 *className = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_className;
+                     J9UTF8 *name = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_name;
+                     J9UTF8 *signature = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_signature;
                      char *methodSignature;
                      char arr[1024];
                      int32_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
@@ -9835,7 +9843,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                         canRelocateMethod = true;
                      }
 
-                  if (canRelocateMethod)
+                  if (!entry->isRemoteCompReq() && canRelocateMethod)
                      {
                      J9JITDataCacheHeader *cacheEntry;
 
@@ -9873,7 +9881,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                         {
                         TR::CompilationInfoPerThreadBase::InterruptibleOperation(*entry->_compInfoPT);
                         // need to get a non-shared cache VM to relocate
-                        TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
+                        TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread, TR_J9ServerVM::J9_SERVER_VM);
                         TR_ResolvedMethod *compilee = fe->createResolvedMethod(comp->trMemory(), (TR_OpaqueMethodBlock *)method);
                         relocatedMetaData = entry->_compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
                            vmThread,

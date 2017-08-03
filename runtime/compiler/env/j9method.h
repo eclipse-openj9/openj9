@@ -168,9 +168,11 @@ protected:
 
    uintptr_t    _paramElements;
    uintptr_t    _paramSlots;
+public:
    J9UTF8 *     _signature;
    J9UTF8 *     _name;
    J9UTF8 *     _className;
+protected:
    uint8_t *    _argTypes;
    char *       _fullSignature;
    flags32_t    _flags;
@@ -265,9 +267,9 @@ public:
    // JAAS TODO: make protected, returning Opaque versions
    J9ROMMethod *           romMethod() { return _romMethod; }
    virtual J9ROMClass *            romClassPtr();
+   virtual J9ConstantPool *      cp();
 protected:
    virtual J9RAMConstantPoolItem * literals();   // address of 1st CP entry (with type being an entry for array indexing)
-   virtual J9ConstantPool *      cp();
 public:
    J9Method *              ramMethod() { return _ramMethod; }
    virtual J9Class *               constantPoolHdr();

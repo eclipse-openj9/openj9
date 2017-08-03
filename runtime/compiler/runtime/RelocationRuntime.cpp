@@ -164,7 +164,7 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
    _fe = theFE;
    _codeCache = aotMCCRuntimeCodeCache;
    _method = theMethod;
-   _ramCP = J9_CP_FROM_METHOD(_method);
+   _ramCP = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->cp();
    _useCompiledCopy = shouldUseCompiledCopy;
    _classReloAmount = 0;
    _exceptionTable = NULL;
@@ -429,7 +429,10 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
       /* Adjust exception table entires */
       _exceptionTable->ramMethod = _method;
       _exceptionTable->constantPool = ramCP();
-      getClassNameSignatureFromMethod(_method, _exceptionTable->className, _exceptionTable->methodName, _exceptionTable->methodSignature);
+
+      _exceptionTable->className = ((TR_ResolvedJ9Method*)_comp->getCurrentMethod())->_className;
+      _exceptionTable->methodName = ((TR_ResolvedJ9Method*)_comp->getCurrentMethod())->_name;
+      _exceptionTable->methodSignature = ((TR_ResolvedJ9Method*)_comp->getCurrentMethod())->_signature;
       RELO_LOG(reloLogger(), 1, "relocateAOTCodeAndData: method %.*s.%.*s%.*s\n",
                                     _exceptionTable->className->length,
                                     _exceptionTable->className->data,
