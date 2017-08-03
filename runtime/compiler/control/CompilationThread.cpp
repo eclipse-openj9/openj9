@@ -376,17 +376,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getLeafComponentClassFromArrayClass(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getClassFromSignature_0:
-         {
-         auto recv = client->getRecvData<std::string, TR_ResolvedMethod *, bool>();
-         std::string sig = std::get<0>(recv);
-         auto method = std::get<1>(recv);
-         bool isVettedForAOT = std::get<2>(recv);
-         auto clazz = fe->getClassFromSignature(sig.c_str(), sig.length(), method, isVettedForAOT);
-         client->write(clazz);
-         }
-         break;
-      case J9ServerMessageType::VM_getClassFromSignature_1:
+      case J9ServerMessageType::VM_getClassFromSignature:
          {
          auto recv = client->getRecvData<std::string, TR_OpaqueMethodBlock *, bool>();
          std::string sig = std::get<0>(recv);

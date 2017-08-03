@@ -142,20 +142,11 @@ TR_J9ServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayCl
    }
 
 TR_OpaqueClassBlock *
-TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT)
-   {
-   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   std::string str(sig, length);
-   stream->write(JAAS::J9ServerMessageType::VM_getClassFromSignature_0, str, method, isVettedForAOT);
-   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
-   }
-
-TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT)
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    std::string str(sig, length);
-   stream->write(JAAS::J9ServerMessageType::VM_getClassFromSignature_1, str, method, isVettedForAOT);
+   stream->write(JAAS::J9ServerMessageType::VM_getClassFromSignature, str, method, isVettedForAOT);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 

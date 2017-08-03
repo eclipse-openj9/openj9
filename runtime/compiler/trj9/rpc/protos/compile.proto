@@ -68,8 +68,8 @@ enum J9ServerMessageType
    VM_getClassOfMethod = 213;
    VM_getBaseComponentClass = 214;
    VM_getLeafComponentClassFromArrayClass = 215;
-   VM_getClassFromSignature_0 = 216;
-   VM_getClassFromSignature_1 = 217;
+   // 216 is available
+   VM_getClassFromSignature = 217;
    VM_jitFieldsAreSame = 218;
    VM_jitStaticsAreSame = 219;
    VM_getComponentClassFromArrayClass = 220;
