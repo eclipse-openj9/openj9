@@ -8407,6 +8407,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    memcpy(_romClass, &romClassStr[0], romClassStr.size());
    memcpy(namePos, &name[0], name.length());
    memcpy(signaturePos, &signature[0], signature.length());
+   _romClass->romSize += (name.length() + signature.length());
 
    // copy ROM method
    uint64_t methodIndex = std::get<4>(recv);
