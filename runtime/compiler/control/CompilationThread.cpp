@@ -627,6 +627,26 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(TR::CompilationInfo::isCompiled(method));
          }
          break;
+      case J9ServerMessageType::CompInfo_getJ9MethodExtra:
+         {
+         J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
+         client->write((uint64_t) TR::CompilationInfo::getJ9MethodExtra(method));
+         }
+         break;
+      case J9ServerMessageType::CompInfo_getInvocationCount:
+         {
+         J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
+         client->write(TR::CompilationInfo::getInvocationCount(method));
+         }
+         break;
+      case J9ServerMessageType::CompInfo_setInvocationCount:
+         {
+         auto recv = client->getRecvData<J9Method *, uint32_t>();
+         J9Method *method = std::get<0>(recv);
+         uint32_t count = std::get<1>(recv);
+         client->write(TR::CompilationInfo::setInvocationCount(method, count));
+         }
+         break;
      default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();

@@ -458,7 +458,8 @@ public:
    
    thread_local static JAAS::J9ServerStream  *_stream; // a non-NULL field denotes a remote compilation request is active
    static bool isInterpreted(J9Method *method) { return !isCompiled(method); }
-   static bool isCompiled(J9Method *method) {
+   static bool isCompiled(J9Method *method)
+      {
       if (_stream)
          {
          _stream->write(JAAS::J9ServerMessageType::CompInfo_isCompiled, method);
@@ -469,21 +470,42 @@ public:
          return (((uintptrj_t)method->extra) & J9_STARTPC_NOT_TRANSLATED) == 0;
          }
       }
-   static bool isJNINative(J9Method *method) {
+   static bool isJNINative(J9Method *method)
+      {
       // Note: This query is only concerned with the method to be compiled
       // and so we don't have to care if the VM has a FastJNI version
       return (((uintptrj_t)method->constantPool) & J9_STARTPC_JNI_NATIVE) != 0;
       }
 
-   static int32_t getInvocationCount(J9Method *method) {
+   static int32_t getInvocationCount(J9Method *method)
+      {
+      if (_stream)
+         {
+         _stream->write(JAAS::J9ServerMessageType::CompInfo_getInvocationCount, method);
+         return std::get<0>(_stream->read<int32_t>());
+         }
+      else
+         {
       if (((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED) == 0)
          return -1;
       int32_t count = getJ9MethodVMExtra(method);
       if (count < 0)
          return count;
       return count >> 1;
+         }
       }
-   static intptrj_t getJ9MethodExtra(J9Method *method) { return (intptrj_t)method->extra; }
+   static intptrj_t getJ9MethodExtra(J9Method *method)
+      {
+      if (_stream)
+         {
+         _stream->write(JAAS::J9ServerMessageType::CompInfo_getJ9MethodExtra, method);
+         return (intptrj_t) std::get<0>(_stream->read<uint64_t>());
+         }
+      else
+         {
+         return (intptrj_t)method->extra;
+         }
+      }
    static int32_t getJ9MethodVMExtra(J9Method *method) {
       return (int32_t)((intptrj_t)method->extra);
       }
@@ -512,11 +534,20 @@ public:
       intptrj_t newValue = (intptrj_t)value;
       return setJ9MethodExtraAtomic(method, oldValue, newValue);
       }
-   static bool setInvocationCount(J9Method *method, int32_t newCount) {
-      newCount = (newCount << 1) | 1;
-      if (newCount < 1)
-         return false;
-      return setJ9MethodVMExtra(method, newCount);
+   static bool setInvocationCount(J9Method *method, int32_t newCount)
+      {
+      if (_stream)
+         {
+         _stream->write(JAAS::J9ServerMessageType::CompInfo_setInvocationCount, method, newCount);
+         return std::get<0>(_stream->read<bool>());
+         }
+      else
+         {
+         newCount = (newCount << 1) | 1;
+         if (newCount < 1)
+            return false;
+         return setJ9MethodVMExtra(method, newCount);
+         }
       }
    static bool setInvocationCount(J9Method *method, int32_t oldCount, int32_t newCount){
       newCount = (newCount << 1) | 1;
