@@ -9756,6 +9756,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   codeSize  = aotMethodHeaderEntry->compileMethodCodeSize;
 
                   aotMethodHeaderEntry->compileFirstClassLocation = (UDATA)jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
+                  J9ROMMethod *romMethod = entry->isRemoteCompReq() ?
+                     ((TR_ResolvedJ9JAASServerMethod*)comp->getCurrentMethod())->romMethod() :
+                     J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
                   if (safeToStore)
                      {
@@ -9763,7 +9766,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                         reinterpret_cast<uintptr_t>(
                            jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
                               vmThread,
-                              ((TR_ResolvedJ9JAASServerMethod*)comp->getCurrentMethod())->romMethod(),
+                              romMethod,
                               dataStart,
                               dataSize,
                               codeStart,
