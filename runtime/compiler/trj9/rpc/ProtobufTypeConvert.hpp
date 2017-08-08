@@ -81,8 +81,8 @@ namespace JAAS
       static T* onRecv(UInt64 in)
          {
          UInt64 proto(in);
-         if (proto.val())
-            proto.set_val(~proto.val());
+         //if (proto.val())
+            //proto.set_val(~proto.val());
          return PrimitiveTypeConvert<T*, UInt64>::onRecv(proto);
          }
       };

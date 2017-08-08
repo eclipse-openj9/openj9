@@ -58,7 +58,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       if (TR::Options::getVerboseOption(TR_VerboseJaas))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
             "ROMClass for %s is not in SCC so we cannot compile method %s. Aborting compilation", className, methodName);
-      rpc->finishWithOnlyCode(compilationFailure);
+      rpc->finishCompilation(compilationFailure,0);
       }
    else
       {
@@ -67,7 +67,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                "Method %s.%s already exists in SCC, aborting compilation.", className, methodName);
-         rpc->finishWithOnlyCode(compilationNotNeeded);
+         rpc->finishCompilation(compilationFailure,0); //JAAS TODO need to send offset here
          }
       else // do AOT compilation
          {
@@ -107,7 +107,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                      }
                   else
                      {
-                     rpc->finishWithOnlyCode(compErrCode);
+                     rpc->finishCompilation(compErrCode,0);
                      if (TR::Options::getVerboseOption(TR_VerboseJaas))
                         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                            "Server failed to queue compilation for %s.%s", className, methodName);
@@ -118,7 +118,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                   if (TR::Options::getVerboseOption(TR_VerboseJaas))
                      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                         "Server failed to compile %s.%s because a new plan could not be created.", className, methodName);
-                  rpc->finishWithOnlyCode(compilationFailure);
+                  rpc->finishCompilation(compilationFailure,0);
                   }
                }
             else
@@ -126,7 +126,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                if (TR::Options::getVerboseOption(TR_VerboseJaas))
                   TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                      "Server failed to compile %s.%s because no memory was available to create an optimization plan.", className, methodName);
-               rpc->finishWithOnlyCode(compilationFailure);
+                  rpc->finishCompilation(compilationFailure,0);
                }
             }
          else // !method
@@ -134,7 +134,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             if (TR::Options::getVerboseOption(TR_VerboseJaas))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                   "Server couldn't find ramMethod for romMethod %s.%s .", className, methodName);
-            rpc->finishWithOnlyCode(compilationFailure);
+               rpc->finishCompilation(compilationFailure,0);
             }
          }
       }

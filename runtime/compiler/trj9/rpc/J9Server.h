@@ -40,7 +40,7 @@ public:
 
    void finish();
    void cancel();   // Same as finish, but with Status::CANCELLED
-   void finishWithOnlyCode(uint32_t code);
+   void finishCompilation(uint32_t code, uint32_t methodOffset);
    void acceptNewRPC();
 
 private:

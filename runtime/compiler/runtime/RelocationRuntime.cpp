@@ -541,7 +541,7 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
       startPC = _exceptionTable->startPC;
       } //end if J9_JIT_DCE_EXCEPTION_INFO
 
-   if (startPC)
+   if (false && startPC)
       {
       // insert exceptionTable into JIT artifacts avl tree under mutex
          {
