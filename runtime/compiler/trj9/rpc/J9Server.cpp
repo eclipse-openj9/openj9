@@ -43,11 +43,11 @@ JAAS::J9ServerStream::cancel()
    }
 
 void
-JAAS::J9ServerStream::finishCompilation(uint32_t code, uint32_t methodOffset)
+JAAS::J9ServerStream::finishCompilation(uint32_t code)
    {
    try
       {
-      write(J9ServerMessageType::compilationCode, code, methodOffset);
+      write(J9ServerMessageType::compilationCode, code);
       finish();
       }
 

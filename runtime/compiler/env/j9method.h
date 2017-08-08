@@ -57,13 +57,6 @@ extern "C" J9UTF8 * getClassNameFromTR_VMMethod(TR_OpaqueMethodBlock *vmMethod);
 extern "C" J9Class * getRAMClassFromTR_ResolvedVMMethod(TR_OpaqueMethodBlock *vmMethod);
 #endif
 
-enum class AllocateDataCacheStatus{
-   UNDEFINED = 0,
-   SUCCESS = 1,
-   RECOVERABLE_DATA_CACHE_ERROR = 2,
-   DATA_CACHE_ERROR = 3,
-};
-
 inline char *nextSignatureArgument(char *currentArgument)
    {
    char *result = currentArgument;
@@ -467,7 +460,6 @@ public:
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier();
    virtual TR_OpaqueMethodBlock *getPersistentIdentifier();
    virtual uint8_t *             allocateException(uint32_t, TR::Compilation*);
-   uint8_t *                     allocateException(uint32_t, TR::Compilation*, AllocateDataCacheStatus*);
 
    virtual const char *          newInstancePrototypeSignature(TR_Memory * m, TR_AllocationKind = heapAlloc);
 
@@ -601,7 +593,6 @@ public:
    virtual bool isInterpreted() override;
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm) override;
    virtual J9ClassLoader *getClassLoader() override;
-   //virtual U_8 *allocateException(uint32_t, TR::Compilation*) override;
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
 
 private:

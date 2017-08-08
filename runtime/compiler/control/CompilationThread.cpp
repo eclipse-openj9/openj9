@@ -612,16 +612,6 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(JAAS::Void());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_allocateException:
-         {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
-         uint32_t numBytes = std::get<1>(recv);
-         AllocateDataCacheStatus statusCode = AllocateDataCacheStatus::UNDEFINED;
-         U_8 *eTbl = method->allocateException(numBytes, TR::comp(), &statusCode);
-         client->write(statusCode, eTbl);
-         }
-         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
@@ -8746,7 +8736,7 @@ TR::CompilationInfoPerThreadBase::compile(
                   if (status.ok() && (code == compilationOK || code == compilationNotNeeded))
                      {
                      UDATA flags = 0;
-                     const void *compiledMethod = (void*)vm.sharedCache()->pointerFromOffsetInSharedCache((void*)(uint64_t)compiledMethodOffset);
+                     const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
                      TR_ASSERT(compiledMethod, "compiled method must be nonnull");
                      _methodBeingCompiled->setAotCodeToBeRelocated(compiledMethod);
                      //TODO we should check flags here, similar to elsewhere
@@ -10116,9 +10106,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
          const void *compiledMethod = findAotBodyInSCC(vmThread, entry->getMethodDetails().getRomMethod());
          TR_ASSERT(compiledMethod, "compiled method must be nonnull");
-         uint32_t compiledMethodOffset = (uint32_t)(uint64_t)trvm->sharedCache()->offsetInSharedCacheFromPointer(const_cast<void*>(compiledMethod));
          entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
-         entry->_stream->finishCompilation(compilationOK, compiledMethodOffset);
+         entry->_stream->finishCompilation(compilationOK);
          }
       }
    else if (!oldStartPC)
@@ -10135,7 +10124,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                   "Server has failed to compile %s", entry->_compInfoPT->getCompilation()->signature());
             }
-         entry->_stream->finishCompilation(compilationFailure, 0);
+         entry->_stream->finishCompilation(compilationFailure);
          }
       }
    else
@@ -10156,8 +10145,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
          const void *compiledMethod = findAotBodyInSCC(vmThread, entry->getMethodDetails().getRomMethod());
          TR_ASSERT(compiledMethod, "compiled method must be nonnull");
-         uint32_t compiledMethodOffset = (uint32_t)(uint64_t)trvm->sharedCache()->offsetInSharedCacheFromPointer(const_cast<void*>(compiledMethod));
-         entry->_stream->finishCompilation(compilationNotNeeded, compiledMethodOffset);
+         entry->_stream->finishCompilation(compilationNotNeeded);
          }
       }
 

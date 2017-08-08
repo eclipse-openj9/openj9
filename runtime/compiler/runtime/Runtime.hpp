@@ -152,7 +152,7 @@ typedef struct TR_AOTMethodHeader {
    uint16_t  minorVersion;
    uint16_t  majorVersion;
    uint32_t  offsetToRelocationDataItems;
-   int32_t  offsetToExceptionTable;
+   uint32_t  offsetToExceptionTable;
    uint32_t  offsetToPersistentInfo;
    uintptr_t compileMethodCodeStartPC;
    uintptr_t compileMethodCodeSize;
