@@ -78,12 +78,14 @@ namespace JAAS
          {
          if (type.id != in.type())
             throw StreamTypeMismatch("Enum type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in.type()));
-         UInt64 proto(in);
-         return (T) PrimitiveTypeConvert<uint64_t, UInt64>::onRecv(proto);
+         return (T) in.val();
          }
       static UInt64 onSend(T in)
          {
-         return PrimitiveTypeConvert<uint64_t, UInt64>::onSend((uint64_t) in);
+         UInt64 val;
+         val.set_val((uint64_t) in);
+         val.set_type(type.id);
+         return val;
          }
       };
    template <typename T> TypeID ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type>::type;
