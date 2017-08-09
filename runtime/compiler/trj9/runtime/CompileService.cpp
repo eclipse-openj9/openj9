@@ -67,7 +67,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                "Method %s.%s already exists in SCC, aborting compilation.", className, methodName);
-         rpc->finishCompilation(compilationFailure);
+         rpc->finishCompilation(compilationNotNeeded);
          }
       else // do AOT compilation
          {

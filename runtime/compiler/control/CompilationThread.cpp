@@ -4108,6 +4108,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    // queue slot (entry) monitor in hand
    //
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
+   TR::CompilationInfo::_stream = nullptr;
 
    // Unpin the class
    if (!entry.isRemoteCompReq())
@@ -8720,9 +8721,8 @@ TR::CompilationInfoPerThreadBase::compile(
                   try
                      {
                      while(!handleServerMessage(&client, compiler->fej9vm()));
-                     auto recv = client.getRecvData<uint32_t, uint32_t>();
+                     auto recv = client.getRecvData<uint32_t>();
                      code = std::get<0>(recv);
-                     compiledMethodOffset = std::get<1>(recv);
                      if (code >= compilationMaxError)
                         throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
                      }
@@ -9971,7 +9971,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                                  }
                               }
                            }
-                        jitMethodTranslated(vmThread, method, startPC);
+                        if (!entry->isRemoteCompReq())
+                           jitMethodTranslated(vmThread, method, startPC);
                         }
                      else
                         {
