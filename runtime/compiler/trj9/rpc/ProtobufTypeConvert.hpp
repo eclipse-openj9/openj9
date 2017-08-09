@@ -68,8 +68,25 @@ namespace JAAS
    template <> struct ProtobufTypeConvert<int32_t> : PrimitiveTypeConvert<int32_t, Int32> { };
    template <> struct ProtobufTypeConvert<std::string> : PrimitiveTypeConvert<std::string, Bytes> { };
 
-   // Specialize conversion for all enums
-   template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type> : PrimitiveTypeConvert<T, Int32> { };
+   // Specialize conversion for all enums by widening to 64 bits
+   template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type>
+      {
+      static TypeID type;
+      using ProtoType = UInt64;
+      static_assert(sizeof(T) <= 8, "Enum is larger than 8 bytes!");
+      static T onRecv(UInt64 in)
+         {
+         if (type.id != in.type())
+            throw StreamTypeMismatch("Enum type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in.type()));
+         UInt64 proto(in);
+         return (T) PrimitiveTypeConvert<uint64_t, UInt64>::onRecv(proto);
+         }
+      static UInt64 onSend(T in)
+         {
+         return PrimitiveTypeConvert<uint64_t, UInt64>::onSend((uint64_t) in);
+         }
+      };
+   template <typename T> TypeID ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type>::type;
 
    // Specialize conversion for pointer types
    // When recieving a pointer, we flip all of the bits as a signal to indicate that it should not be dereferenced.
