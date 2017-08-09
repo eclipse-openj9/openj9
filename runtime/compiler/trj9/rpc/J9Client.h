@@ -2,6 +2,7 @@
 #define J9_CLIENT_H
 
 #include <grpc++/grpc++.h>
+#include "compile/CompilationTypes.hpp"
 #include "rpc/types.h"
 #include "rpc/ProtobufTypeConvert.hpp"
 #include "j9.h"
@@ -17,12 +18,12 @@ public:
       {}
 
 
-   void buildCompileRequest(uint32_t cOffset, uint32_t mOffset, J9Method *method)
+   void buildCompileRequest(uint32_t cOffset, uint32_t mOffset, J9Method *method, TR_Hotness optLevel)
       {
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->Compile(_ctx.get());
 
-      write(cOffset, mOffset, method);
+      write(cOffset, mOffset, method, optLevel);
       }
 
    Status waitForFinish()

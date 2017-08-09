@@ -8704,7 +8704,7 @@ TR::CompilationInfoPerThreadBase::compile(
             uint32_t romMethodOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romMethod)));
 
             JAAS::J9ClientStream client;
-            client.buildCompileRequest(romClassOffset, romMethodOffset, method);
+            client.buildCompileRequest(romClassOffset, romMethodOffset, method, compiler->getMethodHotness());
             uint32_t code = compilationFailure;
             try
                {

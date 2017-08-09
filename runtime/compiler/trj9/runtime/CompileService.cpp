@@ -34,7 +34,7 @@ static J9Method *ramMethodFromRomMethod(J9JITConfig *jitConfig, J9VMThread *vmTh
 
 static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
    J9ROMClass* romClass, const J9ROMMethod* romMethod,
-   J9Method* ramMethod, JAAS::J9ServerStream *rpc)
+   J9Method* ramMethod, JAAS::J9ServerStream *rpc, TR_Hotness optLevel)
    {
    J9UTF8 *methodNameUTF = J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature);
    std::string methodNameStr((const char*)methodNameUTF->data, (size_t)methodNameUTF->length);
@@ -50,7 +50,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
 
    if (TR::Options::getVerboseOption(TR_VerboseJaas))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-         "Server received request to compile %s.%s", className, methodName);
+         "Server received request to compile %s.%s @ %s", className, methodName, TR::Compilation::getHotnessName(optLevel));
 
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
    if (!(compInfo->reloRuntime()->isROMClassInSharedCaches((UDATA)romClass, jitConfig->javaVM)))
@@ -82,6 +82,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             event._oldStartPC = 0;
             event._vmThread = vmThread;
             event._classNeedingThunk = 0;
+            event._jaasClientOptLevel = optLevel;
             bool newPlanCreated;
             IDATA result = 0;
             TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
@@ -144,7 +145,7 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
    {
    try
       {
-      auto req = stream->read<uint32_t, uint32_t, J9Method *>();
+      auto req = stream->read<uint32_t, uint32_t, J9Method *, TR_Hotness>();
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
@@ -152,7 +153,8 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       J9ROMClass *romClass = (J9ROMClass*)cache->pointerFromOffsetInSharedCache((void*)(uint64_t)std::get<0>(req));
       J9ROMMethod *romMethod = (J9ROMMethod*)cache->pointerFromOffsetInSharedCache((void*)(uint64_t)std::get<1>(req));
       J9Method *ramMethod = std::get<2>(req);
-      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, stream);
+      TR_Hotness opt = std::get<3>(req);
+      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, stream, opt);
       }
    catch (const JAAS::StreamFailure &e)
       {
