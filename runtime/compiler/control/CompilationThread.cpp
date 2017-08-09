@@ -33,11 +33,6 @@
 #define snprintf _snprintf
 #endif
 
-// This needs to go first because OMR redefines null and gRPC doesn't like that.
-// TODO maybe we can move the gRPC include into a Client.cpp
-#include "rpc/J9Server.h"
-#include "rpc/J9Client.h"
-
 #include "control/CompilationThread.hpp"
 
 #include <exception>
@@ -98,6 +93,9 @@
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
 #include "env/ClassLoaderTable.hpp"
+#include "rpc/J9Server.h"
+#include "rpc/J9Client.h"
+
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
