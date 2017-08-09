@@ -8700,83 +8700,63 @@ TR::CompilationInfoPerThreadBase::compile(
                   );
                }
             TR_J9SharedCache *cache = vm.sharedCache(); 
-            J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
-            J9ROMClass *romClass = methodClass->romClass;
+            J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
             uint32_t romClassOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romClass)));
             J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
             uint32_t romMethodOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romMethod)));
-            void *ccc = cache->rememberClass(methodClass, true);
-            if (ccc)
+
+            JAAS::J9ClientStream client;
+            client.buildCompileRequest(romClassOffset, romMethodOffset, method);
+            uint32_t code = compilationFailure;
+            try
                {
-               uint32_t classChainCOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(ccc)));
-               J9ClassLoader *CL = methodClass->classLoader;
-               void *cc = cache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(CL);
-               if (cc)
+               while(!handleServerMessage(&client, compiler->fej9vm()));
+               auto recv = client.getRecvData<uint32_t>();
+               code = std::get<0>(recv);
+               if (code >= compilationMaxError)
+                  throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
+               }
+            catch (const JAAS::StreamFailure &e)
+               {
+               if (TR::Options::getVerboseOption(TR_VerboseJaas))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, e.what());
+               compiler->failCompilation<JAAS::StreamFailure>(e.what());
+               }
+            JAAS::Status status = client.waitForFinish();
+            if (status.ok() && (code == compilationOK || code == compilationNotNeeded))
+               {
+               UDATA flags = 0;
+               const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
+               TR_ASSERT(compiledMethod, "compiled method must be nonnull");
+               _methodBeingCompiled->setAotCodeToBeRelocated(compiledMethod);
+               //TODO we should check flags here, similar to elsewhere
+               metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
+               if (TR::Options::getVerboseOption(TR_VerboseJaas))
                   {
-                  uint32_t classChainCLOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer(cc)));
-                  JAAS::J9ClientStream client;
-                  client.buildCompileRequest(romClassOffset, romMethodOffset, method);
-                  uint32_t code = compilationFailure;
-                  uint32_t compiledMethodOffset = 0;
-                  try
+                  if (metaData)
                      {
-                     while(!handleServerMessage(&client, compiler->fej9vm()));
-                     auto recv = client.getRecvData<uint32_t>();
-                     code = std::get<0>(recv);
-                     if (code >= compilationMaxError)
-                        throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
-                     }
-                  catch (const JAAS::StreamFailure &e)
-                     {
-                     if (TR::Options::getVerboseOption(TR_VerboseJaas))
-                        TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, e.what());
-                     compiler->failCompilation<JAAS::StreamFailure>(e.what());
-                     }
-                  JAAS::Status status = client.waitForFinish();
-                  if (status.ok() && (code == compilationOK || code == compilationNotNeeded))
-                     {
-                     UDATA flags = 0;
-                     const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
-                     TR_ASSERT(compiledMethod, "compiled method must be nonnull");
-                     _methodBeingCompiled->setAotCodeToBeRelocated(compiledMethod);
-                     //TODO we should check flags here, similar to elsewhere
-                     metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
-                     if (TR::Options::getVerboseOption(TR_VerboseJaas))
-                        {
-                        if (metaData)
-                           {
-                           TR_VerboseLog::writeLineLocked(
-                              TR_Vlog_JAAS,
-                              "Client successfully loaded method %s @ %s from SCC following compilation request.",
-                              compiler->signature(),
-                              compiler->getHotnessName()
-                              );
-                           }
-                        else
-                           {
-                           // This path should not be entered because performAotLoad throws if metaData cannot be created
-                           TR_VerboseLog::writeLineLocked(
-                              TR_Vlog_JAAS,
-                              "Client failed to load method %s @ %s from SCC following compilation request.",
-                              compiler->signature(),
-                              compiler->getHotnessName()
-                              );
-                           }
-                        }
+                     TR_VerboseLog::writeLineLocked(
+                        TR_Vlog_JAAS,
+                        "Client successfully loaded method %s @ %s from SCC following compilation request.",
+                        compiler->signature(),
+                        compiler->getHotnessName()
+                        );
                      }
                   else
                      {
-                     compiler->failCompilation<TR::CompilationException>("JaaS compilation failed.");
+                     // This path should not be entered because performAotLoad throws if metaData cannot be created
+                     TR_VerboseLog::writeLineLocked(
+                        TR_Vlog_JAAS,
+                        "Client failed to load method %s @ %s from SCC following compilation request.",
+                        compiler->signature(),
+                        compiler->getHotnessName()
+                        );
                      }
-                  }
-               else
-                  {
-                  compiler->failCompilation<TR::CompilationException>("Class Chain for Class Loader not found."); 
                   }
                }
             else
                {
-               compiler->failCompilation<TR::CompilationException>("Class Chain for J9Method 'C' not found."); 
+               compiler->failCompilation<TR::CompilationException>("JaaS compilation failed.");
                }
             } 
          else
