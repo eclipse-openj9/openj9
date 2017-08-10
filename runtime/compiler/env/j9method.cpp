@@ -8359,9 +8359,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
 
    // Create client side mirror of this object to use for calls involving RAM data
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod);
-   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, std::string, uint64_t, std::string, std::string>();
-   const std::string name = std::get<5>(recv);
-   const std::string signature = std::get<6>(recv);
+   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*>();
 
    _remoteMirror = std::get<0>(recv);
 
@@ -8369,33 +8367,9 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _literals = std::get<1>(recv);
    _ramClass = std::get<2>(recv);
 
-   // copy ROM class
-   //const std::string romClassStr = std::get<3>(recv);
-   //_romClass = (J9ROMClass*) trMemory->allocateHeapMemory(romClassStr.size() + name.length() + signature.length());
+   // Use the rom class and rom method read from the SCC
    _romClass = const_cast<J9ROMClass*>(threadCompInfo->getMethodBeingCompiled()->getMethodDetails().getRomClass());
-   //if (!_romClass)
-      //throw std::bad_alloc();
-
-   // Place the method name and signature at the end of the romClass for now
-   // JAAS TODO: work out something less hacky
-   /*char * namePos = (char *)_romClass + romClassStr.size();
-   char * signaturePos = (char *)namePos + name.length();
-   memcpy(_romClass, &romClassStr[0], romClassStr.size());
-   memcpy(namePos, &name[0], name.length());
-   memcpy(signaturePos, &signature[0], signature.length());
-   _romClass->romSize += (name.length() + signature.length());*/
-
-   // copy ROM method
-   //uint64_t methodIndex = std::get<4>(recv);
-   //TR_ASSERT(methodIndex < UDATA_MAX, "method not in class!!!");
    _romMethod = const_cast<J9ROMMethod*>(threadCompInfo->getMethodBeingCompiled()->getMethodDetails().getRomMethod());
-   //_romMethod = J9ROMCLASS_ROMMETHODS(_romClass);
-   //while (methodIndex--) _romMethod = nextROMMethod(_romMethod);
-
-   // Update the J9SRP's by hand (quick and dirty)
-   /*_romMethod->nameAndSignature.name = namePos - (char *)&(_romMethod->nameAndSignature.name);
-   _romMethod->nameAndSignature.signature = signaturePos - (char *)&(_romMethod->nameAndSignature.signature);*/
-
    _romLiterals = (J9ROMConstantPoolItem *) ((UDATA)romClassPtr() + sizeof(J9ROMClass));
 
    _vTableSlot = vTableSlot;

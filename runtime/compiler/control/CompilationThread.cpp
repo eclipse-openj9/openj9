@@ -546,22 +546,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *)(J9_CP_FROM_METHOD(resolvedMethod->ramMethod()));
          J9Class *cpHdr = J9_CLASS_FROM_CP(literals);
 
-         J9Method *ramMethod = (J9Method *)method;
-         J9ROMClass *romClass = J9_CLASS_FROM_METHOD(ramMethod)->romClass;
-         uint64_t methodIndex = getMethodIndexUnchecked(ramMethod);
-         std::string romClassStr((char *) romClass, romClass->romSize);
-
-         J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
-         for (size_t i = methodIndex; i; --i)
-            {
-            romMethod = nextROMMethod(romMethod);
-            }
-         J9UTF8 *name = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-         J9UTF8 *signature = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
-         std::string nameStr((char *)name, name->length + sizeof(U_16));
-         std::string sigStr((char *)signature, signature->length + sizeof(U_16));
-
-         client->write(resolvedMethod, literals, cpHdr, romClassStr, methodIndex, nameStr, sigStr);
+         client->write(resolvedMethod, literals, cpHdr);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isJNINative:
