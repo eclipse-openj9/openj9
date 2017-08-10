@@ -51,6 +51,10 @@ enum J9ServerMessageType
    ResolvedMethod_getClassLoader = 103;
 //   ResolvedMethod_allocateException = 104;
    ResolvedMethod_staticAttributes = 105;
+   ResolvedMethod_getClassFromConstantPool = 106;
+   ResolvedMethod_getDeclaringClassFromFieldOrStatic = 107;
+   ResolvedMethod_classOfStatic = 108;
+   ResolvedMethod_isUnresolvedString = 109;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;

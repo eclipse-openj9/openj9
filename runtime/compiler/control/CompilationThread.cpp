@@ -581,6 +581,40 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(address, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
          }
       break;
+      case J9ServerMessageType::ResolvedMethod_getClassFromConstantPool:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         uint32_t cpIndex = std::get<1>(recv);
+         client->write(method->getClassFromConstantPool(TR::comp(), cpIndex));
+         }
+      break;
+      case J9ServerMessageType::ResolvedMethod_getDeclaringClassFromFieldOrStatic:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         client->write(method->getDeclaringClassFromFieldOrStatic(TR::comp(), cpIndex));
+         }
+      break;
+      case J9ServerMessageType::ResolvedMethod_classOfStatic:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         int32_t returnClassForAOT = std::get<2>(recv);
+         client->write(method->classOfStatic(cpIndex, returnClassForAOT));
+         }
+      break;
+      case J9ServerMessageType::ResolvedMethod_isUnresolvedString:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         int32_t optimizeForAOT = std::get<2>(recv);
+         client->write(method->isUnresolvedString(cpIndex, optimizeForAOT));
+         }
+      break;
       case J9ServerMessageType::get_params_to_construct_TR_j9method:
          {
          auto recv = client->getRecvData<J9Class *, uintptr_t>();
@@ -10092,7 +10126,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       {
       // Tell the VM that a non-compiled method failed translation
       //
-      if (vmThread)
+      if (vmThread && entry && !entry->isRemoteCompReq())
          jitMethodFailedTranslation(vmThread, method);
 
       if (entry && entry->_stream)

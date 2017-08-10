@@ -5829,35 +5829,35 @@ TR::DataType
 TR_ResolvedJ9Method::getLDCType(I_32 cpIndex)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(cp()->ramClass->romClass), cpIndex);
+   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClassPtr()), cpIndex);
    return cpType2trType(cpType);
    }
 
 bool
 TR_ResolvedJ9Method::isClassConstant(int32_t cpIndex)
    {
-   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(cp()->ramClass->romClass), cpIndex);
+   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClassPtr()), cpIndex);
    return cpType == J9CPTYPE_CLASS;
    }
 
 bool
 TR_ResolvedJ9Method::isStringConstant(int32_t cpIndex)
    {
-   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(cp()->ramClass->romClass), cpIndex);
+   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClassPtr()), cpIndex);
    return (cpType == J9CPTYPE_STRING) || (cpType == J9CPTYPE_ANNOTATION_UTF8);
    }
 
 bool
 TR_ResolvedJ9Method::isMethodTypeConstant(int32_t cpIndex)
    {
-   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(cp()->ramClass->romClass), cpIndex);
+   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClassPtr()), cpIndex);
    return cpType == J9CPTYPE_METHOD_TYPE;
    }
 
 bool
 TR_ResolvedJ9Method::isMethodHandleConstant(int32_t cpIndex)
    {
-   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(cp()->ramClass->romClass), cpIndex);
+   UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClassPtr()), cpIndex);
    return cpType == J9CPTYPE_METHODHANDLE;
    }
 
@@ -8483,4 +8483,40 @@ TR_ResolvedJ9JAASServerMethod::staticAttributes(TR::Compilation * comp, I_32 cpI
    if (isPrivate) *isPrivate = std::get<4>(recv);
    if (unresolvedInCP) *unresolvedInCP = std::get<5>(recv);
    return std::get<6>(recv);
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedJ9JAASServerMethod::getClassFromConstantPool(TR::Compilation * comp, uint32_t cpIndex, bool)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getClassFromConstantPool, _remoteMirror, cpIndex);
+   return std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedJ9JAASServerMethod::getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getDeclaringClassFromFieldOrStatic, _remoteMirror, cpIndex);
+   return std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedJ9JAASServerMethod::classOfStatic(I_32 cpIndex, bool returnClassForAOT)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_classOfStatic, _remoteMirror, cpIndex, returnClassForAOT);
+   return std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
+   }
+
+bool
+TR_ResolvedJ9JAASServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeForAOT)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isUnresolvedString, _remoteMirror, cpIndex, optimizeForAOT);
+   return std::get<0>(_stream->read<bool>());
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9JAASServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, I_32 cpIndex, bool ignoreRtResolve, bool * unresolvedInCP)
+   {
+   // if inlining is turned off, this can just return 0
+   // JAAS TODO implement properly
+   return 0;
    }

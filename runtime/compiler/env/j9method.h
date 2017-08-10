@@ -595,6 +595,11 @@ public:
    virtual J9ClassLoader *getClassLoader() override;
    virtual U_8 * allocateException(uint32_t numBytes, TR::Compilation *comp) override;
    virtual bool staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override;
+   virtual TR_OpaqueClassBlock * getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false) override;
+   virtual TR_OpaqueClassBlock * getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex) override;
+   virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false) override;
+   virtual bool isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override;
+   virtual TR_ResolvedMethod *   getResolvedVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreReResolve, bool * unresolvedInCP) override;
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
 
 private:
