@@ -50,6 +50,7 @@ enum J9ServerMessageType
    ResolvedMethod_setRecognizedMethodInfo = 102;
    ResolvedMethod_getClassLoader = 103;
 //   ResolvedMethod_allocateException = 104;
+   ResolvedMethod_staticAttributes = 105;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;

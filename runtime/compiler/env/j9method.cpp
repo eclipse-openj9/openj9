@@ -8496,3 +8496,17 @@ TR_ResolvedJ9JAASServerMethod::getClassLoader()
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getClassLoader, _remoteMirror);
    return std::get<0>(_stream->read<J9ClassLoader *>());
    }
+
+bool
+TR_ResolvedJ9JAASServerMethod::staticAttributes(TR::Compilation * comp, I_32 cpIndex, void * * address, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool isStore, bool * unresolvedInCP, bool needAOTValidation)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_staticAttributes, _remoteMirror, cpIndex, isStore, needAOTValidation);
+   auto recv = _stream->read<void*, TR::DataTypes, bool, bool, bool, bool, bool>();
+   *address = std::get<0>(recv);
+   *type = std::get<1>(recv);
+   *volatileP = std::get<2>(recv);
+   if (isFinal) *isFinal = std::get<3>(recv);
+   if (isPrivate) *isPrivate = std::get<4>(recv);
+   if (unresolvedInCP) *unresolvedInCP = std::get<5>(recv);
+   return std::get<6>(recv);
+   }
