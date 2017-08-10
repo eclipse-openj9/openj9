@@ -10116,8 +10116,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                   "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
             }
-         const void *compiledMethod = findAotBodyInSCC(vmThread, entry->getMethodDetails().getRomMethod());
-         TR_ASSERT(compiledMethod, "compiled method must be nonnull");
          entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
          entry->_stream->finishCompilation(compilationOK);
          }
@@ -10155,8 +10153,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                   "Server has failed to recompile %s", entry->_compInfoPT->getCompilation()->signature());
             }
-         const void *compiledMethod = findAotBodyInSCC(vmThread, entry->getMethodDetails().getRomMethod());
-         TR_ASSERT(compiledMethod, "compiled method must be nonnull");
          entry->_stream->finishCompilation(compilationNotNeeded);
          }
       }
