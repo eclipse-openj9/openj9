@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,10 @@ namespace TR {
 class OMR_EXTENSIBLE CodeCacheManager : public J9::CodeCacheManagerConnector
     {
     public:
-    CodeCacheManager(TR_FrontEnd *fe) : J9::CodeCacheManagerConnector(fe) { }
+    CodeCacheManager(TR_FrontEnd *fe, TR::RawAllocator rawAllocator) :
+       J9::CodeCacheManagerConnector(fe, rawAllocator)
+       {
+       }
     };
 
 }

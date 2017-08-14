@@ -1245,7 +1245,7 @@ onLoadInternal(
    memset(codeCacheManager, 0, sizeof(TR::CodeCacheManager));
 
    // must initialize manager using the global (not thread specific) fe because current thread isn't guaranteed to live longer than the manager
-   new (codeCacheManager) TR::CodeCacheManager(feWithoutThread);
+   new (codeCacheManager) TR::CodeCacheManager(feWithoutThread, TR::Compiler->rawAllocator);
 
    TR::CodeCacheConfig &codeCacheConfig = codeCacheManager->codeCacheConfig();
 
