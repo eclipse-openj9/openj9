@@ -8756,15 +8756,13 @@ TR::CompilationInfoPerThreadBase::compile(
             JAAS::Status status = client.waitForFinish();
             if (status.ok() && (code == compilationOK || code == compilationNotNeeded))
                {
-               UDATA flags = 0;
-               const void *compiledMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
+               const void *compiledMethod = findAotBodyInSCC(vmThread, romMethod);
                TR_ASSERT(compiledMethod, "compiled method must be nonnull");
                _methodBeingCompiled->setAotCodeToBeRelocated(compiledMethod);
-               //TODO we should check flags here, similar to elsewhere
-               metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
-               if (TR::Options::getVerboseOption(TR_VerboseJaas))
+               try
                   {
-                  if (metaData)
+                  metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
+                  if (TR::Options::getVerboseOption(TR_VerboseJaas))
                      {
                      TR_VerboseLog::writeLineLocked(
                         TR_Vlog_JAAS,
@@ -8773,9 +8771,12 @@ TR::CompilationInfoPerThreadBase::compile(
                         compiler->getHotnessName()
                         );
                      }
-                  else
+                  }
+               catch (const std::exception &e)
+                  {
+                  // Log for JAAS mode and re-throw
+                  if (TR::Options::getVerboseOption(TR_VerboseJaas))
                      {
-                     // This path should not be entered because performAotLoad throws if metaData cannot be created
                      TR_VerboseLog::writeLineLocked(
                         TR_Vlog_JAAS,
                         "Client failed to load method %s @ %s from SCC following compilation request.",
@@ -8783,6 +8784,7 @@ TR::CompilationInfoPerThreadBase::compile(
                         compiler->getHotnessName()
                         );
                      }
+                  throw;
                   }
                }
             else
