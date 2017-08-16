@@ -53,6 +53,7 @@
 #include "runtime/RelocationTarget.hpp"
 #include "env/VMJ9.h"
 #include "control/rossa.h"
+#include "control/CompilationRuntime.hpp"
 
 // TODO: move this someplace common for RuntimeAssumptions.cpp and here
 #if defined(__IBMCPP__) && !defined(AIXPPC) && !defined(LINUXPPC)
@@ -1538,6 +1539,11 @@ int32_t
 TR_RelocationRecordDataAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint8_t *newAddress = findDataAddress(reloRuntime, reloTarget);
+
+   // JAAS TODO: If a static field fails to resolve, we just ignore it.
+   // This might not be safe, but it seems to work. We need a better solution.
+   if (!newAddress && reloRuntime->compInfo()->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+      return 0;
 
    if (!newAddress)
       return compilationAotStaticFieldReloFailure;

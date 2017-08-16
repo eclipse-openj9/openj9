@@ -9853,6 +9853,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                         canRelocateMethod = true;
                      }
 
+                  if (TR::CompilationInfo::_stream)
+                     canRelocateMethod = false;
+
                   if (canRelocateMethod)
                      {
                      J9JITDataCacheHeader *cacheEntry;
