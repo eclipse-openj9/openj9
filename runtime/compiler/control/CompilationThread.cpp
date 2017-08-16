@@ -9816,7 +9816,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
                   TR_Debug *debug = TR::Options::getDebug();
                   bool canRelocateMethod = false;
-                  if (debug)
+                  if (entry->isRemoteCompReq())
+                     canRelocateMethod = false;
+                  else if (debug)
                      {
                      TR_FilterBST *filter = NULL;
                      J9UTF8 *className = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_className;
@@ -9852,9 +9854,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                      else
                         canRelocateMethod = true;
                      }
-
-                  if (TR::CompilationInfo::_stream)
-                     canRelocateMethod = false;
 
                   if (canRelocateMethod)
                      {
@@ -9894,7 +9893,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                         {
                         TR::CompilationInfoPerThreadBase::InterruptibleOperation(*entry->_compInfoPT);
                         // need to get a non-shared cache VM to relocate
-                        TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread, TR_J9ServerVM::J9_SERVER_VM);
+                        TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
                         TR_ResolvedMethod *compilee = fe->createResolvedMethod(comp->trMemory(), (TR_OpaqueMethodBlock *)method);
                         relocatedMetaData = entry->_compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
                            vmThread,
@@ -10137,7 +10136,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-                  "Server has failed to compile %s", entry->_compInfoPT->getCompilation()->signature());
+                  "Server has failed to compile");
             }
          entry->_stream->finishCompilation(compilationFailure);
          }
@@ -10156,7 +10155,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-                  "Server has failed to recompile %s", entry->_compInfoPT->getCompilation()->signature());
+                  "Server has failed to recompile");
             }
          entry->_stream->finishCompilation(compilationNotNeeded);
          }
