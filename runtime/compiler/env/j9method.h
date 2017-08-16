@@ -601,6 +601,7 @@ public:
    virtual bool isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override;
    virtual TR_ResolvedMethod *   getResolvedVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreReResolve, bool * unresolvedInCP) override;
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
+   virtual bool fieldAttributes(TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override;
 
 private:
    JAAS::J9ServerStream *_stream;

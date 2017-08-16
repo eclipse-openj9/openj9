@@ -615,6 +615,20 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(method->isUnresolvedString(cpIndex, optimizeForAOT));
          }
       break;
+      case J9ServerMessageType::ResolvedMethod_fieldAttributes:
+         {
+         auto recv = client->getRecvData<TR_ResolvedMethod *, int32_t, bool, bool>();
+         TR_ResolvedMethod *method = std::get<0>(recv);
+         I_32 cpIndex = std::get<1>(recv);
+         bool isStore = std::get<2>(recv);
+         bool needAOTValidation = std::get<3>(recv);
+         U_32 fieldOffset;
+         TR::DataType type;
+         bool volatileP, isFinal, isPrivate, unresolvedInCP;
+         bool result = method->fieldAttributes(TR::comp(), cpIndex, &fieldOffset, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
+         client->write(fieldOffset, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
+         }
+      break;
       case J9ServerMessageType::get_params_to_construct_TR_j9method:
          {
          auto recv = client->getRecvData<J9Class *, uintptr_t>();
