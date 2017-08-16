@@ -1527,7 +1527,10 @@ TR_RelocationRecordDataAddress::findDataAddress(TR_RelocationRuntime *reloRuntim
    if (address == NULL)
       {
       RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tfindDataAddress: unresolved\n");
-      return 0;
+
+      // JAAS TODO: If a static field fails to resolve, we return address of the corresponding entry in the RAM constant pool.
+      // This might not be safe, but it seems to work. We probably need a better solution in the long term.
+      return ((uint8_t*)&cp[cpindex]) + extraOffset;
       }
 
    address = address + extraOffset;
@@ -1540,10 +1543,7 @@ TR_RelocationRecordDataAddress::applyRelocation(TR_RelocationRuntime *reloRuntim
    {
    uint8_t *newAddress = findDataAddress(reloRuntime, reloTarget);
 
-   // JAAS TODO: If a static field fails to resolve, we just ignore it.
-   // This might not be safe, but it seems to work. We need a better solution.
-   if (!newAddress && reloRuntime->compInfo()->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
-      return 0;
+   RELO_LOG(reloRuntime->reloLogger(), 6, "applyRelocation old ptr %p, new ptr %p\n", reloTarget->loadPointer(reloLocation), newAddress);
 
    if (!newAddress)
       return compilationAotStaticFieldReloFailure;
