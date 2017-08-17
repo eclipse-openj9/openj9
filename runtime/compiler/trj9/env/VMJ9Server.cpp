@@ -397,3 +397,11 @@ TR_J9ServerVM::sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_
       sprintf(s, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
    return s;
    }
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getHostClass(TR_OpaqueClassBlock *clazzOffset)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getHostClass, clazzOffset);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }

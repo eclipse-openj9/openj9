@@ -6069,6 +6069,13 @@ TR_J9VMBase::isThunkArchetype(J9Method * method)
    return false;
    }
 
+TR_OpaqueClassBlock *
+TR_J9VMBase::getHostClass(TR_OpaqueClassBlock *clazzOffset)
+   {
+   J9Class *clazzPtr = TR::Compiler->cls.convertClassOffsetToClassPtr(clazzOffset);
+   return convertClassPtrToClassOffset(clazzPtr->hostClass);
+   }
+
 
 TR_OpaqueClassBlock *
 TR_J9VMBase::convertClassPtrToClassOffset(J9Class *clazzPtr)

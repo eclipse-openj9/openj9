@@ -3755,13 +3755,11 @@ TR_J9ByteCodeIlGenerator::genInvokeSpecial(int32_t cpIndex)
       {
       _invokeSpecialSeen = true;
 
-      J9Class * const textualDefClass =
-         TR::Compiler->cls.convertClassOffsetToClassPtr(_method->containingClass());
       // For this purpose, an anonymous class whose host class is an interface
       // is expected to behave as though its code is contained within that
       // interface. For non-anonymous classes, hostClass is circular.
       TR_OpaqueClassBlock * const defClass =
-         fej9()->convertClassPtrToClassOffset(textualDefClass->hostClass);
+         fej9()->getHostClass(_method->containingClass());
       if (TR::Compiler->cls.isInterfaceClass(comp(), defClass))
          _invokeSpecialInterface = defClass;
 
