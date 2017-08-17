@@ -51,6 +51,7 @@ public:
    virtual uint32_t getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getObjectClass(uintptrj_t objectPointer) override;
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz) override;
+   virtual bool hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz) override;
    };
 
 #endif // VMJ9SERVER_H

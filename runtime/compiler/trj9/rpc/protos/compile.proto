@@ -98,6 +98,7 @@ enum J9ServerMessageType
    VM_getAllocationSize = 237;
    VM_getObjectClass = 238;
    VM_stackWalkerMaySkipFrames = 239;
+   VM_hasFinalFieldsInClass = 240;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

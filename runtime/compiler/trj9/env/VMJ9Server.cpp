@@ -365,3 +365,11 @@ TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueC
    stream->write(JAAS::J9ServerMessageType::VM_stackWalkerMaySkipFrames, method, clazz);
    return std::get<0>(stream->read<bool>());
    }
+
+bool
+TR_J9ServerVM::hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_hasFinalFieldsInClass, clazz);
+   return std::get<0>(stream->read<bool>());
+   }
