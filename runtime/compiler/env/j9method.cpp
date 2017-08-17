@@ -8534,3 +8534,101 @@ TR_ResolvedJ9JAASServerMethod::fieldAttributes(TR::Compilation * comp, I_32 cpIn
    if (unresolvedInCP) *unresolvedInCP = std::get<5>(recv);
    return std::get<6>(recv);
    }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9JAASServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP)
+   {
+   // JAAS TODO: Decide whether the counters should be updated on the server or the client
+   TR_ResolvedMethod *resolvedMethod = NULL;
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+   INCREMENT_COUNTER(_fe, totalStaticMethodRefs);
+
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getResolvedStaticMethod, _remoteMirror, cpIndex);
+   J9Method * ramMethod = std::get<0>(_stream->read<J9Method *>());
+
+   bool skipForDebugging = false;
+   if (isArchetypeSpecimen())
+      {
+      // ILGen macros currently must be resolved for correctness, or else they
+      // are not recognized and expanded.  If we have unresolved calls, we can't
+      // tell whether they're ilgen macros because the recognized-method system
+      // only works on resovled methods.
+      //
+      if (ramMethod)
+         skipForDebugging = false;
+      else
+         {
+         comp->failCompilation<TR::ILGenFailure>("Can't compile an archetype specimen with unresolved calls");
+         }
+      }
+
+   if (ramMethod && !skipForDebugging)
+      {
+      TR_AOTInliningStats *aotStats = NULL;
+      if (comp->getOption(TR_EnableAOTStats))
+         aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->staticMethods);
+      resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats);
+      if (unresolvedInCP)
+         *unresolvedInCP = false;
+      }
+
+   if (resolvedMethod == NULL)
+      {
+      INCREMENT_COUNTER(_fe, unresolvedStaticMethodRefs);
+      if (unresolvedInCP)
+         handleUnresolvedStaticMethodInCP(cpIndex, unresolvedInCP);
+      }
+
+   return resolvedMethod;
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9JAASServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP)
+   {
+   // JAAS TODO: Decide whether the counters should be updated on the server or the client
+   TR_ResolvedMethod *resolvedMethod = nullptr;
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+
+   INCREMENT_COUNTER(_fe, totalSpecialMethodRefs);
+
+   if (unresolvedInCP)
+      *unresolvedInCP = true;
+
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethod, _remoteMirror, cpIndex);
+   auto recv = _stream->read<J9Method *, bool>();
+   J9Method * ramMethod = std::get<0>(recv);
+   bool resolve = std::get<1>(recv);
+
+   if (resolve && ramMethod)
+      {
+      TR_AOTInliningStats *aotStats = nullptr;
+      if (comp->getOption(TR_EnableAOTStats))
+         aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->specialMethods);
+      resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats);
+      if (unresolvedInCP)
+         *unresolvedInCP = false;
+      }
+
+   if (resolvedMethod == NULL)
+      {
+      INCREMENT_COUNTER(_fe, unresolvedSpecialMethodRefs);
+      if (unresolvedInCP)
+         handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
+      }
+
+   return resolvedMethod;
+   }
+
+
+TR_ResolvedMethod *
+TR_ResolvedJ9JAASServerMethod::createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats)
+   {
+   return new (comp->trHeapMemory()) TR_ResolvedJ9JAASServerMethod((TR_OpaqueMethodBlock *) j9Method, _fe, comp->trMemory(), this, vTableSlot);
+   }
+
+uint32_t
+TR_ResolvedJ9JAASServerMethod::classCPIndexOfMethod(uint32_t methodCPIndex)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_classCPIndexOfMethod, _remoteMirror, methodCPIndex);
+   return std::get<0>(_stream->read<uint32_t>());
+   }

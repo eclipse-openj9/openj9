@@ -635,6 +635,40 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fieldOffset, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
          }
       break;
+      case J9ServerMessageType::ResolvedMethod_getResolvedStaticMethod:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         J9Method *ramMethod = jitResolveStaticMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+         client->write(ramMethod);
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethod:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         J9Method *ramMethod = jitGetJ9MethodUsingIndex(fe->vmThread(), method->cp(), cpIndex);
+         bool resolve = !((fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
+                           TR::comp()->ilGenRequest().details().isMethodHandleThunk() &&
+                           performTransformation(TR::comp(), "Setting as unresolved special call cpIndex=%d\n",cpIndex));
+         if (resolve)
+            {
+            TR::VMAccessCriticalSection resolveSpecialMethodRef(fe);
+            ramMethod = jitResolveSpecialMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+            }
+         client->write(ramMethod, resolve);
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_classCPIndexOfMethod:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         client->write(method->classCPIndexOfMethod(cpIndex));
+         }
+         break;
       case J9ServerMessageType::get_params_to_construct_TR_j9method:
          {
          auto recv = client->getRecvData<J9Class *, uintptr_t>();

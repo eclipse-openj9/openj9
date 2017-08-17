@@ -56,6 +56,9 @@ enum J9ServerMessageType
    ResolvedMethod_classOfStatic = 108;
    ResolvedMethod_isUnresolvedString = 109;
    ResolvedMethod_fieldAttributes = 110;
+   ResolvedMethod_getResolvedStaticMethod = 111;
+   ResolvedMethod_getResolvedSpecialMethod = 112;
+   ResolvedMethod_classCPIndexOfMethod = 113;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;
