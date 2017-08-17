@@ -52,6 +52,7 @@ public:
    virtual TR_OpaqueClassBlock * getObjectClass(uintptrj_t objectPointer) override;
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz) override;
    virtual bool hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz) override;
+   virtual const char *sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_t bufLen, TR_Memory *memory) override;
    };
 
 #endif // VMJ9SERVER_H

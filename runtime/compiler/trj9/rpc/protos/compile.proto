@@ -102,6 +102,7 @@ enum J9ServerMessageType
    VM_getObjectClass = 238;
    VM_stackWalkerMaySkipFrames = 239;
    VM_hasFinalFieldsInClass = 240;
+   VM_getClassNameSignatureFromMethod = 241;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;
