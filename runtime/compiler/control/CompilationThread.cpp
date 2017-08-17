@@ -658,7 +658,11 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
-         J9Method *ramMethod = jitResolveStaticMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+         J9Method *ramMethod = nullptr;
+            {
+            TR::VMAccessCriticalSection resolveStaticMethodRef(fe);
+            ramMethod = jitResolveStaticMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+            }
          client->write(ramMethod);
          }
          break;
