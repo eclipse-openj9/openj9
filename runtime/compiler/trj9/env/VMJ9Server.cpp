@@ -226,6 +226,7 @@ TR_J9ServerVM::getClassNameChars(TR_OpaqueClassBlock * ramClass, int32_t & lengt
    const std::string className = std::get<0>(stream->read<std::string>());
    char * classNameChars = (char*) _compInfoPT->getCompilation()->trMemory()->allocateMemory(className.length(), heapAlloc);
    memcpy(classNameChars, &className[0], className.length());
+   length = className.length();
    return classNameChars;
    }
 
