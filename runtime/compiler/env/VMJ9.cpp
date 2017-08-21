@@ -493,6 +493,12 @@ TR_J9SharedCacheVM::shouldDelayAotLoad()
    return isAOT_DEPRECATED_DO_NOT_USE();
    }
 
+J9ROMClass *
+TR_J9VMBase::getROMclassFromRAMclass(J9Class * clazz)
+   {
+   return clazz->romClass;
+   }
+
 J9Class *
 TR_J9VMBase::matchRAMclassFromROMclass(J9ROMClass * clazz, TR::Compilation * comp)
    {

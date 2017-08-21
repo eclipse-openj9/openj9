@@ -405,3 +405,12 @@ TR_J9ServerVM::getHostClass(TR_OpaqueClassBlock *clazzOffset)
    stream->write(JAAS::J9ServerMessageType::VM_getHostClass, clazzOffset);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
+
+J9ROMClass *
+TR_J9ServerVM::getROMclassFromRAMclass(J9Class * clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getROMclassFromRAMclass, clazz);
+   auto offset = std::get<0>(stream->read<uint64_t>());
+   return (J9ROMClass*)(sharedCache()->pointerFromOffsetInSharedCache((void*)offset));
+   }

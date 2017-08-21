@@ -374,6 +374,15 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getLeafComponentClassFromArrayClass(clazz));
          }
          break;
+      case J9ServerMessageType::VM_getROMclassFromRAMclass:
+         {
+         auto clazz = std::get<0>(client->getRecvData<J9Class *>());
+         TR_J9SharedCache * cache = fe->sharedCache();
+         J9ROMClass *romClass = fe->getROMclassFromRAMclass(clazz);
+         uint64_t romClassOffset = reinterpret_cast<uint64_t>(cache->offsetInSharedCacheFromPointer((void*)romClass));
+         client->write(romClassOffset);
+         }
+         break;
       case J9ServerMessageType::VM_getClassFromSignature:
          {
          auto recv = client->getRecvData<std::string, TR_OpaqueMethodBlock *, bool>();
