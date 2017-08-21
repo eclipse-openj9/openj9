@@ -59,6 +59,7 @@ enum J9ServerMessageType
    ResolvedMethod_getResolvedStaticMethod = 111;
    ResolvedMethod_getResolvedSpecialMethod = 112;
    ResolvedMethod_classCPIndexOfMethod = 113;
+   ResolvedMethod_startAddressForJittedMethod = 114;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;

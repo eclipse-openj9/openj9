@@ -691,6 +691,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(method->classCPIndexOfMethod(cpIndex));
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_startAddressForJittedMethod:
+         {
+         TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
+         client->write(method->startAddressForJittedMethod());
+         }
+         break;
       case J9ServerMessageType::get_params_to_construct_TR_j9method:
          {
          auto recv = client->getRecvData<J9Class *, uintptr_t>();

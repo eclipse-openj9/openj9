@@ -8632,3 +8632,10 @@ TR_ResolvedJ9JAASServerMethod::classCPIndexOfMethod(uint32_t methodCPIndex)
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_classCPIndexOfMethod, _remoteMirror, methodCPIndex);
    return std::get<0>(_stream->read<uint32_t>());
    }
+
+void *
+TR_ResolvedJ9JAASServerMethod::startAddressForJittedMethod()
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_startAddressForJittedMethod, _remoteMirror);
+   return std::get<0>(_stream->read<void *>());
+   }

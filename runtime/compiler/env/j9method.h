@@ -602,10 +602,11 @@ public:
    virtual TR_ResolvedMethod *   getResolvedVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreReResolve, bool * unresolvedInCP) override;
    virtual TR_ResolvedMethod * getResolvedStaticMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP) override;
    virtual TR_ResolvedMethod * getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP) override;
-   virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
+   virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats) override;
    virtual uint32_t classCPIndexOfMethod(uint32_t methodCPIndex) override;
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual bool fieldAttributes(TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override;
+   virtual void * startAddressForJittedMethod() override;
 
 private:
    JAAS::J9ServerStream *_stream;
