@@ -54,8 +54,8 @@ public:
    virtual bool hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz) override;
    virtual const char *sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_t bufLen, TR_Memory *memory) override;
    virtual TR_OpaqueClassBlock * getHostClass(TR_OpaqueClassBlock *clazzOffset) override;
-   virtual J9ROMClass * getROMclassFromRAMclass(J9Class * clazz) override;
    virtual intptrj_t getStringUTF8Length(uintptrj_t objectPointer) override;
+   virtual uintptrj_t getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock *) override;
    };
 
 #endif // VMJ9SERVER_H

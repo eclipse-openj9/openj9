@@ -480,7 +480,9 @@ UDATA *
 TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   J9ROMClass *romClass = fej9->getROMclassFromRAMclass(clazz);
+   J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(
+            fej9->getPersistentClassPointerFromClassPointer(fej9->convertClassPtrToClassOffset(clazz))
+            );
 
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
    LOG(5,{ log("rememberClass class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });

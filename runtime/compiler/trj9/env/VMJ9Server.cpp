@@ -406,19 +406,19 @@ TR_J9ServerVM::getHostClass(TR_OpaqueClassBlock *clazzOffset)
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
-J9ROMClass *
-TR_J9ServerVM::getROMclassFromRAMclass(J9Class * clazz)
-   {
-   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_getROMclassFromRAMclass, clazz);
-   auto offset = std::get<0>(stream->read<uint64_t>());
-   return (J9ROMClass*)(sharedCache()->pointerFromOffsetInSharedCache((void*)offset));
-   }
-
 intptrj_t
 TR_J9ServerVM::getStringUTF8Length(uintptrj_t objectPointer)
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_getStringUTF8Length, objectPointer);
    return std::get<0>(stream->read<intptrj_t>());
+   }
+
+uintptrj_t
+TR_J9ServerVM::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getPersistentClassPointerFromClassPointer, clazz);
+   auto offset = std::get<0>(stream->read<uint64_t>());
+   return (uintptrj_t)(sharedCache()->pointerFromOffsetInSharedCache((void*)offset));
    }

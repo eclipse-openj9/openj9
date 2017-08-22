@@ -947,7 +947,6 @@ public:
    static char            x86VendorID[13];
    static bool            x86VendorIDInitialized;
 
-   virtual J9ROMClass * getROMclassFromRAMclass(J9Class * clazz);
    virtual J9Class * matchRAMclassFromROMclass(J9ROMClass * clazz,  TR::Compilation * comp);
    virtual J9VMThread * getCurrentVMThread();
 
