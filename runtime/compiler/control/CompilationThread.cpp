@@ -747,6 +747,20 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(JAAS::Void());
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_localName:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, U_32, U_32>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         U_32 slotNumber = std::get<1>(recv);
+         U_32 bcIndex = std::get<2>(recv);
+         I_32 len;
+         char *nameChars = method->localName(slotNumber, bcIndex, len, trMemory);
+         if (nameChars)
+            client->write(std::string(nameChars, len));
+         else
+            client->write(std::string());
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());

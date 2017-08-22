@@ -8640,3 +8640,14 @@ TR_ResolvedJ9JAASServerMethod::startAddressForJittedMethod()
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_startAddressForJittedMethod, _remoteMirror);
    return std::get<0>(_stream->read<void *>());
    }
+
+char *
+TR_ResolvedJ9JAASServerMethod::localName(U_32 slotNumber, U_32 bcIndex, I_32 &len, TR_Memory *trMemory)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_localName, _remoteMirror, slotNumber, bcIndex);
+   const std::string nameString = std::get<0>(_stream->read<std::string>());
+   len = nameString.length();
+   char *out = (char*) trMemory->allocateHeapMemory(len);
+   memcpy(out, &nameString[0], len);
+   return out;
+   }
