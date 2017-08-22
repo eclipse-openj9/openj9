@@ -24,6 +24,11 @@ message Bool
    bool val = 1;
    uint64 type = 2;
    }
+message Int64
+   {
+   int64 val = 1;
+   uint64 type = 2;
+   }
 message Int32
    {
    int32 val = 1;
@@ -105,6 +110,7 @@ enum J9ServerMessageType
    VM_hasFinalFieldsInClass = 240;
    VM_getClassNameSignatureFromMethod = 241;
    VM_getHostClass = 242;
+   VM_getStringUTF8Length = 243;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

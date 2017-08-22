@@ -568,6 +568,15 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getHostClass(clazz));
          }
          break;
+      case J9ServerMessageType::VM_getStringUTF8Length:
+         {
+         uintptrj_t string = std::get<0>(client->getRecvData<uintptrj_t>());
+            {
+            TR::VMAccessCriticalSection getStringUTF8Length(fe);
+            client->write(fe->getStringUTF8Length(string));
+            }
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
