@@ -663,7 +663,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       break;
       case J9ServerMessageType::ResolvedMethod_fieldAttributes:
          {
-         auto recv = client->getRecvData<TR_ResolvedMethod *, int32_t, bool, bool>();
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
          TR_ResolvedMethod *method = std::get<0>(recv);
          I_32 cpIndex = std::get<1>(recv);
          bool isStore = std::get<2>(recv);
