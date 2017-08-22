@@ -719,6 +719,33 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(method->startAddressForJittedMethod());
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_getResolvedVirtualMethod:
+         {
+         auto recv = client->getRecvData<J9RAMConstantPoolItem*, I_32>();
+         auto literals = std::get<0>(recv);
+         J9ConstantPool *cp = (J9ConstantPool*)literals;
+         I_32 cpIndex = std::get<1>(recv);
+         bool resolvedInCP = false;
+         // only call the resolve if unresolved
+         J9Method * ramMethod = 0;
+         UDATA vTableIndex = (((J9RAMVirtualMethodRef*) literals)[cpIndex]).methodIndexAndArgCount;
+         vTableIndex >>= 8;
+         if ((J9JIT_INTERP_VTABLE_OFFSET + sizeof(uintptrj_t)) == vTableIndex)
+            {
+            TR::VMAccessCriticalSection resolveVirtualMethodRef(fe);
+            vTableIndex = fe->_vmFunctionTable->resolveVirtualMethodRefInto(fe->vmThread(), cp, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &ramMethod, NULL);
+            }
+         else
+            {
+            // go fishing for the J9Method...
+            uint32_t classIndex = ((J9ROMMethodRef *) cp->romConstantPool)[cpIndex].classRefCPIndex;
+            J9Class * classObject = (((J9RAMClassRef*) literals)[classIndex]).value;
+            ramMethod = *(J9Method **)((char *)classObject + vTableIndex);
+            resolvedInCP = true;
+            }
+         client->write(ramMethod, vTableIndex, resolvedInCP);
+         }
+         break;
       case J9ServerMessageType::get_params_to_construct_TR_j9method:
          {
          auto recv = client->getRecvData<J9Class *, uintptr_t>();

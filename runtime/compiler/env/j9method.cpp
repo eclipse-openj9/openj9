@@ -8517,9 +8517,65 @@ TR_ResolvedJ9JAASServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeFor
 TR_ResolvedMethod *
 TR_ResolvedJ9JAASServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, I_32 cpIndex, bool ignoreRtResolve, bool * unresolvedInCP)
    {
-   // if inlining is turned off, this can just return 0
-   // JAAS TODO implement properly
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+#if TURN_OFF_INLINING
    return 0;
+#else
+   INCREMENT_COUNTER(_fe, totalVirtualMethodRefs);
+
+   TR_ResolvedMethod *resolvedMethod = NULL;
+
+   // See if the constant pool entry is already resolved or not
+   //
+   if (unresolvedInCP)
+       *unresolvedInCP = true;
+
+   if (!((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
+         !comp->ilGenRequest().details().isMethodHandleThunk() && // cmvc 195373
+         performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve)
+      {
+      _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getResolvedVirtualMethod, literals(), cpIndex);
+      auto recv = _stream->read<J9Method*, UDATA, bool>();
+      J9Method *ramMethod = std::get<0>(recv);
+      UDATA vTableIndex = std::get<1>(recv);
+      if (std::get<2>(recv) && unresolvedInCP)
+         *unresolvedInCP = false;
+
+      if (vTableIndex)
+         {
+         TR_AOTInliningStats *aotStats = NULL;
+         if (comp->getOption(TR_EnableAOTStats))
+            aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->virtualMethods);
+         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableIndex, ramMethod, unresolvedInCP, aotStats);
+         }
+      }
+
+   if (resolvedMethod == NULL)
+      {
+      TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual/null");
+      INCREMENT_COUNTER(_fe, unresolvedVirtualMethodRefs);
+      if (unresolvedInCP)
+         handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
+      }
+   else
+      {
+      if (((TR_ResolvedJ9Method*)resolvedMethod)->isVarHandleAccessMethod())
+         {
+         // VarHandle access methods are resolved to *_impl()V, restore their signatures to obtain function correctness in the Walker
+         J9ROMConstantPoolItem *cpItem = (J9ROMConstantPoolItem *)romLiterals();
+         J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(cpItem + cpIndex);
+         J9ROMNameAndSignature *nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romMethodRef);
+         int32_t signatureLength;
+         char   *signature = utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig), signatureLength);
+         ((TR_ResolvedJ9Method *)resolvedMethod)->setSignature(signature, signatureLength, comp->trMemory());
+         }
+
+      TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual");
+      TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
+      }
+
+   return resolvedMethod;
+#endif
    }
 
 bool
