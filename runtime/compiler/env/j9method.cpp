@@ -8359,7 +8359,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
 
    // Create client side mirror of this object to use for calls involving RAM data
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod);
-   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*>();
+   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uint64_t>();
 
    _remoteMirror = std::get<0>(recv);
 
@@ -8368,8 +8368,9 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _ramClass = std::get<2>(recv);
 
    // Use the rom class and rom method read from the SCC
-   _romClass = const_cast<J9ROMClass*>(threadCompInfo->getMethodBeingCompiled()->getMethodDetails().getRomClass());
-   _romMethod = const_cast<J9ROMMethod*>(threadCompInfo->getMethodBeingCompiled()->getMethodDetails().getRomMethod());
+   TR_J9SharedCache *cache = j9fe->sharedCache();
+   _romClass = (J9ROMClass*)cache->pointerFromOffsetInSharedCache((void*)std::get<3>(recv));
+   _romMethod = (J9ROMMethod*)cache->pointerFromOffsetInSharedCache((void*)std::get<4>(recv));
    _romLiterals = (J9ROMConstantPoolItem *) ((UDATA)romClassPtr() + sizeof(J9ROMClass));
 
    _vTableSlot = vTableSlot;

@@ -587,8 +587,11 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
 
          J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *)(J9_CP_FROM_METHOD(resolvedMethod->ramMethod()));
          J9Class *cpHdr = J9_CLASS_FROM_CP(literals);
+         TR_J9SharedCache *cache = fe->sharedCache();
+         uint64_t romClass = (uint64_t)cache->offsetInSharedCacheFromPointer(cpHdr->romClass);
+         uint64_t romMethod = (uint64_t)cache->offsetInSharedCacheFromPointer(J9_ROM_METHOD_FROM_RAM_METHOD(resolvedMethod->ramMethod()));
 
-         client->write(resolvedMethod, literals, cpHdr);
+         client->write(resolvedMethod, literals, cpHdr, romClass, romMethod);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isJNINative:
