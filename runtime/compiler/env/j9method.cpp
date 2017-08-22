@@ -5783,7 +5783,7 @@ TR_OpaqueClassBlock *
 TR_ResolvedJ9Method::classOfMethod()
    {
    if (isNewInstanceImplThunk())
-      { // JAAS TODO: branch not taken in hello world
+      {
       TR_ASSERT(_j9classForNewInstance, "Must have the class for the newInstance");
       //J9Class * clazz = (J9Class *)((intptrj_t)ramMethod()->extra & ~J9_STARTPC_NOT_TRANSLATED);
       return _fe->convertClassPtrToClassOffset(_j9classForNewInstance);//(TR_OpaqueClassBlock *&)(rc);
