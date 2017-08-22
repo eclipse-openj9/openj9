@@ -413,6 +413,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          int32_t cpIndex2 = std::get<3>(recv);
          client->write(fe->jitStaticsAreSame(method1, cpIndex1, method2, cpIndex2));
          };
+         break;
       case J9ServerMessageType::VM_getClassNameChars:
          {
          TR_OpaqueClassBlock * ramClass = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
