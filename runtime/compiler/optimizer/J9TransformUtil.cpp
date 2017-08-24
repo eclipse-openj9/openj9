@@ -1024,12 +1024,12 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
       && sym->isStaticField()
       && sym->isFinal())
       {
-      J9Class *fieldClass = (J9Class*)symRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, symRef->getCPIndex(), true);
+      TR_OpaqueClassBlock *fieldClass = symRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, symRef->getCPIndex(), true);
       if (!fieldClass)
          return false;
       // Can't trust final statics unless class init is finished
       //
-      bool classInitIsFinished = (fieldClass->initializeStatus & J9ClassInitStatusMask) == J9ClassInitSucceeded;
+      bool classInitIsFinished = fej9->classInitIsFinished(fieldClass);
       if (!classInitIsFinished)
          return false;
 

@@ -56,6 +56,7 @@ public:
    virtual TR_OpaqueClassBlock * getHostClass(TR_OpaqueClassBlock *clazzOffset) override;
    virtual intptrj_t getStringUTF8Length(uintptrj_t objectPointer) override;
    virtual uintptrj_t getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock *) override;
+   virtual bool classInitIsFinished(TR_OpaqueClassBlock *) override;
    };
 
 #endif // VMJ9SERVER_H

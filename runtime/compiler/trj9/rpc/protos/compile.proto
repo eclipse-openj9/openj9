@@ -113,6 +113,7 @@ enum J9ServerMessageType
    VM_getClassNameSignatureFromMethod = 241;
    VM_getHostClass = 242;
    VM_getStringUTF8Length = 243;
+   VM_classInitIsFinished = 244;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

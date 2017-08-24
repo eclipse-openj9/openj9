@@ -976,6 +976,8 @@ public:
    virtual bool acquireClassTableMutex();
    virtual void releaseClassTableMutex(bool);
 
+   virtual bool classInitIsFinished(TR_OpaqueClassBlock *clazz) { return (((J9Class*)clazz)->initializeStatus & J9ClassInitStatusMask) == J9ClassInitSucceeded; }
+
    // --------------------------------------------------------------------------
    // Object model
    // --------------------------------------------------------------------------

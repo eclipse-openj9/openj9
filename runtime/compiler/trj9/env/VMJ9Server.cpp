@@ -422,3 +422,11 @@ TR_J9ServerVM::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock *cl
    auto offset = std::get<0>(stream->read<uint64_t>());
    return (uintptrj_t)(sharedCache()->pointerFromOffsetInSharedCache((void*)offset));
    }
+
+bool
+TR_J9ServerVM::classInitIsFinished(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_classInitIsFinished, clazz);
+   return std::get<0>(stream->read<bool>());
+   }
