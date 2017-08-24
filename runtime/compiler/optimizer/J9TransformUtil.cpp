@@ -1034,7 +1034,7 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
          return false;
 
       int32_t len;
-      char * name = fej9->getClassNameChars((TR_OpaqueClassBlock*)fieldClass, len);
+      char * name = fej9->getClassNameChars(fieldClass, len);
       if (!strncmp(name, "java/lang/System", len))
          return false; // Keep our hands off out/in/err, which are declared final but aren't really
 
@@ -1043,7 +1043,7 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
       //
       if (comp->getOption(TR_RestrictStaticFieldFolding)
           && sym->getRecognizedField() != TR::Symbol::assertionsDisabled
-         && !J9::TransformUtil::foldFinalFieldsIn((TR_OpaqueClassBlock*)fieldClass, name, len, true, comp))
+          && !J9::TransformUtil::foldFinalFieldsIn(fieldClass, name, len, true, comp))
          return false;
 
       // Static initializer can produce different values in different runs
