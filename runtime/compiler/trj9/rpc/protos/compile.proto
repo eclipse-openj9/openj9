@@ -67,6 +67,7 @@ enum J9ServerMessageType
    ResolvedMethod_startAddressForJittedMethod = 114;
    ResolvedMethod_localName = 115;
    ResolvedMethod_getResolvedVirtualMethod = 116;
+   ResolvedMethod_virtualMethodIsOverridden = 117;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;

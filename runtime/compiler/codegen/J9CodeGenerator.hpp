@@ -42,6 +42,7 @@ namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
 #include "codegen/RecognizedMethods.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "optimizer/Dominators.hpp"
 #include "cs2/arrayof.h"   // for ArrayOf
 
@@ -276,7 +277,7 @@ private:
       {
       // If we have a class pointer to consider, it should look like one.
       const uintptrj_t j9classEyecatcher = 0x99669966;
-      if (allegedClassPointer != NULL)
+      if (allegedClassPointer != NULL && !TR::CompilationInfo::_stream)
          {
          TR_ASSERT(*(const uintptrj_t*)allegedClassPointer == j9classEyecatcher,
                    "expected a J9Class* for omitted runtime assumption");

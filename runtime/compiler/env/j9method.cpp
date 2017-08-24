@@ -8707,3 +8707,10 @@ TR_ResolvedJ9JAASServerMethod::localName(U_32 slotNumber, U_32 bcIndex, I_32 &le
    memcpy(out, &nameString[0], len);
    return out;
    }
+
+bool
+TR_ResolvedJ9JAASServerMethod::virtualMethodIsOverridden()
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_virtualMethodIsOverridden, _remoteMirror);
+   return std::get<0>(_stream->read<bool>());
+   }
