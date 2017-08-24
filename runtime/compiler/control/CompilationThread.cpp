@@ -584,6 +584,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->classInitIsFinished(clazz));
          }
          break;
+      case J9ServerMessageType::VM_getClassFromNewArrayType:
+         {
+         int32_t index = std::get<0>(client->getRecvData<int32_t>());
+         client->write(fe->getClassFromNewArrayType(index));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only

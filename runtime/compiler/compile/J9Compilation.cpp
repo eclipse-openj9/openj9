@@ -629,8 +629,7 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
       TR_ASSERT(node->getSecondChild()->getOpCode().isLoadConst(), "Expecting const child \n");
 
       int32_t arrayClassIndex = node->getSecondChild()->getInt();
-      struct J9Class ** arrayClasses = &self()->fej9()->getJ9JITConfig()->javaVM->booleanArrayClass;
-      clazz = arrayClasses[arrayClassIndex - 4];
+      clazz = (J9Class *)self()->fej9()->getClassFromNewArrayType(arrayClassIndex);
 
       if (node->getFirstChild()->getOpCodeValue() != TR::iconst)
          {

@@ -878,7 +878,6 @@ public:
 
    virtual TR_OpaqueClassBlock *getHostClass(TR_OpaqueClassBlock *clazzOffset);
 
-
     TR::TreeTop * lowerAsyncCheck( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
     TR::TreeTop * lowerAtcCheck( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    virtual bool isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method);

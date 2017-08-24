@@ -57,6 +57,7 @@ public:
    virtual intptrj_t getStringUTF8Length(uintptrj_t objectPointer) override;
    virtual uintptrj_t getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock *) override;
    virtual bool classInitIsFinished(TR_OpaqueClassBlock *) override;
+   virtual TR_OpaqueClassBlock *getClassFromNewArrayType(int32_t arrayType) override;
    };
 
 #endif // VMJ9SERVER_H

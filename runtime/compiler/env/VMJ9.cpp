@@ -6076,7 +6076,6 @@ TR_J9VMBase::getHostClass(TR_OpaqueClassBlock *clazzOffset)
    return convertClassPtrToClassOffset(clazzPtr->hostClass);
    }
 
-
 TR_OpaqueClassBlock *
 TR_J9VMBase::convertClassPtrToClassOffset(J9Class *clazzPtr)
    {
