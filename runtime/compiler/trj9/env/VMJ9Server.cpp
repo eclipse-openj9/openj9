@@ -438,3 +438,11 @@ TR_J9ServerVM::getClassFromNewArrayType(int32_t arrayType)
    stream->write(JAAS::J9ServerMessageType::VM_getClassFromNewArrayType, arrayType);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
+
+bool
+TR_J9ServerVM::isCloneable(TR_OpaqueClassBlock *clazzPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isCloneable, clazzPointer);
+   return std::get<0>(stream->read<bool>());
+   }

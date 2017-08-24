@@ -115,6 +115,7 @@ enum J9ServerMessageType
    VM_getStringUTF8Length = 243;
    VM_classInitIsFinished = 244;
    VM_getClassFromNewArrayType = 245;
+   VM_isCloneable = 246;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;
