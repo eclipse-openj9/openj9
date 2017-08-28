@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "compile/Compilation.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "env/ClassEnv.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
@@ -57,6 +58,11 @@ J9::ClassEnv::convertClassOffsetToClassPtr(TR_OpaqueClassBlock *clazzOffset)
 uintptrj_t
 J9::ClassEnv::classFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
+   if (TR::CompilationInfo::_stream)
+      {
+      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_classFlagsValue, classPointer);
+      return std::get<0>(TR::CompilationInfo::_stream->read<uintptrj_t>());
+      }
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags);
    }
 
@@ -64,6 +70,11 @@ J9::ClassEnv::classFlagsValue(TR_OpaqueClassBlock * classPointer)
 uintptrj_t
 J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
    {
+   if (TR::CompilationInfo::_stream)
+      {
+      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_classDepthOf, clazzPointer);
+      return std::get<0>(TR::CompilationInfo::_stream->read<uintptrj_t>());
+      }
    return J9CLASS_DEPTH(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer));
    }
 
@@ -71,6 +82,11 @@ J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
 uintptrj_t
 J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
    {
+   if (TR::CompilationInfo::_stream)
+      {
+      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_classInstanceSize, clazzPointer);
+      return std::get<0>(TR::CompilationInfo::_stream->read<uintptrj_t>());
+      }
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)->totalInstanceSize;
    }
 
@@ -78,6 +94,11 @@ J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
 J9ROMClass *
 J9::ClassEnv::romClassOf(TR_OpaqueClassBlock * clazz)
    {
+   if (TR::CompilationInfo::_stream)
+      {
+      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_romClassOf, clazz);
+      return std::get<0>(TR::CompilationInfo::_stream->read<J9ROMClass *>());
+      }
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazz)->romClass;
    }
 

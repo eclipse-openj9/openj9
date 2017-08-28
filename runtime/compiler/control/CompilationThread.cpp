@@ -865,6 +865,30 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(JAAS::Void());
          }
          break;
+      case J9ServerMessageType::ClassEnv_classFlagsValue:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(TR::Compiler->cls.classFlagsValue(clazz));
+         }
+         break;
+      case J9ServerMessageType::ClassEnv_classDepthOf:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(TR::Compiler->cls.classDepthOf(clazz));
+         }
+         break;
+      case J9ServerMessageType::ClassEnv_classInstanceSize:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(TR::Compiler->cls.classInstanceSize(clazz));
+         }
+         break;
+      case J9ServerMessageType::ClassEnv_romClassOf:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(TR::Compiler->cls.romClassOf(clazz));
+         }
+         break;
      default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();

@@ -127,6 +127,12 @@ enum J9ServerMessageType
    CompInfo_isJSR292 = 305;
    CompInfo_getMethodBytecodeSize = 306;
    CompInfo_setJ9MethodExtra = 307;
+
+   // For J9::ClassEnv Methods
+   ClassEnv_classFlagsValue = 400;
+   ClassEnv_classDepthOf = 401;
+   ClassEnv_classInstanceSize = 402;
+   ClassEnv_romClassOf = 403;
    }
 
 message J9ServerMessage
