@@ -6076,6 +6076,20 @@ TR_J9VMBase::getHostClass(TR_OpaqueClassBlock *clazzOffset)
    return convertClassPtrToClassOffset(clazzPtr->hostClass);
    }
 
+bool
+TR_J9VMBase::canAllocateInlineClass(TR_OpaqueClassBlock *clazzOffset)
+   {
+   J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazzOffset);
+   // Can not inline the allocation if the class is not fully initialized
+   if (clazz->initializeStatus != 1)
+      return false;
+
+   // Can not inline the allocation if the class is an interface or abstract
+   if (clazz->romClass->modifiers & (J9_JAVA_ABSTRACT | J9_JAVA_INTERFACE))
+      return false;
+   return true;
+   }
+
 TR_OpaqueClassBlock *
 TR_J9VMBase::convertClassPtrToClassOffset(J9Class *clazzPtr)
    {

@@ -117,6 +117,7 @@ enum J9ServerMessageType
    VM_classInitIsFinished = 244;
    VM_getClassFromNewArrayType = 245;
    VM_isCloneable = 246;
+   VM_canAllocateInlineClass = 247;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

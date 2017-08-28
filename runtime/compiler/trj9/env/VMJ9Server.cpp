@@ -446,3 +446,11 @@ TR_J9ServerVM::isCloneable(TR_OpaqueClassBlock *clazzPointer)
    stream->write(JAAS::J9ServerMessageType::VM_isCloneable, clazzPointer);
    return std::get<0>(stream->read<bool>());
    }
+
+bool
+TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_canAllocateInlineClass, clazz);
+   return std::get<0>(stream->read<bool>());
+   }

@@ -561,17 +561,7 @@ J9::Compilation::canAllocateInlineClass(TR_OpaqueClassBlock *block)
    if (block == NULL)
       return false;
 
-   J9Class* clazz = reinterpret_cast<J9Class*> (block);
-
-   // Can not inline the allocation if the class is not fully initialized
-   if (clazz->initializeStatus != 1)
-      return false;
-
-   // Can not inline the allocation if the class is an interface or abstract
-   if (clazz->romClass->modifiers & (J9_JAVA_ABSTRACT | J9_JAVA_INTERFACE))
-      return false;
-
-   return true;
+   return self()->fej9()->canAllocateInlineClass(block);
    }
 
 
