@@ -120,7 +120,7 @@ J9::ClassEnv::romClassOfSuperClass(TR_OpaqueClassBlock * clazz, size_t index)
    {
    if (TR::CompilationInfo::_stream)
       {
-      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_romClassOfSuperClass, clazz);
+      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_romClassOfSuperClass, clazz, index);
       auto cache = TR::comp()->fej9()->sharedCache();
       auto offset = std::get<0>(TR::CompilationInfo::_stream->read<void *>());
       return static_cast<J9ROMClass *>(cache->pointerFromOffsetInSharedCache(offset));
