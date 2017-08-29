@@ -61,6 +61,13 @@ public:
    uintptrj_t classInstanceSize(TR_OpaqueClassBlock * clazzPointer);
 
    J9ROMClass *romClassOf(TR_OpaqueClassBlock * clazz);
+   J9ROMClass *romClassOfSuperClass(TR_OpaqueClassBlock * clazz, size_t index);
+   
+   J9ITable *iTableOf(TR_OpaqueClassBlock * clazz);
+   J9ITable *iTableNext(J9ITable *current);
+   J9ROMClass *iTableRomClass(J9ITable *current);
+
+   J9Class **superClassesOf(TR_OpaqueClassBlock * clazz);
 
    bool isStringClass(TR_OpaqueClassBlock *clazz);
 

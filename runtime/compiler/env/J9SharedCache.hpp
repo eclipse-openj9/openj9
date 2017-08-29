@@ -126,7 +126,7 @@ private:
    uint32_t numInterfacesImplemented(J9Class *clazz);
 
    bool writeClassToChain(J9ROMClass *romClass, UDATA * & chainPtr);
-   bool writeClassesToChain(J9Class **superclasses, int32_t numSuperclasses, UDATA * & chainPtr);
+   bool writeClassesToChain(J9Class *clazz, int32_t numSuperclasses, UDATA * & chainPtr);
    bool writeInterfacesToChain(J9Class *clazz, UDATA * & chainPtr);
    bool fillInClassChain(J9Class *clazz, UDATA *chainData, uint32_t chainLength,
                          uint32_t numSuperclasses, uint32_t numInterfaces);

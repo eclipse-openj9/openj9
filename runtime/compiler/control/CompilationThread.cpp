@@ -890,6 +890,41 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(TR::Compiler->cls.classInstanceSize(clazz));
          }
          break;
+      case J9ServerMessageType::ClassEnv_superClassesOf:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(TR::Compiler->cls.superClassesOf(clazz));
+         }
+         break;
+      case J9ServerMessageType::ClassEnv_iTableOf:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(TR::Compiler->cls.iTableOf(clazz));
+         }
+         break;
+      case J9ServerMessageType::ClassEnv_iTableNext:
+         {
+         auto clazz = std::get<0>(client->getRecvData<J9ITable *>());
+         client->write(TR::Compiler->cls.iTableNext(clazz));
+         }
+         break;
+      case J9ServerMessageType::ClassEnv_iTableRomClass:
+         {
+         auto clazz = std::get<0>(client->getRecvData<J9ITable *>());
+         client->write(TR::Compiler->cls.iTableRomClass(clazz));
+         }
+         break;
+      case J9ServerMessageType::ClassEnv_romClassOfSuperClass:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, size_t>();
+         auto clazz = std::get<0>(recv);
+         size_t index = std::get<1>(recv);
+         TR_J9SharedCache * cache = fe->sharedCache();
+         void *romClass = TR::Compiler->cls.romClassOfSuperClass(clazz, index);
+         void *romClassOffset = cache->offsetInSharedCacheFromPointer(romClass);
+         client->write(romClassOffset);
+         }
+         break;
      default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();

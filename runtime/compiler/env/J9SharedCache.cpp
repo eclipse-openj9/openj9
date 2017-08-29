@@ -505,7 +505,7 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
       return chainData;
       }
 
-   int32_t numSuperclasses =  J9CLASS_DEPTH(clazz);
+   int32_t numSuperclasses = TR::Compiler->cls.classDepthOf(fe()->convertClassPtrToClassOffset(clazz));
    int32_t numInterfaces = numInterfacesImplemented(clazz);
 
    LOG(9, { log("\tcreating chain now: 1 + 1 + %d superclasses + %d interfaces\n", numSuperclasses, numInterfaces); });
@@ -601,11 +601,11 @@ uint32_t
 TR_J9SharedCache::numInterfacesImplemented(J9Class *clazz)
    {
    uint32_t count=0;
-   J9ITable *element = (J9ITable *)clazz->iTable;
+   J9ITable *element = TR::Compiler->cls.iTableOf(fe()->convertClassPtrToClassOffset(clazz));
    while (element != NULL)
       {
       count++;
-      element = element->next;
+      element = TR::Compiler->cls.iTableNext(element);
       }
    return count;
    }
@@ -627,13 +627,13 @@ TR_J9SharedCache::writeClassToChain(J9ROMClass *romClass, UDATA * & chainPtr)
    }
 
 bool
-TR_J9SharedCache::writeClassesToChain(J9Class **superclasses, int32_t numSuperclasses, UDATA * & chainPtr)
+TR_J9SharedCache::writeClassesToChain(J9Class *clazz, int32_t numSuperclasses, UDATA * & chainPtr)
    {
    LOG(9, { log("\t\twriteClassesToChain:\n"); });
 
    for (int32_t index=0; index < numSuperclasses;index++)
       {
-      J9ROMClass *romClass = superclasses[index]->romClass;
+      J9ROMClass *romClass = TR::Compiler->cls.romClassOfSuperClass(fe()->convertClassPtrToClassOffset(clazz), index);
       if (! writeClassToChain(romClass, chainPtr))
          return false;
       }
@@ -645,14 +645,14 @@ TR_J9SharedCache::writeInterfacesToChain(J9Class *clazz, UDATA * & chainPtr)
    {
    LOG(9, { log("\t\twriteInterfacesToChain:\n"); });
 
-   J9ITable *element = (J9ITable *)clazz->iTable;
+   J9ITable *element = TR::Compiler->cls.iTableOf(fe()->convertClassPtrToClassOffset(clazz));
    while (element != NULL)
       {
-      J9ROMClass *romClass = element->interfaceClass->romClass;
+      J9ROMClass *romClass = TR::Compiler->cls.iTableRomClass(element);
       if (!writeClassToChain(romClass, chainPtr))
          return false;
 
-      element = element->next;
+      element = TR::Compiler->cls.iTableNext(element);
       }
 
    return true;
@@ -666,8 +666,9 @@ TR_J9SharedCache::fillInClassChain(J9Class *clazz, UDATA *chainData, uint32_t ch
 
    UDATA *chainPtr = chainData;
    *chainPtr++ = chainLength;
-   writeClassToChain(clazz->romClass, chainPtr);
-   if (! writeClassesToChain(clazz->superclasses, numSuperclasses, chainPtr))
+   J9ROMClass* romClass = TR::Compiler->cls.romClassOf(fe()->convertClassPtrToClassOffset(clazz));
+   writeClassToChain(romClass, chainPtr);
+   if (! writeClassesToChain(clazz, numSuperclasses, chainPtr))
       {
       return false;
       }
@@ -715,11 +716,12 @@ TR_J9SharedCache::findChainForClass(J9Class *clazz, const char *key, uint32_t ke
 bool
 TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    {
-   J9UTF8 * className = J9ROMCLASS_CLASSNAME(clazz->romClass);
+   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(fe()->convertClassPtrToClassOffset(clazz));
+   J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
    LOG(5, { log("classMatchesCachedVersion class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
 
    void *classOffsetInCache;
-   if (! isPointerInSharedCache(clazz->romClass, classOffsetInCache))
+   if (! isPointerInSharedCache(romClass, classOffsetInCache))
       {
       LOG(5, { log("\tclass not in shared cache, returning false\n"); });
       return false;
@@ -744,32 +746,33 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    UDATA *chainEnd = (UDATA *) (((U_8*)chainData) + chainLength);
    LOG(9, { log("\tfound chain: %p with length %d\n", chainData, chainLength); });
 
-   if (! romclassMatchesCachedVersion(clazz->romClass, chainPtr, chainEnd))
+   if (! romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
       {
          LOG(5, { log("\tClass did not match, returning false\n"); });
          return false;
       }
 
-   int32_t numSuperclasses = J9CLASS_DEPTH(clazz);
-   J9Class **superclasses = clazz->superclasses;
+   int32_t numSuperclasses = TR::Compiler->cls.classDepthOf(fe()->convertClassPtrToClassOffset(clazz));
    for (int32_t index=0; index < numSuperclasses;index++)
       {
-      if (! romclassMatchesCachedVersion(superclasses[index]->romClass, chainPtr, chainEnd))
+      J9ROMClass *romClass = TR::Compiler->cls.romClassOfSuperClass(fe()->convertClassPtrToClassOffset(clazz), index);
+      if (! romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
          {
          LOG(5, { log("\tClass in hierarchy did not match, returning false\n"); });
          return false;
          }
       }
 
-   J9ITable *interfaceElement = (J9ITable *) clazz->iTable;
+   J9ITable *interfaceElement = TR::Compiler->cls.iTableOf(fe()->convertClassPtrToClassOffset(clazz));
    while (interfaceElement)
       {
-      if (! romclassMatchesCachedVersion(interfaceElement->interfaceClass->romClass, chainPtr, chainEnd))
+      J9ROMClass * romClass = TR::Compiler->cls.iTableRomClass(interfaceElement);
+      if (! romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
          {
          LOG(5, { log("\tInterface class did not match, returning false\n"); });
          return false;
          }
-      interfaceElement = interfaceElement->next;
+      interfaceElement = TR::Compiler->cls.iTableNext(interfaceElement);
       }
 
    if (chainPtr != chainEnd)

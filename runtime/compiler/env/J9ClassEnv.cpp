@@ -104,6 +104,62 @@ J9::ClassEnv::romClassOf(TR_OpaqueClassBlock * clazz)
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazz)->romClass;
    }
 
+J9Class **
+J9::ClassEnv::superClassesOf(TR_OpaqueClassBlock * clazz)
+   {
+   if (TR::CompilationInfo::_stream)
+      {
+      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_superClassesOf, clazz);
+      return std::get<0>(TR::CompilationInfo::_stream->read<J9Class **>());
+      }
+   return TR::Compiler->cls.convertClassOffsetToClassPtr(clazz)->superclasses;
+   }
+
+J9ROMClass *
+J9::ClassEnv::romClassOfSuperClass(TR_OpaqueClassBlock * clazz, size_t index)
+   {
+   if (TR::CompilationInfo::_stream)
+      {
+      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_romClassOfSuperClass, clazz);
+      auto cache = TR::comp()->fej9()->sharedCache();
+      auto offset = std::get<0>(TR::CompilationInfo::_stream->read<void *>());
+      return static_cast<J9ROMClass *>(cache->pointerFromOffsetInSharedCache(offset));
+      }
+   return superClassesOf(clazz)[index]->romClass;
+   }
+
+J9ITable *
+J9::ClassEnv::iTableOf(TR_OpaqueClassBlock * clazz)
+   {
+   if (auto stream = TR::CompilationInfo::_stream)
+      {
+      stream->write(JAAS::J9ServerMessageType::ClassEnv_iTableOf, clazz);
+      return std::get<0>(stream->read<J9ITable*>());
+      }
+   return (J9ITable*) convertClassOffsetToClassPtr(clazz)->iTable;
+   }
+
+J9ITable *
+J9::ClassEnv::iTableNext(J9ITable *current)
+   {
+   if (auto stream = TR::CompilationInfo::_stream)
+      {
+      stream->write(JAAS::J9ServerMessageType::ClassEnv_iTableNext, current);
+      return std::get<0>(stream->read<J9ITable*>());
+      }
+   return current->next;
+   }
+
+J9ROMClass *
+J9::ClassEnv::iTableRomClass(J9ITable *current)
+   {
+   if (auto stream = TR::CompilationInfo::_stream)
+      {
+      stream->write(JAAS::J9ServerMessageType::ClassEnv_iTableRomClass, current);
+      return std::get<0>(stream->read<J9ROMClass*>());
+      }
+   return current->interfaceClass->romClass;
+   }
 
 bool
 J9::ClassEnv::isStringClass(TR_OpaqueClassBlock *clazz)
