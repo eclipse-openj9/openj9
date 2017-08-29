@@ -97,7 +97,9 @@ J9::ClassEnv::romClassOf(TR_OpaqueClassBlock * clazz)
    if (TR::CompilationInfo::_stream)
       {
       TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_romClassOf, clazz);
-      return std::get<0>(TR::CompilationInfo::_stream->read<J9ROMClass *>());
+      auto cache = TR::comp()->fej9()->sharedCache();
+      auto offset = std::get<0>(TR::CompilationInfo::_stream->read<void *>());
+      return static_cast<J9ROMClass *>(cache->pointerFromOffsetInSharedCache(offset));
       }
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazz)->romClass;
    }

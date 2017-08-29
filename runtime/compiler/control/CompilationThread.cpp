@@ -374,6 +374,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getLeafComponentClassFromArrayClass(clazz));
          }
          break;
+      case J9ServerMessageType::ClassEnv_romClassOf:
       case J9ServerMessageType::VM_getPersistentClassPointerFromClassPointer:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -887,12 +888,6 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(TR::Compiler->cls.classInstanceSize(clazz));
-         }
-         break;
-      case J9ServerMessageType::ClassEnv_romClassOf:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(TR::Compiler->cls.romClassOf(clazz));
          }
          break;
      default:
