@@ -563,7 +563,11 @@ public:
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier();
    virtual uint8_t *             allocateException(uint32_t, TR::Compilation*);
 
-private:
+protected:
+   TR_ResolvedRelocatableJ9Method(TR_FrontEnd *fe, TR_ResolvedMethod * owningMethod = 0)
+      :TR_ResolvedJ9Method(fe, owningMethod)
+      {}
+
    virtual TR_ResolvedMethod *   createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
 
    virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
@@ -581,7 +585,7 @@ private:
    };
 #endif
 
-class TR_ResolvedJ9JAASServerMethod : public TR_ResolvedJ9Method
+class TR_ResolvedJ9JAASServerMethod : public TR_ResolvedRelocatableJ9Method
    {
 public:
    TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);

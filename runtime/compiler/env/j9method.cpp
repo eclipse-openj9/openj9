@@ -8347,7 +8347,7 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
 //
 
 TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
-   : TR_ResolvedJ9Method(fe, owningMethod)
+   : TR_ResolvedRelocatableJ9Method(fe, owningMethod)
    {
 
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
@@ -8510,8 +8510,7 @@ TR_ResolvedJ9JAASServerMethod::classOfStatic(I_32 cpIndex, bool returnClassForAO
 bool
 TR_ResolvedJ9JAASServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeForAOT)
    {
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isUnresolvedString, _remoteMirror, cpIndex, optimizeForAOT);
-   return std::get<0>(_stream->read<bool>());
+   return TR_ResolvedRelocatableJ9Method::isUnresolvedString(cpIndex, false);
    }
 
 TR_ResolvedMethod *
