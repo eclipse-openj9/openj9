@@ -613,8 +613,11 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only
          // easily done on the client side.
-         TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
-         TR_ResolvedRelocatableJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(method, fe, trMemory);
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_ResolvedMethod *, uint32_t>();
+         TR_OpaqueMethodBlock *method = std::get<0>(recv);
+         TR_ResolvedMethod *owningMethod = std::get<1>(recv);
+         uint32_t vTableSlot = std::get<2>(recv);
+         TR_ResolvedRelocatableJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(method, fe, trMemory, owningMethod, vTableSlot);
          if (!resolvedMethod) throw std::bad_alloc();
 
          J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *)(J9_CP_FROM_METHOD(resolvedMethod->ramMethod()));

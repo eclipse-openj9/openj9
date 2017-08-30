@@ -8347,7 +8347,7 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
 //
 
 TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
-   : TR_ResolvedRelocatableJ9Method(fe, owningMethod)
+   : TR_ResolvedRelocatableJ9Method(aMethod, fe, trMemory, owningMethod, vTableSlot)
    {
 
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
@@ -8358,7 +8358,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _ramMethod = (J9Method *)aMethod;
 
    // Create client side mirror of this object to use for calls involving RAM data
-   _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod);
+   _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethod, vTableSlot);
    auto recv = _stream->read<TR_ResolvedRelocatableJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uint64_t>();
 
    _remoteMirror = std::get<0>(recv);
