@@ -649,7 +649,8 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
       if (clazz == NULL)
          return -1;
 
-      clazz = clazz->arrayClass;
+      auto classOffset = self()->fej9()->getArrayClassFromComponentClass(self()->fej9()->convertClassPtrToClassOffset(clazz));
+      clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(classOffset);
       if (!clazz)
          return -1;
 

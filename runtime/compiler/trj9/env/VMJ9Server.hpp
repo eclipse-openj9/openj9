@@ -10,6 +10,8 @@ public:
       :TR_J9SharedCacheVM(jitConfig, compInfo, vmContext)
       {}
 
+   virtual bool needClassAndMethodPointerRelocations() { return false; }
+
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT) override;
    virtual bool isClassLibraryClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override;
@@ -60,7 +62,7 @@ public:
    virtual TR_OpaqueClassBlock *getClassFromNewArrayType(int32_t arrayType) override;
    virtual bool isCloneable(TR_OpaqueClassBlock *clazzPointer) override;
    virtual bool canAllocateInlineClass(TR_OpaqueClassBlock *clazz) override;
-   virtual bool supportAllocationInlining(TR::Compilation *comp, TR::Node *node) override;
+   virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override;
    };
 
 #endif // VMJ9SERVER_H
