@@ -623,7 +623,7 @@ private:
    J9ROMClass *_romClass; // cached copy of ROM class from client
    J9RAMConstantPoolItem *_literals; // client pointer to constant pool
    J9Class *_ramClass; // client pointer to RAM class
-   TR_ResolvedJ9Method *_remoteMirror;
+   TR_ResolvedRelocatableJ9Method *_remoteMirror;
    };
 
 #endif
