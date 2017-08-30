@@ -6468,8 +6468,8 @@ static void genInitObjectHeader(TR::Node             *node,
          }
       else
          {
-         TR_ASSERT((node->getOpCodeValue() == TR::New)
-                   && classReg, "must have a classReg for TR::New in AOT mode");
+//         TR_ASSERT((node->getOpCodeValue() == TR::New)
+//                   && classReg, "must have a classReg for TR::New in AOT mode");
          clzReg = classReg;
          }
       }
