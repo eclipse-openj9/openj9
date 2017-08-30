@@ -54,7 +54,7 @@ enum J9ServerMessageType
    ResolvedMethod_isInterpreted = 101;
    ResolvedMethod_setRecognizedMethodInfo = 102;
    ResolvedMethod_getClassLoader = 103;
-//   ResolvedMethod_allocateException = 104;
+   ResolvedMethod_jniNativeMethodProperties = 104;
    ResolvedMethod_staticAttributes = 105;
    ResolvedMethod_getClassFromConstantPool = 106;
    ResolvedMethod_getDeclaringClassFromFieldOrStatic = 107;

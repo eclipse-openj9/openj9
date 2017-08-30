@@ -8376,12 +8376,14 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _vTableSlot = vTableSlot;
    _j9classForNewInstance = nullptr;
 
-   // JAAS TODO For now we assume there's no fast JNI
-   if (false && supportsFastJNI(fe))
+   if (supportsFastJNI(fe))
       {
       // a non-NULL target address is returned for both JNI natives and non-JNI natives with FastJNI replacements, NULL otherwise
       // properties will be non-zero IFF the target address points to a FastJNI replacement
-      _jniTargetAddress = j9fe->getJ9JITConfig()->javaVM->internalVMFunctions->jniNativeMethodProperties(j9fe->vmThread(), _ramMethod, &_jniProperties);
+      _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_jniNativeMethodProperties, _ramMethod);
+      auto recv = _stream->read<uintptrj_t, void*>();
+      _jniProperties = std::get<0>(recv);
+      _jniTargetAddress = std::get<1>(recv);
       }
    else
       {

@@ -810,6 +810,14 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
             client->write(std::string());
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_jniNativeMethodProperties:
+         {
+         auto ramMethod = std::get<0>(client->getRecvData<J9Method*>());
+         uintptrj_t jniProperties;
+         void *jniTargetAddress = fe->getJ9JITConfig()->javaVM->internalVMFunctions->jniNativeMethodProperties(fe->vmThread(), ramMethod, &jniProperties);
+         client->write(jniProperties, jniTargetAddress);
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
