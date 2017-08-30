@@ -60,6 +60,7 @@ public:
    virtual TR_OpaqueClassBlock *getClassFromNewArrayType(int32_t arrayType) override;
    virtual bool isCloneable(TR_OpaqueClassBlock *clazzPointer) override;
    virtual bool canAllocateInlineClass(TR_OpaqueClassBlock *clazz) override;
+   virtual bool supportAllocationInlining(TR::Compilation *comp, TR::Node *node) override;
    };
 
 #endif // VMJ9SERVER_H

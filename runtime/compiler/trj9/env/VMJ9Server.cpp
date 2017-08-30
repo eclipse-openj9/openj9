@@ -454,3 +454,9 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
    stream->write(JAAS::J9ServerMessageType::VM_canAllocateInlineClass, clazz);
    return std::get<0>(stream->read<bool>());
    }
+
+bool
+TR_J9ServerVM::supportAllocationInlining(TR::Compilation *comp, TR::Node *node)
+   {
+   return false;
+   }
