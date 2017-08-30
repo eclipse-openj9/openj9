@@ -1527,10 +1527,6 @@ TR_RelocationRecordDataAddress::findDataAddress(TR_RelocationRuntime *reloRuntim
    if (address == NULL)
       {
       RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tfindDataAddress: unresolved\n");
-
-      // JAAS TODO: If a static field fails to resolve, we return address of the corresponding entry in the RAM constant pool.
-      // This might not be safe, but it seems to work. We probably need a better solution in the long term.
-      return ((uint8_t*)&cp[cpindex]) + extraOffset;
       }
 
    address = address + extraOffset;
