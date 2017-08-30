@@ -611,10 +611,10 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
-         // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
+         // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only
          // easily done on the client side.
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
-         TR_ResolvedJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9Method(method, fe, trMemory);
+         TR_ResolvedRelocatableJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(method, fe, trMemory);
          if (!resolvedMethod) throw std::bad_alloc();
 
          J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *)(J9_CP_FROM_METHOD(resolvedMethod->ramMethod()));
@@ -628,26 +628,26 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_isJNINative:
          {
-         TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedRelocatableJ9Method *>());
          client->write(method->isJNINative());
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isInterpreted:
          {
-         TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedRelocatableJ9Method *>());
          client->write(method->isInterpreted());
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getClassLoader:
          {
-         TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedRelocatableJ9Method *>());
          client->write(method->getClassLoader());
          }
          break;
       case J9ServerMessageType::ResolvedMethod_staticAttributes:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t, bool, bool>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          int32_t isStore = std::get<2>(recv);
          int32_t needAOTValidation = std::get<3>(recv);
@@ -660,24 +660,24 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_getClassFromConstantPool:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, uint32_t>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
          uint32_t cpIndex = std::get<1>(recv);
          client->write(method->getClassFromConstantPool(TR::comp(), cpIndex));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getDeclaringClassFromFieldOrStatic:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          client->write(method->getDeclaringClassFromFieldOrStatic(TR::comp(), cpIndex));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_classOfStatic:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t, bool>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          int32_t returnClassForAOT = std::get<2>(recv);
          client->write(method->classOfStatic(cpIndex, returnClassForAOT));
@@ -685,8 +685,8 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_fieldAttributes:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
-         TR_ResolvedMethod *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t, bool, bool>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
          I_32 cpIndex = std::get<1>(recv);
          bool isStore = std::get<2>(recv);
          bool needAOTValidation = std::get<3>(recv);
@@ -699,8 +699,8 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedStaticMethod:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, I_32>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          J9Method *ramMethod = nullptr;
             {
@@ -712,8 +712,8 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethod:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, I_32>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          J9Method *ramMethod = jitGetJ9MethodUsingIndex(fe->vmThread(), method->cp(), cpIndex);
          bool resolve = !((fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
@@ -729,15 +729,15 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_classCPIndexOfMethod:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, uint32_t>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          client->write(method->classCPIndexOfMethod(cpIndex));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_startAddressForJittedMethod:
          {
-         TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedRelocatableJ9Method *>());
          client->write(method->startAddressForJittedMethod());
          }
          break;
@@ -770,7 +770,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_virtualMethodIsOverridden:
          {
-         TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedRelocatableJ9Method *>());
          client->write(method->virtualMethodIsOverridden());
          }
          break;
@@ -795,8 +795,8 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_setRecognizedMethodInfo:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, TR::RecognizedMethod>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, TR::RecognizedMethod>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
          TR::RecognizedMethod rm = std::get<1>(recv);
          method->setRecognizedMethodInfo(rm);
          client->write(JAAS::Void());
@@ -804,8 +804,8 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_localName:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, U_32, U_32>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, U_32, U_32>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
          U_32 slotNumber = std::get<1>(recv);
          U_32 bcIndex = std::get<2>(recv);
          I_32 len;
