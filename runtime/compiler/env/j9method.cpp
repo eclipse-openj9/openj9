@@ -8399,32 +8399,6 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    construct(aMethod, fe, trMemory, owningMethod, vTableSlot);
    }
 
-U_8*
-TR_ResolvedJ9JAASServerMethod::allocateException(uint32_t numBytes, TR::Compilation *comp)
-   {
-   J9JITExceptionTable *eTbl = NULL;
-   uint32_t size = 0;
-   bool shouldRetryAllocation;
-   eTbl = (J9JITExceptionTable *)_fe->allocateDataCacheRecord(numBytes, comp, true, &shouldRetryAllocation,
-                                                              J9_JIT_DCE_EXCEPTION_INFO, &size);
-   if (!eTbl)
-      {
-      if (shouldRetryAllocation)
-         {
-         // force a retry
-         comp->failCompilation<J9::RecoverableDataCacheError>("Failed to allocate exception table");
-         }
-      comp->failCompilation<J9::DataCacheError>("Failed to allocate exception table");
-      }
-   memset((uint8_t *)eTbl, 0, size);
-
-   // These get updated in TR_RelocationRuntime::relocateAOTCodeAndData
-   eTbl->ramMethod = NULL;
-   eTbl->constantPool = NULL;
-
-   return (U_8 *) eTbl;
-   }
-
 J9ROMClass *
 TR_ResolvedJ9JAASServerMethod::romClassPtr()
    {

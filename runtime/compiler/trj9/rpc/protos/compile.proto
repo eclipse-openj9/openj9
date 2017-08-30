@@ -59,7 +59,7 @@ enum J9ServerMessageType
    ResolvedMethod_getClassFromConstantPool = 106;
    ResolvedMethod_getDeclaringClassFromFieldOrStatic = 107;
    ResolvedMethod_classOfStatic = 108;
-   ResolvedMethod_isUnresolvedString = 109;
+//   ResolvedMethod_isUnresolvedString = 109;
    ResolvedMethod_fieldAttributes = 110;
    ResolvedMethod_getResolvedStaticMethod = 111;
    ResolvedMethod_getResolvedSpecialMethod = 112;

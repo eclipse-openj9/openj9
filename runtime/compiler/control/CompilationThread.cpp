@@ -637,7 +637,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(method->getClassLoader());
          }
-      break;
+         break;
       case J9ServerMessageType::ResolvedMethod_staticAttributes:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
@@ -651,7 +651,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          bool result = method->staticAttributes(TR::comp(), cpIndex, &address, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
          client->write(address, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
          }
-      break;
+         break;
       case J9ServerMessageType::ResolvedMethod_getClassFromConstantPool:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
@@ -659,7 +659,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          uint32_t cpIndex = std::get<1>(recv);
          client->write(method->getClassFromConstantPool(TR::comp(), cpIndex));
          }
-      break;
+         break;
       case J9ServerMessageType::ResolvedMethod_getDeclaringClassFromFieldOrStatic:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
@@ -667,7 +667,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          int32_t cpIndex = std::get<1>(recv);
          client->write(method->getDeclaringClassFromFieldOrStatic(TR::comp(), cpIndex));
          }
-      break;
+         break;
       case J9ServerMessageType::ResolvedMethod_classOfStatic:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
@@ -676,16 +676,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          int32_t returnClassForAOT = std::get<2>(recv);
          client->write(method->classOfStatic(cpIndex, returnClassForAOT));
          }
-      break;
-      case J9ServerMessageType::ResolvedMethod_isUnresolvedString:
-         {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
-         int32_t cpIndex = std::get<1>(recv);
-         int32_t optimizeForAOT = std::get<2>(recv);
-         client->write(method->isUnresolvedString(cpIndex, optimizeForAOT));
-         }
-      break;
+         break;
       case J9ServerMessageType::ResolvedMethod_fieldAttributes:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool, bool>();
@@ -699,7 +690,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          bool result = method->fieldAttributes(TR::comp(), cpIndex, &fieldOffset, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
          client->write(fieldOffset, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
          }
-      break;
+         break;
       case J9ServerMessageType::ResolvedMethod_getResolvedStaticMethod:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
