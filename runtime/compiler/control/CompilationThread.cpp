@@ -866,9 +866,9 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_getUnresolvedStaticMethodInCP:
          {
-         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, uint32_t>();
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t>();
          TR_ResolvedRelocatableJ9Method *method= std::get<0>(recv);
-         uint32_t cpIndex = std::get<1>(recv);
+         int32_t cpIndex = std::get<1>(recv);
          client->write(method->getUnresolvedStaticMethodInCP(cpIndex));
          }
          break;
