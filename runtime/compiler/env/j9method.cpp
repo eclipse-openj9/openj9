@@ -8753,3 +8753,10 @@ TR_ResolvedJ9JAASServerMethod::startAddressForJNIMethod(TR::Compilation *comp)
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_startAddressForJNIMethod, _remoteMirror);
    return std::get<0>(_stream->read<void *>());
    }
+
+bool
+TR_ResolvedJ9JAASServerMethod::getUnresolvedStaticMethodInCP(int32_t cpIndex)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getUnresolvedStaticMethodInCP, _remoteMirror, cpIndex);
+   return std::get<0>(_stream->read<bool>());
+   }
