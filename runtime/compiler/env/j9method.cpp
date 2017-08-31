@@ -8358,7 +8358,8 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _ramMethod = (J9Method *)aMethod;
 
    // Create client side mirror of this object to use for calls involving RAM data
-   _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethod, vTableSlot);
+   TR_ResolvedRelocatableJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JAASServerMethod*) owningMethod)->_remoteMirror : nullptr;
+   _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot);
    auto recv = _stream->read<TR_ResolvedRelocatableJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uint64_t>();
 
    _remoteMirror = std::get<0>(recv);
