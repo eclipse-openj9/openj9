@@ -8347,7 +8347,7 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
 //
 
 TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
-   : TR_ResolvedRelocatableJ9Method(aMethod, fe, trMemory, owningMethod, vTableSlot)
+   : TR_ResolvedRelocatableJ9Method(fe, owningMethod)
    {
 
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
