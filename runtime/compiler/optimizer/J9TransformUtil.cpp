@@ -23,6 +23,7 @@
 #include "optimizer/TransformUtil.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "env/CompilerEnv.hpp"
 #include "il/Block.hpp"
 #include "il/Block_inlines.hpp"
@@ -1009,6 +1010,8 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
 bool
 J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
    {
+   if (TR::CompilationInfo::_stream)
+      return false;
    TR_ASSERT(node->getOpCode().isLoadVarDirect(), "Expecting direct load; found %s %p", node->getOpCode().getName(), node);
    TR::SymbolReference *symRef = node->getSymbolReference();
    TR::Symbol           *sym    = node->getSymbol();
