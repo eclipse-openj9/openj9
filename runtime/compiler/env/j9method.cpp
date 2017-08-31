@@ -8691,6 +8691,7 @@ TR_ResolvedJ9JAASServerMethod::virtualMethodIsOverridden()
    return std::get<0>(_stream->read<bool>());
    }
 
+
 TR_OpaqueClassBlock *
 TR_ResolvedJ9JAASServerMethod::getResolvedInterfaceMethod(I_32 cpIndex, UDATA *pITableIndex)
    {
@@ -8741,4 +8742,14 @@ TR_ResolvedJ9JAASServerMethod::getResolvedInterfaceMethodOffset(TR_OpaqueClassBl
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodOffset, _remoteMirror, classObject, cpIndex);
    auto recv = _stream->read<U_32>();
    return std::get<0>(recv);
+   }
+
+void *
+TR_ResolvedJ9JAASServerMethod::startAddressForJNIMethod(TR::Compilation *comp)
+   {
+   // For fastJNI methods, we have the address cached
+   if (_jniProperties)
+      return _jniTargetAddress;
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_startAddressForJNIMethod, _remoteMirror);
+   return std::get<0>(_stream->read<void *>());
    }

@@ -858,6 +858,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(offset);
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_startAddressForJNIMethod:
+         {
+         TR_ResolvedRelocatableJ9Method *ramMethod = std::get<0>(client->getRecvData<TR_ResolvedRelocatableJ9Method *>());
+         client->write(ramMethod->startAddressForJNIMethod(TR::comp()));
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
