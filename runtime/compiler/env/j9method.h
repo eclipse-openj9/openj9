@@ -602,7 +602,7 @@ public:
    virtual TR_OpaqueClassBlock * getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex) override;
    virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false) override;
    virtual bool isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override;
-   virtual TR_ResolvedMethod *   getResolvedVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreReResolve, bool * unresolvedInCP) override;
+   virtual TR_ResolvedMethod * getResolvedVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreReResolve, bool * unresolvedInCP) override;
    virtual TR_ResolvedMethod * getResolvedStaticMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP) override;
    virtual TR_ResolvedMethod * getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP) override;
    virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats) override;
@@ -611,6 +611,9 @@ public:
    virtual void * startAddressForJittedMethod() override;
    virtual char * localName(uint32_t slotNumber, uint32_t bcIndex, int32_t &len, TR_Memory *) override;
    virtual bool virtualMethodIsOverridden() override;
+   virtual TR_ResolvedMethod * getResolvedInterfaceMethod(TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
+   virtual TR_OpaqueClassBlock * getResolvedInterfaceMethod(int32_t cpIndex, uintptrj_t * pITableIndex) override;
+   virtual uint32_t getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override

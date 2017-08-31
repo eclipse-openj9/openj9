@@ -68,6 +68,9 @@ enum J9ServerMessageType
    ResolvedMethod_localName = 115;
    ResolvedMethod_getResolvedVirtualMethod = 116;
    ResolvedMethod_virtualMethodIsOverridden = 117;
+   ResolvedMethod_getResolvedInterfaceMethod_2 = 118; // arity 2
+   ResolvedMethod_getResolvedInterfaceMethod_3 = 119; // arity 3
+   ResolvedMethod_getResolvedInterfaceMethodOffset = 120;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;

@@ -827,6 +827,37 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(jniProperties, jniTargetAddress);
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethod_2:
+         {
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method*, I_32>();
+         auto mirror = std::get<0>(recv);
+         auto cpIndex = std::get<1>(recv);
+         UDATA pITableIndex;
+         TR_OpaqueClassBlock *clazz = mirror->getResolvedInterfaceMethod(cpIndex, &pITableIndex);
+         client->write(clazz, pITableIndex);
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethod_3:
+         {
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock*, TR_OpaqueClassBlock*, I_32>();
+         auto method = std::get<0>(recv);
+         auto clazz = std::get<1>(recv);
+         auto cpIndex = std::get<2>(recv);
+         J9Method * ramMethod = (J9Method *)fe->getResolvedInterfaceMethod(method, clazz, cpIndex);
+         bool resolved = ramMethod && J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod);
+         client->write(resolved, ramMethod);
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodOffset:
+         {
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method*, TR_OpaqueClassBlock*, I_32>();
+         auto mirror = std::get<0>(recv);
+         auto clazz = std::get<1>(recv);
+         auto cpIndex = std::get<2>(recv);
+         U_32 offset = mirror->getResolvedInterfaceMethodOffset(clazz, cpIndex);
+         client->write(offset);
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());

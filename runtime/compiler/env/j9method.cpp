@@ -8689,3 +8689,55 @@ TR_ResolvedJ9JAASServerMethod::virtualMethodIsOverridden()
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_virtualMethodIsOverridden, _remoteMirror);
    return std::get<0>(_stream->read<bool>());
    }
+
+TR_OpaqueClassBlock *
+TR_ResolvedJ9JAASServerMethod::getResolvedInterfaceMethod(I_32 cpIndex, UDATA *pITableIndex)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethod_2, _remoteMirror, cpIndex);
+   auto recv = _stream->read<TR_OpaqueClassBlock *, UDATA>();
+   *pITableIndex = std::get<1>(recv);
+   return std::get<0>(recv);
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9JAASServerMethod::getResolvedInterfaceMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 cpIndex)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethod_3, getPersistentIdentifier(), classObject, cpIndex);
+   auto recv = _stream->read<bool, J9Method*>();
+   bool resolved = std::get<0>(recv);
+   J9Method *ramMethod = std::get<1>(recv);
+
+   // If the method ref is unresolved, the bytecodes of the ramMethod will be NULL.
+   // IFF resolved, then we can look at the rest of the ref.
+   //
+   if (resolved)
+      {
+      TR_AOTInliningStats *aotStats = NULL;
+      if (comp->getOption(TR_EnableAOTStats))
+         aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->interfaceMethods);
+      TR_ResolvedMethod *m = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, NULL, aotStats);
+
+      TR_OpaqueClassBlock *c = NULL;
+      if (m)
+         {
+         c = m->classOfMethod();
+         if (c && !_fe->isInterfaceClass(c))
+            {
+            TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface");
+            TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface:#bytes", sizeof(TR_ResolvedJ9Method));
+            return m;
+            }
+         }
+      }
+
+   TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface/null");
+   return 0;
+   }
+
+U_32
+TR_ResolvedJ9JAASServerMethod::getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, I_32 cpIndex)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getResolvedInterfaceMethodOffset, _remoteMirror, classObject, cpIndex);
+   auto recv = _stream->read<U_32>();
+   return std::get<0>(recv);
+   }
