@@ -195,6 +195,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/codegen/OMRRealRegister.cpp \
     omr/compiler/codegen/OMRRegisterPair.cpp \
     omr/compiler/codegen/OMRInstruction.cpp \
+    omr/compiler/codegen/ELFObjectFileGenerator.cpp \
+    omr/compiler/codegen/OMRELFRelocationResolver.cpp \
     tr.source/trj9/control/J9Recompilation.cpp \
     omr/compiler/codegen/OMRMemoryReference.cpp \
     omr/compiler/codegen/OMRMachine.cpp \

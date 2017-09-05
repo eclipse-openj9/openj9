@@ -24,7 +24,9 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/x/amd64/codegen/OMRMemoryReference.cpp \
     omr/compiler/x/amd64/codegen/OMRRealRegister.cpp \
     omr/compiler/x/amd64/codegen/OMRTreeEvaluator.cpp \
-    omr/compiler/x/amd64/codegen/AMD64SystemLinkage.cpp
+    omr/compiler/x/amd64/codegen/AMD64SystemLinkage.cpp \
+    omr/compiler/x/amd64/codegen/OMRELFRelocationResolver.cpp \
+
 
 JIT_PRODUCT_SOURCE_FILES+=\
     tr.source/trj9/x/amd64/codegen/J9CodeGenerator.cpp \
