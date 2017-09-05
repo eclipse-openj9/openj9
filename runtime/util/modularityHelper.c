@@ -267,6 +267,11 @@ isPackageExportedToModuleHelper(J9VMThread *currentThread, J9Module *fromModule,
 				 */
 				isExported = (*targetPtr == toModule);
 			}
+		} else if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_DENY_ILLEGAL_ACCESS)) {
+			/* in Java9 --illegal-access=permit is turned on by default. This opens
+			 * each package to all-unnamed modules unless illegal-access=deny is specified
+			 */
+			isExported = TRUE;
 		}
 	}
 	return isExported;
