@@ -7333,6 +7333,10 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM);
       entry->_useAotCompilation = true;
       }
+   else if (entry->_stream)
+      {
+      comp()->failCompilation<TR::CompilationException>("Need to be able to do relocatable compile if performing remote compilation");
+      }
    else if (canDoRelocatableCompile)
       {
       _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
