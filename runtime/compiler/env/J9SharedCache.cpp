@@ -140,19 +140,16 @@ TR_J9SharedCache::log(char *format, ...)
    JITRT_UNLOCK_LOG(jitConfig());
    }
 
-
 uint32_t
 TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
    {
-   return getHint(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method));
-   }
-
-uint32_t
-TR_J9SharedCache::getHint(J9VMThread * vmThread, J9ROMMethod *romMethod)
-   {
+   if (TR::CompilationInfo::_stream)
+      return 0; // JAAS TODO: bypass
    uint32_t result = 0;
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+   J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+
    unsigned char storeBuffer[4];
    uint32_t bufferLength = 4;
    J9SharedDataDescriptor descriptor;
@@ -173,18 +170,15 @@ TR_J9SharedCache::getHint(J9VMThread * vmThread, J9ROMMethod *romMethod)
 uint16_t
 TR_J9SharedCache::getAllEnabledHints(J9Method *method)
    {
-   return getAllEnabledHints(J9_ROM_METHOD_FROM_RAM_METHOD(method));
-   }
-uint16_t
-TR_J9SharedCache::getAllEnabledHints(J9ROMMethod *romMethod)
-   {
+   if (TR::CompilationInfo::_stream)
+      return 0; // JAAS TODO: bypass
    uint16_t hintFlags = 0;
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    if (_hintsEnabledMask)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       J9VMThread * vmThread = fej9->getCurrentVMThread();
-      uint32_t scHints = getHint(vmThread, romMethod);
+      uint32_t scHints = getHint(vmThread, method);
       hintFlags = *((uint16_t *)&scHints) & _hintsEnabledMask;
       }
 #endif // defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
@@ -195,163 +189,117 @@ TR_J9SharedCache::getAllEnabledHints(J9ROMMethod *romMethod)
 bool
 TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t *dataField)
    {
-   return isHint(J9_ROM_METHOD_FROM_RAM_METHOD(method), theHint, dataField);
-   }
+   if (TR::CompilationInfo::_stream)
+      return false; // JAAS TODO: bypass
+   bool isHint = false;
 
-bool
-TR_J9SharedCache::isHint(J9ROMMethod *romMethod, TR_SharedCacheHint theHint, uint16_t *dataField)
-   {
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-   if (TR::Options::sharedClassCache()       // shared classes and AOT must be enabled
-       && !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableSharedCacheHints)
-       && ((theHint & TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags()) != 0)
-       && theHint != TR_NoHint)
+   uint16_t hint = ((uint16_t)theHint) & _hintsEnabledMask;
+   if (hint != 0)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+      J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
       J9VMThread * vmThread = fej9->getCurrentVMThread();
-      uint32_t scHints = getHint(vmThread, romMethod);
-      uint16_t SChintFlags = *((uint16_t *)&scHints);
+      uint32_t scHints = getHint(vmThread, method);
+      uint16_t hintFlags = *((uint16_t *)&scHints);
 
       if (dataField)
-         *dataField = *((uint16_t *)&scHints + 1);
+         *dataField = *(((uint16_t *)&scHints) + 1);
 
-      // JAAS TODO
-      /*if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSCHints))
+      if (_verboseHints)
          {
-         char buffer[500];
-         printTruncatedSignature(buffer, 500, (TR_OpaqueMethodBlock *) method);
-         TR::CompilationInfo * compInfo = TR::CompilationInfo::get(_jitConfig);
-         TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"is hint %x(%x) %s", SChintFlags, hint, buffer);
-         }*/
-      return (SChintFlags & theHint) != 0;
+         char methodSignature[500];
+         int32_t maxSignatureLength = 500;
+         fej9->printTruncatedSignature(methodSignature, maxSignatureLength, (TR_OpaqueMethodBlock *) method);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"is hint %x(%x) %s", hintFlags, hint, methodSignature);
+         }
+      isHint = (hintFlags & hint) != 0;
       }
 #endif // defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390))
-   return false;
+   return isHint;
 }
 
 bool
 TR_J9SharedCache::isHint(TR_ResolvedMethod *method, TR_SharedCacheHint hint, uint16_t *dataField)
    {
-   return isHint(((TR_ResolvedJ9Method *) method)->romMethod(), hint, dataField);
+   if (TR::CompilationInfo::_stream)
+      return false; // JAAS TODO: bypass
+   return isHint(((TR_ResolvedJ9Method *) method)->ramMethod(), hint, dataField);
    }
 
 void
 TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
    {
-   addHint(J9_ROM_METHOD_FROM_RAM_METHOD(method), theHint);
-   }
-
-void
-TR_J9SharedCache::addHint(J9ROMMethod * romMethod, TR_SharedCacheHint hint)
-   {
+   if (TR::CompilationInfo::_stream)
+      return; // JAAS TODO: bypass
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    static bool SCfull = false;
-   if (SCfull && TR::Options::getCmdLineOptions()->getOption(TR_DisableUpdateJITBytesSize))
-      return;
-
-   if (TR::Options::sharedClassCache()        // shared classes and AOT must be enabled
-       && !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableSharedCacheHints)
-       && ((hint & TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags()) != 0)
-       && hint != TR_NoHint)
+   uint16_t newHint = ((uint16_t)theHint) & _hintsEnabledMask;
+   if (newHint)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+      J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
       J9VMThread * vmThread = fej9->getCurrentVMThread();
 
-      // JAAS TODO
-      //char myBuffer[500];
-      //uint32_t bufferLength = 500;
+      char methodSignature[500];
+      uint32_t maxSignatureLength = 500;
 
-      bool isFailedValidationHint = (hint == TR_HintFailedValidation);
+      bool isFailedValidationHint = (newHint == TR_HintFailedValidation);
 
-      // JAAS TODO
-      /*if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSCHints))
+      if (_verboseHints)
          {
-         if (romMethod)
-            {
-            printTruncatedSignature(myBuffer, 500, (TR_OpaqueMethodBlock *) method);
-            TR::CompilationInfo * compInfo = TR::CompilationInfo::get(_jitConfig);
-            TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"adding hint 0x%x %s", hint, myBuffer);
-            }
-         }*/
+         fej9->printTruncatedSignature(methodSignature, maxSignatureLength, (TR_OpaqueMethodBlock *) method);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"adding hint 0x%x %s", newHint, methodSignature);
+         }
 
       // There is only one scenario where concurrency *may* matter, so we don't get a lock
       // The scenario is where a compilation thread wants to register a hint about the method it's compiling at
       // the same time that another thread is inlining it *for the first time*. In that case, one of the hints
       // won't be registered. The affect, however is minimal, and likely to correct itself in the current run
       // (if the inlining hint is missed) or a subsequent run (if the other hint is missed).
-      uint32_t scHints = getHint(vmThread, romMethod);
-      uint16_t *flagsToBeWritten = (uint16_t *)&scHints;
-      uint16_t *newScount = (uint16_t *)&scHints + 1; // Flags and new scount field needs to be in contiguous location to be stored into sharecache
-      bool increaseHintCount = false;
-      bool existsHintAlready = (*flagsToBeWritten != 0);
 
-      if (hint & *flagsToBeWritten)
-         { // Exists this hint already
-         if (!isFailedValidationHint)
-            {
-            return;
-            }
-         else
-            { // If exists a failed validation hint already, then find the current scount and increase it
-            if (!(*newScount == TR_DEFAULT_INITIAL_COUNT)) // not yet reached cap scount
-               {
-               increaseHintCount = true;
-               *newScount *= 10;
-               }
-            }
-         }
-      else if (isFailedValidationHint)
-         { // Creating a new hint for failed validation.  Note that if a user specifies counts explicitly, then the user specified count is obeyed
-         increaseHintCount = true;
-         *newScount = 10 * std::min(TR::Options::getCmdLineOptions()->getInitialSCount(), TR::Options::getAOTCmdLineOptions()->getInitialSCount());
-         if (*newScount == 0) *newScount = 10;
-         }
+      uint32_t scHintData = getHint(vmThread, method);
+      uint16_t *hintFlags = (uint16_t *)&scHintData;
+      uint16_t *hintCount = ((uint16_t *)&scHintData) + 1; // Flags and new count field needs to be in contiguous location to be stored into sharecache
 
-      if (isFailedValidationHint && (*newScount > TR_DEFAULT_INITIAL_COUNT))
-         { // Cap the new scount
-         *newScount = TR_DEFAULT_INITIAL_COUNT;
-         }
+      bool hintDidNotExist = ((newHint & *hintFlags) == 0);
+      const uint32_t scHintDataLength = sizeof(scHintData);
 
-      const uint32_t scHintDataLength = 4;
-
-      if (!existsHintAlready)
+      if (hintDidNotExist)
          {
          uint32_t bytesToPersist = 0;
 
          if (!SCfull)
             {
-            *flagsToBeWritten |= hint;
+            if (isFailedValidationHint)
+               *hintCount = 10 * _initialHintSCount;
 
-            // store in the shared cache
             J9SharedDataDescriptor descriptor;
-            descriptor.address = (U_8*)flagsToBeWritten;
+            descriptor.address = (U_8*)hintFlags;
             descriptor.length = scHintDataLength; // Size includes the 2nd data field, currently only used for TR_HintFailedValidation
             descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
             descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
             UDATA store = sharedCacheConfig()->storeAttachedData(vmThread, romMethod, &descriptor, 0);
-
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSCHints))
+            TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig());
+            if (store == 0)
                {
-               TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig());
-
-               if (store == 0)
-                  {
-                  //JAAS TODO
-                  //TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint added 0x%x (%p), key = %s, scount: %d", *flagsToBeWritten, store, myBuffer, *newScount);
-                  }
-               else if (store != J9SHR_RESOURCE_STORE_FULL)
-                  {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: could not be added into SC");
-                  }
-               else
-                  {
-                  SCfull = true;
-                  bytesToPersist = scHintDataLength;
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: SCC full");
-                  }
+               if (_verboseHints)
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint added 0x%x, key = %s, scount: %d", *hintFlags, methodSignature, *hintCount);
+               }
+            else if (store != J9SHR_RESOURCE_STORE_FULL)
+               {
+               if (_verboseHints)
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: could not be added into SC\n");
+               }
+            else
+               {
+               SCfull = true;
+               bytesToPersist = scHintDataLength;
+               if (_verboseHints)
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: SCC full\n");
                }
             }
-         else
+         else // SCC Full
             {
             bytesToPersist = scHintDataLength;
             }
@@ -365,51 +313,57 @@ TR_J9SharedCache::addHint(J9ROMMethod * romMethod, TR_SharedCacheHint hint)
          }
       else
          {
-         if (!isFailedValidationHint || (isFailedValidationHint && increaseHintCount))
+         bool updateHint = false;
+         if (isFailedValidationHint)
             {
-            *flagsToBeWritten |= hint;
-
-            // store in the shared cache
-            J9SharedDataDescriptor descriptor;
-            descriptor.address = (U_8*)flagsToBeWritten;
-            descriptor.length = scHintDataLength; // Size includes the 2nd data field, currently only used for TR_HintFailedValidation
-            descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
-            descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
-            UDATA store = sharedCacheConfig()->updateAttachedData(vmThread, romMethod, 0, &descriptor); // update the existing attached data
-
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSCHints))
+            uint16_t oldCount = *hintCount;
+            uint16_t newCount = std::min(oldCount * 10, TR_DEFAULT_INITIAL_COUNT);
+            updateHint = true;
+            if (newCount == oldCount)
                {
-               TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig());
-
-               if (store == 0)
+               updateHint = false;
+               if (_verboseHints)
                   {
-                  //JAAS TODO
-                  //TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint updated 0x%x (%p), key = %s, scount: %d", *flagsToBeWritten, store, myBuffer, *newScount);
-                  }
-               else
-                  {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: could not be updated into SC");
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint reached max count of %d", oldCount);
                   }
                }
             }
-         else
+
+         if (updateHint)
             {
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSCHints))
+            J9SharedDataDescriptor descriptor;
+            descriptor.address = (U_8*)hintFlags;
+            descriptor.length = scHintDataLength; // Size includes the 2nd data field, currently only used for TR_HintFailedValidation
+            descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
+            descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
+            UDATA update = sharedCacheConfig()->updateAttachedData(vmThread, romMethod, 0, &descriptor);
+
+            if (_verboseHints)
                {
-               TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig());
-               TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint reached max count of %d", *newScount);
+               if (update == 0)
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint updated 0x%x, key = %s, scount: %d", *hintFlags, methodSignature, *hintCount);
+                  }
+               else
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint error: could not be updated into SC\n");
+                  }
                }
             }
          }
       }
+
 #endif // defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390))
    }
 
 void
 TR_J9SharedCache::addHint(TR_ResolvedMethod * method, TR_SharedCacheHint hint)
    {
-   addHint(((TR_ResolvedJ9Method *) method)->romMethod(), hint);
+   if (TR::CompilationInfo::_stream)
+      return; // JAAS TODO: bypass
+   addHint(((TR_ResolvedJ9Method *) method)->ramMethod(), hint);
    }
+
 
 void
 TR_J9SharedCache::persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR::Compilation *comp)
