@@ -978,7 +978,14 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(romClassOffset);
          }
          break;
-     default:
+      case J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache:
+         {
+         auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         uintptrj_t classChainOffsetInSharedCache = fe->sharedCache()->lookupClassChainOffsetInSharedCacheFromClass(j9class);
+         client->write(classChainOffsetInSharedCache);
+         }
+         break;
+      default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();
       }

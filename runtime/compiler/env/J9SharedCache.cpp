@@ -34,6 +34,7 @@
 #include "env/VMJ9.h"
 #include "env/j9method.h"
 #include "runtime/IProfiler.hpp"
+#include "env/ClassLoaderTable.hpp"
 
 #define   LOG(n,c) \
    if (_logLevel >= (3*n)) \
@@ -407,6 +408,7 @@ TR_J9SharedCache::isPointerInSharedCache(void *ptr, void * & cacheOffset)
       cacheOffset = (void*)offset;
       return true;
       }
+   LOG(5,{ log("isPointerInSharedCache FAIL offset %d size %d\n", offset, _cacheSizeInBytes);});
    return false;
    }
 
@@ -437,7 +439,7 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
    J9ROMClass *romClass = TR::Compiler->cls.romClassOf(fej9->convertClassPtrToClassOffset(clazz));
 
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-   LOG(5,{ log("rememberClass class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
+   LOG(5,{ log("rememberClass class %p romClass %p %.*s\n", clazz, romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
 
    void * classOffsetInCache;
    if (! isPointerInSharedCache(romClass, classOffsetInCache))
@@ -755,4 +757,23 @@ TR_J9SharedCache::lookupClassFromChainAndLoader(uintptrj_t *chainData, void *cla
       return (TR_OpaqueClassBlock *) clazz;
 
    return NULL;
+   }
+
+uintptrj_t TR_J9SharedCache::lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz)
+   {
+   if (auto stream = TR::CompilationInfo::_stream)
+      {
+      stream->write(JAAS::J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache, clazz);
+      return std::get<0>(stream->read<uintptrj_t>());
+      }
+   else
+      {
+      void *loaderForClazz = _fe->getClassLoader(clazz);
+      fprintf(stderr,"SharedCache: loaderForClazz %p\n", loaderForClazz);
+      void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
+      fprintf(stderr,"SharedCache: classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
+      uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+      fprintf(stderr,"SharedCache: classChainOffsetInSharedCache %p\n", (void*)classChainOffsetInSharedCache);
+      return classChainOffsetInSharedCache;
+      }
    }

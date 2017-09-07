@@ -47,6 +47,7 @@ public:
    virtual bool isPointerInSharedCache(void *ptr, void * & cacheOffset) { return false; }
 
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *cinaData, void *loader) { return NULL; }
+   virtual uintptrj_t lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz) { return 0; }
 
    void setPersistentClassLoaderTable(TR_PersistentClassLoaderTable *table) { _persistentClassLoaderTable = table; }
 

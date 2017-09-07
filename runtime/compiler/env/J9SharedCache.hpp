@@ -81,6 +81,8 @@ public:
 
    TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader);
 
+   uintptrj_t lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz);
+
    bool isPointerInSharedCache(void *ptr, void * & cacheOffset);
 
    
