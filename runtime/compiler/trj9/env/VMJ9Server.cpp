@@ -117,6 +117,7 @@ void *
 TR_J9ServerVM::getClassLoader(TR_OpaqueClassBlock * classPointer)
    {
    TR_ASSERT(false, "The server vm should not call getClassLoader.");
+   return nullptr;
    }
 
 TR_OpaqueClassBlock *

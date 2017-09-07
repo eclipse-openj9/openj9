@@ -8445,8 +8445,8 @@ TR_ResolvedJ9JAASServerMethod::setRecognizedMethodInfo(TR::RecognizedMethod rm)
 J9ClassLoader *
 TR_ResolvedJ9JAASServerMethod::getClassLoader()
    {
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getClassLoader, _remoteMirror);
-   return std::get<0>(_stream->read<J9ClassLoader *>());
+   TR_ASSERT(false, "Should not call getClassLoader on the server.");
+   return nullptr;
    }
 
 bool

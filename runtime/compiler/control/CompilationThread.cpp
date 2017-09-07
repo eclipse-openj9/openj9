@@ -641,12 +641,6 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(method->isInterpreted());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getClassLoader:
-         {
-         TR_ResolvedRelocatableJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedRelocatableJ9Method *>());
-         client->write(method->getClassLoader());
-         }
-         break;
       case J9ServerMessageType::ResolvedMethod_staticAttributes:
          {
          auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t, bool, bool>();
