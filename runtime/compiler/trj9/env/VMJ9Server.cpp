@@ -116,9 +116,7 @@ TR_J9ServerVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
 void *
 TR_J9ServerVM::getClassLoader(TR_OpaqueClassBlock * classPointer)
    {
-   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_getClassLoader, classPointer);
-   return std::get<0>(stream->read<void *>());
+   TR_ASSERT(false, "The server vm should not call getClassLoader.");
    }
 
 TR_OpaqueClassBlock *

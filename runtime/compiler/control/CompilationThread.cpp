@@ -347,12 +347,6 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getClassClassPointer(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getClassLoader:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
-         client->write(fe->getClassLoader(clazz));
-         };
-         break;
       case J9ServerMessageType::VM_getClassOfMethod:
          {
          auto method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock*>());
