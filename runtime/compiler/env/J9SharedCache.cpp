@@ -769,11 +769,11 @@ uintptrj_t TR_J9SharedCache::lookupClassChainOffsetInSharedCacheFromClass(TR_Opa
    else
       {
       void *loaderForClazz = _fe->getClassLoader(clazz);
-      fprintf(stderr,"SharedCache: loaderForClazz %p\n", loaderForClazz);
+      //fprintf(stderr,"SharedCache: loaderForClazz %p\n", loaderForClazz);
       void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-      fprintf(stderr,"SharedCache: classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
+      //fprintf(stderr,"SharedCache: classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
       uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
-      fprintf(stderr,"SharedCache: classChainOffsetInSharedCache %p\n", (void*)classChainOffsetInSharedCache);
+      //fprintf(stderr,"SharedCache: classChainOffsetInSharedCache %p\n", (void*)classChainOffsetInSharedCache);
       return classChainOffsetInSharedCache;
       }
    }
