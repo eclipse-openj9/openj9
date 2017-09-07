@@ -462,3 +462,11 @@ TR_J9ServerVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentCla
    stream->write(JAAS::J9ServerMessageType::VM_getArrayClassFromComponentClass, componentClass);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
+
+J9Class *
+TR_J9ServerVM::matchRAMclassFromROMclass(J9ROMClass *clazz, TR::Compilation *comp)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_matchRAMclassFromROMclass, clazz);
+   return std::get<0>(stream->read<J9Class *>());
+   }

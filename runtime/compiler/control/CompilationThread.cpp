@@ -609,6 +609,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getArrayClassFromComponentClass(clazz));
          }
          break;
+      case J9ServerMessageType::VM_matchRAMclassFromROMclass:
+         {
+         J9ROMClass *clazz = std::get<0>(client->getRecvData<J9ROMClass *>());
+         client->write(fe->matchRAMclassFromROMclass(clazz, TR::comp()));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only

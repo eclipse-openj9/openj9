@@ -63,6 +63,7 @@ public:
    virtual bool isCloneable(TR_OpaqueClassBlock *clazzPointer) override;
    virtual bool canAllocateInlineClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override;
+   virtual J9Class * matchRAMclassFromROMclass(J9ROMClass *clazz, TR::Compilation *comp) override;
    };
 
 #endif // VMJ9SERVER_H
