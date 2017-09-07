@@ -124,6 +124,14 @@ enum J9ServerMessageType
    VM_canAllocateInlineClass = 247;
    VM_getArrayClassFromComponentClass = 248;
    VM_matchRAMclassFromROMclass = 249;
+   VM_getReferenceFieldAtAddress = 250;
+   VM_getVolatileReferenceFieldAt = 251;
+   VM_getInt32FieldAt = 252;
+   VM_getInt64FieldAt = 253;
+   VM_setInt64FieldAt = 254;
+   VM_compareAndSwapInt64FieldAt = 255;
+   VM_getArrayLengthInElements = 256;
+   VM_getClassFromJavaLangClass = 257;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

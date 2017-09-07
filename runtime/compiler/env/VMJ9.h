@@ -518,13 +518,13 @@ public:
 
    virtual uint32_t             getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock * clazz);
 
-   TR_OpaqueClassBlock *getObjectClass(uintptrj_t objectPointer);
-   uintptrj_t           getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
-   uintptrj_t           getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
-   uintptrj_t           getReferenceFieldAtAddress(uintptrj_t fieldAddress);
-   uintptrj_t           getReferenceFieldAtAddress(void *fieldAddress){ return getReferenceFieldAtAddress((uintptrj_t)fieldAddress); }
-   uintptrj_t           getStaticReferenceFieldAtAddress(uintptrj_t fieldAddress);
-   int32_t              getInt32FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset);
+   virtual TR_OpaqueClassBlock *getObjectClass(uintptrj_t objectPointer);
+   virtual uintptrj_t           getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
+   virtual uintptrj_t           getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
+   virtual uintptrj_t           getReferenceFieldAtAddress(uintptrj_t fieldAddress);
+   virtual uintptrj_t           getReferenceFieldAtAddress(void *fieldAddress){ return getReferenceFieldAtAddress((uintptrj_t)fieldAddress); }
+   virtual uintptrj_t           getStaticReferenceFieldAtAddress(uintptrj_t fieldAddress);
+   virtual int32_t              getInt32FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset);
 
    int32_t getInt32Field(uintptrj_t objectPointer, char *fieldName)
       {
@@ -535,20 +535,20 @@ public:
       {
       return getInt64FieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, "J"));
       }
-   int64_t                      getInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset);
-   void                         setInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t newValue);
+   virtual int64_t              getInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset);
+   virtual void                 setInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t newValue);
    void setInt64Field(uintptrj_t objectPointer, char *fieldName, int64_t newValue)
       {
       setInt64FieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, "J"), newValue);
       }
 
-   bool                         compareAndSwapInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t oldValue, int64_t newValue);
+   virtual bool                 compareAndSwapInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t oldValue, int64_t newValue);
    bool compareAndSwapInt64Field(uintptrj_t objectPointer, char *fieldName, int64_t oldValue, int64_t newValue)
       {
       return compareAndSwapInt64FieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, "J"), oldValue, newValue);
       }
 
-   intptrj_t                    getArrayLengthInElements(uintptrj_t objectPointer);
+   virtual intptrj_t            getArrayLengthInElements(uintptrj_t objectPointer);
    int32_t                      getInt32Element(uintptrj_t objectPointer, int32_t elementIndex);
    virtual uintptrj_t           getReferenceElement(uintptrj_t objectPointer, intptrj_t elementIndex);
 

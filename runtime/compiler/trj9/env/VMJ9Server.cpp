@@ -483,3 +483,66 @@ TR_J9ServerVM::getCurrentLocalsMapForDLT(TR::Compilation *comp)
 #endif
    return currentBundles;
    }
+
+uintptrj_t
+TR_J9ServerVM::getReferenceFieldAtAddress(uintptrj_t fieldAddress)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getReferenceFieldAtAddress, fieldAddress);
+   return std::get<0>(stream->read<uintptrj_t>());
+   }
+
+uintptrj_t
+TR_J9ServerVM::getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getVolatileReferenceFieldAt, objectPointer, fieldOffset);
+   return std::get<0>(stream->read<uintptrj_t>());
+   }
+
+int32_t
+TR_J9ServerVM::getInt32FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getInt32FieldAt, objectPointer, fieldOffset);
+   return std::get<0>(stream->read<int32_t>());
+   }
+
+int64_t
+TR_J9ServerVM::getInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getInt64FieldAt, objectPointer, fieldOffset);
+   return std::get<0>(stream->read<int64_t>());
+   }
+
+void
+TR_J9ServerVM::setInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t newValue)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_setInt64FieldAt, objectPointer, fieldOffset, newValue);
+   }
+
+bool
+TR_J9ServerVM::compareAndSwapInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t oldValue, int64_t newValue)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_compareAndSwapInt64FieldAt, objectPointer, fieldOffset, oldValue, newValue);
+   return std::get<0>(stream->read<bool>());
+   }
+
+intptrj_t
+TR_J9ServerVM::getArrayLengthInElements(uintptrj_t objectPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getArrayLengthInElements, objectPointer);
+   return std::get<0>(stream->read<intptrj_t>());
+   }
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getClassFromJavaLangClass(uintptrj_t objectPointer)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getClassFromJavaLangClass, objectPointer);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }

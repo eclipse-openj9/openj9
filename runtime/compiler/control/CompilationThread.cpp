@@ -609,6 +609,67 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->matchRAMclassFromROMclass(clazz, TR::comp()));
          }
          break;
+      case J9ServerMessageType::VM_getReferenceFieldAtAddress:
+         {
+         uintptrj_t fieldAddress = std::get<0>(client->getRecvData<uintptrj_t>());
+         client->write(fe->getReferenceFieldAtAddress(fieldAddress));
+         }
+         break;
+      case J9ServerMessageType::VM_getVolatileReferenceFieldAt:
+         {
+         auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
+         uintptrj_t objectPointer = std::get<0>(recv);
+         uintptrj_t fieldOffset = std::get<1>(recv);
+         client->write(fe->getVolatileReferenceFieldAt(objectPointer, fieldOffset));
+         }
+         break;
+      case J9ServerMessageType::VM_getInt32FieldAt:
+         {
+         auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
+         uintptrj_t objectPointer = std::get<0>(recv);
+         uintptrj_t fieldOffset = std::get<1>(recv);
+         client->write(fe->getInt32FieldAt(objectPointer, fieldOffset));
+         }
+         break;
+      case J9ServerMessageType::VM_getInt64FieldAt:
+         {
+         auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
+         uintptrj_t objectPointer = std::get<0>(recv);
+         uintptrj_t fieldOffset = std::get<1>(recv);
+         client->write(fe->getInt64FieldAt(objectPointer, fieldOffset));
+         }
+         break;
+      case J9ServerMessageType::VM_setInt64FieldAt:
+         {
+         auto recv = client->getRecvData<uintptrj_t, uintptrj_t, int64_t>();
+         uintptrj_t objectPointer = std::get<0>(recv);
+         uintptrj_t fieldOffset = std::get<1>(recv);
+         int64_t newValue = std::get<2>(recv);
+         fe->setInt64FieldAt(objectPointer, fieldOffset, newValue);
+         }
+         break;
+      case J9ServerMessageType::VM_compareAndSwapInt64FieldAt:
+         {
+         auto recv = client->getRecvData<uintptrj_t, uintptrj_t, int64_t, int64_t>();
+         uintptrj_t objectPointer = std::get<0>(recv);
+         uintptrj_t fieldOffset = std::get<1>(recv);
+         int64_t oldValue = std::get<2>(recv);
+         int64_t newValue = std::get<3>(recv);
+         client->write(fe->compareAndSwapInt64FieldAt(objectPointer, fieldOffset, oldValue, newValue));
+         }
+         break;
+      case J9ServerMessageType::VM_getArrayLengthInElements:
+         {
+         uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
+         client->write(fe->getArrayLengthInElements(objectPointer));
+         }
+         break;
+      case J9ServerMessageType::VM_getClassFromJavaLangClass:
+         {
+         uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
+         client->write(fe->getClassFromJavaLangClass(objectPointer));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only
