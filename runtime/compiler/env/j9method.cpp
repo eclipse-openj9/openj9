@@ -8766,3 +8766,10 @@ TR_ResolvedJ9JAASServerMethod::storeValidationRecordIfNecessary(TR::Compilation 
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_storeValidationRecordIfNecessary, _remoteMirror, constantPool, cpIndex, reloKind, ramMethod, definingClass);
    return std::get<0>(_stream->read<bool>());
    }
+
+void *
+TR_ResolvedJ9JAASServerMethod::startAddressForInterpreterOfJittedMethod()
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_startAddressForInterpreterOfJittedMethod, _remoteMirror);
+   return std::get<0>(_stream->read<void *>());
+   }

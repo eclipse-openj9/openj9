@@ -618,6 +618,7 @@ public:
    virtual void * startAddressForJNIMethod(TR::Compilation *) override;
    virtual bool getUnresolvedStaticMethodInCP(int32_t cpIndex) override;
    virtual bool storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass) override;
+   virtual void *startAddressForInterpreterOfJittedMethod() override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override

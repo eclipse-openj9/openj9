@@ -925,6 +925,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(ramMethod->startAddressForJNIMethod(TR::comp()));
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_startAddressForInterpreterOfJittedMethod:
+         {
+         TR_ResolvedRelocatableJ9Method *ramMethod = std::get<0>(client->getRecvData<TR_ResolvedRelocatableJ9Method *>());
+         client->write(ramMethod->startAddressForInterpreterOfJittedMethod());
+         }
+         break;
       case J9ServerMessageType::ResolvedMethod_getUnresolvedStaticMethodInCP:
          {
          auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t>();
