@@ -1115,8 +1115,9 @@ TR_ResolvedJ9MethodBase::isInlineable(TR::Compilation *comp)
 
 
 
-static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *m, TR::Compilation *comp)
+static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *rm, TR::Compilation *comp)
    {
+   TR_ResolvedJ9Method *m = static_cast<TR_ResolvedJ9Method *>(rm);
    TR::Options * options = comp->getOptions();
 
    intptrj_t initialCount = m->hasBackwardBranches() ? options->getInitialBCount() : options->getInitialCount();
@@ -1125,9 +1126,10 @@ static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *m, TR::Compilation 
    if (TR::Options::sharedClassCache())
       {
       TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
-      J9Method *method = (J9Method *) m->getPersistentIdentifier();
+      J9ROMClass *romClass = m->romClassPtr();
+      J9ROMMethod *romMethod = m->romMethod();
 
-      if (!compInfo->isRomClassForMethodInSharedCache(method, jitConfig->javaVM))
+      if (!compInfo->reloRuntime()->isROMClassInSharedCaches((UDATA)romClass, jitConfig->javaVM))
          {
 #if defined(J9ZOS390)
           // Do not change the counts on zos at the moment since the shared cache capacity is higher on this platform
@@ -1138,7 +1140,6 @@ static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *m, TR::Compilation 
           if (!startupTimeMatters)
              {
              bool useHigherMethodCounts = false;
-             J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
              if (J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod))
                 {
@@ -1153,8 +1154,7 @@ static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *m, TR::Compilation 
 
              if (useHigherMethodCounts)
                 {
-                J9ROMClass *declaringClazz = J9_CLASS_FROM_METHOD(method)->romClass;
-                J9UTF8 * className = J9ROMCLASS_CLASSNAME(declaringClazz);
+                J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
 
                 if (className->length > 5 &&
                     !strncmp(utf8Data(className), "java/", 5))
