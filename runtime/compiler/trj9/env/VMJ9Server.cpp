@@ -38,7 +38,17 @@ TR_ResolvedMethod *
 TR_J9ServerVM::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod,
                                   TR_ResolvedMethod * owningMethod, TR_OpaqueClassBlock *classForNewInstance)
    {
-   return new (trMemory->trHeapMemory()) TR_ResolvedJ9JAASServerMethod(aMethod, this, trMemory, owningMethod);
+   return createResolvedMethodWithSignature(trMemory, aMethod, classForNewInstance, nullptr, -1, owningMethod);
+   }
+
+TR_ResolvedMethod *
+TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
+                          char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod)
+   {
+   TR_ResolvedJ9Method *result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JAASServerMethod(aMethod, this, trMemory, owningMethod);
+   if (signature)
+      result->setSignature(signature, signatureLength, trMemory);
+   return result;
    }
 
 TR_YesNoMaybe
