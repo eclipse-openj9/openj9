@@ -87,8 +87,6 @@ static TR::ILOpCodes J9ToTRIndirectCallMap[] =
 static TR::ILOpCodes J9ToTRReturnOpCodeMap[] =
    { TR::Return, TR::ireturn, TR::ireturn, TR::ireturn, TR::ireturn, TR::freturn, TR::ireturn, TR::dreturn, TR::lreturn, TR::areturn };
 
-bool storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass=0);
-
 
 #if defined(DEBUG_LOCAL_CLASS_OPT)
 int fieldAttributeCtr = 0;
@@ -1655,7 +1653,8 @@ TR_ResolvedRelocatableJ9Method::getUnresolvedFieldInCP(I_32 cpIndex)
    #endif
    }
 
-bool storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass)
+bool
+TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) comp->fe();
 
@@ -8758,5 +8757,12 @@ bool
 TR_ResolvedJ9JAASServerMethod::getUnresolvedStaticMethodInCP(int32_t cpIndex)
    {
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getUnresolvedStaticMethodInCP, _remoteMirror, cpIndex);
+   return std::get<0>(_stream->read<bool>());
+   }
+
+bool
+TR_ResolvedJ9JAASServerMethod::storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_storeValidationRecordIfNecessary, _remoteMirror, constantPool, cpIndex, reloKind, ramMethod, definingClass);
    return std::get<0>(_stream->read<bool>());
    }

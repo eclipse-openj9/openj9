@@ -562,6 +562,7 @@ public:
 
    virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier();
    virtual uint8_t *             allocateException(uint32_t, TR::Compilation*);
+   virtual bool                  storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass=0);
 
 protected:
    TR_ResolvedRelocatableJ9Method(TR_FrontEnd *fe, TR_ResolvedMethod * owningMethod = 0)
@@ -615,7 +616,8 @@ public:
    virtual TR_OpaqueClassBlock * getResolvedInterfaceMethod(int32_t cpIndex, uintptrj_t * pITableIndex) override;
    virtual uint32_t getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
    virtual void * startAddressForJNIMethod(TR::Compilation *) override;
-   virtual bool getUnresolvedStaticMethodInCP(int32_t cpIndex);
+   virtual bool getUnresolvedStaticMethodInCP(int32_t cpIndex) override;
+   virtual bool storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override

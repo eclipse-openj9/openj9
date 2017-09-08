@@ -933,6 +933,18 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(method->getUnresolvedStaticMethodInCP(cpIndex));
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_storeValidationRecordIfNecessary:
+         {
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, J9ConstantPool *, int32_t, TR_ExternalRelocationTargetKind, J9Method *, J9Class *>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
+         J9ConstantPool *constantPool = std::get<1>(recv);
+         int32_t cpIndex = std::get<2>(recv);
+         TR_ExternalRelocationTargetKind reloKind = std::get<3>(recv);
+         J9Method *ramMethod = std::get<4>(recv);
+         J9Class *definingClass = std::get<5>(recv);
+         client->write(method->storeValidationRecordIfNecessary(TR::comp(), constantPool, cpIndex, reloKind, ramMethod, definingClass));
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());

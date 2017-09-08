@@ -72,6 +72,7 @@ enum J9ServerMessageType
    ResolvedMethod_getResolvedInterfaceMethod_3 = 119; // arity 3
    ResolvedMethod_getResolvedInterfaceMethodOffset = 120;
    ResolvedMethod_getUnresolvedStaticMethodInCP = 121;
+   ResolvedMethod_storeValidationRecordIfNecessary = 122;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;
