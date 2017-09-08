@@ -676,6 +676,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getOffsetOfClassFromJavaLangClassField());
          }
          break;
+      case J9ServerMessageType::VM_getConstantPoolFromMethod:
+         {
+         TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
+         client->write(fe->getConstantPoolFromMethod(method));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only

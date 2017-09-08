@@ -564,3 +564,11 @@ TR_J9ServerVM::getOffsetOfClassFromJavaLangClassField()
    stream->write(JAAS::J9ServerMessageType::VM_getOffsetOfClassFromJavaLangClassField, JAAS::Void());
    return std::get<0>(stream->read<UDATA>());
    }
+
+uintptrj_t
+TR_J9ServerVM::getConstantPoolFromMethod(TR_OpaqueMethodBlock *method)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getConstantPoolFromMethod, method);
+   return std::get<0>(stream->read<uintptrj_t>());
+   }

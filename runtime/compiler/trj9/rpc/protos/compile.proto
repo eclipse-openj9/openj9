@@ -134,6 +134,7 @@ enum J9ServerMessageType
    VM_getArrayLengthInElements = 256;
    VM_getClassFromJavaLangClass = 257;
    VM_getOffsetOfClassFromJavaLangClassField = 258;
+   VM_getConstantPoolFromMethod = 259;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

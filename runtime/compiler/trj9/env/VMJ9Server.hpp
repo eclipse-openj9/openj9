@@ -76,6 +76,7 @@ public:
    virtual intptrj_t getArrayLengthInElements(uintptrj_t objectPointer) override;
    virtual TR_OpaqueClassBlock * getClassFromJavaLangClass(uintptrj_t objectPointer) override;
    virtual UDATA getOffsetOfClassFromJavaLangClassField() override;
+   virtual uintptrj_t getConstantPoolFromMethod(TR_OpaqueMethodBlock *method) override;
    };
 
 #endif // VMJ9SERVER_H
