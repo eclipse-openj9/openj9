@@ -64,6 +64,7 @@
 					<src path="${transformerListener}" />
 					<compilerarg line="--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED" />
 					<classpath>
+						<pathelement location="../TestConfig/lib/asm-all.jar" />
 						<pathelement location="../TestConfig/lib/testng.jar"/>
 						<pathelement location="../TestConfig/lib/jcommander.jar"/>
 					</classpath>
@@ -76,6 +77,7 @@
 					<src path="${transformerListener}" />
 					<compilerarg line="--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED" />
 					<classpath>
+						<pathelement location="../TestConfig/lib/asm-all.jar" />
 						<pathelement location="../TestConfig/lib/testng.jar"/>
 						<pathelement location="../TestConfig/lib/jcommander.jar"/>
 					</classpath>

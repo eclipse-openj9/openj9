@@ -1166,6 +1166,28 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 			i++;
 			break;
 
+		case CFR_CONSTANT_Module:
+		case CFR_CONSTANT_Package:
+			if (classfile->majorVersion < 53) {
+				errorCode = J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53__ID;
+				offset = (U_32)(index - data - 1);
+				goto _errorFound;
+			}
+
+			if (!J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_MODULE)) {
+				if (J9_ARE_ALL_BITS_SET(info->tag, CFR_CONSTANT_Module)) {
+					errorCode = J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE__ID;
+				} else {
+					errorCode = J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE__ID;
+				}
+				offset = (U_32)(index - data - 1);
+				goto _errorFound;
+			}
+			CHECK_EOF(2);
+			NEXT_U16(info->slot1, index);
+			i++;
+			break;
+
 		default:
 			errorCode = J9NLS_CFR_ERR_UNKNOWN_CONSTANT__ID;
 			offset = (U_32) (index - data - 1);
@@ -1375,6 +1397,11 @@ checkPool(J9CfrClassFile* classfile, U_8* segment, U_8* poolStart, I_32 *maxBoot
 				goto _errorFound;
 			}
 			index += 5;
+			break;
+
+		case CFR_CONSTANT_Module:
+		case CFR_CONSTANT_Package:
+			index += 3;
 			break;
 
 		default:
@@ -2405,6 +2432,12 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		}
 
 		classfile->accessFlags |= CFR_ACC_ABSTRACT;
+	}
+
+	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_MODULE)) {
+		errorCode = J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS__ID;
+		offset = index - data - 2;
+		goto _errorFound;
 	}
 
 	NEXT_U16(classfile->thisClass, index);

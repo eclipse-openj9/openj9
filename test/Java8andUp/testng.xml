@@ -371,6 +371,10 @@
 			<class name="org.openj9.test.floatsanity.TestFactory" />
 		</classes>
 	</test>
-
+	<test name="constantPoolTagTests">
+		<classes>
+			<class name="org.openj9.test.constantPoolTags.ConstantPoolTagTests" />
+		</classes>
+	</test>
 </suite>
 <!-- Suite -->

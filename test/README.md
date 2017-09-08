@@ -51,7 +51,7 @@ JAVA_VERSION=[SE80|SE90] (SE90 default value)
 ```
   * list of dependent jars
 
-	* asm-all-5.0.1.jar
+	* asm-all-6.0_BETA.jar
 	* commons-cli-1.2.jar
 	* commons-exec-1.1.jar
 	* javassist-3.20.0-GA.jar
