@@ -73,6 +73,7 @@ public:
    virtual bool compareAndSwapInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset, int64_t oldValue, int64_t newValue) override;
    virtual intptrj_t getArrayLengthInElements(uintptrj_t objectPointer) override;
    virtual TR_OpaqueClassBlock * getClassFromJavaLangClass(uintptrj_t objectPointer) override;
+   virtual UDATA getOffsetOfClassFromJavaLangClassField() override;
    };
 
 #endif // VMJ9SERVER_H

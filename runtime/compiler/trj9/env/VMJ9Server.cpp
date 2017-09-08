@@ -546,3 +546,11 @@ TR_J9ServerVM::getClassFromJavaLangClass(uintptrj_t objectPointer)
    stream->write(JAAS::J9ServerMessageType::VM_getClassFromJavaLangClass, objectPointer);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
+
+UDATA
+TR_J9ServerVM::getOffsetOfClassFromJavaLangClassField()
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getOffsetOfClassFromJavaLangClassField, JAAS::Void());
+   return std::get<0>(stream->read<UDATA>());
+   }
