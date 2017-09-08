@@ -2652,7 +2652,12 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotValidateStringCompressionFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
-               tryCompilingAgain = true;
+               // if this is a remote request, fail the compilation here so that it is retried on the client.
+               // there is no point in doing a jit compilation on the server as it will be useless to the client.
+               if (entry->isRemoteCompReq())
+                  tryCompilingAgain = false;
+               else
+                  tryCompilingAgain = true;
                break;
             //case compilationAotRelocationFailure:
             case compilationAotTrampolineReloFailure:
