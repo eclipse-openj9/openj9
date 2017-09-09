@@ -1,46 +1,24 @@
 syntax = "proto3";
 
-import "google/protobuf/any.proto";
-
 package JAAS;
 
-message UInt64
+message Any
    {
-   uint64 val = 1;
-   uint64 type = 2;
-   }
-message UInt32
-   {
-   uint32 val = 1;
-   uint64 type = 2;
-   }
-message Bytes
-   {
-   bytes val = 1;
-   uint64 type = 2;
-   }
-message Bool
-   {
-   bool val = 1;
-   uint64 type = 2;
-   }
-message Int64
-   {
-   int64 val = 1;
-   uint64 type = 2;
-   }
-message Int32
-   {
-   int32 val = 1;
-   uint64 type = 2;
-   }
-message Void
-   {
+   uint64 extendedTypeTag = 1;
+   oneof type
+      {
+      uint64 uint64_v = 2;
+      uint32 uint32_v = 3;
+      int64 int64_v = 4;
+      int32 int32_v = 5;
+      bytes bytes_v = 6;
+      bool bool_v = 7;
+      }
    }
 
 message AnyData
    {
-   repeated google.protobuf.Any data = 1;
+   repeated Any data = 1;
    }
 
 enum J9ServerMessageType

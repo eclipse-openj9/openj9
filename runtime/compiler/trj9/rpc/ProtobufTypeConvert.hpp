@@ -9,6 +9,13 @@
 namespace JAAS
    {
 
+   // Sending void over gRPC is awkward, so we just wrap a bool...
+   struct Void {
+      Void() {}
+      Void(bool) {}
+      operator bool() { return false; }
+   };
+
    // This struct and global is used as a hacky replacement for run-time type information (rtti), which is not enabled in our build.
    // Every instance of this struct gets a unique identifier assigned to it (assuming constructors run in serial)
    // It is inteneded to be used by holding a static instance of it within a templated class, so that each template instantiation
@@ -22,6 +29,29 @@ namespace JAAS
          id = typeCount++;
          }
       };
+
+   template <typename T> inline T readPrimitiveFromAny(Any* msg);
+   template <> inline uint32_t readPrimitiveFromAny(Any *msg) { return msg->uint32_v(); }
+   template <> inline uint64_t readPrimitiveFromAny(Any *msg) { return msg->uint64_v(); }
+   template <> inline int32_t readPrimitiveFromAny(Any *msg) { return msg->int32_v(); }
+   template <> inline int64_t readPrimitiveFromAny(Any *msg) { return msg->int64_v(); }
+   template <> inline bool readPrimitiveFromAny(Any *msg) { return msg->bool_v(); }
+   template <> inline std::string readPrimitiveFromAny(Any *msg) { return msg->bytes_v(); }
+
+   inline void writePrimitiveToAny(Any* msg, uint64_t val) { msg->set_uint64_v(val); }
+   inline void writePrimitiveToAny(Any* msg, uint32_t val) { msg->set_uint32_v(val); }
+   inline void writePrimitiveToAny(Any* msg, int64_t val) { msg->set_int64_v(val); }
+   inline void writePrimitiveToAny(Any* msg, int32_t val) { msg->set_int32_v(val); }
+   inline void writePrimitiveToAny(Any* msg, std::string val) { msg->set_bytes_v(val); }
+   inline void writePrimitiveToAny(Any* msg, bool val) { msg->set_bool_v(val); }
+
+   template <typename T> inline Any::TypeCase primitiveTypeCase();
+   template <> inline Any::TypeCase primitiveTypeCase<uint64_t>() { return Any::kUint64V; }
+   template <> inline Any::TypeCase primitiveTypeCase<uint32_t>() { return Any::kUint32V; }
+   template <> inline Any::TypeCase primitiveTypeCase<int64_t>() { return Any::kInt64V; }
+   template <> inline Any::TypeCase primitiveTypeCase<int32_t>() { return Any::kInt32V; }
+   template <> inline Any::TypeCase primitiveTypeCase<bool>() { return Any::kBoolV; }
+   template <> inline Any::TypeCase primitiveTypeCase<std::string>() { return Any::kBytesV; }
 
    // The ProtobufTypeConvert struct is intended to allow custom conversions to happen automatically before protobuf serialization
    // and after protobuf deserialization. We use specialization to implement it for specific types.
@@ -39,73 +69,56 @@ namespace JAAS
 
    // This struct is used as a base for conversions that can be done by a simple cast between data types of the same size.
    // It uses a type id mechanism to verify that the types match at runtime upon deserialization.
-   template <typename Primitive, typename Proto>
+   template <typename Primitive, typename Proto=Primitive>
    struct PrimitiveTypeConvert
       {
       static TypeID type;
       using ProtoType = Proto;
-      static_assert(sizeof(decltype(std::declval<ProtoType>().val())) == sizeof(Primitive), "Size of primitive types must be the same");
-      static Primitive onRecv(ProtoType in)
+      static Primitive onRecv(Any *in)
          {
-         if (type.id != in.type())
-            throw StreamTypeMismatch("Primitive type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in.type()));
-         return (Primitive)in.val();
+         if (type.id != in->extendedtypetag())
+            throw StreamTypeMismatch("Primitive type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in->extendedtypetag()));
+         return (Primitive) readPrimitiveFromAny<Proto>(in);
          }
-      static ProtoType onSend(Primitive in)
+      static void onSend(Any *out, Primitive in)
          {
-         ProtoType val;
-         val.set_val((decltype(val.val()))in);
-         val.set_type(type.id);
-         return val;
+         out->set_extendedtypetag(type.id);
+         writePrimitiveToAny(out, (Proto) in);
          }
       };
    template <typename Primitive, typename Proto> TypeID PrimitiveTypeConvert<Primitive, Proto>::type;
 
    // Specialize ProtobufTypeConvert for various primitive types by inheriting from a specifically instantiated PrimitiveTypeConvert
-   template <> struct ProtobufTypeConvert<bool> : PrimitiveTypeConvert<bool, Bool> { };
-   template <> struct ProtobufTypeConvert<uint64_t> : PrimitiveTypeConvert<uint64_t, UInt64> { };
-   template <> struct ProtobufTypeConvert<int64_t> : PrimitiveTypeConvert<int64_t, Int64> { };
-   template <> struct ProtobufTypeConvert<uint32_t> : PrimitiveTypeConvert<uint32_t, UInt32> { };
-   template <> struct ProtobufTypeConvert<int32_t> : PrimitiveTypeConvert<int32_t, Int32> { };
-   template <> struct ProtobufTypeConvert<std::string> : PrimitiveTypeConvert<std::string, Bytes> { };
+   template <> struct ProtobufTypeConvert<bool> : PrimitiveTypeConvert<bool> { };
+   template <> struct ProtobufTypeConvert<uint64_t> : PrimitiveTypeConvert<uint64_t> { };
+   template <> struct ProtobufTypeConvert<int64_t> : PrimitiveTypeConvert<int64_t> { };
+   template <> struct ProtobufTypeConvert<uint32_t> : PrimitiveTypeConvert<uint32_t> { };
+   template <> struct ProtobufTypeConvert<int32_t> : PrimitiveTypeConvert<int32_t> { };
+   template <> struct ProtobufTypeConvert<std::string> : PrimitiveTypeConvert<std::string> { };
+   template <> struct ProtobufTypeConvert<Void> : PrimitiveTypeConvert<Void, bool> { };
 
    // Specialize conversion for all enums by widening to 64 bits
    template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type>
       {
       static TypeID type;
-      using ProtoType = UInt64;
+      using ProtoType = uint64_t;
       static_assert(sizeof(T) <= 8, "Enum is larger than 8 bytes!");
-      static T onRecv(UInt64 in)
+      static T onRecv(Any *in)
          {
-         if (type.id != in.type())
-            throw StreamTypeMismatch("Enum type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in.type()));
-         return (T) in.val();
+         if (type.id != in->extendedtypetag())
+            throw StreamTypeMismatch("Enum type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in->extendedtypetag()));
+         return (T) readPrimitiveFromAny<uint64_t>(in);
          }
-      static UInt64 onSend(T in)
+      static void onSend(Any *out, T in)
          {
-         UInt64 val;
-         val.set_val((uint64_t) in);
-         val.set_type(type.id);
-         return val;
+         out->set_extendedtypetag(type.id);
+         writePrimitiveToAny(out, (uint64_t) in);
          }
       };
    template <typename T> TypeID ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type>::type;
 
    // Specialize conversion for pointer types
-   // When recieving a pointer, we flip all of the bits as a signal to indicate that it should not be dereferenced.
-   // This is intended to make violations of this rule easy to spot in a debugger.
-   // The exception is if the value is null, in which case we do not flip the bits to prevent breaking null checks.
-   template <typename T>
-   struct ProtobufTypeConvert<T*> : PrimitiveTypeConvert<T*, UInt64>
-      {
-      static T* onRecv(UInt64 in)
-         {
-         UInt64 proto(in);
-         //if (proto.val())
-            //proto.set_val(~proto.val());
-         return PrimitiveTypeConvert<T*, UInt64>::onRecv(proto);
-         }
-      };
+   template <typename T> struct ProtobufTypeConvert<T*> : PrimitiveTypeConvert<T*, uint64_t> { };
 
    // setArgs fills out a protobuf AnyData message with values from a variadic argument list.
    // It calls ProtobufTypeConvert::onSend for each argument.
@@ -123,7 +136,7 @@ namespace JAAS
       {
       static void setArgs(AnyData *message, Arg1 arg1)
          {
-         message->add_data()->PackFrom(ProtobufTypeConvert<Arg1>::onSend(arg1));
+         ProtobufTypeConvert<Arg1>::onSend(message->add_data(), arg1);
          }
       };
    template <typename... Args>
@@ -148,18 +161,10 @@ namespace JAAS
       {
       static std::tuple<Arg> getArgs(AnyData *message, size_t n)
          {
-         auto &data = message->data(n);
-         using T = typename ProtobufTypeConvert<Arg>::ProtoType;
-         if (data.Is<T>())
-            {
-            T msg;
-            data.UnpackTo(static_cast<google::protobuf::Message*>(&msg));
-            return std::make_tuple(ProtobufTypeConvert<Arg>::onRecv(msg));
-            }
-         else
-            {
-            throw StreamTypeMismatch("Expected " + data.type_url() + " for argument " + std::to_string(n));
-            }
+         auto data = message->data(n);
+         if (data.type_case() != primitiveTypeCase<typename ProtobufTypeConvert<Arg>::ProtoType>())
+            throw StreamTypeMismatch("Expected type " + std::to_string(data.type_case()) + " but got type " + std::to_string(primitiveTypeCase<typename ProtobufTypeConvert<Arg>::ProtoType>()));
+         return std::make_tuple(ProtobufTypeConvert<Arg>::onRecv(&data));
          }
       };
    template <typename... Args>
