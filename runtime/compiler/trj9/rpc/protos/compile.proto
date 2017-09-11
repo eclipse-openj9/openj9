@@ -135,6 +135,9 @@ enum J9ServerMessageType
    VM_getClassFromJavaLangClass = 257;
    VM_getOffsetOfClassFromJavaLangClassField = 258;
    VM_getConstantPoolFromMethod = 259;
+   VM_getProcessID = 260;
+   VM_getIdentityHashSaltPolicy = 261;
+   VM_getOffsetOfJLThreadJ9Thread = 262;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

@@ -682,6 +682,24 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getConstantPoolFromMethod(method));
          }
          break;
+      case J9ServerMessageType::VM_getProcessID:
+         {
+         client->getRecvData<JAAS::Void>();
+         client->write(fe->getProcessID());
+         }
+         break;
+      case J9ServerMessageType::VM_getIdentityHashSaltPolicy:
+         {
+         client->getRecvData<JAAS::Void>();
+         client->write(fe->getIdentityHashSaltPolicy());
+         }
+         break;
+      case J9ServerMessageType::VM_getOffsetOfJLThreadJ9Thread:
+         {
+         client->getRecvData<JAAS::Void>();
+         client->write(fe->getOffsetOfJLThreadJ9Thread());
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only

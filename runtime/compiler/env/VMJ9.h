@@ -482,7 +482,7 @@ public:
    virtual uintptrj_t         getJ9ObjectFlagsMask64();
    uintptrj_t                 getOffsetOfJ9ThreadJ9VM();
    uintptrj_t                 getOffsetOfJ9ROMArrayClassArrayShape();
-   uintptrj_t                 getOffsetOfJLThreadJ9Thread();
+   virtual uintptrj_t         getOffsetOfJLThreadJ9Thread();
    uintptrj_t                 getOffsetOfJavaVMIdentityHashData();
    uintptrj_t                 getOffsetOfJ9IdentityHashData1();
    uintptrj_t                 getOffsetOfJ9IdentityHashData2();
@@ -491,7 +491,7 @@ public:
    uintptrj_t                 getJ9IdentityHashSaltPolicyStandard();
    uintptrj_t                 getJ9IdentityHashSaltPolicyRegion();
    uintptrj_t                 getJ9IdentityHashSaltPolicyNone();
-   uintptrj_t                 getIdentityHashSaltPolicy();
+   virtual uintptrj_t         getIdentityHashSaltPolicy();
    virtual uintptrj_t         getJ9JavaClassRamShapeShift();
    virtual uintptrj_t         getObjectHeaderShapeMask();
 

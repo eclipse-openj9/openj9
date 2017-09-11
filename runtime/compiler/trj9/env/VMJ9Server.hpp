@@ -77,6 +77,9 @@ public:
    virtual TR_OpaqueClassBlock * getClassFromJavaLangClass(uintptrj_t objectPointer) override;
    virtual UDATA getOffsetOfClassFromJavaLangClassField() override;
    virtual uintptrj_t getConstantPoolFromMethod(TR_OpaqueMethodBlock *method) override;
+   virtual uintptrj_t getProcessID() override;
+   virtual UDATA getIdentityHashSaltPolicy() override;
+   virtual UDATA getOffsetOfJLThreadJ9Thread() override;
    };
 
 #endif // VMJ9SERVER_H

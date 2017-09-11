@@ -572,3 +572,27 @@ TR_J9ServerVM::getConstantPoolFromMethod(TR_OpaqueMethodBlock *method)
    stream->write(JAAS::J9ServerMessageType::VM_getConstantPoolFromMethod, method);
    return std::get<0>(stream->read<uintptrj_t>());
    }
+
+uintptrj_t
+TR_J9ServerVM::getProcessID()
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getProcessID, JAAS::Void());
+   return std::get<0>(stream->read<uintptrj_t>());
+   }
+
+UDATA
+TR_J9ServerVM::getIdentityHashSaltPolicy()
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getIdentityHashSaltPolicy, JAAS::Void());
+   return std::get<0>(stream->read<UDATA>());
+   }
+
+UDATA
+TR_J9ServerVM::getOffsetOfJLThreadJ9Thread()
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getOffsetOfJLThreadJ9Thread, JAAS::Void());
+   return std::get<0>(stream->read<UDATA>());
+   }
