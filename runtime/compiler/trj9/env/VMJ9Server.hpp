@@ -80,6 +80,7 @@ public:
    virtual uintptrj_t getProcessID() override;
    virtual UDATA getIdentityHashSaltPolicy() override;
    virtual UDATA getOffsetOfJLThreadJ9Thread() override;
+   virtual void markHotField(TR::Compilation *comp, TR::SymbolReference *symRef, TR_OpaqueClassBlock *clazz, bool isFixedClass) override;
    };
 
 #endif // VMJ9SERVER_H

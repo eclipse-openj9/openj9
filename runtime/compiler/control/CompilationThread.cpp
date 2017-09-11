@@ -443,7 +443,10 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          }
          break;
       case J9ServerMessageType::VM_getOverflowSafeAllocSize:
+         {
+         client->getRecvData<JAAS::Void>();
          client->write(static_cast<uint64_t>(fe->getOverflowSafeAllocSize()));
+         }
          break;
       case J9ServerMessageType::VM_isThunkArchetype:
          {
@@ -698,6 +701,15 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          client->getRecvData<JAAS::Void>();
          client->write(fe->getOffsetOfJLThreadJ9Thread());
+         }
+         break;
+      case J9ServerMessageType::VM_markHotField:
+         {
+         auto recv = client->getRecvData<TR::SymbolReference *, TR_OpaqueClassBlock *, bool>();
+         TR::SymbolReference *symRef = std::get<0>(recv);
+         TR_OpaqueClassBlock *clazz = std::get<1>(recv);
+         bool isFixedClass = std::get<2>(recv);
+         fe->markHotField(TR::comp(), symRef, clazz, isFixedClass);
          }
          break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
