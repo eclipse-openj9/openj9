@@ -140,6 +140,7 @@ enum J9ServerMessageType
    VM_getOffsetOfJLThreadJ9Thread = 262;
    VM_markHotField = 263;
    VM_scanReferenceSlotsInClassForOffset = 264;
+   VM_findFirstHotFieldTenuredClassOffset = 265;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;
