@@ -139,6 +139,7 @@ enum J9ServerMessageType
    VM_getIdentityHashSaltPolicy = 261;
    VM_getOffsetOfJLThreadJ9Thread = 262;
    VM_markHotField = 263;
+   VM_scanReferenceSlotsInClassForOffset = 264;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

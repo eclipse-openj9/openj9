@@ -712,6 +712,14 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          fe->markHotField(TR::comp(), symRef, clazz, isFixedClass);
          }
          break;
+      case J9ServerMessageType::VM_scanReferenceSlotsInClassForOffset:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, int32_t>();
+         TR_OpaqueClassBlock *clazz = std::get<0>(recv);
+         int32_t offset = std::get<1>(recv);
+         client->write(fe->scanReferenceSlotsInClassForOffset(TR::comp(), clazz, offset));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only

@@ -603,3 +603,11 @@ TR_J9ServerVM::markHotField(TR::Compilation *comp, TR::SymbolReference *symRef, 
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_markHotField, symRef, clazz, isFixedClass);
    }
+
+bool
+TR_J9ServerVM::scanReferenceSlotsInClassForOffset(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, int32_t offset)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_scanReferenceSlotsInClassForOffset, clazz, offset);
+   return std::get<0>(stream->read<bool>());
+   }
