@@ -8780,3 +8780,13 @@ TR_ResolvedJ9JAASServerMethod::getUnresolvedSpecialMethodInCP(I_32 cpIndex)
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getUnresolvedSpecialMethodInCP, _remoteMirror, cpIndex);
    return std::get<0>(_stream->read<bool>());
    }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9JAASServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
+   // the frontend method performs a RPC
+   void * ramMethod = fej9->getResolvedVirtualMethod(classObject, virtualCallOffset, ignoreRtResolve);
+   TR_ResolvedMethod *m = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedJ9JAASServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), this) : 0;
+   return m;
+   }

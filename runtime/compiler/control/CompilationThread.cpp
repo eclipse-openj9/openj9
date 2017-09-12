@@ -717,6 +717,15 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->findFirstHotFieldTenuredClassOffset(TR::comp(), clazz));
          }
          break;
+      case J9ServerMessageType::VM_getResolvedVirtualMethod:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, I_32, bool>();
+         auto clazz = std::get<0>(recv);
+         auto offset = std::get<1>(recv);
+         auto ignoreRTResolve = std::get<2>(recv);
+         client->write(fe->getResolvedVirtualMethod(clazz, offset, ignoreRTResolve));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only

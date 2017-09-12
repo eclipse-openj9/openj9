@@ -617,3 +617,11 @@ TR_J9ServerVM::findFirstHotFieldTenuredClassOffset(TR::Compilation *comp, TR_Opa
    stream->write(JAAS::J9ServerMessageType::VM_findFirstHotFieldTenuredClassOffset, clazz);
    return std::get<0>(stream->read<int32_t>());
    }
+
+TR_OpaqueMethodBlock *
+TR_J9ServerVM::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset, bool ignoreRtResolve)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getResolvedVirtualMethod, classObject, virtualCallOffset, ignoreRtResolve);
+   return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+   }
