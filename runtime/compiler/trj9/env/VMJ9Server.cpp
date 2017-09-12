@@ -222,9 +222,14 @@ TR_J9ServerVM::classHasBeenExtended(TR_OpaqueClassBlock *clazz)
 bool
 TR_J9ServerVM::compiledAsDLTBefore(TR_ResolvedMethod *method)
    {
+#if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_compiledAsDLTBefore, method);
+   auto mirror = static_cast<TR_ResolvedJ9JAASServerMethod *>(method)->getRemoteMirror();
+   stream->write(JAAS::J9ServerMessageType::VM_compiledAsDLTBefore, static_cast<TR_ResolvedMethod *>(mirror));
    return std::get<0>(stream->read<bool>());
+#else
+   return 0;
+#endif
    }
 
 char *
