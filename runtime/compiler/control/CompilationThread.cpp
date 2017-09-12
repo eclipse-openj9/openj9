@@ -9186,6 +9186,7 @@ TR::CompilationInfoPerThreadBase::compile(
                const void *compiledMethod = findAotBodyInSCC(vmThread, romMethod);
                TR_ASSERT(compiledMethod, "compiled method must be nonnull");
                _methodBeingCompiled->setAotCodeToBeRelocated(compiledMethod);
+               reloRuntime()->setReloStartTime(getTimeWhenCompStarted());
                try
                   {
                   metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
