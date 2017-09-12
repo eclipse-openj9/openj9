@@ -703,15 +703,6 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getOffsetOfJLThreadJ9Thread());
          }
          break;
-      case J9ServerMessageType::VM_markHotField:
-         {
-         auto recv = client->getRecvData<TR::SymbolReference *, TR_OpaqueClassBlock *, bool>();
-         TR::SymbolReference *symRef = std::get<0>(recv);
-         TR_OpaqueClassBlock *clazz = std::get<1>(recv);
-         bool isFixedClass = std::get<2>(recv);
-         fe->markHotField(TR::comp(), symRef, clazz, isFixedClass);
-         }
-         break;
       case J9ServerMessageType::VM_scanReferenceSlotsInClassForOffset:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, int32_t>();

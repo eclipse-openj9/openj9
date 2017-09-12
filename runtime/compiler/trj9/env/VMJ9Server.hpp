@@ -80,7 +80,6 @@ public:
    virtual uintptrj_t getProcessID() override;
    virtual UDATA getIdentityHashSaltPolicy() override;
    virtual UDATA getOffsetOfJLThreadJ9Thread() override;
-   virtual void markHotField(TR::Compilation *comp, TR::SymbolReference *symRef, TR_OpaqueClassBlock *clazz, bool isFixedClass) override;
    virtual bool scanReferenceSlotsInClassForOffset(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, int32_t offset) override;
    virtual int32_t findFirstHotFieldTenuredClassOffset(TR::Compilation *comp, TR_OpaqueClassBlock *clazz) override;
    };
