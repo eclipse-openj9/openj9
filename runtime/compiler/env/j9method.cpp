@@ -8777,6 +8777,6 @@ TR_ResolvedJ9JAASServerMethod::startAddressForInterpreterOfJittedMethod()
 bool
 TR_ResolvedJ9JAASServerMethod::getUnresolvedSpecialMethodInCP(I_32 cpIndex)
    {
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_startAddressForInterpreterOfJittedMethod, _remoteMirror, cpIndex);
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getUnresolvedSpecialMethodInCP, _remoteMirror, cpIndex);
    return std::get<0>(_stream->read<bool>());
    }
