@@ -70,7 +70,7 @@ TAGS
 *.pyc
 *.pb.cpp
 *.pb.h
-trj9/rpc/gen/
+runtime/tr.source/trj9/rpc/gen
 
 # Root level .project should be ignored as Eclipse automatically creates this file when new repositories are added as Projects for C/C++ indexing
 /.project
