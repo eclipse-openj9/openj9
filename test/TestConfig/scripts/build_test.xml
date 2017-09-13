@@ -1,0 +1,185 @@
+<?xml version="1.0"?>
+
+<!--
+  Copyright (c) 2016, 2017 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<project name="Compile Java Test Projects" basedir="." default="build">
+
+	<description>Compile Java Test Projects</description>
+
+	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+
+	<property name="ascii.workspace.dir" value="${SRC_ROOT}" />
+	<property name="ascii.test.dir" value="${BUILD_ROOT}" />
+	<property name="JAVA_VERSION" value=""/>
+	<property name="JAVA_BIN" value="${JAVA_BIN}" />
+	<echo> JAVA_BIN is ${JAVA_BIN} </echo>
+	<if>
+		<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+		<then>
+			<property name="JAVAC" value="${JAVA_BIN}/javac" />
+		</then>
+		<else>
+			<property name="JAVAC" value="${JAVA_BIN}/../../bin/javac" />
+		</else>
+	</if>
+
+	<var name="build.list" value= "" />
+	<if>
+		<equals arg1="${BUILD_LIST}" arg2=""/>
+		<then>
+			<var name="build.list" value= "*/build.xml" />
+		</then>
+		<else>
+			<for list="${BUILD_LIST}" param="builddir">
+				<sequential>
+					<if>
+						<equals arg1="${build.list}" arg2="" />
+						<then>
+							<var name="build.list" value="@{builddir}/build.xml" />
+						</then>
+						<else>
+							<var name="build.list" value="${build.list},@{builddir}/build.xml" />
+						</else>
+					</if>
+				</sequential>
+			</for>
+		</else>
+	</if>
+	<echo> build.list is ${build.list} </echo>
+
+	<target name="build" depends="stage_test_material" description="using ${JAVA_VERSION} compile the source ">
+		<if>
+			<equals arg1="${JCL_VERSION}" arg2="latest"/>
+			<then>
+				<subant target="">
+					<property name="build.dir" value="subant1.build" />
+					<property name="not.overloaded" value="not.overloaded" />
+					<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
+					<property name="compiler.javac" value="${JAVAC}" />
+					<fileset dir="../../" includes="${build.list}" >
+						<exclude name="TEST_*/build.xml" />
+						<exclude name="cmd*/build.xml" />
+						<exclude name="Jsr292/build.xml" />
+						<exclude name="Jsr335/build.xml" />
+						<exclude name="NativeTest/build.xml" />
+						<exclude name="UnsafeTest/build.xml" />
+						<exclude name="SharedCPEntryInvokerTests/build.xml" />
+						<exclude name="Valhalla/build.xml" />
+						<exclude name="Panama/build.xml" />
+					</fileset>
+				</subant>
+			</then>
+			<elseif>
+				<equals arg1="${JCL_VERSION}" arg2="Panama"/>
+				<then>
+					<subant target="">
+						<property name="build.dir" value="subant1.build" />
+						<property name="not.overloaded" value="not.overloaded" />
+						<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
+						<property name="compiler.javac" value="${JAVAC}" />
+						<fileset dir="../../">
+							<include name="Panama/build.xml" />
+						</fileset>
+					</subant>
+				</then>
+			</elseif>
+			<elseif>
+				<equals arg1="${JCL_VERSION}" arg2="Valhalla"/>
+				<then>
+					<subant target="">
+						<property name="build.dir" value="subant1.build" />
+						<property name="not.overloaded" value="not.overloaded" />
+						<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
+						<property name="compiler.javac" value="${JAVAC}" />
+						<fileset dir="../../">
+							<include name="Valhalla/build.xml" />
+						</fileset>
+					</subant>
+				</then>
+			</elseif>
+			<else>
+				<subant target="">
+					<property name="build.dir" value="subant1.build" />
+					<property name="not.overloaded" value="not.overloaded" />
+					<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
+					<property name="compiler.javac" value="${JAVAC}" />
+					<fileset dir="../../" includes="${build.list}" >
+						<exclude name="TEST_*/build.xml" />
+						<exclude name="Panama/build.xml" />
+					</fileset>
+				</subant>
+			</else>
+		</if>
+	</target>
+
+	<target name="-create_test_directory">
+		<mkdir dir="${ascii.test.dir}" />
+	</target>
+
+	<target name="stage_test_material" depends="-create_test_directory">
+		<copy todir="${ascii.test.dir}">
+			<fileset dir="${ascii.workspace.dir}">
+				<include name="TestConfig/**" />
+				<include name="*.mk" />
+			</fileset>
+		</copy>
+
+		<chmod dir="${ascii.test.dir}/TestConfig" perm="755"/>
+
+		<chmod file="${ascii.test.dir}/*.mk" perm="755"/>
+	</target>
+
+
+	<target name="check_sdk">
+		<available file="${JAVA_BIN}" property="sdk.present" />
+		<if>
+			<istrue value="${sdk.present}" />
+			<then>
+				<antcall target="build" />
+			</then>
+			<else>
+				<if>
+					<isfalse value="${sdk.present}" />
+					<then>
+						<echo>${JAVA_VERSION} ${JAVA_BIN} is missing</echo>
+						<mkdir dir="${TMP_DIR}/${JAVA_VERSION}"/>
+						<property name="tmp.java.dir" value="${TMP_DIR}/${JAVA_VERSION}" />
+						<delete dir="${tmp.java.dir}"/>
+						<basename property="jar.filename" file="${SDK_JAR}"/>
+						<copy file="${SDK_JAR}" todir="${tmp.java.dir}"/>
+						<unzip src="${tmp.java.dir}/${jar.filename}" dest="${tmp.java.dir}" />
+						<exec executable="chmod">
+							<arg value="-R" />
+							<arg value="755" />
+							<arg value="${tmp.java.dir}" />
+						</exec>
+						<var name="JAVA_BIN" unset="true"/>
+						<property name="JAVA_BIN" value="${tmp.java.dir}/sdk/bin" />
+						<echo>set JAVA_BIN=${JAVA_BIN}</echo>
+					</then>
+				</if>
+				<antcall target="build" />
+			</else>
+		</if>
+	</target>
+</project>

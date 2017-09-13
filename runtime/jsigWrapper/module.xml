@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<!-- 
+	Copyright (c) 2006, 2017 IBM Corp. and others
+	
+	This program and the accompanying materials are made available under
+	the terms of the Eclipse Public License 2.0 which accompanies this
+	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+	or the Apache License, Version 2.0 which accompanies this distribution and
+	is available at https://www.apache.org/licenses/LICENSE-2.0.
+	
+	This Source Code may also be made available under the following
+	Secondary Licenses when the conditions for such availability set
+	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+	General Public License, version 2 with the GNU Classpath
+	Exception [1] and GNU General Public License, version 2 with the
+	OpenJDK Assembly Exception [2].
+	
+	[1] https://www.gnu.org/software/classpath/license.html
+	[2] http://openjdk.java.net/legal/assembly-exception.html
+
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<module>
+
+	<exports group="all">
+		<export name="signal"/>
+		<export name="sigaction">
+			<exclude-if condition="spec.win_x86.*" />
+		</export>
+		<export name="sigset">
+			<exclude-if condition="spec.win_x86.*" />
+		</export>
+		<export name="sigignore">
+			<exclude-if condition="spec.win_x86.*" />
+		</export>
+		<export name="bsd_signal">
+			<exclude-if condition="spec.win_x86.*" />
+		</export>
+		<export name="sysv_signal">
+			<exclude-if condition="spec.win_x86.*" />
+			<exclude-if condition="spec.zos.*" />
+		</export>
+		<export name="__sysv_signal">
+			<include-if condition="spec.linux.*" />
+		</export>
+		<export name="ssignal">
+			<include-if condition="spec.linux.*" />
+		</export>
+		<export name="jsig_handler"/>
+		<export name="jsig_primary_signal"/>
+		<export name="jsig_primary_sigaction">
+			<exclude-if condition="spec.win_x86.*" />
+		</export>
+	</exports>
+	
+	<artifact type="shared" name="jsig" appendrelease="false">
+		<options>
+			<option name="doesNotRequireCMAIN"/>
+			<option name="dllDescription" data="jsig"/>
+			<option name="linuxVersionName" data ="JSIG_2.3" />
+		</options>
+		<phase>core j2se</phase>
+		<exports>
+			<group name="all"/>
+		</exports>
+		<includes>
+			<include path="j9include"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
+		</makefilestubs>
+		<libraries>
+			<library name="omrutil" type="external"/>
+		</libraries>
+	</artifact>
+</module>

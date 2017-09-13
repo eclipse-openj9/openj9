@@ -1,0 +1,44 @@
+// Copyright (c) 2017, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+
+Executable=module
+DATFileName=J9TraceFormat.dat
+
+TraceEntry=Trc_MODULE_freeJ9Module_entry Overhead=1 Level=5 Test Template="free module %s"
+TraceExit=Trc_MODULE_freeJ9Module_exit NoEnv Overhead=1 Level=5 Test Template=" free j9module(%p)"
+
+TraceEvent=Trc_MODULE_creation_package Overhead=1 Level=4 Test Template="add package %s for module %s"
+
+TraceEvent=Trc_MODULE_definition Overhead=1 Level=5 Template="JVM_DefineModule() define module %s"
+
+TraceEvent=Trc_MODULE_set_bootloader_unnamed_module Overhead=1 Level=5 Template="JVM_SetBootLoaderUnnamedModule() set unnamed module for boot loader"
+
+TraceEvent=Trc_MODULE_add_module_exports Overhead=1 Level=5 Test Template="export package %s in module %s to module %s"
+TraceEvent=Trc_MODULE_add_module_exports_to_all Overhead=1 Level=5 Test Template="export package %s in module %s to all modules"
+TraceEvent=Trc_MODULE_add_module_exports_to_all_unnamed Overhead=1 Level=5 Test Template="export package %s in module %s to all unnamed modules"
+
+TraceEvent=Trc_MODULE_add_reads_module Overhead=1 Level=5 Test Template="JVM_AddReadsModule() add read from module %s to module %s"
+
+TraceEvent=Trc_MODULE_add_module_package Overhead=1 Level=5 Test Template="JVM_AddModulePackage() add package %s to module %s"
+
+TraceEvent=Trc_MODULE_setting_package Overhead=1 Level=5 Test Template="internally set package/class: %.*s, loader: %s, module: %s"
+
+TraceException=Trc_VM_checkVisibility_failed_with_errortype Overhead=1 Level=1 Template="checkVisibility from %p (%.*s) to %p (%.*s) failed, error type: %s"
+

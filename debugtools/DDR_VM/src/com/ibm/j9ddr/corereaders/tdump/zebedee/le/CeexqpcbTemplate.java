@@ -1,0 +1,44 @@
+/*******************************************************************************
+ * Copyright (c) 2001, 2014 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+package com.ibm.j9ddr.corereaders.tdump.zebedee.le;
+
+import javax.imageio.stream.ImageInputStream;
+import java.io.IOException;
+
+/* This class was generated automatically by com.ibm.zebedee.util.Xml2Java */
+
+public interface CeexqpcbTemplate {
+
+    public int length();
+    public long getQpcb_eyecatcher(ImageInputStream inputStream, long address) throws IOException;
+    public int getQpcb_eyecatcher$offset();
+    public int getQpcb_eyecatcher$length();
+    public long getQpcb_length(ImageInputStream inputStream, long address) throws IOException;
+    public int getQpcb_length$offset();
+    public int getQpcb_length$length();
+    public long getQpcb_numpools(ImageInputStream inputStream, long address) throws IOException;
+    public int getQpcb_numpools$offset();
+    public int getQpcb_numpools$length();
+    public long getQpcb_pool_data_array(ImageInputStream inputStream, long address) throws IOException;
+    public int getQpcb_pool_data_array$offset();
+    public int getQpcb_pool_data_array$length();
+}

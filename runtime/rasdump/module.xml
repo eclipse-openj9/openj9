@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+   Copyright (c) 2006, 2017 IBM Corp. and others
+
+   This program and the accompanying materials are made available under
+   the terms of the Eclipse Public License 2.0 which accompanies this
+   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+   or the Apache License, Version 2.0 which accompanies this distribution and
+   is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+   This Source Code may also be made available under the following
+   Secondary Licenses when the conditions for such availability set
+   forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+   General Public License, version 2 with the GNU Classpath
+   Exception [1] and GNU General Public License, version 2 with the
+   OpenJDK Assembly Exception [2].
+
+   [1] https://www.gnu.org/software/classpath/license.html
+   [2] http://openjdk.java.net/legal/assembly-exception.html
+
+   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<module>
+        
+	<exports group="all">
+		<export name="JVM_OnUnload"/>
+		<export name="JVM_OnLoad"/>
+		<export name="J9VMDllMain"/>
+	</exports>
+
+	<artifact type="shared" name="j9dmp" bundle="jvm" loadgroup="">
+		<include-if condition="spec.flags.module_rasdump" />
+		<options>
+			<option name="isCPlusPlus"/>
+			<option name="dllDescription" data="RAS Dump"/>
+		</options>
+		<phase>core j2se</phase>
+		<exports>
+			<group name="all"/>
+		</exports>
+		<flags>
+			<!-- Turn off optimisation for PPC because XLC optimization isn't reliable -->
+			<flag name="-O0" definition="false">
+				<include-if condition="spec.linux_ppc"/> 
+			</flag>
+			<!-- Turn off FPO optimisation on Windows 32-bit to improve native stack traces (CMVC 199392) -->
+			<flag name="/Oy-" definition="false">			
+				<include-if condition="spec.win_x86"/>
+			</flag>
+		</flags>
+		<includes>
+			<include path="j9include"/>
+			<include path="j9oti"/>
+			<include path="j9zlib"/>
+			<include path="j9gcinclude"/>
+			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
+			<include path="j9gcgluejava"/>
+			<include path="j9shrcommon"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
+			<!-- Remove the jobname.s file unless on zos -->
+			<makefilestub data="UMA_OBJECTS:=$(filter-out jobname$(UMA_DOT_O),$(UMA_OBJECTS))\n">
+				<exclude-if condition="spec.zos_390.*"/>
+			</makefilestub>
+		</makefilestubs>
+		<libraries>
+			<library name="j9util"/>
+			<library name="j9utilcore"/>
+			<library name="j9avl" type="external"/>
+			<library name="j9hashtable" type="external"/>						
+			<library name="j9thr"/>
+			<library name="j9pool" type="external"/>
+			<library name="j9zlib"/>
+			<library name="j9hookable"/>
+			<library name="j9zip"/>
+			<library name="omrsig">
+				<include-if condition="spec.flags.J9VM_PORT_OMRSIG_SUPPORT"/>
+			</library>
+		</libraries>
+	</artifact>
+</module>

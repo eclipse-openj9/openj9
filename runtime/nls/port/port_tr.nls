@@ -1,0 +1,497 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for common elements of the port library
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+# Every NLS message needs to have the following information provided:
+#
+# J9NLS_VM_SAMPLE_MESSAGE=This is a sample message that takes two parameters parameter 1 is a string  %1$s  parameter 2 is a number  %2$d
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_1=string parameter
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_2=2
+# J9NLS_VM_SAMPLE_MESSAGE.explanation=Explanation for what the message means
+# J9NLS_VM_SAMPLE_MESSAGE.system_action=What will the JVM or more generally the system do when this message is output
+# J9NLS_VM_SAMPLE_MESSAGE.user_response=What should the user do when seeing this message
+
+
+J9NLS.MODULE=PORT
+J9NLS.HEADER=portnls.h
+
+# Do not remove
+# used for unique number only
+J9NLS_PORT_NLS_FAILURE=
+# START NON-TRANSLATABLE
+
+J9NLS_PORT_NLS_FAILURE.explanation=
+J9NLS_PORT_NLS_FAILURE.system_action=
+J9NLS_PORT_NLS_FAILURE.user_response=
+# END NON-TRANSLATABLE
+
+#***********************/
+#* J9NLS_PORT_FILE */
+#***********************/
+
+J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE=Dosyaya yazma giri\u015fimi s\u0131ras\u0131nda bellek ayr\u0131lamad\u0131.
+# START NON-TRANSLATABLE
+J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE.explanation=The system was unable to satisfy a memory allocation request
+J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE.system_action=Subsequent memory allocation attempts will likely fail as a result of which the process will terminate
+J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE.user_response=Increase the amount of memory available to the process and/or contact your IBM service representative
+
+# END NON-TRANSLATABLE
+
+#***********************/
+#* J9NLS_PORT_SL */
+#***********************/
+J9NLS_PORT_SL_UNKOWN_ERROR=Payla\u015f\u0131lan kitapl\u0131k y\u00fcklenirken bilinmeyen hata
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_UNKOWN_ERROR.explanation=There was an unknown error loading a shared library
+J9NLS_PORT_SL_UNKOWN_ERROR.system_action=Process shuts down
+J9NLS_PORT_SL_UNKOWN_ERROR.user_response=This message will be accompanied by another message providing more detail. Verify that the shared library exists and contact your IBM service representative if it does.
+
+# END NON-TRANSLATABLE
+
+# Note: argument is the name of the dependent shared library
+J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE=Ba\u011f\u0131ml\u0131 %s birimi y\u00fcklenemedi
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.sample_input_1=a_dependant_module
+J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.explanation=The named dependent module could not be loaded
+J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.system_action=If the module was critical to the JVM the process will terminate
+J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.user_response=Contact your IBM service representative if the JVM terminates
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE=Simgenin \u00e7\u00f6z\u00fclmesi ba\u015far\u0131s\u0131z oldu
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.explanation=There was a problem with symbol resolution while looking for a particular symbol
+J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.system_action=The JVM will terminate with more information if the symbol was critical
+J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.user_response=Contact your IBM service representative if the JVM terminates
+
+# END NON-TRANSLATABLE
+
+# dead, OSX
+J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE=Payla\u015f\u0131lan kitapl\u0131k y\u00fcklenemedi
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE.explanation=NOTISSUED
+J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE.system_action=
+J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE.user_response=
+
+# END NON-TRANSLATABLE
+
+# dead, OSX
+J9NLS_PORT_SL_MODULE_FORMAT_INCORRECT=Birimin bi\u00e7imi yanl\u0131\u015f
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_MODULE_FORMAT_INCORRECT.explanation=NOTISSUED
+J9NLS_PORT_SL_MODULE_FORMAT_INCORRECT.system_action=
+J9NLS_PORT_SL_MODULE_FORMAT_INCORRECT.user_response=
+
+# END NON-TRANSLATABLE
+
+# dead, OSX
+J9NLS_PORT_SL_NOT_A_MODULE=Belirtilen birim bir birim de\u011fil
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_NOT_A_MODULE.explanation=NOTISSUED
+J9NLS_PORT_SL_NOT_A_MODULE.system_action=
+J9NLS_PORT_SL_NOT_A_MODULE.user_response=
+
+# END NON-TRANSLATABLE
+
+# dead, OSX
+J9NLS_PORT_SL_MODULE_ARCHITECTURE_INCORRECT=Birimin mimarisi do\u011fru de\u011fil
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_MODULE_ARCHITECTURE_INCORRECT.explanation=NOTISSUED
+J9NLS_PORT_SL_MODULE_ARCHITECTURE_INCORRECT.system_action=
+J9NLS_PORT_SL_MODULE_ARCHITECTURE_INCORRECT.user_response=
+
+# END NON-TRANSLATABLE
+
+# dead, OSX
+J9NLS_PORT_SL_FILE_NOT_FOUND=Belirtilen payla\u015f\u0131lan kitapl\u0131k bulunamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_FILE_NOT_FOUND.explanation=NOTISSUED
+J9NLS_PORT_SL_FILE_NOT_FOUND.system_action=
+J9NLS_PORT_SL_FILE_NOT_FOUND.user_response=
+
+# END NON-TRANSLATABLE
+
+# dead, OSX
+J9NLS_PORT_SL_PERMISSION_DENIED=Payla\u015f\u0131lan kitapl\u0131\u011f\u0131 y\u00fckleme izni verilmedi
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_PERMISSION_DENIED.explanation=NOTISSUED
+J9NLS_PORT_SL_PERMISSION_DENIED.system_action=
+J9NLS_PORT_SL_PERMISSION_DENIED.user_response=
+
+# END NON-TRANSLATABLE
+
+# dead, PalmOS
+J9NLS_PORT_SL_OUT_OF_MEMORY=Payla\u015f\u0131lan kitapl\u0131k y\u00fckleme giri\u015fimi s\u0131ras\u0131nda bellek ayr\u0131lamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_OUT_OF_MEMORY.explanation=NOTISSUED
+J9NLS_PORT_SL_OUT_OF_MEMORY.system_action=
+J9NLS_PORT_SL_OUT_OF_MEMORY.user_response=
+
+# END NON-TRANSLATABLE
+
+# dead, PalmOS
+J9NLS_PORT_SL_ERROR_PACE_BIT_SET=Ayarlanmakta olan PACE ikili nedeniyle payla\u015f\u0131lan kitapl\u0131k y\u00fcklenirken hata olu\u015ftu
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_ERROR_PACE_BIT_SET.explanation=NOTISSUED
+J9NLS_PORT_SL_ERROR_PACE_BIT_SET.system_action=
+J9NLS_PORT_SL_ERROR_PACE_BIT_SET.user_response=
+
+# END NON-TRANSLATABLE
+
+# dead, Pilot
+J9NLS_PORT_SL_DLL_TABLE_NOT_FOUND=Payla\u015f\u0131lan kitapl\u0131k y\u00fcklenirken hata - dll \u00e7izelgesi bulunamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_DLL_TABLE_NOT_FOUND.explanation=NOTISSUED
+J9NLS_PORT_SL_DLL_TABLE_NOT_FOUND.system_action=
+J9NLS_PORT_SL_DLL_TABLE_NOT_FOUND.user_response=
+
+# END NON-TRANSLATABLE
+
+# dead, Pilot
+J9NLS_PORT_SL_DLL_NOT_FOUND=Dll bulunamad\u0131\u011f\u0131 i\u00e7in y\u00fcklenemedi
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_DLL_NOT_FOUND.explanation=NOTISSUED
+J9NLS_PORT_SL_DLL_NOT_FOUND.system_action=
+J9NLS_PORT_SL_DLL_NOT_FOUND.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES=Payla\u015f\u0131lan kitapl\u0131k ba\u015fvurusu \u00e7\u00f6z\u00fclemiyor; \u00f6nko\u015ful olan bir payla\u015f\u0131lan kitapl\u0131k eksik olabilir
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES.explanation=The operating system was not able to resolve a shared library reference. A prerequisite shared library may be missing
+J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES.system_action=If the library is critical to the JVM the process will terminate
+J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES.user_response=If the process terminates, verify that the library exists and if it does, contact your IBM Service representative.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_SL_INTERNAL_ERROR=\u0130\u00e7 Hata %i
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_INTERNAL_ERROR.sample_input_1=1
+J9NLS_PORT_SL_INTERNAL_ERROR.explanation=An internal error occurred while looking for a shared library
+J9NLS_PORT_SL_INTERNAL_ERROR.system_action=If the library is critical to the JVM the process will terminate
+J9NLS_PORT_SL_INTERNAL_ERROR.user_response=If the process terminates, verify that the library exists and if it does, contact your IBM service representative
+
+# END NON-TRANSLATABLE
+
+#***********************/
+#* J9NLS_PORT_ERROR */
+#***********************/
+
+#Note: argument is Operating System errorCode
+J9NLS_PORT_ERROR_OPERATION_FAILED=\u0130\u015flem ba\u015far\u0131s\u0131z oldu: %d
+# START NON-TRANSLATABLE
+J9NLS_PORT_ERROR_OPERATION_FAILED.sample_input_1=1
+J9NLS_PORT_ERROR_OPERATION_FAILED.explanation=NOTAG
+J9NLS_PORT_ERROR_OPERATION_FAILED.system_action=
+J9NLS_PORT_ERROR_OPERATION_FAILED.user_response=
+
+# END NON-TRANSLATABLE
+
+#Note: arguments are (1) errorCodeBeingLookedUp, (2) OS Function Call, (3) errorCodeFromFunctionCall
+J9NLS_PORT_ERROR_MESSAGE_LOOKUP_FAILED=\u0130\u015flem Ba\u015far\u0131s\u0131z Oldu: %1$d (%2$s ba\u015far\u0131s\u0131z oldu: %3$d)
+# START NON-TRANSLATABLE
+J9NLS_PORT_ERROR_MESSAGE_LOOKUP_FAILED.sample_input_1=1
+J9NLS_PORT_ERROR_MESSAGE_LOOKUP_FAILED.sample_input_2=anOperatingSystemFunctionCall
+J9NLS_PORT_ERROR_MESSAGE_LOOKUP_FAILED.sample_input_3=1
+J9NLS_PORT_ERROR_MESSAGE_LOOKUP_FAILED.explanation=NOTISSUED
+J9NLS_PORT_ERROR_MESSAGE_LOOKUP_FAILED.system_action=
+J9NLS_PORT_ERROR_MESSAGE_LOOKUP_FAILED.user_response=
+
+# END NON-TRANSLATABLE
+
+#***********************/
+#* J9NLS_PORT_SHAREDHELPER */
+#***********************/
+J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR=%s dizini yarat\u0131lam\u0131yor.  Bu dizin yarat\u0131l\u0131ncaya kadar, payla\u015f\u0131lan s\u0131n\u0131flar ge\u00e7ersiz k\u0131l\u0131n\u0131r.
+# START NON-TRANSLATABLE
+J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.sample_input_1=/temp/sharedresource
+J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.explanation=The user included a directory when they provided the name of the shared classes cache. This directory could not be created.
+J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.user_response=Contact your IBM service representative
+
+# END NON-TRANSLATABLE
+
+# not used in 2.6, 2.4, 2.3
+J9NLS_PORT_SHARED_OPENED_STALE_MEMORY=Eskimi\u015f bir System V payla\u015f\u0131lan belle\u011fini a\u00e7t\u0131n\u0131z: dosya:%1$s payla\u015f\u0131lan bellek tnt:%2$d
+# START NON-TRANSLATABLE
+J9NLS_PORT_SHARED_OPENED_STALE_MEMORY.explanation=NOTISSUED
+J9NLS_PORT_SHARED_OPENED_STALE_MEMORY.system_action=
+J9NLS_PORT_SHARED_OPENED_STALE_MEMORY.user_response=
+
+J9NLS_PORT_SHARED_OPENED_STALE_MEMORY.sample_input_1=dummy.tmp
+J9NLS_PORT_SHARED_OPENED_STALE_MEMORY.sample_input_2=0001
+# END NON-TRANSLATABLE
+
+# not used in 2.6, 2.4, 2.3
+J9NLS_PORT_SHARED_OPENED_STALE_SEM=Eskimi\u015f bir System V semaforunu a\u00e7t\u0131n\u0131z: dosya:%1$s semafor tnt:%2$d
+# START NON-TRANSLATABLE
+J9NLS_PORT_SHARED_OPENED_STALE_SEM.explanation=NOTISSUED
+J9NLS_PORT_SHARED_OPENED_STALE_SEM.system_action=
+J9NLS_PORT_SHARED_OPENED_STALE_SEM.user_response=
+
+
+J9NLS_PORT_SHARED_OPENED_STALE_SEM.sample_input_1=dummy.tmp
+J9NLS_PORT_SHARED_OPENED_STALE_SEM.sample_input_2=0001
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_ZOS_64_APPENDING_XDS=\u00c7ok k\u0131s\u0131ml\u0131 d\u00f6k\u00fcm\u00fc etkinle\u015ftirmek i\u00e7in kullan\u0131c\u0131 taraf\u0131ndan belirtilen d\u00f6k\u00fcm \u015fablonunun sonuna .X&DS ekleniyor.
+# START NON-TRANSLATABLE
+J9NLS_PORT_ZOS_64_APPENDING_XDS.explanation=The user has specified a dump template (via -Xdump:system:file= or using the JAVA_DUMP_TDUMP_PATTERN environment variable). The maximum amount of data that can be dumped to a single IEATDUMP file is 2 gigabytes. For address spaces large than 2 gigabyes, zOS generates multiple dump files. To do this, the suffix &DS needs to be in the dump name, it will be replaced with a counter identifying which part of the dump is in the file. If the user does not add it, the JVM appends it to the dump template.
+J9NLS_PORT_ZOS_64_APPENDING_XDS.system_action=The JVM will add .X&DS to the dump template and continue to run.
+J9NLS_PORT_ZOS_64_APPENDING_XDS.user_response=It is safe to ignore this message (and allow the JVM to alter the dump file name) unless extending the dump file name makes it too long (in which case the JVM will failover to using the default dump template). You can avoid the message by including the &DS placeholder in your dump template or by using the default dump template.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_IEATDUMP_NAME_TOO_LONG=Kullan\u0131c\u0131 taraf\u0131ndan belirtilen d\u00f6k\u00fcm \u015fablonu \u00e7ok uzun oldu\u011fu i\u00e7in IEATDUMP ba\u015far\u0131s\u0131z oldu. D\u00f6k\u00fcm varsay\u0131lan \u015fablonla yeniden deneniyor.
+# START NON-TRANSLATABLE
+J9NLS_PORT_IEATDUMP_NAME_TOO_LONG.explanation=The user has specified a dump template (via -Xdump:system:file= or using the JAVA_DUMP_TDUMP_PATTERN environment variable). When the system has tried to take a dump using the template, the IEATDUMP routine returned with return code 0x8 and reason code 0x22, indicating the dump failed because the name was too long.
+J9NLS_PORT_IEATDUMP_NAME_TOO_LONG.system_action=The JVM will try to take the dump again using the default dump template.
+J9NLS_PORT_IEATDUMP_NAME_TOO_LONG.user_response=Specify a shorter dump template. Note that, on zOS 64, the user-specified dump template will be appended with .X&DS to enable multi-part zOS dumps (necessary to be able to store a full 64 bit address space). If the template you specified was close to 44 characters long, adding the .X&DS may have made it too long.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_IEATDUMP_DISK_FULL=D\u00f6k\u00fcm veri k\u00fcmesi ayr\u0131lamad\u0131\u011f\u0131 i\u00e7in (disk yerini ve alan izinlerini denetleyin) IEATDUMP ba\u015far\u0131s\u0131z oldu.
+# START NON-TRANSLATABLE
+J9NLS_PORT_IEATDUMP_DISK_FULL.explanation=The JVM attempted to take an IEATDUMP, and the dump routine returned with return code 0x8 and reason code 0x26, indicating the dump failed because the dump dataset could not be allocated.
+J9NLS_PORT_IEATDUMP_DISK_FULL.system_action=The JVM will continue running, but will fail to create a dump.
+J9NLS_PORT_IEATDUMP_DISK_FULL.user_response=The most common cause for this error message is that you have run out of space for dump datasets. Check your available dump storage and also check that you have the appropriate permissions.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_FILE_LOCK_INVALID_FLAG=Dosya kilitleme i\u015flemi i\u00e7in kilit tipi ge\u00e7ersiz. lockFlags: %1$d
+# START NON-TRANSLATABLE
+J9NLS_PORT_FILE_LOCK_INVALID_FLAG.sample_input_1=3
+J9NLS_PORT_FILE_LOCK_INVALID_FLAG.explanation=File lock operation failed due to invalid value of the flag specifying the type of lock.
+J9NLS_PORT_FILE_LOCK_INVALID_FLAG.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
+J9NLS_PORT_FILE_LOCK_INVALID_FLAG.user_response=Contact your IBM service representative.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_FILE_OPEN_FILE_IS_DIR=Belirtilen dosya bir dizin
+# START NON-TRANSLATABLE
+J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.explanation=File open operation failed while trying to open a directory as a file.
+J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
+J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.user_response=Contact your IBM service representative.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION=Ge\u00e7ersiz bellek koruma de\u011fi\u015ftirgesi nedeniyle mmap ba\u015far\u0131s\u0131z oldu.
+# START NON-TRANSLATABLE
+J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.explanation=Invalid value for memory protection parameter.
+J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
+J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.user_response=Contact your IBM service representative.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_MMAP_INVALID_FLAG=Ge\u00e7ersiz e\u015fleme se\u00e7enekleri nedeniyle mmap ba\u015far\u0131s\u0131z oldu.
+# START NON-TRANSLATABLE
+J9NLS_PORT_MMAP_INVALID_FLAG.explanation=Invalid value in flag parameter specifying mapping options.
+J9NLS_PORT_MMAP_INVALID_FLAG.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
+J9NLS_PORT_MMAP_INVALID_FLAG.user_response=Contact your IBM service representative.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_MMAP_INVALID_FILE_HANDLE=Tan\u0131t\u0131c\u0131 ge\u00e7ersiz. dosya tan\u0131t\u0131c\u0131s\u0131: %1$d.
+# START NON-TRANSLATABLE
+J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.sample_input_1=-1
+J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.explanation=File map operation failed due to invalid file handle.
+J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
+J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your IBM service representative.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_LINUXDUMP_PIPE_CORE=%s ayar\u0131 \"%s\" \u00e7ekirdek d\u00f6k\u00fcm\u00fcn\u00fcn bir d\u0131\u015f programa y\u00f6neltilece\u011fini belirtiyor.  core ya da core.%d yeniden adland\u0131rma giri\u015fiminde bulunuluyor.\n
+# START NON-TRANSLATABLE
+J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
+J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/libexec/abrt-hook-ccpp /var/spool/abrt %p %s %u %c
+J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_3=12345
+J9NLS_PORT_LINUXDUMP_PIPE_CORE.explanation=Tools such as ABRT use /proc/sys/kernel/core_pattern to redirect the core file to an external program, for example to create bug reports.
+J9NLS_PORT_LINUXDUMP_PIPE_CORE.system_action=The VM will look in the current directory for a file called either core or core.<process ID>, depending on the contents of /proc/sys/kernel/core_uses_pid.
+J9NLS_PORT_LINUXDUMP_PIPE_CORE.user_response=Refer to the documentation for the external program specified in /proc/sys/kernel/core_pattern.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED=Yaz\u0131l\u0131m taraf\u0131ndan ba\u015flat\u0131lan POSIX i\u015faretine ili\u015fkin LE ko\u015fulu %s%i al\u0131nd\u0131.
+# START NON-TRANSLATABLE
+J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.sample_input_1=CEE
+J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.sample_input_2=5206
+J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.explanation=The JVM was instructed at startup to run with LE condition handlers instead of POSIX signal handlers. A LE condition corresponding to a software-raised POSIX signal was received.
+J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.system_action=The JVM will dump diagnostics and exit.
+J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.user_response=Contact your IBM service representative.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_HYPERVISOR_OPFAILED=Hypervisor ile ilgili i\u015flem ba\u015far\u0131s\u0131z oldu.
+# START NON-TRANSLATABLE
+J9NLS_PORT_HYPERVISOR_OPFAILED.explanation=Operation related to Hypervisor failed.
+J9NLS_PORT_HYPERVISOR_OPFAILED.system_action=The JVM will continue, but no hypervisor related information will be provided.
+J9NLS_PORT_HYPERVISOR_OPFAILED.user_response=Contact your IBM service representative.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_UNSUPPORTED_HYPERVISOR=Desteklenen bir Hypervisor saptanamad\u0131.
+# START NON-TRANSLATABLE
+J9NLS_PORT_UNSUPPORTED_HYPERVISOR.explanation=JVM was unable to detect a supported Hypervisor.
+J9NLS_PORT_UNSUPPORTED_HYPERVISOR.system_action=The JVM will continue, but no hypervisor related information will be provided.
+J9NLS_PORT_UNSUPPORTED_HYPERVISOR.user_response=Refer the documentation for Supported Hypervisors
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_ZOS_SHMEM_STORAGE_KEY_MISMATCH=Depolama koruma anahtar\u0131 %lu kullan\u0131larak yarat\u0131lan payla\u015f\u0131lan belle\u011fe ba\u011flanma giri\u015fiminde bulunuldu, ancak \u015fu an %lu anahtar\u0131nda \u00e7al\u0131\u015f\u0131l\u0131yor.
+# START NON-TRANSLATABLE
+J9NLS_PORT_ZOS_SHMEM_STORAGE_KEY_MISMATCH.sample_input_1=8
+J9NLS_PORT_ZOS_SHMEM_STORAGE_KEY_MISMATCH.sample_input_2=9
+J9NLS_PORT_ZOS_SHMEM_STORAGE_KEY_MISMATCH.explanation=There was a failure to open shared memory because the z/OS storage protection key used to create the shared memory is not compatible with the current storage protection key.
+J9NLS_PORT_ZOS_SHMEM_STORAGE_KEY_MISMATCH.system_action=No action required. This message is for informational purposes, any problem will be reported using a different message.
+J9NLS_PORT_ZOS_SHMEM_STORAGE_KEY_MISMATCH.user_response=Check for other error messages.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_MALLOC31_FAILURE=__malloc31, z/OS \u00fczerinde arabellek ay\u0131ramad\u0131
+# START NON-TRANSLATABLE
+J9NLS_PORT_MALLOC31_FAILURE.explanation=__malloc31 failed to allocate buffer
+J9NLS_PORT_MALLOC31_FAILURE.system_action=The JVM will continue, but no hypervisor related information will be provided.
+J9NLS_PORT_MALLOC31_FAILURE.user_response=Contact your IBM service representative.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_CSRSIC_FAILURE=z/OS \u00fczerinde CSRSI hizmetinden beklenmeyen d\u00f6n\u00fc\u015f kodu
+# START NON-TRANSLATABLE
+J9NLS_PORT_CSRSIC_FAILURE.explanation=Unexpected return code from CSRSI service on z/OS
+J9NLS_PORT_CSRSIC_FAILURE.system_action=The JVM will continue, but no hypervisor related information will be provided.
+J9NLS_PORT_CSRSIC_FAILURE.user_response=Contact your IBM service representative.
+
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_NO_HYPERVISOR=Hypervisor \u00fczerinde \u00e7al\u0131\u015f\u0131lm\u0131yor.
+# START NON-TRANSLATABLE
+J9NLS_PORT_NO_HYPERVISOR.explanation=JVM was unable to detect any Hypervisor.
+J9NLS_PORT_NO_HYPERVISOR.system_action=The JVM will continue, but no hypervisor related information will be provided.
+J9NLS_PORT_NO_HYPERVISOR.user_response=Refer the documentation for Supported Hypervisors
+# END NON-TRANSLATABLE
+
+# Note: IBM_JAVA_HYPERVISOR_SETTINGS is an environment variable name and should not be translated
+J9NLS_PORT_MALFORMED_HYPERVISOR_SETTINGS=IBM_JAVA_HYPERVISOR_SETTINGS i\u00e7in bozuk bi\u00e7imli de\u011fer
+# START NON-TRANSLATABLE
+J9NLS_PORT_MALFORMED_HYPERVISOR_SETTINGS.explanation=A closing quote character was missing from a quoted token in the IBM_JAVA_HYPERVISOR_SETTINGS environment variable
+J9NLS_PORT_MALFORMED_HYPERVISOR_SETTINGS.system_action=No Hypervisor settings were read, startup failed.JVM will exit.
+J9NLS_PORT_MALFORMED_HYPERVISOR_SETTINGS.user_response=Correct the IBM_JAVA_HYPERVISOR_SETTINGS environment variable
+# END NON-TRANSLATABLE
+
+# This message is encapsulated within J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR in file nls/j9cl/j9jcl.nls
+J9NLS_PORT_HYPFS_UPDATE_FAILED=HYPFS g\u00fcncellenemedi
+# START NON-TRANSLATABLE
+J9NLS_PORT_HYPFS_UPDATE_FAILED.explanation=Failed to write to the update file on hypfs
+J9NLS_PORT_HYPFS_UPDATE_FAILED.system_action=The JVM will continue, but no guest usage related information will be provided.
+J9NLS_PORT_HYPFS_UPDATE_FAILED.user_response=Check the hypfs permissions for this userid
+# END NON-TRANSLATABLE
+
+# This message is encapsulated within J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR in file nls/j9cl/j9jcl.nls
+J9NLS_PORT_HYPFS_READ_FAILED=HYPFS okunamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_PORT_HYPFS_READ_FAILED.explanation=Failed to read from hypfs
+J9NLS_PORT_HYPFS_READ_FAILED.system_action=The JVM will continue, but no guest usage related information will be provided.
+J9NLS_PORT_HYPFS_READ_FAILED.user_response=Check the hypfs permissions for this userid
+# END NON-TRANSLATABLE
+
+# This message is encapsulated within J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR in file nls/j9cl/j9jcl.nls
+J9NLS_PORT_HYPFS_NOT_MOUNTED=HYPFS sisteme ba\u011flanmad\u0131
+# START NON-TRANSLATABLE
+J9NLS_PORT_HYPFS_NOT_MOUNTED.explanation=The hypfs filesystem is not mounted or is not accessible to this userid
+J9NLS_PORT_HYPFS_NOT_MOUNTED.system_action=The JVM will continue, but no guest usage related information will be provided.
+J9NLS_PORT_HYPFS_NOT_MOUNTED.user_response=Check if hypfs is mounted and this userid has access to it
+# END NON-TRANSLATABLE
+
+# This message is encapsulated within J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR in file nls/j9cl/j9jcl.nls
+J9NLS_PORT_SYSINFO_FILE_READ_FAILED=/proc/sysinfo okunam\u0131yor
+# START NON-TRANSLATABLE
+J9NLS_PORT_SYSINFO_FILE_READ_FAILED.explanation=Read from /proc/sysinfo failed
+J9NLS_PORT_SYSINFO_FILE_READ_FAILED.system_action=The JVM will continue, but no guest usage related information will be provided.
+J9NLS_PORT_SYSINFO_FILE_READ_FAILED.user_response=Check /proc permissions for this userid
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_SYSINFO_USAGE_RETRIEVAL_ERROR_MSG=%1$d: %2$s bilgisi al\u0131namad\u0131.
+# START NON-TRANSLATABLE
+J9NLS_PORT_SYSINFO_USAGE_RETRIEVAL_ERROR_MSG.sample_input_1=-711
+J9NLS_PORT_SYSINFO_USAGE_RETRIEVAL_ERROR_MSG.sample_input_2=Processor Usage
+J9NLS_PORT_SYSINFO_USAGE_RETRIEVAL_ERROR_MSG.explanation=Failed to retrieve usage information from the OS.
+J9NLS_PORT_SYSINFO_USAGE_RETRIEVAL_ERROR_MSG.system_action=The JVM will continue, but no usage related information will be provided.
+J9NLS_PORT_SYSINFO_USAGE_RETRIEVAL_ERROR_MSG.user_response=Refer the documentation for more info on the error.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG=Sanal makine izleyicisi bilgisi al\u0131n\u0131rken bellek ayr\u0131lamad\u0131.
+# START NON-TRANSLATABLE
+J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG.explanation=The system was unable to satisfy a memory allocation request.
+J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG.system_action=Subsequent memory allocation attempts will likely fail as a result of which the process will terminate.
+J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG.user_response=Increase the amount of memory available to the process and/or contact your IBM service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG=Sistem bilgisi al\u0131n\u0131rken bellek ayr\u0131lamad\u0131.
+# START NON-TRANSLATABLE
+J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG.explanation=The system was unable to satisfy a memory allocation request.
+J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG.system_action=Subsequent memory allocation attempts will likely fail as a result of which the process will terminate.
+J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG.user_response=Increase the amount of memory available to the process and/or contact your IBM service representative.
+# END NON-TRANSLATABLE
+
+#***********************/
+#* J9NLS_PORT_SL */
+#***********************/
+J9NLS_PORT_SL_EXECUTABLE_OPEN_ERROR=Y\u00fcr\u00fct\u00fcl\u00fcr dosya a\u00e7\u0131lamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_EXECUTABLE_OPEN_ERROR.explanation=There was an error while opening the executable
+J9NLS_PORT_SL_EXECUTABLE_OPEN_ERROR.system_action=Process shuts down
+J9NLS_PORT_SL_EXECUTABLE_OPEN_ERROR.user_response=This message will be accompanied by another message providing more detail.
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR=Payla\u015f\u0131lan kitapl\u0131k y\u00fckleme giri\u015fimi s\u0131ras\u0131nda yetersiz arabellek
+# START NON-TRANSLATABLE
+J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.explanation=The file system path length of the shared object exceeds the maximum buffer size
+J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.system_action=Shared object is not loaded
+J9NLS_PORT_SL_BUFFER_EXCEEDED_ERROR.user_response=Reduce path length for the target shared object
+# END NON-TRANSLATABLE
+
+J9NLS_PORT_DUMP_PATH_EXISTS=Sistem d\u00f6k\u00fcm\u00fc yarat\u0131lamad\u0131; beklenen sistem d\u00f6k\u00fcm\u00fc dosyas\u0131yla ayn\u0131 ad\u0131 ta\u015f\u0131yan, d\u00fczenli olmayan bir \"%s\" dosyas\u0131 var
+# START NON-TRANSLATABLE
+J9NLS_PORT_DUMP_PATH_EXISTS.sample_input_1=/home/user/core
+J9NLS_PORT_DUMP_PATH_EXISTS.explanation=The JVM was unable to produce a system dump because a non-regular file (for example a directory, symbolic link, pipe or socket) exists with the same name as the expected system dump file.
+J9NLS_PORT_DUMP_PATH_EXISTS.system_action=The JVM continues, the requested system dump is not produced.
+J9NLS_PORT_DUMP_PATH_EXISTS.user_response=Check whether the name of a non-regular file (for example a directory, symbolic link, pipe or socket) in the current working directory of the Java application clashes with the default system dump file name (core or core.<process ID>) or with the setting of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid. Either rename the subdirectory, or change the settings of /proc/sys/kernel/core_pattern and /proc/sys/kernel/core_uses_pid so that the names do not clash.
+# END NON-TRANSLATABLE

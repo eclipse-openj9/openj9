@@ -1,0 +1,47 @@
+// Copyright (c) 2006, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+
+Executable=j9vrb
+Submodules=j9vmutil,j9util,pool,avl
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_VRB_VMInitStages_Event1 Overhead=1 Level=1 Template="Trace engine initialized for module j9vrb"
+TraceEntry=Trc_VRB_WalkStackFrames_Entry Overhead=1 Level=1 Template="WalkStackFrames - walkThread=%p flags=%p"
+TraceExit=Trc_VRB_WalkStackFrames_Exit Overhead=1 Level=1 Template="WalkStackFrames - walkThread=%p, rc=%d"
+TraceEvent=Trc_VRB_WalkStackFrames_swPrintf Overhead=1 Level=1 Template="%s"
+
+TraceException=Trc_VRB_Allocate_Memory_Failed noEnv Overhead=1 Level=1 Template="Unable to allocate memory - size=%zu"
+
+TraceAssert=Assert_VRB_true noEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Assert_VRB_false noEnv Overhead=1 Level=1 Assert="!(P1)"
+TraceAssert=Assert_VRB_notNull noEnv Overhead=1 Level=1 Assert="(P1) != NULL"
+
+TraceEvent=Trc_VRB_printClass_Event1 Group=verboseclass Overhead=1 Level=3 Template="%s: %.*s from: %s"
+TraceEvent=Trc_VRB_printClass_Event2 Group=verboseclass Overhead=1 Level=3 Template="%s: %.*s from: %s %s"
+
+TraceAssert=Assert_VRB_stackMapFailed noEnv Overhead=1 Level=1 Assert="(0 /* stack map error */)"
+TraceAssert=Assert_VRB_stackMapNull noEnv Overhead=1 Level=1 Assert="(0 /* Unable to locate JIT stack map */)"
+
+TraceException=Trc_VRB_Reallocate_Memory_Failed noEnv Overhead=1 Level=1 Template="Unable to reallocate memory - old size=%zu, new size=%zu"
+TraceException=Trc_VRB_WriteMessageBuffer_Failed noEnv Overhead=1 Level=1 Template="Unable to write the error message to buffer - original message length=%zu, error code=%d"
+
+TraceAssert=Assert_VRB_ShouldNeverHappen NoEnv Overhead=1 Level=2 Assert="(0 /* Should never happen */)"
+TraceAssert=Assert_VRB_Equals NoEnv Overhead=1 Level=2 Assert="(P1 == P2)"
+TraceAssert=Assert_VRB_NotEquals NoEnv Overhead=1 Level=2 Assert="(P1 != P2)"

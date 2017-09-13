@@ -1,0 +1,33 @@
+// Copyright (c) 2006, 2017 IBM Corp. and others
+//	
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+
+Executable=j9jni
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_JNI_VMInitStages_Event1 Overhead=1 Level=2 Template="Trace engine initialized for module j9jni"
+
+TraceEvent=Trc_JNI_MemoryAcquire Group=checkjni Overhead=1 Level=5 Template="JNI_MemoryAcquire: JNI function %s, memory address: %p"
+TraceEvent=Trc_JNI_MemoryInitMonitorError NoEnv Group=checkjni Overhead=1 Level=5 Template="JNI_MemoryInitMonitorError: Unable to initialize monitor"
+TraceEvent=Trc_JNI_MemoryInitPoolError NoEnv Group=checkjni Overhead=1 Level=5 Template="JNI_MemoryInitPoolError: Unable to create pool"
+TraceEvent=Trc_JNI_MemoryRelease Group=checkjni Overhead=1 Level=5 Template="JNI_MemoryRelease: JNI function %s, memory address: %p"
+
+TraceEvent=Trc_JNI_GetID Group=checkjni Overhead=1 Level=5 Template="JNI_GetID: JNI function %s, class %s method %s signature %s"
+TraceEvent=Trc_JNI_FindClass Group=checkjni Overhead=1 Level=5 Template="JNI_FindClass: JNI function %s, class name %s"
+

@@ -1,0 +1,87 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the codert module.
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+# Every NLS message needs to have the following information provided:
+#
+# J9NLS_VM_SAMPLE_MESSAGE=This is a sample message that takes two parameters parameter 1 is a string  %1$s  parameter 2 is a number  %2$d
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_1=string parameter
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_2=2
+# J9NLS_VM_SAMPLE_MESSAGE.explanation=Explanation for what the message means
+# J9NLS_VM_SAMPLE_MESSAGE.system_action=What will the JVM or more generally the system do when this message is output
+# J9NLS_VM_SAMPLE_MESSAGE.user_response=What should the user do when seeing this message
+#
+
+J9NLS.MODULE=CDRT
+J9NLS.HEADER=j9codertnls.h
+
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP=JIT y\u0131\u011f\u0131n e\u015flemi bulunam\u0131yor - VM durduruluyor
+# START NON-TRANSLATABLE
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP.explanation=Internal error indicating inability to find JIT metadata while traversing Java stacks
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP.system_action=JVM will exit
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP.user_response=File a problem report
+
+# END NON-TRANSLATABLE
+
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD=Y\u00f6ntem: %2$.*1$s.%4$.*3$s%6$.*5$s (%7$p)
+# START NON-TRANSLATABLE
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD.sample_input_1=5
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD.sample_input_2=Object
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD.sample_input_3=8
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD.sample_input_4=hashcode
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD.sample_input_5=6
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD.sample_input_6=sig()V
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD.sample_input_7=0x02365295
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD.explanation=Internal error indicating inability to find JIT metadata while traversing Java stacks
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD.system_action=JVM will exit
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD.user_response=File a problem report
+
+# END NON-TRANSLATABLE
+
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_PC=PC'de hata: %1$p (g\u00f6reli konum %2$p), meta veri = %3$p
+# START NON-TRANSLATABLE
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_PC.sample_input_1=0x02365295
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_PC.sample_input_2=0x00526831
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_PC.sample_input_3=0x24569212
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_PC.explanation=Internal error indicating inability to find JIT metadata while traversing Java stacks
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_PC.system_action=JVM will exit
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_PC.user_response=File a problem report
+# END NON-TRANSLATABLE

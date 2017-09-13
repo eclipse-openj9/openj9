@@ -1,0 +1,625 @@
+// Copyright (c) 2006, 2017 IBM Corp. and others
+//	
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+
+Executable=j9jcl
+Submodules=j9vmutil,j9util,pool
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_JCL_VMInitStages_Event1 Overhead=1 Level=1 Template="Trace engine initialized for module j9jcl"
+
+TraceEntry=Trc_JCL_sleep_Entry Overhead=1 Level=1 Template="Sleep for %lldms %dns"
+TraceExit-Exception=Trc_JCL_sleep_Interrupted Overhead=1 Level=1 Template="Slept (interrupted)"
+TraceExit-Exception=Trc_JCL_sleep_PriorityInterrupted Overhead=1 Level=1 Template="Slept (priority interrupted)"
+TraceExit-Exception=Trc_JCL_sleep_Error Overhead=1 Level=1 Template="Unexpected error code from sleep! (rc = %d)"
+TraceExit=Trc_JCL_sleep_Exit Overhead=1 Level=1 Template="Slept"
+
+TraceException=Trc_JCL_InvalidTimeout Overhead=1 Level=1 Template="Invalid arguments to sleep or wait (%lldms %dns)"
+
+TraceEntry=Trc_JCL_wait_Entry Overhead=1 Level=3 Template="Wait on %p for %lldms %dns"
+TraceExit-Exception=Trc_JCL_wait_Interrupted Overhead=1 Level=1 Template="Waited (interrupted)"
+TraceExit-Exception=Trc_JCL_wait_PriorityInterrupted Overhead=1 Level=1 Template="Waited (priority interrupted)"
+TraceExit-Exception=Trc_JCL_wait_IllegalState Overhead=1 Level=1 Template="Waited (illegal monitor state)"
+TraceExit-Exception=Trc_JCL_wait_Error Overhead=1 Level=1 Template="Unexpected error code from wait! (rc = %d)"
+TraceExit=Trc_JCL_wait_TimedOut Overhead=1 Level=1 Template="Waited (timed out)"
+TraceExit=Trc_JCL_wait_Exit Overhead=1 Level=3 Template="Waited"
+TraceEvent=Trc_JCL_foundMonitorInNursery Overhead=1 Level=1 Template="Found monitor %p for non-lockword object %p in table"
+TraceEvent=Trc_JCL_foundMonitorInLockword Overhead=1 Level=3 Template="Found monitor %p for object %p in object's lock word"
+TraceException=Trc_JCL_threadDoesntOwnFlatlock Overhead=1 Level=1 Template="The current thread does not own the flatlock for object %p"
+TraceEvent=Trc_JCL_foundMonitorInTable Overhead=1 Level=3 Template="Inflated monitor %p for object %p from table"
+
+TraceEvent=Trc_JCL_threadStop Overhead=1 Level=1 Template="Stop thread %p with throwable %p"
+TraceEvent=Trc_JCL_threadResume Overhead=1 Level=1 Template="Resume thread %p"
+TraceEvent=Trc_JCL_threadSuspend Overhead=1 Level=1 Template="Suspend thread %p"
+
+TraceEvent=Trc_JCL_Runtime_exec_command Overhead=1 Level=1 Template="Runtime.exec() with command ==>%s"
+
+TraceEvent=Trc_JCL_openNativeLibrary Overhead=1 Level=1 Template="Attempting to open %s from classpath %s"
+
+TraceEntry=Trc_JCL_park_Entry Overhead=1 Level=3 Template="Unsafe.park(timeoutIsEpochRelative=%d, timeout=%lld)"
+TraceEvent=Trc_JCL_park_timeIsInPast Overhead=1 Level=1 Template="Epoch relative timeout is in the past (time now=%lld)"
+TraceExit=Trc_JCL_park_Exit Overhead=1 Level=3 Template="Unsafe.park(result=%d)"
+
+TraceEntry=Trc_JCL_unpark_Entry Overhead=1 Level=3 Template="Unsafe.unpark(%p)"
+TraceExit=Trc_JCL_unpark_Exit Overhead=1 Level=3 Template="Unsafe.unpark"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getByte__J_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_getByte__J(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getByte__J_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_getByte__J result = %x"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getChar__J_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_getChar__J(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getChar__J_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_getChar__J result = %x"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getDouble__J_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_getDouble__J(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getDouble__J_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_getDouble__J(high = %zx low = %zx)"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getFloat__J_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_getFloat__J(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getFloat__J_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_getFloat__J result = %x"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getInt__J_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_getInt__J(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getInt__J_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_getInt__J result = %x"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getLong__J_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_getLong__J(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getLong__J_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_getLong__J(high = %zx low = %zx)"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getShort__J_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_getShort__J(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getShort__J_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_getShort__J result = %x"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putByte__JB_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_putByte__JB(%p, %x)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putByte__JB_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_putByte__JB"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putChar__JC_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_putChar__JC(%p, %x)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putChar__JC_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_putChar__JC"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putDouble__JD_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_putDouble__JD(%p, high = %zx low = %zx)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putDouble__JD_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_putDouble__JD"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putFloat__JF_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_putFloat__JF(%p, %x)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putFloat__JF_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_putFloat__JF"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putInt__JI_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_putInt__JI(%p, %x)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putInt__JI_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_putInt__JI"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putLong__JJ_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_putLong__JJ(%p, high = %zx low = %zx)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putLong__JJ_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_putLong__JJ"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putShort__JS_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_putShort__JS(%p, %x)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putShort__JS_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_putShort__JS"
+
+TraceEntry=Trc_JCL_J9SigQuitStartup_Entry noEnv Overhead=1 Level=1 Template="J9SigQuitStartup"
+TraceExit=Trc_JCL_J9SigQuitStartup_Disabled noEnv Overhead=1 Level=1 Template="J9SigQuitStartup (disabled because of -Xrs)"
+TraceExit=Trc_JCL_J9SigQuitStartup_Failure noEnv Overhead=1 Level=1 Template="J9SigQuitStartup (failed to start)"
+TraceExit=Trc_JCL_J9SigQuitStartup_Exit noEnv Overhead=1 Level=1 Template="J9SigQuitStartup"
+
+TraceEntry=Trc_JCL_J9SigQuitShutdown_Entry noEnv Overhead=1 Level=1 Template="J9SigQuitShutdown"
+TraceExit=Trc_JCL_J9SigQuitShutdown_Exit noEnv Overhead=1 Level=1 Template="J9SigQuitShutdown"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_allocateMemory_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_allocateMemory(0x%zx)"
+TraceExit-Exception=Trc_JCL_sun_misc_Unsafe_allocateMemory_OutOfMemory Overhead=1 Level=3 Template="sun_misc_Unsafe_allocateMemory -- OutOfMemory"
+TraceExit=Trc_JCL_sun_misc_Unsafe_allocateMemory_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_allocateMemory result = %p"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_freeMemory_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_freeMemory(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_freeMemory_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_freeMemory"
+
+TraceEntry=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getAnnotationClassNameForEntry_Entry Overhead=1 Level=3 Template="com_ibm_oti_reflect_AnnotationHelper_getAnnotationClassNameForEntry(%llx)"
+TraceEvent=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getAnnotationClassNameForEntry_type Overhead=1 Level=3 Template="annotation type = %.*s"
+TraceExit=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getAnnotationClassNameForEntry_Exit Overhead=1 Level=3 Template="com_ibm_oti_reflect_AnnotationHelper_getAnnotationClassNameForEntry result = %p"
+TraceEntry=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getAnnotationEntries_Entry Overhead=1 Level=3 Template="com_ibm_oti_reflect_AnnotationHelper_getAnnotationEntries(%p, %i, %p)"
+TraceEvent=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getAnnotationEntries_getAnnotations Overhead=1 Level=3 Template="type = %i, method name = %.*s, method signature = %.*s"
+TraceExit=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getAnnotationEntries_Exit Overhead=1 Level=3 Template="com_ibm_oti_reflect_AnnotationHelper_getAnnotationEntries result = %p"
+TraceEntry=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getDefaultReturnValue_Entry Overhead=1 Level=3 Template="com_ibm_oti_reflect_AnnotationHelper_getDefaultReturnValue(%p, %p)"
+TraceEvent=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getDefaultReturnValue_getDefaultValue Overhead=1 Level=3 Template="class = %p, class name = %.*s, method name = %.*s"
+TraceExit=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getDefaultReturnValue_Exit Overhead=1 Level=3 Template="com_ibm_oti_reflect_AnnotationHelper_getDefaultReturnValue result = %p"
+TraceEntry=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getReturnValueForEntry_Entry Overhead=1 Level=3 Template="com_ibm_oti_reflect_AnnotationHelper_getReturnValueForEntry(%p, %p, %p)"
+TraceEvent=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getReturnValueForEntry_value Overhead=1 Level=3 Template="entry = %p, method name = %.*s"
+TraceEvent=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getReturnValueForEntry_defaultValue Overhead=1 Level=3 Template="class = %p, class name = %.*s, method name = %.*s"
+TraceExit=Trc_JCL_com_ibm_oti_reflect_AnnotationHelper_getReturnValueForEntry_Exit Overhead=1 Level=3 Template="com_ibm_oti_reflect_AnnotationHelper_getReturnValueForEntry result = %p"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassAbstractHelper_getIsVerboseImpl_Entry Overhead=1 Level=1 Template="JCL: SharedClassAbstractHelper getIsVerboseImpl: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassAbstractHelper_getIsVerboseImpl_Exit Overhead=1 Level=1 Template="JCL: SharedClassAbstractHelper getIsVerboseImpl: Exiting with %d"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassAbstractHelper_initializeShareableClassloaderImpl_Entry Overhead=1 Level=1 Template="JCL: SharedClassAbstractHelper initializeShareableClassloaderImpl: Entering with classloader=%p"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassAbstractHelper_initializeShareableClassloaderImpl_Exit Overhead=1 Level=1 Template="JCL: SharedClassAbstractHelper initializeShareableClassloaderImpl: Exiting with %d"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_freeSpaceBytesImpl_Entry Overhead=1 Level=1 Template="JCL: SharedClassStatistics freeSpaceBytesImpl: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_freeSpaceBytesImpl_Exit Overhead=1 Level=1 Template="JCL: SharedClassStatistics freeSpaceBytesImpl: Exiting with result %lld"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_maxSizeBytesImpl_Entry Overhead=1 Level=1 Template="JCL: SharedClassStatistics maxSizeBytesImpl: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_maxSizeBytesImpl_Exit Overhead=1 Level=1 Template="JCL: SharedClassStatistics maxSizeBytesImpl: Exiting with result %d"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassTokenHelperImpl_findSharedClassImpl_Entry Overhead=1 Level=1 Template="JCL: SharedClassTokenHelperImpl findSharedClassImpl: Entering for helper ID %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassTokenHelperImpl_findSharedClassImpl_ExitDeny Overhead=1 Level=1 Template="JCL: SharedClassTokenHelperImpl findSharedClassImpl: Exiting because of DENY_CACHE_ACCESS"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassTokenHelperImpl_findSharedClassImpl_ExitTrue Overhead=1 Level=1 Template="JCL: SharedClassTokenHelperImpl findSharedClassImpl: Exiting with TRUE"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassTokenHelperImpl_findSharedClassImpl_ExitFalse Overhead=1 Level=1 Template="JCL: SharedClassTokenHelperImpl findSharedClassImpl: Exiting with FALSE"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassTokenHelperImpl_findSharedClassImpl_ExitError Overhead=1 Level=1 Template="JCL: SharedClassTokenHelperImpl findSharedClassImpl: Exiting with FALSE due to an error"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassTokenHelperImpl_storeSharedClassImpl_Entry Overhead=1 Level=1 Template="JCL: SharedClassTokenHelperImpl storeSharedClassImpl: Entering for helper ID %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassTokenHelperImpl_storeSharedClassImpl_ExitDenyUpdates Overhead=1 Level=1 Template="JCL: SharedClassTokenHelperImpl storeSharedClassImpl: Exiting because of DENY_CACHE_UPDATES"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassTokenHelperImpl_storeSharedClassImpl_ExitResult Overhead=1 Level=1 Template="JCL: SharedClassTokenHelperImpl storeSharedClassImpl: Exiting with result %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassTokenHelperImpl_storeSharedClassImpl_ExitError Overhead=1 Level=1 Template="JCL: SharedClassTokenHelperImpl storeSharedClassImpl: Exiting with FALSE due to an error"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_Entry Overhead=1 Level=3 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: Entering for helper ID %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_ExitDenyAccess Overhead=1 Level=3 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: Exiting because of DENY_CACHE_ACCESS"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_ExitResult Overhead=1 Level=3 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: Exiting with result %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_ExitNoResult Overhead=1 Level=3 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: Exiting with -1"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_ExitError Overhead=1 Level=3 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: Exiting with -1 due to an error"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange_Entry Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange_Exit Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange: Exiting"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_storeSharedClassImpl_Entry Overhead=1 Level=2 Template="JCL: SharedClassURLClasspathHelperImpl storeSharedClassImpl: Entering for helper ID %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_storeSharedClassImpl_ExitDenyUpdates Overhead=1 Level=2 Template="JCL: SharedClassURLClasspathHelperImpl storeSharedClassImpl: Exiting because of DENY_CACHE_UPDATES"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_storeSharedClassImpl_ExitResult Overhead=1 Level=2 Template="JCL: SharedClassURLClasspathHelperImpl storeSharedClassImpl: Exiting with result %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_storeSharedClassImpl_ExitError Overhead=1 Level=2 Template="JCL: SharedClassURLClasspathHelperImpl storeSharedClassImpl: Exiting with FALSE due to an error"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl_Entry Overhead=1 Level=2 Template="JCL: SharedClassURLHelperImpl findSharedClassImpl: Entering for helperID %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl_ExitDenyAccess Overhead=1 Level=2 Template="JCL: SharedClassURLHelperImpl findSharedClassImpl: Exiting because of DENY_CACHE_ACCESS"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl_ExitTrue Overhead=1 Level=2 Template="JCL: SharedClassURLHelperImpl findSharedClassImpl: Exiting with TRUE"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl_ExitFalse Overhead=1 Level=2 Template="JCL: SharedClassURLHelperImpl findSharedClassImpl: Exiting with FALSE"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl_ExitError Overhead=1 Level=2 Template="JCL: SharedClassURLHelperImpl findSharedClassImpl: Exiting with FALSE due to an error"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl_Entry Overhead=1 Level=2 Template="JCL: SharedClassURLHelperImpl storeSharedClassImpl: Entering for helperID %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl_ExitDenyUpdates Overhead=1 Level=2 Template="JCL: SharedClassURLHelperImpl storeSharedClassImpl: Exiting because of DENY_CACHE_UPDATES"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl_ExitResult Overhead=1 Level=2 Template="JCL: SharedClassURLHelperImpl storeSharedClassImpl: Exiting with result %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl_ExitError Overhead=1 Level=2 Template="JCL: SharedClassURLHelperImpl storeSharedClassImpl: Exiting with FALSE due to an error"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_copyString_Entry Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared copyString: Entering with toCopy=%s, length=%d, farmRoot=%p"
+TraceExit=Trc_JCL_com_ibm_oti_shared_copyString_ExitNoFarm Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared copyString: Exiting because of NULL farm"
+TraceExit=Trc_JCL_com_ibm_oti_shared_copyString_Exit Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared copyString: Exiting with copied string=%s"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_correctURLPath_Entry Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared correctURLPath: Entering with path=%s"
+TraceEvent=Trc_JCL_com_ibm_oti_shared_correctURLPath_Exit0 Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared correctURLPath: Allocation failure"
+TraceExit=Trc_JCL_com_ibm_oti_shared_correctURLPath_Exit1 Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared correctURLPath: Exiting with %d and corrected path=%s"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_createCompositeURLHash_Entry Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared createCompositeURLHash: Entering with correctedPath=%s"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createCompositeURLHash_Exit Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared createCompositeURLHash: Returning %d"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_createCPEntries_Entry Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Entering with helperID=%d, urlCount=%d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse1 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as getURLMethodIDs failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse2 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE due to memory allocation failure"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse3 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as getPathProtocolFromURL failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse4 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as getCpeTypeForProtocol failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse5 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as correctURLPath failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse6 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as pool_newElement failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitFalse7 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting FALSE as copyString failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createCPEntries_ExitTrue Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createCPEntries: Exiting with TRUE"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_createROMClassCookie_Entry Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared createROMClassCookie: Entering with ROMClass %p"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createROMClassCookie_Exit Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared createROMClassCookie: Exiting with 0"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_createToken_Entry Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createToken: Entering for helperID %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createToken_ExitFalse1 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createToken: Exiting FALSE as pool_newElement for tokenCachePool failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createToken_ExitFalse2 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createToken: Exiting FALSE as pool_newElement for j9ClassPathEntryPool failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createToken_ExitFalse3 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createToken: Exiting FALSE as copyString failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createToken_ExitTrue Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createToken: Exiting with TRUE"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_createURLEntry_Entry Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createURLEntry: Entering with helperID=%d, correctedPath=%s, cpeType=%d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createURLEntry_ExitFalse1 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createURLEntry: Exiting FALSE as pool_newElement failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createURLEntry_ExitFalse2 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createURLEntry: Exiting FALSE as pool_newElement failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createURLEntry_ExitFalse3 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createURLEntry: Exiting FALSE as copyString failed for path"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createURLEntry_ExitFalse4 Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createURLEntry: Exiting FALSE as copyString failed for partition"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createURLEntry_ExitTrue Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared createURLEntry: Exiting with TRUE"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedClasspath_Entry Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCachedClasspath: Entering with helperID=%d, urlCount=%d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedClasspath_ExitFound Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCachedClasspath: Exiting with found cached classpath"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedClasspath_ExitNull Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCachedClasspath: Exiting with NULL"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedToken_Entry Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared getCachedToken: Entering for helperID %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedToken_ExitFound Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared getCachedToken: Exiting with found cached token"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedToken_ExitNull Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared getCachedToken: Exiting with NULL"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedURL_Entry Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Entering for helperID=%d, cpeType=%d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedURL_ExitFound Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Exiting with found cached URL"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedURL_ExitNull Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Exiting with NULL"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_Entry Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_Exit0 Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with 0 as protocol is NULL"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitJAR Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with JAR"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitDIR Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with DIR"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitJXE Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with JXE"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitUnknown Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with UNKNOWN"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_getPathProtocolFromURL_Entry Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getPathProtocolFromURL: Entering with url %p"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getPathProtocolFromURL_Exit1 Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getPathProtocolFromURL: Exiting with 0 as CallObjectMethod failed for URLgetPathID"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getPathProtocolFromURL_Exit2 Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getPathProtocolFromURL: Exiting with 0 as GetStringUTFChars failed for pathStr"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getPathProtocolFromURL_Exit3 Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getPathProtocolFromURL: Exiting with 0 as CallObjectMethod failed for URLgetProtocolID"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getPathProtocolFromURL_Exit4 Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getPathProtocolFromURL: Exiting with 0 as GetUTFChars failed for protocolStr"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getPathProtocolFromURL_ExitOK Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getPathProtocolFromURL: Exiting with 1"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_getStringPair_Entry Obsolete Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringPair: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getStringPair_Exit1 Obsolete Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringPair: Exiting with 0 as GetStringUTFChars for obj1 failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getStringPair_Exit2 Obsolete Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringPair: Exiting with 0 as GetStringUTFChars for obj2 failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getStringPair_ExitOK Obsolete Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringPair: Exiting with 1"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_getURLMethodIDs_Entry Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringPair: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getURLMethodIDs_ExitCached Obsolete Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringPair: Exiting with cached values"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getURLMethodIDs_ExitNoJNClass Obsolete Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringPair: Exiting with 0 as java/net/URL findClass failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getURLMethodIDs_ExitNoGetPath Obsolete Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringPair: Exiting with 0 as GetMethodID for getPath failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getURLMethodIDs_ExitNoGetProtocol Obsolete Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringPair: Exiting with 0 as GetMethodID for getProtocol failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getURLMethodIDs_ExitSetOK Obsolete Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringPair: Exiting with 1"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_releaseStringPair_Entry Obsolete Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared releaseStringPair: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_releaseStringPair_Exit Obsolete Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared releaseStringPair: Exiting"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Entry Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Entering with left=%p, right=%p"
+TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Exit1 Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Exiting as helper IDs don't match"
+TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Exit2 Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Exiting as cpeTypes don't match"
+TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Exit3 Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Exiting as partition lengths don't match"
+TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Exit4 Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Exiting as partitions don't match"
+TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_ExitResult Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Exiting with result=%d"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_urlHashFn_Entry Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashFn: Entering with item=%p"
+TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashFn_Exit Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHash: Exiting with result=%d"
+
+// Post GA additions
+TraceException=Trc_JCL_com_ibm_oti_shared_getCachedURL_FailedStringCopy Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared getCachedURL: !!Failed string copy!!"
+
+TraceAssert=Assert_JCL_true noEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Assert_JCL_false noEnv Overhead=1 Level=1 Assert="!(P1)"
+TraceAssert=Assert_JCL_notNull noEnv Overhead=1 Level=1 Assert="(P1) != NULL"
+TraceAssert=Assert_JCL_mustHaveVMAccess noEnv overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
+TraceAssert=Assert_JCL_mustNotHaveVMAccess noEnv overhead=1 Level=1 Assert="0 == ((P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedDataHelperImpl_findSharedDataImpl_Entry Overhead=1 Level=1 Template="JCL: SharedDataHelperImpl findSharedDataImpl: Entering for helperID %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedDataHelperImpl_findSharedDataImpl_ExitDeny Overhead=1 Level=1 Template="JCL: SharedDataHelperImpl findSharedDataImpl: Exiting because of DENY_CACHE_ACCESS"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedDataHelperImpl_findSharedDataImpl_Exit Overhead=1 Level=1 Template="JCL: SharedDataHelperImpl findSharedDataImpl: Exiting with result %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedDataHelperImpl_findSharedDataImpl_ExitError Overhead=1 Level=1 Template="JCL: SharedDataHelperImpl findSharedDataImpl: Exiting with NULL due an error"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedDataHelperImpl_storeSharedDataImpl_Entry Overhead=1 Level=1 Template="JCL: SharedDataHelperImpl storeSharedDataImpl: Entering for helperID %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedDataHelperImpl_storeSharedDataImpl_ExitDenyUpdates Overhead=1 Level=1 Template="JCL: SharedDataHelperImpl storeSharedDataImpl: Exiting because of DENY_CACHE_UPDATES"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedDataHelperImpl_storeSharedDataImpl_Exit Overhead=1 Level=1 Template="JCL: SharedDataHelperImpl storeSharedDataImpl: Exiting with result %d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedDataHelperImpl_storeSharedDataImpl_ExitError Overhead=1 Level=1 Template="JCL: SharedDataHelperImpl storeSharedDataImpl: Exiting with NULL due an error"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_createDirectByteBuffer_Entry Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared createDirectByteBuffer: Entering with address=%p, dataLen=%d"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createDirectByteBuffer_Exit1 Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared createDirectByteBuffer: Exiting due to FindClass failure"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createDirectByteBuffer_Exit2 Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared createDirectByteBuffer: Exiting due to GetMethodID failure"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createDirectByteBuffer_Exit3 Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared createDirectByteBuffer: Exiting due to CallObjectMethod failure"
+TraceExit=Trc_JCL_com_ibm_oti_shared_createDirectByteBuffer_ExitOK Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared createDirectByteBuffer: Exiting with returnVal=%p"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_utfHashEqualFn_Entry Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared utfHashEqualFn: Entering with left=%p, right=%p"
+TraceExit=Trc_JCL_com_ibm_oti_shared_utfHashEqualFn_ExitResult Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared utfHashEqualFn: Exiting with result=%d"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_utfHashFn_Entry Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared utfHashFn: Entering with item=%p"
+TraceExit=Trc_JCL_com_ibm_oti_shared_utfHashFn_Exit Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared utfHash: Exiting with result=%d"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedString_Entry Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared getCachedString: Entering with %.*s and getUTF8=%p"
+TraceException=Trc_JCL_com_ibm_oti_shared_getCachedString_FailedStringCopy Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared getCachedString: String copy failed"
+TraceException=Trc_JCL_com_ibm_oti_shared_getCachedString_FailedHashTableCreate Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared getCachedString: Hashtable creation failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedString_ExitOK Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared getCachedString: Exiting with result=%p"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedString_ExitError Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared getCachedString: Exiting with NULL due to error"
+
+TraceException=Trc_JCL_threadReservedButDoesntOwnFlatlock Overhead=1 Level=1 Template="The current thread ows the reservation but not the flatlock for object %p"
+
+TraceEntry=Trc_JCL_Thread_getStateImpl_Entry Overhead=1 Level=1 Template="Thread.getStateImpl: thread %p"
+TraceExit=Trc_JCL_Thread_getStateImpl_Exit Overhead=1 Level=1 Template="Thread.getStateImpl: returning vmstate %d jclstate %d"
+
+TraceEntry=Trc_JCL_initializeKnownClasses_Entry Overhead=1 Level=1 Template="initializeKnownClasses"
+TraceExit=Trc_JCL_initializeKnownClasses_Exit Overhead=1 Level=1 Template="initializeKnownClasses"
+TraceExit=Trc_JCL_initializeKnownClasses_ExitError Overhead=1 Level=1 Template="resolveInstanceFieldRef %u failed"
+TraceEvent=Trc_JCL_initializeKnownClasses_ResolvedInstanceFieldRef Overhead=1 Level=1 Template="Resolved known instance field ref %u -- offset = %zu"
+TraceException=Trc_JCL_initializeKnownClasses_ClassRefNotResolvedForInstanceFieldRef Overhead=1 Level=1 Template="Known class ref %u could not be resolved for instance field ref %u"
+
+TraceEntry=Trc_JCL_threadmxbean_dumpAllThreads_Entry Overhead=1 Level=5 Template="ThreadMXBean.dumpAllThreadsImpl: getLockedMonitors %d, getLockedSynchronizers %d"
+TraceExit=Trc_JCL_threadmxbean_dumpAllThreads_Exit Overhead=1 Level=5 Template="ThreadMXBean.dumpAllThreadsImpl: returning %p"
+
+TraceEntry=Trc_JCL_threadmxbean_getArrayOfThreadInfo_Entry Overhead=1 Level=5 Template="ThreadMXBean.getArrayOfThreadInfoImpl: ids %p, getLockedMonitors %d, getLockedSynchronizers %d"
+TraceExit=Trc_JCL_threadmxbean_getArrayOfThreadInfo_Exit Overhead=1 Level=5 Template="ThreadMXBean.getArrayOfThreadInfoImpl: returning %p"
+
+TraceEntry=Trc_JCL_threadmxbean_getThreadInfoImpl6_Entry Overhead=1 Level=5 Template="ThreadMXBean.getThreadInfoImpl6: id %lld, stackDepth %d, getLockedMonitors %d, getLockedSynchronizers %d"
+TraceExit=Trc_JCL_threadmxbean_getThreadInfoImpl6_Exit Overhead=1 Level=5 Template="ThreadMXBean.getThreadInfoImpl6: returning %p"
+
+TraceEntry=Trc_JCL_threadmxbean_getSynchronizers_Entry Overhead=1 Level=6 Template="getSynchronizers: allinfo %p, allinfolen %d"
+TraceExit=Trc_JCL_threadmxbean_getSynchronizers_Exit Overhead=1 Level=6 Template="getSynchronizers: returning %d"
+
+TraceEntry=Trc_JCL_threadmxbean_getMonitors_Entry Overhead=1 Level=6 Template="getMonitors: vmthread %p, tinfo %p, stacklen %d"
+TraceExit=Trc_JCL_threadmxbean_getMonitors_Exit Overhead=1 Level=6 Template="getMonitors: returning %d"
+TraceException=Trc_JCL_threadmxbean_getMonitors_BufferOverrunInRecords Overhead=1 Level=1 Template="getMonitors: MonitorInfo overrun in record list, vmthread %p, maxMonitors %d, framesWalked %d, frameID %p"
+TraceException=Trc_JCL_threadmxbean_getMonitors_BufferOverrunInStack Overhead=1 Level=1 Template="getMonitors: MonitorInfo overrun in stack, vmthread %p, maxMonitors %d, framesWalked %d, frameID %p"
+
+TraceEntry=Trc_JCL_threadmxbean_getThreadInfo_Entry Overhead=1 Level=6 Template="getThreadInfo: vmthread %p"
+TraceExit=Trc_JCL_threadmxbean_getThreadInfo_Exit Overhead=1 Level=6 Template="getThreadInfo: returning %d"
+
+TraceException=Trc_JCL_com_ibm_oti_shared_SharedDataHelperImpl_findSharedDataImpl_MultipleDataForKeyError Overhead=1 Level=1 Template="findSharedData returned multiple entries for a single key"
+
+TraceEvent=Trc_JCL_threadmxbean_getThreadInfoImpl6_gotVMThread Overhead=1 Level=3 Template="ThreadMXBean.getThreadInfoImpl6: querying vmThread %p"
+
+TraceEvent=Trc_JCL_J9ZipFileInitialized Obsolete Overhead=1 Level=1 Template="ZipFile initialized"
+
+TraceEvent=Trc_JCL_verifyImpl_Start Overhead=1 Level=5 Template="Verifying Class Start %.*s classloader %p"
+TraceEvent=Trc_JCL_verifyImpl_End Overhead=1 Level=5 Template="Verifying Class End %.*s classloader %p"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_reallocateMemory_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_reallocateMemory_entry(%p, %zx)"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_reallocateMemory_OutOfMemory Overhead=1 Level=3 Template="sun_misc_Unsafe_reallocateMemory failed"
+TraceExit=Trc_JCL_sun_misc_Unsafe_reallocateMemory_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_reallocateMemory_exit result = %p"
+
+TraceEvent=Trc_JCL_initializeKnownClasses_ResolvedStaticMethodRef Overhead=1 Level=1 Template="Resolved known static method ref %u -- method = %zu"
+TraceException=Trc_JCL_initializeKnownClasses_ClassRefNotResolvedForMethodRef Overhead=1 Level=1 Template="Known class ref %u could not be resolved for method ref %u"
+TraceEvent=Trc_JCL_initializeKnownClasses_ResolvedVirtualMethodRef Overhead=1 Level=1 Template="Resolved known virtual method ref %u -- methodIndexAndArgCount = %zu"
+TraceEvent=Trc_JCL_initializeKnownClasses_ResolvedSpecialMethodRef Overhead=1 Level=1 Template="Resolved known special method ref %u -- method = %zu"
+TraceEvent=Trc_JCL_initializeKnownClasses_ResolvedInterfaceMethodRef Overhead=1 Level=1 Template="Resolved known interface method ref %u -- methodIndexAndArgCount = %zu"
+
+TraceEntry=Trc_JCL_attach_loadAgentLibraryEntry obsolete  Overhead=1 Noenv Level=1 Template="Java_com_ibm_tools_attach_javaSE_Attachment_loadAgentLibraryImpl %s, options %s, decorate=%d"
+TraceExit=Trc_JCL_attach_loadAgentLibraryExit obsolete Overhead=1 Noenv Level=1 Template="Java_com_ibm_tools_attach_javaSE_Attachment_loadAgentLibraryImpl %s, status=%d"
+TraceEvent=Trc_JCL_attach_mkdirWithPermissions Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_mkdirWithPermissionsImpl %s, permissions = %x, status=%d"
+TraceEvent=Trc_JCL_attach_createFileWithPermissions Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_createFileWithPermissionsImpl %s, permissions = %x, status=%d"
+TraceEvent=Trc_JCL_attach_chmod Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_chmod %s, permissions = %x status=%d"
+TraceEvent=Trc_JCL_attach_createSharedResourcesDir Overhead=1 Level=1 Template="createSharedResourcesDir %s, status=%d"
+TraceEvent=Trc_JCL_attach_openSemaphore Overhead=1 Level=1 Template="openSemaphore name=%s, control director = %s, status=%d"
+TraceEvent=Trc_JCL_attach_notifyVm obsolete Overhead=1 Noenv Level=1 Template="notifyVm on semphore %s, control director = %s, status=%d"
+TraceEntry=Trc_JCL_attach_waitSemaphoreEntry Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_waitSemaphoreImpl waiting on semaphore"
+TraceExit=Trc_JCL_attach_waitSemaphoreExit Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_waitSemaphoreImpl received post on semaphore, status = %d"
+TraceEvent=Trc_JCL_attach_closeSemaphore Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_closeSemaphoreImpl"
+TraceEvent=Trc_JCL_attach_destroySemaphore Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_destroySemaphoreImpl status = %d"
+TraceEvent=Trc_JCL_attach_getProcessId Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_getProcessIdImpl status = %lld"
+
+TraceEvent=Trc_JCL_sun_misc_Unsafe_registerNatives_Entry Overhead=1 Level=1 Template="Java_sun_misc_Unsafe_registerNatives enter"
+TraceEvent=Trc_JCL_sun_misc_Unsafe_registerNatives_Exit Overhead=1 Level=1 Template="Java_sun_misc_Unsafe_registerNatives"
+TraceEvent=Trc_JCL_attach_processExists Overhead=1 Level=3 Template="Java_com_ibm_tools_attach_javaSE_IPC_processExistsImpl pid = %lld rc = %d"
+
+TraceException=Trc_JCL_com_ibm_oti_shared_getCachedClasspath_ExitNull_Exception Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared getCachedClasspath: cache pool is NULL. helperID=%d, urlCount=%d."
+TraceEvent=Trc_JCL_com_ibm_oti_shared_getCachedClasspath_ExitNull_Event Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared getCachedClasspath: Classpath is not found. helperID=%d, urlCount=%d. Returning NULL"
+TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_ExitDenyAccess_Event Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: Exiting because of DENY_CACHE_ACCESS. helperID=%d."
+TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_ExitError2_Event Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: helperID=%d. Creating a pair of strings failed. Exiting with -1."
+TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_ExitError3_Event Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: helperID=%d. Creating new classpath entries failed. Exiting with -1."
+TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_ExitError4_Event Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: helperID=%d. Unable to get string from cache. Exiting with -1."
+TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_ExitResult_Event Overhead=1 Level=2 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: helperID=%d. Exiting with result %d."
+
+TraceEvent=Trc_JCL_attach_getUid Overhead=1 Level=5 Template="JCL: Process UID = %lld."
+TraceEvent=Trc_JCL_attach_chown Overhead=1 Level=5 Template="JCL: path = %s UID = %lld result = %d."
+
+TraceEvent=Trc_JCL_attach_lockFile obsolete Noenv Overhead=1 Level=5 Template="JCL: path = %s mode = %d blocking = %d result = %d."
+TraceEvent=Trc_JCL_attach_unlockFile obsolete Noenv Overhead=1 Level=5 Template="JCL: fd = %d result = %d."
+
+TraceEntry=Trc_JCL_attach_notifyVmEntry Overhead=1 Level=1 Template="notifyVm entry"
+TraceExit=Trc_JCL_attach_notifyVmExit Overhead=1 Level=1 Template="notifyVm exit status=%d"
+TraceEntry=Trc_JCL_attach_openSemaphoreEntry Overhead=1  Level=1 Template="openSemaphore entry"
+TraceExit=Trc_JCL_attach_openSemaphoreExit Overhead=1 Level=1 Template="openSemaphore exit status=%d"
+TraceEntry=Trc_JCL_attach_cancelNotifyVmEntry Overhead=1  Level=1 Template="cancelNotifyVm entry"
+TraceExit=Trc_JCL_attach_cancelNotifyVmExit Overhead=1 Level=1 Template="cancelNotifyVm exit status=%d"
+TraceEvent=Trc_JCL_attach_lockFileImpl Overhead=1 Level=5 Template="lockFile entry path = %s mode = %d blocking = %d result = %d."
+TraceEvent=Trc_JCL_attach_lockFileStatus Overhead=1  Level=1 Template="lockFile exit status=%d"
+TraceEvent=Trc_JCL_attach_loadAgentLibrary Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_Attachment_loadAgentLibraryImpl %s, options %s, decorate=%d"
+TraceEvent=Trc_JCL_attach_loadAgentLibraryStatus Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_Attachment_loadAgentLibraryImpl exit, status=%d"
+TraceEvent=Trc_JCL_attach_getTmpDir Overhead=1 Level=5 Template="tmpdir = %s"
+TraceEvent=Trc_JCL_attach_unlockFileWithStatus Overhead=1 Level=5 Template="unlockFile: fd = %d result = %d."
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getChar_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_getChar(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getChar_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_getChar result = %d"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putChar_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_putChar(%p, value = %d)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putChar_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_putChar"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getByte_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_getByte(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getByte_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_getByte result = %d"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putByte_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_putByte(%p, value = %d)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putByte_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_putByte"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getShort_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_getShort(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getShort_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_getShort result = %d"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putShort_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_putShort(%p, value = %d)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putShort_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_putShort"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getInt_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_getInt(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getInt_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_getInt result = %d"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putInt_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_putInt(%p, value = %d)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putInt_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_putInt"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getLong_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_getLong(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getLong_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_getLong result = %lld"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putLong_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_putLong(%p, value = %lld)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putLong_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_putLong"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getFloat_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_getFloat(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getFloat_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_getFloat result = %f"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putFloat_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_putFloat(%p, value = %f)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putFloat_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_putFloat"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getDouble_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_getDouble(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getDouble_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_getDouble result = %f"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putDouble_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_putDouble(%p, value = %f)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putDouble_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_putDouble"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_getAddress_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_getAddress(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_getAddress_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_getAddress result = %p"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_putAddress_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_putAddress(%p, value = %p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_putAddress_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_putAddress"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_setMemory_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_setMemory(%p, nbyte = %d, value = %x)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_setMemory_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_setMemory"
+TraceEntry=Trc_JCL_sun_misc_Unsafe_copyMemory_Entry Overhead=1 Level=6 Template="sun_misc_Unsafe_copyMemory(source = %p, dest = %p, nbyte = %d)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_copyMemory_Exit Overhead=1 Level=6 Template="sun_misc_Unsafe_copyMemory"
+
+TraceEvent=Trc_JCL_com_ibm_tools_attach_javaSE_IPC_isUsingDefaultUid Overhead=1 Level=1 Template="com_ibm_tools_attach_javaSE_IPC_isUsingDefaultUid: ACEE acronym: %4s aceeflg3Addr = %x aceeflg3Value = %x"
+TraceEvent=Trc_JCL_attach_getFileOwner Overhead=1 Level=1 Template="Java_com_ibcom_ibm_tools_attach_javaSE_CommonDirectory_getFileOwner path %s owner uid = %lld"
+
+TraceException=Trc_JCL_initializeKnownClasses_ClassRefNotResolvedForStaticFieldRef Overhead=1 Level=1 Template="Known class ref %u could not be resolved for static field ref %u"
+TraceEvent=Trc_JCL_initializeKnownClasses_ResolvedStaticFieldRef Overhead=1 Level=1 Template="Resolved known static field ref %u -- address = %p"
+
+TraceEvent=Trc_JCL_tenantInitializeImpl_tclinit Overhead=1 Level=5 Template="tenant initializing by tclinit Class %.*s classloader %p tenant %p"
+TraceEvent=Trc_JCL_tenantInitializeImpl_clinit  Overhead=1 Level=5 Template="tenant initializing by <clinit> Class %.*s classloader %p tenant %p"
+TraceEvent=Trc_JCL_tenantInitializeImpl_optionFlags Overhead=1 Level=5 Template="tenant initializing Class %.*s classloader %p flags: %d"
+
+TraceEvent=Trc_JCL_initializeKnownClasses_SkipResolveOfStringBytesFieldRef Obsolete Overhead=1 Level=1 Template="Skipping resolve of char[] java.lang.String#value. String compression is enabled. Instance field ref %u"
+TraceEvent=Trc_JCL_initializeKnownClasses_SkipResolveOfStringBytesCompressedFieldRef  Obsolete Overhead=1 Level=1 Template="Skipping resolve of Object java.lang.String#value. String compression is disabled. Instance field ref %u"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_allocateDBBMemory_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_allocateDBBMemory(0x%zx)"
+TraceExit-Exception=Trc_JCL_sun_misc_Unsafe_allocateDBBMemory_OutOfMemory Overhead=1 Level=1 Template="sun_misc_Unsafe_allocateDBBMemory -- OutOfMemory"
+TraceExit=Trc_JCL_sun_misc_Unsafe_allocateDBBMemory_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_allocateDBBMemory result = %p"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_freeDBBMemory_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_freeDBBMemory(%p)"
+TraceExit=Trc_JCL_sun_misc_Unsafe_freeDBBMemory_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_freeDBBMemory"
+
+TraceEntry=Trc_JCL_sun_misc_Unsafe_reallocateDBBMemory_Entry Overhead=1 Level=3 Template="sun_misc_Unsafe_reallocateDBBMemory_entry(%p, %zx)"
+TraceExit-Exception=Trc_JCL_sun_misc_Unsafe_reallocateDBBMemory_OutOfMemory Overhead=1 Level=1 Template="sun_misc_Unsafe_reallocateDBBMemory failed"
+TraceExit=Trc_JCL_sun_misc_Unsafe_reallocateDBBMemory_Exit Overhead=1 Level=3 Template="sun_misc_Unsafe_reallocateDBBMemory_exit result = %p"
+
+TraceEvent=Trc_JCL_park_unparkBeforeThreadFullySetup Overhead=1 Level=1 Template="Park before thread fully setup"
+TraceEvent=Trc_JCL_park_outOfMemoryInUnpark Overhead=1 Level=1 Template="Out of memory in unpark"
+
+TraceEvent=Trc_JCL_com_ibm_tools_attach_javaSE_IPC_tracepoint Overhead=1 Level=1 Template="Attach API: status=%d (%s), message = %s"
+
+TraceAssert=Assert_JCL_unreachable noEnv Overhead=1 Level=1 Assert="(0 /* unreachable */)"
+TraceAssert=Assert_JCL_unimplemented noEnv Overhead=1 Level=1 Assert="(0 /* unimplemented */)"
+
+TraceEntry=Trc_Java_com_ibm_lang_management_OperatingSystemMXBeanImpl_getProcessPrivateMemorySizeImpl_Entry Overhead=1 Level=3 Template="getProcessPrivateMemorySizeImpl Entry"
+TraceEvent=Trc_Java_com_ibm_lang_management_OperatingSystemMXBeanImpl_getProcessPrivateMemorySizeImpl_Old_Impl Overhead=1 Level=3 Template="getProcessPrivateMemorySizeImpl using VirtualQuery"
+TraceExit=Trc_Java_com_ibm_lang_management_OperatingSystemMXBeanImpl_getProcessPrivateMemorySizeImpl_Exit Overhead=1 Level=3 Template="getProcessPrivateMemorySizeImpl Exit"
+
+TraceEvent=Trc_JCL_java_lang_J9VMInternals_mtTrace Overhead=1 Level=1 Template="J9VMInternals.mtTraceImpl: tenant = %s, message = %s"
+TraceEvent=Trc_JCL_systemPropertyIterator Overhead=1 Level=10 Template="systemPropertyIterator: added VM system property '%s'='%s'"
+
+TraceEvent=Trc_JCL_mtTrace Overhead=1 Level=1 Template="MT-trace: tenant = %s, message = %s"
+
+TraceEvent=Trc_JCL_initializeImpl_ErrorNoCurrentTenant Overhead=1 Level=1 Template="J9VMInternals.initializeImpl: no current tenant!"
+TraceEvent=Trc_JCL_initializeImpl_ErrorNoHostTenant Overhead=1 Level=1 Template="J9VMInternals.initializeImpl: no host tenant, classloader: %p!"
+TraceEvent=Trc_JCL_initializeImpl_ErrorWrongTenant Overhead=1 Level=1 Template="J9VMInternals.initializeImpl: current tenant=%p but got tenant=%p!"
+TraceEvent=Trc_JCL_initializeImpl_DeferredClinit Overhead=1 Level=1 Template="J9VMInternals.initializeImpl: deferred <clinit> for class=%p (%.*s)"
+
+TraceEvent=Trc_JCL_tenantSwitch_OK Overhead=1 Level=1 Template="tenantSwitch(tenant=%p->%p, data32=%p->%p, data64=%p->%p, dataObj=%p->%p, dataInitStatus=%p->%p, nativeData=%p->%p, newAC=%p)"
+TraceEvent=Trc_JCL_tenantSwitch_Failed Overhead=1 Level=1 Template="tenantSwitchFailed(tenant=%p->%p) rc=%d"
+
+TraceAssert=Assert_JCL_InvalidTenantSlotType noEnv Overhead=1 Level=1 Assert="(0 /* invalid slot type */)"
+TraceEntry=Trc_JCL_com_ibm_tenant_TenantData_syncDataRowGrow_Entry Overhead=1 Level=1 Template="com_ibm_tenant_TenantData_syncDataRowGrow(tenant = %p, newData = %p, type = %d)"
+TraceExit=Trc_JCL_com_ibm_tenant_TenantData_syncDataRowGrow_Exit Overhead=1 Level=1 Template="com_ibm_tenant_TenantData_syncDataRowGrow"
+
+TraceEntry=Trc_JCL_com_ibm_tenant_TenantData_syncDataRowGrowOnAllTenants_Entry Overhead=1 Level=1 Template="com_ibm_tenant_TenantData_syncDataRowGrowOnAllTenants"
+TraceExit=Trc_JCL_com_ibm_tenant_TenantData_syncDataRowGrowOnAllTenants_Exit Overhead=1 Level=1 Template="com_ibm_tenant_TenantData_syncDataRowGrowOnAllTenants"
+
+TraceEntry=Trc_JCL_PackedObject_readPackedDataFromByteArray_Entry Overhead=1 Level=3 Template="PackedObject.readPackedDataFromByteArray(packedDataOffset=%lld, offset=%d, length=%d)"
+TraceEvent=Trc_JCL_PackedObject_readPackedDataFromByteArray_Sizes Overhead=1 Level=3 Template="PackedObject.readPackedDataFromByteArray this=0x%p, packedDataSize=%lld, buf=0x%p, bufferSize=%d, remainingSize=%lld"
+TraceExit=Trc_JCL_PackedObject_readPackedDataFromByteArray_Exit Overhead=1 Level=3 Template="PackedObject.readPackedDataFromByteArray result=%d"
+TraceEntry=Trc_JCL_PackedObject_writePackedDataToByteArray_Entry Overhead=1 Level=3 Template="PackedObject.writePackedDataToByteArray(packedDataOffset=%lld, offset=%d, length=%d)"
+TraceEvent=Trc_JCL_PackedObject_writePackedDataToByteArray_Sizes Overhead=1 Level=3 Template="PackedObject.writePackedDataToByteArray this=0x%p, packedDataSize=%lld, buf=0x%p, bufferSize=%d, remainingSize=%lld"
+TraceExit=Trc_JCL_PackedObject_writePackedDataToByteArray_Exit Overhead=1 Level=3 Template="PackedObject.writePackedDataToByteArray result=%d"
+
+TraceEvent=Trc_JCL_initializeKnownClasses_SkippingResolve Overhead=1 Level=1 Template="skipping resolve of cpIndex=%d, romClassRef=%p, romClassRef->runtimeFlags=%p, runtimeFlags=%p"
+
+TraceEntry=Trc_JCL_com_ibm_tenant_TenantContext_setSocketChannelImpl_Entry Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_setSocketChannelImpl(tenant=%p, channel=%p)"
+TraceExit=Trc_JCL_com_ibm_tenant_TenantContext_setSocketChannelImpl_Exit Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_setSocketChannelImpl result=%d fd=%d"
+
+TraceEvent=Trc_JCL_triggerClassInitializeFailedEvent Overhead=1 Level=1 Template="triggerClassInitializeFailedEvent for class=%p (%.*s)"
+
+TraceEntry=Trc_JCL_com_ibm_tenant_TenantContext_bindToAllocationContext_Entry Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_bindToAllocationContext(tenant=%p, minimumSize=%lld, maximumSize=%lld)"
+TraceEvent=Trc_JCL_com_ibm_tenant_TenantContext_bindToAllocationContext_failedAttempt Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_bindToAllocationContext, failed to bind, triggering GC and finalization"
+TraceExit=Trc_JCL_com_ibm_tenant_TenantContext_bindToAllocationContext_Exit Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_bindToAllocationContext result=%lld"
+
+TraceAssert=Assert_JCL_Natives_Not_Offloaded noEnv Overhead=1 Level=1 Assert="(0 /* unreachable */)"
+
+TraceEvent=Trc_JCL_com_ibm_oti_vm_VM_dumpString Group=verboseclass Overhead=1 Level=3 Template="com_ibm_oti_vm_VM_dumpString: %s"
+
+
+TraceEntry=Trc_JCL_com_ibm_tenant_TenantContext_freeze_Entry Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_freeze(tenantRef=%p)"
+TraceEntry=Trc_JCL_com_ibm_tenant_TenantContext_freeze Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_freezeThread(tenant=%p, thread%p)"
+TraceExit=Trc_JCL_com_ibm_tenant_TenantContext_freeze_Exit Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_freeze result=%lld"
+
+TraceEntry=Trc_JCL_com_ibm_tenant_TenantContext_thaw_Entry Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_thaw(tenantRef=%p)"
+TraceEntry=Trc_JCL_com_ibm_tenant_TenantContext_thaw Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_thawThread(tenant=%p, thread%p)"
+TraceExit=Trc_JCL_com_ibm_tenant_TenantContext_thaw_Exit Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_thaw result=%lld"
+
+TraceEvent=Trc_JCL_tenantSwitch_freezingTenant Overhead=1 Level=1 Template="tenantSwitch.freezing(tenant=%p, vmThread=%p)"
+
+TraceEntry=Trc_JCL_com_ibm_tenant_TenantContext_run_Entry Overhead=1 Level=3 Template="com_ibm_tenant_TenantContext_run(tenantRef=%p)"
+TraceEvent=Trc_JCL_com_ibm_tenant_TenantContext_run_tenantEnterFailed Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_run_enterFailed(cause=%lld)"
+TraceEvent=Trc_JCL_com_ibm_tenant_TenantContext_run_killedDuringRun Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_run_killedDuringRun"
+TraceEvent=Trc_JCL_com_ibm_tenant_TenantContext_run_tenantRestoreFailed Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_run_restoreFailed(cause=%lld)"
+TraceEvent=Trc_JCL_com_ibm_tenant_TenantContext_run_errorAlreadyRunningTenantCode Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_run_errorAlreadyRunningTenantCode"
+TraceExit=Trc_JCL_com_ibm_tenant_TenantContext_run_Exit Overhead=1 Level=3 Template="com_ibm_tenant_TenantContext_run result=%lld"
+
+TraceEntry=Trc_JCL_com_ibm_tenant_TenantContext_kill_Entry Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_kill(tenantRef=%p)"
+TraceEntry=Trc_JCL_com_ibm_tenant_TenantContext_kill Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_killThread(tenant=%p, thread%p)"
+TraceExit=Trc_JCL_com_ibm_tenant_TenantContext_kill_Exit Overhead=1 Level=1 Template="com_ibm_tenant_TenantContext_kill result=%lld"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_getStringChars_Entry Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringChars: Entering with obj %p"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getStringChars_Exit Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringChars: Exiting with 0 as GetStringUTFChars for obj failed"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getStringChars_ExitOK Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getStringChars: Exiting with 1"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_releaseStringChars_Entry Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared releaseStringChars: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_releaseStringChars_Exit Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared releaseStringChars: Exiting"
+
+TraceEvent=Trc_JCL_setTenantInitStatus_newStatus Group=classinit Overhead=1 Level=3 Template="setTenantInitStatus to %p (%s)"
+TraceEntry=Trc_JCL_tenantInitStateMachine_Entry Group=classinit Overhead=1 Level=3 Template="tenantInitStateMachine for %.*s (%p) loader=%p"
+TraceEvent=Trc_JCL_tenantInitStateMachine_notTenantAware Group=classinit Overhead=1 Level=3 Template="class is not tenant-aware, check superclass"
+TraceEvent=Trc_JCL_tenantInitStateMachine_status Group=classinit Overhead=1 Level=3 Template="status is %p (%s)"
+TraceEvent=Trc_JCL_tenantInitStateMachine_stateChanged Group=classinit Overhead=1 Level=3 Template="state changed after acquiring lock - loop and check state again"
+TraceEvent=Trc_JCL_tenantInitStateMachine_markInitializationInProgress Group=classinit Overhead=1 Level=3 Template="marking class as initializing in current thread on this tenant"
+TraceEvent=Trc_JCL_tenantInitStateMachine_initSuperclass Group=classinit Overhead=1 Level=3 Template="initialize superclass"
+TraceEvent=Trc_JCL_tenantInitStateMachine_tenantInitializeFailed Group=classinit Overhead=1 Level=3 Template="tenant initialization failed"
+TraceEvent=Trc_JCL_tenantInitStateMachine_initializingOnCurrentThread Group=classinit Overhead=1 Level=3 Template="initializing on current thread - exit"
+TraceEvent=Trc_JCL_tenantInitStateMachine_waitForOtherThread Group=classinit Overhead=1 Level=3 Template="operation in progress on another thread - wait for it to complete"
+TraceEvent=Trc_JCL_tenantInitStateMachine_waitComplete Group=classinit Overhead=1 Level=3 Template="wait complete - loop and check state again"
+TraceEvent=Trc_JCL_tenantInitStateMachine_waitFailed Group=classinit Overhead=1 Level=3 Template="wait complete - exception or async pending - exit"
+TraceExit=Trc_JCL_tenantInitStateMachine_Exit Group=classinit Overhead=1 Level=3 Template="tenantInitStateMachine"
+TraceEntry=Trc_JCL_initializeNonIsolatedClass_Entry Group=classinit Overhead=1 Level=3 Template="initializeNonIsolatedClass for %.*s (%p)"
+TraceEvent=Trc_JCL_initializeNonIsolatedClass_noRootTenant Group=classinit Overhead=1 Level=3 Template="root tenant not initialized"
+TraceEvent=Trc_JCL_initializeNonIsolatedClass_callingIntializeImpl Group=classinit Overhead=1 Level=3 Template="calling initializeImpl"
+TraceEvent=Trc_JCL_initializeNonIsolatedClass_maskingRCM Group=classinit Overhead=1 Level=3 Template="masking RCM"
+TraceEvent=Trc_JCL_initializeNonIsolatedClass_unmaskingRCM Group=classinit Overhead=1 Level=3 Template="unmasking RCM"
+TraceEvent=Trc_JCL_initializeNonIsolatedClass_repostingInjector Group=classinit Overhead=1 Level=3 Template="reposting code injector event"
+TraceEvent=Trc_JCL_initializeNonIsolatedClass_switchingToOwningTenant Group=classinit Overhead=1 Level=3 Template="switching to owning tenant"
+TraceEvent=Trc_JCL_initializeNonIsolatedClass_restoringTenant Group=classinit Overhead=1 Level=3 Template="switching back to original tenant"
+TraceExit=Trc_JCL_initializeNonIsolatedClass_Exit Group=classinit Overhead=1 Level=3 Template="initializeNonIsolatedClass"
+
+TraceException=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_UnknownProtocol Noenv Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Unrecognised protocol %.*s found (path: %.*s)"
+
+TraceEntry=Trc_JCL_java_lang_Class_storeNewPDobjects_Entry Overhead=1 Level=1 Template="JCL: java_lang_Class storeNewPDobjects: Entering with framesWalked %zu and pdObjects %p"
+TraceExit=Trc_JCL_java_lang_Class_storeNewPDobjects_Exit Overhead=1 Level=1 Template="JCL: java_lang_Class storeNewPDobjects: resultIndex %d"
+TraceEntry=Trc_JCL_java_lang_Class_calloutHelper_Entry Overhead=1 Level=1 Template="JCL: java_lang_Class calloutHelper: Entering with permObjects %p"
+TraceExit=Trc_JCL_java_lang_Class_calloutHelper_Exit Overhead=1 Level=1 Template="JCL: java_lang_Class calloutHelper: return with state %d"
+TraceEntry=Trc_JCL_java_security_AccessController_getProtectionDomainsWithPerm_Entry Overhead=1 Level=1 Template="JCL: java_security_AccessController_getProtectionDomainsWithPerm: Entering with startingFrame %zd, jsPermission %p"
+TraceExit=Trc_JCL_java_security_AccessController_getProtectionDomainsWithPerm_Exit Overhead=1 Level=1 Template="JCL: java_security_AccessController_getProtectionDomainsWithPerm: result %p"
+TraceEntry=Trc_JCL_java_security_AccessController_getAccSnapshot_Entry Overhead=1 Level=1 Template="JCL: java_security_AccessController_getAccSnapshot: Entering with startingFrame %zd"
+TraceExit=Trc_JCL_java_security_AccessController_getAccSnapshot_Exit Overhead=1 Level=1 Template="JCL: java_security_AccessController_getAccSnapshot: result %p"
+TraceEntry=Trc_Java_java_security_AccessController_getdoPrivilegedWithCombinerAccPDs_Entry Overhead=1 Level=1 Template="JCL: Java_java_security_AccessController_getdoPrivilegedWithCombinerAccPDs: Entering with startingFrame %zd"
+TraceExit=Trc_JCL_java_security_AccessController_getdoPrivilegedWithCombinerAccPDs_Exit Overhead=1 Level=1 Template="JCL: java_security_AccessController_getdoPrivilegedWithCombinerAccPDs: result %p"
+
+TraceEntry=Trc_JCL_findClassAndCreateGlobalRef_Entry Overhead=1 Level=6 Template="JCL: findClassAndCreateGlobalRef : Entering with className = %s"
+TraceException=Trc_JCL_findClassAndCreateGlobalRef_Failed_To_Find_Class Overhead=1 Level=1 Template="JCL: findClassAndCreateGlobalRef : Failed to find the class = %s"
+TraceExit=Trc_JCL_findClassAndCreateGlobalRef_ExitOK Overhead=1 Level=6 Template="JCL: findClassAndCreateGlobalRef : Exiting with globalRef = %p"
+TraceExit=Trc_JCL_findClassAndCreateGlobalRef_ExitError Overhead=1 Level=6 Template="JCL: findClassAndCreateGlobalRef : Exiting with NULL due to error"
+
+TraceEntry=Trc_JCL_getMethodParametersAsArray_Entry Overhead=1 Level=6 Template="JCL: getMethodParametersAsArray : Entering with jlrExecutable = %p"
+TraceEvent=Trc_JCL_getMethodParametersAsArray_Event1 Overhead=1 Level=6 Template="JCL: getMethodParametersAsArray : java.lang.reflect.Parameter class = %p"
+TraceException=Trc_JCL_getMethodParametersAsArray_Failed_To_getMethodID_For_Parameter_init Overhead=1 Level=1 Template="JCL: getMethodParametersAsArray : Failed to getMethodID for java_lang_reflect_Parameter_init"
+TraceEvent=Trc_JCL_getMethodParametersAsArray_Event2 Overhead=1 Level=6 Template="JCL: getMethodParametersAsArray : java.lang.reflect.Parameter#init methodID = %p"
+TraceEvent=Trc_JCL_getMethodParametersAsArray_Event3 Overhead=1 Level=6 Template="JCL: getMethodParametersAsArray : executableID  = %p"
+TraceEvent=Trc_JCL_getMethodParametersAsArray_Event4 Overhead=1 Level=6 Template="JCL: getMethodParametersAsArray : parametersData  = %p, numberOfParameters = %u"
+TraceEvent=Trc_JCL_getMethodParametersAsArray_Event5 Overhead=1 Level=6 Template="JCL: getMethodParametersAsArray : parametersArray  = %p"
+TraceEvent=Trc_JCL_getMethodParametersAsArray_Event6 Overhead=1 Level=6 Template="JCL: getMethodParametersAsArray : nameCharArray  = %s"
+TraceEvent=Trc_JCL_getMethodParametersAsArray_Event7 Overhead=1 Level=6 Template="JCL: getMethodParametersAsArray : Creating java_lang_reflect_Parameter Object. Name = %s, flags = %u, parameterIndex = %u"
+TraceException=Trc_JCL_getMethodParametersAsArray_Failed_To_Create_ParametersArray Overhead=1 Level=1 Template="JCL: getMethodParametersAsArray : Failed to create parameters array of size = %zd"
+TraceException=Trc_JCL_getMethodParametersAsArray_Failed_To_Allocate_Memory_For_NameCharArray Overhead=1 Level=1 Template="JCL: getMethodParametersAsArray : Failed to allocate memory for nameCharArray of size = %zd"
+TraceException=Trc_JCL_getMethodParametersAsArray_Failed_To_Create_NewStringUTF8 Overhead=1 Level=1 Template="JCL: getMethodParametersAsArray : Exception occured while creating NewStringUTF for %s"
+TraceException=Trc_JCL_getMethodParametersAsArray_Failed_To_Create_java_lang_reflect_Parameter_Object Overhead=1 Level=1 Template="JCL: getMethodParametersAsArray : Failed to create java_lang_reflect_Parameter Object. Name = %s, flags = %u, parameterIndex = %u"
+TraceExit=Trc_JCL_getMethodParametersAsArray_Exit Overhead=1 Level=6 Template="JCL: getMethodParametersAsArray : Exiting with parametersArray=%p"
+
+TraceExit=Trc_JCL_getMethodParametersAsArray_WrongParameterCount Overhead=1 Level=1 Template="JCL: getMethodParametersAsArray wrong number of arguments %d"
+
+TraceExit=Trc_JCL_com_ibm_oti_shared_getURLMethodIDs_ExitSetOK_V1 Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getURLMethodIDs: Exiting"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getURLMethodIDs_ExitError Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getURLMethodIDs: Exiting with exception"
+
+TraceEntry=Trc_JCL_threadmxbean_findNativeThreadId_Entry Overhead=1 Level=6 Template="JCL: findNativeThreadId : Entered with threadID = %llu."
+TraceExit=Trc_JCL_threadmxbean_findNativeThreadId_Exit Overhead=1 Level=6 Template="JCL: findNativeThreadId : Exiting with = %llu."
+
+TraceEntry=Trc_JCL_threadmxbean_findNativeThreadIDImpl_Entry Overhead=1 Level=6 Template="JCL: findNativeThreadIDImpl : Received unique threadID = %llu."
+TraceExit=Trc_JCL_threadmxbean_findNativeThreadIDImpl_Exit Overhead=1 Level=6 Template="JCL: findNativeThreadIDImpl : Returning native threadID = %llu."
+
+TraceEntry=Trc_JCL_threadmxbean_getNativeThreadIdsImpl_Entry Overhead=1 Level=3 Template="JCL: getNativeThreadIdsImpl : Entered function."
+TraceException=Trc_JCL_threadmxbean_getNativeThreadIdsImpl_failedGettingArrayElt Overhead=1 Level=1 Template="JCL: getNativeThreadIdsImpl : GetLongArrayElements failed."
+TraceException=Trc_JCL_threadmxbean_getNativeThreadIdsImpl_invalidArrLen Overhead=1 Level=1 Template="JCL: getNativeThreadIdsImpl : Array of invalid length received."
+TraceException=Trc_JCL_threadmxbean_getNativeThreadIdsImpl_outOfMemory Overhead=1 Level=1 Template="JCL: getNativeThreadIdsImpl : Failed allocating %llu bytes."
+TraceExit=Trc_JCL_threadmxbean_getNativeThreadIdsImpl_Exit Overhead=1 Level=3 Template="JCL: getNativeThreadIdsImpl : Returning array of native threadID at %p."
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_softmxBytesImpl_Entry Overhead=1 Level=6 Template="JCL: SharedClassStatistics softmxBytesImpl: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_softmxBytesImpl_Exit Overhead=1 Level=6 Template="JCL: SharedClassStatistics softmxBytesImpl: Exiting with result %zu"
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_minAotBytesImpl_Entry Overhead=1 Level=6 Template="JCL: SharedClassStatistics minAotBytesImpl: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_minAotBytesImpl_Exit Overhead=1 Level=6 Template="JCL: SharedClassStatistics minAotBytesImpl: Exiting with ret %d"
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_maxAotBytesImpl_Entry Overhead=1 Level=6 Template="JCL: SharedClassStatistics maxAotBytesImpl: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_maxAotBytesImpl_Exit Overhead=1 Level=6 Template="JCL: SharedClassStatistics maxAotBytesImpl: Exiting with ret %d"
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_minJitDataBytesImpl_Entry Overhead=1 Level=6 Template="JCL: SharedClassStatistics minJitDataBytesImpl: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_minJitDataBytesImpl_Exit Overhead=1 Level=6 Template="JCL: SharedClassStatistics minJitDataBytesImpl: Exiting with ret %d"
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_maxJitDataBytesImpl_Entry Overhead=1 Level=6 Template="JCL: SharedClassStatistics maxJitDataBytesImpl: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_maxJitDataBytesImpl_Exit Overhead=1 Level=6 Template="JCL: SharedClassStatistics maxJitDataBytesImpl: Exiting with ret %d"
+
+TraceEvent=Trc_JCL_getMethodImpl_result Overhead=1 Level=10 Template="Java_java_lang_Class_getMethodImpl %.*s(%.*s) = %p"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitJIMAGE Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with JIMAGE"

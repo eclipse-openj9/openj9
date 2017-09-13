@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+	Copyright (c) 2006, 2017 IBM Corp. and others
+	
+	This program and the accompanying materials are made available under
+	the terms of the Eclipse Public License 2.0 which accompanies this
+	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+	or the Apache License, Version 2.0 which accompanies this distribution and
+	is available at https://www.apache.org/licenses/LICENSE-2.0.
+	
+	This Source Code may also be made available under the following
+	Secondary Licenses when the conditions for such availability set
+	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+	General Public License, version 2 with the GNU Classpath
+	Exception [1] and GNU General Public License, version 2 with the
+	OpenJDK Assembly Exception [2].
+	
+	[1] https://www.gnu.org/software/classpath/license.html
+	[2] http://openjdk.java.net/legal/assembly-exception.html
+
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<interface>
+	<publicHeader>vmzipcachehook.h</publicHeader>
+	<privateHeader>vmzipcachehook_internal.h</privateHeader>
+	<struct>J9VMZipCachePoolHookInterface</struct>
+	<description>Hook interface for ZIP cache pool</description>
+
+	<declarations>
+#define J9ZIP_STATE_OPEN 1
+#define J9ZIP_STATE_CLOSED 2
+#define J9ZIP_STATE_RESET 3
+#define J9ZIP_STATE_IGNORE_STATE_CHANGES 4
+	</declarations>
+
+	<event>
+		<name>J9HOOK_VM_ZIP_LOAD</name>
+		<description>Triggered every time zip_openZipFile is called</description>
+		<struct>J9VMZipLoadEvent</struct>
+		<data type="struct J9PortLibrary*" name="portlib" description="A port library" />
+		<data type="void*" name="userData" description="An optional pointer to a JavaVM" />
+		<data type="const struct J9ZipFile*" name="zipfile" description="The zip file which has changed state" />
+		<data type="UDATA" name="newState" description="The new state of the zip file" />
+		<data type="U_8*" name="cpPath" description="path specified by the CP entry" />
+		<data type="I_32" name="returnCode" description="the return code for invalid ZIP entry, using existing flags defined in include/zipsup.h" />
+	</event>
+
+</interface>
+

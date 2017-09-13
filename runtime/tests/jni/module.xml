@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+   Copyright (c) 2006, 2017 IBM Corp. and others
+
+   This program and the accompanying materials are made available under
+   the terms of the Eclipse Public License 2.0 which accompanies this
+   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+   or the Apache License, Version 2.0 which accompanies this distribution and
+   is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+   This Source Code may also be made available under the following
+   Secondary Licenses when the conditions for such availability set
+   forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+   General Public License, version 2 with the GNU Classpath
+   Exception [1] and GNU General Public License, version 2 with the
+   OpenJDK Assembly Exception [2].
+
+   [1] https://www.gnu.org/software/classpath/license.html
+   [2] http://openjdk.java.net/legal/assembly-exception.html
+
+   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<module>
+        
+<exports group="all">
+	<export name="JNI_OnLoad"/>
+	<export name="JNI_OnUnload"/>
+	<export name="Java_j9vm_test_jni_GetObjectRefTypeTest_getObjectRefTypeTest"/>
+	<export name="Java_jvmti_test_nativeMethodPrefixes_UnwrappedNative_nat"/>
+	<export name="Java_jvmti_test_nativeMethodPrefixes_DirectNative_gac4gac3gac2gac1nat"/>
+	<export name="Java_jvmti_test_nativeMethodPrefixes_WrappedNative_nat"/>
+	<export name="Java_jit_test_vich_JNIObjectArray_getObjectArrayElement"/>
+	<export name="Java_jit_test_vich_JNILocalRef_localReference32"/>
+	<export name="Java_jit_test_vich_JNILocalRef_localReference8"/>
+	<export name="Java_jit_test_vich_JNIArray_getPrimitiveArrayCritical"/>
+	<export name="Java_jit_test_vich_JNIArray_getDoubleArrayElements"/>
+	<export name="Java_jit_test_vich_JNIArray_getLongArrayElements"/>
+	<export name="Java_jit_test_vich_JNIArray_getFloatArrayElements"/>
+	<export name="Java_jit_test_vich_JNIArray_getByteArrayElements"/>
+	<export name="Java_jit_test_vich_JNIArray_getIntArrayElements"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__III"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__IIIII"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__II"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__I"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__IIII"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__IIIIIIII"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__IIIIIII"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__IIIIII"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__Ljava_lang_Object_2"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__Ljava_lang_Object_2Ljava_lang_Object_2"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2Ljava_lang_Object_2"/>
+	<export name="Java_jit_test_vich_JNI_nativeJNI__"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualVoid"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualVoidA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualBoolean"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualBooleanA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualByte"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualByteA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualShort"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualShortA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualChar"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualCharA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualInt"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualIntA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualLong"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualLongA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualDouble"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualDoubleA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualFloat"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualFloatA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualObject"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInVirtualObjectA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualVoid"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualVoidA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualBoolean"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualBooleanA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualByte"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualByteA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualShort"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualShortA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualChar"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualCharA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualInt"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualIntA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualLong"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualLongA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualDouble"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualDoubleA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualFloat"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualFloatA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualObject"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInNonvirtualObjectA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticVoid"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticVoidA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticBoolean"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticBooleanA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticByte"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticByteA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticShort"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticShortA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticChar"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticCharA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticInt"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticIntA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticLong"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticLongA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticDouble"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticDoubleA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticFloat"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticFloatA"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticObject"/>
+	<export name="Java_jit_test_vich_JNICallIn_callInStaticObjectA"/>
+	<export name="Java_jit_test_vich_JNIFields_setStaticBoolean"/>
+	<export name="Java_jit_test_vich_JNIFields_getStaticBoolean"/>
+	<export name="Java_jit_test_vich_JNIFields_setStaticByte"/>
+	<export name="Java_jit_test_vich_JNIFields_getStaticByte"/>
+	<export name="Java_jit_test_vich_JNIFields_setStaticShort"/>
+	<export name="Java_jit_test_vich_JNIFields_getStaticShort"/>
+	<export name="Java_jit_test_vich_JNIFields_setStaticChar"/>
+	<export name="Java_jit_test_vich_JNIFields_getStaticChar"/>
+	<export name="Java_jit_test_vich_JNIFields_setStaticInt"/>
+	<export name="Java_jit_test_vich_JNIFields_getStaticInt"/>
+	<export name="Java_jit_test_vich_JNIFields_setStaticLong"/>
+	<export name="Java_jit_test_vich_JNIFields_getStaticLong"/>
+	<export name="Java_jit_test_vich_JNIFields_setStaticDouble"/>
+	<export name="Java_jit_test_vich_JNIFields_getStaticDouble"/>
+	<export name="Java_jit_test_vich_JNIFields_setStaticFloat"/>
+	<export name="Java_jit_test_vich_JNIFields_getStaticFloat"/>
+	<export name="Java_jit_test_vich_JNIFields_setStaticObject"/>
+	<export name="Java_jit_test_vich_JNIFields_getStaticObject"/>
+	<export name="Java_jit_test_vich_JNIFields_setInstanceBoolean"/>
+	<export name="Java_jit_test_vich_JNIFields_getInstanceBoolean"/>
+	<export name="Java_jit_test_vich_JNIFields_setInstanceByte"/>
+	<export name="Java_jit_test_vich_JNIFields_getInstanceByte"/>
+	<export name="Java_jit_test_vich_JNIFields_setInstanceShort"/>
+	<export name="Java_jit_test_vich_JNIFields_getInstanceShort"/>
+	<export name="Java_jit_test_vich_JNIFields_setInstanceChar"/>
+	<export name="Java_jit_test_vich_JNIFields_getInstanceChar"/>
+	<export name="Java_jit_test_vich_JNIFields_setInstanceInt"/>
+	<export name="Java_jit_test_vich_JNIFields_getInstanceInt"/>
+	<export name="Java_jit_test_vich_JNIFields_setInstanceLong"/>
+	<export name="Java_jit_test_vich_JNIFields_getInstanceLong"/>
+	<export name="Java_jit_test_vich_JNIFields_setInstanceDouble"/>
+	<export name="Java_jit_test_vich_JNIFields_getInstanceDouble"/>
+	<export name="Java_jit_test_vich_JNIFields_setInstanceFloat"/>
+	<export name="Java_jit_test_vich_JNIFields_getInstanceFloat"/>
+	<export name="Java_jit_test_vich_JNIFields_setInstanceObject"/>
+	<export name="Java_jit_test_vich_JNIFields_getInstanceObject"/>
+	<export name="Java_j9vm_test_jni_JNIFloatTest_floatJNITest"/>
+	<export name="Java_j9vm_test_jni_JNIMultiFloatTest_floatJNITest2"/>
+	<export name="Java_j9vm_test_jni_LocalRefTest_testPushLocalFrame1"/>
+	<export name="Java_j9vm_test_jni_LocalRefTest_testPushLocalFrame2"/>
+	<export name="Java_j9vm_test_jni_LocalRefTest_testPushLocalFrame3"/>
+	<export name="Java_j9vm_test_jni_LocalRefTest_testPushLocalFrame4"/>
+	<export name="Java_j9vm_test_jni_LocalRefTest_testPushLocalFrameNeverPop"/>
+	<export name="Java_j9vm_test_libraryhandle_LibHandleTest_libraryHandleTest"/>
+	<export name="Java_j9vm_test_libraryhandle_MultipleLibraryLoadTest_vmVersion"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_getVolatileInt"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_getVolatileFloat"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_getVolatileLong"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_getVolatileDouble"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_getVolatileStaticDouble"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_getVolatileStaticLong"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_getVolatileStaticInt"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_getVolatileStaticFloat"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileInt"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileFloat"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileLong"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileDouble"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileStaticDouble"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileStaticLong"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileStaticInt"/>
+	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileStaticFloat"/>
+	<export name="Java_j9vm_test_jni_NullRefTest_test"/>
+	<export name="Java_j9vm_test_jnichk_BufferOverrun_test"/>
+	<export name="Java_j9vm_test_jnichk_ModifiedBuffer_test"/>
+	<export name="Java_j9vm_test_jnichk_DeleteGlobalRefTwice_test"/>
+	<export name="Java_j9vm_test_jnichk_ModifyArrayData_test"/>
+	<export name="Java_j9vm_test_jnichk_ConcurrentGlobalReferenceModification_test"/>
+	<export name="Java_j9vm_test_jnichk_ReturnInvalidReference_deletedGlobalRef"/>
+	<export name="Java_j9vm_test_jnichk_ReturnInvalidReference_deletedLocalRef"/>
+	<export name="Java_j9vm_test_jnichk_ReturnInvalidReference_explicitReturnOfNull"/>
+	<export name="Java_j9vm_test_jnichk_ReturnInvalidReference_localRefFromPoppedFrame"/>
+	<export name="Java_j9vm_test_jnichk_ReturnInvalidReference_validGlobalRef"/>
+	<export name="Java_j9vm_test_jnichk_ReturnInvalidReference_validLocalRef"/>
+	<export name="Java_j9vm_test_jnichk_CriticalAlwaysCopy_testArray"/>
+	<export name="Java_j9vm_test_jnichk_CriticalAlwaysCopy_testString"/>	
+	<export name="Java_j9vm_test_monitor_Helpers_getLastReturnCode"/>
+	<export name="Java_j9vm_test_monitor_Helpers_monitorEnter"/>
+	<export name="Java_j9vm_test_monitor_Helpers_monitorExit"/>
+	<export name="Java_j9vm_test_monitor_Helpers_monitorExitWithException"/>
+	<export name="Java_j9vm_test_monitor_Helpers_monitorReserve"/>
+	<export name="Java_j9vm_test_memchk_NoFree_test"/>
+	<export name="Java_j9vm_test_memchk_BlockOverrun_test"/>
+	<export name="Java_j9vm_test_memchk_BlockUnderrun_test"/>
+	<export name="Java_j9vm_test_memchk_Generic_test"/>
+	<export name="Java_j9vm_test_thread_NativeHelpers_findDeadlockedThreads"/>
+	<export name="Java_j9vm_test_thread_NativeHelpers_findDeadlockedThreadsAndObjects"/>
+	<export name="Java_org_openj9_test_osthread_ReattachAfterExit_createTLSKeyDestructor"/>
+	<export name="Java_j9vm_test_classloading_VMAccess_getNumberOfNodes"/>
+	<export name="Java_com_ibm_jvmti_tests_util_TestRunner_callLoadAgentLibraryOnAttach"/>
+	<export name="Java_j9vm_utils_JNI_NewDirectByteBuffer"/>
+	<export name="Java_j9vm_utils_JNI_GetDirectBufferAddress"/>
+	<export name="Java_j9vm_utils_JNI_GetDirectBufferCapacity"/>
+	<export name="Java_j9vm_test_harmonyvmi_Test_testGetEnv"/>
+	<export name="Java_com_ibm_j9_jnimark_Natives_getByteArrayElements"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testGetRelease___3B"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testModify___3BZ"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testMemcpy___3B_3B"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testGetRelease___3I"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testModify___3IZ"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testMemcpy___3I_3I"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testGetRelease___3D"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testModify___3DZ"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testMemcpy___3D_3D"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testGetRelease__Ljava_lang_String_2"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testModify__Ljava_lang_String_2"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_testMemcpy__Ljava_lang_String_2Ljava_lang_String_2"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_holdsVMAccess"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_returnsDirectPointer"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_acquireAndSleep"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_acquireAndCallIn"/>
+	<export name="Java_j9vm_test_jni_CriticalRegionTest_acquireDiscardAndGC"/>
+	<export name="Java_j9vm_test_jni_Utf8Test_testAttachCurrentThreadAsDaemon"/>
+	<export name="Java_j9vm_test_memory_MemoryAllocator_allocateMemory"/>
+	<export name="Java_j9vm_test_memory_MemoryAllocator_allocateMemory32"/>
+	<export name="Java_j9vm_test_corehelper_DeadlockCoreGenerator_setup"/>
+	<export name="Java_j9vm_test_corehelper_DeadlockCoreGenerator_enterFirstMonitor"/>
+	<export name="Java_j9vm_test_corehelper_DeadlockCoreGenerator_enterSecondMonitor"/>
+	<export name="Java_j9vm_test_corehelper_DeadlockCoreGenerator_spawnNativeThread"/>
+	<export name="Java_j9vm_test_corehelper_DeadlockCoreGenerator_createNativeDeadlock"/>
+	<export name="Java_j9vm_test_jni_PthreadTest_attachAndDetach"/>
+	<export name="Java_org_openj9_test_contendedfields_FieldUtilities_getObjectAlignmentInBytes"/>
+</exports>
+<exports group="packed">
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_setUp"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_tearDown"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_testGetEnv"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_testHeapPackedPrimitiveArray"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_testNativePackedPrimitiveArray"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_testSetNestedField"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_testPackedObjectPointer"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_testMethodCall"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_testMonitorEnterExit"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedObjectPointer"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedObjectPointerFromObject"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperReleasePackedObjectPointer"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperReleasePackedObjectPointerFromObject"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedArrayElements"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedArrayElementsFromObject"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperReleasePackedArrayElements"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperReleasePackedArrayElementsFromObject"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetClassPackedDataSize"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedArrayClass"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedArrayClassComponentType"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperAllocNativePackedObject"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperAllocNativePackedArray"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperAllocPackedArray"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperNewObjectArray"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperNewObject"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperNewPackedObject"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperAllocObject"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetObjectClass"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetSuperClass"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperIsAssignableFrom"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperIsIdentical"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperIsInstanceOf"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperIsSameObject"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperCallObjectMethod"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperCallByteMethod"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperCallCharMethod"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperCallDoubleMethod"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperCallFloatMethod"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperCallIntMethod"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperCallShortMethod"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperCallLongMethod"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperCallBooleanMethod"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperDefineClass"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperNewLocalRef"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperFreeNativePackedObject"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetFieldID"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetMethodID"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetStaticFieldID"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetStaticMethodID"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetNestedField"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetByteField__Ljava_lang_Object_2JB"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetBooleanField__Ljava_lang_Object_2JZ"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetCharField__Ljava_lang_Object_2JC"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetShortField__Ljava_lang_Object_2JS"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetIntField__Ljava_lang_Object_2JI"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetLongField__Ljava_lang_Object_2JJ"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetFloatField__Ljava_lang_Object_2JF"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetDoubleField__Ljava_lang_Object_2JD"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetObjectField__Ljava_lang_Object_2JLjava_lang_Object_2"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetObjectFieldWithPackedObject__Ljava_lang_Object_2JLcom_ibm_jvm_packed_PackedObject_2"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetByteField__Ljava_lang_Object_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetBooleanField__Ljava_lang_Object_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetCharField__Ljava_lang_Object_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetShortField__Ljava_lang_Object_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetIntField__Ljava_lang_Object_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetLongField__Ljava_lang_Object_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetFloatField__Ljava_lang_Object_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetDoubleField__Ljava_lang_Object_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetObjectField__Ljava_lang_Object_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetObjectFieldAsPackedObject__Ljava_lang_Object_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetByteField__Lcom_ibm_jvm_packed_PackedObject_2JB"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetBooleanField__Lcom_ibm_jvm_packed_PackedObject_2JZ"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetCharField__Lcom_ibm_jvm_packed_PackedObject_2JC"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetShortField__Lcom_ibm_jvm_packed_PackedObject_2JS"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetIntField__Lcom_ibm_jvm_packed_PackedObject_2JI"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetLongField__Lcom_ibm_jvm_packed_PackedObject_2JJ"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetFloatField__Lcom_ibm_jvm_packed_PackedObject_2JF"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetDoubleField__Lcom_ibm_jvm_packed_PackedObject_2JD"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetObjectField__Lcom_ibm_jvm_packed_PackedObject_2JLjava_lang_Object_2"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetObjectFieldWithPackedObject__Lcom_ibm_jvm_packed_PackedObject_2JLcom_ibm_jvm_packed_PackedObject_2"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetByteField__Lcom_ibm_jvm_packed_PackedObject_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetBooleanField__Lcom_ibm_jvm_packed_PackedObject_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetCharField__Lcom_ibm_jvm_packed_PackedObject_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetShortField__Lcom_ibm_jvm_packed_PackedObject_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetIntField__Lcom_ibm_jvm_packed_PackedObject_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetLongField__Lcom_ibm_jvm_packed_PackedObject_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetFloatField__Lcom_ibm_jvm_packed_PackedObject_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetDoubleField__Lcom_ibm_jvm_packed_PackedObject_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetObjectField__Lcom_ibm_jvm_packed_PackedObject_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetObjectFieldAsPackedObject__Lcom_ibm_jvm_packed_PackedObject_2J"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetPackedArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetPackedByteArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetPackedBooleanArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetPackedCharArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetPackedShortArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetPackedIntArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetPackedLongArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetPackedFloatArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetPackedDoubleArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetObjectArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedByteArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedBooleanArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedCharArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedShortArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedIntArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedLongArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedFloatArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedDoubleArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetObjectArrayElement"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperToReflectedField"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperToReflectedMethod"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedArrayLength"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperGetPackedArrayRegion"/>
+	<export name="Java_com_ibm_j9_packed_util_NativeTest_helperSetPackedArrayRegion"/>
+	<export name="Java_com_ibm_j9_packed_util_PackedCastNatives_boguscast"/>
+	<export name="Java_com_ibm_j9_packed_util_PackedCastNatives_bytesAreZero"/>
+	<export name="Java_com_ibm_j9_packed_util_PackedCastNatives_zeroObject"/>
+</exports>
+
+	<artifact type="shared" name="j9ben" appendrelease="false">
+		<include-if condition="spec.flags.module_jnitest" />
+		<options>
+			<option name="requiresPrimitiveTable"/>
+			<option name="prototypeHeaderFileNames" data="j9protos.h jnitest_internal.h"/>
+		</options>
+		<phase>core j2se</phase>
+		<exports>
+			<group name="all"/>
+		</exports>
+		<includes>
+			<include path="j9include"/>
+			<include path="j9oti"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+			<makefilestub data="UMA_IGNORE_CODECOV=1"/>
+			<makefilestub data="UMA_DISABLE_DDRGEN=1"/>
+		</makefilestubs>
+		<libraries>
+			<library name="j9thr"/>
+			<library name="j9util"/>
+			<library name="j9utilcore"/>
+			<library name="jvm"/>
+		</libraries>
+	</artifact>
+</module>

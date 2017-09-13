@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+	Copyright (c) 2006, 2017 IBM Corp. and others
+	
+	This program and the accompanying materials are made available under
+	the terms of the Eclipse Public License 2.0 which accompanies this
+	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+	or the Apache License, Version 2.0 which accompanies this distribution and
+	is available at https://www.apache.org/licenses/LICENSE-2.0.
+	
+	This Source Code may also be made available under the following
+	Secondary Licenses when the conditions for such availability set
+	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+	General Public License, version 2 with the GNU Classpath
+	Exception [1] and GNU General Public License, version 2 with the
+	OpenJDK Assembly Exception [2].
+	
+	[1] https://www.gnu.org/software/classpath/license.html
+	[2] http://openjdk.java.net/legal/assembly-exception.html
+
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<vmconstantpool>
+	<classref name="java/lang/ArrayStoreException"/>
+	<classref name="java/lang/ClassCastException"/>
+	<classref name="java/lang/IllegalMonitorStateException"/>
+	<classref name="java/lang/IndexOutOfBoundsException"/>
+	<classref name="java/lang/NegativeArraySizeException"/>
+	<classref name="java/lang/NullPointerException"/>
+	<classref name="java/lang/VirtualMachineError"/>
+	<classref name="java/lang/InstantiationError"/>
+	<classref name="java/lang/UnsatisfiedLinkError"/>
+	<classref name="java/lang/InternalError"/>
+	<classref name="java/lang/OutOfMemoryError"/>
+	<classref name="java/lang/StackOverflowError"/>
+	<classref name="java/lang/UnsupportedClassVersionError"/>
+	<classref name="java/lang/AbstractMethodError"/>
+	<classref name="java/lang/IncompatibleClassChangeError"/>
+	<classref name="java/lang/IllegalAccessError"/>
+	<classref name="java/lang/NoSuchMethodError"/>
+	<classref name="java/lang/CloneNotSupportedException"/>
+	<classref name="java/lang/InstantiationException"/>
+	<classref name="java/lang/NoSuchFieldError"/>
+	<classref name="java/lang/NoClassDefFoundError"/>
+	<classref name="java/lang/ArrayIndexOutOfBoundsException"/>
+	<classref name="java/lang/Object"/>
+	<classref name="java/lang/String"/>
+	<classref name="java/lang/String$StringCompressionFlag"/>
+	<classref name="java/lang/Class"/>
+	<classref name="java/lang/IllegalThreadStateException"/>
+	<classref name="java/lang/Thread"/>
+	<classref name="java/lang/ArithmeticException"/>
+	<classref name="java/lang/ThreadGroup"/>
+	<classref name="java/lang/InterruptedException"/>
+	<classref name="java/lang/ClassNotFoundException"/>
+	<classref name="java/lang/Throwable" flags="interp_hotCodeReplacement"/>
+	<classref name="com/ibm/oti/vm/ReflectObjectInvalidException" flags="opt_reflect"/>
+	<classref name="java/lang/StringIndexOutOfBoundsException"/>
+	<classref name="java/lang/ThreadDeath"/>
+	<classref name="java/lang/IllegalAccessException"/>
+	<classref name="java/lang/IllegalArgumentException"/>
+	<classref name="java/lang/reflect/Method" flags="opt_reflect"/>
+	<classref name="java/lang/reflect/Field" flags="opt_reflect"/>
+	<classref name="java/lang/LinkageError"/>
+	<classref name="java/lang/Byte" flags="opt_reflect"/>
+	<classref name="java/lang/Short" flags="opt_reflect"/>
+	<classref name="java/lang/Integer" flags="opt_reflect"/>
+	<classref name="java/lang/Long" flags="opt_reflect"/>
+	<classref name="java/lang/Float" flags="opt_reflect"/>
+	<classref name="java/lang/Double" flags="opt_reflect"/>
+	<classref name="java/lang/Boolean" flags="opt_reflect"/>
+	<classref name="java/lang/Character" flags="opt_reflect"/>
+	<classref name="java/lang/Void" flags="opt_reflect"/>
+	<classref name="java/lang/ClassLoader"/>
+	<classref name="java/lang/NoSuchFieldException" flags="opt_reflect"/>
+	<classref name="java/lang/NoSuchMethodException" flags="opt_reflect"/>
+	<classref name="java/lang/reflect/Constructor" flags="opt_reflect"/>
+	<classref name="java/lang/ClassCircularityError"/>
+	<classref name="java/lang/VerifyError"/>
+	<classref name="java/lang/ClassFormatError"/>
+	<classref name="java/lang/StackTraceElement"/>
+	<classref name="java/lang/StackWalker$StackFrameImpl"/>
+	
+	<classref name="java/lang/ExceptionInInitializerError"/>
+	<classref name="java/io/UTFDataFormatException"/>
+	<classref name="java/lang/reflect/InvocationTargetException" flags="opt_reflect"/>
+	<classref name="java/lang/J9VMInternals"/>
+	<classref name="com/ibm/oti/lang/ThreadDeath"/>
+	<classref name="java/lang/ref/Reference"/>
+	<classref name="java/lang/ref/SoftReference"/>
+	<classref name="java/util/concurrent/locks/AbstractOwnableSynchronizer" />
+	<classref name="java/lang/invoke/MethodHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/PrimitiveHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/NativeMethodHandle" flags="opt_panama"/>
+	<classref name="java/lang/invoke/ReceiverBoundHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/ConvertHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/CollectHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/DynamicInvokerHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/FilterReturnHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/FoldHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/FilterArgumentsHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/GuardWithTestHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/VarargsCollectorHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/InvokeExactHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/SpreadHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/VolatileCallSite" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/MutableCallSite" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/MethodType" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/WrongMethodTypeException" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/PassThroughHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/InsertHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/PermuteHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/ConstantObjectHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/ConstantIntHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/ConstantFloatHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/ConstantLongHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/ConstantDoubleHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/InvokeGenericHandle" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/DefaultMethodConflictException" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/MethodHandleCache" flags="opt_methodHandle"/>
+	<classref name="java/lang/SecurityException"/>
+	<classref name="java/lang/J9VMInternals$ClassInitializationLock"/>
+	<classref name="java/lang/invoke/ThunkTuple" flags="opt_methodHandle"/>
+	<classref name="com/ibm/oti/util/WeakReferenceNode"/> 
+	<classref name="com/ibm/oti/vm/VM"/> 
+	<classref name="java/lang/System"/> 
+	<classref name="java/lang/reflect/Module" jcl="se9_before_b165" flags="opt_module"/>
+	<classref name="java/lang/Module" jcl="se9" flags="opt_module"/>
+	<classref name="java/lang/invoke/VarHandle" jcl="se9_before_b165,se9"/>
+	<classref name="java/lang/invoke/VarHandleInvokeHandle" jcl="se9_before_b165,se9"/>
+
+	<fieldref class="java/lang/ClassLoader" name="parent" signature="Ljava/lang/ClassLoader;"/>
+	<fieldref class="java/lang/ClassLoader" name="vmRef" signature="J" cast="struct J9ClassLoader *"/>
+	<fieldref class="java/lang/ClassLoader" name="isParallelCapable" signature="Z"/>
+	<fieldref class="java/lang/ClassLoader" name="unnamedModule" signature="Ljava/lang/reflect/Module;" flags="opt_module" jcl="se9_before_b165">
+		<fieldalias name="unnamedModule" signature="Ljava/lang/Module;" flags="opt_module" jcl="se9" />
+	</fieldref> 
+	<fieldref class="java/lang/ClassLoader" name="classLoaderName" signature="Ljava/lang/String;" flags="opt_module" jcl="se9_before_b165,se9" />
+	<fieldref class="java/lang/Class" name="reflectCache" signature="Ljava/lang/Class$ReflectCache;"/>
+	<fieldref class="java/lang/Class" name="classLoader" signature="Ljava/lang/ClassLoader;"/>
+	<fieldref class="java/lang/Class" name="vmRef" signature="J" cast="struct J9Class *"/>
+	<fieldref class="java/lang/Class" name="initializationLock" signature="Ljava/lang/J9VMInternals$ClassInitializationLock;"/>
+	<fieldref class="java/lang/Class" name="protectionDomain" signature="Ljava/security/ProtectionDomain;"/>
+	<fieldref class="java/lang/Class" name="classNameString" signature="Ljava/lang/String;"/>
+	<fieldref class="java/lang/Class" name="annotationCache" signature="Ljava/lang/Class$AnnotationCache;"/>
+	<fieldref class="java/lang/Class" name="module" signature="Ljava/lang/reflect/Module;" flags="opt_module" jcl="se9_before_b165">
+		<fieldalias name="module" signature="Ljava/lang/Module;" flags="opt_module" jcl="se9" />
+	</fieldref> 
+	<fieldref class="java/lang/Class" name="methodHandleCache" signature="Ljava/lang/Object;" flags="opt_methodHandle"/>
+	
+	<staticfieldref class="java/lang/String" name="compressionFlag" signature="Ljava/lang/String$StringCompressionFlag;"/>
+	<fieldref class="java/lang/String" name="value" signature="[B" jcl="se9_before_b165,se9">
+		<fieldalias name="value" signature="[C" jcl="se7_basic" />
+	</fieldref> 
+	<fieldref class="java/lang/String" name="count" signature="I"/>
+	<fieldref class="java/lang/String" name="hashCode" signature="I"/>
+	<fieldref class="java/lang/StackTraceElement" name="moduleName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9" flags="opt_module"/>
+	<fieldref class="java/lang/StackTraceElement" name="moduleVersion" signature="Ljava/lang/String;" jcl="se9_before_b165,se9" flags="opt_module"/>
+	<fieldref class="java/lang/StackTraceElement" name="declaringClass" signature="Ljava/lang/String;"/>
+	<fieldref class="java/lang/StackTraceElement" name="classLoaderName" signature="Ljava/lang/String;" flags="opt_module" jcl="se9_before_b165,se9" />
+	<fieldref class="java/lang/StackTraceElement" name="methodName" signature="Ljava/lang/String;"/>
+	<fieldref class="java/lang/StackTraceElement" name="fileName" signature="Ljava/lang/String;"/>
+	<fieldref class="java/lang/StackTraceElement" name="lineNumber" signature="I"/>
+	<fieldref class="java/lang/StackTraceElement" name="source" signature="Ljava/lang/Object;"/>
+	<fieldref class="java/lang/Thread" name="threadRef" signature="J" cast="struct J9VMThread *"/>
+	<fieldref class="java/lang/Thread" name="stackSize" signature="J"/>
+	<fieldref class="java/lang/Thread" name="tid" signature="J"/>
+	<fieldref class="java/lang/Thread" name="started" signature="Z"/>
+	<fieldref class="java/lang/Thread" name="name" signature="Ljava/lang/String;"/>
+	
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="declaringClass" signature="Ljava/lang/Class;" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="callerSensitive" signature="Z" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="fileName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="bytecodeIndex" signature="I" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="className" signature="Ljava/lang/String;" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="classLoaderName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="lineNumber" signature="I" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="methodName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="frameModule" signature="Ljava/lang/reflect/Module;" jcl="se9_before_b165">
+		<fieldalias name="frameModule" signature="Ljava/lang/Module;" jcl="se9" />
+	</fieldref> 
+	
+	<fieldref class="java/lang/Thread" name="priority" signature="I"/>
+	<fieldref class="java/lang/Thread" name="isDaemon" signature="Z"/>
+	<fieldref class="java/lang/Thread" name="runnable" signature="Ljava/lang/Runnable;"/>
+	<fieldref class="java/lang/Thread" name="group" signature="Ljava/lang/ThreadGroup;"/>
+	<fieldref class="java/lang/Thread" name="stopCalled" signature="Z"/>
+	<fieldref class="java/lang/Thread" name="contextClassLoader" signature="Ljava/lang/ClassLoader;"/>
+	<fieldref class="java/lang/Thread" name="inheritedAccessControlContext" signature="Ljava/security/AccessControlContext;"/>
+	<fieldref class="java/lang/Thread" name="lock" signature="Ljava/lang/Object;"/>
+	<fieldref class="java/lang/Thread" name="parkBlocker" signature="Ljava/lang/Object;"/>
+	<fieldref class="java/lang/Throwable" name="detailMessage" signature="Ljava/lang/String;"/>
+	<fieldref class="java/lang/Throwable" name="walkback" signature="Ljava/lang/Object;"/>
+	<fieldref class="java/lang/Throwable" name="stackTrace" signature="[Ljava/lang/StackTraceElement;"/>
+	<fieldref class="java/lang/Throwable" name="enableWritableStackTrace" signature="Z"/>
+	<fieldref class="java/lang/ExceptionInInitializerError" name="exception" signature="Ljava/lang/Throwable;"/>
+	<fieldref class="java/lang/Boolean" name="value" signature="Z"/>
+	<fieldref class="java/lang/Byte" name="value" signature="B"/>
+	<fieldref class="java/lang/Character" name="value" signature="C"/>
+	<fieldref class="java/lang/Short" name="value" signature="S"/>
+	<fieldref class="java/lang/Integer" name="value" signature="I"/>
+	<fieldref class="java/lang/Float" name="value" signature="F" cast="U_32"/>
+	<fieldref class="java/lang/Long" name="value" signature="J"/>
+	<fieldref class="java/lang/Double" name="value" signature="D" cast="U_64"/>
+	<fieldref class="java/lang/reflect/Field" name="name" signature="Ljava/lang/String;"/>
+	<fieldref class="java/lang/reflect/Field" name="type" signature="Ljava/lang/Class;"/>
+	<fieldref class="java/lang/reflect/Field" name="signature" signature="Ljava/lang/String;"/>
+	<fieldref class="java/lang/reflect/Field" name="modifiers" signature="I"/>
+	<fieldref class="java/lang/reflect/Field" name="annotations" signature="[B"/>
+	<fieldref class="java/lang/reflect/Field" name="intFieldID" signature="I">
+		<fieldalias name="slot"/>
+	</fieldref>
+	<fieldref class="java/lang/reflect/Field" name="declaringClass" signature="Ljava/lang/Class;">
+		<fieldalias name="clazz"/>
+	</fieldref>
+	<fieldref class="java/lang/reflect/Method" name="name" signature="Ljava/lang/String;"/>
+	<fieldref class="java/lang/reflect/Method" name="returnType" signature="Ljava/lang/Class;"/>
+	<fieldref class="java/lang/reflect/Method" name="parameterTypes" signature="[Ljava/lang/Class;"/>
+	<fieldref class="java/lang/reflect/Method" name="exceptionTypes" signature="[Ljava/lang/Class;"/>
+	<fieldref class="java/lang/reflect/Method" name="signature" signature="Ljava/lang/String;"/>
+	<fieldref class="java/lang/reflect/Method" name="modifiers" signature="I"/>
+	<fieldref class="java/lang/reflect/Method" name="annotations" signature="[B"/>
+	<fieldref class="java/lang/reflect/Method" name="parameterAnnotations" signature="[B"/>
+	<fieldref class="java/lang/reflect/Method" name="annotationDefault" signature="[B"/>
+	<fieldref class="java/lang/reflect/Method" name="intMethodID" signature="I">
+		<fieldalias name="slot"/>
+	</fieldref>
+	<fieldref class="java/lang/reflect/Method" name="declaringClass" signature="Ljava/lang/Class;">
+		<fieldalias name="clazz"/>
+	</fieldref>
+	<fieldref class="java/lang/reflect/Constructor" name="name" signature="Ljava/lang/String;" jcl="max"/>
+	<fieldref class="java/lang/reflect/Constructor" name="returnType" signature="Ljava/lang/Class;" jcl="max"/>
+	<fieldref class="java/lang/reflect/Constructor" name="parameterTypes" signature="[Ljava/lang/Class;"/>
+	<fieldref class="java/lang/reflect/Constructor" name="exceptionTypes" signature="[Ljava/lang/Class;"/>
+	<fieldref class="java/lang/reflect/Constructor" name="signature" signature="Ljava/lang/String;"/>
+	<fieldref class="java/lang/reflect/Constructor" name="modifiers" signature="I"/>
+	<fieldref class="java/lang/reflect/Constructor" name="annotations" signature="[B"/>
+	<fieldref class="java/lang/reflect/Constructor" name="parameterAnnotations" signature="[B"/>
+	<fieldref class="java/lang/reflect/Constructor" name="intMethodID" signature="I">
+		<fieldalias name="slot"/>
+	</fieldref>
+	<fieldref class="java/lang/reflect/Constructor" name="declaringClass" signature="Ljava/lang/Class;">
+		<fieldalias name="clazz"/>
+	</fieldref>
+	<fieldref class="java/lang/ThreadGroup" name="name" signature="Ljava/lang/String;"/>
+	<fieldref class="java/lang/ThreadGroup" name="maxPriority" signature="I"/>
+	<fieldref class="java/lang/ThreadGroup" name="parent" signature="Ljava/lang/ThreadGroup;"/>
+	<fieldref class="java/lang/ThreadGroup" name="numThreads" signature="I"/>
+	<fieldref class="java/lang/ThreadGroup" name="numGroups" signature="I"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenThreads" signature="[Ljava/lang/Thread;"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenGroups" signature="[Ljava/lang/ThreadGroup;"/>
+	<fieldref class="java/lang/ThreadGroup" name="isDaemon" signature="Z"/>
+	<fieldref class="java/lang/ThreadGroup" name="memorySpace" signature="J" cast="void *"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenGroupsLock" signature="Ljava/lang/Object;"/>
+	<fieldref class="java/lang/ThreadGroup" name="childrenThreadsLock" signature="Ljava/lang/Object;"/>
+	<fieldref class="java/lang/ref/Reference" name="referent" signature="Ljava/lang/Object;"/>
+	<fieldref class="java/lang/ref/Reference" name="queue" signature="Ljava/lang/ref/ReferenceQueue;"/>
+	<fieldref class="java/lang/ref/Reference" name="state" signature="I"/>
+	<fieldref class="java/lang/ref/SoftReference" name="age" signature="I"/>	
+	<fieldref class="java/util/concurrent/locks/AbstractOwnableSynchronizer" name="exclusiveOwnerThread" signature="Ljava/lang/Thread;"/>
+	<fieldref class="java/lang/invoke/PrimitiveHandle" name="vmSlot" signature="J" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/PrimitiveHandle" name="referenceClass" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/PrimitiveHandle" name="rawModifiers" signature="I" cast="U_32" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/PrimitiveHandle" name="defc" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodHandle" name="type" signature="Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodHandle" name="kind" signature="B" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodHandle" name="previousAsType" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/NativeMethodHandle" name="J9NativeCalloutDataRef" signature="J" cast="J9NativeCalloutData *" flags="opt_panama"/>
+	<fieldref class="java/lang/invoke/ReceiverBoundHandle" name="receiver" signature="Ljava/lang/Object;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/ConvertHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/FoldHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/FoldHandle" name="combiner" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/FilterArgumentsHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/FilterArgumentsHandle" name="startPos" signature="I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/FilterArgumentsHandle" name="filters" signature="[Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/GuardWithTestHandle" name="guard" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/GuardWithTestHandle" name="trueTarget" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/GuardWithTestHandle" name="falseTarget" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/CollectHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/CollectHandle" name="collectArraySize" signature="I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/CollectHandle" name="collectPosition" signature="I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/ConvertHandle" name="requiresBoxing" signature="Z" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/SpreadHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/SpreadHandle" name="arrayClass" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/SpreadHandle" name="spreadCount" signature="I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/SpreadHandle" name="spreadPosition" signature="I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodType" name="arguments" signature="[Ljava/lang/Class;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodType" name="returnType" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodType" name="argSlots" signature="I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodType" name="stackDescriptionBits" signature="[I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodType" name="methodDescriptor" signature="Ljava/lang/String;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/DynamicInvokerHandle" name="site" signature="Ljava/lang/invoke/CallSite;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/FilterReturnHandle" name="filter" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/VarargsCollectorHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/InvokeExactHandle" name="nextType" signature="Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>	
+	<fieldref class="java/lang/invoke/VolatileCallSite" name="target" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MutableCallSite" name="target" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/PassThroughHandle" name="equivalent" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/ThunkTuple" name="i2jInvokeExactThunk" signature="J" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/ThunkTuple" name="invocationCount" signature="I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodHandle" name="thunks" signature="Ljava/lang/invoke/ThunkTuple;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodHandle" name="invocationCount" signature="I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/InsertHandle" name="insertionIndex" signature="I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/InsertHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/InsertHandle" name="values" signature="[Ljava/lang/Object;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/PermuteHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/PermuteHandle" name="permute" signature="[I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/ConstantObjectHandle" name="value" signature="Ljava/lang/Object;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/ConstantIntHandle" name="value" signature="I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/ConstantFloatHandle" name="value" signature="F" cast="U_32" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/ConstantLongHandle" name="value" signature="J" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/ConstantDoubleHandle" name="value" signature="D" cast="U_64" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/InvokeGenericHandle" name="castType" signature="Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/VarHandle" name="handleTable" signature="[Ljava/lang/invoke/MethodHandle;" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/invoke/VarHandle" name="typeTable" signature="[Ljava/lang/invoke/MethodType;" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/invoke/VarHandle" name="modifiers" signature="I" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/invoke/FoldHandle" name="foldPosition" signature="I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/FoldHandle" name="argumentIndices" signature="[I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodHandleCache" name="directHandlesHead" signature="Lcom/ibm/oti/util/WeakReferenceNode;" flags="opt_methodHandle"/>	
+	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="operation" signature="I" jcl="se9_before_b165,se9"/>
+	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="accessModeType" signature="Ljava/lang/invoke/MethodType;" jcl="se9_before_b165,se9"/>
+
+	<fieldref class="java/lang/reflect/Module" name="loader" signature="Ljava/lang/ClassLoader;" jcl="se9_before_b165" flags="opt_module"/>
+	<fieldref class="java/lang/Module" name="loader" signature="Ljava/lang/ClassLoader;" jcl="se9" flags="opt_module"/>
+	<fieldref class="java/lang/reflect/Module" name="name" signature="Ljava/lang/String;" jcl="se9_before_b165" flags="opt_module"/>
+	<fieldref class="java/lang/Module" name="name" signature="Ljava/lang/String;" jcl="se9" flags="opt_module"/>
+
+	<fieldref class="com/ibm/oti/util/WeakReferenceNode" name="next" signature="Lcom/ibm/oti/util/WeakReferenceNode;" jcl="se7_basic,se9" flags="opt_methodHandle"/>
+
+	<staticmethodref class="java/lang/J9VMInternals" name="completeInitialization" signature="()V"/>
+	<staticmethodref class="java/lang/J9VMInternals" name="checkPackageAccess" signature="(Ljava/lang/Class;Ljava/security/ProtectionDomain;)V"/>
+	<staticmethodref class="java/lang/J9VMInternals" name="threadCleanup" signature="(Ljava/lang/Thread;)V"/>
+	<staticmethodref class="java/lang/J9VMInternals" name="newInstanceImpl" signature="(Ljava/lang/Class;)Ljava/lang/Object;" flags="jit_newInstancePrototype"/>
+	<staticmethodref class="java/lang/J9VMInternals" name="formatNoSuchMethod" signature="(Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;"/>
+	<staticmethodref class="java/lang/invoke/MethodType" name="fromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
+	<staticmethodref class="java/lang/invoke/MethodHandle" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/> 
+	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveInvokeDynamic" signature="(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;J)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/> 
+	<staticmethodref class="java/lang/invoke/MethodHandle" name="invokeWithArgumentsHelper" signature="(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/> 
+	<staticmethodref class="java/lang/invoke/MethodHandle" name="constructorPlaceHolder" signature="(Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/>
+	<specialmethodref class="java/lang/invoke/MethodHandle" name="forGenericInvoke" signature="(Ljava/lang/invoke/MethodType;Z)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<specialmethodref class="java/lang/invoke/MethodHandle" name="forGenericInvokeVarHandle" signature="(Ljava/lang/invoke/MethodType;Ljava/lang/invoke/VarHandle;)Ljava/lang/invoke/MethodHandle;" jcl="se9_before_b165,se9"/>
+	<specialmethodref class="java/lang/invoke/MethodHandle" name="returnFilterPlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<specialmethodref class="java/lang/invoke/MethodHandle" name="foldHandlePlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<specialmethodref class="java/lang/invoke/MethodHandle" name="guardWithTestPlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<specialmethodref class="java/lang/invoke/MethodHandle" name="filterArgumentsPlaceHolder" signature="(III)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
+	<virtualmethodref class="java/lang/ClassLoader" name="loadClass" signature="(Ljava/lang/String;)Ljava/lang/Class;"/>
+	<specialmethodref class="java/lang/Thread" name="uncaughtException" signature="(Ljava/lang/Throwable;)V"/>
+	<specialmethodref class="java/lang/Thread" name="&lt;init>" signature="(Ljava/lang/String;Ljava/lang/Object;IZ)V"/>
+
+	<fieldref class="java/lang/J9VMInternals$ClassInitializationLock" name="theClass" signature="Ljava/lang/Class;" />
+	
+	<!-- Class initialization in C -->
+	<staticmethodref class="java/lang/J9VMInternals" name="initializationAlreadyFailed" signature="(Ljava/lang/Class;)V"/>
+	<staticmethodref class="java/lang/J9VMInternals" name="recordInitializationFailure" signature="(Ljava/lang/Class;Ljava/lang/Throwable;)V"/>
+	
+	<!-- Security manager check -->
+	<staticfieldref class="java/lang/System" name="security" signature="Ljava/lang/SecurityManager;"/>
+
+	<!-- VM constants in java -->
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE_NONE" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE_ALWAYS" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE_OLDCHECK" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE_CARDMARK" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE_CARDMARK_INCREMENTAL" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE_CARDMARK_AND_OLDCHECK" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE_REALTIME" signature="I"/>
+
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_ALLOCATION_TYPE" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_ALLOCATION_TYPE_TLH" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_ALLOCATION_TYPE_SEGREGATED" signature="I"/>
+
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_POLICY" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_POLICY_OPTTHRUPUT" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_POLICY_OPTAVGPAUSE" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_POLICY_GENCON" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_POLICY_BALANCED" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_POLICY_METRONOME" signature="I"/>
+
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_JAVA_CLASS_RAM_SHAPE_SHIFT" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="OBJECT_HEADER_SHAPE_MASK" signature="I"/>
+	
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_INSTANCESIZE_OFFSET" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_INSTANCE_DESCRIPTION_OFFSET" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_LOCK_OFFSET_OFFSET" signature="I"/>
+
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_INITIALIZE_STATUS_OFFSET" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="OBJECT_HEADER_SIZE" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="ADDRESS_SIZE" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_SIZE" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="FJ9OBJECT_SIZE" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_CLASS_DEPTH_AND_FLAGS_OFFSET" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_SUPERCLASSES_OFFSET" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_ROMCLASS_OFFSET" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9ROMCLASS_MODIFIERS_OFFSET" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_JAVA_CLASS_DEPTH_MASK" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_ACC_CLASS_INTERNAL_PRIMITIVE_TYPE" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_JIT_STRING_DEDUP_POLICY" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_STRING_COMPRESSION_ENABLED" signature="Z"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS" signature="I"/>
+</vmconstantpool>

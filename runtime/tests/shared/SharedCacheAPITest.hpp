@@ -1,0 +1,55 @@
+/*******************************************************************************
+ * Copyright (c) 2001, 2014 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+#if !defined(SHAREDCACHEAPITEST_HPP_INCLUDED)
+#define SHAREDCACHEAPITEST_HPP_INCLUDED
+
+extern "C" {
+#include "sharedconsts.h"
+}
+
+#if !(defined(J9ZOS390))
+#define NUM_CACHE 2
+#else
+#define NUM_CACHE 1
+#endif
+
+#if !defined(WIN32)
+#define NUM_SNAPSHOT 1
+#else
+#define NUM_SNAPSHOT 0
+#endif /* !defined(WIN32) */
+
+#define NONPERSISTENT_CACHE_INDEX 0
+#define CACHE_SIZE 1024*1024
+#define TEST_BASEDIR "sharedcacheapi"
+
+typedef struct CacheInfo {
+	const char *name;
+	char *cacheDir;
+	UDATA cacheType;
+	UDATA cacheSize;
+	UDATA softMaxBytes;
+	UDATA debugBytes;
+	BOOLEAN found;
+} CacheInfo;
+
+#endif /* SHAREDCACHEAPI_HPP_INCLUDED */

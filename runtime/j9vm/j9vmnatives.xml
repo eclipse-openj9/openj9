@@ -1,0 +1,317 @@
+<!--
+  Copyright (c) 2007, 2017 IBM Corp. and others
+ 
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+ 
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+ 
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<exportlists>
+	<exports group="j9vmnatives">
+		<export name="_JVM_Accept@12" />
+		<export name="_JVM_ActiveProcessorCount@0" />
+		<export name="_JVM_AllocateNewArray@16" />
+		<export name="_JVM_AllocateNewObject@16" />
+		<export name="_JVM_Available@8" />
+		<export name="_JVM_ClassDepth@8" />
+		<export name="_JVM_ClassLoaderDepth@4" />
+		<export name="_JVM_Close@4" />
+		<export name="_JVM_Connect@12" />
+		<export name="_JVM_ConstantPoolGetClassAt@16" />
+		<export name="_JVM_ConstantPoolGetClassAtIfLoaded@16" />
+		<export name="_JVM_ConstantPoolGetDoubleAt@16" />
+		<export name="_JVM_ConstantPoolGetFieldAt@16" />
+		<export name="_JVM_ConstantPoolGetFieldAtIfLoaded@16" />
+		<export name="_JVM_ConstantPoolGetFloatAt@16" />
+		<export name="_JVM_ConstantPoolGetIntAt@16" />
+		<export name="_JVM_ConstantPoolGetLongAt@16" />
+		<export name="_JVM_ConstantPoolGetMemberRefInfoAt@16" />
+		<export name="_JVM_ConstantPoolGetMethodAt@16" />
+		<export name="_JVM_ConstantPoolGetMethodAtIfLoaded@16" />
+		<export name="_JVM_ConstantPoolGetSize@12" />
+		<export name="_JVM_ConstantPoolGetStringAt@16" />
+		<export name="_JVM_ConstantPoolGetUTF8At@16" />
+		<export name="_JVM_CurrentClassLoader@4" />
+		<export name="_JVM_CurrentLoadedClass@4" />
+		<export name="_JVM_CurrentTimeMillis@8" />
+		<export name="_JVM_CX8Field@28" />
+		<export name="_JVM_DefineClassWithSource@28" />
+		<export name="_JVM_DumpThreads@12" />
+		<export name="_JVM_ExpandFdTable@4" />
+		<export name="_JVM_FindLibraryEntry@8" />
+		<export name="_JVM_FindSignal@4" />
+		<export name="_JVM_FreeMemory@0" />
+		<export name="_JVM_GC@0" />
+		<export name="_JVM_GCNoCompact@0" />
+		<export name="_JVM_GetAllThreads@8" />
+		<export name="_JVM_GetCallerClass@8" />
+		<export name="_JVM_GetClassAccessFlags@8" />
+		<export name="_JVM_GetClassAnnotations@8" />
+		<export name="_JVM_GetClassConstantPool@8" />
+		<export name="_JVM_GetClassContext@4" />
+		<export name="_JVM_GetClassLoader@8" />
+		<export name="_JVM_GetClassName@8" />
+		<export name="_JVM_GetClassSignature@8" />
+		<export name="_JVM_GetEnclosingMethodInfo@8" />
+		<export name="_JVM_GetInterfaceVersion@0" />
+		<export name="_JVM_GetLastErrorString@8" />
+		<export name="_JVM_GetManagement@4" />
+		<export name="_JVM_GetPortLibrary@0" />
+		<export name="_JVM_GetSystemPackage@8" />
+		<export name="_JVM_GetSystemPackages@4" />
+		<export name="_JVM_GetThreadInterruptEvent@0" />
+		<export name="_JVM_Halt@4" />
+		<export name="_JVM_InitializeSocketLibrary@0" />
+		<export name="_JVM_InvokeMethod@16" />
+		<export name="_JVM_IsNaN@8" />
+		<export name="_JVM_LatestUserDefinedLoader@4" />
+		<export name="_JVM_Listen@8" />
+		<export name="_JVM_LoadLibrary@4" />
+		<export name="_JVM_LoadSystemLibrary@4" />
+		<export name="_JVM_Lseek@16" />
+		<export name="_JVM_MaxMemory@0" />
+		<export name="_JVM_MaxObjectInspectionAge@0" />
+		<export name="_JVM_MonitorNotify@8" />
+		<export name="_JVM_MonitorNotifyAll@8" />
+		<export name="_JVM_MonitorWait@16" />
+		<export name="_JVM_NanoTime@8" />
+		<export name="_JVM_NativePath@4" />
+		<export name="_JVM_NewInstanceFromConstructor@12" />
+		<export name="_JVM_OnExit@4" />
+		<export name="_JVM_Open@12" />
+		<export name="_JVM_RaiseSignal@4" />
+		<export name="_JVM_RawMonitorCreate@0" />
+		<export name="_JVM_RawMonitorDestroy@4" />
+		<export name="_JVM_RawMonitorEnter@4" />
+		<export name="_JVM_RawMonitorExit@4" />
+		<export name="_JVM_Read@12" />
+		<export name="_JVM_Recv@16" />
+		<export name="_JVM_RecvFrom@24" />
+		<export name="_JVM_RegisterSignal@8" />
+		<export name="_JVM_RegisterUnsafeMethods@8" />
+		<export name="_JVM_Send@16" />
+		<export name="_JVM_SendTo@24" />
+		<export name="_JVM_SetLength@12" />
+		<export name="_JVM_Sleep@16" />
+		<export name="_JVM_Socket@12" />
+		<export name="_JVM_SocketAvailable@8" />
+		<export name="_JVM_SocketClose@4" />
+		<export name="_JVM_Startup@8" />
+		<export name="_JVM_SupportsCX8@0" />
+		<export name="_JVM_Sync@4" />
+		<export name="_JVM_Timeout@8" />
+		<export name="_JVM_TotalMemory@0" />
+		<export name="_JVM_TraceInstructions@4" />
+		<export name="_JVM_TraceMethodCalls@4" />
+		<export name="_JVM_UcsOpen@12" />
+		<export name="_JVM_ZipHook@12" />
+		<export name="_JVM_Write@12" />
+		<export name="_JVM_RawAllocate@8" />
+		<export name="_JVM_RawRealloc@12" />
+		<export name="_JVM_RawCalloc@12" />
+		<export name="_JVM_RawAllocateInCategory@12" />
+		<export name="_JVM_RawReallocInCategory@16" />
+		<export name="_JVM_RawCallocInCategory@16" />
+		<export name="_JVM_RawFree@4" />
+		<export name="jio_fprintf" />
+		<export name="jio_snprintf" />
+		<export name="jio_vfprintf" />
+		<export name="jio_vsnprintf" />
+		<export name="post_block" />
+		<export name="pre_block" />
+
+		<!-- Additions for Java 7 -->
+		<export name="_JVM_GetStackAccessControlContext@8"/>
+		<export name="_JVM_GetInheritedAccessControlContext@8"/>
+		<export name="_JVM_GetArrayLength@8"/>
+		<export name="_JVM_GetArrayElement@12"/>
+		<export name="_JVM_GetStackTraceElement@12"/>
+		<export name="_JVM_GetStackTraceDepth@8"/>
+		<export name="_JVM_FillInStackTrace@8"/>
+		<export name="_JVM_StartThread@8"/>
+		<export name="_JVM_StopThread@12"/>
+		<export name="_JVM_IsThreadAlive@8"/>
+		<export name="_JVM_SuspendThread@8"/>
+		<export name="_JVM_ResumeThread@8"/>
+		<export name="_JVM_SetThreadPriority@12"/>
+		<export name="_JVM_Yield@8"/>
+		<export name="_JVM_CurrentThread@8"/>
+		<export name="_JVM_CountStackFrames@8"/>
+		<export name="_JVM_Interrupt@8"/>
+		<export name="_JVM_IsInterrupted@12"/>
+		<export name="_JVM_HoldsLock@12"/>
+		<export name="_JVM_InitProperties@8"/>
+		<export name="_JVM_ArrayCopy@28"/>
+		<export name="_JVM_DoPrivileged@20"/>
+		<export name="_JVM_IHashCode@8"/>
+		<export name="_JVM_Clone@8"/>
+		<export name="_JVM_CompileClass@12"/>
+		<export name="_JVM_CompileClasses@12"/>
+		<export name="_JVM_CompilerCommand@12"/>
+		<export name="_JVM_EnableCompiler@8"/>
+		<export name="_JVM_DisableCompiler@8"/>
+		<export name="_JVM_IsSupportedJNIVersion@4"/>
+		<export name="_JVM_UnloadLibrary@4"/>
+		<export name="_JVM_FindLoadedClass@12"/>
+		<export name="_JVM_ResolveClass@8"/>
+		<export name="_JVM_AssertionStatusDirectives@8"/>
+		<export name="_JVM_FindPrimitiveClass@8"/>
+		<export name="_JVM_FindClassFromClassLoader@20"/>
+		<export name="JVM_FindClassFromBootLoader"/>
+		<export name="_JVM_GetClassInterfaces@8"/>
+		<export name="_JVM_IsInterface@8"/>
+		<export name="_JVM_GetClassSigners@8"/>
+		<export name="_JVM_SetClassSigners@12"/>
+		<export name="_JVM_IsArrayClass@8"/>
+		<export name="_JVM_IsPrimitiveClass@8"/>
+		<export name="_JVM_GetComponentType@8"/>
+		<export name="_JVM_GetClassModifiers@8"/>
+		<export name="_JVM_GetClassDeclaredFields@12"/>
+		<export name="_JVM_GetClassDeclaredMethods@12"/>
+		<export name="_JVM_GetClassDeclaredConstructors@12"/>
+		<export name="_JVM_GetProtectionDomain@8"/>
+		<export name="_JVM_SetProtectionDomain@12"/>
+		<export name="_JVM_GetDeclaredClasses@8"/>
+		<export name="_JVM_GetDeclaringClass@8"/>
+		<export name="_JVM_DesiredAssertionStatus@12"/>
+		<export name="_JVM_InternString@8"/>
+		<export name="_JVM_NewMultiArray@12"/>
+		<export name="_JVM_NewArray@12"/>
+		<export name="_JVM_SetPrimitiveArrayElement@24"/>
+		<export name="_JVM_SetArrayElement@16"/>
+		<export name="_JVM_GetPrimitiveArrayElement@16"/>
+		<export name="_JVM_GetSockOpt@20"/>
+		<export name="_JVM_ExtendBootClassPath@8" />
+		<export name="_JVM_Bind@12"/>
+		<export name="_JVM_DTraceActivate@20"/>
+		<export name="_JVM_DTraceDispose@12"/>
+		<export name="_JVM_DTraceGetVersion@4"/>
+		<export name="_JVM_DTraceIsProbeEnabled@8"/>
+		<export name="_JVM_DTraceIsSupported@4"/>
+		<export name="_JVM_DefineClass@24"/>
+		<export name="_JVM_DefineClassWithSourceCond@32"/>
+		<export name="_JVM_EnqueueOperation@20"/>
+		<export name="_JVM_Exit@4"/>
+		<export name="_JVM_GetCPFieldNameUTF@12"/>
+		<export name="_JVM_GetClassConstructor@16"/>
+		<export name="_JVM_GetClassConstructors@12"/>
+		<export name="_JVM_GetClassField@16"/>
+		<export name="_JVM_GetClassFields@12"/>
+		<export name="_JVM_GetClassMethod@20"/>
+		<export name="_JVM_GetClassMethods@12"/>
+		<export name="_JVM_GetField@12"/>
+		<export name="_JVM_GetFieldAnnotations@8"/>
+		<export name="_JVM_GetMethodAnnotations@8"/>
+		<export name="_JVM_GetMethodDefaultAnnotationValue@8"/>
+		<export name="_JVM_GetMethodParameterAnnotations@8"/>
+		<export name="_JVM_GetPrimitiveField@16"/>
+		<export name="_JVM_InitializeCompiler@8"/>
+		<export name="_JVM_IsSilentCompiler@8"/>
+		<export name="_JVM_LoadClass0@16"/>
+		<export name="_JVM_NewInstance@8"/>
+		<export name="_JVM_PrintStackTrace@12"/>
+		<export name="_JVM_SetField@16"/>
+		<export name="_JVM_SetPrimitiveField@24"/>
+		<export name="_JVM_SetNativeThreadName@12"/>		
+		
+		<!-- Additions used on linux-x86 -->
+		<export name="_JVM_SetSockOpt@20"/>
+		<export name="_JVM_SocketShutdown@8"/>
+		<export name="_JVM_GetSockName@12"/>
+		<export name="_JVM_GetHostName@8"/>
+		
+		<!-- Additions to support the JDWP agent -->
+		<export name="JVM_InitAgentProperties"/>
+
+		<!-- Additions to support Java 7 verification -->
+		<export name="_JVM_GetMethodIxLocalsCount@12"/>
+		<export name="_JVM_GetCPMethodNameUTF@12"/>
+		<export name="_JVM_GetMethodIxExceptionTableEntry@20"/>
+		<export name="_JVM_GetMethodIxExceptionTableLength@12"/>
+		<export name="_JVM_GetMethodIxMaxStack@12"/>
+		<export name="_JVM_GetMethodIxExceptionIndexes@16"/>
+		<export name="_JVM_GetCPFieldSignatureUTF@12"/>
+		<export name="_JVM_GetClassMethodsCount@8"/>
+		<export name="_JVM_GetClassFieldsCount@8"/>
+		<export name="_JVM_GetClassCPTypes@12"/>
+		<export name="_JVM_GetClassCPEntriesCount@8"/>
+		<export name="_JVM_GetCPMethodSignatureUTF@12"/>
+		<export name="_JVM_GetCPFieldModifiers@16"/>
+		<export name="_JVM_GetCPMethodModifiers@16"/>
+		<export name="_JVM_IsSameClassPackage@12"/>
+		<export name="_JVM_GetCPMethodClassNameUTF@12"/>
+		<export name="_JVM_GetCPFieldClassNameUTF@12"/>
+		<export name="_JVM_GetCPClassNameUTF@12"/>
+		<export name="_JVM_GetMethodIxArgsSize@12"/>
+		<export name="_JVM_GetMethodIxModifiers@12"/>
+		<export name="_JVM_IsConstructorIx@12"/>
+		<export name="_JVM_GetMethodIxByteCodeLength@12"/>
+		<export name="_JVM_GetMethodIxByteCode@16"/>
+		<export name="_JVM_GetFieldIxModifiers@12"/>
+		<export name="_JVM_FindClassFromClass@16"/>
+		<export name="_JVM_GetClassNameUTF@8"/>
+		<export name="_JVM_GetMethodIxNameUTF@12"/>
+		<export name="_JVM_GetMethodIxSignatureUTF@12"/>
+		<export name="_JVM_GetMethodIxExceptionsCount@12"/>
+		<export name="_JVM_ReleaseUTF@4"/>
+		
+		<!-- Additions for Java 8 -->
+		<export name="_JVM_GetClassTypeAnnotations@8"/>
+		<export name="_JVM_GetFieldTypeAnnotations@8"/>
+		<export name="_JVM_GetMethodParameters@8"/>
+		<export name="_JVM_GetMethodTypeAnnotations@8"/>
+		<export name="_JVM_IsVMGeneratedMethodIx@12"/>
+		<export name="JVM_GetTemporaryDirectory"/>
+
+		<!-- Additions for Java 9 (Modularity) -->
+		<export name="JVM_DefineModule"/>
+		<export name="JVM_AddModuleExports"/>
+		<export name="JVM_AddModuleExportsToAll"/>
+		<export name="JVM_AddReadsModule"/>
+		<export name="JVM_CanReadModule"/>
+		<export name="JVM_IsExportedToModule"/>
+		<export name="JVM_AddModulePackage"/>
+		<export name="JVM_AddModuleExportsToAllUnnamed"/>
+		<export name="JVM_SetBootLoaderUnnamedModule"/>
+		<export name="JVM_GetModuleByPackageName"/>
+		
+		<!-- Additions for Java 9 RAW -->
+		<export name="JVM_GetSimpleBinaryName"/>
+		<export name="JVM_SetMethodInfo"/>		
+		<export name="JVM_ConstantPoolGetNameAndTypeRefIndexAt"/>		
+		<export name="JVM_MoreStackWalk"/>		
+		<export name="JVM_ConstantPoolGetClassRefIndexAt"/>		
+		<export name="JVM_GetVmArguments"/>		
+		<export name="JVM_FillStackFrames"/>		
+		<export name="JVM_FindClassFromCaller"/>		
+		<export name="JVM_ConstantPoolGetNameAndTypeRefInfoAt"/>		
+		<export name="JVM_ConstantPoolGetTagAt"/>		
+		<export name="JVM_CallStackWalk"/>		
+		<export name="JVM_ToStackTraceElement"/>
+		<export name="JVM_GetStackTraceElements"/>
+		<export name="JVM_InitStackTraceElementArray"/>
+		<export name="JVM_InitStackTraceElement"/>
+		<export name="JVM_GetAndClearReferencePendingList"/>
+		<export name="JVM_HasReferencePendingList"/>
+		<export name="JVM_WaitForReferencePendingList"/>
+						
+		<!-- Additions for Java 9 (General) -->
+		<export name="_JVM_GetNanoTimeAdjustment@16"/>
+	</exports>	
+
+</exportlists>
+

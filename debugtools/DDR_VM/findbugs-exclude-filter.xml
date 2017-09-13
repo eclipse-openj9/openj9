@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!--Filter used to limit the FindBugs results-->
+<FindBugsFilter>
+	<!--Ignore hits from the generated classes-->
+	<Match>
+		<Class name="~.*\.generated\..*" />
+	</Match>
+	
+	<!--Ignore hits from Zebedee-->
+	<Match>
+		<Class name="~com\.ibm\.dtfj\..*" />
+	</Match>
+</FindBugsFilter>

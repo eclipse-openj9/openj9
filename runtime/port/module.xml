@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+   Copyright (c) 2006, 2017 IBM Corp. and others
+
+   This program and the accompanying materials are made available under
+   the terms of the Eclipse Public License 2.0 which accompanies this
+   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+   or the Apache License, Version 2.0 which accompanies this distribution and
+   is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+   This Source Code may also be made available under the following
+   Secondary Licenses when the conditions for such availability set
+   forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+   General Public License, version 2 with the GNU Classpath
+   Exception [1] and GNU General Public License, version 2 with the
+   OpenJDK Assembly Exception [2].
+
+   [1] https://www.gnu.org/software/classpath/license.html
+   [2] http://openjdk.java.net/legal/assembly-exception.html
+
+   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<module xmlns:xi="http://www.w3.org/2001/XInclude">
+        
+	<exports group="all">
+		<export name="j9port_allocate_library" />
+		<export name="j9port_create_library" />
+		<export name="j9port_getSize" />
+		<export name="j9port_getVersion" />
+		<export name="j9port_init_library" />
+		<export name="j9port_isCompatible" />
+		<export name="j9port_startup_library" />
+	</exports>
+
+	<!-- vendor_port.xml can contain vendor specific configuration -->
+	<xi:include href="vendor_port.xml">
+		<xi:fallback>
+			<xi:include href="vendor_port_default.xml"></xi:include>
+		</xi:fallback>
+	</xi:include>
+
+	<objects group="all">
+		<object name="j9gp" />
+
+		<object name="j9hypervisor"/>
+		<object name="j9hypervisor_common"/>
+		<object name="j9hypervisor_i386" >
+			<include-if condition="spec.linux_x86.*"/>
+			<include-if condition="spec.linux_x86-64.*"/>
+			<include-if condition="spec.win_x86.*"/>
+			<include-if condition="spec.win_x86-64.*"/>
+		</object>
+		<object name="j9hypervisor_systemp">
+			<include-if condition="spec.aix_ppc-64.*"/>
+			<include-if condition="spec.aix.*"/>
+			<include-if condition="spec.linux_ppc-64.*"/>
+			<include-if condition="spec.linux_ppc.*"/>
+		</object>
+		<object name="j9hypervisor_systemz">
+			<include-if condition="spec.zos_390.*"/>
+			<include-if condition="spec.zos_390-64.*"/>
+			<include-if condition="spec.linux_390.*"/>
+			<include-if condition="spec.linux_390-64.*"/>
+		</object>
+
+		<object name="j9ipcmutex" />
+		<object name="j9mprotect">
+			<include-if condition="spec.zos_390.*"/>
+			<exclude-if condition="spec.zos_390-64.*"/>
+		</object>
+		<object name="j9munprotect">
+			<include-if condition="spec.zos_390.*"/>
+			<exclude-if condition="spec.zos_390-64.*"/>
+		</object>
+		<object name="j9SysvIPCWrappers">
+			<exclude-if condition="spec.win_x86.*"/>
+		</object>
+		
+		<object name="j9port" />
+		<object name="j9process" />
+		<object name="j9gs"/>
+		<object name="j9gs_authorize_64">
+			<include-if condition="spec.zos_390.* and spec.flags.J9VM_ENV_DATA64"/>
+		</object>
+		<object name="j9gs_authorize_31">
+			<include-if condition="spec.zos_390.* and not spec.flags.J9VM_ENV_DATA64"/>
+		</object>
+		<object name="j9gs_get_supported">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9gs_load_gscb">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9gs_store_gscb">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9csrsi">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9csrsi_wrp">
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9gs_s390">
+			<include-if condition="spec.linux_390.*"/>
+			<include-if condition="spec.zos_390.*"/>
+			<exclude-if condition="spec.linux_x86.*"/>
+			<exclude-if condition="spec.win_x86.*"/>
+		</object>	
+		<object name="j9ri">
+			<include-if condition="spec.flags.port_runtimeInstrumentation"/>
+		</object>
+		<object name="j9ri_authorize_31">
+			<include-if condition="spec.zos_390.* and not spec.flags.J9VM_ENV_DATA64 and spec.flags.port_runtimeInstrumentation"/>
+		</object>
+		<object name="j9ri_authorize_64">
+			<include-if condition="spec.zos_390.* and spec.flags.J9VM_ENV_DATA64 and spec.flags.port_runtimeInstrumentation"/>
+		</object>
+		<object name="j9ri_get_supported">
+			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
+		</object>
+		<object name="j9ri_mric">
+			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
+		</object>
+		<object name="j9ri_rioff">
+			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
+		</object>
+		<object name="j9ri_rion">
+			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
+		</object>
+		<object name="j9ri_stric">
+			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
+		</object>
+		<object name="j9ri_tric">
+			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
+		</object>
+
+		<object name="j9sharedhelper">
+			<exclude-if condition="spec.win_x86.*"/>
+		</object>
+		<object name="j9shmem" />
+		<object name="j9shsem" />
+		<object name="j9shsem_deprecated" />
+
+		<object name="j9sock" />
+		<object name="j9sockptb" />
+
+		<object name="j9sysinfo" />
+		<object name="j9sysinfo_helpers">
+			<include-if condition="spec.linux_x86.*"/>
+			<include-if condition="spec.win_x86.*"/>
+			<include-if condition="spec.linux_390.*"/>
+			<include-if condition="spec.zos_390.*"/>
+		</object>
+		<object name="j9mem_basic" />
+		<object name="j9portcontrol" />
+		<object name="protect_helpers">
+			<include-if condition="spec.zos_390.*"/>
+			<exclude-if condition="spec.zos_390-64.*"/>
+		</object>
+		<object name="ut_j9prt" />
+	</objects>
+
+	<!-- vendor_port_flags.xml can contain vendor specific configuration -->
+	<xi:include href="vendor_port_flags.xml">
+		<xi:fallback>
+			<flags group="vendor_flags"/>
+		</xi:fallback>
+	</xi:include>
+
+
+	<artifact type="shared" name="j9prt" bundle="jvm" loadgroup="">
+		<include-if condition="spec.flags.module_port" />
+		<options>
+			<option name="prototypeHeaderFileNames" data="j9protos.h j9port.h"/>
+			<option name="dllDescription" data="Port"/>
+		</options>
+		<phase>core quick j2se</phase>
+		<exports>
+			<group name="all"/>
+		</exports>
+
+		<flags>
+			<flag name="J9PORT_LIBRARY_DEFINE"/>
+			<flag name="OMRPORT_OMRSIG_SUPPORT">
+				<include-if condition="spec.flags.J9VM_PORT_OMRSIG_SUPPORT"/>
+			</flag>
+			<group name="vendor_flags"/>
+		</flags>
+
+		<includes>
+			<!-- j9port uses some private headers from omrport. Add those paths here. -->
+
+			<include path="$(OMRPORT_SRCDIR)zos390" type="relativepath">
+				<include-if condition="spec.zos_390.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)win64amd" type="relativepath">
+				<include-if condition="spec.win_x86-64.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)aix64" type="relativepath">
+				<include-if condition="spec.aix_ppc-64.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)aix" type="relativepath">
+				<include-if condition="spec.aix_ppc.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)linuxppc64le" type="relativepath">
+				<include-if condition="spec.linux_ppc-64_le.*"/>
+				<include-if condition="spec.linux_ppc-64_cmprssptrs_le.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)linuxppc64" type="relativepath">
+				<include-if condition="spec.linux_ppc-64.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)linuxppc" type="relativepath">
+				<include-if condition="spec.linux_ppc.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)linuxamd64" type="relativepath">
+				<include-if condition="spec.linux_x86-64.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)linux386" type="relativepath">
+				<include-if condition="spec.linux_x86.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)linuxs39064" type="relativepath">
+				<include-if condition="spec.linux_390-64.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)linuxs390" type="relativepath">
+				<include-if condition="spec.linux_390.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)linuxarm" type="relativepath">
+				<include-if condition="spec.linux_arm.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)linux" type="relativepath">
+				<include-if condition="spec.linux.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)win32_include" type="relativepath">
+				<include-if condition="spec.win_x86.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)unix_include" type="relativepath">
+				<exclude-if condition="spec.win_x86.*"/>
+			</include>
+
+			<include path="$(OMRPORT_SRCDIR)" type="relativepath"/>
+			<include path="$(OMRPORT_SRCDIR)common" type="relativepath"/>
+			<include path="j9oti"/>
+			<include path="j9include"/>
+		</includes>
+		
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1">
+				<exclude-if condition="spec.linux_ppc.*"/>
+
+				<!--  Provisionally ignore the warning until RTC #132065 is resolved. -->
+				<exclude-if condition="spec.linux_390.*" />
+				<exclude-if condition="spec.linux_390-64.*" />
+			</makefilestub>
+			
+			<makefilestub data="OMRPORT_SRCDIR=$(OMR_DIR)/port/" />
+
+			<makefilestub data="ifdef I5_VERSION">
+				<include-if condition="spec.aix.*"/>
+			</makefilestub>
+			<makefilestub data="vpath % iseries64">
+				<include-if condition="spec.aix_ppc-64.*"/>
+			</makefilestub>
+			<makefilestub data="UMA_INCLUDES+=iseries64 $(OMRPORT_SRCDIR)iseries64">
+				<include-if condition="spec.aix_ppc-64.*"/>
+			</makefilestub>
+			<makefilestub data="vpath % iseries">
+				<include-if condition="spec.aix.*"/>
+			</makefilestub>
+			<makefilestub data="UMA_INCLUDES+=iseries $(OMRPORT_SRCDIR)iseries">
+				<include-if condition="spec.aix.*"/>
+			</makefilestub>
+			<makefilestub data="endif">
+				<include-if condition="spec.aix.*"/>
+			</makefilestub>
+		</makefilestubs>
+
+		<vpaths>
+			<vpath pattern="%" path="zos390" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.zos_390.*"/>
+			</vpath>
+
+			<vpath pattern="%" path="win64amd" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.win_x86-64.*"/>
+			</vpath>
+
+			<vpath pattern="%" path="aix64" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.aix_ppc-64.*"/>
+			</vpath>
+			<vpath pattern="%" path="aix" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.aix_ppc.*"/>
+			</vpath>
+
+			<vpath pattern="%" path="linuxppc64le" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_ppc-64_le.*"/>
+				<include-if condition="spec.linux_ppc-64_cmprssptrs_le.*"/>
+			</vpath>
+			<vpath pattern="%" path="linuxppc64" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_ppc-64.*"/>
+			</vpath>
+			<vpath pattern="%" path="linuxppc" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_ppc.*"/>
+			</vpath>
+
+			<vpath pattern="%" path="linuxamd64" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_x86-64.*"/>
+			</vpath>
+			<vpath pattern="%" path="linux386" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_x86.*"/>
+			</vpath>
+
+			<vpath pattern="%" path="linuxs39064" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_390-64.*"/>
+			</vpath>
+			<vpath pattern="%" path="linuxs390" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_390.*"/>
+				<include-if condition="spec.linux_ztpf.*"/>
+			</vpath>
+			
+			<vpath pattern="%" path="ztpf" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_ztpf.*"/>
+			</vpath>
+			
+			<vpath pattern="%" path="linuxarm" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_arm.*"/>
+			</vpath>
+
+			<vpath pattern="%" path="linux" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux.*"/>
+			</vpath>
+
+			<vpath pattern="%" path="sysvipc" augmentIncludes="true" type="relativepath">
+				<exclude-if condition="spec.win_x86.*"/>
+			</vpath>
+
+			<vpath pattern="%" path="unix_include" augmentIncludes="true" type="relativepath">
+				<exclude-if condition="spec.win_x86.*"/>
+			</vpath>
+			<vpath pattern="%" path="unix" augmentIncludes="true" type="relativepath">
+				<exclude-if condition="spec.win_x86.*"/>
+			</vpath>
+
+			<vpath pattern="%" path="win32_include" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.win_x86.*"/>
+			</vpath>
+			<vpath pattern="%" path="win32" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.win_x86.*"/>
+			</vpath>
+
+			<vpath pattern="%.h" path="include" augmentIncludes="true" type="relativepath"/>
+			<vpath pattern="%" path="common" augmentIncludes="true" type="relativepath"/>
+		</vpaths>
+
+		<objects>
+			<group name="all"/>
+			<group name="vendor_port"/>
+		</objects>
+
+		<libraries>
+			<library name="j9omrport"/>
+			<library name="j9thr"/>
+			<library name="j9utilcore"/>
+			<library name="j9avl" type="external"/>
+			<library name="j9hashtable" type="external"/>						
+			<library name="omrsig"/>
+			<library name="socket" type="macro"/>			
+			<library name="j9pool" type="external"/>
+			<library name="omrglue" type="external"/>
+			<library name="iconv" type="system">
+				<include-if condition="spec.aix_.*"/>
+			</library>
+			<library name="perfstat" type="system">
+				<include-if condition="spec.aix_.*"/>
+			</library>
+			<library name="shell32.lib" type="system" delayload="true">
+				<include-if condition="spec.win_.*"/>
+			</library>
+			<library name="Iphlpapi.lib" type="system" delayload="true">
+				<include-if condition="spec.win_.*"/>
+			</library>
+			<library name="psapi.lib" type="system" delayload="true">
+				<include-if condition="spec.win_.*"/>
+			</library>
+			<library name="pdh.lib" type="system" delayload="true">
+				<include-if condition="spec.win_.*"/>
+			</library>
+		</libraries>
+	</artifact>
+</module>

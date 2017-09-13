@@ -1,0 +1,192 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the VM module.
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=VMUT
+J9NLS.HEADER=j9vmutilnls.h
+
+J9NLS_VMUTIL_THREAD_NAME_OUT_OF_MEMORY=(sem mem\u00f3ria)
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_THREAD_NAME_OUT_OF_MEMORY.explanation=This string is displayed in place of a thread's name if memory could not be allocated to print the thread's name
+J9NLS_VMUTIL_THREAD_NAME_OUT_OF_MEMORY.system_action=None
+J9NLS_VMUTIL_THREAD_NAME_OUT_OF_MEMORY.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_VMUTIL_THREAD_NAME_UNNAMED=(encadeamento sem nome)
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_THREAD_NAME_UNNAMED.explanation=This string is displayed in place of a thread's name if the thread has no name
+J9NLS_VMUTIL_THREAD_NAME_UNNAMED.system_action=None
+J9NLS_VMUTIL_THREAD_NAME_UNNAMED.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_VMUTIL_THREAD_NAME_ACCESS_ERROR=(erro de acesso)
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_THREAD_NAME_ACCESS_ERROR.explanation=This string is displayed in place of a thread's name if the thread's name could not be read due to RTJ access barrier restrictions
+J9NLS_VMUTIL_THREAD_NAME_ACCESS_ERROR.system_action=None
+J9NLS_VMUTIL_THREAD_NAME_ACCESS_ERROR.user_response=None
+
+# END NON-TRANSLATABLE
+
+# Note: this string is not used by J2ME VMs.
+J9NLS_VMUTIL_OPTIONS_FILE_NOT_FOUND_STR=Arquivo de op\u00e7\u00f5es n\u00e3o localizado
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_OPTIONS_FILE_NOT_FOUND_STR.explanation=An options file specified with the -Xoptionsfile option could not be opened
+J9NLS_VMUTIL_OPTIONS_FILE_NOT_FOUND_STR.system_action=The JVM will warn the user and ignore the specified options file
+J9NLS_VMUTIL_OPTIONS_FILE_NOT_FOUND_STR.user_response=Correct the command line option
+
+# END NON-TRANSLATABLE
+
+# Note %s command-line option
+J9NLS_VMUTIL_OPTION_MALFORMED=Op\u00e7\u00e3o malformada: '%s'
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_OPTION_MALFORMED.explanation=The specified option could not be parsed
+J9NLS_VMUTIL_OPTION_MALFORMED.system_action=The JVM will warn the user and ignore the option
+J9NLS_VMUTIL_OPTION_MALFORMED.user_response=Correct the command line option
+J9NLS_VMUTIL_OPTION_MALFORMED.sample_input_1=-XX:MaxDirectMemorySize=1J
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_VMUTIL_OPTION_OVERFLOW=Op\u00e7\u00e3o muito grande: '%s'
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_OPTION_OVERFLOW.explanation=The specified option is larger than the maximum permitted value
+J9NLS_VMUTIL_OPTION_OVERFLOW.system_action=The JVM will warn the user and ignore the option
+J9NLS_VMUTIL_OPTION_OVERFLOW.user_response=Adjust the command line option
+J9NLS_VMUTIL_OPTION_OVERFLOW.sample_input_1=-XX:MaxDirectMemorySize=1000G
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_VMUTIL_MALFORMED_OPTIONSFILE_ERROR_STR=Op\u00e7\u00e3o malformada %s localizada em -Xoptionsfile
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_MALFORMED_OPTIONSFILE_ERROR_STR.sample_input_1=badoption
+J9NLS_VMUTIL_MALFORMED_OPTIONSFILE_ERROR_STR.explanation=A closing quote character was missing from a quoted token in the specified option found in a file specified by -Xoptionsfile
+J9NLS_VMUTIL_MALFORMED_OPTIONSFILE_ERROR_STR.system_action=The JVM will terminate
+J9NLS_VMUTIL_MALFORMED_OPTIONSFILE_ERROR_STR.user_response=Correct the option in the file specified by -Xoptionsfile
+
+# END NON-TRANSLATABLE
+
+# Note: JAVA_TOOL_OPTIONS is an environment variable name and should not be translated
+J9NLS_VMUTIL_MALFORMED_JTOPTS_ERROR_STR=Valor malformado para JAVA_TOOL_OPTIONS
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_MALFORMED_JTOPTS_ERROR_STR.explanation=A closing quote character was missing from a quoted token in the JAVA_TOOL_OPTIONS environment variable
+J9NLS_VMUTIL_MALFORMED_JTOPTS_ERROR_STR.system_action=The JVM will terminate
+J9NLS_VMUTIL_MALFORMED_JTOPTS_ERROR_STR.user_response=Correct the JAVA_TOOL_OPTIONS environment variable
+
+# END NON-TRANSLATABLE
+
+# Note: this string is not used by J2ME VMs.
+# Note: IBM_JAVA_OPTIONS is an environment variable name and should not be translated
+J9NLS_VMUTIL_MALFORMED_OPTS_ERROR_STR=Valor malformado para IBM_JAVA_OPTIONS
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_MALFORMED_OPTS_ERROR_STR.explanation=A closing quote character was missing from a quoted token in the IBM_JAVA_OPTIONS environment variable
+J9NLS_VMUTIL_MALFORMED_OPTS_ERROR_STR.system_action=The JVM will terminate
+J9NLS_VMUTIL_MALFORMED_OPTS_ERROR_STR.user_response=Correct the IBM_JAVA_OPTIONS environment variable
+
+# END NON-TRANSLATABLE
+
+# Note: this string is not used by J2ME VMs.
+# Note: -Xservice is a command line option and should not be translated
+J9NLS_VMUTIL_MALFORMED_XSERVICE_ERROR_STR=Valor malformado para -Xservice
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_MALFORMED_XSERVICE_ERROR_STR.explanation=A closing quote character was missing from a quoted token in the -Xservice command line option
+J9NLS_VMUTIL_MALFORMED_XSERVICE_ERROR_STR.system_action=The JVM will terminate
+J9NLS_VMUTIL_MALFORMED_XSERVICE_ERROR_STR.user_response=Correct the command line option
+
+# END NON-TRANSLATABLE
+
+J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION=Valor da op\u00e7\u00e3o malformado, a op\u00e7\u00e3o "%1$s%3$.*2$s" cont\u00e9m os caracteres \u00e0 direita "%4$s" que foram ignorados
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION.sample_input_1=-Xminf
+J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION.sample_input_2=3
+J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION.sample_input_3=0.5
+J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION.sample_input_4= -Xmaxf0.8
+J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION.explanation=The specified option value could not be parsed
+J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION.system_action=The JVM will warn the user and ignore the option value
+J9NLS_VMUTIL_MALFORMED_MEMORY_OPTION.user_response=Correct the command line option
+
+# END NON-TRANSLATABLE
+
+J9NLS_VMUTIL_OUT_OF_MEM_FOR_CMD_LINE_OPTS=N\u00e3o foi poss\u00edvel alocar mem\u00f3ria para a matriz de op\u00e7\u00f5es da linha de comandos
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_OUT_OF_MEM_FOR_CMD_LINE_OPTS.explanation=The JVM tried to allocate memory to copy command line options but failed
+J9NLS_VMUTIL_OUT_OF_MEM_FOR_CMD_LINE_OPTS.system_action=The JVM will terminate
+J9NLS_VMUTIL_OUT_OF_MEM_FOR_CMD_LINE_OPTS.user_response=Check available memory in your process or system. Increase the memory available to start the JVM and retry.
+# END NON-TRANSLATABLE
+
+# Message for IncompatibleClassChangeError due to invalid defender supersend
+# argument 1 is the invalid target class
+# argument 2 is the sender class
+
+J9NLS_VMUTIL_DEFAULT_METHOD_INVALID_SUPERSEND=%2$.*1$s n\u00e3o \u00e9 uma superinterface direta de %4$.*3$s.
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_DEFAULT_METHOD_INVALID_SUPERSEND.sample_input_1=SomeInterface
+J9NLS_VMUTIL_DEFAULT_METHOD_INVALID_SUPERSEND.sample_input_2=2
+J9NLS_VMUTIL_DEFAULT_METHOD_INVALID_SUPERSEND.sample_input_3=SomeClassThatDoesNotImplement1
+J9NLS_VMUTIL_DEFAULT_METHOD_INVALID_SUPERSEND.sample_input_4=4
+J9NLS_VMUTIL_DEFAULT_METHOD_INVALID_SUPERSEND.explanation=NOTAG
+J9NLS_VMUTIL_DEFAULT_METHOD_INVALID_SUPERSEND.system_action=
+J9NLS_VMUTIL_DEFAULT_METHOD_INVALID_SUPERSEND.user_response=
+# END NON-TRANSLATABLE
+
+# Note: this string is not used by J2ME VMs.
+J9NLS_VMUTIL_OPTIONS_FILE_INVALID_STR=Arquivo de op\u00e7\u00f5es %s inv\u00e1lido
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_OPTIONS_FILE_INVALID_STR.explanation=An options file specified with the -Xoptionsfile option could not be opened or is too large
+J9NLS_VMUTIL_OPTIONS_FILE_INVALID_STR.system_action=The JVM will exit
+J9NLS_VMUTIL_OPTIONS_FILE_INVALID_STR.user_response=Check the size and contents of the option file
+# END NON-TRANSLATABLE
+
+# Message for IllegalAccessError if receiver class is not the current class or a subtype of the current [=interface] class
+# argument 1 is the receiver class
+# argument 2 is the current class
+
+J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS=A classe do receptor %2$.*1$s deve ser a classe atual ou um subtipo da interface %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.sample_input_1=ReceiverClass
+J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.sample_input_2=2
+J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.sample_input_3=CurrentClass
+J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.sample_input_4=4
+J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.explanation=NOTAG
+J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.system_action=
+J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.user_response=
+# END NON-TRANSLATABLE
+

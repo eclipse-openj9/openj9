@@ -1,0 +1,408 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the VM components of the JCL module.
+# New messages MUST be added at the end of this file.
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Every NLS message needs to have the following information provided:
+#
+# J9NLS_VM_SAMPLE_MESSAGE=This is a sample message that takes two parameters parameter 1 is a string  %1$s  parameter 2 is a number  %2$d
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_1=string parameter
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_2=2
+# J9NLS_VM_SAMPLE_MESSAGE.explanation=Explanation for what the message means
+# J9NLS_VM_SAMPLE_MESSAGE.system_action=What will the JVM or more generally the system do when this message is output
+# J9NLS_VM_SAMPLE_MESSAGE.user_response=What should the user do when seeing this message
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=J9CL
+J9NLS.HEADER=j9jclnls.h
+
+J9NLS_JCL_INCOMPATIBLE_CL=Nezdru\u017eljiva razredna knji\u017enica
+# START NON-TRANSLATABLE
+J9NLS_JCL_INCOMPATIBLE_CL.explanation=The class library jar is incompatible with the class library natives.
+J9NLS_JCL_INCOMPATIBLE_CL.system_action=The JVM will fail to start.
+J9NLS_JCL_INCOMPATIBLE_CL.user_response=Ensure that the vm.jar is of the same version as the JVM.
+
+# END NON-TRANSLATABLE
+
+# This error occurs if the default jcl, or the jcl specified with the -jcl: option
+# is not the same as the class library found in the bootpath
+# The message indicates the correct input to use with the -jcl option. e.g midp20, foun11, etc..
+J9NLS_JCL_TRY_JCL=Poskusite zagon z -jcl:%s
+# START NON-TRANSLATABLE
+J9NLS_JCL_TRY_JCL.sample_input_1=midp20
+J9NLS_JCL_TRY_JCL.explanation=The class library jar is incompatible with the class library natives and the JVM.
+J9NLS_JCL_TRY_JCL.system_action=The JVM will fail to start.
+J9NLS_JCL_TRY_JCL.user_response=Ensure that the class library natives and the JVM are compatible with the specified class library jar.
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_NOTJ9=Razredi so iz knji\u017enice, ki ni J9 ali nepravilno zmanj\u0161ani JXE
+# START NON-TRANSLATABLE
+J9NLS_JCL_NOTJ9.explanation=The class library jar is incompatible with this VM.
+J9NLS_JCL_NOTJ9.system_action=The JVM will fail to start.
+J9NLS_JCL_NOTJ9.user_response=Ensure that the class library is compatible with the JVM.
+
+# END NON-TRANSLATABLE
+
+# This error occurs if the JCL and VM doesn't have the same master version
+# (i.e. JCL and VM come from different development streams)
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION=Nezdru\u017eljiva razli\u010dica razredne knji\u017enice: JCL %1$x, VM %2$x
+# START NON-TRANSLATABLE
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION.sample_input_1=24a
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION.sample_input_2=231
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION.explanation=The class library is not from the same release as the JVM.
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION.system_action=The JVM will fail to start.
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION.user_response=Ensure the JVM and the class libraries are from the same release.
+
+# END NON-TRANSLATABLE
+
+# This error occurs if the JCL is older than what VM requires
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL=Nezdru\u017eljiva razli\u010dica razredne knji\u017enice: pri\u010dakovano JCL v%1$i, najdeno v%2$i
+# START NON-TRANSLATABLE
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.sample_input_1=12
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.sample_input_2=7
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.explanation=The class library is not from the same release as the JVM.
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.system_action=The JVM will fail to start.
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_JCL.user_response=Ensure the JVM and the class libraries are from the same release.
+
+# END NON-TRANSLATABLE
+
+# This error occurs if the VM is older than what JCL requires
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM=Nezdru\u017eljiva razli\u010dica razredne knji\u017enice: zahteva VM v%1$i, najdeno v%2$i
+# START NON-TRANSLATABLE
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.sample_input_1=28
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.sample_input_2=26
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.explanation=The class library is not from the same release as the JVM.
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.system_action=The JVM will fail to start.
+J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.user_response=Ensure the JVM and the class libraries are from the same release.
+
+# END NON-TRANSLATABLE
+
+# This fatal error can only occur if -verify:all is used with a JXE which provides no preverify
+# data, and the VM does not include a first pass verifier
+J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT=Brez prej potrjenih podatkov za java/lang/Object
+# START NON-TRANSLATABLE
+J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.explanation=The JXEed class library contains no preverification information.
+J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.system_action=The JVM will fail to start.
+J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.user_response=Contact IBM Service.
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_TIMEOUT_VALUE_IS_NEGATIVE=vrednost \u010dasovne omejitve je negativna
+# START NON-TRANSLATABLE
+J9NLS_JCL_TIMEOUT_VALUE_IS_NEGATIVE.explanation=NOTAG
+J9NLS_JCL_TIMEOUT_VALUE_IS_NEGATIVE.system_action=
+J9NLS_JCL_TIMEOUT_VALUE_IS_NEGATIVE.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_NANOSECOND_TIMEOUT_VALUE_OUT_OF_RANGE=vrednost \u010dasovne omejitve v nanosekundah je zunaj obsega
+# START NON-TRANSLATABLE
+J9NLS_JCL_NANOSECOND_TIMEOUT_VALUE_OUT_OF_RANGE.explanation=NOTAG
+J9NLS_JCL_NANOSECOND_TIMEOUT_VALUE_OUT_OF_RANGE.system_action=
+J9NLS_JCL_NANOSECOND_TIMEOUT_VALUE_OUT_OF_RANGE.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_THREAD_ALREADY_STARTED=Nit je \u017ee zagnana
+# START NON-TRANSLATABLE
+J9NLS_JCL_THREAD_ALREADY_STARTED.explanation=NOTAG
+J9NLS_JCL_THREAD_ALREADY_STARTED.system_action=
+J9NLS_JCL_THREAD_ALREADY_STARTED.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_FAILED_TO_ALLOCATE_VMTHREAD=Dodelitev JNIEnv ni uspela
+# START NON-TRANSLATABLE
+J9NLS_JCL_FAILED_TO_ALLOCATE_VMTHREAD.explanation=NOTAG
+J9NLS_JCL_FAILED_TO_ALLOCATE_VMTHREAD.system_action=
+J9NLS_JCL_FAILED_TO_ALLOCATE_VMTHREAD.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_FAILED_TO_FORK_OS_THREAD=Veje niti OS ni bilo mogo\u010de izdelati
+# START NON-TRANSLATABLE
+J9NLS_JCL_FAILED_TO_FORK_OS_THREAD.explanation=NOTAG
+J9NLS_JCL_FAILED_TO_FORK_OS_THREAD.system_action=
+J9NLS_JCL_FAILED_TO_FORK_OS_THREAD.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_FAILED_TO_ALLOCATE_TLS=
+# START NON-TRANSLATABLE
+J9NLS_JCL_FAILED_TO_ALLOCATE_TLS.explanation=NOTAG
+J9NLS_JCL_FAILED_TO_ALLOCATE_TLS.system_action=
+J9NLS_JCL_FAILED_TO_ALLOCATE_TLS.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_FAILED_TO_INFLATE_MONITOR=Dodelitev nadzora OS ni uspela
+# START NON-TRANSLATABLE
+J9NLS_JCL_FAILED_TO_INFLATE_MONITOR.explanation=NOTAG
+J9NLS_JCL_FAILED_TO_INFLATE_MONITOR.system_action=
+J9NLS_JCL_FAILED_TO_INFLATE_MONITOR.user_response=
+
+# END NON-TRANSLATABLE
+
+# First argument is the module name (e.g. "jclcldc10_23")
+# second argument is the unrecognized command line option
+# this error occurs if you pass an unrecognized option to a J2ME JCL. e.g. ./j9 -jcl:cldc11:foo
+# This error message is not used anymore
+J9NLS_JCL_UNRECOGNIZED_OPTION=Neveljaven argument ukazne vrstice JCL
+# START NON-TRANSLATABLE
+J9NLS_JCL_UNRECOGNIZED_OPTION.explanation=NOTAG
+J9NLS_JCL_UNRECOGNIZED_OPTION.system_action=
+J9NLS_JCL_UNRECOGNIZED_OPTION.user_response=
+
+# END NON-TRANSLATABLE
+
+# Detail message for OutOfMemoryError thrown by fillInStackTrace() when the stack walk fails
+# due to lack of OS memory
+J9NLS_JCL_FAILED_TO_CREATE_STACK_TRACE=Izdelava sledenja skladu ni uspela (najverjetneje zaradi pomanjkanja pomnilnika OS).
+# START NON-TRANSLATABLE
+J9NLS_JCL_FAILED_TO_CREATE_STACK_TRACE.explanation=NOTAG
+J9NLS_JCL_FAILED_TO_CREATE_STACK_TRACE.system_action=
+J9NLS_JCL_FAILED_TO_CREATE_STACK_TRACE.user_response=
+
+# END NON-TRANSLATABLE
+
+# Detail message for OutOfMemoryError thrown by throwNewOutOfMemoryError via setNativeOutOfMemoryError
+J9NLS_JCL_UNABLE_TO_CREATE_CLASS_PATH_ENTRY=ni mogo\u010de izdelati novega vnosa razredne poti
+# START NON-TRANSLATABLE
+J9NLS_JCL_UNABLE_TO_CREATE_CLASS_PATH_ENTRY.explanation=NOTAG
+J9NLS_JCL_UNABLE_TO_CREATE_CLASS_PATH_ENTRY.system_action=
+J9NLS_JCL_UNABLE_TO_CREATE_CLASS_PATH_ENTRY.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_UNABLE_TO_ALLOCATE_TIMEZONE_RESOURCE=ni mogo\u010de dodeliti za vir \u010dasovnega pasu
+# START NON-TRANSLATABLE
+J9NLS_JCL_UNABLE_TO_ALLOCATE_TIMEZONE_RESOURCE.explanation=NOTAG
+J9NLS_JCL_UNABLE_TO_ALLOCATE_TIMEZONE_RESOURCE.system_action=
+J9NLS_JCL_UNABLE_TO_ALLOCATE_TIMEZONE_RESOURCE.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_UNABLE_TO_ALLOCATE_TIMEZONE_ENTRY=ni mogo\u010de dodeliti za vnos \u010dasovnega pasu
+# START NON-TRANSLATABLE
+J9NLS_JCL_UNABLE_TO_ALLOCATE_TIMEZONE_ENTRY.explanation=NOTAG
+J9NLS_JCL_UNABLE_TO_ALLOCATE_TIMEZONE_ENTRY.system_action=
+J9NLS_JCL_UNABLE_TO_ALLOCATE_TIMEZONE_ENTRY.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CANNOT_ALLOCATE_SIOCGIFCONF_BUFFER=Ni mogo\u010de dodeliti medpomnilnika SIOCGIFCONF
+# START NON-TRANSLATABLE
+J9NLS_JCL_CANNOT_ALLOCATE_SIOCGIFCONF_BUFFER.explanation=NOTAG
+J9NLS_JCL_CANNOT_ALLOCATE_SIOCGIFCONF_BUFFER.system_action=
+J9NLS_JCL_CANNOT_ALLOCATE_SIOCGIFCONF_BUFFER.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_OOM_READ_LOCALE_DATA=Ni dovolj pomnilnika za branje podatkov podro\u010dnih nastavitev
+# START NON-TRANSLATABLE
+J9NLS_JCL_OOM_READ_LOCALE_DATA.explanation=NOTAG
+J9NLS_JCL_OOM_READ_LOCALE_DATA.system_action=
+J9NLS_JCL_OOM_READ_LOCALE_DATA.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_OOM_CREATE_INDEX_LIST=Ni dovolj pomnilnika za izdelavo seznama indeksa
+# START NON-TRANSLATABLE
+J9NLS_JCL_OOM_CREATE_INDEX_LIST.explanation=NOTAG
+J9NLS_JCL_OOM_CREATE_INDEX_LIST.system_action=
+J9NLS_JCL_OOM_CREATE_INDEX_LIST.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_OOM_LIST_RECORD_STORES=Ni dovolj pomnilnika za prikaz seznama shramb zapisov
+# START NON-TRANSLATABLE
+J9NLS_JCL_OOM_LIST_RECORD_STORES.explanation=NOTAG
+J9NLS_JCL_OOM_LIST_RECORD_STORES.system_action=
+J9NLS_JCL_OOM_LIST_RECORD_STORES.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_OOM_TO_READ_RECORD=Na voljo ni dovolj pomnilnika za branje zapisa
+# START NON-TRANSLATABLE
+J9NLS_JCL_OOM_TO_READ_RECORD.explanation=NOTAG
+J9NLS_JCL_OOM_TO_READ_RECORD.system_action=
+J9NLS_JCL_OOM_TO_READ_RECORD.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_OUT_OF_MEMORY=Zmanjkalo je pomnilnika
+# START NON-TRANSLATABLE
+J9NLS_JCL_OUT_OF_MEMORY.explanation=NOTAG
+J9NLS_JCL_OUT_OF_MEMORY.system_action=
+J9NLS_JCL_OUT_OF_MEMORY.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_OOM_HTTP_RESPONSE_HEADERS=Ni mogo\u010de dodeliti pomnilnika za glave odziva HTTP
+# START NON-TRANSLATABLE
+J9NLS_JCL_OOM_HTTP_RESPONSE_HEADERS.explanation=NOTAG
+J9NLS_JCL_OOM_HTTP_RESPONSE_HEADERS.system_action=
+J9NLS_JCL_OOM_HTTP_RESPONSE_HEADERS.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_OOM_HTTP_POST_CONTENT=Ni mogo\u010de dodeliti pomnilnika za vsebino objave HTTP
+# START NON-TRANSLATABLE
+J9NLS_JCL_OOM_HTTP_POST_CONTENT.explanation=NOTAG
+J9NLS_JCL_OOM_HTTP_POST_CONTENT.system_action=
+J9NLS_JCL_OOM_HTTP_POST_CONTENT.user_response=
+
+# END NON-TRANSLATABLE
+
+# Detail message for exceptions thrown by native Zip routines
+J9NLS_JCL_UNABLE_TO_READ_ZIP_FILE=Napaka pri branju datoteke Zip
+# START NON-TRANSLATABLE
+J9NLS_JCL_UNABLE_TO_READ_ZIP_FILE.explanation=NOTAG
+J9NLS_JCL_UNABLE_TO_READ_ZIP_FILE.system_action=
+J9NLS_JCL_UNABLE_TO_READ_ZIP_FILE.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_INTERNAL_ERROR_READING_ZIP=Pri branju datoteke zip je pri\u0161lo do notranje napake, koda napake %d
+# START NON-TRANSLATABLE
+J9NLS_JCL_INTERNAL_ERROR_READING_ZIP.explanation=NOTAG
+J9NLS_JCL_INTERNAL_ERROR_READING_ZIP.system_action=
+J9NLS_JCL_INTERNAL_ERROR_READING_ZIP.user_response=
+J9NLS_JCL_INTERNAL_ERROR_READING_ZIP.sample_input_1=5
+
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_ERROR_MALFORMED_UNMAPPABLE_CHARACTERS=najdeni so bili nepravilno oblikovani znaki/znaki, ki jih ni mogo\u010de preslikati
+# START NON-TRANSLATABLE
+J9NLS_JCL_ERROR_MALFORMED_UNMAPPABLE_CHARACTERS.explanation=NOTAG
+J9NLS_JCL_ERROR_MALFORMED_UNMAPPABLE_CHARACTERS.system_action=
+J9NLS_JCL_ERROR_MALFORMED_UNMAPPABLE_CHARACTERS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_OOM_TENANT_NATIVE_DATA=Ni mogo\u010de dodeliti pomnilnika za izvirne podatke imetnika
+# START NON-TRANSLATABLE
+J9NLS_JCL_OOM_TENANT_NATIVE_DATA.explanation=A TenantContext java object was created, but the JVM was not able to allocate the memory required to back the native resources associated with the object.
+J9NLS_JCL_OOM_TENANT_NATIVE_DATA.system_action=The JVM will exit unless the OutOfMemoryError is caught and recovered from
+J9NLS_JCL_OOM_TENANT_NATIVE_DATA.user_response=Ensure the process has enough native memory to run.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB=dbgwrapper.dll ni bilo mogo\u010de registrirati kot zagonsko knji\u017enico. Koda napake = %zu
+# START NON-TRANSLATABLE
+J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load dbgwrapper.dll was unsuccessful, the internal error code is shown.
+J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.system_action=The JVM will proceed but may fail to start.
+J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact IBM Service.
+J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_1=5
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR=%1$d: Informacij %2$s ni bilo mogo\u010de pridobiti.
+# START NON-TRANSLATABLE
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR.sample_input_1=-857
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR.sample_input_2=GuestOS Processor Usage
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR.explanation=Failed to retrieve guest usage information from the hypervisor.
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR.system_action=The JVM will continue, but no guest usage related information will be provided.
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR.user_response=Refer the documentation for supported Hypervisor / OS combinations for which usage information will be provided.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB=%s ni bilo mogo\u010de registrirati kot zagonsko knji\u017enico. Koda napake = %zu
+# START NON-TRANSLATABLE
+J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load a dll was unsuccessful, the dll name and internal error code are shown.
+J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.system_action=The JVM will proceed but may fail to start.
+J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact IBM Service.
+J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_1=dbgwrapper.dll
+J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_2=5
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR_MSG=%1$d: Informacij %2$s ni bilo mogo\u010de pridobiti. %3$s
+# START NON-TRANSLATABLE
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR_MSG.sample_input_1=-857
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR_MSG.sample_input_2=GuestOS Processor Usage
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR_MSG.sample_input_3=JVMPORT037 Not running on a Hypervisor
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR_MSG.explanation=Failed to retrieve guest usage information from the hypervisor.
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR_MSG.system_action=The JVM will continue, but no guest usage related information will be provided.
+J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR_MSG.user_response=Refer the documentation for supported Hypervisor / OS combinations for which usage information will be provided.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL=Metode zasebnih vmesnikov zahtevajo invokespecial
+# START NON-TRANSLATABLE
+J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL.explanation=Private interface methods must be looked up with the equivalent of invokespecial, not invokeinterface or invokevirtual.
+J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL.user_response=Use the correct invoke bytecode to access private interface methods.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT=kr\u0161itev omejitve nalaganja: %2$.*1$s ni viden iz %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_1=SomeClassloader
+J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_2=2
+J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_3=SomeClassloader2
+J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_4=4
+J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.explanation=A class loading constraint has been violated.  The two class loader's have different classes for one of the class names in the signature.
+J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.system_action=A java/lang/LinkageError will be thrown
+J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.user_response=Check the Classes supplied to the MethodType to determine why a cross-class loader constraint has been violated.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_UNSUPPORTED_MSG=Informacij o uporabi CPE-ja za JVM ni mogo\u010de pridobiti, ko je podan -XX:-EnableCPUMonitor.
+# START NON-TRANSLATABLE
+J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_UNSUPPORTED_MSG.explanation=Retrieving JVM CPU usage information when -XX:-EnableCPUMonitor is specified is unsupported.
+J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_UNSUPPORTED_MSG.system_action=The JVM will continue, but no JVM CPU usage related information will be provided.
+J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_UNSUPPORTED_MSG.user_response=Remove the -XX:-EnableCPUMonitor option and try again.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR=Napaka pri pridobivanju informacij o uporabi CPE-ja za JVM.
+# START NON-TRANSLATABLE
+J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.explanation=Internal error occured when retrieving JVM CPU usage information.
+J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.system_action=The JVM will continue, but no JVM CPU usage related information will be provided.
+J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.user_response=Contact IBM Service.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP=\u010casovni \u017eig ni veljaven pri pridobivanju informacij o uporabi CPE-ja za JVM.
+# START NON-TRANSLATABLE
+J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.explanation=Timestamp is invalid when retrieving JVM CPU usage info.
+J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.system_action=The JVM will continue, but no JVM CPU usage related information will be provided.
+J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.user_response=Contact IBM Service.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_OOM_NEW_GLOBAL_REF=Ni mogo\u010de dodeliti pomnilnika za nov globalni sklic JNI
+# START NON-TRANSLATABLE
+J9NLS_JCL_OOM_NEW_GLOBAL_REF.explanation=The JVM was not able to allocate the native memory required to create a new JNI global reference.
+J9NLS_JCL_OOM_NEW_GLOBAL_REF.system_action=The JVM will exit unless the OutOfMemoryError is caught and recovered from.
+J9NLS_JCL_OOM_NEW_GLOBAL_REF.user_response=Ensure the process has enough native memory to run.
+# END NON-TRANSLATABLE

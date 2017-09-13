@@ -1,0 +1,65 @@
+/*******************************************************************************
+ * Copyright (c) 2010, 2014 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+package com.ibm.j9ddr.autoblob.datamodel;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Artificial type used for fudging the blob output. 
+ * 
+ * @author andhall
+ *
+ */
+
+/*
+ * TODO: lpnguyen turning PseudoType from a UserDefinedType into a RecordType may be the wrong thing to do.. 
+ * but currently necessary if you ever want to inherit off a pseudotype.  May want to eventually implement
+ * functionality to make some sort of PseudoClassType.
+ */
+public class PseudoType extends RecordType
+{
+
+	public PseudoType(String name)
+	{
+		super(name, null);
+	}
+
+	@Override
+	protected List<Declaration> getDeclaredEntries()
+	{
+		return new ArrayList<Declaration>();
+	}
+
+	@Override
+	protected boolean isEmptyStruct()
+	{
+		return true;
+	}
+
+	@Override
+	public boolean shouldBeInBlob()
+	{
+		return true;
+	}
+	
+}

@@ -1,0 +1,347 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the verbose module.
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=VERB
+J9NLS.HEADER=verbosenls.h
+
+# Note: %.*s is the thread name
+# Note: %zd/%zd is two numbers, indicating how much stack was used on each stack
+J9NLS_VERB_STACK_USAGE=Sklad z razlago: \"%2$.*1$s\" uporabljenih %3$zd/%4$zd bajtov na skladih Java/C
+# START NON-TRANSLATABLE
+J9NLS_VERB_STACK_USAGE.sample_input_1=11
+J9NLS_VERB_STACK_USAGE.sample_input_2=Gc Slave Thread
+J9NLS_VERB_STACK_USAGE.sample_input_3=232
+J9NLS_VERB_STACK_USAGE.sample_input_4=2308
+J9NLS_VERB_STACK_USAGE.explanation=Indicates how much stack was used on each stack for a thread when -verbose:stack is specified
+J9NLS_VERB_STACK_USAGE.system_action=None
+J9NLS_VERB_STACK_USAGE.user_response=None
+# END NON-TRANSLATABLE
+
+# Unused
+J9NLS_VERB_UNNAMED_THREAD=
+# START NON-TRANSLATABLE
+J9NLS_VERB_UNNAMED_THREAD.explanation=
+J9NLS_VERB_UNNAMED_THREAD.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_VERB_UNNAMED_THREAD.user_response=
+# END NON-TRANSLATABLE
+
+# Note: %zd/%zd is two numbers, indicating how much stack was used on each stack
+J9NLS_VERB_MAX_STACK_USAGE=Sklad z razlago: najve\u010dja uporaba sklada je bila %1$zd/%2$zd bajtov na skladih Java/C
+# START NON-TRANSLATABLE
+J9NLS_VERB_MAX_STACK_USAGE.sample_input_1=536870912
+J9NLS_VERB_MAX_STACK_USAGE.sample_input_2=268435456
+J9NLS_VERB_MAX_STACK_USAGE.explanation=Indicates the largest stack usage for each stack for all threads when -verbose:stack is specified
+J9NLS_VERB_MAX_STACK_USAGE.system_action=None
+J9NLS_VERB_MAX_STACK_USAGE.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES=Napaka: \u0161tevilo datotek -Xverbosegclog mora biti ve\u010dje kot 0
+# START NON-TRANSLATABLE
+J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES.explanation=The -Xverbosegclog option was specified with 0 files or the option could not be parsed
+J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES.system_action=The JVM will terminate
+J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES.user_response=Correct the command line option
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_XVERBOSEGCLOG_NUM_CYCLES=Napaka: \u0161tevilo ciklov -Xverbosegclog mora biti ve\u010dje kot 0
+# START NON-TRANSLATABLE
+J9NLS_VERB_XVERBOSEGCLOG_NUM_CYCLES.explanation=The -Xverbosegclog option was specified with 0 cycles or the option could not be parsed
+J9NLS_VERB_XVERBOSEGCLOG_NUM_CYCLES.system_action=The JVM will terminate
+J9NLS_VERB_XVERBOSEGCLOG_NUM_CYCLES.user_response=Correct the command line option
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_XVERBOSEGCLOG_FILENAME=Napaka: manjkajo\u010de ime datoteke -Xverbosegclog
+# START NON-TRANSLATABLE
+J9NLS_VERB_XVERBOSEGCLOG_FILENAME.explanation=The -Xverbosegclog option was specified with an empty filename
+J9NLS_VERB_XVERBOSEGCLOG_FILENAME.system_action=The JVM will terminate
+J9NLS_VERB_XVERBOSEGCLOG_FILENAME.user_response=Correct the command line option
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_FAILED_TO_INITIALIZE=Inicializacija ni uspela
+# START NON-TRANSLATABLE
+J9NLS_VERB_FAILED_TO_INITIALIZE.explanation=The verbose GC logging facility could not be initialized
+J9NLS_VERB_FAILED_TO_INITIALIZE.system_action=The JVM will terminate
+J9NLS_VERB_FAILED_TO_INITIALIZE.user_response=None
+# END NON-TRANSLATABLE
+
+#the following are used in 'java -verbose:sizes'
+#the text in these messages should closely match the text displayed by 'java -X'
+J9NLS_VERB_SIZES_XMSO=velikost sklada niti operacijskega sistema
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XMSO.explanation=NOTAG
+J9NLS_VERB_SIZES_XMSO.system_action=
+J9NLS_VERB_SIZES_XMSO.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XISS=za\u010detna velikost nitnega sklada java
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XISS.explanation=NOTAG
+J9NLS_VERB_SIZES_XISS.system_action=
+J9NLS_VERB_SIZES_XISS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSSI=prirastek nitnega sklada java
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSSI.explanation=NOTAG
+J9NLS_VERB_SIZES_XSSI.system_action=
+J9NLS_VERB_SIZES_XSSI.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSS_GROWABLE=najve\u010dja velikost nitnega sklada java
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSS_GROWABLE.explanation=NOTAG
+J9NLS_VERB_SIZES_XSS_GROWABLE.system_action=
+J9NLS_VERB_SIZES_XSS_GROWABLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSS_NONGROWABLE=velikost nitnega sklada java
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSS_NONGROWABLE.explanation=NOTAG
+J9NLS_VERB_SIZES_XSS_NONGROWABLE.system_action=
+J9NLS_VERB_SIZES_XSS_NONGROWABLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XMCA=prirastek segmentov razreda RAM
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XMCA.explanation=NOTAG
+J9NLS_VERB_SIZES_XMCA.system_action=
+J9NLS_VERB_SIZES_XMCA.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XMCO=prirastek segmentov razreda ROM
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XMCO.explanation=NOTAG
+J9NLS_VERB_SIZES_XMCO.system_action=
+J9NLS_VERB_SIZES_XMCO.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XMX=maksimum pomnilnika
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XMX.explanation=NOTAG
+J9NLS_VERB_SIZES_XMX.system_action=
+J9NLS_VERB_SIZES_XMX.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMX=velikost predpomnilnika razreda v skupni rabi
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMX.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMX.system_action=
+J9NLS_VERB_SIZES_XSCMX.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMINAOT=najmanj\u0161i rezerviran predpomnilni\u0161ki prostor razredov v skupni rabi za AOT
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMINAOT.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMINAOT.system_action=
+J9NLS_VERB_SIZES_XSCMINAOT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMAXAOT=najve\u010dji dovoljen predpomnilni\u0161ki prostor razredov v skupni rabi za AOT
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMAXAOT.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMAXAOT.system_action=
+J9NLS_VERB_SIZES_XSCMAXAOT.user_response=
+# END NON-TRANSLATABLE
+
+#the following are used in 'java -verbose:class' when invalid class path entry is detected
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR=Neveljaven vnos razredne poti: %s (V/I datoteke ni uspel)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR.sample_input_1=/path/java/user.jar
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR.explanation=The specified ZIP file could not be opened. It may not exist or the file permissions may not allow access by the JVM.
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR.user_response=Check if the specified ZIP file exists and has appropriate permissions
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR=Neveljaven vnos razredne poti: %s (branje datoteke ni uspelo)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR.sample_input_1=/path/java/user.jar
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR.explanation=Part of the specified ZIP file could not be read. The file may be corrupt or truncated.
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR.user_response=Examine the corrupt or truncated ZIP file and replace it with a valid copy
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_CORRUPT=Neveljaven vnos razredne poti: %s (datoteka je okvarjena)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_CORRUPT.sample_input_1=/path/java/user.jar
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_CORRUPT.explanation=The specified ZIP file is corrupt
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_CORRUPT.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_CORRUPT.user_response=Examine the corrupt ZIP file and replace it with a valid copy
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNSUPPORTED_FILE_TYPE=Neveljaven vnos razredne poti: %s (nepodprt tip datoteke)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNSUPPORTED_FILE_TYPE.sample_input_1=/path/java/user.txt
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNSUPPORTED_FILE_TYPE.explanation=The specified ZIP file type is unsupported
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNSUPPORTED_FILE_TYPE.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNSUPPORTED_FILE_TYPE.user_response=Replace the specified ZIP file with a supported ZIP file type
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNKNOWN_FILE_TYPE=Neveljaven vnos razredne poti: %s (neznan tip datoteke)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNKNOWN_FILE_TYPE.sample_input_1=/path/java/user.jjj
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNKNOWN_FILE_TYPE.explanation=The specified ZIP file type is unknown
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNKNOWN_FILE_TYPE.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNKNOWN_FILE_TYPE.user_response=Replace the specified ZIP file with a supported ZIP file type
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR=Neveljaven vnos razredne poti: %s (neznana napaka)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.sample_input_1=/path/java/user.jar
+J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.explanation=An unexpected error occurred while reading the specified ZIP file
+J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.user_response=If the problem persists then contact your IBM Service representative
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_MISSING_ROM_CLASSES=Neveljaven vnos razredne poti: %s (v jxe manjka rom.classes)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_MISSING_ROM_CLASSES.sample_input_1=/path/java/user.jxe
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_MISSING_ROM_CLASSES.explanation=A rom.classes entry could not be found in the specified JXE file
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_MISSING_ROM_CLASSES.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_MISSING_ROM_CLASSES.user_response=Examine the JXE file and replace it with a valid copy
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_CORRUPT_IMAGE_HEADER=Neveljaven vnos razredne poti: %s (okvarjena glava slike jxe)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_CORRUPT_IMAGE_HEADER.sample_input_1=/path/java/user.jxe
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_CORRUPT_IMAGE_HEADER.explanation=The specified JXE file had a corrupt header
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_CORRUPT_IMAGE_HEADER.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_CORRUPT_IMAGE_HEADER.user_response=Examine the corrupt JXE file and replace it with a valid copy
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED=Neveljaven vnos razredne poti: %s (nasprotni endian jxe ni podprt)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.sample_input_1=/path/java/user.jxe
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.explanation=The specified JXE file had incorrect endianess for this platform
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.user_response=Replace the JXE file with one of the correct endianess
+# END NON-TRANSLATABLE
+
+# Note: %.*s is the thread name
+# Note: %zd/%zd is two numbers, indicating how much stack was used on each stack
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS=Sklad z razlago: Izvajanje niti \"%2$.*1$s\" uporablja %3$zd/%4$zd bajtov na skladih Java/C
+# START NON-TRANSLATABLE
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.explanation=Indicates how much stack was used on each stack for a thread when -verbose:stack is specified
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.system_action=None
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.user_response=None
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_1=11
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_2=Gc Slave Thread
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_3=232
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_4=2308
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1=Sklad z razlago: Ni mogo\u010de izpisati informacij o skladu za niti, ki se trenutno izvajajo
+# START NON-TRANSLATABLE
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.explanation=Indicates that the JVM was unable to obtain a lock to iterate over the currently running threads
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.system_action=None
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMINJIT=najmanj\u0161i rezerviran predpomnilni\u0161ki prostor razredov v skupni rabi za JIT
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMINJIT.explanation=NOTISSUED
+J9NLS_VERB_SIZES_XSCMINJIT.system_action=
+J9NLS_VERB_SIZES_XSCMINJIT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMAXJIT=najve\u010dji dovoljen predpomnilni\u0161ki prostor razredov v skupni rabi za JIT
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMAXJIT.explanation=NOTISSUED
+J9NLS_VERB_SIZES_XSCMAXJIT.system_action=
+J9NLS_VERB_SIZES_XSCMAXJIT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCDMX=rezerviran predpomnilni\u0161ki prostor razredov v skupni rabi za atribute razhro\u0161\u010devanja
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCDMX.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCDMX.system_action=
+J9NLS_VERB_SIZES_XSCDMX.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMINJITDATA=najmanj\u0161i rezerviran predpomnilni\u0161ki prostor razredov v skupni rabi za podatke JIT
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMINJITDATA.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMINJITDATA.system_action=
+J9NLS_VERB_SIZES_XSCMINJITDATA.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMAXJITDATA=najve\u010dji dovoljen predpomnilni\u0161ki prostor razredov v skupni rabi za podatke JIT
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMAXJITDATA.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMAXJITDATA.system_action=
+J9NLS_VERB_SIZES_XSCMAXJITDATA.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XLP_CODECACHE=velika velikost strani za kodni predpomnilnik JIT
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XLP_CODECACHE.explanation=NOTAG
+J9NLS_VERB_SIZES_XLP_CODECACHE.system_action=
+J9NLS_VERB_SIZES_XLP_CODECACHE.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE=razpolo\u017eljive velike velikosti strani za kodni predpomnilnik JIT:
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE.explanation=NOTAG
+J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE.system_action=
+J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XMCRS=stisnjena za\u010detna velikost metapodatkov referenc
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XMCRS.explanation=NOTAG
+J9NLS_VERB_SIZES_XMCRS.system_action=
+J9NLS_VERB_SIZES_XMCRS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS=velikost predpomnilnika razreda v skupni rabi
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.explanation=NOTAG
+J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.system_action=
+J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMX_V1=mehka najve\u010dja velikost predpomnilnika razredov v skupni rabi
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMX_V1.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMX_V1.system_action=
+J9NLS_VERB_SIZES_XSCMX_V1.user_response=
+# END NON-TRANSLATABLE

@@ -1,0 +1,2 @@
+/u/andhall/builds/SR6/J5.0/bin/java  -Xdump:system:events=user -cp /u/andhall Hang
+/u/andhall/builds/SR4/J5.0_64/bin/java -Xdump:system:events=user -cp /u/andhall Hang

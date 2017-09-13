@@ -1,0 +1,72 @@
+/*******************************************************************************
+ * Copyright (c) 1991, 2017 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+ 
+/*
+ * This file is the input to the gperf utility for generating a perfect
+ * hash table of attribute names, which is used by attributeTagFor().
+ *
+ * To generate attrlookup.h, use the following command-line:
+ *
+ *   gperf -CD -t --output-file=attrlookup.h attrlookup.gperf
+ *
+ * (The gperf utility is a perfect hash function generator that is readily available on Linux.)
+ *
+ */
+
+%language=ANSI-C
+%define hash-function-name attributeHash
+%define lookup-function-name lookupKnownAttribute
+
+struct AttribType
+{
+	const char *name;
+	U_8 attribCode;
+	U_8 strippedAttribCode;
+};
+
+%%
+Code, CFR_ATTRIBUTE_Code, CFR_ATTRIBUTE_Code
+StackMap, CFR_ATTRIBUTE_StackMap, CFR_ATTRIBUTE_StackMap
+Synthetic, CFR_ATTRIBUTE_Synthetic, CFR_ATTRIBUTE_Synthetic
+Signature, CFR_ATTRIBUTE_Signature, CFR_ATTRIBUTE_Signature
+Deprecated, CFR_ATTRIBUTE_Deprecated, CFR_ATTRIBUTE_Deprecated
+Exceptions, CFR_ATTRIBUTE_Exceptions, CFR_ATTRIBUTE_Exceptions
+SourceFile, CFR_ATTRIBUTE_SourceFile, CFR_ATTRIBUTE_SourceFile
+InnerClasses, CFR_ATTRIBUTE_InnerClasses, CFR_ATTRIBUTE_InnerClasses
+ConstantValue, CFR_ATTRIBUTE_ConstantValue, CFR_ATTRIBUTE_ConstantValue
+StackMapTable, CFR_ATTRIBUTE_StackMapTable, CFR_ATTRIBUTE_StackMapTable
+EnclosingMethod, CFR_ATTRIBUTE_EnclosingMethod, CFR_ATTRIBUTE_EnclosingMethod
+LineNumberTable, CFR_ATTRIBUTE_LineNumberTable, CFR_ATTRIBUTE_StrippedLineNumberTable
+BootstrapMethods, CFR_ATTRIBUTE_BootstrapMethods, CFR_ATTRIBUTE_BootstrapMethods
+AnnotationDefault, CFR_ATTRIBUTE_AnnotationDefault, CFR_ATTRIBUTE_AnnotationDefault
+LocalVariableTable, CFR_ATTRIBUTE_LocalVariableTable, CFR_ATTRIBUTE_StrippedLocalVariableTable
+SourceDebugExtension, CFR_ATTRIBUTE_SourceDebugExtension, CFR_ATTRIBUTE_StrippedSourceDebugExtension
+LocalVariableTypeTable, CFR_ATTRIBUTE_LocalVariableTypeTable, CFR_ATTRIBUTE_StrippedLocalVariableTypeTable
+RuntimeVisibleAnnotations, CFR_ATTRIBUTE_RuntimeVisibleAnnotations, CFR_ATTRIBUTE_RuntimeVisibleAnnotations
+RuntimeInvisibleAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleAnnotations
+RuntimeVisibleTypeAnnotations, CFR_ATTRIBUTE_RuntimeVisibleTypeAnnotations, CFR_ATTRIBUTE_RuntimeVisibleTypeAnnotations
+RuntimeInvisibleTypeAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleTypeAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleTypeAnnotations
+RuntimeVisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeVisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeVisibleParameterAnnotations
+RuntimeInvisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleParameterAnnotations, CFR_ATTRIBUTE_RuntimeInvisibleParameterAnnotations
+MethodParameters, CFR_ATTRIBUTE_MethodParameters, CFR_ATTRIBUTE_MethodParameters
+NestMembers, CFR_ATTRIBUTE_NestMembers, CFR_ATTRIBUTE_NestMembers
+MemberOfNest, CFR_ATTRIBUTE_MemberOfNest, CFR_ATTRIBUTE_MemberOfNest

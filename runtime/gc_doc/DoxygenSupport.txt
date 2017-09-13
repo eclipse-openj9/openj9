@@ -1,0 +1,166 @@
+
+/*******************************************************************************
+ * Copyright (c) 1991, 2006 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+
+/*
+ * This file provides the group definitions required to create the Doxygen generated
+ * output for compounds.  There is one group per directory (GC_Check, GC_Modron, etc.).
+ */
+ 
+/**
+ * @defgroup GC GC
+ * @brief Basic GC DLL code.
+ *
+ * This component contains the main wrapper code for the GC DLL, including
+ * the J9VMDllMain() function and other entrypoints.
+ */
+
+/**
+ * @defgroup GC_Base GC_Base
+ * @brief A brief description.
+ *
+ * A more detailed description.
+ */
+
+/**
+ * @defgroup GC_Base_Core GC_Base_Core
+ * @brief A brief description.
+ *
+ * A more detailed description.
+ */
+
+/**
+ * @defgroup GC_Check GC_Check
+ * @brief Performs verification of the heap and various VM structures.
+ *
+ * This component is compiled twice: once for inclusion into the gcchk DLL,
+ * and a second time for inclusion into the debugger extensions. All code
+ * must therefore be safe to run both in-process (via the gcchk DLL) and 
+ * out-of-process in the debugger extensions.
+ *
+ * @see GCChk
+ */
+
+/**
+ * @defgroup GC_Include GC_Include
+ * @brief Header and supplementary files
+ *
+ * This component contains miscellaneous header files, as well as files needed
+ * for the tracing and NLS components
+ */
+
+/**
+ * @defgroup GC_Modron_Base GC_Modron_Base
+ * @brief A brief description.
+ *
+ * A more detailed description.
+ */
+
+/**
+ * @defgroup GC_Modron_Env GC_Modron_Env
+ * @brief A brief description.
+ *
+ * A more detailed description.
+ */
+
+/**
+ * @defgroup GC_Modron_Eprof GC_Modron_Eprof
+ * @brief A brief description.
+ *
+ * A more detailed description.
+ */
+
+/**
+ * @defgroup GC_Modron_Resman GC_Modron_Resman
+ * @brief A brief description.
+ *
+ * A more detailed description.
+ */
+
+/**
+ * @defgroup GC_Modron_Standard GC_Modron_Standard
+ * @brief A brief description.
+ *
+ * A more detailed description.
+ */
+
+/**
+ * @defgroup GC_Modron_Startup GC_Modron_Startup
+ * @brief A brief description.
+ *
+ * A more detailed description.
+ */
+
+/**
+ * @defgroup GC_Port GC_Port
+ * @brief Platform portability classes
+ *
+ * Classes wrapping platform specifics, such as locks
+ * and atomic operations.
+ */
+
+/**
+ * @defgroup GC_Stats GC_Stats
+ * @brief A brief description.
+ *
+ * A more detailed description.
+ */
+
+/**
+ * @defgroup GC_Structs GC_Structs
+ * @brief A brief description.
+ *
+ * A more detailed description.
+ */
+
+
+/**
+ * @defgroup GC_Trace GC_Trace
+ * @brief Includes TGC tracing code
+ *
+ * This component holds the code for the TGC traces, which can be
+ * enabled on the command line through -Xtgc:foo,bar
+ * These traces provide additional debugging information on specific
+ * aspects of the collectors and Modron framework. They are usually
+ * used by developers or those investigating performance issues.
+ */
+
+/**
+ * @defgroup GC_Verbose GC_Verbose
+ * @brief Code for verbosegc output
+ *
+ * This component holds the code for the -verbose:gc output, which displays
+ * detailed information relating to garbage collection operation. Note that
+ * this code is built into the verbose DLL, not the GC DLL. The GC DLL communicates
+ * with verbosegc through hooks.
+ */
+
+/**
+ * @defgroup GCChk GCChk
+ * @brief A DLL wrapper for the GC_Check module.
+ *
+ * If this DLL is loaded by the VM the -Xrunj9gcchk<version> option, the DLL will have GC_Check
+ * perform heap and VM structure verification at specific intervals (by default,
+ * before and after each garbage collection).
+ *
+ * @see GC_Check
+ */

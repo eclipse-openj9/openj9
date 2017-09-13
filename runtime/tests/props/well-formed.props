@@ -1,0 +1,5 @@
+# Comment
+foo=bar
+answer=42
+this=is\
+	a line continuation

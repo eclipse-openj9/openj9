@@ -1,0 +1,33 @@
+//*******************************************************************************
+// Copyright (c) 2006, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//******************************************************************************
+
+Executable=j9trc
+Submodules=j9vmutil,j9util,map
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_trcengine_J9VMDllMain_Event1 Overhead=1 Level=1 NoEnv Template="Trace engine initialized for VM = %p"
+TraceEvent=Trc_trcengine_J9VMDllMain_Event2 Overhead=1 Level=1 Template="Trace engine terminating for VM = %p"
+TraceEvent=Trc_trcengine_reportTraceEvent_Event1 Overhead=1 Level=1 Template="Thread started VMthread = %p, name = %s"
+TraceEvent=Trc_trcengine_reportTraceEvent_Event2 Overhead=1 Level=1 Template="Thread stopped VMthread = %p, name = %s"
+TraceEvent=Trc_trcengine_checkMethod Overhead=1 Level=1 Template="Check for method match"
+TraceEvent=Trc_trcengine_reportThreadStart Overhead=1 Level=1 Template="Thread started VMthread = %p, name = %s, nativeID = %p"
+TraceEvent=Trc_trcengine_reportThreadEnd Overhead=1 Level=1 Template="Thread ended VMthread = %p, name = %s, nativeID = %p"

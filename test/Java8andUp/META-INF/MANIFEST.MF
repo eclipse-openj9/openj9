@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Class-Path: .
+Main-Class: org.openj9.test.vmArguments.ArgumentDumper
+IBM-Java-Options: -Xshareclasses:name=mycache,nonfa
+ tal,cacheDirPerm=1000  -Dfoo=bar -Da.long.system.pro
+ perty="this is a long system property value to
+  demonstrate long JVM arguments 
+ in the manifest file"
+

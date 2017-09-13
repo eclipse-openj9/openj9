@@ -1,0 +1,70 @@
+/*******************************************************************************
+ * Copyright (c) 1991, 2014 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+
+#ifndef rastrace_api_h
+#define rastrace_api_h
+
+/**
+* @file rastrace_api.h
+* @brief Public API for the RASTRACE module.
+*
+* This file contains public function prototypes and
+* type definitions for the RASTRACE module.
+*
+*/
+
+#include "j9.h"
+#include "j9comp.h"
+#include "jni.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* ---------------- jvmri.c ---------------- */
+
+/**
+* @brief
+* @param vm
+* @return void
+*/
+void 
+rasStartDeferredThreads(J9JavaVM* vm);
+
+/* ---------------- trcengine.c ---------------- */
+
+/**
+* @brief
+* @param *vm
+* @param stage
+* @param *reserved
+* @return IDATA
+*/
+IDATA 
+J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* rastrace_api_h */

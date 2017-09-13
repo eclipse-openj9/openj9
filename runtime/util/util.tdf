@@ -1,0 +1,81 @@
+// Copyright (c) 2006, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+
+Executable=j9util
+DATFileName=J9TraceFormat.dat
+
+TraceEntry=Trc_Util_getDefineArgument_Entry Noenv Overhead=1 Level=1 Template="getDefineArgument (arg=%s, key=%s)"
+TraceExit=Trc_Util_getDefineArgument_Exit Noenv Overhead=1 Level=1 Template="getDefineArgument (result=%s)"
+TraceExit=Trc_Util_getDefineArgument_Empty Noenv Overhead=1 Level=1 Template="getDefineArgument (empty value)"
+TraceExit=Trc_Util_getDefineArgument_NotFound Noenv Overhead=1 Level=1 Template="getDefineArgument (not matched)"
+
+TraceException=Trc_Util_decodeUTF8CharN_EmbdeddedNul Noenv Overhead=1 Level=1 Template="decodeUTF8CharN - embedded NUL character found"
+TraceException=Trc_Util_decodeUTF8CharN_Truncated Noenv Overhead=1 Level=1 Template="decodeUTF8CharN - not enough data left"
+TraceException=Trc_Util_decodeUTF8CharN_Invalid2ByteEncoding Noenv Overhead=1 Level=1 Template="decodeUTF8CharN - invalid 2 byte encoding (0x%x)"
+TraceException=Trc_Util_decodeUTF8CharN_Invalid3ByteEncoding Noenv Overhead=1 Level=1 Template="decodeUTF8CharN - invalid 3 byte encoding (0x%x)"
+TraceException=Trc_Util_decodeUTF8CharN_EncodingTooLarge Noenv Overhead=1 Level=1 Template="decodeUTF8CharN - invalid encoding (0x%x)"
+
+TraceEntry=Trc_Util_parseWildcard_Entry Noenv Overhead=1 Level=3 Template="parseWildcard(%.*s)"
+TraceExit-Exception=Trc_Util_parseWildcard_Error Noenv Overhead=1 Level=1 Template="parseWildcard - invalid wildcard"
+TraceExit=Trc_Util_parseWildcard_Exit Noenv Overhead=1 Level=3 Template="parseWildcard (needle=%.*s matchFlag=%x)"
+
+TraceEntry=Trc_Util_j9cached_file_open_Entry Noenv Overhead=1 Level=1 Template="j9cached_file_open (%s)"
+TraceExit=Trc_Util_j9cached_file_open_Exit Noenv Overhead=1 Level=1 Template="j9cached_file_open (result=%x)"
+TraceEntry=Trc_Util_j9cached_file_close_Entry Noenv Overhead=1 Level=1 Template="j9cached_file_close (%x)"
+TraceExit=Trc_Util_j9cached_file_close_Exit Noenv Overhead=1 Level=1 Template="j9cached_file_close"
+TraceEntry=Trc_Util_j9cached_file_write_Entry Noenv Overhead=1 Level=1 Template="j9cached_file_write (%x, %d)"
+TraceExit=Trc_Util_j9cached_file_write_Exit Noenv Overhead=1 Level=1 Template="j9cached_file_write (wrote %d bytes)"
+TraceEntry=Trc_Util_j9cached_file_seek_Entry Noenv Overhead=1 Level=1 Template="j9cached_file_seek (%x)"
+TraceExit=Trc_Util_j9cached_file_seek_Exit Noenv Overhead=1 Level=1 Template="j9cached_file_seek (position=%d)"
+TraceEntry=Trc_Util_j9cached_file_sync_Entry Noenv Overhead=1 Level=1 Template="j9cached_file_sync (%x)"
+TraceExit=Trc_Util_j9cached_file_sync_Exit Noenv Overhead=1 Level=1 Template="j9cached_file_sync"
+
+TraceEntry=Trc_Util_sl_open_system_library_Entry NoEnv Overhead=1 Level=1 Template="j9util_open_system_library name=%s, flags=%d"
+TraceEvent=Trc_Util_sl_open_system_library_Null NoEnv Overhead=1 Level=1 Template="j9util_open_system_library descriptor is NULL"
+TraceEvent=Trc_Util_sl_open_system_library_FailedGetSystemDirectory NoEnv Overhead=1 Level=1 Template="j9util_open_system_library failed to get system directory. Error code=%d"
+TraceEvent=Trc_Util_sl_open_system_library_FailedGetWindowsDirectory NoEnv Overhead=1 Level=1 Template="j9util_open_system_library failed to get windows directory. Error code=%d"
+TraceEvent=Trc_Util_sl_open_system_library_FailedUnicodeConversion NoEnv Overhead=1 Level=1 Template="j9util_open_system_library failed to convert library name to unicode."
+TraceEvent=Trc_Util_sl_open_system_library_FailedLoadLibrary NoEnv Overhead=1 Level=1 Template="j9util_open_system_library failed to load %s. Error code=%d"
+TraceExit=Trc_Util_sl_open_system_library_Exit NoEnv Overhead=1 Level=1 Template="j9util_open_system_library -- return 0x%zx"
+
+TraceEntry=Trc_Util_checkLibraryType_Enter NoEnv Overhead=1 Level=1 Template="checkLibraryType Enter"
+TraceEvent=Trc_Util_checkLibraryType_FailedCreateFile NoEnv Overhead=1 Level=1 Template="checkLibraryType Failed to open file %s. Error code=%d"
+TraceEvent=Trc_Util_checkLibraryType_FailedUnsupported NoEnv Overhead=1 Level=1 Template="checkLibraryType Failed. Unsupported library architecture. Error code=%d"
+TraceEvent=Trc_Util_checkLibraryType_FailedSetFP NoEnv Overhead=1 Level=1 Template="checkLibraryType Failed to set file pointer for library file %s. Error code=%d"
+TraceEvent=Trc_Util_checkLibraryType_FailedRead NoEnv Overhead=1 Level=1 Template="checkLibraryType Failed to read library file %s. Error code=%d"
+TraceExit=Trc_Util_checkLibraryType_Exit NoEnv Overhead=1 Level=1 Template="checkLibraryType Exit return %d"
+
+TraceEvent=Trc_Util_setHWPrefetch NoEnv Overhead=1 Level=1 Template="setHWPrefetch return code = %d and current value of DSCR = %lld"
+TraceException=Trc_Util_setHWPrefetch_Failed NoEnv Overhead=1 Level=1 Template="setHWPrefetch Error code=%d %s"
+
+TraceAssert=Assert_Util_true noEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Assert_Util_false noEnv Overhead=1 Level=1 Assert="!(P1)"
+TraceAssert=Assert_Util_signalProtectionFailed noEnv Overhead=1 Level=1 Assert="(0 /* signalProtectionFailed */)"
+TraceAssert=Assert_Util_notNull noEnv Overhead=1 Level=1 Assert="(P1) != NULL"
+TraceAssert=Assert_Util_unreachable noEnv Overhead=1 Level=1 Assert="(0 /* unreachable */)"
+
+TraceEntry=Trc_Util_validateLibrary_Entry Noenv Overhead=1 Level=5 Template="validateLibrary entered (library=%p, name=%s)"
+TraceEvent=Trc_Util_validateLibrary_onLoadNotFound NoEnv Overhead=1 Level=4 Template="validateLibrary __OnLoad not implemented in %s"
+TraceEvent=Trc_Util_validateLibrary_onLoadFound NoEnv Overhead=1 Level=5 Template="validateLibrary __OnLoad implemented (library=%s at=%p)"
+TraceException=Trc_Util_validateLibrary_invalidLibraryNameLength Noenv Overhead=1 Level=1 Template="validateLibrary received invalid library name (length=%d)"
+TraceException=Trc_Util_validateLibrary_memAllocFailed Noenv Overhead=1 Level=1 Template="validateLibrary memory allocation failed"
+TraceEvent=Trc_Util_validateLibrary_onLoadSignature NoEnv Overhead=1 Level=5 Template="validateLibrary signature (switch-string: %s, clear-string: %s)"
+TraceEvent=Trc_Util_validateLibrary_libraryStatus NoEnv Overhead=1 Level=3 Template="validateLibrary shared library %s flagged as %s"
+TraceExit=Trc_Util_validateLibrary_Exit Noenv Overhead=1 Level=5 Template="validateLibrary returns"

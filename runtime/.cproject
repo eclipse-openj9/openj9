@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><?fileVersion 4.0.0?><cproject>
+	<storageModule moduleId="org.eclipse.cdt.core.settings">
+		<cconfiguration id="converted.config.1997071776">
+			<storageModule buildSystemId="org.eclipse.cdt.core.defaultConfigDataProvider" id="converted.config.1997071776" moduleId="org.eclipse.cdt.core.settings" name="convertedConfig">
+				<externalSettings>
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="includePath" name="runtime/oti"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="includePath" name="runtime/include"/>
+					</externalSetting>
+				</externalSettings>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.PE" point="org.eclipse.cdt.core.BinaryParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+		</cconfiguration>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile"/>
+		<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
+			<buildOutputProvider>
+				<openAction enabled="false" filePath=""/>
+				<parser enabled="true"/>
+			</buildOutputProvider>
+			<scannerInfoProvider id="specsFile">
+				<runAction arguments="-E -P -v -dD ${plugin_state_location}/${specs_file}" command="gcc" useDefault="true"/>
+				<parser enabled="true"/>
+			</scannerInfoProvider>
+		</profile>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.pathentry">
+		<pathentry base-path="runtime" exported="true" include="oti" kind="inc" path="" system="true"/>
+		<pathentry base-path="runtime" exported="true" include="include" kind="inc" path="" system="true"/>
+		<pathentry base-path="runtime" include="include_core" kind="inc" path="" system="true"/>
+		<pathentry base-path="VM_Shared-Classes" include="shared_common/include" kind="inc" path="" system="true"/>
+		<pathentry base-path="java_linux_x86-64_cmprssptrs" include="oti" kind="inc" path="" system="true"/>
+		<pathentry base-path="java_linux_x86-64_cmprssptrs" include="gc_include" kind="inc" path="" system="true"/>
+		<pathentry base-path="java_linux_x86-64_cmprssptrs" include="include" kind="inc" path="" system="true"/>
+		<pathentry base-path="java_linux_x86-64_cmprssptrs" include="include_core" kind="inc" path="" system="true"/>
+		<pathentry base-path="java_linux_x86-64_cmprssptrs" include="nls" kind="inc" path="" system="true"/>
+		<pathentry kind="mac" name="LINUX" path="" value=""/>
+		<pathentry kind="mac" name="J9HAMMER" path="" value=""/>
+		<pathentry kind="src" path=""/>
+		<pathentry kind="out" path=""/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+</cproject>

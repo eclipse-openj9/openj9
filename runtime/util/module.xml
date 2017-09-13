@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<!--
+	Copyright (c) 2006, 2017 IBM Corp. and others
+
+	This program and the accompanying materials are made available under
+	the terms of the Eclipse Public License 2.0 which accompanies this
+	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+	or the Apache License, Version 2.0 which accompanies this distribution and
+	is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+	This Source Code may also be made available under the following
+	Secondary Licenses when the conditions for such availability set
+	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+	General Public License, version 2 with the GNU Classpath
+	Exception [1] and GNU General Public License, version 2 with the
+	OpenJDK Assembly Exception [2].
+
+	[1] https://www.gnu.org/software/classpath/license.html
+	[2] http://openjdk.java.net/legal/assembly-exception.html
+
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<module>
+	<artifact type="static" name="j9util">
+		<include-if condition="spec.flags.module_util" />
+		<phase>core</phase>
+		<dependencies>
+			<dependency name="run_constgen"/>
+		</dependencies>
+		<includes>
+			<include path="j9include"/>
+			<include path="j9oti"/>
+			<include path="j9gcinclude"/>
+			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+			<!-- Remove the sse2enabled.{s|asm} file unless on win_x86 or linux_x86 -->
+			<makefilestub data="UMA_OBJECTS:=$(filter-out sse2enabled$(UMA_DOT_O),$(UMA_OBJECTS))">
+				<exclude-if condition="spec.flags.J9VM_ENV_SSE2_SUPPORT_DETECTION"/>
+			</makefilestub>
+			<makefilestub data="UMA_OBJECTS:=$(filter-out sse2memclear$(UMA_DOT_O),$(UMA_OBJECTS))">
+				<exclude-if condition="spec.win_x86.* and not spec.flags.J9VM_ENV_DATA64"/>
+			</makefilestub>
+			<makefilestub data="UMA_OBJECTS:=$(filter-out mingw_comp$(UMA_DOT_O),$(UMA_OBJECTS))">
+				<exclude-if condition="spec.win_x86.* and not spec.flags.J9VM_ENV_DATA64"/>
+			</makefilestub>
+			<makefilestub data="UMA_OBJECTS:=$(filter-out fpusup$(UMA_DOT_O),$(UMA_OBJECTS))">
+				<exclude-if condition="spec.flags.J9VM_ARCH_X86"/>
+			</makefilestub>
+			<!--Special compilation for openj9_version.c with extra version flags. -->
+			<makefilestub data="ifeq ($(OPENJ9_BUILD),true)"/>
+			<makefilestub data="openj9_version$(UMA_DOT_O) : CFLAGS += -DOPENJ9_BUILD"/>
+			<makefilestub data="endif"/>
+		</makefilestubs>
+		<vpaths>
+			<vpath pattern="freessp.c" path="zos" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.zos.*"/>
+			</vpath>
+			<vpath pattern="openlibrary.c" path="win32" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.win_x86.*"/>
+			</vpath>
+			<vpath pattern="sethwprefetch.c" path="aix" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.aix.*"/>
+			</vpath>
+			<vpath pattern="osinfo.c" path="linux" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux.*"/>
+			</vpath>
+			<vpath pattern="volatile.c" path="arm32" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_arm.* and not spec.flags.J9VM_ENV_DATA64"/>
+			</vpath>
+			<vpath pattern="volatile.s" path="ap32" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.aix.* and not spec.flags.J9VM_ENV_DATA64"/>
+			</vpath>
+			<vpath pattern="volatile.s" path="mz31" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.zos.* and not spec.flags.J9VM_ENV_DATA64"/>
+			</vpath>
+			<vpath pattern="volatile.asm" path="wi32" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.win_x86.* and not spec.flags.J9VM_ENV_DATA64"/>
+			</vpath>
+			<vpath pattern="volatile.s" path="xi32" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_x86.* and not spec.flags.J9VM_ENV_DATA64"/>
+			</vpath>
+			<vpath pattern="volatile.s" path="xp32" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_ppc.* and not spec.flags.J9VM_ENV_DATA64"/>
+			</vpath>
+			<vpath pattern="volatile.s" path="xz31" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_390.* and not spec.flags.J9VM_ENV_DATA64"/>
+			</vpath>
+		</vpaths>
+	</artifact>
+</module>

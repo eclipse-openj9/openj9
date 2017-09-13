@@ -1,0 +1,4 @@
+#mapping between playlist name and its generated playlist job file name
+JVM_Functionality.csv, JVM_Functionality_Integration_SE7_Fusion
+JVM_Smoke.csv, SE7fusion_JVM_Smoke
+JCK_IT_Tier1.csv, Tier1_SE7_Fusion

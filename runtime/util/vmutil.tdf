@@ -1,0 +1,58 @@
+// Copyright (c) 2006, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+
+Executable=j9vmutil
+DATFileName=J9TraceFormat.dat
+
+TraceEntry=Trc_VMUtil_pushEventFrame_Entry Overhead=1 Level=3 Template="pushEventFrame (wantVMAccess=%zu, jniRefSlots=%zu)"
+TraceExit=Trc_VMUtil_pushEventFrame_Exit Overhead=1 Level=3 Template="pushEventFrame (hadVMAccess=%zu)"
+
+TraceEntry=Trc_VMUtil_popEventFrame_Entry Overhead=1 Level=3 Template="popEventFrame (hadVMAccess=%zu)"
+TraceExit=Trc_VMUtil_popEventFrame_Exit Overhead=1 Level=3 Template="popEventFrame"
+
+TraceEntry=Trc_VMUtil_getObjectMonitorOwner_Entry Overhead=1 Level=1 Noenv Template="getObjectMonitorOwner (jvm=%p, object=%p, pcount=%p)"
+TraceExit=Trc_VMUtil_getObjectMonitorOwner_Exit Obsolete Overhead=1 Level=1 Noenv Template="getObjectMonitorOwner (owner=%p, count=%zu)"
+
+TraceEntry=Trc_VMUtil_getOriginalROMMethod_Entry Overhead=1 Level=3 Noenv Template="getOriginalROMMethod (method=%p)"
+TraceExit=Trc_VMUtil_getOriginalROMMethod_Exit Overhead=1 Level=3 Noenv Template="getOriginalROMMethod (result=%p)"
+
+TraceEntry=Trc_VMUtil_getVMThreadStatus_Entry Overhead=1 Level=1 Noenv Template="getVMThreadStatus(thread=%p, pmonitor=%p, powner=%p, pcount=%p)"
+TraceExit=Trc_VMUtil_getVMThreadStatus_Exit Overhead=1 Level=1 Noenv Template="getVMThreadStatus(status=%zu, monitor=%p, owner=%p, count=%zu)"
+
+TraceEntry=Trc_VMUtil_getVMThreadName_Entry Overhead=1 Level=1 Noenv Template="getVMThreadName(mustFree=%p)"
+TraceExit-Exception=Trc_VMUtil_getVMThreadName_AccessError Overhead=1 Level=1 Noenv Template="getVMThreadName -- access exception"
+TraceExit-Exception=Trc_VMUtil_getVMThreadName_OOM Overhead=1 Level=1 Noenv Template="getVMThreadName -- out of memory (%zu bytes)"
+TraceExit=Trc_VMUtil_getVMThreadName_Unnamed Overhead=1 Level=1 Noenv Template="getVMThreadName -- no name"
+TraceExit=Trc_VMUtil_getVMThreadName_Exit Overhead=1 Level=1 Noenv Template="getVMThreadName: %s"
+
+TraceAssert=Assert_VMUtil_true noEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Assert_VMUtil_false noEnv Overhead=1 Level=1 Assert="!(P1)"
+
+TraceAssert=Assert_VMUtil_ShouldNeverHappen NoEnv Overhead=1 Level=3 Assert="(0)"
+
+TraceExit=Trc_VMUtil_getObjectMonitorOwner_Exit2 Overhead=1 Level=1 Noenv Template="getObjectMonitorOwner (object=%p, owner=%p, count=%zu)"
+
+TraceEntry=Trc_VMUtil_getImportPackedAnnotationFromROM_Entry Overhead=1 Level=1 Noenv Template="Fetching @ImportPacked from %.*s"
+TraceExit=Trc_VMUtil_getImportPackedAnnotationFromROM_Exit Overhead=1 Level=1 Noenv Template="Completed parsing of @ImportPacked from %.*s"
+
+TraceEntry=Trc_VMUtil_getOriginalROMMethodUnchecked_Entry Overhead=1 Level=3 Noenv Template="getOriginalROMMethodUnchecked (method=%p)"
+TraceExit=Trc_VMUtil_getOriginalROMMethodUnchecked_Exit Overhead=1 Level=3 Noenv Template="getOriginalROMMethodUnchecked (result=%p)"
+
+TraceException=Trc_VMUtil_getOriginalROMMethodUnchecked_getMethodIndexFailed Overhead=1 Level=1 Noenv Template="getOriginalROMMethodUnchecked: Unable to get methodIndex for method=%p"

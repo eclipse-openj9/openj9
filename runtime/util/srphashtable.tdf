@@ -1,0 +1,54 @@
+// Copyright (c) 2010, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+
+Executable=srphashtable
+DATFileName=J9TraceFormat.dat
+
+TraceAssert=Assert_srphashtable_true NoEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Assert_srphashtable_ShouldNeverHappen NoEnv Overhead=1 Level=3 Assert="(0 /* Fatal srphashtable error */)"
+
+TraceEntry=Trc_srpHashTableVerify_Entry Overhead=1 Level=3 Noenv Template="srpHashTableVerify(srphashtable=%p, memorySize=%u, entrySize=%u)" 
+TraceException=Trc_srpHashTableVerify_entrySizeIncorrect Overhead=1 Level=1 NoEnv Template="entrySize is not correct, srphashtable=%p, entrySize=%u, expected entrySize=%u"
+TraceException=Trc_srpHashTableVerify_nodeSizeIncorrect Overhead=1 Level=1 NoEnv Template="nodeSize is not correct, srphashtable=%p, nodeSize=%u, expected nodeSize=%u"
+TraceException=Trc_srpHashTableVerify_numberOfNodesIncorrect Overhead=1 Level=1 NoEnv Template="numberOfNodes is not correct, srphashtable=%p, simplepool_numberOfElements=%u, srpHashTable_numberOfNodes=%u"
+TraceException=Trc_srpHashTableVerify_tableSizeIncorrect Overhead=1 Level=1 NoEnv Template="tableSize is not correct, srphashtable=%p, tableSize=%u, expected tableSize=%u"
+TraceException=Trc_srpHashTableVerify_flagsIncorrect Overhead=1 Level=1 NoEnv Template="value of flags is not correct, srphashtable=%p, flags=%u, expected value of flags=%u"
+TraceException=Trc_srpHashTableVerify_nodesAddressIncorrect Overhead=1 Level=1 NoEnv Template="SRP for nodes is pointing to the wrong address, srphashtable=%p, SRP is pointing to %p, nodes are located at %d" 
+TraceException=Trc_srpHashTableVerify_simplePoolAddressIncorrect Overhead=1 Level=1 NoEnv Template="SRP for simplepool is pointing to the wrong address, srphashtable=%p, SRP is pointing to %p, simplepool is located at %d"
+TraceException=Trc_srpHashTableVerify_SRPPointsToNonSimplepoolElement Overhead=1 Level=1 NoEnv Template="SRP (address=%p, value=%u) points to %p which is not a simplepool element ( srphashtable=%p )" 
+TraceException=Trc_srpHashTableVerify_numOfElementsIncorrect Overhead=1 Level=1 NoEnv Template="Mismatch number of elements, srphashtable=%p, number of elements in simplepool = %u, number of SRPs that are set = %u"
+TraceExit=Trc_srpHashTableVerify_Exit Overhead=1 Level=3 Noenv Template="srpHashTableVerify(result=%u)"
+
+TraceEntry=Trc_srpHashTableNew_Entry Overhead=1 Level=3 Noenv Template="srpHashTableNew(portLibrary=%p, tableName=%p, tableSize=%u, entrySize=%u, flags=%u, hashFn=%p, hashEqualFn=%p, printFn=%p, functionUserData=%p)" 
+TraceException=Trc_srpHashTableNew_tableSizeOutOfRange Overhead=1 Level=1 NoEnv Template="Table size %u is not in the supported range. Supported range:  0 - %u"
+TraceException=Trc_srpHashTableNew_failedToAllocMemoryForSRPHashTable Overhead=1 Level=1 NoEnv Template="Memory for SRPHashtable could not be allocated. (tableSize = %u, entrySize= %u)"
+TraceException=Trc_srpHashTableNew_failedToAllocMemoryForInternalSRPHashTable Overhead=1 Level=1 NoEnv Template="Memory for internal SRPHashtable could not be allocated. (primeTableSize=%u, entrySize=%u, totalSize = %u)"
+TraceExit=Trc_srpHashTableNew_Exit Overhead=1 Level=3 Noenv Template="srpHashTableNew(srpHashTable=%p)"
+
+TraceEntry=Trc_srpHashTableReset_Entry Overhead=1 Level=3 Noenv Template="srpHashTableReset(portLibrary=%p, tableName=%p, srpHashTable=%p, address=%p, memorySize=%u, entrySize=%u, flags=%u, hashFn=%p, hashEqualFn=%p, printFn=%p, functionUserData=%p)" 
+TraceException=Trc_srpHashTableReset_memoryIsTooSmall Overhead=1 Level=1 NoEnv Template="Given memory size (%u) is too small to create SRP hashtable. SRPHashTable with tableSize=2 requires %u memory."
+TraceException=Trc_srpHashTableReset_memoryIsTooBig Overhead=1 Level=1 NoEnv Template="Given memory size (%u) can hold more entries (entrySize=%u) than the biggest number supported by primeNumberHelper. Supported range: 0 - %u"
+TraceExit=Trc_srpHashTableReset_Exit Overhead=1 Level=3 Noenv Template="srpHashTableReset(srpHashTable=%p)"
+
+TraceEntry=Trc_srpHashTableFindNode_Entry Overhead=1 Level=3 Noenv Template="srpHashTableFindNode(srptable=%p, key=%p)" 
+TraceException=Trc_srpHashTableFindNode_srptableNodesCanNotBeLocated Overhead=1 Level=1 NoEnv Template="SRP HashTable nodes can not be located. (srptable = %p)"
+TraceExit=Trc_srpHashTableFindNode_Exit Overhead=1 Level=3 Noenv Template="srpHashTableFindNode(srpNode=%p, SRP_GET(srpNode,void*)=%p)"
+
+

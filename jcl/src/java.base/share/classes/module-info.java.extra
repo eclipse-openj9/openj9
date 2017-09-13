@@ -1,0 +1,47 @@
+/*[INCLUDE-IF Sidecar19-SE]*/
+/*******************************************************************************
+ * Copyright (c) 2017, 2017 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+module java.base {
+  exports com.ibm.jvm;
+  exports com.ibm.le.conditionhandling;
+  /*[IF PLATFORM-mz31 | PLATFORM-mz64 | PLATFORM-xz64]*/
+  exports com.ibm.jit.crypto to ibm.crypto.hdwrcca;
+  /*[ENDIF]*/
+  exports com.ibm.sharedclasses.spi to openj9.sharedclasses, java.management, java.rmi;
+  exports com.ibm.oti.vm to com.ibm.management, java.management, jdk.attach, openj9.sharedclasses;
+  exports com.ibm.oti.util to com.ibm.management, java.management, jdk.attach, jdk.management, openj9.sharedclasses;
+  exports com.ibm.tools.attach.target to jdk.attach;
+  exports jdk.internal.org.objectweb.asm to com.ibm.dtfj, com.ibm.dtfjview;
+  // Following allows dtfj/dtfjview modules invoke module addReads & addExports programmatically via reflection APIs
+  exports jdk.internal.module to com.ibm.dtfj, com.ibm.dtfjview;
+  /*[IF Valhalla-MVT]*/
+  exports jdk.experimental.value;
+  exports jvm.internal.value;
+  /*[ENDIF]*/
+  uses com.ibm.sharedclasses.spi.SharedClassProvider;
+  uses com.ibm.gpu.spi.GPUAssist.Provider;
+  exports com.ibm.gpu.spi to openj9.gpu;
+  // TODO remove the following after they move to their new modules
+  exports com.ibm.cuda;
+  exports com.ibm.gpu;
+  provides com.ibm.gpu.spi.GPUAssist.Provider with com.ibm.gpu.internal.CudaGPUAssistProvider;
+}

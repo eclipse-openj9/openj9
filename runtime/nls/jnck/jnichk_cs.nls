@@ -1,0 +1,1006 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the JNICHK module.
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=JNCK
+J9NLS.HEADER=jnichknls.h
+
+# This occurs if you pass an unrecognized option to -Xcheck:jni. e.g. java -Xcheck:jni:bogus. Parameter #1 is the unrecognized command line option
+# -Xcheck:jni is not translatable
+J9NLS_JNICHK_UNRECOGNIZED_OPTION=-Xcheck:jni: Nerozpoznan\u00e1 volba --> \'%s\'
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_UNRECOGNIZED_OPTION.sample_input_1=bogus
+J9NLS_JNICHK_UNRECOGNIZED_OPTION.explanation=An unrecognized -Xcheck:jni option has been passed in to the JVM.
+J9NLS_JNICHK_UNRECOGNIZED_OPTION.system_action=The JVM prints usage information for the -Xcheck:jni option and terminates.
+J9NLS_JNICHK_UNRECOGNIZED_OPTION.user_response=Correct the -Xcheck:jni command line option.
+# END NON-TRANSLATABLE
+
+# JNI and -Xcheck:jni:help are not translatable
+J9NLS_JNICHK_INSTALLED=Byla provedena instalace obslu\u017en\u00e9ho programu kontroly JNI. N\u00e1pov\u011bdu zobraz\u00edte volbou -Xcheck:jni:help.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_INSTALLED.explanation=The JNI check utility has been installed.
+J9NLS_JNICHK_INSTALLED.system_action=The JVM performs additional checks on JNI calls.
+J9NLS_JNICHK_INSTALLED.user_response=None, this message is for information only.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_UNABLE_TO_HOOK=Obslu\u017en\u00fd program kontroly JNI: Nelze zachytit ud\u00e1lost.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_UNABLE_TO_HOOK.explanation=Initialization of the JNI check utility has failed because it was unable to intercept native method calls.
+J9NLS_JNICHK_UNABLE_TO_HOOK.system_action=The JVM terminates.
+J9NLS_JNICHK_UNABLE_TO_HOOK.user_response=Contact your IBM service representative.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_UNABLE_TO_ALLOCATE_VMLS=Obslu\u017en\u00fd program kontroly JNI: Nelze p\u0159id\u011blit lok\u00e1ln\u00ed \u00falo\u017ei\u0161t\u011b VM.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_UNABLE_TO_ALLOCATE_VMLS.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_JNICHK_UNABLE_TO_ALLOCATE_VMLS.system_action=
+J9NLS_JNICHK_UNABLE_TO_ALLOCATE_VMLS.user_response=
+# END NON-TRANSLATABLE
+
+# Use java -Xcheck:jni:help to display these help messages
+# jnichk, JNI and J9 are not translatable
+J9NLS_JNICHK_HELP_1=jnichk - Obslu\u017en\u00fd program kontroly JNI pro J9 verze %s
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_1.sample_input_1=2.4
+J9NLS_JNICHK_HELP_1.explanation=NOTAG
+J9NLS_JNICHK_HELP_1.system_action=
+J9NLS_JNICHK_HELP_1.user_response=
+# END NON-TRANSLATABLE
+
+# -Xcheck:jni: is not translatable
+J9NLS_JNICHK_HELP_2=Pou\u017eit\u00ed: -Xcheck:jni:[volba[,volba[,...]]]
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_2.explanation=NOTAG
+J9NLS_JNICHK_HELP_2.system_action=
+J9NLS_JNICHK_HELP_2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_HELP_3=\tall            Zkontroluje t\u0159\u00eddy aplikace a syst\u00e9mu.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_3.explanation=NOTAG
+J9NLS_JNICHK_HELP_3.system_action=
+J9NLS_JNICHK_HELP_3.user_response=
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_HELP_4=\tverbose        Trasuje ur\u010dit\u00e9 funkce a aktivity JNI.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_4.explanation=NOTAG
+J9NLS_JNICHK_HELP_4.system_action=
+J9NLS_JNICHK_HELP_4.user_response=
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_HELP_5=\ttrace          Trasuje v\u0161echny funkce JNI.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_5.explanation=NOTAG
+J9NLS_JNICHK_HELP_5.system_action=
+J9NLS_JNICHK_HELP_5.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_HELP_6=\tnobounds       Neprovede kontrolu hrani\u010dn\u00edch podm\u00ednek pro \u0159et\u011bzce a pole.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_6.explanation=NOTAG
+J9NLS_JNICHK_HELP_6.system_action=
+J9NLS_JNICHK_HELP_6.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_HELP_7=\tnonfatal       P\u0159i v\u00fdskytu chyb se program neukon\u010d\u00ed.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_7.explanation=NOTAG
+J9NLS_JNICHK_HELP_7.system_action=
+J9NLS_JNICHK_HELP_7.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_HELP_8=\tnowarn         Nezobraz\u00ed varov\u00e1n\u00ed.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_8.explanation=NOTAG
+J9NLS_JNICHK_HELP_8.system_action=
+J9NLS_JNICHK_HELP_8.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_HELP_9=\tnoadvice       Nezobraz\u00ed rady.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_9.explanation=NOTAG
+J9NLS_JNICHK_HELP_9.system_action=
+J9NLS_JNICHK_HELP_9.user_response=
+# END NON-TRANSLATABLE
+
+# va_list is not translatable
+J9NLS_JNICHK_HELP_10=\tnovalist       Nekontroluje op\u011btn\u00e9 pou\u017eit\u00ed seznamu ov\u011b\u0159en\u00ed.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_10.explanation=NOTAG
+J9NLS_JNICHK_HELP_10.system_action=
+J9NLS_JNICHK_HELP_10.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_HELP_11=\tpedantic       Provede d\u016fkladn\u011bj\u0161\u00ed kontroly, kter\u00e9 ale trvaj\u00ed d\u00e9le.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_11.explanation=NOTAG
+J9NLS_JNICHK_HELP_11.system_action=
+J9NLS_JNICHK_HELP_11.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_HELP_12=\thelp           Vytiskne tuto obrazovku.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_12.explanation=NOTAG
+J9NLS_JNICHK_HELP_12.system_action=
+J9NLS_JNICHK_HELP_12.user_response=
+# END NON-TRANSLATABLE
+
+# The following 7 messages are used to describe JNI reference types in other messages, such as J9NLS_JNICHK_ARGUMENT_IS_NOT_REF
+J9NLS_JNICHK_NULL_REF=NULL
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NULL_REF.explanation=NOTAG
+J9NLS_JNICHK_NULL_REF.system_action=
+J9NLS_JNICHK_NULL_REF.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_LOCAL_REF=lok\u00e1ln\u00ed odkaz
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_LOCAL_REF.explanation=NOTAG
+J9NLS_JNICHK_LOCAL_REF.system_action=
+J9NLS_JNICHK_LOCAL_REF.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_GLOBAL_REF=glob\u00e1ln\u00ed odkaz
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_GLOBAL_REF.explanation=NOTAG
+J9NLS_JNICHK_GLOBAL_REF.system_action=
+J9NLS_JNICHK_GLOBAL_REF.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_WEAK_GLOBAL_REF=slab\u00fd glob\u00e1ln\u00ed odkaz
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_WEAK_GLOBAL_REF.explanation=NOTAG
+J9NLS_JNICHK_WEAK_GLOBAL_REF.system_action=
+J9NLS_JNICHK_WEAK_GLOBAL_REF.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_DEBUGGER_REF=odkaz na ladic\u00ed modul
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_DEBUGGER_REF.explanation=NOTAG
+J9NLS_JNICHK_DEBUGGER_REF.system_action=
+J9NLS_JNICHK_DEBUGGER_REF.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_BAD_LOCAL_REF=lok\u00e1ln\u00ed odkaz v jin\u00e9m podprocesu
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_BAD_LOCAL_REF.explanation=NOTAG
+J9NLS_JNICHK_BAD_LOCAL_REF.system_action=
+J9NLS_JNICHK_BAD_LOCAL_REF.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_FREED_LOCAL_REF=uvoln\u011bn\u00fd lok\u00e1ln\u00ed odkaz
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_FREED_LOCAL_REF.explanation=NOTAG
+J9NLS_JNICHK_FREED_LOCAL_REF.system_action=
+J9NLS_JNICHK_FREED_LOCAL_REF.user_response=
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_NONFATAL_ERROR=Byla zji\u0161t\u011bna chyba JNI. Pokra\u010dov\u00e1n\u00ed operace...
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NONFATAL_ERROR.explanation=The JNI check utility has detected a recoverable JNI error.
+J9NLS_JNICHK_NONFATAL_ERROR.system_action=The JVM continues.
+J9NLS_JNICHK_NONFATAL_ERROR.user_response=Investigate the JNI check error reported in the previous message.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_FATAL_ERROR=Byla zji\u0161t\u011bna chyba JNI. P\u0159ed\u010dasn\u00e9 ukon\u010den\u00ed.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_FATAL_ERROR.explanation=The JNI check utility has detected an unrecoverable JNI error.
+J9NLS_JNICHK_FATAL_ERROR.system_action=The JVM terminates.
+J9NLS_JNICHK_FATAL_ERROR.user_response=Investigate the JNI check error reported in the previous message.
+# END NON-TRANSLATABLE
+
+# -Xcheck:jni:nonfatal is not translatable
+J9NLS_JNICHK_FATAL_ERROR_ADVICE=Chcete-li pokra\u010dovat i po v\u00fdskytu chyb, pou\u017eijte volbu -Xcheck:jni:nonfatal.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_FATAL_ERROR_ADVICE.explanation=The JVM has terminated because it has detected a JNI error. The -Xcheck:jni:nonfatal option can be used to change this behaviour.
+J9NLS_JNICHK_FATAL_ERROR_ADVICE.system_action=The JVM terminates.
+J9NLS_JNICHK_FATAL_ERROR_ADVICE.user_response=As required, add the -Xcheck:jni:nonfatal option and re-run.
+# END NON-TRANSLATABLE
+
+# JNI, JNIEnv, -Xcheck:jni:nonfatal and JVM are not translatable
+J9NLS_JNICHK_INVALID_ENV=Chyba JNI v %s: Prost\u0159ed\u00ed JNIEnv z\u0159ejm\u011b nen\u00ed platn\u00fdm podprocesem. Mohlo doj\u00edt k po\u0161kozen\u00ed pam\u011bti nebo se nejedn\u00e1 o virtu\u00e1ln\u00ed stroj J9.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_INVALID_ENV.sample_input_1=methodName
+J9NLS_JNICHK_INVALID_ENV.explanation=Validation of the JNIEnv passed on the named JNI function has failed.
+J9NLS_JNICHK_INVALID_ENV.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_INVALID_ENV.user_response=Check that the JNIEnv pointer passed in the function is correct.
+# END NON-TRANSLATABLE
+
+# JNI, JNIEnv, -Xcheck:jni:nonfatal and JVM are not translatable
+J9NLS_JNICHK_WRONG_ENV=Chyba JNI v %s: Prost\u0159ed\u00ed JNIEnv nen\u00ed prost\u0159ed\u00edm JNIEnv pro aktivn\u00ed podproces.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_WRONG_ENV.sample_input_1=methodName
+J9NLS_JNICHK_WRONG_ENV.explanation=Validation of the JNIEnv passed on the named JNI function has failed.
+J9NLS_JNICHK_WRONG_ENV.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_WRONG_ENV.user_response=Check that the JNIEnv pointer passed in the function is correct.
+# END NON-TRANSLATABLE
+
+# JNI, -Xcheck:jni:nonfatal and JVM are not translatable
+J9NLS_JNICHK_PENDING_EXCEPTION=Chyba JNI v %s: Tuto funkci nelze vyvolat, pokud nen\u00ed zpracov\u00e1na v\u00fdjimka.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_PENDING_EXCEPTION.sample_input_1=methodName
+J9NLS_JNICHK_PENDING_EXCEPTION.explanation=The named JNI function has been called when there is an exception pending.
+J9NLS_JNICHK_PENDING_EXCEPTION.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_PENDING_EXCEPTION.user_response=Correct the JNI application code to handle any pending exception before calling the named function.
+# END NON-TRANSLATABLE
+
+# JNI, -Xcheck:jni:nonfatal and JVM are not translatable
+J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR=Chyba JNI v %s: Tuto funkci nelze vyvolat z kritick\u00e9 sekce.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.sample_input_1=methodName
+J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.explanation=The named JNI function has been called within a JNI critical section.
+J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.user_response=Correct the JNI application code to avoid calling the named function within a JNI critical section.
+# END NON-TRANSLATABLE
+
+# JNI, GC, JVMPI and JVMTI are not translatable
+J9NLS_JNICHK_GC_IS_DISABLED=Chyba JNI v %s: Tuto funkci nelze vyvolat, je-li zak\u00e1z\u00e1n modul GC. (Funkce byla pravd\u011bpodobn\u011b vol\u00e1na z ud\u00e1losti JVMPI nebo JVMTI.)
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_GC_IS_DISABLED.sample_input_1=methodName
+J9NLS_JNICHK_GC_IS_DISABLED.explanation=The named JNI function has been called at a point where the calling thread that has an internal VM access lock.
+J9NLS_JNICHK_GC_IS_DISABLED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_GC_IS_DISABLED.user_response=Correct the JNI application code to avoid calling the named function at this point.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_NULL_ARGUMENT=Chyba JNI v %1$s: Argument #%2$d m\u00e1 hodnotu NULL.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NULL_ARGUMENT.sample_input_1=methodName
+J9NLS_JNICHK_NULL_ARGUMENT.sample_input_2=3
+J9NLS_JNICHK_NULL_ARGUMENT.explanation=The named JNI function has been called with a null parameter value.
+J9NLS_JNICHK_NULL_ARGUMENT.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_NULL_ARGUMENT.user_response=Correct the JNI function call to pass a non-null parameter.
+# END NON-TRANSLATABLE
+
+# JNI and jobjectArray are not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY=Chyba JNI v %1$s: Argument #%2$d nen\u00ed typu jobjectArray.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY.explanation=The named JNI function has been called with a incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JOBJECTARRAY.user_response=Correct the JNI function call to pass a jobjectArray parameter.
+# END NON-TRANSLATABLE
+
+# JNI and jarray are not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY=Chyba JNI v %1$s: Argument #%2$d nen\u00ed typu jarray.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY.explanation=The named JNI function has been called with a incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_JARRAY.user_response=Correct the JNI function call to pass a jarray parameter.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_X=Chyba JNI v %1$s: Argument #%2$d nen\u00ed typu %3$s.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_X.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_X.sample_input_2=4
+J9NLS_JNICHK_ARGUMENT_IS_NOT_X.sample_input_3=jintArray
+J9NLS_JNICHK_ARGUMENT_IS_NOT_X.explanation=The named JNI function has been called with an incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_X.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_X.user_response=Correct the JNI function call to pass the correct parameter type as indicated in the message.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF=Chyba JNI v %1$s: Argument #%2$d (0x%3$p) nen\u00ed glob\u00e1ln\u00edm odkazem. Typ argumentu: %4$s
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF.sample_input_2=4
+J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF.sample_input_3=004A3B00
+J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF.sample_input_4=local reference
+J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF.explanation=The named JNI function has been called with an incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF.user_response=Correct the JNI function call to pass the correct reference parameter type.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF=Chyba JNI v %1$s: Argument #%2$d (0x%3$p) nen\u00ed slab\u00fdm glob\u00e1ln\u00edm odkazem. Typ argumentu: %4$s
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.sample_input_2=4
+J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.sample_input_3=004A3B00
+J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.sample_input_4=local reference
+J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.explanation=The named JNI function has been called with an incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.user_response=Correct the JNI function call to pass the correct reference parameter type.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF=Chyba JNI v %1$s: Argument #%2$d (0x%3$p) nen\u00ed lok\u00e1ln\u00edm odkazem. Typ argumentu: %4$s
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF.sample_input_2=4
+J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF.sample_input_3=004A8500
+J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF.sample_input_4=global reference
+J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF.explanation=The named JNI function has been called with an incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_LOCAL_REF.user_response=Correct the JNI function call to pass the correct reference parameter type.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REF=Chyba JNI v %1$s: Argument #%2$d (0x%3$p) nen\u00ed platn\u00fdm odkazem na objekt. Typ argumentu: %4$s\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REF.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REF.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REF.sample_input_3=004A8600
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REF.sample_input_4=global reference
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REF.explanation=The named JNI function has been called with an incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REF.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REF.user_response=Correct the JNI function call to pass the correct reference parameter type.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NULL=Chyba JNI v %1$s: Argument #%2$d m\u00e1 hodnotu NULL.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NULL.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NULL.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NULL.explanation=The named JNI function has been called with a null parameter.
+J9NLS_JNICHK_ARGUMENT_IS_NULL.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NULL.user_response=Correct the JNI function call to pass a non-null parameter.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW=Chyba JNI v %1$s: Argument #%2$d je mimo rozsah pro %3$s (0x%4$x < 0x%5$x).
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW.sample_input_3=jchar
+J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW.sample_input_4=0
+J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW.sample_input_5=0xFFFF
+J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW.explanation=The named JNI function has been called with a parameter value which is out of range (the value is too low).
+J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_TOO_LOW.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH=Chyba JNI v %1$s: Argument #%2$d je mimo rozsah pro %3$s (0x%4$x > 0x%5$x).
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH.sample_input_3=jchar
+J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH.sample_input_4=0
+J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH.sample_input_5=0xFFFF
+J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH.explanation=The named JNI function has been called with a parameter value which is out of range (the value is too high).
+J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_TOO_HIGH.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS=Chyba JNI v %1$s: Typ argumentu #%2$d nen\u00ed podt\u0159\u00eddou t\u0159\u00eddy %3$s.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS.sample_input_3=package/Class2
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS.explanation=The named JNI function has been called with an incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND=Chyba JNI v %1$s: Argument #%2$d; nem\u016f\u017ee naj\u00edt %3$s.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND.sample_input_3=package/Class3
+J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND.explanation=The named JNI function has been called with a parameter whose type is an unknown class.
+J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_CLASS_NOT_FOUND.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_METHOD_IS_STATIC=Chyba JNI v %s: Metoda je statick\u00e1.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_METHOD_IS_STATIC.sample_input_1=methodName
+J9NLS_JNICHK_METHOD_IS_STATIC.explanation=The named JNI function has been called with incorrect parameter (mismatched Java method modifier).
+J9NLS_JNICHK_METHOD_IS_STATIC.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_METHOD_IS_STATIC.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_METHOD_IS_NOT_STATIC=Chyba JNI v %s: Metoda nen\u00ed statick\u00e1.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_METHOD_IS_NOT_STATIC.sample_input_1=methodName
+J9NLS_JNICHK_METHOD_IS_NOT_STATIC.explanation=The named JNI function has been called with incorrect parameter (mismatched Java method modifier).
+J9NLS_JNICHK_METHOD_IS_NOT_STATIC.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_METHOD_IS_NOT_STATIC.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_METHOD_HAS_WRONG_RETURN_TYPE=Chyba JNI v %1$s: Metoda m\u00e1 nespr\u00e1vn\u00fd typ n\u00e1vratov\u00e9 hodnoty ('%2$c').
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_METHOD_HAS_WRONG_RETURN_TYPE.sample_input_1=methodName
+J9NLS_JNICHK_METHOD_HAS_WRONG_RETURN_TYPE.sample_input_2=a
+J9NLS_JNICHK_METHOD_HAS_WRONG_RETURN_TYPE.explanation=The named JNI function has been called with incorrect parameter (mismatched Java method return type).
+J9NLS_JNICHK_METHOD_HAS_WRONG_RETURN_TYPE.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_METHOD_HAS_WRONG_RETURN_TYPE.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# JNI and clazz are not translatable
+J9NLS_JNICHK_METHOD_INCORRECT_CLAZZ=Chyba JNI v %s: Nespr\u00e1vn\u00fd argument t\u0159\u00eddy.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_METHOD_INCORRECT_CLAZZ.sample_input_1=methodName
+J9NLS_JNICHK_METHOD_INCORRECT_CLAZZ.explanation=The named JNI function has been called with incorrect clazz parameter.
+J9NLS_JNICHK_METHOD_INCORRECT_CLAZZ.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_METHOD_INCORRECT_CLAZZ.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_METHOD_INELIGIBLE_RECEIVER=Chyba JNI v %s: Ne\u017e\u00e1douc\u00ed p\u0159\u00edjemce
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_METHOD_INELIGIBLE_RECEIVER.sample_input_1=methodName
+J9NLS_JNICHK_METHOD_INELIGIBLE_RECEIVER.explanation=The named JNI function has been called with incorrect parameter (instance method not in class).
+J9NLS_JNICHK_METHOD_INELIGIBLE_RECEIVER.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_METHOD_INELIGIBLE_RECEIVER.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# JNI and va_list are not translatable
+J9NLS_JNICHK_VA_LIST_REUSE=Chyba JNI v %s: Bylo zji\u0161t\u011bno op\u011btn\u00e9 pou\u017eit\u00ed seznamu ov\u011b\u0159en\u00ed.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_VA_LIST_REUSE.sample_input_1=methodName
+J9NLS_JNICHK_VA_LIST_REUSE.explanation=The named JNI function has been called re-using a va_list.
+J9NLS_JNICHK_VA_LIST_REUSE.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_VA_LIST_REUSE.user_response=See advice in the Diagnostic Guide on re-using a va_list, some platforms allow this usage.
+# END NON-TRANSLATABLE
+
+# JNI and PopLocalFrame are not translatable
+J9NLS_JNICHK_NO_LOCAL_FRAME_ON_STACK=Chyba JNI v %s: Funkce PopLocalFrame byla vol\u00e1na bez lok\u00e1ln\u00edho r\u00e1mce v z\u00e1sobn\u00edku.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NO_LOCAL_FRAME_ON_STACK.sample_input_1=methodName
+J9NLS_JNICHK_NO_LOCAL_FRAME_ON_STACK.explanation=The JNI PopLocalFrame function has been called without a previous call to PushLocalFrame.
+J9NLS_JNICHK_NO_LOCAL_FRAME_ON_STACK.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_NO_LOCAL_FRAME_ON_STACK.user_response=Correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# VM and JNI are not translatable
+J9NLS_JNICHK_INCORRECT_PUSH_COUNT=Intern\u00ed chyba VM v %1$s: Po\u010det vlo\u017een\u00fdch bajt\u016f %2$p je men\u0161\u00ed ne\u017e po\u010det referen\u010dn\u00edch bajt\u016f JNI %3$p.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_INCORRECT_PUSH_COUNT.sample_input_1=methodName
+J9NLS_JNICHK_INCORRECT_PUSH_COUNT.sample_input_2=80
+J9NLS_JNICHK_INCORRECT_PUSH_COUNT.sample_input_3=120
+J9NLS_JNICHK_INCORRECT_PUSH_COUNT.explanation=An internal JVM error has occurred while checking a JNI PopLocalFrame function call.
+J9NLS_JNICHK_INCORRECT_PUSH_COUNT.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_INCORRECT_PUSH_COUNT.user_response=Contact your IBM service representative.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_OBSOLETE_CLASS=Chyba JNI v %1$s: T\u0159\u00edda %3$.*2$s je zastaral\u00e1.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_OBSOLETE_CLASS.sample_input_1=methodName
+J9NLS_JNICHK_OBSOLETE_CLASS.sample_input_2=21
+J9NLS_JNICHK_OBSOLETE_CLASS.sample_input_3=package/ObsoleteClass
+J9NLS_JNICHK_OBSOLETE_CLASS.explanation=The named JNI function references a class which has been redefined via a JVMTI call.
+J9NLS_JNICHK_OBSOLETE_CLASS.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_OBSOLETE_CLASS.user_response=Investigation the interaction between the JNI and JVMTI applications.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_UNRELEASED_CRITICAL_SECTION=Chyba JNI: P\u0159ed n\u00e1vratem z funkce je nutn\u00e9 uvolnit kritickou sekci.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_UNRELEASED_CRITICAL_SECTION.explanation=A JNI function has failed to release a critical sections before returning.
+J9NLS_JNICHK_UNRELEASED_CRITICAL_SECTION.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_UNRELEASED_CRITICAL_SECTION.user_response=Correct the JNI application code to release the critical section.
+# END NON-TRANSLATABLE
+
+# JNI and mode are not translatable
+J9NLS_JNICHK_UNRECOGNIZED_MODE=Chyba JNI v %1$s: Nerozpoznan\u00e1 volba re\u017eimu %2$d.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_UNRECOGNIZED_MODE.sample_input_1=methodName
+J9NLS_JNICHK_UNRECOGNIZED_MODE.sample_input_2=3
+J9NLS_JNICHK_UNRECOGNIZED_MODE.explanation=The named JNI function has been called with an invalid mode parameter.
+J9NLS_JNICHK_UNRECOGNIZED_MODE.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_UNRECOGNIZED_MODE.user_response=Correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_BAD_POINTER=Chyba JNI v %1$s: Ukazatel 0x%2$p nebyl vr\u00e1cen \u017e\u00e1dnou funkc\u00ed JNI, nebo ji\u017e byl uvoln\u011bn.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_BAD_POINTER.sample_input_1=methodName
+J9NLS_JNICHK_BAD_POINTER.sample_input_2=0xFFFFAAAA
+J9NLS_JNICHK_BAD_POINTER.explanation=The named JNI function has been called with an invalid pointer parameter.
+J9NLS_JNICHK_BAD_POINTER.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_BAD_POINTER.user_response=Correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_WRONG_OBJECT=Chyba JNI v %1$s: Byla z\u00edsk\u00e1na pam\u011b\u0165 0x%2$p z objektu 0x%3$p uvoln\u011bn\u00edm od adresy 0x%4$p.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_WRONG_OBJECT.sample_input_1=methodName
+J9NLS_JNICHK_WRONG_OBJECT.sample_input_2=0x008FA000
+J9NLS_JNICHK_WRONG_OBJECT.sample_input_3=0x00900500
+J9NLS_JNICHK_WRONG_OBJECT.sample_input_4=0x00900780
+J9NLS_JNICHK_WRONG_OBJECT.explanation=Memory allocated against an object by a JNI function such as GetStringChars is being released (e.g. by ReleaseStringChars) against a different object.
+J9NLS_JNICHK_WRONG_OBJECT.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_WRONG_OBJECT.user_response=Correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_WRONG_FUNCTION=Chyba JNI v %1$s: Nepou\u017e\u00edvejte funkci %2$s k uvoln\u011bn\u00ed pam\u011bti 0x%3$p z\u00edskan\u00e9 pou\u017eit\u00edm %4$s.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_WRONG_FUNCTION.sample_input_1=methodName
+J9NLS_JNICHK_WRONG_FUNCTION.sample_input_2=methodName
+J9NLS_JNICHK_WRONG_FUNCTION.sample_input_3=0x008FA060
+J9NLS_JNICHK_WRONG_FUNCTION.sample_input_4=methodName
+J9NLS_JNICHK_WRONG_FUNCTION.explanation=Memory allocated by a JNI function such as GetStringChars is being released by the wrong JNI function (in the case of GetStringChars, a function other than ReleaseStringChars).
+J9NLS_JNICHK_WRONG_FUNCTION.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_WRONG_FUNCTION.user_response=Correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# JNI, ExceptionCheck, ExceptionClear and ExceptionOccurred are not translatable
+J9NLS_JNICHK_MISSING_EXCEPTION_CHECK=Varov\u00e1n\u00ed JNI v %1$s: Po vol\u00e1n\u00ed %2$s je p\u0159ed vol\u00e1n\u00edm %3$s nutn\u00e9 zkontrolovat v\u00fdjimky pomoc\u00ed funkce ExceptionCheck, ExceptionClear nebo ExceptionOccurred.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.sample_input_1=methodName
+J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.sample_input_2=JNIFunc1
+J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.sample_input_3=JNIFunc2
+J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.explanation=This is a warning that after the named JNI function has been called you may need to check for exceptions.
+J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.system_action=The JVM continues.
+J9NLS_JNICHK_MISSING_EXCEPTION_CHECK.user_response=Correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_MALFORMED_IDENTIFIER=Varov\u00e1n\u00ed JNI v %1$s: Argument #%2$d je nespr\u00e1vn\u00fdm identifik\u00e1torem (\"%3$s\").
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_MALFORMED_IDENTIFIER.sample_input_1=methodName
+J9NLS_JNICHK_MALFORMED_IDENTIFIER.sample_input_2=3
+J9NLS_JNICHK_MALFORMED_IDENTIFIER.sample_input_3={package/Class}
+J9NLS_JNICHK_MALFORMED_IDENTIFIER.explanation=This is a warning that the named JNI function has been called with a parameter that is an invalid class or member name.
+J9NLS_JNICHK_MALFORMED_IDENTIFIER.system_action=The JVM continues.
+J9NLS_JNICHK_MALFORMED_IDENTIFIER.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE=Varov\u00e1n\u00ed JNI v %1$s: Argument #%2$d je nespr\u00e1vn\u00fdm podpisem metody (\"%3$s\").
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.sample_input_1=methodName
+J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.sample_input_2=3
+J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.sample_input_3=N
+J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.explanation=This is a warning that the named JNI function has been called with a parameter which is an invalid method signature.
+J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.system_action=The JVM continues.
+J9NLS_JNICHK_MALFORMED_METHOD_SIGNATURE.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE=Varov\u00e1n\u00ed JNI v %1$s: Argument #%2$d je nespr\u00e1vn\u00fdm podpisem pole (\"%3$s\").
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_1=methodName
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_2=3
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.sample_input_3=N
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.explanation=This is a warning that the named JNI function has been called with a parameter which is an invalid field signature.
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.system_action=The JVM continues.
+J9NLS_JNICHK_MALFORMED_FIELD_SIGNATURE.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_CRITICAL_UNSAFE_WARN=Varov\u00e1n\u00ed JNI v %s: Tato funkce by nem\u011bla b\u00fdt vol\u00e1na z kritick\u00e9 sekce.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_CRITICAL_UNSAFE_WARN.sample_input_1=methodName
+J9NLS_JNICHK_CRITICAL_UNSAFE_WARN.explanation=This is a warning that a JNI function has been called within a JNI critical section.
+J9NLS_JNICHK_CRITICAL_UNSAFE_WARN.system_action=The JVM continues.
+J9NLS_JNICHK_CRITICAL_UNSAFE_WARN.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_GREW_GLOBAL_REF_POOL=Varov\u00e1n\u00ed JNI v %1$s: Do\u0161lo k automatick\u00e9mu zv\u011bt\u0161en\u00ed kapacity spole\u010dn\u00e9 oblasti pro glob\u00e1ln\u00ed odkazy z hodnoty %2$d na %3$d.\nTo m\u016f\u017ee znamenat probl\u00e9my s vyu\u017eit\u00edm pam\u011bti.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.sample_input_1=methodName
+J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.sample_input_2=64
+J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.sample_input_3=128
+J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.explanation=This is a warning that as a result of the call to the named JNI function the JVM has increased the size of the JNI global reference pool.
+J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.system_action=The JVM continues.
+J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL=Varov\u00e1n\u00ed JNI v %1$s: Do\u0161lo k automatick\u00e9mu zv\u011bt\u0161en\u00ed kapacity spole\u010dn\u00e9 oblasti pro slab\u00e9 glob\u00e1ln\u00ed odkazy z hodnoty %2$d na %3$d.\nTo m\u016f\u017ee znamenat probl\u00e9my s vyu\u017eit\u00edm pam\u011bti.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.sample_input_1=methodName
+J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.sample_input_2=64
+J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.sample_input_3=128
+J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.explanation=This is a warning that as a result of the call to the named JNI function the JVM has increased the size of the JNI global weak reference pool.
+J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.system_action=The JVM continues.
+J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# JNI, EnsureLocalCapacity and PushLocalFrame are not translatable
+J9NLS_JNICHK_GREW_LOCAL_REF_FRAME=Varov\u00e1n\u00ed JNI v %1$s: Do\u0161lo k automatick\u00e9mu zv\u011bt\u0161en\u00ed kapacity r\u00e1mce lok\u00e1ln\u00edch odkaz\u016f z hodnoty %2$d na %3$d. Je pou\u017eito %4$d odkaz\u016f.\nChcete-li explicitn\u011b zv\u011bt\u0161it r\u00e1mec, pou\u017eijte funkci EnsureLocalCapacity nebo PushLocalFrame.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.sample_input_1=methodName
+J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.sample_input_2=64
+J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.sample_input_3=128
+J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.sample_input_4=65
+J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.explanation=This is a warning that as a result of the call to the named JNI function the JVM has increased the size of the JNI local reference frame.
+J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.system_action=The JVM continues.
+J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_NEGATIVE_INDEX=Varov\u00e1n\u00ed JNI v %1$s: Byl ur\u010den z\u00e1porn\u00fd za\u010d\u00e1tek nebo index (%2$d).
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NEGATIVE_INDEX.sample_input_1=methodName
+J9NLS_JNICHK_NEGATIVE_INDEX.sample_input_2=-1
+J9NLS_JNICHK_NEGATIVE_INDEX.explanation=The named JNI function has been called with a parameter value out of range.
+J9NLS_JNICHK_NEGATIVE_INDEX.system_action=The JVM continues.
+J9NLS_JNICHK_NEGATIVE_INDEX.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_NEGATIVE_LENGTH=Varov\u00e1n\u00ed JNI v %1$s: Byla ur\u010dena z\u00e1porn\u00e1 d\u00e9lka oblasti (%2$d).
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NEGATIVE_LENGTH.sample_input_1=methodName
+J9NLS_JNICHK_NEGATIVE_LENGTH.sample_input_2=-20
+J9NLS_JNICHK_NEGATIVE_LENGTH.explanation=The named JNI function has been called with a parameter value out of range.
+J9NLS_JNICHK_NEGATIVE_LENGTH.system_action=The JVM continues.
+J9NLS_JNICHK_NEGATIVE_LENGTH.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_INDEX_OUT_OF_RANGE=Varov\u00e1n\u00ed JNI v %1$s: Za\u010d\u00e1tek nebo index je mimo rozsah (%2$d >= %3$d).
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_INDEX_OUT_OF_RANGE.sample_input_1=methodName
+J9NLS_JNICHK_INDEX_OUT_OF_RANGE.sample_input_2=90
+J9NLS_JNICHK_INDEX_OUT_OF_RANGE.sample_input_3=40
+J9NLS_JNICHK_INDEX_OUT_OF_RANGE.explanation=The named JNI function has been called with a parameter value out of range.
+J9NLS_JNICHK_INDEX_OUT_OF_RANGE.system_action=The JVM continues.
+J9NLS_JNICHK_INDEX_OUT_OF_RANGE.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_END_OUT_OF_RANGE=Varov\u00e1n\u00ed JNI v %1$s: Konec je mimo rozsah (%2$d + %3$d > %4$d).
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_END_OUT_OF_RANGE.sample_input_1=methodName
+J9NLS_JNICHK_END_OUT_OF_RANGE.sample_input_2=15
+J9NLS_JNICHK_END_OUT_OF_RANGE.sample_input_3=4
+J9NLS_JNICHK_END_OUT_OF_RANGE.sample_input_4=12
+J9NLS_JNICHK_END_OUT_OF_RANGE.explanation=The named JNI function has been called with a parameter value out of range.
+J9NLS_JNICHK_END_OUT_OF_RANGE.system_action=The JVM continues.
+J9NLS_JNICHK_END_OUT_OF_RANGE.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARRAY_DATA_MODIFIED=Varov\u00e1n\u00ed JNI v %1$s: P\u016fvodn\u00ed pole dat bylo upraveno mezi hodnotou %2$s a %3$s.\n(P\u016fvodn\u00ed hodnota CRC=0x%4$x, nov\u00e1 hodnota CRC=0x%5$x).\nVzhledem k tomu, \u017ee funkce %6$s vr\u00e1tila kopii obsahu pole, nov\u00fd obsah bude ztracen.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARRAY_DATA_MODIFIED.sample_input_1=methodName
+J9NLS_JNICHK_ARRAY_DATA_MODIFIED.sample_input_2=function1
+J9NLS_JNICHK_ARRAY_DATA_MODIFIED.sample_input_3=function2
+J9NLS_JNICHK_ARRAY_DATA_MODIFIED.sample_input_4=0x3123FAB3
+J9NLS_JNICHK_ARRAY_DATA_MODIFIED.sample_input_5=0xCDD3FA13
+J9NLS_JNICHK_ARRAY_DATA_MODIFIED.sample_input_6=methodName2
+J9NLS_JNICHK_ARRAY_DATA_MODIFIED.explanation=The named JNI function has returned a copy of an array. The original array contents have been modfied since the copy was obtained.
+J9NLS_JNICHK_ARRAY_DATA_MODIFIED.system_action=The JVM continues.
+J9NLS_JNICHK_ARRAY_DATA_MODIFIED.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARRAY_MEMORY_NOT_RELEASED=Varov\u00e1n\u00ed JNI: Pam\u011b\u0165 na adrese 0x%1$p z\u00edskan\u00e1 funkc\u00ed %2$s nebyla uvoln\u011bna p\u0159ed n\u00e1vratem z nativn\u00ed funkce. To m\u016f\u017ee znamenat probl\u00e9my s vyu\u017eit\u00edm pam\u011bti.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARRAY_MEMORY_NOT_RELEASED.sample_input_1=0x0008ACD1
+J9NLS_JNICHK_ARRAY_MEMORY_NOT_RELEASED.sample_input_2=methodName
+J9NLS_JNICHK_ARRAY_MEMORY_NOT_RELEASED.explanation=Memory acquired by the named JNI function has not been released.
+J9NLS_JNICHK_ARRAY_MEMORY_NOT_RELEASED.system_action=The JVM continues.
+J9NLS_JNICHK_ARRAY_MEMORY_NOT_RELEASED.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# JNI and JNI_COMMIT are not translatable
+J9NLS_JNICHK_IGNORING_JNI_COMMIT=Rada JNI v %1$s: Bylo ur\u010deno potvrzen\u00ed JNI_COMMIT, kter\u00e9 v\u0161ak bude ignorov\u00e1no.\nVzhledem k tomu, \u017ee funkce %2$s vr\u00e1tila skute\u010dn\u00fd obsah pole, po tomto vol\u00e1n\u00ed nebude vyrovn\u00e1vac\u00ed pam\u011b\u0165 platn\u00e1. Pravd\u011bpodobn\u011b se nejedn\u00e1 o chov\u00e1n\u00ed, kter\u00e9 po\u017eadujete.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_IGNORING_JNI_COMMIT.sample_input_1=methodName
+J9NLS_JNICHK_IGNORING_JNI_COMMIT.sample_input_2=methodName2
+J9NLS_JNICHK_IGNORING_JNI_COMMIT.explanation=The named JNI function was called with a mode parameter set to JNI_COMMIT, but this value will be ignored by the JVM.
+J9NLS_JNICHK_IGNORING_JNI_COMMIT.system_action=The JVM continues.
+J9NLS_JNICHK_IGNORING_JNI_COMMIT.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# JNI and JNI_ABORT are not translatable
+J9NLS_JNICHK_IGNORING_JNI_ABORT=Rada JNI v %1$s: Byla ur\u010dena akce JNI_ABORT, kterou v\u0161ak nelze prov\u00e9st, proto\u017ee do\u0161lo k \u00faprav\u011b dat.\n(P\u016fvodn\u00ed hodnota CRC=0x%2$x, nov\u00e1 hodnota CRC=0x%3$x).\nVzhledem k tomu, \u017ee funkce %4$s vr\u00e1tila skute\u010dn\u00fd obsah pole, zm\u011bny nebudou zru\u0161eny. Pravd\u011bpodobn\u011b se nejedn\u00e1 o chov\u00e1n\u00ed, kter\u00e9 po\u017eadujete.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_IGNORING_JNI_ABORT.sample_input_1=methodName
+J9NLS_JNICHK_IGNORING_JNI_ABORT.sample_input_2=0x3123FAB3
+J9NLS_JNICHK_IGNORING_JNI_ABORT.sample_input_3=0xCDD3FA13
+J9NLS_JNICHK_IGNORING_JNI_ABORT.sample_input_4=methodName2
+J9NLS_JNICHK_IGNORING_JNI_ABORT.explanation=The named JNI function was called with a mode parameter set to JNI_ABORT, but this value will be ignored by the JVM.
+J9NLS_JNICHK_IGNORING_JNI_ABORT.system_action=The JVM continues.
+J9NLS_JNICHK_IGNORING_JNI_ABORT.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_CONSIDER_JNI_ABORT=Rada JNI v %s: Vyrovn\u00e1vac\u00ed pam\u011b\u0165 se z\u0159ejm\u011b nezm\u011bnila. Zkuste m\u00edsto re\u017eimu 0 pou\u017e\u00edt funkci JNI_ABORT.
+J9NLS_JNICHK_CONSIDER_JNI_ABORT.sample_input_1=n\u00e1zev_metody
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_CONSIDER_JNI_ABORT.explanation=The named JNI function was called with a mode parameter set to 0.
+J9NLS_JNICHK_CONSIDER_JNI_ABORT.system_action=The JVM continues.
+J9NLS_JNICHK_CONSIDER_JNI_ABORT.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# jnichk is not translatable
+J9NLS_JNICHK_BAD_DESCRIPTOR=Intern\u00ed chyba jnichk v %1$s: Nerozpoznan\u00fd deskriptor 0x%2$x
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_BAD_DESCRIPTOR.sample_input_1=methodName
+J9NLS_JNICHK_BAD_DESCRIPTOR.sample_input_2=255
+J9NLS_JNICHK_BAD_DESCRIPTOR.explanation=An internal JVM error has occurred while checking a JNI function parameter.
+J9NLS_JNICHK_BAD_DESCRIPTOR.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_BAD_DESCRIPTOR.user_response=Contact your IBM service representative.
+# END NON-TRANSLATABLE
+
+# jnichk is not translatable
+J9NLS_JNICHK_OUT_OF_MEMORY=Intern\u00ed chyba jnichk v %s: Nedostatek pam\u011bti
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_OUT_OF_MEMORY.sample_input_1=methodName
+J9NLS_JNICHK_OUT_OF_MEMORY.explanation=An internal JVM error has occurred while allocating memory required by the named JNI function.
+J9NLS_JNICHK_OUT_OF_MEMORY.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_OUT_OF_MEMORY.user_response=Investigate process native memory usage and retry.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ERROR_IN_METHOD=Zji\u0161t\u011bna chyba v %2$.*1$s.%4$.*3$s%6$.*5$s\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ERROR_IN_METHOD.sample_input_1=9
+J9NLS_JNICHK_ERROR_IN_METHOD.sample_input_2=methodName
+J9NLS_JNICHK_ERROR_IN_METHOD.sample_input_3=11
+J9NLS_JNICHK_ERROR_IN_METHOD.sample_input_4=ClassName
+J9NLS_JNICHK_ERROR_IN_METHOD.sample_input_5=1
+J9NLS_JNICHK_ERROR_IN_METHOD.sample_input_6=B
+J9NLS_JNICHK_ERROR_IN_METHOD.explanation=This message provides additional information about the Java class and method used in the JNI function identified in a previous error message.
+J9NLS_JNICHK_ERROR_IN_METHOD.system_action=The JVM continues.
+J9NLS_JNICHK_ERROR_IN_METHOD.user_response=Investigate the previous error message.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_WARNING_IN_METHOD=Zji\u0161t\u011bno varov\u00e1n\u00ed v %2$.*1$s.%4$.*3$s%6$.*5$s\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_WARNING_IN_METHOD.sample_input_1=9
+J9NLS_JNICHK_WARNING_IN_METHOD.sample_input_2=methodName
+J9NLS_JNICHK_WARNING_IN_METHOD.sample_input_3=11
+J9NLS_JNICHK_WARNING_IN_METHOD.sample_input_4=ClassName
+J9NLS_JNICHK_WARNING_IN_METHOD.sample_input_5=1
+J9NLS_JNICHK_WARNING_IN_METHOD.sample_input_6=B
+J9NLS_JNICHK_WARNING_IN_METHOD.explanation=This message provides additional information about the Java class and method used in the JNI function identified in a previous warning message.
+J9NLS_JNICHK_WARNING_IN_METHOD.system_action=The JVM continues.
+J9NLS_JNICHK_WARNING_IN_METHOD.user_response=Investigate the previous warning message.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_ADVICE_IN_METHOD=Zji\u0161t\u011bna rada v %2$.*1$s.%4$.*3$s%6$.*5$s\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ADVICE_IN_METHOD.sample_input_1=9
+J9NLS_JNICHK_ADVICE_IN_METHOD.sample_input_2=methodName
+J9NLS_JNICHK_ADVICE_IN_METHOD.sample_input_3=11
+J9NLS_JNICHK_ADVICE_IN_METHOD.sample_input_4=ClassName
+J9NLS_JNICHK_ADVICE_IN_METHOD.sample_input_5=1
+J9NLS_JNICHK_ADVICE_IN_METHOD.sample_input_6=B
+J9NLS_JNICHK_ADVICE_IN_METHOD.explanation=This message provides additional information about the Java class and method used in the JNI function identified in a previous advice message.
+J9NLS_JNICHK_ADVICE_IN_METHOD.system_action=The JVM continues.
+J9NLS_JNICHK_ADVICE_IN_METHOD.user_response=Investigate the previous advice message.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_ERROR_IN_OUTER_FRAME=Ve vn\u011bj\u0161\u00edm r\u00e1mci nejvy\u0161\u0161\u00ed \u00farovn\u011b p\u0159ipojen\u00e9ho podprocesu byla zji\u0161t\u011bna chyba.\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ERROR_IN_OUTER_FRAME.explanation=This message provides additional information about the frame context of the JNI function identified in a previous error message.
+J9NLS_JNICHK_ERROR_IN_OUTER_FRAME.system_action=The JVM continues.
+J9NLS_JNICHK_ERROR_IN_OUTER_FRAME.user_response=Investigate the previous error messages.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_WARNING_IN_OUTER_FRAME=Ve vn\u011bj\u0161\u00edm r\u00e1mci nejvy\u0161\u0161\u00ed \u00farovn\u011b p\u0159ipojen\u00e9ho podprocesu bylo zji\u0161t\u011bno varov\u00e1n\u00ed.\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_WARNING_IN_OUTER_FRAME.explanation=This message provides additional information about the frame context of the JNI function identified in a previous warning message.
+J9NLS_JNICHK_WARNING_IN_OUTER_FRAME.system_action=The JVM continues.
+J9NLS_JNICHK_WARNING_IN_OUTER_FRAME.user_response=Investigate the previous warning messages.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_ADVICE_IN_OUTER_FRAME=Ve vn\u011bj\u0161\u00edm r\u00e1mci nejvy\u0161\u0161\u00ed \u00farovn\u011b p\u0159ipojen\u00e9ho podprocesu byla zji\u0161t\u011bna rada.\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ADVICE_IN_OUTER_FRAME.explanation=This message provides additional information about the frame context of the JNI function identified in a previous advice message.
+J9NLS_JNICHK_ADVICE_IN_OUTER_FRAME.system_action=The JVM continues.
+J9NLS_JNICHK_ADVICE_IN_OUTER_FRAME.user_response=Investigate the previous advice messages.
+# END NON-TRANSLATABLE
+
+# JNI_OnLoad is not translatable
+J9NLS_JNICHK_ERROR_IN_ONLOAD=Zji\u0161t\u011bna chyba ve funkci JNI_OnLoad knihovny %.*s\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ERROR_IN_ONLOAD.sample_input_1=11
+J9NLS_JNICHK_ERROR_IN_ONLOAD.sample_input_2=libraryName
+J9NLS_JNICHK_ERROR_IN_ONLOAD.explanation=This message provides additional information about JNI function identified in a previous error message.
+J9NLS_JNICHK_ERROR_IN_ONLOAD.system_action=The JVM continues.
+J9NLS_JNICHK_ERROR_IN_ONLOAD.user_response=Investigate the previous error message.
+# END NON-TRANSLATABLE
+
+# JNI_OnLoad is not translatable
+J9NLS_JNICHK_WARNING_IN_ONLOAD=Zji\u0161t\u011bno varov\u00e1n\u00ed ve funkci JNI_OnLoad knihovny %.*s\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_WARNING_IN_ONLOAD.sample_input_1=11
+J9NLS_JNICHK_WARNING_IN_ONLOAD.sample_input_2=libraryName
+J9NLS_JNICHK_WARNING_IN_ONLOAD.explanation=This message provides additional information about JNI function identified in a previous warning message.
+J9NLS_JNICHK_WARNING_IN_ONLOAD.system_action=The JVM continues.
+J9NLS_JNICHK_WARNING_IN_ONLOAD.user_response=Investigate the previous warning message.
+# END NON-TRANSLATABLE
+
+# JNI_OnLoad is not translatable
+J9NLS_JNICHK_ADVICE_IN_ONLOAD=Zji\u0161t\u011bna rada ve funkci JNI_OnLoad knihovny %.*s\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ADVICE_IN_ONLOAD.sample_input_1=11
+J9NLS_JNICHK_ADVICE_IN_ONLOAD.sample_input_2=libraryName
+J9NLS_JNICHK_ADVICE_IN_ONLOAD.explanation=This message provides additional information about JNI function identified in a previous advice message.
+J9NLS_JNICHK_ADVICE_IN_ONLOAD.system_action=The JVM continues.
+J9NLS_JNICHK_ADVICE_IN_ONLOAD.user_response=Investigate the previous advice message.
+# END NON-TRANSLATABLE
+
+# JNI and java/nio/Buffer are not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER=Varov\u00e1n\u00ed JNI v %1$s: Argument #%2$d nen\u00ed java/nio/Buffer. Funkce %3$s vr\u00e1t\u00ed k\u00f3d chyby.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER.sample_input_3=function1
+J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER.explanation=The named JNI function has been called with a incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER.system_action=The JVM continues.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_DIRECTBUFFER.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# JNI, java/lang/reflect/Method and java/lang/reflect/Constructor are not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD=Chyba JNI v %1$s: Argument #%2$d nen\u00ed java/lang/reflect/Method nebo java/lang/reflect/Constructor.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD.explanation=The named JNI function has been called with a incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+# JNI, NewLocalRef and NewGlobalRef are not translatable
+J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL=Varov\u00e1n\u00ed JNI v souboru %1$s: Argument #%2$d m\u00e1 slab\u00fd odkaz. Slab\u00fd odkaz m\u016f\u017ee b\u00fdt kdykoli nastaven\u00fd na hodnotu Null. Odkaz je vhodn\u00e9 pov\u00fd\u0161it pou\u017eit\u00edm funkce NewLocalRef nebo NewGlobalRef a p\u0159ed vol\u00e1n\u00edm funkce %3$s porovnat, zda neobsahuje hodnotu Null.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.sample_input_1=methodName
+J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.sample_input_2=3
+J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.sample_input_3=function1
+J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.explanation=This is a warning that the named JNI function uses a weak reference as a parameter.
+J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.system_action=The JVM continues.
+J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.user_response=Check and correct the JNI application code if necessary.
+# END NON-TRANSLATABLE
+
+# JVMPI and JVMTI are not translatable
+J9NLS_JNICHK_ERROR_IN_EVENT_FRAME=Zji\u0161t\u011bna chyba v r\u00e1mci obslu\u017en\u00e9 rutiny ud\u00e1losti JVMPI nebo JVMTI\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ERROR_IN_EVENT_FRAME.explanation=This message provides additional information about the frame context of the JNI function identified in a previous error message.
+J9NLS_JNICHK_ERROR_IN_EVENT_FRAME.system_action=The JVM continues.
+J9NLS_JNICHK_ERROR_IN_EVENT_FRAME.user_response=Investigate the previous error messages.
+# END NON-TRANSLATABLE
+
+# JVMPI and JVMTI are not translatable
+J9NLS_JNICHK_WARNING_IN_EVENT_FRAME=Zji\u0161t\u011bno varov\u00e1n\u00ed v r\u00e1mci obslu\u017en\u00e9 rutiny ud\u00e1losti JVMPI nebo JVMTI\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_WARNING_IN_EVENT_FRAME.explanation=This message provides additional information about the frame context of the JNI function identified in a previous warning message.
+J9NLS_JNICHK_WARNING_IN_EVENT_FRAME.system_action=The JVM continues.
+J9NLS_JNICHK_WARNING_IN_EVENT_FRAME.user_response=Investigate the previous warning messages.
+# END NON-TRANSLATABLE
+
+# JVMPI and JVMTI are not translatable
+J9NLS_JNICHK_ADVICE_IN_EVENT_FRAME=Zji\u0161t\u011bna rada v r\u00e1mci obslu\u017en\u00e9 rutiny ud\u00e1losti JVMPI nebo JVMTI\n
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ADVICE_IN_EVENT_FRAME.explanation=This message provides additional information about the frame context of the JNI function identified in a previous advice message.
+J9NLS_JNICHK_ADVICE_IN_EVENT_FRAME.system_action=The JVM continues.
+J9NLS_JNICHK_ADVICE_IN_EVENT_FRAME.user_response=Investigate the previous advice messages.
+# END NON-TRANSLATABLE
+
+# use java -Xcheck:jni:help to display this message
+# va_list is not translatable
+J9NLS_JNICHK_HELP_13=\tvalist         Zkontroluje op\u011btn\u00e9 pou\u017eit\u00ed seznamu ov\u011b\u0159en\u00ed.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_13.explanation=NOTAG
+J9NLS_JNICHK_HELP_13.system_action=
+J9NLS_JNICHK_HELP_13.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_METHOD_IS_NOT_CONSTRUCTOR=Chyba JNI v %s: Metoda nen\u00ed konstruktor.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_METHOD_IS_NOT_CONSTRUCTOR.sample_input_1=methodName
+J9NLS_JNICHK_METHOD_IS_NOT_CONSTRUCTOR.explanation=The named JNI function has been called using an incorrect parameter.
+J9NLS_JNICHK_METHOD_IS_NOT_CONSTRUCTOR.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_METHOD_IS_NOT_CONSTRUCTOR.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_BUFFER_MODIFIED=Chyba JNI v %1$s: Data, na n\u011b\u017e odkazuje argument #%2$d, byla upravena b\u011bhem prov\u00e1d\u011bn\u00ed funkce %3$s. Data mohla b\u00fdt upravena jin\u00fdm podprocesem nebo vno\u0159en\u00fdm vol\u00e1n\u00edm. V\u00fdsledek funkce %4$s nemus\u00ed b\u00fdt spr\u00e1vn\u00fd a prost\u0159ed\u00ed VM m\u016f\u017ee b\u00fdt nestabiln\u00ed.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_BUFFER_MODIFIED.sample_input_1=methodName
+J9NLS_JNICHK_BUFFER_MODIFIED.sample_input_2=2
+J9NLS_JNICHK_BUFFER_MODIFIED.sample_input_3=function1
+J9NLS_JNICHK_BUFFER_MODIFIED.sample_input_4=function2
+J9NLS_JNICHK_BUFFER_MODIFIED.explanation=The JVM has detected that data referenced by the named JNI function has been modified.
+J9NLS_JNICHK_BUFFER_MODIFIED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_BUFFER_MODIFIED.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_RETURN_IS_NOT_REF=Chyba rozhran\u00ed JNI v n\u00e1vratov\u00e9 hodnot\u011b: n\u00e1vratov\u00fd typ je odkaz, hodnota (0x%1$p) v\u0161ak nen\u00ed platn\u00fdm odkazem na objekt. P\u0159\u00edslu\u0161n\u00fd typ: %2$s
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_RETURN_IS_NOT_REF.sample_input_1=0x0008ACD1
+J9NLS_JNICHK_RETURN_IS_NOT_REF.sample_input_2=reference
+J9NLS_JNICHK_RETURN_IS_NOT_REF.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_JNICHK_RETURN_IS_NOT_REF.system_action=
+J9NLS_JNICHK_RETURN_IS_NOT_REF.user_response=
+# END NON-TRANSLATABLE
+
+# use java -Xcheck:jni:help to display these message
+J9NLS_JNICHK_HELP_14=\twarn           zobrazen\u00ed varov\u00e1n\u00ed
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_14.explanation=NOTAG
+J9NLS_JNICHK_HELP_14.system_action=
+J9NLS_JNICHK_HELP_14.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_HELP_15=\tadvice         zobrazen\u00ed rady
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_15.explanation=NOTAG
+J9NLS_JNICHK_HELP_15.system_action=
+J9NLS_JNICHK_HELP_15.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_PACKED_MISMATCH=Chyba JNI v %1$s: argument #%2$d o\u010dek\u00e1v\u00e1 %3$s %4$s, aktu\u00e1ln\u00ed argument je %5$s %6$s
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_PACKED_MISMATCH.sample_input_1=SetObjectField
+J9NLS_JNICHK_PACKED_MISMATCH.sample_input_2=3
+J9NLS_JNICHK_PACKED_MISMATCH.sample_input_3=non nested
+J9NLS_JNICHK_PACKED_MISMATCH.sample_input_4=field
+J9NLS_JNICHK_PACKED_MISMATCH.sample_input_5=nested
+J9NLS_JNICHK_PACKED_MISMATCH.sample_input_6=field
+J9NLS_JNICHK_PACKED_MISMATCH.explanation=Packedness mismatch for argument type
+J9NLS_JNICHK_PACKED_MISMATCH.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_PACKED_MISMATCH.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_NON_ARRAY_REQUIRED=Chyba JNI v %1$s: argument #%2$d vy\u017eaduje typ jin\u00fd ne\u017e pole
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NON_ARRAY_REQUIRED.sample_input_1=GetClassPackedDataSize
+J9NLS_JNICHK_NON_ARRAY_REQUIRED.sample_input_2=2
+J9NLS_JNICHK_NON_ARRAY_REQUIRED.explanation=expects a non-array type
+J9NLS_JNICHK_NON_ARRAY_REQUIRED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_NON_ARRAY_REQUIRED.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE
+
+J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS=Rada JNI v %1$s: Tuto funkci nelze pou\u017e\u00edt se sbalen\u00fdmi objekty. Pou\u017eijte m\u00edsto toho %2$s.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_1=GetPrimitiveArrayCritical
+J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_2=GetPackedArrayElements
+J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.explanation=wrong api used.
+J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.system_action=JVM continues
+J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.user_response=Check and correct the JNI application code.
+# END NON-TRANSLATABLE

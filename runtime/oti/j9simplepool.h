@@ -1,0 +1,57 @@
+/*******************************************************************************
+ * Copyright (c) 1991, 2014 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+
+#ifndef J9SIMPLEPOOL_H
+#define J9SIMPLEPOOL_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/*		DO NOT DIRECTLY INCLUDE THIS FILE 	*/
+/*		Include simplepool_api.h instead					*/
+
+
+#include "j9nongenerated.h"
+
+typedef struct J9SimplePoolFreeList {
+	J9SRP next;
+	J9SRP simplePool;
+} J9SimplePoolFreeList;
+
+typedef struct J9SimplePool {
+	uint32_t numElements;
+	uint32_t elementSize;
+	J9SRP freeList;
+	J9SRP firstFreeSlot;
+	J9SRP blockEnd;
+	uint32_t flags;
+} J9SimplePool;
+
+#undef J9SRP
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* J9SIMPLEPOOL_H */

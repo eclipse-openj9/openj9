@@ -1,0 +1,67 @@
+/*******************************************************************************
+ * Copyright (c) 2007, 2011 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+package com.ibm.j9tools.om;
+
+import java.text.MessageFormat;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * Verifier class to check the existance of the sources in a given {@link ISourceContainer}.
+ * 
+ * @author	Gabriel Castro
+ * @author	Han Xu
+ */
+public class SourceVerifier {
+	private final ISourceContainer sourceContainer;
+	private final Set<String> sources;
+
+	/**
+	 * Creates a {@link SourceVerifier} for the given container and valid sources.
+	 * 
+	 * @param 	sourceContainer		the container to be verified
+	 * @param 	sources				the valid sources from the container's build-info
+	 */
+	public SourceVerifier(ISourceContainer sourceContainer, Set<String> sources) {
+		this.sourceContainer = sourceContainer;
+		this.sources = sources;
+	}
+
+	/**
+	 * Verifies the sources and returns errors when appropriate.
+	 * 
+	 * @return	the errors associated with the given {@link ISourceContainer}
+	 */
+	public Collection<OMException> verify() {
+		Collection<OMException> errors = new HashSet<OMException>();
+
+		for (Source source : sourceContainer.getLocalSources().values()) {
+			if (!sources.contains(source.getId())) {
+				errors.add(new InvalidSourceException(MessageFormat.format(Messages.getString("SourceVerifier.invalidSource"), new Object[] { source.getId() }), source)); //$NON-NLS-1$
+			}
+		}
+
+		return errors;
+	}
+
+}

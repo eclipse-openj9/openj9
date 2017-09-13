@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+        
+	<exports group="all">
+		<export name="j9zlib_adler32" />
+		<export name="j9zlib_compress" />
+		<export name="j9zlib_compress2" />
+		<export name="j9zlib_crc32" />
+		<export name="j9zlib_deflate" />
+		<export name="j9zlib_deflateCopy" />
+		<export name="j9zlib_deflateEnd" />
+		<export name="j9zlib_deflateInit_" />
+		<export name="j9zlib_deflateInit2_" />
+		<export name="j9zlib_deflateParams" />
+		<export name="j9zlib_deflateReset" />
+		<export name="j9zlib_deflateSetDictionary" />
+		<export name="j9zlib_get_crc_table" />
+		<export name="j9zlib_inflate" />
+		<export name="j9zlib_inflateCopy" />
+		<export name="j9zlib_inflateEnd" />
+		<export name="j9zlib_inflateInit_" />
+		<export name="j9zlib_inflateInit2_" />
+		<export name="j9zlib_inflateReset" />
+		<export name="j9zlib_inflateSetDictionary" />
+		<export name="j9zlib_inflateSync" />
+		<export name="j9zlib_inflateSyncPoint" />
+		<export name="j9zlib_uncompress" />
+		<export name="j9zlib_zError" />
+		<export name="j9zlib_zlibVersion" />
+	</exports>
+		
+	<artifact type="shared" name="j9zlib" bundle="jvm" loadgroup="">
+		<include-if condition="spec.flags.module_zlib" />
+		<options>
+			<option name="isRequired"/>
+			<option name="requiresPrimitiveTable"/>
+			<option name="prototypeHeaderFileNames" data="j9protos.h zlib.h"/>
+			<option name="nonIBMCopyright" data="zlib data compression library Copyright (C) 1995-2003 Jean-loup Gailly and Mark Adler"/>
+			<option name="dllDescription" data="Zip"/>
+		</options>
+		<phase>core quick j2se</phase>
+		<exports>
+			<group name="all"/>
+		</exports>
+		<flags>
+			<flag name="STDC">
+				<include-if condition="spec.zos_.*"/>
+			</flag>
+		</flags>
+		<includes>
+			<include path="j9include"/>
+			<include path="j9oti"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_COPYRIGHT_FILE=zlib_copyright"/>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+				<makefilestub data="inftrees.o: CFLAGS+=-mstackrealign">
+				<include-if condition="spec.linux_x86.*"/>
+				<exclude-if condition="spec.linux_x86-32_hrt"/>
+			</makefilestub>
+		</makefilestubs>
+	</artifact>
+</module>

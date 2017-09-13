@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Copyright (c) 2010, 2017 IBM Corp. and others
+
+   This program and the accompanying materials are made available under
+   the terms of the Eclipse Public License 2.0 which accompanies this
+   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+   or the Apache License, Version 2.0 which accompanies this distribution and
+   is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+   This Source Code may also be made available under the following
+   Secondary Licenses when the conditions for such availability set
+   forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+   General Public License, version 2 with the GNU Classpath
+   Exception [1] and GNU General Public License, version 2 with the
+   OpenJDK Assembly Exception [2].
+
+   [1] https://www.gnu.org/software/classpath/license.html
+   [2] http://openjdk.java.net/legal/assembly-exception.html
+
+   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<module>
+	<artifact type="static" name="j9gcautoblob">
+		<include-if condition="spec.flags.module_ddr" />
+		<options>
+			<option name="isCPlusPlus"/>
+		</options>
+		<phase>core j2se</phase>
+		<flags>
+		</flags>
+		<includes>
+			<include path="j9include"/>
+			<include path="j9oti"/>
+			<include path="j9ddrgen"/>
+			<!--Local GC headers-->
+			<include path="gc_api" type="relativepath"/>
+			<include path="gc_base" type="relativepath"/>
+			<include path="omr/gc/base" type="relativepath"/>
+			<include path="omr/gc/include" type="relativepath"/>
+			<include path="gc_include" type="relativepath"/>
+			<include path="gc_glue_java" type="relativepath"/>
+			<include path="gc_modron_standard" type="relativepath">
+				<include-if condition="spec.flags.module_gc_modron_standard" />
+			</include>
+			<include path="omr/gc/base/standard" type="relativepath">
+				<include-if condition="spec.flags.module_gc_modron_standard" />
+			</include>
+			<include path="omr/gc/base/segregated" type="relativepath">
+				<include-if condition="spec.flags.module_gc_realtime" />
+			</include>
+			<include path="gc_modron_startup" type="relativepath"/>
+			<include path="gc_realtime" type="relativepath">
+				<include-if condition="spec.flags.module_gc_realtime" />
+			</include>
+			<include path="gc_staccato" type="relativepath">
+				<include-if condition="spec.flags.module_gc_realtime" />
+			</include>
+			<include path="gc_stats" type="relativepath"/>
+			<include path="omr/gc/stats" type="relativepath"/>
+			<include path="gc_structs" type="relativepath"/>
+			<include path="omr/gc/structs" type="relativepath"/>
+			<include path="gc_verbose_old_events" type="relativepath"/>
+			<include path="gc_verbose_old" type="relativepath"/>
+			<include path="omr/gc/verbose" type="relativepath"/>
+			<include path="gc_verbose_java" type="relativepath"/>
+			<include path="gc_vlhgc" type="relativepath">
+				<include-if condition="spec.flags.gc_vlhgc" />
+			</include>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+			<makefilestub data="UMA_DISABLE_DDRGEN=1"/>
+			<makefilestub data="include ../ddr/ddr_stubs.mk"/>
+			<makefilestub data="include ddr_gcheaders.mk"/>
+		</makefilestubs>
+		<objects>
+			<object name="gcddrblob"/>
+		</objects>
+	</artifact>
+</module>

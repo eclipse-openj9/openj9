@@ -1,0 +1,13 @@
+/bin/
+
+/data/coreFiles/*.dmp
+/data/coreFiles/java5
+/data/coreFiles/*.xml
+/data/log_configs
+/data/output
+/data/*.properties
+/output/
+
+# generated Java source packages
+/src/com/ibm/j9ddr/vm*/pointer/generated/
+/src/com/ibm/j9ddr/vm*/structure/

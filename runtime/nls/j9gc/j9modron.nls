@@ -1,0 +1,954 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# j9modron.nls
+
+# Externalised messages for Modron GC
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=J9GC
+J9NLS.HEADER=modronnls.h
+
+J9NLS_GC_INTERNAL_ERROR_OUT_OF_MEMORY=Internal error; out of memory
+# START NON-TRANSLATABLE
+J9NLS_GC_INTERNAL_ERROR_OUT_OF_MEMORY.explanation=An internal error has occurred due to an out of memory condition
+J9NLS_GC_INTERNAL_ERROR_OUT_OF_MEMORY.system_action=The JVM will terminate
+J9NLS_GC_INTERNAL_ERROR_OUT_OF_MEMORY.user_response=This may indicate a native memory leak in the application.
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP=Failed to instantiate heap
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.explanation=The JVM was unable to allocate memory for the object heap 
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.user_response=Specify a smaller heap value using the -Xmx command line option
+
+# END NON-TRANSLATABLE
+
+# Note %1$zu is number of bytes requested  (e.g. 256)
+# Note %2$s is qualifier for number of bytes (e.g. "M")
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED=Failed to instantiate heap; %1$zu%2$s requested
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.explanation=The JVM was unable to allocate memory for the object heap 
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.user_response=Specify a smaller heap value using the -Xmx command line option
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.sample_input_1=256
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.sample_input_2=M
+
+
+# END NON-TRANSLATABLE
+
+# Note a task dispatcher is an internal GC structure responsible for distributing tasks among different worker threads
+J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER=Failed to instantiate task dispatcher
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.explanation=The JVM was unable to instantiate the task dispatcher used for distributing tasks among different worker threads
+J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR=Failed to instantiate global garbage collector
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.explanation=The JVM was unable to instantiate the global garbage collector structures
+J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_INITIALIZE=Failed to initialize
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INITIALIZE.explanation=The garbage collector failed to initialize for an unknown reason
+J9NLS_GC_FAILED_TO_INITIALIZE.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INITIALIZE.user_response=Unknown
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY=Failed to initialize; out of memory
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.explanation=The garbage collector failed to initialize due to an out of memory condition
+J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE=Failed to initialize; unable to parse command line
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE.explanation=The garbage collector failed to initialize because of an error on the command line
+J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE.user_response=Check that all of the GC options are correctly specified
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS=Failed to initialize module extensions
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.explanation=The garbage collector failed to initialize due to an out of memory condition
+J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX=Failed to initialize mutex for GC statistics
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.explanation=The garbage collector failed to initialize due to insufficient system resources
+J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+# Note finalization is a Java term related to the Object#finalize() method
+J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT=Failed to initialize finalization management
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.explanation=The garbage collector failed to initialize due to an out of memory condition
+J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES=Failed to initialize pool of memory spaces
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.explanation=The garbage collector failed to initialize due to an out of memory condition
+J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS=Failed to allocate VM memory segments
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS=Failed to allocate VM object memory segments
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS=Failed to allocate VM class memory segments
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE=Failed to allocate default memory space
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.explanation=The garbage collector failed to initialize due to an out of memory condition
+J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+# Note survivor is a technical term used in the context of a semispace garbage collector
+J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT=Failed to allocate survivor segment in default memory space
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.explanation=The garbage collector failed to initialize due to an out of memory condition
+J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+# Note %1$s is the memoryParameter that is too small (e.g. "-Xmx")
+# Note %2$zu the minimumSize value (e.g. 1024)
+# Note %3$s the qualifier for the minimumSize (e.g. "K", "M" or "G")
+J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE=%1$s too small, must be at least %2$zu %3$sbytes
+# START NON-TRANSLATABLE
+J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE.explanation=The specified option is smaller than the minimum permitted value
+J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE.system_action=The JVM will terminate
+J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE.user_response=Use a larger value for the specified option
+J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE.sample_input_1=-Xmx
+J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE.sample_input_2=1024
+J9NLS_GC_SUBSPACE_TOO_SMALL_FOR_VALUE.sample_input_3=M
+
+# END NON-TRANSLATABLE
+
+# Note %1$s memoryParameter (e.g. "-Xms")
+# Note %2$s memoryParameter (e.g. "-Xmx")
+J9NLS_GC_SUBSPACE_TOO_SMALL=%1$s too small for %2$s
+# START NON-TRANSLATABLE
+J9NLS_GC_SUBSPACE_TOO_SMALL.explanation=The specified option is smaller than the minimum permitted value
+J9NLS_GC_SUBSPACE_TOO_SMALL.system_action=The JVM will terminate
+J9NLS_GC_SUBSPACE_TOO_SMALL.user_response=Adjust the garbage collector options
+J9NLS_GC_SUBSPACE_TOO_SMALL.sample_input_1=-Xms
+J9NLS_GC_SUBSPACE_TOO_SMALL.sample_input_2=-Xmx
+
+# END NON-TRANSLATABLE
+
+# Note %1$s memoryParameter (e.g. "-Xms")
+# Note %2$s memoryParameter (e.g. "-Xmx")
+J9NLS_GC_SUBSPACE_TOO_LARGE=%1$s too large for %2$s
+# START NON-TRANSLATABLE
+J9NLS_GC_SUBSPACE_TOO_LARGE.explanation=The specified option is larger than the maximum permitted value
+J9NLS_GC_SUBSPACE_TOO_LARGE.system_action=The JVM will terminate
+J9NLS_GC_SUBSPACE_TOO_LARGE.user_response=Adjust the garbage collector options
+J9NLS_GC_SUBSPACE_TOO_LARGE.sample_input_1=-Xms
+J9NLS_GC_SUBSPACE_TOO_LARGE.sample_input_2=-Xmx
+
+# END NON-TRANSLATABLE
+
+# Note %s memoryParameter (e.g. "-Xms")
+J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP=%s too large for heap
+# START NON-TRANSLATABLE
+J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP.explanation=The specified option is larger than the maximum permitted value
+J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP.system_action=The JVM will terminate
+J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP.user_response=Adjust the garbage collector options
+J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP.sample_input_1=-Xms
+
+# END NON-TRANSLATABLE
+
+# Note %1$s memoryParameter (e.g. "-Xms")
+# Note %2$s memoryParameter (e.g. "-Xmos")
+J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR=%1$s must equal %2$s
+# START NON-TRANSLATABLE
+J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.explanation=The specified options must be equal if both are specified 
+J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.system_action=The JVM will terminate
+J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.user_response=Adjust the garbage collector options
+J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.sample_input_1=-Xms
+J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.sample_input_2=-Xmos
+
+# END NON-TRANSLATABLE
+
+# Note %1$s memoryParameter (e.g. "-Xms")
+# Note %2$s memoryParameter (e.g. "-Xms")
+# Note %3$s memoryParameter (e.g. "-Xms")
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE=Sum of %1$s and %2$s too large for %3$s
+# START NON-TRANSLATABLE
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE.explanation=The sum of the specified options is larger than the maximum permitted value
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE.system_action=The JVM will terminate
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE.user_response=Adjust the garbage collector options
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE.sample_input_1=-Xms
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE.sample_input_2=-Xmn
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE.sample_input_3=-Xmo
+
+# END NON-TRANSLATABLE
+
+# Note %1$s memoryParameter (e.g. "-Xms")
+# Note %2$s memoryParameter (e.g. "-Xms")
+# Note %3$s memoryParameter (e.g. "-Xms")
+J9NLS_GC_SUBSPACE_SUM_OF_NOT_EQUAL=Sum of %1$s and %2$s must equal %3$s
+# START NON-TRANSLATABLE
+J9NLS_GC_SUBSPACE_SUM_OF_NOT_EQUAL.explanation=The sum of the specified options is not equal to the third option
+J9NLS_GC_SUBSPACE_SUM_OF_NOT_EQUAL.system_action=The JVM will terminate
+J9NLS_GC_SUBSPACE_SUM_OF_NOT_EQUAL.user_response=Adjust the garbage collector options
+J9NLS_GC_SUBSPACE_SUM_OF_NOT_EQUAL.sample_input_1=-Xms
+J9NLS_GC_SUBSPACE_SUM_OF_NOT_EQUAL.sample_input_2=-Xmn
+J9NLS_GC_SUBSPACE_SUM_OF_NOT_EQUAL.sample_input_3=-Xmo
+
+# END NON-TRANSLATABLE
+
+# Note %1$s memoryParameter (e.g. "-Xms")
+# Note %2$s memoryParameter (e.g. "-Xms")
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE_FOR_HEAP=Sum of %1$s and %2$s too large for heap
+# START NON-TRANSLATABLE
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE_FOR_HEAP.explanation=The sum of the specified options is larger than the maximum permitted value
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE_FOR_HEAP.system_action=The JVM will terminate
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE_FOR_HEAP.user_response=Adjust the garbage collector options
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE_FOR_HEAP.sample_input_1=-Xms
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_LARGE_FOR_HEAP.sample_input_2=-Xmn
+
+# END NON-TRANSLATABLE
+
+# Deprecated
+J9NLS_GC_SUBSPACE_SUM_OF_WITH_MEMORY_PARAMETERS=Sum of %1$s and %2$s
+# START NON-TRANSLATABLE
+
+J9NLS_GC_SUBSPACE_SUM_OF_WITH_MEMORY_PARAMETERS.explanation=TODO
+J9NLS_GC_SUBSPACE_SUM_OF_WITH_MEMORY_PARAMETERS.system_action=TODO
+J9NLS_GC_SUBSPACE_SUM_OF_WITH_MEMORY_PARAMETERS.user_response=TODO
+J9NLS_GC_SUBSPACE_SUM_OF_WITH_MEMORY_PARAMETERS.sample_input_1=TODO
+J9NLS_GC_SUBSPACE_SUM_OF_WITH_MEMORY_PARAMETERS.sample_input_2=TODO
+# END NON-TRANSLATABLE
+
+# Note -Xverbosegclog is a command line option
+J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES=-Xverbosegclog failed to allocate internal structures
+# START NON-TRANSLATABLE
+J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.explanation=The garbage collector failed to initialize due to an out of memory condition
+J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.system_action=The JVM will terminate
+J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+# Note %s command-line option
+J9NLS_GC_OPTION_MALFORMED=Malformed option: '%s'
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTION_MALFORMED.explanation=The specified option could not be parsed
+J9NLS_GC_OPTION_MALFORMED.system_action=The JVM will terminate
+J9NLS_GC_OPTION_MALFORMED.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTION_MALFORMED.sample_input_1=-Xmx1J
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTION_OVERFLOW=Option too large: '%s'
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTION_OVERFLOW.explanation=The specified option is larger than the maximum permitted value
+J9NLS_GC_OPTION_OVERFLOW.system_action=The JVM will terminate
+J9NLS_GC_OPTION_OVERFLOW.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTION_OVERFLOW.sample_input_1=-Xmx1000G
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTION_ERROR=Option error: '%s'
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTION_ERROR.explanation=The specified option is invalid
+J9NLS_GC_OPTION_ERROR.system_action=The JVM will terminate
+J9NLS_GC_OPTION_ERROR.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTION_ERROR.sample_input_1=-Xmx1000G
+
+# END NON-TRANSLATABLE
+
+# Note %1$s memoryParameter (e.g. "-Xminf")
+# Note %2$f specified value (or default) (a floating point number, e.g. 1.2)
+# Note %3$s the minimum difference (e.g. "0.05")
+# Note %4$s memoryParameter (e.g. "-Xmaxf")
+# Note %5$f specified value (or default) (a floating point number, e.g. 1.2)
+J9NLS_GC_OPTION_MINIMUM_DIFFERENCE=%1$s value of %2$.2f must be at least %3$s less than %4$s value of %5$.2f
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTION_MINIMUM_DIFFERENCE.explanation=The specified options are too close
+J9NLS_GC_OPTION_MINIMUM_DIFFERENCE.system_action=The JVM will terminate
+J9NLS_GC_OPTION_MINIMUM_DIFFERENCE.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTION_MINIMUM_DIFFERENCE.sample_input_1=-Xminf
+J9NLS_GC_OPTION_MINIMUM_DIFFERENCE.sample_input_2=1.2
+J9NLS_GC_OPTION_MINIMUM_DIFFERENCE.sample_input_3=0.05
+J9NLS_GC_OPTION_MINIMUM_DIFFERENCE.sample_input_4=-Xmaxf
+J9NLS_GC_OPTION_MINIMUM_DIFFERENCE.sample_input_5=1.2
+
+# END NON-TRANSLATABLE
+
+#Note %1$s memoryParameter (e.g. "-Xresman")
+#Note %2$s memoryParameter (e.g. "-Xgcpolicy:gencon")
+J9NLS_GC_OPTIONS_EXCLUSIVE=%1$s and %2$s cannot both be specified
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_EXCLUSIVE.explanation=The specified options cannot both be specified
+J9NLS_GC_OPTIONS_EXCLUSIVE.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_EXCLUSIVE.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTIONS_EXCLUSIVE.sample_input_1=-Xresman
+J9NLS_GC_OPTIONS_EXCLUSIVE.sample_input_2=-Xgcpolicy:gencon
+
+# END NON-TRANSLATABLE
+
+# Note %s option name (e.g. "-Xlp")
+J9NLS_GC_OPTIONS_SYSTEM_CONFIG_OPTION_NOT_SUPPORTED=System configuration does not support option '%s'
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_SYSTEM_CONFIG_OPTION_NOT_SUPPORTED.explanation=The specified option is not supported by the current hardware or operating system configuration
+J9NLS_GC_OPTIONS_SYSTEM_CONFIG_OPTION_NOT_SUPPORTED.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_SYSTEM_CONFIG_OPTION_NOT_SUPPORTED.user_response=Remove the unsupported option or adjust the configuration appropriately
+J9NLS_GC_OPTIONS_SYSTEM_CONFIG_OPTION_NOT_SUPPORTED.sample_input_1=-Xlp
+
+# END NON-TRANSLATABLE
+
+# Note %1$s memoryParameter (e.g. "-Xmaxf")
+# Note %2$f lower bound (e.g. 0.0)
+# Note %3$f upper bound (e.g. 1.0)
+J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE=%1$s value must be between %2$.2f and %3$.2f (inclusive)
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE.explanation=The specified option is not within the permitted range
+J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_1=-Xmaxf
+J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_2=0.0
+J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_3=1.0
+
+# END NON-TRANSLATABLE
+
+# Note %1$s memoryParameter (e.g. "-Xmx")
+# Note %2$zu lower bound (e.g. 10)
+# Note %3$zu upper bound (e.g. 100)
+J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE=%1$s value must be between %2$zu and %3$zu (inclusive)
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE.explanation=The specified option is not within the permitted range
+J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE.sample_input_1=-Xmx
+J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE.sample_input_2=10
+J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE.sample_input_3=100
+
+# END NON-TRANSLATABLE
+
+# Note %s memoryParameter (e.g. "-Xmx")
+J9NLS_GC_OPTIONS_MUST_BE_NUMBER=%s must be followed by a number
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_MUST_BE_NUMBER.explanation=The specified option must be immediately followed by a number
+J9NLS_GC_OPTIONS_MUST_BE_NUMBER.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_MUST_BE_NUMBER.user_response=Adjust the garbage collector options (e.g. instead of "-Xmx 100m" use "-Xmx100m")
+J9NLS_GC_OPTIONS_MUST_BE_NUMBER.sample_input_1=-Xmx
+
+# END NON-TRANSLATABLE
+
+# Note %1$s memoryParameter (e.g. "-Xgcthreads")
+# Note %2$zu invalid value (e.g. 0)
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE=%1$s value must be above %2$zu
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE.explanation=The specified option must be greater than the specified value
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE.sample_input_1=-Xgcthreads
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE.sample_input_2=0
+
+# END NON-TRANSLATABLE
+
+# Note this message is currently unused
+# Note %1$s memoryParameter (e.g. "-Xgcthreads")
+# Note %2$zu valid value (e.g. 0)
+J9NLS_GC_OPTIONS_VALUE_MUST_BE=%1$s not supported with values other than %2$zu
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_VALUE_MUST_BE.explanation=The specified option only supports the specified value 
+J9NLS_GC_OPTIONS_VALUE_MUST_BE.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_VALUE_MUST_BE.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTIONS_VALUE_MUST_BE.sample_input_1=-Xgcthreads
+J9NLS_GC_OPTIONS_VALUE_MUST_BE.sample_input_2=0
+
+# END NON-TRANSLATABLE
+
+# Note %s memoryParameter (e.g. "-Xmx")
+J9NLS_GC_OPTIONS_VALUE_OVERFLOWED=%s value specified is too large
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.explanation=The specified option is too large 
+J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.sample_input_1=-Xmx
+
+# END NON-TRANSLATABLE
+
+# Note %1$s deprecated parameter (e.g. "-Xgc:excessiveGCdebug=")
+# Note %2$s new parameter (e.g. "-Xtgc:excessivegc")
+J9NLS_GC_OPTION_DEPRECATED=%1$s is deprecated; use %2$s instead
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTION_DEPRECATED.explanation=The specified option is deprecated and is no longer supportd 
+J9NLS_GC_OPTION_DEPRECATED.system_action=The JVM will terminate
+J9NLS_GC_OPTION_DEPRECATED.user_response=Replace the deprecated option with the suggested replacement
+J9NLS_GC_OPTION_DEPRECATED.sample_input_1=-Xgc:excessiveGCdebug=
+J9NLS_GC_OPTION_DEPRECATED.sample_input_2=-Xtgc:excessivegc
+
+# END NON-TRANSLATABLE
+
+# Note %s parameter
+# e.g. java -Xgc:foo
+J9NLS_GC_OPTION_UNKNOWN=Unknown option: %s
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTION_UNKNOWN.explanation=The specified option is not recognized 
+J9NLS_GC_OPTION_UNKNOWN.system_action=The JVM will terminate
+J9NLS_GC_OPTION_UNKNOWN.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTION_UNKNOWN.sample_input_1=foo
+
+# END NON-TRANSLATABLE
+
+# Note %s parameter
+# Note fvtest is a command line option. It should not be translated. 
+# e.g. java -Xgc:fvtest=foo
+J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE=Unknown fvtest type: %s
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.explanation=The specified option is not recognized 
+J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.system_action=The JVM will terminate
+J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.sample_input_1=foo
+
+# END NON-TRANSLATABLE
+
+# Note %1$s memoryParameter (e.g. "-Xmn")
+# Note %2$s memoryParameter (e.g. "-Xmo")
+# Note %3$s memoryParameter (e.g. "-Xmx")
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_SMALL=Sum of %1$s and %2$s too small for %3$s
+# START NON-TRANSLATABLE
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_SMALL.explanation=The sum of the specified options is smaller than the minimum permitted value
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_SMALL.system_action=The JVM will terminate
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_SMALL.user_response=Adjust the garbage collector options
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_SMALL.sample_input_1=-Xmn
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_SMALL.sample_input_2=-Xmo
+J9NLS_GC_SUBSPACE_SUM_OF_TOO_SMALL.sample_input_3=-Xmx
+
+# END NON-TRANSLATABLE
+
+# These are the GC options output by -verbose:sizes
+J9NLS_GC_VERB_SIZES_XMNS=initial new space size
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XMNS.explanation=Explains the -Xmns option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XMNS.system_action=None
+J9NLS_GC_VERB_SIZES_XMNS.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XMNX=maximum new space size
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XMNX.explanation=Explains the -Xmnx option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XMNX.system_action=None
+J9NLS_GC_VERB_SIZES_XMNX.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XMS=initial memory size
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XMS.explanation=Explains the -Xms option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XMS.system_action=None
+J9NLS_GC_VERB_SIZES_XMS.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XMOS=initial old space size
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XMOS.explanation=Explains the -Xmos option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XMOS.system_action=None
+J9NLS_GC_VERB_SIZES_XMOS.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XMOX=maximum old space size
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XMOX.explanation=Explains the -Xmox option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XMOX.system_action=None
+J9NLS_GC_VERB_SIZES_XMOX.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XMOI=old space increment
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XMOI.explanation=Explains the -Xmoi option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XMOI.system_action=None
+J9NLS_GC_VERB_SIZES_XMOI.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XMR=remembered set size
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XMR.explanation=Explains the -Xmr option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XMR.system_action=None
+J9NLS_GC_VERB_SIZES_XMR.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XSOFTMX=soft memory maximum
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XSOFTMX.explanation=Explains the -Xsoftmx option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XSOFTMX.system_action=None
+J9NLS_GC_VERB_SIZES_XSOFTMX.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XMCA=RAM class segment increment
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XMCA.explanation=Explains the -Xmca option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XMCA.system_action=None
+J9NLS_GC_VERB_SIZES_XMCA.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XMCO=ROM class segment increment
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XMCO.explanation=Explains the -Xmco option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XMCO.system_action=None
+J9NLS_GC_VERB_SIZES_XMCO.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XMX=memory maximum
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XMX.explanation=Explains the -Xmx option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XMX.system_action=None
+J9NLS_GC_VERB_SIZES_XMX.user_response=None
+
+# END NON-TRANSLATABLE
+
+# Note %1$zu size of the page (e.g. 4096)
+# Note %2$s size qualifier (e.g. "K")
+# Note %3$zu size of the page (e.g. 16)
+# Note %4$s size qualifier (e.g. "M")
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED=Large page size %1$zu%2$s is not a supported page size; using %3$zu%4$s instead
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.explanation=The specified large page size is not supported by the operating system. A default size will be used instead
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.system_action=The JVM will start using the default large page size instead of the specified size
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_1=4096
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_2=K
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_3=16
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_4=M
+
+# END NON-TRANSLATABLE
+
+# This is a GC option output by -verbose:sizes
+J9NLS_GC_VERB_SIZES_XLP=large page size
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XLP.explanation=Explains the -Xlp option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XLP.system_action=None
+J9NLS_GC_VERB_SIZES_XLP.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_AVAILABLE_XLP=available large page sizes:
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_AVAILABLE_XLP.explanation=When J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED is displayed, it will be followed by this message and then a list of supported sizes
+J9NLS_GC_VERB_SIZES_AVAILABLE_XLP.system_action=None
+J9NLS_GC_VERB_SIZES_AVAILABLE_XLP.user_response=None
+
+# END NON-TRANSLATABLE
+
+#Note %1$s first option
+#Note %2$s second option
+#e.g. java -Xgc:scvTiltRatioMin=70,scvTiltRatioMax=60 -Xgcpolicy:gencon
+J9NLS_GC_OPTIONS_MUST_BE_NO_GREATER_THAN=%1$s must be no greater than %2$s
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_MUST_BE_NO_GREATER_THAN.explanation=The first option cannot be used because it must not be greater than the second option
+J9NLS_GC_OPTIONS_MUST_BE_NO_GREATER_THAN.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_MUST_BE_NO_GREATER_THAN.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTIONS_MUST_BE_NO_GREATER_THAN.sample_input_1=scvTiltRatioMin=
+J9NLS_GC_OPTIONS_MUST_BE_NO_GREATER_THAN.sample_input_2=scvTiltRatioMax=
+
+# END NON-TRANSLATABLE
+
+#
+# Options before this point also appeared in J9 2.3
+#
+
+# Realtime
+# Note immortal memory is a technical term referring to memory which is not garbage collected. It is 
+# defined by the Real-Time Specification for Java (JSR 001)
+J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE=Failed to allocate immortal memory space
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.explanation=The garbage collector failed to initialize due to an out of memory condition
+J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.user_response=Ensure the the system has sufficient memory available
+
+# END NON-TRANSLATABLE
+
+# Realtime
+# Note -Xgcpolicy:metronome is a command line option
+# Note -Xrealtime is a command line option
+J9NLS_GC_METRONOME_WITHOUT_REALTIME=-Xgcpolicy:metronome is not allowed without -Xrealtime
+# START NON-TRANSLATABLE
+J9NLS_GC_METRONOME_WITHOUT_REALTIME.explanation=The metronome GC policy requires the -Xrealtime option, but this option was not specified
+J9NLS_GC_METRONOME_WITHOUT_REALTIME.system_action=The JVM will terminate
+J9NLS_GC_METRONOME_WITHOUT_REALTIME.user_response=Adjust the garbage collector options
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_IMMORTAL=immortal memory space size
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_IMMORTAL.explanation=Explains the -Xgc:immortalMemorySize= option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_IMMORTAL.system_action=None
+J9NLS_GC_VERB_SIZES_IMMORTAL.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_SCOPED=scoped memory space maximum size
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_SCOPED.explanation=Explains the -Xgc:scopedMemoryMaximumSize= option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_SCOPED.system_action=None
+J9NLS_GC_VERB_SIZES_SCOPED.user_response=None
+
+# END NON-TRANSLATABLE
+
+#
+# Options before this point also appeared in J9 2.3 RTJ
+#
+
+#Note %s memoryParameter (e.g. "-Xmx")
+#Note "power of two" refers to the mathematical concept (e.g. 2^1 = 2, 2^2 = 4, 2^3 = 8, . . .)
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO=%s value must be a power of two
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.explanation=The value of the specified option must be a power of 2 (e.g. 2, 4, 8, 16, . . .) 
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.user_response=Adjust the garbage collector options
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.sample_input_1=heapBytesPerRemsetCard=
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_UNABLE_TO_OPEN_FILE=Unable to open file '%s' for writing
+# START NON-TRANSLATABLE
+J9NLS_GC_UNABLE_TO_OPEN_FILE.explanation=The specified file could not be opened for writing 
+J9NLS_GC_UNABLE_TO_OPEN_FILE.system_action=No log file will be produced
+J9NLS_GC_UNABLE_TO_OPEN_FILE.user_response=Check the permissions on the file system or specify a different file name
+J9NLS_GC_UNABLE_TO_OPEN_FILE.sample_input_1=filename.log
+
+# END NON-TRANSLATABLE
+
+# Split heap error messages
+J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE=Failed to allocate old space
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE.explanation=The size of the heap extent used for old space could not be reserved
+J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_ALLOCATE_OLD_SPACE.user_response=Request a smaller old space value
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_ALLOCATE_NEW_SPACE=Failed to allocate new space
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_ALLOCATE_NEW_SPACE.explanation=The size of the heap extent used for new space could not be reserved
+J9NLS_GC_FAILED_TO_ALLOCATE_NEW_SPACE.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_ALLOCATE_NEW_SPACE.user_response=Request a smaller new space value
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_SPLIT_HEAP_ENTEXTS_WRONG_ORDER=Required split heap memory geometry could not be allocated
+# START NON-TRANSLATABLE
+J9NLS_GC_SPLIT_HEAP_ENTEXTS_WRONG_ORDER.explanation=The heap extents required for new space and old space could not be reserved in the address order required by the implementation
+J9NLS_GC_SPLIT_HEAP_ENTEXTS_WRONG_ORDER.system_action=The JVM will terminate
+J9NLS_GC_SPLIT_HEAP_ENTEXTS_WRONG_ORDER.user_response=Request a smaller object heap
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP=Failed to instantiate split heap: %1$s (new size %2$zu%3$s, old size %4$zu%5$s)
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.explanation=Split heap failed to initialize
+J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.user_response=Adjust the garbage collector options
+J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.sample_input_1=Failed to allocate old space
+J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.sample_input_2=2000
+J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.sample_input_3=M
+J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.sample_input_4=1800
+J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.sample_input_5=M
+
+# END NON-TRANSLATABLE
+
+# Exception thrown on return from wait interruptible primitive wrapper rtsj_waitScopeReferenceCountLock for ScopedMemory.join and .joinAndEnter
+J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN=ScopedMemory.join/joinAndEnter interrupted 
+# START NON-TRANSLATABLE
+J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN.explanation=Interrupt has broken the wait in ScopedMemory.join/joinAndEnter
+J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN.system_action=A java/lang/InterruptedException will be thrown
+
+J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN.user_response=TODO
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZE_SUPPORT=Failed to initialize Finalize thread
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZE_SUPPORT.explanation=Finalize thread could not be created
+J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZE_SUPPORT.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZE_SUPPORT.user_response=Ensure that the system has enough native memory to run the JVM
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_FAILED_TO_STARTUP_GARBAGE_COLLECTOR=Failed to startup the Garbage Collector
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_STARTUP_GARBAGE_COLLECTOR.explanation=The Garbage Collector failed to startup
+J9NLS_GC_FAILED_TO_STARTUP_GARBAGE_COLLECTOR.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_STARTUP_GARBAGE_COLLECTOR.user_response=Ensure that the system has enough native memory and that the Java heap size is sufficient to run the JVM
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_INCORRECT_MEMORY_SIZE=Value for '%s' is not correct
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_INCORRECT_MEMORY_SIZE.explanation=Value specified for the option is not correct
+J9NLS_GC_OPTIONS_INCORRECT_MEMORY_SIZE.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_INCORRECT_MEMORY_SIZE.user_response=Correct the option
+J9NLS_GC_OPTIONS_INCORRECT_MEMORY_SIZE.sample_input_1=-Xlp:objectheap:pagesize=<size>
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE=Large page size %1$zu%2$s is not a supported page size; using %3$zu%4$s %5$s instead
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.explanation=The specified page size is not supported by the operating system. A suitable page size will be used.
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.user_response=Adjust the -Xlp option to specify page size supported by the operating system
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_1=4096
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_2=K
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_3=4096
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_4=K
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_5=pageable
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=Large page size %1$zu%2$s %3$s is not a supported page size; using %4$zu%5$s instead
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.user_response=Adjust the -Xlp option to specify page size supported by the operating system
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_1=4096
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_2=K
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_3=pageable
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_4=4096
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_5=K
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE=Large page size %1$zu%2$s %3$s is not a supported page size; using %4$zu%5$s %6$s instead
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.user_response=Adjust the -Xlp option to specify page size supported by the operating system
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_1=4096
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_2=K
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_3=pageable
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_4=4096
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_5=K
+J9NLS_GC_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_6=pageable
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_XLP_PARSING_ERROR=An error occurred in parsing '-Xlp' option
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_XLP_PARSING_ERROR.explanation=An error occurred in parsing -Xlp option
+J9NLS_GC_OPTIONS_XLP_PARSING_ERROR.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_XLP_PARSING_ERROR.user_response=Correct the -Xlp option syntax and retry
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED=System configuration does not support requested %1$zu%2$s large page size
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED.explanation=The specified large page size is not supported by the operating system
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED.user_response=Adjust the -Xlp option to specify page size supported by the operating system
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED.sample_input_1=4096
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED.sample_input_2=K
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE=System configuration does not support requested %1$zu%2$s %3$s large page size
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE.explanation=The specified large page size is not supported by the operating system
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE.user_response=Adjust the -Xlp option to specify page size supported by the operating system
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_1=4096
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_2=K
+J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_3=pageable
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER='%1$s' is not specified as the first parameter in '%2$s' option
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER.explanation=Either a required parameter is not specified, or it is not in specified in required order
+J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER.user_response=Modify parameters of -Xlp option as suggested by the error message
+J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER.sample_input_1=pagesize=<size>
+J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER.sample_input_2=-Xlp:objectheap:
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION='%1$s' option is not complete, must specify '%2$s' parameter.
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION.explanation=Specified option is not complete, it requires more parameters
+J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION.user_response=Specify all the required parameter for -Xlp option
+J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION.sample_input_1=-Xlp:objectheap:
+J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION.sample_input_2=[non]pageable
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION=System configuration does not support parameter '%.*s' in option '-Xlp'
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION.explanation=Specified parameter is not recognized in -Xlp option
+J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION.user_response=Remove the unrecognized parameter from -Xlp option
+J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION.sample_input_1=3
+J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION.sample_input_2=abc
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_XLP_EXTRA_COMMA=Extra comma characters are discovered in '-Xlp' option - ignored
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_XLP_EXTRA_COMMA.explanation=Extra comma characters are discovered in '-Xlp' option
+J9NLS_GC_OPTIONS_XLP_EXTRA_COMMA.system_action=The JVM will ignore extra comma characters
+J9NLS_GC_OPTIONS_XLP_EXTRA_COMMA.user_response=Remove extra commas from -Xlp option
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_SUPPORTED=Requested for %1$s page size %2$zu%3$s%4$s is not a supported page size; using %5$zu%6$s%7$s instead
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_SUPPORTED.explanation=The specified page size is not supported by the operating system. A suitable page size will be used.
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_SUPPORTED.system_action=The JVM will start using a different page size instead of the specified size
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_SUPPORTED.user_response=Adjust the -Xlp:gc: options to specify page size supported by the operating system
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_SUPPORTED.sample_input_1=gcmetadata
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_SUPPORTED.sample_input_2=4096
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_SUPPORTED.sample_input_3=K
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_SUPPORTED.sample_input_4=pageable
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_SUPPORTED.sample_input_5=4096
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_SUPPORTED.sample_input_6=K
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_SUPPORTED.sample_input_7=pageable
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_INVALID_MT_POLICY=Failed to initialize, multitenancy only supports -Xgcpolicy:balanced
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_INVALID_MT_POLICY.explanation=The multitenancy options can only be used in conjunction with -Xgcpolicy:balanced
+J9NLS_GC_OPTIONS_INVALID_MT_POLICY.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_INVALID_MT_POLICY.user_response=Adjust the garbage collector options
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_IGNORE_OS_REPORTED_HIGHRES_VALUES=OS clock resolution claims to not support the requested target pause time.  Overriding due to command line option -Xgc:overrideHiresTimerCheck
+# START NON-TRANSLATABLE
+J9NLS_GC_IGNORE_OS_REPORTED_HIGHRES_VALUES.explanation=OS returned a clock resolution larger than requested but the user requested that the JVM continue to start
+J9NLS_GC_IGNORE_OS_REPORTED_HIGHRES_VALUES.system_action=The JVM will continue to start since -Xgc:overrideHiresTimerCheck has been specified
+J9NLS_GC_IGNORE_OS_REPORTED_HIGHRES_VALUES.user_response=Upgrade the OS so that this option is no longer output
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_VERB_SIZES_XMCRS=compressed references metadata initial size
+# START NON-TRANSLATABLE
+J9NLS_GC_VERB_SIZES_XMCRS.explanation=Explains the -Xmcrs option when -verbose:sizes is specified
+J9NLS_GC_VERB_SIZES_XMCRS.system_action=None
+J9NLS_GC_VERB_SIZES_XMCRS.user_response=None
+
+# END NON-TRANSLATABLE
+
+# Note %1$zu is number of bytes requested  (e.g. 256)
+# Note %2$s is qualifier for number of bytes (e.g. "M")
+J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED=Failed to instantiate compressed references metadata; %1$zu%2$s requested
+# START NON-TRANSLATABLE
+J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.explanation=The JVM was unable to allocate memory for compressed references metadata 
+J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.system_action=The JVM will terminate
+J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.user_response=Specify a smaller compressed references metadata initial size value using the -Xmcrs command line option
+J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.sample_input_1=256
+J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.sample_input_2=M
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT=Unable to satisfy heap size %1$zu%2$s with page size %3$zu%4$s. Heap size can be specified with -Xmx
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT.explanation=The requested objectheap page size is supported by the OS but not currently available
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT.system_action=The JVM will terminate
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT.user_response=None
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT.sample_input_1=512
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT.sample_input_2=M
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT.sample_input_3=2
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_STRICT.sample_input_4=M
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_WARN=Requested objectheap page size %1$zu%2$s could not be satisfied; using %3$zu%4$s instead
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_WARN.explanation=The requested objectheap page size is supported by the OS but not currently available
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_WARN.system_action=The JVM will start using a different objectheap page size instead of the specified size
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_WARN.user_response=None
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_WARN.sample_input_1=2
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_WARN.sample_input_2=M
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_WARN.sample_input_3=4096
+J9NLS_GC_OPTIONS_XLP_PAGE_NOT_AVAILABLE_WARN.sample_input_4=K
+
+# END NON-TRANSLATABLE
+
+J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN=The -Xgc:preferredHeapBase option is not supported on z/OS.
+# START NON-TRANSLATABLE
+J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.explanation=The JVM was started with the -Xgc:preferredHeapBase option, which has no effect on z/OS.
+J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.system_action=The JVM ignores the -Xgc:preferredHeapBase option.
+J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.user_response=Refer to the IBM SDK documentation.
+# END NON-TRANSLATABLE

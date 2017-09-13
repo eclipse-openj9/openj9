@@ -1,0 +1,138 @@
+<project name="symlink_jcl" basedir=".">
+	<!--
+	   Copyright (c) 2014, 2017 IBM Corp. and others
+
+	   This program and the accompanying materials are made available under
+	   the terms of the Eclipse Public License 2.0 which accompanies this
+	   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+	   or the Apache License, Version 2.0 which accompanies this distribution and
+	   is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+	   This Source Code may also be made available under the following
+	   Secondary Licenses when the conditions for such availability set
+	   forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+	   General Public License, version 2 with the GNU Classpath
+	   Exception [1] and GNU General Public License, version 2 with the
+	   OpenJDK Assembly Exception [2].
+
+	   [1] https://www.gnu.org/software/classpath/license.html
+	   [2] http://openjdk.java.net/legal/assembly-exception.html
+
+	   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+	-->
+	<description>Creates symlinks between </description>
+
+	<!-- Import custom tasks -->
+	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
+	<taskdef resource='com/ibm/j9/ant/antlib.xml'/>
+	<taskdef name="stringutil" classname="ise.antelope.tasks.StringUtilTask"/>
+
+	<stopwatch name="timer"/>
+
+	<!-- Properties -->
+	<fail unless="stream"     message="Missing stream name for destination directory: e.g. R25_current" />
+	<fail unless="job.buildId"   message="Missing build id: e.g. 19729" />
+	<fail unless="build.type" message="Missing build type: e.g. continuous, promotion or integration" />
+	<fail unless="build.component" message="Missing component type: e.g. VM, GC or JIT" />
+	<fail unless="storage.server"  message="Missing storage server hostname: e.g. vmtank.ottawa.ibm.com" />
+	<fail unless="timestamp"  message="Missing J9 timestamp [format:yyyymmdd]: e.g. 20100419"  />
+
+	<property name="ant.enable.asserts" value="true" />
+	<property name="user.name"			value="j9build" />
+	<property name="store.root.dir"      value="/vm_archive" />
+
+	<stringutil string="${build.component}" property="build.component">
+		<lowercase/>
+	</stringutil>
+
+	<if>
+		<equals arg1="${build.type}" arg2="continuous"/>
+		<then>
+			<property name="build.tag" value="cbuild_${build.component}" />
+		</then>
+	</if>
+	<if>
+		<equals arg1="${build.type}" arg2="promotion"/>
+		<then>
+			<property name="build.tag" value="pbuild_${build.component}" />
+		</then>
+	</if>
+	<if>
+		<equals arg1="${build.type}" arg2="integration"/>
+		<then>
+			<property name="build.tag" value="ibuild" />
+		</then>
+	</if>
+	<if>
+		<equals arg1="${build.type}" arg2="feature"/>
+		<then>
+			<property name="build.tag" value="fbuild" />
+		</then>
+	</if>
+	<if>
+		<equals arg1="${build.type}" arg2="service"/>
+		<then>
+			<property name="build.tag" value="sbuild" />
+		</then>
+	</if>
+	<if>
+		<equals arg1="${build.type}" arg2="monolithic"/>
+		<then>
+			<property name="build.tag" value="ibuild" />
+		</then>
+	</if>
+	<if>
+		<equals arg1="${build.type}" arg2="developer"/>
+		<then>
+			<property name="build.tag" value="developer" />
+		</then>
+	</if>
+	<if>
+		<equals arg1="${build.type}" arg2="customized" />
+		<then>
+			<property name="build.tag" value="customized" />
+		</then>
+	</if>
+	<if>
+		<equals arg1="${build.type}" arg2="codecoverage"/>
+		<then>
+			<property name="build.tag" value="codecoverage" />
+		</then>
+	</if>
+	<if>
+		<equals arg1="${build.type}" arg2="acceptance"/>
+		<then>
+			<property name="build.tag" value="acceptance" />
+		</then>
+	</if>
+
+    <target name="symlink_JCLs_in_vmtank">
+
+    <property name="dest.dir"           value="${store.root.dir}/${stream}/JCLandJCLTests/${job.buildId}" />
+
+    <if>
+            <equals arg1="${build.type}" arg2="feature" />
+            <then>
+                    <property name="feature.dest.dir"     value="${store.root.dir}/${product}/JCLandJCLTests" />
+                    <property name="command_line"         value="mkdir -p ${feature.dest.dir}/ ; rm -r ${feature.dest.dir}/${job.buildId} ; ln -s ${dest.dir} ${feature.dest.dir}/${job.buildId}" />
+            </then>
+            <else>
+                    <property name="dest.dir.symlink_1"   value="${store.root.dir}/${stream}/JCLandJCLTests/${build.tag}_${job.buildId}" />
+                    <property name="dest.dir.symlink_2"   value="${store.root.dir}/${stream}/JCLandJCLTests/${timestamp}_${job.buildId}" />
+                    <property name="command_line"         value="cd ${dest.dir} ; rm -r ${dest.dir.symlink_1}; ln -s ${job.buildId} ${dest.dir.symlink_1}; rm -r ${dest.dir.symlink_2}; ln -s ${job.buildId} ${dest.dir.symlink_2}" />
+            </else>
+    </if>
+		
+		<echo>Symlinking ${job.buildId} to ${dest.dir.symlink}</echo>
+		<sshexec host="${storage.server}"
+			keyfile="${user.home}/.ssh/id_rsa"
+			username="${user.name}" 
+			failonerror="true" 
+			passphrase="" 
+			verbose="true"
+			trust="true"
+			command="${command_line}" />
+		<stopwatch name="timer" action="elapsed"/>
+
+	</target>
+</project>

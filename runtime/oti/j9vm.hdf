@@ -1,0 +1,1271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+	Copyright (c) 2006, 2017 IBM Corp. and others
+	
+	This program and the accompanying materials are made available under
+	the terms of the Eclipse Public License 2.0 which accompanies this
+	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+	or the Apache License, Version 2.0 which accompanies this distribution and
+	is available at https://www.apache.org/licenses/LICENSE-2.0.
+	
+	This Source Code may also be made available under the following
+	Secondary Licenses when the conditions for such availability set
+	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+	General Public License, version 2 with the GNU Classpath
+	Exception [1] and GNU General Public License, version 2 with the
+	OpenJDK Assembly Exception [2].
+	
+	[1] https://www.gnu.org/software/classpath/license.html
+	[2] http://openjdk.java.net/legal/assembly-exception.html
+
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<interface>
+	<publicHeader>vmhook.h</publicHeader>
+	<privateHeader>vmhook_internal.h</privateHeader>
+	<struct>J9VMHookInterface</struct>
+	<description>All core hookable Java events</description>
+
+	<declarations>
+struct J9Method;
+struct J9NativeLibrary;
+struct J9VMThread;
+struct J9BytecodeVerificationData;
+typedef void (* classDataFreeFunction)(void * userData, void * address);
+typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, struct J9Method *nativeMethod, struct J9NativeLibrary *handle, char *longJNI, char *shortJNI, UDATA functionArgCount, UDATA bindJNINative);
+#include "j9cfg.h"
+#include "j9accessbarrier.h"
+	</declarations>
+
+	<event>
+		<name>J9HOOK_THREAD_ABOUT_TO_START</name>
+		<description>Triggered as soon as a thread has started, before it has bootstrapped. The thread is not yet ready to run Java code at this point.</description>
+		<struct>J9ThreadAboutToStartEvent</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_INITIALIZED</name>
+		<description>Triggered at the end of JNI_CreateJavaVM, just before the start event for the main thread</description>
+		<once />
+		<struct>J9VMInitEvent</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_SHUTTING_DOWN</name>
+		<description>Triggered by DestroyJavaVM or exit after exit hooks have run, but before the finalizer has shutdown</description>
+		<once />
+		<struct>J9VMShutdownEvent</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
+		<data type="IDATA" name="exitCode" description="zero if triggered by DestroyJavaVM, or exit code if called by System.exit()" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_THREAD_CREATED</name>
+		<description>
+			Triggered during initialization of a J9VMThread. At this point the thread has an object associated with it.
+			This hook can optionally cause the allocation of the J9VMThread to fail (e.g. if some substructres fail to
+			be allocated during the hook.
+		</description>
+		<struct>J9VMThreadCreatedEvent</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="new thread" />
+		<data type="UDATA" name="continueInitialization" return="true" description="success/fail flag" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_THREAD_DESTROY</name>
+		<description>
+			Triggered just before freeing a J9VMThread. At this point the thread has an object associated with it.
+		</description>
+		<struct>J9VMThreadDestroyEvent</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="thread being freed" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_THREAD_STARTED</name>
+		<description>
+			Triggered once the thread is ready to run. At this point the thread has an object associated with it.
+			Note that this event may be triggered by the main thread (instead of the starting thread) if the 
+			vmThread was created during bootstrap.  The current thread does not have VM access when this hook
+			is fired.
+		</description>
+		<struct>J9VMThreadStartedEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_THREAD_END</name>
+		<description>
+			Triggered when a thread is about to die.  The current thread does not have VM access when this hook
+			is fired.
+		</description>
+		<struct>J9VMThreadEndEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="UDATA" name="destroyingJavaVM" 
+			description="TRUE if this thread is ending because it called DestroyJavaVM. In this case, the
+								thread may report additional events as the VM shuts down. But for consistency,
+								the thread reports its end event BEFORE the J9HOOK_VM_SHUTTING_DOWN event.
+								FALSE if the thread is ending for some other reason" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASS_LOAD</name>
+		<description>
+				Triggered immediately after a RAM class has been created for a newly loaded class. 
+				Static final fields have been initialized to their default values (zero).
+				VM access is released. It is safe to execute Java code from handlers of this hook. If 
+				an exception is pending on return, the class load fails.
+		</description>
+		<struct>J9VMClassLoadEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Class*" name="clazz" description="the class which was just loaded" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_EXCEPTION_THROW</name>
+		<description>
+				Triggered when an exception is about to be thrown. The thread's currentException
+				field has been cleared at this point.
+				VM access is held by the current thread. The handler may release VM access, but
+				if it does so, it is the handler's responsibility to save the exception object and update 
+				the 'exception' field of the event structure with the new address of the exception.
+		</description>
+		<struct>J9VMExceptionThrowEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="j9object_t" name="exception" return="true" description="the exception object being thrown" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_EXCEPTION_SYSTHROW</name>
+		<description>
+				Triggered when an exception is about to be thrown by the VM. The thread's currentException
+				field has been cleared at this point.
+				VM access is held by the current thread. The handler may release VM access, but
+				if it does so, it is the handler's responsibility to save the exception object and update 
+				the 'exception' field of the event structure with the new address of the exception.
+		</description>
+		<struct>J9VMExceptionSysThrowEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="j9object_t" name="exception" return="true" description="the exception object being thrown" />
+	</event>	
+
+	<event>
+		<name>J9HOOK_VM_EXCEPTION_CATCH</name>
+		<description>
+				Triggered when an exception is about to be caught.
+				VM access is held by the current thread. The handler may release VM access, but
+				if it does so, it is the handler's responsibility to save the exception object and update 
+				the 'exception' field of the event structure with the new address of the exception.
+		</description>
+		<struct>J9VMExceptionCatchEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="j9object_t" name="exception" return="true" description="the exception object being caught" />
+		<data type="UDATA*" name="popProtectedFrame" description="the frame in which the exception will be caught, or NULL if (?)" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_BREAKPOINT</name>
+		<description>
+				Triggered when a breakpointed bytecode is executed.
+				The handler must pass back the true bytecode to execute in the originalBytecode field.
+				The current thread has VM access. VM access may be temporarily released by a handler.
+		</description>
+		<struct>J9VMBreakpointEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name = "method" description="current method" />
+		<data type="IDATA" name = "location" description="current pc offset" />
+		<data type="UDATA" name="originalBytecode" return="true" description="the bytecode which will be executed on return from this event" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_FRAME_POPPED</name>
+		<description>
+				Triggered when a pop-protected frame is popped from the stack.
+				This event is only supported if J9VM_INTERP_DEBUG_SUPPORT is defined.
+		</description>
+		<struct>J9VMFramePoppedEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_MONITOR_CONTENDED_ENTER</name>
+		<description>
+				Triggered when a thread is about to block on a Java monitor.
+				The current thread has VM access, but a handler may safely release and reacquire access.
+		</description>
+		<struct>J9VMMonitorContendedEnterEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="omrthread_monitor_t" name="monitor" description="the contended monitor" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_MONITOR_CONTENDED_ENTERED</name>
+		<description>
+				Triggered when a thread has finished blocking on a Java monitor.
+				The current thread has VM access, but a handler may safely release and reacquire access.
+		</description>
+		<struct>J9VMMonitorContendedEnteredEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="omrthread_monitor_t" name="monitor" description="the contended monitor" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_EXCEPTION_DESCRIBE</name>
+		<description>
+				Triggered when an exception is about to be reported as uncaught.
+				VM access is held by the current thread. The handler may release VM access, but if it
+				does so it must update the 'exception' field in the event data for subsequent handlers, as 
+				the object may have moved.
+		</description>
+		<struct>J9VMExceptionDescribeEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="j9object_t" name="exception" return="true" description="the uncaught exception" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_GETENV</name>
+		<description>
+				Triggered when JNI GetEnv is called.
+				VM access is not held by the current thread.
+		</description>
+		<struct>J9VMGetEnvEvent</struct>
+		<data type="JavaVM*" name="jvm" description="jvm parameter to GetEnv, should be a J9InvocationJavaVM* when GetEnv() is called from JVMTI agents" />
+		<data type="void**" name="penv" description="penv parameter to GetEnv, fill in to indicate success" />
+		<data type="jint" name="version" description="version parameter to GetEnv" />
+		<data type="jint" name="rc" return="true" description="return value for GetEnv" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_SLOW_EXCLUSIVE</name>
+		<description>
+				Triggered when a thread takes longer than a specified time to respond to an exclusive access request.
+				It is not safe to execute Java code from within a handler for this event, as the current thread owns the
+				exclusiveAccessMutex.
+		</description>
+		<struct>J9VMSlowExclusiveEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="UDATA" name="timeTaken" description="time in ms it took this thread to respond" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_ACQUIREVMACCESS</name>
+		<description>
+				Triggered when a thread is about to acquire VM access.
+		</description>
+		<struct>J9VMAcquireVMAccessEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_THREAD_CRASH</name>
+		<description>
+				Triggered when a thread has crashed. The VM is about to terminate, and may be in an unstable state
+		</description>
+		<struct>J9VMThreadCrashEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_METHOD_ENTER</name>
+		<description>
+			Triggered every time a method is entered. Hooking this event may have a significant performance impact.
+			Even reserving this event will cause the VM and JIT to run with reduced optimization.
+			When this event is reported, the current thread has VM access.
+		</description>
+		<struct>J9VMMethodEnterEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name="method" description="method being entered" />
+		<data type="void*" name="arg0EA" description="pointer to the first argument" />
+		<data type="UDATA" name="methodType" description="0 for interpreted, non-zero for JIT" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_ABOUT_TO_BOOTSTRAP</name>
+		<description>
+			Triggered just before the VM starts loading classes and executing bytecodes.
+		</description>
+		<once />
+		<struct>J9VMAboutToBootstrapEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_METHOD_RETURN</name>
+		<description>
+			Triggered every time a method is about to return. Hooking this event may have a significant performance impact.
+			Even reserving this event will cause the VM and JIT to run with reduced optimization.
+			When this event is reported, the current thread has VM access.  If the return value is an object, it will be
+			kept up-to-date by the caller.
+		</description>
+		<struct>J9VMMethodReturnEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name="method" description="method being returned from" />
+		<data type="UDATA" name="poppedByException" description="did this method exit due to an exception throw?" />
+		<data type="void*" name="returnValuePtr" description="pointer to return value, undefined if return type is void or poppedByException is true" />
+		<data type="UDATA" name="methodType" description="0 for interpreted, non-zero for JIT" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_NATIVE_METHOD_ENTER</name>
+		<description>
+			Triggered every time a native method is entered.
+			When this event is reported, the current thread has VM access.
+		</description>
+		<struct>J9VMNativeMethodEnterEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name="method" description="method being entered" />
+		<data type="void*" name="arg0EA" description="pointer to the receiver (or class, for static methods)" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_NATIVE_METHOD_RETURN</name>
+		<description>
+			Triggered every time a native method is about to return.
+			Reserving this event will cause the JIT to run with reduced optimization.
+			When this event is reported, the current thread has VM access.  If the return value is an object, it will be
+			kept up-to-date by the caller.
+		</description>
+		<struct>J9VMNativeMethodReturnEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name="method" description="method being returned from" />
+		<data type="UDATA" name="poppedByException" description="did this method exit due to an exception throw?" />
+		<data type="void*" name="returnValuePtr" description="pointer to return value, undefined if return type is void or poppedByException is true" />
+		<data type="jobject" name="returnRef" description="jobject representing an object return value, undefined if return type is not object or poppedByException is true" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_ROM_CLASS_LOAD</name>
+		<description>
+				Triggered immediately after a ROM class has been created for a newly loaded class.
+				(Does this belong in the VM hook interface, or should dynload have its own interface?)
+		</description>
+		<struct>J9VMROMClassLoadEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9ROMClass*" name="romClass" description="the class which was just loaded" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_MONITOR_CONTENDED_EXIT</name>
+		<description>
+				Triggered when a thread is about to exit a Java monitor on which other threads are contending.
+				The current thread has VM access, but a handler may safely release and reacquire access.
+		</description>
+		<struct>J9VMMonitorContendedExitEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="omrthread_monitor_t" name="monitor" description="the contended monitor" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASS_LOAD_HOOK</name>
+		<description>
+				Triggered just before a class file is transformed into a ROM class. Listeners of this event
+				are permitted to replace the class file data with new data, allowing instrumentation to take
+				place. If new data is provided, the old data should be freed using the freeFunction.  If the
+				freeFunction is NULL, nothing need be done.  If not, it should be called with the freeUserData and
+				classData fields from this struct.  The freeUserData and freeFunction must be updated such that
+				the new classData can be freed in similar fashion by another listener or the sender of this
+				event.
+				The current thread has VM access and owns the class table mutex.
+				If VM access is released, the listener is reponsible for keeping the protectionDomain object up-to-date.
+		</description>
+		<struct>J9VMClassLoadHookEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9ClassLoader*" name="classLoader" description="class loader in which the new class will be defined" />
+		<data type="j9object_t" name="protectionDomain" return="true" description="protectionDomain in which the class will be created" />
+		<data type="struct J9Class*" name="oldClass" description="NULL for normal class loads, set if a class is being redefined" />
+		<data type="char*" name="className" description="the name of the class, in nul-terminated UTF8 format, or NULL if none was specified" />
+		<data type="U_8*" name="classData"  return="true" description="class file bytes" />
+		<data type="UDATA" name="classDataLength" return="true" description="the length of the classData, in bytes" />
+		<data type="void*" name="freeUserData" return="true" description="passed to freeFunction to free existing classData" />
+		<data type="classDataFreeFunction" name="freeFunction" return="true" description="pointer to function used to free classData" />
+		<data type="UDATA" name="classDataReplaced" return="true" description="listener sets to TRUE if the class file bytes are replaced with new ones" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASS_LOAD_HOOK2</name>
+		<description>
+				See J9HOOK_VM_CLASS_LOAD_HOOK.  The struct must be identical.
+				This event is used for JVMTI 1.1 RetransformClasses.
+		</description>
+		<struct>J9VMClassLoadHook2Event</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9ClassLoader*" name="classLoader" description="class loader in which the new class will be defined" />
+		<data type="j9object_t" name="protectionDomain" return="true" description="protectionDomain in which the class will be created" />
+		<data type="struct J9Class*" name="oldClass" description="NULL for normal class loads, set if a class is being redefined" />
+		<data type="char*" name="className" description="the name of the class, in nul-terminated UTF8 format, or NULL if none was specified" />
+		<data type="U_8*" name="classData"  return="true" description="class file bytes" />
+		<data type="UDATA" name="classDataLength" return="true" description="the length of the classData, in bytes" />
+		<data type="void*" name="freeUserData" return="true" description="passed to freeFunction to free existing classData" />
+		<data type="classDataFreeFunction" name="freeFunction" return="true" description="pointer to function used to free classData" />
+		<data type="UDATA" name="classDataReplaced" return="true" description="listener sets to TRUE if the class file bytes are replaced with new ones" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_OBJECT_ALLOCATE</name>
+		<description>
+				Triggered when an object has just been allocated in a non-instrumentable fashion.  See JVMTI spec for details.
+				This event is included in the VM hook interface (rather than memory manager interface), since in-line allocates are so common.
+				The current thread has VM access, but a handler may safely release and reacquire access.  If VM access is released,
+				the listener is responsible for keeping the object up-to-date.
+		</description>
+		<struct>J9VMObjectAllocateEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="j9object_t" name="object" return="true" description="the object which was just allocated" />
+		<data type="UDATA" name="size" description="the number of bytes allocated" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_OBJECT_ALLOCATE_INSTRUMENTABLE</name>
+		<description>
+				Triggered when an object has just been allocated, but could be instrumented to provide notification.
+				This event is included in the VM hook interface (rather than memory manager interface), since in-line allocates are so common.
+				The current thread has VM access, but a handler may safely release and reacquire access.  If VM access is released,
+				the listener is responsible for keeping the object up-to-date.
+		</description>
+		<struct>J9VMObjectAllocateInstrumentableEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="j9object_t" name="object" return="true" description="the object which was just allocated" />
+		<data type="UDATA" name="size" description="the number of bytes allocated" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_USER_INTERRUPT</name>
+		<description>Triggered when a user sends an interrupt signal to the VM</description>
+		<struct>J9VMUserInterruptEvent</struct>
+		<data type="struct J9JavaVM*" name="vm" description="target vm" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_INITIALIZE_SEND_TARGET</name>
+		<description>
+				Triggered when a RAM method is having its send target address initialized.
+				The send target (methodRunAddress) of the method is NULL at the beginning of this event. If a listener sets methodRunAddress
+				to another value, then further send target initialization is skipped, and the listener's value is used.
+		</description>
+		<trace-sampling intervals="101" />
+		<struct>J9VMInitializeSendTargetEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name="method" description="the method whose send target it about to be initialized" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_MONITOR_WAIT</name>
+		<description>
+				Triggered when a thread is about to wait on a Java monitor.
+				The current thread has VM access, but a handler may safely release and reacquire access.
+				Note that this event is reported before all error conditions have been checked. The wait may
+				terminate abnormally due to an IllegalMonitorStateException, for instance.
+		</description>
+		<struct>J9VMMonitorWaitEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="omrthread_monitor_t" name="monitor" description="the monitor which will be waited on" />
+		<data type="I_64" name="millis" description="milliseconds to wait for" />
+		<data type="I_32" name="nanos" description="nanoseconds to wait for" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_MONITOR_WAITED</name>
+		<description>
+				Triggered when a thread is has finished waiting on a Java monitor.
+				The current thread has VM access, but a handler may safely release and reacquire access.
+		</description>
+		<struct>J9VMMonitorWaitedEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="omrthread_monitor_t" name="monitor" description="the monitor which was waited on" />
+		<data type="I_64" name="millis" description="milliseconds to wait for" />
+		<data type="I_32" name="nanos" description="nanoseconds to wait for" />
+		<data type="IDATA" name="reason" description="reason why the wait has finished" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_STARTED</name>
+		<description>Triggered once enough initialization has taken place to use JNI</description>
+		<once />
+		<struct>J9VMStartEvent</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_REQUIRED_DEBUG_ATTRIBUTES</name>
+		<description>
+			Triggered exactly once before any classes are dynamically loaded, then disabled.
+			The consumer must bitwise OR any required debug attribute bits into requiredDebugAttributes.
+			Valid attributes are the J9VM_DEBUG_ATTRIBUTE bits in j9.h.
+			Currently only triggered if J9VM_OPT_DEBUG_INFO_SERVER is defined.  If it is not defined,
+			the hook will be disabled immediately to indicate that no debug attributes will be stored.
+		</description>
+		<once />
+		<struct>J9VMRequiredDebugAttributesEvent</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
+		<data type="UDATA" name="requiredDebugAttributes" return="true" description="the required debug attributes" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASS_PREPARE</name>
+		<description>
+				Triggered after a class is prepared.  This event is not sent for primitive or array classes.
+				Static final fields have been initialized to their initial values from the class file.
+				VM access is released. It is safe to execute Java code from handlers of this hook. If 
+				an exception is pending on return, the class load fails.
+		</description>
+		<struct>J9VMClassPrepareEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Class*" name="clazz" description="the class which was just prepared" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_FIND_METHOD_FROM_PC</name>
+		<description>
+			Triggered when the VM searches for a method from a PC (program counter) and fails to find the method.
+			This gives listeners an opportunity to provide the method which the VM was unable to find on its own.
+		</description>
+		<struct>J9VMFindMethodFromPCEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="U_8*" name="pc" description="the pc being searched for" />
+		<data type="struct J9Class*" name="clazz" description="the class which contains the method" />
+		<data type="struct J9Method*" name="result" return="true" description="listeners should set this field to the found method. Listeners may wish to check that this field is NULL before performing their search" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_PERMANENT_PC</name>
+		<description>
+			When a method PC is about to be recorded in, for instance, an exception trace, this hook is triggered
+			to give listeners an opportunity to substitute a different PC. Generally, this is used if the PC points to
+			a transient data area, such as a breakpointed method. In that case, the listener replaces the PC with
+			the equivalent PC in the original ROM method.
+		</description>
+		<struct>J9VMPermanentPCEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="U_8*" name="pc" return="true" description="the pc" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_PARK</name>
+		<description>
+			Triggered when a thread is about to park.
+		</description>
+		<struct>J9VMParkEvent</struct>
+		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
+		<data type="I_64" name="millis" description="milliseconds to park for" />
+		<data type="IDATA" name="nanos" description="nanoseconds to park for" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_UNPARKED</name>
+		<description>
+			Triggered when a thread resumes from being parked.
+		</description>
+		<struct>J9VMUnparkedEvent</struct>
+		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_GET_FIELD</name>
+		<description>
+			Triggered just before an instance field is read by a JBgetfield bytecode.
+			This event is not triggered by JIT methods.
+			Note that reserving or hooking this event incurs a significant performance penalty.
+		</description>
+		<struct>J9VMGetFieldEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name = "method" description="current method" />
+		<data type="IDATA" name = "location" description="current pc offset" />
+		<data type="j9object_t*" name="objectAddress" description="an indirect pointer to the object whose field is being read" />
+		<data type="UDATA" name="offset" description="the offset of the field in the object" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_PUT_FIELD</name>
+		<description>
+			Triggered just before an instance field is written by a JBputfield bytecode.
+			This event is not triggered by JIT methods.
+			Note that reserving or hooking this event incurs a significant performance penalty.
+		</description>
+		<struct>J9VMPutFieldEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name = "method" description="current method" />
+		<data type="IDATA" name = "location" description="current pc offset" />
+		<data type="j9object_t*" name="objectAddress" description="an indirect pointer to the object whose field is being written" />
+		<data type="UDATA" name="offset" description="the offset of the field in the object" />
+		<data type="void*" name="valueAddress" description="a pointer to the value which is about to be stored" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_GET_STATIC_FIELD</name>
+		<description>
+			Triggered just before a static field is read by a JBgetstatic bytecode.
+			This event is not triggered by native or JIT methods.
+			Note that reserving or hooking this event incurs a significant performance penalty.
+		</description>
+		<struct>J9VMGetStaticFieldEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name = "method" description="current method" />
+		<data type="IDATA" name = "location" description="current pc offset" />
+		<data type="void*" name="fieldAddress" description="an indirect pointer to the static field being read" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_PUT_STATIC_FIELD</name>
+		<description>
+			Triggered just before a static field is written by a JBputstatic bytecode.
+			This event is not triggered by native or JIT methods.
+			Note that reserving or hooking this event incurs a significant performance penalty.
+		</description>
+		<struct>J9VMPutStaticFieldEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name = "method" description="current method" />
+		<data type="IDATA" name = "location" description="current pc offset" />
+		<data type="void*" name="fieldAddress" description="an indirect pointer to the static field being written" />
+		<data type="void*" name="valueAddress" description="a pointer to the value which is about to be stored" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_SINGLE_STEP</name>
+		<description>
+			Triggered before every bytecode execution within a method.
+			This event is not triggered by native methods, and JIT methods will be decompiled in order to report this event.
+			Note that hooking this event incurs an astronomical performance penalty.
+		</description>
+		<struct>J9VMSingleStepEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name="method" description="method being executed" />
+		<data type="IDATA" name="location" description="the bytecode offset within the method" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_PROFILING_BYTECODE_BUFFER_FULL</name>
+		<description>
+			If this event is hooked, the VM installs profiling versions of branch and call
+			bytecodes and collects profiling data about these bytecodes in buffers associated
+			with each thread. When a buffer becomes full, this event is triggered on the
+			thread which filled its buffer. Once listeners have been notified, the buffer is reset
+			any pointers into the buffer become invalid.
+
+			When classes are unloaded, or when a thread is terminated, any unprocessed
+			data remaining in a thread's buffer is discarded without triggering this event.
+
+			If this event is unhooked, the profiling buffers remain in place, and profiling will
+			resume where it left off if the event is re-hooked.
+
+			Listeners should not release VM access during this event, as this may allow additional
+			bytecodes to run.
+
+			Records in the buffer all start with a (possibly misaligned) pointer to the bytecode
+			which was profiled. Listeners must inspect the bytecode to determine what follows:
+				lookupswitch:
+					4 bytes: the operand (i.e. the key) to the lookupswitch
+				tableswitch: 
+					4 bytes: the operand (i.e. the index) to the tableswitch
+				ifacmpeq,ifacmpne,ifeq,ifge,ifgt,ifle,iflt,ifne,ificmpeq,ificmpne,ificmpge,ificmpgt,ificmple,ificmplt,ifnull,ifnonnull:
+					1 byte: 1 for 'branch taken', 0 for 'branch not taken'
+				invokevirtual,invokeinterface,invokeinterface2:
+					4 or 8 bytes: a pointer to the class of the receiver. No record is generated if the receiver is null.
+				checkcast,instanceof:
+					4 or 8 bytes: a pointer to the class of the instance being cast. No record is generated if the instance is null.
+
+			Since records point directly at bytecodes, this event disables itself silently while breakpointed methods 
+			are in use, as records may point into breakpointed methods which no longer exist. The event may still be
+			hooked, but will not be triggered.
+
+			This event should be regarded as a 'best-effort' contract with the interpreter. The interpreter
+			will attempt to report all data, but it is permitted to discard data, or stop collecting with no
+			notice.
+		</description>
+		<condition>defined (J9VM_INTERP_PROFILING_BYTECODES)</condition>
+		<trace-sampling intervals="101" />
+		<struct>J9VMProfilingBytecodeBufferFullEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="const U_8*" name="bufferStart" description="the start of the profiling data" />
+		<data type="UDATA" name="bufferSize" description="the number of bytes in the profiling data" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASS_PREINITIALIZE</name>
+		<description>
+			Triggered just before a class is initialized.
+			The current thread has VM access.
+		</description>
+		<struct>J9VMClassPreinitializeEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Class*" name="clazz" description="the class which is about to be initialized" />
+		<data type="UDATA" name="failed" return="true" description="set to TRUE to indicate failure" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASS_INITIALIZE</name>
+		<description>
+			Triggered just after a class is succesfully initialized.
+			The current thread has VM access.
+		</description>
+		<struct>J9VMClassInitializeEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Class*" name="clazz" description="the class which was initialized" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASS_INITIALIZE_FAILED</name>
+		<description>
+			Triggered just after a class is succesfully initialized.
+			The current thread has VM access, and an exception is pending.
+		</description>
+		<struct>J9VMClassInitializeFailedEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Class*" name="clazz" description="the class which failed to initialize" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_CLASS_LOADER_INITIALIZED</name>
+		<description>
+			Triggered just after a classloader is succesfully initialized.
+			The current thread has VM access.
+		</description>
+		<struct>J9VMClassLoaderInitializedEvent</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="the thread that just initialized this classloader" />
+		<data type="struct J9ClassLoader*" name="classLoader" description="the classloader which was just initialized" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_LOOKUP_JNI_ID</name>
+		<description>
+			Triggered whenever a GetFieldID, GetStaticFieldID, GetMethodID, or GetStaticMethodID call is about to return
+		</description>
+		<struct>J9VMLookupJNIIDEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="jclass" name="clazz" description="a JNI ref to the class being searched" />
+		<data type="const char *" name="name" description="name of the field or method being searched for" />
+		<data type="const char *" name="signature" description="signature of the field or method being searched for" />
+		<data type="U_8" name="isStatic" description="zero for an instance field or method, non zero for a static member" />
+		<data type="U_8" name="isField" description="zero for a method, non zero for a field" />
+		<data type="void *" name="id" description="the ID which was found. NULL if the lookup failed" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_FIND_LOCALLY_DEFINED_CLASS</name>
+		<description>
+			Triggered when a classloader is looking for a locally defined class. It looks first in its local cache, 
+			then this hook allows a ROMClass to be provided before the classloader looks on disk.
+		</description>
+		<struct>J9VMFindLocalClassEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9ClassLoader*" name="classloader" description="caller classloader" />
+		<data type="struct J9Module*" name="j9module" description="the module the class belongs to" />
+		<data type="const char*" name="className" description="name of class to find" />
+		<data type="UDATA" name="classNameLength" description="length of the className param" />
+		<data type="struct J9ClassPathEntry*" name="classPathEntries" description="caller classloader classpath" />
+		<data type="UDATA" name="entryCount" description="number of classpath entries" />
+		<data type="IDATA" name="confirmedCount" description="number of confirmed classpath entries" />
+		<data type="const struct J9UTF8*" name="partition" description="optional partition for relocating the class" />
+		<data type="UDATA" name="doPreventFind" description="prevent the class from being found" />
+		<data type="UDATA" name="doPreventStore" description="prevent the class from being stored in a subsequent store call" />
+		<data type="IDATA*" name="foundAtIndex" description="the index in the caller classpath at which a returned class was found" />
+		<data type="struct J9ROMClass*" return="true" name="result" description="The location of the ROMClass found" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_FRAME_POP</name>
+		<description>
+			Triggered every time a method is about to return. Hooking this event may have a significant performance impact.
+			Even reserving this event will cause the VM and JIT to run with reduced optimization.
+			When this event is reported, the current thread has VM access.
+			This event is reported after J9HOOK_VM_METHOD_RETURN if both are hooked.
+		</description>
+		<struct>J9VMFramePopEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name="method" description="method being returned from" />
+		<data type="UDATA" name="poppedByException" description="did this method exit due to an exception throw?" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_INTERNAL_CLASS_LOAD</name>
+		<description>
+				Triggered immediately after a RAM class has been created for a newly loaded class. 
+				Static final fields have been initialized to their default values (zero).
+				VM access and the class table mutex are both owned by the current thread, so the class
+				is not yet visible to other threads. It is NOT safe to execute Java code from handlers of this 
+				hook.
+		</description>
+		<struct>J9VMInternalClassLoadEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Class*" name="clazz" description="the class which was just loaded" />
+		<data type="UDATA" name="failed" return="true" description="set to TRUE to indicate failure" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_POP_FRAMES_INTERRUPT</name>
+		<description>
+				Triggered when control is returned to a java method and publicFlagsPopFramesInterrupt
+				is set in the current thread's publicFlags.  Set the "executeAsyncCheck" field to FALSE to execute
+				the current bytecode upon return, or TRUE to execute another async check.
+		</description>
+		<condition>defined (J9VM_INTERP_HOT_CODE_REPLACEMENT)</condition>
+		<struct>J9VMPopFramesInterruptEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="UDATA" return="true" name="executeAsyncCheck" description="set to FALSE to execute current bytecode, TRUE to execute async check" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_LOOKUP_NATIVE_ADDRESS</name>
+		<description>
+				Triggered when a native cannot be bound in using the ClassLoader's native libraries.
+				VM access is not held during this event.
+		</description>
+		<condition>defined (J9VM_OPT_JVMTI)</condition>
+		<struct>J9VMLookupNativeAddressEvent</struct>
+		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
+		<data type="struct J9Method *" name="nativeMethod" description="native method being bound" />
+		<data type="char *" name="longJNI" description="long JNI name" />
+		<data type="char *" name="shortJNI" description="short JNI name" />
+		<data type="UDATA" name="functionArgCount" description="total arg count for native function" />
+		<data type="lookupNativeAddressCallback" name="callback" description="call with each shared library handle to search" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_FIND_NATIVE_TO_REGISTER</name>
+		<description>
+				Triggered when RegisterNatives finds a matching method which is not native.
+				This hook has the opportunity to find a different method to which to bind.
+		</description>
+		<condition>defined (J9VM_OPT_JVMTI)</condition>
+		<struct>J9VMFindNativeToRegisterEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" return="true" name="method" description="the method found by RegisterNatives" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_JNI_NATIVE_BIND</name>
+		<description>
+				Triggered when a JNI native is about to be bound.
+				nativeMethodAddress may be modified by the listener.
+		</description>
+		<condition>defined (J9VM_OPT_JVMTI)</condition>
+		<struct>J9VMJNINativeBindEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method *" name="nativeMethod" description="native method being bound" />
+		<data type="void *" return="true" name="nativeMethodAddress" description="the address of the JNI code implementing the native" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_JNI_NATIVE_REGISTERED</name>
+		<description>
+				Triggered when a JNI native is about to be bound (or rebound) by JNI RegisterNatives.
+				The current thread has exclusive VM access.  This hook is called before the new
+				address is written into the method.
+		</description>
+		<struct>J9VMJNINativeRegisteredEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method *" name="nativeMethod" description="native method being bound" />
+		<data type="void *" name="nativeMethodAddress" description="the address of the JNI code implementing the native" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_INITIALIZE_REQUIRED_CLASSES_DONE</name>
+		<description>
+				Triggered when initializeRequiredClasses has completed.  Hook will be invoked
+				_without_ VM access.
+		</description>
+		<struct>J9VMInitializeRequiredClassesDoneEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="IDATA" return="true" name="continueInitialization" description="Should initialization continue" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_INITIALIZE_TENANTDATA_DONE</name>
+		<description>
+				Triggered when the initialization to tenant data has completed.
+				VMAccess will be held when this hook is called
+		</description>
+		<struct>J9VMInitializeTenantDataDoneEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_DYNAMIC_CODE_LOAD</name>
+		<description>
+			Triggered when dynamic code is generated (e.g. JIT compiles a method). Multiple events may be generated for
+			the same method.  If method is NULL, name must be non-NULL.  If method is non-NULL, then name is optional.
+			The name string does not persist beyond the reporting of this event - it must be copied by the listener if desired.
+
+			This hook may be called with or without VM access, may be called with exclusive VM access, and may be called
+			while internal VM mutexxes are held.
+		</description>
+		<condition>defined (J9VM_INTERP_NATIVE_SUPPORT)</condition>
+		<struct>J9DynamicCodeLoadEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name="method" description="method associated with the region (may be NULL)" />
+		<data type="void *" name="startPC" description="start of dynamic region" />
+		<data type="UDATA" name="length" description="length of dynamic region" />
+		<data type="const char *" name="name" description="name of the region" />
+		<data type="void *" name="metaData" description="pointer to JIT metadata (may be NULL)" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_DYNAMIC_CODE_UNLOAD</name>
+		<description>
+			Triggered when dynamic code is unloaded.
+
+			This hook may be called with or without VM access, may be called with exclusive VM access, and may be called
+			while internal VM mutexxes are held.
+		</description>
+		<condition>defined (J9VM_INTERP_NATIVE_SUPPORT)</condition>
+		<struct>J9DynamicCodeUnloadEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Method*" name="method" description="method associated with the region (may be NULL)" />
+		<data type="void *" name="startPC" description="start of dynamic region" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASS_LOADER_UNLOAD</name>
+		<description>
+			Triggered when a classloader is about to be unloaded.
+			This event will be triggered for each loader which is to be unloaded
+			in the current GC cycle before any of them, or their classes, are actually freed.
+			J9HOOK_VM_CLASSES_UNLOAD will have been triggered before this event.
+		</description>
+		<condition>defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)</condition>
+		<struct>J9VMClassLoaderUnloadEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9ClassLoader*" name="classLoader" description="ClassLoader instance about to be unloaded" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_CLASS_LOADERS_UNLOAD</name>
+		<description>
+			Triggered when a set of class loaders is about to be unloaded.
+		</description>
+		<condition>defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)</condition>
+		<struct>J9VMClassLoadersUnloadEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9ClassLoader*" name="classLoadersToUnload" description="head of a linked list, connected through the unloadLink field and terminated by NULL, of the class loaders about the be unloaded." />
+	</event>	
+
+	<event>
+		<name>J9HOOK_VM_CLASS_UNLOAD</name>
+		<description>
+			Triggered when a class is about to be unloaded.
+			This event will be triggered for each class which is to be unloaded
+			in the current GC cycle before any of them are actually freed.
+			J9HOOK_VM_CLASSES_UNLOAD will be triggered after this event has
+			been triggered for all of the unloading classes.
+		</description>
+		<condition>defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)</condition>
+		<struct>J9VMClassUnloadEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9Class*" name="clazz" description="class about to be unloaded" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASSES_UNLOAD</name>
+		<description>
+			Triggered when a set of classes is about to be unloaded.
+			This event will be triggered once before any of the classes including anonymous are unloaded
+			in the current GC cycle, after J9HOOK_VM_CLASS_UNLOAD has been
+			triggered for each of the unloading classes.  Partial clean up may have been
+			performed for the unloading classes prior to this event.
+		</description>
+		<condition>defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)</condition>
+		<struct>J9VMClassesUnloadEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="UDATA" name="classUnloadCount" description="count of classes about to be unloaded" />
+		<data type="struct J9Class*" name="classesToUnload" description="head of a linked list, connected through the gcLink field and terminated by NULL, of the classes about the be unloaded. Listeners must treat the linked list as read only, i.e. they may not add or remove classes" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_ANON_CLASSES_UNLOAD</name>
+		<description>
+			Triggered when a set of anonymous classes is about to be unloaded.
+			This event will be triggered once before any of the anonymous classes are unloaded
+			in the current GC cycle, after J9HOOK_VM_CLASS_UNLOAD has been
+			triggered for each of the unloading classes.  Partial clean up may have been
+			performed for the unloading classes prior to this event.
+		</description>
+		<condition>defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)</condition>
+		<struct>J9VMAnonymousClassesUnloadEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="UDATA" name="anonymousClassUnloadCount" description="count of classes about to be unloaded" />
+		<data type="struct J9Class*" name="anonymousClassesToUnload" description="head of a linked list, connected through the gcLink field and terminated by NULL, of the classes about the be unloaded. Listeners must treat the linked list as read only, i.e. they may not add or remove classes" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_STORE_COMPILED_METHOD</name>
+		<description>
+			Triggered when a method has been compiled.
+		</description>
+		<struct>J9VMStoreCompiledMethodEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9ROMMethod*" name="romMethod" description="rom method" />
+		<data type="const U_8*" name="dataStart" description="data start" />
+		<data type="UDATA" name="dataSize" description="data size" />
+		<data type="const U_8*" name="codeStart" description="code start" />
+		<data type="UDATA" name="codeSize" description="code size" />
+		<data type="const U_8*" return="true" name="result" description="result" />
+	</event>
+
+
+	<event>
+		<name>J9HOOK_VM_FIND_COMPILED_METHOD</name>
+		<description>
+			Triggered when a compiled method is retrieved.
+		</description>
+		<struct>J9VMFindCompiledMethodEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9ROMMethod*" name="romMethod" description="rom method" />
+		<data type="const U_8*" return="true" name="result" description="result" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_DUMP_START</name>
+		<description>Triggered whenever a dump starts</description>
+		<struct>J9VMVmDumpStartEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="char *" name="label" description="the dump label" />
+		<data type="char *" name="detail" description="the details of the dump" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_DUMP_END</name>
+		<description>Triggered whenever a dump ends</description>
+		<struct>J9VMVmDumpEndEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="char *" name="label" description="the dump label" />
+		<data type="char *" name="detail" description="the details of the dump" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_RESOURCE_EXHAUSTED</name>
+		<description>Triggered whenever a VM resource such as memory or threads is exhausted</description>
+		<struct>J9VMVmResourceExhaustedEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="UDATA" name="resourceTypes" description="bitfield specifying types of exhausted resources" />
+		<data type="const char *" name="description" description="message containing a verbose description of the reason we generate this event" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_LOAD_JNI_LIBRARY</name>
+		<description>
+			Triggered during symbolic resolution of JNI library (e.g. System.loadLibrary('zz')) this
+			hook allows alternative resolution of the name (the 'zz' above).  The nativeLibrary passed
+			to the hook will have default resolution functions, which may be overridden in the hook. 
+	
+			Callee must fill in the result field to indicate what action was taken:		
+				J9NATIVE_LIBRARY_LOAD_OK	 	 	= The library was loaded successfully.
+				J9NATIVE_LIBRARY_LOAD_NOT_FOUND  	= The library was not found (non-fatal).
+				J9NATIVE_LIBRARY_LOAD_ERROR 	 	= The library failed to load (fatal), errorBuf has details.
+				J9NATIVE_LIBRARY_LOAD_INIT_ERROR 	= JNI_OnLoad() failed (fatal), errorBuf has details.
+				J9NATIVE_LIBRARY_LOAD_GENERIC_ERROR = A generic error occurred, errorBuf has details.				
+		</description>
+		<struct>J9VMLoadJNILibraryEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="struct J9ClassLoader* " name="classLoader" description="ClassLoader being scanned" />
+		<data type="char *" name="logicalName" description="Logical name of the library" />
+		<data type="struct J9NativeLibrary *" name="nativeLibrary" description="Structure with name of the library" />
+		<data type="UDATA" name="result" return="true" description="The result of the lookup." />
+		<data type="char *" name="errorBuf" description="Buffer where error information is stored." />
+		<data type="UDATA" name="bufLen" description="Length of the error buffer." />
+		<data type="UDATA" name="openFlags" description="Shared library open flags." />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_SERIALIZE_SHARED_CACHE</name>
+		<description>Trigger to request the shared cache be serialized.</description>
+		<struct>J9VMSerializeSharedCacheEvent</struct>
+		<data type="struct J9JavaVM*" name="vm" description="the Java VM" />
+		<data type="IDATA" return="true" name="result" description="result" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_CLASS_LOADER_CREATED</name>
+		<description>This event is triggered when a classloader is created</description>
+		<struct>J9VMClassloaderCreatedEvent</struct>
+		<data type="struct J9JavaVM*" name="vm" description="the Java VM" />
+		<data type="struct J9ClassLoader*" name="classLoader" description="ClassLoader that was created" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_CLASS_LOADER_DESTROY</name>
+		<description>This event is triggered when a classloader is destroyed</description>
+		<struct>J9VMClassloaderDestroyEvent</struct>
+		<data type="struct J9JavaVM*" name="vm" description="the Java VM" />
+		<data type="struct J9ClassLoader*" name="classLoader" description="ClassLoader that was destroyed" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_CLASS_LOADER_CLASSPATH_ENTRY_ADDED</name>
+		<description>This event is triggered when a class path entry is added to a ClassLoader for which
+				     the classpath was already initialized </description>
+		<struct>J9VMClassloaderClassPathEntryAddedEvent</struct>
+		<data type="struct J9JavaVM*" name="vm" description="the Java VM" />
+		<data type="struct J9ClassLoader*" name="classLoader" description="ClassLoader to which entry is being added" />
+		<data type="struct J9ClassPathEntry*" name="classPathEntry" description="class path entry being added" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_CLASS_LOADER_CLASSPATH_ENTRIES_INITIALIZED</name>
+		<description>This event is triggered when a the initial classpath for a classloader is ready </description>
+		<struct>J9VMClassloaderClassPathEntriesInitializedEvent</struct>
+		<data type="struct J9JavaVM*" name="vm" description="the Java VM" />
+		<data type="struct J9ClassLoader*" name="classLoader" description="ClassLoader for which the initalization is complete" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_FIND_LOCALLY_DEFINED_CLASS_FROM_FILESYSTEM</name>
+		<description>
+			Triggered when a classloader is looking for a locally defined class using its classpath.  This occurs after 
+			lookups to the shared cache or other methods that do not use the files specified by the classpath.  If the
+			hook method is run it should update searchComplete to 1 regardless of wether or not the class was found.  In this
+			case the vm will not search for the class itself.
+		</description>
+		<struct>J9VMFindLocalClassFromFilesystemEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="const char*" name="className" description="name of class to find" />
+		<data type="UDATA" name="classNameLength" description="length of the className param" />
+		<data type="struct J9ClassLoader*" name="classloader" description="caller classloader" />
+		<data type="UDATA" name="flags" description="flags that control how class is loaded" />
+		<data type="IDATA*" name="classFound" description="returns non zero if class was found" />
+		<data type="IDATA*" return="true" name="result" description="returns non zero if the hook ran" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_SCAR_PRECONFIGURE</name>
+		<description>
+			Triggered when we are about to preconfigure for the sidecar class library.  If returnValue
+			is still null on return then the normal preconfigure is completed
+		</description>
+		<struct>J9VMScarPreconfigureEvent</struct>
+		<data type="struct J9JavaVM*" name="vm" description="the Java VM" />
+		<data type="I_32*" name="returnValue" description="returnValue for the remote execution" />
+		<data type="IDATA*" return="true" name="result" description="returns non zero if the hook ran" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_OBJECT_ALLOCATE_WITHIN_THRESHOLD</name>
+		<description>
+			Triggered whenever an object is allocated whose size is within the range provided by lowThreshold and highThreshold (inclusive).
+			The current thread has VM access, but a handler may safely release and reacquire access.  If VM access is released,
+			the listener is responsible for keeping the object up-to-date.
+		</description>
+		<struct>J9VMAllocationThresholdEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="j9object_t" name="object" return="true" description="The object that was just allocated" />
+		<data type="UDATA" name="size" description="The size of the object that was allocated" />
+		<data type="UDATA" name="lowThreshold" description="The lower bound of the allocation threshold range" />
+		<data type="UDATA" name="highThreshold" description="The upper bound of the allocation threshold range" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_SLEEP</name>
+		<description>
+			Triggered when a thread is about to sleep.
+		</description>
+		<struct>J9VMSleepEvent</struct>
+		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
+		<data type="I_64" name="millis" description="milliseconds to sleep for" />
+		<data type="IDATA" name="nanos" description="nanoseconds to sleep for" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_SLEPT</name>
+		<description>
+			Triggered when a thread returns from a sleep
+		</description>
+		<struct>J9VMSleptEvent</struct>
+		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_CORRUPT_CACHE</name>
+		<description>
+			Triggered when VM finds the shared class cache to be corrupt
+		</description>
+		<struct>J9VMCorruptCache</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASSES_REDEFINED</name>
+		<description>
+			Triggered after classes are successfully redefined.
+			Exclusive VM access is held by the current thread.
+		</description>
+		<struct>J9VMClassesRedefinedEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASS_VERIFICATION_START</name>
+		<description>
+			Triggered before starting class verification.
+		</description>
+		<struct>J9VMClassVerificationStartEvent</struct>
+		<data type="struct J9BytecodeVerificationData*" name="verifyData" description="verification context" />
+		<data type="BOOLEAN" name="newFormat" description="verification with new format(stack map frame)" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASS_VERIFICATION_FALLBACK</name>
+		<description>
+			Triggered before starting method verification.
+		</description>
+		<struct>J9VMMethodVerificationEndEvent</struct>
+		<data type="struct J9BytecodeVerificationData*" name="verifyData" description="verification context" />
+		<data type="BOOLEAN" name="newFormat" description="verification with new format(stack map frame)" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_CLASS_VERIFICATION_END</name>
+		<description>
+			Triggered after completed class verification.
+		</description>
+		<struct>J9VMClassVerificationEndEvent</struct>
+		<data type="struct J9BytecodeVerificationData*" name="verifyData" description="verification context" />
+		<data type="BOOLEAN" name="newFormat" description="verification with new format(stack map frame)" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_METHOD_VERIFICATION_START</name>
+		<description>
+			Triggered before starting method verification.
+		</description>
+		<struct>J9VMMethodVerificationStartEvent</struct>
+		<data type="struct J9BytecodeVerificationData*" name="verifyData" description="verification context" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_STACKMAPFRAME_VERIFICATION</name>
+		<description>
+			Triggered after completed each stackmap frame verification.
+		</description>
+		<struct>J9VMStackMapFrameVerificationEvent</struct>
+		<data type="struct J9BytecodeVerificationData*" name="verifyData" description="verification context" />
+	</event>
+
+	<event>
+		<name>J9HOOK_JAVA_BASE_LOADED</name>
+		<description>Triggered once enough initialization has taken place to use modules</description>
+		<once />
+		<struct>J9VMModuleStartEvent</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
+	</event>
+	
+	<event>
+		<name>J9HOOK_VM_DEEP_IDLE_STATE_ENTERED</name>
+		<description>
+			Triggered when JVM entered deep idle state.
+		</description>
+		<struct>J9VMDeepIdleStateEnteredEvent</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
+		<data type="U_32" name="level" description="the idle state level" />
+	</event>
+
+	<event>
+		<name>J9HOOK_VM_RUNTIME_STATE_CHANGED</name>
+		<description>
+			Triggered when JVM's runtime state is changed
+		</description>
+		<struct>J9VMRuntimeStateChanged</struct>
+		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
+		<data type="U_32" name="state" description="the VM runtime state" />
+	</event>
+</interface>
+

@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+	<exports group="raw_api">
+		<export name="ffi_raw_call" />
+		<export name="ffi_ptrarray_to_raw" />
+	</exports>
+
+	<artifact type="shared" name="ffi" bundle="jvm" loadgroup="">
+		<options>
+			<option name="isRequired" />
+			<option name="prototypeHeaderFileNames" data="ffi.h" />
+			<option name="nonIBMCopyright" data="libFFI foreign function interface library Copyright (C) 2011 Anthony Green" />
+			<option name="dllDescription" data="libFFI" />
+		</options>
+		<phase>core</phase>
+		<exports>
+			<group name="raw_api">
+				<exclude-if condition="spec.win_x86-64.*" />
+			</group>
+			<export name="ffi_prep_cif" />
+			<export name="ffi_call" />
+			<export name="ffi_type_void" />
+			<export name="ffi_type_uint8" />
+			<export name="ffi_type_sint8" />
+			<export name="ffi_type_sint16" />
+			<export name="ffi_type_uint16" />
+			<export name="ffi_type_sint32" />
+			<export name="ffi_type_sint64" />
+			<export name="ffi_type_float" />
+			<export name="ffi_type_double" />
+			<export name="ffi_type_pointer" />
+		</exports>
+		<includes>
+			<include path="j9include" />
+		</includes>
+
+		<makefilestubs>
+			<makefilestub data="UMA_COPYRIGHT_FILE=ffi_copyright" />
+			<makefilestub data="UMA_OBJECTS:= $(filter-out dlmalloc$(UMA_DOT_O), $(UMA_OBJECTS))" />
+
+			<!-- override makefile default rule for building .S files -->
+			<makefilestub data="COMPILE.S=$(CC) $(addprefix -Xassembler ,$(ASFLAGS)) $(CPPFLAGS) $(TARGET_MACH) -c">
+				<include-if condition="spec.linux.*" />
+				<exclude-if condition="spec.flags.arch_power and not spec.flags.env_gcc or spec.flags.arch_s390" />
+			</makefilestub>
+
+			<!-- override makefile default rule for building .S files on zLinux 64 bit-->
+			<makefilestub data="sysv.o : ASFLAGS=-z noexecstack -march=z9-109">
+				<include-if condition="spec.linux_390-64.*" />
+			</makefilestub>
+
+			<!-- override makefile default rule for building .S files on zLinux 31 bit-->
+			<makefilestub data="sysv.o : ASFLAGS=-z noexecstack -mzarch -march=z9-109 -m31">
+				<include-if condition="spec.linux_390" />
+			</makefilestub>
+
+			<!-- Build .S files on AIX -->
+			<makefilestub data="TARGET_MACH=-q64">
+				<include-if condition="spec.aix_ppc-64.*" />
+			</makefilestub>
+			<makefilestub data="TARGET_MACH=-q32">
+				<include-if condition="spec.aix_ppc(_.*)?" />
+			</makefilestub>
+			<makefilestub data='COMPILE.S=$(CC) -qasm_as="$(AS) $(ASFLAGS)" $(TARGET_MACH) $(CPPFLAGS) -c'>
+				<include-if condition="spec.aix_ppc.*" />
+			</makefilestub>
+
+			<!-- Build .S files on z/OS -->
+			<makefilestub data='COMPILE.S=as -mgoff'>
+				<include-if condition="spec.zos_390.*" />
+			</makefilestub>
+
+			<!-- Build .S files on Windows -->
+			<makefilestub data="include winassembly.mk">
+				<include-if condition="spec.win.*" />
+			</makefilestub>
+
+			<!-- identify directory of architecture-specific ffitarget.h -->
+			<makefilestub data="FFI_TARGET_DIR := arm">
+				<include-if condition="spec.linux_arm.*" />
+			</makefilestub>
+			<makefilestub data="FFI_TARGET_DIR := powerpc">
+				<include-if condition="spec.flags.arch_power" />
+			</makefilestub>
+			<makefilestub data="FFI_TARGET_DIR := s390">
+				<include-if condition="spec.linux_390.*" />
+				<include-if condition="spec.linux_ztpf.*" />
+			</makefilestub>
+			<makefilestub data="FFI_TARGET_DIR := x86">
+				<include-if condition="spec.flags.arch_x86" />
+			</makefilestub>
+			<makefilestub data="FFI_TARGET_DIR := z">
+				<include-if condition="spec.zos_390.*" />
+			</makefilestub>
+
+			<!-- identify platform-specific preconf subdirectory -->
+			<makefilestub data="FFI_PRECONF_DIR := ap32">
+				<include-if condition="spec.aix_ppc.* and not spec.flags.J9VM_ENV_DATA64" />
+			</makefilestub>
+			<makefilestub data="FFI_PRECONF_DIR := ap64">
+				<include-if condition="spec.aix_ppc.* and spec.flags.J9VM_ENV_DATA64" />
+			</makefilestub>
+
+			<makefilestub data="FFI_PRECONF_DIR := arm">
+				<include-if condition="spec.linux_arm.*" />
+			</makefilestub>
+
+			<makefilestub data="FFI_PRECONF_DIR := mz31">
+				<include-if condition="spec.zos_390.* and not spec.flags.J9VM_ENV_DATA64" />
+			</makefilestub>
+			<makefilestub data="FFI_PRECONF_DIR := mz64">
+				<include-if condition="spec.zos_390.* and spec.flags.J9VM_ENV_DATA64" />
+			</makefilestub>
+
+			<makefilestub data="FFI_PRECONF_DIR := wa">
+				<include-if condition="spec.win_x86.* and spec.flags.J9VM_ENV_DATA64" />
+			</makefilestub>
+			<makefilestub data="FFI_PRECONF_DIR := wi">
+				<include-if condition="spec.win_x86.* and not spec.flags.J9VM_ENV_DATA64" />
+			</makefilestub>
+
+			<makefilestub data="FFI_PRECONF_DIR := xa">
+				<include-if condition="spec.linux_x86.* and spec.flags.J9VM_ENV_DATA64" />
+			</makefilestub>
+			<makefilestub data="FFI_PRECONF_DIR := xi">
+				<include-if condition="spec.linux_x86.* and not spec.flags.J9VM_ENV_DATA64" />
+			</makefilestub>
+
+			<makefilestub data="FFI_PRECONF_DIR := xl64">
+				<include-if condition="spec.linux_ppc.* and spec.flags.J9VM_ENV_DATA64 and spec.flags.env_littleEndian" />
+			</makefilestub>
+
+			<makefilestub data="FFI_PRECONF_DIR := xp32">
+				<include-if condition="spec.linux_ppc.* and not spec.flags.J9VM_ENV_DATA64 and not spec.flags.env_littleEndian" />
+			</makefilestub>
+			<makefilestub data="FFI_PRECONF_DIR := xp64">
+				<include-if condition="spec.linux_ppc.* and spec.flags.J9VM_ENV_DATA64 and not spec.flags.env_littleEndian" />
+			</makefilestub>
+
+			<makefilestub data="FFI_PRECONF_DIR := xz31">
+				<include-if condition="spec.linux_390.* and not spec.flags.J9VM_ENV_DATA64" />
+			</makefilestub>
+			<makefilestub data="FFI_PRECONF_DIR := xz64">
+				<include-if condition="spec.linux_390.* and spec.flags.J9VM_ENV_DATA64" />
+				<include-if condition="spec.linux_ztpf.*" />
+			</makefilestub>
+
+			<!-- ensure that 'all' is the default target -->
+			<makefilestub data="all :" />
+			<makefilestub data="FFI_HEADERS := $(UMA_PATH_TO_ROOT)libffi/$(FFI_TARGET_DIR)/ffitarget.h $(wildcard $(UMA_PATH_TO_ROOT)libffi/preconf/$(FFI_PRECONF_DIR)/*.h)" />
+			<makefilestub data="FFI_COPY_template = $(UMA_PATH_TO_ROOT)include/$(notdir $(strip $1)) : $1 ; cp -f $$&lt; $$@" />
+			<makefilestub data="$(foreach H,$(FFI_HEADERS),$(eval $(call FFI_COPY_template,$H)))" />
+			<makefilestub data="UMA_OBJECTS_PREREQS += $(addprefix $(UMA_PATH_TO_ROOT)include/,$(notdir $(FFI_HEADERS)))" />
+		</makefilestubs>
+		<vpaths>
+			<!-- vpaths for PPC -->
+			<vpath pattern="ffi.c" path="powerpc" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_ppc.*" />
+			</vpath>
+			<vpath pattern="ppc_closure.S" path="powerpc" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_ppc.*" />
+			</vpath>
+			<vpath pattern="sysv.S" path="powerpc" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_ppc.*" />
+			</vpath>
+			<vpath pattern="linux64.S" path="powerpc" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_ppc.*" />
+			</vpath>
+			<vpath pattern="linux64_closure.S" path="powerpc" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_ppc.*" />
+			</vpath>
+			<vpath pattern="ffi_linux64.c" path="powerpc" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_ppc.*" />
+			</vpath>
+			<vpath pattern="ffi_sysv.c" path="powerpc" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_ppc.*" />
+			</vpath>
+			<vpath pattern="ffi_darwin.c" path="powerpc" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.aix.*" />
+			</vpath>
+			<vpath pattern="aix.S" path="powerpc" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.aix.*" />
+			</vpath>
+			<vpath pattern="aix_closure.S" path="powerpc" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.aix.*" />
+			</vpath>
+
+			<!-- vpaths for arm -->
+			<vpath pattern="ffi.c" path="arm" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_arm.*" />
+			</vpath>
+			<vpath pattern="sysv.S" path="arm" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_arm.*" />
+			</vpath>
+			<vpath pattern="trampoline.S" path="arm" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_arm.*" />
+			</vpath>
+
+			<!-- vpaths for x86 -->
+			<vpath pattern="ffi64.c" path="x86" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.flags.arch_x86 and spec.flags.J9VM_ENV_DATA64" />
+			</vpath>
+			<vpath pattern="unix64.S" path="x86" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_x86-64.*" />
+			</vpath>
+			<vpath pattern="ffi.c" path="x86" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.flags.arch_x86" />
+			</vpath>
+			<vpath pattern="sysv.S" path="x86" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_x86.*" />
+			</vpath>
+			<!-- Yes, we need to include this even on linux -->
+			<vpath pattern="win32.S" path="x86" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.flags.arch_x86 and not spec.flags.J9VM_ENV_DATA64" />
+			</vpath>
+			<vpath pattern="win64.S" path="x86" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.win_x86-64.*" />
+			</vpath>
+
+			<!-- vpaths for s390 -->
+			<vpath pattern="ffi.c" path="s390" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_390.*" />
+			</vpath>
+			<vpath pattern="sysv.S" path="s390" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.linux_390.*" />
+				<include-if condition="spec.linux_ztpf.*" />
+			</vpath>
+			<vpath pattern="ffi.c" path="z" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.zos_390([^-].*)?" />
+			</vpath>
+			<vpath pattern="sysvz.S" path="z" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.zos_390([^-].*)?" />
+			</vpath>
+			<vpath pattern="closure_sysvz.S" path="z" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.zos_390([^-].*)?" />
+			</vpath>
+			<vpath pattern="ffi64.c" path="z" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.zos_390-64.*" />
+			</vpath>
+			<vpath pattern="sysvz64.S" path="z" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.zos_390-64.*" />
+			</vpath>
+			<vpath pattern="closure_sysvz64.S" path="z" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.zos_390-64.*" />
+			</vpath>
+		</vpaths>
+	</artifact>
+
+</module>

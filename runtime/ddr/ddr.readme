@@ -1,0 +1,70 @@
+###############################################################################
+# Copyright (c) 2010, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+###############################################################################
+
+Notes on DDR Module
+
+DDR (Direct Dump Reader) is a Java implementation of the DTFJ 
+(Diagnostic Tooling Framework for Java) API. It works by walking 
+the J9 structures inside a dump to extract VM and application state.
+
+To walk the J9 structures, DDR needs to know the structure shapes 
+(i.e. the names, types and offsets of all fields). This data (known as
+ the DDR blob) is held in a file called j9ddr.dat, which is loaded
+  into memory at JVM start-up (see the initializeDDR function in 
+  vm/jvminit.c for details). By loading the data into memory at 
+  runtime, any core files taken will contain that data.
+
+j9ddr.dat is produced by an executable called j9ddrgen, which is 
+built from the ddr and gc_ddr directories.
+
+j9ddrgen is composed of tables describing J9 structures. A few 
+(e.g. jitflagsddr.c) contain pseudo structures that are maintained
+manually. The bulk of the tables for J9 C structures are generated 
+by parsing the C headers. The generated blob C files are generated
+in the buildtools phase and have a name of the form 
+<something>blob.c (e.g. vmddrblob.c). The generation mechanism is 
+controlled by a file called <something>structs.properties.
+
+Each property file contains the following information
+
+* Which headers should be parsed for structures.
+* How the constants (numeric pre-processor macros) should be handled.
+* Any field type overrides (necessary for fields like J9SRPs, 
+where the C code lacks information about the field type).
+
+You can run the generation phase on Linux by running make -f 
+buildtools.mk ddr. On all other platforms, this will just delete the 
+generated files (so the next time the ddr module is built, the stubs
+will be used).
+
+NOTE: If you try to build the ddr directory without running the 
+generation step first, stub tables will be included. The stub files 
+are called <something>blob.c.stub - and will be copied to 
+<something>blob.c if the blob.c cannot be found.
+
+gc_ddr contains tables for the GC structures. Currently these are
+ manually maintained, but may one day be parsed. Taking offsets
+of private fields inside GC structures means the DDR function must 
+be a friend of each class. This is accomplished by taking a copy
+of the GC headers, and using a sed script to inject the necessary 
+friend statement into each class.
+

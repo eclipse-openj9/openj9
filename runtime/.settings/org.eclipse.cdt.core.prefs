@@ -1,0 +1,6 @@
+#Tue Oct 06 18:18:23 BST 2009
+eclipse.preferences.version=1
+indexer/indexAllFiles=true
+indexer/indexerId=org.eclipse.cdt.core.nullindexer
+instance/org.eclipse.core.net/org.eclipse.core.net.hasMigrated=true
+indexerId=org.eclipse.cdt.core.fastIndexer

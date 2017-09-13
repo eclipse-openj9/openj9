@@ -1,0 +1,371 @@
+//*******************************************************************************
+// Copyright (c) 2006, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//******************************************************************************
+
+Executable=j9bcu
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_BCU_VMInitStages_Event1 Obsolete Overhead=1 Level=3 Template="Trace engine initialized for module j9dyn"
+
+TraceEntry=Trc_BCU_internalDefineClass_Entry Overhead=1 Level=3 Template="BCU internalDefineClass: classnamePtr=%p, classname=%.*s"
+TraceExit=Trc_BCU_internalDefineClass_Exit Overhead=1 Level=3 Template="BCU internalDefineClass: classnamePtr=%p, result=%p"
+TraceEntry=Trc_BCU_createRomClassEndian_Entry Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: searchFilename=%s (note - this value does not always get set)"
+TraceExit=Trc_BCU_createRomClassEndian_Exit Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: successfully created ROMClass. Returning with error=%d"
+TraceEntry=Trc_BCU_j9bcutil_readClassFileBytes_Entry NoEnv Overhead=1 Level=3 Template="BCU j9bcutil_readClassFileBytes: entering"
+TraceExit=Trc_BCU_j9bcutil_readClassFileBytes_Exit NoEnv Overhead=1 Level=3 Template="BCU j9bcutil_readClassFileBytes: exiting with result=%d"
+TraceException=Trc_BCU_j9bcutil_readClassFileBytes_ClassFormatError_Exception NoEnv Overhead=1 Level=3 Template="BCU j9bcutil_readClassFileBytes: ClassFormatError %d - %s"
+TraceException=Trc_BCU_j9bcutil_readClassFileBytes_VerifyError_Exception NoEnv Overhead=1 Level=3 Template="BCU j9bcutil_readClassFileBytes: VerifyError %d - %s"
+TraceEntry=Trc_BCU_inlineJsrs_Entry NoEnv Overhead=1 Level=3 Template="BCU inlineJsrs: %.*s %.*s %.*s"
+TraceExit=Trc_BCU_inlineJsrs_Exit NoEnv Overhead=1 Level=3 Template="BCU inlineJsrs"
+
+TraceEntry=Trc_BCU_internalLoadROMClass_Entry Overhead=1 Level=3 Template="BCU internalLoadROMClass: loadData=%p classDataLength=%u"
+TraceEvent=Trc_BCU_internalLoadROMClass_AttemptExisting Overhead=1 Level=3 Template="BCU internalLoadROMClass: attempt to use an existing segment %p (%u (available) >= %u (estimate))"
+TraceEvent=Trc_BCU_internalLoadROMClass_AttemptNew Overhead=1 Level=3 Template="BCU internalLoadROMClass: attempt to allocate a new segment (%u bytes)"
+TraceExit=Trc_BCU_internalLoadROMClass_Exit Overhead=1 Level=3 Template="BCU internalLoadROMClass: result=%d"
+
+TraceEntry=Trc_BCU_checkForExistingClass_Entry Overhead=1 Level=3 Template="BCU checkForExistingClass: classnamePtr=%p, classLoader=%p"
+TraceException=Trc_BCU_checkForExistingClass_Exists Overhead=1 Level=3 Template="BCU checkForExistingClass: !! FOUND EXISTING CLASS !!"
+TraceExit=Trc_BCU_checkForExistingClass_Exit Overhead=1 Level=3 Template="BCU checkForExistingClass: Exiting with %p"
+
+TraceEntry=Trc_BCU_createROMClassFromClassFile_Entry Overhead=1 Level=3 Template="BCU createROMClassFromClassFile: entering with loadData=%p"
+TraceEvent=Trc_BCU_createROMClassFromClassFile_postLoadNoErr Overhead=1 Level=3 Template="BCU createROMClassFromClassFile: load succeeded for %.*s, classloader=%p, romclass=%p, segment=%p"
+TraceException=Trc_BCU_createROMClassFromClassFile_nameMismatch Overhead=1 Level=3 Template="BCU createROMClassFromClassFile: !! NAME MISMATCH !! className=%.*s, romName=%.*s"
+TraceExit=Trc_BCU_createROMClassFromClassFile_Exit Overhead=1 Level=3 Template="BCU createROMClassFromClassFile: returning %p"
+TraceEvent=Trc_BCU_internalLoadROMClass_modBytes Overhead=1 Level=3 Template="BCU internalLoadROMClass: ROMClass %p has been modified"
+TraceEvent=Trc_BCU_createROMClassFromClassFile_unsafe Overhead=1 Level=3 Template="BCU createROMClassFromClassFile: ROMClass %p is unsafe"
+TraceEvent=Trc_BCU_createROMClassFromClassFile_newROMClass Overhead=1 Level=3 Template="BCU createROMClassFromClassFile: ROMClass replace hook called. New ROMClass=%p"
+TraceException=Trc_BCU_createROMClassFromClassFile_throwError Overhead=1 Level=3 Template="BCU createROMClassFromClassFile: !! ROMCLASS LOAD FAILED !! Throwing exception number %d"
+
+TraceEntry=Trc_BCU_throwNoClassDefFoundError_Entry Overhead=1 Level=3 Template="BCU throwNoClassDefFoundError: throwing NoClassDefFoundError"
+TraceEvent=Trc_BCU_throwNoClassDefFoundError_ErrorBuf Overhead=1 Level=3 Template="BCU throwNoClassDefFoundError: created error buffer=%s"
+TraceExit=Trc_BCU_throwNoClassDefFoundError_Exit Overhead=1 Level=3 Template="BCU throwNoClassDefFoundError: exiting - exception is thrown"
+
+TraceEvent=Trc_BCU_internalLoadROMClass_ClassLoadHookEnter Overhead=1 Level=3 Template="BCU internalLoadROMClass: entering CLASS_FILE_LOAD_HOOK block"
+TraceEvent=Trc_BCU_internalLoadROMClass_ClassLoadHookDone Overhead=1 Level=3 Template="BCU internalLoadROMClass: done CLASS_FILE_LOAD_HOOK block"
+TraceEvent=Trc_BCU_internalLoadROMClass_NoError Overhead=1 Level=3 Template="BCU internalLoadROMClass: ROMClass loaded successfully into address %p"
+TraceException=Trc_BCU_internalLoadROMClass_NoMemory Overhead=1 Level=3 Template="BCU internalLoadROMClass: !! OUT OF MEMORY !!"
+TraceEvent=Trc_BCU_internalLoadROMClass_DoFree Overhead=1 Level=3 Template="BCU internalLoadROMClass: freeing the class file bytes"
+
+TraceEvent=Trc_BCU_createRomClassEndian_OutOfROM Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: ROM segment size %d too small for ROMClass"
+TraceException=Trc_BCU_createRomClassEndian_Error Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: generic error occurred creating ROMClass. result=%d, error=%d"
+TraceException=Trc_BCU_createRomClassEndian_RenumberError Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during renumberConstantPool. error=%d"
+TraceException=Trc_BCU_createRomClassEndian_AnnotationError1 Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during calculateAnnotationInfoSize. error=%d"
+TraceException=Trc_BCU_createRomClassEndian_DebugInfoError1 Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during calculateDebugInfoSize. error=%d"
+TraceException=Trc_BCU_createRomClassEndian_CopyUTF8Error Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during copyUTF8DataToROM. error=%d"
+TraceException=Trc_BCU_createRomClassEndian_InitROMFieldsError Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during initializeROMFieldsAndStatics. error=%d"
+TraceException=Trc_BCU_createRomClassEndian_CopyCPError Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during copyConstantPoolToROM. error=%d"
+TraceException=Trc_BCU_createRomClassEndian_CopyMethodsError Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during copyMethodsToROM. error=%d"
+TraceException=Trc_BCU_createRomClassEndian_CopyCPShapeError Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during copyCPShapeAndPreinitDataToROM. error=%d"
+TraceException=Trc_BCU_createRomClassEndian_AnnotationError2 Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during buildAnnotationInfo. error=%d"
+TraceException=Trc_BCU_createRomClassEndian_DebugInfoError2 Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during buildDebugInfo. error=%d"
+TraceEvent=Trc_BCU_createRomClassEndian_Synthetic Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: Setting J9AccSynthetic flag on ROMClass %p"
+TraceException=Trc_BCU_createRomClassEndian_StoreOptionalError Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: error occurred during storeOptionalData. error=%d"
+
+TraceEntry=Trc_BCU_allocTranslationBuffers_Entry Noenv Overhead=1 Level=3 Template="BCU j9bcutil_allocTranslationBuffers: entering with maxInternTreeSize=%d"
+TraceExit=Trc_BCU_allocTranslationBuffers_Exit Noenv Overhead=1 Level=3 Template="BCU j9bcutil_allocTranslationBuffers: exiting with translationBuffers=%p"
+
+TraceEntry=Trc_BCU_calculateRamClassSize_Entry Noenv Overhead=1 Level=3 Template="BCU j9bcutil_calculateRamClassSize: entering with isUsingJit=%d, is64Bit=%d, isInterface=%d"
+TraceEvent=Trc_BCU_calculateRamClassSize_Sizes Noenv Overhead=1 Level=3 Template="BCU j9bcutil_calculateRamClassSize: tracing sizes: vTableSize=%d, ramConstantPoolSize=%d, instanceVariableSlots=%d"
+TraceEvent=Trc_BCU_calculateRamClassSize_Counts1 Noenv Overhead=1 Level=3 Template="BCU j9bcutil_calculateRamClassSize: tracing counts: objectStaticCount=%d, singleScalarStaticCount=%d, doubleScalarStaticCount=%d, superClassCount=%d"
+TraceEvent=Trc_BCU_calculateRamClassSize_Counts2 Noenv Overhead=1 Level=3 Template="BCU j9bcutil_calculateRamClassSize: tracing counts: interfaceClosureCount=%d, directInterfaceCount=%d, classRomMethodCount=%d, interfaceRomMethodCount=%d"
+TraceExit=Trc_BCU_calculateRamClassSize_Exit Noenv Overhead=1 Level=3 Template="BCU j9bcutil_calculateRamClassSize: exiting with result=%d, slots=%d"
+
+TraceEntry=Trc_BCU_freeTranslationBuffers_Entry Noenv Overhead=1 Level=3 Template="BCU j9bcutil_freeTranslationBuffers: entering with translationBuffers=%p"
+TraceExit=Trc_BCU_freeTranslationBuffers_Exit Noenv Overhead=1 Level=3 Template="BCU j9bcutil_freeTranslationBuffers: done freeing"
+
+TraceEntry=Trc_BCU_markClassnamesAsUsed_Entry Noenv Overhead=1 Level=3 Template="BCU j9bcutil_markClassnamesAsUsed: entering"
+TraceExit=Trc_BCU_markClassnamesAsUsed_Exit Noenv Overhead=1 Level=3 Template="BCU j9bcutil_markClassnamesAsUsed: exiting"
+
+TraceEntry=Trc_BCU_verifyCanonisizeAndCopyUTF8_Entry Noenv Overhead=1 Level=10 Template="BCU j9bcutil_verifyCanonisizeAndCopyUTF8: entering with dest=%p, source=%p, length=%d"
+TraceExit=Trc_BCU_verifyCanonisizeAndCopyUTF8_Exit Noenv Overhead=1 Level=10 Template="BCU j9bcutil_verifyCanonisizeAndCopyUTF8: exiting with result=%d"
+
+TraceEvent=Trc_BCU_fixVariableTableRanges_rangeShortened Noenv Overhead=1 Level=3 Template="BCU fixVariableTableRanges: rom method %p, var %d shortened length from %d to %d"
+
+TraceEvent=Trc_BCU_j9bcutil_createRomClassEndian_verifyExcludeAttribute Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createRomClassEndian: Verification Exclude Attribute for class:  %.*s"
+
+TraceEntry=Trc_BCU_avl_lru_insert_EntryOBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_insert: tree=%p, nodeToInsert=%p"
+TraceExit=Trc_BCU_avl_lru_insert_ExitOBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_insert: Returning node %p"
+
+TraceEntry=Trc_BCU_avl_lru_delete_EntryOBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_delete: tree=%p, nodeToDelete=%p"
+TraceExit=Trc_BCU_avl_lru_delete_Failed1OBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_delete: failed to delete SRP node %p. Returning NULL"
+TraceExit=Trc_BCU_avl_lru_delete_Failed2OBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_delete: failed to delete overflow head node %p. Returning NULL"
+TraceExit=Trc_BCU_avl_lru_delete_Failed3OBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_delete: failed to re-insert SRP node %p. Returning NULL"
+TraceExit=Trc_BCU_avl_lru_delete_Failed4OBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_delete: failed to remove SRP node %p from the list. Returning NULL"
+TraceExit=Trc_BCU_avl_lru_delete_ExitOBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_delete: Succeeded. Returning node %p"
+
+TraceEntry=Trc_BCU_avl_lru_search_Entry Noenv Overhead=1 Level=3 Template="BCU avl_lru_search: tree=%p, searchKey=%p"
+TraceExit=Trc_BCU_avl_lru_search_Exit Noenv Overhead=1 Level=3 Template="BCU avl_lru_search: Returning node %p"
+
+TraceEntry=Trc_BCU_avl_lru_mark_used_EntryOBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_mark_used: tree=%p, nodeUsed=%p"
+TraceExit=Trc_BCU_avl_lru_mark_used_Failed1OBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_mark_used: failed to delete local node %p. Returning NULL"
+TraceExit=Trc_BCU_avl_lru_mark_used_Failed2OBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_mark_used: failed to delete SRP node %p. Returning NULL" 
+TraceExit=Trc_BCU_avl_lru_mark_used_Failed3OBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_mark_used: failed to re-insert SRP node %p. Returning NULL"
+TraceExit=Trc_BCU_avl_lru_mark_used_ExitOBSOLETE Noenv Overhead=1 Level=3 Template="BCU avl_lru_mark_used: Succeeded. Returning node %p"
+
+TraceEntry=Trc_BCU_promoteSharedNodeToSharedHead_Entry Noenv Overhead=1 Level=4 Template="BCU promoteSharedNodeToSharedHead: tree=%p, node=%p"
+TraceExit=Trc_BCU_promoteSharedNodeToSharedHead_Noop Noenv Overhead=1 Level=4 Template="BCU promoteSharedNodeToSharedHead: Node %p is either not SRP node or is NULL. Returning NULL"
+TraceExit=Trc_BCU_promoteSharedNodeToSharedHead_Exit Noenv Overhead=1 Level=4 Template="BCU promoteSharedNodeToSharedHead: Returning node=%p"
+
+TraceEntry=Trc_BCU_promoteNodeToHead_Entry Noenv Overhead=1 Level=4 Template="BCU promoteNodeToHead: tree=%p, node=%p"
+TraceExit=Trc_BCU_promoteNodeToHead_Noop Noenv Overhead=1 Level=4 Template="BCU promoteNodeToHead: Node %p is either an SRP node or is NULL. Returning NULL"
+TraceExit=Trc_BCU_promoteNodeToHead_Exit Noenv Overhead=1 Level=4 Template="BCU promoteNodeToHead: Returning node=%p"
+
+TraceEntry=Trc_BCU_removeNodeFromList_Entry Noenv Overhead=1 Level=4 Template="BCU removeNodeFromList: tree=%p, node=%p"
+TraceExit=Trc_BCU_removeNodeFromList_Noop Noenv Overhead=1 Level=4 Template="BCU removeNodeFromList: Node %p is either an SRP node or is NULL. Returning NULL"
+TraceExit=Trc_BCU_removeNodeFromList_Exit Noenv Overhead=1 Level=4 Template="BCU removeNodeFromList: Returning node=%p"
+
+TraceEntry=Trc_BCU_removeSharedNodeFromSharedList_Entry Noenv Overhead=1 Level=4 Template="BCU removeSharedNodeFromSharedList: tree=%p, node=%p"
+TraceExit=Trc_BCU_removeSharedNodeFromSharedList_Noop Noenv Overhead=1 Level=4 Template="BCU removeSharedNodeFromSharedList: Node %p is either not SRP node or is NULL. Returning NULL"
+TraceExit=Trc_BCU_removeSharedNodeFromSharedList_Exit Noenv Overhead=1 Level=4 Template="BCU removeSharedNodeFromSharedList: Returning node=%p"
+
+TraceEntry=Trc_BCU_removeInternedInvariantsByClassLoader_Entry Noenv Overhead=1 Level=3 Template="BCU removeInternedInvariantsByClassLoader: portLibrary=%p, tb=%p, classloader=%p"
+TraceExit=Trc_BCU_removeInternedInvariantsByClassLoader_Noop Noenv Overhead=1 Level=3 Template="BCU removeInternedInvariantsByClassLoader: Exiting with noop as BCU_ENABLE_INVARIANT_INTERNING flag not set in tb"
+TraceExit=Trc_BCU_removeInternedInvariantsByClassLoader_Exit Noenv Overhead=1 Level=3 Template="BCU removeInternedInvariantsByClassLoader: Success"
+
+TraceEntry=Trc_BCU_removeInternedInvariantsByAddress_Entry Noenv Overhead=1 Level=3 Template="BCU removeInternedInvariantsByAddress: portLibrary=%p, tb=%p, segment=%p, segLength=%d"
+TraceExit=Trc_BCU_removeInternedInvariantsByAddress_Noop Noenv Overhead=1 Level=3 Template="BCU removeInternedInvariantsByAddress: Exiting with noop as BCU_ENABLE_INVARIANT_INTERNING flag not set in tb"
+TraceExit=Trc_BCU_removeInternedInvariantsByAddress_Exit Noenv Overhead=1 Level=3 Template="BCU removeInternedInvariantsByAddress: Success"
+
+TraceEntry=Trc_BCU_relocateInternedInvariants_Entry Noenv Overhead=1 Level=3 Template="BCU relocateInternedInvariants: portLibrary=%p, tb=%p, oldSegment=%p, newSegment=%p, segLength=%d"
+TraceExit=Trc_BCU_relocateInternedInvariants_Noop Noenv Overhead=1 Level=3 Template="BCU relocateInternedInvariants: Exiting with noop as BCU_ENABLE_INVARIANT_INTERNING flag not set in tb"
+TraceExit=Trc_BCU_relocateInternedInvariants_Exit Noenv Overhead=1 Level=3 Template="BCU relocateInternedInvariants: Success"
+
+TraceEntry=Trc_BCU_findLocallyDefinedClass_Entry Noenv Overhead=1 Level=3 Template="BCU j9bcutil_findLocallyDefinedClass: Finding %s (classPathEntryCount: %d)"
+TraceExit=Trc_BCU_findLocallyDefinedClass_Failed Noenv Overhead=1 Level=3 Template="BCU j9bcutil_findLocallyDefinedClass: <dynamic search for %s failed>"
+TraceExit=Trc_BCU_findLocallyDefinedClass_Exit Noenv Overhead=1 Level=3 Template="BCU j9bcutil_findLocallyDefinedClass: <found %s in: %s>"
+TraceEvent=Trc_BCU_findLocallyDefinedClass_UnknownCPE Noenv Overhead=1 Level=3 Template="BCU j9bcutil_findLocallyDefinedClass: <error initializing class path entry %s type %i>"
+TraceEvent=Trc_BCU_loadZip_vmZipCachePoolHookInterfaceInitFailure Noenv Overhead=1 Level=3 Template="BCU j9bcutil_loadZip: Failed to init vmZipCachePoolHookInterface"
+TraceEvent=Trc_BCU_loadZip_vmZipCachePoolHookInterfaceInitSuccess Noenv Overhead=1 Level=3 Template="BCU j9bcutil_loadZip: vmZipCachePoolHookInterface initiliazed"
+TraceException=Trc_BCU_loadJXE_loadJXEfileIOerror Noenv Overhead=1 Level=3 Template="BCU j9bcutil_loadJXE: %s: IVE_RELO_RC_FILE_ERROR"
+TraceException=Trc_BCU_loadJXE_loadJXEunknownDataError Noenv Overhead=1 Level=3 Template="BCU j9bcutil_loadJXE: %s: IVE_RELO_RC_UNKNOWN_DATA"
+TraceException=Trc_BCU_loadJXE_loadJXEimageHeaderCorruption Noenv Overhead=1 Level=3 Template="BCU j9bcutil_loadJXE: %s: ROM image header corruption"
+TraceException=Trc_BCU_loadJXE_loadJXEoppositeEndian Noenv Overhead=1 Level=3 Template="BCU j9bcutil_loadJXE: %s: Opposite endian JXE not supported"
+
+TraceEntry=Trc_BCU_initializeNodeData_Entry Noenv Overhead=1 Level=3 Template="BCU initializeNodeData: Entering with node=%p, utfPtr=%p, classLoader=%p"
+TraceExit=Trc_BCU_initializeNodeData_Exit Noenv Overhead=1 Level=3 Template="BCU initializeNodeData: Exiting"
+
+TraceEntry=Trc_BCU_getNewStringTableNode_Entry Noenv Overhead=1 Level=3 Template="BCU getNewStringTableNode: Entering with translationBuffers=%p, doShared=%d, classLoader=%p"
+TraceEvent=Trc_BCU_getNewStringTableNode_SharedTreeFull Noenv Overhead=1 Level=3 Template="BCU getNewStringTableNode: Setting max shared size of table to %d"
+TraceExit=Trc_BCU_getNewStringTableNode_Exit Noenv Overhead=1 Level=3 Template="BCU getNewStringTableNode: Exiting with node=%p, *isOverflowNode=%d"
+
+TraceEntry=Trc_BCU_addNodeToRelocationData_Entry Noenv Overhead=1 Level=3 Template="BCU addNodeToRelocationData: Entering with translationBuffers=%p, newNode=%p, cpConstant=%p"
+TraceExit=Trc_BCU_addNodeToRelocationData_Exit Noenv Overhead=1 Level=3 Template="BCU addNodeToRelocationData: Exiting with newRelocInfo=%p"
+
+TraceEntry=Trc_BCU_addNodeToStringTable_Entry Noenv Overhead=1 Level=3 Template="BCU addNodeToStringTable: Entering with translationBuffers=%p, node=%p, doShared=%d"
+TraceEvent=Trc_BCU_addNodeToStringTable_RemovingFromTree Noenv Overhead=1 Level=3 Template="BCU addNodeToStringTable: Removing node %p from tree"
+TraceEvent=Trc_BCU_addNodeToStringTable_RemovingFromPool Noenv Overhead=1 Level=3 Template="BCU addNodeToStringTable: Removing node %p from pool"
+TraceExit=Trc_BCU_addNodeToStringTable_Exit Noenv Overhead=1 Level=3 Template="BCU addNodeToStringTable: Exiting"
+
+TraceEntry=Trc_BCU_replaceWithInteredString_Enter Noenv Overhead=1 Level=3 Template="BCU replaceWithInteredString: Entering with translationBuffers=%p, cpConstant=%p, classLoader=%p, canModifyStringTable=%d"
+TraceEvent=Trc_BCU_replaceWithInteredString_FoundNode Noenv Overhead=1 Level=3 Template="BCU replaceWithInteredString: Found node in string table, node=%p"
+TraceExit=Trc_BCU_replaceWithInteredString_ExitOutOfRange Noenv Overhead=1 Level=3 Template="BCU replaceWithInteredString: Failed as SRP would be out of range"
+TraceExit=Trc_BCU_replaceWithInteredString_ExitSuccess Noenv Overhead=1 Level=3 Template="BCU replaceWithInteredString: Succeeded - added interned string %d to cpConstant"
+TraceExit=Trc_BCU_replaceWithInteredString_ExitNotFound Noenv Overhead=1 Level=3 Template="BCU replaceWithInteredString: Failed as string not found in table"
+TraceExit=Trc_BCU_replaceWithInteredString_ExitUntwizzledShared Noenv Overhead=1 Level=3 Template="BCU replaceWithInteredString: ERROR: Found untwizzled node in shared string table"
+TraceExit=Trc_BCU_replaceWithInteredString_ExitUntwizzledNodeForSharedClassLoader Noenv Overhead=1 Level=3 Template="BCU replaceWithInteredString: Exit due to untwizzled node found for shared class"
+
+TraceEvent=Trc_BCU_createRomClassEndian_Subset Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: Setting J9AccSubset flag on ROMClass %p"
+
+TraceAssert=Trc_BCU_Assert_ShouldNeverHappen NoEnv Overhead=1 Level=3 Assert="(0 /* Fatal verifier error */)"
+TraceAssert=Trc_BCU_Assert_Equals NoEnv Overhead=1 Level=3 Assert="(P1 == P2)"
+TraceAssert=Trc_BCU_Assert_NotEquals NoEnv Overhead=1 Level=3 Assert="(P1 != P2)"
+TraceAssert=Trc_BCU_Assert_True NoEnv Overhead=1 Level=3 Assert="(P1)"
+TraceAssert=Trc_BCU_Assert_False NoEnv Overhead=1 Level=3 Assert="!(P1)"
+
+TraceException=Trc_BCU_verifyCanonisizeAndCopyUTF8_FailedFirstByteZero Noenv Overhead=1 Level=10 Template="BCU j9bcutil_verifyCanonisizeAndCopyUTF8: failed because first byte is 0"
+TraceException=Trc_BCU_verifyCanonisizeAndCopyUTF8_FailedFirstByteFormat Noenv Overhead=1 Level=10 Template="BCU j9bcutil_verifyCanonisizeAndCopyUTF8: failed due to first byte format, first byte=%x"
+TraceException=Trc_BCU_verifyCanonisizeAndCopyUTF8_FailedSecondByteFormat Noenv Overhead=1 Level=10 Template="BCU j9bcutil_verifyCanonisizeAndCopyUTF8: failed due to second byte format, second byte=%x"
+TraceException=Trc_BCU_verifyCanonisizeAndCopyUTF8_FailedFirstOfThreeByteFormat Noenv Overhead=1 Level=10 Template="BCU j9bcutil_verifyCanonisizeAndCopyUTF8: failed due to first byte of three-byte format, first byte=%x"
+TraceException=Trc_BCU_verifyCanonisizeAndCopyUTF8_FailedThirdByteFormat Noenv Overhead=1 Level=10 Template="BCU j9bcutil_verifyCanonisizeAndCopyUTF8: failed due to third byte format, third byte=%x"
+
+TraceException=Trc_BCU_copyUTF8DataToROM_stringTableMutexNotEntered Noenv Overhead=1 Level=3 Template="BCU copyUTF8DataToROM: Current thread does not have the shared string table mutex, omrthread=0x%p, sharedStringMutexState=0x%x"
+TraceEvent=Trc_BCU_copyUTF8DataToROM_freeStringTableNode Noenv Overhead=1 Level=3 Template="BCU copyUTF8DataToROM: Removing node %p from pool"
+TraceEntry=Trc_BCU_avl_intern_verify_Entry Noenv Overhead=1 Level=3 Template="BCU avl_intern_verify Entry: tree=%p localPool=%p sharedPool=%p doCoolChecks=%d" 
+TraceExit=Trc_BCU_avl_intern_verify_Exit Noenv Overhead=1 Level=3 Template="BCU avl_intern_verify Exit"
+TraceEntry=Trc_BCU_removeInternedInvariantsByNode_Entry Obsolete Noenv Overhead=1 Level=3 Template="BCU removeInternedInvariantsByNode: portLibrary=%p, tb=%p, node=%p"
+TraceExit=Trc_BCU_removeInternedInvariantsByNode_Exit Obsolete Noenv Overhead=1 Level=3 Template="BCU removeInternedInvariantsByNode Exit: %s"
+TraceEntry=Trc_BCU_changeToSystemClassLoader_Entry Noenv Overhead=1 Level=3 Template="BCU changeToSystemClassLoader Entry: tree=%p node=%p old classloader=%p"
+TraceExit=Trc_BCU_changeToSystemClassLoader_Exit Noenv Overhead=1 Level=3 Template="BCU changeToSystemClassLoader Exit (returnVal=%d)"
+
+TraceEntry=Trc_BCU_avl_intern_delete_Entry Noenv Overhead=1 Level=3 Template="BCU avl_intern_delete: tb=%p, tree=%p, treeflags=%p, nodeToDelete=%p, nodeflags=%x"
+TraceExit=Trc_BCU_avl_intern_delete_Exit Noenv Overhead=1 Level=3 Template="BCU avl_intern_delete: Succeeded. Returning node %p"
+TraceEvent=Trc_BCU_avl_intern_delete_DeletedLocalNode Noenv Overhead=1 Level=3 Template="BCU avl_intern_delete: deleted local node %p, return=%p, tree=%p"
+TraceEvent=Trc_BCU_avl_intern_delete_DeletedSharedNode Noenv Overhead=1 Level=3 Template="BCU avl_intern_delete: deleted shared node %p, return=%p, tree=%p"
+TraceEvent=Trc_BCU_avl_intern_delete_PromotingNode Noenv Overhead=1 Level=3 Template="BCU avl_intern_delete: promoting local node %p into shared node %p, tree=%p"
+TraceEvent=Trc_BCU_avl_intern_delete_NodeIsDuplicate Noenv Overhead=1 Level=3 Template="BCU avl_intern_delete: node %p duplicates node %p, not promoting, tree=%p"
+
+TraceEntry=Trc_BCU_avl_intern_mark_used_Entry Noenv Overhead=1 Level=3 Template="BCU avl_intern_mark_used Entry: tb=%p, tree=%p, treeflags=%p, node=%p, nodeflags=%x"
+TraceExit=Trc_BCU_avl_intern_mark_used_Exit Noenv Overhead=1 Level=3 Template="BCU avl_intern_mark_used Exit: returning %p"
+TraceEvent=Trc_BCU_avl_intern_mark_used_PromotingNode Noenv Overhead=1 Level=3 Template="BCU avl_intern_mark_used: promoting local node %p into shared node %p, tree=%p"
+TraceEvent=Trc_BCU_avl_intern_mark_used_DeletedLocalNode Noenv Overhead=1 Level=3 Template="BCU avl_intern_mark_used: deleted local node %p, return=%p, tree=%p"
+TraceEvent=Trc_BCU_avl_intern_mark_used_DeletedSharedNode Noenv Overhead=1 Level=3 Template="BCU avl_intern_mark_used: deleted shared node %p, return=%p, tree=%p"
+TraceEvent=Trc_BCU_avl_intern_mark_used_NodeIsDuplicate Noenv Overhead=1 Level=3 Template="BCU avl_intern_mark_used: node %p duplicates node %p, not promoting, tree=%p"
+
+TraceEntry=Trc_BCU_avl_intern_insert_Entry Noenv Overhead=1 Level=3 Template="BCU avl_intern_insert Entry: tree=%p, treeflags=%p, node=%p, nodeflags=%x"
+TraceExit=Trc_BCU_avl_intern_insert_Exit Noenv Overhead=1 Level=3 Template="BCU avl_intern_insert Exit: returning %p"
+
+TraceEvent=Trc_BCU_createRomClassEndian_allocateTempLineTable Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: allocate temp line table %d free %d"
+TraceException=Trc_BCU_createRomClassEndian_allocateFailed Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: failed allocation %d for temp line table"
+
+TraceEvent=Trc_BCU_createRomClassEndian_ParseClassFileStart NoEnv Overhead=1 Level=5 Template="BCU Start Parsing Class File %s Classloader %p"
+TraceEvent=Trc_BCU_createRomClassEndian_ParseClassFileEnd NoEnv Overhead=1 Level=5 Template="BCU End Parsing Class File %s size %d Classloader %p"
+TraceEvent=Trc_BCU_createRomClassEndian_TranslateClassFileStart NoEnv Overhead=1 Level=5 Template="BCU Start Translation %s Classloader %p"
+TraceEvent=Trc_BCU_createRomClassEndian_TranslateClassFileEnd NoEnv Overhead=1 Level=5 Template="BCU End Translation %.*s romClassSize %d Classloader %p"
+
+TraceAssert=Trc_BCU_Assert_TrueTreeVerify NoEnv Overhead=1 Level=3 Assert="(P1)"
+
+TraceAssert=Trc_Assert_BCU_mustHaveVMAccess NoEnv overhead=1 Level=3 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
+
+TraceAssert=Trc_BCU_Assert_LessThan NoEnv Overhead=1 Level=3 Assert="(P1 < P2)"
+TraceAssert=Trc_BCU_Assert_NotGreaterThan NoEnv Overhead=1 Level=3 Assert="(P1 <= P2)"
+
+TraceEvent=Trc_BCU_ClassFileOracle_walkFields_UnknownAttribute Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkFields: Unknown attribute tag=%d name=%.*s length=%d"
+TraceEvent=Trc_BCU_ClassFileOracle_walkMethods_UnknownAttribute Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkMethods: Unknown attribute tag=%d name=%.*s length=%d"
+TraceEvent=Trc_BCU_ClassFileOracle_walkAttributes_UnknownAttribute Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkAttributes: Unknown attribute tag=%d name=%.*s length=%d"
+TraceEvent=Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_UnknownAttribute Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkMethodCodeAttributeAttributes: Unknown attribute tag=%d name=%.*s length=%d"
+
+TraceEntry=Trc_BCU_buildRomClass_Entry Noenv Overhead=1 Level=3 Template="BCU build ROMClass start [classname=%.*s] (note - this value does not always get set)"
+TraceEvent=Trc_BCU_buildRomClass_ParseClassFileStart NoEnv Overhead=1 Level=5 Template="BCU Start Parsing Class File %.*s Classloader %p"
+TraceEvent=Trc_BCU_buildRomClass_ParseClassFileEnd NoEnv Overhead=1 Level=5 Template="BCU End Parsing Class File %.*s size %d Classloader %p"
+TraceEvent=Trc_BCU_buildRomClass_TranslateClassFileStart NoEnv Overhead=1 Level=5 Template="BCU Start Translation %.*s Classloader %p"
+TraceEvent=Trc_BCU_buildRomClass_TranslateClassFileEnd NoEnv Overhead=1 Level=5 Template="BCU End Translation %.*s romClassSize %d Classloader %p"
+TraceExit=Trc_BCU_buildRomClass_Exit Noenv Overhead=1 Level=3 Template="BCU build ROMClass end result=%d"
+
+TraceException=Trc_BCU_ClassFileOracle_OutOfMemory Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::ClassFileOracle: Unable to allocate memory from BufferManager for class %.*s"
+TraceException=Trc_BCU_ClassFileOracle_walkAnnotationElement_UnknownTag Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkAnnotationElement: Unsupported tag %x in annotation element"
+TraceException=Trc_BCU_ClassFileOracle_walkMethodThrownExceptions_OutOfMemory Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkMethodThrownExceptions: Unable to allocate %i bytes from BufferManager"
+TraceException=Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_OutOfMemory Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkMethodCodeAttributeAttributes: Unable to allocate %i bytes from BufferManager"
+TraceException=Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_LocalVariableTableIndexOutOfBounds Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkMethodCodeAttributeAttributes: LocalVariableTable index %d exceeds number of local variables %d in method %.*s"
+TraceException=Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_DuplicateLocalVariableTable Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkMethodCodeAttributeAttributes: Multiple LocalVariableTable attributes in method %.*s, found %p, original=%p"
+TraceException=Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_LocalVariableTypeTableIndexOutOfBounds Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkMethodCodeAttributeAttributes: LocalVariableTypeTable index %d exceeds number of local variables %d in method %.*s"
+TraceException=Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_DuplicateLocalVariableTypeTable Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkMethodCodeAttributeAttributes: Multiple LocalVariableTable attributes in method %.*s, found %p, original=%p"
+
+TraceAssert=Trc_BCU_Assert_SupportedByteCode NoEnv Overhead=1 Level=3 Assert="(0 != sunJavaInstructionSizeTable[P1])"
+TraceEntry=Trc_BCU_avl_intern_verify_EntryV2 Noenv Overhead=1 Level=3 Template="BCU avl_intern_verify Entry: tree=%p sharedPool=%p localPool=%p"
+
+TraceAssert=Trc_Assert_BCU_mustHaveExclusiveVMAccess NoEnv overhead=1 Level=3 Assert="(P1)->publicFlags & (J9_PUBLIC_FLAGS_VM_ACCESS | J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)"
+
+TraceAssert=Trc_BCU_Assert_InternVerificationFailure NoEnv Overhead=1 Level=3 Assert="(0)"
+
+TraceEvent=Trc_BCU_romClassOrphansHashTableAdd Overhead=1 Level=3 Template="BCU romClassOrphansHashTableAdd: className=%.*s orphanROMClass=%p"
+TraceEvent=Trc_BCU_romClassOrphansHashTableReplace Overhead=1 Level=3 Template="BCU romClassOrphansHashTableReplace: className=%.*s orphanROMClass=%p"
+TraceEvent=Trc_BCU_romClassOrphansHashTableDelete Overhead=1 Level=3 Template="BCU romClassOrphansHashTableDelete: className=%.*s orphanROMClass=%p"
+
+TraceEvent=Trc_BCU_stringInternTableCreated NoEnv Overhead=1 Level=3 Template="BCU stringInternTableCreated: nodeCount=%u"
+TraceException=Trc_BCU_stringInternTableCreationFailed NoEnv Overhead=1 Level=3 Template="BCU stringInternTableCreationFailed: nodeCount=%u"
+TraceEvent=Trc_BCU_stringInternTableNotCreated NoEnv Overhead=1 Level=3 Template="BCU stringInternTableNotCreated"
+
+TraceEvent=Trc_BCU_internalDefineClass_FullData Overhead=1 Level=7 Template="BCU Trc_BCU_internalDefineClass_FullData: data=%.*s, classLoader=%p"
+
+TraceAssert=Trc_BCU_Assert_ShouldNeverHappen_CompressionMissmatch NoEnv Overhead=1 Level=1 Assert="(0)"
+TraceAssert=Trc_BCU_Assert_CorrectLineNumbersCount NoEnv Overhead=1 Level=1 Assert="(P1 == P2)"
+TraceAssert=Trc_BCU_Assert_Compression_OutOfMemory NoEnv Overhead=1 Level=1 Assert="(0)"
+
+TraceAssert=Trc_BCU_Assert_Equals_Level1 NoEnv Overhead=1 Level=1 Assert="(P1 == P2)"
+
+TraceEvent=Trc_BCU_ClassFileOracle_autoTenantScopeFieldStatus NoEnv Overhead=1 Level=5 Template="BCU ClassFileOracle::walkFields autoTenantScopeFieldStatus: enabled=%d TenantContext inited=%d className=%.*s"
+TraceEvent=Trc_BCU_ClassFileOracle_tenantScopeAnnotationAdd NoEnv Overhead=1 Level=5 Template="BCU ClassFileOracle::walkFields tenantScopeAnnotationAdd: className=%.*s fieldName=%.*s auto=%d"
+
+TraceEntry=Trc_BCU_internalDefineClass_Entry1 Overhead=1 Level=3 Template="BCU internalDefineClass: classnamePtr=%p, classname=%.*s, existingROMClass=%p"
+
+TraceEvent=Trc_BCU_ROMClassBuilder_classNeedsTenantIsolation NoEnv Overhead=1 Level=5 Template="BCU ROMClassBuilder::classNeedsTenantIsolation className=%.*s"
+TraceEvent=Trc_BCU_ClassFileOracle_hasDoNotIsolateAnnotation NoEnv Overhead=1 Level=5 Template="BCU ClassFileOracle::hasDoNotIsolateAnnotation className=%.*s"
+
+TraceException=Trc_BCU_internalLoadROMClass_ErrorInRecreatingClassfile Overhead=1 Level=1 Template="BCU internalLoadROMClass: Error in recreating classfile from ROMClass=%p, error code=%zd"
+TraceException=Trc_BCU_callDynamicLoader_ErrorInCreatingIntermediateROMClass Obsolete NoEnv Overhead=1 Level=1 Template="BCU callDynamicLoader: Error in creating intermediate ROMClass loadData=%p, error code=%zd"
+
+TraceEvent=Trc_BCU_callDynamicLoader_IntermediateROMClassCreationFailed NoEnv Overhead=1 Level=1 Template="BCU callDynamicLoader: Intermediate ROMClass creation failed with loadData=%p, error code=%zd; using classfile as intermediate data"
+
+TraceEvent=Trc_BCU_TypeAnnotation NoEnv Overhead=1 Level=5 Template="BCU readTypeAnnotation targetType=0x%x"
+
+TraceAssert=Trc_BCU_Assert_NotNull NoEnv Overhead=1 Level=1 Assert="(P1 != NULL)"
+
+TraceException=Trc_BCU_MalformedTypeAnnotation NoEnv Overhead=1 Level=1 Template="BCU readAttributes bad type_annotation attribute at %d"
+TraceException=Trc_BCU_MalformedMethodParameter NoEnv Overhead=1 Level=1 Template="BCU readAttributes bad methodParameters attribute at %d"
+
+TraceException=Trc_BCU_verifyJImageHeader_BadMagic NoEnv Overhead=1 Level=1 Template="BCU verifyJImageHeader(file=%s) magic value 0x%x in jimage header=0x%p is incorrect"
+TraceException=Trc_BCU_verifyJImageHeader_BadMajorVersion NoEnv Overhead=1 Level=1 Template="BCU verifyJImageHeader(file=%s) major version %d in jimage header=0x%p is incorrect"
+TraceException=Trc_BCU_verifyJImageHeader_BadMinorVersion NoEnv Overhead=1 Level=1 Template="BCU verifyJImageHeader(file=%s) minor version %d in jimage header=0x%p is incorrect"
+
+TraceEntry=Trc_BCU_createAndVerifyJImageLocation_Entry NoEnv Overhead=1 Level=3 Template="BCU createAndVerifyJImageLocation(file=%s) entered with resourceName=%s, imageLocation=0x%p"
+TraceException=Trc_BCU_createAndVerifyJImageLocation_InvalidBaseStringOffset NoEnv Overhead=1 Level=1 Template="BCU createAndVerifyJImageLocation(file=%s) invalid base string offset=0x%llx in imageLocation=0x%p. Strings data size is 0x%x"
+TraceException=Trc_BCU_createAndVerifyJImageLocation_InvalidParentStringOffset NoEnv Overhead=1 Level=1 Template="BCU createAndVerifyJImageLocation(file=%s) invalid parent string offset=0x%llx in imageLocation=0x%p. Strings data size is 0x%x"
+TraceException=Trc_BCU_createAndVerifyJImageLocation_InvalidExtensionStringOffset NoEnv Overhead=1 Level=1 Template="BCU createAndVerifyJImageLocation(file=%s) invalid extension string offset=0x%llx in imageLocation=0x%p. Strings data size is 0x%x"
+TraceException=Trc_BCU_createAndVerifyJImageLocation_InvalidResourceOffset NoEnv Overhead=1 Level=1 Template="BCU createAndVerifyJImageLocation(file=%s) invalid resource offset=0x%llx in imageLocation=0x%p. Resources data size is 0x%llx"
+TraceException=Trc_BCU_createAndVerifyJImageLocation_InvalidCompressedSize NoEnv Overhead=1 Level=1 Template="BCU createAndVerifyJImageLocation(file=%s) invalid resource compressed size=0x%llx in imageLocation=0x%p. Resources data size is 0x%llx"
+TraceException=Trc_BCU_createAndVerifyJImageLocation_InvalidUncompressedSize NoEnv Overhead=1 Level=1 Template="BCU createAndVerifyJImageLocation(file=%s) found invalid resource uncompressed size=0x%llx in imageLocation=0x%p. Resources data size is 0x%llx"
+TraceException=Trc_BCU_createAndVerifyJImageLocation_ResourceNameMismatch NoEnv Overhead=1 Level=1 Template="BCU createAndVerifyJImageLocation(file=%s) resourceName=%s does not match with the name=%s found in imageLocation=0x%p"
+TraceExit=Trc_BCU_createAndVerifyJImageLocation_Exit NoEnv Overhead=1 Level=3 Template="BCU createAndVerifyJImageLocation(file=%s) exiting with rc=%d"
+
+TraceEntry=Trc_BCU_loadJImage_Entry NoEnv Overhead=1 Level=3 Template="BCU loadJImage entered with jimage filename=%s"
+TraceException=Trc_BCU_loadJImage_JImageOpenFailed NoEnv Overhead=1 Level=1 Template="BCU loadJImage failed to open jimage file %s with portlib error code=%d (error msg=%s)"
+TraceException=Trc_BCU_loadJImage_JImageFileLenFailed NoEnv Overhead=1 Level=1 Template="BCU loadJImage failed to get size of jimage file %s with portlib error code=%d (error msg=%s)"
+TraceException=Trc_BCU_loadJImage_JImageReadHeaderFailed NoEnv Overhead=1 Level=1 Template="BCU loadJImage failed to read header jimage file %s with portlib error code=%d (error msg=%s). Read %zd bytes, expected %zd bytes"
+TraceException=Trc_BCU_loadJImage_MemoryAllocationFailed NoEnv Overhead=1 Level=1 Template="BCU loadJImage failed to allocate memory region of %zu bytes"
+TraceException=Trc_BCU_loadJImage_JImageMmapFailed NoEnv Overhead=1 Level=1 Template="BCU loadJImage failed to mmap 0x%zx bytes of jimage file %s with portlib error code=%d (error msg=%s)"
+TraceExit=Trc_BCU_loadJImage_Exit NoEnv Overhead=1 Level=3 Template="BCU loadJImage exiting with rc=%d, jimage=0x%p"
+
+TraceEntry=Trc_BCU_lookupJImageResource_Entry NoEnv Overhead=1 Level=3 Template="BCU lookupJImageResource(file=%s) entered with resourceName=%s, jimage=0x%p"
+TraceEvent=Trc_BCU_lookupJImageResource_ResourceNotFound NoEnv Overhead=1 Level=3 Template="BCU lookupJImageResource(file=%s) resource %s not found in jimage=0x%p"
+TraceException=Trc_BCU_lookupJImageResource_InvalidLocationOffsetsTableIndex NoEnv Overhead=1 Level=1 Template="BCU lookupJImageResource(file=%s) location offsets table index(%u) is >= locations count(%u) in jimage=0x%p"
+TraceException=Trc_BCU_lookupJImageResource_InvalidLocationOffset NoEnv Overhead=1 Level=1 Template="BCU lookupJImageResource(file=%s) location offset(%u) is >= locations data size(%u) in jimage=0x%p"
+TraceExit=Trc_BCU_lookupJImageResource_Exit NoEnv Overhead=1 Level=3 Template="BCU lookupJImageResource(file=%s) exiting with rc=%d"
+
+TraceEntry=Trc_BCU_getJImageResource_Entry NoEnv Overhead=1 Level=3 Template="BCU getJImageResource(file=%s) entered with buffer=%p, bufferSize=0x%llx, jimage=0x%p, j9jimageLocation=0x%p"
+TraceException=Trc_BCU_getJImageResource_BufferIsNull NoEnv Overhead=1 Level=1 Template="BCU getJImageResource(file=%s) buffer is passed NULL"
+TraceException=Trc_BCU_getJImageResource_JImageFileSeekFailed NoEnv Overhead=1 Level=1 Template="BCU getJImageResource(file=%s) failed to seek to offset 0x%llx with portlib error code=%d (error msg=%s)"
+TraceException=Trc_BCU_getJImageResource_JImageReadResourceDataFailed NoEnv Overhead=1 Level=1 Template="BCU getJImageResource(file=%s) failed to read resource data with portlib error code=%d (error msg=%s). Read %zd bytes, expected %lld bytes"
+TraceExit=Trc_BCU_getJImageResource_Exit NoEnv Overhead=1 Level=1 Template="BCU getJImageResource(file=%s) exiting with rc=%d"
+
+TraceEntry=Trc_BCU_unloadJImage_Entry NoEnv Overhead=1 Level=3 Template="BCU unloadJImage entered with jimage=0x%p"
+TraceExit=Trc_BCU_unloadJImage_Exit NoEnv Overhead=1 Level=3 Template="BCU unloadJImage exiting"
+
+TraceException=Trc_BCU_initializeClassPathEntry_loadJImageFailed Obsolete NoEnv Overhead=1 Level=1 Template="BCU initializeClassPathEntry Failed to load jimage file %s with error code=%d"
+
+TraceEntry=Trc_BCU_readFileFromJImage_Entry NoEnv Overhead=1 Level=3 Template="BCU readFileFromJImage entered with resource %s"
+TraceException=Trc_BCU_readFileFromJImage_BufferAllocationFailed Obsolete NoEnv Overhead=1 Level=1 Template="BCU readFileFromJImage failed to allocate memory region for the resource %s; requested amount=%llx bytes"
+TraceEvent=Trc_BCU_readFileFromJImage_LookupFailed Obsolete NoEnv Overhead=1 Level=2 Template="BCU readFileFromJImage lookup failed for resource %s with error code=%d"
+TraceEvent=Trc_BCU_readFileFromJImage_LookupPassed Obsolete NoEnv Overhead=1 Level=2 Template="BCU readFileFromJImage lookup passed for resource %s"
+TraceExit=Trc_BCU_readFileFromJImage_Exit NoEnv Overhead=1 Level=3 Template="BCU readFileFromJImage exiting with rc=%zd"
+
+TraceException=Trc_BCU_getJImageResourceName_NameAllocationFailed NoEnv Overhead=1 Level=1 Template="BCU getJImageResourceName(file=%s) failed to allocate memory of %u bytes"
+
+TraceException=Trc_BCU_MalformedMethodParameterAttribute NoEnv Overhead=1 Level=1 Template="ClassFileOracle::walkMethodMethodParametersAttribute bad methodParametersAttribute %d"
+
+TraceException=Trc_BCU_createAndVerifyJImageLocation_InvalidModuleStringOffset NoEnv Overhead=1 Level=1 Template="BCU createAndVerifyJImageLocation(file=%s) invalid module string offset=0x%llx in imageLocation=0x%p. Strings data size is 0x%x"
+
+TraceException=Trc_BCU_getJImageResource_MemoryAllocationFailed NoEnv Overhead=1 Level=1 Template="BCU getJImageResource(file=%s) failed to allocate memory region of %zu bytes"
+TraceException=Trc_BCU_getJImageResource_JImageInvalidDecompressor NoEnv Overhead=1 Level=1 Template="BCU getJImageResource(file=%s) decompressor header is invalid"
+TraceException=Trc_BCU_getJImageResource_JImageDecompressorNotSupported NoEnv Overhead=1 Level=1 Template="BCU getJImageResource(file=%s) decompressor %s is not supported"
+
+TraceEvent=Trc_BCU_initJImageIntf_usingLibJImage NoEnv Overhead=1 Level=1 Template="JImage interface is using jimage library"
+TraceEvent=Trc_BCU_initJImageIntf_usingJ9JImageReader NoEnv Overhead=1 Level=1 Template="JImage interface is using internal implementation of jimage reader"
+TraceException=Trc_BCU_initJImageIntf_libJImageFailed NoEnv Overhead=1 Level=1 Template="JImage interface failed to use jimage library" 
+TraceException=Trc_BCU_MalformedParameterAnnotation NoEnv Overhead=1 Level=1 Template="BCU readAttributes bad parameter_annotation attribute at %u"
+TraceException=Trc_BCU_MalformedAnnotation NoEnv Overhead=1 Level=1 Template="BCU readAttributes bad annotation attribute at %d"
+TraceException=Trc_BCU_BadAttributeLength NoEnv Overhead=1 Level=1 Template="BCU readAttributes attribute length = %d  data length = %d"
+
+TraceException=Trc_BCU_readFileFromJImage_BufferAllocationFailed_V1 NoEnv Overhead=1 Level=1 Template="BCU readFileFromJImage failed to allocate memory region for the resource %s/%s; requested amount=%llx bytes"
+TraceEvent=Trc_BCU_readFileFromJImage_LookupFailed_V1 NoEnv Overhead=1 Level=2 Template="BCU readFileFromJImage lookup failed for resource %s/%s with error code=%d"
+TraceEvent=Trc_BCU_readFileFromJImage_LookupPassed_V1 NoEnv Overhead=1 Level=2 Template="BCU readFileFromJImage lookup passed for resource %s/%s"
+
+TraceEvent=Trc_BCU_searchClassInCPEntry_UnexpectedCPE Noenv Overhead=1 Level=3 Template="BCU searchClassInCPEntry did not expect class path entry %s type %i to be searched for the class"
+

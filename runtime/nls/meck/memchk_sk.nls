@@ -1,0 +1,70 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=MECK
+J9NLS.HEADER=memchknls.h
+
+J9NLS_MEMCHK_INIT_ERROR=Po\u010das inicializ\u00e1cie pomocn\u00e9ho programu -Xcheck:memory nastala chyba
+# START NON-TRANSLATABLE
+J9NLS_MEMCHK_INIT_ERROR.explanation=The memory check utility was unable to locate the required virtual machine resources.
+J9NLS_MEMCHK_INIT_ERROR.system_action=The requested memory check will not be performed.
+J9NLS_MEMCHK_INIT_ERROR.user_response=Verify that your Java runtime environment is correctly installed.
+
+# END NON-TRANSLATABLE
+
+J9NLS_MEMCHK_UNRECOGNIZED_OPTION=Nerozpoznan\u00e1 vo\u013eba -Xcheck:memory: %s
+# START NON-TRANSLATABLE
+J9NLS_MEMCHK_UNRECOGNIZED_OPTION.sample_input_1=someOption
+J9NLS_MEMCHK_UNRECOGNIZED_OPTION.explanation=The memory check requested is not a recognized type.
+J9NLS_MEMCHK_UNRECOGNIZED_OPTION.system_action=The Java application runs but no memory checks are performed.
+J9NLS_MEMCHK_UNRECOGNIZED_OPTION.user_response=Run the Java virtual machine with the -Xcheck:memory:help option to list the valid checks.
+
+# END NON-TRANSLATABLE
+
+J9NLS_MEMCHK_AVL_ERROR=Pri vytv\u00e1ran\u00ed \u0161trukt\u00fary \u00fadajov na str\u00e1nke volania nastala chyba. Inform\u00e1cie o str\u00e1nke volania nebud\u00fa zobrazen\u00e9
+# START NON-TRANSLATABLE
+J9NLS_MEMCHK_AVL_ERROR.explanation=The memory check utility was unable to store information about the source code locations of memory requests.
+J9NLS_MEMCHK_AVL_ERROR.system_action=The Java virtual machine executes the memory checks without recording memory requestor information.
+J9NLS_MEMCHK_AVL_ERROR.user_response=Check that your system is configured with sufficient memory.
+
+
+# END NON-TRANSLATABLE

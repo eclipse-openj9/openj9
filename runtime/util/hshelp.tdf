@@ -1,0 +1,45 @@
+// Copyright (c) 2007, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+
+Executable=j9hshelp
+DATFileName=J9TraceFormat.dat
+
+TraceEntry=Trc_hshelp_fixVTables_forExtendedRedefine_Entry Overhead=1 Level=3 Template="fixVTables_forExtendedRedefine"
+TraceExit=Trc_hshelp_fixVTables_forExtendedRedefine_Exit Overhead=1 Level=3 Template="fixVTables_forExtendedRedefine"
+
+TraceEntry=Trc_hshelp_fixVTables_forNormalRedefine_Entry Overhead=1 Level=3 Template="fixVTables_forNormalRedefine"
+TraceExit=Trc_hshelp_fixVTables_forNormalRedefine_Exit Overhead=1 Level=3 Template="fixVTables_forNormalRedefine"
+
+
+TraceDebug=Trc_hshelp_fixVTables_ExtensionUse Overhead=1 Level=3 Template="extensions %s"
+TraceDebug=Trc_hshelp_fixVTables_Shape Overhead=1 Level=3 Template="vtable size = %d  [%s]"
+TraceDebug=Trc_hshelp_fixVTables_Search Overhead=1 Level=3 Template="slot %d: [C:M 0x%08x:0x%08x]  [%s]  jitVTable slot o[0x%x] n[0x%x]"
+TraceDebug=Trc_hshelp_fixVTables_intVTableReplace Overhead=1 Level=3 Template="intVTable slot [%d] replaced."
+TraceDebug=Trc_hshelp_fixVTables_jitVTableReplace Overhead=1 Level=3 Template="jitVTable equivalent slot [%d] replaced."
+
+TraceDebug=Trc_hshelp_recreateRAMClasses_classReplace Overhead=1 Level=3 Template="recreateRAMClasses: Replace RAMClass o[%p] => n[%p]"
+TraceDebug=Trc_hshelp_recreateRAMClasses_addMethRemap Overhead=1 Level=3 Template="recreateRAMClasses: add meth remap cls[0x%08x] o[0x%08x] => n[0x%08x]  [%s]"
+TraceDebug=Trc_hshelp_jitEventAddClass Overhead=1 Level=3 Template="JIT Event ClassPair old: %p new: %p -> method count: %d"
+TraceDebug=Trc_hshelp_jitEventAddMethod Overhead=1 Level=3 Template="  method old=%p new=%p equivalent=%d"
+
+TraceAssert=Assert_hshelp_true noEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Assert_hshelp_false noEnv Overhead=1 Level=1 Assert="!(P1)"
+
+TraceAssert=Assert_hshelp_ShouldNeverHappen NoEnv Overhead=1 Level=3 Assert="(0)"

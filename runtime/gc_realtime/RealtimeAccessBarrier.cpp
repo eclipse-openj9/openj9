@@ -1,0 +1,742 @@
+
+/*******************************************************************************
+ * Copyright (c) 1991, 2016 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+
+#include "ArrayletObjectModel.hpp"
+#include "Bits.hpp"
+#include "EnvironmentRealtime.hpp"
+#include "HeapRegionDescriptorRealtime.hpp"
+#include "HeapRegionManager.hpp"
+#include "JNICriticalRegion.hpp"
+#include "RealtimeAccessBarrier.hpp"
+#include "RealtimeGC.hpp"
+#include "RealtimeMarkingScheme.hpp"
+
+#if defined(J9VM_GC_REALTIME)
+
+bool 
+MM_RealtimeAccessBarrier::initialize(MM_EnvironmentBase *env)
+{
+	if (!MM_ObjectAccessBarrier::initialize(env)) {
+		return false;
+	}
+	_realtimeGC = MM_GCExtensions::getExtensions(env)->realtimeGC;
+	_markingScheme = _realtimeGC->getMarkingScheme();
+	
+	return true;
+}
+
+void
+MM_RealtimeAccessBarrier::tearDown(MM_EnvironmentBase *env)
+{
+	MM_ObjectAccessBarrier::tearDown(env);
+}
+
+/**
+ * Override of referenceGet.  This barriered version does two things.  (1) When the
+ * collector is tracing, it makes any gotten object "grey" to ensure that it is eventually
+ * traced.  (2) When the collector is in the unmarkedImpliesCleared phase (after
+ * to-be-cleared soft and weak references have been identified and logically cleared), the
+ * get() operation returns NULL instead of the referent if the referent is unmarked.
+ *
+ * @param refObject the SoftReference or WeakReference object on which get() is being called.
+ *	This barrier must not be called for PhantomReferences.  The parameter must not be NULL.
+ */
+J9Object *
+MM_RealtimeAccessBarrier::referenceGet(J9VMThread *vmThread, J9Object *refObject)
+{
+	UDATA offset = J9VMJAVALANGREFREFERENCE_REFERENT_OFFSET(vmThread);
+	J9Object *referent = mixedObjectReadObject(vmThread, refObject, offset, false);
+
+	/* Do nothing exceptional for NULL or marked referents */
+	if (referent == NULL) {
+		goto done;	
+	}
+
+	if (_markingScheme->isMarked(referent)) {
+		goto done;
+	}
+	
+	/* Now we know referent isn't NULL and isn't marked */
+	
+	if (_realtimeGC->_unmarkedImpliesCleared) {
+		/* In phase indicated by this flag, all unmarked references are logically cleared
+		 * (will be physically cleared by the end of the gc).
+		 */
+		return NULL;
+	}
+
+	/* Throughout tracing, we must turn any gotten reference into a root, because the
+	 * thread doing the getting may already have been scanned.  However, since we are
+	 * running on a mutator thread and not a gc thread we do this indirectly by putting
+	 * the object in the barrier buffer.
+	 */
+	if (_realtimeGC->isBarrierEnabled()) {
+		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+		rememberObject(env, referent);
+	}
+
+done:
+	/* We must return the external reference */
+	return referent;
+}
+
+/**
+ * Barrier called from within j9jni_deleteGlobalRef to maintain the "double barrier"
+ * invariant (see comment in preObjectStore).  To maintain EXACTLY what we do for ordinary
+ * reference stores, we should trap globalref creation for unscanned threads (only) and
+ * globalref deletion for all threads.  But, since creating a global ref can
+ * only open a leak if that reference is subsequently deleted, it is sufficient to trap
+ * deletions for all threads. Note that we do not attempt to guard against JNI threads
+ * passing objects by back channels without creating global refs (we could not do so even
+ * if we wished to).  Such JNI code is already treacherously unsafe and would sooner or
+ * later crash with or without incremental thread scanning.
+ *
+ * @param reference the JNI global reference that is about to be deleted.  Must not be NULL
+ *  (same requirement as j9jni_deleteGlobalRef).
+ */
+void 
+MM_RealtimeAccessBarrier::jniDeleteGlobalReference(J9VMThread *vmThread, J9Object *reference)
+{
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+
+	if (!_realtimeGC->isBarrierEnabled()) {
+		return;
+	}
+
+	deleteHeapReference(env, reference);
+}
+
+/**
+ * Take any required action when a string constant has been fetched from the table.
+ * If there is a yield point between the last marking work and when the string table
+ * is cleared, then a thread could potentially get a reference to a string constant
+ * that is about to be cleared. This method prevents that be adding the string to 
+ * the remembered set.
+ */
+void 
+MM_RealtimeAccessBarrier::stringConstantEscaped(J9VMThread *vmThread, J9Object *stringConst)
+{
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+
+	if (_realtimeGC->isBarrierEnabled()) {
+		rememberObject(env, stringConst);
+	}	
+}
+
+/**
+ * Take any required action when a heap reference is deleted. This method is called on
+ * all slots when finalizing a scoped object. It's also called from jniDeleteGlobalReference,
+ * but only when the collector is tracing (therefore we shouldn't check for isBarrierEnabled
+ * from this method).
+ */
+void
+MM_RealtimeAccessBarrier::deleteHeapReference(MM_EnvironmentBase *env, J9Object *object)
+{
+	rememberObject(env, object);
+}
+
+/**
+ * DEBUG method. Only called when MM_GCExtensions::debugWriteBarrier >= 1.
+ */ 
+void 
+MM_RealtimeAccessBarrier::validateWriteBarrier(J9VMThread *vmThread, J9Object *dstObject, fj9object_t *dstAddress, J9Object *srcObject)
+{
+	J9JavaVM *javaVM = vmThread->javaVM;
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
+
+	switch(_extensions->objectModel.getScanType(dstObject)) {
+	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
+	case GC_ObjectModel::SCAN_MIXED_OBJECT:
+	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
+	case GC_ObjectModel::SCAN_CLASS_OBJECT:
+	case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
+	case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
+	{
+		if (((fj9object_t *) dstAddress) - ((fj9object_t *) dstObject)) {
+			j9tty_printf(PORTLIB, "validateWriteBarrier: slotIndex is negative dstAddress %d and dstObject %d\n", dstAddress, dstObject);
+		}
+		UDATA slotIndex = ((fj9object_t *) dstAddress) - ((fj9object_t *) dstObject);
+		UDATA dataSizeInSlots = MM_Bits::convertBytesToSlots(_extensions->objectModel.getSizeInBytesWithHeader(dstObject));
+		if (slotIndex >= dataSizeInSlots) {
+			j9tty_printf(PORTLIB, "validateWriteBarrier: slotIndex (%d) >= object size in slots (%d)", slotIndex, dataSizeInSlots);
+			printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+			j9tty_printf(PORTLIB, "\n");
+		}
+		/* Also consider validating that slot is a ptr slot */
+		break;
+	}
+
+	case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
+	{
+#if defined(J9VM_GC_ARRAYLETS)
+		MM_HeapRegionManager *regionManager = MM_GCExtensions::getExtensions(javaVM)->getHeap()->getHeapRegionManager();
+		GC_ArrayletObjectModel::ArrayLayout layout = _extensions->indexableObjectModel.getArrayLayout((J9IndexableObject*)dstObject);
+		switch (layout) {
+			case GC_ArrayletObjectModel::InlineContiguous: {
+				UDATA** arrayletPtr = (UDATA**)(((J9IndexableObject*)dstObject) + 1);
+				UDATA* dataStart = *arrayletPtr;
+				UDATA* dataEnd = dataStart + _extensions->indexableObjectModel.getSizeInElements((J9IndexableObject*)dstObject);
+				if ((UDATA*)dstAddress < dataStart || (UDATA*)dstAddress >= dataEnd) {
+					j9tty_printf(PORTLIB, "validateWriteBarrier: IC: store to %p not in data section of array %p to %p", dstAddress, dataStart, dataEnd);
+					printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+					j9tty_printf(PORTLIB, "\n");
+				}
+				break;
+			}
+			case GC_ArrayletObjectModel::Discontiguous: {
+				MM_HeapRegionDescriptorRealtime *region = (MM_HeapRegionDescriptorRealtime *)regionManager->tableDescriptorForAddress(dstAddress);
+				if (!region->isArraylet()) {
+					j9tty_printf(PORTLIB, "validateWriteBarrier: D: dstAddress (%p) is not on an arraylet region", dstAddress);
+					printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+					j9tty_printf(PORTLIB, "\n");
+				}
+				else {
+					UDATA* arrayletParent = region->getArrayletParent(region->whichArraylet((UDATA*)dstAddress, javaVM->arrayletLeafLogSize));
+					if (arrayletParent != (UDATA*)dstObject) {
+						j9tty_printf(PORTLIB, "validateWriteBarrier: D: parent of arraylet (%p) is not destObject (%p)", arrayletParent, dstObject);
+						printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+						j9tty_printf(PORTLIB, "\n");
+					}
+				}
+				break;
+			}
+			case GC_ArrayletObjectModel::Hybrid: {
+				/* First check to see if it is in the last arraylet which is contiguous with the array spine. */
+				UDATA numberArraylets = _extensions->indexableObjectModel.numArraylets((J9IndexableObject*)dstObject);
+				UDATA** arrayletPtr = (UDATA**)(((J9IndexableObject*)dstObject)+1) + numberArraylets - 1;
+				UDATA* dataStart = *arrayletPtr;
+				UDATA spineSize = _extensions->indexableObjectModel.getSpineSize((J9IndexableObject*)dstObject);
+				UDATA* dataEnd = (UDATA*)(((U_8*)dstObject) + spineSize);
+				if ((UDATA*)dstAddress < dataStart || (UDATA*)dstAddress >= dataEnd) {
+					/* store was _not_ to last arraylet; attempt to validate that
+					 * it was to one of the other arraylets of this array.
+					 */
+					MM_HeapRegionDescriptorRealtime *region = (MM_HeapRegionDescriptorRealtime *)regionManager->tableDescriptorForAddress(dstAddress);
+					if (!region->isArraylet()) {
+						j9tty_printf(PORTLIB, "validateWriteBarrier: H: dstAddress (%p) is not on an arraylet region", dstAddress);
+						printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+					}
+					else {
+						UDATA* arrayletParent = region->getArrayletParent(region->whichArraylet((UDATA*)dstAddress, javaVM->arrayletLeafLogSize));
+						if (arrayletParent != (UDATA*)dstObject) {
+							j9tty_printf(PORTLIB, "validateWriteBarrier: H: parent of arraylet (%p) is not destObject (%p)", arrayletParent, dstObject);
+							printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+							j9tty_printf(PORTLIB, "\n");
+						}
+					}
+				}
+				break;
+			}
+			default: {
+				j9tty_printf(PORTLIB, "validateWriteBarrier: unexpected arraylet type %d\n", layout);
+				assert(0);
+			}
+		};
+#else /* defined(J9VM_GC_ARRAYLETS) */
+		UDATA* dataStart = (UDATA*)(((J9IndexableObject*)dstObject) + 1);
+		UDATA* dataEnd = dataStart + _extensions->indexableObjectModel.getSizeInElements((J9IndexableObject*)dstObject);
+		if ((UDATA*)dstAddress < dataStart || (UDATA*)dstAddress >= dataEnd) {
+			j9tty_printf(PORTLIB, "validateWriteBarrier: store to %p not in data section of array %p to %p", dstAddress, dataStart, dataEnd);
+			printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+			j9tty_printf(PORTLIB, "\n");
+		}
+#endif /* defined(J9VM_GC_ARRAYLETS) */
+
+		break;
+	}
+
+	case GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT:
+		j9tty_printf(PORTLIB, "validateWriteBarrier: writeBarrier called on array of primitive\n");
+		j9tty_printf(PORTLIB, "value being overwritten is %d\n", *dstAddress);
+		printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+		j9tty_printf(PORTLIB, "\n");
+		break;
+
+	default:
+		Assert_MM_unreachable();
+	}
+}
+
+void 
+MM_RealtimeAccessBarrier::printClass(J9JavaVM *javaVM, J9Class* clazz)
+{
+	J9ROMClass* romClass;
+	J9UTF8* utf;
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
+
+	/* TODO: In Sov, if the class is char[], the string is printed instead of the class name */
+	romClass = clazz->romClass;
+	if(romClass->modifiers & J9_JAVA_CLASS_ARRAY) {
+		J9ArrayClass* arrayClass = (J9ArrayClass*) clazz;
+		UDATA arity = arrayClass->arity;
+		utf = J9ROMCLASS_CLASSNAME(arrayClass->leafComponentType->romClass);
+		j9tty_printf(PORTLIB, "%.*s", (UDATA)J9UTF8_LENGTH(utf), J9UTF8_DATA(utf));
+		while(arity--) {
+			j9tty_printf(PORTLIB, "[]");
+		}
+	} else {
+		utf = J9ROMCLASS_CLASSNAME(romClass);
+		j9tty_printf(PORTLIB, "%.*s", (UDATA)J9UTF8_LENGTH(utf), J9UTF8_DATA(utf));
+	}
+}
+
+/**
+ * Unmarked, heap reference, about to be deleted (or overwritten), while marking
+ * is in progress is to be remembered for later marking and scanning.
+ */
+void
+MM_RealtimeAccessBarrier::rememberObject(MM_EnvironmentBase *env, J9Object *object)
+{
+	if (_markingScheme->markObject(MM_EnvironmentRealtime::getEnvironment(env), object, true)) {
+		rememberObjectImpl(env, object);
+	}
+}
+
+/**
+ * Read an object from an internal VM slot (J9VMThread, J9JavaVM, named field of J9Class).
+ * This function is only concerned with moving the actual data. Do not re-implement
+ * unless the value is stored in a non-native format (e.g. compressed object pointers). 
+ * See readObjectFromInternalVMSlot() for higher-level actions.
+ * In realtime, we must remember the object being read in case it's being read from an
+ * unmarked thread and stored on a marked threads' stack. If the unmarked thread terminates
+ * before being marked, we will miss the object since a stack push doesn't invoke the write
+ * barrier.
+ * @param srcAddress the address of the field to be read
+ * @param isVolatile non-zero if the field is volatile, zero otherwise
+ */
+mm_j9object_t
+MM_RealtimeAccessBarrier::readObjectFromInternalVMSlotImpl(J9VMThread *vmThread, j9object_t *srcAddress, bool isVolatile)
+{
+	mm_j9object_t object = *srcAddress;
+	rememberObjectIfBarrierEnabled(vmThread, object);
+	return object;
+}
+
+/**
+ * Write an object to an internal VM slot (J9VMThread, J9JavaVM, named field of J9Class).
+ * In realtime, we must explicitly remember the value when being stored in case it's being
+ * read from an unmarked threads' stack and stored into a marked thread. If the unmarked
+ * thread terminates before being marked, we will miss the object since a stack pop doesn't
+ * invoke the barrier.
+ * @param destSlot the slot to be used
+ * @param value the value to be stored
+ */
+void 
+MM_RealtimeAccessBarrier::storeObjectToInternalVMSlot(J9VMThread *vmThread, J9Object** destSlot, J9Object *value)
+{
+	if (preObjectStore(vmThread, destSlot, value, false)) {
+		rememberObjectIfBarrierEnabled(vmThread, value);
+		storeObjectToInternalVMSlotImpl(vmThread, destSlot, value, false);
+		postObjectStore(vmThread, destSlot, value, false);
+	}
+}
+
+/**
+ * Call rememberObject() if realtimeGC->isBarrierEnabled() returns true.
+ * @param object the object to remember
+ */
+void
+MM_RealtimeAccessBarrier::rememberObjectIfBarrierEnabled(J9VMThread *vmThread, J9Object* object)
+{
+	MM_EnvironmentRealtime* env = MM_EnvironmentRealtime::getEnvironment(vmThread);
+	if (_realtimeGC->isBarrierEnabled()) {
+		rememberObject(env, object);
+	}
+}
+
+void*
+MM_RealtimeAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray array, jboolean *isCopy)
+{
+	void *data = NULL;
+	J9JavaVM *javaVM = vmThread->javaVM;
+	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
+
+	J9IndexableObject *arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
+	bool shouldCopy = false;
+	if((javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) {
+		shouldCopy = true;
+	} else {
+#if defined(J9VM_GC_ARRAYLETS)
+		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
+		if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(arrayObject)) {
+			shouldCopy = true;
+		}
+#endif
+	}
+
+	if(shouldCopy) {
+		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+		GC_ArrayObjectModel* indexableObjectModel = &_extensions->indexableObjectModel;
+		I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(arrayObject);
+		UDATA sizeInBytes = indexableObjectModel->getDataSizeInBytes(arrayObject);
+		data = functions->jniArrayAllocateMemoryFromThread(vmThread, sizeInBytes);
+		if(NULL == data) {
+			functions->setNativeOutOfMemoryError(vmThread, 0, 0);	// better error message here?
+		} else {
+			indexableObjectModel->memcpyFromArray(data, arrayObject, 0, sizeInElements);
+			if(NULL != isCopy) {
+				*isCopy = JNI_TRUE;
+			}
+		}
+		vmThread->jniCriticalCopyCount += 1;
+		VM_VMAccess::inlineExitVMToJNI(vmThread);
+	} else {
+		// acquire access and return a direct pointer
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+	  	vmThread->jniCriticalDirectCount += 1;
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		data = (void *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
+		if(NULL != isCopy) {
+			*isCopy = JNI_FALSE;
+		}
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		VM_VMAccess::inlineExitVMToJNI(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+	}
+	return data;
+}
+
+void
+MM_RealtimeAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, jarray array, void * elems, jint mode)
+{
+	J9JavaVM *javaVM = vmThread->javaVM;
+	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
+
+	J9IndexableObject *arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
+	bool shouldCopy = false;
+	if((javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) {
+		shouldCopy = true;
+	} else {
+#if defined(J9VM_GC_ARRAYLETS)
+		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
+		if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(arrayObject)) {
+			shouldCopy = true;
+		}
+#endif
+	}
+	if(shouldCopy) {
+		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+		if(JNI_ABORT != mode) {
+			GC_ArrayObjectModel* indexableObjectModel = &_extensions->indexableObjectModel;
+			I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(arrayObject);
+			_extensions->indexableObjectModel.memcpyToArray(arrayObject, 0, sizeInElements, elems);
+		}
+
+		// Commit means copy the data but do not free the buffer.
+		// All other modes free the buffer.
+		if(JNI_COMMIT != mode) {
+			functions->jniArrayFreeMemoryFromThread(vmThread, elems);
+		}
+
+		if(vmThread->jniCriticalCopyCount > 0) {
+			vmThread->jniCriticalCopyCount -= 1;
+		} else {
+			Assert_MM_invalidJNICall();
+		}
+
+		VM_VMAccess::inlineExitVMToJNI(vmThread);
+	} else {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+
+		/*
+		 * Objects can not be moved if critical section is active
+		 * This trace point will be generated if object has been moved or passed value of elems is corrupted
+		 */
+		void *data = (void *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
+		if(elems != data) {
+			Trc_MM_JNIReleasePrimitiveArrayCritical_invalid(vmThread, arrayObject, elems, data);
+		}
+
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	  	vmThread->jniCriticalDirectCount -= 1;
+		VM_VMAccess::inlineExitVMToJNI(vmThread);
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+	}
+}
+
+const jchar*
+MM_RealtimeAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str, jboolean *isCopy)
+{
+	jchar *data = NULL;
+	J9JavaVM *javaVM = vmThread->javaVM;
+	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
+	bool isCompressed = false;
+	bool shouldCopy = false;
+	bool hasVMAccess = false;
+
+#if !defined(J9VM_GC_ARRAYLETS)
+	if ((javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) {
+		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+		hasVMAccess = true;
+		shouldCopy = true;
+	} else if (IS_STRING_COMPRESSION_ENABLED_VM(javaVM)) {
+		/* If the string bytes are in compressed UNICODE, then we need to copy to decompress */
+		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+		hasVMAccess = true;
+		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
+		if (IS_STRING_COMPRESSED(javaVM, stringObject)) {
+			isCompressed = true;
+			shouldCopy = true;
+		}
+	}
+#else /* J9VM_GC_ARRAYLETS */
+	// For now only copying is supported for arraylets
+	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+	hasVMAccess = true;
+	shouldCopy = true;
+#endif /* J9VM_GC_ARRAYLETS */
+
+	if (shouldCopy) {
+		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
+		J9IndexableObject *valueObject = (J9IndexableObject*)J9VMJAVALANGSTRING_VALUE(vmThread, stringObject);
+		jint length = J9VMJAVALANGSTRING_LENGTH(vmThread, stringObject);
+		UDATA sizeInBytes = length * sizeof(jchar);
+
+		if (IS_STRING_COMPRESSED(vmThread, stringObject)) {
+			isCompressed = true;
+		}
+		data = (jchar*)functions->jniArrayAllocateMemoryFromThread(vmThread, sizeInBytes);
+		if (NULL == data) {
+			functions->setNativeOutOfMemoryError(vmThread, 0, 0);	// better error message here?
+		} else {
+			GC_ArrayObjectModel* indexableObjectModel = &_extensions->indexableObjectModel;
+			if (isCompressed) {
+				jint i;
+				
+				for (i = 0; i < length; i++) {
+					data[i] = (jchar)J9JAVAARRAYOFBYTE_LOAD(vmThread, (j9object_t)valueObject, i) & (jchar)0xFF;
+				}
+			} else {
+				if (J9_ARE_ANY_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
+					// This API determines the stride based on the type of valueObject so in the [B case we must passin the length in bytes
+					indexableObjectModel->memcpyFromArray(data, valueObject, 0, (I_32)sizeInBytes);
+				} else {
+					indexableObjectModel->memcpyFromArray(data, valueObject, 0, length);
+				}
+			}
+			if (NULL != isCopy) {
+				*isCopy = JNI_TRUE;
+			}
+		}
+		vmThread->jniCriticalCopyCount += 1;
+	} else {
+		// acquire access and return a direct pointer
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+	  	vmThread->jniCriticalDirectCount += 1;
+		hasVMAccess = true;
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
+		J9IndexableObject *valueObject = (J9IndexableObject*)J9VMJAVALANGSTRING_VALUE(vmThread, stringObject);
+
+		data = (jchar*)_extensions->indexableObjectModel.getDataPointerForContiguous(valueObject);
+
+		if (NULL != isCopy) {
+			*isCopy = JNI_FALSE;
+		}
+	}
+	if (hasVMAccess) {
+		VM_VMAccess::inlineExitVMToJNI(vmThread);
+	}
+	return data;
+}
+
+void
+MM_RealtimeAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring str, const jchar* elems)
+{
+	J9JavaVM *javaVM = vmThread->javaVM;
+	J9InternalVMFunctions *functions = javaVM->internalVMFunctions;
+	bool hasVMAccess = false;
+	bool shouldCopy = false;
+
+#if !defined(J9VM_GC_ARRAYLETS)
+	if ((javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) {
+		shouldCopy = true;
+	} else if (IS_STRING_COMPRESSION_ENABLED_VM(javaVM)) {
+		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+		hasVMAccess = true;
+		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
+		if (IS_STRING_COMPRESSED(vmThread, stringObject)) {
+			shouldCopy = true;
+		}
+	}
+#else /* J9VM_GC_ARRAYLETS */
+	// For now only copying is supported for arraylets
+	shouldCopy = true;
+#endif /* J9VM_GC_ARRAYLETS */
+
+	if (shouldCopy) {
+		// String data is not copied back
+		functions->jniArrayFreeMemoryFromThread(vmThread, (void*)elems);
+
+		if(vmThread->jniCriticalCopyCount > 0) {
+			vmThread->jniCriticalCopyCount -= 1;
+		} else {
+			Assert_MM_invalidJNICall();
+		}
+	} else {
+		// direct pointer, just drop access
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+	  	vmThread->jniCriticalDirectCount -= 1;
+		hasVMAccess = true;
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+	}
+
+	if (hasVMAccess) {
+		VM_VMAccess::inlineExitVMToJNI(vmThread);
+	}
+}
+
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+bool
+MM_RealtimeAccessBarrier::checkClassLive(J9JavaVM *javaVM, J9Class *classPtr)
+{
+	J9ClassLoader *classLoader = classPtr->classLoader;
+	bool result = false;
+
+	if ((0 == (classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD)) && (0 == (J9CLASS_FLAGS(classPtr) & J9_JAVA_CLASS_DYING))) {
+		/*
+		 *  this class has not been discovered dead yet
+		 *  so mark it if necessary to force it to be alive
+		 */
+		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+		MM_RealtimeGC *realtimeGC = extensions->realtimeGC;
+		J9Object *classLoaderObject = classLoader->classLoaderObject;
+
+		if (NULL != classLoaderObject) {
+			if (realtimeGC->_unmarkedImpliesClasses) {
+				/*
+				 * Mark is complete but GC cycle is still be in progress
+				 * so we just can check is the correspondent class loader object marked
+				 */
+				result = realtimeGC->getMarkingScheme()->isMarked(classLoaderObject);
+			} else {
+				/*
+				 * The return for this case is always true. If mark is active but not completed yet
+				 * force this class to be marked to survive this GC
+				 */
+
+				J9VMThread* vmThread =  javaVM->internalVMFunctions->currentVMThread(javaVM);
+				rememberObjectIfBarrierEnabled(vmThread, classLoaderObject);
+				result = true;
+			}
+		} else {
+			/* this class loader probably is in initialization process and class loader object has not been attached yet */
+			result = true;
+		}
+	}
+
+	return result;
+}
+#endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+
+extern "C" {
+
+/**
+ * The "barrier" in java.lang.ref.Reference.get() is essentially a complete replacement
+ * for the original function.
+ */
+J9Object*
+j9gc_objaccess_referenceGet(J9VMThread *vmThread, j9object_t refObject) 
+{
+	MM_RealtimeAccessBarrier *barrier = (MM_RealtimeAccessBarrier*)MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	return barrier->referenceGet(vmThread, refObject);
+}
+
+void
+j9gc_objaccess_jniDeleteGlobalReference(J9VMThread *vmThread, J9Object *reference) {
+	MM_RealtimeAccessBarrier *barrier = (MM_RealtimeAccessBarrier*)MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	barrier->jniDeleteGlobalReference(vmThread, reference);
+}
+
+/**
+ * Check that the two string constants should be considered truly "live".
+ * This is a bit of a hack to enable us to scan the string table incrementally.
+ * If we are still doing marking work, we treat a call to this method as meaning
+ * that one of the strings has been fetched from the string table. If we are finished
+ * marking work, but have yet to clear the string table, we treat any unmarked strings
+ * as cleared, by returning false from this function.
+ * NOTE: Because this function is called from the hash equals function, we can't
+ * actually tell which one of the strings is actually the one in the table already,
+ * so we have to assume they both are.
+ * @return true if they can be considered live, false otherwise.
+ */
+UDATA 
+j9gc_objaccess_checkStringConstantsLive(J9JavaVM *javaVM, j9object_t stringOne, j9object_t stringTwo)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	MM_RealtimeGC *realtimeGC = extensions->realtimeGC;
+
+	if (realtimeGC->isBarrierEnabled()) {
+		if (realtimeGC->_unmarkedImpliesStringsCleared) {
+			/* If this flag is set, we will not scan the remembered set again, so we must
+			 * treat any unmarked string constant as having been cleared.
+			 */
+			return realtimeGC->getMarkingScheme()->isMarked((J9Object *)stringOne) && realtimeGC->getMarkingScheme()->isMarked((J9Object *)stringTwo);
+		} else {
+			J9VMThread* vmThread =  javaVM->internalVMFunctions->currentVMThread(javaVM);
+			((MM_RealtimeAccessBarrier*)extensions->accessBarrier)->stringConstantEscaped(vmThread, (J9Object *)stringOne);
+			((MM_RealtimeAccessBarrier*)extensions->accessBarrier)->stringConstantEscaped(vmThread, (J9Object *)stringTwo);
+		}
+	}
+	return true;
+}
+
+/**
+ *  Equivalent to j9gc_objaccess_checkStringConstantsLive but for a single string constant
+ */
+BOOLEAN
+j9gc_objaccess_checkStringConstantLive(J9JavaVM *javaVM, j9object_t string)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	MM_RealtimeGC *realtimeGC = extensions->realtimeGC;
+
+	if (realtimeGC->isBarrierEnabled()) {
+		if (realtimeGC->_unmarkedImpliesStringsCleared) {
+			/* If this flag is set, we will not scan the remembered set again, so we must
+			 * treat any unmarked string constant as having been cleared.
+			 */
+			return realtimeGC->getMarkingScheme()->isMarked((J9Object *)string) ? TRUE : FALSE;
+		} else {
+			J9VMThread* vmThread =  javaVM->internalVMFunctions->currentVMThread(javaVM);
+			((MM_RealtimeAccessBarrier*)extensions->accessBarrier)->stringConstantEscaped(vmThread, (J9Object *)string);
+		}
+	}
+	return TRUE;
+}
+
+}
+
+#endif /* J9VM_GC_REALTIME */
