@@ -992,6 +992,7 @@ jobject JNICALL Java_sun_reflect_ConstantPool_getUTF8At0(JNIEnv *env, jobject un
 jint JNICALL Java_java_lang_invoke_MethodHandle_getCPTypeAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex);
 jobject JNICALL Java_java_lang_invoke_MethodHandle_getCPMethodTypeAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex);
 jobject JNICALL Java_java_lang_invoke_MethodHandle_getCPMethodHandleAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex);
+jobject JNICALL Java_java_lang_invoke_MethodHandle_getCPClassNameAt(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
 jint JNICALL Java_jdk_internal_reflect_ConstantPool_getClassRefIndexAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
 jint JNICALL Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefIndexAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
 jobject JNICALL Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefInfoAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);

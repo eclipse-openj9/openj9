@@ -807,6 +807,21 @@ public abstract class MethodHandle {
 	 * equivalent for MethodHandle.
 	 */
 	private static final native MethodHandle getCPMethodHandleAt(Class<?> clazz, int index);
+	
+	/**
+	 * Get the class name from a constant pool class element, which is located
+	 * at the specified <i>index</i> in <i>clazz</i>'s constant pool.
+	 * 
+	 * @param   an instance of class - its constant pool is accessed
+	 * @param   the constant pool index
+	 * 
+	 * @return  instance of String which contains the class name or NULL in
+	 *          case of error
+	 * 
+	 * @throws  NullPointerException if <i>clazz</i> is null
+	 * @throws  IllegalArgumentException if <i>index</i> has wrong constant pool type
+	 */
+	private static final native String getCPClassNameAt(Class<?> clazz, int index);
 
 	private static final int BSM_ARGUMENT_SIZE = Short.SIZE / Byte.SIZE;
 	private static final int BSM_ARGUMENT_COUNT_OFFSET = BSM_ARGUMENT_SIZE;
@@ -861,6 +876,9 @@ public abstract class MethodHandle {
 				switch (cpType) {
 				case 1:
 					cpEntry = cp.getClassAt(index);
+					if (cpEntry == null) {
+						throw throwNoClassDefFoundError(clazz, index);
+					}
 					break;
 				case 2:
 					cpEntry = cp.getStringAt(index);
@@ -990,6 +1008,26 @@ public abstract class MethodHandle {
 			throw noClassDefFoundError;
 		}
 		throw e;
+	}
+
+	/**
+	 * Retrieve the class name of the constant pool class element located at the specified
+	 * index in clazz's constant pool. Then, throw a NoClassDefFoundError with the cause
+	 * set as ClassNotFoundException. The message of NoClassDefFoundError and 
+	 * ClassNotFoundException contains the name of the class, which couldn't be found.
+	 * 
+	 * @param   an instance of Class - its constant pool is accessed
+	 * @param   integer value of the constant pool index
+	 * 
+	 * @return  Throwable to prevent any fall through case
+	 * 
+	 * @throws  NoClassDefFoundError with the cause set as ClassNotFoundException
+	 */
+	private static Throwable throwNoClassDefFoundError(Class<?> clazz, int index) {
+		String className = getCPClassNameAt(clazz, index);
+		NoClassDefFoundError noClassDefFoundError = new NoClassDefFoundError(className);
+		noClassDefFoundError.initCause(new ClassNotFoundException(className));
+		throw noClassDefFoundError;	
 	}
 	
 	@Override
