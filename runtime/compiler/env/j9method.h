@@ -621,6 +621,7 @@ public:
    virtual void *startAddressForInterpreterOfJittedMethod() override;
    virtual bool getUnresolvedSpecialMethodInCP(I_32 cpIndex) override;
    virtual TR_ResolvedMethod *getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve) override;
+   virtual bool getUnresolvedFieldInCP(I_32 cpIndex) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override

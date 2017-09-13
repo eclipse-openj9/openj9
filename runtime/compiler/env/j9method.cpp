@@ -8790,3 +8790,15 @@ TR_ResolvedJ9JAASServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, 
    TR_ResolvedMethod *m = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedJ9JAASServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), this) : 0;
    return m;
    }
+
+bool
+TR_ResolvedJ9JAASServerMethod::getUnresolvedFieldInCP(I_32 cpIndex)
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getUnresolvedFieldInCP, _remoteMirror, cpIndex);
+   return std::get<0>(_stream->read<bool>());
+#else
+      return true;
+#endif
+   }

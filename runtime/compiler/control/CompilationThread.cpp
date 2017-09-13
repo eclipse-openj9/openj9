@@ -997,6 +997,14 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(method->getUnresolvedSpecialMethodInCP(cpIndex));
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_getUnresolvedFieldInCP:
+         {
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t>();
+         TR_ResolvedRelocatableJ9Method *method= std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         client->write(method->getUnresolvedFieldInCP(cpIndex));
+         }
+         break;
       case J9ServerMessageType::ResolvedMethod_storeValidationRecordIfNecessary:
          {
          auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, J9ConstantPool *, int32_t, TR_ExternalRelocationTargetKind, J9Method *, J9Class *>();
