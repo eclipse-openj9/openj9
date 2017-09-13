@@ -24,6 +24,7 @@ clean: jit_cleanobjs jit_cleandeps jit_cleandll
 cleanobjs: jit_cleanobjs
 cleandeps: jit_cleandeps
 cleandll: jit_cleandll
+proto: proto_clean protoc
 
 #
 # Define our targets. "jit_cleanobjs" "jit_cleandeps" and "jit_cleandll" are double-colon so they can be appended to
@@ -35,5 +36,7 @@ jit_createdirs::
 jit_cleanobjs::
 jit_cleandeps::
 jit_cleandll::
+protoc:
+proto_clean:
 
 include $(JIT_MAKE_DIR)/rules/$(TOOLCHAIN)/common.mk
