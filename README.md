@@ -28,8 +28,8 @@ We're not sure which route you might have taken on your way here, but we're real
 
 - [Eclipse OpenJ9 website](http://www.eclipse.org/openj9) - Learn about this high performance, enterprise-grade Java Virtual Machine (JVM) and why we think you want to get involved in its development.
 - [AdoptopenJDK website](https://adoptopenjdk.net/releases.html?variant=openj9) - (Coming soon!) Grab pre-built OpenJDK binaries that embed OpenJ9 and try it out.
-- [Build instructions](https://pages.github.ibm.com/runtimes/openj9-website/oj9_build.html) - Here's how you can build an OpenJDK with OpenJ9 yourself.
-- [FAQ](http://www.eclipse.org/openj9/faq)
+- [Build instructions](https://www.eclipse.org/openj9/oj9_build.html) - Here's how you can build an OpenJDK with OpenJ9 yourself.
+- [FAQ](https://www.eclipse.org/openj9/oj9_faq.html)
 
 Hopefully you're here because you want to get involved in the project? Read on ...
 
