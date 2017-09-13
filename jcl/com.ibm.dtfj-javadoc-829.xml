@@ -1,31 +1,35 @@
 <!--
-/*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
- *
- * This program and the accompanying materials are made available under
- * the terms of the Eclipse Public License 2.0 which accompanies this
- * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
- * or the Apache License, Version 2.0 which accompanies this distribution and
- * is available at https://www.apache.org/licenses/LICENSE-2.0.
- *
- * This Source Code may also be made available under the following
- * Secondary Licenses when the conditions for such availability set
- * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
- * General Public License, version 2 with the GNU Classpath
- * Exception [1] and GNU General Public License, version 2 with the
- * OpenJDK Assembly Exception [2].
- *
- * [1] https://www.gnu.org/software/classpath/license.html
- * [2] http://openjdk.java.net/legal/assembly-exception.html
- *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
- *******************************************************************************/
- -->
+Copyright (c) 2016, 2017 IBM Corp. and others
 
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
 <project default="javadoc" basedir=".">
+
 	<target name="setup">
 		<property name="javadoc.dir" location="com.ibm.dtfj-javadoc" />
-		<echo>javadoc.exe=${javadoc.exe}</echo>
+		<!-- set path for javadoc for linux from IBM Java8sr5 SDK -->
+		<property name="javadoc.linux" location="/bluebird/vmlab.bluebird.bin/platform/linux386/6480sr5-20170206/sdk/bin/javadoc" />
+		<property name="javadoc.windows" location="W:\bin\sdk6480sr5-20170206\bin\javadoc" />
+		<condition property="javadoc.exe" value="${javadoc.windows}" else="${javadoc.linux}">
+			<os family="windows" />
+		</condition>
+		<echo level="info" message="javadoc.exe=${javadoc.exe}" />
 		<pathconvert property="src.path">
 			<path location="src" />
 		</pathconvert>
@@ -43,7 +47,6 @@
 		<delete dir="${javadoc.dir}" />
 		<mkdir dir="${javadoc.dir}" />
 		<exec executable="${javadoc.exe}" dir="${javadoc.dir}" failonerror="true">
-			<arg value="-verbose" />
 			<arg value="-sourcepath" />
 			<arg value="${src.path}" />
 			<arg value="com.ibm.dtfj.image" />
@@ -51,6 +54,8 @@
 			<arg value="com.ibm.dtfj.runtime" />
 			<arg value="-bottom" />
 			<arg value="${bottom}" />
+			<arg value="-overview" />
+			<arg value="${src.path}/dtfj-overview.html" />
 		</exec>
 
 		<!-- remove unwanted line in stylesheet.css: -->
@@ -63,6 +68,8 @@
 			</filterchain>
 		</copy>
 		<move file="${javadoc.dir}/stylesheet.css.tmp" tofile="${javadoc.dir}/stylesheet.css" />
+		<!-- improve accessibility -->
+		<echo message=".subNav ul.navList a, .subNav ul.subNavList a { color: #002d4a; }${line.separator}" file="${javadoc.dir}/stylesheet.css" append="true" />
 	</target>
 
 	<target name="update-zip" depends="generate" if="zip.dest.exists">
@@ -73,7 +80,7 @@
 		<echo level="warning" message="Can't find '${zip.dest.dir}', so not updating com.ibm.dtfj.zip" />
 	</target>
 
-	<target name="javadoc" depends="generate, update-zip, warn-no-update">
+	<target name="javadoc" depends="update-zip, warn-no-update">
 		<echo level="info" message="Done" />
 	</target>
 
