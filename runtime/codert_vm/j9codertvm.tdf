@@ -1,0 +1,165 @@
+//*******************************************************************************
+// Copyright (c) 2007, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//******************************************************************************
+
+Executable=j9codertvm
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_Decomp_printMethod Overhead=1 Level=1 Template="(method %p => %.*s.%.*s%.*s)"
+
+TraceEntry=Trc_Decomp_jitCodeBreakpointAdded_Entry Overhead=1 Level=1 Template="jitCodeBreakpointAdded - Code breakpoint added to %p"
+TraceEvent=Trc_Decomp_jitCodeBreakpointAdded_newEntry Overhead=1 Level=1 Template="new entry"
+TraceEvent=Trc_Decomp_jitCodeBreakpointAdded_hasBeenTranslated Overhead=1 Level=1 Template="hasBeenTranslated = %d"
+TraceExit=Trc_Decomp_jitCodeBreakpointAdded_incCount Overhead=1 Level=1 Template="jitCodeBreakpointAdded - Count incremented to %d"
+TraceExit=Trc_Decomp_jitCodeBreakpointAdded_Exit Overhead=1 Level=1 Template="jitCodeBreakpointAdded"
+
+TraceEntry=Trc_Decomp_jitCodeBreakpointRemoved_Entry Overhead=1 Level=1 Template="jitCodeBreakpointRemoved - Code breakpoint removed from %p"
+TraceEvent=Trc_Decomp_jitCodeBreakpointAdded_fixingMethods Overhead=1 Level=1 Template="fixing methods"
+TraceExit=Trc_Decomp_jitCodeBreakpointRemoved_decCount Overhead=1 Level=1 Template="jitCodeBreakpointRemoved - Count decremented to %d"
+TraceExit-Exception=Trc_Decomp_jitCodeBreakpointAdded_Failed Overhead=1 Level=1 Template="failed to find bp method in jitCodeBreakpointRemoved"
+
+TraceEntry=Trc_Decomp_jitDataBreakpointAdded_Entry Overhead=1 Level=1 Template="jitDataBreakpointAdded"
+TraceExit=Trc_Decomp_jitDataBreakpointAdded_Exit Overhead=1 Level=1 Template="jitDataBreakpointAdded"
+
+TraceEntry=Trc_Decomp_jitDataBreakpointRemoved_Entry Overhead=1 Level=1 Template="jitDataBreakpointRemoved"
+TraceExit=Trc_Decomp_jitDataBreakpointRemoved_Exit Overhead=1 Level=1 Template="jitDataBreakpointRemoved"
+
+TraceEntry=Trc_Decomp_jitExceptionCaught_Entry Overhead=1 Level=1 Template="jitExceptionCaught in frame A0=%08X:"
+TraceEvent=Trc_Decomp_jitExceptionCaught_JITFrame Overhead=1 Level=1 Template="jitExceptionCaught - JIT frame"
+TraceEvent=Trc_Decomp_jitExceptionCaught_frameMarked Overhead=1 Level=1 Template="exception catch frame %p was marked for decompilation"
+TraceEvent=Trc_Decomp_jitExceptionCaught_mustReportPopProtected Overhead=1 Level=1 Template="must report exception catch: pop protected frame %p removed from stack by exception throw"
+TraceEvent=Trc_Decomp_jitExceptionCaught_mustReportNormal Overhead=1 Level=1 Template="must report exception catch: frame A0=%p is the catch frame"
+TraceEvent=Trc_Decomp_jitExceptionCaught_decompileRequested Overhead=1 Level=1 Template="decompile was requested"
+TraceEvent=Trc_Decomp_jitExceptionCaught_notDecompiling Overhead=1 Level=1 Template="not decompiling"
+TraceEvent=Trc_Decomp_jitExceptionCaught_notReportingCatch Overhead=1 Level=1 Template="not reporting exception catch"
+TraceExit=Trc_Decomp_jitExceptionCaught_notJITFrame Overhead=1 Level=1 Template="jitExceptionCaught - not a JIT frame"
+TraceExit=Trc_Decomp_jitExceptionCaught_Exit Overhead=1 Level=1 Template="jitExceptionCaught"
+
+TraceEntry=Trc_Decomp_jitFramePopBreakpointAdded_Entry Overhead=1 Level=1 Template="jitFramePopBreakpointAdded - Adding JIT frame pop in thread %p, A0 = %p, method = %p"
+TraceEvent=Trc_Decomp_jitFramePopBreakpointAdded_JITFrame Overhead=1 Level=1 Template="JIT frame"
+TraceEvent=Trc_Decomp_jitFramePopBreakpointAdded_JITINLFrame Overhead=1 Level=1 Template="JIT->INL frame"
+TraceEvent=Trc_Decomp_jitFramePopBreakpointAdded_J2IFrame Overhead=1 Level=1 Template="J2I frame"
+TraceExit=Trc_Decomp_jitFramePopBreakpointAdded_Exit Overhead=1 Level=1 Template="jitFramePopBreakpointAdded"
+
+TraceEntry=Trc_Decomp_jitFramePopNotificationAdded_Entry Overhead=1 Level=1 Template="jitFramePopBreakpointAdded - Adding JIT frame pop notification in thread %p, A0 = %p, method = %p"
+TraceExit=Trc_Decomp_jitFramePopNotificationAdded_Exit Overhead=1 Level=1 Template="jitFramePopBreakpointAdded"
+
+TraceEntry=Trc_Decomp_jitHotswapOccurred_Entry Overhead=1 Level=1 Template="jitHotswapOccurred"
+TraceExit=Trc_Decomp_jitHotswapOccurred_Exit Overhead=1 Level=1 Template="jitHotswapOccurred"
+
+TraceEntry=Trc_Decomp_jitInterpreterPCFromWalkState_Entry noEnv Overhead=1 Level=1 Template="jitInterpreterPCFromWalkState - Lookup interp PC for %p"
+TraceExit=Trc_Decomp_jitInterpreterPCFromWalkState_notJIT noEnv Overhead=1 Level=1 Template="jitInterpreterPCFromWalkState - interp pc = %p (frame not JIT)"
+TraceExit=Trc_Decomp_jitInterpreterPCFromWalkState_exHandler noEnv Overhead=1 Level=1 Template="jitInterpreterPCFromWalkState - interp pc = %p (ex handler)"
+TraceExit=Trc_Decomp_jitInterpreterPCFromWalkState_noStackMap noEnv Overhead=1 Level=1 Template="jitInterpreterPCFromWalkState - interp pc = 0 (stack map not found)"
+TraceExit=Trc_Decomp_jitInterpreterPCFromWalkState_stackMap noEnv Overhead=1 Level=1 Template="jitInterpreterPCFromWalkState - interp pc = %p (stack map)"
+
+TraceEntry=Trc_Decomp_jitSingleStepAdded_Entry Overhead=1 Level=1 Template="jitSingleStepAdded"
+TraceExit=Trc_Decomp_jitSingleStepAdded_Exit Overhead=1 Level=1 Template="jitSingleStepAdded"
+
+TraceEntry=Trc_Decomp_jitSingleStepRemoved_Entry Overhead=1 Level=1 Template="jitSingleStepRemoved"
+TraceExit=Trc_Decomp_jitSingleStepRemoved_Exit Overhead=1 Level=1 Template="jitSingleStepRemoved"
+
+TraceEntry=Trc_Decomp_addDecompilation_Entry Overhead=1 Level=1 Template="addDecompilation - Marking %p for decompilation"
+TraceEvent=Trc_Decomp_addDecompilation_walkStateInfo Overhead=1 Level=1 Template="BP = %p, A0 = %p, CP = %p, PC = %p"
+TraceEvent=Trc_Decomp_addDecompilation_reason Overhead=1 Level=1 Template="reason = %zx %s%s%s%s%s%s%s"
+TraceEvent=Trc_Decomp_addDecompilation_allocRecord Overhead=1 Level=1 Template="new decomp record is %p"
+TraceEvent=Trc_Decomp_addDecompilation_insertBeforeFramePop Overhead=1 Level=1 Template="inserting before framePop"
+TraceEvent=Trc_Decomp_addDecompilation_atExceptionCatch Overhead=1 Level=1 Template="at exception catch"
+TraceEvent=Trc_Decomp_addDecompilation_beforeSyncMonitorEnter Overhead=1 Level=1 Template="before sync monitor enter"
+TraceEvent=Trc_Decomp_addDecompilation_beforeReportMethodEnter Overhead=1 Level=1 Template="before report method enter"
+TraceEvent=Trc_Decomp_addDecompilation_advancePC Overhead=1 Level=1 Template="advancing PC"
+TraceEvent=Trc_Decomp_addDecompilation_atCurrentPC Overhead=1 Level=1 Template="at current PC"
+TraceEvent=Trc_Decomp_addDecompilation_atInvoke Overhead=1 Level=1 Template="at invoke"
+TraceEvent=Trc_Decomp_addDecompilation_explainInvoke Overhead=1 Level=1 Template="This method sent %.*s%.*s"
+TraceExit=Trc_Decomp_addDecompilation_existingRecord Overhead=1 Level=1 Template="existing decomp record %p found - setting bits"
+TraceExit-Exception=Trc_Decomp_addDecompilation_allocFailed Overhead=1 Level=1 Template="addDecompilation - allocate of decompilation info failed - returning NULL"
+TraceExit=Trc_Decomp_addDecompilation_Exit Overhead=1 Level=1 Template="addDecompilation - %p"
+
+TraceEntry=Trc_Decomp_decompileMethodFrameIterator_Entry Overhead=1 Level=1 Template="decompileMethodFrameIterator"
+TraceEvent=Trc_Decomp_decompileMethodFrameIterator_outgoingArgCount Overhead=1 Level=1 Template="outgoing arg count is %d"
+TraceEvent=Trc_Decomp_decompileMethodFrameIterator_pendingCount Overhead=1 Level=1 Template="pending count from stack mapper is %d"
+TraceEvent=Trc_Decomp_decompileMethodFrameIterator_adjustedCount Overhead=1 Level=1 Template="adjusted count (based on return type %c) is %d"
+TraceExit=Trc_Decomp_decompileMethodFrameIterator_previousIsJIT Overhead=1 Level=1 Template="decompileMethodFrameIterator - finish: previous is JIT - copy preserved register values"
+TraceExit=Trc_Decomp_decompileMethodFrameIterator_previousIsBC Overhead=1 Level=1 Template="decompileMethodFrameIterator - finish: previous is BC - set flag"
+TraceExit=Trc_Decomp_decompileMethodFrameIterator_Exit Overhead=1 Level=1 Template="decompileMethodFrameIterator"
+
+TraceEntry=Trc_Decomp_deleteAllDecompilations_Entry Overhead=1 Level=1 Template="deleteAllDecompilations - fixing decomp records"
+TraceEvent=Trc_Decomp_deleteAllDecompilations_notFreeingRecord Overhead=1 Level=1 Template="not freeing decomp record %p (reason=%zx)"
+TraceExit=Trc_Decomp_deleteAllDecompilations_Exit Overhead=1 Level=1 Template="deleteAllDecompilations"
+
+TraceEntry=Trc_Decomp_deleteDecompilationForExistingFrame_Entry noEnv Overhead=1 Level=1 Template="deleteDecompilationForExistingFrame"
+TraceEvent=Trc_Decomp_deleteDecompilationForExistingFrame_fixingFramePop noEnv Overhead=1 Level=1 Template="fixing framePop in thread %p"
+TraceEvent=Trc_Decomp_deleteDecompilationForExistingFrame_freeDecomp noEnv Overhead=1 Level=1 Template="free decomp %p for frame %p"
+TraceExit=Trc_Decomp_deleteDecompilationForExistingFrame_Exit noEnv Overhead=1 Level=1 Template="deleteDecompilationForExistingFrame"
+
+TraceEntry=Trc_Decomp_performDecompile_Entry Overhead=1 Level=1 Template="performDecompile"
+TraceEvent=Trc_Decomp_performDecompile_syncMethod Overhead=1 Level=1 Template="sync method, incrementing temp count"
+TraceEvent=Trc_Decomp_performDecompile_buildingBCFrame Overhead=1 Level=1 Template="building bytecode frame at %p"
+TraceEvent=Trc_Decomp_performDecompile_fixingPopProtected Overhead=1 Level=1 Template="fixing pop-protected savedPC address to %p"
+TraceEvent=Trc_Decomp_performDecompile_buildingJ2IFrame Overhead=1 Level=1 Template="building J2I frame at %p"
+TraceEvent=Trc_Decomp_performDecompile_fixingDecompStack Overhead=1 Level=1 Template="fixing top of decomp stack (%p) from %p to %p (pc = %p)"
+TraceEvent=Trc_Decomp_performDecompile_addedPopNotification Overhead=1 Level=1 Template="frame pop notification added at %p"
+TraceEvent=Trc_Decomp_performDecompile_fixingInvokeInterface Overhead=1 Level=1 Template="at JBinvokeinterface, backing pc up to JBinvokeinterface2"
+TraceExit=Trc_Decomp_performDecompile_Exit Overhead=1 Level=1 Template="performDecompile - new SP = %p"
+TraceEvent=Trc_Decomp_performDecompile_monitorNotEntered Overhead=1 Level=1 Template="monitor not entered"
+
+TraceEntry=Trc_Decomp_jitStackLocalsModified_Entry Overhead=1 Level=1 Template="jitStackLocalsModified"
+TraceEvent=Trc_Decomp_jitStackLocalsModified_notJIT Overhead=1 Level=1 Template="jitStackLocalsModified - not a JIT frame"
+TraceExit=Trc_Decomp_jitStackLocalsModified_Exit Overhead=1 Level=1 Template="jitStackLocalsModified"
+
+TraceEntry=Trc_Decomp_jitBreakpointedMethodCompiled_Entry Overhead=1 Level=1 Template="jitBreakpointedMethodCompiled method = %p startAddress=%p"
+TraceExit=Trc_Decomp_jitBreakpointedMethodCompiled_Exit_success Overhead=1 Level=1 Template="jitBreakpointedMethodCompiled success - breakpointed method at %p"
+TraceExit=Trc_Decomp_jitBreakpointedMethodCompiled_Exit_fail Overhead=1 Level=1 Template="jitBreakpointedMethodCompiled failed to find breakpointed method"
+
+TraceEvent=Trc_Decomp_addDecompilation_atAllocate Overhead=1 Level=1 Template="at allocation bytecode"
+TraceEvent=Trc_Decomp_addDecompilation_beforeAnewarray Overhead=1 Level=1 Template="before anewarray"
+TraceEvent=Trc_Decomp_addDecompilation_beforeMultianewarray Overhead=1 Level=1 Template="before multianewarray"
+
+TraceEntry=Trc_DLT_setUpForDLT_Entry Overhead=1 Level=1 Template="setUpForDLT"
+TraceExit=Trc_DLT_setUpForDLT_Exit_Success Overhead=1 Level=1 Template="setUpForDLT success (DLT entry at %p)"
+TraceExit=Trc_DLT_setUpForDLT_Exit_MalformedStack Overhead=1 Level=1 Template="setUpForDLT - malformed stack"
+TraceExit=Trc_DLT_setUpForDLT_Exit_StackOverflow Overhead=1 Level=1 Template="setUpForDLT - stack overflow"
+TraceExit=Trc_DLT_setUpForDLT_Exit_FailedTempAllocate Overhead=1 Level=1 Template="setUpForDLT - temp buffer allocation failed"
+TraceEvent=Trc_DLT_setUpForDLT_Jitted_Caller Overhead=1 Level=1 Template="calling frame is compiled"
+TraceEvent=Trc_DLT_setUpForDLT_Bytecode_Caller Overhead=1 Level=1 Template="calling frame is bytecoded"
+TraceEvent=Trc_DLT_setUpForDLT_Aligning_Arguments Overhead=1 Level=1 Template="aligning arguments on the stack"
+TraceEvent=Trc_DLT_setUpForDLT_Discard_Enter_Record Overhead=1 Level=1 Template="discarding monitor enter record %p (object %p)"
+
+TraceEntry=Trc_Thunk_j9ThunkLookupNameAndSig_Entry Overhead=1 Level=3 NoEnv Template="j9ThunkLookupNameAndSig"
+TraceExit=Trc_Thunk_j9ThunkLookupNameAndSig_Exit_Success Overhead=1 Level=3 NoEnv Template="j9ThunkLookupNameAndSig success (thunk %p)"
+TraceExit=Trc_Thunk_j9ThunkLookupNameAndSig_Exit_ThunkNotFound Overhead=1 Level=1 NoEnv Template="j9ThunkLookupNameAndSig - thunk not found"
+
+TraceAssert=Assert_JSWalk_invalidFrameType noEnv Overhead=1 Level=1 Assert="(0 /* invalid frame (sub)type encountered */)"
+TraceAssert=Assert_j9i2jMHTransition_unreachable noEnv Overhead=1 Level=1 Assert="(0 /* unreachable */)"
+
+TraceAssert=Assert_CodertVM_true noEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Assert_CodertVM_false noEnv Overhead=1 Level=1 Assert="!(P1)"
+
+TraceEvent=Trc_Decomp_addDecompilation_osrFrame Overhead=1 Level=1 Template="This compiled frame uses OSR"
+TraceEvent=Trc_Decomp_addDecompilation_osrFailed Overhead=1 Level=1 Template="OSR failed"
+TraceEvent=Trc_Decomp_addDecompilation_osrMustDecompile Overhead=1 Level=1 Template="OSR forcing decompilation"
+
+TraceEvent=Trc_Decomp_addDecompilation_atMonitorEnter Overhead=1 Level=1 Template="at monitorenter bytecode"
+
+TraceAssert=Assert_Swalk_stackMapNull noEnv Overhead=1 Level=1 Assert="(0 /* Unable to locate JIT stack map */)"
+TraceAssert=Assert_Decomp_breakpointFailed noEnv Overhead=1 Level=1 Assert="(0 /* alloc failure in jitPermanentBreakpointAdded */)"
+
+TraceAssert=Assert_CodertVM_mustHaveVMAccess noEnv overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"

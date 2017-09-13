@@ -1,0 +1,14 @@
+*.jar
+*.zip
+*.dll
+*.class
+omr
+
+# 8096* and com.ibm.jvmti.tests are currently in different repos and copied into the build $workspace
+com.ibm.jvmti.tests
+8096_Base
+8096_Bootstrap
+8096_Utils
+
+# Root level .project should be ignored as Eclipse automatically creates this file when new repositories are added as Projects for C/C++ indexing
+/.project

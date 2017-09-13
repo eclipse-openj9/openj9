@@ -1,0 +1,915 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=EXEL
+J9NLS.HEADER=j9exelibnls.h
+
+# J9SourceExeLibArgumentsParsing - describeInternalOptions
+
+J9NLS_EXELIB_INTERNAL_HELP_1_1=A\u015fa\u011f\u0131daki se\u00e7enekler standart d\u0131\u015f\u0131d\u0131r ve haber verilmeden de\u011fi\u015ftirilebilir.\n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_1.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_1.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_2=\  -Xbootclasspath:<yol>     \u00f6ny\u00fckleme s\u0131n\u0131f yolu <yol> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_2.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_2.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_3=\  -Xbootclasspath/p:<yol>   \u00f6ny\u00fckleme s\u0131n\u0131f yolunun ba\u015f\u0131na <yol> eklenir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_3.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_3.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_3.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_4=\  -Xbootclasspath/a:<yol>   \u00f6ny\u00fckleme s\u0131n\u0131f yolunun sonuna <yol> eklenir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_4.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_4.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_4.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_5=\n\
+\  -Xrun<kitapl\u0131k>[:se\u00e7enekler]  yerli arac\u0131 kitapl\u0131\u011f\u0131n\u0131 y\u00fckler\n\
+\                                (kullan\u0131mdan kald\u0131r\u0131lm\u0131\u015f, yerini -agentlib alm\u0131\u015ft\u0131r)\n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_5.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_5.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_5.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_6=\  -Xint           yaln\u0131zca yorumlanan \u00e7al\u0131\u015ft\u0131r\u0131l\u0131r (-Xnojit -Xnoaot ile e\u015fde\u011fer)
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_6.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_6.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_6.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_7=\  -Xnojit         JIT ge\u00e7ersiz k\u0131l\u0131n\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_7.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_7.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_7.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_8=\  -Xnoaot         \u00f6n derlenmi\u015f kod \u00e7al\u0131\u015ft\u0131r\u0131lmaz
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_8.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_8.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_8.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_9=\  -Xfuture        ileride varsay\u0131lan de\u011fer beklenerek, en s\u0131k\u0131 denetimler etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_9.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_9.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_9.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_1=\n\
+A\u015fa\u011f\u0131daki se\u00e7eneklere ili\u015fkin ba\u011f\u0131ms\u0131z de\u011fi\u015fkenler byte olarak ifade edilir.
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_1.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_1.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_2=\"k\" (kilo) ya da \"m\" (mega) sonekini ta\u015f\u0131yan de\u011ferler buna g\u00f6re \u00e7arpanlar\u0131na ayr\u0131l\u0131r.\n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_2.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_2.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_3=\  -Xmca<x>        RAM s\u0131n\u0131f kesimi art\u0131m\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_3.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_3.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_3.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_4=\  -Xmco<x>        ROM s\u0131n\u0131f kesimi art\u0131m\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_4.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_4.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_4.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_5=\  -Xmn<x>         yeni yer b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_5.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_5.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_5.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1=\  -Xmn<x>         yeni yerin ba\u015flang\u0131\u00e7taki/\u00fcst s\u0131n\u0131r b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2=\  -Xmns<x>        ba\u015flang\u0131\u00e7taki yeni yer b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3=\  -Xmnx<x>        yeni yer b\u00fcy\u00fckl\u00fc\u011f\u00fc \u00fcst s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_5_MODRON_3.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_6=\  -Xmo<x>         eski yer b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_6.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_6.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_6.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1=\  -Xmo<x>         eski yerin ba\u015flang\u0131\u00e7taki/\u00fcst s\u0131n\u0131r b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2=\  -Xmos<x>        ba\u015flang\u0131\u00e7taki eski yer b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3=\  -Xmox<x>        eski yer b\u00fcy\u00fckl\u00fc\u011f\u00fc \u00fcst s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_6_MODRON_3.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_7=\  -Xmoi<x>        eski yer art\u0131m\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_7.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_7.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_7.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_8=\  -Xms<x>         eski yer b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_8.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_8.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_8.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON=\  -Xms<x>         ba\u015flang\u0131\u00e7taki bellek b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_8_MODRON.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_9=\  -Xmx<x>         bellek b\u00fcy\u00fckl\u00fc\u011f\u00fc \u00fcst s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_9.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_9.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_9.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL=\  -Xmr<x>         imli k\u00fcme b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON=\  -Xmrx<x>        imli k\u00fcme b\u00fcy\u00fckl\u00fc\u011f\u00fc \u00fcst s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_10_GENERATIONAL_MODRON.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_11=\  -Xmso<x>        i\u015fletim sistemi i\u015f par\u00e7ac\u0131c\u0131\u011f\u0131 y\u0131\u011f\u0131n b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_11.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_11.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_11.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE=\  -Xiss<x>        ba\u015flang\u0131\u00e7taki Java i\u015f par\u00e7ac\u0131\u011f\u0131 y\u0131\u011f\u0131n b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_12_GROWABLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE=\  -Xss<x>         Java i\u015f par\u00e7ac\u0131\u011f\u0131 y\u0131\u011f\u0131n b\u00fcy\u00fckl\u00fc\u011f\u00fc \u00fcst s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_13_GROWABLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_13=\  -Xss<x>         i\u015f par\u00e7ac\u0131\u011f\u0131 y\u0131\u011f\u0131n b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_13.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_13.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_13.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON=\  -Xmine<x>       \u00f6bek geni\u015fletmede b\u00fcy\u00fckl\u00fck alt s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_14_MODRON.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON=\  -Xmaxe<x>       \u00f6bek geni\u015fletmede b\u00fcy\u00fckl\u00fck \u00fcst s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_15_MODRON.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1=\n\
+A\u015fa\u011f\u0131daki se\u00e7eneklere ili\u015fkin ba\u011f\u0131ms\u0131z de\u011fi\u015fkenler 0 ile 1 aras\u0131 ondal\u0131k say\u0131lar olarak ifade edilir.
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2=0.3 de\u011feri %%30 iste\u011fini belirtir\n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3=\  -Xminf<x>       GC sonras\u0131 serbest \u00f6bek y\u00fczdesi alt s\u0131n\u0131r\u0131
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_3.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4=\  -Xmaxf<x>       GC sonras\u0131 serbest \u00f6bek y\u00fczdesi \u00fcst s\u0131n\u0131r\u0131
+# START NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_3_4.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1=\n\
+A\u015fa\u011f\u0131daki se\u00e7eneklere ili\u015fkin ba\u011f\u0131ms\u0131z de\u011fi\u015fkenler ondal\u0131k say\u0131 olarak ifade edilir.\n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2=\  -Xgcthreads<x>                GC i\u015f par\u00e7ac\u0131klar\u0131n\u0131n say\u0131s\u0131n\u0131 belirler
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3=\  -Xnoclassgc                   dinamik s\u0131n\u0131f bo\u015faltma ge\u00e7ersiz k\u0131l\u0131n\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_3.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4=\  -Xclassgc                     dinamik s\u0131n\u0131f bo\u015faltma etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_4.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5=\  -Xalwaysclassgc               her GC'de dinamik s\u0131n\u0131f bo\u015faltma etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_5.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6=\  -Xnocompactexplicitgc         sistem GC'de s\u0131k\u0131\u015ft\u0131rma ge\u00e7ersiz k\u0131l\u0131n\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_6.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7=\  -Xcompactexplicitgc           sistem GC'de s\u0131k\u0131\u015ft\u0131rma etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_7.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8=\  -Xcompactgc                   s\u0131k\u0131\u015ft\u0131rma etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_8.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9=\  -Xnocompactgc                 s\u0131k\u0131\u015ft\u0131rma ge\u00e7ersiz k\u0131l\u0131n\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_4_9.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT=\  -Xlp                          b\u00fcy\u00fck sayfa deste\u011fi etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_MODRON_LARGE_PAGE_SUPPORT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1=\n\
+\  -Xdbg:<se\u00e7enekler>               hata ay\u0131klamay\u0131 etkinle\u015ftir, JDWP standart se\u00e7enekleri
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2=\  -Xrunjdwp:<se\u00e7enekler>        hata ay\u0131klamay\u0131 etkinle\u015ftirir, JDWP standart se\u00e7enekleri
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3=\  -Xdbginfo:<simge dsy yolu>    hata ay\u0131klama bilgileri sunucusunu etkinle\u015ftirir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_3.user_response=
+# END NON-TRANSLATABLE
+
+# -Xrdbginfo is a command line option to Java which takes 2 parameters; host name of a computer and the port the server is utilizing
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4=\  -Xrdbginfo:<anasistem>:<kap\u0131> uzak hata ay\u0131klama bilgileri sunucusunu etkinle\u015ftirir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_DBGSUP_4.user_response=
+# END NON-TRANSLATABLE
+
+# J9SourceExeLibArgumentsParsing - cmdline_classpath_WARN
+
+J9NLS_EXELIB_CMDLINE_CP_WARN=\n\
+UYARI: Komut sat\u0131r\u0131 ba\u011f\u0131ms\u0131z de\u011fi\u015fkeni \"%s\" kullan\u0131mdan kald\u0131r\u0131lm\u0131\u015ft\u0131r.\n\
+UYARI: \"-classpath <yol>\" ya da \"-cp <yol>\" kullan\u0131lmal\u0131d\u0131r.
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_CMDLINE_CP_WARN.sample_input_1=-cp:
+J9NLS_EXELIB_CMDLINE_CP_WARN.explanation=NOTAG
+J9NLS_EXELIB_CMDLINE_CP_WARN.system_action=
+J9NLS_EXELIB_CMDLINE_CP_WARN.user_response=
+# END NON-TRANSLATABLE
+
+#J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numberic1024_WARN
+J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\n\
+UYARI: Komut sat\u0131r\u0131 ba\u011f\u0131ms\u0131z de\u011fi\u015fkeni \"%s\" kullan\u0131mdan kald\u0131r\u0131lm\u0131\u015ft\u0131r.\n\
+UYARI: -X e\u015fde\u011ferini kullan\u0131n.
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_CMDLINE_PREPEND_WARN.sample_input_1=-mca:
+J9NLS_EXELIB_CMDLINE_PREPEND_WARN.explanation=NOTAG
+J9NLS_EXELIB_CMDLINE_PREPEND_WARN.system_action=
+J9NLS_EXELIB_CMDLINE_PREPEND_WARN.user_response=
+# END NON-TRANSLATABLE
+
+# J9SourceStandaloneExeHelpers - dumpCopyrights
+J9NLS_EXELIB_COPYRIGHT_1=
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_COPYRIGHT_1.explanation=NOTAG
+J9NLS_EXELIB_COPYRIGHT_1.system_action=
+J9NLS_EXELIB_COPYRIGHT_1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_COPYRIGHT_2=
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_COPYRIGHT_2.explanation=NOTAG
+J9NLS_EXELIB_COPYRIGHT_2.system_action=
+J9NLS_EXELIB_COPYRIGHT_2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_TARGET=Hedef: %s
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_TARGET.sample_input_1=20070809_013422_lHdSMR (Windows XP 5.1 build 2600 Service Pack 2 x86)
+J9NLS_EXELIB_TARGET.explanation=NOTAG
+J9NLS_EXELIB_TARGET.system_action=
+J9NLS_EXELIB_TARGET.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_COPYRIGHT_3=
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_COPYRIGHT_3.explanation=NOTAG
+J9NLS_EXELIB_COPYRIGHT_3.system_action=
+J9NLS_EXELIB_COPYRIGHT_3.user_response=
+# END NON-TRANSLATABLE
+
+# J9SourceStandaloneExeHelpers - dumpVersionInfo
+
+J9NLS_EXELIB_VERSION=
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_VERSION.explanation=NOTAG
+J9NLS_EXELIB_VERSION.system_action=
+J9NLS_EXELIB_VERSION.user_response=
+# END NON-TRANSLATABLE
+
+# J9SourceStandaloneExeHelpers - main_runJavaMain
+
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY=\u0130\u00e7 VM hatas\u0131: Bellek yetersiz
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY.explanation=There are not enough virtual memory to satisfy memory allocation request.
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY.system_action=The JVM will terminate.
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY.user_response=Contact IBM Service.
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS=\u0130\u00e7 VM hatas\u0131: java/lang/String s\u0131n\u0131f\u0131 bulunamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS.explanation=java/lang/String class is not found in class path.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS.system_action=The JVM will terminate.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS.user_response=Contact IBM Service.
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA=\u0130\u00e7 VM hatas\u0131: %s s\u0131n\u0131f ad\u0131 i\u00e7in byte dizisi yarat\u0131lamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.sample_input_1=Main
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.explanation=Byte Array creation failed.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.system_action=The JVM will terminate.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.user_response=Contact IBM Service.
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME=\u0130\u00e7 VM hatas\u0131: %s s\u0131n\u0131f ad\u0131 i\u00e7in java/lang/String yarat\u0131lamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.sample_input_1=Main
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.explanation=Creation of java/lang/String failed.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.system_action=The JVM will terminate.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.user_response=Contact IBM Service.
+# END NON-TRANSLATABLE
+
+# VM and UTF are not translatable
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING=\u0130\u00e7 VM hatas\u0131: %s s\u0131n\u0131f ad\u0131 i\u00e7in dizgi UTF karakterlerine d\u00f6n\u00fc\u015ft\u00fcr\u00fcl\u00fcrken bellek bitti
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.sample_input_1=Main
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.explanation=Amount of available memory is too low.
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.system_action=The JVM will terminate.
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.user_response=Contact IBM Service.
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_CLASS_DOES_NOT_IMPL_MAIN=%s s\u0131n\u0131f\u0131 main() y\u00f6ntemini ger\u00e7ekle\u015ftirmiyor
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_CLASS_DOES_NOT_IMPL_MAIN.sample_input_1=Example
+J9NLS_EXELIB_CLASS_DOES_NOT_IMPL_MAIN.explanation=main() method is not found
+J9NLS_EXELIB_CLASS_DOES_NOT_IMPL_MAIN.system_action=the JVM will terminate.
+J9NLS_EXELIB_CLASS_DOES_NOT_IMPL_MAIN.user_response=Ensure target class implements main().
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_MUST_BE_PSV=main y\u00f6ntemi public, static ve void olarak bildirilmelidir.
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_MUST_BE_PSV.explanation=main method should always be public, static and void
+J9NLS_EXELIB_MUST_BE_PSV.system_action=The JVM will terminate.
+J9NLS_EXELIB_MUST_BE_PSV.user_response=Ensure main method is declared correctly.
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY=\u0130\u00e7 VM hatas\u0131: Ba\u011f\u0131ms\u0131z de\u011fi\u015fken dizisi yarat\u0131lamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY.explanation=Internal JVM error encountered.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY.system_action=The JVM will terminate.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY.user_response=Contact IBM Service.
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY=\u0130\u00e7 VM hatas\u0131: %s i\u00e7in ba\u011f\u0131ms\u0131z de\u011fi\u015fken dizisi yarat\u0131lamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.sample_input_1=test
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.explanation=Internal JVM error encountered.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.system_action=The JVM will terminate.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.user_response=Contact IBM Service.
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG=\u0130\u00e7 VM hatas\u0131: %s ba\u011f\u0131ms\u0131z de\u011fi\u015fkeni i\u00e7in java/lang/String yarat\u0131lamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.sample_input_1=test
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.explanation=Internal JVM error encountered.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.system_action=The JVM will terminate.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.user_response=Contact IBM Service.
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM=\u0130\u00e7 VM hatas\u0131: %s i\u00e7in dizi \u00f6\u011fesi tan\u0131mlanamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.sample_input_1=test
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.explanation=Internal JVM error encountered.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.system_action=The JVM will terminate.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.user_response=Contact IBM Service.
+# END NON-TRANSLATABLE
+
+# J9SourceStandaloneExe - gpProtectedMain
+
+J9NLS_EXELIB_FAILED_FIND_ROM_IMAGE=ROM g\u00f6r\u00fcnt\u00fcs\u00fc bulunamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_FAILED_FIND_ROM_IMAGE.explanation=NOTAG
+J9NLS_EXELIB_FAILED_FIND_ROM_IMAGE.system_action=
+J9NLS_EXELIB_FAILED_FIND_ROM_IMAGE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_WRONG_ROM_IMAGE_VERSION=ROM g\u00f6r\u00fcnt\u00fcs\u00fcn\u00fcn s\u00fcr\u00fcm\u00fc yanl\u0131\u015f
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_WRONG_ROM_IMAGE_VERSION.explanation=NOTAG
+J9NLS_EXELIB_WRONG_ROM_IMAGE_VERSION.system_action=
+J9NLS_EXELIB_WRONG_ROM_IMAGE_VERSION.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_FAILED_FIND_MAIN_CLASS=Ana s\u0131n\u0131f ad\u0131 bulunamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_FAILED_FIND_MAIN_CLASS.explanation=NOTAG
+J9NLS_EXELIB_FAILED_FIND_MAIN_CLASS.system_action=
+J9NLS_EXELIB_FAILED_FIND_MAIN_CLASS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_VM_STARTUP_ERR_OUT_OF_MEMORY=VM ba\u015flatma hatas\u0131: Bellek yetersiz
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_VM_STARTUP_ERR_OUT_OF_MEMORY.explanation=NOTAG
+J9NLS_EXELIB_VM_STARTUP_ERR_OUT_OF_MEMORY.system_action=
+J9NLS_EXELIB_VM_STARTUP_ERR_OUT_OF_MEMORY.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM=\u0130\u00e7 VM hatas\u0131: Java VM yarat\u0131lamad\u0131
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.system_action=
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.user_response=
+# END NON-TRANSLATABLE
+
+# J9SourceMainRemoteConsole - remoteConsole_startup
+
+J9NLS_EXELIB_UNABLE_REDIRECT_IO=Konsol buraya y\u00f6nlendirilemiyor: %1$s:%2$d
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_1=localhost
+J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_2=8080
+J9NLS_EXELIB_UNABLE_REDIRECT_IO.explanation=Failed to establish socket connection to target remote console.
+J9NLS_EXELIB_UNABLE_REDIRECT_IO.system_action=JVM console output will not be redirected to target console.
+J9NLS_EXELIB_UNABLE_REDIRECT_IO.user_response=Ensure remote console is reachable and accessible.
+# END NON-TRANSLATABLE
+
+# J9SourceExeLibArgumentsParsing - describeInternalOptions
+J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    eniyilemeler geciktirilerek ba\u015flatma s\u00fcresi iyile\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_10.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_10.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_10.user_response=
+# END NON-TRANSLATABLE
+
+# J9SourceStandaloneExeHelpers - dumpCopyrights
+J9NLS_EXELIB_JIT_LEVEL=JIT  - %s\n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_JIT_LEVEL.sample_input_1=dev_20070808_1809
+J9NLS_EXELIB_JIT_LEVEL.explanation=NOTAG
+J9NLS_EXELIB_JIT_LEVEL.system_action=
+J9NLS_EXELIB_JIT_LEVEL.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE=\  -Xssi<x>        Java i\u015f par\u00e7ac\u0131\u011f\u0131 y\u0131\u011f\u0131n art\u0131m\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSSI_GROWABLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES=\  -Xshareclasses[:se\u00e7enekler]  S\u0131n\u0131f verilerinin payla\u015f\u0131lmas\u0131n\u0131 etkinle\u015ftirir (ayr\u0131nt\u0131lar i\u00e7in help)\n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       yeni payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011finin b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX.user_response=
+# END NON-TRANSLATABLE
+
+# J9SourceStandaloneExeHelpers - dumpVersionInfo
+
+J9NLS_EXELIB_VERSION2=java s\u00fcr\u00fcm\u00fc "%s"
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_VERSION2.sample_input_1=1.4.2
+J9NLS_EXELIB_VERSION2.explanation=NOTAG
+J9NLS_EXELIB_VERSION2.system_action=
+J9NLS_EXELIB_VERSION2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_VERSION_ME=java s\u00fcr\u00fcm\u00fc "%1$s/%2$s"
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_VERSION_ME.sample_input_1=CLDC-1.1
+J9NLS_EXELIB_VERSION_ME.sample_input_2=MIDP-2.0
+J9NLS_EXELIB_VERSION_ME.explanation=NOTAG
+J9NLS_EXELIB_VERSION_ME.system_action=
+J9NLS_EXELIB_VERSION_ME.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE=\  -Xlp<x>         b\u00fcy\u00fck sayfa b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> de\u011ferine ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XLP_SIZE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_COULD_NOT_OPEN_FILE=Dosya a\u00e7\u0131lamad\u0131: %s
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_COULD_NOT_OPEN_FILE.sample_input_1=logfile.txt
+J9NLS_EXELIB_COULD_NOT_OPEN_FILE.explanation=Target file cannot be access.
+J9NLS_EXELIB_COULD_NOT_OPEN_FILE.system_action=JVM console output will not be redirected to the target file.
+J9NLS_EXELIB_COULD_NOT_OPEN_FILE.user_response=Ensure target file is reachable and accessible.
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_LOGFILE_BACKUP_FAILED=Dosyan\u0131n yedek kopyas\u0131 al\u0131nam\u0131yor: %s
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.sample_input_1=logfile.txt
+J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.explanation=JVM's attempt to back up existing file has failed.
+J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.system_action=JVM execution continues without backing up the old file.
+J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.user_response=Ensure target file has the right access permission.
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_CMDLINE_JXECOLON_WARN=\n\
+UYARI: Komut sat\u0131r\u0131 ba\u011f\u0131ms\u0131z de\u011fi\u015fkeni \"%s\" kullan\u0131mdan kald\u0131r\u0131lm\u0131\u015ft\u0131r.\n\
+UYARI: Onun yerine \"-jxe <yol>\" kullan\u0131n.\n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.sample_input_1=-jxe:
+J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.explanation=The specified command line argument is no longer valid
+J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.system_action=JVM will ignore the command line argument and continue execution.
+J9NLS_EXELIB_CMDLINE_JXECOLON_WARN.user_response=Replace the command line argument as suggested.
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_11=\n\
+\  -Xtrace[:se\u00e7enek,...]  izlemeyi denetlemenizi sa\u011flar, ek ayr\u0131nt\u0131lar i\u00e7in -Xtrace:help yaz\u0131n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_11.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_11.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_11.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XJNI_1=\  -Xjni:<se\u00e7enekler>            JNI se\u00e7eneklerini ayarlay\u0131n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XJNI_1.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XJNI_1.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XJNI_1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_2_16=
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_2_16.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_2_16.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_2_16.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT=\  -Xscminaot<x>   AOT veriler i\u00e7in ayr\u0131lan payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011fi alt s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT=\  -Xscmaxaot<x>   AOT veriler i\u00e7in ayr\u0131lan payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011fi \u00fcst s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_12=\n\
+\  -Xcheck[:se\u00e7enek[:...]]  denetlemeyi denetlemenizi sa\u011flar, ek ayr\u0131nt\u0131lar i\u00e7in -Xcheck:help yaz\u0131n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_12.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_12.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_12.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_1_13=\n\
+\  -Xdump[:se\u00e7enek,...]  d\u00f6k\u00fcmleri denetlemenizi sa\u011flar, ek ayr\u0131nt\u0131lar i\u00e7in -Xdump:help yaz\u0131n
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_1_13.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_1_13.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_1_13.user_response=
+# END NON-TRANSLATABLE
+
+# These messages are no longer used, but should be left intact just in case an older redirector is running
+
+J9NLS_EXELIB_INTERNAL_HELP_VMSELECT=A\u015fa\u011f\u0131daki se\u00e7enekler genel VM yap\u0131lan\u0131\u015f\u0131n\u0131 denetler:
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED=\  -Xcompressedrefs              s\u0131k\u0131\u015ft\u0131r\u0131lm\u0131\u015f \u00f6bek ba\u015fvurular\u0131 kullan\u0131l\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_VMCOMPRESSED.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME=\  -Xrealtime                    ger\u00e7ek zamanl\u0131 uzant\u0131lar etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2=\  -Xgcpolicy:metronome          ger\u00e7ek zamanl\u0131 uzant\u0131lar etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_VMREALTIME2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT=\  -Xrealtime                    esnek ger\u00e7ek zaman etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2=\  -Xgcpolicy:metronome          esnek ger\u00e7ek zaman etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_VMSOFTRT2.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ=\  -Xrealtime -Xnortsj           esnek ger\u00e7ek zaman etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2=\  -Xgcpolicy:metronome -Xnortsj esnek ger\u00e7ek zaman etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.user_response=
+# END NON-TRANSLATABLE
+
+# healthcenter help
+
+J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER=\n\
+\  -Xhealthcenter  Health Center arac\u0131s\u0131 etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.user_response=
+# END NON-TRANSLATABLE
+
+# diagnostic collector help
+
+J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR=\n\
+\  -Xdiagnosticscollector Diagnostics Collector etkinle\u015ftirilir
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_DIAGNOSTICSCOLLECTOR.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSCDMX=\  -Xscdmx<x>      payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011fi hata ay\u0131klama \u00f6zniteli\u011fi b\u00f6lgesinin b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSCDMX.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT=\  -Xscminjit<x>   JIT veriler i\u00e7in ayr\u0131lan payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011fi alt s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJIT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT=\  -Xscmaxjit<x>   JIT veriler i\u00e7in ayr\u0131lan payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011fi \u00fcst s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJIT.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA=\  -Xscminjitdata<x>   JIT veriler i\u00e7in ayr\u0131lan payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011fi \u00fcst s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA=\  -Xscmaxjitdata<x>   JIT veriler i\u00e7in ayr\u0131lan payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011fi \u00fcst s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP=\  -Xzero:nosharebootzip   payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011finde \u00f6ny\u00fckleme jar giri\u015fi \u00f6nbellekleri payla\u015f\u0131lmaz
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI=\  -XX:ShareClassesEnableBCI   byte kodu i\u015flenmesi deste\u011fiyle payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011fi yarat\u0131l\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI=\  -XX:ShareClassesDisableBCI   byte kodu i\u015flenmesi deste\u011fi olmaks\u0131z\u0131n, payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011fi yarat\u0131l\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE=\  -XX:+StoreIntermediateClassfile   yeniden d\u00f6n\u00fc\u015ft\u00fcrme s\u0131ras\u0131nda kullan\u0131lacak ham s\u0131n\u0131f verileri saklan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XXSTOREINTERMEDIATECLASSFILE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX=\  -Xscsoftmx<x>       yeni payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011finin b\u00fcy\u00fckl\u00fc\u011f\u00fcn\u00fcn yumu\u015fak \u00fcst s\u0131n\u0131r\u0131 <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSCSOFTMX.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1=\  -Xscmx<x>       yeni payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011finin b\u00fcy\u00fckl\u00fc\u011f\u00fc (ya da -XX:SharedCacheHardLimit= se\u00e7ene\u011fi varsa, b\u00fcy\u00fckl\u00fc\u011f\u00fcn yumu\u015fak \u00fcst s\u0131n\u0131r\u0131) <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\  -XX:SharedCacheHardLimit=<x>   yeni payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011finin b\u00fcy\u00fckl\u00fc\u011f\u00fc <x> olarak ayarlan\u0131r
+# START NON-TRANSLATABLE
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.explanation=NOTAG
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.system_action=
+J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS.user_response=
+# END NON-TRANSLATABLE

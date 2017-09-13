@@ -1,0 +1,214 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the RAStrace module.
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+# Important: the NLS messages are shared between all releases including branched SRs.
+# This makes changing the meaning of any message highly dangerous.
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=TRCE
+J9NLS.HEADER=j9trcnls.h
+
+J9NLS_TRC_UNRECOGNISED_OPTION_STR=Op\u00e7\u00e3o de rastreio n\u00e3o reconhecida: -Xtrace:%s
+# START NON-TRANSLATABLE
+J9NLS_TRC_UNRECOGNISED_OPTION_STR.explanation=An unknown option was used with the -Xtrace parameter.
+J9NLS_TRC_UNRECOGNISED_OPTION_STR.system_action=The JVM ends.
+J9NLS_TRC_UNRECOGNISED_OPTION_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
+J9NLS_TRC_UNRECOGNISED_OPTION_STR.sample_input_1=-Xtrace:bogus
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_ERROR_IN_OPTION_STR=Erro ao processar op\u00e7\u00e3o de rastreio: -Xtrace:%s
+# START NON-TRANSLATABLE
+J9NLS_TRC_ERROR_IN_OPTION_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to a syntax error.
+J9NLS_TRC_ERROR_IN_OPTION_STR.system_action=The JVM ends.
+J9NLS_TRC_ERROR_IN_OPTION_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
+J9NLS_TRC_ERROR_IN_OPTION_STR.sample_input_1=-Xtrace:buffers
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR=Erro ao processar op\u00e7\u00e3o de rastreio: -Xtrace:%s=%s
+# START NON-TRANSLATABLE
+J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to a problem with the option or the arguments used.
+J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.system_action=The JVM ends.
+J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
+J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.sample_input_1=-Xtrace:buffers=bogus
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_ERROR_DETAIL_STR=Erro ao processar op\u00e7\u00e3o de rastreio, detalhe: %s
+# START NON-TRANSLATABLE
+J9NLS_TRC_ERROR_DETAIL_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to the problem described in the detail string.
+J9NLS_TRC_ERROR_DETAIL_STR.system_action=The JVM ends.
+J9NLS_TRC_ERROR_DETAIL_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
+J9NLS_TRC_ERROR_DETAIL_STR.sample_input_1=-Xtrace:buffers=bogus
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_FILE_OPEN_FAIL_STR=Erro ao abrir arquivo de rastreio: %s
+# START NON-TRANSLATABLE
+J9NLS_TRC_FILE_OPEN_FAIL_STR.explanation=The specified trace file could not be opened.
+J9NLS_TRC_FILE_OPEN_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
+J9NLS_TRC_FILE_OPEN_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
+J9NLS_TRC_FILE_OPEN_FAIL_STR.sample_input_1=-Xtrace:output=C:\temp\trace.out
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_HEADER_WRITE_FAIL_STR=Erro ao gravar cabe\u00e7alho no arquivo de rastreio: %s
+# START NON-TRANSLATABLE
+J9NLS_TRC_HEADER_WRITE_FAIL_STR.explanation=The specified trace file could not be written to.
+J9NLS_TRC_HEADER_WRITE_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
+J9NLS_TRC_HEADER_WRITE_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
+J9NLS_TRC_HEADER_WRITE_FAIL_STR.sample_input_1=-Xtrace:output=C:\temp\trace.out
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_TRACE_WRITE_FAIL_STR=Erro ao gravar %d bytes no arquivo de rastreio: %s rc: %d
+# START NON-TRANSLATABLE
+J9NLS_TRC_TRACE_WRITE_FAIL_STR.explanation=The specified trace file could not be written to.
+J9NLS_TRC_TRACE_WRITE_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
+J9NLS_TRC_TRACE_WRITE_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
+J9NLS_TRC_TRACE_WRITE_FAIL_STR.sample_input_1=-Xtrace:output=C:\temp\trace.out
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_NEXT_GEN_FILE_OPEN_FAIL_STR=Erro ao abrir pr\u00f3xima gera\u00e7\u00e3o do arquivo de rastreio: %s
+# START NON-TRANSLATABLE
+J9NLS_TRC_NEXT_GEN_FILE_OPEN_FAIL_STR.explanation=The specified trace file could not be opened when the JVM attempted to open the next trace file in a cycle of generational trace files.
+J9NLS_TRC_NEXT_GEN_FILE_OPEN_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
+J9NLS_TRC_NEXT_GEN_FILE_OPEN_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
+J9NLS_TRC_NEXT_GEN_FILE_OPEN_FAIL_STR.sample_input_1=-Xtrace:output={C:\temp\trace.#.out,50k,5}
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_FILE_SEEK_FAIL_STR=Erro ao executar busca no arquivo de rastreio: %s
+# START NON-TRANSLATABLE
+J9NLS_TRC_FILE_SEEK_FAIL_STR.explanation=The JVM could not find an expected location in the specified trace file.
+J9NLS_TRC_FILE_SEEK_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
+J9NLS_TRC_FILE_SEEK_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
+J9NLS_TRC_FILE_SEEK_FAIL_STR.sample_input_1=-Xtrace:output={C:\temp\trace.out}
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_SNAP_WRITE_FAIL=Erro ao gravar no arquivo snap
+# START NON-TRANSLATABLE
+J9NLS_TRC_SNAP_WRITE_FAIL.explanation=The JVM could not write trace data to a snap file while the JVM was running.
+J9NLS_TRC_SNAP_WRITE_FAIL.system_action=The JVM continues but trace data is not written to this file.
+J9NLS_TRC_SNAP_WRITE_FAIL.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
+J9NLS_TRC_SNAP_WRITE_FAIL.sample_input_1=
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_NODYNAMIC_FALLBACK=Falha de aloca\u00e7\u00e3o de mem\u00f3ria nativa, voltando para configura\u00e7\u00f5es de rastreio n\u00e3o din\u00e2micas.
+# START NON-TRANSLATABLE
+J9NLS_TRC_NODYNAMIC_FALLBACK.explanation=The JVM could not allocate space for another trace buffer.
+J9NLS_TRC_NODYNAMIC_FALLBACK.system_action=The JVM continues but trace reuses existing buffers. Trace points that are not written to disk before a new buffer is required might be lost.
+J9NLS_TRC_NODYNAMIC_FALLBACK.user_response=No action is required. However, to reduce the amount of trace points produced, change the trace options.
+J9NLS_TRC_NODYNAMIC_FALLBACK.sample_input_1=
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_MODULE_NOT_LOADED=M\u00f3dulo n\u00e3o configurado para rastreio: %s
+# START NON-TRANSLATABLE
+J9NLS_TRC_MODULE_NOT_LOADED.explanation=The JVM could not configure trace for the specified module, typically due to a native out of memory situation.
+J9NLS_TRC_MODULE_NOT_LOADED.system_action=The JVM continues but there is no trace data generated for this module.
+J9NLS_TRC_MODULE_NOT_LOADED.user_response=Contact your IBM service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
+J9NLS_TRC_MODULE_NOT_LOADED.sample_input_1=
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_COUNTER_FILE_NOT_OPENED=N\u00e3o foi poss\u00edvel abrir arquivo contador de ponto de rastreio %s, contadores redirecionados para stderr.
+# START NON-TRANSLATABLE
+J9NLS_TRC_COUNTER_FILE_NOT_OPENED.explanation=The JVM could not open the specified file for the trace point counts at shutdown.
+J9NLS_TRC_COUNTER_FILE_NOT_OPENED.system_action=The JVM writes the counter information to stderr at shutdown.
+J9NLS_TRC_COUNTER_FILE_NOT_OPENED.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be written to.
+J9NLS_TRC_COUNTER_FILE_NOT_OPENED.sample_input_1=-Xtrace:count
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_COUNTER_BEING_WRITTEN=Gravando informa\u00e7\u00f5es de contagem de rastreio em %s
+# START NON-TRANSLATABLE
+J9NLS_TRC_COUNTER_BEING_WRITTEN.explanation=The JVM is writing trace counter information to the specified location at shutdown.
+J9NLS_TRC_COUNTER_BEING_WRITTEN.system_action=The JVM writes the counter information to that location at shutdown.
+J9NLS_TRC_COUNTER_BEING_WRITTEN.user_response=No action required. This message is for information only.
+J9NLS_TRC_COUNTER_BEING_WRITTEN.sample_input_1=
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_TRACE_INIT_FAILED=Falha na inicializa\u00e7\u00e3o do mecanismo de rastreio, rastreio n\u00e3o ativado
+# START NON-TRANSLATABLE
+J9NLS_TRC_TRACE_INIT_FAILED.explanation=The JVM cannot start the trace engine.
+J9NLS_TRC_TRACE_INIT_FAILED.system_action=The JVM ends.
+J9NLS_TRC_TRACE_INIT_FAILED.user_response=Contact your IBM service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
+J9NLS_TRC_TRACE_INIT_FAILED.sample_input_1=
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED=Erro ao registrar assinante de grava\u00e7\u00e3o de rastreio
+# START NON-TRANSLATABLE
+J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.explanation=The JVM cannot start the trace subscriber thread that writes trace buffers to disk.
+J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.system_action=The JVM continues but trace data is not written to disk.
+J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.user_response=Contact your IBM service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
+J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.sample_input_1=
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_RAS_GLOBAL_STORAGE=Armazenamento para RasGlobalStorage n\u00e3o dispon\u00edvel, rastreio n\u00e3o ativado
+# START NON-TRANSLATABLE
+J9NLS_TRC_RAS_GLOBAL_STORAGE.explanation=The JVM could not initialize.
+J9NLS_TRC_RAS_GLOBAL_STORAGE.system_action=The JVM ends.
+J9NLS_TRC_RAS_GLOBAL_STORAGE.user_response=Contact your IBM service representative.
+J9NLS_TRC_RAS_GLOBAL_STORAGE.sample_input_1=
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_RAS_TLS_ALLOC_FAILED=N\u00e3o foi poss\u00edvel alocar chave de armazenamento local de encadeamento RAS
+# START NON-TRANSLATABLE
+J9NLS_TRC_RAS_TLS_ALLOC_FAILED.explanation=The JVM could not initialize.
+J9NLS_TRC_RAS_TLS_ALLOC_FAILED.system_action=The JVM ends.
+J9NLS_TRC_RAS_TLS_ALLOC_FAILED.user_response=Contact your IBM service representative.
+J9NLS_TRC_RAS_TLS_ALLOC_FAILED.sample_input_1=
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_UTE_TLS_ALLC_FAILED=N\u00e3o foi poss\u00edvel alocar chave de armazenamento local de encadeamento UTE
+# START NON-TRANSLATABLE
+J9NLS_TRC_UTE_TLS_ALLC_FAILED.explanation=The JVM could not initialize.
+J9NLS_TRC_UTE_TLS_ALLC_FAILED.system_action=The JVM ends.
+J9NLS_TRC_UTE_TLS_ALLC_FAILED.user_response=Contact your IBM service representative.
+J9NLS_TRC_UTE_TLS_ALLC_FAILED.sample_input_1=
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_TRACE_INIT_FAILED_RC=Falha na inicializa\u00e7\u00e3o adequada do mecanismo de rastreio, RC = %d
+# START NON-TRANSLATABLE
+J9NLS_TRC_TRACE_INIT_FAILED_RC.explanation=The JVM could not initialize.
+J9NLS_TRC_TRACE_INIT_FAILED_RC.system_action=The JVM ends.
+J9NLS_TRC_TRACE_INIT_FAILED_RC.user_response=Contact your IBM service representative.
+J9NLS_TRC_TRACE_INIT_FAILED_RC.sample_input_1=
+# END NON-TRANSLATABLE
+
+J9NLS_TRC_SHUTDOWN_TIMEOUT=Ocorreu um tempo limite durante o encerramento do mecanismo de rastreio
+# START NON-TRANSLATABLE
+J9NLS_TRC_SHUTDOWN_TIMEOUT.explanation=A timeout occurred during JVM shutdown, when the trace engine is waiting for trace subscriber threads to finish.
+J9NLS_TRC_SHUTDOWN_TIMEOUT.system_action=The JVM terminates without waiting for trace subscriber threads to finish.
+J9NLS_TRC_SHUTDOWN_TIMEOUT.user_response=Contact your IBM service representative.
+# END NON-TRANSLATABLE

@@ -1,0 +1,508 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the RASdump module.
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+# Important: the NLS messages are shared between all releases including branched SRs.
+# This makes changing the meaning of any message highly dangerous.
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=DUMP
+J9NLS.HEADER=j9dmpnls.h
+
+J9NLS_DMP_UNRECOGNISED_OPTION_STR=\u8f6c\u50a8\u9009\u9879\u65e0\u6cd5\u8bc6\u522b\uff1a-Xdump:%s
+# START NON-TRANSLATABLE
+J9NLS_DMP_UNRECOGNISED_OPTION_STR.explanation=An option used with the -Xdump parameter is unknown.
+J9NLS_DMP_UNRECOGNISED_OPTION_STR.system_action=The JVM terminates.
+J9NLS_DMP_UNRECOGNISED_OPTION_STR.user_response=Use -Xdump:help to find the correct syntax for the -Xdump options.
+J9NLS_DMP_UNRECOGNISED_OPTION_STR.sample_input_1=java:...events=bogus
+J9NLS_DMP_UNRECOGNISED_OPTION_STR.link=dita:///diag/tools/dumpagents_syntax.dita
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_UNRECOGNISED_EVENT_STR=\u8f6c\u50a8\u4e8b\u4ef6\u65e0\u6cd5\u8bc6\u522b\uff1a...%s
+# START NON-TRANSLATABLE
+J9NLS_DMP_UNRECOGNISED_EVENT_STR.explanation=The event name provided with the -Xdump parameter is unknown.
+J9NLS_DMP_UNRECOGNISED_EVENT_STR.system_action=The JVM terminates.
+J9NLS_DMP_UNRECOGNISED_EVENT_STR.user_response=Use -Xdump:events to find the supported set of event names.
+J9NLS_DMP_UNRECOGNISED_EVENT_STR.sample_input_1=bogus
+J9NLS_DMP_UNRECOGNISED_EVENT_STR.link=dita:///diag/tools/dumpagents_events.dita
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_UNRECOGNISED_LABEL_FIELD_STR=\u6807\u8bb0\u65e0\u6cd5\u8bc6\u522b\uff1a%%%1$c
+# START NON-TRANSLATABLE
+J9NLS_DMP_UNRECOGNISED_LABEL_FIELD_STR.explanation=An unidentified %token was found in the dump label.
+J9NLS_DMP_UNRECOGNISED_LABEL_FIELD_STR.system_action=The JVM terminates.
+J9NLS_DMP_UNRECOGNISED_LABEL_FIELD_STR.user_response=Use -Xdump:tokens to find the supported set of tokens.
+J9NLS_DMP_UNRECOGNISED_LABEL_FIELD_STR.sample_input_1=java:...-Xdump:java:label=%bogus
+J9NLS_DMP_UNRECOGNISED_LABEL_FIELD_STR.link=dita:///diag/tools/dumpagents_tokens.dita
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_UNRECOGNISED_NAMED_DUMP_STR=\u8f6c\u50a8\u4ee3\u7406\u65e0\u6cd5\u8bc6\u522b\uff1a%s
+# START NON-TRANSLATABLE
+J9NLS_DMP_UNRECOGNISED_NAMED_DUMP_STR.explanation=An unsupported dump type has been requested.
+J9NLS_DMP_UNRECOGNISED_NAMED_DUMP_STR.system_action=The JVM terminates.
+J9NLS_DMP_UNRECOGNISED_NAMED_DUMP_STR.user_response=Use -Xdump:help to find the supported set of dump types.
+J9NLS_DMP_UNRECOGNISED_NAMED_DUMP_STR.sample_input_1=bogus
+J9NLS_DMP_UNRECOGNISED_NAMED_DUMP_STR.link=dita:///diag/tools/dumpagents_agents.dita
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_MISSING_FILENAME_STR=\u7f3a\u5c11\u6587\u4ef6\u540d
+# START NON-TRANSLATABLE
+J9NLS_DMP_MISSING_FILENAME_STR.explanation=The dump file name could not be found.
+J9NLS_DMP_MISSING_FILENAME_STR.system_action=The dump cannot be written.
+J9NLS_DMP_MISSING_FILENAME_STR.user_response=Provide a valid filename for the dump.
+J9NLS_DMP_MISSING_FILENAME_STR.sample_input_1=bogus
+J9NLS_DMP_MISSING_FILENAME_STR.link=dita:///diag/tools/dumpagents_filenames.dita
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_MISSING_EXECUTABLE_STR=\u7f3a\u5c11\u5916\u90e8\u5de5\u5177
+# START NON-TRANSLATABLE
+J9NLS_DMP_MISSING_EXECUTABLE_STR.explanation=The executable file for the tool could not be found.
+J9NLS_DMP_MISSING_EXECUTABLE_STR.system_action=The tool cannot run.
+J9NLS_DMP_MISSING_EXECUTABLE_STR.user_response=Provide a valid path and filename for the executable file.
+J9NLS_DMP_MISSING_EXECUTABLE_STR.sample_input_1=bogus
+J9NLS_DMP_MISSING_EXECUTABLE_STR.link=dita:///diag/tools/dumpagents_exec.dita
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_PROCESSING_EVENT_STR=\u6b63\u5728\u5904\u7406\u8f6c\u50a8\u4e8b\u4ef6\u201c%1$s\u201d\uff0c\u8be6\u7ec6\u4fe1\u606f\u201c%3$.*2$s\u201d- \u8bf7\u7a0d\u5019\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_PROCESSING_EVENT_STR.explanation=A dump event has occurred and is being handled.
+J9NLS_DMP_PROCESSING_EVENT_STR.system_action=The JVM attempts to process the event.
+J9NLS_DMP_PROCESSING_EVENT_STR.user_response=No response is required.
+# vmstop is not translatable
+J9NLS_DMP_PROCESSING_EVENT_STR.sample_input_1=vmstop
+J9NLS_DMP_PROCESSING_EVENT_STR.sample_input_2=9
+J9NLS_DMP_PROCESSING_EVENT_STR.sample_input_3=#00000000
+J9NLS_DMP_PROCESSING_EVENT_STR.link=dita:///diag/tools/dump_agents.dita
+# END NON-TRANSLATABLE
+
+
+J9NLS_DMP_REQUESTING_DUMP_STR=JVM \u6b63\u4f7f\u7528\u201c%2$s\u201d\u8bf7\u6c42 %1$s \u8f6c\u50a8
+# START NON-TRANSLATABLE
+J9NLS_DMP_REQUESTING_DUMP_STR.explanation=The JVM is about to write a dump. The dump might have been triggered by an event, such as an exception, or requested using JVMTI, JVMRI, -Xtrace:trigger or the com.ibm.jvm.Dump Java API.
+J9NLS_DMP_REQUESTING_DUMP_STR.system_action=The JVM attempts to write the dump. A second message is generated when the dump is complete.
+J9NLS_DMP_REQUESTING_DUMP_STR.user_response=Review the dump and take appropriate action.
+J9NLS_DMP_REQUESTING_DUMP_STR.sample_input_1=Java
+# javacore.txt is not translatable
+J9NLS_DMP_REQUESTING_DUMP_STR.sample_input_2=javacore.txt
+J9NLS_DMP_REQUESTING_DUMP_STR.link=dita:///diag/tools/dump_agents.dita
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_SNAPPED_LABEL_STR=\u4f7f\u7528\u201c%s\u201d
+# START NON-TRANSLATABLE
+J9NLS_DMP_SNAPPED_LABEL_STR.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_DMP_SNAPPED_LABEL_STR.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_DMP_SNAPPED_LABEL_STR.user_response=THIS MESSAGE IS RESERVED FOR FUTURE USE
+
+# Snap0001.trc is not translatable
+J9NLS_DMP_SNAPPED_LABEL_STR.sample_input_1=Snap0001.trc
+J9NLS_DMP_SNAPPED_LABEL_STR.link=
+# END NON-TRANSLATABLE
+
+
+J9NLS_DMP_DUMP_NOT_AVAILABLE_STR=%s \u8f6c\u50a8\u4e0d\u53ef\u7528
+# START NON-TRANSLATABLE
+J9NLS_DMP_DUMP_NOT_AVAILABLE_STR.explanation=The specified dump type is not currently available. For example, a JVM trace snap dump has been requested, but JVM trace is disabled.
+J9NLS_DMP_DUMP_NOT_AVAILABLE_STR.system_action=The JVM does not write the requested dump.
+J9NLS_DMP_DUMP_NOT_AVAILABLE_STR.user_response=None, the message is for information only.
+J9NLS_DMP_DUMP_NOT_AVAILABLE_STR.sample_input_1=Java
+J9NLS_DMP_DUMP_NOT_AVAILABLE_STR.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_WRITTEN_DUMP_STR=%1$s \u8f6c\u50a8\u5df2\u5199\u5165 %2$s
+# START NON-TRANSLATABLE
+J9NLS_DMP_WRITTEN_DUMP_STR.explanation=The dump was written to the specified location.
+J9NLS_DMP_WRITTEN_DUMP_STR.system_action=The JVM continues.
+J9NLS_DMP_WRITTEN_DUMP_STR.user_response=To understand how to interpret a java dump file, refer to diagnostics information.
+J9NLS_DMP_WRITTEN_DUMP_STR.sample_input_1=Java
+J9NLS_DMP_WRITTEN_DUMP_STR.sample_input_2=javacore.txt
+J9NLS_DMP_WRITTEN_DUMP_STR.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_SPAWNED_DUMP_STR=%1$s \u8f6c\u50a8\u5df2\u521b\u5efa\u8fdb\u7a0b %2$d
+# START NON-TRANSLATABLE
+J9NLS_DMP_SPAWNED_DUMP_STR.explanation=A tool dump process has been created.
+J9NLS_DMP_SPAWNED_DUMP_STR.system_action=The JVM runs the executable process specified for the tool dump. Any parameters are passed to the process.
+J9NLS_DMP_SPAWNED_DUMP_STR.user_response=Refer to the documentation for the tool creating the dump process.
+J9NLS_DMP_SPAWNED_DUMP_STR.sample_input_1=Tool
+J9NLS_DMP_SPAWNED_DUMP_STR.sample_input_2=1234
+J9NLS_DMP_SPAWNED_DUMP_STR.link=dita:///diag/tools/dumpagents_tool.dita
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_ERROR_IN_DUMP_STR=%1$s \u8f6c\u50a8\u4e2d\u5b58\u5728\u9519\u8bef\uff1a%2$s
+# START NON-TRANSLATABLE
+J9NLS_DMP_ERROR_IN_DUMP_STR.explanation=The JVM detected an error while attempting to produce a dump.
+J9NLS_DMP_ERROR_IN_DUMP_STR.system_action=The JVM continues, but the dump might not be usable.
+J9NLS_DMP_ERROR_IN_DUMP_STR.user_response=Refer to diagnostic information or contact your local IBM support representative.
+J9NLS_DMP_ERROR_IN_DUMP_STR.sample_input_1=Tool
+J9NLS_DMP_ERROR_IN_DUMP_STR.sample_input_2=missing process
+J9NLS_DMP_ERROR_IN_DUMP_STR.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_PROCESSED_EVENT_STR=\u5df2\u5904\u7406\u8f6c\u50a8\u4e8b\u4ef6\u201c%1$s\u201d\uff0c\u8be6\u7ec6\u4fe1\u606f\uff1a\u201c%3$.*2$s\u201d\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_PROCESSED_EVENT_STR.explanation=A dump event has occurred and has been handled.
+J9NLS_DMP_PROCESSED_EVENT_STR.system_action=The JVM continues.
+J9NLS_DMP_PROCESSED_EVENT_STR.user_response=Refer to other messages issued by the JVM for the location of the dump file, or for other actions required.
+J9NLS_DMP_PROCESSED_EVENT_STR.sample_input_1=vmstop
+J9NLS_DMP_PROCESSED_EVENT_STR.sample_input_2=9
+J9NLS_DMP_PROCESSED_EVENT_STR.sample_input_3=#00000000
+J9NLS_DMP_PROCESSED_EVENT_STR.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_UNRECOGNISED_REQUEST_STR=VM \u64cd\u4f5c\u65e0\u6cd5\u8bc6\u522b\uff1a...%s
+# START NON-TRANSLATABLE
+J9NLS_DMP_UNRECOGNISED_REQUEST_STR.explanation=A specified dump request action was not understood by the JVM.
+J9NLS_DMP_UNRECOGNISED_REQUEST_STR.system_action=The JVM produces help information and terminates.
+J9NLS_DMP_UNRECOGNISED_REQUEST_STR.user_response=Use -Xdump:request to check that your request is valid.
+J9NLS_DMP_UNRECOGNISED_REQUEST_STR.sample_input_1=bogus
+J9NLS_DMP_UNRECOGNISED_REQUEST_STR.link=dita:///diag/tools/dumpagents_syntax.dita
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_NO_OPEN_READ=\u5f02\u5e38\u7ec8\u6b62\uff1a\u65e0\u6cd5\u6253\u5f00\u6216\u8bfb\u53d6 (%s)
+# START NON-TRANSLATABLE
+J9NLS_DMP_NO_OPEN_READ.explanation=The JVM cannot open a dump file in read mode.
+J9NLS_DMP_NO_OPEN_READ.system_action=INTERNAL USE ONLY
+J9NLS_DMP_NO_OPEN_READ.user_response=INTERNAL USE ONLY
+J9NLS_DMP_NO_OPEN_READ.sample_input_1=javacore.txt
+J9NLS_DMP_NO_OPEN_READ.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_NO_CREATE=\u5f02\u5e38\u7ec8\u6b62\uff1a\u65e0\u6cd5\u521b\u5efa\u6587\u4ef6 (%s)
+# START NON-TRANSLATABLE
+J9NLS_DMP_NO_CREATE.explanation=The JVM cannot open a new file.
+J9NLS_DMP_NO_CREATE.system_action=INTERNAL USE ONLY
+J9NLS_DMP_NO_CREATE.user_response=INTERNAL USE ONLY
+J9NLS_DMP_NO_CREATE.sample_input_1=javacore.txt
+J9NLS_DMP_NO_CREATE.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_NO_COMPRESS=\u5f02\u5e38\u7ec8\u6b62\uff1a\u65e0\u6cd5\u538b\u7f29\u6587\u4ef6 (%s)
+# START NON-TRANSLATABLE
+J9NLS_DMP_NO_COMPRESS.explanation=The JVM cannot compress a file.
+J9NLS_DMP_NO_COMPRESS.system_action=INTERNAL USE ONLY
+J9NLS_DMP_NO_COMPRESS.user_response=INTERNAL USE ONLY
+J9NLS_DMP_NO_COMPRESS.sample_input_1=javacore.txt
+J9NLS_DMP_NO_COMPRESS.link=
+
+# END NON-TRANSLATABLE
+
+# -Xdump:dynamic is not translatable
+J9NLS_DMP_HOOK_IS_DISABLED_STR=\u8bf7\u6c42\u7684\u4e8b\u4ef6\u4e0d\u53ef\u7528\uff1a\u8bf7\u4f7f\u7528 -Xdump:dynamic \u6807\u5fd7\u8fd0\u884c
+# START NON-TRANSLATABLE
+J9NLS_DMP_HOOK_IS_DISABLED_STR.explanation=A dump has been requested on an event type that is not supported.
+J9NLS_DMP_HOOK_IS_DISABLED_STR.system_action=INTERNAL USE ONLY
+J9NLS_DMP_HOOK_IS_DISABLED_STR.user_response=INTERNAL USE ONLY
+J9NLS_DMP_HOOK_IS_DISABLED_STR.link=
+
+# END NON-TRANSLATABLE
+
+# JVM is not translatable
+J9NLS_DMP_REQUESTING_DUMP_STR_NOFILE=JVM \u6b63\u5728\u8bf7\u6c42 %s \u8f6c\u50a8
+# START NON-TRANSLATABLE
+J9NLS_DMP_REQUESTING_DUMP_STR_NOFILE.explanation=A dump file of the type specified has been requested.
+J9NLS_DMP_REQUESTING_DUMP_STR_NOFILE.system_action=The JVM starts to produce a dump of the specified type.
+J9NLS_DMP_REQUESTING_DUMP_STR_NOFILE.user_response=Wait for a message indicating that the dump is complete.
+J9NLS_DMP_REQUESTING_DUMP_STR_NOFILE.sample_input_1=Java
+J9NLS_DMP_REQUESTING_DUMP_STR_NOFILE.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_WRITTEN_DUMP_STR_NOFILE=\u5df2\u5199 %s \u8f6c\u50a8
+# START NON-TRANSLATABLE
+J9NLS_DMP_WRITTEN_DUMP_STR_NOFILE.explanation=A dump file of the type specified has been written.
+J9NLS_DMP_WRITTEN_DUMP_STR_NOFILE.system_action=No action. The JVM has completed the dump file.
+J9NLS_DMP_WRITTEN_DUMP_STR_NOFILE.user_response=To understand how to interpret the dump file, refer to Java diagnostic information.
+J9NLS_DMP_WRITTEN_DUMP_STR_NOFILE.sample_input_1=Java
+J9NLS_DMP_WRITTEN_DUMP_STR_NOFILE.link=
+
+# END NON-TRANSLATABLE
+
+# "heapdump" and "exclusive" are not translatable. request=exclusive+prepwalk+compact and -Xdump:heap: are literal
+J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST=\u7531\u4e8e\u672a\u8bf7\u6c42\u6216\u65e0\u6cd5\u83b7\u53d6 exclusive \u5b58\u53d6\uff0c\u56e0\u6b64\u672a\u751f\u6210\u8bf7\u6c42\u7684 heapdump\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST.user_response=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_DMP_INVALID_HEAP_DUMP_REQUEST.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_INVALID_HEAP_COMPACTION_REQUEST=\u7531\u4e8e\u672a\u8bf7\u6c42\u6216\u8005\u65e0\u6cd5\u83b7\u53d6 exclusive \u5b58\u53d6\uff0c\u56e0\u6b64\u672a\u6267\u884c\u8bf7\u6c42\u7684\u5806\u538b\u7f29\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_INVALID_HEAP_COMPACTION_REQUEST.explanation=The garbage collector could not run because the gc thread did not have exclusive access to the heap.
+J9NLS_DMP_INVALID_HEAP_COMPACTION_REQUEST.system_action=The dump file is not produced.
+J9NLS_DMP_INVALID_HEAP_COMPACTION_REQUEST.user_response=Modify the -Xdump option to request exclusive access. See the Java diagnostic information for valid dump request types.
+J9NLS_DMP_INVALID_HEAP_COMPACTION_REQUEST.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_INVALID_HEAP_PREPARATION_REQUEST=\u7531\u4e8e\u672a\u8bf7\u6c42\u6216\u65e0\u6cd5\u83b7\u53d6 exclusive \u5b58\u53d6\uff0c\u56e0\u6b64\u672a\u6267\u884c\u8bf7\u6c42\u7684\u5806\u51c6\u5907\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_INVALID_HEAP_PREPARATION_REQUEST.explanation=The dump thread must lock the heap to prevent changes while the dump is taken. Either no attempt was made to obtain the lock or the lock could not be obtained
+J9NLS_DMP_INVALID_HEAP_PREPARATION_REQUEST.system_action=The JVM does not produce the specified dump.
+J9NLS_DMP_INVALID_HEAP_PREPARATION_REQUEST.user_response=Modify the -Xdump option to request exclusive access. See the Java diagnostic information for valid dump request types.
+J9NLS_DMP_INVALID_HEAP_PREPARATION_REQUEST.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE=\u5df2\u8bf7\u6c42\u591a\u4e2a heapdump\uff0c\u4f46\u6587\u4ef6\u6807\u7b7e\u4e2d\u7f3a\u5c11 %%id\uff1a\u8f6c\u50a8\u5c06\u8986\u76d6
+# START NON-TRANSLATABLE
+J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE.explanation=The JVM replaces the %%id insertion point with a unique number. Because %%id is missing the replacement cannot take place, causing a potential file name clash and file overwrite.
+J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE.system_action=The JVM informs the user and produces dumps as requested.
+J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE.user_response=If you do not want files overwritten, specify a file label that includes the %%id.
+J9NLS_DMP_MULTIPLE_DUMP_OVERWRITE.link=
+
+# END NON-TRANSLATABLE
+
+# IEATDUMP Failure
+J9NLS_DMP_IEATDUMP_FAILURE=IEATDUMP \u5931\u8d25\uff1aDSN='%s' RC=0x%08X RSN=0x%08X
+# START NON-TRANSLATABLE
+J9NLS_DMP_IEATDUMP_FAILURE.explanation=An IEATDUMP was requested but could not be produced.
+J9NLS_DMP_IEATDUMP_FAILURE.system_action=No action. The JVM cannot produce the dump.
+J9NLS_DMP_IEATDUMP_FAILURE.user_response=Check the response code provided. See Java diagnostic information or the z/OS V1R7.0 MVS Authorized Assembler Services Reference, 36.1.10 Return and Reason Codes.
+J9NLS_DMP_IEATDUMP_FAILURE.link=dita:///diag/problem_determination/zos_setup_dumps.dita
+
+J9NLS_DMP_IEATDUMP_FAILURE.sample_input_1=J9BUILD.J9VM.TDUMP.S123334
+J9NLS_DMP_IEATDUMP_FAILURE.sample_input_2=12341234
+J9NLS_DMP_IEATDUMP_FAILURE.sample_input_3=abcdabcd
+# END NON-TRANSLATABLE
+
+# IEATDUMP exceeding maximum length when appending X&DS flag
+J9NLS_DMP_IEATDUMP_MAXLENGTH_EXCEEDED=IEATDUMP \u540d\u79f0\u8d85\u51fa\u5141\u8bb8\u7684\u6700\u5927\u957f\u5ea6\u3002\u5df2\u4f7f\u7528\u7f3a\u7701\u540d\u79f0\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_IEATDUMP_MAXLENGTH_EXCEEDED.explanation=The file label exceeded the maximum length for file names on z/OS.
+J9NLS_DMP_IEATDUMP_MAXLENGTH_EXCEEDED.system_action=The dump file is not produced.
+J9NLS_DMP_IEATDUMP_MAXLENGTH_EXCEEDED.user_response= Refer to Java diagnostic information for information about producing dumps on z/OS.
+J9NLS_DMP_IEATDUMP_MAXLENGTH_EXCEEDED.link=
+
+# END NON-TRANSLATABLE
+
+#Additional heapdump and system dump messages. "heapdump", "prepwalk", "exclusive", "compact" are not translatable
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_FAILED=\u7531\u4e8e\u53e6\u4e00\u4e2a\u7ec4\u4ef6\u6301\u6709 VM exclusive \u9501\u5b9a\uff0c\u56e0\u6b64\u672a\u751f\u6210\u8bf7\u6c42\u7684 heapdump\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_FAILED.explanation=The exclusive VM lock must be held to produce a usable heapdump. Although the VM exclusive lock was requested by the user, the VM could not obtain the lock in a reasonable time. This behavior avoids risking a deadlock.
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_FAILED.system_action=The VM does not produce a heapdump.
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_FAILED.user_response=Wait for one minute and try taking the heapdump again when the VM exclusive lock might be free.
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_FAILED.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_SYSTEM_DUMP_EXCLUSIVE_FAILED=\u5728\u8fdb\u884c\u7cfb\u7edf\u8f6c\u50a8\u4e4b\u524d\u65e0\u6cd5\u83b7\u53d6 VM exclusive \u9501\u5b9a\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_SYSTEM_DUMP_EXCLUSIVE_FAILED.explanation=Although the VM exclusive lock was requested by the user, the VM could not obtain the lock in a reasonable time before taking the system dump. This behavior avoids risking a deadlock.
+J9NLS_DMP_SYSTEM_DUMP_EXCLUSIVE_FAILED.system_action=The VM produces a system dump without taking the VM exclusive lock. The dump might show an inconsistent view of the VM data structures and heap.
+J9NLS_DMP_SYSTEM_DUMP_EXCLUSIVE_FAILED.user_response=Wait for one minute and try taking the system dump again when the VM exclusive lock might be free.
+J9NLS_DMP_SYSTEM_DUMP_EXCLUSIVE_FAILED.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_SYSTEM_DUMP_COMPACT_PREPWALK_WITHOUT_EXCLUSIVE=\u7531\u4e8e\u672a\u8bf7\u6c42 VM exclusive \u9501\u5b9a\uff0c\u56e0\u6b64\u5c06\u5ffd\u7565\u8fdb\u884c\u8f6c\u50a8\u4e4b\u524d\u53d1\u51fa\u7684 prepwalk \u6216 compact \u8bf7\u6c42\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_SYSTEM_DUMP_COMPACT_PREPWALK_WITHOUT_EXCLUSIVE.explanation=The user requested the prepwalk or compact options before taking a system dump, but did not request the VM exclusive lock. These actions require the exclusive VM lock.
+J9NLS_DMP_SYSTEM_DUMP_COMPACT_PREPWALK_WITHOUT_EXCLUSIVE.system_action=The system dump is taken without running prepwalk or compact.
+J9NLS_DMP_SYSTEM_DUMP_COMPACT_PREPWALK_WITHOUT_EXCLUSIVE.user_response=Modify the -Xdump:system parameter to include the exclusive request option. For example, -Xdump:system:events=user,request=exclusive+compact+prepwalk.
+J9NLS_DMP_SYSTEM_DUMP_COMPACT_PREPWALK_WITHOUT_EXCLUSIVE.link=
+
+# END NON-TRANSLATABLE
+
+# Failure to write dumps out to specified location
+J9NLS_DMP_MAKEPATH_CANNOT_USE_DMP_LABEL=\u65e0\u6cd5\u5c06\u8f6c\u50a8\u5199\u5165\u6587\u4ef6 %s\uff1a%s
+# START NON-TRANSLATABLE
+J9NLS_DMP_MAKEPATH_CANNOT_USE_DMP_LABEL.explanation=The JVM was unable to write a dump to the specified file. There might be multiple causes, including insufficient file system permissions or specifying a file that already exists.
+J9NLS_DMP_MAKEPATH_CANNOT_USE_DMP_LABEL.system_action=The JVM uses a default file name. The name and location of the file are indicated by the messages produced when the dump is written.
+J9NLS_DMP_MAKEPATH_CANNOT_USE_DMP_LABEL.user_response=Correct the problem with the specified file path or change the target dump file with the file= option.
+J9NLS_DMP_MAKEPATH_CANNOT_USE_DMP_LABEL.sample_input_1=/home/andhall/javacore.20081212.164512.4356.txt
+J9NLS_DMP_MAKEPATH_CANNOT_USE_DMP_LABEL.sample_input_2=Permission denied
+J9NLS_DMP_MAKEPATH_CANNOT_USE_DMP_LABEL.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_NOT_REQUESTED=\u7531\u4e8e\u672a\u8bf7\u6c42 VM exclusive \u9501\u5b9a\uff0c\u56e0\u6b64\u672a\u751f\u6210\u8bf7\u6c42\u7684 heapdump\u3002\u5c06 request=exclusive+prepwalk+compact \u6dfb\u52a0\u5230\u60a8\u7684 -Xdump:heap: \u547d\u4ee4\u884c\u9009\u9879\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_NOT_REQUESTED.explanation=A heapdump dump agent was configured using the -Xdump option or JVMTI without requesting that the exclusive VM lock.
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_NOT_REQUESTED.system_action=The JVM does not take the heapdump because the dump might be corrupt without the VM exclusive lock in place.
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_NOT_REQUESTED.user_response=Change the -Xdump:heap: option to include the request=exclusive option. For example, -Xdump:heap:events=user,request=exclusive.
+J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_NOT_REQUESTED.link=
+
+# END NON-TRANSLATABLE
+
+#-Xtrace:trigger, JVMTI, JVMRI and javacore.txt are not translatable.
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR=JVM \u4f7f\u7528\u201c%2$s\u201d\u6765\u8bf7\u6c42 %1$s \u8f6c\u50a8\u4ee5\u54cd\u5e94\u4e8b\u4ef6
+# START NON-TRANSLATABLE
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR.explanation=The JVM will write a dump because an event, such as an exception, was triggered.
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR.system_action=The JVM attempts to write the dump. A second message is produced when the dump is complete.
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR.user_response=Review the dump and take appropriate action.
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR.sample_input_1=Java
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR.sample_input_2=javacore.txt
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR.link=dita:///diag/tools/dump_agents.dita
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR_NOFILE=JVM \u8bf7\u6c42 %1$s \u8f6c\u50a8\u4ee5\u54cd\u5e94\u4e00\u4e2a\u4e8b\u4ef6
+# START NON-TRANSLATABLE
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR_NOFILE.explanation=The JVM will write a dump because an event, such as an exception, has been triggered.
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR_NOFILE.system_action=The JVM attempts to write the dump. A second message is produced when the dump is complete.
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR_NOFILE.user_response=Review the dump and take appropriate action.
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR_NOFILE.sample_input_1=Java
+J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR_NOFILE.link=dita:///diag/tools/dump_agents.dita
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_USER_REQUESTED_DUMP_STR=\u7528\u6237\u901a\u8fc7 %3$s \u4f7f\u7528\u201c%2$s\u201d\u6765\u8bf7\u6c42 %1$s \u8f6c\u50a8
+# START NON-TRANSLATABLE
+J9NLS_DMP_USER_REQUESTED_DUMP_STR.explanation=The JVM will write a dump in response to a request through an API, such as JVMTI, or through the -Xtrace:trigger option.
+J9NLS_DMP_USER_REQUESTED_DUMP_STR.system_action=The JVM attempts to write the dump. A second message is produced when the dump is complete.
+J9NLS_DMP_USER_REQUESTED_DUMP_STR.user_response=Review the dump and take appropriate action.
+
+# javacore.txt is not translatable
+J9NLS_DMP_USER_REQUESTED_DUMP_STR.sample_input_2=javacore.txt
+J9NLS_DMP_USER_REQUESTED_DUMP_STR.sample_input_3=JVMTI
+J9NLS_DMP_USER_REQUESTED_DUMP_STR.link=dita:///diag/tools/dump_agents.dita
+# END NON-TRANSLATABLE
+
+
+
+J9NLS_DMP_USER_REQUESTED_DUMP_STR_NOFILE=\u7528\u6237\u901a\u8fc7 %2$s \u8bf7\u6c42 %1$s \u8f6c\u50a8
+# START NON-TRANSLATABLE
+J9NLS_DMP_USER_REQUESTED_DUMP_STR_NOFILE.explanation=The JVM will write a dump in response to a user request through an API, such as JVMTI, or through the -Xtrace:trigger option.
+J9NLS_DMP_USER_REQUESTED_DUMP_STR_NOFILE.system_action=The JVM attempts to write the dump. A second message is produced when the dump is complete.
+J9NLS_DMP_USER_REQUESTED_DUMP_STR_NOFILE.user_response=Review the dump and take appropriate action.
+J9NLS_DMP_USER_REQUESTED_DUMP_STR_NOFILE.sample_input_1=Java
+J9NLS_DMP_USER_REQUESTED_DUMP_STR_NOFILE.sample_input_2=JVMTI
+J9NLS_DMP_USER_REQUESTED_DUMP_STR_NOFILE.link=dita:///diag/tools/dump_agents.dita
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_INVALID_OR_MISSING_FILTER=-Xdump \u8fc7\u6ee4\u5668\u65e0\u6548\u6216\u7f3a\u5931
+# START NON-TRANSLATABLE
+J9NLS_DMP_INVALID_OR_MISSING_FILTER.explanation=A valid -Xdump filter must be supplied.
+J9NLS_DMP_INVALID_OR_MISSING_FILTER.system_action=The dump agent is not loaded.
+J9NLS_DMP_INVALID_OR_MISSING_FILTER.user_response=Modify the dump option to include a valid filter.
+J9NLS_DMP_INVALID_OR_MISSING_FILTER.link=dita:///diag/tools/dump_agents.dita
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_ERROR_IN_DUMP_STR_RC=%1$s \u8f6c\u50a8\u4e2d\u51fa\u9519\uff1a%2$s \u5931\u8d25\uff0c\u9519\u8bef\u4ee3\u7801\uff1a%3$d
+# START NON-TRANSLATABLE
+J9NLS_DMP_ERROR_IN_DUMP_STR_RC.explanation=An error has occurred in a JVM dump agent. An operating system call used by the agent has failed.
+J9NLS_DMP_ERROR_IN_DUMP_STR_RC.system_action=The JVM continues.
+J9NLS_DMP_ERROR_IN_DUMP_STR_RC.user_response=Check preceding JVM messages. The JVMDUMP007I message includes the command string supplied for tool dumps. Check that the command string is correct.
+J9NLS_DMP_ERROR_IN_DUMP_STR_RC.sample_input_1=Java
+J9NLS_DMP_ERROR_IN_DUMP_STR_RC.sample_input_2=CreateProcess
+J9NLS_DMP_ERROR_IN_DUMP_STR_RC.sample_input_3=123
+J9NLS_DMP_ERROR_IN_DUMP_STR_RC.link=dita:///diag/tools/dump_agents.dita
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_NO_SNAPDUMP_WHEN_TRACING_TO_FILE=\u7531\u4e8e\u8ddf\u8e2a\u672a\u5199\u5165\u6587\u4ef6 %1$s\uff0c\u56e0\u6b64\u672a\u5199 snap \u8f6c\u50a8
+# START NON-TRANSLATABLE
+J9NLS_DMP_NO_SNAPDUMP_WHEN_TRACING_TO_FILE.explanation=Snap dumps are not produced when a trace output file is in use.
+J9NLS_DMP_NO_SNAPDUMP_WHEN_TRACING_TO_FILE.system_action=The JVM continues.
+J9NLS_DMP_NO_SNAPDUMP_WHEN_TRACING_TO_FILE.user_response=Use the trace file specified in the message.
+J9NLS_DMP_NO_SNAPDUMP_WHEN_TRACING_TO_FILE.sample_input_1=Perfmon.out
+J9NLS_DMP_NO_SNAPDUMP_WHEN_TRACING_TO_FILE.link=dita:///diag/tools/dump_agents.dita
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_PROCESSING_EVENT_TIME=\u6b63\u5728\u5904\u7406\u8f6c\u50a8\u4e8b\u4ef6\u201c%1$s\u201d\uff0c\u8be6\u7ec6\u4fe1\u606f\u201c%3$.*2$s\u201d\uff0c\u4f4d\u4e8e %4$s - \u8bf7\u7a0d\u5019\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_PROCESSING_EVENT_TIME.explanation=A dump event has occurred and is being handled.
+J9NLS_DMP_PROCESSING_EVENT_TIME.system_action=The JVM generates dumps as configured for the event by the -Xdump option.
+J9NLS_DMP_PROCESSING_EVENT_TIME.user_response=No response is required.
+J9NLS_DMP_PROCESSING_EVENT_TIME.sample_input_1=vmstop
+J9NLS_DMP_PROCESSING_EVENT_TIME.sample_input_2=9
+J9NLS_DMP_PROCESSING_EVENT_TIME.sample_input_3=#00000000
+J9NLS_DMP_PROCESSING_EVENT_TIME.sample_input_4=20110901.134521
+J9NLS_DMP_PROCESSING_EVENT_TIME.link=dita:///diag/tools/dump_agents.dita
+# END NON-TRANSLATABLE
+
+
+J9NLS_DMP_WRITTEN_DUMP_STR_ZOS=%1$s \u8f6c\u50a8\u5df2\u4f7f\u7528\u540d\u79f0\u6a21\u677f %2$s \u5199\u5165\u6570\u636e\u96c6
+# START NON-TRANSLATABLE
+J9NLS_DMP_WRITTEN_DUMP_STR_ZOS.explanation=The dump was written using the specified dataset name template.
+J9NLS_DMP_WRITTEN_DUMP_STR_ZOS.system_action=The JVM continues.
+J9NLS_DMP_WRITTEN_DUMP_STR_ZOS.user_response=Locate the dump dataset(s) and take appropriate action.
+J9NLS_DMP_WRITTEN_DUMP_STR_ZOS.sample_input_1=System
+J9NLS_DMP_WRITTEN_DUMP_STR_ZOS.sample_input_2=USERID.JVM.JOBID.D110208.T124503.X&DS
+J9NLS_DMP_WRITTEN_DUMP_STR_ZOS.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_INCORRECT_USE_MSG_FILTER=-Xdump msg_filter \u4f7f\u7528\u9519\u8bef
+# START NON-TRANSLATABLE
+J9NLS_DMP_INCORRECT_USE_MSG_FILTER.explanation=The suboption msg_filter is only applicable to events throw, systhrow, catch and uncaught.
+J9NLS_DMP_INCORRECT_USE_MSG_FILTER.system_action=The dump agent is not loaded.
+J9NLS_DMP_INCORRECT_USE_MSG_FILTER.user_response=Modify the dump option to apply the msg_filter to applicable events.
+J9NLS_DMP_INCORRECT_USE_MSG_FILTER.link=dita:///diag/tools/dump_agents.dita
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_ABORT_ON_JAVA_STACK=\u5728 Java \u5806\u6808\u4e0a\u8fd0\u884c\u65f6\u6536\u5230\u5f02\u5e38\u4e2d\u6b62\u4fe1\u53f7\u3002JVM \u8f6c\u50a8\u4ee3\u7406\u65e0\u6cd5\u8fd0\u884c\u3002
+# START NON-TRANSLATABLE
+J9NLS_DMP_ABORT_ON_JAVA_STACK.explanation=The JVM abort signal handler was called on a thread that is running on a Java stack. The JVM dump agents are not run to avoid further problems.
+J9NLS_DMP_ABORT_ON_JAVA_STACK.system_action=The JVM terminates. The abort signal is passed on to the operating system.
+J9NLS_DMP_ABORT_ON_JAVA_STACK.user_response=No specific action is required. Look for other messages that are produced to assist you with problem determination. Refer to operating system documentation for information on obtaining dumps on abort signals.
+J9NLS_DMP_ABORT_ON_JAVA_STACK.link=dita:///diag/tools/dump_agents.dita
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_UNSUPPORTED_ON_PLATFORM=\u6b64\u5e73\u53f0\u4e0a\u4e0d\u652f\u6301 %s
+# START NON-TRANSLATABLE
+J9NLS_DMP_UNSUPPORTED_ON_PLATFORM.explanation=The option specified is not supported on the current platform.
+J9NLS_DMP_UNSUPPORTED_ON_PLATFORM.system_action=The JVM exits.
+J9NLS_DMP_UNSUPPORTED_ON_PLATFORM.user_response=remove the option.
+J9NLS_DMP_UNSUPPORTED_ON_PLATFORM.sample_input_1=suspendwith
+J9NLS_DMP_UNSUPPORTED_ON_PLATFORM.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_INVALID_OR_RESERVED=%s \u7684\u65e0\u6548\u503c\u6216\u4fdd\u7559\u7684\u6709\u6548\u503c
+# START NON-TRANSLATABLE
+J9NLS_DMP_INVALID_OR_RESERVED.explanation=The value for the option is out of the legal range or is reserved for other purposes.
+J9NLS_DMP_INVALID_OR_RESERVED.system_action=The JVM exits.
+J9NLS_DMP_INVALID_OR_RESERVED.user_response=select a different value.
+J9NLS_DMP_INVALID_OR_RESERVED.sample_input_1=suspendwith
+J9NLS_DMP_INVALID_OR_RESERVED.link=
+# END NON-TRANSLATABLE

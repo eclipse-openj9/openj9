@@ -1,0 +1,15 @@
+NumberOfUrls=3
+Url0=./Alphabet;
+NumberOfClassesToLoad0=2
+LoadClasses0=A,G
+Url1=./Pets;
+NumberOfClassesToLoad1=3
+LoadClasses1=Cat,Dog,Hamster
+Url2=./Vowels;
+NumberOfClassesToLoad2=4
+LoadClasses2=A,E,I,O
+Classpath=./Alphabet;./Pets;./Vowels;
+NumberOfClassesToFind=8
+FindClasses=A,E,G,Cat,Dog,Hamster,I,O
+Results=true,false,true,true,true,true,true,true
+FoundAt=Alphabet,Vowels,Alphabet,Pets,Pets,Pets,Vowels,Vowels

@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!--
+	Copyright (c) 2013, 2017 IBM Corp. and others
+
+	This program and the accompanying materials are made available under
+	the terms of the Eclipse Public License 2.0 which accompanies this
+	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+	or the Apache License, Version 2.0 which accompanies this distribution and
+	is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+	This Source Code may also be made available under the following
+	Secondary Licenses when the conditions for such availability set
+	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+	General Public License, version 2 with the GNU Classpath
+	Exception [1] and GNU General Public License, version 2 with the
+	OpenJDK Assembly Exception [2].
+
+	[1] https://www.gnu.org/software/classpath/license.html
+	[2] http://openjdk.java.net/legal/assembly-exception.html
+
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<module>
+	<!-- Re-bundle the OMR util libs into j9utilcore. The JIT requires j9utilcore to build. -->
+
+	<!--
+This makefile re-archives omr/util/omrutil/*.o into libj9utilcore.a.
+
+The $(OMR_OBJECTS): target overrides the default rule for *.o, which is defined in makelib/targets.mk.
+The default rule for *.o looks for matching *.c/cpp and recompiles if the .c/cpp is newer, which
+shouldn't be done by this makefile because 1) they were already compiled by the prereq OMR projects; 
+2) this makefile doesn't specify all the path dependencies of the OMR projects.
+
+The scenario where *.c/cpp is newer than *.o shouldn't happen, but we have occasional blips in the build
+system where the *.c/cpp get "weird" timestamps. Make consistently detects them as newer than freshly
+compiled *.o's. The $(OMR_OBJECTS): rule prevents the .c/cpp from being checked as dependencies.
+
+It is assumed that all of omr is built before attempting to make this library.
+
+The "all" and "$(UMA_OBJECTS)" targets are added using <makefilestub/> instead of <artifact/> because
+UMA insists on adding new artifact targets to the top-level makefile, even if all="false" is specified.
+	-->
+
+	<artifact type="static" name="j9utilcore">
+		<phase>core</phase>
+		<includes>
+			<include path="j9oti"/>
+			<include path="j9include"/>
+		</includes>
+		<makefilestubs>
+			<!-- Bundle objects from OMR util libraries -->
+			<makefilestub data="OMR_OBJECTS += $(wildcard $(OMR_DIR)/util/omrutil/*$(UMA_DOT_O))"/>
+			
+			<!-- Bundle objects from OMR UtilGlue -->
+			<makefilestub data="OMR_OBJECTS += $(wildcard $(UMA_PATH_TO_ROOT)gc_glue_java/UtilGlue$(UMA_DOT_O))"/>
+			
+			<!-- Add the OMR util objects to the objects in this directory -->
+			<makefilestub data="UMA_OBJECTS += $(OMR_OBJECTS)"/>
+
+			<!-- Prevent $(OMR_OBJECTS) from being used as the default make target -->
+			<makefilestub data="all: $(UMA_LIBTARGET)"/>
+			
+			<!-- Override default rules for checking dependencies of $(UMA_OBJECTS) -->
+			<makefilestub data="$(OMR_OBJECTS): ; echo $@"/>
+		</makefilestubs>
+	</artifact>
+</module>

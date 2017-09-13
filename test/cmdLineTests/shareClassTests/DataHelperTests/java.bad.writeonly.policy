@@ -1,0 +1,8 @@
+grant {
+      permission java.util.PropertyPermission "user.dir", "read";
+      permission java.io.FilePermission "datacaching/dataone.jar", "read";
+      permission java.io.FilePermission "datacaching/datatwo.jar", "read";
+      permission java.lang.RuntimePermission "createClassLoader";
+      permission java.lang.RuntimePermission "accessClassInPackage.*";
+      permission com.ibm.oti.shared.SharedClassPermission "CustomClassloaders.DataCachingClassLoader", "write";
+};

@@ -1,0 +1,612 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the JVMTI module.
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+# Every NLS message needs to have the following information provided:
+#
+# J9NLS_VM_SAMPLE_MESSAGE=This is a sample message that takes two parameters parameter 1 is a string  %1$s  parameter 2 is a number  %2$d
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_1=string parameter
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_2=2
+# J9NLS_VM_SAMPLE_MESSAGE.explanation=Explanation for what the message means
+# J9NLS_VM_SAMPLE_MESSAGE.system_action=What will the JVM or more generally the system do when this message is output
+# J9NLS_VM_SAMPLE_MESSAGE.user_response=What should the user do when seeing this message
+#
+
+J9NLS.MODULE=J9TI
+J9NLS.HEADER=jvmtinls.h
+
+J9NLS_JVMTI_OUT_OF_MEMORY=Sem mem\u00f3ria, est\u00e1 tentando carregar a biblioteca do agente %s
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_OUT_OF_MEMORY.sample_input_1=demoAgent
+J9NLS_JVMTI_OUT_OF_MEMORY.explanation=System run out of native memory
+J9NLS_JVMTI_OUT_OF_MEMORY.system_action=JVM will exit failing to load the agent library
+J9NLS_JVMTI_OUT_OF_MEMORY.user_response=Increase the amount of available native memory
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_AGENT_LIBRARY_OPEN_FAILED=A biblioteca do agente %1$s n\u00e3o p\u00f4de ser aberta (%2$s)
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_AGENT_LIBRARY_OPEN_FAILED.sample_input_1=demoAgent
+J9NLS_JVMTI_AGENT_LIBRARY_OPEN_FAILED.sample_input_2=The specified module could not be found.
+J9NLS_JVMTI_AGENT_LIBRARY_OPEN_FAILED.explanation=The agent shared library could not be found or opened
+J9NLS_JVMTI_AGENT_LIBRARY_OPEN_FAILED.system_action=JVM will exit failing to load the agent library
+J9NLS_JVMTI_AGENT_LIBRARY_OPEN_FAILED.user_response=Verify existence of the agent shared library and file read permissions
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_AGENT_ONLOAD_NOT_FOUND=Agent_OnLoad n\u00e3o localizado na biblioteca %s
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_AGENT_ONLOAD_NOT_FOUND.sample_input_1=demoAgent
+J9NLS_JVMTI_AGENT_ONLOAD_NOT_FOUND.explanation=Specified agent does not follow the JVMTI specification
+J9NLS_JVMTI_AGENT_ONLOAD_NOT_FOUND.system_action=JVM will exit failing to load the agent library
+J9NLS_JVMTI_AGENT_ONLOAD_NOT_FOUND.user_response=Developer of the agent library should add a Agent_OnLoad function
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_AGENT_ONLOAD_FAILED=Agent_OnLoad falhou para a biblioteca %s
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_AGENT_ONLOAD_FAILED.sample_input_1=demoAgent
+J9NLS_JVMTI_AGENT_ONLOAD_FAILED.explanation=Initialization of the agent failed in Agent_OnLoad
+J9NLS_JVMTI_AGENT_ONLOAD_FAILED.system_action=JVM will exit failing to load the agent library
+J9NLS_JVMTI_AGENT_ONLOAD_FAILED.user_response=Developer of the agent library should correct the Agent_OnLoad failure
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_POTENTIAL_EXTENDED_CAPABILITIES_DESCRIPTION=Retorna por meio do capabilities_ptr os recursos estendidos dispon\u00edveis neste momento.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_POTENTIAL_EXTENDED_CAPABILITIES_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_POTENTIAL_EXTENDED_CAPABILITIES_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_POTENTIAL_EXTENDED_CAPABILITIES_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_ADD_EXTENDED_CAPABILITIES_DESCRIPTION=Inclua os novos recursos estendidos a partir de capabilities_ptr.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_ADD_EXTENDED_CAPABILITIES_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_ADD_EXTENDED_CAPABILITIES_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_ADD_EXTENDED_CAPABILITIES_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_RELINQUISH_EXTENDED_CAPABILITIES_DESCRIPTION=Elimine os recursos estendidos de capabilities_ptr.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_RELINQUISH_EXTENDED_CAPABILITIES_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_RELINQUISH_EXTENDED_CAPABILITIES_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_RELINQUISH_EXTENDED_CAPABILITIES_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_EXTENDED_CAPABILITIES_DESCRIPTION=Obtenha o conjunto atual de recursos estendidos por meio de capabilities_ptr.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_EXTENDED_CAPABILITIES_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_EXTENDED_CAPABILITIES_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_EXTENDED_CAPABILITIES_DESCRIPTION.user_response=NOne
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_COMPILING_START_DESCRIPTION=Indica o in\u00edcio de uma fase de compila\u00e7\u00e3o de JIT. (N\u00e3o \u00e9 seguro para retorno de chamada)
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_COMPILING_START_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_COMPILING_START_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_COMPILING_START_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_COMPILING_END_DESCRIPTION=Indica o fim de uma fase de compila\u00e7\u00e3o de JIT. (N\u00e3o \u00e9 seguro para retorno de chamada)
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_COMPILING_END_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_COMPILING_END_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_COMPILING_END_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_METHOD_ENTRY_EXTENDED_DESCRIPTION=Entrada do m\u00e9todo com informa\u00e7\u00f5es estendidas sobre o tipo de m\u00e9todo.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_METHOD_ENTRY_EXTENDED_DESCRIPTION.explanation=Method entry with extended information about method type.
+J9NLS_JVMTI_COM_IBM_METHOD_ENTRY_EXTENDED_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_METHOD_ENTRY_EXTENDED_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_TRACE_SET_DESCRIPTION=Inclua uma op\u00e7\u00e3o -Xtrace din\u00e2mica
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_TRACE_SET_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_TRACE_SET_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_TRACE_SET_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_DUMP_SET_DESCRIPTION=Inclua uma op\u00e7\u00e3o -Xdump din\u00e2mica
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_DUMP_SET_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_DUMP_SET_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_DUMP_SET_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_INSTRUMENTABLE_OBJET_ALLOC=Permite retornos de chamada para aloca\u00e7\u00f5es instrument\u00e1veis (as n\u00e3o relatadas por VMObjectAlloc).
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_INSTRUMENTABLE_OBJET_ALLOC.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_INSTRUMENTABLE_OBJET_ALLOC.system_action=None
+J9NLS_JVMTI_COM_IBM_INSTRUMENTABLE_OBJET_ALLOC.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_JLM_SET_DESCRIPTION=Controla o JLM (Java Lock Monitor) (COM_IBM_JLM_START, COM_IBM_JLM_START_TIME_STAMP, COM_IBM_JLM_STOP, COM_IBM_JLM_STOP_TIME_STAMP).
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_JLM_SET_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_JLM_SET_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_JLM_SET_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_JLM_DUMP_DESCRIPTION=Solicita um dump JLM.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_JLM_DUMP_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_JLM_DUMP_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_JLM_DUMP_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_ALLOW_INLINING_WITH_METHOD_ENTER_EXIT=Permitir seq\u00fcenciamento na presen\u00e7a de eventos de entrada e sa\u00edda de m\u00e9todo (resultando em um prov\u00e1vel relat\u00f3rio impreciso de entrada e sa\u00edda)
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_ALLOW_INLINING_WITH_METHOD_ENTER_EXIT.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_ALLOW_INLINING_WITH_METHOD_ENTER_EXIT.system_action=None
+J9NLS_JVMTI_COM_IBM_ALLOW_INLINING_WITH_METHOD_ENTER_EXIT.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_SET_VM_AND_COMPILING_CONTROL_OPTIONS=Controla v\u00e1rias op\u00e7\u00f5es de VM e de compila\u00e7\u00e3o.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_SET_VM_AND_COMPILING_CONTROL_OPTIONS.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_SET_VM_AND_COMPILING_CONTROL_OPTIONS.system_action=None
+J9NLS_JVMTI_COM_IBM_SET_VM_AND_COMPILING_CONTROL_OPTIONS.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_SET_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY=Configura um m\u00e9todo para notifica\u00e7\u00e3o seletiva de entrada e sa\u00edda.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_SET_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_SET_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY.system_action=None
+J9NLS_JVMTI_COM_IBM_SET_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_SET_EXTENDED_EVENT_NOTIFICATION_MODE=Configura o modo de notifica\u00e7\u00e3o para eventos estendidos, permitindo seletividade em n\u00edvel de encadeamento
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_SET_EXTENDED_EVENT_NOTIFICATION_MODE.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_SET_EXTENDED_EVENT_NOTIFICATION_MODE.system_action=None
+J9NLS_JVMTI_COM_IBM_SET_EXTENDED_EVENT_NOTIFICATION_MODE.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_OS_THREAD_ID=Obt\u00e9m o ID de encadeamento de S.O. de um jthread
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_OS_THREAD_ID.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_OS_THREAD_ID.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_OS_THREAD_ID.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_STACK_TRACE_EXTENDED_DESCRIPTION=Obter informa\u00e7\u00f5es estendidas sobre o quadro
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_STACK_TRACE_EXTENDED_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_STACK_TRACE_EXTENDED_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_STACK_TRACE_EXTENDED_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_ALL_STACK_TRACES_EXTENDED_DESCRIPTION=Obter informa\u00e7\u00f5es estendidas sobre o quadro para todos os rastreios de pilha
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_ALL_STACK_TRACES_EXTENDED_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_ALL_STACK_TRACES_EXTENDED_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_ALL_STACK_TRACES_EXTENDED_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_THREAD_LIST_STACK_TRACES_EXTENDED_DESCRIPTION=Obter informa\u00e7\u00f5es estendidas sobre o quadro para uma lista de encadeamento
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_THREAD_LIST_STACK_TRACES_EXTENDED_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_THREAD_LIST_STACK_TRACES_EXTENDED_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_THREAD_LIST_STACK_TRACES_EXTENDED_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_METHOD_EXIT_NO_RC_DESCRIPTION=Sa\u00edda de m\u00e9todo sem o valor de retorno.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_METHOD_EXIT_NO_RC_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_METHOD_EXIT_NO_RC_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_METHOD_EXIT_NO_RC_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_ALLOW_DIRECT_JNI_WITH_METHOD_ENTER_EXIT=Permitir JNI direta na presen\u00e7a de eventos de entrada e sa\u00edda de m\u00e9todo (resultando em um prov\u00e1vel relat\u00f3rio impreciso de entrada e sa\u00edda)
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_ALLOW_DIRECT_JNI_WITH_METHOD_ENTER_EXIT.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_ALLOW_DIRECT_JNI_WITH_METHOD_ENTER_EXIT.system_action=None
+J9NLS_JVMTI_COM_IBM_ALLOW_DIRECT_JNI_WITH_METHOD_ENTER_EXIT.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_TRIGGER_VM_DUMP_DESCRIPTION=Aciona um dump utilizando a configura\u00e7\u00e3o de RAS fornecida.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_TRIGGER_VM_DUMP_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_TRIGGER_VM_DUMP_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_TRIGGER_VM_DUMP_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_VM_DUMP_START=Relata o in\u00edcio de um dump de RAS.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_VM_DUMP_START.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_VM_DUMP_START.system_action=None
+J9NLS_JVMTI_COM_IBM_VM_DUMP_START.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_VM_DUMP_END=Relata o fim de um dump de RAS.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_VM_DUMP_END.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_VM_DUMP_END.system_action=None
+J9NLS_JVMTI_COM_IBM_VM_DUMP_END.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_QUERY_VM_DUMP=Consulta a configura\u00e7\u00e3o do agente de dump do RAS.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_QUERY_VM_DUMP.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_QUERY_VM_DUMP.system_action=None
+J9NLS_JVMTI_COM_IBM_QUERY_VM_DUMP.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_SIGNAL_ASYNC_EVENT=Sinaliza o evento ass\u00edncrono em um \u00fanico encadeamento ou em todos os encadeamentos
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_SIGNAL_ASYNC_EVENT.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_SIGNAL_ASYNC_EVENT.system_action=None
+J9NLS_JVMTI_COM_IBM_SIGNAL_ASYNC_EVENT.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_CANCEL_ASYNC_EVENT=Cancela o evento ass\u00edncrono em um \u00fanico encadeamento ou em todos os encadeamentos
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_CANCEL_ASYNC_EVENT.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_CANCEL_ASYNC_EVENT.system_action=None
+J9NLS_JVMTI_COM_IBM_CANCEL_ASYNC_EVENT.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_ASYNC_EVENT=Indica que um encadeamento processou o evento ass\u00edncrono
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_ASYNC_EVENT.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_ASYNC_EVENT.system_action=None
+J9NLS_JVMTI_COM_IBM_ASYNC_EVENT.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_RESET_VM_DUMP_DESCRIPTION=Reconfigure as op\u00e7\u00f5es de dump de VM.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_RESET_VM_DUMP_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_RESET_VM_DUMP_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_RESET_VM_DUMP_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GARBAGE_COLLECTION_CYCLE_START_DESCRIPTION=Ciclo de coleta de lixo iniciado.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GARBAGE_COLLECTION_CYCLE_START_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GARBAGE_COLLECTION_CYCLE_START_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_GARBAGE_COLLECTION_CYCLE_START_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GARBAGE_COLLECTION_CYCLE_FINISH_DESCRIPTION=Ciclo de coleta de lixo conclu\u00eddo.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GARBAGE_COLLECTION_CYCLE_FINISH_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GARBAGE_COLLECTION_CYCLE_FINISH_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_GARBAGE_COLLECTION_CYCLE_FINISH_DESCRIPTION.user_response=None
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_HEAP_FREE_MEMORY_DESCRIPTION=Obter a mem\u00f3ria livre do heap atual.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_HEAP_FREE_MEMORY_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_HEAP_FREE_MEMORY_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_HEAP_FREE_MEMORY_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_HEAP_TOTAL_MEMORY_DESCRIPTION=Obter a mem\u00f3ria total do heap.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_HEAP_TOTAL_MEMORY_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_HEAP_TOTAL_MEMORY_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_HEAP_TOTAL_MEMORY_DESCRIPTION.user_response=None
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_ITERATE_SHARED_CACHES_DESCRIPTION=Iterar sobre caches compartilhados.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_ITERATE_SHARED_CACHES_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_ITERATE_SHARED_CACHES_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_ITERATE_SHARED_CACHES_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_DESTROY_SHARED_CACHE_DESCRIPTION=Destruir um cache compartilhado nomeado.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_DESTROY_SHARED_CACHE_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_DESTROY_SHARED_CACHE_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_DESTROY_SHARED_CACHE_DESCRIPTION.user_response=None
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_ADD_CAN_AUTO_TAG_OBJECTS_CAPABILITY_DESCRIPTION=Inclui o recurso estendido can_autotag_objects.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_ADD_CAN_AUTO_TAG_OBJECTS_CAPABILITY_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_ADD_CAN_AUTO_TAG_OBJECTS_CAPABILITY_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_ADD_CAN_AUTO_TAG_OBJECTS_CAPABILITY_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_OBJECTS_RENAMED_DESCRIPTION=Sinalizar o evento renomeado por objeto(s) (movido ou exclu\u00eddo).
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_OBJECTS_RENAMED_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_OBJECTS_RENAMED_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_OBJECTS_RENAMED_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_AUTOTAGGED_OBJECT_ALLOCATED_DESCRIPTION=Sinalizar tags autom\u00e1ticas para o objeto recentemente alocado e sua classe.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_AUTOTAGGED_OBJECT_ALLOCATED_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_AUTOTAGGED_OBJECT_ALLOCATED_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_AUTOTAGGED_OBJECT_ALLOCATED_DESCRIPTION.user_response=None
+
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_ARRAY_CLASS_LOAD=Sinalizar carregamento de classe apenas para classes de matriz.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_ARRAY_CLASS_LOAD.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_ARRAY_CLASS_LOAD.system_action=None
+J9NLS_JVMTI_COM_IBM_ARRAY_CLASS_LOAD.user_response=None
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_REMOVE_ALL_TAGS=Excluir todas as tags de objeto.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_REMOVE_ALL_TAGS.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_REMOVE_ALL_TAGS.system_action=None
+J9NLS_JVMTI_COM_IBM_REMOVE_ALL_TAGS.user_response=None
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_TRACE_SUBSCRIBER_DESCRIPTION=Criar uma assinatura para registros de rastreio externos
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_TRACE_SUBSCRIBER_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_TRACE_SUBSCRIBER_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_TRACE_SUBSCRIBER_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACE_SUBSCRIBER_DESCRIPTION=Cancelar uma assinatura para registros de rastreio externos
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACE_SUBSCRIBER_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACE_SUBSCRIBER_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACE_SUBSCRIBER_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_FLUSH_TRACE_DATA_DESCRIPTION=Todos os registros de rastreio em uso s\u00e3o alternados e passados para assinantes do rastreio
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_FLUSH_TRACE_DATA_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_FLUSH_TRACE_DATA_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_FLUSH_TRACE_DATA_DESCRIPTION.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_GET_TRACE_METADATA_DESCRIPTION=Obt\u00e9m os metadados de rastreio que podem ser usados com o formatador para processar buffers de rastreio
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_GET_TRACE_METADATA_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_GET_TRACE_METADATA_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_GET_TRACE_METADATA_DESCRIPTION.user_response=None
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_METHOD_AND_CLASS_NAMES=Os nomes de Classe de Retorno, M\u00e9todo e Pacote para um conjunto de ponteiros do M\u00e9todo RAM
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_METHOD_AND_CLASS_NAMES.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_METHOD_AND_CLASS_NAMES.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_METHOD_AND_CLASS_NAMES.user_response=None
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_OBJECT_MONITOR_HASH_CODE_DESCRIPTION=Obter um c\u00f3digo hash para o monitor de um objeto.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_OBJECT_MONITOR_HASH_CODE_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_OBJECT_MONITOR_HASH_CODE_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_OBJECT_MONITOR_HASH_CODE_DESCRIPTION.user_response=None
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_CLEAR_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY=Limpar o sinalizador per-method para notifica\u00e7\u00e3o seletiva de entrada e sa\u00edda.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_CLEAR_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_CLEAR_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY.system_action=None
+J9NLS_JVMTI_COM_IBM_CLEAR_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY.user_response=None
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_QUERY_VM_LOG_OPTIONS=Consultar as op\u00e7\u00f5es atuais de log da VM.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_QUERY_VM_LOG_OPTIONS.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_QUERY_VM_LOG_OPTIONS.system_action=None
+J9NLS_JVMTI_COM_IBM_QUERY_VM_LOG_OPTIONS.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_SET_VM_LOG_OPTIONS=Configurar as op\u00e7\u00f5es de log da VM.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_SET_VM_LOG_OPTIONS.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_SET_VM_LOG_OPTIONS.system_action=None
+J9NLS_JVMTI_COM_IBM_SET_VM_LOG_OPTIONS.user_response=None
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JLM_STATS_DUMP_DESCRIPTION=Solicitar um dump de Java Lock Monitor (JLM) com um especificador de formato.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JLM_STATS_DUMP_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JLM_STATS_DUMP_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JLM_STATS_DUMP_DESCRIPTION.user_response=None
+
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_LOG_ALLOC_BUFFER_ERROR=N\u00e3o foi poss\u00edvel alocar o buffer para as op\u00e7\u00f5es de log da JVM.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_LOG_ALLOC_BUFFER_ERROR.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_LOG_ALLOC_BUFFER_ERROR.system_action=None
+J9NLS_JVMTI_COM_IBM_LOG_ALLOC_BUFFER_ERROR.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR=N\u00e3o foi poss\u00edvel consultar as op\u00e7\u00f5es de log da JVM.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR.system_action=None
+J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_LOG_NATIVE_STRING_ERROR=N\u00e3o foi poss\u00edvel converter as sequ\u00eancias nativas das op\u00e7\u00f5es de log da JVM.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_LOG_NATIVE_STRING_ERROR.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_LOG_NATIVE_STRING_ERROR.system_action=None
+J9NLS_JVMTI_COM_IBM_LOG_NATIVE_STRING_ERROR.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_LOG_SET_OPT_ERROR=N\u00e3o foi poss\u00edvel configurar as op\u00e7\u00f5es de log da JVM.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_LOG_SET_OPT_ERROR.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_LOG_SET_OPT_ERROR.system_action=None
+J9NLS_JVMTI_COM_IBM_LOG_SET_OPT_ERROR.user_response=None
+
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_MEMORY_CATEGORIES_DESCRIPTION=Obter a quantia de mem\u00f3ria nativa usada pela JVM, quebrada dentro das categorias de mem\u00f3ria.
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_MEMORY_CATEGORIES_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_MEMORY_CATEGORIES_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_MEMORY_CATEGORIES_DESCRIPTION.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_VERBOSEGC_SUBSCRIBER_DESCRIPTION=Criar uma assinatura para registros de GC detalhados
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_VERBOSEGC_SUBSCRIBER_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_VERBOSEGC_SUBSCRIBER_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_VERBOSEGC_SUBSCRIBER_DESCRIPTION.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_VERBOSEGC_SUBSCRIBER_DESCRIPTION=Cancelar uma assinatura para registros de GC detalhados
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_VERBOSEGC_SUBSCRIBER_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_VERBOSEGC_SUBSCRIBER_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_VERBOSEGC_SUBSCRIBER_DESCRIPTION.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_J9VMTHREAD=Obt\u00e9m o ponteiro J9VMThread de um jthread
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_J9VMTHREAD.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_J9VMTHREAD.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_J9VMTHREAD.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_GET_J9METHOD=Obt\u00e9m o ponteiro J9Method de JMethodID
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_GET_J9METHOD.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_GET_J9METHOD.system_action=None
+J9NLS_JVMTI_COM_IBM_GET_J9METHOD.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_AGENT_INITIALIZATION_FAILED=A fun\u00e7\u00e3o de inicializa\u00e7\u00e3o %s do agente falhou para a biblioteca %s, c\u00f3digo de retorno %d
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_AGENT_INITIALIZATION_FAILED.sample_input_1=Agent_OnLoad
+J9NLS_JVMTI_AGENT_INITIALIZATION_FAILED.sample_input_2=demoAgent
+J9NLS_JVMTI_AGENT_INITIALIZATION_FAILED.sample_input_3=42
+J9NLS_JVMTI_AGENT_INITIALIZATION_FAILED.explanation=Initialization of the agent failed in Agent_OnLoad or Agent_OnAttach
+J9NLS_JVMTI_AGENT_INITIALIZATION_FAILED.system_action=JVM will exit failing to load the agent library
+J9NLS_JVMTI_AGENT_INITIALIZATION_FAILED.user_response=Developer of the agent library should correct the agent initialization failure
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_AGENT_INITIALIZATION_FUNCTION_NOT_FOUND=Fun\u00e7\u00e3o de inicializa\u00e7\u00e3o %s do agente n\u00e3o localizada na biblioteca %s
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_AGENT_INITIALIZATION_FUNCTION_NOT_FOUND.sample_input_1=Agent_OnAttach
+J9NLS_JVMTI_AGENT_INITIALIZATION_FUNCTION_NOT_FOUND.sample_input_2=demoAgent
+J9NLS_JVMTI_AGENT_INITIALIZATION_FUNCTION_NOT_FOUND.explanation=Specified agent does not follow the JVMTI specification
+J9NLS_JVMTI_AGENT_INITIALIZATION_FUNCTION_NOT_FOUND.system_action=JVM will exit failing to load the agent library
+J9NLS_JVMTI_AGENT_INITIALIZATION_FUNCTION_NOT_FOUND.user_response=Developer of the agent library should add the missing initialization function function
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION=Criar uma assinatura para tracepoints de VM
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_REGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION=Cancelar uma assinatura para tracepoints de VM
+# START NON-TRANSLATABLE
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION.explanation=Internationalized description of a JVMTI extension
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION.system_action=None
+J9NLS_JVMTI_COM_IBM_JVM_DEREGISTER_TRACEPOINT_SUBSCRIBER_DESCRIPTION.user_response=None
+# END NON-TRANSLATABLE

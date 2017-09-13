@@ -1,0 +1,62 @@
+/*******************************************************************************
+ * Copyright (c) 1991, 2014 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+#ifndef ctest_h
+#define ctest_h
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "j9.h"
+#include "j9port.h"
+
+#ifdef J9VM_OPT_ZIP_SUPPORT
+#include "zip_api.h"
+#endif
+
+#include "romcookie.h"
+
+extern J9PortLibrary *cTestPortLib;
+extern UDATA passCount, failCount;
+
+#define j9_assume(val1, val2) \
+	do { \
+		if (val1 != val2) { \
+			J9PortLibrary *privatePortLibrary = cTestPortLib; \
+			failCount++; \
+			j9tty_printf(cTestPortLib, "%d: FAIL -> %s == %s (%d == %d)\n", \
+				failCount + passCount, \
+				#val1, \
+				#val2, \
+				val1, \
+				val2); \
+		} else { \
+			passCount++; \
+		} \
+	} while (0)
+
+#ifdef __cplusplus
+ }
+#endif
+
+
+#endif /* ctest_h */

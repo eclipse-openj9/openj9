@@ -1,0 +1,61 @@
+//*******************************************************************************
+// Copyright (c) 2006, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//******************************************************************************
+
+Executable=mt
+DATFileName=J9TraceFormat.dat
+
+TraceEntry=Trc_MethodEntry   Overhead=1 Level=5 Group=bytecodeMethods                Template="%.*s.%.*s%.*s bytecode method, this = 0x%zx"
+TraceEntry=Trc_MethodEntryC  Overhead=1 Level=5 Group=compiledMethods                Template="%.*s.%.*s%.*s compiled method, this = 0x%zx"
+TraceEntry=Trc_MethodEntryN  Overhead=1 Level=5 Group=nativeMethods                  Template="%.*s.%.*s%.*s native method, this = 0x%zx"
+TraceEntry=Trc_MethodEntryS  Overhead=1 Level=5 Group=bytecodeMethods,staticMethods  Template="%.*s.%.*s%.*s bytecode static method"
+TraceEntry=Trc_MethodEntryCS Overhead=1 Level=5 Group=compiledMethods,staticMethods  Template="%.*s.%.*s%.*s compiled static method"
+TraceEntry=Trc_MethodEntryNS Overhead=1 Level=5 Group=nativeMethods,staticMethods    Template="%.*s.%.*s%.*s native static method"
+
+TraceExit=Trc_MethodExit    Overhead=1 Level=5 Group=bytecodeMethods                 Template="%.*s.%.*s%.*s bytecode method"
+TraceExit=Trc_MethodExitC   Overhead=1 Level=5 Group=compiledMethods                 Template="%.*s.%.*s%.*s compiled method"
+TraceExit=Trc_MethodExitN   Overhead=1 Level=5 Group=nativeMethods                   Template="%.*s.%.*s%.*s native method"
+TraceExit=Trc_MethodExitS   Overhead=1 Level=5 Group=bytecodeMethods,staticMethods   Template="%.*s.%.*s%.*s bytecode static method"
+TraceExit=Trc_MethodExitCS  Overhead=1 Level=5 Group=compiledMethods,staticMethods   Template="%.*s.%.*s%.*s compiled static method"
+TraceExit=Trc_MethodExitNS  Overhead=1 Level=5 Group=nativeMethods,staticMethods     Template="%.*s.%.*s%.*s native static method"
+
+TraceExit=Trc_MethodExitX_Obsolete Obsolete Overhead=1 Level=5 Group=bytecodeMethods                 Template="* %.*s.%.*s%.*s Bytecode method, looking for matching catch block for %s"
+TraceExit=Trc_MethodExitCX_Obsolete Obsolete Overhead=1 Level=5 Group=compiledMethods                 Template="* %.*s.%.*s%.*s Compiled method, looking for matching catch block for %s"
+TraceExit=Trc_MethodExitNX_Obsolete Obsolete Overhead=1 Level=5 Group=nativeMethods                   Template="* %.*s.%.*s%.*s Native method, looking for matching catch block for %s"
+TraceExit=Trc_MethodExitXS_Obsolete Obsolete Overhead=1 Level=5 Group=bytecodeMethods,staticMethods   Template="* %.*s.%.*s%.*s Bytecode static method, looking for matching catch block for %s"
+TraceExit=Trc_MethodExitCXS_Obsolete Obsolete Overhead=1 Level=5 Group=compiledMethods,staticMethods   Template="* %.*s.%.*s%.*s Compiled static method, looking for matching catch block for %s"
+TraceExit=Trc_MethodExitNXS_Obsolete Obsolete Overhead=1 Level=5 Group=nativeMethods,staticMethods     Template="* %.*s.%.*s%.*s Native static method, looking for matching catch block for %s"
+
+TraceEvent=Trc_MethodArguments Overhead=1 Level=5 Group=methodArguments Template="this: %.*s@%p method arguments: (%s)"
+TraceEvent=Trc_MethodArgumentsS Overhead=1 Level=5 Group=methodArguments Template="method arguments: (%s)"
+
+TraceEvent=Trc_MethodStackStart Overhead=1 Level=5 Template="jstacktrace:"
+TraceEvent=Trc_MethodStackFrame Overhead=1 Level=5 Template="%s"
+
+TraceExit-Exception=Trc_MethodExitX   Overhead=1 Level=5 Group=throw,bytecodeMethods                 Template="%.*s.%.*s%.*s bytecode method, exception thrown"
+TraceExit-Exception=Trc_MethodExitCX  Overhead=1 Level=5 Group=throw,compiledMethods                 Template="%.*s.%.*s%.*s compiled method, exception thrown"
+TraceExit-Exception=Trc_MethodExitNX  Overhead=1 Level=5 Group=throw,nativeMethods                   Template="%.*s.%.*s%.*s native method, exception thrown"
+TraceExit-Exception=Trc_MethodExitXS  Overhead=1 Level=5 Group=throw,bytecodeMethods,staticMethods   Template="%.*s.%.*s%.*s bytecode static method, exception thrown"
+TraceExit-Exception=Trc_MethodExitCXS Overhead=1 Level=5 Group=throw,compiledMethods,staticMethods   Template="%.*s.%.*s%.*s compiled static method, exception thrown"
+TraceExit-Exception=Trc_MethodExitNXS Overhead=1 Level=5 Group=throw,nativeMethods,staticMethods     Template="%.*s.%.*s%.*s native static method, exception thrown"
+
+TraceEvent=Trc_MethodReturn Overhead=1 Level=5 Group=methodArguments Template="return value: %s"
+TraceEvent=Trc_MethodException Overhead=1 Level=5 Group=methodArguments Template="exception: %s"

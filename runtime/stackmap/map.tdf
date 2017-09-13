@@ -1,0 +1,62 @@
+//*******************************************************************************
+// Copyright (c) 2008, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//******************************************************************************
+
+Executable=map
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_Map_j9maxmap_setMapMemoryBuffer_Larger_Method Noenv Overhead=1 Level=3 Template="maxmap - Global buffer size = %d in %.*s.%.*s%.*s"
+TraceException=Trc_Map_j9maxmap_setMapMemoryBuffer_AllocationFailure Noenv Overhead=1 Level=1 Template="maxmap - Global buffer allocation failure, wanted %d bytes"
+
+TraceEvent=Trc_Map_j9mapmemory_GetBuffer Noenv Overhead=1 Level=3 Template="mapmemorybuffer - Global buffer acquire"
+TraceEvent=Trc_Map_j9mapmemory_ReleaseBuffer Noenv Overhead=1 Level=3 Template="mapmemorybuffer - Global buffer release"
+TraceEvent=Trc_Map_j9mapmemory_GetResultsBuffer Noenv Overhead=1 Level=3 Template="mapmemorybuffer - Global results buffer acquire"
+TraceEvent=Trc_Map_j9mapmemory_ReleaseResultsBuffer Noenv Overhead=1 Level=3 Template="mapmemorybuffer - Global results buffer release"
+
+TraceEvent=Trc_Map_j9stackmap_StackBitsForPC_Method Noenv Overhead=1 Level=3 Template="j9stackmap_StackBitsForPC - Map maxStack %d at pc %d %.*s.%.*s%.*s"
+TraceException=Trc_Map_j9stackmap_StackBitsForPC_AllocationFailure Noenv Overhead=1 Level=1 Template="j9stackmap_StackBitsForPC - Stackmap buffer allocation failure, wanted %d bytes"
+TraceException=Trc_Map_j9stackmap_StackBitsForPC_GlobalBufferFailure Noenv Overhead=1 Level=1 Template="j9stackmap_StackBitsForPC - Global maxmap buffer acquisition failure, wanted %d bytes"
+
+TraceException=Trc_Map_mapstack_UnknownBytecode Noenv Overhead=1 Level=1 Template="mapstack - Unknown bytecode 0x%x at pc %d"
+TraceException=Trc_Map_mapstack_MapPCNotFound Noenv Overhead=1 Level=1 Template="mapstack - Unable to reach target pc"
+TraceException=Trc_Map_mapstack_WalkOffEndOfBytecodeArray Noenv Overhead=1 Level=1 Template="mapstack - Walked off end of bytecode array"
+
+TraceEvent=Trc_Map_j9localmap_LocalBitsForPC_Method Noenv Overhead=1 Level=3 Template="j9localmap_LocalBitsForPC - Map %d slots at pc %d %.*s.%.*s%.*s"
+TraceException=Trc_Map_j9localmap_LocalBitsForPC_AllocationFailure Noenv Overhead=1 Level=1 Template="j9localmap_LocalBitsForPC - Localmap buffer allocation failure, wanted %d bytes"
+TraceException=Trc_Map_j9localmap_LocalBitsForPC_GlobalBufferFailure Noenv Overhead=1 Level=1 Template="j9localmap_LocalBitsForPC - Global maxmap buffer acquisition failure, wanted %d bytes"
+
+TraceException=Trc_Map_mapLocalSet_WalkOffEndOfBytecodeArray Noenv Overhead=1 Level=1 Template="mapLocalSet - Walked off end of bytecode array"
+
+TraceEvent=Trc_Map_j9localmap_DebugLocalBitsForPC_Method Noenv Overhead=1 Level=3 Template="j9localmap_DebugLocalBitsForPC - Map %d slots at pc %d %.*s.%.*s%.*s"
+TraceException=Trc_Map_j9localmap_DebugLocalBitsForPC_AllocationFailure Noenv Overhead=1 Level=1 Template="j9localmap_DebugLocalBitsForPC - Localmap buffer allocation failure, wanted %d bytes"
+TraceException=Trc_Map_j9localmap_DebugLocalBitsForPC_GlobalBufferFailure Noenv Overhead=1 Level=1 Template="j9localmap_DebugLocalBitsForPC - Global maxmap buffer acquisition failure, wanted %d bytes"
+
+TraceException=Trc_Map_debugMapLocalSet_WalkOffEndOfBytecodeArray Noenv Overhead=1 Level=1 Template="debugMapLocalSet - Walked off end of bytecode array"
+
+TraceEvent=Trc_Map_fixReturnBytecodes_Class Noenv Overhead=1 Level=3 Template="fixReturnBytecodes - %.*s"
+TraceException=Trc_Map_fixReturnBytecodes_MissingMaps Noenv Overhead=1 Level=1 Template="fixReturnBytecodes - Missing stack maps - %.*s.%.*s%.*s"
+
+TraceException=Trc_Map_fixReturnBytecodesInMethod_AllocationFailure Noenv Overhead=1 Level=1 Template="fixReturnBytecodesInMethod - Fix returns buffer allocation failure, wanted %d bytes"
+
+TraceException=Trc_Map_fixReturns_UnknownBytecode Noenv Overhead=1 Level=1 Template="fixReturns - Unknown bytecode 0x%x at pc %d"
+TraceException=Trc_Map_fixReturns_WalkOffEndOfBytecodeArray Noenv Overhead=1 Level=1 Template="fixReturns - Walked off end of bytecode array"
+
+TraceException=Trc_Map_fixReturnsWithStackMaps_UnknownBytecode Noenv Overhead=1 Level=1 Template="fixReturnsWithStackMaps - Unknown bytecode 0x%x at pc %d"

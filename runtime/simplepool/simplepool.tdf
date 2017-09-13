@@ -1,0 +1,91 @@
+//*******************************************************************************
+// Copyright (c) 2010, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//******************************************************************************
+
+Executable=simplepool
+DATFileName=J9TraceFormat.dat
+
+TraceAssert=Assert_simplepool_true NoEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Assert_simplepool_ShouldNeverHappen NoEnv Overhead=1 Level=3 Assert="(0 /* Fatal simplepool error */)"
+
+TraceEntry=Trc_simplepool_new_Entry Overhead=1 Level=3 Noenv Template="simplepool_new(poolAddress=%p, memorySize=%u, elementSize=%u, flags=%u)" 
+TraceException=Trc_simplepool_new_NullParameters Overhead=1 Level=1 NoEnv Template="one or more required parameters are NULL or 0, poolAddress=%p, memorySize=%u, elementSize=%u"
+TraceException=Trc_simplepool_new_elementSizeUnaligned Overhead=1 Level=1 NoEnv Template="elementSize is not a multiple of 4, elementSize=%u"
+TraceException=Trc_simplepool_new_elementSizeTooSmall Overhead=1 Level=1 NoEnv Template="elementSize=%u is less than SIMPLEPOOL_MIN_ELEMENT_SIZE=%u"
+TraceException=Trc_simplepool_new_memorySizeTooSmall Overhead=1 Level=1 NoEnv Template="memorySize=%u is less than the minimum required to fit a single element pool, elementSize=%u"
+TraceException=Trc_simplepool_new_memorySizeTooLarge Overhead=1 Level=1 NoEnv Template="memorySize=%u is greater than the maximum supported size SIMPLEPOOL_MAX_MEMORY_SIZE=%u"
+TraceExit=Trc_simplepool_new_Exit Overhead=1 Level=3 Noenv Template="simplepool_new(result=%p)"
+
+TraceEntry=Trc_simplepool_newElement_Entry Overhead=1 Level=3 Noenv Template="simplepool_newElement(simplePool=%p)"
+TraceEvent=Trc_simplepool_newElement_simplePoolFull Overhead=1 Level=3 NoEnv Template="simple pool is full simplePool=%p"
+TraceException=Trc_simplepool_newElement_freeListInvalidBackPointer Overhead=1 Level=1 NoEnv Template="simple pool free list back pointer is invalid, simplePool=%p, simplePool->freeList=%p, freeList->simplePool=%p"
+TraceException=Trc_simplepool_newElement_freeListoutOfRange Overhead=1 Level=1 NoEnv Template="free list next element out of range, simplePool=%p, nextFree=%p, firstPossibleElementSlot=%p, firstFreeSlot=%p"
+TraceException=Trc_simplepool_newElement_freeListUnaligned Overhead=1 Level=1 NoEnv Template="simple pool free list next element is unaligned, simplePool=%p, nextFree=%p, simplePool->elementSize=%u"
+TraceException=Trc_simplepool_newElement_NullSimplePool Overhead=1 Level=1 Noenv Template="simplepool_newElement simplePool is NULL"
+TraceExit=Trc_simplepool_newElement_Exit Overhead=1 Level=3 Noenv Template="simplepool_newElement(simplePool=%p, newElement=%p)"
+
+TraceEntry=Trc_simplepool_removeElement_Entry Overhead=1 Level=3 Noenv Template="simplepool_removeElement(simplePool=%p, element=%p)"
+TraceException=Trc_simplepool_removeElement_NullParameter Overhead=1 Level=1 Noenv Template="simplepool_removeElement simplepool parameter is NULL"
+TraceExit=Trc_simplepool_removeElement_Exit Overhead=1 Level=3 Noenv Template="simplepool_removeElement(rc=%d)"
+
+TraceEntry=Trc_simplepool_numElements_Entry Overhead=1 Level=3 Noenv Template="simplepool_numElements(simplePool=%p)"
+TraceException=Trc_simplepool_numElements_NullSimplePool Overhead=1 Level=1 NoEnv Template="simplePool is NULL"
+TraceExit=Trc_simplepool_numElements_Exit Overhead=1 Level=3 Noenv Template="simplepool_numElements(numElements=%u)"
+
+TraceEntry=Trc_simplepool_verify_Entry Overhead=1 Level=3 Noenv Template="simplepool_verify(simplePool=%p, memorySize=%u, elementSize=%u)"
+TraceException=Trc_simplepool_verify_NullSimplePool Overhead=1 Level=1 NoEnv Template="simplePool is NULL"
+TraceException=Trc_simplepool_verify_incorrectElementSize Overhead=1 Level=1 NoEnv Template="simplePool=%p, simplePool->elementSize %u does not match passed in elementSize %u"
+TraceException=Trc_simplepool_verify_incorrectMemorySize Overhead=1 Level=1 NoEnv Template="memorySize check failed, simplePool=%p, elementSpaceSize=%u, lostSpace=%u, memorySize=%u"
+TraceException=Trc_simplepool_verify_firstFreeSlotOutOfRange Overhead=1 Level=1 NoEnv Template="firstFreeSlot is out of range, simplePool=%p, firstFreeSlot=%p, firstPossibleElementSlot=%p, blockEnd=%p"
+TraceException=Trc_simplepool_verify_firstFreeSlotUnaligned  Overhead=1 Level=1 NoEnv Template="firstFreeSlot is out of range, simplePool=%p, firstFreeSlot=%p, firstPossibleElementSlot=%p, elementSize=%u"
+TraceException=Trc_simplepool_verify_invalidFlags Overhead=1 Level=1 NoEnv Template="simplePool has invalid flags, simplePool=%p, simplePool->flags=0x%X, possible valid flags=0x%X"
+TraceException=Trc_simplepool_verify_freeListInvalidBackPointer Overhead=1 Level=1 NoEnv Template="simple pool free list back pointer is invalid, simplePool=%p, simplePool->freeList=%p, freeList->simplePool=%p"
+TraceException=Trc_simplepool_verify_freeListoutOfRange Overhead=1 Level=1 NoEnv Template="free list pointer out of range, simplePool=%p, freeList=%p, firstPossibleElementSlot=%p, firstFreeSlot=%p"
+TraceException=Trc_simplepool_verify_freeListUnaligned Overhead=1 Level=1 NoEnv Template="simple pool free list pointer is unaligned, simplePool=%p, freeList=%p, simplePool->elementSize=%u"
+TraceException=Trc_simplepool_verify_numberOfElementsIncorrect Overhead=1 Level=1 NoEnv Template="number of elements is incorrect, simplePool=%p, simplepool->numElements=%u, expected value=%u"
+TraceExit=Trc_simplepool_verify_Exit Overhead=1 Level=3 Noenv Template="simplepool_verify(result=%u)"
+
+TraceEntry=Trc_simplepool_do_Entry Overhead=1 Level=3 Noenv Template="simplepool_do(simplePool=%p, aFunction=%p, userData=%p)"
+TraceException=Trc_simplepool_do_NullParameters Overhead=1 Level=1 Noenv Template="simplepool_do one or more parameters is NULL"
+TraceExit=Trc_simplepool_do_Exit Overhead=1 Level=3 Noenv Template="simplepool_do(rc=%d)"
+
+TraceEntry=Trc_simplepool_clear_Entry Overhead=1 Level=3 Noenv Template="simplepool_clear(simplePool=%p)"
+TraceException=Trc_simplepool_clear_NullParameters Overhead=1 Level=1 Noenv Template="simplepool_clear one or more parameters is NULL"
+TraceExit=Trc_simplepool_clear_Exit Overhead=1 Level=3 Noenv Template="simplepool_clear"
+
+TraceEntry=Trc_simplepool_checkConsistency_Entry Overhead=1 Level=3 Noenv Template="simplepool_checkConsistency(simplePool=%p, aFunction=%p, userData=%p, skipCount=%u)"
+TraceException=Trc_simplepool_checkConsistency_NullParameters Overhead=1 Level=1 Noenv Template="simplepool_checkConsistency one or more required parameters is NULL"
+TraceExit=Trc_simplepool_checkConsistency_Exit Overhead=1 Level=3 Noenv Template="simplepool_checkConsistency(rc=%d)"
+
+TraceException=Trc_iterateOverSimplePoolElements_freeListElementNextOutOfRange Overhead=1 Level=1 Noenv Template="iterateOverSimplePoolElements freeListElement->next is out of range, simplePool=%p, freeListElement=%p, next=%p, firstPossibleElementSlot=%p, firstFreeSlot=%p"
+TraceException=Trc_iterateOverSimplePoolElements_freeListElementNextUnaligned Overhead=1 Level=1 Noenv Template="iterateOverSimplePoolElements freeListElement->next is unaligned, simplePool=%p, freeListElement=%p, next=%p, simplePool->elementSize=%u"
+TraceException=Trc_iterateOverSimplePoolElements_freeListElementInvalidBackPointer Overhead=1 Level=1 Noenv Template="iterateOverSimplePoolElements freeListElement->simplePool pointer invalid, simplePool=%p, freeListElement=%p, simplePoolPtr=%p"
+TraceException=Trc_iterateOverSimplePoolElements_unableToAllocateAllocMap Overhead=1 Level=1 Noenv Template="iterateOverSimplePoolElements allocating allocMap failed, allocMapSize = %u"
+
+TraceEntry=Trc_simplepool_maxNumElements_Entry Overhead=1 Level=3 Noenv Template="simplepool_maxNumElements(simplePool=%p)"
+TraceException=Trc_simplepool_maxNumElements_NullSimplePool Overhead=1 Level=1 NoEnv Template="simplePool is NULL"
+TraceExit=Trc_simplepool_maxNumElements_Exit Overhead=1 Level=3 Noenv Template="simplepool_maxNumElements(maxNumElements=%u)"
+
+TraceEntry=Trc_simplepool_isElement_Entry Overhead=1 Level=3 Noenv Template="simplepool_isElement(simplePool=%p, element=%p)"
+TraceException=Trc_simplepool_isElement_elementAddressOutOfRange Overhead=1 Level=1 NoEnv Template="simplepool_isElement address out of range, simplePool=%p, address=%p, firstPossibleElementSlot=%p, firstFreeSlot=%p"
+TraceException=Trc_simplepool_isElement_unaligned Overhead=1 Level=1 NoEnv Template="simplepool_isElement the address is not correctly aligned, simplePool=%p, simplePool->elementSize=%u, address=%p"
+TraceException=Trc_simplepool_isElement_NullParameter Overhead=1 Level=1 Noenv Template="simplepool_isElement simplepool parameter is NULL"
+TraceExit=Trc_simplepool_isElement_Exit Overhead=1 Level=3 Noenv Template="simplepool_isElement(rc=%d)"

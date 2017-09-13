@@ -1,0 +1,9 @@
+Classpath=./Alphabet;
+NumberOfClassesToLoad=3
+LoadClasses=A,E,G
+NumberOfUrls=1
+Url0=./Alphabet;
+NumberOfClassesToFind0=3
+FindClasses0=A,E,G
+Results0=false,false,false
+BatchFileToRun="./batchfiles/StaleClassPathTest1.bat"

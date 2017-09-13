@@ -1,0 +1,429 @@
+//*******************************************************************************
+// Copyright (c) 2015, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//******************************************************************************
+
+Executable=cuda4j
+DATFileName=J9TraceFormat.dat
+
+// -- Important: 1) only add entries to the end of this file
+// --            2) do not modify an existing entry - mark the existing one obsolete and add a new one
+// --            3) entries added to .tdf files in service streams must be propagated forward to dev streams
+
+// --------- CudaBuffer.cpp ------------------------------------
+
+TraceEntry=Trc_cuda_bufferAllocate_entry                        Level=3       Obsolete Overhead=1 Template="bufferAllocateDevice(bytes=%llu)"
+TraceExit=Trc_cuda_bufferAllocate_exit                          Level=3       Overhead=1 Template="bufferAllocateDevice: %p"
+
+TraceEntry=Trc_cuda_bufferAllocateDirectBuffer_entry            Level=3       Overhead=1 Template="bufferAllocateDirect(bytes=%llu)"
+TraceException=Trc_cuda_bufferAllocateDirectBuffer_allocFail    Level=1       Overhead=1 Template="bufferAllocateDirect allocation failed"
+TraceException=Trc_cuda_bufferAllocateDirectBuffer_newFail      Level=1       Overhead=1 Template="bufferAllocateDirect NewDirectByteBuffer failed"
+TraceExit=Trc_cuda_bufferAllocateDirectBuffer_exit              Level=3       Overhead=1 Template="bufferAllocateDirect: buffer=%p, native=%p"
+
+TraceEntry=Trc_cuda_bufferCopyFromDevice_entry                  Level=3       Obsolete Overhead=1 Template="bufferCopyFromDevice(targetDevice=%d, targetAddress=%p, sourceDevice=%d, sourceAddress=%p, byteCount=%llu)"
+TraceException=Trc_cuda_bufferCopyFromDevice_fail               Level=1       Overhead=1 Template="bufferCopyFromDevice: error=%d"
+TraceExit=Trc_cuda_bufferCopyFromDevice_exit                    Level=3       Overhead=1 Template="bufferCopyFromDevice"
+
+TraceEntry=Trc_cuda_bufferCopyFromHostByte_entry                Level=3       Obsolete Overhead=1 Template="bufferCopyFromHostByte(target=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyFromHostByte_exit                  Level=3       Overhead=1 Template="bufferCopyFromHostByte"
+
+TraceEntry=Trc_cuda_bufferCopyFromHostChar_entry                Level=3       Obsolete Overhead=1 Template="bufferCopyFromHostChar(target=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyFromHostChar_exit                  Level=3       Overhead=1 Template="bufferCopyFromHostChar"
+
+TraceEntry=Trc_cuda_bufferCopyFromHostDirect_entry              Level=3       Obsolete Overhead=1 Template="bufferCopyFromHostDirect(target=%p, source=%p, from=%llu, to=%llu)"
+TraceExit=Trc_cuda_bufferCopyFromHostDirect_exit                Level=3       Overhead=1 Template="bufferCopyFromHostDirect"
+
+TraceEntry=Trc_cuda_bufferCopyFromHostDouble_entry              Level=3       Obsolete Overhead=1 Template="bufferCopyFromHostDouble(target=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyFromHostDouble_exit                Level=3       Overhead=1 Template="bufferCopyFromHostDouble"
+
+TraceEntry=Trc_cuda_bufferCopyFromHostFloat_entry               Level=3       Obsolete Overhead=1 Template="bufferCopyFromHostFloat(target=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyFromHostFloat_exit                 Level=3       Overhead=1 Template="bufferCopyFromHostFloat"
+
+TraceEntry=Trc_cuda_bufferCopyFromHostInt_entry                 Level=3       Obsolete Overhead=1 Template="bufferCopyFromHostInt(target=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyFromHostInt_exit                   Level=3       Overhead=1 Template="bufferCopyFromHostInt"
+
+TraceEntry=Trc_cuda_bufferCopyFromHostLong_entry                Level=3       Obsolete Overhead=1 Template="bufferCopyFromHostLong(target=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyFromHostLong_exit                  Level=3       Overhead=1 Template="bufferCopyFromHostLong"
+
+TraceEntry=Trc_cuda_bufferCopyFromHostShort_entry               Level=3       Obsolete Overhead=1 Template="bufferCopyFromHostShort(target=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyFromHostShort_exit                 Level=3       Overhead=1 Template="bufferCopyFromHostShort"
+
+TraceEntry=Trc_cuda_bufferCopyToHostByte_entry                  Level=3       Obsolete Overhead=1 Template="bufferCopyToHostByte(source=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyToHostByte_exit                    Level=3       Overhead=1 Template="bufferCopyToHostByte"
+
+TraceEntry=Trc_cuda_bufferCopyToHostChar_entry                  Level=3       Obsolete Overhead=1 Template="bufferCopyToHostChar(source=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyToHostChar_exit                    Level=3       Overhead=1 Template="bufferCopyToHostChar"
+
+TraceEntry=Trc_cuda_bufferCopyToHostDirect_entry                Level=3       Obsolete Overhead=1 Template="bufferCopyToHostDirect(source=%p, target=%p, from=%llu, to=%llu)"
+TraceExit=Trc_cuda_bufferCopyToHostDirect_exit                  Level=3       Overhead=1 Template="bufferCopyToHostDirect"
+
+TraceEntry=Trc_cuda_bufferCopyToHostDouble_entry                Level=3       Obsolete Overhead=1 Template="bufferCopyToHostDouble(source=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyToHostDouble_exit                  Level=3       Overhead=1 Template="bufferCopyToHostDouble"
+
+TraceEntry=Trc_cuda_bufferCopyToHostFloat_entry                 Level=3       Obsolete Overhead=1 Template="bufferCopyToHostFloat(source=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyToHostFloat_exit                   Level=3       Overhead=1 Template="bufferCopyToHostFloat"
+
+TraceEntry=Trc_cuda_bufferCopyToHostInt_entry                   Level=3       Obsolete Overhead=1 Template="bufferCopyToHostInt(source=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyToHostInt_exit                     Level=3       Overhead=1 Template="bufferCopyToHostInt"
+
+TraceEntry=Trc_cuda_bufferCopyToHostLong_entry                  Level=3       Obsolete Overhead=1 Template="bufferCopyToHostLong(source=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyToHostLong_exit                    Level=3       Overhead=1 Template="bufferCopyToHostLong"
+
+TraceEntry=Trc_cuda_bufferCopyToHostShort_entry                 Level=3       Obsolete Overhead=1 Template="bufferCopyToHostShort(source=%p, array=%p, from=%d, to=%d)"
+TraceExit=Trc_cuda_bufferCopyToHostShort_exit                   Level=3       Overhead=1 Template="bufferCopyToHostShort"
+
+TraceEntry=Trc_cuda_bufferFill_entry                            Level=3       Obsolete Overhead=1 Template="bufferFill(target=%p, elemSize=%d, value=%d, count=%llu)"
+TraceExit=Trc_cuda_bufferFill_exit                              Level=3       Overhead=1 Template="bufferFill"
+
+TraceEntry=Trc_cuda_bufferFreeDirectBuffer_entry                Level=3       Overhead=1 Template="bufferFreeDirectBuffer(buffer=%p)"
+TraceExit=Trc_cuda_bufferFreeDirectBuffer_exit                  Level=3       Overhead=1 Template="bufferFreeDirectBuffer"
+
+TraceEntry=Trc_cuda_bufferRelease_entry                         Level=3       Obsolete Overhead=1 Template="bufferRelease(target=%p)"
+TraceExit=Trc_cuda_bufferRelease_exit                           Level=3       Overhead=1 Template="bufferRelease"
+
+// --------- CudaCommon.cpp ------------------------------------
+
+TraceAssert=Assert_cuda_true                                    Level=1 NoEnv Overhead=1 Assert="(P1)"
+
+TraceEntry=Trc_cuda_doDeviceCallback_entry                      Level=3       Obsolete Overhead=1 Template="doDeviceCallback(runnable=%p)"
+TraceException=Trc_cuda_doDeviceCallback_exception              Level=1       Obsolete Overhead=1 Template="doDeviceCallback: exception=%p"
+TraceExit=Trc_cuda_doDeviceCallback_exit                        Level=3       Obsolete Overhead=1 Template="doDeviceCallback"
+
+TraceEntry=Trc_cuda_throwCudaException_entry                    Level=3       Overhead=1 Template="throwCudaException(code=%d)"
+TraceException=Trc_cuda_throwCudaException_suppressed           Level=1       Overhead=1 Template="throwCudaException: suppressed"
+TraceExit=Trc_cuda_throwCudaException_exit                      Level=3       Overhead=1 Template="throwCudaException"
+
+TraceEntry=Trc_cuda_throwRuntimeException_entry                 Level=3       Overhead=1 Template="throwRuntimeException(message=%s)"
+TraceException=Trc_cuda_throwRuntimeException_suppressed        Level=1       Overhead=1 Template="throwRuntimeException: suppressed"
+TraceExit=Trc_cuda_throwRuntimeException_exit                   Level=3       Overhead=1 Template="throwRuntimeException"
+
+TraceEntry=Trc_cuda_allocatePinnedBuffer_entry                  Level=3       Overhead=1 Template="allocatePinnedBuffer(size=%llu)"
+TraceExit=Trc_cuda_allocatePinnedBuffer_exit                    Level=3       Overhead=1 Template="allocatePinnedBuffer: %p"
+
+TraceEntry=Trc_cuda_getDeviceCount_entry                        Level=3       Overhead=1 Template="getDeviceCount"
+TraceExit=Trc_cuda_getDeviceCount_exit                          Level=3       Overhead=1 Template="getDeviceCount: %d"
+
+TraceEntry=Trc_cuda_getDriverVersion_entry                      Level=3       Overhead=1 Template="getDriverVersion"
+TraceExit=Trc_cuda_getDriverVersion_exit                        Level=3       Overhead=1 Template="getDriverVersion: %d"
+
+TraceEntry=Trc_cuda_getErrorMessage_entry                       Level=3       Overhead=1 Template="getErrorMessage(code=%d)"
+TraceExit=Trc_cuda_getErrorMessage_exit                         Level=3       Overhead=1 Template="getErrorMessage: %s"
+
+TraceEntry=Trc_cuda_getRuntimeVersion_entry                     Level=3       Overhead=1 Template="getRuntimeVersion"
+TraceExit=Trc_cuda_getRuntimeVersion_exit                       Level=3       Overhead=1 Template="getRuntimeVersion: %d"
+
+TraceEntry=Trc_cuda_initialize_entry                            Level=3       Overhead=1 Template="initialize"
+TraceException=Trc_cuda_initialize_fail                         Level=1       Overhead=1 Template="initialize: failed to %s"
+TraceExit=Trc_cuda_initialize_exit                              Level=3       Overhead=1 Template="initialize: %d"
+
+TraceEntry=Trc_cuda_initializeThreadContext_entry               Level=3       Overhead=1 Template="initializeThreadContext"
+TraceExit=Trc_cuda_initializeThreadContext_exit                 Level=3       Overhead=1 Template="initializeThreadContext"
+
+TraceEntry=Trc_cuda_wrapDirectBuffer_entry                      Level=3       Overhead=1 Template="wrapDirectBuffer(buffer=%p, capacity=%llu)"
+TraceExit=Trc_cuda_wrapDirectBuffer_exit                        Level=3       Overhead=1 Template="wrapDirectBuffer: %p"
+
+TraceEntry=Trc_cuda_releasePinnedBuffer_entry                   Level=3       Overhead=1 Template="releasePinnedBuffer(buffer=%p)"
+TraceExit=Trc_cuda_releasePinnedBuffer_exit                     Level=3       Overhead=1 Template="releasePinnedBuffer"
+
+// --------- CudaCommon.hpp ------------------------------------
+
+TraceEntry=Trc_cuda_withDevice_entry                            Level=3       Obsolete Overhead=1 Template="withDevice(%d)"
+TraceException=Trc_cuda_withDevice_fail                         Level=3       Obsolete Overhead=1 Template="withDevice: failed to %s current device, error=%d"
+TraceExit=Trc_cuda_withDevice_exit                              Level=3       Obsolete Overhead=1 Template="withDevice: %d"
+
+// --------- CudaDevice.cpp ------------------------------------
+
+TraceEntry=Trc_cuda_deviceAddCallback_entry                     Level=3       Obsolete Overhead=1 Template="deviceAddCallback(stream=%p, runnable=%p)"
+TraceExit=Trc_cuda_deviceAddCallback_exit                       Level=3       Overhead=1 Template="deviceAddCallback"
+
+TraceEntry=Trc_cuda_deviceCallbackHandler_entry                 Level=3 NoEnv Overhead=1 Template="deviceCallbackHandler(stream=%p, error=%d, data=%p)"
+TraceExit-Exception=Trc_cuda_deviceCallbackHandler_exitFail     Level=1 NoEnv Overhead=1 Template="deviceCallbackHandler: failed to attach to VM (error=%d)"
+TraceExit=Trc_cuda_deviceCallbackHandler_exit                   Level=3       Overhead=1 Template="deviceCallbackHandler"
+
+TraceEntry=Trc_cuda_deviceCallbackInsert_entry                  Level=3       Obsolete Overhead=1 Template="deviceCallbackInsert(stream=%p, runnable=%p)"
+TraceException=Trc_cuda_deviceCallbackInsert_allocFail          Level=1       Overhead=1 Template="deviceCallbackInsert: allocation failed"
+TraceException=Trc_cuda_deviceCallbackInsert_globalRefFail      Level=1       Overhead=1 Template="deviceCallbackInsert: NewGlobalRef failed"
+TraceExit=Trc_cuda_deviceCallbackInsert_exit                    Level=3       Overhead=1 Template="deviceCallbackInsert: %d"
+
+TraceEntry=Trc_cuda_deviceCanAccessPeer_entry                   Level=3       Overhead=1 Template="deviceCanAccessPeer(device=%d, peerDevice=%d)"
+TraceExit=Trc_cuda_deviceCanAccessPeer_exit                     Level=3       Overhead=1 Template="deviceCanAccessPeer: %d"
+
+TraceEntry=Trc_cuda_deviceDisablePeerAccess_entry               Level=3       Overhead=1 Template="deviceDisablePeerAccess(device=%d, peerDevice=%d)"
+TraceExit=Trc_cuda_deviceDisablePeerAccess_exit                 Level=3       Overhead=1 Template="deviceDisablePeerAccess"
+
+TraceEntry=Trc_cuda_deviceEnablePeerAccess_entry                Level=3       Overhead=1 Template="deviceEnablePeerAccess(device=%d, peerDevice=%d)"
+TraceExit=Trc_cuda_deviceEnablePeerAccess_exit                  Level=3       Overhead=1 Template="deviceEnablePeerAccess"
+
+TraceEntry=Trc_cuda_deviceGetAttribute_entry                    Level=3       Overhead=1 Template="deviceGetAttribute(device=%d, attribute=%d)"
+TraceExit=Trc_cuda_deviceGetAttribute_exit                      Level=3       Overhead=1 Template="deviceGetAttribute: %d"
+
+TraceEntry=Trc_cuda_deviceGetCacheConfig_entry                  Level=3       Obsolete Overhead=1 Template="deviceGetCacheConfig"
+TraceExit=Trc_cuda_deviceGetCacheConfig_exit                    Level=3       Overhead=1 Template="deviceGetCacheConfig: %d"
+
+TraceEntry=Trc_cuda_deviceGetFreeMemory_entry                   Level=3       Obsolete Overhead=1 Template="deviceGetFreeMemory"
+TraceExit=Trc_cuda_deviceGetFreeMemory_exit                     Level=3       Obsolete Overhead=1 Template="deviceGetFreeMemory: %llu"
+
+TraceEntry=Trc_cuda_deviceGetGreatestStreamPriority_entry       Level=3       Obsolete Overhead=1 Template="deviceGetGreatestStreamPriority"
+TraceExit=Trc_cuda_deviceGetGreatestStreamPriority_exit         Level=3       Overhead=1 Template="deviceGetGreatestStreamPriority: %d"
+
+TraceEntry=Trc_cuda_deviceGetLeastStreamPriority_entry          Level=3       Obsolete Overhead=1 Template="deviceGetLeastStreamPriority"
+TraceExit=Trc_cuda_deviceGetLeastStreamPriority_exit            Level=3       Overhead=1 Template="deviceGetLeastStreamPriority: %d"
+
+TraceEntry=Trc_cuda_deviceGetLimit_entry                        Level=3       Obsolete Overhead=1 Template="deviceGetLimit(limit=%d)"
+TraceExit=Trc_cuda_deviceGetLimit_exit                          Level=3       Overhead=1 Template="deviceGetLimit: %lld"
+
+TraceEntry=Trc_cuda_deviceGetName_entry                         Level=3       Overhead=1 Template="deviceGetName(device=%d)"
+TraceExit=Trc_cuda_deviceGetName_exit                           Level=3       Overhead=1 Template="deviceGetName: %p (%s)"
+
+TraceEntry=Trc_cuda_deviceGetSharedMemConfig_entry              Level=3       Obsolete Overhead=1 Template="deviceGetSharedMemConfig"
+TraceExit=Trc_cuda_deviceGetSharedMemConfig_exit                Level=3       Overhead=1 Template="deviceGetSharedMemConfig: %d"
+
+TraceEntry=Trc_cuda_deviceGetTotalMemory_entry                  Level=3       Obsolete Overhead=1 Template="deviceGetTotalMemory"
+TraceExit=Trc_cuda_deviceGetTotalMemory_exit                    Level=3       Obsolete Overhead=1 Template="deviceGetTotalMemory: %llu"
+
+TraceEntry=Trc_cuda_deviceSetCacheConfig_entry                  Level=3       Obsolete Overhead=1 Template="deviceSetCacheConfig(config=%d)"
+TraceExit=Trc_cuda_deviceSetCacheConfig_exit                    Level=3       Overhead=1 Template="deviceSetCacheConfig"
+
+TraceEntry=Trc_cuda_deviceSetLimit_entry                        Level=3       Obsolete Overhead=1 Template="deviceSetLimit(limit=%d, value=%llu)"
+TraceExit=Trc_cuda_deviceSetLimit_exit                          Level=3       Overhead=1 Template="deviceSetLimit"
+
+TraceEntry=Trc_cuda_deviceSetSharedMemConfig_entry              Level=3       Obsolete Overhead=1 Template="deviceSetSharedMemConfig(config=%d)"
+TraceExit=Trc_cuda_deviceSetSharedMemConfig_exit                Level=3       Overhead=1 Template="deviceSetSharedMemConfig"
+
+TraceEntry=Trc_cuda_deviceSynchronize_entry                     Level=3       Obsolete Overhead=1 Template="deviceSynchronize"
+TraceExit=Trc_cuda_deviceSynchronize_exit                       Level=3       Overhead=1 Template="deviceSynchronize"
+
+// --------- CudaEvent.cpp -------------------------------------
+
+TraceEntry=Trc_cuda_eventCreate_entry                           Level=3       Obsolete Overhead=1 Template="eventCreate(flags=%d)"
+TraceExit=Trc_cuda_eventCreate_exit                             Level=3       Overhead=1 Template="eventCreate: %p"
+
+TraceEntry=Trc_cuda_eventDestroy_entry                          Level=3       Obsolete Overhead=1 Template="eventDestroy(event=%p)"
+TraceExit=Trc_cuda_eventDestroy_exit                            Level=3       Overhead=1 Template="eventDestroy: %d"
+
+TraceEntry=Trc_cuda_eventElapsedTimeSince_entry                 Level=3       Overhead=1 Template="eventElapsedTime(event1=%p, event2=%p)"
+TraceExit=Trc_cuda_eventElapsedTimeSince_exit                   Level=3       Overhead=1 Template="eventElapsedTime: error=%d, delta=%f"
+
+TraceEntry=Trc_cuda_eventQuery_entry                            Level=3       Overhead=1 Template="eventQuery(event=%p)"
+TraceExit=Trc_cuda_eventQuery_exit                              Level=3       Overhead=1 Template="eventQuery: %d"
+
+TraceEntry=Trc_cuda_eventRecord_entry                           Level=3       Obsolete Overhead=1 Template="eventRecord(stream=%p, event=%p)"
+TraceExit=Trc_cuda_eventRecord_exit                             Level=3       Overhead=1 Template="eventRecord"
+
+TraceEntry=Trc_cuda_eventSynchronize_entry                      Level=3       Overhead=1 Template="eventSynchronize(event=%p)"
+TraceExit=Trc_cuda_eventSynchronize_exit                        Level=3       Overhead=1 Template="eventSynchronize: %d"
+
+// --------- CudaFunction.cpp ----------------------------------
+
+TraceEntry=Trc_cuda_functionGetAttribute_entry                  Level=3       Obsolete Overhead=1 Template="functionGetAttribute(function=%p, attribute=%d)"
+TraceExit=Trc_cuda_functionGetAttribute_exit                    Level=3       Overhead=1 Template="functionGetAttribute: %d"
+
+TraceEntry=Trc_cuda_functionLaunch_entry                        Level=3       Obsolete Overhead=1 Template="functionLaunch(function=%p, grid=(%d,%d,%d), block=(%d,%d,%d), shared=%d, stream=%p, sizes=%p, values=%p)"
+TraceException=Trc_cuda_functionLaunch_allocFail                Level=1       Overhead=1 Template="functionLaunch: allocation failed"
+TraceException=Trc_cuda_functionLaunch_getFail                  Level=1       Overhead=1 Template="functionLaunch: failed to get native pointer"
+TraceExit=Trc_cuda_functionLaunch_exit                          Level=3       Overhead=1 Template="functionLaunch"
+
+TraceEntry=Trc_cuda_functionSetCacheConfig_entry                Level=3       Obsolete Overhead=1 Template="functionSetCacheConfig(function=%p, config=%d)"
+TraceExit=Trc_cuda_functionSetCacheConfig_exit                  Level=3       Overhead=1 Template="functionSetCacheConfig"
+
+TraceEntry=Trc_cuda_functionSetSharedMemConfig_entry            Level=3       Obsolete Overhead=1 Template="functionSetSharedMemConfig(function=%p, config=%d)"
+TraceExit=Trc_cuda_functionSetSharedMemConfig_exit              Level=3       Overhead=1 Template="functionSetSharedMemConfig"
+
+// --------- CudaJitOptions.cpp --------------------------------
+
+TraceEntry=Trc_cuda_jitOptionsCreate_entry                      Level=3       Overhead=1 Template="jitOptionsCreate(pairs=%p)"
+TraceException=Trc_cuda_jitOptionsCreate_allocFail              Level=1       Overhead=1 Template="jitOptionsCreate: allocation failed"
+TraceException=Trc_cuda_jitOptionsCreate_badOption              Level=1       Overhead=1 Template="jitOptionsCreate: invalid option (%d)"
+TraceException=Trc_cuda_jitOptionsCreate_badTarget              Level=1       Overhead=1 Template="jitOptionsCreate: invalid target (%d)"
+TraceException=Trc_cuda_jitOptionsCreate_excessOptions          Level=1       Overhead=1 Template="jitOptionsCreate: too many options"
+TraceException=Trc_cuda_jitOptionsCreate_getFail                Level=1       Overhead=1 Template="jitOptionsCreate: failed to get native pointer"
+TraceExit=Trc_cuda_jitOptionsCreate_exit                        Level=3       Overhead=1 Template="jitOptionsCreate: %p"
+
+TraceEntry=Trc_cuda_jitOptionsDestroy0_entry                    Level=3       Overhead=1 Template="jitOptionsDestroy_internal(options=%p)"
+TraceExit=Trc_cuda_jitOptionsDestroy0_exit                      Level=3       Overhead=1 Template="jitOptionsDestroy_internal"
+
+TraceEntry=Trc_cuda_jitOptionsDestroy_entry                     Level=3       Overhead=1 Template="jitOptionsDestroy(options=%p)"
+TraceExit=Trc_cuda_jitOptionsDestroy_exit                       Level=3       Overhead=1 Template="jitOptionsDestroy"
+
+TraceEntry=Trc_cuda_jitOptionsGetErrorLogBuffer_entry           Level=3       Overhead=1 Template="jitOptionsGetErrorLogBuffer(options=%p)"
+TraceExit=Trc_cuda_jitOptionsGetErrorLogBuffer_exit             Level=3       Overhead=1 Template="jitOptionsGetErrorLogBuffer: %p"
+
+TraceEntry=Trc_cuda_jitOptionsGetInfoLogBuffer_entry            Level=3       Overhead=1 Template="jitOptionsGetInfoLogBuffer(options=%p)"
+TraceExit=Trc_cuda_jitOptionsGetInfoLogBuffer_exit              Level=3       Overhead=1 Template="jitOptionsGetInfoLogBuffer: %p"
+
+TraceEntry=Trc_cuda_jitOptionsGetThreadsPerBlock_entry          Level=3       Overhead=1 Template="jitOptionsGetThreadsPerBlock(options=%p)"
+TraceExit=Trc_cuda_jitOptionsGetThreadsPerBlock_exit            Level=3       Overhead=1 Template="jitOptionsGetThreadsPerBlock: %d"
+
+TraceEntry=Trc_cuda_jitOptionsGetWallTime_entry                 Level=3       Overhead=1 Template="jitOptionsGetWallTime(options=%p)"
+TraceExit=Trc_cuda_jitOptionsGetWallTime_exit                   Level=3       Overhead=1 Template="jitOptionsGetWallTime: %f"
+
+// --------- CudaLinker.cpp ------------------------------------
+
+TraceEntry=Trc_cuda_linkerAdd_entry                             Level=3       Obsolete Overhead=1 Template="linkerAdd(linker=%p, type=%d, image=%p, name=%p, options=%p)"
+TraceException=Trc_cuda_linkerAdd_fail                          Level=1       Overhead=1 Template="linkerAdd: failed to get native pointer"
+TraceExit=Trc_cuda_linkerAdd_exit                               Level=3       Overhead=1 Template="linkerAdd"
+
+TraceEntry=Trc_cuda_linkerComplete_entry                        Level=3       Obsolete Overhead=1 Template="linkerComplete(linker=%p)"
+TraceException=Trc_cuda_linkerComplete_exception                Level=1       Overhead=1 Template="linkerComplete: exception occurred"
+TraceException=Trc_cuda_linkerComplete_fail                     Level=1       Overhead=1 Template="linkerComplete: failed to allocate byte array"
+TraceExit=Trc_cuda_linkerComplete_exit                          Level=3       Overhead=1 Template="linkerComplete: %p"
+
+TraceEntry=Trc_cuda_linkerCreate_entry                          Level=3       Obsolete Overhead=1 Template="linkerCreate(options=%p)"
+TraceExit=Trc_cuda_linkerCreate_exit                            Level=3       Overhead=1 Template="linkerCreate: %p"
+
+TraceEntry=Trc_cuda_linkerDestroy_entry                         Level=3       Obsolete Overhead=1 Template="linkerDestroy(linker=%p)"
+TraceExit=Trc_cuda_linkerDestroy_exit                           Level=3       Overhead=1 Template="linkerDestroy"
+
+// --------- CudaModule.cpp ------------------------------------
+
+TraceException=Trc_cuda_module_getStringFail                    Level=1       Overhead=1 Template="module: failed to get native string"
+
+TraceEntry=Trc_cuda_moduleGetFunction_entry                     Level=3       Obsolete Overhead=1 Template="moduleGetFunction(module=%p, name=%p)"
+TraceExit=Trc_cuda_moduleGetFunction_exit                       Level=3       Overhead=1 Template="moduleGetFunction: %p"
+
+TraceEntry=Trc_cuda_moduleGetGlobal_entry                       Level=3       Obsolete Overhead=1 Template="moduleGetGlobal(module=%p, name=%p)"
+TraceExit=Trc_cuda_moduleGetGlobal_exit                         Level=3       Overhead=1 Template="moduleGetGlobal: %p"
+
+TraceEntry=Trc_cuda_moduleGetSurface_entry                      Level=3       Obsolete Overhead=1 Template="moduleGetSurface(module=%p, name=%p)"
+TraceExit=Trc_cuda_moduleGetSurface_exit                        Level=3       Overhead=1 Template="moduleGetSurface: %p"
+
+TraceEntry=Trc_cuda_moduleGetTexture_entry                      Level=3       Obsolete Overhead=1 Template="moduleGetTexture(module=%p, name=%p)"
+TraceExit=Trc_cuda_moduleGetTexture_exit                        Level=3       Overhead=1 Template="moduleGetTexture: %p"
+
+TraceEntry=Trc_cuda_moduleLoad_entry                            Level=3       Obsolete Overhead=1 Template="moduleLoad(image=%p, options=%p)"
+TraceException=Trc_cuda_moduleLoad_fail                         Level=1       Overhead=1 Template="moduleLoad: failed to get native bytes"
+TraceExit=Trc_cuda_moduleLoad_exit                              Level=3       Overhead=1 Template="moduleLoad: %p"
+
+TraceEntry=Trc_cuda_moduleUnload_entry                          Level=3       Obsolete Overhead=1 Template="moduleUnload(module=%p)"
+TraceExit=Trc_cuda_moduleUnload_exit                            Level=3       Overhead=1 Template="moduleUnload"
+
+// --------- CudaStream.cpp ------------------------------------
+
+TraceEntry=Trc_cuda_streamCreate_entry                          Level=3       Obsolete Overhead=1 Template="streamCreate"
+TraceExit=Trc_cuda_streamCreate_exit                            Level=3       Overhead=1 Template="streamCreate: %p"
+
+TraceEntry=Trc_cuda_streamCreateWithPriority_entry              Level=3       Obsolete Overhead=1 Template="streamCreateWithPriority(flags=%d, priority=%d)"
+TraceExit=Trc_cuda_streamCreateWithPriority_exit                Level=3       Overhead=1 Template="streamCreateWithPriority: %p"
+
+TraceEntry=Trc_cuda_streamDestroy_entry                         Level=3       Obsolete Overhead=1 Template="streamDestroy(stream=%p)"
+TraceExit=Trc_cuda_streamDestroy_exit                           Level=3       Overhead=1 Template="streamDestroy: %d"
+
+TraceEntry=Trc_cuda_streamGetFlags_entry                        Level=3       Obsolete Overhead=1 Template="streamGetFlags(stream=%p)"
+TraceExit=Trc_cuda_streamGetFlags_exit                          Level=3       Overhead=1 Template="streamGetFlags error=%d flags=%d"
+
+TraceEntry=Trc_cuda_streamGetPriority_entry                     Level=3       Obsolete Overhead=1 Template="streamGetPriority(stream=%p)"
+TraceExit=Trc_cuda_streamGetPriority_exit                       Level=3       Overhead=1 Template="streamGetPriority error=%d priority=%d"
+
+TraceEntry=Trc_cuda_streamQuery_entry                           Level=3       Obsolete Overhead=1 Template="streamQuery(stream=%p)"
+TraceExit=Trc_cuda_streamQuery_exit                             Level=3       Overhead=1 Template="streamQuery: %d"
+
+TraceEntry=Trc_cuda_streamSynchronize_entry                     Level=3       Obsolete Overhead=1 Template="streamSynchronize(stream=%p)"
+TraceExit=Trc_cuda_streamSynchronize_exit                       Level=3       Overhead=1 Template="streamSynchronize: %d"
+
+TraceEntry=Trc_cuda_streamWaitFor_entry                         Level=3       Obsolete Overhead=1 Template="streamWaitFor(stream=%p, event=%p)"
+TraceExit=Trc_cuda_streamWaitFor_exit                           Level=3       Overhead=1 Template="streamWaitFor: %d"
+
+// --------- CudaCommon.cpp -----------------------------------
+
+TraceEntry=Trc_cuda_getMemoryInfo_entry                         Level=3 NoEnv Obsolete Overhead=1 Template="getMemoryInfo(device=%u)"
+TraceException=Trc_cuda_getMemoryInfo_fail                      Level=1 NoEnv Obsolete Overhead=1 Template="getMemoryInfo: failed to %s, error=%d"
+TraceExit=Trc_cuda_getMemoryInfo_exit                           Level=3 NoEnv Obsolete Overhead=1 Template="getMemoryInfo: %d"
+
+TraceEntry=Trc_cuda_initDeviceData_entry                        Level=3       Obsolete Overhead=1 Template="initDeviceData(device=%u)"
+TraceException=Trc_cuda_initDeviceData_fail                     Level=1       Obsolete Overhead=1 Template="initDeviceData: failed to get %s, error=%d"
+TraceExit=Trc_cuda_initDeviceData_exit                          Level=3       Obsolete Overhead=1 Template="initDeviceData: %d"
+
+TraceEntry=Trc_cuda_initSummaryData_entry                       Level=3       Obsolete Overhead=1 Template="initSummaryData(deviceCount=%u)"
+TraceException=Trc_cuda_initSummaryData_fail                    Level=1       Obsolete Overhead=1 Template="initSummaryData: failed to get %s version, error=%d"
+TraceExit=Trc_cuda_initSummaryData_exit                         Level=3       Obsolete Overhead=1 Template="initSummaryData: %d"
+
+// --------- CudaFunction.cpp ----------------------------------
+
+TraceEntry=Trc_cuda_functionLaunch_entry_no_sizes               Level=3       Obsolete Overhead=1 Template="functionLaunch(function=%p, grid=(%d,%d,%d), block=(%d,%d,%d), shared=%d, stream=%p, values=%p)"
+
+// --------- Trace points introduced in adoption of j9cuda API from the port library.
+
+TraceEntry=Trc_cuda_bufferAllocate_entry                        Level=3       Overhead=1 Template="bufferAllocateDevice(device=%u, bytes=%llu)"
+TraceEntry=Trc_cuda_bufferCopyFromDevice_entry                  Level=3       Overhead=1 Template="bufferCopyFromDevice(targetDevice=%d, targetAddress=%p, sourceDevice=%d, sourceAddress=%p, byteCount=%llu)"
+TraceEntry=Trc_cuda_bufferCopyFromHostByte_entry                Level=3       Overhead=1 Template="bufferCopyFromHostByte(device=%u, target=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyFromHostChar_entry                Level=3       Overhead=1 Template="bufferCopyFromHostChar(device=%u, target=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyFromHostDirect_entry              Level=3       Overhead=1 Template="bufferCopyFromHostDirect(device=%u, target=%p, source=%p, from=%llu, to=%llu)"
+TraceEntry=Trc_cuda_bufferCopyFromHostDouble_entry              Level=3       Overhead=1 Template="bufferCopyFromHostDouble(device=%u, target=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyFromHostFloat_entry               Level=3       Overhead=1 Template="bufferCopyFromHostFloat(device=%u, target=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyFromHostInt_entry                 Level=3       Overhead=1 Template="bufferCopyFromHostInt(device=%u, target=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyFromHostLong_entry                Level=3       Overhead=1 Template="bufferCopyFromHostLong(device=%u, target=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyFromHostShort_entry               Level=3       Overhead=1 Template="bufferCopyFromHostShort(device=%u, target=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyToHostByte_entry                  Level=3       Overhead=1 Template="bufferCopyToHostByte(device=%u, source=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyToHostChar_entry                  Level=3       Overhead=1 Template="bufferCopyToHostChar(device=%u, source=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyToHostDirect_entry                Level=3       Overhead=1 Template="bufferCopyToHostDirect(device=%u, source=%p, target=%p, from=%llu, to=%llu)"
+TraceEntry=Trc_cuda_bufferCopyToHostDouble_entry                Level=3       Overhead=1 Template="bufferCopyToHostDouble(device=%u, source=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyToHostFloat_entry                 Level=3       Overhead=1 Template="bufferCopyToHostFloat(device=%u, source=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyToHostInt_entry                   Level=3       Overhead=1 Template="bufferCopyToHostInt(device=%u, source=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyToHostLong_entry                  Level=3       Overhead=1 Template="bufferCopyToHostLong(device=%u, source=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferCopyToHostShort_entry                 Level=3       Overhead=1 Template="bufferCopyToHostShort(device=%u, source=%p, array=%p, from=%d, to=%d)"
+TraceEntry=Trc_cuda_bufferFill_entry                            Level=3       Overhead=1 Template="bufferFill(device=%u, target=%p, elemSize=%d, value=%d, count=%llu)"
+TraceEntry=Trc_cuda_bufferRelease_entry                         Level=3       Overhead=1 Template="bufferRelease(device=%u, target=%p)"
+
+TraceEntry=Trc_cuda_deviceAddCallback_entry                     Level=3       Overhead=1 Template="deviceAddCallback(device=%u, stream=%p, runnable=%p)"
+TraceException=Trc_cuda_deviceCallbackHandler_exception         Level=1       Overhead=1 Template="deviceCallbackHandler: exception=%p"
+TraceEntry=Trc_cuda_deviceCallbackInsert_entry                  Level=3       Overhead=1 Template="deviceCallbackInsert(device=%u, stream=%p, runnable=%p)"
+TraceEntry=Trc_cuda_deviceGetCacheConfig_entry                  Level=3       Overhead=1 Template="deviceGetCacheConfig(device=%d)"
+TraceEntry=Trc_cuda_deviceGetFreeMemory_entry                   Level=3       Overhead=1 Template="deviceGetFreeMemory(device=%d)"
+TraceExit=Trc_cuda_deviceGetFreeMemory_exit                     Level=3       Overhead=1 Template="deviceGetFreeMemory: %zu"
+TraceEntry=Trc_cuda_deviceGetGreatestStreamPriority_entry       Level=3       Overhead=1 Template="deviceGetGreatestStreamPriority(device=%d)"
+TraceEntry=Trc_cuda_deviceGetLeastStreamPriority_entry          Level=3       Overhead=1 Template="deviceGetLeastStreamPriority(device=%d)"
+TraceEntry=Trc_cuda_deviceGetLimit_entry                        Level=3       Overhead=1 Template="deviceGetLimit(device=%u, limit=%d)"
+TraceEntry=Trc_cuda_deviceGetSharedMemConfig_entry              Level=3       Overhead=1 Template="deviceGetSharedMemConfig(device=%d)"
+TraceEntry=Trc_cuda_deviceGetTotalMemory_entry                  Level=3       Overhead=1 Template="deviceGetTotalMemory(device=%d)"
+TraceExit=Trc_cuda_deviceGetTotalMemory_exit                    Level=3       Overhead=1 Template="deviceGetTotalMemory: %zu"
+TraceEntry=Trc_cuda_deviceSetCacheConfig_entry                  Level=3       Overhead=1 Template="deviceSetCacheConfig(device=%u, config=%d)"
+TraceEntry=Trc_cuda_deviceSetLimit_entry                        Level=3       Overhead=1 Template="deviceSetLimit(device=%u, limit=%d, value=%llu)"
+TraceEntry=Trc_cuda_deviceSetSharedMemConfig_entry              Level=3       Overhead=1 Template="deviceSetSharedMemConfig(device=%u, config=%d)"
+TraceEntry=Trc_cuda_deviceSynchronize_entry                     Level=3       Overhead=1 Template="deviceSynchronize(device=%u)"
+
+TraceEntry=Trc_cuda_eventCreate_entry                           Level=3       Overhead=1 Template="eventCreate(device=%u, flags=%d)"
+TraceEntry=Trc_cuda_eventDestroy_entry                          Level=3       Overhead=1 Template="eventDestroy(device=%u, event=%p)"
+TraceEntry=Trc_cuda_eventRecord_entry                           Level=3       Overhead=1 Template="eventRecord(device=%u, stream=%p, event=%p)"
+
+TraceEntry=Trc_cuda_functionGetAttribute_entry                  Level=3       Overhead=1 Template="functionGetAttribute(device=%u, function=%p, attribute=%d)"
+TraceEntry=Trc_cuda_functionLaunch_entry                        Level=3       Overhead=1 Template="functionLaunch(device=%u, function=%p, grid=(%d,%d,%d), block=(%d,%d,%d), shared=%d, stream=%p, values=%p)"
+TraceEntry=Trc_cuda_functionSetCacheConfig_entry                Level=3       Overhead=1 Template="functionSetCacheConfig(device=%u, function=%p, config=%d)"
+TraceEntry=Trc_cuda_functionSetSharedMemConfig_entry            Level=3       Overhead=1 Template="functionSetSharedMemConfig(device=%u, function=%p, config=%d)"
+
+TraceEntry=Trc_cuda_linkerAdd_entry                             Level=3       Overhead=1 Template="linkerAdd(device=%u, linker=%p, type=%d, image=%p, name=%p, options=%p)"
+TraceEntry=Trc_cuda_linkerComplete_entry                        Level=3       Overhead=1 Template="linkerComplete(device=%u, linker=%p)"
+TraceEntry=Trc_cuda_linkerCreate_entry                          Level=3       Overhead=1 Template="linkerCreate(device=%u, options=%p)"
+TraceEntry=Trc_cuda_linkerDestroy_entry                         Level=3       Overhead=1 Template="linkerDestroy(device=%u, linker=%p)"
+
+TraceEntry=Trc_cuda_moduleGetFunction_entry                     Level=3       Overhead=1 Template="moduleGetFunction(device=%u, module=%p, name=%p)"
+TraceEntry=Trc_cuda_moduleGetGlobal_entry                       Level=3       Overhead=1 Template="moduleGetGlobal(device=%u, module=%p, name=%p)"
+TraceEntry=Trc_cuda_moduleGetSurface_entry                      Level=3       Overhead=1 Template="moduleGetSurface(device=%u, module=%p, name=%p)"
+TraceEntry=Trc_cuda_moduleGetTexture_entry                      Level=3       Overhead=1 Template="moduleGetTexture(device=%u, module=%p, name=%p)"
+TraceEntry=Trc_cuda_moduleLoad_entry                            Level=3       Overhead=1 Template="moduleLoad(device=%u, image=%p, options=%p)"
+TraceEntry=Trc_cuda_moduleUnload_entry                          Level=3       Overhead=1 Template="moduleUnload(device=%u, module=%p)"
+
+TraceEntry=Trc_cuda_streamCreate_entry                          Level=3       Overhead=1 Template="streamCreate(device=%u)"
+TraceEntry=Trc_cuda_streamCreateWithPriority_entry              Level=3       Overhead=1 Template="streamCreateWithPriority(device=%u, flags=%d, priority=%d)"
+TraceEntry=Trc_cuda_streamDestroy_entry                         Level=3       Overhead=1 Template="streamDestroy(device=%u, stream=%p)"
+TraceEntry=Trc_cuda_streamGetFlags_entry                        Level=3       Overhead=1 Template="streamGetFlags(device=%u, stream=%p)"
+TraceEntry=Trc_cuda_streamGetPriority_entry                     Level=3       Overhead=1 Template="streamGetPriority(device=%u, stream=%p)"
+TraceEntry=Trc_cuda_streamQuery_entry                           Level=3       Overhead=1 Template="streamQuery(device=%u, stream=%p)"
+TraceEntry=Trc_cuda_streamSynchronize_entry                     Level=3       Overhead=1 Template="streamSynchronize(device=%u, stream=%p)"
+TraceEntry=Trc_cuda_streamWaitFor_entry                         Level=3       Overhead=1 Template="streamWaitFor(device=%u, stream=%p, event=%p)"

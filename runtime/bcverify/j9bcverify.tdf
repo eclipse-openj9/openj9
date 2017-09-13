@@ -1,0 +1,188 @@
+//*******************************************************************************
+// Copyright (c) 2006, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//******************************************************************************
+
+Executable=j9bcverify
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_BCV_VMInitStages_Event1 Obsolete Overhead=1 Level=1 Template="Trace engine initialized for module j9bcverify"
+
+TraceEntry=Trc_BCV_simulateStack_Entry Overhead=1 Level=3 Template="simulateStack"
+TraceException=Trc_BCV_simulateStack_verifyError Overhead=1 Level=1 Template="simulateStack - verifyError pc = %x, error = %x"
+TraceEvent=Trc_BCV_simulateStack_returnRewrite Overhead=1 Level=3 Template="simulateStack - return rewrite pc = %x, bc = %x"
+TraceExit=Trc_BCV_simulateStack_Exit Overhead=1 Level=3 Template="simulateStack"
+
+TraceEvent=Trc_BCV_growPreverifyBuffer_grow Overhead=1 Level=1 Template="growPreverifyBuffer - from %x to %x"
+TraceException=Trc_BCV_growPreverifyBuffer_allocFailure Overhead=1 Level=1 Template="growPreverifyBuffer - alloc failure"
+
+TraceEvent=Trc_BCV_allocateVerifyBuffers_Event1 Overhead=1 Level=2 Template="allocateVerifyBuffers"
+TraceException=Trc_BCV_allocateVerifyBuffers_allocFailure Overhead=1 Level=1 Template="allocateVerifyBuffers - alloc failure"
+
+TraceEvent=Trc_BCV_freeVerifyBuffers_Event1 Overhead=1 Level=2 Template="freeVerifyBuffers"
+
+TraceEntry=Trc_BCV_j9bcv_verifyCreateStackAttributes_Entry Overhead=1 Level=1 Template="j9bcv_verifyCreateStackAttributes - class: %.*s"
+TraceExit=Trc_BCV_j9bcv_verifyCreateStackAttributes_Exit Overhead=1 Level=1 Template="j9bcv_verifyCreateStackAttributes"
+
+TraceEntry=Trc_BCV_checkStack_Entry Overhead=1 Level=3 Template="checkStack - method: %.*s%.*s"
+TraceExit=Trc_BCV_checkStack_Exit Overhead=1 Level=3 Template="checkStack"
+
+TraceEntry=Trc_STV_j9bcv_verifyClassStructure_Entry NoEnv Overhead=1 Level=2 Template="j9bcv_verifyClassStructure - class: %.*s"
+TraceException=Trc_STV_j9bcv_verifyClassStructure_MethodError NoEnv Overhead=1 Level=1 Template="j9bcv_verifyClassStructure - formatError %x, method = %x"
+TraceException=Trc_STV_j9bcv_verifyClassStructure_VerifyError NoEnv Overhead=1 Level=1 Template="j9bcv_verifyClassStructure - verifyError %x, romAddress offset = %x"
+TraceException=Trc_STV_j9bcv_verifyClassStructure_ClassError NoEnv Overhead=1 Level=1 Template="j9bcv_verifyClassStructure - formatError %x, romAddress offset = %x"
+TraceExit=Trc_STV_j9bcv_verifyClassStructure_Exit NoEnv Overhead=1 Level=2 Template="j9bcv_verifyClassStructure"
+
+TraceException=Trc_STV_buildInstructionMap_VerifyError NoEnv Overhead=1 Level=1 Template="buildInstructionMap - formatError %x, method %x, pc = %x"
+
+TraceException=Trc_STV_checkBytecodeStructure_FormatError NoEnv Overhead=1 Level=1 Template="checkBytecodeStructure - formatError %x, method %x, pc = %x"
+TraceException=Trc_STV_checkBytecodeStructure_VerifyError NoEnv Overhead=1 Level=1 Template="checkBytecodeStructure - verifyError %x, method %x, pc = %x"
+
+TraceException=Trc_STV_checkMethodStructure_FormatError NoEnv Overhead=1 Level=1 Template="checkMethodStructure - formatError %x, method %x"
+TraceException=Trc_STV_checkMethodStructure_VerifyError NoEnv Overhead=1 Level=1 Template="checkMethodStructure - verifyError %x, method %x, pc = %x"
+
+TraceEntry=Trc_RTV_j9rtv_verifierGetRAMClass_Entry Overhead=1 Level=3 Template="verifierGetRAMClass - class loader %x, class: %.*s"
+TraceEvent=Trc_RTV_j9rtv_verifierGetRAMClass_found Overhead=1 Level=3 Template="verifierGetRAMClass - class already loaded"
+TraceEvent=Trc_RTV_j9rtv_verifierGetRAMClass_notFound Overhead=1 Level=2 Template="verifierGetRAMClass - class load requested"
+TraceExit=Trc_RTV_j9rtv_verifierGetRAMClass_Exit Overhead=1 Level=3 Template="verifierGetRAMClass"
+
+TraceException=Trc_RTV_j9rtv_verifyBytecodes_VerifyError Overhead=1 Level=1 Template="j9rtv_verifyBytecodes - verifyError %x, method %x"
+
+TraceException=Trc_RTV_verifyBytecodes_VerifyError Overhead=1 Level=1 Template="verifyBytecodes - verifyError %x, method %.*s%.*s, pc = %x"
+
+TraceEntry=Trc_RTV_j9rtv_verifyBytecodes_Entry Overhead=1 Level=3 Template="j9rtv_verifyBytecodes - class: %.*s"
+TraceExit=Trc_RTV_j9rtv_verifyBytecodes_Exit Overhead=1 Level=3 Template="j9rtv_verifyBytecodes"
+
+TraceEntry=Trc_RTV_verifyBytecodes_Entry Overhead=1 Level=3 Template="verifyBytecodes - method: %.*s%.*s"
+TraceExit=Trc_RTV_verifyBytecodes_Exit Overhead=1 Level=3 Template="verifyBytecodes"
+
+TraceEntry=Trc_RTV_verifyExceptions_Entry Overhead=1 Level=3 Template="verifyExceptions - method: %.*s%.*s"
+TraceExit=Trc_RTV_verifyExceptions_Exit Overhead=1 Level=3 Template="verifyExceptions"
+
+TraceEntry=Trc_RTV_registerClassLoadingConstraint_Entry Overhead=1 Level=3 Template="registerClassLoadingConstraint - %.*s in %p"
+TraceEvent=Trc_RTV_registerClassLoadingConstraint_AllocatingTable Overhead=1 Level=1 Template="allocating classLoadingConstraints table"
+TraceException=Trc_RTV_registerClassLoadingConstraint_TableAllocationFailed Overhead=1 Level=1 Template="failed to allocate classLoadingConstraints table"
+TraceException=Trc_RTV_registerClassLoadingConstraint_EntryAllocationFailed Overhead=1 Level=1 Template="failed to allocate classLoadingConstraints entry"
+TraceEvent=Trc_RTV_registerClassLoadingConstraint_AllocatedEntry Overhead=1 Level=2 Template="Allocated new class loading constraint %p for %.*s in %p"
+TraceExit=Trc_RTV_registerClassLoadingConstraint_Exit Overhead=1 Level=3 Template="registerClassLoadingConstraint - return %p"
+
+TraceEntry=Trc_RTV_findClassLoadingConstraint_Entry Overhead=1 Level=3 Template="findClassLoadingConstraint - %.*s in %p"
+TraceExit=Trc_RTV_findClassLoadingConstraint_Exit Overhead=1 Level=3 Template="findClassLoadingConstraint - returning %p"
+
+TraceEntry=Trc_RTV_unlinkClassLoadingConstraints_Entry NoEnv Overhead=1 Level=1 Template="unlinkClassLoadingConstraints"
+TraceExit=Trc_RTV_unlinkClassLoadingConstraints_Exit NoEnv Overhead=1 Level=1 Template="unlinkClassLoadingConstraints"
+
+TraceEvent=Trc_RTV_checkClassLoadingConstraintForName Overhead=1 Level=3 Template="checkClassLoadingConstraintForName - Checking constraints between %p and %p for %.*s"
+
+TraceAssert=Assert_RTV_validateClassLoadingConstraints Overhead=2 Level=5 NoEnv Assert="validateArgs(P1, P2, P3, P4, P5, P6), 1"
+TraceAssert=Assert_RTV_true Overhead=1 Level=1 NoEnv Assert="P1"
+TraceAssert=Assert_RTV_notEqual Overhead=1 Level=1 NoEnv Assert="P1 != P2"
+
+TraceEntry=Trc_RTV_checkAllClassLoadingConstraints_Entry NoEnv Overhead=1 Level=2 Template="checkAllClassLoadingConstraints(ramClass=%p -- %.*s)"
+TraceEvent=Trc_RTV_checkAllClassLoadingConstraints_CheckSuperclassMethod NoEnv Overhead=1 Level=2 Template="Found method overridden from a superclass in a different loader: %p"
+TraceException=Trc_RTV_checkAllClassLoadingConstraints_SuperclassViolation NoEnv Overhead=1 Level=1 Template="Method overridden from superclass violates a class loading constraint: romMethod %p in %.*s"
+TraceEvent=Trc_RTV_checkAllClassLoadingConstraints_CheckInterfaceMethod NoEnv Overhead=1 Level=2 Template="Found method overridden from an interface in a different loader: %p"
+TraceException=Trc_RTV_checkAllClassLoadingConstraints_InterfaceViolation NoEnv Overhead=1 Level=1 Template="Method overridden from interface violates a class loading constraint: romMethod %p in %.*s"
+TraceExit=Trc_RTV_checkAllClassLoadingConstraints_Exit NoEnv Overhead=1 Level=2 Template="checkAllClassLoadingConstraints -- return %p"
+
+TraceEntry=Trc_RTV_checkClassLoadingConstraintsForSignature_Entry Overhead=1 Level=3 Template="checkClassLoadingConstraintsForSignature(loader1=%p, loader2=%p, sig1=%p, sig2=%p -- %.*s)"
+TraceExit=Trc_RTV_checkClassLoadingConstraintsForSignature_Exit Overhead=1 Level=3 Template="checkClassLoadingConstraintsForSignature(result=%zu)"
+
+TraceException=Trc_RTV_verifyExceptions_VerifyError Overhead=1 Level=1 Template="verifyExceptions - %.*s %.*s%.*s exception table entry %i containing %.*s is not a subclass of java.lang.Throwable"
+
+TraceEntry=Trc_RTV_findAndMatchStack_Entry Overhead=1 Level=3 Template="findAndMatchStack - match stack from %i to stack at %i"
+TraceException=Trc_RTV_findAndMatchStack_StackNotFound Overhead=1 Level=1 Template="findAndMatchStack - %.*s %.*s%.*s target stack at %i not found"
+TraceExit=Trc_RTV_findAndMatchStack_Exit Overhead=1 Level=3 Template="findAndMatchStack - returning %i"
+
+TraceEntry=Trc_RTV_matchStack_Entry Overhead=1 Level=3 Template="matchStack - inlineMatch is %i"
+TraceException=Trc_RTV_matchStack_DepthMismatchException Overhead=1 Level=1 Template="matchStack - %.*s %.*s%.*s mismatched stack depths, live = %i, target = %i"
+TraceException=Trc_RTV_matchStack_IncompatibleClassException Overhead=1 Level=1 Template="matchStack - %.*s %.*s%.*s incompatible objects at offset %i, live = 0x%X, target = 0x%X"
+TraceException=Trc_RTV_matchStack_PrimitiveMismatchException Overhead=1 Level=1 Template="matchStack - %.*s %.*s%.*s incompatible primitives at offset %i, live = 0x%X, target = 0x%X"
+TraceEvent=Trc_RTV_matchStack_InlineMatchEvent Overhead=1 Level=3 Template="matchStack - inlineMatch, overwrite live stack with target stack"
+TraceExit=Trc_RTV_matchStack_Exit Overhead=1 Level=3 Template="matchStack - returning %i"
+
+TraceException=Trc_RTV_verifyBytecodes_VerifyErrorBytecode Overhead=1 Level=1 Template="verifyBytecodes - %.*s %.*s%.*s error 0x%X, at offset %i(0x%X), bytecode = 0x%X"
+
+TraceEntry=Trc_RTV_j9rtv_verifyArguments_Entry Overhead=1 Level=3 Template="j9rtv_verifyArguments - signature %.*s"
+TraceException=Trc_RTV_j9rtv_verifyArguments_PrimitiveMismatch Overhead=1 Level=1 Template="j9rtv_verifyArguments - %.*s %.*s%.*s Primitive mismatch, argument %i in signature %.*s not match 0x%X"
+TraceException=Trc_RTV_j9rtv_verifyArguments_WidePrimitiveMismatch Overhead=1 Level=1 Template="j9rtv_verifyArguments - %.*s %.*s%.*s Wide primitive mismatch, argument %i in signature %.*s second slot not match BASE_TYPE_TOP"
+TraceException=Trc_RTV_j9rtv_verifyArguments_ObjectMismatch Overhead=1 Level=1 Template="j9rtv_verifyArguments - %.*s %.*s%.*s Object mismatch, argument %i in signature %.*s not match 0x%X"
+TraceException=Trc_RTV_j9rtv_verifyArguments_Unreachable Overhead=1 Level=1 Template="j9rtv_verifyArguments - %.*s %.*s%.*s Unreachable error %i occurred"
+TraceExit=Trc_RTV_j9rtv_verifyArguments_Exit Overhead=1 Level=3 Template="j9rtv_verifyArguments - returning %i"
+
+TraceEvent=Trc_RTV_nextStack_Result Overhead=1 Level=3 Template="nextStack - %.*s %.*s%.*s stackMapsCount = %i, nextMapIndex = %i, nextStackPC = %i of %i"
+
+TraceEvent=Trc_RTV_nextExceptionStart_Result Overhead=1 Level=3 Template="nextExceptionStart - %.*s %.*s%.*s catchCount = %i, lastPC = %i, nextPC = %i of %i"
+
+TraceException=Trc_BCV_buildBranchMap_UnknownInstruction Overhead=1 Level=1 Template="buildBranchMap - %.*s %.*s%.*s Unknown bytecode 0x%X at offset %i(0x%X)"
+TraceEvent=Trc_BCV_buildBranchMap_branchCount Overhead=1 Level=3 Template="buildBranchMap - %.*s %.*s%.*s branchCount = %i"
+
+TraceEntry=Trc_BCV_decompressStackMaps_Entry Overhead=1 Level=3 Template="decompressStackMaps - incoming argCount %i"
+TraceException=Trc_BCV_decompressStackMaps_LocalsArrayOverFlowUnderFlow Overhead=1 Level=1 Template="decompressStackMaps - %.*s %.*s%.*s stack map %i at offset %i overflowed or underflowed the locals array"
+TraceException=Trc_BCV_decompressStackMaps_StackArrayOverFlow Overhead=1 Level=1 Template="decompressStackMaps - %.*s %.*s%.*s stack map %i at offset %i overflowed the stack array"
+TraceException=Trc_BCV_decompressStackMaps_MapOutOfRange Overhead=1 Level=1 Template="decompressStackMaps - %.*s %.*s%.*s stack map %i offset %i must be less than code length %i"
+TraceExit=Trc_BCV_decompressStackMaps_Exit Overhead=1 Level=3 Template="decompressStackMaps - returning %i"
+
+TraceException=Trc_BCV_parseLocals_LocalsArrayUnderFlow Overhead=1 Level=1 Template="parseLocals - %.*s %.*s%.*s stack map underflowed the locals array"
+TraceException=Trc_BCV_parseLocals_LocalsArrayOverFlow Overhead=1 Level=1 Template="parseLocals - %.*s %.*s%.*s stack map overflowed the locals array"
+
+TraceEvent=Trc_BCV_mergeObjectTypes_UnableToLoadClass Overhead=1 Level=3 Template="mergeObjectTypes - %.*s %.*s%.*s unable to load source class 0x%X or target class 0x%X - rewalk"
+TraceEvent=Trc_BCV_mergeObjectTypes_NullTargetOverwritten Overhead=1 Level=3 Template="mergeObjectTypes - %.*s %.*s%.*s Null target overwritten, source class 0x%X - rewalk"
+TraceEvent=Trc_BCV_mergeObjectTypes_DecaySourceArray Overhead=1 Level=3 Template="mergeObjectTypes - %.*s %.*s%.*s source base array decayed to Object array, source class 0x%X"
+TraceEvent=Trc_BCV_mergeObjectTypes_DecayTargetArray Overhead=1 Level=3 Template="mergeObjectTypes - %.*s %.*s%.*s target base array decayed to Object array, target class 0x%X"
+TraceEvent=Trc_BCV_mergeObjectTypes_MergeClassesFail Overhead=1 Level=3 Template="mergeObjectTypes - %.*s %.*s%.*s merge source class %.*s with target class %.*s fail - copy source to target - rewalk"
+TraceEvent=Trc_BCV_mergeObjectTypes_MergeClassesSucceed Overhead=1 Level=3 Template="mergeObjectTypes - %.*s %.*s%.*s merge source class %.*s with target class %.*s to class %.*s (0x%X)"
+TraceEvent=Trc_BCV_mergeObjectTypes_MergeClassesMinimumArity Overhead=1 Level=3 Template="mergeObjectTypes - %.*s %.*s%.*s merge to minimum arity object array, source class arity %i with target class arity %i - rewalk"
+TraceEvent=Trc_BCV_mergeObjectTypes_MergedClass Overhead=1 Level=3 Template="mergeObjectTypes - %.*s %.*s%.*s merged class 0x%X - rewalk"
+
+TraceEntry=Trc_BCV_mergeStacks_Entry Overhead=1 Level=3 Template="mergeStacks - %.*s %.*s%.*s merge to target PC = %i(0x%X)"
+TraceEvent=Trc_BCV_mergeStacks_CopyStack Overhead=1 Level=3 Template="mergeStacks - %.*s %.*s%.*s copy stack to stack %i at target PC = %i(0x%X), queue for unwalked"
+TraceException=Trc_BCV_mergeStacks_DepthMismatch Overhead=1 Level=1 Template="mergeStacks - %.*s %.*s%.*s stack map depth mismatch, stack %i at target PC = %i(0x%X), source depth = %i, target depth = %i"
+TraceEvent=Trc_BCV_mergeStacks_MergeStacks Overhead=1 Level=3 Template="mergeStacks - %.*s %.*s%.*s merge to stack %i at target PC = %i(0x%X)"
+TraceEvent=Trc_BCV_mergeStacks_OptMergeRequired Overhead=1 Level=3 Template="mergeStacks - %.*s %.*s%.*s -Xverify:opt real merge source = 0x%X, target = 0x%X result = 0x%X"
+TraceEvent=Trc_BCV_mergeStacks_OptMergeNotRequired Overhead=1 Level=3 Template="mergeStacks - %.*s %.*s%.*s -Xverify:opt merge avoided source = 0x%X, target = 0x%X"
+TraceEvent=Trc_BCV_mergeStacks_QueueForRewalk Overhead=1 Level=3 Template="mergeStacks - %.*s %.*s%.*s changed stack at target PC = %i(0x%X), queue for rewalk"
+TraceExit=Trc_BCV_mergeStacks_Exit Overhead=1 Level=3 Template="mergeStacks - %.*s %.*s%.*s returning %i"
+
+TraceException=Trc_BCV_simulateStack_verifyErrorBytecode Overhead=1 Level=1 Template="simulateStack - %.*s %.*s%.*s error 0x%X, at offset %i(0x%X), bytecode = 0x%X"
+TraceEvent=Trc_BCV_simulateStack_NewWalkFrom Overhead=1 Level=3 Template="simulateStack - %.*s %.*s%.*s stopped at offset %i(0x%X), new walk from offset %i(0x%X)"
+TraceEvent=Trc_BCV_simulateStack_RewalkFrom Overhead=1 Level=3 Template="simulateStack - %.*s %.*s%.*s stopped at offset %i(0x%X), rewalk from offset %i(0x%X)"
+
+TraceEvent=Trc_BCV_bcvalloc_ExternalAlloc Overhead=1 Level=3 Template="bcvalloc - %.*s external alloc of %i bytes at 0x%X"
+TraceEvent=Trc_BCV_bcvalloc_ExternalFree Overhead=1 Level=3 Template="bcvalloc - %.*s external free at 0x%X"
+
+TraceEntry=Trc_BCV_j9bcv_verifyBytecodes_Entry Overhead=1 Level=2 Template="j9bcv_verifyBytecodes - %.*s "
+TraceEvent=Trc_BCV_j9bcv_verifyBytecodes_VerifyMethod Overhead=1 Level=3 Template="j9bcv_verifyBytecodes - %.*s %.*s%.*s method modifiers 0x%X"
+TraceException=Trc_BCV_j9bcv_verifyBytecodes_OutOfMemory Overhead=1 Level=1 Template="j9bcv_verifyBytecodes - %.*s %.*s%.*s out of memory"
+TraceEvent=Trc_BCV_j9bcv_verifyBytecodes_ReverifyMethod Overhead=1 Level=1 Template="j9bcv_verifyBytecodes - %.*s %.*s%.*s verify error using StackMap/StackMapTable, reverify with old verifier"
+TraceExit=Trc_BCV_j9bcv_verifyBytecodes_Exit Overhead=1 Level=2 Template="j9bcv_verifyBytecodes - returning %i"
+
+TraceEvent=Trc_BCV_bcvalloc_ExternalFreeAddress Overhead=1 Level=3 Template="bcvalloc - external free at 0x%X"
+
+TraceException=Trc_BCV_mergeObjectTypes_MergeClasses_OutOfMemoryException Overhead=1 Level=1 Template="mergeObjectTypes - %.*s %.*s%.*s Out of Memory Exception - no rewalk"
+TraceException=Trc_BCV_simulateStack_verifyErrorBytecode_OutOfMemoryException Overhead=1 Level=1 Template="simulateStack - %.*s %.*s%.*s error 0x%X, at offset %i(0x%X), bytecode = 0x%X - Out Of Memory Exception"
+TraceException=Trc_RTV_j9rtv_verifierGetRAMClass_OutOfMemoryException Overhead=1 Level=1 Template="verifierGetRAMClass - class loader %x, class: %.*s - Out of Memory Exception"
+TraceException=Trc_RTV_j9rtv_verifyBytecodes_OutOfMemoryException Overhead=1 Level=1 Template="j9rtv_verifyBytecodes - class: %.*s - Out of Memory Exception"
+TraceException=Trc_RTV_matchStack_OutOfMemoryException Overhead=1 Level=1 Template="matchStack - %.*s %.*s%.*s - Out of Memory Exception"
+TraceException=Trc_RTV_verifyBytecodes_OutOfMemoryException Overhead=1 Level=1 Template="verifyBytecodes - verifyError %x, method %.*s%.*s, pc = %x - Out of Memory Exception"
+TraceException=Trc_RTV_verifyExceptions_OutOfMemoryException Overhead=1 Level=1 Template="verifyExceptions - %.*s %.*s%.*s - Out of Memory Exception"
+TraceException=Trc_RTV_j9rtv_verifyArguments_OutOfMemoryException Overhead=1 Level=1 Template="j9rtv_verifyArguments - %.*s %.*s%.*s - Out of Memory Exception"
+TraceException=Trc_RTV_j9rtv_verifyArguments_InaccessibleClass Overhead=1 Level=1 Template="j9rtv_verifyArguments - %.*s %.*s%.*s - Inaccessible class"
+

@@ -1,0 +1,9 @@
+
+*.class
+
+/bin
+/dtfj-interface.jar
+/dtfj.jar
+/dtfjview.jar
+/traceformat.jar
+/tracegen.jar

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Copyright (c) 2015, 2017 IBM Corp. and others
+
+   This program and the accompanying materials are made available under
+   the terms of the Eclipse Public License 2.0 which accompanies this
+   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+   or the Apache License, Version 2.0 which accompanies this distribution and
+   is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+   This Source Code may also be made available under the following
+   Secondary Licenses when the conditions for such availability set
+   forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+   General Public License, version 2 with the GNU Classpath
+   Exception [1] and GNU General Public License, version 2 with the
+   OpenJDK Assembly Exception [2].
+
+   [1] https://www.gnu.org/software/classpath/license.html
+   [2] http://openjdk.java.net/legal/assembly-exception.html
+
+   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<module xmlns:xi="http://www.w3.org/2001/XInclude">
+
+	<xi:include href="exports.xml"></xi:include>
+
+	<artifact type="shared" name="cuda4j" loadgroup="">
+		<options>
+			<option name="dllDescription" data="CUDA4J" />
+		</options>
+
+		<phase>core j2se</phase>
+
+		<exports>
+			<group name="standard" />
+			<group name="optional">
+				<include-if condition="spec.flags.opt_cuda" />
+			</group>
+		</exports>
+
+		<includes>
+			<include path="j9include" />
+			<include path="j9oti" />
+		</includes>
+
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS = 1" />
+			<makefilestub data="UMA_ENABLE_ALL_WARNINGS = 1" />
+		</makefilestubs>
+
+		<objects>
+			<object name="CudaBuffer" />
+			<object name="CudaCommon" />
+			<object name="CudaDevice" />
+			<object name="CudaEvent" />
+			<object name="CudaFunction" />
+			<object name="CudaJitOptions" />
+			<object name="CudaLinker" />
+			<object name="CudaModule" />
+			<object name="CudaStream" />
+			<object name="ut_cuda4j" />
+		</objects>
+
+		<libraries>
+			<library name="j9util" />
+		</libraries>
+	</artifact>
+
+</module>

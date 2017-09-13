@@ -1,0 +1,238 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the JVMRI module
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=J9RI
+J9NLS.HEADER=j9jvmrinls.h
+
+# jvmri->CreateThread is not translatable
+J9NLS_RI_CANT_ALLOCATE_MEM_FOR_THREAD_ARGS=jvmri->CreateThread \u7121\u6cd5\u914d\u7f6e\u57f7\u884c\u7dd2\u5f15\u6578\u8a18\u61b6\u9ad4
+# START NON-TRANSLATABLE
+J9NLS_RI_CANT_ALLOCATE_MEM_FOR_THREAD_ARGS.explanation=The JVM could not allocate memory required to process a JVMRI CreateThread call.
+J9NLS_RI_CANT_ALLOCATE_MEM_FOR_THREAD_ARGS.system_action=The thread is not created, JNI_ERR is returned.
+J9NLS_RI_CANT_ALLOCATE_MEM_FOR_THREAD_ARGS.user_response=Investigate process memory usage and retry.
+# END NON-TRANSLATABLE
+
+# jvmri->DumpDeregister is not translatable
+J9NLS_RI_INTERNAL_DUMP_DEREGISTER_ERROR=\u5728 jvmri->DumpDeregister \u4e2d\u79fb\u9664\u50be\u51fa\u4ee3\u7406\u7a0b\u5f0f\u6642\u767c\u751f\u5167\u90e8\u932f\u8aa4\uff0c\u50be\u51fa\u51fd\u6578\u53ef\u80fd\u5c1a\u672a\u53d6\u6d88\u767b\u9304\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_INTERNAL_DUMP_DEREGISTER_ERROR.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_INTERNAL_DUMP_DEREGISTER_ERROR.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_INTERNAL_DUMP_DEREGISTER_ERROR.user_response=THIS MESSAGE IS RESERVED FOR FUTURE USE
+# END NON-TRANSLATABLE
+
+# jvmri->DumpRegister and NULL are not translatable
+J9NLS_RI_DUMP_REGISTER_NULL_CALLBACK=jvmri->DumpRegister \u662f\u4ee5 NULL \u56de\u547c\u547c\u53eb\uff0c\u51fd\u6578\u672a\u767b\u9304
+# START NON-TRANSLATABLE
+J9NLS_RI_DUMP_REGISTER_NULL_CALLBACK.explanation=The JVM could not process a JVMRI DumpRegister call because the supplied callback function parameter was null.
+J9NLS_RI_DUMP_REGISTER_NULL_CALLBACK.system_action=No callback function is registered, JNI_EINVAL is returned.
+J9NLS_RI_DUMP_REGISTER_NULL_CALLBACK.user_response=Correct the JVMRI DumpRegister call to provide a callback function parameter.
+# END NON-TRANSLATABLE
+
+# jvmri->DumpRegister is not translatable
+J9NLS_RI_DUMP_REGISTER_INTERNAL_ALLOC_ERROR=\u7121\u6cd5\u5728 jvmri->DumpRegister \u4e2d\u914d\u7f6e\u50be\u51fa\u4ee3\u7406\u7a0b\u5f0f\uff0c\u51fd\u6578\u672a\u767b\u9304\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_DUMP_REGISTER_INTERNAL_ALLOC_ERROR.explanation=The JVM could not allocate memory required to process a JVMRI DumpRegister call.
+J9NLS_RI_DUMP_REGISTER_INTERNAL_ALLOC_ERROR.system_action=No callback function is registered, JNI_ERR is returned.
+J9NLS_RI_DUMP_REGISTER_INTERNAL_ALLOC_ERROR.user_response=Investigate process memory usage and retry.
+# END NON-TRANSLATABLE
+
+# jvmri->DynamicVerbosegc is not translatable
+J9NLS_RI_DYNAMIC_VERBOSEGC_NOT_SUPPORTED=\u4e0d\u652f\u63f4 jvmri->DynamicVerbosegc\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_DYNAMIC_VERBOSEGC_NOT_SUPPORTED.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_DYNAMIC_VERBOSEGC_NOT_SUPPORTED.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_DYNAMIC_VERBOSEGC_NOT_SUPPORTED.user_response=THIS MESSAGE IS RESERVED FOR FUTURE USE
+# END NON-TRANSLATABLE
+
+# jvmri->GetComponentDataArea, VM and dataArea are not translatable
+J9NLS_RI_NO_COMPONENT_DATA_AREA=jvmri->GetComponentDataArea \u5143\u4ef6 %s \u5728\u6b64 VM \u4e0b\u6c92\u6709 dataArea\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_NO_COMPONENT_DATA_AREA.sample_input_1=j9vm
+J9NLS_RI_NO_COMPONENT_DATA_AREA.explanation=The JVMRI GetComponentDataArea call is not supported by this JVM.
+J9NLS_RI_NO_COMPONENT_DATA_AREA.system_action=No action, JNI_ERR is returned.
+J9NLS_RI_NO_COMPONENT_DATA_AREA.user_response=Remove the JVMRI GetComponentDataArea call from the JVMRI agent code.
+# END NON-TRANSLATABLE
+
+# jvmri->GetRasInfo and RasInfo are not translatable
+J9NLS_RI_NULL_RAS_INFO_STRUCTURE=jvmri->GetRasInfo \u662f\u4ee5 NULL RasInfo \u7d50\u69cb\u547c\u53eb\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_NULL_RAS_INFO_STRUCTURE.explanation=The JVM could not process a JVMRI GetRasInfo call because the supplied info_ptr parameter was null.
+J9NLS_RI_NULL_RAS_INFO_STRUCTURE.system_action=No action, JNI_EINVAL is returned.
+J9NLS_RI_NULL_RAS_INFO_STRUCTURE.user_response=Correct the JVMRI GetRasInfo call to provide a valid pointer as the info_ptr parameter.
+# END NON-TRANSLATABLE
+
+# jvmri->GetRasInfo is not translatable
+J9NLS_RI_CANT_ALLOCATE_QUERY_NAMES=jvmri->GetRasInfo \u7121\u6cd5\u914d\u7f6e\u8a18\u61b6\u9ad4\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_CANT_ALLOCATE_QUERY_NAMES.explanation=The JVM could not allocate memory required to process a JVMRI GetRasInfo call.
+J9NLS_RI_CANT_ALLOCATE_QUERY_NAMES.system_action=No action, JNI_ENOMEM is returned.
+J9NLS_RI_CANT_ALLOCATE_QUERY_NAMES.user_response=Investigate process memory usage and retry.
+# END NON-TRANSLATABLE
+
+# jvmri->GetRasInfo is not translatable
+J9NLS_RI_GETRASINFO_CANT_GET_COMPONENTS=jvmri->GetRasInfo \u7121\u6cd5\u53d6\u5f97\u5143\u4ef6\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_GETRASINFO_CANT_GET_COMPONENTS.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_GETRASINFO_CANT_GET_COMPONENTS.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_GETRASINFO_CANT_GET_COMPONENTS.user_response=THIS MESSAGE IS RESERVED FOR FUTURE USE
+# END NON-TRANSLATABLE
+
+J9NLS_RI_GETRASINFO_CANT_ALLOCATE_LIST=jvmri->GetRasInfo \u7121\u6cd5\u914d\u7f6e\u8a18\u61b6\u9ad4\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_GETRASINFO_CANT_ALLOCATE_LIST.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_GETRASINFO_CANT_ALLOCATE_LIST.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_GETRASINFO_CANT_ALLOCATE_LIST.user_response=THIS MESSAGE IS RESERVED FOR FUTURE USE
+# END NON-TRANSLATABLE
+
+# jvmri->GetRasInfo is not translatable
+J9NLS_RI_GETRASINFO_CANT_ALLOCATE_COMP_BIT_MAP=jvmri->GetRasInfo \u7121\u6cd5\u914d\u7f6e\u8a18\u61b6\u9ad4\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_GETRASINFO_CANT_ALLOCATE_COMP_BIT_MAP.explanation=The JVM could not allocate memory required to process a JVMRI GetRasInfo call.
+J9NLS_RI_GETRASINFO_CANT_ALLOCATE_COMP_BIT_MAP.system_action=No action, JNI_ENOMEM is returned.
+J9NLS_RI_GETRASINFO_CANT_ALLOCATE_COMP_BIT_MAP.user_response=Investigate process memory usage and retry.
+# END NON-TRANSLATABLE
+
+# RasInfo is not translatable
+J9NLS_RI_GETRASINFO_UNSUPPORTED_FIELD_TYPE=RasInfo \u7d50\u69cb\u542b\u6709\u4e0d\u53d7\u652f\u63f4\u7684\u985e\u578b\u6b04\u4f4d\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_GETRASINFO_UNSUPPORTED_FIELD_TYPE.explanation=The request type in the RasInfo structure supplied as parameter to a JVMRI GetRasInfo call is invalid.
+J9NLS_RI_GETRASINFO_UNSUPPORTED_FIELD_TYPE.system_action=No action, JNI_EINVAL is returned.
+J9NLS_RI_GETRASINFO_UNSUPPORTED_FIELD_TYPE.user_response=Correct the request type in the supplied RasInfo structure and retry.
+# END NON-TRANSLATABLE
+
+# jvmri->ReleaseRasInfo is not translatable
+J9NLS_RI_RELEASERASINFO_NULL_INFO_STRUCTURE=jvmri->ReleaseRasInfo \u662f\u4ee5 NULL RasInfo \u7d50\u69cb\u547c\u53eb\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_RELEASERASINFO_NULL_INFO_STRUCTURE.explanation=The JVM could not process a JVMRI ReleaseRasInfo call because the supplied info_ptr parameter was null.
+J9NLS_RI_RELEASERASINFO_NULL_INFO_STRUCTURE.system_action=No action, JNI_EINVAL is returned.
+J9NLS_RI_RELEASERASINFO_NULL_INFO_STRUCTURE.user_response=Correct the JVMRI ReleaseRasInfo call to provide a valid pointer as the info_ptr parameter.
+# END NON-TRANSLATABLE
+
+# jvmri->ReleaseRasInfo is not translatable
+J9NLS_RI_RELEASERASINFO_UNSUPPORTED_FIELD_TYPE=jvmri->ReleaseRasInfo: \u7d50\u69cb\u542b\u6709\u4e0d\u53d7\u652f\u63f4\u7684\u985e\u578b\u6b04\u4f4d\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_RELEASERASINFO_UNSUPPORTED_FIELD_TYPE.explanation=The request type in the RasInfo structure supplied as parameter to a JVMRI ReleaseRasInfo call is invalid.
+J9NLS_RI_RELEASERASINFO_UNSUPPORTED_FIELD_TYPE.system_action=No action, JNI_EINVAL is returned.
+J9NLS_RI_RELEASERASINFO_UNSUPPORTED_FIELD_TYPE.user_response=Correct the request type in the supplied RasInfo structure and retry.
+# END NON-TRANSLATABLE
+
+# jvmri->RunDumpRoutine is not translatable
+J9NLS_RI_RUNDUMPROUTINE_CANT_RETRIEVE_COMP_DATA=jvmri->RunDumpRoutine: \u7121\u6cd5\u64f7\u53d6\u5143\u4ef6\u8cc7\u6599\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_RUNDUMPROUTINE_CANT_RETRIEVE_COMP_DATA.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_RUNDUMPROUTINE_CANT_RETRIEVE_COMP_DATA.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_RUNDUMPROUTINE_CANT_RETRIEVE_COMP_DATA.user_response=THIS MESSAGE IS RESERVED FOR FUTURE USE
+# END NON-TRANSLATABLE
+
+J9NLS_RI_RUNDUMPROUTINE_COMPONENT_ID_OUT_OF_BOUNDS=jvmri->RunDumpRoutine: componentId \u5143\u4ef6\u8d85\u983b\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_RUNDUMPROUTINE_COMPONENT_ID_OUT_OF_BOUNDS.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_RUNDUMPROUTINE_COMPONENT_ID_OUT_OF_BOUNDS.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_RUNDUMPROUTINE_COMPONENT_ID_OUT_OF_BOUNDS.user_response=THIS MESSAGE IS RESERVED FOR FUTURE USE
+# END NON-TRANSLATABLE
+
+# jvmri->SetOutOfMemoryHook is not translatable
+J9NLS_RI_SETOUTOFMEMORYHOOK_NULL_CALLBACK=jvmri->SetOutOfMemoryHook \u662f\u4ee5 NULL \u56de\u547c\u547c\u53eb\uff0c\u51fd\u6578\u672a\u767b\u9304
+# START NON-TRANSLATABLE
+J9NLS_RI_SETOUTOFMEMORYHOOK_NULL_CALLBACK.explanation=The JVM could not process a JVMRI SetOutOfMemoryHook call because the supplied callback function parameter was null.
+J9NLS_RI_SETOUTOFMEMORYHOOK_NULL_CALLBACK.system_action=No callback function is registered, JNI_EINVAL is returned.
+J9NLS_RI_SETOUTOFMEMORYHOOK_NULL_CALLBACK.user_response=Correct the JVMRI SetOutOfMemoryHook call to provide a callback function parameter.
+# END NON-TRANSLATABLE
+
+# jvmri->SetOutOfMemoryHook is not translatable
+J9NLS_RI_SETOUTOFMEMORYHOOK_ALLOC_RDA_FAILED=\u7121\u6cd5\u5728 jvmri->SetOutOfMemoryHook \u4e2d\u914d\u7f6e\u50be\u51fa\u4ee3\u7406\u7a0b\u5f0f\uff0c\u51fd\u6578\u672a\u767b\u9304\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_SETOUTOFMEMORYHOOK_ALLOC_RDA_FAILED.explanation=The JVM could not allocate memory required to process a JVMRI SetOutOfMemoryHook call.
+J9NLS_RI_SETOUTOFMEMORYHOOK_ALLOC_RDA_FAILED.system_action=No callback function is registered, JNI_ERR is returned.
+J9NLS_RI_SETOUTOFMEMORYHOOK_ALLOC_RDA_FAILED.user_response=Investigate process memory usage and retry.
+# END NON-TRANSLATABLE
+
+# jvmri->NotifySignal is not translatable
+J9NLS_RI_RASNOTIFYSIGNAL_RAISING_SIGNAL=jvmri->NotifySignal \u767c\u51fa\u4fe1\u865f %d\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_RASNOTIFYSIGNAL_RAISING_SIGNAL.sample_input_1=9
+J9NLS_RI_RASNOTIFYSIGNAL_RAISING_SIGNAL.explanation=The JVM is about to raise a signal as requested by a JVMRI NotifySignal call.
+J9NLS_RI_RASNOTIFYSIGNAL_RAISING_SIGNAL.system_action=The JVM raises the requested signal.
+J9NLS_RI_RASNOTIFYSIGNAL_RAISING_SIGNAL.user_response=None, the message is for information only.
+# END NON-TRANSLATABLE
+
+# jvmri->InjectOutOfMemory is not translatable
+J9NLS_RI_INJECT_OUT_OF_MEMORY_NOT_SUPPORTED=\u4e0d\u652f\u63f4 jvmri->InjectOutOfMemory\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_INJECT_OUT_OF_MEMORY_NOT_SUPPORTED.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_INJECT_OUT_OF_MEMORY_NOT_SUPPORTED.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_RI_INJECT_OUT_OF_MEMORY_NOT_SUPPORTED.user_response=THIS MESSAGE IS RESERVED FOR FUTURE USE
+# END NON-TRANSLATABLE
+
+# jvmri->CreateThread is not translatable
+J9NLS_RI_CREATE_THREAD_CANT_ALLOCATE_MONITOR=jvmri->CreateThread \u7121\u6cd5\u914d\u7f6e\u5c08\u7528\u76e3\u8996\u5668
+# START NON-TRANSLATABLE
+J9NLS_RI_CREATE_THREAD_CANT_ALLOCATE_MONITOR.explanation=A call to JVMRI CreateThread has failed because the JVM was unable to allocate a monitor.
+J9NLS_RI_CREATE_THREAD_CANT_ALLOCATE_MONITOR.system_action=The thread is not created, JNI_ERR is returned.
+J9NLS_RI_CREATE_THREAD_CANT_ALLOCATE_MONITOR.user_response=Investigate process memory usage and retry.
+# END NON-TRANSLATABLE
+
+# jvmri->RunDumpRoutine is not translatable
+J9NLS_RI_RUNDUMPROUTINE_NOT_SUPPORTED=\u4e0d\u652f\u63f4 jvmri->RunDumpRoutine\u3002
+# START NON-TRANSLATABLE
+J9NLS_RI_RUNDUMPROUTINE_NOT_SUPPORTED.explanation=The JVMRI RunDumpRoutine call is not supported by this JVM.
+J9NLS_RI_RUNDUMPROUTINE_NOT_SUPPORTED.system_action=No action, JNI_ERR is returned.
+J9NLS_RI_RUNDUMPROUTINE_NOT_SUPPORTED.user_response=Remove the JVMRI RunDumpRoutine call from the JVMRI agent code.
+# END NON-TRANSLATABLE
+
+# JVMRI is not translatable
+J9NLS_RI_INITIALISE_CANT_ALLOCATE_MONITOR=\u8d77\u59cb\u8a2d\u5b9a JVMRI \u7121\u6cd5\u914d\u7f6e jvmri \u50be\u51fa\u76e3\u8996\u5668
+# START NON-TRANSLATABLE
+J9NLS_RI_INITIALISE_CANT_ALLOCATE_MONITOR.explanation=The JVM failed to initialise the JVMRI interface because the JVM was unable to allocate a monitor.
+J9NLS_RI_INITIALISE_CANT_ALLOCATE_MONITOR.system_action=The JVM terminates.
+J9NLS_RI_INITIALISE_CANT_ALLOCATE_MONITOR.user_response=Investigate process memory usage and retry.
+# END NON-TRANSLATABLE
+
+# jvmri->TraceRegister, jvmri->TraceDeregister, TraceListener and JVMRAS_VERSION_1_5 are not translatable
+J9NLS_RI_TRACELISTENER_NOT_SUPPORTED=\u4e0d\u518d\u652f\u63f4 jvmri->TraceRegister\u3001jvmri->TraceDeregister \u53ca TraceListener\uff0c\u8acb\u5728 JVMRAS_VERSION_1_5 \u4e2d\u4f7f\u7528\u65b0\u7248\u672c
+# START NON-TRANSLATABLE
+J9NLS_RI_TRACELISTENER_NOT_SUPPORTED.explanation=The JVMRI TraceRegister and TraceDeregister calls are not supported by this JVM.
+J9NLS_RI_TRACELISTENER_NOT_SUPPORTED.system_action=The trace listener is not registered or deregistered, JNI_ERR is returned.
+J9NLS_RI_TRACELISTENER_NOT_SUPPORTED.user_response=Change the JVMRI agent code to use the JVMRI TraceRegister50 and TraceDeregister50 calls.
+# END NON-TRANSLATABLE
+

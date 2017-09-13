@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2010, 2017 IBM Corp. and others
+ 
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+ 
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+ 
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<project name="J9DDR Tests" default="help">
+
+	<!-- This Ant build exists to run tests against DDR. It is run separately
+	from the build (and doesn't expect the source to be checked out, for example)
+	so is separate from the build.xml -->
+
+	<property name="output.dir" value="${user.dir}/output/"/>
+	<property name="sdk.dir" value="./sdk"/>
+	<property name="sdk.executable" value="${sdk.dir}/jre/bin/java.exe"/>
+	<property name="tck.dir" value="${output.dir}/tck"/>
+	<property name="tck.core.dir" value="${tck.dir}/cores"/>
+	<property name="tck.core.file" value="${tck.core.dir}/tck.core.dmp"/>
+	<property name="tck.config.file" value="tck.properties"/>
+	<property name="tck.output.dir" value="${tck.dir}/output"/>
+	<property name="tck.junit.output.dir" value="${tck.dir}/junit"/>
+	<property name="tck.testlist.file" value="testlist.txt"/>
+	<property name="tck.testlist" value="${tck.junit.output.dir}/${tck.testlist.file}"/>
+
+	<property name="j9_core_jar" value="j9ddr-core.jar"/>
+	<property name="j9_core_tests_jar" value="j9ddr-core-tests.jar"/>
+	<property name="ddr_dtfj_jar" value="j9ddr-dtfj.jar"/>
+	<property name="ddr_dtfj_tests_jar" value="j9ddr-dtfj-tests.jar"/>
+	<property name="dtfj-interface.jar" value="dtfj-interface.jar"/>
+	<property name="tck-pkg.jar" value="dtfj.pkg.tck-head.jar"/>
+	<property name="junit.jar" value="junit.jar"/>
+
+	<path id="tck.class.path">
+		<pathelement location="${j9_core_jar}"/>
+		<pathelement location="${ddr_dtfj_jar}"/>
+		<pathelement location="${ddr_dtfj_tests_jar}"/>
+		<pathelement location="${dtfj-interface.jar}"/>
+		<pathelement location="${tck-pkg.jar}"/>
+		<pathelement location="${junit.jar}"/>
+	</path>
+
+	<target name="help">
+		<echo>DDR Test Script
+
+Expects to have the DDR build artifacts in the current directory.
+
+Targets:
+TCK - runs the DTFJ TCK
+</echo>
+	</target>
+
+	<target name="TCK" depends="clean,TCK.setup">
+		<taskdef resource="com/ibm/dtfj/anttasks/antlib.xml">
+			<classpath refid="tck.class.path"/>
+		</taskdef>
+
+		<echo>Writing config file</echo>
+
+		<propertyfile
+			file="${tck.config.file}"
+			comment="TCK configuration">
+			<entry key="tck.testsuite" value="all"/>
+			<entry key="tck.dumpcreator.class" value="ibm.j9.dumpcreators.SystemDumpCreator"/>
+			<entry key="tck.imagecreator.class" value="com.ibm.j9ddr.dtfj.tck.ImageCreator"/>
+			<entry key="tck.dumpcreator.launcher" value="${sdk.executable}"/>
+			<entry key="env.IBM_JAVA_OPTIONS" value="-Xdump:system:defaults:file=&quot;${tck.core.file}&quot;"/>
+			<!--TODO: Make this support 64 bit-->
+			<entry key="wordsize" value="${wordsize}"/>
+		</propertyfile>
+
+		<!-- Create the dump -->
+
+		<echo>Generating TCK dump</echo>
+
+		<java fork="true" jvm="${sdk.executable}" classname="com.ibm.dtfj.tck.harness.TCKLauncher" failonerror="true">
+			<jvmarg value="-Dtck.output=${tck.output.dir}"/>
+			<jvmarg value="-Djunit.output=${tck.junit.output.dir}" />
+
+			<arg value="-testconfig" />
+			<arg value="${tck.config.file}" />
+			<arg value="-dumponly" />
+
+			<classpath refid="tck.class.path"/>
+
+		</java>
+
+		<!--Create a test list-->
+		<java fork="true" jvm="${sdk.executable}" classname="com.ibm.dtfj.tck.harness.TCKFilter" failonerror="true">
+			<arg value="${tck.testlist}" />
+			<classpath refid="tck.class.path"/>
+		</java>
+
+		<!-- Run some tests -->
+		<junit fork="true" showoutput="true" haltonfailure="false" jvm="${sdk.executable}" forkmode="once" dir="${tck.output.dir}">
+			<classpath refid="tck.class.path"/>
+
+			<jvmarg value="-Dsystem.dump=${tck.core.file}"/>
+			<jvmarg value="-Dtck.config.file=${tck.config.file}"/>
+
+			<formatter type="plain" />
+			<formatter type="xml" />
+
+			<batchtest todir="${tck.junit.output.dir}">
+				<tckdef verbose="true" usefirstfile="true"  testlist="${tck.testlist}">
+					<property name="tck.standalone" value="false" />
+					<property name="vendor" value="ibm" />
+					<property name="vmtype" value="j9" />
+					<property name="version" value="1.5.0" />
+					<property name="wordsize" value="${wordsize}" />
+					<property name="dumptype" value="ddr" />
+					<property name="tck.testsuite" value="all" />
+					<property name="tck.imagecreator.class" value="com.ibm.j9ddr.dtfj.tck.ImageCreator"/>
+				</tckdef>
+			</batchtest>
+		</junit>
+	</target>
+
+	<target name="clean">
+		<delete dir="${output.dir}" includeemptydirs="true" />
+	</target>
+
+	<target name="TCK.setup">
+		<mkdir dir="${output.dir}"/>
+		<mkdir dir="${tck.core.dir}"/>
+		<mkdir dir="${tck.output.dir}"/>
+		<mkdir dir="${tck.junit.output.dir}"/>
+	</target>
+
+	<target name="download">
+		<description>Downloads the latest DDR packages</description>
+
+		<get src="http://chevalier.hursley.ibm.com:8180/hudson/view/J9DDR/job/j9ddr.build/lastSuccessfulBuild/artifact/J9DDR%20Tools/build_tools/assemble_ddr_build/assemble_ddr_vm.pl" dest="assemble_ddr_vm.pl"/>
+		<get src="http://chevalier.hursley.ibm.com:8180/hudson/view/J9DDR/job/j9ddr.build/lastSuccessfulBuild/artifact/J9DDR%20J9%20Core/output/libs/j9ddr-core.jar" dest="j9ddr-core.jar"/>
+		<get src="http://chevalier.hursley.ibm.com:8180/hudson/view/J9DDR/job/j9ddr.build/lastSuccessfulBuild/artifact/J9DDR%20J9%20Core/output/libs/j9ddr-corereaders.jar" dest="j9ddr-corereaders.jar"/>
+		<get src="http://chevalier.hursley.ibm.com:8180/hudson/view/J9DDR/job/j9ddr.build/lastSuccessfulBuild/artifact/J9DDR%20J9%20Core/output/libs/j9ddr-dtfj.jar" dest="j9ddr-dtfj.jar"/>
+		<get src="http://chevalier.hursley.ibm.com:8180/hudson/view/TCK/job/dtfj.pkg.tck-head/lastSuccessfulBuild/artifact/DTFJ%20TCK%20Package/output/dist/dtfj.pkg.tck-head.jar" dest="dtfj.pkg.tck-head.jar"/>
+		<get src="http://chevalier.hursley.ibm.com:8180/hudson/view/J9DDR/job/j9ddr.build/lastSuccessfulBuild/artifact/J9DDR%20J9%20Core/output/libs/j9ddr-dtfj-tests.jar" dest="j9ddr-dtfj-tests.jar"/>
+		<get src="http://chevalier.hursley.ibm.com:8180/hudson/view/J9DDR/job/j9ddr.build/lastSuccessfulBuild/artifact/J9DDR%20J9%20Core/output/libs/j9ddr-core-tests.jar" dest="j9ddr-core-tests.jar"/>
+		<get src="http://chevalier.hursley.ibm.com:8180/hudson/view/J9DDR/job/j9ddr.build/lastSuccessfulBuild/artifact/J9DDR%20J9%20Core/output/libs/j9ddr-corereaders-tests.jar" dest="j9ddr-corereaders-tests.jar"/>
+		<get src="http://chevalier.hursley.ibm.com:8180/hudson/view/J9DDR/job/j9ddr.build/lastSuccessfulBuild/artifact/J9DDR%20J9%20Core/lib/junit.jar" dest="junit.jar"/>
+	</target>
+
+</project>

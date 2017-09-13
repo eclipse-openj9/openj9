@@ -1,0 +1,79 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the VM components of the JCL module.
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Every NLS message needs to have the following information provided:
+#
+# J9NLS_VM_SAMPLE_MESSAGE=This is a sample message that takes two parameters parameter 1 is a string  %1$s  parameter 2 is a number  %2$d
+# # START NON-TRANSLATABLE
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_1=string parameter
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_2=2
+# J9NLS_VM_SAMPLE_MESSAGE.explanation=Explanation for what the message means
+# J9NLS_VM_SAMPLE_MESSAGE.system_action=What will the JVM or more generally the system do when this message is output
+# J9NLS_VM_SAMPLE_MESSAGE.user_response=What should the user do when seeing this message
+# # END NON-TRANSLATABLE
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=ZIPS
+J9NLS.HEADER=j9zipnls.h
+
+# This error occurs if the zip DLL could not be opened.
+# first argument is the name of the zip DLL
+# second argument is a platform error message
+J9NLS_ZIP_UNABLE_TO_OPEN_ZIP_DLL=No es pot obrir %1$s (%2$s)
+# START NON-TRANSLATABLE
+J9NLS_ZIP_UNABLE_TO_OPEN_ZIP_DLL.sample_input_1=j9zlib24
+J9NLS_ZIP_UNABLE_TO_OPEN_ZIP_DLL.sample_input_2=The system cannot find the file specified.
+J9NLS_ZIP_UNABLE_TO_OPEN_ZIP_DLL.explanation=The JVM attempted to load the J9 zlib library, but the operation failed.
+J9NLS_ZIP_UNABLE_TO_OPEN_ZIP_DLL.system_action=The JVM terminates.
+J9NLS_ZIP_UNABLE_TO_OPEN_ZIP_DLL.user_response=Restore the file specified from a copy of the JVM and start the JVM again.
+# END NON-TRANSLATABLE
+
+# This error occurs if an export could not be found in the zip DLL.
+# argument is the name of the zip DLL
+J9NLS_ZIP_MISSING_EXPORT=No es pot obrir %s (falta l'exportaci\u00f3)
+# START NON-TRANSLATABLE
+J9NLS_ZIP_MISSING_EXPORT.sample_input_1=j9zlib24
+J9NLS_ZIP_MISSING_EXPORT.explanation=The JVM attempted to find an exported symbol in the J9 zlib library, but the operation failed.
+J9NLS_ZIP_MISSING_EXPORT.system_action=The JVM terminates.
+J9NLS_ZIP_MISSING_EXPORT.user_response=Restore the file specified from a copy of the JVM and start the JVM again.
+# END NON-TRANSLATABLE
+

@@ -1,0 +1,13 @@
+NumberOfUrls=2
+Url0=./Alphabet;
+NumberOfClassesToLoad0=4
+LoadClasses0=A,B,C,E
+NumberOfClassesToFind0=4
+FindClasses0=A,B,C,E
+Results0=true,true,true,true
+Url1=./Vowels;
+NumberOfClassesToLoad1=0
+LoadClasses1=
+NumberOfClassesToFind1=4
+FindClasses1=A,B,C,E
+Results1=false,false,false,false

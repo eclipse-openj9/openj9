@@ -1,0 +1,117 @@
+<!--
+  Copyright (c) 2017, 2017 IBM Corp. and others
+ 
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+ 
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+ 
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<project name="generate-ddr" default="generate-all" basedir=".">
+
+	<target name="-init-for-eclipse" if="eclipse.running">
+		<eclipse.convertPath property="DDR_Artifacts.loc" resourcepath="/DDR_Artifacts" />
+		<eclipse.convertPath property="DDR_VM.loc" resourcepath="/DDR_VM" />
+	</target>
+
+	<target name="-init-no-eclipse" unless="eclipse.running">
+		<fail message="DDR_Artifacts.loc must be defined." unless="DDR_Artifacts.loc" />
+		<fail message="DDR_VM.loc must be defined." unless="DDR_VM.loc" />
+
+		<!-- Refresh does nothing when not running under eclipse. -->
+		<macrodef name="eclipse.refreshLocal">
+			<attribute name="resource" />
+			<sequential />
+		</macrodef>
+	</target>
+
+	<target name="-init" depends="-init-for-eclipse, -init-no-eclipse">
+		<path id="tools.class.path">
+			<pathelement path="${DDR_VM.loc}/bin" />
+		</path>
+	</target>
+
+	<target name="generate-all" depends="-init">
+		<generate-package version="29" />
+	</target>
+
+	<macrodef name="generate-package">
+		<attribute name="version" />
+		<attribute name="superset" default="superset.ibuild.dat" />
+		<sequential>
+			<generate-structure version="@{version}" superset="@{superset}" />
+
+			<!--
+			Refresh now so eclipse can begin compiling the structure stubs which
+			are required by the pointer types we're about to generate.
+			-->
+			<eclipse.refreshLocal resource="/DDR_VM-closed" />
+
+			<generate-pointers version="@{version}" superset="@{superset}" />
+
+			<!-- Refresh again so eclipse can see the final content. -->
+			<eclipse.refreshLocal resource="/DDR_VM-closed" />
+		</sequential>
+	</macrodef>
+
+	<macrodef name="generate-pointers">
+		<attribute name="version" />
+		<attribute name="superset" />
+		<sequential>
+			<java classname="com.ibm.j9ddr.tools.PointerGenerator" classpathref="tools.class.path" fork="true">
+				<jvmarg value="-Dfile.encoding=UTF-8" />
+
+				<arg value="-o" />
+				<arg value="${DDR_VM.loc}/src" />
+
+				<arg value="-p" />
+				<arg value="com.ibm.j9ddr.vm@{version}.pointer.generated" />
+
+				<arg value="-f" />
+				<arg value="${DDR_Artifacts.loc}/supersets/@{version}/" />
+
+				<arg value="-s" />
+				<arg value="@{superset}" />
+
+				<arg value="-v" />
+				<arg value="@{version}" />
+			</java>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="generate-structure">
+		<attribute name="version" />
+		<attribute name="superset" />
+		<sequential>
+			<java classname="com.ibm.j9ddr.tools.StructureStubGenerator" classpathref="tools.class.path" fork="true">
+				<jvmarg value="-Dfile.encoding=UTF-8" />
+
+				<arg value="-o" />
+				<arg value="${DDR_VM.loc}/src" />
+
+				<arg value="-p" />
+				<arg value="com.ibm.j9ddr.vm@{version}.structure" />
+
+				<arg value="-f" />
+				<arg value="${DDR_Artifacts.loc}/supersets/@{version}/" />
+
+				<arg value="-s" />
+				<arg value="@{superset}" />
+			</java>
+		</sequential>
+	</macrodef>
+
+</project>

@@ -1,0 +1,18 @@
+# java .class files
+*.class
+
+# misc auto generated folders
+bin
+test_output_*
+
+# misc auto generated files
+autoGenTest.mk
+TestConfig/jvmTest.mk
+TestConfig/specToPlat.mk
+TestConfig/*.log
+TestConfig/tempTestTargetResult
+TestConfig/failedtargets.mk
+.DS_Store
+
+# misc downloaded dependent files
+TestConfig/lib/*.jar

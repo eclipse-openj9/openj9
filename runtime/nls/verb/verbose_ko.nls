@@ -1,0 +1,347 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the verbose module.
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Note to translators:
+#
+# This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
+# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
+# change their order. For instance, in a message like "from %d to %s", %d
+# MUST appear before %s in any translated message, or a run-time crash
+# could occur. This is a known limitation of the product.
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=VERB
+J9NLS.HEADER=verbosenls.h
+
+# Note: %.*s is the thread name
+# Note: %zd/%zd is two numbers, indicating how much stack was used on each stack
+J9NLS_VERB_STACK_USAGE=\uc0c1\uc138 \uc2a4\ud0dd: \"%2$.*1$s\"\uc740(\ub294) Java/C \uc2a4\ud0dd\uc5d0\uc11c %3$zd/%4$zd\ubc14\uc774\ud2b8\ub97c \uc0ac\uc6a9\ud588\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VERB_STACK_USAGE.sample_input_1=11
+J9NLS_VERB_STACK_USAGE.sample_input_2=Gc Slave Thread
+J9NLS_VERB_STACK_USAGE.sample_input_3=232
+J9NLS_VERB_STACK_USAGE.sample_input_4=2308
+J9NLS_VERB_STACK_USAGE.explanation=Indicates how much stack was used on each stack for a thread when -verbose:stack is specified
+J9NLS_VERB_STACK_USAGE.system_action=None
+J9NLS_VERB_STACK_USAGE.user_response=None
+# END NON-TRANSLATABLE
+
+# Unused
+J9NLS_VERB_UNNAMED_THREAD=
+# START NON-TRANSLATABLE
+J9NLS_VERB_UNNAMED_THREAD.explanation=
+J9NLS_VERB_UNNAMED_THREAD.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_VERB_UNNAMED_THREAD.user_response=
+# END NON-TRANSLATABLE
+
+# Note: %zd/%zd is two numbers, indicating how much stack was used on each stack
+J9NLS_VERB_MAX_STACK_USAGE=\uc0c1\uc138 \uc2a4\ud0dd: Java/C \uc2a4\ud0dd\uc5d0\uc11c \ucd5c\ub300 \uc2a4\ud0dd\uc73c\ub85c %1$zd/%2$zd\ubc14\uc774\ud2b8\uac00 \uc0ac\uc6a9\ub418\uc5c8\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VERB_MAX_STACK_USAGE.sample_input_1=536870912
+J9NLS_VERB_MAX_STACK_USAGE.sample_input_2=268435456
+J9NLS_VERB_MAX_STACK_USAGE.explanation=Indicates the largest stack usage for each stack for all threads when -verbose:stack is specified
+J9NLS_VERB_MAX_STACK_USAGE.system_action=None
+J9NLS_VERB_MAX_STACK_USAGE.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES=\uc624\ub958: -Xverbosegclog\uc758 \ud30c\uc77c \uc218\ub294 0\ubcf4\ub2e4 \ucee4\uc57c \ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES.explanation=The -Xverbosegclog option was specified with 0 files or the option could not be parsed
+J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES.system_action=The JVM will terminate
+J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES.user_response=Correct the command line option
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_XVERBOSEGCLOG_NUM_CYCLES=\uc624\ub958: -Xverbosegclog\uc758 \uc8fc\uae30 \uc218\ub294 0\ubcf4\ub2e4 \ucee4\uc57c \ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VERB_XVERBOSEGCLOG_NUM_CYCLES.explanation=The -Xverbosegclog option was specified with 0 cycles or the option could not be parsed
+J9NLS_VERB_XVERBOSEGCLOG_NUM_CYCLES.system_action=The JVM will terminate
+J9NLS_VERB_XVERBOSEGCLOG_NUM_CYCLES.user_response=Correct the command line option
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_XVERBOSEGCLOG_FILENAME=\uc624\ub958: -Xverbosegclog\uc5d0 \ud30c\uc77c \uc774\ub984\uc774 \ub204\ub77d\ub418\uc5c8\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VERB_XVERBOSEGCLOG_FILENAME.explanation=The -Xverbosegclog option was specified with an empty filename
+J9NLS_VERB_XVERBOSEGCLOG_FILENAME.system_action=The JVM will terminate
+J9NLS_VERB_XVERBOSEGCLOG_FILENAME.user_response=Correct the command line option
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_FAILED_TO_INITIALIZE=\ucd08\uae30\ud654\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VERB_FAILED_TO_INITIALIZE.explanation=The verbose GC logging facility could not be initialized
+J9NLS_VERB_FAILED_TO_INITIALIZE.system_action=The JVM will terminate
+J9NLS_VERB_FAILED_TO_INITIALIZE.user_response=None
+# END NON-TRANSLATABLE
+
+#the following are used in 'java -verbose:sizes'
+#the text in these messages should closely match the text displayed by 'java -X'
+J9NLS_VERB_SIZES_XMSO=\uc6b4\uc601 \uccb4\uc81c \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ud06c\uae30
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XMSO.explanation=NOTAG
+J9NLS_VERB_SIZES_XMSO.system_action=
+J9NLS_VERB_SIZES_XMSO.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XISS=java \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ucd08\uae30 \ud06c\uae30
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XISS.explanation=NOTAG
+J9NLS_VERB_SIZES_XISS.system_action=
+J9NLS_VERB_SIZES_XISS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSSI=java \uc2a4\ub808\ub4dc \uc2a4\ud0dd \uc99d\ubd84
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSSI.explanation=NOTAG
+J9NLS_VERB_SIZES_XSSI.system_action=
+J9NLS_VERB_SIZES_XSSI.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSS_GROWABLE=java \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ucd5c\uc18c \ud06c\uae30
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSS_GROWABLE.explanation=NOTAG
+J9NLS_VERB_SIZES_XSS_GROWABLE.system_action=
+J9NLS_VERB_SIZES_XSS_GROWABLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSS_NONGROWABLE=java \uc2a4\ub808\ub4dc \uc2a4\ud0dd \ud06c\uae30
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSS_NONGROWABLE.explanation=NOTAG
+J9NLS_VERB_SIZES_XSS_NONGROWABLE.system_action=
+J9NLS_VERB_SIZES_XSS_NONGROWABLE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XMCA=RAM \ud074\ub798\uc2a4 \uc138\uadf8\uba3c\ud2b8 \uc99d\ubd84
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XMCA.explanation=NOTAG
+J9NLS_VERB_SIZES_XMCA.system_action=
+J9NLS_VERB_SIZES_XMCA.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XMCO=ROM \ud074\ub798\uc2a4 \uc138\uadf8\uba3c\ud2b8 \uc99d\ubd84
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XMCO.explanation=NOTAG
+J9NLS_VERB_SIZES_XMCO.system_action=
+J9NLS_VERB_SIZES_XMCO.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XMX=\ucd5c\uc18c \uba54\ubaa8\ub9ac
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XMX.explanation=NOTAG
+J9NLS_VERB_SIZES_XMX.system_action=
+J9NLS_VERB_SIZES_XMX.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMX=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \ud06c\uae30
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMX.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMX.system_action=
+J9NLS_VERB_SIZES_XSCMX.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMINAOT=AOT\uc6a9\uc73c\ub85c \uc608\uc57d\ub41c \ucd5c\uc18c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMINAOT.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMINAOT.system_action=
+J9NLS_VERB_SIZES_XSCMINAOT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMAXAOT=AOT\uc6a9\uc73c\ub85c \ud5c8\uc6a9\ub418\ub294 \ucd5c\ub300 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMAXAOT.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMAXAOT.system_action=
+J9NLS_VERB_SIZES_XSCMAXAOT.user_response=
+# END NON-TRANSLATABLE
+
+#the following are used in 'java -verbose:class' when invalid class path entry is detected
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uacbd\ub85c \ud56d\ubaa9: %s(\ud30c\uc77c I/O \uc2e4\ud328)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR.sample_input_1=/path/java/user.jar
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR.explanation=The specified ZIP file could not be opened. It may not exist or the file permissions may not allow access by the JVM.
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_OPEN_ERROR.user_response=Check if the specified ZIP file exists and has appropriate permissions
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uacbd\ub85c \ud56d\ubaa9: %s(\ud30c\uc77c \uc77d\uae30 \uc2e4\ud328)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR.sample_input_1=/path/java/user.jar
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR.explanation=Part of the specified ZIP file could not be read. The file may be corrupt or truncated.
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_READ_ERROR.user_response=Examine the corrupt or truncated ZIP file and replace it with a valid copy
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_CORRUPT=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uacbd\ub85c \ud56d\ubaa9: %s(\ud30c\uc77c \uc190\uc0c1)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_CORRUPT.sample_input_1=/path/java/user.jar
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_CORRUPT.explanation=The specified ZIP file is corrupt
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_CORRUPT.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_FILE_CORRUPT.user_response=Examine the corrupt ZIP file and replace it with a valid copy
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNSUPPORTED_FILE_TYPE=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uacbd\ub85c \ud56d\ubaa9: %s(\uc9c0\uc6d0\ub418\uc9c0 \uc54a\ub294 \ud30c\uc77c \uc720\ud615)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNSUPPORTED_FILE_TYPE.sample_input_1=/path/java/user.txt
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNSUPPORTED_FILE_TYPE.explanation=The specified ZIP file type is unsupported
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNSUPPORTED_FILE_TYPE.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNSUPPORTED_FILE_TYPE.user_response=Replace the specified ZIP file with a supported ZIP file type
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNKNOWN_FILE_TYPE=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uacbd\ub85c \ud56d\ubaa9: %s(\uc54c \uc218 \uc5c6\ub294 \ud30c\uc77c \uc720\ud615)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNKNOWN_FILE_TYPE.sample_input_1=/path/java/user.jjj
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNKNOWN_FILE_TYPE.explanation=The specified ZIP file type is unknown
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNKNOWN_FILE_TYPE.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_ZIP_UNKNOWN_FILE_TYPE.user_response=Replace the specified ZIP file with a supported ZIP file type
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uacbd\ub85c \ud56d\ubaa9: %s(\uc54c \uc218 \uc5c6\ub294 \uc624\ub958)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.sample_input_1=/path/java/user.jar
+J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.explanation=An unexpected error occurred while reading the specified ZIP file
+J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.user_response=If the problem persists then contact your IBM Service representative
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_MISSING_ROM_CLASSES=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uacbd\ub85c \ud56d\ubaa9: %s(jxe\uc5d0 rom.classes \ub204\ub77d)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_MISSING_ROM_CLASSES.sample_input_1=/path/java/user.jxe
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_MISSING_ROM_CLASSES.explanation=A rom.classes entry could not be found in the specified JXE file
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_MISSING_ROM_CLASSES.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_MISSING_ROM_CLASSES.user_response=Examine the JXE file and replace it with a valid copy
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_CORRUPT_IMAGE_HEADER=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uacbd\ub85c \ud56d\ubaa9: %s(jxe \uc190\uc0c1 \uc774\ubbf8\uc9c0 \ud5e4\ub354)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_CORRUPT_IMAGE_HEADER.sample_input_1=/path/java/user.jxe
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_CORRUPT_IMAGE_HEADER.explanation=The specified JXE file had a corrupt header
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_CORRUPT_IMAGE_HEADER.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_CORRUPT_IMAGE_HEADER.user_response=Examine the corrupt JXE file and replace it with a valid copy
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED=\uc62c\ubc14\ub974\uc9c0 \uc54a\uc740 \ud074\ub798\uc2a4 \uacbd\ub85c \ud56d\ubaa9: %s(\ubc18\ub300\ud3b8 \ub05d\uc758 jxe\uac00 \uc9c0\uc6d0\ub418\uc9c0 \uc54a\uc74c)
+# START NON-TRANSLATABLE
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.sample_input_1=/path/java/user.jxe
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.explanation=The specified JXE file had incorrect endianess for this platform
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
+J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_OE_NOT_SUPPORTED.user_response=Replace the JXE file with one of the correct endianess
+# END NON-TRANSLATABLE
+
+# Note: %.*s is the thread name
+# Note: %zd/%zd is two numbers, indicating how much stack was used on each stack
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS=\uc0c1\uc138 \uc2a4\ud0dd: \"%2$.*1$s\" \uc2a4\ub808\ub4dc \uc2e4\ud589 \uc2dc Java/C \uc2a4\ud0dd\uc5d0\uc11c %3$zd/%4$zd\ubc14\uc774\ud2b8 \uc0ac\uc6a9
+# START NON-TRANSLATABLE
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.explanation=Indicates how much stack was used on each stack for a thread when -verbose:stack is specified
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.system_action=None
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.user_response=None
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_1=11
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_2=Gc Slave Thread
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_3=232
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS.sample_input_4=2308
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1=\uc0c1\uc138 \uc2a4\ud0dd: \ud604\uc7ac \uc2e4\ud589 \uc911\uc778 \uc2a4\ub808\ub4dc\uc758 \uc2a4\ud0dd \uc815\ubcf4\ub97c \uc778\uc1c4\ud560 \uc218 \uc5c6\uc74c
+# START NON-TRANSLATABLE
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.explanation=Indicates that the JVM was unable to obtain a lock to iterate over the currently running threads
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.system_action=None
+J9NLS_VERB_STACK_USAGE_FOR_RUNNING_THREADS_FAILURE_1.user_response=None
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMINJIT=JIT\uc758 \ucd5c\uc18c \uc608\uc57d \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMINJIT.explanation=NOTISSUED
+J9NLS_VERB_SIZES_XSCMINJIT.system_action=
+J9NLS_VERB_SIZES_XSCMINJIT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMAXJIT=JIT\uc758 \ucd5c\ub300 \ud5c8\uc6a9 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMAXJIT.explanation=NOTISSUED
+J9NLS_VERB_SIZES_XSCMAXJIT.system_action=
+J9NLS_VERB_SIZES_XSCMAXJIT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCDMX=\ud074\ub798\uc2a4 \ub514\ubc84\uadf8 \uc18d\uc131\uc744 \uc704\ud574 \uc608\uc57d\ub41c \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCDMX.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCDMX.system_action=
+J9NLS_VERB_SIZES_XSCDMX.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMINJITDATA=JIT \ub370\uc774\ud130\uc758 \ucd5c\uc18c \uc608\uc57d \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMINJITDATA.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMINJITDATA.system_action=
+J9NLS_VERB_SIZES_XSCMINJITDATA.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMAXJITDATA=JIT \ub370\uc774\ud130\uc758 \ucd5c\ub300 \ud5c8\uc6a9 \uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uacf5\uac04
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMAXJITDATA.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMAXJITDATA.system_action=
+J9NLS_VERB_SIZES_XSCMAXJITDATA.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XLP_CODECACHE=JIT \ucf54\ub4dc \uce90\uc2dc\uc758 \ud070 \ud398\uc774\uc9c0 \ud06c\uae30
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XLP_CODECACHE.explanation=NOTAG
+J9NLS_VERB_SIZES_XLP_CODECACHE.system_action=
+J9NLS_VERB_SIZES_XLP_CODECACHE.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE=JIT \ucf54\ub4dc \uce90\uc2dc\uc5d0 \uc0ac\uc6a9 \uac00\ub2a5\ud55c \ud070 \ud398\uc774\uc9c0 \ud06c\uae30:
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE.explanation=NOTAG
+J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE.system_action=
+J9NLS_VERB_SIZES_AVAILABLE_XLP_CODECACHE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XMCRS=\uc555\ucd95\ub41c \ucc38\uc870 \uba54\ud0c0\ub370\uc774\ud130 \ucd08\uae30 \ud06c\uae30
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XMCRS.explanation=NOTAG
+J9NLS_VERB_SIZES_XMCRS.system_action=
+J9NLS_VERB_SIZES_XMCRS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \ud06c\uae30
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.explanation=NOTAG
+J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.system_action=
+J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_VERB_SIZES_XSCMX_V1=\uacf5\uc720 \ud074\ub798\uc2a4 \uce90\uc2dc \uc18c\ud504\ud2b8 \ucd5c\ub300 \ud06c\uae30
+# START NON-TRANSLATABLE
+J9NLS_VERB_SIZES_XSCMX_V1.explanation=NOTAG
+J9NLS_VERB_SIZES_XSCMX_V1.system_action=
+J9NLS_VERB_SIZES_XSCMX_V1.user_response=
+# END NON-TRANSLATABLE

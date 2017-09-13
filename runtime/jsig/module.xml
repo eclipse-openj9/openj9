@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+	Copyright (c) 2006, 2017 IBM Corp. and others
+	
+	This program and the accompanying materials are made available under
+	the terms of the Eclipse Public License 2.0 which accompanies this
+	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+	or the Apache License, Version 2.0 which accompanies this distribution and
+	is available at https://www.apache.org/licenses/LICENSE-2.0.
+	
+	This Source Code may also be made available under the following
+	Secondary Licenses when the conditions for such availability set
+	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+	General Public License, version 2 with the GNU Classpath
+	Exception [1] and GNU General Public License, version 2 with the
+	OpenJDK Assembly Exception [2].
+	
+	[1] https://www.gnu.org/software/classpath/license.html
+	[2] http://openjdk.java.net/legal/assembly-exception.html
+
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<module xmlns:xi="http://www.w3.org/2001/XInclude">
+        
+        
+	<exports group="all">
+		<export name="__sigactionset">
+			<include-if condition="spec.zos_390.*"/>
+		</export>
+		<export name="__sysv_signal">
+			<include-if condition="spec.linux_arm.*"/>
+			<include-if condition="spec.linux_x86.*"/>
+			<include-if condition="spec.linux_ppc.*"/>
+			<include-if condition="spec.linux_390.*"/>
+		</export>
+		<export name="bsd_signal">
+			<exclude-if condition="spec.win_x86.*"/>
+		</export>
+		<export name="omrsig_handler" />
+		<export name="omrsig_primary_sigaction">
+			<exclude-if condition="spec.win_x86.*"/>
+		</export>
+		<export name="omrsig_primary_signal" />
+		<export name="sigaction">
+			<exclude-if condition="spec.win_x86.*"/>
+		</export>
+		<export name="sigignore">
+			<exclude-if condition="spec.win_x86.*"/>
+		</export>
+		<export name="signal" />
+		<export name="sigset">
+			<exclude-if condition="spec.win_x86.*"/>
+		</export>
+		<export name="ssignal">
+			<include-if condition="spec.linux_arm.*"/>
+			<include-if condition="spec.linux_x86.*"/>
+			<include-if condition="spec.linux_ppc.*"/>
+			<include-if condition="spec.linux_390.*"/>
+		</export>
+		<export name="sysv_signal">
+			<exclude-if condition="spec.win_x86.*"/>
+		</export>
+	</exports>
+
+	<objects group="all">
+		<object name="jsigimpl" />
+		<object name="jsigunix">
+			<exclude-if condition="spec.win_x86.*"/>
+		</object>
+	</objects>
+  
+	<!--
+	The "dirty" jsig library has been renamed to omrsigdirty so that we can
+	continue building it while also building the clean omrsig library.
+	omrsigdirty will not be bundled with the Java SDK.
+	-->
+	<artifact type="shared" name="omrsigdirty" loadgroup="top" appendrelease="false">
+		<include-if condition="spec.flags.module_jsig" />
+		<phase>core quick j2se</phase>
+		<exports>
+			<group name="all"/>
+		</exports>
+		<includes>
+			<include path="j9include"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+		</makefilestubs>
+		<vpaths>
+			<vpath pattern="%" path="win32" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.win_x86.*"/>
+			</vpath>
+			<vpath pattern="%" path="zos" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.zos_390.*"/>
+			</vpath>
+			<vpath pattern="%" path="aix" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.aix_ppc.*"/>
+			</vpath>
+			<vpath pattern="%" path="linux" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_arm.*"/>
+				<include-if condition="spec.linux_x86.*"/>
+				<include-if condition="spec.linux_ppc.*"/>
+				<include-if condition="spec.linux_390.*"/>
+			</vpath>
+			<vpath pattern="%" path="ztpf" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_ztpf.*"/>
+			</vpath>
+			<vpath pattern="%" path="unix" augmentIncludes="true" type="relativepath">
+				<exclude-if condition="spec.win_x86.*"/>
+			</vpath>
+			<vpath pattern="%" path="common" augmentIncludes="true" type="relativepath"/>
+		</vpaths>
+		<objects>
+			<group name="all"/>
+		</objects>
+	</artifact>
+</module>

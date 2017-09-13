@@ -1,0 +1,1 @@
+ ./j9jit${uma.buildinfo.version.major}${uma.buildinfo.version.minor}.dll

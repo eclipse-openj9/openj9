@@ -1,0 +1,317 @@
+<!-- 
+	Copyright (c) 2009, 2017 IBM Corp. and others
+	
+	This program and the accompanying materials are made available under
+	the terms of the Eclipse Public License 2.0 which accompanies this
+	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+	or the Apache License, Version 2.0 which accompanies this distribution and
+	is available at https://www.apache.org/licenses/LICENSE-2.0.
+	
+	This Source Code may also be made available under the following
+	Secondary Licenses when the conditions for such availability set
+	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+	General Public License, version 2 with the GNU Classpath
+	Exception [1] and GNU General Public License, version 2 with the
+	OpenJDK Assembly Exception [2].
+	
+	[1] https://www.gnu.org/software/classpath/license.html
+	[2] http://openjdk.java.net/legal/assembly-exception.html
+
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<exports group="se6_vm-side_natives">
+	<export name="Java_com_ibm_oti_vm_BootstrapClassLoader_addJar" />
+	<export name="Java_com_ibm_oti_vm_VM_dumpString" />
+	<export name="Java_com_ibm_oti_vm_VM_getClassNameImpl" />
+	<export name="Java_com_ibm_oti_vm_VM_getNonBootstrapClassLoader" />
+	<export name="Java_com_ibm_oti_vm_VM_getVMArgsImpl" />
+	<export name="Java_com_ibm_oti_vm_VM_globalGC" />
+	<export name="Java_com_ibm_oti_vm_VM_localGC" />
+	<export name="J9VMDllMain" />
+	<export name="Java_com_ibm_jvm_Dump_HeapDumpImpl" />
+	<export name="Java_com_ibm_jvm_Dump_JavaDumpImpl" />
+	<export name="Java_com_ibm_jvm_Dump_SystemDumpImpl" />
+	<export name="Java_com_ibm_jvm_Dump_SnapDumpImpl" />
+	<export name="Java_com_ibm_jvm_Dump_setDumpOptionsImpl" />
+	<export name="Java_com_ibm_jvm_Dump_queryDumpOptionsImpl" />
+	<export name="Java_com_ibm_jvm_Dump_resetDumpOptionsImpl" />
+	<export name="Java_com_ibm_jvm_Dump_triggerDumpsImpl" />
+	<export name="Java_com_ibm_jvm_Dump_isToolDump" />
+	<export name="Java_com_ibm_jvm_Log_QueryOptionsImpl" />
+	<export name="Java_com_ibm_jvm_Log_SetOptionsImpl" />
+	
+	
+	<export name="Java_com_ibm_jvm_Trace_initTraceImpl" />
+	<export name="Java_com_ibm_jvm_Trace_registerApplicationImpl" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__II" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2Ljava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2Ljava_lang_String_2Ljava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2Ljava_lang_Object_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_Object_2Ljava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2I" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIILjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2J" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIJLjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2B" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIBLjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2C" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IICLjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2F" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIFLjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2D" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIDLjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_Object_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_Object_2Ljava_lang_Object_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__III" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIII" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIIII" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIJ" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIJJ" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIJJJ" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIB" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIBB" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIBBB" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIC" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IICC" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IICCC" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIF" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIFF" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIFFF" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IID" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIDD" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIDDD" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2Ljava_lang_Object_2Ljava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_Object_2Ljava_lang_String_2Ljava_lang_Object_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2ILjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIILjava_lang_String_2I" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2JLjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIJLjava_lang_String_2J" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2BLjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIBLjava_lang_String_2B" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2CLjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IICLjava_lang_String_2C" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2FLjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIFLjava_lang_String_2F" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IILjava_lang_String_2DLjava_lang_String_2" />
+	<export name="Java_com_ibm_jvm_Trace_traceImpl__IIDLjava_lang_String_2D" />
+	<export name="Java_com_ibm_jvm_Trace_setImpl" />
+	<export name="Java_com_ibm_jvm_Trace_snapImpl" />
+	<export name="Java_com_ibm_jvm_Trace_suspendImpl" />
+	<export name="Java_com_ibm_jvm_Trace_resumeImpl" />
+	<export name="Java_com_ibm_jvm_Trace_suspendThisImpl" />
+	<export name="Java_com_ibm_jvm_Trace_resumeThisImpl" />
+	<export name="Java_com_ibm_jvm_Trace_getMicros" />
+	
+	<export name="Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getLoadedClassCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getTotalLoadedClassCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getUnloadedClassCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_isVerboseImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_setVerboseImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_CompilationMXBeanImpl_getTotalCompilationTimeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_CompilationMXBeanImpl_isCompilationTimeMonitoringSupportedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_CompilationMXBeanImpl_isJITEnabled" />
+	<export name="Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getCollectionCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getCollectionTimeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getLastCollectionEndTimeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getLastCollectionStartTimeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getTotalMemoryFreedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getTotalCompactsImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_GarbageCollectorMXBeanImpl_getMemoryUsedImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedGarbageCollectorMXBeanImpl_getLastGcInfoImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryManagerMXBeanImpl_isManagedPoolImpl" />	
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryManagers" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryPools" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCModeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getHeapMemoryUsageImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaxHeapSizeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaxHeapSizeLimitImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMinHeapSizeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getNonHeapMemoryUsageImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getObjectPendingFinalizationCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_isSetMaxHeapSizeSupportedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_isVerboseImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setMaxHeapSizeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setVerboseImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCMasterThreadCpuUsedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCSlaveThreadsCpuUsedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaximumGCThreadsImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getCurrentGCThreadsImpl" />
+	<export name="Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificationLoop" />
+	<export name="Java_com_ibm_lang_management_internal_MemoryNotificationThreadShutdown_sendShutdownNotification" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getCollectionUsageImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getCollectionUsageThresholdCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getCollectionUsageThresholdImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getPeakUsageImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getPreCollectionUsageImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getUsageImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getUsageThresholdCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getUsageThresholdImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_isCollectionUsageThresholdExceededImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_isCollectionUsageThresholdSupportedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_isUsageThresholdExceededImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_isUsageThresholdSupportedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_resetPeakUsageImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_setCollectionUsageThresholdImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_setUsageThresholdImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessingCapacityImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getTotalPhysicalMemoryImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_isDLPAREnabled" />
+	<export name="Java_com_ibm_java_lang_management_internal_OperatingSystemMXBeanImpl_getSystemLoadAverageImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessCpuTimeImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getFreePhysicalMemorySizeImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessVirtualMemorySizeImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessPrivateMemorySizeImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessPhysicalMemorySizeImpl" />
+	<export name="Java_com_ibm_lang_management_internal_OperatingSystemNotificationThread_processNotificationLoop" />
+	<export name="Java_com_ibm_lang_management_internal_OperatingSystemNotificationThreadShutdown_sendShutdownNotification" />
+	<export name="Java_com_ibm_lang_management_internal_SysinfoCpuTime_getCpuUtilizationImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getNameImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getStartTimeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getUptimeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_isBootClassPathSupportedImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getProcessIDImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_findMonitorDeadlockedThreadsImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getAllThreadIdsImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getDaemonThreadCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getPeakThreadCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getThreadCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getThreadCpuTimeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getThreadUserTimeImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getTotalStartedThreadCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_isCurrentThreadCpuTimeSupportedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_isThreadContentionMonitoringEnabledImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_isThreadContentionMonitoringSupportedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_isThreadCpuTimeEnabledImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_isThreadCpuTimeSupportedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_resetPeakThreadCountImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_setThreadContentionMonitoringEnabledImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_setThreadCpuTimeEnabledImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getThreadInfoImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_isObjectMonitorUsageSupportedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_isSynchronizerUsageSupportedImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_findDeadlockedThreadsImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getMultiThreadInfoImpl" />
+	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl" />
+	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getAnnotationsData__Ljava_lang_reflect_Field_2" />
+	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getAnnotationsData__Ljava_lang_reflect_Constructor_2" />
+	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getAnnotationsData__Ljava_lang_reflect_Method_2" />
+	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getParameterAnnotationsData__Ljava_lang_reflect_Constructor_2" />
+	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getParameterAnnotationsData__Ljava_lang_reflect_Method_2" />
+	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getDefaultValueData" />
+	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getConstantPool" />
+	<export name="Java_java_lang_Class_getDeclaredAnnotationsData" />
+	<export name="Java_com_ibm_oti_shared_SharedAbstractHelper_getIsVerboseImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassAbstractHelper_initializeShareableClassloaderImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_freeSpaceBytesImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassStatistics_maxSizeBytesImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_findSharedClassImpl2" />
+	<export name="Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_storeSharedClassImpl2" />
+	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl2" />
+	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange2" />
+	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_storeSharedClassImpl2" />
+	<export name="Java_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl3" />
+	<export name="Java_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl3" />
+	<export name="Java_com_ibm_oti_shared_SharedDataHelperImpl_findSharedDataImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedDataHelperImpl_storeSharedDataImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassUtilities_init" />
+	<export name="Java_com_ibm_oti_shared_SharedClassUtilities_getSharedCacheInfoImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassUtilities_destroySharedCacheImpl" />
+	<export name="Java_com_ibm_oti_shared_SharedClassURLHelperImpl_init" />
+	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_init" />
+	<export name="Java_com_ibm_oti_shared_Shared_isSharingEnabledImpl" />
+	<export name="Java_com_ibm_oti_vm_VM_allInstances" />
+	<export name="Java_com_ibm_oti_vm_VM_getClassPathCount" />
+	<export name="Java_com_ibm_oti_vm_VM_getPathFromClassPath" />
+	<export name="Java_com_ibm_oti_vm_VM_setCommonData" />
+	<export name="Java_java_lang_Class_isClassADeclaredClass" />
+	<export name="Java_java_lang_ClassLoader_defineClassImpl" />
+	<export name="Java_java_lang_ClassLoader_isVerboseImpl" />
+	<export name="Java_java_lang_ClassLoader_foundJavaAssertOption" />
+	<export name="Java_java_lang_Compiler_commandImpl" />
+	<export name="Java_java_lang_Compiler_compileClassesImpl" />
+	<export name="Java_java_lang_Compiler_compileClassImpl" />
+	<export name="Java_java_lang_Compiler_disable" />
+	<export name="Java_java_lang_Compiler_enable" />
+	<export name="Java_java_lang_J9VMInternals_newInstance" />
+	<export name="Java_java_lang_reflect_Proxy_defineClass0__Ljava_lang_ClassLoader_2Ljava_lang_String_2_3BII" />
+	<export name="Java_java_lang_reflect_Proxy_defineClass0__Ljava_lang_ClassLoader_2Ljava_lang_String_2_3BIILjava_lang_Object_2_3Ljava_lang_Object_2Ljava_lang_Object_2" />
+	<export name="Java_java_lang_reflect_Proxy_defineClassImpl" />
+	<export name="Java_java_lang_reflect_Array_multiNewArrayImpl" />
+	<export name="Java_java_lang_System_getEncoding" />
+	<export name="Java_java_lang_String_getSeed" />
+	<export name="Java_java_lang_System_getPropertyList" />
+	<export name="Java_java_lang_System_mapLibraryName" />
+	<export name="Java_java_lang_System_setFieldImpl" />
+	<export name="Java_java_lang_System_rasInitializeVersion" />
+	<export name="Java_java_lang_Thread_getStateImpl" />
+	<export name="Java_java_lang_Thread_setPriorityNoVMAccessImpl" />
+	<export name="Java_java_lang_Thread_setNameImpl" />
+	<export name="Java_java_lang_Thread_yield" />
+	<export name="Java_java_security_AccessController_initializeInternal" />
+	<export name="Java_java_lang_Class_allocateAndFillArray" />
+	<export name="Java_java_lang_Class_getConstructorImpl" />
+	<export name="Java_java_lang_Class_getConstructorsImpl" />
+	<export name="Java_java_lang_Class_getDeclaredClassesImpl" />
+	<export name="Java_java_lang_Class_getDeclaredConstructorImpl" />
+	<export name="Java_java_lang_Class_getDeclaredConstructorsImpl" />
+	<export name="Java_java_lang_Class_getDeclaredFieldsImpl" />
+	<export name="Java_java_lang_Class_getDeclaredFieldImpl" />
+	<export name="Java_java_lang_Class_getDeclaredMethodImpl" />
+	<export name="Java_java_lang_Class_getDeclaredMethodsImpl" />
+	<export name="Java_java_lang_Class_getDeclaringClassImpl" />
+	<export name="Java_java_lang_Class_getEnclosingObject" />
+	<export name="Java_java_lang_Class_getEnclosingObjectClass" />
+	<export name="Java_java_lang_Class_getFieldImpl" />
+	<export name="Java_java_lang_Class_getFieldsImpl" />
+	<export name="Java_java_lang_Class_getGenericSignature" />
+	<export name="Java_java_lang_Class_getMethodImpl" />
+	<export name="Java_java_lang_Class_getStackClasses" />
+	<export name="Java_java_lang_Class_getStaticMethodCountImpl" />
+	<export name="Java_java_lang_Class_getStaticMethodsImpl" />
+	<export name="Java_java_lang_Class_getVirtualMethodCountImpl" />
+	<export name="Java_java_lang_Class_getVirtualMethodsImpl" />
+	<export name="Java_java_lang_J9VMInternals_getStackTrace" />
+	<export name="Java_java_lang_J9VMInternals_dumpString" />
+	<export name="Java_java_lang_ref_Finalizer_runAllFinalizersImpl" />
+	<export name="Java_java_lang_ref_Finalizer_runFinalizationImpl" />
+	<export name="Java_java_lang_ref_Reference_reprocess" />
+	<export name="Java_java_lang_Thread_getStackTraceImpl" />
+	<export name="Java_java_lang_Thread_holdsLock" />
+	<export name="Java_java_lang_Thread_interruptImpl" />
+	<export name="Java_java_lang_Thread_resumeImpl" />
+	<export name="Java_java_lang_Thread_startImpl" />
+	<export name="Java_java_lang_Thread_stopImpl" />
+	<export name="Java_java_lang_Thread_suspendImpl" />
+	<export name="Java_java_security_AccessController_getAccSnapshot" />
+	<export name="Java_java_security_AccessController_getCallerPD" />
+	<export name="JCL_OnLoad" />
+	<export name="JNI_OnUnload" />
+	<export name="JVM_OnLoad" />
+
+	<export name="Java_com_ibm_virtualization_management_internal_HypervisorMXBeanImpl_isEnvironmentVirtualImpl"/>
+	<export name="Java_com_ibm_virtualization_management_internal_HypervisorMXBeanImpl_getVendorImpl"/>
+	
+	<export name="Java_com_ibm_lang_management_internal_ProcessorMXBeanImpl_getNumberCPUsImpl"/>
+	<export name="Java_com_ibm_lang_management_internal_ProcessorMXBeanImpl_setNumberEntitledCPUsImpl"/>
+
+	<export name="Java_sun_reflect_ConstantPool_getSize0" />
+	<export name="Java_sun_reflect_ConstantPool_getClassAt0" />
+	<export name="Java_sun_reflect_ConstantPool_getClassAtIfLoaded0" />
+	<export name="Java_sun_reflect_ConstantPool_getMethodAt0" />
+	<export name="Java_sun_reflect_ConstantPool_getMethodAtIfLoaded0" />
+	<export name="Java_sun_reflect_ConstantPool_getFieldAt0" />
+	<export name="Java_sun_reflect_ConstantPool_getFieldAtIfLoaded0" />
+	<export name="Java_sun_reflect_ConstantPool_getMemberRefInfoAt0" />
+	<export name="Java_sun_reflect_ConstantPool_getIntAt0" />
+	<export name="Java_sun_reflect_ConstantPool_getLongAt0" />
+	<export name="Java_sun_reflect_ConstantPool_getFloatAt0" />
+	<export name="Java_sun_reflect_ConstantPool_getDoubleAt0" />
+	<export name="Java_sun_reflect_ConstantPool_getStringAt0" />
+	<export name="Java_sun_reflect_ConstantPool_getUTF8At0" />
+
+	<export name="Java_com_ibm_virtualization_management_internal_GuestOS_retrieveProcessorUsageImpl"/>
+	<export name="Java_com_ibm_virtualization_management_internal_GuestOS_retrieveMemoryUsageImpl"/>
+	
+	<export name="Java_com_ibm_jvm_Stats_getStats" />
+</exports>

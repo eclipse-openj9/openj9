@@ -1,0 +1,2 @@
+Manifest-Version: 1.0
+Class-Path: F1.jar G.jar G1.jar

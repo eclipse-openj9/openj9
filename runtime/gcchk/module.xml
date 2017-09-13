@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+
+<!--
+  Copyright (c) 2006, 2017 IBM Corp. and others
+ 
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+ 
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+ 
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<module>
+	<exports group="all">
+		<export name="J9VMDllMain"/>
+	</exports>
+
+	<artifact type="shared" name="j9gcchk" bundle="j9vmall" loadgroup="tools">
+		<include-if condition="spec.flags.module_gcchk" />
+		<options>
+			<option name="requiresPrimitiveTable"/>
+			<option name="prototypeHeaderFileNames" data="j9protos.h"/>
+			<option name="isCPlusPlus"/>
+			<option name="dllDescription" data="CHECK_GC"/>
+		</options>
+		<phase>core j2se</phase>
+		<exports>
+			<group name="all"/>
+		</exports>
+		<flags>
+			<flag name="USING_ANSI">
+				<include-if condition="spec.linux_ppc.*"/>
+			</flag>
+			<flag name="-fpeel-loops" asmflag="false" definition="false">
+				<include-if condition="spec.linux_x86.*"/>
+			</flag>
+			<flag name="/w34189" asmflag="false" definition="false">
+				<include-if condition="spec.win_x86.*"/>
+			</flag>
+		</flags>
+		<includes>
+			<include path="j9include"/>
+			<include path="j9oti"/>
+			<include path="j9gcbase"/>
+			<include path="$(OMR_DIR)/gc/base" type="relativepath"/>
+			<include path="j9gcstructs"/>
+			<include path="$(OMR_DIR)/gc/structs" type="relativepath"/>
+			<include path="j9gcstats"/>
+			<include path="$(OMR_DIR)/gc/stats" type="relativepath"/>
+			<include path="j9gcinclude"/>
+			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
+			<include path="j9gccheck"/>
+			<include path="j9gcgluejava"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+		</makefilestubs>
+		<libraries>
+			<library name="j9util"/>
+			<library name="j9utilcore"/>
+			<library name="j9avl" type="external"/>
+			<library name="j9hashtable" type="external"/>
+			<library name="j9thr"/>
+			<library name="j9stackmap"/>
+			<library name="j9pool" type="external"/>
+			<library name="j9hookable"/>
+			<library name="j9gcbase"/>
+			<library name="omrgcbase" type="external"/>
+			<library name="j9gcstructs"/>
+			<library name="omrgcstructs" type="external"/>
+			<library name="j9gcstats"/>
+			<library name="omrgcstats" type="external"/>
+			<library name="j9gccheck"/>
+		</libraries>
+	</artifact>
+</module>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="us-ascii"?>
+
+<!-- This is the DTD for a template. A template is used to describe the contents of an
+     area of memory. The main thing it does is to define the offsets of various fields and
+     associate symbolic names with these fields. In this respect it is similar to the use
+     of a structure in C. XML is used to define the fields within the data structure.
+     <p>
+     The two main elements are item and array. Items may also contain items recursively. An
+     array is an array of items.
+     <p>
+     Items may also contain an optional child element that describes how
+     the contents should be represented, eg int, pointer, string etc.
+     <p>
+     (This was rewritten
+     recently because the <a href="oldtemplate.html">old version</a> was getting unwieldy -
+     I'm leaving the more exotic features out until I actually have a need for them!)).-->
+<!-- @root template -->
+
+<!-- This is the top level element for a template. It has one or more child elements. Each
+     of those elements in turn represent a complete version of the template. In this way
+     multiple versions of the same template may be represented. Each child element is
+     of type "item". -->
+<!ELEMENT template (item+)>
+
+<!-- This attribute specifies the name of the template. This name may not be one of
+     the built-in types. The name should be relative to this package, the fully qualified
+     type name with the package prepended will be created automatically.  -->
+<!ATTLIST template name NMTOKEN #REQUIRED>
+
+<!-- This element represents an item of data. An item may be either a simple primitive (eg
+     a byte) or it may be a complex data item containing further nested items. -->
+<!ELEMENT item (item | array | pointer)*>
+
+<!-- This attribute specifies the version number of this item. It is only intended for
+     use with a top-level item. The version number should consist of dot-separated numbers,
+     eg "1.4.2". -->
+<!ATTLIST item version NMTOKEN #IMPLIED>
+
+<!-- Specifies the name of this item. -->
+<!ATTLIST item name NMTOKEN #REQUIRED>
+
+<!-- Specifies the length of this item in bits. If this attribute is not specified there must
+     be child items that the length will be calculated from instead. -->
+<!ATTLIST item length NMTOKEN #IMPLIED>
+
+<!-- This attribute provides a short description of this element. -->
+<!ATTLIST item desc CDATA #IMPLIED>
+
+<!-- This attribute may be used to specify that this item is a union. In a union, all the
+     child items begin at offset zero from this item. -->
+<!ATTLIST item union (true | yes) #IMPLIED>
+
+<!-- This element defines an array of items. It must contain one child element defining the
+     item it is an array of. -->
+<!ELEMENT array (item)>
+
+<!-- Specifies the name of the array. -->
+<!ATTLIST array name NMTOKEN #REQUIRED>
+
+<!-- Length of the array in terms of the number of elements -->
+<!ATTLIST array length NMTOKEN #REQUIRED>
+
+<!-- See <a href="#item_desc">description above</a>. -->
+<!ATTLIST array desc CDATA #IMPLIED>
+
+<!-- This element is used to specify that its parent item should be represented as a pointer. -->
+<!ELEMENT pointer EMPTY>

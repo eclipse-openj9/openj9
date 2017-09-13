@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Copyright (c) 2006, 2017 IBM Corp. and others
+
+	This program and the accompanying materials are made available under
+	the terms of the Eclipse Public License 2.0 which accompanies this
+	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+	or the Apache License, Version 2.0 which accompanies this distribution and
+	is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+	This Source Code may also be made available under the following
+	Secondary Licenses when the conditions for such availability set
+	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+	General Public License, version 2 with the GNU Classpath
+	Exception [1] and GNU General Public License, version 2 with the
+	OpenJDK Assembly Exception [2].
+
+	[1] https://www.gnu.org/software/classpath/license.html
+	[2] http://openjdk.java.net/legal/assembly-exception.html
+
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<module>
+
+	<exports group="all">
+		<export name='JVM_OnLoad'/>
+		<export name='JVM_OnUnload'/>
+		<export name='J9VMDllMain'/>
+	</exports>
+
+	<artifact type="shared" name="j9vrb" bundle="jvm" loadgroup="">
+		<include-if condition="spec.flags.module_verbose" />
+		<options>
+			<option name="isRequired"/>
+			<option name="requiresPrimitiveTable"/>
+			<option name="prototypeHeaderFileNames" data="j9protos.h"/>
+			<option name="isCPlusPlus"/>
+			<option name="dllDescription" data="Verbose"/>
+		</options>
+		<phase>core j2se</phase>
+		<exports>
+			<group name="all"/>
+		</exports>
+
+		<flags>
+			<flag name="$(TR_HOST)">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</flag>
+			<flag name="TR_64Bit">
+				<include-if condition="spec.flags.J9VM_ENV_DATA64"/>
+			</flag>
+			<flag name="TR_HOST_64BIT">
+				<include-if condition="spec.flags.J9VM_ENV_DATA64"/>
+			</flag>
+			<flag name="TR_TARGET_64BIT">
+				<include-if condition="spec.flags.J9VM_ENV_DATA64"/>
+			</flag>
+			<flag name="TR_TARGET_32BIT">
+				<exclude-if condition="spec.flags.J9VM_ENV_DATA64"/>
+			</flag>
+			<flag name="TR_HOST_32BIT">
+				<exclude-if condition="spec.flags.J9VM_ENV_DATA64"/>
+			</flag>
+			<flag name="TR_TARGET_X86">
+				<include-if condition="spec.flags.module_jit_ia32"/>
+			</flag>
+			<flag name="TR_TARGET_POWER">
+				<include-if condition="spec.flags.module_jit_ppc"/>
+			</flag>
+			<flag name="TR_TARGET_S390">
+				<include-if condition="spec.flags.module_jit_s390"/>
+			</flag>
+			<flag name="J9VM_INTERP_STACKWALK_TRACING"/>
+			<flag name="J9VM_INTERP_LINEAR_STACKWALK_TRACING"/>
+		</flags>
+
+		<includes>
+			<include path="j9include"/>
+			<include path="j9oti"/>
+			<include path="j9shr_include"/>
+			<include path="j9gcinclude"/>
+			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
+			<include path="j9gcgluejava"/>
+			<include path="../tr.source/runtime" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="../tr.source/ibm/runtime" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="j9codert_vm">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="../tr.source/codegen" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="../tr.source/ibm/codegen" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="$(OMR_DIR)/compiler/codegen" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="$(OMR_DIR)/compiler" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="../tr.source/base" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="../tr.source/ibm/base" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="../tr.source" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="../tr.source/ibm" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="../tr.source/trj9/runtime" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+			<include path="../tr.source/trj9" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</include>
+		</includes>
+
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+			<makefilestub data="MethodMetaData.o: CFLAGS+=-std=gnu89">
+				<include-if condition="spec.linux_x86.*"/>
+			</makefilestub>
+		</makefilestubs>
+
+		<vpaths>
+			<vpath pattern="swalk.c" path="j9vm" augmentObjects="true"/>
+			<vpath pattern="linearswalk.c" path="j9vm" augmentObjects="true"/>
+			<vpath pattern="jswalk.c" path="j9codert_vm" augmentObjects="true">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</vpath>
+			<vpath pattern="MethodMetaData.c" path="../tr.source/trj9/runtime" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
+			</vpath>
+			<vpath pattern="ctsupport.c" path="j9jit_vm" augmentObjects="true">
+				<include-if condition="spec.flags.J9VM_INTERP_USE_SPLIT_SIDE_TABLES"/>
+			</vpath>
+		</vpaths>
+
+		<libraries>
+			<library name="j9stackmap"/>
+			<library name="j9util"/>
+			<library name="j9utilcore"/>
+			<library name="j9verutil"/>
+			<library name="j9avl" type="external"/>
+			<library name="j9hashtable" type="external"/>
+			<library name="j9pool" type="external"/>
+			<library name="j9thr"/>
+			<library name="j9gcbase"/>
+			<library name="omrgcbase" type="external"/>
+			<library name="j9gcstructs"/>
+			<library name="omrgcstructs" type="external"/>
+			<library name="j9gcstats"/>
+			<library name="omrgcstats" type="external"/>
+			<library name="j9gcapi"/>
+			<library name="omrglue" type="external"/>
+			<library name="j9modronstartup"/>
+			<library name="omrgcstartup" type="external"/>
+			<library name="omrgcverbose" type="external"/>
+			<library name="j9gcvrbjava"/>
+			<library name="j9gcvrbold"/>
+			<library name="j9gcvrbevents"/>
+			<library name="j9modronstandard">
+				<include-if condition="spec.flags.gc_modronStandard"/>
+			</library>
+			<library name="omrgcstandard" type="external">
+				<include-if condition="spec.flags.gc_modronStandard"/>
+			</library>
+			<library name="j9realtime">
+				<include-if condition="spec.flags.gc_realtime"/>
+			</library>
+			<library name="j9gcvlhgc">
+				<include-if condition="spec.flags.gc_vlhgc"/>
+			</library>
+			<library name="omrgcverbosehandlerstandard" type="external">
+				<include-if condition="spec.flags.gc_modronStandard" />
+			</library>
+			<library name="j9gcvrbhdlrstandardjava">
+				<include-if condition="spec.flags.gc_modronStandard" />
+			</library>
+			<library name="j9gcvrbhdlrrealtime">
+				<include-if condition="spec.flags.gc_realtime" />
+			</library>
+			<library name="j9gcvrbhdlrvlhgc">
+				<include-if condition="spec.flags.gc_vlhgc" />
+			</library>
+			<library name="j9hookable">
+				<include-if condition="spec.flags.J9VM_OPT_ZIP_SUPPORT"/>
+			</library>
+			<library name="j9zip">
+				<include-if condition="spec.flags.J9VM_OPT_ZIP_SUPPORT"/>
+			</library>
+		</libraries>
+	</artifact>
+</module>

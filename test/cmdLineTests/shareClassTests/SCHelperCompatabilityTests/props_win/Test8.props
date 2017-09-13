@@ -1,0 +1,9 @@
+Classpath=./AlphabetJar/Alphabet.jar;
+NumberOfClassesToLoad=3
+LoadClasses=D,E,F
+NumberOfUrls=1
+Url0=./AlphabetJar/Alphabet.jar;
+NumberOfClassesToFind0=3
+FindClasses0=D,E,F
+Results0=true,true,true
+BatchFileToRun="./batchfiles/StaleClassPathTest5.bat"

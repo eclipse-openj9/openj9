@@ -1,0 +1,102 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the Stack Mapper
+#
+# Note to developers:
+#
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# Every NLS message needs to have the following information provided:
+#
+# J9NLS_VM_SAMPLE_MESSAGE=This is a sample message that takes two parameters parameter 1 is a string  %1$s  parameter 2 is a number  %2$d
+# # START NON-TRANSLATABLE
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_1=string parameter
+# J9NLS_VM_SAMPLE_MESSAGE.sample_input_2=2
+# J9NLS_VM_SAMPLE_MESSAGE.explanation=Explanation for what the message means
+# J9NLS_VM_SAMPLE_MESSAGE.system_action=What will the JVM or more generally the system do when this message is output
+# J9NLS_VM_SAMPLE_MESSAGE.user_response=What should the user do when seeing this message
+# # END NON-TRANSLATABLE
+#
+# Note to translators:
+#
+# The messages in this module are used for unique numbers only.
+# No translation is necessary
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=SMAP
+J9NLS.HEADER=stackmapnls.h
+
+# Empty stack - pc=%d, bc=%x - aborting VM\n
+J9NLS_STACKMAP_EMPTY=
+# START NON-TRANSLATABLE
+J9NLS_STACKMAP_EMPTY.explanation=
+J9NLS_STACKMAP_EMPTY.system_action=
+J9NLS_STACKMAP_EMPTY.user_response=
+# END NON-TRANSLATABLE
+
+#new=%x old=%x a&t=%x\n
+#Local map warning
+J9NLS_STACKMAP_MISMATCH=
+# START NON-TRANSLATABLE
+J9NLS_STACKMAP_MISMATCH.explanation=
+J9NLS_STACKMAP_MISMATCH.system_action=
+J9NLS_STACKMAP_MISMATCH.user_response=
+# END NON-TRANSLATABLE
+
+#Breakpoint encountered
+J9NLS_STACKMAP_BREAKPOINT=
+# START NON-TRANSLATABLE
+J9NLS_STACKMAP_BREAKPOINT.explanation=
+J9NLS_STACKMAP_BREAKPOINT.system_action=
+J9NLS_STACKMAP_BREAKPOINT.user_response=
+# END NON-TRANSLATABLE
+
+#PC not found - exceptions walked
+J9NLS_STACKMAP_PC_NOT_FOUND_EXCEPTIONS_WALKED=
+# START NON-TRANSLATABLE
+J9NLS_STACKMAP_PC_NOT_FOUND_EXCEPTIONS_WALKED.explanation=
+J9NLS_STACKMAP_PC_NOT_FOUND_EXCEPTIONS_WALKED.system_action=
+J9NLS_STACKMAP_PC_NOT_FOUND_EXCEPTIONS_WALKED.user_response=
+# END NON-TRANSLATABLE
+
+#PC not found - no exceptions
+J9NLS_STACKMAP_PC_NOT_FOUND_NO_EXCEPTIONS=
+# START NON-TRANSLATABLE
+J9NLS_STACKMAP_PC_NOT_FOUND_NO_EXCEPTIONS.explanation=
+J9NLS_STACKMAP_PC_NOT_FOUND_NO_EXCEPTIONS.system_action=
+J9NLS_STACKMAP_PC_NOT_FOUND_NO_EXCEPTIONS.user_response=
+# END NON-TRANSLATABLE
+
+#Fell off end of bytecodes
+J9NLS_STACKMAP_FELL_OFF_END=
+# START NON-TRANSLATABLE
+J9NLS_STACKMAP_FELL_OFF_END.explanation=
+J9NLS_STACKMAP_FELL_OFF_END.system_action=
+J9NLS_STACKMAP_FELL_OFF_END.user_response=
+# END NON-TRANSLATABLE
+

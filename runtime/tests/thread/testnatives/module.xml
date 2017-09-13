@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2008, 2017 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<module>
+        
+	<exports group="all">
+		<export name="Java_com_ibm_thread_TestNatives_setSpinCounts"/>
+		<export name="Java_com_ibm_tests_perftests_jlm_JLMInfoHelper_jvmtiJlmSet"/>
+		<export name="Java_com_ibm_tests_perftests_jlm_JLMInfoHelper_jvmtiJlmDump"/>
+		<export name="Agent_OnAttach"/>
+		<export name="Agent_OnLoad"/>
+		<export name="Agent_OnUnload"/>
+		<export name="Java_com_ibm_j9_monitor_tests_TestNatives_getLockWordValue"/>
+		<export name="Java_com_ibm_j9_monitor_tests_TestNatives_getLockWordOffset"/>
+		<export name="Java_com_ibm_j9_monitor_tests_TestNatives_getHeaderSize"/>
+		<export name="Java_com_ibm_j9_monitor_tests_TestNatives_getLockwordSize"/>
+		<export name="Java_j9vm_test_thread_TestNatives_getSchedulingPolicy"/>
+		<export name="Java_j9vm_test_thread_TestNatives_getSchedulingPriority"/>
+		<export name="Java_j9vm_test_thread_TestNatives_getGCAlarmSchedulingPolicy"/>
+		<export name="Java_j9vm_test_thread_TestNatives_getGCAlarmSchedulingPriority"/>
+		<export name="Java_j9vm_test_softmx_TestNatives_setAggressiveGCPolicy"/>
+		<export name="Java_com_ibm_tests_tenant_helpers_StaticInitializationTestTargetStaticNativeMethod_runAStaticNativeMethod"/>
+		<export name="Java_com_ibm_tests_tenant_helpers_StaticInitializationTestTargetStaticNativeMethod2_runAStaticNativeMethod"/>
+		<export name="Java_com_ibm_tests_tenant_helpers_StaticInitializationTestTargetMethodInvokeNative1_trigger"/>
+		<export name="Java_com_ibm_tests_tenant_helpers_StaticInitializationTestTargetMethodInvokeNative2_trigger"/>
+	</exports>
+
+	<artifact type="shared" name="j9thrtestnatives">
+		<phase>core j2se</phase>
+		<exports>
+			<group name="all"/>
+		</exports> 
+		<includes>
+			<include path="j9include"/>
+			<include path="j9oti"/>
+			<include path="j9util"/>
+			<include path="$(OMR_DIR)/thread" type="relativepath"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+			<makefilestub data="UMA_DISABLE_DDRGEN=1"/>
+		</makefilestubs>
+		<libraries>
+			<library name="j9util"/>
+			<library name="j9utilcore"/>
+			<library name="j9thr"/>
+     	</libraries>
+	</artifact>
+</module>

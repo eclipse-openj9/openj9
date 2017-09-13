@@ -1,0 +1,40 @@
+//*******************************************************************************
+// Copyright (c) 2008, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//******************************************************************************
+
+Executable=j9dmp
+Submodules=j9vmutil,j9util
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_dump_J9VMDllMain_Event1 NoEnv Overhead=1 Level=1 Template="Dump component initialized for VM = %p"
+TraceEvent=Trc_dump_J9VMDllMain_Event2 NoEnv Overhead=1 Level=1 Template="Dump component terminating for VM = %p"
+TraceEvent=Trc_dump_reportDumpStart_Event1 NoEnv Overhead=1 Level=1 Template="JVM Requesting %s Dump using filename=%s"
+TraceEvent=Trc_dump_reportDumpError_Event2 NoEnv Overhead=1 Level=1 Template="Error in %s Dump: %s"
+TraceEvent=Trc_dump_reportDumpEnd_Event2 NoEnv Overhead=1 Level=1 Template="%s Dump written to filename=%s"
+TraceEvent=Trc_dump_reportDumpStart_FromEvent NoEnv Overhead=1 Level=1 Template="JVM requested %s Dump using filename=%s"
+TraceEvent=Trc_dump_reportDumpStart_FromEvent_NoFile NoEnv Overhead=1 Level=1 Template="JVM requested %s Dump"
+TraceEvent=Trc_dump_reportDumpStart_FromUser NoEnv Overhead=1 Level=1 Template="User requested %s Dump using filename=%s through %s"
+TraceEvent=Trc_dump_reportDumpStart_FromUser_NoFile NoEnv Overhead=1 Level=1 Template="User requested %s Dump through %s"
+TraceEvent=Trc_dump_prepareForDump_Event1 NoEnv Overhead=1 Level=1 Template="Preparing for dump, filename=%s"
+TraceEvent=Trc_dump_unwindAfterDump_Event1 NoEnv Overhead=1 Level=1 Template="Unwinding after dump, filename=%s"
+TraceEvent=Trc_dump_prepareForSilentDump_Event1 NoEnv Overhead=1 Level=4 Template="Preparing for silent dump"
+TraceEvent=Trc_dump_unwindAfterSilentDump_Event1 NoEnv Overhead=1 Level=4 Template="Unwinding after silent dump"
+

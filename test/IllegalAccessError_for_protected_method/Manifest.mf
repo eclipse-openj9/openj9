@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Main-Class: org.openj9.test.Testcase
+Premain-Class: org.openj9.test.Agent
+Can-Redefine-Classes: true
+Can-Retransform-Classes: true

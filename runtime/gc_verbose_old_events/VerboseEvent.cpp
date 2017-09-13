@@ -1,0 +1,56 @@
+
+/*******************************************************************************
+ * Copyright (c) 1991, 2014 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+
+#include "VerboseEvent.hpp"
+#include "GCExtensions.hpp"
+#include "VerboseEventStream.hpp"
+#include "VerboseManagerOld.hpp"
+
+class MM_EnvironmentBase;
+
+/**
+ * Wrapper function to MM_Forge::allocate
+ * Allocates storage of the passed size.
+ * @param size The size of storage to allocate.
+ */
+void*
+MM_VerboseEvent::create(OMR_VMThread *omrVMThread, UDATA size)
+{
+	MM_Forge *forge = MM_GCExtensions::getExtensions(omrVMThread)->getForge();
+	return forge->allocate(size, MM_AllocationCategory::DIAGNOSTIC, J9_GET_CALLSITE());
+}
+
+void*
+MM_VerboseEvent::create(J9VMThread *vmThread, UDATA size)
+{
+	return create((OMR_VMThread*)vmThread->omrVMThread, size);
+}
+
+/**
+ * Frees the storage allocated for this event.
+ */
+void
+MM_VerboseEvent::kill(MM_EnvironmentBase *env)
+{
+	_extensions->getForge()->free(this);
+}

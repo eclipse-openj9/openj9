@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2006, 2017 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<module xmlns:xi="http://www.w3.org/2001/XInclude">
+	<artifact type="shared" name="j9thr" loadgroup="">
+		<include-if condition="spec.flags.module_thread" />
+		<phase>core quick j2se</phase>
+
+		<!--
+		The build commands have been implemented in a separate makefile so that
+		UMA can be used to fill in the stream-specific suffix of the shared library name.
+		-->
+		<commands>
+			<command line="$(MAKE) -f threadshared.mk all UMA_PATH_TO_ROOT=$(UMA_PATH_TO_ROOT) OMR_DIR=$(OMR_DIR)" type="all"/>
+			<command line="$(MAKE) -f threadshared.mk clean UMA_PATH_TO_ROOT=$(UMA_PATH_TO_ROOT) OMR_DIR=$(OMR_DIR)" type="clean"/>
+			<command line="$(MAKE) -f threadshared.mk ddrgen UMA_PATH_TO_ROOT=$(UMA_PATH_TO_ROOT) OMR_DIR=$(OMR_DIR)" type="ddrgen"/>
+		</commands>
+	</artifact>
+</module>
+

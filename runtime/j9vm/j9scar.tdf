@@ -1,0 +1,335 @@
+// Copyright (c) 2006, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+
+Executable=j9scar
+Submodules=j9vmutil,j9util,pool,module
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_SC_VMInitStages_Event1 Overhead=1 Level=1 Template="Trace engine initialized for module jvm"
+
+// z/OS only
+TraceEntry=Trc_SC_GetStringPlatform_Entry Overhead=1 Level=1 Template="GetStringPlatform(%p,%p,%d,%s)"
+TraceExit=Trc_SC_GetStringPlatform_Exit Overhead=1 Level=1 Template="GetStringPlatform() -- return %d"
+
+// z/OS only
+TraceEntry=Trc_SC_GetStringPlatformLength_Entry Overhead=1 Level=1 Template="GetStringPlatformLength(%p,%p,%s)"
+TraceExit=Trc_SC_GetStringPlatformLength_Exit Overhead=1 Level=1 Template="GetStringPlatformLength() -- return %d, length=%d"
+
+TraceEntry=Trc_SC_fprintf_Entry NoEnv Overhead=1 Level=1 Template="jio_fprintf()"
+TraceExit=Trc_SC_fprintf_Exit NoEnv Overhead=1 Level=1 Template="jio_fprintf() -- return %d"
+TraceEntry=Trc_SC_snprintf_Entry NoEnv Overhead=1 Level=1 Template="jio_snprintf()"
+TraceExit=Trc_SC_snprintf_Exit NoEnv Overhead=1 Level=1 Template="jio_snprintf() -- return %d"
+TraceEntry=Trc_SC_vfprintf_Entry NoEnv Overhead=1 Level=1 Template="jio_vfprintf(%p,%s,...)"
+TraceExit=Trc_SC_vfprintf_Exit NoEnv Overhead=1 Level=1 Template="jio_vfprintf() -- return %d"
+TraceEntry=Trc_SC_vsnprintf_Entry NoEnv Overhead=1 Level=1 Template="jio_vsnprintf(%p,%d,%s,...)"
+TraceExit=Trc_SC_vsnprintf_Exit NoEnv Overhead=1 Level=1 Template="jio_vsnprintf() -- return %d"
+
+// z/OS only
+TraceEntry=Trc_SC_a2e_vsprintf_Entry NoEnv Overhead=1 Level=1 Template="JNI_a2e_vsprintf(%p,%s,...)"
+TraceExit=Trc_SC_a2e_vsprintf_Exit NoEnv Overhead=1 Level=1 Template="JNI_a2e_vsprintf() -- return %d"
+
+TraceEntry=Trc_SC_GetCreatedJavaVMs_Entry NoEnv Overhead=1 Level=1 Template="JNI_GetCreatedJavaVMs(%p,%zu,%p)"
+TraceExit=Trc_SC_GetCreatedJavaVMs_Exit NoEnv Overhead=1 Level=1 Template="JNI_GetCreatedJavaVMs() -- return %d, *nVMs = %d"
+
+TraceEntry=Trc_SC_Accept_Entry NoEnv Overhead=1 Level=1 Template="JVM_Accept(descriptor=%d, address=%p, length=%p)"
+TraceExit=Trc_SC_Accept_Exit NoEnv Overhead=1 Level=1 Template="JVM_Accept -- return %d, *length=%d"
+
+TraceEntry=Trc_SC_ActiveProcessorCount_Entry NoEnv Overhead=1 Level=1 Template="JVM_ActiveProcessorCount()"
+TraceExit=Trc_SC_ActiveProcessorCount_Exit NoEnv Overhead=1 Level=1 Template="JVM_ActiveProcessorCount -- return %d"
+
+TraceEntry=Trc_SC_AllocateNewArray_Entry Overhead=1 Level=1 Template="JVM_AllocateNewArray(caller=%p, current=%p, length=%d)"
+TraceExit=Trc_SC_AllocateNewArray_Exit Overhead=1 Level=1 Template="JVM_AllocateNewArray -- return %p"
+
+TraceEntry=Trc_SC_AllocateNewObject_Entry Overhead=1 Level=1 Template="JVM_AllocateNewObject(caller=%p, current=%p, init=%p)"
+TraceExit=Trc_SC_AllocateNewObject_Exit Overhead=1 Level=1 Template="JVM_AllocateNewObject -- return %p"
+
+TraceEntry=Trc_SC_Available_Entry NoEnv Overhead=1 Level=1 Template="JVM_Available(descriptor=%d, &bytes=%p)"
+TraceExit-Exception=Trc_SC_Available_bad_descriptor NoEnv Overhead=1 Level=1 Template="descriptor is -1. Returning: 0"
+TraceExit-Exception=Trc_SC_Available_fstat_failed NoEnv Overhead=1 Level=1 Template="fstat failed for handle: %d. errno %i, Returning: 0"
+TraceExit-Exception=Trc_SC_Available_ioctl_failed NoEnv Overhead=1 Level=1 Template="ioctl failed for handle: %d. errno %i, Returning: 0"
+TraceExit-Exception=Trc_SC_Available_lseek_failed NoEnv Overhead=1 Level=1 Template="lseek failed for handle: %d. Returning: 0"
+TraceExit=Trc_SC_Available_Exit NoEnv Overhead=1 Level=1 Template="JVM_Available -- return %d, *bytes=%lld"
+
+TraceEntry=Trc_SC_ClassDepth_Entry Overhead=1 Level=1 Template="JVM_ClassDepth(name=%p)"
+TraceExit=Trc_SC_ClassDepth_Exit Overhead=1 Level=1 Template="JVM_ClassDepth -- return %d"
+
+TraceEntry=Trc_SC_ClassLoaderDepth_Entry Overhead=1 Level=1 Template="JVM_ClassLoaderDepth()"
+TraceExit=Trc_SC_ClassLoaderDepth_Exit Overhead=1 Level=1 Template="JVM_ClassLoaderDepth -- return %d"
+
+TraceEntry=Trc_SC_Close_Entry NoEnv Overhead=1 Level=1 Template="JVM_Close(descriptor=%d)"
+TraceExit-Exception=Trc_SC_Close_bad_descriptor NoEnv Overhead=1 Level=1 Template="descriptor is -1. Returning: JVM_IO_ERR"
+TraceExit-Exception=Trc_SC_Close_std_descriptor NoEnv Overhead=1 Level=1 Template="trying to close stdin, stderr, or stdout. Returning: 0"
+TraceExit=Trc_SC_Close_Exit NoEnv Overhead=1 Level=1 Template="JVM_Close -- return %d"
+
+TraceEntry=Trc_SC_Connect_Entry NoEnv Overhead=1 Level=1 Template="JVM_Connect(descriptor=%d, address=%p, length=%d)"
+TraceExit=Trc_SC_Connect_Exit NoEnv Overhead=1 Level=1 Template="JVM_Connect -- return %d"
+
+TraceException=Trc_SC_ConstantPoolGetClassAt Overhead=1 Level=1 Template="JVM_ConstantPoolGetClassAt not implemented"
+TraceException=Trc_SC_ConstantPoolGetClassAtIfLoaded Overhead=1 Level=1 Template="JVM_ConstantPoolGetClassAtIfLoaded not implemented"
+TraceException=Trc_SC_ConstantPoolGetDoubleAt Overhead=1 Level=1 Template="JVM_ConstantPoolGetDoubleAt not implemented"
+TraceException=Trc_SC_ConstantPoolGetFieldAt Overhead=1 Level=1 Template="JVM_ConstantPoolGetFieldAt not implemented"
+TraceException=Trc_SC_ConstantPoolGetFieldAtIfLoaded Overhead=1 Level=1 Template="JVM_ConstantPoolGetFieldAtIfLoaded not implemented"
+TraceException=Trc_SC_ConstantPoolGetFloatAt Overhead=1 Level=1 Template="JVM_ConstantPoolGetFloatAt not implemented"
+TraceException=Trc_SC_ConstantPoolGetIntAt Overhead=1 Level=1 Template="JVM_ConstantPoolGetIntAt not implemented"
+TraceException=Trc_SC_ConstantPoolGetLongAt Overhead=1 Level=1 Template="JVM_ConstantPoolGetLongAt not implemented"
+TraceException=Trc_SC_ConstantPoolGetMemberRefInfoAt Overhead=1 Level=1 Template="JVM_ConstantPoolGetMemberRefInfoAt not implemented"
+TraceException=Trc_SC_ConstantPoolGetMethodAt Overhead=1 Level=1 Template="JVM_ConstantPoolGetMethodAt not implemented"
+TraceException=Trc_SC_ConstantPoolGetMethodAtIfLoaded Overhead=1 Level=1 Template="JVM_ConstantPoolGetMethodAtIfLoaded not implemented"
+TraceException=Trc_SC_ConstantPoolGetSize Overhead=1 Level=1 Template="JVM_ConstantPoolGetSize not implemented"
+TraceException=Trc_SC_ConstantPoolGetStringAt Overhead=1 Level=1 Template="JVM_ConstantPoolGetStringAt not implemented"
+TraceException=Trc_SC_ConstantPoolGetUTF8At Overhead=1 Level=1 Template="JVM_ConstantPoolGetUTF8At not implemented"
+
+TraceEntry=Trc_SC_CurrentClassLoader_Entry Overhead=1 Level=1 Template="JVM_CurrentClassLoader()"
+TraceExit=Trc_SC_CurrentClassLoader_Exit Overhead=1 Level=1 Template="JVM_CurrentClassLoader -- return %p"
+
+TraceEntry=Trc_SC_CurrentLoadedClass_Entry Overhead=1 Level=1 Template="JVM_CurrentLoadedClass()"
+TraceExit=Trc_SC_CurrentLoadedClass_Exit Overhead=1 Level=1 Template="JVM_CurrentLoadedClass -- return %p"
+
+TraceEntry=Trc_SC_CurrentTimeMillis_Entry Overhead=1 Level=1 Template="JVM_CurrentTimeMillis(unused=%d)"
+TraceExit=Trc_SC_CurrentTimeMillis_Exit Overhead=1 Level=1 Template="JVM_CurrentTimeMillis -- return %lld"
+
+TraceEntry=Trc_SC_CX8Field_Entry Overhead=1 Level=1 Template="JVM_CX8Field(obj=%p, field=%p, oldval=%llx, newval=%llx)"
+TraceExit=Trc_SC_CX8Field_Exit Overhead=1 Level=1 Template="JVM_CX8Field -- return %d"
+
+TraceException=Trc_SC_DefineClassWithSource Overhead=1 Level=1 Template="JVM_DefineClassWithSource not implemented"
+TraceException=Trc_SC_DumpThreads Overhead=1 Level=1 Template="JVM_DumpThreads not implemented"
+
+TraceEntry=Trc_SC_FindLibraryEntry_Entry NoEnv Overhead=1 Level=1 Template="JVM_FindLibraryEntry(handle=%p, name=%s)"
+TraceExit=Trc_SC_FindLibraryEntry_Exit NoEnv Overhead=1 Level=1 Template="JVM_FindLibraryEntry -- return %p"
+
+TraceEntry=Trc_SC_FindSignal_Entry NoEnv Overhead=1 Level=1 Template="JVM_FindSignal(sigName=%s)"
+TraceExit=Trc_SC_FindSignal_Exit NoEnv Overhead=1 Level=1 Template="JVM_FindSignal -- return %d"
+
+TraceEntry=Trc_SC_FreeMemory_Entry NoEnv Overhead=1 Level=1 Template="JVM_FreeMemory()"
+TraceExit=Trc_SC_FreeMemory_Exit NoEnv Overhead=1 Level=1 Template="JVM_FreeMemory -- return %lld"
+
+TraceEntry=Trc_SC_GC_Entry Overhead=1 Level=1 Template="JVM_GC()"
+TraceExit=Trc_SC_GC_Exit Overhead=1 Level=1 Template="JVM_GC()"
+
+TraceException=Trc_SC_GCNoCompact NoEnv Overhead=1 Level=1 Template="JVM_GCNoCompact not implemented"
+TraceException=Trc_SC_GetAllThreads Overhead=1 Level=1 Template="JVM_GetAllThreads not implemented"
+
+TraceEntry=Trc_SC_GetCallerClass_Entry Overhead=1 Level=3 Template="JVM_GetCallerClass(depth=%d)"
+TraceExit=Trc_SC_GetCallerClass_Exit Overhead=1 Level=3 Template="JVM_GetCallerClass -- return %p"
+
+TraceEntry=Trc_SC_GetClassAccessFlags_Entry Overhead=1 Level=3 Template="JVM_GetClassAccessFlags(clazz=%p)"
+TraceExit=Trc_SC_GetClassAccessFlags_Exit Overhead=1 Level=3 Template="JVM_GetClassAccessFlags -- return %x"
+
+TraceException=Trc_SC_GetClassAnnotations Overhead=1 Level=1 Template="JVM_GetClassAnnotations not implemented"
+TraceException=Trc_SC_GetClassConstantPool Overhead=1 Level=1 Template="JVM_GetClassConstantPool not implemented"
+
+TraceEntry=Trc_SC_GetClassContext_Entry Overhead=1 Level=1 Template="JVM_GetClassContext()"
+TraceExit=Trc_SC_GetClassContext_Exit Overhead=1 Level=1 Template="JVM_GetClassContext -- return %p"
+
+TraceEntry=Trc_SC_GetClassLoader_Entry Overhead=1 Level=1 Template="JVM_GetClassLoader(obj=%p)"
+TraceExit=Trc_SC_GetClassLoader_Exit Overhead=1 Level=1 Template="JVM_GetClassLoader -- return %p"
+
+TraceEntry=Trc_SC_GetClassName_Entry Overhead=1 Level=1 Template="JVM_GetClassName(clazz=%p)"
+TraceExit=Trc_SC_GetClassName_Exit Overhead=1 Level=1 Template="JVM_GetClassName -- return %p"
+
+TraceException=Trc_SC_GetClassSignature Overhead=1 Level=1 Template="JVM_GetClassSignature not implemented"
+TraceException=Trc_SC_GetEnclosingMethodInfo Overhead=1 Level=1 Template="JVM_GetEnclosingMethodInfo not implemented"
+
+TraceEntry=Trc_SC_GetInterfaceVersion_Entry NoEnv Overhead=1 Level=1 Template="JVM_GetInterfaceVersion()"
+TraceExit=Trc_SC_GetInterfaceVersion_Exit NoEnv Overhead=1 Level=1 Template="JVM_GetInterfaceVersion -- return %d"
+
+TraceEntry=Trc_SC_GetLastErrorString_Entry NoEnv Overhead=1 Level=1 Template="JVM_GetLastErrorString(buffer=%p, length=%d)"
+TraceExit=Trc_SC_GetLastErrorString_Exit NoEnv Overhead=1 Level=1 Template="JVM_GetLastErrorString -- return %d, buffer=%s"
+
+TraceException=Trc_SC_GetManagement NoEnv Overhead=1 Level=1 Template="JVM_GetManagement not implemented"
+
+TraceEntry=Trc_SC_GetSystemPackage_Entry Overhead=1 Level=1 Template="JVM_GetSystemPackage(name=%p)"
+TraceEvent=Trc_SC_GetSystemPackage_SearchingForPackage Overhead=1 Level=1 Template="Searching for package %s (len=%d)"
+TraceEvent=Trc_SC_GetSystemPackage_FoundRepresentativeClass Overhead=1 Level=1 Template="Using representative class %p (%.*s)"
+TraceEvent=Trc_SC_GetSystemPackage_CPEntry Overhead=1 Level=1 Template="CPEntry is %p (%.*s)"
+TraceExit=Trc_SC_GetSystemPackage_Exit Overhead=1 Level=1 Template="JVM_GetSystemPackage -- return %p"
+
+TraceEntry=Trc_SC_GetSystemPackages_Entry Overhead=1 Level=1 Template="JVM_GetSystemPackages()"
+TraceExit=Trc_SC_GetSystemPackages_Exit Overhead=1 Level=1 Template="JVM_GetSystemPackages -- return %p"
+
+TraceEntry=Trc_SC_GetThreadInterruptEvent_Entry Overhead=1 Level=1 Template="JVM_GetThreadInterruptEvent()"
+TraceExit=Trc_SC_GetThreadInterruptEvent_Exit Overhead=1 Level=1 Template="JVM_GetThreadInterruptEvent -- return %p"
+
+TraceEntry=Trc_SC_Halt_Entry Overhead=1 Level=1 Template="JVM_Halt(exitCode=%d)"
+TraceExit-Exception=Trc_SC_Halt_Exit Overhead=1 Level=1 Template="JVM_Halt returned unexpectedly"
+
+TraceEvent=Trc_SC_InitializeSocketLibrary NoEnv Overhead=1 Level=1 Template="JVM_InitializeSocketLibrary()"
+
+TraceEntry=Trc_SC_InvokeMethod_Entry Overhead=1 Level=3 Template="JVM_InvokeMethod(method=%p, object=%p, args=%p)"
+TraceExit=Trc_SC_InvokeMethod_Exit Overhead=1 Level=3 Template="JVM_InvokeMethod -- return %p"
+
+TraceEvent=Trc_SC_IsNaN NoEnv Overhead=1 Level=3 Template="Trc_SC_IsNaN(%llx)"
+
+TraceEntry=Trc_SC_LatestUserDefinedLoader_Entry Overhead=1 Level=3 Template="JVM_LatestUserDefinedLoader()"
+TraceExit=Trc_SC_LatestUserDefinedLoader_Exit Overhead=1 Level=3 Template="JVM_LatestUserDefinedLoader -- return %p"
+
+TraceEntry=Trc_SC_Listen_Entry NoEnv Overhead=1 Level=1 Template="JVM_Listen(descriptor=%d, count=%d)"
+TraceExit=Trc_SC_Listen_Exit NoEnv Overhead=1 Level=1 Template="JVM_Listen -- return %d"
+
+TraceEntry=Trc_SC_LoadLibrary_Entry NoEnv Overhead=1 Level=1 Template="JVM_LoadLibrary(name=%s)"
+TraceExit-Exception=Trc_SC_LoadLibrary_Error Obsolete NoEnv Overhead=1 Level=1 Template="JVM_LoadLibrary -- error. Return %d"
+TraceExit=Trc_SC_LoadLibrary_Exit NoEnv Overhead=1 Level=1 Template="JVM_LoadLibrary -- return %d"
+
+TraceEntry=Trc_SC_Lseek_Entry NoEnv Overhead=1 Level=3 Template="JVM_Lseek(descriptor=%d, bytesToSeek=%lld, origin=%d)"
+TraceExit-Exception=Trc_SC_Lseek_bad_descriptor NoEnv Overhead=1 Level=1 Template="invalid descriptor"
+TraceExit=Trc_SC_Lseek_Exit NoEnv Overhead=1 Level=3 Template="JVM_Lseek -- return %lld"
+
+TraceEntry=Trc_SC_MaxMemory_Entry NoEnv Overhead=1 Level=1 Template="JVM_MaxMemory()"
+TraceExit=Trc_SC_MaxMemory_Exit NoEnv Overhead=1 Level=1 Template="JVM_MaxMemory -- return %llx"
+
+TraceEvent=Trc_SC_MaxObjectInspectionAge NoEnv Overhead=1 Level=1 Template="JVM_MaxObjectInspectionAge -- return %lld"
+
+TraceEntry=Trc_SC_MonitorNotify_Entry Overhead=1 Level=1 Template="JVM_MonitorNotify(obj=%p)"
+TraceExit=Trc_SC_MonitorNotify_Exit Overhead=1 Level=1 Template="JVM_MonitorNotify"
+
+TraceEntry=Trc_SC_MonitorNotifyAll_Entry Overhead=1 Level=1 Template="JVM_MonitorNotifyAll(obj=%p)"
+TraceExit=Trc_SC_MonitorNotifyAll_Exit Overhead=1 Level=1 Template="JVM_MonitorNotifyAll"
+
+TraceEntry=Trc_SC_MonitorWait_Entry Overhead=1 Level=1 Template="JVM_MonitorWait(obj=%p, timeout=%lld)"
+TraceExit=Trc_SC_MonitorWait_Exit Overhead=1 Level=1 Template="JVM_MonitorWait"
+
+TraceEvent=Trc_SC_NanoTime Overhead=1 Level=1 Template="JVM_NanoTime"
+
+TraceEntry=Trc_SC_NativePath_Entry NoEnv Overhead=1 Level=3 Template="JVM_NativePath(path=%s)"
+TraceExit=Trc_SC_NativePath_Exit NoEnv Overhead=1 Level=3 Template="JVM_NativePath -- return %s"
+
+TraceEntry=Trc_SC_NewInstanceFromConstructor_Entry Overhead=1 Level=3 Template="JVM_NewInstanceFromConstructor(obj=%p, args=%p)"
+TraceExit=Trc_SC_NewInstanceFromConstructor_Exit Overhead=1 Level=3 Template="JVM_NewInstanceFromConstructor -- return %p"
+
+TraceEntry=Trc_SC_OnExit_Entry NoEnv Overhead=1 Level=1 Template="JVM_OnExit(func=%p)"
+TraceException=Trc_SC_OnExit_OutOfMemory NoEnv Overhead=1 Level=1 Template="JVM_OnExit could not allocate func"
+TraceExit=Trc_SC_OnExit_Exit NoEnv Overhead=1 Level=1 Template="JVM_OnExit -- newFunc=%p"
+
+TraceEntry=Trc_SC_Open_Entry NoEnv Overhead=1 Level=1 Template="JVM_Open(name=%s, mode=%d, flags=%d)"
+TraceExit-Exception=Trc_SC_Open_fstat64 NoEnv Overhead=1 Level=1 Template="JVM_Open: File: fstat64 failed for %s. Returns -1"
+TraceExit-Exception=Trc_SC_Open_isDirectory NoEnv Overhead=1 Level=1 Template="JVM_Open: File: %s is a directory. Returns -1"
+TraceExit-Exception=Trc_SC_Open_error NoEnv Overhead=1 Level=1 Template="JVM_Open: File: %s. Returns: %d"
+TraceExit=Trc_SC_Open_Exit NoEnv Overhead=1 Level=1 Template="JVM_Open: File: %s opened successfully with handle %d"
+
+TraceEntry=Trc_SC_RaiseSignal_Entry NoEnv Overhead=1 Level=1 Template="JVM_RaiseSignal(signal=%d)"
+TraceExit=Trc_SC_RaiseSignal_Exit NoEnv Overhead=1 Level=1 Template="JVM_RaiseSignal -- return %d"
+
+TraceEntry=Trc_SC_RawMonitorCreate_Entry NoEnv Overhead=1 Level=2 Template="JVM_RawMonitorCreate()"
+TraceEvent=Trc_SC_RawMonitorCreate_Error NoEnv Overhead=1 Level=1 Template="JVM_RawMonitorCreate -- error initializing raw monitor"
+TraceExit=Trc_SC_RawMonitorCreate_Exit NoEnv Overhead=1 Level=2 Template="JVM_RawMonitorCreate -- return %p"
+
+TraceEntry=Trc_SC_RawMonitorDestroy_Entry NoEnv Overhead=1 Level=2 Template="JVM_RawMonitorDestroy(monitor=%p)"
+TraceExit=Trc_SC_RawMonitorDestroy_Exit NoEnv Overhead=1 Level=2 Template="JVM_RawMonitorDestroy"
+
+TraceEntry=Trc_SC_RawMonitorEnter_Entry NoEnv Overhead=1 Level=3 Template="JVM_RawMonitorEnter(monitor=%p)"
+TraceExit=Trc_SC_RawMonitorEnter_Exit NoEnv Overhead=1 Level=3 Template="JVM_RawMonitorEnter"
+
+TraceEntry=Trc_SC_RawMonitorExit_Entry NoEnv Overhead=1 Level=3 Template="JVM_RawMonitorExit(monitor=%p)"
+TraceExit=Trc_SC_RawMonitorExit_Exit NoEnv Overhead=1 Level=3 Template="JVM_RawMonitorExit"
+
+TraceEntry=Trc_SC_Read_Entry NoEnv Overhead=1 Level=3 Template="JVM_Read(descriptor=%d, buffer=%p, bytesToRead=%d)"
+TraceExit-Exception=Trc_SC_Read_bad_descriptor NoEnv Overhead=1 Level=1 Template="invalid descriptor"
+TraceExit=Trc_SC_Read_Exit NoEnv Overhead=1 Level=3 Template="JVM_Read -- return %d, errno=%d"
+
+TraceEntry=Trc_SC_Recv_Entry NoEnv Overhead=1 Level=1 Template="JVM_Recv(descriptor=%d, buffer=%p, length=%d, flags=%d)"
+TraceExit=Trc_SC_Recv_Exit NoEnv Overhead=1 Level=1 Template="JVM_Recv -- return %d"
+
+TraceEntry=Trc_SC_RecvFrom_Entry NoEnv Overhead=1 Level=1 Template="JVM_RecvFrom(descriptor=%d, buffer=%p, length=%d, flags=%d, fromAddr=%p, fromLength=%p)"
+TraceExit=Trc_SC_RecvFrom_Exit NoEnv Overhead=1 Level=1 Template="JVM_RecvFrom -- return %d, *length=%d"
+
+TraceEvent=Trc_SC_RegisterSignal NoEnv Overhead=1 Level=1 Template="JVM_RegisterSignal (not implemented -- returning -1)"
+TraceEvent=Trc_SC_RegisterUnsafeMethods Overhead=1 Level=1 Template="JVM_RegisterUnsafeMethods (not implemented -- returning)"
+
+TraceEntry=Trc_SC_Send_Entry NoEnv Overhead=1 Level=1 Template="JVM_Send(descriptor=%d, buffer=%p, length=%d, flags=%d)"
+TraceExit=Trc_SC_Send_Exit NoEnv Overhead=1 Level=1 Template="JVM_Send -- return %d"
+
+TraceEntry=Trc_SC_SendTo_Entry NoEnv Overhead=1 Level=1 Template="JVM_SendTo(descriptor=%d, buffer=%p, length=%d, flags=%d, toAddr=%p, toLength=%d)"
+TraceExit=Trc_SC_SendTo_Exit NoEnv Overhead=1 Level=1 Template="JVM_SendTo -- return %d"
+
+TraceEntry=Trc_SC_SetLength_Entry NoEnv Overhead=1 Level=1 Template="JVM_SetLength(fd=%d, length=%lld)"
+TraceExit-Exception=Trc_SC_SetLength_bad_descriptor NoEnv Overhead=1 Level=1 Template="JVM_SetLength -- bad descriptor"
+TraceExit=Trc_SC_SetLength_Exit NoEnv Overhead=1 Level=1 Template="JVM_SetLength -- return %d"
+
+TraceEntry=Trc_SC_Sleep_Entry Overhead=1 Level=1 Template="JVM_Sleep(threadClazz=%p, timeout=%lld)"
+TraceExit=Trc_SC_Sleep_Exit Overhead=1 Level=1 Template="JVM_Sleep"
+
+TraceEntry=Trc_SC_Socket_Entry NoEnv Overhead=1 Level=1 Template="JVM_Socket(domain=%d, type=%d, protocol=%d)"
+TraceExit=Trc_SC_Socket_Exit NoEnv Overhead=1 Level=1 Template="JVM_Socket -- return %d"
+
+TraceEntry=Trc_SC_SocketAvailable_Entry NoEnv Overhead=1 Level=1 Template="JVM_SocketAvailable(descriptor=%d, result=%p)"
+TraceExit=Trc_SC_SocketAvailable_Exit NoEnv Overhead=1 Level=1 Template="JVM_SocketAvailable -- return %d *result=%d"
+
+TraceEntry=Trc_SC_SocketClose_Entry NoEnv Overhead=1 Level=1 Template="JVM_SocketClose(descriptor=%d)"
+TraceExit-Exception=Trc_SC_SocketClose_bad_descriptor NoEnv Overhead=1 Level=1 Template="JVM_SocketClose -- bad descriptor"
+TraceExit=Trc_SC_SocketClose_Exit NoEnv Overhead=1 Level=1 Template="JVM_SocketClose -- return %d (expected return value is 1)"
+
+TraceEvent=Trc_SC_SupportsCX8 NoEnv Overhead=1 Level=1 Template="JVM_SupportsCX8"
+
+TraceEntry=Trc_SC_Sync_Entry NoEnv Overhead=1 Level=1 Template="JVM_Sync(descriptor=%d)"
+TraceExit-Exception=Trc_SC_Sync_bad_descriptor NoEnv Overhead=1 Level=1 Template="JVM_Sync -- bad descriptor"
+TraceExit=Trc_SC_Sync_Exit NoEnv Overhead=1 Level=1 Template="JVM_Sync -- return %d (expected return value is 1)"
+
+TraceEntry=Trc_SC_Timeout_Entry NoEnv Overhead=1 Level=1 Template="JVM_Timeout(descriptor=%d, timeout=%d)"
+TraceExit=Trc_SC_Timeout_Exit NoEnv Overhead=1 Level=1 Template="JVM_Timeout -- return %d"
+
+TraceEntry=Trc_SC_TotalMemory_Entry NoEnv Overhead=1 Level=1 Template="JVM_TotalMemory()"
+TraceExit=Trc_SC_TotalMemory_Exit NoEnv Overhead=1 Level=1 Template="JVM_TotalMemory -- return %lld"
+
+TraceEvent=Trc_SC_TraceInstructions NoEnv Overhead=1 Level=1 Template="JVM_TraceInstructions(on=%d)"
+TraceEvent=Trc_SC_TraceMethodCalls NoEnv Overhead=1 Level=1 Template="JVM_TraceMethodCalls(on=%d)"
+
+TraceEntry=Trc_SC_UcsOpen_Entry NoEnv Overhead=1 Level=1 Template="JVM_UcsOpen(name=%s, flags=%d, mode=%d)"
+TraceException=Trc_SC_UcsOpen_nullName NoEnv Overhead=1 Level=1 Template="JVM_UcsOpen called with NULL filename\n"
+TraceExit-Exception=Trc_SC_UcsOpen_GetFullPathNameW NoEnv Overhead=1 Level=1 Template="JVM_UcsOpen: Error from GetFullPathNameW (rc=%d)"
+TraceExit-Exception=Trc_SC_UcsOpen_error NoEnv Overhead=1 Level=1 Template="JVM_UcsOpen: Error -- Returns: %d"
+TraceExit=Trc_SC_UcsOpen_Exit NoEnv Overhead=1 Level=1 Template="JVM_UcsOpen: File opened successfully with handle %d"
+
+TraceEntry=Trc_SC_Write_Entry NoEnv Overhead=1 Level=3 Template="JVM_Write(descriptor=%d, buffer=%p, bytesToWrite=%d)"
+TraceExit-Exception=Trc_SC_Write_bad_descriptor NoEnv Overhead=1 Level=1 Template="invalid descriptor"
+TraceExit=Trc_SC_Write_Exit NoEnv Overhead=1 Level=3 Template="JVM_Write -- return %d"
+
+// z/OS only
+TraceEntry=Trc_SC_NewStringPlatform_Entry Overhead=1 Level=1 Template="NewStringPlatform(%s,%p,%s)"
+TraceExit=Trc_SC_NewStringPlatform_Exit Overhead=1 Level=1 Template="NewStringPlatform() -- return %d"
+
+// AIX, Linux, and z/OS only
+TraceEntry=Trc_SC_SysInt_PreInterruptFileOperation_Entry NoEnv Overhead=1 Level=2 Template="preInterruptFileOperation(descriptor=%d)"
+TraceExit=Trc_SC_SysInt_PreInterruptFileOperation_Exit NoEnv Overhead=1 Level=2 Template="preInterruptFileOperation"
+TraceEvent=Trc_SC_SysInt_StoreThreadInTable_Event1 NoEnv Overhead=1 Level=1 Template="Failed to grow fileUserTable to %d entries for descriptor %d"
+TraceEvent=Trc_SC_SysInt_StoreThreadInTable_Event2 NoEnv Overhead=1 Level=1 Template="Failed to allocate new linked list element in pool for descriptor %d"
+TraceEvent=Trc_SC_SysInt_J9SyntheticSignalHandler_Event1 NoEnv Overhead=1 Level=1 Template="Interrupted I/O syscall"
+TraceEvent=Trc_SC_SysInt_J9SyntheticSignalHandler_Event2 NoEnv Overhead=1 Level=1 Template="Interrupted thread on signal meant for other handler"
+TraceEntry=Trc_SC_SysInt_InitializeSyscallInterruptMechanism_Entry NoEnv Overhead=1 Level=1 Template="initializeSyscallInterruptMechanism(void)"
+TraceExit=Trc_SC_SysInt_InitializeSyscallInterruptMechanism_Exit NoEnv Overhead=1 Level=1 Template="initializeSyscallInterruptMechanism successful"
+TraceExit=Trc_SC_SysInt_InitializeSyscallInterruptMechanism_Exit1 NoEnv Overhead=1 Level=1 Template="Failed to create pthread_key"
+TraceExit=Trc_SC_SysInt_InitializeSyscallInterruptMechanism_Exit2 NoEnv Overhead=1 Level=1 Template="Failed to initialize fileUserTable to %d entries"
+TraceExit=Trc_SC_SysInt_InitializeSyscallInterruptMechanism_Exit3 NoEnv Overhead=1 Level=1 Template="Failed to register handler with sigaction"
+TraceExit=Trc_SC_SysInt_InitializeSyscallInterruptMechanism_Exit4 NoEnv Overhead=1 Level=1 Template="Failed to initialize pool for pthreads blocked on descriptors"
+
+TraceAssert=Assert_SC_true noEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Assert_SC_false noEnv Overhead=1 Level=1 Assert="!(P1)"
+TraceAssert=Assert_SC_notNull noEnv Overhead=1 Level=1 Assert="(P1) != NULL"
+TraceAssert=Assert_SC_mustHaveVMAccess noEnv overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
+TraceAssert=Assert_SC_mustNotHaveVMAccess noEnv overhead=1 Level=1 Assert="0 == ((P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)"
+
+// if (defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390))
+TraceExit-Exception=Trc_SC_Available_poll_failed NoEnv Overhead=1 Level=1 Template="poll failed for descriptor: %d. errno %i, Returning: 0"
+
+TraceEntry=Trc_SC_GCNoCompact_Entry Overhead=1 Level=1 Template="JVM_GCNoCompact()"
+TraceExit=Trc_SC_GCNoCompact_Exit Overhead=1 Level=1 Template="JVM_GCNoCompact()"
+
+TraceEntry=Trc_SC_LoadSystemLibrary_Entry NoEnv Overhead=1 Level=1 Template="JVM_LoadSystemLibrary(name=%s)"
+TraceExit=Trc_SC_LoadSystemLibrary_Exit NoEnv Overhead=1 Level=1 Template="JVM_LoadSystemLibrary -- return 0x%zx"
+TraceEvent=Trc_SC_LoadSystemLibrary_LoadFailed NoEnv Overhead=1 Level=1 Template="JVM_LoadSystemLibrary(name=%s) failed to load"

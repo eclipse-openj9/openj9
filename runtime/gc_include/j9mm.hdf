@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2010, 2017 IBM Corp. and others
+ 
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+ 
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+ 
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<interface>
+	<publicHeader>../include/mmhook.h</publicHeader>
+	<privateHeader>../gc_base/mmhook_internal.h</privateHeader>
+	<struct>MM_HookInterface</struct>
+	<description>Memory manager hookable events</description>
+
+	<declarations>
+
+/* @ddr_namespace: default */
+#include "mmhook_common.h"
+#include "objectdescription.h"
+
+struct J9VMThread;
+
+	</declarations>
+
+	<event>
+		<name>J9HOOK_MM_CLASS_UNLOADING_END</name>
+		<description>
+			Triggered when a class unloading phase is completed.
+		</description>
+		<struct>MM_ClassUnloadingEndEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="U_64" name="timestamp" description="time of event" />
+		<data type="UDATA" name="eventid" description="unique identifier for event" />
+		<data type="U_64" name="duration" description="the duration of the operation" />
+		<data type="UDATA" name="classLoaderCount" description="the number of class loaders unloaded" />
+		<data type="UDATA" name="classesCount" description="the number of classes unloaded" />
+		<data type="U_64" name="quiesceTime" description="the time the gc was waiting on the classUnloadMonitor" />
+		<data type="U_64" name="cleanUpClassLoadersStartTime" description="the time to call cleanUpClassLoadersStart" />
+		<data type="U_64" name="cleanUpClassLoaders" description="the time the gc was waiting on the cleanUpClassLoader call" />
+		<data type="U_64" name="cleanUpClassLoadersEndTime" description="the time to call cleanUpClassLoadersEnd" />
+	</event>
+
+	<event>
+		<name>J9HOOK_MM_INTERRUPT_COMPILATION</name>
+		<description>
+			Triggered when JIT compilation must be interrupted to allow the GC to unload classes during the GC cycle
+		</description>
+		<struct>MM_InterruptCompilationEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+
+</interface>

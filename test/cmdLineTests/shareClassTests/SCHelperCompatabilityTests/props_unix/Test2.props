@@ -1,0 +1,16 @@
+Classpath=./Alphabet;./Pets;
+NumberOfClassesToLoad=6
+LoadClasses=A,E,G,Cat,Dog,Hamster
+NumberOfUrls=3
+Url0=./Alphabet;
+NumberOfClassesToFind0=3
+FindClasses0=A,E,G
+Results0=true,true,true
+Url1=./Pets;
+NumberOfClassesToFind1=3
+FindClasses1=Cat,Dog,Hamster
+Results1=true,true,true
+Url2=./Vowels;
+NumberOfClassesToFind2=3
+FindClasses2=A,E,G
+Results2=false,false,false

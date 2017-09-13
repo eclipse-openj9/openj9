@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Copyright (c) 2015, 2017 IBM Corp. and others
+
+   This program and the accompanying materials are made available under
+   the terms of the Eclipse Public License 2.0 which accompanies this
+   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+   or the Apache License, Version 2.0 which accompanies this distribution and
+   is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+   This Source Code may also be made available under the following
+   Secondary Licenses when the conditions for such availability set
+   forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+   General Public License, version 2 with the GNU Classpath
+   Exception [1] and GNU General Public License, version 2 with the
+   OpenJDK Assembly Exception [2].
+
+   [1] https://www.gnu.org/software/classpath/license.html
+   [2] http://openjdk.java.net/legal/assembly-exception.html
+
+   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+<exportlists>
+	<exports group="standard">
+		<export name="Java_com_ibm_cuda_Cuda_allocatePinnedBuffer" />
+		<export name="Java_com_ibm_cuda_Cuda_getDeviceCount" />
+		<export name="Java_com_ibm_cuda_Cuda_getDriverVersion" />
+		<export name="Java_com_ibm_cuda_Cuda_getErrorMessage" />
+		<export name="Java_com_ibm_cuda_Cuda_getRuntimeVersion" />
+		<export name="Java_com_ibm_cuda_Cuda_initialize" />
+
+		<export name="Java_com_ibm_cuda_CudaBuffer_allocate" />
+
+		<export name="Java_com_ibm_cuda_CudaDevice_addCallback" />
+		<export name="Java_com_ibm_cuda_CudaDevice_canAccessPeer" />
+		<export name="Java_com_ibm_cuda_CudaDevice_disablePeerAccess" />
+		<export name="Java_com_ibm_cuda_CudaDevice_enablePeerAccess" />
+		<export name="Java_com_ibm_cuda_CudaDevice_getAttribute" />
+		<export name="Java_com_ibm_cuda_CudaDevice_getCacheConfig" />
+		<export name="Java_com_ibm_cuda_CudaDevice_getFreeMemory" />
+		<export name="Java_com_ibm_cuda_CudaDevice_getGreatestStreamPriority" />
+		<export name="Java_com_ibm_cuda_CudaDevice_getLeastStreamPriority" />
+		<export name="Java_com_ibm_cuda_CudaDevice_getLimit" />
+		<export name="Java_com_ibm_cuda_CudaDevice_getName" />
+		<export name="Java_com_ibm_cuda_CudaDevice_getSharedMemConfig" />
+		<export name="Java_com_ibm_cuda_CudaDevice_getTotalMemory" />
+		<export name="Java_com_ibm_cuda_CudaDevice_setCacheConfig" />
+		<export name="Java_com_ibm_cuda_CudaDevice_setLimit" />
+		<export name="Java_com_ibm_cuda_CudaDevice_setSharedMemConfig" />
+		<export name="Java_com_ibm_cuda_CudaDevice_synchronize" />
+
+		<export name="Java_com_ibm_cuda_CudaEvent_create" />
+
+		<export name="Java_com_ibm_cuda_CudaJitOptions_create" />
+		<export name="Java_com_ibm_cuda_CudaJitOptions_destroy" />
+		<export name="Java_com_ibm_cuda_CudaJitOptions_getErrorLogBuffer" />
+		<export name="Java_com_ibm_cuda_CudaJitOptions_getInfoLogBuffer" />
+		<export name="Java_com_ibm_cuda_CudaJitOptions_getThreadsPerBlock" />
+		<export name="Java_com_ibm_cuda_CudaJitOptions_getWallTime" />
+
+		<export name="Java_com_ibm_cuda_CudaLinker_create" />
+
+		<export name="Java_com_ibm_cuda_CudaModule_load" />
+
+		<export name="Java_com_ibm_cuda_CudaStream_create" />
+		<export name="Java_com_ibm_cuda_CudaStream_createWithPriority" />
+
+		<export name="JNI_OnUnload" />
+	</exports>
+
+	<exports group="optional">
+		<export name="Java_com_ibm_cuda_Cuda_wrapDirectBuffer" />
+
+		<export name="Java_com_ibm_cuda_Cuda_00024Cleaner_releasePinnedBuffer" />
+
+		<export name="Java_com_ibm_cuda_CudaBuffer_allocateDirectBuffer" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyFromDevice" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyFromHostByte" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyFromHostChar" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyFromHostDirect" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyFromHostDouble" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyFromHostFloat" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyFromHostInt" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyFromHostLong" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyFromHostShort" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyToHostByte" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyToHostChar" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyToHostDirect" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyToHostDouble" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyToHostFloat" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyToHostInt" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyToHostLong" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_copyToHostShort" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_fill" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_freeDirectBuffer" />
+		<export name="Java_com_ibm_cuda_CudaBuffer_release" />
+
+		<export name="Java_com_ibm_cuda_CudaEvent_destroy" />
+		<export name="Java_com_ibm_cuda_CudaEvent_elapsedTimeSince" />
+		<export name="Java_com_ibm_cuda_CudaEvent_query" />
+		<export name="Java_com_ibm_cuda_CudaEvent_record" />
+		<export name="Java_com_ibm_cuda_CudaEvent_synchronize" />
+
+		<export name="Java_com_ibm_cuda_CudaFunction_getAttribute" />
+		<export name="Java_com_ibm_cuda_CudaFunction_launch" />
+		<export name="Java_com_ibm_cuda_CudaFunction_setCacheConfig" />
+		<export name="Java_com_ibm_cuda_CudaFunction_setSharedMemConfig" />
+
+		<export name="Java_com_ibm_cuda_CudaLinker_add" />
+		<export name="Java_com_ibm_cuda_CudaLinker_complete" />
+		<export name="Java_com_ibm_cuda_CudaLinker_destroy" />
+
+		<export name="Java_com_ibm_cuda_CudaModule_getFunction" />
+		<export name="Java_com_ibm_cuda_CudaModule_getGlobal" />
+		<export name="Java_com_ibm_cuda_CudaModule_getSurface" />
+		<export name="Java_com_ibm_cuda_CudaModule_getTexture" />
+		<export name="Java_com_ibm_cuda_CudaModule_unload" />
+
+		<export name="Java_com_ibm_cuda_CudaStream_destroy" />
+		<export name="Java_com_ibm_cuda_CudaStream_getFlags" />
+		<export name="Java_com_ibm_cuda_CudaStream_getPriority" />
+		<export name="Java_com_ibm_cuda_CudaStream_query" />
+		<export name="Java_com_ibm_cuda_CudaStream_synchronize" />
+		<export name="Java_com_ibm_cuda_CudaStream_waitFor" />
+	</exports>
+</exportlists>

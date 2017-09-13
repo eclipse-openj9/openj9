@@ -1,0 +1,53 @@
+/*******************************************************************************
+ * Copyright (c) 2014, 2014 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+
+#include "j9.h"
+#include "jni.h"
+
+jint
+omrErrorCodeToJniErrorCode(omr_error_t omrError)
+{
+	jint rc = JNI_OK;
+	switch (omrError) {
+	case OMR_ERROR_NONE:
+		rc = JNI_OK;
+		break;
+	case OMR_ERROR_OUT_OF_NATIVE_MEMORY:
+		rc = JNI_ENOMEM;
+		break;
+	case OMR_ERROR_ILLEGAL_ARGUMENT:
+		rc = JNI_EINVAL;
+		break;
+	case OMR_ERROR_INTERNAL:
+		rc = JNI_ERR;
+		break;
+	case OMR_ERROR_NOT_AVAILABLE:
+		rc = JNI_EEXIST;
+		break;
+	default:
+		rc = JNI_ERR;
+		break;
+	}
+	return rc;
+}
+
+

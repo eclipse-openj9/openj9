@@ -1,0 +1,201 @@
+#
+# Copyright (c) 2000, 2017 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+
+# Externalised messages for the JIT module.
+# New messages MUST be added at the end of this file.
+# DO NOT delete messages from this file, as it will change their indices.
+# If you wish to remove a message, delete its text, but leave the key in place
+#
+# NLS_ENCODING=UNICODE
+# NLS_MESSAGEFORMAT_NONE
+#
+
+J9NLS.MODULE=JITM
+J9NLS.HEADER=j9jitnls.h
+
+J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE=Nieobs\u0142ugiwany sprz\u0119t [%d].
+# START NON-TRANSLATABLE
+J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE.sample_input_1=9672
+J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE.explanation=The current hardware is not supported by the compiler.
+J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE.system_action=The compiler will not generate code for this hardware.
+J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE.user_response=Check the SDK and Runtime Environment Guide for a list of supported hardware.
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_STORE_FULL=Zabrak\u0142o miejsca na kod AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas. Nowy kod AOT nie zostanie wygenerowany.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_STORE_FULL.explanation=The AOT section of the shared class cache is full.
+J9NLS_RELOCATABLE_CODE_STORE_FULL.system_action=The compiler will stop generating AOT code. The AOT code already stored in the shared class cache will continue to be used.
+J9NLS_RELOCATABLE_CODE_STORE_FULL.user_response=Increase the size of the AOT section of the shared class cache using the -Xscmaxaot option.
+J9NLS_RELOCATABLE_CODE_STORE_FULL.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xscmaxaot
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_STORE_ERROR=Niepowodzenie zapisania kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas. Pami\u0119\u0107 podr\u0119czna wsp\u00f3\u0142u\u017cytkowanych klas mo\u017ce by\u0107 uszkodzona. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_STORE_ERROR.explanation=An error occured storing AOT code in the shared class cache. The shared class cache might be corrupted.
+J9NLS_RELOCATABLE_CODE_STORE_ERROR.system_action=The compiler will stop generating AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_STORE_ERROR.user_response=Destroy and recreate the AOT code in the shared class cache using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_STORE_ERROR.link=dita:///diag/tools/shcpd_debug_cache.dita
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE=Niepowodzenie podczas inicjowania \u015brodowiska wykonawczego AOT. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE.explanation=An error occured initializing using AOT.
+J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE.user_response=If the error persists, destroy and recreate the AOT code in the shared class cache using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE=Nie mo\u017cna wykona\u0107 kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas na bie\u017c\u0105cym procesorze. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE.explanation=The AOT code in the shared class cache is not compiled for this platform.
+J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_WRONG_HARDWARE.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION=Kod AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas nie mo\u017ce dzia\u0142a\u0107 w bie\u017c\u0105cej wersji maszyny JVM. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION.explanation=The AOT code in the shared class cache was created using a different JVM release.
+J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION.user_response=Destroy and recreate the AOT code in the shared class cache for the current JVM release using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_WRONG_JVM_VERSION.link=dita:///diag/tools/shcpd_deploying_compat.dita
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY=Kod AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas nie mo\u017ce dzia\u0142a\u0107 z bie\u017c\u0105c\u0105 strategi\u0105 czyszczenia pami\u0119ci. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY.explanation=The AOT code in the shared class cache was created using a different garbage collection policy.
+J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY.user_response=Destroy and recreate AOT code in the shared class cache for the current garbage collection policy using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI=Kod AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas nie mo\u017ce dzia\u0142a\u0107 z bie\u017c\u0105cymi ustawieniami JVMPI lub JVMTI. Ignorowanie kodu AOT w pami\u0119ci podr\u0119cznej wsp\u00f3\u0142u\u017cytkowanych klas.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.explanation=AOT code cannot be used with JVMPI or JVMTI.
+J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.user_response=Disable JVMPI and JVMTI if you want to use AOT code.
+J9NLS_RELOCATABLE_CODE_NOT_AVAILABLE_WITH_FSD_JVMPI.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OUT_OF_MEMORY=Przydzielenie pami\u0119ci przez JIT nie powiod\u0142o si\u0119
+# START NON-TRANSLATABLE
+J9NLS_JIT_OUT_OF_MEMORY.explanation=TODO
+J9NLS_JIT_OUT_OF_MEMORY.system_action=TODO
+J9NLS_JIT_OUT_OF_MEMORY.user_response=TODO
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_XLP_UNRECOGNIZED_OPTION=Konfiguracja systemu nie obs\u0142uguje parametru '%.*s' w opcji '-Xlp'
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_XLP_UNRECOGNIZED_OPTION.explanation=Specified parameter is not recognized in -Xlp option
+J9NLS_JIT_OPTIONS_XLP_UNRECOGNIZED_OPTION.system_action=The JVM will terminate
+J9NLS_JIT_OPTIONS_XLP_UNRECOGNIZED_OPTION.user_response=Remove the unrecognized parameter from -Xlp option
+J9NLS_JIT_OPTIONS_XLP_UNRECOGNIZED_OPTION.sample_input_1=3
+J9NLS_JIT_OPTIONS_XLP_UNRECOGNIZED_OPTION.sample_input_2=abc
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_MUST_BE_NUMBER=Po parametrze %s musi nast\u0119powa\u0107 liczba
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_MUST_BE_NUMBER.explanation=The specified option must be immediately followed by a number
+J9NLS_JIT_OPTIONS_MUST_BE_NUMBER.system_action=The JVM will terminate
+J9NLS_JIT_OPTIONS_MUST_BE_NUMBER.user_response=Adjust the JIT option (e.g. instead of "-Xlp:objectheap:pagesize <size>" use "-Xlp:objectheap:pagesize<size>")
+J9NLS_JIT_OPTIONS_MUST_BE_NUMBER.sample_input_1=-Xlp:codecache:pagesize=<size>
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED=Podana warto\u015b\u0107 parametru %s jest zbyt du\u017ca
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.explanation=The specified option is too large
+J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.system_action=The JVM will terminate
+J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.user_response=Adjust the JIT options
+J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.sample_input_1=-Xlp:codecache:pagesize=<size>
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_INCORRECT_MEMORY_SIZE=Warto\u015b\u0107 dla '%s' nie jest poprawna
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_INCORRECT_MEMORY_SIZE.explanation=Value specified for the option is not correct
+J9NLS_JIT_OPTIONS_INCORRECT_MEMORY_SIZE.system_action=The JVM will terminate
+J9NLS_JIT_OPTIONS_INCORRECT_MEMORY_SIZE.user_response=Correct the option
+J9NLS_JIT_OPTIONS_INCORRECT_MEMORY_SIZE.sample_input_1=-Xlp:codecache:pagesize=<size>
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_XLP_INCOMPLETE_OPTION=Opcja '%1$s' nie jest pe\u0142na, nale\u017cy poda\u0107 parametr '%2$s'.
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_XLP_INCOMPLETE_OPTION.explanation=Specified option is not complete, it requires more parameters
+J9NLS_JIT_OPTIONS_XLP_INCOMPLETE_OPTION.system_action=The JVM will terminate
+J9NLS_JIT_OPTIONS_XLP_INCOMPLETE_OPTION.user_response=Specify all the required parameter for -Xlp option
+J9NLS_JIT_OPTIONS_XLP_INCOMPLETE_OPTION.sample_input_1=-Xlp:codecache:
+J9NLS_JIT_OPTIONS_XLP_INCOMPLETE_OPTION.sample_input_2=[non]pageable
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA=W opcji '-Xlp' wykryto dodatkowe znaki przecinka - zignorowano
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.explanation=Extra comma characters are discovered in '-Xlp' option
+J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.system_action=The JVM will ignore extra comma characters
+J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.user_response=Remove extra commas from -Xlp option
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED=Wielko\u015b\u0107 du\u017cych stron %1$zu%2$s nie jest obs\u0142ugiwan\u0105 wielko\u015bci\u0105 stron dla pami\u0119ci podr\u0119cznej kodu JIT; zostanie u\u017cyte %3$zu%4$s
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.explanation=The specified large page size is not supported by the operating system. A default size will be used instead
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.system_action=The JVM will start using the default large page size instead of the specified size
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.user_response=Adjust the -Xlp option to specify page size supported by the operating system
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_1=4096
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_2=K
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_3=16
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_4=M
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE=Wielko\u015b\u0107 du\u017cych stron %1$zu%2$s nie jest obs\u0142ugiwan\u0105 wielko\u015bci\u0105 stron dla pami\u0119ci podr\u0119cznej kodu JIT; zostanie u\u017cyte %3$zu%4$s (%5$s)
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.explanation=The specified page size is not supported by the operating system. A suitable page size will be used.
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.user_response=Adjust the -Xlp option to specify page size supported by the operating system
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_1=4096
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_2=K
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_3=4096
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_4=K
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_5=pageable
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=Wielko\u015b\u0107 du\u017cych stron %1$zu%2$s (%3$s) nie jest obs\u0142ugiwan\u0105 wielko\u015bci\u0105 strony dla pami\u0119ci podr\u0119cznej kodu JIT; zamiast tego zostanie u\u017cyta warto\u015b\u0107 %4$zu%5$s
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.user_response=Adjust the -Xlp option to specify page size supported by the operating system
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_1=4096
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_2=K
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_3=pageable
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_4=4096
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_5=K
+# END NON-TRANSLATABLE
+
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE=Wielko\u015b\u0107 du\u017cych stron %1$zu%2$s (%3$s) nie jest obs\u0142ugiwan\u0105 wielko\u015bci\u0105 strony dla pami\u0119ci podr\u0119cznej kodu JIT; zamiast tego zostanie u\u017cyta warto\u015b\u0107 %4$zu%5$s (%6$s)
+# START NON-TRANSLATABLE
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.user_response=Adjust the -Xlp option to specify page size supported by the operating system
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_1=4096
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_2=K
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_3=pageable
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_4=4096
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_5=K
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_6=pageable
+# END NON-TRANSLATABLE
