@@ -22,7 +22,6 @@
 # These are the rules to compile files of type ".x" into object files
 # as well as to generate clean and cleandeps rules
 #
-
 #
 # Compile .proto files to .cpp files
 #
