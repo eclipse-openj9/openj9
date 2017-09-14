@@ -390,6 +390,14 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
       }
    if (!codeCacheSegment && preferredStartAddress)
       {
+      // Fail the VM if we requested a specific address, but couldn't get it
+      if (TR::Options::_mandatoryCodeCacheAddress)
+         {
+         if (config.verboseCodeCache())
+            TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "Could not allocate code cache at mandatory address %p", (void*)TR::Options::_mandatoryCodeCacheAddress);
+         mcc_printf("TR::CodeCache::allocate : codeCacheSegment is NULL, %p\n", codeCacheSegment);
+         exit(1);
+         }
 #if !defined(J9ZOS390)
       // we could have failed because we wanted a start address
       // let's try without it
@@ -511,6 +519,9 @@ J9::CodeCacheManager::chooseCacheStartAddress(size_t repositorySize)
    {
    void *startAddress = NULL;
 #if defined(TR_HOST_64BIT) && defined(TR_TARGET_X86)
+   if (TR::Options::_mandatoryCodeCacheAddress)
+      return (void*)TR::Options::_mandatoryCodeCacheAddress;
+   
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableSmartPlacementOfCodeCaches))
       {
       size_t alignment = 2 * 1024 * 1024; // 2MB alignment
