@@ -9209,7 +9209,8 @@ TR::CompilationInfoPerThreadBase::compile(
                   compiledMethod = findAotBodyInSCC(vmThread, romMethod);
                   }
                TR_ASSERT(compiledMethod, "compiled method must be nonnull");
-               _methodBeingCompiled->setAotCodeToBeRelocated(compiledMethod);
+               // We need to "unwrap" the wrapper, as performAOTLoad expects this pointer to go directly into the data cache.
+               _methodBeingCompiled->setAotCodeToBeRelocated((void*)((char*)compiledMethod + sizeof(CompiledMethodWrapper)));
                reloRuntime()->setReloStartTime(getTimeWhenCompStarted());
                try
                   {
@@ -10224,33 +10225,49 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
                   if (safeToStore)
                      {
-                     storedCompiledMethod = 
-                        reinterpret_cast<const J9JITDataCacheHeader*>(
-                           jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
-                              vmThread,
-                              romMethod,
-                              dataStart,
-                              dataSize,
-                              codeStart,
-                              codeSize,
-                              0));
-                     switch(reinterpret_cast<uintptr_t>(storedCompiledMethod))
+                     // In server mode, we construct an AOT method cache entry on the heap, and send that over gRPC
+                     // rather than storing the body into the SCC.
+                     if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
                         {
-                        case J9SHR_RESOURCE_STORE_FULL:
+                        size_t methodSize = sizeof(CompiledMethodWrapper) + dataSize + codeSize;
+                        storedCompiledMethod = (J9JITDataCacheHeader *) new (comp->trMemory()->trHeapMemory()) char[methodSize];
+                        CompiledMethodWrapper *methodWrapper = (CompiledMethodWrapper*) storedCompiledMethod;
+                        methodWrapper->romMethodOffset = 0; // JAAS TODO: it appears we do not need to set this! Why?
+                        methodWrapper->dataLength = dataSize;
+                        methodWrapper->codeLength = codeSize;
+                        memcpy(CMWDATA(methodWrapper), dataStart, dataSize);
+                        memcpy(CMWCODE(methodWrapper), codeStart, codeSize);
+                        }
+                     else
+                        {
+                        storedCompiledMethod = 
+                           reinterpret_cast<const J9JITDataCacheHeader*>(
+                              jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
+                                 vmThread,
+                                 romMethod,
+                                 dataStart,
+                                 dataSize,
+                                 codeStart,
+                                 codeSize,
+                                 0));
+                        switch(reinterpret_cast<uintptr_t>(storedCompiledMethod))
                            {
-                           if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
-                              j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_FULL);
-                           TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_FULL);
-                           disableAOTCompilations();
-                           }
-                           break;
-                        case J9SHR_RESOURCE_STORE_ERROR:
-                           {
-                           if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
-                              j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_ERROR);
-                           TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_STORE_ERROR);
-                           TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
-                           disableAOTCompilations();
+                           case J9SHR_RESOURCE_STORE_FULL:
+                              {
+                              if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
+                                 j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_FULL);
+                              TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_FULL);
+                              disableAOTCompilations();
+                              }
+                              break;
+                           case J9SHR_RESOURCE_STORE_ERROR:
+                              {
+                              if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
+                                 j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_ERROR);
+                              TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_STORE_ERROR);
+                              TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+                              disableAOTCompilations();
+                              }
                            }
                         }
                      }
@@ -10574,14 +10591,10 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
             }
          entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
-         J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader*) comp->getAotMethodDataStart();
-         TR_ASSERT(aotMethodHeader, "The AOT method header must have been set.");
-         TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
-         UDATA dataSize = aotMethodHeaderEntry->compileMethodDataSize;
-         UDATA codeSize = aotMethodHeaderEntry->compileMethodCodeSize;
-         // XXX: This is a hack, J9's SCC API doesn't tell you exactly what it stored into the SCC as a result of the storeCompiledMethod() call above
-         // but by inspection we know it's a CompiledMethodWrapper struct + data + code.
-         size_t methodSize = sizeof(CompiledMethodWrapper) + dataSize + codeSize + 16;
+
+         CompiledMethodWrapper *wrapper = (CompiledMethodWrapper *) storedCompiledMethod;
+         size_t methodSize = sizeof(CompiledMethodWrapper) + wrapper->dataLength + wrapper->codeLength;
+
          entry->_stream->finishCompilation(compilationOK, storedCompiledMethod, methodSize);
          }
       }
