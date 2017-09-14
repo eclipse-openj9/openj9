@@ -54,5 +54,5 @@ MM_ConfigurationStaccato::newInstance(MM_EnvironmentBase *env)
 MM_GlobalCollector *
 MM_ConfigurationStaccato::createGlobalCollector(MM_EnvironmentBase *env)
 {
-	return MM_StaccatoGC::newInstance(env, env->getExtensions()->collectorLanguageInterface);
+	return MM_StaccatoGC::newInstance(env);
 }

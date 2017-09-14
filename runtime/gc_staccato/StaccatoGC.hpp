@@ -45,13 +45,13 @@ private:
 /* Methods */
 public:
 	/* Constructors & destructors */
-	static MM_StaccatoGC *newInstance(MM_EnvironmentBase *env, MM_CollectorLanguageInterface *cli);
+	static MM_StaccatoGC *newInstance(MM_EnvironmentBase *env);
 	virtual void kill(MM_EnvironmentBase *env);
 	bool initialize(MM_EnvironmentBase *env);
 	void tearDown(MM_EnvironmentBase *env);
 
-	MM_StaccatoGC(MM_EnvironmentBase *env, MM_CollectorLanguageInterface *cli) :
-		MM_RealtimeGC(env, cli)
+	MM_StaccatoGC(MM_EnvironmentBase *env) :
+		MM_RealtimeGC(env)
 	{
 		_typeId = __FUNCTION__;
 	}
