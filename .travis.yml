@@ -1,0 +1,83 @@
+###############################################################################
+# Copyright (c) 2016, 2017 IBM Corp. and others
+# 
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#      
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#    
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+# 
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+###############################################################################
+os:
+  - linux
+language: cpp
+sudo: false
+#cache: ccache # https://docs.travis-ci.com/user/caching/
+dist: trusty
+addons:
+  apt:
+    packages:
+      - autoconf 
+      - ca-certificates 
+      - ccache 
+      - cpio 
+      - file 
+      - g++-4.8 
+      - gcc-4.8 
+      - git 
+      - git-core 
+      - libasound2-dev 
+      - libcups2-dev 
+      - libelf-dev 
+      - libfreetype6-dev 
+      - libnuma-dev 
+      - libx11-dev 
+      - libxext-dev 
+      - libxrender-dev 
+      - libxt-dev 
+      - libxtst-dev 
+      - make 
+      - openjdk-8-jdk 
+      - pkg-config 
+      - realpath 
+      - ssh 
+      - unzip 
+      - wget 
+      - zip 
+before_install:
+  - jdk_switcher use oraclejdk8
+env:
+  global:
+before_script:
+        #  - ccache -s -z
+  - wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
+  - tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
+  - cd ..
+  - git clone https://github.com/ibmruntimes/openj9-openjdk-jdk9.git
+script:
+  # Clear this option so it doesn't interfere with configure detecting the bootjdk
+  - unset _JAVA_OPTIONS
+  # Point the get_sources script at the OpenJ9 repo that's already been cloned to disk.  
+  # Results in a copy of the source (disk space =( ) but no new network activity so overall a win. 
+  - cd openj9-openjdk-jdk9 && bash ./get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$TRAVIS_COMMIT
+  # Based on https://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/ travis container builds
+  # have 2 cores and 4 gigs of memory.  Attempt to double provision the number of cores for the make...
+  # Limit number of jobs to work around g++ internal compiler error
+  - export UMA_WINDOWS_PARRALLEL_HACK="-j4"
+  - bash ./configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=4 --with-num-cores=4
+  - make images
+  # Minimal sniff test - ensure java -version works
+  - ./build/linux-x86_64-normal-server-release/images/jdk/bin/java -version
+after_script:
+        #- ccache -s
