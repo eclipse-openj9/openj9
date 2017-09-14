@@ -82,4 +82,9 @@
 			<class name="org.openj9.test.varhandle.VarHandleInvokerTest" />
 		</classes>
 	</test>
+	<test name="TestJava9AttachAPI">
+		<classes>
+			<class name="org.openj9.test.java9AttachAPI.TestAttachAPI" />
+		</classes>
+	</test>
 </suite> <!-- Suite -->
