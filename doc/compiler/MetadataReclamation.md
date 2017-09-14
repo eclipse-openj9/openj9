@@ -22,8 +22,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
 # Metadata Reclamation Design {#MetadataReclamation}
 
-See !59
-
 When an ordinary java method *aJavaMethod* gets recompiled, this is the sequence
 of operations:
 
