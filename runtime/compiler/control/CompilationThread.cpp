@@ -95,7 +95,7 @@
 #include "env/ClassLoaderTable.hpp"
 #include "rpc/J9Server.h"
 #include "rpc/J9Client.h"
-
+#include "shcdatatypes.h" // for CompiledMethodWrapper
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -9181,13 +9181,15 @@ TR::CompilationInfoPerThreadBase::compile(
 
             JAAS::J9ClientStream client;
             client.buildCompileRequest(romClassOffset, romMethodOffset, method, compiler->getMethodHotness());
-            uint32_t code = compilationFailure;
+            uint32_t statusCode = compilationFailure;
+            std::string compiledMethodStr;
             try
                {
                while(!handleServerMessage(&client, compiler->fej9vm()));
-               auto recv = client.getRecvData<uint32_t>();
-               code = std::get<0>(recv);
-               if (code >= compilationMaxError)
+               auto recv = client.getRecvData<uint32_t, std::string>();
+               statusCode = std::get<0>(recv);
+               compiledMethodStr = std::get<1>(recv);
+               if (statusCode >= compilationMaxError)
                   throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
                }
             catch (const JAAS::StreamFailure &e)
@@ -9197,9 +9199,15 @@ TR::CompilationInfoPerThreadBase::compile(
                compiler->failCompilation<JAAS::StreamFailure>(e.what());
                }
             JAAS::Status status = client.waitForFinish();
-            if (status.ok() && (code == compilationOK || code == compilationNotNeeded))
+            if (status.ok() && (statusCode == compilationOK || statusCode == compilationNotNeeded))
                {
-               const void *compiledMethod = findAotBodyInSCC(vmThread, romMethod);
+               bool wireTransferSucceeded = true;
+               const void *compiledMethod = compiledMethodStr.size() == 0 ? nullptr : compiledMethodStr.data();
+               if (!compiledMethod)
+                  {
+                  wireTransferSucceeded = false;
+                  compiledMethod = findAotBodyInSCC(vmThread, romMethod);
+                  }
                TR_ASSERT(compiledMethod, "compiled method must be nonnull");
                _methodBeingCompiled->setAotCodeToBeRelocated(compiledMethod);
                reloRuntime()->setReloStartTime(getTimeWhenCompStarted());
@@ -9210,9 +9218,10 @@ TR::CompilationInfoPerThreadBase::compile(
                      {
                      TR_VerboseLog::writeLineLocked(
                         TR_Vlog_JAAS,
-                        "Client successfully loaded method %s @ %s from SCC following compilation request.",
+                        "Client successfully loaded method %s @ %s from %s following compilation request.",
                         compiler->signature(),
-                        compiler->getHotnessName()
+                        compiler->getHotnessName(),
+                        wireTransferSucceeded ? "over RPC" : "SCC"
                         );
                      }
                   }
@@ -9223,9 +9232,10 @@ TR::CompilationInfoPerThreadBase::compile(
                      {
                      TR_VerboseLog::writeLineLocked(
                         TR_Vlog_JAAS,
-                        "Client failed to load method %s @ %s from SCC following compilation request.",
+                        "Client failed to load method %s @ %s from %s following compilation request.",
                         compiler->signature(),
-                        compiler->getHotnessName()
+                        compiler->getHotnessName(),
+                        wireTransferSucceeded ? "over RPC" : "SCC"
                         );
                      }
                   throw;
@@ -10075,6 +10085,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    //
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
    TR_DataCache *dataCache = NULL;
+   const J9JITDataCacheHeader *storedCompiledMethod = nullptr;
 
    // In JAAS Server mode, we currently do not need to reply when details include NewInstanceThunk/MethodInProgress/MethodHandleThunk
    // as the server will not see these types of requests.
@@ -10213,8 +10224,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
                   if (safeToStore)
                      {
-                     switch(
-                        reinterpret_cast<uintptr_t>(
+                     storedCompiledMethod = 
+                        reinterpret_cast<const J9JITDataCacheHeader*>(
                            jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
                               vmThread,
                               romMethod,
@@ -10222,10 +10233,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                               dataSize,
                               codeStart,
                               codeSize,
-                              0
-                              )
-                           )
-                        )
+                              0));
+                     switch(reinterpret_cast<uintptr_t>(storedCompiledMethod))
                         {
                         case J9SHR_RESOURCE_STORE_FULL:
                            {
@@ -10565,7 +10574,15 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
             }
          entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
-         entry->_stream->finishCompilation(compilationOK);
+         J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader*) comp->getAotMethodDataStart();
+         TR_ASSERT(aotMethodHeader, "The AOT method header must have been set.");
+         TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+         UDATA dataSize = aotMethodHeaderEntry->compileMethodDataSize;
+         UDATA codeSize = aotMethodHeaderEntry->compileMethodCodeSize;
+         // XXX: This is a hack, J9's SCC API doesn't tell you exactly what it stored into the SCC as a result of the storeCompiledMethod() call above
+         // but by inspection we know it's a CompiledMethodWrapper struct + data + code.
+         size_t methodSize = sizeof(CompiledMethodWrapper) + dataSize + codeSize + 16;
+         entry->_stream->finishCompilation(compilationOK, storedCompiledMethod, methodSize);
          }
       }
    else if (!oldStartPC)

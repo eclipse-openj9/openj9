@@ -43,11 +43,11 @@ JAAS::J9ServerStream::cancel()
    }
 
 void
-JAAS::J9ServerStream::finishCompilation(uint32_t code)
+JAAS::J9ServerStream::finishCompilation(uint32_t statusCode, const void *compiledMethod, size_t methodSize)
    {
    try
       {
-      write(J9ServerMessageType::compilationCode, code);
+      write(J9ServerMessageType::compilationCode, statusCode, std::string(static_cast<const char*>(compiledMethod), methodSize));
       finish();
       }
 
