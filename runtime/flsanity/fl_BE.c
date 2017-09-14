@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2014 IBM Corp. and others
+ * Copyright (c) 2002, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,16 +121,6 @@ int totalNumTest=0, totalTestsPassed=0, totalTestsFailed=0;
          group_java_lang_Math_tan,
          group_java_lang_Math_toDegrees_double,
          group_java_lang_Math_toRadians_double,
-         group_java_lang_StrictMath_acos,
-         group_java_lang_StrictMath_asin,
-         group_java_lang_StrictMath_atan,
-         group_java_lang_StrictMath_atan2,
-         group_java_lang_StrictMath_cos,
-         group_java_lang_StrictMath_exp,
-         group_java_lang_StrictMath_log,
-         group_java_lang_StrictMath_pow,
-         group_java_lang_StrictMath_sin,
-         group_java_lang_StrictMath_tan,
          /* when adding or removing - ensure you adjust the numGroups value above */
       };
 

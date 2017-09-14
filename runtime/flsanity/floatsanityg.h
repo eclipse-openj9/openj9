@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2014 IBM Corp. and others
+ * Copyright (c) 2002, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,16 +89,6 @@ extern int totalNumTest, totalTestsPassed, totalTestsFailed;
    double java_lang_Math_tan ( double op_0 );
    double java_lang_Math_toDegrees_double ( double op_0 );
    double java_lang_Math_toRadians_double ( double op_0 );
-   double java_lang_StrictMath_acos ( double op_0 );
-   double java_lang_StrictMath_asin ( double op_0 );
-   double java_lang_StrictMath_atan ( double op_0 );
-   double java_lang_StrictMath_atan2 ( double op_0, double op_1 );
-   double java_lang_StrictMath_cos ( double op_0 );
-   double java_lang_StrictMath_exp ( double op_0 );
-   double java_lang_StrictMath_log ( double op_0 );
-   double java_lang_StrictMath_pow ( double op_0, double op_1 );
-   double java_lang_StrictMath_sin ( double op_0 );
-   double java_lang_StrictMath_tan ( double op_0 );
 void group_JBd2f();
 void group_JBd2i();
 void group_JBd2l();
@@ -150,14 +140,3 @@ void group_java_lang_Math_sqrt_double();
 void group_java_lang_Math_tan();
 void group_java_lang_Math_toDegrees_double();
 void group_java_lang_Math_toRadians_double();
-void group_java_lang_StrictMath_acos();
-void group_java_lang_StrictMath_asin();
-void group_java_lang_StrictMath_atan();
-void group_java_lang_StrictMath_atan2();
-void group_java_lang_StrictMath_cos();
-void group_java_lang_StrictMath_exp();
-void group_java_lang_StrictMath_log();
-void group_java_lang_StrictMath_pow();
-void group_java_lang_StrictMath_sin();
-void group_java_lang_StrictMath_tan();
-
