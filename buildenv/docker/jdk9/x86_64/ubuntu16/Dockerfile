@@ -25,7 +25,7 @@
 FROM ubuntu:16.04
 
 # Install required OS tools
-RUN apt-get update \
+RUN rm -rf /var/lib/apt/lists/* && apt-get clean && apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     autoconf \
     ca-certificates \
