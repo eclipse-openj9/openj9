@@ -64,7 +64,6 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 				&& (J2SE_VERSION(vm) >= J2SE_19) 
 				&& J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)
 				&& !J9ROMCLASS_IS_PRIMITIVE_TYPE(destClass->romClass)
-				&& J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_DENY_ILLEGAL_ACCESS)
 			) {
 				j9object_t srcClassObject = sourceClass->classObject;
 				j9object_t destClassObject = destClass->classObject;
