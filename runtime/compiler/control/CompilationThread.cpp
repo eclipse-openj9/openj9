@@ -254,6 +254,56 @@ jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, v
    return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
    }
 
+// For JaaS
+// Packs the ROMClass of a given method into a std::string to be transfered to the server.
+// The name and signature of the given method are appended to the end of the cloned class body and the
+// self referential pointers to them are updated to deal with possible interning. The method name
+// and signature are needed on the server to construct the required ResolvedMethod.
+static std::string packROMClassWithMethod(J9ROMClass *origRomClass, uint64_t methodIndex, TR_Memory *trMemory)
+   {
+   J9ROMMethod *origRomMethod = J9ROMCLASS_ROMMETHODS(origRomClass);
+   for (size_t i = methodIndex; i; --i)
+      {
+      origRomMethod = nextROMMethod(origRomMethod);
+      }
+   J9UTF8 *name = J9ROMMETHOD_GET_NAME(origRomClass, origRomMethod);
+   J9UTF8 *signature = J9ROMMETHOD_GET_SIGNATURE(origRomClass, origRomMethod);
+
+   // Each J9UTF8 holds a char array and a U_16 to store the length of the char array
+   size_t nameSize = name->length + sizeof(U_16);
+   size_t sigSize = signature->length + sizeof(U_16);
+
+   // Make a cloned ROMClass with extra space at the end
+   J9ROMClass *romClass = (J9ROMClass *)trMemory->allocateHeapMemory(origRomClass->romSize + nameSize + sigSize);
+   if (!romClass)
+      throw std::bad_alloc();
+   memcpy(romClass, origRomClass, origRomClass->romSize);
+
+   // Copy the J9UTF8s to the extra space allocated at the end
+   char *namePos = (char *)romClass + romClass->romSize;
+   memcpy(namePos, name, nameSize);
+   char *signaturePos = (char *)namePos + nameSize;
+   memcpy(signaturePos, signature, sigSize);
+
+   // Find the romMethod in the cloned romClass to modify the self referential pointers
+   J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+   for (size_t i = methodIndex; i; --i)
+      {
+      romMethod = nextROMMethod(romMethod);
+      }
+   // Update the J9SRPs
+   NNSRP_SET(romMethod->nameAndSignature.name, namePos);
+   NNSRP_SET(romMethod->nameAndSignature.signature, signaturePos);
+
+   // Update the size of the romClass
+   romClass->romSize += nameSize + sigSize;
+
+   // Return the cloned ROMClass as a byte array
+   std::string romClassStr((char *) romClass, romClass->romSize);
+   trMemory->freeMemory(romClass, heapAlloc);
+   return romClassStr;
+   }
+
 static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
    {
    using JAAS::J9ServerMessageType;
@@ -739,11 +789,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
 
          J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *)(J9_CP_FROM_METHOD(resolvedMethod->ramMethod()));
          J9Class *cpHdr = J9_CLASS_FROM_CP(literals);
-         TR_J9SharedCache *cache = fe->sharedCache();
-         uint64_t romClass = (uint64_t)cache->offsetInSharedCacheFromPointer(cpHdr->romClass);
-         uint64_t romMethod = (uint64_t)cache->offsetInSharedCacheFromPointer(J9_ROM_METHOD_FROM_RAM_METHOD(resolvedMethod->ramMethod()));
 
-         client->write(resolvedMethod, literals, cpHdr, romClass, romMethod);
+         J9Method *j9method = (J9Method *)method;
+         const uint64_t methodIndex = getMethodIndexUnchecked(j9method);
+         auto romClass = packROMClassWithMethod(J9_CLASS_FROM_METHOD(j9method)->romClass, methodIndex, trMemory);
+
+         client->write(resolvedMethod, literals, cpHdr, romClass, methodIndex);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isJNINative:

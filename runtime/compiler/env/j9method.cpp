@@ -8345,6 +8345,25 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
 //
 //
 
+static J9ROMClass *
+romClassFromString(const std::string &romClassStr, TR_Memory *trMemory)
+   {
+   auto romClass = (J9ROMClass *)(trMemory->allocateHeapMemory(romClassStr.size()));
+   if (!romClass)
+      throw std::bad_alloc();
+   memcpy(romClass, &romClassStr[0], romClassStr.size());
+   return romClass;
+   }
+
+static J9ROMMethod *
+romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
+   {
+   J9ROMMethod * romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+   for (size_t i = methodIndex; i; --i)
+      romMethod = nextROMMethod(romMethod);
+   return romMethod;
+   }
+
 TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedRelocatableJ9Method(fe, owningMethod)
    {
@@ -8359,7 +8378,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    // Create client side mirror of this object to use for calls involving RAM data
    TR_ResolvedRelocatableJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JAASServerMethod*) owningMethod)->_remoteMirror : nullptr;
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot);
-   auto recv = _stream->read<TR_ResolvedRelocatableJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uint64_t>();
+   auto recv = _stream->read<TR_ResolvedRelocatableJ9Method*, J9RAMConstantPoolItem*, J9Class*, std::string, uint64_t>();
 
    _remoteMirror = std::get<0>(recv);
 
@@ -8367,10 +8386,8 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _literals = std::get<1>(recv);
    _ramClass = std::get<2>(recv);
 
-   // Use the rom class and rom method read from the SCC
-   TR_J9SharedCache *cache = j9fe->sharedCache();
-   _romClass = (J9ROMClass*)cache->pointerFromOffsetInSharedCache((void*)std::get<3>(recv));
-   _romMethod = (J9ROMMethod*)cache->pointerFromOffsetInSharedCache((void*)std::get<4>(recv));
+   _romClass = romClassFromString(std::get<3>(recv), trMemory);
+   _romMethod = romMethodAtClassIndex(_romClass, std::get<4>(recv));
    _romLiterals = (J9ROMConstantPoolItem *) ((UDATA)romClassPtr() + sizeof(J9ROMClass));
 
    _vTableSlot = vTableSlot;
