@@ -9210,7 +9210,7 @@ TR::CompilationInfoPerThreadBase::compile(
                   }
                TR_ASSERT(compiledMethod, "compiled method must be nonnull");
                // We need to "unwrap" the wrapper, as performAOTLoad expects this pointer to go directly into the data cache.
-               _methodBeingCompiled->setAotCodeToBeRelocated((void*)((char*)compiledMethod + sizeof(CompiledMethodWrapper)));
+               _methodBeingCompiled->setAotCodeToBeRelocated((void*)((CompiledMethodWrapper*) compiledMethod + 1));
                reloRuntime()->setReloStartTime(getTimeWhenCompStarted());
                try
                   {
@@ -10635,7 +10635,10 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          }
       }
 
-   if ((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && comp && (dataCache = (TR_DataCache *)comp->getReservedDataCache()))
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
+       (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)) &&
+       comp && (dataCache = (TR_DataCache *)comp->getReservedDataCache()))
       {
       dataCache->resetAllocationToMark();
       // TODO: make sure we didn't allocate a new dataCache (the mark was set in the old cache)
