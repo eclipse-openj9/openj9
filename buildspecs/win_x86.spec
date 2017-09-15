@@ -229,7 +229,6 @@
 		<flag id="module_jnichk" value="true"/>
 		<flag id="module_jniinv" value="true"/>
 		<flag id="module_jnitest" value="true"/>
-		<flag id="module_jsig" value="true"/>
 		<flag id="module_jvmti" value="true"/>
 		<flag id="module_jvmtitst" value="true"/>
 		<flag id="module_lifecycle_tests" value="true"/>
