@@ -268,13 +268,15 @@ static std::string packROMClassWithMethod(J9ROMClass *origRomClass, uint64_t met
       }
    J9UTF8 *name = J9ROMMETHOD_GET_NAME(origRomClass, origRomMethod);
    J9UTF8 *signature = J9ROMMETHOD_GET_SIGNATURE(origRomClass, origRomMethod);
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(origRomClass);
 
    // Each J9UTF8 holds a char array and a U_16 to store the length of the char array
    size_t nameSize = name->length + sizeof(U_16);
    size_t sigSize = signature->length + sizeof(U_16);
+   size_t classNameSize = className->length + sizeof(U_16);
 
    // Make a cloned ROMClass with extra space at the end
-   J9ROMClass *romClass = (J9ROMClass *)trMemory->allocateHeapMemory(origRomClass->romSize + nameSize + sigSize);
+   J9ROMClass *romClass = (J9ROMClass *)trMemory->allocateHeapMemory(origRomClass->romSize + nameSize + sigSize + classNameSize);
    if (!romClass)
       throw std::bad_alloc();
    memcpy(romClass, origRomClass, origRomClass->romSize);
@@ -284,6 +286,8 @@ static std::string packROMClassWithMethod(J9ROMClass *origRomClass, uint64_t met
    memcpy(namePos, name, nameSize);
    char *signaturePos = (char *)namePos + nameSize;
    memcpy(signaturePos, signature, sigSize);
+   char *classNamePos = (char *)signaturePos + sigSize;
+   memcpy(classNamePos, className, classNameSize);
 
    // Find the romMethod in the cloned romClass to modify the self referential pointers
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
@@ -294,12 +298,10 @@ static std::string packROMClassWithMethod(J9ROMClass *origRomClass, uint64_t met
    // Update the J9SRPs
    NNSRP_SET(romMethod->nameAndSignature.name, namePos);
    NNSRP_SET(romMethod->nameAndSignature.signature, signaturePos);
-
-   // Update the size of the romClass
-   romClass->romSize += nameSize + sigSize;
+   NNSRP_SET(romClass->className, classNamePos);
 
    // Return the cloned ROMClass as a byte array
-   std::string romClassStr((char *) romClass, romClass->romSize);
+   std::string romClassStr((char *) romClass, romClass->romSize + nameSize + sigSize + classNameSize);
    trMemory->freeMemory(romClass, heapAlloc);
    return romClassStr;
    }
