@@ -8827,31 +8827,69 @@ TR_ResolvedJ9JAASServerMethod::inROMClass(void * address)
    }
 
 char *
+TR_ResolvedJ9JAASServerMethod::getRemoteROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
+   {
+   size_t offsetFromROMClass = (uint8_t*) basePtr - (uint8_t*) romClassPtr();
+   std::string offsetsStr((char*) offsets.begin(), offsets.size() * sizeof(size_t));
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getRemoteROMString, _remoteMirror, offsetFromROMClass, offsetsStr);
+   std::string str = std::get<0>(_stream->read<std::string>());
+   len = str.length();
+   char *chars = new (TR::comp()->trHeapMemory()) char[len];
+   memcpy(chars, &str[0], len);
+   return chars;
+   }
+
+// Takes a pointer to some data which is placed statically relative to the rom class,
+// as well as a list of offsets to J9SRP fields. The first offset is applied before the first
+// SRP is followed.
+//
+// If at any point while following the chain of SRP pointers we land outside the ROM class,
+// then we fall back to getRemoteROMString which follows the same process on the client.
+//
+// This is a workaround because some data referenced in the ROM constant pool is located outside of
+// it, but we cannot easily determine if the reference is outside or not (or even if it is a reference!)
+// because the data is untyped.
+char *
+TR_ResolvedJ9JAASServerMethod::getROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
+   {
+   uint8_t *ptr = (uint8_t*) basePtr;
+   for (size_t offset : offsets)
+      {
+      ptr += offset;
+      if (!inROMClass(ptr))
+         return getRemoteROMString(len, basePtr, offsets);
+      ptr = ptr + *(J9SRP*)ptr;
+      }
+   if (!inROMClass(ptr))
+      return getRemoteROMString(len, basePtr, offsets);
+   char *data = utf8Data((J9UTF8*) ptr, len);
+   return data;
+   }
+
+char *
 TR_ResolvedJ9JAASServerMethod::fieldOrStaticSignatureChars(I_32 cpIndex, int32_t & len)
    {
    if (cpIndex < 0)
       return 0;
 
-   auto localSignature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE(&romCPBase()[cpIndex]));
-   if (inROMClass(localSignature))
-      return utf8Data(localSignature, len);
-
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_fieldOrStaticSignatureChars, _remoteMirror, cpIndex);
-   std::string signature = std::get<0>(_stream->read<std::string>());
-   len = signature.size();
-   return &signature[0];
+   char *signature = getROMString(len, &romCPBase()[cpIndex],
+                           {
+                           offsetof(J9ROMFieldRef, nameAndSignature),
+                           offsetof(J9ROMNameAndSignature, signature)
+                           });
+   return signature;
    }
 
 char *
 TR_ResolvedJ9JAASServerMethod::getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-   auto romClassRef = J9ROMCLASSREF_NAME((J9ROMClassRef *) &romLiterals()[cpIndex]);
-   if (inROMClass(romClassRef))
-      return utf8Data(romClassRef, length);
 
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getClassNameFromConstantPool, _remoteMirror, cpIndex);
-   std::string signature = std::get<0>(_stream->read<std::string>());
-   length = signature.size();
-   return &signature[0];
+   int32_t len;
+   char *name = getROMString(len, &romLiterals()[cpIndex],
+                           {
+                           offsetof(J9ROMClassRef, name),
+                           });
+   length = len; // this is what happends when you have no type conventions
+   return name;
    }

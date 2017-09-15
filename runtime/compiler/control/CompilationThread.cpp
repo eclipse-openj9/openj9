@@ -1070,26 +1070,23 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(method->storeValidationRecordIfNecessary(TR::comp(), constantPool, cpIndex, reloKind, ramMethod, definingClass));
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_fieldOrStaticSignatureChars:
+      case J9ServerMessageType::ResolvedMethod_getRemoteROMString:
          {
-         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t>();
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, size_t, std::string>();
          TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
-         int32_t cpIndex = std::get<1>(recv);
+         size_t offsetFromROMClass = std::get<1>(recv);
+         std::string offsetsStr = std::get<2>(recv);
+         size_t numOffsets = offsetsStr.size() / sizeof(size_t);
+         size_t *offsets = (size_t*) &offsetsStr[0];
+         uint8_t *ptr = (uint8_t*) method->romClassPtr() + offsetFromROMClass;
+         for (size_t i = 0; i < numOffsets; i++)
+            {
+            size_t offset = offsets[i];
+            ptr = ptr + offset + *(J9SRP*)(ptr + offset);
+            }
          int32_t len;
-         auto sigChars = method->fieldOrStaticSignatureChars(cpIndex, len);
-         std::string signature(sigChars, len);
-         client->write(signature);
-         }
-         break;
-      case J9ServerMessageType::ResolvedMethod_getClassNameFromConstantPool:
-         {
-         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t>();
-         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
-         int32_t cpIndex = std::get<1>(recv);
-         uint32_t len;
-         auto sigChars = method->getClassNameFromConstantPool(cpIndex, len);
-         std::string signature(sigChars, len);
-         client->write(signature);
+         char * data = utf8Data((J9UTF8*) ptr, len);
+         client->write(std::string(data, len));
          }
          break;
       case J9ServerMessageType::CompInfo_isCompiled:

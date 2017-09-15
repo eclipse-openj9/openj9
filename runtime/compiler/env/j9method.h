@@ -638,6 +638,9 @@ private:
    J9RAMConstantPoolItem *_literals; // client pointer to constant pool
    J9Class *_ramClass; // client pointer to RAM class
    TR_ResolvedRelocatableJ9Method *_remoteMirror;
+
+   char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
+   char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    };
 
 #endif
