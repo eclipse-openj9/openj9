@@ -468,7 +468,7 @@ public:
    bool                          fieldIsFromLocalClass(int32_t cpIndex);
 
    char *fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);
-   char *fieldOrStaticSignatureChars (int32_t cpIndex, int32_t & len);
+   virtual char *fieldOrStaticSignatureChars (int32_t cpIndex, int32_t & len);
 
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm);
 
@@ -584,7 +584,6 @@ protected:
 
    J9ExceptionHandler * exceptionHandler();
    };
-#endif
 
 class TR_ResolvedJ9JAASServerMethod : public TR_ResolvedRelocatableJ9Method
    {
@@ -622,12 +621,15 @@ public:
    virtual bool getUnresolvedSpecialMethodInCP(I_32 cpIndex) override;
    virtual TR_ResolvedMethod *getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve) override;
    virtual bool getUnresolvedFieldInCP(I_32 cpIndex) override;
+   virtual char * fieldOrStaticSignatureChars(I_32 cpIndex, int32_t & len) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override
       {
       return _fe->convertClassPtrToClassOffset(_ramClass);
       }
+
+   bool inROMClass(void *address);
 
 private:
    JAAS::J9ServerStream *_stream;
@@ -637,4 +639,5 @@ private:
    TR_ResolvedRelocatableJ9Method *_remoteMirror;
    };
 
+#endif
 #endif

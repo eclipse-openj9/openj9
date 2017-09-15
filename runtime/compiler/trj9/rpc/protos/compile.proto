@@ -53,6 +53,7 @@ enum J9ServerMessageType
    ResolvedMethod_storeValidationRecordIfNecessary = 122;
    ResolvedMethod_getUnresolvedSpecialMethodInCP = 123;
    ResolvedMethod_getUnresolvedFieldInCP = 124;
+   ResolvedMethod_fieldOrStaticSignatureChars = 125;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;

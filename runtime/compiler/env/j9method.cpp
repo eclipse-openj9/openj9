@@ -8819,3 +8819,25 @@ TR_ResolvedJ9JAASServerMethod::getUnresolvedFieldInCP(I_32 cpIndex)
       return true;
 #endif
    }
+
+bool
+TR_ResolvedJ9JAASServerMethod::inROMClass(void * address)
+   {
+   return address >= romClassPtr() && address < ((uint8_t*)romClassPtr()) + romClassPtr()->romSize;
+   }
+
+char *
+TR_ResolvedJ9JAASServerMethod::fieldOrStaticSignatureChars(I_32 cpIndex, int32_t & len)
+   {
+   if (cpIndex < 0)
+      return 0;
+
+   auto localSignature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE(&romCPBase()[cpIndex]));
+   if (inROMClass(localSignature))
+      return utf8Data(localSignature, len);
+
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_fieldOrStaticSignatureChars, _remoteMirror, cpIndex);
+   std::string signature = std::get<0>(_stream->read<std::string>());
+   len = signature.size();
+   return &signature[0];
+   }

@@ -1070,6 +1070,17 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(method->storeValidationRecordIfNecessary(TR::comp(), constantPool, cpIndex, reloKind, ramMethod, definingClass));
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_fieldOrStaticSignatureChars:
+         {
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         int32_t len;
+         auto sigChars = method->fieldOrStaticSignatureChars(cpIndex, len);
+         std::string signature(sigChars, len);
+         client->write(signature);
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
