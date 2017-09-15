@@ -8841,3 +8841,17 @@ TR_ResolvedJ9JAASServerMethod::fieldOrStaticSignatureChars(I_32 cpIndex, int32_t
    len = signature.size();
    return &signature[0];
    }
+
+char *
+TR_ResolvedJ9JAASServerMethod::getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length)
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+   auto romClassRef = J9ROMCLASSREF_NAME((J9ROMClassRef *) &romLiterals()[cpIndex]);
+   if (inROMClass(romClassRef))
+      return utf8Data(romClassRef, length);
+
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getClassNameFromConstantPool, _remoteMirror, cpIndex);
+   std::string signature = std::get<0>(_stream->read<std::string>());
+   length = signature.size();
+   return &signature[0];
+   }

@@ -1081,6 +1081,17 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(signature);
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_getClassNameFromConstantPool:
+         {
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         uint32_t len;
+         auto sigChars = method->getClassNameFromConstantPool(cpIndex, len);
+         std::string signature(sigChars, len);
+         client->write(signature);
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
