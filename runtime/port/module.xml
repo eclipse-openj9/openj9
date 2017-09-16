@@ -105,6 +105,7 @@
 		<object name="j9gs_s390">
 			<include-if condition="spec.linux_390.*"/>
 			<include-if condition="spec.zos_390.*"/>
+			<include-if condition="spec.linux_ztpf.*"/>
 			<exclude-if condition="spec.linux_x86.*"/>
 			<exclude-if condition="spec.win_x86.*"/>
 		</object>	

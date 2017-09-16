@@ -690,7 +690,7 @@ getj9bin()
 	/* misnamed - returns the directory that the jvm DLL is found in, NOT the directory that the J9 VM itself is in. */
 
 	J9StringBuffer *result = NULL;
-#if defined(LINUX)
+#if defined(LINUX) && !defined(J9ZTPF)
 	Dl_info libraryInfo;
 	int rc = dladdr((void *)getj9bin, &libraryInfo);
 
@@ -716,11 +716,9 @@ getj9bin()
 		if(isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME ".so")) {
 			return result;
 		}
-#if defined(J9ZOS390)
+
 		truncatePath(jvmBufferData(result));
-#elif defined(J9ZTPF)
-		truncateStringAtLastOccurence(jvmBufferData(result), DIR_SEPARATOR);
-#endif /* defined(J9ZOS390) */
+
 		/* trying parent */
 		if(isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME ".so")) {
 			return result;
@@ -772,7 +770,7 @@ getj9bin()
 	truncatePath(jvmBufferData(result));
 
 	free(linfo);
-#endif  /* defined(LINUX) */
+#endif  /* defined(LINUX) && !defined(J9ZTPF) */
 	return result;
 }
 #endif /* ifndef WIN32*/
