@@ -33,9 +33,11 @@
 #include "AtomicSupport.hpp"
 #include "VMHelpers.hpp"
 #include "BytecodeAction.hpp"
-#include "FFITypeHelpers.hpp"
 #include "ObjectAllocationAPI.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
+#ifdef J9VM_OPT_PANAMA
+#include "NativeCalloutHelpers.h"
+#endif /* J9VM_OPT_PANAMA */
 
 typedef struct ClassCastExceptionData {
 	J9Class * currentClass;

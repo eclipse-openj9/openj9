@@ -40,9 +40,6 @@ public class NativeMethodHandle extends PrimitiveHandle {
 
 	private native void initJ9NativeCalloutDataRef(String[] argLayoutStrings);
 
-	/* TODO Need to address cleanup of J9NativeCalloutDataRef */
-	private native void freeJ9NativeCalloutDataRef();
-
 	/* This constructor is used to bootstrap the Panama JCL (for sterror, dlopen, dlsym, etc.). It only handles primitive methods. */
 	NativeMethodHandle(String methodName, MethodType type, long nativeAddress) throws IllegalAccessException {
 		this(methodName, type, nativeAddress, null);

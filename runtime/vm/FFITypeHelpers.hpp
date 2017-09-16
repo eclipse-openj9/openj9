@@ -26,17 +26,10 @@
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 #ifdef J9VM_OPT_PANAMA
-#include "ffi.h"
+#include "NativeCalloutHelpers.h"
 #endif /* J9VM_OPT_PANAMA */
 
 #define J9VM_LAYOUT_STRING_ON_STACK_LIMIT 128
-
-#ifdef J9VM_OPT_PANAMA
-typedef struct J9NativeCalloutData {
-	ffi_type **arguments;
-	ffi_cif *cif;
-} J9NativeCalloutData;
-#endif /* J9VM_OPT_PANAMA */
 
 class FFITypeHelpers
 {

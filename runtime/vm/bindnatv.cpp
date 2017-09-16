@@ -283,7 +283,6 @@ static J9OutOfLineINLMapping outOfLineINLmappings[] = {
 #endif /* defined(J9VM_OPT_VALHALLA_MVT) */
 #if defined(J9VM_OPT_PANAMA)
 	{ "Java_java_lang_invoke_NativeMethodHandle_initJ9NativeCalloutDataRef___3Ljava_lang_String_2", OutOfLineINL_java_lang_invoke_NativeMethodHandle_initJ9NativeCalloutDataRef },
-	{ "Java_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef__", OutOfLineINL_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef },
 #endif /* defined(J9VM_OPT_PANAMA) */
 };
 

@@ -39,7 +39,6 @@ J9OutOfLineINLMethod OutOfLineINL_jdk_experimental_value_ValueType_valueClassImp
 #endif /* defined(J9VM_OPT_VALHALLA_MVT) */
 #if defined(J9VM_OPT_PANAMA)
 J9OutOfLineINLMethod OutOfLineINL_java_lang_invoke_NativeMethodHandle_initJ9NativeCalloutDataRef;
-J9OutOfLineINLMethod OutOfLineINL_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef;
 #endif /* defined(J9VM_OPT_PANAMA) */
 }
 

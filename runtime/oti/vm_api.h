@@ -1795,6 +1795,18 @@ findModuleForPackage(J9VMThread *currentThread, J9ClassLoader *classLoader, U_8 
 J9ModuleExtraInfo *
 findModuleInfoForModule(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module *j9module);
 
+/* ---------------- NativeCalloutDataHashTable.c ---------------- */
+
+#ifdef J9VM_OPT_PANAMA
+/**
+ * @brief Create the J9NativeCalloutData hash table
+ * @param initialSize initial size
+ * @return Pointer to new hash table
+ */
+J9HashTable *
+hashNativeCalloutDataNew(J9JavaVM *javaVM, U_32 initialSize);
+#endif /* J9VM_OPT_PANAMA */
+
 /* ---------------- lookupmethod.c ---------------- */
 
 /**

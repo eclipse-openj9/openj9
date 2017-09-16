@@ -27,6 +27,9 @@
 #include "ut_j9vm.h"
 #include "VMHelpers.hpp"
 #include "ArrayCopyHelpers.hpp"
+#ifdef J9VM_OPT_PANAMA
+#include "FFITypeHelpers.hpp"
+#endif /* J9VM_OPT_PANAMA */
 #include "j9vmnls.h"
 
 extern "C" {
@@ -181,5 +184,38 @@ convertCStringToByteArray(J9VMThread *currentThread, const char *cString)
 	}
 	return result;
 }
+
+#ifdef J9VM_OPT_PANAMA
+void
+freeJ9NativeCalloutDataRef(J9VMThread *currentThread, void *nativeCalloutData)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9NativeCalloutData *calloutData = NULL;
+
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	Assert_VM_notNull(nativeCalloutData);
+
+	calloutData = (J9NativeCalloutData *)nativeCalloutData;
+
+	Assert_VM_notNull(calloutData->arguments);
+	Assert_VM_notNull(calloutData->cif);
+
+	FFITypeHelpers FFIHelpers = FFITypeHelpers(currentThread);
+	/**
+	 * calloutData->arguments[0] stores the ffi_type of the return argument of the method.
+	 * The remaining calloutData->arguments array stores the ffi_type of the input arguments.
+	 **/
+	UDATA argumentsCount = (UDATA)calloutData->cif->nargs + 1;
+	for (U_8 i = 0; i < argumentsCount; i++) {
+		FFIHelpers.freeStructFFIType(calloutData->arguments[i]);
+	}
+	j9mem_free_memory(calloutData->arguments);
+	calloutData->arguments = NULL;
+
+	j9mem_free_memory(calloutData->cif);
+	calloutData->cif = NULL;
+}
+#endif /* J9VM_OPT_PANAMA */
 
 }
