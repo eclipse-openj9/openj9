@@ -107,6 +107,15 @@ TR_PatchNOPedGuardSiteOnClassPreInitialize::matches(char *sig, uint32_t sigLen)
    return true;
    }
 
+TR_PatchNOPedGuardSiteOnMethodBreakPoint* TR_PatchNOPedGuardSiteOnMethodBreakPoint::make(
+      TR_FrontEnd *fe, TR_PersistentMemory * pm, TR_OpaqueMethodBlock *method, uint8_t *location, uint8_t *destination,
+      OMR::RuntimeAssumption **sentinel)
+   {
+   TR_PatchNOPedGuardSiteOnMethodBreakPoint *result = new (pm) TR_PatchNOPedGuardSiteOnMethodBreakPoint(pm, method, location, destination);
+   result->addToRAT(pm, RuntimeAssumptionOnMethodBreakPoint, fe, sentinel);
+   return result;
+   }
+
 
 void
 TR_PreXRecompile::compensate(TR_FrontEnd *fe, bool, void *)
