@@ -5381,6 +5381,216 @@ bool genInstanceOfOrCheckCastNullTest(TR::Node* node, TR::CodeGenerator* cg, TR:
       return isNullTestImplicit;
    }
 
+
+/** \brief
+ *     Generates a dynamicCache test with helper call for instanceOf/ifInstanceOf node
+ *
+ *  \details
+ *     This funcition generates a sequence to check per site cache for object class and cast class before calling out to jitInstanceOf helper
+ */
+static
+void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *cg, TR::Register *castClassReg, TR::Register *objClassReg, TR::Register *resultReg, TR_S390ScratchRegisterManager *srm, TR::LabelSymbol *doneLabel, TR::LabelSymbol *helperCallLabel, TR::LabelSymbol *dynamicCacheTestLabel, TR::LabelSymbol *branchLabel, TR::LabelSymbol *trueLabel, TR::LabelSymbol *falseLabel, bool dynamicCastClass, bool generateDynamicCache, bool cacheCastClass, bool ifInstanceOf, bool trueFallThrough )
+   {
+   TR::Compilation                *comp = cg->comp();
+   bool needResult = resultReg != NULL;
+   if (!castClassReg)
+      castClassReg = cg->evaluate(node->getSecondChild());
+   int32_t maxOnsiteCacheSlots = comp->getOptions()->getMaxOnsiteCacheSlotForInstanceOf();
+   TR::Register *dynamicCacheReg = NULL;
+   int32_t addressSize = TR::Compiler->om.sizeofReferenceAddress();
+   /* Layout of the writable data snippet
+    * Case - 1 : Cast class is runtime variable
+    * [UpdateIndex][ObjClassSlot-0][CastClassSlot-0]...[ObjClassSlot-N][CastClassSlot-N]
+    * Case - 2 : Cast Class is interface / unresolved
+    * [UpdateIndex][ObjClassSlot-0]...[ObjClassSlot-N]
+    * If there is only one cache slot, we will not have header.
+    * Last bit of cached objectClass will set to 1 indicating false cast
+    */
+   int32_t snippetSizeInBytes = ((cacheCastClass ? 2 : 1) * maxOnsiteCacheSlots * addressSize) + (addressSize * (maxOnsiteCacheSlots != 1));
+   if (generateDynamicCache)
+      {
+      TR::S390WritableDataSnippet *dynamicCacheSnippet = NULL;
+      /* We can only request the snippet size of power 2, following table summarizes bytes needed for corresponding number of cache slots
+       * Case 1 : Cast class is runtime variable
+       * Case 2 : Cast class is interface / unresolved
+       * Number Of Slots |  Bytes needed for Case 1 | Bytes needed for Case 2
+       *        1        |              16          |           8
+       *        2        |              64          |           32
+       *        3        |              64          |           32
+       *        4        |              128         |           64
+       *        5        |              128         |           64
+       *        6        |              128         |           64
+       */
+      int32_t requestedBytes = 1 << (int) (log2(snippetSizeInBytes-1)+1);
+      traceMsg(comp, "Requested Bytes = %d\n",requestedBytes);
+      // NOTE: For single slot cache, we initialize snippet with addressSize (4/8) assuming which can not be objectClass
+      // In all cases, we use first addressSize bytes to store offset of the circular buffer and rest of buffer will be initialized with 0xf.
+      TR_ASSERT_FATAL(maxOnsiteCacheSlots <= 7, "Maximum 7 slots per site allowed because we use a fixed stack allocated buffer to construct the snippet\n");
+      UDATA initialSnippet[16] = { static_cast<UDATA>(addressSize) };
+      dynamicCacheSnippet = (TR::S390WritableDataSnippet*)cg->CreateConstant(node, initialSnippet, requestedBytes, true);
+      
+      int32_t currentIndex = maxOnsiteCacheSlots > 1 ? addressSize : 0;
+      dynamicCacheReg = srm->findOrCreateScratchRegister();
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, dynamicCacheTestLabel);
+      generateRILInstruction(cg, TR::InstOpCode::LARL, node, dynamicCacheReg, dynamicCacheSnippet, 0);
+      TR::Register *cachedObjectClass = srm->findOrCreateScratchRegister();
+      TR::LabelSymbol *gotoNextTest = NULL;
+      /* Dynamic Cache Test
+       * LARL dynamicCacheReg, dynamicCacheSnippet
+       * if (cacheCastClass)
+       *    CG castClassReg, @(dynamicCacheSnippet+currentIndex+addressSize)
+       *    BRC NE,isLastCacheSlot ? helperCall:checkNextSlot
+       * LG cachedOjectClass,@(dynamicCacheSnippet+currentIndex)
+       * XR cachedObjectClass,objClassReg
+       * if (isLastCacheSlot && trueFallThrough)
+       *    CGIJ cachedObjectClass, 1, Equal, falseLabel
+       *    BRC NotZero, helperCallLabel
+       * else if (isLastCacheSlot)
+       *    BRC Zero, trueLabel
+       *    CGIJ cachedObjectClass, 1, NotEqual, helperCallLabel
+       * else
+       *    BRC Zero ,trueLabel
+       *    CGIJ cachedObjectClass,1,Equal,falseLabel
+       * if (isLastCacheSlot)
+       *    fallThroughLabel:
+       * else
+       *    checkNextSlot:
+       */
+      for (auto i=0; i<maxOnsiteCacheSlots; i++)
+         {
+         if (cacheCastClass)
+            {
+            gotoNextTest = (i+1 == maxOnsiteCacheSlots) ? helperCallLabel : generateLabelSymbol(cg);
+            generateRXInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, castClassReg, generateS390MemoryReference(dynamicCacheReg,currentIndex+addressSize,cg));
+            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, gotoNextTest);
+            }
+         generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, cachedObjectClass, generateS390MemoryReference(dynamicCacheReg,currentIndex,cg));
+         generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node,cachedObjectClass, objClassReg);
+         if (i+1 == maxOnsiteCacheSlots)
+            {
+            if (trueFallThrough)
+               {
+               generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, cachedObjectClass, 1, TR::InstOpCode::COND_BE, falseLabel, false, false);
+               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, helperCallLabel);
+               }
+            else
+               {
+               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, trueLabel);
+               generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, cachedObjectClass, 1, TR::InstOpCode::COND_BNE, helperCallLabel, false, false);
+               }
+            }
+         else
+            {  
+            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, trueLabel);
+            generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, cachedObjectClass, 1, TR::InstOpCode::COND_BE, falseLabel, false, false);
+            }
+         
+         if (gotoNextTest && gotoNextTest != helperCallLabel)
+            generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, gotoNextTest);
+         currentIndex += (cacheCastClass? 2: 1)*addressSize;
+         }
+      srm->reclaimScratchRegister(cachedObjectClass);
+      }
+   else if (!dynamicCastClass)
+      {
+      // If dynamic Cache Test is not generated and it is not dynamicCastClass, we need to generate following branch
+      // In cases of dynamic cache test / dynamic Cast Class, we would have a branch to helper call at appropriate location.
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, helperCallLabel);
+      }
+
+      /* helperCallLabel : jitInstanceOfCall prologue
+       *                   BRASL jitInstanceOf
+       *                   jitInstanceOfCall epilogue
+       *                   CGIJ helperReturnReg,1,skipSettingBitForFalseResult <- Start of Internal Control Flow
+       *                   OILL objClassReg,1
+       * skipSettingBitForFalseResult:
+       *               Case - 1 : maxOnsiteCacheSlots = 1
+       *                   STG objClassReg, @(dynamicCacheReg)    
+       *                   if (cacheCastClass)
+       *                      STG castClassReg, @(dynamicCacheReg,addressSize)
+       *               Case - 2 : maxOnsiteCacheSlots > 1
+       *                   LG offsetRegister,@(dynamicCacheReg)
+       *                   STG objClassReg,@(dynamicCacheReg,offsetRegister)
+       *                   if (cacheCastClass)
+       *                      STG castClassReg, @(dynamicCacheReg,offsetRegister,addressSize)
+       *                   AGHI offsetReg,addressSize
+       *                   CIJ offsetReg,snippetSizeInBytes,NotEqual,skipResetOffset
+       *                   LGHI offsetReg,addressSize
+       * skipResetOffset:
+       *                   STG offsetReg,@(dynamicCacheReg) -> End of Internal Control Flow
+       *                   LT resultReg,helperReturnReg
+       */  
+   TR_S390OutOfLineCodeSection *outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(helperCallLabel, doneLabel, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
+      outlinedSlowPath->swapInstructionListsWithCompilation();
+   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, helperCallLabel);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOf/(%s)/Helper", comp->signature()),1,TR::DebugCounter::Undetermined);
+   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
+   resultReg = helperLink->buildDirectDispatch(node, resultReg);
+   if (generateDynamicCache)
+      {
+      TR::LabelSymbol *skipSettingBitForFalseResult = generateLabelSymbol(cg);
+      TR::Instruction *cursor = generateRIEInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::CGIJ : TR::InstOpCode::CIJ, node, resultReg, (uint8_t) 1, skipSettingBitForFalseResult, TR::InstOpCode::COND_BE);
+      // We will set the last bit of objectClassRegister to 1 if helper returns false.
+      generateRIInstruction(cg, TR::InstOpCode::OILL, node, objClassReg, 0x1);
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, skipSettingBitForFalseResult);
+      // Update cache sequence
+      if (maxOnsiteCacheSlots == 1)
+         {
+         generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, objClassReg, generateS390MemoryReference(dynamicCacheReg,0,cg));
+         if (cacheCastClass)
+            generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, castClassReg, generateS390MemoryReference(dynamicCacheReg,addressSize,cg));
+         }
+      else
+         {
+         TR::Register *offsetRegister = srm->findOrCreateScratchRegister();
+         // NOTE: In OOL helper call is not within ICF hence we can avoid passing dependency to helper call dispatch function and stretching it to merge label.
+         // Although internal control flow starts after returning from helper we need to define starting point and ending point of internal control flow.
+         cursor->setStartInternalControlFlow();
+         generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, offsetRegister, generateS390MemoryReference(dynamicCacheReg,0,cg));    
+         generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, objClassReg, generateS390MemoryReference(dynamicCacheReg,offsetRegister,0,cg));
+         if (cacheCastClass)
+            generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, castClassReg, generateS390MemoryReference(dynamicCacheReg,offsetRegister,addressSize,cg));
+         TR::LabelSymbol *skipResetOffsetLabel = generateLabelSymbol(cg);
+         generateRIInstruction(cg,TR::InstOpCode::getAddHalfWordImmOpCode(),node,offsetRegister,static_cast<int32_t>(cacheCastClass?addressSize*2:addressSize));
+         generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, offsetRegister, snippetSizeInBytes, skipResetOffsetLabel, TR::InstOpCode::COND_BNE);
+         generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode() , node, offsetRegister, addressSize);
+         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, skipResetOffsetLabel);
+         cursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, offsetRegister, generateS390MemoryReference(dynamicCacheReg,0,cg));
+         TR::RegisterDependencyConditions * OOLconditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 5, cg);
+         OOLconditions->addPostCondition(objClassReg, TR::RealRegister::AssignAny);
+         OOLconditions->addPostCondition(resultReg, TR::RealRegister::AssignAny);
+         OOLconditions->addPostCondition(dynamicCacheReg, TR::RealRegister::AssignAny);
+         OOLconditions->addPostCondition(offsetRegister, TR::RealRegister::AssignAny);
+         if (cacheCastClass)
+            OOLconditions->addPostCondition(castClassReg, TR::RealRegister::AssignAny);
+         cursor->setEndInternalControlFlow();
+         cursor->setDependencyConditions(OOLconditions);
+         srm->reclaimScratchRegister(offsetRegister);
+         }
+      srm->reclaimScratchRegister(dynamicCacheReg);
+      }
+
+   // WARNING: It is not recommended to have two exit point in OOL section
+   // In this case we need it in case of ifInstanceOf to save additional complex logic in mainline section
+   // In case if there is GLRegDeps attached to ifIntsanceOf node, it will be evaluated and attached as post dependency conditions
+   // at the end of node
+   // We can take a risk of having two exit points in OOL here as there is no other register instruction between them
+   if (ifInstanceOf)
+      {
+      generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, resultReg, resultReg);
+      if (trueFallThrough)
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, branchLabel);
+      else
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, branchLabel);
+      }
+   
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneLabel);
+   outlinedSlowPath->swapInstructionListsWithCompilation();
+   if (!needResult)
+      cg->stopUsingRegister(resultReg);
+   }
+
 /**   \brief Generates inlined sequence of tests for instanceOf/ifInstanceOf node.
  *    \details
  *    It calls common function to generate list of inlined tests and generates instructions handling both instanceOf and ifInstanceOf case.
@@ -5403,7 +5613,6 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
    TR::Register                  *objClassReg = NULL;
    TR::Register                  *resultReg = NULL;
    TR::Register                  *castClassReg = NULL;
-   TR::Register                  *helperReturnRegister = NULL;
 
    // In the evaluator, We need at maximum two scratch registers, so creating a pool of scratch registers with 2 size.
    TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(2);
@@ -5417,17 +5626,15 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
    TR::Instruction *gcPoint = NULL;
 
    // We load resultReg with the parameter initialResult when we need result as outcome for routine
-   TR::InstOpCode::Mnemonic loadHalfWordImmOp = TR::Compiler->target.is64Bit() ? TR::InstOpCode::LGHI : TR::InstOpCode::LHI;
    if (needResult)
       {
       resultReg = cg->allocateRegister();
-      cursor = generateRIInstruction(cg,loadHalfWordImmOp,node,resultReg,static_cast<int32_t>(initialResult));
+      cursor = generateRIInstruction(cg,TR::InstOpCode::getLoadHalfWordImmOpCode(),node,resultReg,static_cast<int32_t>(initialResult));
       }
 
    TR_S390OutOfLineCodeSection *outlinedSlowPath = NULL;
 
    TR::LabelSymbol *doneOOLLabel = NULL;
-   TR::LabelSymbol *startOOLLabel = NULL;
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *callLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *doneTestCacheLabel = NULL;
@@ -5435,8 +5642,10 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
    TR::LabelSymbol *helperTrueLabel = NULL;
    TR::LabelSymbol *helperFalseLabel = NULL;
    TR::LabelSymbol *helperReturnLabel = NULL;
-
+   TR::LabelSymbol *dynamicCacheTestLabel = NULL;
    TR::LabelSymbol *branchLabel = NULL;
+   TR::LabelSymbol *jmpLabel = NULL;
+
    TR::InstOpCode::S390BranchCondition branchCond;
    TR_Debug *debugObj = cg->getDebug();
    bool trueFallThrough;
@@ -5451,6 +5660,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
          falseLabel = (needResult) ? oppositeResultLabel : doneLabel;
          branchLabel = trueLabel;
          branchCond = TR::InstOpCode::COND_BE;
+         jmpLabel = falseLabel;
          trueFallThrough = false;
          }
       else
@@ -5459,6 +5669,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
          trueLabel = (needResult)? oppositeResultLabel : doneLabel;
          branchLabel = falseLabel;
          branchCond = TR::InstOpCode::COND_BNE;
+         jmpLabel = trueLabel;
          trueFallThrough = true;
          }
       }
@@ -5469,16 +5680,21 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
          trueLabel = doneLabel;
          falseLabel = oppositeResultLabel;
          branchCond = TR::InstOpCode::COND_BE;
+         trueFallThrough = false;
          }
       else
          {
          trueLabel = oppositeResultLabel;
          falseLabel = doneLabel;
          branchCond = TR::InstOpCode::COND_BNE;
+         trueFallThrough = true;
          }
       branchLabel = doneLabel;
+      jmpLabel = oppositeResultLabel;
       }
 
+   bool generateDynamicCache = false;
+   bool cacheCastClass = false;
    InstanceOfOrCheckCastSequences *iter = &sequences[0];
    while (numSequencesRemaining >   1 || (numSequencesRemaining==1 && *iter!=HelperCall))
       {
@@ -5554,14 +5770,19 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
                * case-1 instanceof , initial Result = false: BRC 0x8, doneLabel
                * case-2 instanceof , initial Result = true: BRC 0x6, doneLabel
                * case-3 ifInstanceOf , trueLabel == branchLabel : BRC 0x8, branchLabel
-               * case-4 ifInstanceOf , falseLabel == branchLabel : BRC 0x6, branhLabel
+               * case-4 ifInstanceOf , falseLabel == branchLabel : BRC 0x6, branchLabel
                */
             int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
+            dynamicCacheTestLabel = generateLabelSymbol(cg);
             if (comp->getOption(TR_TraceCG))
                traceMsg(comp, "%s: Emitting Super Class Test, Cast Class Depth = %d\n", node->getOpCode().getName(),castClassDepth);
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/SuperClassTest", comp->signature()),1,TR::DebugCounter::Undetermined);
-            dynamicCastClass = genInstanceOfOrCheckcastSuperClassTest(node, cg, objClassReg, castClassReg, castClassDepth, falseLabel, callLabel, srm);
+            // For dynamic cast class genInstanceOfOrCheckcastSuperClassTest will generate branch to either helper call or dynamicCacheTest depending on the next generated test.
+            dynamicCastClass = genInstanceOfOrCheckcastSuperClassTest(node, cg, objClassReg, castClassReg, castClassDepth, falseLabel, *(iter+1) == DynamicCacheDynamicCastClassTest ? dynamicCacheTestLabel : callLabel, srm);
             generateS390BranchInstruction(cg, TR::InstOpCode::BRC, branchCond, node, branchLabel);
+            // If next test is dynamicCacheTest then generate a Branch to Skip it.
+            if (*(iter+1) == DynamicCacheDynamicCastClassTest)
+               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BC, node, jmpLabel);
             generateGoToFalseBRC=false;
             break;
             }
@@ -5578,12 +5799,22 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
                traceMsg(comp, "%s: Emitting ProfiledClass Test\n", node->getOpCode().getName());
             TR::Register *arbitraryClassReg1 = srm->findOrCreateScratchRegister();
             uint8_t numPICs = 0;
+            TR::Instruction *temp= NULL;
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/Profile", comp->signature()),1,TR::DebugCounter::Undetermined);
             while (numPICs < numberOfProfiledClass)
                {
-               TR::Instruction *temp = generateRILInstruction(cg, TR::InstOpCode::LARL, node, arbitraryClassReg1, (uintptrj_t)profiledClassesList[numPICs].profiledClass);
+               if (cg->needClassAndMethodPointerRelocations())
+                  temp = generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, arbitraryClassReg1, (uintptrj_t) profiledClassesList[numPICs].profiledClass, TR_ClassPointer, NULL, NULL, NULL);
+               else
+                  temp = generateRILInstruction(cg, TR::InstOpCode::LARL, node, arbitraryClassReg1, (uintptrj_t)profiledClassesList[numPICs].profiledClass);
+
+               // Adding profiled class to the static PIC slots.  
+               if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(profiledClassesList[numPICs].profiledClass), comp->getCurrentMethod()))
+                  comp->getStaticPICSites()->push_front(temp);
+               // Adding profiled class to static HCR PIC sites.               
                if (cg->wantToPatchClassPointer(profiledClassesList[numPICs].profiledClass, node))
                   comp->getStaticHCRPICSites()->push_front(temp);
+               
                if (profiledClassesList[numPICs].isProfiledClassInstanceOfCastClass)
                   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, arbitraryClassReg1, objClassReg, TR::InstOpCode::COND_BE, trueLabel, false, false);
                else
@@ -5642,6 +5873,23 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
             srm->reclaimScratchRegister(castClassCacheReg);
             break;
             }
+         case DynamicCacheObjectClassTest:
+            {
+            generateDynamicCache = true;
+            dynamicCacheTestLabel = generateLabelSymbol(cg);
+            if (comp->getOption(TR_TraceCG))
+               traceMsg(comp,"Emitting Dynamic Cache for ObjectClass only\n",node->getOpCode().getName());
+            break;
+            }
+         case DynamicCacheDynamicCastClassTest:
+            {
+            generateDynamicCache = true;
+            cacheCastClass = true;
+            TR_ASSERT(dynamicCacheTestLabel!=NULL, "DynamicCacheDynamicCastClassTest: dynamicCacheTestLabel should be generated by SuperClassTest before reaching this point");
+            if (comp->getOption(TR_TraceCG))
+               traceMsg(comp,"Emitting Dynamic Cache for CastClass and ObjectClass\n",node->getOpCode().getName());
+            break;
+            }
          case HelperCall:
             TR_ASSERT(false, "Doesn't make sense, HelperCall should be the terminal sequence");
             break;
@@ -5651,10 +5899,17 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
       --numSequencesRemaining;
       ++iter;
       }
-   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(graDeps, 0, 5+srm->numAvailableRegisters(), cg);
-   TR::RegisterDependencyConditions *outlinedConditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2, cg);
 
-   // Dependency Conditions for main line sequences
+   if (numSequencesRemaining > 0 && *iter == HelperCall)
+      genInstanceOfDynamicCacheAndHelperCall(node, cg, castClassReg, objClassReg, resultReg, srm, doneLabel, callLabel, dynamicCacheTestLabel, branchLabel, trueLabel, falseLabel, dynamicCastClass, generateDynamicCache, cacheCastClass, ifInstanceOf, trueFallThrough);
+
+   if (needResult)
+      {
+      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, oppositeResultLabel);
+      generateRIInstruction(cg,TR::InstOpCode::getLoadHalfWordImmOpCode(),node,resultReg,static_cast<int32_t>(!initialResult));
+      }
+   
+   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(graDeps, 0, 4+srm->numAvailableRegisters(), cg);
    if (objClassReg)
       conditions->addPostCondition(objClassReg, TR::RealRegister::AssignAny);
    if (needResult)
@@ -5663,93 +5918,16 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
    if (castClassReg)
       conditions->addPostConditionIfNotAlreadyInserted(castClassReg, TR::RealRegister::AssignAny);
    srm->addScratchRegistersToDependencyList(conditions);
-   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
-   if (numSequencesRemaining > 0 && *iter == HelperCall)
-      {
-      if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "%s: Emitting helper call\n",node->getOpCode().getName());
-
-      // Dependency Conditions for outlined section
-      if (!comp->getOption(TR_DisableOOL))
-         {
-         // In case of dynamic cast class, in super class we test if the runtime class is interface or array class, in either case we call helper from super class test
-         // So no need to generate another branch instruction here
-         if (!dynamicCastClass)
-            generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, callLabel);
-         doneOOLLabel = doneLabel;
-         outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(callLabel, doneOOLLabel, cg);
-         cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
-         outlinedSlowPath->swapInstructionListsWithCompilation();
-         }
-
-         //In case we call a helper, we need castClass in R1 and objClass in R2 for the Helper
-         /* callLabel: #IF !(castClass evaluated)
-                       castClassReg= Eval(castClassNode)
-                       #ENDIF
-                       LG R1,castClassReg
-                       LG R2,objClassReg
-                       BRASL jitInstanceOf
-                       LT resultReg,R2
-                       #ifInstanceIf
-                           if trueFallThrough
-                              BRC COND_BNE, branchLabel
-                           else
-                              BRC COND_BE, branchLabel
-                       BRC (JMP),doneLabel
-
-            MainLine:
-            oppositeResLabel: LHI resultReg,!initialResult
-            doneLabel:
-         */
-         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, callLabel);
-         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/Helper", comp->signature()),1,TR::DebugCounter::Undetermined);
-         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOf/(%s)/Helper", comp->signature()),1,TR::DebugCounter::Undetermined);
-         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "SingleInstanceOf/Helper", comp->signature()),1,TR::DebugCounter::Undetermined);
-      if(!castClassReg)
-         {
-         castClassReg = cg->evaluate(castClassNode);
-         outlinedConditions->addPostConditionIfNotAlreadyInserted(castClassReg, TR::RealRegister::AssignAny);
-         conditions->addPostConditionIfNotAlreadyInserted(castClassReg, TR::RealRegister::AssignAny);
-         }
-         helperReturnLabel = generateLabelSymbol(cg);
-         resultReg = helperLink->buildDirectDispatch(node, resultReg);
-         conditions->addPostConditionIfNotAlreadyInserted(resultReg, TR::RealRegister::AssignAny);
-         outlinedConditions->addPostCondition(resultReg, TR::RealRegister::AssignAny);
-         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, helperReturnLabel, outlinedConditions);
-         generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, resultReg, resultReg);
-
-      if (doneOOLLabel)
-         {
-         // WARNING: It is not recommended to have two exit point in OOL section.
-         // In this case we need it in case of ifInstanceOf to save additional complex logic in mainline section
-         // We can take a risk of having two exit points in OOL here as there is no other register instruction between them.
-         if (ifInstanceOf)
-            {
-            if (trueFallThrough)
-               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, falseLabel);
-            else
-               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, trueLabel);
-            }
-         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneOOLLabel);
-         outlinedSlowPath->swapInstructionListsWithCompilation();
-         }
-      }
-   if (needResult)
-      {
-      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, oppositeResultLabel);
-      generateRIInstruction(cg,loadHalfWordImmOp,node,resultReg,static_cast<int32_t>(!initialResult));
-      }
-
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, doneLabel, conditions);
    if (objClassReg)
       cg->stopUsingRegister(objClassReg);
+   if (castClassReg)
+      cg->stopUsingRegister(castClassReg);
    srm->stopUsingRegisters();
    cg->decReferenceCount(objectNode);
    cg->decReferenceCount(castClassNode);
    if (needResult)
       node->setRegister(resultReg);
-   else
-      cg->stopUsingRegister(resultReg);
    return resultReg;
    }
 
@@ -6052,15 +6230,23 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator2(TR::Node * node, TR::CodeGenerator *
                traceMsg(comp, "%s: Emitting Profiled Class Test\n", node->getOpCode().getName());
             TR::Register *arbitraryClassReg1 = srm->findOrCreateScratchRegister();
             uint8_t numPICs = 0;
+            TR::Instruction *temp= NULL;
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/Profiled", comp->signature()),1,TR::DebugCounter::Undetermined);
             while (numPICs < numberOfProfiledClass)
                {
-               TR::Instruction *temp = generateRILInstruction(cg, TR::InstOpCode::LARL, node, arbitraryClassReg1, (uintptrj_t)profiledClassesList[numPICs].profiledClass);
+               if (cg->needClassAndMethodPointerRelocations())
+                  temp = generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, arbitraryClassReg1, (uintptrj_t) profiledClassesList[numPICs].profiledClass, TR_ClassPointer, NULL, NULL, NULL);
+               else
+                  temp = generateRILInstruction(cg, TR::InstOpCode::LARL, node, arbitraryClassReg1, (uintptrj_t)profiledClassesList[numPICs].profiledClass);
+
+               // Adding profiled classes to static PIC sites
+               if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(profiledClassesList[numPICs].profiledClass), comp->getCurrentMethod()))
+                  comp->getStaticPICSites()->push_front(temp);
+               // Adding profiled classes to HCR PIC sites
                if (cg->wantToPatchClassPointer(profiledClassesList[numPICs].profiledClass, node))
                   comp->getStaticHCRPICSites()->push_front(temp);
+               
                temp = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, arbitraryClassReg1, objClassReg, TR::InstOpCode::COND_BE, resultLabel, false, false);
-               if (numPICs == 0)
-                  cursor = temp;
                numPICs++;
                }
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/ProfiledFail", comp->signature()),1,TR::DebugCounter::Undetermined);

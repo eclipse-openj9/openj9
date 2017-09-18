@@ -72,6 +72,7 @@ int32_t J9::Options::_relaxedCompilationLimitsSampleThreshold = 120; // normally
 int32_t J9::Options::_sampleThresholdVariationAllowance = 30;
 
 int32_t J9::Options::_maxCheckcastProfiledClassTests = 3;
+int32_t J9::Options::_maxOnsiteCacheSlotForInstanceOf = 0; // Setting this value to zero will disable onsite cache in instanceof.
 int32_t J9::Options::_cpuEntitlementForConservativeScorching = 801; // 801 means more than 800%, i.e. 8 cpus
                                                                     // A very large number disables the feature
 int32_t J9::Options::_sampleHeartbeatInterval = 10;
@@ -866,6 +867,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_lowVirtualMemoryMBThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"maxCheckcastProfiledClassTests=", "R<nnn>\tnumber inlined profiled classes for profiledclass test in checkcast/instanceof",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_maxCheckcastProfiledClassTests, 0, "%d", NOT_IN_SUBSET},
+   {"maxOnsiteCacheSlotForInstanceOf=", "R<nnn>\tnumber of onsite cache slots for instanceOf",
+      TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_maxOnsiteCacheSlotForInstanceOf, 0, "%d", NOT_IN_SUBSET},
    {"minSamplingPeriod=", "R<nnn>\tminimum number of milliseconds between samples for hotness",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_minSamplingPeriod, 0, "P%d", NOT_IN_SUBSET},
    {"minSuperclassArraySize=", "I<nnn>\t set the size of the minimum superclass array size",
