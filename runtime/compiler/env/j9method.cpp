@@ -8908,3 +8908,18 @@ TR_ResolvedJ9JAASServerMethod::classNameOfFieldOrStatic(I_32 cpIndex, int32_t & 
                            });
    return name;
    }
+
+char *
+TR_ResolvedJ9JAASServerMethod::classSignatureOfFieldOrStatic(I_32 cpIndex, int32_t & len)
+   {
+   if (cpIndex == -1)
+      return 0;
+
+   J9ROMFieldRef * ref = (J9ROMFieldRef *) (&romCPBase()[cpIndex]);
+   char *name = getROMString(len, ref,
+                           {
+                           offsetof(J9ROMFieldRef, nameAndSignature),
+                           offsetof(J9ROMNameAndSignature, name),
+                           });
+   return name;
+   }
