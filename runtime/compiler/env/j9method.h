@@ -239,7 +239,7 @@ public:
 
    protected:
 
-   char *  fieldOrStaticName(int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
+   virtual char *  fieldOrStaticName(int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
    int32_t exceptionData(J9ExceptionHandler *, int32_t, int32_t, int32_t *, int32_t *, int32_t *);
    virtual TR_J9MethodBase *asJ9Method() = 0;
 
@@ -644,6 +644,7 @@ private:
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
+   virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
    };
 
 #endif

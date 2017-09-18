@@ -54,6 +54,7 @@ enum J9ServerMessageType
    ResolvedMethod_getUnresolvedSpecialMethodInCP = 123;
    ResolvedMethod_getUnresolvedFieldInCP = 124;
    ResolvedMethod_getRemoteROMString = 125;
+   ResolvedMethod_fieldOrStaticName = 126;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;

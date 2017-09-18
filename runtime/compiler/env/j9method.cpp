@@ -8936,3 +8936,38 @@ TR_ResolvedJ9JAASServerMethod::fieldOrStaticNameChars(I_32 cpIndex, int32_t & le
                            });
    return name;
    }
+
+char *
+TR_ResolvedJ9JAASServerMethod::fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind)
+   {
+   if (cpIndex == -1)
+      return "<internal name>";
+
+   J9ROMFieldRef * ref = (J9ROMFieldRef *) (&romCPBase()[cpIndex]);
+   J9ROMNameAndSignature * nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref);
+
+   if (inROMClass(nameAndSignature))
+      {
+      J9UTF8 * declName = J9ROMCLASSREF_NAME((J9ROMClassRef *) (&romCPBase()[ref->classRefCPIndex]));
+      J9UTF8 * name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
+      J9UTF8 * signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
+
+      if (inROMClass(declName) && inROMClass(name) && inROMClass(signature))
+         {
+         len = J9UTF8_LENGTH(declName) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) +3;
+         char * s = (char *)trMemory->allocateMemory(len, kind);
+         sprintf(s, "%.*s.%.*s %.*s",
+                 J9UTF8_LENGTH(declName), utf8Data(declName),
+                 J9UTF8_LENGTH(name), utf8Data(name),
+                 J9UTF8_LENGTH(signature), utf8Data(signature));
+         return s;
+         }
+      }
+
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_fieldOrStaticName, _remoteMirror, cpIndex);
+   std::string recv = std::get<0>(_stream->read<std::string>());
+   len = recv.length();
+   char * s = (char *)trMemory->allocateMemory(len, kind);
+   memcpy(s, &recv[0], len);
+   return s;
+   }

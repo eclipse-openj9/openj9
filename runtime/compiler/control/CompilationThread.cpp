@@ -1089,6 +1089,18 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(std::string(data, len));
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_fieldOrStaticName:
+         {
+         auto recv = client->getRecvData<TR_ResolvedRelocatableJ9Method *, int32_t>();
+         TR_ResolvedRelocatableJ9Method *method = std::get<0>(recv);
+         size_t cpIndex = std::get<1>(recv);
+         int32_t len;
+
+         // Call staticName here in lieu of fieldOrStaticName as the server has already checked for "<internal field>"
+         char *s = method->staticName(cpIndex, len, trMemory, heapAlloc);
+         client->write(std::string(s, len));
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
