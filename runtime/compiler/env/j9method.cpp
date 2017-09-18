@@ -8893,3 +8893,18 @@ TR_ResolvedJ9JAASServerMethod::getClassNameFromConstantPool(uint32_t cpIndex, ui
    length = len; // this is what happends when you have no type conventions
    return name;
    }
+
+char *
+TR_ResolvedJ9JAASServerMethod::classNameOfFieldOrStatic(I_32 cpIndex, int32_t & len)
+   {
+   if (cpIndex == -1)
+      return 0;
+
+   J9ROMFieldRef * ref = (J9ROMFieldRef *) (&romCPBase()[cpIndex]);
+   TR_ASSERT(inROMClass(ref), "field ref must be in ROM class"); // for now. if this fails make it a remote call
+   char *name = getROMString(len, &romCPBase()[ref->classRefCPIndex],
+                           {
+                           offsetof(J9ROMClassRef, name),
+                           });
+   return name;
+   }

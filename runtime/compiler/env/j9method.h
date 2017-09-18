@@ -623,6 +623,7 @@ public:
    virtual bool getUnresolvedFieldInCP(I_32 cpIndex) override;
    virtual char * fieldOrStaticSignatureChars(I_32 cpIndex, int32_t & len) override;
    virtual char * getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length) override;
+   virtual char * classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override
