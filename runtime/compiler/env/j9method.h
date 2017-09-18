@@ -467,7 +467,7 @@ public:
    void                          setClassForNewInstance(J9Class *c) { _j9classForNewInstance = c; }
    bool                          fieldIsFromLocalClass(int32_t cpIndex);
 
-   char *fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);
+   virtual char *fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);
    virtual char *fieldOrStaticSignatureChars (int32_t cpIndex, int32_t & len);
 
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm);
@@ -580,7 +580,7 @@ protected:
    bool                          unresolvedFieldAttributes (int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
    bool                          unresolvedStaticAttributes(int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
    void                          setAttributeResult(bool, bool, uintptr_t, int32_t, int32_t, int32_t, TR::DataType *, bool *, bool *, bool *, void ** );
-   char *                        fieldOrStaticNameChars(int32_t cpIndex, int32_t & len);
+   virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len);
 
    J9ExceptionHandler * exceptionHandler();
    };
@@ -625,6 +625,7 @@ public:
    virtual char * getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length) override;
    virtual char * classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
    virtual char * classSignatureOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
+   virtual char * fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override

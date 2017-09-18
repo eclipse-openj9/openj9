@@ -8915,11 +8915,24 @@ TR_ResolvedJ9JAASServerMethod::classSignatureOfFieldOrStatic(I_32 cpIndex, int32
    if (cpIndex == -1)
       return 0;
 
-   J9ROMFieldRef * ref = (J9ROMFieldRef *) (&romCPBase()[cpIndex]);
-   char *name = getROMString(len, ref,
+   char *signature = getROMString(len, &romCPBase()[cpIndex],
                            {
                            offsetof(J9ROMFieldRef, nameAndSignature),
-                           offsetof(J9ROMNameAndSignature, name),
+                           offsetof(J9ROMNameAndSignature, signature),
+                           });
+   return signature;
+   }
+
+char *
+TR_ResolvedJ9JAASServerMethod::fieldOrStaticNameChars(I_32 cpIndex, int32_t & len)
+   {
+   if (cpIndex < 0)
+      return 0;
+
+   char *name = getROMString(len, &romCPBase()[cpIndex],
+                           {
+                           offsetof(J9ROMFieldRef, nameAndSignature),
+                           offsetof(J9ROMNameAndSignature, name)
                            });
    return name;
    }
