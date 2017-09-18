@@ -21,13 +21,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 module java.base {
-  exports com.ibm.jvm;
   exports com.ibm.le.conditionhandling;
   /*[IF PLATFORM-mz31 | PLATFORM-mz64 | PLATFORM-xz64]*/
   exports com.ibm.jit.crypto to ibm.crypto.hdwrcca;
   /*[ENDIF]*/
   exports com.ibm.sharedclasses.spi to openj9.sharedclasses, java.management, java.rmi;
-  exports com.ibm.oti.vm to com.ibm.management, java.management, jdk.attach, openj9.sharedclasses;
+  exports com.ibm.oti.vm to com.ibm.management, java.management, jdk.attach, openj9.jvm, openj9.sharedclasses;
   exports com.ibm.oti.util to com.ibm.management, java.management, jdk.attach, jdk.management, openj9.sharedclasses;
   exports com.ibm.tools.attach.target to jdk.attach;
   exports jdk.internal.org.objectweb.asm to com.ibm.dtfj, com.ibm.dtfjview;

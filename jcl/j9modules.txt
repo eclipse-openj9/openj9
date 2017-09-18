@@ -31,6 +31,7 @@ com.ibm.dataaccess
 openj9.sharedclasses
 com.ibm.traceformat
 jdk.attach
+openj9.jvm
 
 # requires openj9.cuda
 openj9.gpu
