@@ -25,7 +25,7 @@ package java.lang;
  *******************************************************************************/
 
 /**
- * This runtime exception is thrown when a program attempts to cast a an object
+ * This runtime exception is thrown when a program attempts to cast an object
  * to a type with which it is not compatible.
  * 
  * @version initial
