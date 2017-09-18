@@ -73,6 +73,9 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _maxCheckcastProfiledClassTests;
    static int32_t getCheckcastMaxProfiledClassTests() {return _maxCheckcastProfiledClassTests;}
 
+   static int32_t _maxOnsiteCacheSlotForInstanceOf;
+   static int32_t getMaxOnsiteCacheSlotForInstanceOf() {return _maxOnsiteCacheSlotForInstanceOf;}
+
    static int32_t _resetCountThreshold;
 
    static int32_t _scorchingSampleThreshold;
