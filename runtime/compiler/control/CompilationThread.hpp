@@ -24,6 +24,7 @@
 #define COMPILATIONTHREAD_INCL
 
 #include <ctime>
+#include <unordered_map>
 #include "control/CompilationPriority.hpp"
 #include "env/RawAllocator.hpp"
 #include "j9.h"
@@ -353,6 +354,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
    TR_J9ServerVM         *getServerVM() { return _serverVM; }
    void                   setServerVM(TR_J9ServerVM *vm) { _serverVM = vm; }
+   JAAS::J9ServerStream  *getStream();
 
    private:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
@@ -370,7 +372,11 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   _initializationSucceeded;
    bool                   _isDiagnosticThread;
    CpuSelfThreadUtilization _compThreadCPU;
+
+   std::unordered_map<J9Class *, J9ROMClass *> cachedROMClasses;
    }; // CompilationInfoPerThread
+
+extern thread_local TR::CompilationInfoPerThread * compInfoPT;
 
 } // namespace TR
 

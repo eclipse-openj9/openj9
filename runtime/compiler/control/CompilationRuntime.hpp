@@ -455,24 +455,24 @@ public:
    static int computeCompilationThreadPriority(J9JavaVM *vm);
    static void *compilationEnd(J9VMThread *context, TR::IlGeneratorMethodDetails & details, J9JITConfig *jitConfig, void * startPC,
                                void *oldStartPC, TR_FrontEnd *vm=0, TR_MethodToBeCompiled *entry=NULL, TR::Compilation *comp=NULL);
-   
-   thread_local static JAAS::J9ServerStream  *_stream; // a non-NULL field denotes a remote compilation request is active
+
+   static JAAS::J9ServerStream *getStream();
    static bool isInterpreted(J9Method *method) { return !isCompiled(method); }
    static bool isCompiled(J9Method *method)
       {
-      if (_stream)
+      if (auto stream = getStream())
          {
-         _stream->write(JAAS::J9ServerMessageType::CompInfo_isCompiled, method);
-         return std::get<0>(_stream->read<bool>());
+         stream->write(JAAS::J9ServerMessageType::CompInfo_isCompiled, method);
+         return std::get<0>(stream->read<bool>());
          }
       return (((uintptrj_t)method->extra) & J9_STARTPC_NOT_TRANSLATED) == 0;
       }
    static bool isJNINative(J9Method *method)
       {
-      if (_stream)
+      if (auto stream = getStream())
          {
-         _stream->write(JAAS::J9ServerMessageType::CompInfo_isJNINative, method);
-         return std::get<0>(_stream->read<bool>());
+         stream->write(JAAS::J9ServerMessageType::CompInfo_isJNINative, method);
+         return std::get<0>(stream->read<bool>());
          }
       // Note: This query is only concerned with the method to be compiled
       // and so we don't have to care if the VM has a FastJNI version
@@ -481,10 +481,10 @@ public:
 
    static int32_t getInvocationCount(J9Method *method)
       {
-      if (_stream)
+      if (auto stream = getStream())
          {
-         _stream->write(JAAS::J9ServerMessageType::CompInfo_getInvocationCount, method);
-         return std::get<0>(_stream->read<int32_t>());
+         stream->write(JAAS::J9ServerMessageType::CompInfo_getInvocationCount, method);
+         return std::get<0>(stream->read<int32_t>());
          }
       if (((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED) == 0)
          return -1;
@@ -495,10 +495,10 @@ public:
       }
    static intptrj_t getJ9MethodExtra(J9Method *method)
       {
-      if (_stream)
+      if (auto stream = getStream())
          {
-         _stream->write(JAAS::J9ServerMessageType::CompInfo_getJ9MethodExtra, method);
-         return (intptrj_t) std::get<0>(_stream->read<uint64_t>());
+         stream->write(JAAS::J9ServerMessageType::CompInfo_getJ9MethodExtra, method);
+         return (intptrj_t) std::get<0>(stream->read<uint64_t>());
          }
       return (intptrj_t)method->extra;
       }
@@ -514,10 +514,10 @@ public:
       return (void *)method->extra;
       }
    static void setJ9MethodExtra(J9Method *method, intptrj_t newValue) {
-      if (_stream)
+      if (auto stream = getStream())
          {
-         _stream->write(JAAS::J9ServerMessageType::CompInfo_setJ9MethodExtra, method, (uint64_t) newValue);
-         std::get<0>(_stream->read<JAAS::Void>());
+         stream->write(JAAS::J9ServerMessageType::CompInfo_setJ9MethodExtra, method, (uint64_t) newValue);
+         std::get<0>(stream->read<JAAS::Void>());
          }
       else
          {
@@ -540,10 +540,10 @@ public:
       }
    static bool setInvocationCount(J9Method *method, int32_t newCount)
       {
-      if (_stream)
+      if (auto stream = getStream())
          {
-         _stream->write(JAAS::J9ServerMessageType::CompInfo_setInvocationCount, method, newCount);
-         return std::get<0>(_stream->read<bool>());
+         stream->write(JAAS::J9ServerMessageType::CompInfo_setInvocationCount, method, newCount);
+         return std::get<0>(stream->read<bool>());
          }
       newCount = (newCount << 1) | 1;
       if (newCount < 1)

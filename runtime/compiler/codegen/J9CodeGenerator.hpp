@@ -277,7 +277,7 @@ private:
       {
       // If we have a class pointer to consider, it should look like one.
       const uintptrj_t j9classEyecatcher = 0x99669966;
-      if (allegedClassPointer != NULL && !TR::CompilationInfo::_stream)
+      if (allegedClassPointer != NULL && !TR::CompilationInfo::getStream())
          {
          TR_ASSERT(*(const uintptrj_t*)allegedClassPointer == j9classEyecatcher,
                    "expected a J9Class* for omitted runtime assumption");

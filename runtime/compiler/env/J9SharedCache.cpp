@@ -144,7 +144,7 @@ TR_J9SharedCache::log(char *format, ...)
 uint32_t
 TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
    {
-   if (TR::CompilationInfo::_stream)
+   if (TR::CompilationInfo::getStream())
       return 0; // JAAS TODO: bypass
    uint32_t result = 0;
 
@@ -171,7 +171,7 @@ TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
 uint16_t
 TR_J9SharedCache::getAllEnabledHints(J9Method *method)
    {
-   if (TR::CompilationInfo::_stream)
+   if (TR::CompilationInfo::getStream())
       return 0; // JAAS TODO: bypass
    uint16_t hintFlags = 0;
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
@@ -190,7 +190,7 @@ TR_J9SharedCache::getAllEnabledHints(J9Method *method)
 bool
 TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t *dataField)
    {
-   if (TR::CompilationInfo::_stream)
+   if (TR::CompilationInfo::getStream())
       return false; // JAAS TODO: bypass
    bool isHint = false;
 
@@ -223,7 +223,7 @@ TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t 
 bool
 TR_J9SharedCache::isHint(TR_ResolvedMethod *method, TR_SharedCacheHint hint, uint16_t *dataField)
    {
-   if (TR::CompilationInfo::_stream)
+   if (TR::CompilationInfo::getStream())
       return false; // JAAS TODO: bypass
    return isHint(((TR_ResolvedJ9Method *) method)->ramMethod(), hint, dataField);
    }
@@ -231,7 +231,7 @@ TR_J9SharedCache::isHint(TR_ResolvedMethod *method, TR_SharedCacheHint hint, uin
 void
 TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
    {
-   if (TR::CompilationInfo::_stream)
+   if (TR::CompilationInfo::getStream())
       return; // JAAS TODO: bypass
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    static bool SCfull = false;
@@ -360,7 +360,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
 void
 TR_J9SharedCache::addHint(TR_ResolvedMethod * method, TR_SharedCacheHint hint)
    {
-   if (TR::CompilationInfo::_stream)
+   if (TR::CompilationInfo::getStream())
       return; // JAAS TODO: bypass
    addHint(((TR_ResolvedJ9Method *) method)->ramMethod(), hint);
    }
@@ -761,7 +761,7 @@ TR_J9SharedCache::lookupClassFromChainAndLoader(uintptrj_t *chainData, void *cla
 
 uintptrj_t TR_J9SharedCache::lookupClassChainOffsetInSharedCacheFromClass(TR_OpaqueClassBlock *clazz)
    {
-   if (auto stream = TR::CompilationInfo::_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JAAS::J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache, clazz);
       return std::get<0>(stream->read<uintptrj_t>());

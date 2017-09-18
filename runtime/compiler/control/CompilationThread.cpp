@@ -172,6 +172,8 @@ blankDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpI
    }
 #endif
 
+thread_local TR::CompilationInfoPerThread *TR::compInfoPT;
+
 static UDATA
 jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg)
    {
@@ -318,7 +320,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::compilationCode:
          done = true;
          break;
- 
+
       case J9ServerMessageType::VM_isClassLibraryClass:
          {
          bool rv = fe->isClassLibraryClass(std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>()));
@@ -1220,8 +1222,6 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       }
    return done;
    }
-
-thread_local JAAS::J9ServerStream *TR::CompilationInfo::_stream;
 
 inline void
 TR::CompilationInfo::incrementMethodQueueSize()
@@ -2171,13 +2171,19 @@ TR::CompilationInfo::getMethodBytecodeSize(J9ROMMethod * romMethod)
    return (romMethod->bytecodeSizeHigh << 16) + romMethod->bytecodeSizeLow;
    }
 
+JAAS::J9ServerStream *
+TR::CompilationInfo::getStream()
+   {
+   return (TR::compInfoPT) ? TR::compInfoPT->getStream() : nullptr;
+   }
+
 uint32_t
 TR::CompilationInfo::getMethodBytecodeSize(J9Method* method)
    {
-   if (_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
-      _stream->write(JAAS::J9ServerMessageType::CompInfo_getMethodBytecodeSize, method);
-      return std::get<0>(_stream->read<uint32_t>());
+      stream->write(JAAS::J9ServerMessageType::CompInfo_getMethodBytecodeSize, method);
+      return std::get<0>(stream->read<uint32_t>());
       }
    return getMethodBytecodeSize(J9_ROM_METHOD_FROM_RAM_METHOD(method));
    }
@@ -2191,10 +2197,10 @@ TR::CompilationInfo::isJSR292(const J9ROMMethod *romMethod) // Check to see if t
 bool
 TR::CompilationInfo::isJSR292(J9Method *j9method) // Check to see if the J9AccMethodHasMethodHandleInvokes flag is set
    {
-   if (_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
-      _stream->write(JAAS::J9ServerMessageType::CompInfo_isJSR292, j9method);
-      return std::get<0>(_stream->read<bool>());
+      stream->write(JAAS::J9ServerMessageType::CompInfo_isJSR292, j9method);
+      return std::get<0>(stream->read<bool>());
       }
    return isJSR292(J9_ROM_METHOD_FROM_RAM_METHOD(j9method));
    }
@@ -2782,7 +2788,7 @@ bool TR::CompilationInfo::shouldAbortCompilation(TR_MethodToBeCompiled *entry, T
       J9Class *clazz = details.isNewInstanceThunk() ?
          static_cast<J9::NewInstanceThunkDetails &>(details).getClass() :
          (J9Class*)J9JitMemory::convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(details.getMethod()));
-      
+
       if (clazz && J9_IS_CLASS_OBSOLETE(clazz))
          {
          TR_ASSERT(0, "Should never have compiled replaced method %p", details.getMethod());
@@ -4239,6 +4245,12 @@ IDATA J9THREAD_PROC protectedCompilationThreadProc(J9PortLibrary *, TR::Compilat
    return 0;
    }
 
+JAAS::J9ServerStream *
+TR::CompilationInfoPerThread::getStream()
+   {
+   return (_methodBeingCompiled) ? _methodBeingCompiled->_stream : nullptr;
+   }
+
 void
 TR::CompilationInfoPerThread::run()
    {
@@ -4542,9 +4554,6 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    J9Method *method = details.getMethod();
 
    setMethodBeingCompiled(&entry); // must have compilation monitor
-   
-   if (entry._stream)
-      CompilationInfo::_stream = entry._stream;
 
    // Increase main queue weight while still holding compilation monitor
    if (entry._reqFromSecondaryQueue || entry._reqFromJProfilingQueue)
@@ -4553,6 +4562,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    compInfo->printQueue();
 
    entry._compInfoPT = this; // need to know which comp thread is handling this request
+   TR::compInfoPT = this; // set the thread-local compinfoPT
 
    // update the last time the compilation thread had to do something.
    compInfo->setLastReqStartTime(compInfo->getPersistentInfo()->getElapsedTime());
@@ -4662,7 +4672,8 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    // queue slot (entry) monitor in hand
    //
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
-   TR::CompilationInfo::_stream = nullptr;
+   // un-set the thread_local compInfoPT a little early - immediately after the compilation
+   TR::compInfoPT = nullptr;
 
    // Unpin the class
    if (!entry.isRemoteCompReq())
@@ -5954,9 +5965,9 @@ void *TR::CompilationInfo::compileRemoteMethod(J9VMThread * vmThread, TR::IlGene
       }
 #endif // defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
 
-    
+
    CompilationPriority compPriority = CP_SYNC_NORMAL; // JAAS TODO: priority should come from the client
-  
+
    TR_MethodToBeCompiled *entry =
       addMethodToBeCompiled(details, oldStartPC, compPriority, async,
          optimizationPlan, queued, methodIsInSharedCache, extra);
@@ -5982,7 +5993,7 @@ void *TR::CompilationInfo::compileRemoteMethod(J9VMThread * vmThread, TR::IlGene
 
    if (compErrCode)
       *compErrCode = compilationInProgress;
-  
+
    return 0;
    }
 
@@ -7021,7 +7032,7 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
 
    if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
       TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-         "prepareRelocateAOTCodeAndData results: j9method=%p metaData=%p returnCode=%d method=%s", 
+         "prepareRelocateAOTCodeAndData results: j9method=%p metaData=%p returnCode=%d method=%s",
          method, metaData, returnCode, compiler->signature());
 
    if (_compInfo.getPersistentInfo()->isRuntimeInstrumentationEnabled())
@@ -7413,7 +7424,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    entry->_doAotLoad = false;
 
    if (entry->_methodIsInSharedCache == TR_yes &&    // possible AOT load
-      (entry->isRemoteCompReq() || !TR::CompilationInfo::isCompiled(method)) && 
+      (entry->isRemoteCompReq() || !TR::CompilationInfo::isCompiled(method)) &&
       !entry->_doNotUseAotCodeFromSharedCache &&
       !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) &&
       !(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
@@ -7430,7 +7441,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          TR_J9VMBase *fe = entry->isRemoteCompReq() ?
             TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM) :
             TR_J9VMBase::get(_jitConfig, vmThread);
-           
+
          if (NULL == fe)
             {
             throw std::bad_alloc();
@@ -7501,9 +7512,9 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          eligibleForRelocatableCompile =
             TR::Options::sharedClassCache() &&
             !details.isNewInstanceThunk() &&
-            //!entry->isJNINative() &&  
+            //!entry->isJNINative() &&
             !details.isMethodHandleThunk() &&
-            //!TR::CompilationInfo::isCompiled(method) && 
+            //!TR::CompilationInfo::isCompiled(method) &&
             !entry->isDLTCompile() &&
             !entry->_doNotUseAotCodeFromSharedCache &&
             reloRuntime->isROMClassInSharedCaches((UDATA)details.getRomClass(), javaVM) &&
@@ -7516,10 +7527,10 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             !details.isNewInstanceThunk() &&
             !entry->isJNINative() &&
             !details.isMethodHandleThunk() &&
-            !TR::CompilationInfo::isCompiled(method) && 
+            !TR::CompilationInfo::isCompiled(method) &&
             !entry->isDLTCompile() &&
             !entry->_doNotUseAotCodeFromSharedCache &&
-            reloRuntime->isRomClassForMethodInSharedCache(method, javaVM) && 
+            reloRuntime->isRomClassForMethodInSharedCache(method, javaVM) &&
             !isMethodIneligibleForAot(method) &&
             (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
                TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
@@ -7970,7 +7981,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
    if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
       TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-         "Compilation thread executing compile(): j9method=%p isAotLoad=%d canDoRelocatableCompile=%d eligibleForRelocatableCompile=%d _doNotUseAotCodeFromSharedCache=%d AOTfe=%d", 
+         "Compilation thread executing compile(): j9method=%p isAotLoad=%d canDoRelocatableCompile=%d eligibleForRelocatableCompile=%d _doNotUseAotCodeFromSharedCache=%d AOTfe=%d",
           method, entry->isAotLoad(), canDoRelocatableCompile, eligibleForRelocatableCompile, entry->_doNotUseAotCodeFromSharedCache, _vm->isAOT_DEPRECATED_DO_NOT_USE());
 
       if (
@@ -8631,7 +8642,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             uint64_t proposedScratchMemoryLimit = (uint64_t)TR::Options::getScratchSpaceLimit();
 
             bool isJSR292 = TR::CompilationInfo::isJSR292(details.getRomMethod());
-            
+
             // Check if the the method to be compiled is a JSR292 method
             if (isJSR292)
                {
@@ -9187,7 +9198,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
       intptr_t rtn = 0;
 
-      if (_compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE || 
+      if (_compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE ||
          !_methodBeingCompiled->isAotLoad()) // Remote compilation requests appear as AOT loads
          {
          if (!_methodBeingCompiled->isAotLoad())
@@ -9240,12 +9251,12 @@ TR::CompilationInfoPerThreadBase::compile(
             }
          else // AOT load
             {
-            metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);   
+            metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
             }
          }
       else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE) // Jaas Client Mode
          {
-         if (TR::Options::sharedClassCache() && 
+         if (TR::Options::sharedClassCache() &&
             _compInfo.reloRuntime()->isRomClassForMethodInSharedCache(method, _jitConfig->javaVM)) // if ROM method exists in SCC
             {
             if (TR::Options::getVerboseOption(TR_VerboseJaas))
@@ -9257,7 +9268,7 @@ TR::CompilationInfoPerThreadBase::compile(
                   compiler->getHotnessName()
                   );
                }
-            TR_J9SharedCache *cache = vm.sharedCache(); 
+            TR_J9SharedCache *cache = vm.sharedCache();
             J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
             uint32_t romClassOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romClass)));
             J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
@@ -9330,7 +9341,7 @@ TR::CompilationInfoPerThreadBase::compile(
                {
                compiler->failCompilation<TR::CompilationException>("JaaS compilation failed.");
                }
-            } 
+            }
          else
             {
             compiler->failCompilation<TR::CompilationException>("ROMClass not in SCC; cannot send JaaS request.");
@@ -10324,7 +10335,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                         }
                      else
                         {
-                        storedCompiledMethod = 
+                        storedCompiledMethod =
                            reinterpret_cast<const J9JITDataCacheHeader*>(
                               jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
                                  vmThread,

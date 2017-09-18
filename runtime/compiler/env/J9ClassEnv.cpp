@@ -58,10 +58,10 @@ J9::ClassEnv::convertClassOffsetToClassPtr(TR_OpaqueClassBlock *clazzOffset)
 uintptrj_t
 J9::ClassEnv::classFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
-   if (TR::CompilationInfo::_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
-      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_classFlagsValue, classPointer);
-      return std::get<0>(TR::CompilationInfo::_stream->read<uintptrj_t>());
+      stream->write(JAAS::J9ServerMessageType::ClassEnv_classFlagsValue, classPointer);
+      return std::get<0>(stream->read<uintptrj_t>());
       }
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags);
    }
@@ -70,10 +70,10 @@ J9::ClassEnv::classFlagsValue(TR_OpaqueClassBlock * classPointer)
 uintptrj_t
 J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
    {
-   if (TR::CompilationInfo::_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
-      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_classDepthOf, clazzPointer);
-      return std::get<0>(TR::CompilationInfo::_stream->read<uintptrj_t>());
+      stream->write(JAAS::J9ServerMessageType::ClassEnv_classDepthOf, clazzPointer);
+      return std::get<0>(stream->read<uintptrj_t>());
       }
    return J9CLASS_DEPTH(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer));
    }
@@ -82,10 +82,10 @@ J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
 uintptrj_t
 J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
    {
-   if (TR::CompilationInfo::_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
-      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_classInstanceSize, clazzPointer);
-      return std::get<0>(TR::CompilationInfo::_stream->read<uintptrj_t>());
+      stream->write(JAAS::J9ServerMessageType::ClassEnv_classInstanceSize, clazzPointer);
+      return std::get<0>(stream->read<uintptrj_t>());
       }
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)->totalInstanceSize;
    }
@@ -94,11 +94,11 @@ J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
 J9ROMClass *
 J9::ClassEnv::romClassOf(TR_OpaqueClassBlock * clazz)
    {
-   if (TR::CompilationInfo::_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
-      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_romClassOf, clazz);
+      stream->write(JAAS::J9ServerMessageType::ClassEnv_romClassOf, clazz);
       auto cache = TR::comp()->fej9()->sharedCache();
-      auto offset = std::get<0>(TR::CompilationInfo::_stream->read<void *>());
+      auto offset = std::get<0>(stream->read<void *>());
       return static_cast<J9ROMClass *>(cache->pointerFromOffsetInSharedCache(offset));
       }
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazz)->romClass;
@@ -107,10 +107,10 @@ J9::ClassEnv::romClassOf(TR_OpaqueClassBlock * clazz)
 J9Class **
 J9::ClassEnv::superClassesOf(TR_OpaqueClassBlock * clazz)
    {
-   if (TR::CompilationInfo::_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
-      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_superClassesOf, clazz);
-      return std::get<0>(TR::CompilationInfo::_stream->read<J9Class **>());
+      stream->write(JAAS::J9ServerMessageType::ClassEnv_superClassesOf, clazz);
+      return std::get<0>(stream->read<J9Class **>());
       }
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazz)->superclasses;
    }
@@ -118,11 +118,11 @@ J9::ClassEnv::superClassesOf(TR_OpaqueClassBlock * clazz)
 J9ROMClass *
 J9::ClassEnv::romClassOfSuperClass(TR_OpaqueClassBlock * clazz, size_t index)
    {
-   if (TR::CompilationInfo::_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
-      TR::CompilationInfo::_stream->write(JAAS::J9ServerMessageType::ClassEnv_romClassOfSuperClass, clazz, index);
+      stream->write(JAAS::J9ServerMessageType::ClassEnv_romClassOfSuperClass, clazz, index);
       auto cache = TR::comp()->fej9()->sharedCache();
-      auto offset = std::get<0>(TR::CompilationInfo::_stream->read<void *>());
+      auto offset = std::get<0>(stream->read<void *>());
       return static_cast<J9ROMClass *>(cache->pointerFromOffsetInSharedCache(offset));
       }
    return superClassesOf(clazz)[index]->romClass;
@@ -131,7 +131,7 @@ J9::ClassEnv::romClassOfSuperClass(TR_OpaqueClassBlock * clazz, size_t index)
 J9ITable *
 J9::ClassEnv::iTableOf(TR_OpaqueClassBlock * clazz)
    {
-   if (auto stream = TR::CompilationInfo::_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JAAS::J9ServerMessageType::ClassEnv_iTableOf, clazz);
       return std::get<0>(stream->read<J9ITable*>());
@@ -142,7 +142,7 @@ J9::ClassEnv::iTableOf(TR_OpaqueClassBlock * clazz)
 J9ITable *
 J9::ClassEnv::iTableNext(J9ITable *current)
    {
-   if (auto stream = TR::CompilationInfo::_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JAAS::J9ServerMessageType::ClassEnv_iTableNext, current);
       return std::get<0>(stream->read<J9ITable*>());
@@ -153,7 +153,7 @@ J9::ClassEnv::iTableNext(J9ITable *current)
 J9ROMClass *
 J9::ClassEnv::iTableRomClass(J9ITable *current)
    {
-   if (auto stream = TR::CompilationInfo::_stream)
+   if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JAAS::J9ServerMessageType::ClassEnv_iTableRomClass, current);
       return std::get<0>(stream->read<J9ROMClass*>());
