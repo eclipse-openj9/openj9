@@ -2928,11 +2928,62 @@ public class MethodHandles {
 	 * @param originalHandle the original method handle to be transformed
 	 * @param skippedArgumentCount the number of argument to be skipped from the original method handle
 	 * @param valueTypes a List of the argument types to be inserted
-	 * @param location the location of the first argument to be removed
+	 * @param location the (zero-indexed) location of the first argument to be removed
 	 * @return a MethodHandle representing a transformed handle as described above
 	 */
-	public static MethodHandle dropArgumentsToMatch(MethodHandle originalHandle, int skippedArgumentCount, List<Class<?>> valueTypes, int location) {
-		throw new UnsupportedOperationException("The method has not yet been implemented for now"); //$NON-NLS-1$
+	public static final  MethodHandle dropArgumentsToMatch(MethodHandle originalHandle, int skippedArgumentCount, List<Class<?>> valueTypes, int location) {
+		/* implicit null checks */
+		MethodType originalType = originalHandle.type;
+		Class<?>[] valueTypesCopy = new Class<?>[valueTypes.size()];
+
+		/* check if indexing is in range*/
+		if ((0 > skippedArgumentCount) ||
+			(skippedArgumentCount > originalType.parameterCount())) {
+			throw new IllegalArgumentException("Invalid parameters: skippedArgumentCount"); //$NON-NLS-1$
+		}
+		if ((0 > location) ||
+			(valueTypes.size() < location) ||
+			(valueTypes.size() < location + originalType.parameterCount() - skippedArgumentCount)) {
+			throw new IllegalArgumentException("Invalid parameters: location"); //$NON-NLS-1$
+		}
+
+		/* check for void.class in list during clone process */
+		for (int i = 0; i < valueTypes.size(); i++) {
+			if (valueTypes.get(i) == void.class) {
+				throw new IllegalArgumentException("Invalid parameters: void.class found in valueTypes"); //$NON-NLS-1$
+			}
+			else if (valueTypes.get(i) == null) {
+				throw new IllegalArgumentException("Invalid parameters: null entry found in valueTypes"); //$NON-NLS-1$
+			}
+			else {
+				valueTypesCopy[i] = valueTypes.get(i);
+			}
+		}
+
+		Class<?>[] ptypes = originalType.parameterArray();
+
+		/* check if sublist match */
+		for (int i = skippedArgumentCount; i < ptypes.length; i++) {
+			if (ptypes[i] != valueTypesCopy[i + location - skippedArgumentCount]) {
+				throw new IllegalArgumentException("Invalid parameters: original handle types does not match given types"); //$NON-NLS-1$
+			}
+		}
+
+		/* replace the sublist with new valueTypes */
+		MethodType permuteType = originalType.dropParameterTypes(skippedArgumentCount, originalType.parameterCount()).appendParameterTypes(valueTypesCopy);
+
+		/* construct permutation indexes */
+		int[] permute = new int[originalType.parameterCount()];
+		int originalIndex = 0;
+		for (int i = 0; i < originalType.parameterCount(); i++) {
+			if (originalIndex == skippedArgumentCount) {
+				originalIndex += location;
+			}
+			permute[i] = originalIndex++;
+		}
+
+		assert(validatePermutationArray(permuteType, originalType, permute));
+		return originalHandle.permuteArguments(permuteType, permute);
 	}
 	/*[ENDIF]*/
 	
