@@ -348,20 +348,55 @@ static std::string packROMClassWithMethod(J9ROMClass *origRomClass, uint64_t met
    return romClassStr;
    }
 
+static size_t methodStringsLength(J9ROMMethod *method)
+   {
+   J9UTF8 *name = J9ROMMETHOD_NAME(method);
+   J9UTF8 *sig = J9ROMMETHOD_SIGNATURE(method);
+   return name->length + sig->length + 2 * sizeof(U_16);
+   }
+
 static std::string packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
    {
+   //JAAS TODO: Add comments
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(origRomClass);
    size_t classNameSize = className->length + sizeof(U_16);
-   J9ROMClass *romClass = (J9ROMClass *)trMemory->allocateHeapMemory(origRomClass->romSize + classNameSize);
+
+   J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(origRomClass);
+   size_t totalSize = origRomClass->romSize + classNameSize;
+   for (size_t i = 0; i < origRomClass->romMethodCount; ++i)
+      {
+      totalSize += methodStringsLength(romMethod);
+      romMethod = nextROMMethod(romMethod);
+      }
+
+   J9ROMClass *romClass = (J9ROMClass *)trMemory->allocateHeapMemory(totalSize);
    if (!romClass)
       throw std::bad_alloc();
    memcpy(romClass, origRomClass, origRomClass->romSize);
 
-   char *classNamePos = (char *)romClass + origRomClass->romSize;
-   memcpy(classNamePos, className, classNameSize);
-   NNSRP_SET(romClass->className, classNamePos);
+   uint8_t *curPos = (uint8_t *)romClass + romClass->romSize;
 
-   std::string romClassStr((char *) romClass, romClass->romSize + classNameSize);
+   memcpy(curPos, className, classNameSize);
+   NNSRP_SET(romClass->className, curPos);
+   curPos += classNameSize;
+
+   romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+   for (size_t i = 0; i < romClass->romMethodCount; ++i)
+      {
+      J9UTF8 *field = J9ROMMETHOD_NAME(romMethod);
+      size_t fieldLen = field->length + sizeof(U_16);
+      memcpy(curPos, field, fieldLen);
+      NNSRP_SET(romMethod->nameAndSignature.name, curPos);
+      curPos += fieldLen;
+
+      field = J9ROMMETHOD_SIGNATURE(romMethod);
+      fieldLen = field->length + sizeof(U_16);
+      memcpy(curPos, field, fieldLen);
+      NNSRP_SET(romMethod->nameAndSignature.signature, curPos);
+      curPos += fieldLen;
+      }
+
+   std::string romClassStr((char *) romClass, totalSize);
    trMemory->freeMemory(romClass, heapAlloc);
    return romClassStr;
    }
