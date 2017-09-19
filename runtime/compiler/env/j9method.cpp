@@ -8364,6 +8364,14 @@ romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
    return romMethod;
    }
 
+J9ROMClass *
+TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(J9Class *clazz, JAAS::J9ServerStream *stream, TR_Memory *trMemory)
+   {
+   stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getRemoteROMClass, clazz);
+   auto str = std::get<0>(stream->read<std::string>());
+   return romClassFromString(str, trMemory);
+   }
+
 TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedRelocatableJ9Method(fe, owningMethod)
    {

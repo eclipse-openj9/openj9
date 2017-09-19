@@ -352,9 +352,14 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    void                   setLastCompilationDuration(int32_t t) { _lastCompilationDuration = t; }
    bool                   isDiagnosticThread() const { return _isDiagnosticThread; }
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
+
+   // JAAS
    TR_J9ServerVM         *getServerVM() { return _serverVM; }
    void                   setServerVM(TR_J9ServerVM *vm) { _serverVM = vm; }
    JAAS::J9ServerStream  *getStream();
+   J9ROMClass            *getAndCacheRemoteROMClass(J9Class *);
+   J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
+   void                   cacheRemoteROMClass(J9Class *, J9ROMClass *);
 
    private:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
@@ -373,7 +378,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   _isDiagnosticThread;
    CpuSelfThreadUtilization _compThreadCPU;
 
-   std::unordered_map<J9Class *, J9ROMClass *> cachedROMClasses;
+   std::unordered_map<J9Class *, J9ROMClass *> _cachedROMClasses;
    }; // CompilationInfoPerThread
 
 extern thread_local TR::CompilationInfoPerThread * compInfoPT;

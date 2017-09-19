@@ -1581,6 +1581,31 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
    }
 
 void
+TR::CompilationInfoPerThread::cacheRemoteROMClass(J9Class *clazz, J9ROMClass *romClass)
+   {
+   _cachedROMClasses[clazz] = romClass;
+   }
+
+J9ROMClass *
+TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
+   {
+   auto it = _cachedROMClasses.find(clazz);
+   return (it == _cachedROMClasses.end()) ? nullptr : it->second;
+   }
+
+J9ROMClass *
+TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz)
+   {
+   auto romClass = getRemoteROMClassIfCached(clazz);
+   if (romClass == nullptr)
+      {
+      romClass = TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(clazz, getStream(), TR::comp()->trMemory());
+      cacheRemoteROMClass(clazz, romClass);
+      }
+   return romClass;
+   }
+
+void
 TR::CompilationInfoPerThread::waitForGCCycleMonitor(bool threadHasVMAccess)
    {
 #if defined (J9VM_GC_REALTIME)
