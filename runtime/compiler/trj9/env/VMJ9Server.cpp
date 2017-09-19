@@ -437,9 +437,9 @@ TR_J9ServerVM::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock *cl
    J9Class *j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
    if (TR::compInfoPT && TR::compInfoPT->getStream())
       {
-      return static_cast<uintptrj_t>(TR::compInfoPT->getAndCacheRemoteROMClass(j9clazz));
+      return reinterpret_cast<uintptrj_t>(TR::compInfoPT->getAndCacheRemoteROMClass(j9clazz));
       }
-   return static_cast<uintptrj_t>(j9clazz->romClass);
+   return reinterpret_cast<uintptrj_t>(j9clazz->romClass);
    }
 
 bool
