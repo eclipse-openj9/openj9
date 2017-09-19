@@ -308,6 +308,22 @@ static std::string packROMClassWithMethod(J9ROMClass *origRomClass, uint64_t met
    return romClassStr;
    }
 
+static std::string packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
+   {
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(origRomClass);
+   size_t classNameSize = className->length + sizeof(U_16);
+   J9ROMClass *romClass = (J9ROMClass *)trMemory->allocateHeapMemory(origRomClass->romSize + classNameSize);
+   if (!romClass)
+      throw std::bad_alloc();
+   memcpy(romClass, origRomClass, origRomClass->romSize);
+   char *classNamePos = (char *)romClass + origRomClass->romSize;
+   memcpy(classNamePos, className, classNameSize);
+
+   std::string romClassStr((char *) romClass, romClass->romSize + classNameSize);
+   trMemory->freeMemory(romClass, heapAlloc);
+   return romClassStr;
+   }
+
 static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
    {
    using JAAS::J9ServerMessageType;
@@ -799,6 +815,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto romClass = packROMClassWithMethod(J9_CLASS_FROM_METHOD(j9method)->romClass, methodIndex, trMemory);
 
          client->write(resolvedMethod, literals, cpHdr, romClass, methodIndex);
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_getRemoteROMClass:
+         {
+         J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
+         client->write(packROMClass(clazz->romClass, trMemory));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isJNINative:

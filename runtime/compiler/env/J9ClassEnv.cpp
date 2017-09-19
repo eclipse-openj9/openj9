@@ -22,6 +22,7 @@
 
 #include "compile/Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
 #include "env/ClassEnv.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
@@ -94,14 +95,12 @@ J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
 J9ROMClass *
 J9::ClassEnv::romClassOf(TR_OpaqueClassBlock * clazz)
    {
-   if (auto stream = TR::CompilationInfo::getStream())
+   J9Class *j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
+   if (TR::compInfoPT && TR::compInfoPT->getStream())
       {
-      stream->write(JAAS::J9ServerMessageType::ClassEnv_romClassOf, clazz);
-      auto cache = TR::comp()->fej9()->sharedCache();
-      auto offset = std::get<0>(stream->read<void *>());
-      return static_cast<J9ROMClass *>(cache->pointerFromOffsetInSharedCache(offset));
+      return TR::compInfoPT->getAndCacheRemoteROMClass(j9clazz);
       }
-   return TR::Compiler->cls.convertClassOffsetToClassPtr(clazz)->romClass;
+   return j9clazz->romClass;
    }
 
 J9Class **
