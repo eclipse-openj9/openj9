@@ -142,7 +142,7 @@ enum J9ServerMessageType
    ClassEnv_classInstanceSize = 402;
    ClassEnv_romClassOf = 403;
    ClassEnv_superClassesOf = 404;
-   ClassEnv_romClassOfSuperClass = 405;
+   ClassEnv_indexedSuperClassOf = 405;
    ClassEnv_iTableOf = 406;
    ClassEnv_iTableNext = 407;
    ClassEnv_iTableRomClass = 408;

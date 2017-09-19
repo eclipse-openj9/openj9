@@ -1220,15 +1220,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(TR::Compiler->cls.iTableRomClass(clazz));
          }
          break;
-      case J9ServerMessageType::ClassEnv_romClassOfSuperClass:
+      case J9ServerMessageType::ClassEnv_indexedSuperClassOf:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, size_t>();
          auto clazz = std::get<0>(recv);
          size_t index = std::get<1>(recv);
-         TR_J9SharedCache * cache = fe->sharedCache();
-         void *romClass = TR::Compiler->cls.romClassOfSuperClass(clazz, index);
-         void *romClassOffset = cache->offsetInSharedCacheFromPointer(romClass);
-         client->write(romClassOffset);
+         client->write(TR::Compiler->cls.superClassesOf(clazz)[index]);
          }
          break;
       case J9ServerMessageType::SharedCache_getClassChainOffsetInSharedCache:
