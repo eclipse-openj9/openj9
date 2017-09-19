@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE-OpenJ9]*/
+/*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
  * Copyright (c) 2017, 2017 IBM Corp. and others
@@ -59,6 +59,12 @@ class LambdaForm {
 		MethodHandle resolvedHandle() {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
+
+		/*[IF Sidecar18-SE-OpenJ9&!Sidecar19-SE-OpenJ9]*/
+		MethodHandle resolve() {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+		/*[ENDIF]*/
 	}
 	
 	enum BasicType {

@@ -44,7 +44,7 @@ import java.util.WeakHashMap;
 import com.ibm.oti.util.Msg;
 import com.ibm.oti.vm.VM;
 
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF Sidecar18-SE-OpenJ9]*/
 import java.lang.invoke.MethodTypeForm;
 /*[ENDIF]*/
 
@@ -1114,7 +1114,7 @@ public final class MethodType implements Serializable {
 		return invoker;
 	}
 	
-/*[IF Sidecar19-SE-OpenJ9]*/	
+/*[IF Sidecar18-SE-OpenJ9]*/	
 	MethodType basicType() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -1134,10 +1134,16 @@ public final class MethodType implements Serializable {
 	Class<?> rtype() {
 		return returnType;
 	}
-	
+
+/*[IF Sidecar19-SE-OpenJ9]*/	
 	MethodType asCollectorType(Class<?> clz, int num1, int num2) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-/*[ENDIF]*/	
+/*[ELSE]*/
+	MethodType asCollectorType(Class<?> clz, int num1) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF]*/
+/*[ENDIF]*/
 }
 

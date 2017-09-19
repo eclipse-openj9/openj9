@@ -173,14 +173,17 @@ public final class System {
 		// Check the default encoding
 		/*[Bug 102075] J2SE Setting -Dfile.encoding=junk fails to run*/
 		/*[IF Sidecar19-SE]*/
+		StringCoding.encode(String.LATIN1, new byte[1]);
+		/*[ELSE]*/
+		StringCoding.encode(new char[1], 0, 1);
+		/*[ENDIF]*/
+		/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
 		setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true));
 		setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true));
 		/*[IF Sidecar19-SE_RAWPLUSJ9]*/
 		setIn(new BufferedInputStream(new FileInputStream(FileDescriptor.in)));
 		/*[ENDIF]*/
-		StringCoding.encode(String.LATIN1, new byte[1]);
 		/*[ELSE]*/
-		StringCoding.encode(new char[1], 0, 1);
 		/*[PR s66168] - ConsoleInputStream initialization may write to System.err */
 		/*[PR s73550, s74314] ConsolePrintStream incorrectly initialized */
 		setErr(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true));
@@ -215,7 +218,7 @@ static void completeInitialization() {
 	} catch (Exception e) {
 		throw new InternalError(e.toString());
 	}
-	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
 	setIn(new BufferedInputStream(new FileInputStream(FileDescriptor.in)));
 	/*[ELSE]*/
 	/*[PR 100718] Initialize System.in after the main thread*/

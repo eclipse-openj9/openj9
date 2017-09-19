@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.reflect.ConstantPool;
-/*[IF Sidecar19-SE-OpenJ9]
+/*[IF Sidecar18-SE-OpenJ9]
 import java.lang.invoke.LambdaForm;
 /*[ENDIF]*/
 /*[ELSE]*/
@@ -117,7 +117,7 @@ public abstract class MethodHandle {
 	static final byte KIND_DEFAULTVALUE = 33;
 	/*[ENDIF]*/
 
-/*[IF Sidecar19-SE-OpenJ9]
+/*[IF Sidecar18-SE-OpenJ9]
 	MethodHandle asTypeCache = null;
 	LambdaForm form = null;	
 /*[ENDIF]*/	
@@ -1203,7 +1203,7 @@ public abstract class MethodHandle {
 		return "KIND_#"+kind; //$NON-NLS-1$
 	}
 
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF Sidecar18-SE-OpenJ9]*/
 	MethodHandle(MethodType mt, LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -1236,9 +1236,11 @@ public abstract class MethodHandle {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
+/*[IF Sidecar19-SE-OpenJ9]*/
 	void customize() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+/*[ENDIF]*/
 	
 	void updateForm(LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();

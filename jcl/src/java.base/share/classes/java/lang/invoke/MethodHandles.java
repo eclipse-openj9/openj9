@@ -4358,7 +4358,7 @@ public class MethodHandles {
 		}
 	}
 
-/*[IF Sidecar19-SE-OpenJ9]*/	
+/*[IF Sidecar18-SE-OpenJ9]*/	
 	static MethodHandle basicInvoker(MethodType mt) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
