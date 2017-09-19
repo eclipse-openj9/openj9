@@ -8345,8 +8345,8 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
 //
 //
 
-static J9ROMClass *
-romClassFromString(const std::string &romClassStr, TR_Memory *trMemory)
+J9ROMClass *
+TR_ResolvedJ9JAASServerMethod::romClassFromString(const std::string &romClassStr, TR_Memory *trMemory)
    {
    auto romClass = (J9ROMClass *)(trMemory->allocateHeapMemory(romClassStr.size()));
    if (!romClass)

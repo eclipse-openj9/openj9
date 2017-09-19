@@ -591,6 +591,7 @@ public:
    TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
    static J9ROMClass *getRemoteROMClass(J9Class *, JAAS::J9ServerStream *stream, TR_Memory *trMemory);
+   static J9ROMClass * romClassFromString(const std::string &romClassStr, TR_Memory *trMemory);
 
    virtual J9ROMClass *romClassPtr() override;
    virtual J9RAMConstantPoolItem *literals() override;
@@ -648,6 +649,7 @@ private:
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
    };
+
 
 #endif
 #endif
