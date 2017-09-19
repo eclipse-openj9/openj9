@@ -316,8 +316,10 @@ static std::string packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
    if (!romClass)
       throw std::bad_alloc();
    memcpy(romClass, origRomClass, origRomClass->romSize);
+
    char *classNamePos = (char *)romClass + origRomClass->romSize;
    memcpy(classNamePos, className, classNameSize);
+   NNSRP_SET(romClass->className, classNamePos);
 
    std::string romClassStr((char *) romClass, romClass->romSize + classNameSize);
    trMemory->freeMemory(romClass, heapAlloc);
