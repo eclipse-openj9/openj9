@@ -18,12 +18,12 @@ public:
       {}
 
 
-   void buildCompileRequest(uint32_t cOffset, uint32_t mOffset, J9Method *method, TR_Hotness optLevel)
+   void buildCompileRequest(uint32_t cOffset, uint32_t mOffset, J9Method *method, TR_Hotness optLevel, uint8_t *allocPtr, size_t sz)
       {
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->Compile(_ctx.get());
 
-      write(cOffset, mOffset, method, optLevel);
+      write(cOffset, mOffset, method, optLevel, allocPtr, sz);
       }
 
    Status waitForFinish()

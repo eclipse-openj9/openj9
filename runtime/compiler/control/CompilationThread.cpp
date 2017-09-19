@@ -7051,6 +7051,14 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
 
    // We need to perform the relocation for the method in the shared classes cache
    TR::CodeCache *aotMCCRuntimeCodeCache = NULL;
+   // JAAS temporary HACK
+   // If we want a specific address for the code, then we must have already reserved the code cache
+   // Indicate this to prepareRelocateAotCodeAndData to avoid another reservation
+   if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+      {
+      TR_ASSERT(compiler->getCurrentCodeCache(), "Must have reserved a code cache");
+      aotMCCRuntimeCodeCache = compiler->getCurrentCodeCache();
+      }
 
    const J9JITDataCacheHeader *cacheEntry = static_cast<const J9JITDataCacheHeader *>(aotCachedMethod);
    if (entry)
@@ -9316,13 +9324,40 @@ TR::CompilationInfoPerThreadBase::compile(
                   );
                }
             TR_J9SharedCache *cache = vm.sharedCache();
+            // JAAS temporary HACK
+            // Reserve a code cache and send the server the virtual address where
+            // the compiled body will be loaded as well as the size of the space available
+
+            // Artificially acquire classUnloadMonitor because reserveCodeCache expects that
+            //
+            bool haveLockedClassUnloadMonitor = false;
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+            bool doAcquireClassUnloadMonitor = true;
+#else
+            bool doAcquireClassUnloadMonitor = compiler->getOption(TR_EnableHCR) || compiler->getOption(TR_FullSpeedDebug);
+#endif
+            if (doAcquireClassUnloadMonitor)
+               {
+               _compInfo.debugPrint(NULL, "\tcompilation thread acquiring class unload monitor\n");
+               TR::MonitorTable::get()->readAcquireClassUnloadMonitor(getCompThreadId());
+               haveLockedClassUnloadMonitor = true;
+               }
+            compiler->cg()->reserveCodeCache(); // this will throw if we cannot reserve
+            if (haveLockedClassUnloadMonitor)
+               TR::MonitorTable::get()->readReleaseClassUnloadMonitor(getCompThreadId());
+
+            size_t availableSpace = compiler->getCurrentCodeCache()->getFreeContiguousSpace();
+            uint8_t *allocPtr = compiler->getCurrentCodeCache()->getWarmCodeAlloc();
+            if (TR::Options::getVerboseOption(TR_VerboseJaas))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Client requesting to compile method at address %p freeSpace=%u", allocPtr, (uint32_t)availableSpace);
+
             J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
             uint32_t romClassOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romClass)));
             J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
             uint32_t romMethodOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romMethod)));
 
             JAAS::J9ClientStream client;
-            client.buildCompileRequest(romClassOffset, romMethodOffset, method, compiler->getMethodHotness());
+            client.buildCompileRequest(romClassOffset, romMethodOffset, method, compiler->getMethodHotness(), allocPtr, availableSpace);
             uint32_t statusCode = compilationFailure;
             std::string compiledMethodStr;
             try

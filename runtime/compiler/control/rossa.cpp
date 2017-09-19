@@ -322,6 +322,11 @@ j9jit_testarossa_err(
                   }
                }
             }
+         else
+            {
+            if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+               return 0;
+            }
          }
       }
 
