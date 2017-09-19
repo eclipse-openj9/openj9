@@ -850,9 +850,12 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
-	rc = addSystemProperty(vm, "com.ibm.zero.version", "2", 0);
-	if (J9SYSPROP_ERROR_NONE != rc) {
-		goto fail;
+	/* -Xzero option is removed from Java 9 */
+	if (j2seVersion < J2SE_19) {
+		rc = addSystemProperty(vm, "com.ibm.zero.version", "2", 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			goto fail;
+		}
 	}
 
 	/* Set the system agent path, which is necessary for system agents such as JDWP to load the libraries they need. */
