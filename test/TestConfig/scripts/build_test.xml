@@ -126,6 +126,7 @@
 					<fileset dir="../../" includes="${build.list}" >
 						<exclude name="TEST_*/build.xml" />
 						<exclude name="Panama/build.xml" />
+						<exclude name="OpenJ9_Jsr_292_API/build.xml" />
 					</fileset>
 				</subant>
 			</else>
