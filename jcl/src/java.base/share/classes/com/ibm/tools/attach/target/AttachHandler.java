@@ -103,8 +103,11 @@ public class AttachHandler extends Thread {
 	private static String pidProperty;
 	private static int numberOfTargets;
 	/*[IF Sidecar19-SE]*/
-	/*[PR 132828 don't allow VM to attach to itself unless explicitly enabled ]*/
-	/* grab the setting before the application has a chance to change it, but parse lazily */
+	/*
+	 * As of Java 9, a VM cannot attach to itself unless explicitly enabled.
+	 * Grab the setting before the application has a chance to change it, 
+	 * but parse it lazily because we rarely need the value.
+	 */
 	public final static String allowAttachSelf = 
 			com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("jdk.attach.allowAttachSelf");  //$NON-NLS-1$
 	/*[ENDIF]*/
