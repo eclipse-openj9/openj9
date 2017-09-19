@@ -358,21 +358,3 @@ void armIndirectCallPatching_unwrapper(void **argsPtr, void **resPtr)
    armCodePatching(argsPtr[0], argsPtr[1], NULL, NULL, argsPtr[2], argsPtr[3]);
    }
 }
-
-#if defined(TR_HOST_ARM)
-void fixupMethodInfoAddressInCodeCache(void *startPC, void *bodyInfo)
-   {
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
-   int32_t  jitEntryOffset = getJitEntryOffset(linkageInfo);
-   int32_t *jitEntry = (int32_t *)((int8_t *)startPC + jitEntryOffset);
-
-   if (linkageInfo->isSamplingMethodBody())
-      {
-      *(void **)((int8_t *)startPC + OFFSET_METHODINFO_FROM_STARTPC) = bodyInfo;
-      }
-   else if (linkageInfo->isCountingMethodBody()) {
-      TR_ASSERT(0, "Counting method body\n");
-      }
-   return;
-   }
-#endif

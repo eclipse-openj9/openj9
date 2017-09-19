@@ -2604,12 +2604,6 @@ TR_IProfiler::getValueProfileInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp
    return valueProfileInfo;
    }
 
-extern "C" {
-uint8_t platformLightweightLockingIsSupported();
-uint32_t platformTryLock(uint32_t *ptr);
-void platformUnlock(uint32_t *ptr);
-}
-
 bool
 TR_IProfiler::acquireHashTableWriteLock(bool forceFullLock)
    {

@@ -1259,64 +1259,10 @@ void initializeJitRuntimeHelperTable(char isSMP)
    #undef SET
    }
 
-#if defined (TR_TARGET_X86)
-extern "C" int32_t compareAndExchange4(uint32_t *ptr, uint32_t, uint32_t);
-#elif defined (TR_HOST_S390)
-extern "C" int32_t _CompareAndSwap4(int32_t * addr, uint32_t, uint32_t);
-#elif defined (TR_HOST_PPC)
-extern "C" _tr_try_lock(uint32_t *a, uint32_t b, uint32_t c); // return 1 if compareAndSwap "c" successfully into "a"; otherwise 0;
-extern "C" _tr_unlock(uint32_t *a, uint32_t b, uint32_t c);   // store "c" into "a", and returns 1;
-#endif
-
 #define PLATFORM_MONITOR_LOCKED    1
 #define PLATFORM_MONITOR_UNLOCKED  0
 
-extern "C" {
-uint8_t platformLightweightLockingIsSupported()
-   {
-#if defined (TR_TARGET_X86) || defined (TR_HOST_S390) || defined (TR_HOST_PPC)
-   return 1;
-#else
-   return 0;
-#endif
-   }
-
-uint32_t platformTryLock(uint32_t *ptr)
-   {
-#if defined(TR_TARGET_X86)
-   return compareAndExchange4(ptr, PLATFORM_MONITOR_UNLOCKED, PLATFORM_MONITOR_LOCKED);
-#elif defined (TR_HOST_S390)
-   return _CompareAndSwap4((int32_t *)ptr, PLATFORM_MONITOR_UNLOCKED, PLATFORM_MONITOR_LOCKED);
-#elif defined (TR_HOST_PPC)
-   return _tr_try_lock (ptr, PLATFORM_MONITOR_UNLOCKED, PLATFORM_MONITOR_LOCKED);
-#else // monitor implementation
-   return 0;
-#endif
-   }
-
-void platformUnlock(uint32_t *ptr)
-   {
-#if defined(TR_TARGET_X86)
-   compareAndExchange4(ptr, PLATFORM_MONITOR_LOCKED, PLATFORM_MONITOR_UNLOCKED);
-#elif defined (TR_HOST_S390)
-   _CompareAndSwap4((int32_t *)ptr, PLATFORM_MONITOR_LOCKED, PLATFORM_MONITOR_UNLOCKED);
-#elif defined (TR_HOST_PPC)
-   _tr_unlock (ptr, PLATFORM_MONITOR_LOCKED, PLATFORM_MONITOR_UNLOCKED);
-#endif
-   }
-}
-
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_ARM))
-uint32_t *getLinkageInfo(void *startPC)
-   {
-   return (uint32_t *)TR_LinkageInfo::get(startPC);
-   }
-
-uint32_t isRecompMethBody(void *li)
-   {
-   TR_LinkageInfo *linkageInfo = (TR_LinkageInfo *)li;
-   return linkageInfo->isRecompMethodBody();
-   }
 
 // This method MUST be used only for methods that were AOTed and then relocated
 // It marks the BodyInfo that this is an aoted method.

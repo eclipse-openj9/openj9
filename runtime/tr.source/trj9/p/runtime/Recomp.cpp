@@ -286,36 +286,3 @@ void ppcIndirectCallPatching_unwrapper(void **argsPtr, void **resPtr)
    ppcCodePatching(argsPtr[0], argsPtr[1], NULL, NULL, argsPtr[2], argsPtr[3]);
    }
 }
-
-#if defined(TR_HOST_POWER)
-void fixupMethodInfoAddressInCodeCache(void *startPC, void *bodyInfo)
-   {
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
-   int32_t  jitEntryOffset = getJitEntryOffset(linkageInfo);
-   int32_t *jitEntry = (int32_t *)((int8_t *)startPC + jitEntryOffset);
-
-   if (linkageInfo->isSamplingMethodBody())
-      {
-      *(void **)((int8_t *)startPC + OFFSET_SAMPLING_METHODINFO_FROM_STARTPC) = bodyInfo;
-      }
-   else if (linkageInfo->isCountingMethodBody())
-      {
-      int32_t *branchLocation = (int32_t *)((int8_t *)jitEntry + OFFSET_COUNTING_BRANCH_FROM_JITENTRY);
-      int32_t  binst = *branchLocation;
-      int32_t  toSnippet;
-
-      if ((binst & 0xFF830000) == 0x41800000)   // blt snippet
-	 {
-	 toSnippet = ((binst<<16) & 0xFFFC0000)>>16;
-	 }
-      else
-	 {
-         branchLocation = (int32_t *)((int8_t *)branchLocation + 4);
-         binst = *branchLocation;
-         toSnippet = ((binst<<6) & 0xFFFFFF00)>>6;
-	 }
-      *(void **)((int8_t *)branchLocation + toSnippet + 4) = bodyInfo;
-      }
-   return;
-   }
-#endif

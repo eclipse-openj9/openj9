@@ -355,9 +355,3 @@ void J9::Recompilation::invalidateMethodBody(void *startPC, TR_FrontEnd *fe)
    fixUpMethodCode(startPC); // schedule a sync compilation
    }
 
-#if defined(TR_HOST_X86)
-void fixupMethodInfoAddressInCodeCache(void *startPC, void *bodyInfo)
-   {
-   *((void **)((U_8*)startPC+START_PC_TO_METHOD_INFO_ADDRESS)) = bodyInfo;
-   }
-#endif

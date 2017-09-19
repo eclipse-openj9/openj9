@@ -89,10 +89,7 @@ inline uint32_t getJitEntryOffset(TR_LinkageInfo *linkageInfo)
 
 /* Functions used by AOT runtime to fixup recompilation info for AOT */
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_ARM))
-uint32_t *getLinkageInfo(void * startPC);
-uint32_t isRecompMethBody(void *li);
 void fixPersistentMethodInfo(void *table);
-void fixupMethodInfoAddressInCodeCache(void *startPC, void *bodyInfo);
 #endif
 
 
