@@ -2229,7 +2229,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
 
             if (useProfiledValues)
                {
-               TR::Instruction * unloadableConstInstr = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegZero, (uintptrj_t)profiledClass);
+               TR::Instruction * unloadableConstInstr = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegZero, reinterpret_cast<uintptrj_t*>(profiledClass));
                if (fej9->isUnloadAssumptionRequired(profiledClass, comp()->getCurrentMethod()))
                   {
                   comp()->getStaticPICSites()->push_front(unloadableConstInstr);
@@ -2573,20 +2573,20 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
 
                // We will generate CLFI / BRCL sequence to dispatch to target branches.
                // First CLFI/BRCL
-               cursor = generateRILInstruction(cg(), TR::InstOpCode::CLFI, callNode, vftReg, (uintptrj_t)0x0, cursor); //compare against 0
+               cursor = generateRILInstruction(cg(), TR::InstOpCode::CLFI, callNode, vftReg, 0x0, cursor); //compare against 0
 
                ifcSnippet->getDataConstantSnippet()->setFirstCLFI(cursor);
 
                // BRCL
-               cursor = new (cg()->trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRCL, callNode, (uint32_t)0x0, (uintptrj_t)0x0, cursor, cg());
+               cursor = generateRILInstruction(cg(), TR::InstOpCode::BRCL, callNode, static_cast<uint32_t>(0x0), reinterpret_cast<void*>(0x0), cursor);
 
                for(i = 1; i < numInterfaceCallCacheSlots; i++)
                   {
                   // We will generate CLFI / BRCL sequence to dispatch to target branches.
-                  cursor = generateRILInstruction(cg(), TR::InstOpCode::CLFI, callNode, vftReg, (uintptrj_t)0x0, cursor); //compare against 0
+                  cursor = generateRILInstruction(cg(), TR::InstOpCode::CLFI, callNode, vftReg, 0x0, cursor); //compare against 0
 
                   // BRCL
-                  cursor = new (cg()->trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRCL, callNode, (uint32_t) 0x0, (uintptrj_t)0x0, cursor, cg());
+                  cursor = generateRILInstruction(cg(), TR::InstOpCode::BRCL, callNode, static_cast<uint32_t>(0x0), reinterpret_cast<void*>(0x0), cursor);
                   }
                }
             else

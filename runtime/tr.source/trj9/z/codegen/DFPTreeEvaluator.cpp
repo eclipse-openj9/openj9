@@ -124,16 +124,16 @@ genClearFPCBits(
       {
       maskRegister = cg->allocateRegister();
       generateRRInstruction(cg, TR::InstOpCode::LR, node, maskRegister, fpcRegister); //make a copy
-      generateRILInstruction(cg, TR::InstOpCode::NILF, node, maskRegister, (int32_t)0xFF000000);
+      generateRILInstruction(cg, TR::InstOpCode::NILF, node, maskRegister, 0xFF000000);
       }
 
    // Perform the clear
    if (mask & maskIEEEMask && !(mask & maskIEEEException)) //clear only the IEEE exception mask bits
-      generateRILInstruction(cg, TR::InstOpCode::NILF, node, fpcRegister, (int32_t)0x07FFFFFF);
+      generateRILInstruction(cg, TR::InstOpCode::NILF, node, fpcRegister, 0x07FFFFFF);
    else if (mask & maskIEEEException && !(mask & maskIEEEMask)) //clear only the IEEE exception bits
-      generateRILInstruction(cg, TR::InstOpCode::NILF, node, fpcRegister, (int32_t)0xFF07FFFF);
+      generateRILInstruction(cg, TR::InstOpCode::NILF, node, fpcRegister, 0xFF07FFFF);
    else if (mask & (maskIEEEMask|maskIEEEException))//maskIEEEBoth) //both types of FPC bits
-      generateRILInstruction(cg, TR::InstOpCode::NILF, node, fpcRegister, (int32_t)0x0707FFFF);
+      generateRILInstruction(cg, TR::InstOpCode::NILF, node, fpcRegister, 0x0707FFFF);
 
    generateRRInstruction(cg, TR::InstOpCode::SFPC, node, fpcRegister, fpcRegister);
    cg->stopUsingRegister(fpcRegister);
@@ -993,7 +993,7 @@ inlineBigDecimalScaledDivide(
    // check inexact exception bits for a failure
    generateRRInstruction(cg, TR::InstOpCode::EFPC, node, retRegister, retRegister);
    generateRILInstruction(cg, TR::InstOpCode::NILF, node, retRegister, excInexactFlag);
-   generateRILInstruction(cg, TR::InstOpCode::CLFI, node, retRegister, (uintptrj_t)0); //compare against 0
+   generateRILInstruction(cg, TR::InstOpCode::CLFI, node, retRegister, 0); //compare against 0
 
    // assume inexact fail
    generateLoad32BitConstant(cg, node, 0, retRegister, false);
@@ -1126,7 +1126,7 @@ inlineBigDecimalDivide(
       // need to check for inexact exception
       generateRRInstruction(cg, TR::InstOpCode::EFPC, node, retRegister, retRegister);
       generateRILInstruction(cg, TR::InstOpCode::NILF, node, retRegister, excInexactFlag);
-      generateRILInstruction(cg, TR::InstOpCode::CLFI, node, retRegister, (uintptrj_t)0); //compare against 0
+      generateRILInstruction(cg, TR::InstOpCode::CLFI, node, retRegister, 0); //compare against 0
 
       // did we fail?
       // 0 already loaded in return register
@@ -1415,7 +1415,7 @@ inlineBigDecimalSetScale(
       {
       generateRRInstruction(cg, TR::InstOpCode::EFPC, node, retRegister, retRegister);
       generateRILInstruction(cg, TR::InstOpCode::NILF, node, retRegister, excInexactFlag);
-      generateRILInstruction(cg, TR::InstOpCode::CLFI, node, retRegister, (uintptrj_t)0); //compare against 0
+      generateRILInstruction(cg, TR::InstOpCode::CLFI, node, retRegister, 0); //compare against 0
 
       // did we fail?
       // 0 already loaded in return register
