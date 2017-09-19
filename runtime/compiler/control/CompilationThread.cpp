@@ -440,16 +440,6 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getLeafComponentClassFromArrayClass(clazz));
          }
          break;
-      case J9ServerMessageType::ClassEnv_romClassOf:
-      case J9ServerMessageType::VM_getPersistentClassPointerFromClassPointer:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         TR_J9SharedCache * cache = fe->sharedCache();
-         void *romClass = reinterpret_cast<void *>(fe->getPersistentClassPointerFromClassPointer(clazz));
-         void *romClassOffset = cache->offsetInSharedCacheFromPointer(romClass);
-         client->write(romClassOffset);
-         }
-         break;
       case J9ServerMessageType::VM_getClassFromSignature:
          {
          auto recv = client->getRecvData<std::string, TR_OpaqueMethodBlock *, bool>();

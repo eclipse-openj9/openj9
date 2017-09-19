@@ -74,7 +74,7 @@ enum J9ServerMessageType
    VM_getClassOfMethod = 213;
    VM_getBaseComponentClass = 214;
    VM_getLeafComponentClassFromArrayClass = 215;
-   VM_getPersistentClassPointerFromClassPointer = 216;
+//   VM_getPersistentClassPointerFromClassPointer = 216;
    VM_getClassFromSignature = 217;
    VM_jitFieldsAreSame = 218;
    VM_jitStaticsAreSame = 219;
@@ -140,7 +140,7 @@ enum J9ServerMessageType
    ClassEnv_classFlagsValue = 400;
    ClassEnv_classDepthOf = 401;
    ClassEnv_classInstanceSize = 402;
-   ClassEnv_romClassOf = 403;
+//   ClassEnv_romClassOf = 403;
    ClassEnv_superClassesOf = 404;
    ClassEnv_indexedSuperClassOf = 405;
    ClassEnv_iTableOf = 406;

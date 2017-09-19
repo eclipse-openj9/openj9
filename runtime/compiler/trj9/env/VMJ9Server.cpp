@@ -434,10 +434,12 @@ TR_J9ServerVM::getStringUTF8Length(uintptrj_t objectPointer)
 uintptrj_t
 TR_J9ServerVM::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock *clazz)
    {
-   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_getPersistentClassPointerFromClassPointer, clazz);
-   auto offset = std::get<0>(stream->read<void *>());
-   return (uintptrj_t)(sharedCache()->pointerFromOffsetInSharedCache(offset));
+   J9Class *j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
+   if (TR::compInfoPT && TR::compInfoPT->getStream())
+      {
+      return static_cast<uintptrj_t>(TR::compInfoPT->getAndCacheRemoteROMClass(j9clazz));
+      }
+   return static_cast<uintptrj_t>(j9clazz->romClass);
    }
 
 bool
