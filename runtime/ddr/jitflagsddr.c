@@ -49,13 +49,6 @@ J9DDRConstantTableEntryWithValue("host_IA32", host_IA32)
 #endif
 J9DDRConstantTableEntryWithValue("host_POWER",host_POWER)
 
-#if defined(TR_HOST_PPC)
-	#define host_PPC 1
-#else
-	#define host_PPC 0
-#endif
-J9DDRConstantTableEntryWithValue("host_PPC", host_PPC)
-
 #if defined(TR_HOST_S390)
 	#define host_S390 1
 #else

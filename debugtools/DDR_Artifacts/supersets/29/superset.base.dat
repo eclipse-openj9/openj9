@@ -10,7 +10,6 @@ C|host_ARM
 C|host_IA32
 C|host_MIPS
 C|host_POWER
-C|host_PPC
 C|host_S390
 C|host_SH4
 C|host_X86
