@@ -48,6 +48,7 @@ import com.ibm.j9tools.om.BuildSpec;
 import com.ibm.j9tools.om.ConfigDirectory;
 import com.ibm.j9tools.om.Flag;
 import com.ibm.j9tools.om.FlagDefinitions;
+import com.ibm.j9tools.om.InvalidBuildSpecException;
 import com.ibm.j9tools.om.InvalidConfigurationException;
 import com.ibm.j9tools.om.OMObjectException;
 import com.ibm.j9tools.om.ObjectFactory;
@@ -469,6 +470,14 @@ public class ConfigurationImpl implements IConfiguration, ISinglePredicateEvalua
 			return  "$(UMA_PATH_TO_ROOT)include $(UMA_PATH_TO_ROOT)oti ";
 		}
 		return "";
+	}
+
+	public void verify() throws UMAException {
+		try {
+			buildSpec.verify(flagDefs, buildInfo);
+		} catch (InvalidBuildSpecException e) {
+			throw new UMAException(e);
+		}
 	}
 
 }

@@ -22,10 +22,12 @@
 package com.ibm.j9.uma;
 
 import com.ibm.j9.uma.configuration.ConfigurationImpl;
+import com.ibm.j9tools.om.Flag;
 import com.ibm.uma.UMA;
 import com.ibm.uma.UMAException;
 import com.ibm.uma.util.Logger;
 import java.io.File;
+import java.util.HashMap;
 
 public class Main {
 	static String applicationVersion = "2.5.1";
@@ -54,6 +56,8 @@ public class Main {
 	static String option_jitVersionFile_short = "-jvf";
 	static String option_excludeArtifacts = "-excludeArtifacts";
 	static String option_excludeArtifacts_short = "-ea";
+	static String option_define = "-D";
+	static String option_undefine = "-U";
 	
 	static boolean splashed = false;
 	static boolean quiet = false;
@@ -66,8 +70,9 @@ public class Main {
 	static String buildTag = "dev_12150101_0000_B0";
 	static String jitVersionFile = "";
 	static String excludeArtifacts = "";
+	static HashMap<String, Boolean> overrideFlags = new HashMap<String,Boolean>();
 	static Logger logger;
-	
+
 	static void dumpSplash() {
 		if (splashed||quiet) {
 			return;
@@ -79,11 +84,12 @@ public class Main {
 	
 	static void dumpHelp() {
 		dumpSplash();
-		System.err.println(applicationNameShort + " [options] " + option_rootDir + " <directory> " + option_configDir + " <directory> " + option_buildSpecId + " <specId>");
+		System.err.println(applicationNameShort + " [options] " + option_rootDir + " <directory> " + option_configDir + " <directory> " + option_buildSpecId + " <specId>" );
 		System.err.println("options:");
 		System.err.println("\t-quiet");
 		System.err.println("\t-verbose");
 		System.err.println("\t-help");
+		System.err.println("\t" +"{" + option_define + "|" + option_undefine + "} <flagName>");
 		System.err.println("\t" + option_rootDir + " <directory>");
 		System.err.println("\t" + option_configDir + " <directory>");
 		System.err.println("\t" + option_buildSpecId + " <specId>");
@@ -173,6 +179,20 @@ public class Main {
 				excludeArtifacts = args[++i];
 				excludeArtifacts = excludeArtifacts.trim();
 				continue;
+			} else if (arg.equalsIgnoreCase(option_define) ) {
+				if ( i+1 >= args.length ) {
+					System.err.println("Must provide an argument for option " + arg + "\n");
+					return false;
+				}
+				overrideFlags.put(args[++i], true);
+				continue;
+			} else if (arg.equalsIgnoreCase(option_undefine) ) {
+				if ( i+1 >= args.length ) {
+					System.err.println("Must provide an argument for option " + arg + "\n");
+					return false;
+				}
+				overrideFlags.put(args[++i], false);
+				continue;
 			} else {
 				System.err.println("Unknown command line option " + arg + "\n");
 				return false;
@@ -219,6 +239,16 @@ public class Main {
 		
 		try {
 			ConfigurationImpl configuration = new ConfigurationImpl(configDirectory, buildSpecId, buildId, buildDate, buildTag, jitVersionFile, excludeArtifacts);
+			for(String flagString: overrideFlags.keySet()){
+				if(!configuration.isFlagValid(flagString)){
+					throw new UMAException("Invalid flag override: " + flagString);
+				}
+				Flag flag = configuration.getBuildSpec().getFlag(flagString);
+				flag.setState(overrideFlags.get(flagString));
+			}
+			// Since we may have changed some flags, we need to re-verify them
+			configuration.verify();
+
 			new UMA(configuration, configuration, rootDir).generate();
 		} catch (NullPointerException e) {
 			logger.println(Logger.ErrorLog, "Internal error: null pointer exception");
