@@ -47,6 +47,13 @@ pipeline {
                                 sh 'git push target --tags'
                                 // Remove the bot account username/password from the config
                                 sh "git config remote.target.url ${HTTP}${TARGET_REPO}"
+
+                                // Set the build description
+                                LAST_COMMIT = sh (
+                                        script: 'git log --oneline -1',
+                                        returnStdout: true
+                                    ).trim()
+                                currentBuild.description = "${LAST_COMMIT}"
                             }
                         }
                     }
