@@ -629,6 +629,8 @@ public:
    virtual char * classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
    virtual char * classSignatureOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
    virtual char * fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
+   virtual U_8 *allocateException(uint32_t, TR::Compilation *) override;
+   virtual void *stringConstant(int32_t cpIndex) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override
