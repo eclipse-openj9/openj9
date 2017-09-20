@@ -8378,7 +8378,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
 
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(j9fe->getJ9JITConfig());
-   TR::CompilationInfoPerThreadBase *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
+   TR::CompilationInfoPerThread *threadCompInfo = compInfo->getCompInfoForThread(j9fe->vmThread());
    _stream = threadCompInfo->getMethodBeingCompiled()->_stream;
 
    _ramMethod = (J9Method *)aMethod;
@@ -8386,7 +8386,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    // Create client side mirror of this object to use for calls involving RAM data
    TR_ResolvedRelocatableJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JAASServerMethod*) owningMethod)->_remoteMirror : nullptr;
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot);
-   auto recv = _stream->read<TR_ResolvedRelocatableJ9Method*, J9RAMConstantPoolItem*, J9Class*, std::string, uint64_t>();
+   auto recv = _stream->read<TR_ResolvedRelocatableJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t>();
 
    _remoteMirror = std::get<0>(recv);
 
@@ -8394,8 +8394,8 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _literals = std::get<1>(recv);
    _ramClass = std::get<2>(recv);
 
-   _romClass = romClassFromString(std::get<3>(recv), trMemory);
-   _romMethod = romMethodAtClassIndex(_romClass, std::get<4>(recv));
+   _romClass = threadCompInfo->getAndCacheRemoteROMClass(_ramClass, trMemory);
+   _romMethod = romMethodAtClassIndex(_romClass, std::get<3>(recv));
    _romLiterals = (J9ROMConstantPoolItem *) ((UDATA)romClassPtr() + sizeof(J9ROMClass));
 
    _vTableSlot = vTableSlot;

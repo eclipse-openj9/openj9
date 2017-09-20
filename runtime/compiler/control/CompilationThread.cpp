@@ -256,45 +256,6 @@ jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, v
    return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
    }
 
-// JAAS TODO FIXME XXX DELETE THIS when packROMClass is rewritten (by wed sep 20 2017)
-static std::string packROMClassWithMethodOffset(J9ROMClass *origRomClass, int32_t methodOffset, TR_Memory *trMemory)
-   {
-   J9ROMMethod *origRomMethod = (J9ROMMethod*) ((uint8_t*) origRomClass + methodOffset);
-   J9UTF8 *name = J9ROMMETHOD_GET_NAME(origRomClass, origRomMethod);
-   J9UTF8 *signature = J9ROMMETHOD_GET_SIGNATURE(origRomClass, origRomMethod);
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(origRomClass);
-
-   // Each J9UTF8 holds a char array and a U_16 to store the length of the char array
-   size_t nameSize = name->length + sizeof(U_16);
-   size_t sigSize = signature->length + sizeof(U_16);
-   size_t classNameSize = className->length + sizeof(U_16);
-
-   // Make a cloned ROMClass with extra space at the end
-   J9ROMClass *romClass = (J9ROMClass *)trMemory->allocateHeapMemory(origRomClass->romSize + nameSize + sigSize + classNameSize);
-   if (!romClass)
-      throw std::bad_alloc();
-   memcpy(romClass, origRomClass, origRomClass->romSize);
-
-   // Copy the J9UTF8s to the extra space allocated at the end
-   char *namePos = (char *)romClass + romClass->romSize;
-   memcpy(namePos, name, nameSize);
-   char *signaturePos = (char *)namePos + nameSize;
-   memcpy(signaturePos, signature, sigSize);
-   char *classNamePos = (char *)signaturePos + sigSize;
-   memcpy(classNamePos, className, classNameSize);
-
-   // Find the romMethod in the cloned romClass to modify the self referential pointers
-   J9ROMMethod *romMethod = (J9ROMMethod*) ((uint8_t*) romClass + methodOffset);
-   // Update the J9SRPs
-   NNSRP_SET(romMethod->nameAndSignature.name, namePos);
-   NNSRP_SET(romMethod->nameAndSignature.signature, signaturePos);
-   NNSRP_SET(romClass->className, classNamePos);
-
-   // Return the cloned ROMClass as a byte array
-   std::string romClassStr((char *) romClass, romClass->romSize + nameSize + sigSize + classNameSize);
-   trMemory->freeMemory(romClass, heapAlloc);
-   return romClassStr;
-   }
 
 // For JaaS
 // Packs the ROMClass of a given method into a std::string to be transfered to the server.
@@ -374,30 +335,34 @@ static std::string packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
       throw std::bad_alloc();
    memcpy(romClass, origRomClass, origRomClass->romSize);
 
-   uint8_t *curPos = (uint8_t *)romClass + romClass->romSize;
+   uint8_t *curPos = ((uint8_t *)romClass) + romClass->romSize;
 
    memcpy(curPos, className, classNameSize);
    NNSRP_SET(romClass->className, curPos);
    curPos += classNameSize;
 
    romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+   J9ROMMethod *origRomMethod = J9ROMCLASS_ROMMETHODS(origRomClass);
    for (size_t i = 0; i < romClass->romMethodCount; ++i)
       {
-      J9UTF8 *field = J9ROMMETHOD_NAME(romMethod);
+      J9UTF8 *field = J9ROMMETHOD_NAME(origRomMethod);
       size_t fieldLen = field->length + sizeof(U_16);
       memcpy(curPos, field, fieldLen);
       NNSRP_SET(romMethod->nameAndSignature.name, curPos);
       curPos += fieldLen;
 
-      field = J9ROMMETHOD_SIGNATURE(romMethod);
+      field = J9ROMMETHOD_SIGNATURE(origRomMethod);
       fieldLen = field->length + sizeof(U_16);
       memcpy(curPos, field, fieldLen);
       NNSRP_SET(romMethod->nameAndSignature.signature, curPos);
       curPos += fieldLen;
+
+      romMethod = nextROMMethod(romMethod);
+      origRomMethod = nextROMMethod(origRomMethod);
       }
 
    std::string romClassStr((char *) romClass, totalSize);
-   trMemory->freeMemory(romClass, heapAlloc);
+   //trMemory->freeMemory(romClass, heapAlloc);
    return romClassStr;
    }
 
@@ -879,9 +844,8 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
 
          J9Method *j9method = (J9Method *)method;
          const uint64_t methodIndex = getMethodIndexUnchecked(j9method);
-         auto romClass = packROMClassWithMethod(J9_CLASS_FROM_METHOD(j9method)->romClass, methodIndex, trMemory);
 
-         client->write(resolvedMethod, literals, cpHdr, romClass, methodIndex);
+         client->write(resolvedMethod, literals, cpHdr, methodIndex);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getRemoteROMClass:
@@ -1680,12 +1644,12 @@ TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
    }
 
 J9ROMClass *
-TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz)
+TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memory *trMemory)
    {
    auto romClass = getRemoteROMClassIfCached(clazz);
    if (romClass == nullptr)
       {
-      romClass = TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(clazz, getStream(), TR::comp()->trMemory());
+      romClass = TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory());
       cacheRemoteROMClass(clazz, romClass);
       }
    return romClass;
@@ -4675,6 +4639,8 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    entry._compInfoPT = this; // need to know which comp thread is handling this request
    TR::compInfoPT = this; // set the thread-local compinfoPT
 
+   // need to clear JAAS ROM class cache between compilations because the ram class pointers may be reused.
+   _cachedROMClasses.clear();
    cacheRemoteROMClass(details.getClass(), const_cast<J9ROMClass*>(details.getRomClass()));
 
    // update the last time the compilation thread had to do something.
@@ -9422,10 +9388,10 @@ TR::CompilationInfoPerThreadBase::compile(
             uint32_t romClassOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romClass)));
             J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
             uint32_t romMethodOffset = uint32_t((uint8_t*) romMethod - (uint8_t*) romClass);
-            std::string romClassStr = packROMClassWithMethodOffset(romClass, romMethodOffset, compiler->trMemory());
+            std::string romClassStr = packROMClass(romClass, compiler->trMemory());
 
             JAAS::J9ClientStream client;
-            client.buildCompileRequest(romClassStr, romMethodOffset, method, compiler->getMethodHotness(), allocPtr, availableSpace);
+            client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), allocPtr, availableSpace);
             uint32_t statusCode = compilationFailure;
             std::string compiledMethodStr;
             try

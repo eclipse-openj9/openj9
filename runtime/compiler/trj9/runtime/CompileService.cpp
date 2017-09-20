@@ -34,7 +34,7 @@ static J9Method *ramMethodFromRomMethod(J9JITConfig *jitConfig, J9VMThread *vmTh
 
 static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
    J9ROMClass* romClass, const J9ROMMethod* romMethod,
-   J9Method* ramMethod, JAAS::J9ServerStream *rpc, TR_Hotness optLevel,
+   J9Method* ramMethod, J9Class *clazz, JAAS::J9ServerStream *rpc, TR_Hotness optLevel,
    uint8_t *mandatoryCodeAddress = nullptr, size_t availableCodeSpace = 0)  // JAAS temporary HACK
    {
    J9UTF8 *methodNameUTF = J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature);
@@ -79,7 +79,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             plan->_mandatoryCodeAddress = mandatoryCodeAddress;
             plan->_availableCodeSpace = availableCodeSpace;
             }
-         J9::RemoteMethodDetails details(ramMethod, romClass, romMethod);
+         J9::RemoteMethodDetails details(ramMethod, romClass, romMethod, clazz);
          result = (IDATA)compInfo->compileRemoteMethod(vmThread, details, romMethod, romClass, 0, &compErrCode, &queued, plan, rpc);
 
          if (newPlanCreated)
@@ -132,7 +132,7 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
    {
    try
       {
-      auto req = stream->read<std::string, uint32_t, J9Method *, TR_Hotness, uint8_t*, size_t>();
+      auto req = stream->read<std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, uint8_t*, size_t>();
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
@@ -143,10 +143,11 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       uint32_t romMethodOffset = std::get<1>(req);
       J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*) romClass + romMethodOffset);
       J9Method *ramMethod = std::get<2>(req);
-      TR_Hotness opt = std::get<3>(req);
-      uint8_t *allocPtr = std::get<4>(req);
-      size_t allocSize = std::get<5>(req);
-      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, stream, opt, allocPtr, allocSize);
+      J9Class *clazz = std::get<3>(req);
+      TR_Hotness opt = std::get<4>(req);
+      uint8_t *allocPtr = std::get<5>(req);
+      size_t allocSize = std::get<6>(req);
+      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, allocPtr, allocSize);
       }
    catch (const JAAS::StreamFailure &e)
       {

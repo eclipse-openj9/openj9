@@ -93,18 +93,17 @@ class RemoteMethodDetails : public TR::IlGeneratorMethodDetails
          {
          _data._romData._romClass = other.getRomClass();
          _data._romData._romMethod = other.getRomMethod();
+         _clazz = other.getClass();
          }
-      RemoteMethodDetails(J9Method * const method, const J9ROMClass *romClass, const J9ROMMethod *romMethod) : TR::IlGeneratorMethodDetails(method) 
+      RemoteMethodDetails(J9Method * const method, const J9ROMClass *romClass, const J9ROMMethod *romMethod, J9Class *clazz) : TR::IlGeneratorMethodDetails(method) 
          {
          _data._romData._romClass = romClass;
          _data._romData._romMethod = romMethod;
+         _clazz = clazz;
          }
       const J9ROMClass  *getRomClass()  const { return _data._romData._romClass; }
       const J9ROMMethod *getRomMethod() const { return _data._romData._romMethod; }
-      J9Class *getClass() const // JAAS TODO: make this inquire the client, or maybe cache it 
-         {
-         return nullptr; // J9_CLASS_FROM_METHOD(self()->getMethod());
-         }
+      J9Class *getClass() const { return _clazz; }
 
       virtual const char * name()        const { return "RemoteMethod"; }
 
@@ -118,6 +117,11 @@ class RemoteMethodDetails : public TR::IlGeneratorMethodDetails
          }
 
       //virtual bool supportsInvalidation() const { return false; }
+   private:
+      // NOTE: we cannot use _data._class because _data is union and 
+      // _class is aliased with _romData._romClass.
+      // (defined in ilgen/J9IlGeneratorMethodDetails.hpp)
+      J9Class *_clazz;
    };
 
 class MethodInProgressDetails : public TR::IlGeneratorMethodDetails

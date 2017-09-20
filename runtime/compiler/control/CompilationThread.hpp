@@ -357,7 +357,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    TR_J9ServerVM         *getServerVM() { return _serverVM; }
    void                   setServerVM(TR_J9ServerVM *vm) { _serverVM = vm; }
    JAAS::J9ServerStream  *getStream();
-   J9ROMClass            *getAndCacheRemoteROMClass(J9Class *);
+   J9ROMClass            *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=nullptr);
    J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
    void                   cacheRemoteROMClass(J9Class *, J9ROMClass *);
 

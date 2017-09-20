@@ -18,12 +18,12 @@ public:
       {}
 
 
-   void buildCompileRequest(std::string romClassStr, uint32_t mOffset, J9Method *method, TR_Hotness optLevel, uint8_t *allocPtr, size_t sz)
+   void buildCompileRequest(std::string romClassStr, uint32_t mOffset, J9Method *method, J9Class* clazz, TR_Hotness optLevel, uint8_t *allocPtr, size_t sz)
       {
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->Compile(_ctx.get());
 
-      write(romClassStr, mOffset, method, optLevel, allocPtr, sz);
+      write(romClassStr, mOffset, method, clazz, optLevel, allocPtr, sz);
       }
 
    Status waitForFinish()
