@@ -30,6 +30,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Properties;
@@ -107,9 +108,16 @@ final class Attachment extends Thread implements Response {
 	boolean connectToAttacher(int portNum) {
 
 		try {
-			IPC.logMessage("connectToAttacher portNum=", portNum); //$NON-NLS-1$
-			InetAddress localHost = InetAddress.getLocalHost();
-			attacherSocket = new Socket(localHost, portNum);
+			InetAddress localHost;
+			try {
+				IPC.logMessage("connectToAttacher using \"localhost\" portNum=", portNum); //$NON-NLS-1$
+				localHost = InetAddress.getByName("localhost"); //$NON-NLS-1$
+				attacherSocket = new Socket(localHost, portNum);
+			} catch (UnknownHostException otherException) {
+				IPC.logMessage("connectToAttacher using getLocalHost() portNum=", portNum); //$NON-NLS-1$
+				localHost = InetAddress.getLocalHost();
+				attacherSocket = new Socket(localHost, portNum);
+			}
 			IPC.logMessage("connectToAttacher localPort=",  attacherSocket.getLocalPort(), " remotePort=", Integer.toString(attacherSocket.getPort())); //$NON-NLS-1$//$NON-NLS-2$
 			responseStream = attacherSocket.getOutputStream();
 			commandStream = attacherSocket.getInputStream();
