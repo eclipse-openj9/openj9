@@ -224,6 +224,7 @@ public:
    virtual ~TR_J9VMBase() {}
 
    virtual bool isAOT_DEPRECATED_DO_NOT_USE() { return false; }
+   virtual bool needsContiguousAllocation() { return false; }
    virtual bool supportsMethodEntryPadding() { return true; }
 
 #if defined(TR_TARGET_S390)
@@ -1092,6 +1093,7 @@ public:
 
    // in process of removing this query in favour of more meaningful queries below
    virtual bool               isAOT_DEPRECATED_DO_NOT_USE()                                         { return true; }
+   virtual bool               needsContiguousAllocation() { return true; }
 
    // replacing calls to isAOT
    virtual bool               supportsCodeCacheSnippets()                     { return false; }

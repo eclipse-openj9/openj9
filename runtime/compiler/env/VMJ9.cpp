@@ -2067,7 +2067,7 @@ TR_J9VMBase::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, u
    bool hadClassUnloadMonitor;
    bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
 
-   uint8_t *warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(warmCodeSize, coldCodeSize, &codeCache, coldCode, isAOT_DEPRECATED_DO_NOT_USE(), isMethodHeaderNeeded);
+   uint8_t *warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(warmCodeSize, coldCodeSize, &codeCache, coldCode, needsContiguousAllocation(), isMethodHeaderNeeded);
 
    acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
 
