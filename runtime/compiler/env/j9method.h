@@ -565,10 +565,6 @@ public:
    virtual bool                  storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass=0);
 
 protected:
-   TR_ResolvedRelocatableJ9Method(TR_FrontEnd *fe, TR_ResolvedMethod * owningMethod = 0)
-      :TR_ResolvedJ9Method(fe, owningMethod)
-      {}
-
    virtual TR_ResolvedMethod *   createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
 
    virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
@@ -585,7 +581,7 @@ protected:
    J9ExceptionHandler * exceptionHandler();
    };
 
-class TR_ResolvedJ9JAASServerMethod : public TR_ResolvedRelocatableJ9Method
+class TR_ResolvedJ9JAASServerMethod : public TR_ResolvedJ9Method
    {
 public:
    TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
@@ -619,7 +615,6 @@ public:
    virtual uint32_t getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
    virtual void * startAddressForJNIMethod(TR::Compilation *) override;
    virtual bool getUnresolvedStaticMethodInCP(int32_t cpIndex) override;
-   virtual bool storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass) override;
    virtual void *startAddressForInterpreterOfJittedMethod() override;
    virtual bool getUnresolvedSpecialMethodInCP(I_32 cpIndex) override;
    virtual TR_ResolvedMethod *getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve) override;
@@ -645,7 +640,7 @@ private:
    J9ROMClass *_romClass; // cached copy of ROM class from client
    J9RAMConstantPoolItem *_literals; // client pointer to constant pool
    J9Class *_ramClass; // client pointer to RAM class
-   TR_ResolvedRelocatableJ9Method *_remoteMirror;
+   TR_ResolvedJ9Method *_remoteMirror;
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);

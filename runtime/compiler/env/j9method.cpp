@@ -8373,7 +8373,7 @@ TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(J9Class *clazz, JAAS::J9ServerS
    }
 
 TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
-   : TR_ResolvedRelocatableJ9Method(fe, owningMethod)
+   : TR_ResolvedJ9Method(fe, owningMethod)
    {
 
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
@@ -8384,9 +8384,9 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _ramMethod = (J9Method *)aMethod;
 
    // Create client side mirror of this object to use for calls involving RAM data
-   TR_ResolvedRelocatableJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JAASServerMethod*) owningMethod)->_remoteMirror : nullptr;
+   TR_ResolvedJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JAASServerMethod*) owningMethod)->_remoteMirror : nullptr;
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot);
-   auto recv = _stream->read<TR_ResolvedRelocatableJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t>();
+   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t>();
 
    _remoteMirror = std::get<0>(recv);
 
@@ -8782,13 +8782,6 @@ bool
 TR_ResolvedJ9JAASServerMethod::getUnresolvedStaticMethodInCP(int32_t cpIndex)
    {
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getUnresolvedStaticMethodInCP, _remoteMirror, cpIndex);
-   return std::get<0>(_stream->read<bool>());
-   }
-
-bool
-TR_ResolvedJ9JAASServerMethod::storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass)
-   {
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_storeValidationRecordIfNecessary, _remoteMirror, constantPool, cpIndex, reloKind, ramMethod, definingClass);
    return std::get<0>(_stream->read<bool>());
    }
 
