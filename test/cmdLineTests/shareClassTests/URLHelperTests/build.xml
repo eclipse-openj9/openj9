@@ -77,9 +77,21 @@
 		<copy todir="${build}/APITests">
 			<fileset dir="${src}/APITests/"/>
 		</copy>
-		<javac srcdir="${build}/APITests" destdir="${build}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
-			<src path="${SharedClassUtils_srddir}"/>
-		</javac>
+		<if>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<then>
+				<javac srcdir="${build}/APITests" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+			</then>
+			<else>
+				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
+				<javac srcdir="${build}/APITests" destdir="${build}" classpath="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+					<src path="${SharedClassUtils_srddir}"/>
+					<compilerarg line='${addExports}' />
+				</javac>
+			</else>
+		</if>
 		
 		<!--
 		3.) ClassPathMatchingTests directory ...
@@ -88,9 +100,21 @@
 		<copy todir="${build}/ClassPathMatchingTests">
 			<fileset dir="${src}/ClassPathMatchingTests/"/>
 		</copy>
-		<javac srcdir="${build}/ClassPathMatchingTests" destdir="${build}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
-			<src path="${SharedClassUtils_srddir}"/>
-		</javac>
+		<if>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<then>
+				<javac srcdir="${build}/ClassPathMatchingTests" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+			</then>
+			<else>
+				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
+				<javac srcdir="${build}/ClassPathMatchingTests" destdir="${build}" classpath="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+					<src path="${SharedClassUtils_srddir}"/>
+					<compilerarg line='${addExports}' />
+				</javac>
+			</else>
+		</if>
 		
 		<!--
 		4.) PartitioningTests directory ...
@@ -107,7 +131,7 @@
 		<copy todir="${build}/PartitioningTests/props_win">
 			<fileset dir="${src}/PartitioningTests/props_win"/>
 		</copy>
-		<javac srcdir="${build}/PartitioningTests" destdir="${build}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+		<javac srcdir="${build}/PartitioningTests" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 		</javac>
 		
 		<!--
@@ -125,7 +149,7 @@
 		<copy todir="${build}/StaleClassPathEntryTests/props_win">
 			<fileset dir="${src}/StaleClassPathEntryTests/props_win"/>
 		</copy>
-		<javac srcdir="${build}/StaleClassPathEntryTests" destdir="${build}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+		<javac srcdir="${build}/StaleClassPathEntryTests" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 		</javac>
 	</target>
 
