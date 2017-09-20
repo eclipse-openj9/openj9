@@ -10806,8 +10806,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          CompiledMethodWrapper *wrapper = (CompiledMethodWrapper *) storedCompiledMethod;
          size_t methodSize = sizeof(CompiledMethodWrapper) + wrapper->dataLength + wrapper->codeLength;
 
-         trvm->jitPersistentFree(const_cast<J9ROMClass*>(entry->getMethodDetails().getRomClass()));
-
          entry->_stream->finishCompilation(compilationOK, storedCompiledMethod, methodSize);
          }
       }
@@ -10858,6 +10856,12 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       jitConfig->codeCache->heapAlloc = jitConfig->codeCache->heapBase;
       TR_DataCacheManager::getManager()->makeDataCacheAvailable(dataCache);
       comp->setReservedDataCache(NULL);
+      }
+
+   if (entry && entry->_stream)
+      {
+      // this is allocated in CompileService.cpp
+      trvm->jitPersistentFree(const_cast<J9ROMClass*>(entry->getMethodDetails().getRomClass()));
       }
 
    return startPC;
