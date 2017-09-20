@@ -41,47 +41,43 @@
 static const char* StringBuilderClassName = "java/lang/StringBuilder";
 
 /** \note
+ *     This optimization is disabled for AOT compilations due to a functional issue. Consider an AOT compilation of the
+ *     following FireTruck.toString()Ljava/lang/String; method:
  *
- *  This optimization is disabled for AOT compilations due to a functional issue which is described as follows:
+ *     \code
+ *     class FireTruck
+ *     {
+ *        // ...
  *
- *  Consider an AOT compilation of the following FireTruck.toString()Ljava/lang/String; method:
+ *        public String toString()
+ *        {
+ *           return "Firetruck " + getSerialNumber();
+ *        }
+ *     }
+ *     \endcode
  *
- *  \code{.java}
+ *     During an AOT compilation of this method the StringBuilderTransformer optimization would pattern match the
+ *     String concatenation sequence and would replace the java/lang/StringBuilder.<init>()V call with a call to the
+ *     overloaded java/lang/StringBuilder.<init>(I)V method. Now consider a scenario in which the inliner subsequently
+ *     chose to inline this new constructor call. Because this is an AOT compilation we have to place down a guard for
+ *     this inlined call site and generate a relocation record for it. The guard generated will be an
+ *     TR_InlinedStaticMethodWithNopGuard which guards against java/lang/StringBuilder class modifications.
  *
- *  class FireTruck
- *  {
- *      ...
+ *     The issue that arises in the AOT compilation is that the original bytecode for the original java/lang/
+ *     StringBuilder.<init>()V call is an invokespecial bytecode with a constant pool index of the java/lang/
+ *     StringBuilder.<init>()V in the constant pool of FireTruck.toString()Ljava/lang/String;. Because we modified the
+ *     target of the call to the overloaded constructor we may not have a constant pool entry for this overloaded
+ *     constructor so we are not able to properly create the relocation record for the TR_InlinedStaticMethodWithNopGuard
+ *     because we do not have a valid constant pool index for the new constructor overload call.
  *
- *      public String toString()
- *      {
- *          return "Firetruck " + getSerialNumber();
- *      }
- *  }
+ *     Because this constant pool index is non-existent we are not able to correctly validate the inlined call site in
+ *     an AOT compilation where the StringBuilderTransformer optimization was performed. The amount of work involved to
+ *     add support for these types of relocations is greater than the amount of work involved in writing this
+ *     optimization. Because of this tradeoff we chose to disable this optimization for AOT compilations.
  *
- *  \endcode
- *
- *  During an AOT compilation of this method the StringBuilderTransformer optimization would pattern match the String
- *  concatenation sequence and would replace the java/lang/StringBuilder.<init>()V call with a call to the overloaded
- *  java/lang/StringBuilder.<init>(I)V method. Now consider a scenario in which the Inliner subsequently chose to
- *  inline this new constructor call. Because this is an AOT compilation we have to place down a guard for this inlined
- *  call site and generate a relocation record for it. The guard generated will be an TR_InlinedStaticMethodWithNopGuard
- *  which guards against java/lang/StringBuilder class modifications.
- *
- *  The issue that arises in the AOT compilation is that the original bytecode for the original java/lang/StringBuilder
- *  .<init>()V call is an invokespecial bytecode with a constant pool index of the java/lang/StringBuilder.<init>()V
- *  in the constant pool of FireTruck.toString()Ljava/lang/String;. Because we modified the target of the call to the
- *  overloaded constructor we may not have a constant pool entry for this overloaded constructor so we are not able to
- *  properly create the relocation record for the TR_InlinedStaticMethodWithNopGuard because we do not have a valid
- *  constant pool index for the new constructor overload call.
- *
- *  Because this constant pool index is non-existent we are not able to correctly validate the inlined call site in an
- *  AOT compilation where the StringBuilderTransformer optimization was performed. The amount of work involved to add
- *  support for these types of relocations is greater than the amount of work involved in writing this optimization.
- *  Because of this tradeoff we chose to disable this optimization for AOT compilations.
- *
- *  TODO : Add AOT support for this optimization. Note that this may be a heroic effort.
- *
- *  TODO : For correctness under HCR, the modified call should be wrapped in an HCR guard, in the event that StringBuilder is redefined.
+ *     TODO: Add AOT support for this optimization. Note that this may be a heroic effort.
+ *     TODO: For correctness under HCR, the modified call should be wrapped in an HCR guard, in the event that
+ *     StringBuilder is redefined.
  */
 int32_t TR_StringBuilderTransformer::perform()
    {
@@ -210,24 +206,23 @@ int32_t TR_StringBuilderTransformer::performOnBlock(TR::Block* block)
    }
 
 /** \details
+ *     We attempt to pattern match the following canonical tree sequence:
  *
- *  We attempt to pattern match the following canonical tree sequence:
+ *     \code
+ *     n5n       treetop
+ *     n4n         new  jitNewObject
+ *     n3n           loadaddr  java/lang/StringBuilder
+ *     n7n       NULLCHK
+ *     n6n         call  java/lang/StringBuilder.<init>()V
+ *     n4n           ==>new
+ *     \endcode
  *
- *  ----------------------------------------------------------------------------------------------------------
- *  n5n       treetop
- *  n4n         new  jitNewObject
- *  n3n           loadaddr  java/lang/StringBuilder
- *  n7n       NULLCHK
- *  n6n         call  java/lang/StringBuilder.<init>()V
- *  n4n           ==>new
- *  ----------------------------------------------------------------------------------------------------------
- *
- *  Note that we do not actually traverse any treetops. We only peek inside of the current iterator.
+ *     Note that we do not actually traverse any treetops. We only peek inside of the current iterator.
  */
 TR::Node* TR_StringBuilderTransformer::findStringBuilderInit(TR::TreeTopIterator iter, TR::Node* newNode)
    {
-   // It is necessary to skip trees added for OSR book keeping purposes between the
-   // allocation and the call. There could be several treetops.
+   // It is necessary to skip trees added for OSR book keeping purposes between the allocation and the call. There
+   // could be several treetops.
    if (comp()->isOSRTransitionTarget(TR::postExecutionOSR))
       {
       bool foundNewReference = false;
@@ -241,8 +236,8 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderInit(TR::TreeTopIterator
          ++iter;
          }
 
-      // The call node should have the same bytecodeinfo as the related nodes
-      // and the additional reference should have been found
+      // The call node should have the same bytecodeinfo as the related nodes and the additional reference should have
+      // been found
       TR_ByteCodeInfo &callBCI = iter.currentNode()->getByteCodeInfo();
       if (!foundNewReference
           || callBCI.getByteCodeIndex() != bci.getByteCodeIndex()
@@ -283,35 +278,34 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderInit(TR::TreeTopIterator
    }
 
 /** \details
+ *     We attempt to pattern match the following canonical tree sequence:
  *
- *  We attempt to pattern match the following canonical tree sequence:
+ *     \code
+ *     n10n      NULLCHK
+ *     n9n         acall  java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+ *     n4n           ==>new
+ *     n8n           aload
+ *     n13n      NULLCHK
+ *     n12n        acall  java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+ *     n9n           ==>acall
+ *     n11n          aload
+ *     .
+ *     .
+ *     .
+ *     n26n      NULLCHK
+ *     n25n        acall  java/lang/StringBuilder.append(I)Ljava/lang/StringBuilder;
+ *     n19n          ==>acall
+ *     n24n          iload
+ *     n28n      NULLCHK
+ *     n27n        acall  java/lang/StringBuilder.toString()Ljava/lang/String;
+ *     n25n          ==>acall
+ *     \endcode
  *
- *  ----------------------------------------------------------------------------------------------------------
- *  n10n      NULLCHK
- *  n9n         acall  java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;
- *  n4n           ==>new
- *  n8n           aload
- *  n13n      NULLCHK
- *  n12n        acall  java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;
- *  n9n           ==>acall
- *  n11n          aload
- *  .
- *  .
- *  .
- *  n26n      NULLCHK
- *  n25n        acall  java/lang/StringBuilder.append(I)Ljava/lang/StringBuilder;
- *  n19n          ==>acall
- *  n24n          iload
- *  n28n      NULLCHK
- *  n27n        acall  java/lang/StringBuilder.toString()Ljava/lang/String;
- *  n25n          ==>acall
- *  ----------------------------------------------------------------------------------------------------------
- *
- *  Note that the result of each acall is a StringBuilder object which is the receiver of the next acall node.
- *  The sequence is terminated by a call to StringBuilder.toString() within the same block. Furthermore there
- *  can be arbitrary NULLCHK trees in between the calls to StringBuilder.append(...) as long as the chain is
- *  not broken. This notion of chaining along with node reference counts ensures that the StringBuilder object
- *  is not used anywhere outside the chained StringBuilder.append(...) sequence.
+ *     Note that the result of each acall is a StringBuilder object which is the receiver of the next acall node. The
+ *     sequence is terminated by a call to StringBuilder.toString() within the same block. Furthermore there can be
+ *     arbitrary NULLCHK trees in between the calls to StringBuilder.append(...) as long as the chain is not broken.
+ *     This notion of chaining along with node reference counts ensures that the StringBuilder object  is not used
+ *     anywhere outside the chained StringBuilder.append(...) sequence.
  */
 TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(TR::TreeTopIterator iter, TR::Node* newNode, List<TR_Pair<TR::Node*, TR::RecognizedMethod> >& appendArguments)
    {
@@ -466,15 +460,14 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
    }
 
 /** \details
+ *     If the StringBuilder.append(...) argument is a compile time constant we statically determine number of chars
+ *     needed to represent the argument by doing the String conversion at compile time. If the argument is not a
+ *     compile time constant (such as a parameter or unresolved static) we use a heuristic approach to estimating the
+ *     size of the object.
  *
- *  If the StringBuilder.append(...) argument is a compile time constant we statically determine number of chars
- *  needed to represent the argument by doing the String conversion at compile time. If the argument is not a
- *  compile time constant (such as a parameter or unresolved static) we use a heuristic approach to estimating
- *  the size of the object.
- *
- *  The heuristic used in the non-constant case is hard coded per object type and was determined using the
- *  statistics collection mechanisms implemented by this optimization. See TR_StringBuilderTransformer Environment
- *  Variables section for more details.
+ *     The heuristic used in the non-constant case is hard coded per object type and was determined using the
+ *     statistics collection mechanisms implemented by this optimization. See TR_StringBuilderTransformer Environment
+ *     Variables section for more details.
  */
 int32_t TR_StringBuilderTransformer::computeHeuristicStringBuilderInitCapacity(List<TR_Pair<TR::Node*, TR::RecognizedMethod> >& appendArguments)
    {
