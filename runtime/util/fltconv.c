@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,15 +35,6 @@
 
 #if (defined(LINUXPPC) || defined(ARMGNU)) && defined(HARDHAT)
 #include "fltdmath.h"
-#endif
-
-#ifdef J9VM_MATH_USE_FDLIBM_MATH_LIBRARY
-#undef fmod
-#undef remainder
-#define fmod fdlibm_fmod
-#define remainder fdlibm_remainder
-extern double fmod (double, double);
-extern double remainder (double, double);
 #endif
 
 static int fltconv_indexLeadingOne32 (U_32 u32val);
