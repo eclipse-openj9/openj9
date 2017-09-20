@@ -69,6 +69,10 @@ copying resources into the body of the commit over providing external links.
 Structure large commit messages with headers, references etc. Remember, however,
 that the commit message is always going to be rendered in plain text.
 
+Please add `[skip ci]` to the commit message when the change doesn't require a 
+compilation, such as documentation only changes, to avoid unnecessarily wasting
+the project's build resources.
+
 Use the commit footer to place commit metadata. The footer is the last block of
 contiguous text in the message. It is separated from the body by one or more
 blank lines, and as such cannot contain any blank lines. Lines in the footer are
