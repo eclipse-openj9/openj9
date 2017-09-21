@@ -39,6 +39,49 @@
 		<reason>Java 6 SDK is missing for the platform</reason>
 	</exclude>
 	
+	<exclude id="Test 7: ensure zip cache sharing works and zip cache number is not 0" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 8: ensure zip cache info is printed in printAllStats output" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 10s: JAZZ 31726 setup for Test 10, 11" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 10: JAZZ 31726 test 1 ensure -Xzero:sharebootzip creates zip caches" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 11: JAZZ 31726 test 2 ensure -Xzero:describe shows -Xzero:sharebootzip" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 12s: JAZZ 31726 setup for Test 12" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 12: JAZZ 31726 test 3 ensure -Xzero:nosharebootzip doesn't create zip caches" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 13s: JAZZ 31726 setup for Tests 13, 14 and 15" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 13: JAZZ 31723 test 2 ensure opened non-cached zip files are calling the VM_ZIP_LOAD hook" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 14: JAZZ 31726 test 4 ensure -Xzero:none doesn't create zip caches" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 15: JAZZ 31726 test 5 ensure -Xzero:nosharebootzip,describe shows -Xzero:none" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 16s: JAZZ 31726 setup for Test 16" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 16: JAZZ 31726 test 6 ensure -Xzero creates boot zip caches" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+	<exclude id="Test 17: JAZZ 31726 test 7 ensure -Xzero -Xzero:describe shows sharebootzip" platform="SE90">
+		<reason>Java 9 removed option -Xzero</reason>
+	</exclude>
+
 	<exclude id="Test 206-a: Create a new cache with -Xshareclasses:mprotect=default option." platform="zos_390-64.*">
 		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
 	</exclude>

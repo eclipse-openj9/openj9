@@ -3384,110 +3384,115 @@ zeroInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 {
 	J9VMDllLoadInfo* loadInfo;
 	IDATA returnVal = J9VMDLLMAIN_OK;
-	IDATA argIndex1;
+	IDATA argIndex1 = -1;
 	BOOLEAN describe = FALSE;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	switch(stage) {
 		case PORT_LIBRARY_GUARANTEED :
-			vm->zeroOptions = J9VM_ZERO_SHAREBOOTZIPCACHE;
-			argIndex1 = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XZERO, NULL);
-			while(argIndex1 >= 0) {
-				char *optionString;
-				char optionsBuffer[LARGE_STRING_BUF_SIZE];
-				char* optionsBufferPtr = (char*)optionsBuffer;
-				UDATA rc;
+			/* -Xzero option is removed from Java 9 */
+			if (J2SE_VERSION(vm) >= J2SE_19) {
+				vm->zeroOptions = 0;
+			} else {
+				vm->zeroOptions = J9VM_ZERO_SHAREBOOTZIPCACHE;
+				argIndex1 = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XZERO, NULL);
+				while(argIndex1 >= 0) {
+					char *optionString;
+					char optionsBuffer[LARGE_STRING_BUF_SIZE];
+					char* optionsBufferPtr = (char*)optionsBuffer;
+					UDATA rc;
 
-				optionString = vm->vmArgsArray->actualVMArgs->options[argIndex1].optionString;
-				if (strcmp(optionString, VMOPT_XZERO) == 0) {
-					/* Found -Xzero, enable the default Zero options */
-#if defined(J9VM_OPT_ZERO)
-					vm->zeroOptions = J9VM_ZERO_DEFAULT_OPTIONS;
-#endif
-					CONSUME_ARG(vm->vmArgsArray, argIndex1);
-					argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
-					continue;
-				} else if (strncmp(optionString, VMOPT_XZERO_COLON, sizeof(VMOPT_XZERO_COLON) - 1) != 0) {
-					/* If the option does not start with -Xzero:, do not consume it so it later causes option unrecognised */
-					argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
-					continue;
-				}
-				CONSUME_ARG(vm->vmArgsArray, argIndex1);
-				rc = GET_OPTION_VALUES(argIndex1, ':', ',', &optionsBufferPtr, LARGE_STRING_BUF_SIZE);
-				if (rc == OPTION_OK) {
-					if (*optionsBufferPtr == 0) {
-						/* Enable default Zero options */
+					optionString = vm->vmArgsArray->actualVMArgs->options[argIndex1].optionString;
+					if (strcmp(optionString, VMOPT_XZERO) == 0) {
+						/* Found -Xzero, enable the default Zero options */
 #if defined(J9VM_OPT_ZERO)
 						vm->zeroOptions = J9VM_ZERO_DEFAULT_OPTIONS;
 #endif
-					} else {
-						while (*optionsBufferPtr) {
-							char *errorBuffer;
+						CONSUME_ARG(vm->vmArgsArray, argIndex1);
+						argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
+						continue;
+					} else if (strncmp(optionString, VMOPT_XZERO_COLON, sizeof(VMOPT_XZERO_COLON) - 1) != 0) {
+						/* If the option does not start with -Xzero:, do not consume it so it later causes option unrecognised */
+						argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
+						continue;
+					}
+					CONSUME_ARG(vm->vmArgsArray, argIndex1);
+					rc = GET_OPTION_VALUES(argIndex1, ':', ',', &optionsBufferPtr, LARGE_STRING_BUF_SIZE);
+					if (rc == OPTION_OK) {
+						if (*optionsBufferPtr == 0) {
+							/* Enable default Zero options */
+#if defined(J9VM_OPT_ZERO)
+							vm->zeroOptions = J9VM_ZERO_DEFAULT_OPTIONS;
+#endif
+						} else {
+							while (*optionsBufferPtr) {
+								char *errorBuffer;
 
-							if (strcmp(optionsBufferPtr, VMOPT_ZERO_NONE) == 0) {
-								vm->zeroOptions = 0;
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_J9ZIP) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_J9ZIP) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHAREZIP) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHAREZIP) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHAREBOOTZIP) == 0) {
-								vm->zeroOptions |= J9VM_ZERO_SHAREBOOTZIPCACHE;
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHAREBOOTZIP) == 0) {
-								vm->zeroOptions &= ~J9VM_ZERO_SHAREBOOTZIPCACHE;
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHARESTRING) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHARESTRING) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_DESCRIBE) == 0) {
-								describe = TRUE;
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else {
-								errorBuffer = j9mem_allocate_memory(LARGE_STRING_BUF_SIZE, OMRMEM_CATEGORY_VM);
-								if (errorBuffer) {
-									strcpy(errorBuffer, VMOPT_XZERO_COLON);
-									safeCat(errorBuffer, optionsBufferPtr, LARGE_STRING_BUF_SIZE);
-									j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, errorBuffer);
-									j9mem_free_memory(errorBuffer);
+								if (strcmp(optionsBufferPtr, VMOPT_ZERO_NONE) == 0) {
+									vm->zeroOptions = 0;
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_J9ZIP) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_J9ZIP) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHAREZIP) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHAREZIP) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHAREBOOTZIP) == 0) {
+									vm->zeroOptions |= J9VM_ZERO_SHAREBOOTZIPCACHE;
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHAREBOOTZIP) == 0) {
+									vm->zeroOptions &= ~J9VM_ZERO_SHAREBOOTZIPCACHE;
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHARESTRING) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHARESTRING) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_DESCRIBE) == 0) {
+									describe = TRUE;
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
 								} else {
-									loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_ZERO_INIT );
-									loadInfo->fatalErrorStr = "Cannot allocate memory for error message";
+									errorBuffer = j9mem_allocate_memory(LARGE_STRING_BUF_SIZE, OMRMEM_CATEGORY_VM);
+									if (errorBuffer) {
+										strcpy(errorBuffer, VMOPT_XZERO_COLON);
+										safeCat(errorBuffer, optionsBufferPtr, LARGE_STRING_BUF_SIZE);
+										j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, errorBuffer);
+										j9mem_free_memory(errorBuffer);
+									} else {
+										loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_ZERO_INIT );
+										loadInfo->fatalErrorStr = "Cannot allocate memory for error message";
+									}
+									goto _error;
 								}
-								goto _error;
 							}
 						}
+					} else {
+						loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_ZERO_INIT );
+						loadInfo->fatalErrorStr = "Error parsing " VMOPT_XZERO_COLON " options";
 					}
-				} else {
-					loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_ZERO_INIT );
-					loadInfo->fatalErrorStr = "Error parsing " VMOPT_XZERO_COLON " options";
+					argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
 				}
-				argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
-			}
-			if (describe) {
-				BOOLEAN foundOption = FALSE;
-				j9tty_printf(PORTLIB, VMOPT_XZERO_COLON);
-				if ((vm->zeroOptions & J9VM_ZERO_SHAREBOOTZIPCACHE) != 0) {
-					j9tty_printf(PORTLIB, "%s"VMOPT_ZERO_SHAREBOOTZIP, foundOption ? "," : "");
-					foundOption = TRUE;
+				if (describe) {
+					BOOLEAN foundOption = FALSE;
+					j9tty_printf(PORTLIB, VMOPT_XZERO_COLON);
+					if ((vm->zeroOptions & J9VM_ZERO_SHAREBOOTZIPCACHE) != 0) {
+						j9tty_printf(PORTLIB, "%s"VMOPT_ZERO_SHAREBOOTZIP, foundOption ? "," : "");
+						foundOption = TRUE;
+					}
+					j9tty_printf(PORTLIB, "%s\n", foundOption ? "" : VMOPT_ZERO_NONE);
 				}
-				j9tty_printf(PORTLIB, "%s\n", foundOption ? "" : VMOPT_ZERO_NONE);
 			}
 			break;
 		case ALL_DEFAULT_LIBRARIES_LOADED :
