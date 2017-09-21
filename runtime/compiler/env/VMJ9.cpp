@@ -2011,7 +2011,7 @@ TR_J9VMBase::allocateRelocationData(TR::Compilation * comp, uint32_t numBytes)
    uint8_t * relocationData = NULL;
    uint32_t size = 0;
    bool shouldRetryAllocation;
-   relocationData = allocateDataCacheRecord(numBytes, comp, isAOT_DEPRECATED_DO_NOT_USE(), &shouldRetryAllocation,
+   relocationData = allocateDataCacheRecord(numBytes, comp, needsContiguousAllocation(), &shouldRetryAllocation,
                                             J9_JIT_DCE_RELOCATION_DATA, &size);
    if (!relocationData)
       {

@@ -708,7 +708,7 @@ TR_J9ServerVM::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize,
       bool hadClassUnloadMonitor;
       bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
 
-      warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(warmCodeSize, coldCodeSize, &codeCache, coldCode, needsContiguousAllocation(), true);
+      warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(warmCodeSize, coldCodeSize, &codeCache, coldCode, needsContiguousAllocation(), isMethodHeaderNeeded);
 
       acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
 
