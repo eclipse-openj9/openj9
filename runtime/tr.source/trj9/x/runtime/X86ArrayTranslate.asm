@@ -103,11 +103,11 @@ endif
 
    sixteencharsOTNoBreak:
       movdqu  xmm1, [_rsi+_rax]
-      movdqa  xmm2, xmm1
-      punpckhbw xmm1, xmm3
-      punpcklbw xmm2, xmm3
-      movdqu [_rdi+16+_rax*2], xmm1
-      movdqu [_rdi+_rax*2], xmm2
+      movdqu  xmm2, xmm1
+      punpcklbw xmm1, xmm3
+      punpckhbw xmm2, xmm3
+      movdqu [_rdi+_rax*2], xmm1
+      movdqu [_rdi+_rax*2+16], xmm2
       sub _rcx, 16
       add _rax, 16
       cmp _rcx, 16
@@ -178,11 +178,11 @@ endif
       pmovmskb ebx, xmm1
       test ebx, ebx
       jnz    computeNewLengthOT
-      movdqa  xmm2, xmm1
-      punpckhbw xmm1, xmm3
-      punpcklbw xmm2, xmm3
-      movdqu [_rdi+16+_rax*2], xmm1
-      movdqu [_rdi+_rax*2], xmm2
+      movdqu  xmm2, xmm1
+      punpcklbw xmm1, xmm3
+      punpckhbw xmm2, xmm3
+      movdqu [_rdi+_rax*2], xmm1
+      movdqu [_rdi+_rax*2+16], xmm2
       sub _rcx, 16
       add _rax, 16
       cmp _rcx, 16
