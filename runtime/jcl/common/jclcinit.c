@@ -151,7 +151,6 @@ jint computeFullVersionString(J9JavaVM* vm)
 	strcat(vminfo, EsBuildVersionString);
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
-#ifdef J9VM_INTERP_NATIVE_SUPPORT
 	jitConfig = vm->jitConfig;
 	if (NULL != jitConfig) {
 		if (jitConfig->runtimeFlags & J9JIT_JIT_ATTACHED) {
@@ -161,7 +160,11 @@ jint computeFullVersionString(J9JavaVM* vm)
 			aotEnabled = 1;
 		}
 	}
-#endif
+
+#if !defined(OPENJ9_REPO)
+#define OPENJ9_REPO "OpenJ9   - "
+#endif /* !OPENJ9_REPO */
+
 	strcat(fullversion, " (JIT ");
 	strcat(fullversion, jitEnabled ? "en" : "dis");
 	strcat(vminfo, " (JIT ");
@@ -170,30 +173,21 @@ jint computeFullVersionString(J9JavaVM* vm)
 	strcat(fullversion, aotEnabled ? "en" : "dis");
 	strcat(vminfo, "abled, AOT ");
 	strcat(vminfo, aotEnabled ? "en" : "dis");
-	strcat(fullversion, "abled)\nJ9VM - ");
-	strcat(vminfo, "abled)\nJ9VM - ");
+	strcat(fullversion, "abled)\n" OPENJ9_REPO);
+	strcat(vminfo, "abled)\n" OPENJ9_REPO);
+#endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
-#endif
 	vmVersion = J9VM_VERSION_STRING;
 	strcat(fullversion, vmVersion);
 	strcat(vminfo, vmVersion);
 
-#ifdef J9VM_INTERP_NATIVE_SUPPORT
-	if ( jitConfig && jitConfig->jitLevelName ) {
-		strcat(fullversion, "\nJIT  - ");
-		strcat(fullversion, jitConfig->jitLevelName);
-		strcat(vminfo, "\nJIT  - ");
-		strcat(vminfo, jitConfig->jitLevelName);
-	}
-#endif
-
 #if defined(J9VM_GC_MODRON_GC)
 	gcVersion = OMR_VERSION_STRING;
-	strcat(fullversion, "\nOMR  - ");
+	strcat(fullversion, "\nOMR      - ");
 	strcat(fullversion, gcVersion);
-	strcat(vminfo, "\nOMR  - ");
+	strcat(vminfo, "\nOMR      - ");
 	strcat(vminfo, gcVersion);
-#endif
+#endif /* J9VM_GC_MODRON_GC */
 
 	(*VMI)->SetSystemProperty(VMI, "java.vm.info", vminfo);
 	/*[PR 114306] System property java.fullversion is not initialized properly */
