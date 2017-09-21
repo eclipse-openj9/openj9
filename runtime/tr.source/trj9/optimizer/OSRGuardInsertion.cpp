@@ -158,8 +158,10 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes)
 
    for (TR::Block *cursor = comp()->getStartBlock(); cursor != NULL; cursor = cursor->getNextBlock())
       {
-      if (!cursor->getLastRealTreeTop()) { continue; }
-      TR::Node *node = cursor->getLastRealTreeTop()->getNode();
+      TR::TreeTop *lastTree = cursor->getLastRealTreeTop();
+      if (!lastTree) { continue; }
+      TR::Node *node = lastTree->getNode();
+
       if (!node->isTheVirtualGuardForAGuardedInlinedCall()) { continue; }
       TR_VirtualGuard *guardInfo = comp()->findVirtualGuardInfo(node);
       TR_ASSERT(guardInfo, "we expect to get virtual guard info in HCRGuardRemoval!");
@@ -221,6 +223,17 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes)
                }
 
             TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "hcrGuardRemoval/success"), cursor->getExit());
+            }
+         else if (guardInfo->mergedWithHCRGuard())
+            {
+            guardInfo->setMergedWithHCRGuard(false);
+            if (TR_FearPointAnalysis::virtualGuardsKillFear())
+               guardInfo->setMergedWithOSRGuard();
+            else
+               {
+               if (cursor->getNextBlock() && cursor->getNextBlock()->getEntry())
+                  fearGeneratingNodes.set(cursor->getNextBlock()->getEntry()->getNode()->getGlobalIndex());
+               }
             }
          }
       else
