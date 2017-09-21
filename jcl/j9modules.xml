@@ -69,6 +69,7 @@
 			<case value="java.base">
 				<removeexport package="com.ibm.cuda" />
 				<removeexport package="com.ibm.dataaccess" />
+				<removeexport package="com.ibm.jvm" />
 				<removeexport package="com.ibm.oti.shared" />
 				<removeexport package="com.ibm.sharedclasses.spi" />
 
@@ -78,6 +79,7 @@
 						<include name="com/ibm/dataaccess/*" />
 						<include name="com/ibm/gpu/*" />
 						<include name="com/ibm/oti/shared/*" />
+						<include name="com/ibm/jvm/*" />
 					</fileset>
 				</delete>
 				
