@@ -20,10 +20,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-
-/**
- * OpenJ9 management extensions.
- */
 module com.ibm.management {
 	requires transitive java.management;
 	requires transitive jdk.management;

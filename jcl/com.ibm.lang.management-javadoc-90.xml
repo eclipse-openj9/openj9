@@ -25,20 +25,20 @@
 <project default="javadoc" basedir=".">
 	<target name="setup">
 		<property name="javadoc.dir" location="com.ibm.lang.management-javadoc" />
-		<!-- set path for javadoc for linux from IBM Java8sr5 SDK -->
-		<property name="javadoc.linux" location="/bluebird/vmlab.bluebird.bin/platform/linux386/6480sr5-20170206/sdk/bin/javadoc" />
-		<property name="javadoc.windows" location="W:\bin\sdk6480sr5-20170206\bin\javadoc" />
+		<!-- set path for javadoc for linux from IBM Java9 SDK (JCL based on RI jdk-9+136 or later) -->
+		<property name="javadoc.linux" location="/bluebird/vmlab.bluebird.bin/platform/linux386/6490ea-20161212+b136/sdk/bin/javadoc" />
+		<property name="javadoc.windows" location="W:\bin\sdk6490ea-20170110+b136\bin\javadoc" />
 		<condition property="javadoc.exe" value="${javadoc.windows}" else="${javadoc.linux}">
 		    <os family="windows" />
 		</condition>
 		<pathconvert property="src.path">
-			<path location="src" />
+			<path location="src/com.ibm.management" />
 		</pathconvert>
 		<tstamp>
 			<format property="year" pattern="yyyy" />
 		</tstamp>
-		<property name="bottom" value="&amp;copy; Copyright (c) 2003, ${year} IBM Corp. and others" />
-		<property name="zip.dest.dir" location="../JavaID Development API docs/non-security/80_29_api/com.ibm.lang.management" />
+		<property name="bottom" value="&amp;copy; Copyright (c) 2013, ${year} IBM Corp. and others" />
+		<property name="zip.dest.dir" location="../JavaID Development API docs/non-security/90_api/com.ibm.lang.management" />
 		<condition property="zip.dest.exists">
 			<available file="${zip.dest.dir}" />
 		</condition>
@@ -49,7 +49,11 @@
 		<mkdir dir="${javadoc.dir}" />
 		<exec executable="${javadoc.exe}" dir="${javadoc.dir}" failonerror="true">
 			<arg value="-verbose" />
-			<arg value="-sourcepath" />
+			<arg value="--add-modules" />
+			<arg value="com.ibm.management" />
+			<arg value="--add-exports" />
+			<arg value="java.management/sun.management.spi=com.ibm.management" />
+			<arg value="--source-path" />
 			<arg value="${src.path}" />
 			<arg value="com.ibm.lang.management" />
 			<arg value="com.ibm.virtualization.management" />
