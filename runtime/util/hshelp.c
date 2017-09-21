@@ -385,20 +385,21 @@ fixJNIMethodID(J9VMThread *currentThread, J9Method *oldMethod, J9Method *newMeth
 			/* walk back the class chain and fix up old equivalence */
 			while (NULL != currentClass->replacedClass) {
 				void **methodIDs = NULL;
-				UDATA methodIndex = 0;
-				UDATA methodCount = 0;
 				J9Method *equivalentMethod = NULL;
 				BOOLEAN found = FALSE;
 				
 				currentClass = currentClass->replacedClass;
 				methodIDs = currentClass->jniIDs;
-				methodCount = currentClass->romClass->romMethodCount;
 
-				for (methodIndex = 0; methodIndex < methodCount; methodIndex++) {
-					if (methodIDs[methodIndex] == oldMethodID) {
-						methodIDs[methodIndex] = oldMethodIDReplacement;
-						found = TRUE;
-						break;
+				if (NULL != methodIDs) {
+					UDATA methodIndex = 0;
+					UDATA methodCount = currentClass->romClass->romMethodCount;
+					for (methodIndex = 0; methodIndex < methodCount; methodIndex++) {
+						if (methodIDs[methodIndex] == oldMethodID) {
+							methodIDs[methodIndex] = oldMethodIDReplacement;
+							found = TRUE;
+							break;
+						}
 					}
 				}
 				if (!found) {
