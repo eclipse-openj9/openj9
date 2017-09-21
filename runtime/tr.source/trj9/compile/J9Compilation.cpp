@@ -1183,6 +1183,17 @@ J9::Compilation::addClassForOSRRedefinition(TR_OpaqueClassBlock *clazz)
    _classForOSRRedefinition.add(clazz);
    }
 
+/*
+ * Controls if pending push liveness is stashed during IlGen to reduce OSRLiveRange
+ * overhead.
+ */
+bool
+J9::Compilation::pendingPushLivenessDuringIlgen()
+   {
+   static bool enabled = (feGetEnv("TR_DisablePendingPushLivenessDuringIlGen") == NULL);
+   return enabled;
+   }
+
 bool
 J9::Compilation::supportsQuadOptimization()
    {

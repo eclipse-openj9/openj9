@@ -2193,6 +2193,7 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
                // method's state now, so that it is available when the transition is made.
                handlePendingPushSaveSideEffects(n);
                saveStack(-1);
+               stashPendingPushLivenessForOSR();
 
                return _block->append(TR::TreeTop::create(comp(), n));
                }
@@ -2201,7 +2202,8 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
                // Save the stack after the treetop has been created and appended
                handlePendingPushSaveSideEffects(n);
                TR::TreeTop *toReturn = _block->append(TR::TreeTop::create(comp(), n));
-               saveStack(-1, true);
+               saveStack(-1, !comp()->pendingPushLivenessDuringIlgen());
+               stashPendingPushLivenessForOSR(comp()->getOSRInductionOffset(n));
 
                return toReturn;
                }
@@ -2215,6 +2217,11 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
             // part of decompilation
             //
             saveStack(-1);
+
+            // Currently, livenss will not run under involuntary OSR, so stashing
+            // the pending push liveness is only necessary in the voluntary case
+            if (comp()->getOSRMode() == TR::voluntaryOSR)
+               stashPendingPushLivenessForOSR();
             }
          }
       }
@@ -2627,6 +2634,45 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
          arg++;
          }
       slot += n->getNumberOfSlots(); 
+      }
+   }
+
+// Under voluntary OSR, it is preferable to keep only the essential symrefs live
+// for the transition. Computing the liveness can be costly however. To reduce
+// this compile time overhead, pending push liveness can be solved during IlGen.
+//
+// This method will solve the liveness for the current bci with the offset applied
+// and stash the result against the OSR method data.
+void
+TR_J9ByteCodeIlGenerator::stashPendingPushLivenessForOSR(int32_t offset)
+   {
+   if (!comp()->pendingPushLivenessDuringIlgen())
+      return;
+
+   TR_OSRMethodData *osrData = comp()->getOSRCompilationData()->findOrCreateOSRMethodData(
+      comp()->getCurrentInlinedSiteIndex(), comp()->getMethodSymbol());
+
+   // Reset any existing pending push mapping
+   // This is due to the overlap with arg stashing
+   TR_BitVector *livePP = osrData->getPendingPushLivenessInfo(_bcIndex + offset);
+   if (livePP)
+      livePP->empty();
+
+   int32_t slot = 0;
+   int arg = 0;
+   for (int32_t i = 0; i < _stack->size(); ++i)
+      {
+      TR::Node *n = _stack->element(i);
+      TR::SymbolReference *symRef = symRefTab()->findOrCreatePendingPushTemporary(_methodSymbol, slot, getDataType(n));
+      if (livePP)
+         livePP->set(symRef->getReferenceNumber());
+      else
+         {
+         livePP = new (trHeapMemory()) TR_BitVector(0, trMemory(), heapAlloc);
+         livePP->set(symRef->getReferenceNumber());
+         osrData->addPendingPushLivenessInfo(_bcIndex + offset, livePP);
+         }
+      slot += n->getNumberOfSlots();
       }
    }
 
@@ -5580,7 +5626,8 @@ break
        && !_methodSymbol->cannotAttemptOSRAt(callNode->getByteCodeInfo(), NULL, comp())
        && !_cannotAttemptOSR)
       {
-      saveStack(-1, true);
+      saveStack(-1, !comp()->pendingPushLivenessDuringIlgen());
+      stashPendingPushLivenessForOSR(comp()->getOSRInductionOffset(callNode));
       }
 
    if (cg()->getEnforceStoreOrder() && calledMethod->isConstructor())

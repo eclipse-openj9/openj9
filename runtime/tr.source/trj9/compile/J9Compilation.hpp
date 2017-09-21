@@ -164,6 +164,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool isJProfilingCompilation();
 
+   bool pendingPushLivenessDuringIlgen();
+
    TR::list<TR_MethodValueProfileInfo*> &getMethodVPInfos() { return _methodVPInfoList; }
    TR::list<TR_MethodValueProfileInfo*> &getMethodHWVPInfos() { return _methodHWVPInfoList; }
 
