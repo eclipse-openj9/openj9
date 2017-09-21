@@ -82,7 +82,7 @@ static const OptimizationStrategy J9EarlyGlobalOpts[] =
    { OMR::stringPeepholes                      }, // need stringpeepholes to catch bigdecimal patterns
    { OMR::methodHandleInvokeInliningGroup,  OMR::IfMethodHandleInvokes },
    { OMR::inlining                             },
-   { OMR::osrGuardInsertion,                OMR::IfOSRAndNoDebug       },
+   { OMR::osrGuardInsertion,                OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
    { OMR::jProfiling                           },
    { OMR::stringBuilderTransformer             },
@@ -302,7 +302,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::stringPeepholes                                                       }, // need stringpeepholes to catch bigdecimal patterns
    { OMR::methodHandleInvokeInliningGroup,                OMR::IfMethodHandleInvokes },
    { OMR::inlining                                                              },
-   { OMR::osrGuardInsertion,                         OMR::IfOSRAndNoDebug       },
+   { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
    { OMR::jProfiling                           },
    { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
@@ -310,7 +310,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled                  }, // disabled by default, enabled by -Xjit:enableSequentialLoadStoreWarm
    { OMR::cheapGlobalValuePropagationGroup                                      },
    { OMR::dataAccessAccelerator                                                 }, // globalValuePropagation and inlinging might expose opportunities for dataAccessAccelerator
-   { OMR::globalCopyPropagation,                       OMR::IfOSRAndNoDebug          },
+   { OMR::globalCopyPropagation,                       OMR::IfVoluntaryOSR          },
    { OMR::lastLoopVersionerGroup,                      OMR::IfLoops                  },
    { OMR::globalDeadStoreElimination,                  OMR::IfEnabledAndLoops},
    { OMR::deadTreesElimination                                                  },
@@ -359,7 +359,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::prefetchInsertionGroup,                    OMR::IfLoops                    }, // created IL should not be moved
    { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // Simplify non-normalized address computations introduced by prefetch insertion
    { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                  }, // final cleanup before opcode expansion
-   { OMR::globalDeadStoreElimination,                OMR::IfOSRAndNoDebug            },
+   { OMR::globalDeadStoreElimination,                OMR::IfVoluntaryOSR            },
    { OMR::arraysetStoreElimination                                              },
    { OMR::checkcastAndProfiledGuardCoalescer                                    },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
@@ -383,7 +383,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
 static const OptimizationStrategy reducedWarmStrategyOpts[] =
    {
    { OMR::inlining                                                              },
-   { OMR::osrGuardInsertion,                         OMR::IfOSRAndNoDebug       },
+   { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
    { OMR::jProfiling                           },
    { OMR::dataAccessAccelerator                                                 }, // immediate does unconditional dataAccessAccelerator after inlining
@@ -640,7 +640,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::stringPeepholes                                                       }, // need stringpeepholes to catch bigdecimal patterns
    { OMR::methodHandleInvokeInliningGroup,           OMR::IfMethodHandleInvokes      },
    { OMR::inlining                                                              },
-   { OMR::osrGuardInsertion,                         OMR::IfOSRAndNoDebug       },
+   { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
    { OMR::jProfiling                           },
    { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
@@ -651,7 +651,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::cheapGlobalValuePropagationGroup                                      },
    { OMR::dataAccessAccelerator                                                 },
 #ifdef TR_HOST_S390
-   { OMR::globalCopyPropagation,                     OMR::IfOSRAndNoDebug            },
+   { OMR::globalCopyPropagation,                     OMR::IfVoluntaryOSR            },
 #endif
    { OMR::lastLoopVersionerGroup,                    OMR::IfLoops                    },
 #ifdef TR_HOST_S390
