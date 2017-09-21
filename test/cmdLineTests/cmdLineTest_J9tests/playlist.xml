@@ -25,7 +25,7 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTest_J9test_SE80</testCaseName>
-		<command>$(JAVA_COMMAND) -Xdump $(JVM_OPTIONS) -DFIBJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)$(JAVA_VERSION)$(D)utils.jar$(Q) \
+		<command>$(JAVA_COMMAND) -Xdump $(JVM_OPTIONS) -DFIBJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' \
 	-Xint -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)j9tests_Java8.xml$(Q) \
@@ -42,7 +42,7 @@
 	
 	<test>
 		<testCaseName>cmdLineTest_J9test_SE90</testCaseName>
-		<command>$(JAVA_COMMAND) -Xdump $(JVM_OPTIONS) -DFIBJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)$(JAVA_VERSION)$(D)utils.jar$(Q) \
+		<command>$(JAVA_COMMAND) -Xdump $(JVM_OPTIONS) -DFIBJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' \
 	-Xint -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)j9tests_Java9.xml$(Q) \

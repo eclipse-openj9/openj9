@@ -31,13 +31,13 @@
 		</variations>
 		<command>$(MKDIR) -p $(REPORTDIR); \
 	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)..$(D)..$(D)URLHelperTests$(D)$(JAVA_VERSION)$(D)URLHelperTests.jar$(Q) .; \
+	cp $(Q)$(TEST_RESROOT)$(D)..$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJAVA_HOME='$(JDK_HOME)' -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
-	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)$(JAVA_VERSION)$(D)utils.jar$(Q) \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)ShareClassesCMLTests-1.xml$(Q) -xids all,$(PLATFORM),$(VARIATION),$(JAVA_VERSION) -plats all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError \

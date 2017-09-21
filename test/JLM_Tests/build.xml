@@ -33,7 +33,6 @@
 	<property name="BUILDINFO_FSROOT" value="${BUILD_ROOT}" />
 	<property name="DEST" value="${BUILD_ROOT}/JLM_Tests" />
 
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="src" location="./src" />
 	<property name="src_80" location="./src_80" />
 	<property name="src_90" location="./src_90" />
@@ -42,7 +41,7 @@
 
 	<target name="init">
 		<fail message="BUILD_ROOT must be defined." unless="BUILD_ROOT" />
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 	</target>
 
@@ -94,16 +93,14 @@
 
 	<target name="dist" depends="compile" description="generate the distribution">
 		<!-- Store all class files in jlm-tests.jar file. -->
-		<mkdir dir="${dist}"/>
-		<jar jarfile="${dist}/jlm_tests.jar" filesonly="true">
+		<mkdir dir="${DEST}"/>
+		<jar jarfile="${DEST}/jlm_tests.jar" filesonly="true">
 			<fileset dir="${build}"/>
 			<fileset dir="${src}"/>
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />
 		</jar>
-		<copy todir="${dist}">
-			<fileset dir="${src}/../" includes="*.xml" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml" />
 			<fileset dir="${src}/../" includes="*.mk" />
 		</copy>
 	</target>

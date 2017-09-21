@@ -29,7 +29,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>	
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DUTILS_DIR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)$(JAVA_VERSION)$(Q) -DSCMODE=204 \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJDK_HOME=$(Q)$(JDK_HOME)$(Q) -DCPDL=$(Q)$(P)$(Q) -DUTILS_DIR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(Q) -DSCMODE=204 \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)ShareClassesSimpleSanity.xml$(Q) \
 	-nonZeroExitWhenError \

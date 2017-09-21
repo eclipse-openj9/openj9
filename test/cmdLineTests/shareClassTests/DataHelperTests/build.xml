@@ -30,13 +30,12 @@
 
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/shareClassTests/DataHelperTests" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src" location="."/>
 	<property name="build" location="./bin"/>
 
 	<target name="init">
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 	</target>
 	
@@ -46,7 +45,7 @@
 		<echo>===fork:				yes</echo>
 		<echo>===executable:			${compiler.javac}</echo>
 		<echo>===debug:				on</echo>
-		<echo>===destdir:				${dist}</echo>
+		<echo>===destdir:				${DEST}</echo>
 
 		<!--
 		1.) Copy config files and java ...
@@ -112,13 +111,11 @@
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
-		<jar jarfile="${dist}/DataHelperTests.jar" filesonly="true">
+		<jar jarfile="${DEST}/DataHelperTests.jar" filesonly="true">
 			<fileset dir="${build}" />
 		</jar>
-		<copy todir="${dist}">
-			<fileset dir="${src}" includes="*.xml" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}" includes="*.xml" />
 			<fileset dir="${src}" includes="*.mk" />
 		</copy>
 	</target>

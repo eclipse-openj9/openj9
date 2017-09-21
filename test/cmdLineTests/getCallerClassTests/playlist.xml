@@ -28,7 +28,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DRESDIR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(D)$(JAVA_VERSION)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)getCallerClassTests_${JAVA_VERSION}.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DRESDIR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)getCallerClassTests_${JAVA_VERSION}.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<tags>

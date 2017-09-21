@@ -31,20 +31,19 @@
 	<!-- set global properties for this build -->
 	<property name="BUILD_ROOT" value="../" />
 	<property name="DEST" value="${BUILD_ROOT}/JavaAgentTest" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="src" location="./src"/>
 	<property name="build" location="./bin"/>
 	<property name="transformerListener" location="../Utils/src"/>
 
 	<target name="init">
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 	</target>
 
 	<target name="compile" depends="init" description="compile the source " >
 		<echo>===Ant version: ${ant.version}</echo>
 		<echo>===executable:			${compiler.javac}</echo>
-		<echo>===destdir:				${dist}</echo>
+		<echo>===destdir:				${DEST}</echo>
 		<if>
 			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 			<then>
@@ -75,15 +74,13 @@
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution" >
-		<jar jarfile="${dist}/javaagenttest.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF" >
+		<jar jarfile="${DEST}/javaagenttest.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF" >
 			<fileset dir="${build}"/>
 			<fileset dir="${src}"/>
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />
 		</jar>
-		<copy todir="${dist}">
-			<fileset dir="${src}/../" includes="*.xml" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml" />
 			<fileset dir="${src}/../" includes="*.mk" />
 		</copy>
 	</target>

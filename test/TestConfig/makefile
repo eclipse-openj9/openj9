@@ -80,9 +80,22 @@ D=\\
 PROPS_DIR=props_win
 endif
 
+# Environment variable OSTYPE is set to cygwin if running under cygwin.
+ifndef CYGWIN
+	OSTYPE?=$(shell echo $$OSTYPE)
+	ifeq ($(OSTYPE),cygwin)
+		CYGWIN:=1
+	else
+		CYGWIN:=0
+	endif
+endif
+
 ifndef SRC_ROOT
-SRC_ROOT := $(shell $(PWD))$(D)..
-SRC_ROOT := $(subst \,/,$(SRC_ROOT))
+	SRC_ROOT := $(shell $(PWD))$(D)..
+	ifeq ($(CYGWIN),1)
+		SRC_ROOT := $(shell cygpath -w $(SRC_ROOT))
+	endif
+	SRC_ROOT := $(subst \,/,$(SRC_ROOT))
 endif
 $(info set SRC_ROOT to $(SRC_ROOT))
 
@@ -156,8 +169,8 @@ RESOURCES_DIR=$(JVM_TEST_ROOT)$(D)TestConfig$(D)resources
 #######################################
 # cmdlinetester jars
 #######################################
-CMDLINETESTER_JAR   =$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_tester$(D)$(JAVA_VERSION)$(D)cmdlinetester.jar$(Q)
-CMDLINETESTER_RESJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(D)$(JAVA_VERSION)$(D)cmdlinetestresources.jar$(Q)
+CMDLINETESTER_JAR   =$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_tester$(D)cmdlinetester.jar$(Q)
+CMDLINETESTER_RESJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(D)cmdlinetestresources.jar$(Q)
 
 #######################################
 # testng report dir
