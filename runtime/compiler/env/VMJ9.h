@@ -430,6 +430,7 @@ public:
 
    virtual bool storeOffsetToArgumentsInVirtualIndirectThunks() { return false; }
 
+
    virtual bool               tlhHasBeenCleared();
    virtual bool               isStaticObjectFlags();
    virtual uint32_t           getStaticObjectFlags();
@@ -1079,6 +1080,8 @@ public:
 
    virtual bool isDecimalFormatPattern( TR::Compilation *comp, TR_ResolvedMethod *method);
 
+   virtual bool               needsContiguousAllocation()                     { return true; }
+
 private:
    void transformJavaLangClassIsArrayOrIsPrimitive( TR::Compilation *, TR::Node * callNode,  TR::TreeTop * treeTop, int32_t andMask);
    void transformJavaLangClassIsArray( TR::Compilation *, TR::Node * callNode,  TR::TreeTop * treeTop);
@@ -1113,7 +1116,8 @@ public:
    virtual bool               doStringPeepholing()                            { return false; }
    virtual bool               hardwareProfilingInstructionsNeedRelocation()   { return true; }
    virtual bool               supportsMethodEntryPadding()                    { return false; }
-   virtual bool               isBenefitInliningCheckIfFinalizeObject()          { return true; }
+   virtual bool               isBenefitInliningCheckIfFinalizeObject()        { return true; }
+   virtual bool               needsContiguousAllocation()                     { return true; }
    virtual bool               shouldDelayAotLoad();
 
    virtual bool               isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false);

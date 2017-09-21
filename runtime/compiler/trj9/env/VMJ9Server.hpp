@@ -3,15 +3,33 @@
 
 #include "env/VMJ9.h"
 
-class TR_J9ServerVM: public TR_J9SharedCacheVM
+class TR_J9ServerVM: public TR_J9VM
    {
 public:
    TR_J9ServerVM(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo, J9VMThread *vmContext)
-      :TR_J9SharedCacheVM(jitConfig, compInfo, vmContext)
+      :TR_J9VM(jitConfig, compInfo, vmContext)
       {}
 
-   virtual bool needClassAndMethodPointerRelocations() override { return false; }
-   virtual bool needsContiguousAllocation() override { return true; }
+   virtual bool isAOT_DEPRECATED_DO_NOT_USE()                   { return true; }
+   virtual bool needClassAndMethodPointerRelocations()          { return false; }
+   virtual bool supportsCodeCacheSnippets()                     { return false; }
+   virtual bool canRelocateDirectNativeCalls()                  { return false; }
+   virtual bool inlinedAllocationsMustBeVerified()              { return true; }
+   virtual bool helpersNeedRelocation()                         { return true; }
+   virtual bool supportsEmbeddedHeapBounds()                    { return false; }
+   virtual bool supportsFastNanoTime()                          { return false; }
+   virtual bool needRelocationsForStatics()                     { return true; }
+   virtual bool forceUnresolvedDispatch()                       { return true; }
+   virtual bool nopsAlsoProcessedByRelocations()                { return true; }
+   virtual bool supportsGuardMerging()                          { return false; }
+   virtual bool canDevirtualizeDispatch()                       { return false; }
+   virtual bool storeOffsetToArgumentsInVirtualIndirectThunks() { return true; }
+   virtual bool callTargetsNeedRelocations()                    { return true; }
+   virtual bool doStringPeepholing()                            { return false; }
+   virtual bool hardwareProfilingInstructionsNeedRelocation()   { return true; }
+   virtual bool supportsMethodEntryPadding()                    { return false; }
+   virtual bool isBenefitInliningCheckIfFinalizeObject()        { return true; }
+   virtual bool needsContiguousAllocation()                     { return true; }
 
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT) override;
    virtual bool isClassLibraryClass(TR_OpaqueClassBlock *clazz) override;
@@ -86,6 +104,8 @@ public:
    virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, int32_t cpIndex, bool ignoreReResolve = true) override;
    virtual TR::CodeCache *getDesignatedCodeCache(TR::Compilation *comp) override;
    virtual uint8_t *allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t ** coldCode, bool isMethodHeaderNeeded) override;
+   virtual bool sameClassLoaders(TR_OpaqueClassBlock *, TR_OpaqueClassBlock *) override;
+   virtual bool isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *) override;
    };
 
 #endif // VMJ9SERVER_H

@@ -672,7 +672,7 @@ TR_J9ServerVM::getDesignatedCodeCache(TR::Compilation *comp)
    else
       {
       // TODO: change this if we inherit directly from TR_J9VM
-      return TR_J9SharedCacheVM::getDesignatedCodeCache(comp);
+      return TR_J9VM::getDesignatedCodeCache(comp);
       }
    }
 
@@ -729,8 +729,23 @@ TR_J9ServerVM::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize,
       }
    else
       {
-      return TR_J9SharedCacheVM::allocateCodeMemory(comp, warmCodeSize, coldCodeSize, coldCode, isMethodHeaderNeeded);
+      return TR_J9VM::allocateCodeMemory(comp, warmCodeSize, coldCodeSize, coldCode, isMethodHeaderNeeded);
       }
    }
 
 
+bool
+TR_J9ServerVM::sameClassLoaders(TR_OpaqueClassBlock * class1, TR_OpaqueClassBlock * class2)
+   {
+   // conservative answer
+   // JAAS TODO: ask client
+   return false;
+   }
+
+bool
+TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *)
+   {
+   // conservative answer
+   // JAAS TODO: ask client
+   return true;
+   }
