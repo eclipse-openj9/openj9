@@ -243,6 +243,8 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
    // will potentially slow down manipulations to the CFG, so it is remove
    comp()->getFlowGraph()->invalidateStructure();
 
+   TR::TreeTop * cfgEnd = comp()->getFlowGraph()->findLastTreeTop();
+
    TR::Block *block = NULL;
    TR_SingleBitContainer fear(1, trMemory(), stackAlloc);
    int32_t initialNodeCount = comp()->getNodeCount();
@@ -304,7 +306,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
 
          // If something went wrong with bookkeeping, due to the nature of the implicit OSR point,
          // this will return false
-         bool induceOSR = comp()->getMethodSymbol()->induceOSRAfter(cursor, nodeBCI, guard, false, 0);
+         bool induceOSR = comp()->getMethodSymbol()->induceOSRAfter(cursor, nodeBCI, guard, false, 0, &cfgEnd);
          if (trace())
             {
             if (induceOSR)
@@ -404,7 +406,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
                guard->getNode()->getFirstChild()->setByteCodeInfo(guardBCI);
                guard->getNode()->getSecondChild()->setByteCodeInfo(guardBCI);
 
-               bool induceOSR = targetMethod->induceOSRAfter(inductionPoint, nodeBCI, guard, false, comp()->getOSRInductionOffset(cursor->getNode()));
+               bool induceOSR = targetMethod->induceOSRAfter(inductionPoint, nodeBCI, guard, false, comp()->getOSRInductionOffset(cursor->getNode()), &cfgEnd);
                if (trace() && induceOSR)
                   traceMsg(comp(), "  OSR induction added successfully\n");
                else if (trace())
