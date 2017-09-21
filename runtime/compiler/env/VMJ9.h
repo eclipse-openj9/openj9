@@ -1080,8 +1080,6 @@ public:
 
    virtual bool isDecimalFormatPattern( TR::Compilation *comp, TR_ResolvedMethod *method);
 
-   virtual bool               needsContiguousAllocation()                     { return true; }
-
 private:
    void transformJavaLangClassIsArrayOrIsPrimitive( TR::Compilation *, TR::Node * callNode,  TR::TreeTop * treeTop, int32_t andMask);
    void transformJavaLangClassIsArray( TR::Compilation *, TR::Node * callNode,  TR::TreeTop * treeTop);
@@ -1096,7 +1094,6 @@ public:
 
    // in process of removing this query in favour of more meaningful queries below
    virtual bool               isAOT_DEPRECATED_DO_NOT_USE()                                         { return true; }
-   virtual bool               needsContiguousAllocation() { return true; }
 
    // replacing calls to isAOT
    virtual bool               supportsCodeCacheSnippets()                     { return false; }
