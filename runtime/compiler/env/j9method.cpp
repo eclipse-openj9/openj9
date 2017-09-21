@@ -8973,41 +8973,6 @@ TR_ResolvedJ9JAASServerMethod::fieldOrStaticName(I_32 cpIndex, int32_t & len, TR
    return s;
    }
 
-U_8 *
-TR_ResolvedJ9JAASServerMethod::allocateException(uint32_t numBytes, TR::Compilation *comp)
-   {
-   J9JITExceptionTable *eTbl;
-   uint32_t size = 0;
-   bool shouldRetryAllocation;
-   eTbl = (J9JITExceptionTable *)_fe->allocateDataCacheRecord(numBytes, comp, _fe->needsContiguousAllocation(), &shouldRetryAllocation,
-                                                              J9_JIT_DCE_EXCEPTION_INFO, &size);
-   if (!eTbl)
-      {
-      comp->failCompilation<J9::DataCacheError>("Failed to allocate exception table");
-      }
-   memset((uint8_t *)eTbl, 0, size);
-
-   #if defined(J9VM_RAS_EYECATCHERS)
-   eTbl->className       = J9ROMCLASS_CLASSNAME(romClassPtr());
-   eTbl->methodName      = J9ROMMETHOD_GET_NAME(romClassPtr(), romMethod());// J9ROMMETHOD_NAME(romMethod());
-   eTbl->methodSignature = J9ROMMETHOD_GET_SIGNATURE(romClassPtr(), romMethod());   //J9ROMMETHOD_SIGNATURE(romMethod());
-   #endif
-
-   J9ConstantPool *cpool = cp();
-//   if (isNewInstanceImplThunk())
-//      {
-//      TR_ASSERT(_j9classForNewInstance, "Must have the class for the newInstance");
-//      cpool = J9_CP_FROM_CLASS(_j9classForNewInstance);
-//      }
-//   else
-//      cpool = cp();
-
-   // fill in the reserved slots in the newly allocated table
-   eTbl->constantPool = cpool;
-   eTbl->ramMethod = _ramMethod;
-   return (U_8 *) eTbl;
-   }
-
 void *
 TR_ResolvedJ9JAASServerMethod::stringConstant(I_32 cpIndex)
    {
