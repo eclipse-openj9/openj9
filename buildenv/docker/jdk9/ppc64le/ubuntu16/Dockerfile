@@ -55,6 +55,12 @@ RUN apt-get update \
     zip \
   && rm -rf /var/lib/apt/lists/*
 
+# Install optional tools
+RUN apt-get update \
+  && apt-get install -qq -y --no-install-recommends \
+    vim \
+  && rm -rf /var/lib/apt/lists/*
+
 # Create links for c++,g++,cc,gcc
 RUN ln -s g++ /usr/bin/c++ \
   && ln -s g++-4.8 /usr/bin/g++ \
