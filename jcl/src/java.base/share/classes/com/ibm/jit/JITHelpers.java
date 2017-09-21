@@ -135,6 +135,37 @@ public final class JITHelpers {
 	}
 
 	/*
+	 * To be recognized by the JIT and turned into trees that is foldable when obj is known at compile time.
+	 */
+	public boolean isArray(Object obj) {
+		if (is32Bit()) {
+			int j9Class = getJ9ClassFromObject32(obj);
+			int flags = getClassDepthAndFlagsFromJ9Class32(j9Class);
+			return (flags & VM.J9_ACC_CLASS_ARRAY) != 0;
+		}
+		else {
+			long j9Class = getJ9ClassFromObject64(obj);
+			// Cast the flag to int because only the lower 32 bits are valid and VM.J9_ACC_CLASS_ARRAY is int type
+			int flags = (int)getClassDepthAndFlagsFromJ9Class64(j9Class);
+			return (flags & VM.J9_ACC_CLASS_ARRAY) != 0;
+		}
+	}
+
+	/*
+	 * To be recognized by the JIT and turned into a load with vft symbol.
+	 */
+	public long getJ9ClassFromObject64(Object obj) {
+		Class<?> clazz = obj.getClass();
+		return getJ9ClassFromClass64(clazz);
+	}
+
+	public int getJ9ClassFromObject32(Object obj) {
+		Class<?> clazz = obj.getClass();
+		return getJ9ClassFromClass32(clazz);
+	}
+
+
+	/*
 	 * sun.misc.Unsafe.get* and put* have to generate internal control flow for correctness due to different object shapes. The JIT emitted sequences
 	 * checks for and handles: 1) standard fields in normal objects 2) static fields from classes 3) entries from arrays This sequence is branchy and
 	 * hard for us to optimize. The better solution in cases where we know the type of object is to use case specific accessors which are the methods

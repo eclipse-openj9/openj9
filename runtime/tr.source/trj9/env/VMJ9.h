@@ -1076,6 +1076,7 @@ public:
 
 private:
    void transformJavaLangClassIsArrayOrIsPrimitive( TR::Compilation *, TR::Node * callNode,  TR::TreeTop * treeTop, int32_t andMask);
+   void transformJavaLangClassIsArray( TR::Compilation *, TR::Node * callNode,  TR::TreeTop * treeTop);
    void setProcessorByDebugOption();
    };
 

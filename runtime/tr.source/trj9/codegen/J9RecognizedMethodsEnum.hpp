@@ -656,6 +656,9 @@
    com_ibm_Compiler_Internal_Quad_lo,
 
    com_ibm_jit_JITHelpers_is32Bit,
+   com_ibm_jit_JITHelpers_isArray,
+   com_ibm_jit_JITHelpers_getJ9ClassFromObject32,
+   com_ibm_jit_JITHelpers_getJ9ClassFromObject64,
    com_ibm_jit_JITHelpers_getNumBitsInReferenceField,
    com_ibm_jit_JITHelpers_getNumBytesInReferenceField,
    com_ibm_jit_JITHelpers_getNumBitsInDescriptionWord,
