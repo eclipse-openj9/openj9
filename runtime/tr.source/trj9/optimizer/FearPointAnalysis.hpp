@@ -27,6 +27,8 @@ class TR_FearPointAnalysis : public TR_BackwardUnionSingleBitContainerAnalysis
    {
    public:
 
+   static bool containsPrepareForOSR(TR::Block *block);
+
    TR_FearPointAnalysis(TR::Compilation *comp, TR::Optimizer *optimizer, TR_Structure *,
       TR_BitVector &fearGeneratingNodes, bool topLevelFearOnly=false, bool trace=false);
 

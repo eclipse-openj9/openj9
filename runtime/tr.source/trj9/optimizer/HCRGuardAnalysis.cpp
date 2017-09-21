@@ -33,20 +33,8 @@
 #include "infra/Assert.hpp"                // for TR_ASSERT
 #include "infra/BitVector.hpp"             // for TR_BitVector
 #include "infra/Checklist.hpp"             // for TR::NodeChecklist
+#include "optimizer/FearPointAnalysis.hpp" // for containsPrepareForOSR
 
-static bool containsPrepareForOSR(TR::Block *block)
-   {
-   for (TR::TreeTop *tt = block->getEntry(); tt != block->getExit(); tt = tt->getNextTreeTop())
-       {
-       if (tt->getNode()->getOpCode().isCheck() || tt->getNode()->getOpCodeValue() == TR::treetop)
-          {
-          if (tt->getNode()->getFirstChild()->getOpCode().isCall()
-              && tt->getNode()->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_prepareForOSR)
-             return true;
-          }
-       }
-   return false;
-   }
 
 int32_t TR_HCRGuardAnalysis::getNumberOfBits() { return 1; }
 
@@ -83,7 +71,7 @@ TR_HCRGuardAnalysis::TR_HCRGuardAnalysis(TR::Compilation *comp, TR::Optimizer *o
 
 bool TR_HCRGuardAnalysis::shouldSkipBlock(TR::Block *block)
    {
-   return block->isOSRCatchBlock() || block->isOSRCodeBlock() || containsPrepareForOSR(block);
+   return block->isOSRCatchBlock() || block->isOSRCodeBlock() || TR_FearPointAnalysis::containsPrepareForOSR(block);
    }
 
 void TR_HCRGuardAnalysis::initializeGenAndKillSetInfo()
