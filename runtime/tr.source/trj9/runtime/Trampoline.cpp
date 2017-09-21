@@ -502,6 +502,7 @@ void ppcCodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *
 #endif /*(TR_TARGET_POWER)*/
 
 #if defined(TR_TARGET_X86) && defined(TR_TARGET_64BIT)
+#include "x/runtime/X86Runtime.hpp"
 
 // Hack markers
 //
@@ -514,7 +515,6 @@ void ppcCodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *
 #define IS_32BIT_RIP(x,rip)  ((intptrj_t)(x) == (intptrj_t)(rip) + (int32_t)((intptrj_t)(x) - (intptrj_t)(rip)))
 #define TRAMPOLINE_SIZE    16
 #define CALL_INSTR_LENGTH  5
-extern "C" void _patchingFence16(void *startAddr);
 
 void amd64CodeCacheConfig(int32_t ccSizeInByte, uint32_t *numTempTrampolines)
    {
@@ -641,11 +641,11 @@ int32_t amd64CodePatching(void *theMethod, void *callSite, void *currentPC, void
 
             // Self-loop
             *(uint16_t *)currentTramp = 0xfeeb;
-            _patchingFence16(currentTramp);
+            patchingFence16(currentTramp);
 
             // Store the new address
             *(intptrj_t *)((uint8_t *)currentTramp + 2) = (intptrj_t)entryAddress;
-            _patchingFence16(currentTramp);
+            patchingFence16(currentTramp);
 
             // Restore the MOV instruction
             *(uint16_t *)currentTramp = 0xbf48;
@@ -676,12 +676,12 @@ int32_t amd64CodePatching(void *theMethod, void *callSite, void *currentPC, void
          // time.)
 
          *(uint16_t *)patchAddr = 0xfeeb;
-         _patchingFence16(patchAddr);
+         patchingFence16(patchAddr);
 
          patchAddr[2] = (distance>>8) & 0xff;
          patchAddr[3] = (distance>>16) & 0xff;
          patchAddr[4] = (distance>>24) & 0xff;
-         _patchingFence16(patchAddr);
+         patchingFence16(patchAddr);
 
          *(uint16_t *)patchAddr = 0xe8 | ((distance<<8) & 0xff00);
          }

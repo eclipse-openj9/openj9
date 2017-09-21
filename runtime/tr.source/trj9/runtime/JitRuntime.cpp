@@ -64,6 +64,10 @@
 #include "runtime/Runtime.hpp"
 #endif
 
+#if defined(TR_HOST_X86)
+#include "x/runtime/X86Runtime.hpp"
+#endif
+
 #include "runtime/J9ValueProfiler.hpp"
 
 #if defined(J9ZOS390)
@@ -1268,9 +1272,7 @@ void initializeJitRuntimeHelperTable(char isSMP)
    #undef SET
    }
 
-#if defined (TR_TARGET_X86)
-extern "C" int32_t compareAndExchange4(uint32_t *ptr, uint32_t, uint32_t);
-#elif defined (TR_HOST_S390)
+#if defined (TR_HOST_S390)
 extern "C" int32_t _CompareAndSwap4(int32_t * addr, uint32_t, uint32_t);
 #elif defined (TR_HOST_PPC)
 extern "C" _tr_try_lock(uint32_t *a, uint32_t b, uint32_t c); // return 1 if compareAndSwap "c" successfully into "a"; otherwise 0;
@@ -1293,7 +1295,7 @@ uint8_t platformLightweightLockingIsSupported()
 uint32_t platformTryLock(uint32_t *ptr)
    {
 #if defined(TR_TARGET_X86)
-   return compareAndExchange4(ptr, PLATFORM_MONITOR_UNLOCKED, PLATFORM_MONITOR_LOCKED);
+   return AtomicCompareAndSwap(ptr, PLATFORM_MONITOR_UNLOCKED, PLATFORM_MONITOR_LOCKED);
 #elif defined (TR_HOST_S390)
    return _CompareAndSwap4((int32_t *)ptr, PLATFORM_MONITOR_UNLOCKED, PLATFORM_MONITOR_LOCKED);
 #elif defined (TR_HOST_PPC)
@@ -1306,7 +1308,7 @@ uint32_t platformTryLock(uint32_t *ptr)
 void platformUnlock(uint32_t *ptr)
    {
 #if defined(TR_TARGET_X86)
-   compareAndExchange4(ptr, PLATFORM_MONITOR_LOCKED, PLATFORM_MONITOR_UNLOCKED);
+   AtomicCompareAndSwap(ptr, PLATFORM_MONITOR_LOCKED, PLATFORM_MONITOR_UNLOCKED);
 #elif defined (TR_HOST_S390)
    _CompareAndSwap4((int32_t *)ptr, PLATFORM_MONITOR_LOCKED, PLATFORM_MONITOR_UNLOCKED);
 #elif defined (TR_HOST_PPC)
