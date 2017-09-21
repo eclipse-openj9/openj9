@@ -23,7 +23,6 @@ package com.ibm.j9.jsr292;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -33,10 +32,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-
-import junit.framework.AssertionFailedError;
-import junit.framework.TestListener;
-import junit.framework.TestResult;
 import examples.PackageExamples;
 
 /**
@@ -60,8 +55,8 @@ public class MethodHandleTest{
 		mh = mh.bindTo(g);
 		mh = mh.asCollector(String[].class, 5);
 		
-		AssertJUnit.assertEquals(MethodType.methodType(String.class,String.class,String.class,String.class,String.class,String.class),mh.type());
-		AssertJUnit.assertEquals("[A,star,I am looking at,may already have,died]",(String)mh.invokeExact("A","star","I am looking at","may already have","died"));
+		Assert.assertEquals(mh.type(), MethodType.methodType(String.class,String.class,String.class,String.class,String.class,String.class));
+		Assert.assertEquals((String)mh.invokeExact("A","star","I am looking at","may already have","died"), "[A,star,I am looking at,may already have,died]");
 	}
 	
 	/**
@@ -73,8 +68,8 @@ public class MethodHandleTest{
 		MethodHandle mh = MethodHandles.lookup().findStatic(SamePackageExample.class,"getLengthStatic",MethodType.methodType(int.class, String[].class));
 		mh = mh.asCollector(String[].class, 5);
 		
-		AssertJUnit.assertEquals(MethodType.methodType(int.class,String.class,String.class,String.class,String.class,String.class),mh.type());
-		AssertJUnit.assertEquals(5,(int)mh.invokeExact("A","star","I am looking at","may already have","died"));
+		Assert.assertEquals(mh.type(), MethodType.methodType(int.class,String.class,String.class,String.class,String.class,String.class));
+		Assert.assertEquals((int)mh.invokeExact("A","star","I am looking at","may already have","died"), 5);
 	}
 	
 	/**
@@ -86,27 +81,20 @@ public class MethodHandleTest{
 		MethodHandle mh = MethodHandles.lookup().findStatic(Arrays.class,"deepToString",MethodType.methodType(String.class, Object[].class));
 		mh = mh.asCollector(Object[].class, 1);
 		
-		AssertJUnit.assertEquals("[[There, is, nothing, outside of text]]",(String)mh.invokeExact( (Object) new Object[] {"There", "is", "nothing", "outside of text"} ) );
+		Assert.assertEquals((String)mh.invokeExact( (Object) new Object[] {"There", "is", "nothing", "outside of text"}), "[[There, is, nothing, outside of text]]");
 	}
 	
 	/**
 	 * Negative test : asCollector using wrong type on a MH obtained through a findVirtual call to a class in the same package
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asCollector_SamePackage_Virtual_WrongType() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(SamePackageExample.class,"getLength",MethodType.methodType(int.class, String[].class));
 		SamePackageExample g = new SamePackageExample();
 		mh = mh.bindTo(g);
-		boolean illegalArgumentExceptionThrown = false; 
-		try {
-			mh = mh.asCollector(int[].class, 2);
-		}
-		catch(IllegalArgumentException e) {
-			illegalArgumentExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgumentExceptionThrown);
+		mh = mh.asCollector(int[].class, 2);
+		Assert.fail("The test case failed to throw an IllegalArgumentException in the case of the wrong method type");
 	}
 	
 	/**
@@ -120,8 +108,8 @@ public class MethodHandleTest{
 		mh = mh.bindTo(g);
 		mh = mh.asCollector(String[].class, 5);
 		
-		AssertJUnit.assertEquals(MethodType.methodType(int.class,String.class,String.class,String.class,String.class,String.class),mh.type());
-		AssertJUnit.assertEquals(5,(int)mh.invokeExact("A","star","I am looking at","may already have","died"));
+		Assert.assertEquals(mh.type(), MethodType.methodType(int.class,String.class,String.class,String.class,String.class,String.class));
+		Assert.assertEquals((int)mh.invokeExact("A","star","I am looking at","may already have","died"), 5);
 	}
 	
 	/**
@@ -133,48 +121,34 @@ public class MethodHandleTest{
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"getLengthStatic",MethodType.methodType(int.class, String[].class));
 		mh = mh.asCollector(String[].class, 5);
 		
-		AssertJUnit.assertEquals(MethodType.methodType(int.class,String.class,String.class,String.class,String.class,String.class),mh.type());
-		AssertJUnit.assertEquals(5,(int)mh.invokeExact("A","star","I am looking at","may already have","died"));
+		Assert.assertEquals(mh.type(), MethodType.methodType(int.class,String.class,String.class,String.class,String.class,String.class));
+		Assert.assertEquals((int)mh.invokeExact("A","star","I am looking at","may already have","died"), 5);
 	}
 	
 	/**
 	 * Negative test : asCollector using wrong type on a MH obtained through a findVirtual call to a class in a different package
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asCollector_CrossPackage_Virtual_WrongType() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(PackageExamples.class,"getLength",MethodType.methodType(int.class, String[].class));
 		PackageExamples g = new PackageExamples();
 		mh = mh.bindTo(g);
-		boolean illegalArgumentExceptionThrown = false; 
-		try {
-			mh = mh.asCollector(int[].class, 2);
-		}
-		catch(IllegalArgumentException e) {
-			illegalArgumentExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgumentExceptionThrown);
+		mh = mh.asCollector(int[].class, 2);
+		Assert.fail("The test case failed to throw an IllegalArgumentException in the case of the wrong method type");
 	}
 	
 	/**
 	 * Negative test :  asCollector using wrong type on a MH that has no array argument , obtained through a findVirtual call to a class in a different package
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asCollector_CrossPackage_Virtual_WrongType_nonArrayTarget() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(PackageExamples.class,"addPublic",MethodType.methodType(int.class, int.class, int.class));
 		PackageExamples g = new PackageExamples();
 		mh = mh.bindTo(g);
-		boolean illegalArgumentExceptionThrown = false; 
-		try {
-			mh = mh.asCollector(int[].class, 2);
-		}
-		catch(IllegalArgumentException e) {
-			illegalArgumentExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgumentExceptionThrown);
+		mh = mh.asCollector(int[].class, 2);
+		Assert.fail("The test case failed to throw an IllegalArgumentException in the case of the wrong method type");
 	}
 	
 	/**
@@ -187,7 +161,7 @@ public class MethodHandleTest{
 		SamePackageExample g = new SamePackageExample();
 		mh = mh.bindTo(g);
 		mh = mh.asCollector(String[].class, 2);
-		AssertJUnit.assertEquals("[a,b]",(String)mh.invokeExact("a","b"));
+		Assert.assertEquals((String)mh.invokeExact("a","b"), "[a,b]");
 	}
 	
 	/**
@@ -200,7 +174,7 @@ public class MethodHandleTest{
 		SamePackageExample g = new SamePackageExample();
 		mh = mh.bindTo(g);
 		mh = mh.asCollector(Object[].class, 6);
-		AssertJUnit.assertEquals("[a,1000,true,1.1,9223372036854775807,-32768]",mh.invoke("a",1000,true,1.1,Long.MAX_VALUE,Short.MIN_VALUE)); 
+		Assert.assertEquals(mh.invoke("a",1000,true,1.1,Long.MAX_VALUE,Short.MIN_VALUE), "[a,1000,true,1.1,9223372036854775807,-32768]"); 
 	}
 	
 	/**
@@ -214,61 +188,61 @@ public class MethodHandleTest{
 		SamePackageExample g = new SamePackageExample();
 		mhGetLength = mhGetLength.bindTo(g);
 		mhGetLength = mhGetLength.asCollector(String[].class, 0);
-		AssertJUnit.assertEquals(0,(int)mhGetLength.invokeExact());
+		Assert.assertEquals((int)mhGetLength.invokeExact(), 0);
 		
 		//test with Object array
 		MethodHandle mhArrayToString = MethodHandles.lookup().findVirtual(SamePackageExample.class,"arrayToString",MethodType.methodType(String.class,Object[].class));
 		mhArrayToString = mhArrayToString.bindTo(g);
 		mhArrayToString = mhArrayToString.asCollector(String[].class,0);
-		AssertJUnit.assertEquals("[]",(String)mhArrayToString.invokeExact());
+		Assert.assertEquals((String)mhArrayToString.invokeExact(), "[]");
 		
 		//test with byte array
 		MethodHandle mhByteArray = MethodHandles.lookup().findVirtual(SamePackageExample.class,"getLength",MethodType.methodType(int.class,byte[].class));
 		mhByteArray = mhByteArray.bindTo(g);
 		mhByteArray = mhByteArray.asCollector(byte[].class,0);
-		AssertJUnit.assertEquals(0,(int)mhByteArray.invokeExact());
+		Assert.assertEquals((int)mhByteArray.invokeExact(), 0);
 		
 		//test with short array
 		MethodHandle mhShortArray = MethodHandles.lookup().findVirtual(SamePackageExample.class,"getLength",MethodType.methodType(int.class,short[].class));
 		mhShortArray = mhShortArray.bindTo(g);
 		mhShortArray = mhShortArray.asCollector(short[].class,0);
-		AssertJUnit.assertEquals(0,(int)mhShortArray.invokeExact());
+		Assert.assertEquals((int)mhShortArray.invokeExact(), 0);
 		
 		//test with boolean array
 		MethodHandle mhBooleanArray = MethodHandles.lookup().findVirtual(SamePackageExample.class,"getLength",MethodType.methodType(int.class,boolean[].class));
 		mhBooleanArray = mhBooleanArray.bindTo(g);
 		mhBooleanArray = mhBooleanArray.asCollector(boolean[].class,0);
-		AssertJUnit.assertEquals(0,(int)mhBooleanArray.invokeExact());
+		Assert.assertEquals((int)mhBooleanArray.invokeExact(), 0);
 		
 		//test with long array
 		MethodHandle mhLongArray = MethodHandles.lookup().findVirtual(SamePackageExample.class,"getLength",MethodType.methodType(int.class,long[].class));
 		mhLongArray = mhLongArray.bindTo(g);
 		mhLongArray = mhLongArray.asCollector(long[].class,0);
-		AssertJUnit.assertEquals(0,(int)mhLongArray.invokeExact());
+		Assert.assertEquals((int)mhLongArray.invokeExact(), 0);
 		
 		//test with char array
 		MethodHandle mhCharArray = MethodHandles.lookup().findVirtual(SamePackageExample.class,"getLength",MethodType.methodType(int.class,char[].class));
 		mhCharArray = mhCharArray.bindTo(g);
 		mhCharArray = mhCharArray.asCollector(char[].class,0);
-		AssertJUnit.assertEquals(0,(int)mhCharArray.invokeExact());
+		Assert.assertEquals((int)mhCharArray.invokeExact(), 0);
 		
 		//test with double array
 		MethodHandle mhDoubleArray = MethodHandles.lookup().findVirtual(SamePackageExample.class,"getLength",MethodType.methodType(int.class,double[].class));
 		mhDoubleArray = mhDoubleArray.bindTo(g);
 		mhDoubleArray = mhDoubleArray.asCollector(double[].class,0);
-		AssertJUnit.assertEquals(0,(int)mhDoubleArray.invokeExact());
+		Assert.assertEquals((int)mhDoubleArray.invokeExact(), 0);
 		
 		//test with float array
 		MethodHandle mhFloatArray = MethodHandles.lookup().findVirtual(SamePackageExample.class,"getLength",MethodType.methodType(int.class,float[].class));
 		mhFloatArray = mhFloatArray.bindTo(g);
 		mhFloatArray = mhFloatArray.asCollector(float[].class,0);
-		AssertJUnit.assertEquals(0,(int)mhFloatArray.invokeExact());
+		Assert.assertEquals((int)mhFloatArray.invokeExact(), 0);
 		
 		//test with int array
 		MethodHandle mhIntArray = MethodHandles.lookup().findVirtual(SamePackageExample.class,"getLength",MethodType.methodType(int.class,int[].class));
 		mhIntArray = mhIntArray.bindTo(g);
 		mhIntArray = mhIntArray.asCollector(int[].class,0);
-		AssertJUnit.assertEquals(0,(int)mhIntArray.invokeExact());
+		Assert.assertEquals((int)mhIntArray.invokeExact(), 0);
 	}
 	
 	
@@ -287,8 +261,8 @@ public class MethodHandleTest{
 		mh = mh.bindTo(g);
 		mh = mh.asVarargsCollector(String[].class);
 		
-		AssertJUnit.assertEquals(MethodType.methodType(String.class,String[].class),mh.type());
-		AssertJUnit.assertEquals("[A,star,I am looking at,may already have,died]",mh.invoke("A","star","I am looking at","may already have","died"));
+		Assert.assertEquals(mh.type(), MethodType.methodType(String.class,String[].class));
+		Assert.assertEquals(mh.invoke("A","star","I am looking at","may already have","died"), "[A,star,I am looking at,may already have,died]");
 	}
 	
 	/**
@@ -302,28 +276,21 @@ public class MethodHandleTest{
 		mh = mh.bindTo(g);
 		mh = mh.asVarargsCollector(String[].class);
 		
-		AssertJUnit.assertEquals(MethodType.methodType(String.class,String[].class),mh.type());
-		AssertJUnit.assertEquals("[A,star,I am looking at,may already have,died]", (String)mh.invokeExact(new String[]{"A","star","I am looking at","may already have","died"}));
+		Assert.assertEquals(mh.type(), MethodType.methodType(String.class,String[].class));
+		Assert.assertEquals((String)mh.invokeExact(new String[]{"A","star","I am looking at","may already have","died"}), "[A,star,I am looking at,may already have,died]");
 	}
 	
 	/**
 	 * Negative test : asVarargsCollector test using wrong method type
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asVarargsCollector_SamePackage_Virtual_WrongType() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(PackageExamples.class,"getLength",MethodType.methodType(int.class, String[].class));
 		PackageExamples g = new PackageExamples();
 		mh = mh.bindTo(g);
-		boolean illegalArgumentExceptionThrown = false; 
-		try {
-			mh = mh.asVarargsCollector(int[].class);
-		}
-		catch(IllegalArgumentException e) {
-			illegalArgumentExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgumentExceptionThrown);
+		mh = mh.asVarargsCollector(int[].class);
+		Assert.fail("The test case failed to throw an IllegalArgumentException in the case of the wrong method type");
 	}
 	
 	/**
@@ -335,7 +302,7 @@ public class MethodHandleTest{
 		MethodHandle mh = MethodHandles.lookup().findStatic(Arrays.class,"deepToString",MethodType.methodType(String.class, Object[].class));
 		mh = mh.asVarargsCollector(Object[].class);
 		
-		AssertJUnit.assertEquals("[[There, is, nothing, outside of text]]",(String) mh.invoke((Object) new Object[] {"There", "is", "nothing", "outside of text"} ) );
+		Assert.assertEquals((String)mh.invoke((Object) new Object[] {"There", "is", "nothing", "outside of text"}), "[[There, is, nothing, outside of text]]");
 	}
 	
 	/**
@@ -349,8 +316,8 @@ public class MethodHandleTest{
 		mh = mh.bindTo(g);
 		mh = mh.asVarargsCollector(String[].class);
 		
-		AssertJUnit.assertEquals(MethodType.methodType(int.class,String[].class),mh.type());
-		AssertJUnit.assertEquals(6,mh.invoke("A","star","I am looking at","may already have","died","long ago"));
+		Assert.assertEquals(mh.type(), MethodType.methodType(int.class,String[].class));
+		Assert.assertEquals(mh.invoke("A","star","I am looking at","may already have","died","long ago"), 6);
 	}
 	
 	/**
@@ -364,8 +331,8 @@ public class MethodHandleTest{
 		mh = mh.bindTo(g);
 		mh = mh.asVarargsCollector(String[].class);
 		
-		AssertJUnit.assertEquals(MethodType.methodType(int.class,String[].class),mh.type());
-		AssertJUnit.assertEquals(5, (int)mh.invokeExact(new String[]{"A","star","I am looking at","may already have","died"}));
+		Assert.assertEquals(mh.type(), MethodType.methodType(int.class,String[].class));
+		Assert.assertEquals((int)mh.invokeExact(new String[]{"A","star","I am looking at","may already have","died"}), 5);
 	}
 	
 	/**
@@ -377,49 +344,34 @@ public class MethodHandleTest{
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"getLengthStatic",MethodType.methodType(int.class, String[].class));
 		mh = mh.asVarargsCollector(String[].class);
 		
-		AssertJUnit.assertEquals(MethodType.methodType(int.class,String[].class),mh.type());
-		AssertJUnit.assertEquals(5,(int)mh.invoke("A","star","I am looking at","may already have","died"));
+		Assert.assertEquals(mh.type(), MethodType.methodType(int.class,String[].class));
+		Assert.assertEquals((int)mh.invoke("A","star","I am looking at","may already have","died"), 5);
 	}
 	
 	/**
 	 * Negative test : asVarargsCollector test using wrong type and a virtual method belonging to a class in a different package 
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asVarargsCollector_CrossPackage_Virtual_WrongType() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(PackageExamples.class,"getLength",MethodType.methodType(int.class, String[].class));
 		PackageExamples g = new PackageExamples();
 		mh = mh.bindTo(g);
-		
-		boolean illegalArgumentExceptionThrown = false; 
-		try {
-			mh = mh.asVarargsCollector(int[].class);
-		}
-		catch(IllegalArgumentException e) {
-			illegalArgumentExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgumentExceptionThrown);
+		mh = mh.asVarargsCollector(int[].class);
+		Assert.fail("The test case failed to throw an IllegalArgumentException in the case of the wrong method type");
 	}
 	
 	/**
 	 * Negative test : asVarargsCollector test using wrong method type and virtual method living in a class of a different package 
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asVarargsCollector_CrossPackage_Virtual_WrongType_nonArrayTarget() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(PackageExamples.class,"addPublic",MethodType.methodType(int.class, int.class, int.class));
 		PackageExamples g = new PackageExamples();
 		mh = mh.bindTo(g);
-		boolean illegalArgumentExceptionThrown = false; 
-		try {
-			mh = mh.asVarargsCollector(int[].class);
-		}
-		catch(IllegalArgumentException e) {
-			illegalArgumentExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgumentExceptionThrown);
+		mh = mh.asVarargsCollector(int[].class);
+		Assert.fail("The test case failed to throw an IllegalArgumentException in the case of the wrong method type");
 	}
 
 	/**
@@ -432,7 +384,7 @@ public class MethodHandleTest{
 		SamePackageExample g = new SamePackageExample();
 		mh = mh.bindTo(g);
 		mh = mh.asVarargsCollector(String[].class);
-		AssertJUnit.assertEquals("[a,b]",(String)mh.invoke("a","b"));
+		Assert.assertEquals((String)mh.invoke("a","b"), "[a,b]");
 	}
 	
 	/**
@@ -445,7 +397,7 @@ public class MethodHandleTest{
 		SamePackageExample g = new SamePackageExample();
 		mh = mh.bindTo(g);
 		mh = mh.asVarargsCollector(Object[].class);
-		AssertJUnit.assertEquals("[a,1000,true,1.1,9223372036854775807,-32768]",mh.invoke("a",1000,true,1.1,Long.MAX_VALUE,Short.MIN_VALUE)); 
+		Assert.assertEquals(mh.invoke("a",1000,true,1.1,Long.MAX_VALUE,Short.MIN_VALUE), "[a,1000,true,1.1,9223372036854775807,-32768]"); 
 	}
 	
 	
@@ -463,52 +415,34 @@ public class MethodHandleTest{
 		SamePackageExample g = new SamePackageExample();
 		mh = mh.bindTo(g);
 		mh = mh.asSpreader(int[].class, 2);
-		AssertJUnit.assertEquals(MethodType.methodType(int.class,int[].class),mh.type());
-		AssertJUnit.assertEquals(5,(int)mh.invokeExact(new int[] {3,2}));
+		Assert.assertEquals(mh.type(), MethodType.methodType(int.class,int[].class));
+		Assert.assertEquals((int)mh.invokeExact(new int[] {3,2}), 5);
 	}
 	
 	/**
 	 * Negative test : asSpreader test using wrong method type for a virtual method in the same package 
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_asSpreader_SamePackage_Virtual_WrongType() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(SamePackageExample.class,"addPublic",MethodType.methodType(int.class,int.class,int.class));
 		SamePackageExample g = new SamePackageExample();
 		mh = mh.bindTo(g);
-		
-		boolean wrongMethodTypeExceptionThrown = false; 
-		
-		try {
-			mh = mh.asSpreader(String[].class, 2);
-		}
-		catch(WrongMethodTypeException e) {
-			wrongMethodTypeExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(wrongMethodTypeExceptionThrown);
+		mh = mh.asSpreader(String[].class, 2);
+		Assert.fail("The test case failed to throw an WrongMethodTypeException in the case of the wrong method type");
 	}
 	
 	/**
 	 * Negative test : asSpreader test using wrong argument count for the target method
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asSpreader_SamePackage_Virtual_WrongArgCount() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(SamePackageExample.class,"addPublic",MethodType.methodType(int.class,int.class,int.class));
 		SamePackageExample g = new SamePackageExample();
 		mh = mh.bindTo(g);
-		
-		boolean illegalArgumentException = false; 
-		
-		try {
-			mh = mh.asSpreader(int[].class, 3);
-		}
-		catch(IllegalArgumentException e) {
-			illegalArgumentException = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgumentException);
+		mh = mh.asSpreader(int[].class, 3);
+		Assert.fail("The test case failed to throw an IllegalArgumentException in the case of the wrong method type");
 	}
 	
 	/**
@@ -519,28 +453,20 @@ public class MethodHandleTest{
 	public void test_asSpreader_SamePackage_Static() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findStatic(SamePackageExample.class,"addPublicStatic",MethodType.methodType(int.class,int.class,int.class));
 		mh = mh.asSpreader(int[].class, 2);
-		AssertJUnit.assertEquals(MethodType.methodType(int.class,int[].class),mh.type());
-		AssertJUnit.assertEquals(5,(int)mh.invokeExact(new int[] {3,2}));
+		Assert.assertEquals(mh.type(), MethodType.methodType(int.class,int[].class));
+		Assert.assertEquals((int)mh.invokeExact(new int[] {3,2}), 5);
 	}
 	
 	/**
 	 * Negative test : asSpreader test using wrong method type for a static method belonging to a class in the same package 
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asSpreader_SamePackage_Static_WrongType() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findStatic(SamePackageExample.class,"addPublicStatic",MethodType.methodType(int.class,int.class,int.class));
 		mh = mh.asSpreader(int[].class, 2);
-		boolean illegalArgExceptionThrown = false; 
-		
-		try {
-			mh = mh.asSpreader(String[].class, 2);
-		}
-		catch(IllegalArgumentException e) {
-			illegalArgExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgExceptionThrown);
+		mh = mh.asSpreader(String[].class, 2);
+		Assert.fail("The test case failed to throw an IllegalArgumentException in the case of the wrong method type");
 	}
 	
 	/**
@@ -553,8 +479,8 @@ public class MethodHandleTest{
 		PackageExamples g = new PackageExamples();
 		mh = mh.bindTo(g);
 		mh = mh.asSpreader(int[].class, 2);
-		AssertJUnit.assertEquals(MethodType.methodType(int.class,int[].class),mh.type());
-		AssertJUnit.assertEquals(5,(int)mh.invokeExact(new int[] {3,2}));
+		Assert.assertEquals(mh.type(), MethodType.methodType(int.class,int[].class));
+		Assert.assertEquals((int)mh.invokeExact(new int[] {3,2}), 5);
 	}
 	
 	/**
@@ -565,74 +491,69 @@ public class MethodHandleTest{
 	public void test_asSpreader_CrossPackage_Static() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStatic",MethodType.methodType(int.class,int.class,int.class));
 		mh = mh.asSpreader(int[].class, 2);
-		AssertJUnit.assertEquals(MethodType.methodType(int.class,int[].class),mh.type());
-		AssertJUnit.assertEquals(5,(int)mh.invokeExact(new int[] {3,2}));
+		Assert.assertEquals(mh.type(), MethodType.methodType(int.class,int[].class));
+		Assert.assertEquals((int)mh.invokeExact(new int[] {3,2}), 5);
 	}
 	
 	/**
 	 * Negative test : asSpreader test using cross package virtual method with a wrong method type
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_asSpreader_CrossPackage_Virtual_WrongType() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(PackageExamples.class,"addPublic",MethodType.methodType(int.class,int.class,int.class));
 		PackageExamples g = new PackageExamples();
 		mh = mh.bindTo(g);
-		boolean wrongMethodTypeExceptionThrown = false; 
-		
-		try {
-			mh = mh.asSpreader(String[].class, 2);
-		}
-		catch(WrongMethodTypeException e) {
-			wrongMethodTypeExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(wrongMethodTypeExceptionThrown);
+		mh = mh.asSpreader(String[].class, 2);
+		Assert.fail("The test case failed to throw an WrongMethodTypeException in the case of the wrong method type");
 	}
 	
 	/**
 	 * Negative test : asSpreader test using a cross-package static method and wrong method type
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asSpreader_CrossPackage_Static_WrongType() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStatic",MethodType.methodType(int.class,int.class,int.class));
 		mh = mh.asSpreader(int[].class, 2);
-		boolean illegalArgumentExceptionThrown = false; 
-		
-		try {
-			mh = mh.asSpreader(String[].class, 2);
-		}
-		catch(IllegalArgumentException e) {
-			illegalArgumentExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgumentExceptionThrown);
+		mh = mh.asSpreader(String[].class, 2);
+		Assert.fail("The test case failed to throw an IllegalArgumentException in the case of the wrong method type");
 	}
 	
 	/**
 	 * Negative test : asSpreader test using cross package static method and a wrong argument count
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asSpreader_CrossPackage_Static_WrongArgCount() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStatic",MethodType.methodType(int.class,int.class,int.class));
-		
-		boolean illegalArgumentException = false; 
-		
-		try {
-			mh = mh.asSpreader(int[].class, 3);
-		}
-		catch(IllegalArgumentException e) {
-			illegalArgumentException = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgumentException);
+		mh = mh.asSpreader(int[].class, 3);
+		Assert.fail("The test case failed to throw an IllegalArgumentException in the case of the wrong argument count");
 	}
 	
 	/******************************
 	 * Tests for MethodHandle arity
 	 * ****************************/
+	/**
+	 * Create MethodHandle with highest possible arity and use findConstructor (253)
+	 * @throws Throwable
+	 */
+	@Test(groups = { "level.extended" })
+	public void test_findConstructor_ArityLimit() throws Throwable {
+		MethodHandle mh = MethodHandles.lookup().findConstructor(HelperConstructorClass.class, helperMethodType_void_253int);
+		mh = mh.asSpreader(int[].class, 253);
+	}
+	
+	/**
+	 * Negative test: Create MethodHandle with highest possible arity + 1 (254) 
+	 * @throws Throwable
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public void test_findConstructor_ArityLimit_TooHigh() throws Throwable {
+		MethodHandles.lookup().findConstructor(HelperConstructorClass.class, helperMethodType_void_254int);
+		Assert.fail("The test case failed to detect that the argument slots exceeds the upper limit (255)");
+	}
+	
 	/**
 	 * Create MethodHandle with highest possible arity and use asSpreader (253)
 	 * @throws Throwable
@@ -659,34 +580,20 @@ public class MethodHandleTest{
 	 * Negative test: Create MethodHandle with highest possible arity + 1 (254) 
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_MethodHandle_ArityLimit_TooHigh() throws Throwable {
-		boolean illegalArgumentException = false;
-		try {
-			MethodHandles.lookup().findVirtual(MethodHandleTest.class, "helperSpreaderMethod_254arg", helperMethodType_void_254int);
-		}
-		catch (IllegalArgumentException e) {
-			illegalArgumentException = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgumentException);
+		MethodHandles.lookup().findVirtual(MethodHandleTest.class, "helperSpreaderMethod_254arg", helperMethodType_void_254int);
+		Assert.fail("The test case failed to detect that the argument slots exceeds the upper limit (255)");
 	}
 	
 	/**
 	 * Negative test: Create static MethodHandle with highest possible arity + 1 (255)
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_MethodHandle_Static_ArityLimit_TooHigh() throws Throwable {
-		boolean illegalArgumentException = false;
-		try {
-			MethodHandles.lookup().findStatic(MethodHandleTest.class, "helperSpreaderStaticMethod_255arg", helperMethodType_void_255int);
-		}
-		catch (IllegalArgumentException e) {
-			illegalArgumentException = true;
-		}
-		
-		AssertJUnit.assertTrue(illegalArgumentException);
+		MethodHandles.lookup().findStatic(MethodHandleTest.class, "helperSpreaderStaticMethod_255arg", helperMethodType_void_255int);
+		Assert.fail("The test case failed to detect that the argument slots exceeds the upper limit (255)");
 	}
 	
 	/**
@@ -703,16 +610,11 @@ public class MethodHandleTest{
 	 * Negative test: Create MethodHandle with highest possible arity + 1 using asCollector (254)
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asCollector_ArityLimit_TooHigh() throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findVirtual(MethodHandleTest.class, "helperCollectorMethod", MethodType.methodType(void.class, int[].class));
-		boolean illegalArgumentException = false; 
-		try {
-			mh = mh.asCollector(int[].class, 254);
-		} catch(IllegalArgumentException e) {
-			illegalArgumentException = true;
-		}
-		AssertJUnit.assertTrue(illegalArgumentException);
+		mh = mh.asCollector(int[].class, 254);
+		Assert.fail("The test case failed to detect that the argument slots exceeds the upper limit (255)");
 	}
 	
 	/**
@@ -729,16 +631,11 @@ public class MethodHandleTest{
 	 * Negative test: Create MethodHandle with highest possible arity + 1 using asCollector (255)
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_asCollector_Static_ArityLimit_TooHigh() throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findStatic(MethodHandleTest.class, "helperStaticCollectorMethod", MethodType.methodType(void.class, int[].class));
-		boolean illegalArgumentException = false; 
-		try {
-			mh = mh.asCollector(int[].class, 255);
-		} catch(IllegalArgumentException e) {
-			illegalArgumentException = true;
-		}
-		AssertJUnit.assertTrue(illegalArgumentException);
+		mh = mh.asCollector(int[].class, 255);
+		Assert.fail("The test case failed to detect that the argument slots exceeds the upper limit (255)");
 	}
 	
 	/**
@@ -827,30 +724,20 @@ public class MethodHandleTest{
 	 * Negative test: Create exactInvoker with highest possible arity + 1 (253)
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_exactInvoker_ArityLimit_TooHigh() throws Throwable {
-		boolean IAEThrown = false;
-		try {
-			MethodHandles.exactInvoker(helperMethodType_void_253int.insertParameterTypes(0, MethodHandleTest.class));
-		} catch (IllegalArgumentException e) {
-			IAEThrown = true;
-		}
-		AssertJUnit.assertTrue(IAEThrown);
+		MethodHandles.exactInvoker(helperMethodType_void_253int.insertParameterTypes(0, MethodHandleTest.class));
+		Assert.fail("The test case failed to detect that the argument slots exceeds the upper limit (255)");
 	}
 	
 	/**
 	 * Negative test: Create static exactInvoker with highest possible arity + 1 (254)
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_exactInvoker_Static_ArityLimit_TooHigh() throws Throwable {
-		boolean IAEThrown = false;
-		try {
-			MethodHandles.exactInvoker(helperMethodType_void_254int);
-		} catch (IllegalArgumentException e) {
-			IAEThrown = true;
-		}
-		AssertJUnit.assertTrue(IAEThrown);
+		MethodHandles.exactInvoker(helperMethodType_void_254int);
+		Assert.fail("The test case failed to detect that the argument slots exceeds the upper limit (255)");
 	}
 	
 	/**
@@ -907,30 +794,20 @@ public class MethodHandleTest{
 	 * Negative test: Create invoker with highest possible arity + 1 (253)
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_invoker_ArityLimit_TooHigh() throws Throwable {
-		boolean IAEThrown = false;
-		try {
-			MethodHandles.invoker(helperMethodType_void_253int.insertParameterTypes(0, MethodHandleTest.class));
-		} catch (IllegalArgumentException e) {
-			IAEThrown = true;
-		}
-		AssertJUnit.assertTrue(IAEThrown);
+		MethodHandles.invoker(helperMethodType_void_253int.insertParameterTypes(0, MethodHandleTest.class));
+		Assert.fail("The test case failed to detect that the argument slots exceeds the upper limit (255)");
 	}
 	
 	/**
 	 * Negative test: Create static invoker with highest possible arity + 1 (254)
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public void test_invoker_Static_ArityLimit_TooHigh() throws Throwable {
-		boolean IAEThrown = false;
-		try {
-			MethodHandles.invoker(helperMethodType_void_254int);
-		} catch (IllegalArgumentException e) {
-			IAEThrown = true;
-		}
-		AssertJUnit.assertTrue(IAEThrown);
+		MethodHandles.invoker(helperMethodType_void_254int);
+		Assert.fail("The test case failed to detect that the argument slots exceeds the upper limit (255)");
 	}
 	
 	@Test(groups = { "level.extended" })
@@ -1004,14 +881,14 @@ public class MethodHandleTest{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(SamePackageExample.class,"takeVariableArityObject", MethodType.methodType(void.class, Object[].class));
 		SamePackageExample g = new SamePackageExample(); 
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 		
 		mh = mh.asFixedArity();
 		
 		//Ensure after calling asFixedArity, it is no longer a varargs handles 
-		AssertJUnit.assertFalse(mh.isVarargsCollector());
+		Assert.assertFalse(mh.isVarargsCollector());
 		
-		AssertJUnit.assertEquals(null,mh.invoke(g,new Object[]{new Object[]{"abc",true,12}}));
+		Assert.assertEquals(mh.invoke(g,new Object[]{new Object[]{"abc",true,12}}), null);
 	}
 	
 	/**
@@ -1024,33 +901,25 @@ public class MethodHandleTest{
 		mh = mh.asVarargsCollector(String[].class);
 		MethodHandle mhFix = mh.asFixedArity();
 		
-		AssertJUnit.assertFalse(mhFix.isVarargsCollector());
-		AssertJUnit.assertEquals(5,mhFix.invoke(new String[]{"a","b","c","d","e"}));
+		Assert.assertFalse(mhFix.isVarargsCollector());
+		Assert.assertEquals(mhFix.invoke(new String[]{"a","b","c","d","e"}), 5);
 	}
 	
 	/**
 	 * Negative test : asFixedArity test using variable input
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_asFixedArity_SamePackage_Static_VarialbeInput() throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findStatic(SamePackageExample.class, "getLengthStatic", MethodType.methodType(int.class,String[].class));
 		mh = mh.asVarargsCollector(String[].class);
 		
 		MethodHandle mhFix = mh.asFixedArity();
 		
-		AssertJUnit.assertFalse(mhFix.isVarargsCollector());
+		Assert.assertFalse(mhFix.isVarargsCollector());
 		
-		boolean wmtThrown = false;
-		
-		try {
-			AssertJUnit.assertEquals(5,mhFix.invoke("a","b","c","d","e"));
-		}
-		catch(WrongMethodTypeException e) {
-			wmtThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(wmtThrown);
+		mhFix.invoke("a","b","c","d","e");
+		Assert.fail("The test case failed to throw an WrongMethodTypeException in using variable input");
 	}
 	
 	
@@ -1073,7 +942,7 @@ public class MethodHandleTest{
 				"helper_invokeWithArguments_List_Different_Array_Type", 
 				MethodType.methodType(String.class, Object.class,Object.class,Object.class));	
 		String result = (String)mh.invokeWithArguments(Arrays.asList("A", "B", "C"));
-		AssertJUnit.assertEquals("A:B:C", result);
+		Assert.assertEquals(result, "A:B:C");
 	}
 	
 	/**
@@ -1090,33 +959,26 @@ public class MethodHandleTest{
 		l.add(1);
 		l.add(2);
 		
-		AssertJUnit.assertEquals(3,(int)mh.invokeWithArguments(l));
+		Assert.assertEquals((int)mh.invokeWithArguments(l), 3);
 	}
 	
 	/**
 	 * Negative test : invokeWithArgument(List<?>) test with mismatched number of argument passed in argument list
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_invokeWithArguments_List_SamePackage_Virtual_WrongArgCount() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(SamePackageExample.class, "addPublic", MethodType.methodType(int.class,int.class,int.class));
 		SamePackageExample g = new SamePackageExample();
 		mh = mh.bindTo(g);
-		boolean wmtThrown = false;
 		
 		List<Integer> l = new ArrayList<Integer>();
 		l.add(1);
 		l.add(2);
 		l.add(3);
 		
-		try {
-			AssertJUnit.assertEquals(6,(int)mh.invokeWithArguments(l));
-		}
-		catch(WrongMethodTypeException e) {
-			wmtThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(wmtThrown);
+		mh.invokeWithArguments(l);
+		Assert.fail("The test case failed to throw an WrongMethodTypeException in the case of mismatched number of argument");
 	}
 	
 	/**
@@ -1131,7 +993,7 @@ public class MethodHandleTest{
 		l.add(1);
 		l.add(2);
 		
-		AssertJUnit.assertEquals(3,(int)mh.invokeWithArguments(l));
+		Assert.assertEquals((int)mh.invokeWithArguments(l), 3);
 	}
 	
 	/**
@@ -1148,7 +1010,7 @@ public class MethodHandleTest{
 		l.add(1);
 		l.add(2);
 		
-		AssertJUnit.assertEquals(3,(int)mh.invokeWithArguments(l));
+		Assert.assertEquals((int)mh.invokeWithArguments(l), 3);
 	}
 	
 	/**
@@ -1163,7 +1025,7 @@ public class MethodHandleTest{
 		l.add(1);
 		l.add(2);
 		
-		AssertJUnit.assertEquals(3,(int)mh.invokeWithArguments(l));
+		Assert.assertEquals((int)mh.invokeWithArguments(l), 3);
 	}
 	
 
@@ -1171,15 +1033,11 @@ public class MethodHandleTest{
 	 * Tests for invokeWithArguments(Object...)
 	 * **************************************/
 	
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_invokeWithArguments_WMT_NULL_args()  throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findVirtual(Object.class, "toString", MethodType.methodType(String.class));
-		try {
-			mh.invokeWithArguments("receiver", null, null);
-			Assert.fail("Should have thrown WMT");
-		} catch(WrongMethodTypeException e) {
-			
-		}
+		mh.invokeWithArguments("receiver", null, null);
+		Assert.fail("The test case failed to throw an WrongMethodTypeException in the case of null arguments");
 	}
 	
 	/**
@@ -1191,7 +1049,7 @@ public class MethodHandleTest{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(SamePackageExample.class, "addPublic", MethodType.methodType(int.class,int.class,int.class));
 		SamePackageExample g = new SamePackageExample();
 		
-		AssertJUnit.assertEquals(3,(int)mh.invokeWithArguments(g,1,2));
+		Assert.assertEquals((int)mh.invokeWithArguments(g,1,2), 3);
 	}
 	
 	/**
@@ -1203,30 +1061,22 @@ public class MethodHandleTest{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(SamePackageExample.class, "addPublicVariableArity", MethodType.methodType(int.class,Object[].class));
 		SamePackageExample g = new SamePackageExample();
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 		
-		AssertJUnit.assertEquals(9,mh.invokeWithArguments(g, 1, 2, 2, 2, 2));
+		Assert.assertEquals(mh.invokeWithArguments(g, 1, 2, 2, 2, 2), 9);
 	}
 	
 	/**
 	 * Negative test : invokeWithArguments(Object... args) with wrong argument type
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_invokeWithArguments_VarargsObj_SamePackage_Virtual_WrongArgCount() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(SamePackageExample.class, "addPublic", MethodType.methodType(int.class,int.class,int.class));
 		SamePackageExample g = new SamePackageExample();
 		mh = mh.bindTo(g);
-		boolean wmtThrown = false;
-		
-		try {
-			AssertJUnit.assertEquals(6,(int)mh.invokeWithArguments(1,2,3));
-		}
-		catch(WrongMethodTypeException e) {
-			wmtThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(wmtThrown);
+		mh.invokeWithArguments(1,2,3);
+		Assert.fail("The test case failed to throw an WrongMethodTypeException in the case of wrong argument type");
 	}
 	
 	/**
@@ -1241,7 +1091,7 @@ public class MethodHandleTest{
 		l[0] = 1;
 		l[1] = 2;
 		
-		AssertJUnit.assertEquals(3,(int)mh.invokeWithArguments(l));
+		Assert.assertEquals((int)mh.invokeWithArguments(l), 3);
 	}
 	
 	/**
@@ -1258,7 +1108,7 @@ public class MethodHandleTest{
 		l[0] = 1;
 		l[1] = 2;
 		
-		AssertJUnit.assertEquals(3,(int)mh.invokeWithArguments(l));
+		Assert.assertEquals((int)mh.invokeWithArguments(l), 3);
 	}
 	
 	/**
@@ -1273,35 +1123,27 @@ public class MethodHandleTest{
 		l[0] = 1;
 		l[1] = 2;
 		
-		AssertJUnit.assertEquals(3,(int)mh.invokeWithArguments(l));
+		Assert.assertEquals((int)mh.invokeWithArguments(l), 3);
 	}
 	
 	/**
 	 * invokeWithArguments(Object... args) test with Corner case of 0 length array
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_invokeWithArguments_VarargsObj_CrossPackage_Static_ZeroLengthArray() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findStatic(SamePackageExample.class, "returnOne", MethodType.methodType(String.class));
 		
 		Object [] l = new Object[0];
 		
-		AssertJUnit.assertEquals("1",(String)mh.invokeWithArguments(l));
+		Assert.assertEquals((String)mh.invokeWithArguments(l), "1");
 		
 		MethodHandle mh2 = MethodHandles.lookup().findStatic(SamePackageExample.class, "addPublicStatic", MethodType.methodType(int.class,int.class,int.class));
 		
 		Object [] l2 = new Object[0];
 		
-		boolean wrongMethodTypeExceptionThrown = false;
-		
-		try {
-			AssertJUnit.assertEquals(0,(int)mh2.invokeWithArguments(l2));
-		}
-		catch(WrongMethodTypeException e) {
-			wrongMethodTypeExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(wrongMethodTypeExceptionThrown);
+		mh2.invokeWithArguments(l2);
+		Assert.fail("The test case failed to throw an WrongMethodTypeException in the case of 0 length array");
 	}
 	
 	/****************************************
@@ -1319,7 +1161,7 @@ public class MethodHandleTest{
 		mh = mh.bindTo(g);
 		mh = mh.asVarargsCollector(String[].class);
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 	}
 	
 	/**
@@ -1333,7 +1175,7 @@ public class MethodHandleTest{
 		mh = mh.bindTo(g);
 		mh = mh.asCollector(String[].class,3);
 		
-		AssertJUnit.assertFalse(mh.isVarargsCollector());
+		Assert.assertFalse(mh.isVarargsCollector());
 	}
 	
 	/**
@@ -1345,7 +1187,7 @@ public class MethodHandleTest{
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"getLengthStatic",MethodType.methodType(int.class, String[].class));
 		mh = mh.asVarargsCollector(String[].class);
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 	}
 	
 	/**
@@ -1356,7 +1198,7 @@ public class MethodHandleTest{
 	public void test_isVarargsCollector_Using_VariableArity_JavaMethod_Virtual_SamePackage() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(SamePackageExample.class,"addPublicVariableArity",MethodType.methodType(int.class, int[].class));
 				
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 	}
 	
 	/**
@@ -1367,7 +1209,7 @@ public class MethodHandleTest{
 	public void test_isVarargsCollector_Using_VariableArity_JavaConstructor_SamePackage() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findConstructor(SamePackageExample.class,MethodType.methodType(void.class, int[].class));
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 	}
 	
 	/**
@@ -1378,7 +1220,7 @@ public class MethodHandleTest{
 	public void test_isVarargsCollector_Using_VariableArity_JavaMethod_Virtual_CrossPackage() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findVirtual(PackageExamples.class,"addPublicVariableArity",MethodType.methodType(int.class, int[].class));
 
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 	}
 	
 	/**
@@ -1389,7 +1231,7 @@ public class MethodHandleTest{
 	public void test_isVarargsCollector_Using_VariableArity_JavaMethod_Static_CrossPackage() throws Throwable{
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStaticVariableArity",MethodType.methodType(int.class, int[].class));
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 	}
 	
 	/**
@@ -1400,11 +1242,11 @@ public class MethodHandleTest{
 	public void test_isVarargsCollector_Using_asVarargsCollector_asTyped() throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStaticVariableArity",MethodType.methodType(int.class, int[].class));
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 		
 		mh = mh.asType(MethodType.methodType(int.class,int[].class));
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 	}
 	
 	/**
@@ -1416,11 +1258,11 @@ public class MethodHandleTest{
 	public void test_isVarargsCollector_Using_asVarargsCollector_asTyped_arg_int_to_byte() throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStaticVariableArity",MethodType.methodType(int.class, int[].class));
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 		
 		mh = mh.asType(MethodType.methodType(int.class,byte.class));
 		
-		AssertJUnit.assertFalse(mh.isVarargsCollector());  
+		Assert.assertFalse(mh.isVarargsCollector());  
 	}
 	
 	/**
@@ -1428,22 +1270,14 @@ public class MethodHandleTest{
 	 * Negative test : Change return type from int --> byte : This should throw exception as return types can only be converted from small to big types
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_isVarargsCollector_Using_asVarargsCollector_asTyped_RT_int_to_byte() throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStaticVariableArity",MethodType.methodType(int.class, int[].class));
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 		
-		boolean wrongMethodTypeExceptionThrown = false;
-		
-		try {
-			mh = mh.asType(MethodType.methodType(byte.class,int[].class));
-		}
-		catch(WrongMethodTypeException e) {
-			wrongMethodTypeExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(wrongMethodTypeExceptionThrown);  
+		mh = mh.asType(MethodType.methodType(byte.class,int[].class));
+		Assert.fail("The test case failed to throw an WrongMethodTypeException as return types can only be converted from small to big types");
 	}
 	
 	/**
@@ -1455,11 +1289,11 @@ public class MethodHandleTest{
 	public void test_isVarargsCollector_Using_asVarargsCollector_asTyped_arg_int_to_short() throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStaticVariableArity",MethodType.methodType(int.class, int[].class));
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 		
 		mh = mh.asType(MethodType.methodType(int.class,short.class));
 		
-		AssertJUnit.assertFalse(mh.isVarargsCollector());  
+		Assert.assertFalse(mh.isVarargsCollector());  
 	}
 	
 	/**
@@ -1467,22 +1301,14 @@ public class MethodHandleTest{
 	 * Negative test : Change return type from int --> short : This should throw exception as return types can only be converted from small to big types
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_isVarargsCollector_Using_asVarargsCollector_asTyped_RT_int_to_short() throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStaticVariableArity",MethodType.methodType(int.class, int[].class));
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 		
-		boolean wrongMethodTypeExceptionThrown = false;
-		
-		try {
-			mh = mh.asType(MethodType.methodType(short.class,int[].class));
-		}
-		catch(WrongMethodTypeException e) {
-			wrongMethodTypeExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(wrongMethodTypeExceptionThrown);  
+		mh = mh.asType(MethodType.methodType(short.class,int[].class));
+		Assert.fail("The test case failed to throw an WrongMethodTypeException as return types can only be converted from small to big types");
 	}
 	
 	/**
@@ -1490,22 +1316,14 @@ public class MethodHandleTest{
 	 * Negative test : Change type of argument from int --> long : This is an invalid conversion
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_isVarargsCollector_Using_asVarargsCollector_asTyped_arg_int_to_long() throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStaticVariableArity",MethodType.methodType(int.class, int[].class));
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 		
-		boolean wrongMethodTypeExceptionThrown = false; 
-		
-		try {
-			mh = mh.asType(MethodType.methodType(int.class,long.class));
-		}
-		catch(WrongMethodTypeException e) {
-			wrongMethodTypeExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(wrongMethodTypeExceptionThrown);
+		mh = mh.asType(MethodType.methodType(int.class,long.class));
+		Assert.fail("The test case failed to throw an WrongMethodTypeException in the case of the invalid type conversion from int to long");
 	}
 	
 	
@@ -1518,11 +1336,11 @@ public class MethodHandleTest{
 	public void test_isVarargsCollector_Using_asVarargsCollector_asTyped_RT_int_to_long() throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStaticVariableArity",MethodType.methodType(int.class, int[].class));
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 		
 		mh = mh.asType(MethodType.methodType(long.class,int[].class));
 		
-		AssertJUnit.assertFalse(mh.isVarargsCollector());  
+		Assert.assertFalse(mh.isVarargsCollector());  
 	}
 	
 	/**
@@ -1530,104 +1348,83 @@ public class MethodHandleTest{
 	 * Negative test : Change type of argument from int --> double : This is an invalid conversion
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
 	public void test_isVarargsCollector_Using_asVarargsCollector_asTyped_arg_int_to_double() throws Throwable {
 		MethodHandle mh = MethodHandles.lookup().findStatic(PackageExamples.class,"addPublicStaticVariableArity",MethodType.methodType(int.class, int[].class));
 		
-		AssertJUnit.assertTrue(mh.isVarargsCollector());
+		Assert.assertTrue(mh.isVarargsCollector());
 		
-		boolean wrongMethodTypeExceptionThrown = false; 
-		
-		try {
-			mh = mh.asType(MethodType.methodType(int.class,double.class));
-		}
-		catch(WrongMethodTypeException e) {
-			wrongMethodTypeExceptionThrown = true;
-		}
-		
-		AssertJUnit.assertTrue(wrongMethodTypeExceptionThrown);
+		mh = mh.asType(MethodType.methodType(int.class,double.class));
+		Assert.fail("The test case failed to throw an WrongMethodTypeException in the case of the invalid type conversion from int to double");
 	}
 	
     /**
      * Tests bindTo by binding non-null and null objects to a MethodHandle
      * @throws Throwable
      */
-    @Test(groups = { "level.extended" })
+    @Test(expectedExceptions = NullPointerException.class, groups = { "level.extended" })
 	public void testBindTo() throws Throwable {
         MethodHandle handle = SamePackageExample.getLookup().findSpecial(SamePackageExample.class, "isReceiverNull", MethodType.methodType(boolean.class), SamePackageExample.class);
         
-        AssertJUnit.assertFalse((boolean)handle.bindTo(new SamePackageExample()).invokeExact());
+        Assert.assertFalse((boolean)handle.bindTo(new SamePackageExample()).invokeExact());
         
-        boolean npeThrownWhenNullIsPassedInBindTo = false;
-        
-        try{
-        	boolean b = (boolean)(handle.bindTo(null).invokeExact());
-        }
-        catch(NullPointerException e) {
-        	npeThrownWhenNullIsPassedInBindTo = true;
-        }
-        AssertJUnit.assertTrue(npeThrownWhenNullIsPassedInBindTo);
+        boolean b = (boolean)(handle.bindTo(null).invokeExact());
+        Assert.fail("The test case failed to throw an NullPointerException in the case of null objects");
     }
     
     /**
-     * Negative test for invoke
+     * Negative test for invoke on String as argument
      * @throws Throwable
      */
-    @Test(groups = { "level.extended" })
-	public void test_Invoke() throws Throwable {
+    @Test(expectedExceptions = NumberFormatException.class, groups = { "level.extended" })
+	public void test_Invoke_String() throws Throwable {
     	MethodHandle handle = MethodHandles.lookup().findStatic(Integer.class, "parseInt", MethodType.methodType(int.class,String.class));
-    	boolean nfeHit = false;
-    	boolean wmtHit = false;
     	
-    	try {
-    		AssertJUnit.assertEquals(5,handle.invoke("s"));
-    	}
-    	catch(NumberFormatException e) {
-    		nfeHit = true;
-    	}
+    	handle.invoke("s");
+    	Assert.fail("The test case failed to throw an NumberFormatException");
+    }
+    
+    /**
+     * Negative test for invoke on Integer as argument
+     * @throws Throwable
+     */
+    @Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
+	public void test_Invoke_Int() throws Throwable {
+    	MethodHandle handle = MethodHandles.lookup().findStatic(Integer.class, "parseInt", MethodType.methodType(int.class,String.class));
     	
-    	AssertJUnit.assertTrue(nfeHit);
-    	
-    	try {
-    		AssertJUnit.assertEquals(5,handle.invoke(5));
-    	}
-    	catch(WrongMethodTypeException e) {
-    		wmtHit = true;
-    	}
-    	
-    	AssertJUnit.assertTrue(wmtHit);
+    	handle.invoke(5);
+    	Assert.fail("The test case failed to throw an WrongMethodTypeException");
     }
     
 	/**
-	 * Negative test for invokeExcat
+	 * Negative test for invokeExcat on an array of characters as argument
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
-	public void test_InvokeExact() throws Throwable {
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
+	public void test_InvokeExact_InvalidArgument1() throws Throwable {
 		MethodHandle mh  = MethodHandles.lookup().findVirtual(SamePackageExample.class,"arrayToString",MethodType.methodType(String.class,Object[].class));
 		SamePackageExample g = new SamePackageExample();
 		mh = mh.bindTo(g);
-		boolean wmtHit = false;
-		try{
-			AssertJUnit.assertEquals("[a,b]",(String)mh.invokeExact("a","b"));
-		}
-		catch(WrongMethodTypeException e) {
-			wmtHit = true;
-		}
 		
-		AssertJUnit.assertTrue(wmtHit);
+		String str = (String)mh.invokeExact("a","b");
+		Assert.fail("The test case failed to throw an WrongMethodTypeException");
+	}
+	
+	/**
+	 * Negative test for invokeExcat on a combination of String array and Integer as argument
+	 * @throws Throwable
+	 */
+	@Test(expectedExceptions = WrongMethodTypeException.class, groups = { "level.extended" })
+	public void test_InvokeExact_InvalidArgument2() throws Throwable {
+		MethodHandle mh  = MethodHandles.lookup().findVirtual(SamePackageExample.class,"arrayToString",MethodType.methodType(String.class,Object[].class));
+		SamePackageExample g = new SamePackageExample();
+		mh = mh.bindTo(g);
 		
-		wmtHit = false;
 		ArrayList<String> a = new ArrayList<String>();
 		MethodHandle m = MethodHandles.lookup().findVirtual(ArrayList.class, "add", MethodType.methodType(boolean.class,Object.class));
         
-		try {
-        	Object r = (Object)m.invokeExact(a,1);
-        }catch(WrongMethodTypeException e) {
-        	wmtHit = true;
-        }
-        
-		AssertJUnit.assertTrue(wmtHit);
+		Object r = (Object)m.invokeExact(a,1);
+		Assert.fail("The test case failed to throw an WrongMethodTypeException");
 	}
 	
 	public static int countArgs(int... args) {
@@ -1640,7 +1437,7 @@ public class MethodHandleTest{
 		ArrayList args = new ArrayList();
 		for ( int i = 0; i < 25; i++ ){
 			args.add( i );
-			AssertJUnit.assertEquals( i+1, MH.invokeWithArguments(args.toArray()) );
+			Assert.assertEquals(MH.invokeWithArguments(args.toArray()), i+1);
 		}
 	}
 
@@ -1915,8 +1712,66 @@ public class MethodHandleTest{
     		int i221, int i222, int i223, int i224, int i225, int i226, int i227, int i228, int i229, int i230, 
     		int i231, int i232, int i233, int i234, int i235, int i236, int i237, int i238, int i239, int i240, 
     		int i241, int i242, int i243, int i244, int i245, int i246, int i247, int i248, int i249, int i250, 
-    		int i251, int i252, int i253, int i254, int i255) {}
+    		int i251, int i252, int i253, int i254, int i255) {}	
     private void helperCollectorMethod(int[] i) {}
     private static void helperStaticCollectorMethod(int[] i) {}
     private void helperVarArgsMethod(String s, int... i) {}
+}
+
+class HelperConstructorClass {
+	public HelperConstructorClass(
+			int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, int i9, int i10, 
+			int i11, int i12, int i13, int i14, int i15, int i16, int i17, int i18, int i19, int i20, 
+			int i21, int i22, int i23, int i24, int i25, int i26, int i27, int i28, int i29, int i30, 
+			int i31, int i32, int i33, int i34, int i35, int i36, int i37, int i38, int i39, int i40, 
+			int i41, int i42, int i43, int i44, int i45, int i46, int i47, int i48, int i49, int i50, 
+			int i51, int i52, int i53, int i54, int i55, int i56, int i57, int i58, int i59, int i60, 
+			int i61, int i62, int i63, int i64, int i65, int i66, int i67, int i68, int i69, int i70, 
+			int i71, int i72, int i73, int i74, int i75, int i76, int i77, int i78, int i79, int i80, 
+			int i81, int i82, int i83, int i84, int i85, int i86, int i87, int i88, int i89, int i90, 
+			int i91, int i92, int i93, int i94, int i95, int i96, int i97, int i98, int i99, int i100, 
+			int i101, int i102, int i103, int i104, int i105, int i106, int i107, int i108, int i109, int i110, 
+			int i111, int i112, int i113, int i114, int i115, int i116, int i117, int i118, int i119, int i120, 
+			int i121, int i122, int i123, int i124, int i125, int i126, int i127, int i128, int i129, int i130, 
+			int i131, int i132, int i133, int i134, int i135, int i136, int i137, int i138, int i139, int i140, 
+			int i141, int i142, int i143, int i144, int i145, int i146, int i147, int i148, int i149, int i150, 
+			int i151, int i152, int i153, int i154, int i155, int i156, int i157, int i158, int i159, int i160, 
+			int i161, int i162, int i163, int i164, int i165, int i166, int i167, int i168, int i169, int i170, 
+			int i171, int i172, int i173, int i174, int i175, int i176, int i177, int i178, int i179, int i180, 
+			int i181, int i182, int i183, int i184, int i185, int i186, int i187, int i188, int i189, int i190, 
+			int i191, int i192, int i193, int i194, int i195, int i196, int i197, int i198, int i199, int i200, 
+			int i201, int i202, int i203, int i204, int i205, int i206, int i207, int i208, int i209, int i210, 
+			int i211, int i212, int i213, int i214, int i215, int i216, int i217, int i218, int i219, int i220, 
+			int i221, int i222, int i223, int i224, int i225, int i226, int i227, int i228, int i229, int i230, 
+			int i231, int i232, int i233, int i234, int i235, int i236, int i237, int i238, int i239, int i240, 
+			int i241, int i242, int i243, int i244, int i245, int i246, int i247, int i248, int i249, int i250, 
+			int i251, int i252, int i253) {}
+	
+	public HelperConstructorClass(
+    		int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, int i9, int i10, 
+    		int i11, int i12, int i13, int i14, int i15, int i16, int i17, int i18, int i19, int i20, 
+    		int i21, int i22, int i23, int i24, int i25, int i26, int i27, int i28, int i29, int i30, 
+    		int i31, int i32, int i33, int i34, int i35, int i36, int i37, int i38, int i39, int i40, 
+    		int i41, int i42, int i43, int i44, int i45, int i46, int i47, int i48, int i49, int i50, 
+    		int i51, int i52, int i53, int i54, int i55, int i56, int i57, int i58, int i59, int i60, 
+    		int i61, int i62, int i63, int i64, int i65, int i66, int i67, int i68, int i69, int i70, 
+    		int i71, int i72, int i73, int i74, int i75, int i76, int i77, int i78, int i79, int i80,
+    		int i81, int i82, int i83, int i84, int i85, int i86, int i87, int i88, int i89, int i90, 
+    		int i91, int i92, int i93, int i94, int i95, int i96, int i97, int i98, int i99, int i100, 
+    		int i101, int i102, int i103, int i104, int i105, int i106, int i107, int i108, int i109, int i110, 
+    		int i111, int i112, int i113, int i114, int i115, int i116, int i117, int i118, int i119, int i120, 
+    		int i121, int i122, int i123, int i124, int i125, int i126, int i127, int i128, int i129, int i130, 
+    		int i131, int i132, int i133, int i134, int i135, int i136, int i137, int i138, int i139, int i140, 
+    		int i141, int i142, int i143, int i144, int i145, int i146, int i147, int i148, int i149, int i150, 
+    		int i151, int i152, int i153, int i154, int i155, int i156, int i157, int i158, int i159, int i160, 
+    		int i161, int i162, int i163, int i164, int i165, int i166, int i167, int i168, int i169, int i170, 
+    		int i171, int i172, int i173, int i174, int i175, int i176, int i177, int i178, int i179, int i180, 
+    		int i181, int i182, int i183, int i184, int i185, int i186, int i187, int i188, int i189, int i190, 
+    		int i191, int i192, int i193, int i194, int i195, int i196, int i197, int i198, int i199, int i200, 
+    		int i201, int i202, int i203, int i204, int i205, int i206, int i207, int i208, int i209, int i210, 
+    		int i211, int i212, int i213, int i214, int i215, int i216, int i217, int i218, int i219, int i220, 
+    		int i221, int i222, int i223, int i224, int i225, int i226, int i227, int i228, int i229, int i230, 
+    		int i231, int i232, int i233, int i234, int i235, int i236, int i237, int i238, int i239, int i240, 
+    		int i241, int i242, int i243, int i244, int i245, int i246, int i247, int i248, int i249, int i250, 
+    		int i251, int i252, int i253, int i254) {}
 }

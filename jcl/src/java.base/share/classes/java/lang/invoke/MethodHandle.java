@@ -266,7 +266,7 @@ public abstract class MethodHandle {
 		this.kind = kind;
 		/* Must be called last as it may use previously set fields to modify the MethodType */
 		this.type = type;
-		enforceArityLimit(this.type);
+		enforceArityLimit(kind, this.type);
 		/* Must be called even laster as it uses the method type */
 		this.thunks = computeThunks(thunkArg);
 		/* Touch JITHelpers to make sure CP entries are resolved when needed later */
@@ -276,7 +276,7 @@ public abstract class MethodHandle {
 	MethodHandle(MethodHandle original, MethodType newType) {
 		this.kind = original.kind;
 		this.type = newType;
-		enforceArityLimit(newType);
+		enforceArityLimit(original.kind, newType);
 		this.thunks = original.thunks;
 		this.previousAsType = original.previousAsType;
 	}
@@ -1236,9 +1236,21 @@ public abstract class MethodHandle {
 		throw new UnsupportedOperationException("Subclass must implement this"); //$NON-NLS-1$
 	}
 
-	static final void enforceArityLimit(MethodType type) {
-		if (type.argSlots > 254) {
-			throwIllegalArgumentExceptionForMTArgCount(type.argSlots);
+	static final void enforceArityLimit(byte kind, MethodType type) {
+		int argumentSlots = type.argSlots;
+		
+		/* The upper limit of argument slots is 255. For a constructor, 
+		 * there should be at most 253 argument slots, one slot for
+		 * MethodHandle itself and one slot for the placeholder of a 
+		 * newly created object at the native level. So the slot occupied
+		 * by the placeholder must be counted in when doing the arity check.
+		 */
+		if (KIND_CONSTRUCTOR == kind) {
+			argumentSlots += 1;
+		}
+		
+		if (argumentSlots > 254) {
+			throwIllegalArgumentExceptionForMTArgCount(argumentSlots);
 		}
 	}
 	
