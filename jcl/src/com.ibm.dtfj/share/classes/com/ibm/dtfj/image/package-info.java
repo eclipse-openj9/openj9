@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,6 @@
  *******************************************************************************/
 
 /**
- * OpenJ9 management extensions.
+ * Classes to support reading system images.
  */
-module com.ibm.management {
-	requires transitive java.management;
-	requires transitive jdk.management;
-	requires java.logging;
-	exports com.ibm.lang.management;
-	exports com.ibm.virtualization.management;
-	provides sun.management.spi.PlatformMBeanProvider with com.ibm.lang.management.internal.PlatformMBeanProvider;
-}
+package com.ibm.dtfj.image;
