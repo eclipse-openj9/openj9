@@ -109,8 +109,8 @@ public class MethodHandleAPI_privateLookupIn {
 		Lookup lookup = MethodHandles.lookup();
 		Class<?> targetClass = lookup.lookupClass();
 		Lookup mhprivateLookupIn = privateLookupIn(targetClass, lookup);
-		Assert.assertEquals(targetClass, mhprivateLookupIn.lookupClass());
-		Assert.assertEquals(Lookup.PRIVATE, mhprivateLookupIn.lookupModes() & Lookup.PRIVATE);
+		Assert.assertEquals(mhprivateLookupIn.lookupClass(), targetClass);
+		Assert.assertEquals(mhprivateLookupIn.lookupModes() & Lookup.PRIVATE, Lookup.PRIVATE);
 	}
 	
 	/**
@@ -119,8 +119,8 @@ public class MethodHandleAPI_privateLookupIn {
 	@Test(groups = { "level.sanity" })
 	public static void test_privateLookupIn_TargetClass_Itself_NamedModule() throws Throwable {
 		Lookup mhprivateLookupIn = privateLookupIn(ModuleExample.class, callerLookup);
-		Assert.assertEquals(ModuleExample.class, mhprivateLookupIn.lookupClass());
-		Assert.assertEquals(Lookup.PRIVATE, mhprivateLookupIn.lookupModes() & Lookup.PRIVATE);
+		Assert.assertEquals(mhprivateLookupIn.lookupClass(), ModuleExample.class);
+		Assert.assertEquals(mhprivateLookupIn.lookupModes() & Lookup.PRIVATE, Lookup.PRIVATE);
 	}
 	
 	/**
@@ -129,8 +129,8 @@ public class MethodHandleAPI_privateLookupIn {
 	@Test(groups = { "level.sanity" })
 	public static void test_privateLookupIn_TargetClass_callerLookup_SamePackage_SameModule() throws Throwable {
 		Lookup mhprivateLookupIn = privateLookupIn(AnotherModuleExample.class, callerLookup);
-		Assert.assertEquals(AnotherModuleExample.class, mhprivateLookupIn.lookupClass());
-		Assert.assertEquals(Lookup.PRIVATE, mhprivateLookupIn.lookupModes() & Lookup.PRIVATE);
+		Assert.assertEquals(mhprivateLookupIn.lookupClass(), AnotherModuleExample.class);
+		Assert.assertEquals(mhprivateLookupIn.lookupModes() & Lookup.PRIVATE, Lookup.PRIVATE);
 	}
 	
 	/**
@@ -139,8 +139,8 @@ public class MethodHandleAPI_privateLookupIn {
 	@Test(groups = { "level.sanity" })
 	public static void test_privateLookupIn_TargetClass_callerLookup_DiffferentPackage_SameModule() throws Throwable {
 		Lookup mhprivateLookupIn = privateLookupIn(SameModuleExample.class, callerLookup);
-		Assert.assertEquals(SameModuleExample.class, mhprivateLookupIn.lookupClass());
-		Assert.assertEquals(Lookup.PRIVATE, mhprivateLookupIn.lookupModes() & Lookup.PRIVATE);
+		Assert.assertEquals(mhprivateLookupIn.lookupClass(), SameModuleExample.class);
+		Assert.assertEquals(mhprivateLookupIn.lookupModes() & Lookup.PRIVATE, Lookup.PRIVATE);
 	}
 	
 	/**
@@ -149,7 +149,7 @@ public class MethodHandleAPI_privateLookupIn {
 	@Test(groups = { "level.sanity" })
 	public static void test_privateLookupIn_TargetClass_callerLookup_DifferentModule() throws Throwable {
 		Lookup mhprivateLookupIn = privateLookupIn(DifferentModuleExample1.class, callerLookup);
-		Assert.assertEquals(DifferentModuleExample1.class, mhprivateLookupIn.lookupClass());
-		Assert.assertEquals(Lookup.PRIVATE, mhprivateLookupIn.lookupModes() & Lookup.PRIVATE);
+		Assert.assertEquals(mhprivateLookupIn.lookupClass(), DifferentModuleExample1.class);
+		Assert.assertEquals(mhprivateLookupIn.lookupModes() & Lookup.PRIVATE, Lookup.PRIVATE);
 	}
 }

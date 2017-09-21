@@ -28,7 +28,7 @@
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-modules mods.modulea,mods.moduleb,mods.modulec --module-path $(Q)$(TEST_RESROOT)$(D)mods$(Q) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
-	-cp $(Q)$(TEST_RESROOT)$(D)openj9_jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)openj9_jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testngSE90.xml$(Q) \
 	-testnames openj9_jsr292Test \
 	-groups $(TEST_GROUP) \
@@ -50,7 +50,7 @@
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-modules mods.modulea,mods.moduleb,mods.modulec --module-path $(Q)$(TEST_RESROOT)$(D)mods$(Q) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
-	-cp $(Q)$(TEST_RESROOT)$(D)openj9_jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)openj9_jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testngSE90.xml$(Q) \
 	-testnames openj9_jsr292Test \
 	-groups $(TEST_GROUP) \
