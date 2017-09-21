@@ -152,7 +152,7 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes)
       requiresAnalysis = false;
 
    // Create the fake region
-   TR_Structure *structure = fakeRegion(comp());
+   TR_Structure *structure = requiresAnalysis ? fakeRegion(comp()) : NULL;
    comp()->getFlowGraph()->setStructure(structure);
    TR_HCRGuardAnalysis *guardAnalysis = requiresAnalysis ? new (comp()->allocator()) TR_HCRGuardAnalysis(comp(), optimizer(), structure) : NULL;
 
@@ -249,6 +249,9 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes)
 int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
    {
    static char *forceOSRInsertion = feGetEnv("TR_ForceOSRGuardInsertion");
+
+   if (!comp()->getFlowGraph()->getStructure())
+      comp()->getFlowGraph()->setStructure(fakeRegion(comp()));
 
    TR_FearPointAnalysis fearAnalysis(comp(), optimizer(), comp()->getFlowGraph()->getStructure(),
       fearGeneratingNodes, true, trace());
