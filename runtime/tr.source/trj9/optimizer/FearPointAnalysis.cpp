@@ -36,7 +36,8 @@
 
 bool TR_FearPointAnalysis::virtualGuardsKillFear()
    {
-   return feGetEnv("TR_FPAnalaysisGuardsDoNotKillFear") == NULL;
+   static bool kill = (feGetEnv("TR_FPAnalaysisGuardsDoNotKillFear") == NULL);
+   return kill;
    }
 
 static bool containsPrepareForOSR(TR::Block *block)
