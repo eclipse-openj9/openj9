@@ -87,8 +87,7 @@ check_env:
 configure:
 ifeq ($(AUTOGEN_FILES),)
 	(cd $(OPENJ9TEST_SRC_DIR)/TestConfig && \
-		$(MAKE) -f run_configure.mk $(ADD_CMD_ARGS) && \
-		$(MAKE) $(ADD_CMD_ARGS) getdependency )
+		$(MAKE) -f run_configure.mk $(ADD_CMD_ARGS) )
 endif
 
 compile: configure

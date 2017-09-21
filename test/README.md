@@ -36,7 +36,6 @@ cd openj9/test/TestConfig
 export JAVA_BIN=<path to java bin that you wish to test>
 export SPEC=linux_x86-64_cmprssptrs
 make -f run_configure.mk
-make getdependency
 make test
 ```
 
@@ -59,9 +58,7 @@ JAVA_VERSION=[SE80|SE90] (SE90 default value)
 	* jcommander-1.48.jar
 	* asmtools-6.0.jar
 
-	The above jars will be downloaded by running command:
-
-            make getdependency
+	The above jars will be downloaded automatically when you begin to compile test source codes.
 
 2. Compile tests:
   * compile and run all tests
