@@ -2936,7 +2936,7 @@ public class MethodHandles {
 		MethodType originalType = originalHandle.type;
 		Class<?>[] valueTypesCopy = new Class<?>[valueTypes.size()];
 
-		/* check if indexing is in range*/
+		/* check if indexing is in range */
 		if ((0 > skippedArgumentCount) ||
 			(skippedArgumentCount > originalType.parameterCount())) {
 			throw new IllegalArgumentException("Invalid parameters: skippedArgumentCount"); //$NON-NLS-1$

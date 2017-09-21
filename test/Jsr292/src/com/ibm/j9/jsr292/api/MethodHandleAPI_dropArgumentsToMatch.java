@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,10 @@ import java.lang.invoke.MethodType;
 public class MethodHandleAPI_dropArgumentsToMatch {
 	public static class Hash_Methods {
 		public Hash_Methods() {}
+
+		public static String hash_void() {
+			return "abc";
+		}
 
 		public String hash_boolean(boolean a, boolean b) {
 			return String.valueOf(a && b);
@@ -78,7 +82,7 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 
 		MethodHandle h1 = MethodHandles.dropArgumentsToMatch(null, 0, h0.type().parameterList(), 0);
 
-		Assert.fail("dropArgumentsToMatch method is nut supposed to accept null MethodHandle");
+		Assert.fail("dropArgumentsToMatch method is not supposed to accept null MethodHandle");
 	}
 
 	/**
@@ -91,7 +95,7 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 
 		MethodHandle h1 = MethodHandles.dropArgumentsToMatch(h0, 0, null, 0);
 
-		Assert.fail("dropArgumentsToMatch method is nut supposed to accept null parameter list");
+		Assert.fail("dropArgumentsToMatch method is not supposed to accept null parameter list");
 	}
 
 	/**
@@ -176,6 +180,54 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 		h1 = MethodHandles.dropArgumentsToMatch(h1, 0, typeList.parameterList(), 1);
 
 		Assert.fail("dropArgumentsToMatch method must receive a valueTypes list that doesn't contain void.class");
+	}
+
+	/**
+	 * test for illegal arguments where match location has passed the end of valueList
+	 * @throws IllegalArgumentException
+	 */
+	@Test(groups = { "level.extended" }, expectedExceptions = IllegalArgumentException.class)
+	public static void test_dropArgumentsToMatch_outrange_matching() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(String.class, "concat", MethodType.methodType(String.class, String.class));
+		MethodType typeList = h1.type().insertParameterTypes(1, String.class, String.class);
+
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 1, typeList.parameterList(), 4);
+
+		Assert.fail("dropArgumentsToMatch method must receive a valueTypes list that doesn't contain void.class");
+	}
+
+	/**
+	 * test for empty original parameter list
+	 */
+    @Test(groups = {"level.extended"})
+	public static void test_dropArgumentsToMatch_empty_original() {
+		try {
+			MethodHandle h1 = MethodHandles.lookup().findStatic(Hash_Methods.class, "hash_void", MethodType.methodType(String.class));
+			MethodType typeList = h1.type().insertParameterTypes(0, char.class, int.class);
+
+			h1 = MethodHandles.dropArgumentsToMatch(h1, 0, typeList.parameterList(), 0);
+
+			Assert.assertEquals(h1.invoke('c', 2), "abc", "Transformed method handle did not return expected result");
+		} catch (Throwable t) {
+			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
+		}
+	}
+
+	/**
+	 * test for empty valueList
+	 */
+	@Test(groups = {"level.extended"})
+	public static void test_dropArgumentsToMatch_empty_valueList() {
+		try {
+			MethodHandle h1 = MethodHandles.lookup().findStatic(Hash_Methods.class, "hash_void", MethodType.methodType(String.class));
+			MethodType typeList = h1.type();
+
+			h1 = MethodHandles.dropArgumentsToMatch(h1, 0, typeList.parameterList(), 0);
+
+			Assert.assertEquals(h1.invoke(), "abc", "Transformed method handle did not return expected result");
+		} catch (Throwable t) {
+			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
+		}
 	}
 
 	/**
