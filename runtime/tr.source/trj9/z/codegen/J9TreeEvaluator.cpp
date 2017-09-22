@@ -9778,154 +9778,127 @@ static TR::Register * inlineSinglePrecisionSQRT(TR::Node *node, TR::CodeGenerato
    return node->getRegister();
    }
 
-static TR::Register *inlineCurrentTimeMaxPrecision(
-      TR::Node * node,
-      TR::CodeGenerator * cg)
+/** \brief
+ *     Evaluates a sequence of instructions which generate the current time in terms of 1/2048 of micro-seconds.
+ *
+ *  \param cg
+ *     The code generator used to generate the instructions.
+ *
+ *  \param node
+ *     The node with which to associate the generated instructions with.
+ *
+ *  \return
+ *     A register (or register pair for 31-bit) containing the current time in terms of 1/2048 of micro-seconds.
+ */
+static TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::Node* node)
    {
-   //
-   // We will generate the following code inline for this function instead of making a call
-   // 64-bit:
-   //   STCK  0(Rx)          write TOD clock value to 8-byte temp located at address Rx
-   //   LG    Rx,0(Rx)       load the second double-word
-   //   SG    Rx,=L(1970)    subtract 1970
-   //      LLGT Ry, FLCCVT(r0)
-   //      LLGT Ry, CVTEXT2-CVT(Ry)
-   //      SLG  Rx, cvtLSO - CVTXTNT2(Ry)   zOS requires time correction for leap seconds.
-   //   SRLG  Rx,1           get time in terms of 1/2048 of micro-seconds
-   //
-   // 32-bit:
-   //   STCK  0(Rx)          write TOD clock value to 8-byte temp located at address Rx
-   //   LM    Rx,Rx+1,0(,Rx) load the second double-word (needs to be even reg)
-   //   SL    Rx+1,=L(1970)+4 subtract low word
-   //   BCRC  <carry>        branch around carry logic
-   //   AHI   Rx,-1
-   // <carry>
-   //   S     Rx,=L(1970)    subtract high word, with borrow
-   //       L Ry, FLCCVT(r0)    zOS Requires time correction for leap seconds.
-   //       L Ry, CVTEXT2-CVT(Ry)
-   //       SL Rx+1, CVTLSO-CVTXTNT2+4(Ry)
-   //       BCRC <carry1>
-   //       AHI Rx, -1
-   //  <carry1>
-   //       S  Rx, CVTLSO-CVTXTNT2(Ry)
-   //   SRDL  Rx,1           get time in terms of 1/2048 of micro-seconds
+   // STCKF is an S instruction and requires a 64-bit memory reference
+   TR::SymbolReference* reusableTempSlot = cg->allocateReusableTempSlot();
 
-   // first, allocate a temp slot for the call as an 8-byte storage location for STCK
-   TR::SymbolReference* symRef = cg->allocateReusableTempSlot();
-   TR::MemoryReference * mref = generateS390MemoryReference(node, symRef, cg);
+   generateSInstruction(cg, TR::InstOpCode::STCKF, node, generateS390MemoryReference(node, reusableTempSlot, cg));
 
-   generateSInstruction(cg, TR::InstOpCode::STCKF, node, mref);
+   // Dynamic literal pool could have assigned us a literal base register
+   TR::Register* literalBaseRegister = (node->getNumChildren() == 1) ? cg->evaluate(node->getFirstChild()) : NULL;
 
-   TR::Register *litBase = (node->getNumChildren() == 1) ? cg->evaluate(node->getFirstChild()) : NULL;
-
-   TR::Register * targetRegister;
+   TR::Register* targetRegister;
 
    if (TR::Compiler->target.is64Bit() || cg->use64BitRegsOn32Bit())
       {
       targetRegister = cg->allocate64bitRegister();
-      TR::Register * tmpReg = cg->allocate64bitRegister();
+
+#if defined(TR_HOST_S390) && defined(J9ZOS390)
       int32_t offsets[3];
+      _getSTCKLSOOffset(offsets);
 
-#if defined(TR_HOST_S390) && defined(J9ZOS390)
-      _getSTCKLSOOffset((int32_t*)&offsets);
+      TR::Register* tempRegister = cg->allocate64bitRegister();
 
-      // zOS requires some time correction to account for Leap Seconds.
-      // The number of leap seconds is stored in the LSO field of the
-      // MVS data area.
+      // z/OS requires time correction to account for leap seconds. The number of leap seconds is stored in the LSO
+      // field of the MVS data area.
       if (TR::Compiler->target.isZOS())
          {
-         // Load FFCVT(r0)
-         TR::MemoryReference *tmpMemRef = generateS390MemoryReference(tmpReg, offsets[0],cg);
-         tmpMemRef->setBaseRegister(NULL, cg);
-         generateRXYInstruction(cg, TR::InstOpCode::LLGT, node, tmpReg, tmpMemRef);
+         // Load FFCVT(R0)
+         generateRXYInstruction(cg, TR::InstOpCode::LLGT, node, tempRegister, generateS390MemoryReference(offsets[0], cg));
+
          // Load CVTEXT2 - CVT
-         generateRXYInstruction(cg, TR::InstOpCode::LLGT, node, tmpReg, generateS390MemoryReference(tmpReg, offsets[1],cg));
+         generateRXYInstruction(cg, TR::InstOpCode::LLGT, node, tempRegister, generateS390MemoryReference(tempRegister, offsets[1], cg));
          }
 #endif
 
-      TR::MemoryReference * lref = generateS390MemoryReference(node, symRef, cg);
-      generateRXInstruction(cg, TR::InstOpCode::LG, node, targetRegister, lref);
+      generateRXInstruction(cg, TR::InstOpCode::LG, node, targetRegister, generateS390MemoryReference(node, reusableTempSlot, cg));
 
-      int64_t todJan1970 = CONSTANT64(0x7D91048BCA000000);
-      generateS390ImmOp(cg, TR::InstOpCode::SG, node, targetRegister, targetRegister, todJan1970,NULL, litBase);
+      int64_t todJanuary1970 = 0x7D91048BCA000000LL;
+      generateRegLitRefInstruction(cg, TR::InstOpCode::SLG, node, targetRegister, todJanuary1970, NULL, NULL, literalBaseRegister);
 
 #if defined(TR_HOST_S390) && defined(J9ZOS390)
-      // zOS requires some time correction to account for Leap Seconds.
-      // The number of leap seconds is stored in the LSO field of the
-      // MVS data area.
       if (TR::Compiler->target.isZOS())
          {
-         // Subtract the LSO Offset.
-         generateRXYInstruction(cg, TR::InstOpCode::SG, node, targetRegister, generateS390MemoryReference(tmpReg, offsets[2],cg));
+         // Subtract the LSO offset
+         generateRXYInstruction(cg, TR::InstOpCode::SLG, node, targetRegister, generateS390MemoryReference(tempRegister, offsets[2],cg));
          }
+
+      cg->stopUsingRegister(tempRegister);
 #endif
 
+      // Get current time in terms of 1/2048 of micro-seconds
       generateRSInstruction(cg, TR::InstOpCode::SRLG, node, targetRegister, targetRegister, 1);
-
-      cg->stopUsingRegister(tmpReg);
       }
    else
       {
       targetRegister = cg->allocateConsecutiveRegisterPair();
-      TR::Register * targetLowRegister  = targetRegister->getLowOrder();
-      TR::Register * targetHighRegister = targetRegister->getHighOrder();
 
-      TR::Register * tmpReg  = cg->allocateRegister();;
-      TR::Register * tmpReg2 = cg->allocateRegister();;
-
-      int32_t offsets[3];
+      TR::Register* tempRegister1 = cg->allocateRegister();
+      TR::Register* tempRegister2 = cg->allocateRegister();
 
 #if defined(TR_HOST_S390) && defined(J9ZOS390)
-      _getSTCKLSOOffset((int32_t*)&offsets);
+      int32_t offsets[3];
+      _getSTCKLSOOffset(offsets);
 
-      // zOS requires some time correction to account for Leap Seconds.
-      // The number of leap seconds is stored in the LSO field of the
-      // MVS data area.
+      // z/OS requires time correction to account for leap seconds. The number of leap seconds is stored in the LSO
+      // field of the MVS data area.
       if (TR::Compiler->target.isZOS())
          {
          // Load FFCVT(r0)
-         TR::MemoryReference *tmpMemRef = generateS390MemoryReference(tmpReg, offsets[0],cg);
-         tmpMemRef->setBaseRegister(NULL, cg);
-         generateRXYInstruction(cg, TR::InstOpCode::L, node, tmpReg, tmpMemRef);
+         generateRXYInstruction(cg, TR::InstOpCode::L, node, tempRegister1, generateS390MemoryReference(offsets[0], cg));
+
          // Load CVTEXT2 - CVT
-         generateRXYInstruction(cg, TR::InstOpCode::L, node, tmpReg, generateS390MemoryReference(tmpReg, offsets[1],cg));
-         // Subtract the LSO Offset.
+         generateRXYInstruction(cg, TR::InstOpCode::L, node, tempRegister1, generateS390MemoryReference(tempRegister1, offsets[1],cg));
          }
 #endif
 
-      TR::MemoryReference * lhref = generateS390MemoryReference(node, symRef, cg);
-      generateRSInstruction(cg, TR::InstOpCode::LM, node, targetRegister, lhref);
+      generateRSInstruction(cg, TR::InstOpCode::LM, node, targetRegister, generateS390MemoryReference(node, reusableTempSlot, cg));
 
-      int32_t todJan1970H = 0x7D91048B;
-      int32_t todJan1970L = 0xCA000000;
+      int32_t todJanuary1970High = 0x7D91048B;
+      int32_t todJanuary1970Low = 0xCA000000;
 
-      // tmpReg2 is not actually used
-      //
-      generateS390ImmOp(cg, TR::InstOpCode::SL, node, tmpReg2, targetLowRegister, todJan1970L, NULL, litBase);
-      generateS390ImmOp(cg, TR::InstOpCode::SLB, node, tmpReg2, targetHighRegister, todJan1970H, NULL, litBase);
+      // tempRegister2 is not actually used
+      generateS390ImmOp(cg, TR::InstOpCode::SL, node, tempRegister2, targetRegister->getLowOrder(), todJanuary1970Low, NULL, literalBaseRegister);
+      generateS390ImmOp(cg, TR::InstOpCode::SLB, node, tempRegister2, targetRegister->getHighOrder(), todJanuary1970High, NULL, literalBaseRegister);
 
 #if defined(TR_HOST_S390) && defined(J9ZOS390)
-      // zOS requires some time correction to account for Leap Seconds.
-      // The number of leap seconds is stored in the LSO field of the
-      // MVS data area.
       if (TR::Compiler->target.isZOS())
          {
-         generateRXYInstruction(cg, TR::InstOpCode::SL, node, targetLowRegister, generateS390MemoryReference(tmpReg, offsets[2]+4,cg));
-         generateRXYInstruction(cg, TR::InstOpCode::SLB, node, targetHighRegister, generateS390MemoryReference(tmpReg, offsets[2],cg));
+         // Subtract the LSO offset
+         generateRXYInstruction(cg, TR::InstOpCode::SL, node, targetRegister->getLowOrder(), generateS390MemoryReference(tempRegister1, offsets[2] + 4, cg));
+         generateRXYInstruction(cg, TR::InstOpCode::SLB, node, targetRegister->getHighOrder(), generateS390MemoryReference(tempRegister1, offsets[2], cg));
          }
 #endif
 
+      // Get current time in terms of 1/2048 of micro-seconds
       generateRSInstruction(cg, TR::InstOpCode::SRDL, node, targetRegister, 1);
-      cg->stopUsingRegister(tmpReg);
-      cg->stopUsingRegister(tmpReg2);
+
+      cg->stopUsingRegister(tempRegister1);
+      cg->stopUsingRegister(tempRegister2);
       }
+
    cg->freeReusableTempSlot();
-   if (litBase)
+
+   if (literalBaseRegister != NULL)
       {
       cg->decReferenceCount(node->getFirstChild());
       }
 
    node->setRegister(targetRegister);
+
    return targetRegister;
    }
 
@@ -12046,7 +12019,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
    //
    if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::currentTimeMaxPrecisionSymbol))
       {
-      resultReg = inlineCurrentTimeMaxPrecision(node, cg);
+      resultReg = inlineCurrentTimeMaxPrecision(cg, node);
       return true;
       }
    else if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::singlePrecisionSQRTSymbol))
