@@ -4627,10 +4627,6 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    entry._compInfoPT = this; // need to know which comp thread is handling this request
    TR::compInfoPT = this; // set the thread-local compinfoPT
 
-   // need to clear JAAS ROM class cache between compilations because the ram class pointers may be reused.
-   _cachedROMClasses.clear();
-   cacheRemoteROMClass(details.getClass(), const_cast<J9ROMClass*>(details.getRomClass()));
-
    // update the last time the compilation thread had to do something.
    compInfo->setLastReqStartTime(compInfo->getPersistentInfo()->getElapsedTime());
 
@@ -4704,6 +4700,10 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       return;
       }
 
+   // If this is a request for a remote compilation, cache the ROMClass
+   if (entry.isRemoteCompReq())
+      cacheRemoteROMClass(details.getClass(), const_cast<J9ROMClass*>(details.getRomClass()));
+
    // Pin the class of the method being compiled to prevent it from being unloaded
    //
    // This conversion is safe. The macro J9VM_J9CLASS_TO_HEAPCLASS will not make a conversion if Classes on Heap is not enabled.
@@ -4739,12 +4739,14 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    // queue slot (entry) monitor in hand
    //
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
-   // un-set the thread_local compInfoPT a little early - immediately after the compilation
-   TR::compInfoPT = nullptr;
 
    // Unpin the class
    if (!entry.isRemoteCompReq())
       compThread->javaVM->internalVMFunctions->j9jni_deleteLocalRef((JNIEnv*)compThread, classObject);
+
+   // free the cached classes map
+   if (entry.isRemoteCompReq())
+      _cachedROMClasses.clear();
 
    // Update how many compilation threads are working on hot/scorching methods
    if (entry._hasIncrementedNumCompThreadsCompilingHotterMethods)
@@ -4858,6 +4860,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    compInfo->debugPrint(compThread, "\tcompilation thread releasing VM access\n");
    releaseVMAccess(compThread);
    compInfo->debugPrint(compThread, "-VMacc\n");
+
    // We can suspend this thread if too many are active
    if (
       !(isDiagnosticThread()) // must not be reserved for log
