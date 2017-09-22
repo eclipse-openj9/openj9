@@ -4318,6 +4318,7 @@ TR::CompilationInfoPerThread::getStream()
 void
 TR::CompilationInfoPerThread::run()
    {
+   TR::compInfoPT = this; // set the thread_local pointer to this object on first run
    for (
       CompilationThreadState threadState = getCompilationThreadState();
       threadState != COMPTHREAD_SIGNAL_TERMINATE;
@@ -4626,7 +4627,6 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    compInfo->printQueue();
 
    entry._compInfoPT = this; // need to know which comp thread is handling this request
-   TR::compInfoPT = this; // set the thread-local compinfoPT
 
    // update the last time the compilation thread had to do something.
    compInfo->setLastReqStartTime(compInfo->getPersistentInfo()->getElapsedTime());
