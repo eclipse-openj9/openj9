@@ -1181,14 +1181,6 @@ Only available on zOS</description>
 		<description>Divide, remainder operations are implemented via C helpers (divrem.c) rather than assembly. </description>
 		<ifRemoved>An assembly implementation of all math operations must exist.</ifRemoved>
 	</flag>
-	<flag id="math_useFdlibmMathLibrary">
-		<description>Controls whether or not we use the PD FDLIBM math libraries</description>
-		<ifRemoved>VM uses platform math functions.</ifRemoved>
-	</flag>
-	<flag id="math_useFdlibmScaling">
-		<description>Scale trig arguments to PI/2 range using FDLIBM helpers</description>
-		<ifRemoved>Trig results are slightly less accurate.</ifRemoved>
-	</flag>
 	<flag id="module_a2e">
 		<description>Enables compilation of the a2e module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
@@ -1387,14 +1379,6 @@ Only available on zOS</description>
 	</flag>
 	<flag id="module_exelib">
 		<description>Enables compilation of the exelib module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_fdlibm">
-		<description>Enables compilation of the fdlibm module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_flsanity">
-		<description>Enables compilation of the flsanity module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_gc">

@@ -104,7 +104,6 @@
 		<project id="buildspecs"/>
 		<project id="VM_Build-Tools"/>
 		<project id="runtime"/>
-		<project id="VM_FDLIBM"/>
 		<project id="VM_LINUX39031"/>
 		<project id="VM_LINUX39064"/>
 		<project id="VM_LINUXPPC32"/>

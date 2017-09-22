@@ -931,7 +931,6 @@
 						<include name="cfdump${r"${exe.suffix}"}/" />
 						<include name="dbx_plug64_26${r"${exe.suffix}"}/" />
 						<include name="j9ddrgen${r"${exe.suffix}"}/" />
-						<include name="floatsanityg${r"${exe.suffix}"}/" />
 						<include name="invtest${r"${exe.suffix}"}/" />
 						<include name="pltest${r"${exe.suffix}"}/" />
 						<include name="propstest${r"${exe.suffix}"}/" />

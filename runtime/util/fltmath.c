@@ -37,15 +37,6 @@
 #define J9_NO_DENORMAL_FLOAT_SUPPORT 1
 #endif
 
-#ifdef J9VM_MATH_USE_FDLIBM_MATH_LIBRARY
-#undef fmod
-#undef remainder
-#define fmod fdlibm_fmod
-#define remainder fdlibm_remainder
-extern double fmod (double, double);
-extern double remainder (double, double);
-#endif
-
 
 I_32
 helperCDoubleCompareDouble(jdouble a, jdouble b)
