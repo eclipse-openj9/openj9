@@ -20,6 +20,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
+
+/**
+ * Diagnostic Tool Framework for Java&trade; (DTFJ)
+ *
+ * The Diagnostic Tool Framework for Java&trade; (DTFJ) is a Java application
+ * programming interface (API) used to support the building of Java diagnostic
+ * tools. DTFJ works with data from a system dump or a Javadump.
+ */
 module com.ibm.dtfj {
 	requires transitive java.desktop;
 	requires transitive java.logging;

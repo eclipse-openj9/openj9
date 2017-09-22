@@ -27,13 +27,12 @@ import java.util.Iterator;
 import java.util.Properties;
 
 /**
- * <p>Represents an entire operating system image (e.g. a core file).</p> 
+ * <p>Represents an entire operating system image (for example, a core file).</p> 
  * 
  * <p>There are methods for accessing information about the architecture 
  * of the machine on which the image was running - hardware and 
  * operating system. The major feature, however, is the ability to 
  * iterate over the Address Spaces contained within the image.</p> 
- *
  */
 public interface Image {
 	
