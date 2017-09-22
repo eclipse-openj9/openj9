@@ -378,7 +378,9 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   _isDiagnosticThread;
    CpuSelfThreadUtilization _compThreadCPU;
 
-   std::unordered_map<J9Class *, J9ROMClass *> _cachedROMClasses;
+   typedef TR::typed_allocator<std::pair<const J9Class *, J9ROMClass * const>, TR::PersistentAllocator &> ClassCacheMapAllocator;
+   typedef std::unordered_map<J9Class *, J9ROMClass *, std::hash<J9Class *>, std::equal_to<J9Class *>, ClassCacheMapAllocator> PersistentClassMap;
+   PersistentClassMap _cachedROMClasses;
    }; // CompilationInfoPerThread
 
 extern thread_local TR::CompilationInfoPerThread * compInfoPT;
