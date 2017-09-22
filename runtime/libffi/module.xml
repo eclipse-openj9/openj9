@@ -220,9 +220,12 @@
 			<!-- vpaths for s390 -->
 			<vpath pattern="ffi.c" path="s390" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_390.*" />
+				<include-if condition="spec.linux_ztpf.*" />
 			</vpath>
 			<vpath pattern="sysv.S" path="s390" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_390.*" />
+			</vpath>
+			<vpath pattern="sysv.S" path="ztpf" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_ztpf.*" />
 			</vpath>
 			<vpath pattern="ffi.c" path="z" augmentObjects="true" type="relativepath">
