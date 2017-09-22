@@ -968,6 +968,17 @@ static void completeInitialization() {
 	initSystemClassLoader = true;
 }
 
+/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
+//Returns incoming class's classloader without going through security checking
+static ClassLoader getClassLoader(Class<?> clz) {
+	if (null != clz) {
+		return clz.getClassLoader0();
+	} else {
+		return null;
+	}
+}
+/*[ENDIF]*/
+
 /*[IF Sidecar19-SE]*/
 @CallerSensitive
 public static ClassLoader getPlatformClassLoader() {
@@ -980,15 +991,6 @@ public static ClassLoader getPlatformClassLoader() {
 		}
 	}
 	return platformClassLoader;
-}
-
-// Returns incoming class's classloader without going through security checking
-static ClassLoader getClassLoader(Class<?> clz) {
-	if (null != clz) {
-		return clz.getClassLoader0();
-	} else {
-		return null;
-	}
 }
 
 // Loads a class in a module defined to this classloader

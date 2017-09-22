@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE-OpenJ9]*/
+/*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
  * Copyright (c) 2017, 2017 IBM Corp. and others
@@ -29,6 +29,12 @@ package java.lang.invoke;
  */
 
 final class MemberName {
+	/*[IF Sidecar18-SE-OpenJ9&!Sidecar19-SE-OpenJ9]*/
+	static final class Factory {
+		public static Factory INSTANCE = null;
+	}
+	/*[ENDIF]*/
+
 	public boolean isVarargs() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
