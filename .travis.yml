@@ -64,7 +64,8 @@ before_script:
   - wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
   - tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
   - cd ..
-  - git clone https://github.com/ibmruntimes/openj9-openjdk-jdk9.git
+  # Shallow clone of the openj9-openjdk-jdk9 repo to speed up clone / reduce server load
+  - git clone --depth 1 https://github.com/ibmruntimes/openj9-openjdk-jdk9.git
 script:
   # Clear this option so it doesn't interfere with configure detecting the bootjdk
   - unset _JAVA_OPTIONS
