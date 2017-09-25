@@ -35,7 +35,6 @@ import org.testng.log4testng.Logger;
  * This test must be invoked via testng.  Running the main method will return only the status of the attach API.
  *
  */
-@SuppressWarnings({"nls","boxing"})
 @Test(groups = { "level.extended" })
 public class TestAttachAPI  {
 	protected static Logger logger = Logger.getLogger(TestAttachAPI.class);
