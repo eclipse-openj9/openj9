@@ -236,12 +236,11 @@ TR::Register* TR::X86HelperCallSite::BuildCall()
    // Find the return register, EAX/RAX
    TR::Register* EAX = RealRegisters.Use(TR::RealRegister::eax);
 
-   // Build parameters
-   // Note that parameters from the Call Node are Right-to-Left (RTL) which is same as the order of parameters on stack per this linkage
+   // Build parameters, parameters in _Params are Right-to-Left (RTL)
    int NumberOfParamOnStack = 0;
    for (size_t i = 0; i < _Params.size(); i++)
       {
-      size_t index = _Params.size() - i;
+      size_t index = _Params.size() - i - 1;
       if (index < NumberOfIntParamRegisters)
          {
          generateRegRegInstruction(MOVRegReg(),
@@ -268,13 +267,6 @@ TR::Register* TR::X86HelperCallSite::BuildCall()
             }
          }
       }
-
-   // The first param is always VM Thread
-   generateRegRegInstruction(MOVRegReg(),
-                             _Node,
-                             RealRegisters.Use(IntParamRegisters[0]),
-                             cg()->getVMThreadRegister(),
-                             cg());
 
    // Call helper
    TR::X86ImmInstruction* instr = generateImmSymInstruction(CALLImm4,

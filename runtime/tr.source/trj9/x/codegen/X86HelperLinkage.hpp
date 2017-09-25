@@ -94,14 +94,24 @@ class X86HelperLinkage : public TR::Linkage
    const X86LinkageProperties& getProperties() { return _Properties; }
    virtual void createPrologue(TR::Instruction *cursor) { TR_ASSERT(false, IMCOMPLETELINKAGE); }
    virtual void createEpilogue(TR::Instruction *cursor) { TR_ASSERT(false, IMCOMPLETELINKAGE); }
-   virtual TR::Register *buildIndirectDispatch(TR::Node *callNode) { TR_ASSERT(false, "Indirect dispatch is not currently supported"); return NULL; }
+   virtual TR::Register* buildIndirectDispatch(TR::Node *callNode) { TR_ASSERT(false, "Indirect dispatch is not currently supported"); return NULL; }
    virtual TR::Register* buildDirectDispatch(TR::Node* callNode, bool spillFPRegs)
       {
       X86HelperCallSite CallSite(callNode, cg());
       // Evaluate children
       for (int i = 0; i < callNode->getNumChildren(); i++)
          {
-         CallSite.AddParam(cg()->evaluate(callNode->getChild(i)));
+         cg()->evaluate(callNode->getChild(i));
+         }
+      // Setup parameters
+      for (int i = callNode->getNumChildren() - 1; i >= 0; i--)
+         {
+         CallSite.AddParam(callNode->getChild(i)->getRegister());
+         }
+      // Supply VMThread as the first parameter if necessary
+      if (!callNode->getSymbol()->getMethodSymbol()->isSystemLinkageDispatch())
+         {
+         CallSite.AddParam(cg()->getVMThreadRegister());
          }
       TR::Register* ret = CallSite.BuildCall();
       // Release children
