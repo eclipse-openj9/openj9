@@ -823,7 +823,11 @@ public abstract class MethodHandle {
 		MethodType type = null;
 
 		try {
-			type = MethodType.fromMethodDescriptorString(methodDescriptor, VM.getVMLangAccess().getClassloader(clazz));
+			try { 
+				type = MethodType.fromMethodDescriptorString(methodDescriptor, VM.getVMLangAccess().getClassloader(clazz));
+			} catch (TypeNotPresentException e) {
+				throw throwNoClassDefFoundError(e);
+			}
 			int bsmIndex = unsafe.getShort(bsmData);
 			int bsmArgCount = unsafe.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
 			long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
@@ -892,7 +896,11 @@ public abstract class MethodHandle {
 					cpEntry = cp.getDoubleAt(index);
 					break;
 				case 13:
-					cpEntry = getCPMethodTypeAt(clazz, index);
+					try {
+						cpEntry = getCPMethodTypeAt(clazz, index);
+					} catch (TypeNotPresentException e) {
+						throw throwNoClassDefFoundError(e);
+					}
 					break;
 				case 14:
 					cpEntry = getCPMethodHandleAt(clazz, index);
@@ -961,6 +969,27 @@ public abstract class MethodHandle {
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * Helper method to throw NoClassDefFoundError if the cause of TypeNotPresentException 
+	 * is ClassNotFoundException. Otherwise, re-throw TypeNotPresentException.
+	 * 
+	 * @param   an instance of TypeNotPresentException
+	 * 
+	 * @return  Throwable to prevent any fall through case
+	 * 
+	 * @throws  NoClassDefFoundError if the cause of TypeNotPresentException is 
+	 *          ClassNotFoundException. Otherwise, re-throw TypeNotPresentException.
+	 */
+	private static Throwable throwNoClassDefFoundError(TypeNotPresentException e) {
+		Throwable cause = e.getCause();
+		if (cause instanceof ClassNotFoundException) {
+			NoClassDefFoundError noClassDefFoundError = new NoClassDefFoundError(cause.getMessage());
+			noClassDefFoundError.initCause(cause);
+			throw noClassDefFoundError;
+		}
+		throw e;
 	}
 	
 	@Override
