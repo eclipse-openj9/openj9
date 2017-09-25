@@ -98,6 +98,17 @@
 
 extern void createGuardSiteForRemovedGuard(TR::Compilation *comp, TR::Node* ifNode);
 
+static bool blockIsInLoop(TR::Block *block)
+   {
+   for (TR_Structure *s = block->getStructureOf()->getParent(); s; s = s->getParent())
+      {
+      TR_RegionStructure *region = s->asRegion();
+      if (region->isNaturalLoop() || region->containsInternalCycles())
+         return true;
+      }
+   return false;
+   }
+
 TR_EscapeAnalysis::TR_EscapeAnalysis(TR::OptimizationManager *manager)
    : TR::Optimization(manager),
      _newObjectNoZeroInitSymRef(NULL),
@@ -1048,8 +1059,8 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    if (comp()->getStartBlock() && !_candidates.isEmpty())
       {
       TR::Block *block = comp()->getStartBlock();
-      bool isInLoop = (block->getStructureOf()->getContainingLoop() != NULL);
-      if (isInLoop)
+
+      if (blockIsInLoop(block))
          {
          comp()->getFlowGraph()->setStructure(NULL);
          TR::Block *firstBlockReplacement = toBlock(comp()->getFlowGraph()->addNode(
@@ -1418,15 +1429,9 @@ void TR_EscapeAnalysis::findCandidates()
             {
             candidate->setExplicitlyInitialized();
             }
-         for (TR_Structure *s = _curBlock->getStructureOf()->getParent(); s; s = s->getParent())
-            {
-            TR_RegionStructure *region = s->asRegion();
-            if (region->isNaturalLoop() || region->containsInternalCycles())
-               {
-               candidate->setInsideALoop();
-               break;
-               }
-            }
+
+         if (blockIsInLoop(_curBlock))
+            candidate->setInsideALoop();
 
          if (inAColdBlock)
             candidate->setInAColdBlock(true);
