@@ -184,7 +184,7 @@
 	
 	<test>
 		<featureIds>
-			<featureId>113813</featureId>
+			<featureId>openj9 issue #126</featureId>
 		</featureIds>
 		<testCaseName>TestJava9AttachAPI</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \

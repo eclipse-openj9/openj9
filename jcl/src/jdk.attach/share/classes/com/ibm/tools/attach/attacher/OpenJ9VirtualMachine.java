@@ -406,8 +406,8 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 
 				if (descriptor.id().equals(AttachHandler.getVmId())) {
 					/*[IF Sidecar19-SE]*/
-					String allowattachselfValue = AttachHandler.allowAttachSelf;
-					boolean selfAttachAllowed = "".equals(allowattachselfValue) || Boolean.parseBoolean(allowattachselfValue); //$NON-NLS-1$
+					String allowAttachSelf_Value = AttachHandler.allowAttachSelf;
+					boolean selfAttachAllowed = "".equals(allowAttachSelf_Value) || Boolean.parseBoolean(allowAttachSelf_Value); //$NON-NLS-1$
 					if (!selfAttachAllowed) {
 						/*[MSG "K0646", "Late attach connection to self disabled"]*/
 						throw new IOException(getString("K0646")); //$NON-NLS-1$
