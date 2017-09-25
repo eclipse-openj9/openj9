@@ -28,6 +28,7 @@
 #include "util_internal.h"
 #include "j9vmutilnls.h"
 #include "ut_j9util.h"
+#include "rommeth.h"
 
 J9Method *
 getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *resolvedClass, J9Method *method)
@@ -80,7 +81,13 @@ getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *re
 				} else {
 					/* 'methodClass' is a superclass of the current class so vTableIndex can't be 0 here */
 					Assert_Util_true(0 != vTableIndex);
-					method = *(J9Method **)(((UDATA)superclass) + vTableIndex);
+					/* In order to support non-vTable methods in a super invoke, perform the lookup rather than
+					 * looking in the vTable.
+					 */
+					method = (J9Method *)vmFuncs->javaLookupMethod(vmStruct, superclass, J9ROMMETHOD_NAMEANDSIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method)), NULL, J9_LOOK_VIRTUAL | J9_LOOK_ALLOW_FWD | J9_LOOK_NO_THROW);
+					if (NULL == method) {
+						method = *(J9Method **)(((UDATA)superclass) + vTableIndex);
+					}
 				}
 			}
 		}

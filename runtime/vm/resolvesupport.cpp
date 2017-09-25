@@ -1165,8 +1165,31 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 			goto done;
 		}
 	}
-	
-	method = getMethodForSpecialSend(vmStruct, currentClass, resolvedClass, method);
+
+	{
+		J9Class *resolvedMethodClass = J9_CLASS_FROM_METHOD(method);
+		method = getMethodForSpecialSend(vmStruct, currentClass, resolvedClass, method);
+		/* Constrain the selected method, as it may differ from the lookup-up method */
+		if (lookupOptions & J9_LOOK_CLCONSTRAINTS) {
+			J9JavaVM *vm = vmStruct->javaVM;
+			if (vm->runtimeFlags & J9_RUNTIME_VERIFY) {
+				J9Class *selectedMethodClass = J9_CLASS_FROM_METHOD(method);
+				J9ClassLoader * cl1 = resolvedMethodClass->classLoader;
+				J9ClassLoader * cl2 = selectedMethodClass->classLoader;
+				if (cl1 != cl2) {
+					J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+					if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, cl1, cl2, signature, signature)) {
+						if (0 == jitFlags) {
+							J9UTF8 *name =  J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+							setClassLoadingConstraintSignatureError(vmStruct, cl1, resolvedMethodClass, cl2, selectedMethodClass, resolvedMethodClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature));
+						}
+						method = NULL;
+						goto done;
+					}
+				}
+			}
+		}
+	}
 
 #if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	if (NULL != ramCPEntry)
