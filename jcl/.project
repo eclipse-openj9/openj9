@@ -6,26 +6,6 @@
 	</projects>
 	<buildSpec>
 		<buildCommand>
-			<name>com.ibm.oti.antbuild.builder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
-			<name>com.ibm.oti.jpp.jppbuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
-			<name>com.ibm.oti.jpp.ui.jppbuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
-			<name>com.stateofflow.eclipse.metrics.MetricsBuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
 			<name>org.eclipse.ui.externaltools.ExternalToolBuilder</name>
 			<triggers>clean,full,incremental,</triggers>
 			<arguments>
@@ -43,9 +23,6 @@
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
-		<nature>org.eclipse.team.cvs.core.cvsnature</nature>
-		<nature>com.ibm.oti.jpp.jppnature</nature>
-		<nature>com.ibm.oti.jpp.ui.jppnature</nature>
-		<nature>com.stateofflow.eclipse.metrics.MetricsNature</nature>
+		<nature>com.ibm.jpp.core.jppnature</nature>
 	</natures>
 </projectDescription>
