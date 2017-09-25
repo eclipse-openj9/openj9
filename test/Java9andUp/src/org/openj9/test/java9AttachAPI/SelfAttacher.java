@@ -21,12 +21,15 @@ package org.openj9.test.java9AttachAPI;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.testng.log4testng.Logger;
+
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 
 public class SelfAttacher {
 
+	protected static Logger logger = Logger.getLogger(SelfAttacher.class);
 	static final int ATTACH_ERROR_CODE = 10;
 	static final int ATTACH_NOT_SUPPORTED_CODE = 11;
 	static final int ATTACH_SELF_IOEXCEPTION_CODE = 12;
