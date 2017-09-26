@@ -110,6 +110,7 @@ j9ri_params_init(struct J9PortLibrary *portLibrary, struct J9RIParameters *riPar
 int32_t
 j9ri_enableRISupport(struct J9PortLibrary *portLibrary)
 {
+#if !defined(J9ZTPF)
 	struct sigaction sig;
 	Trc_PRT_ri_enableSupport_Entry();
 	memset(&sig, 0, sizeof(sig));
@@ -140,6 +141,11 @@ j9ri_enableRISupport(struct J9PortLibrary *portLibrary)
 
 	Trc_PRT_ri_enableSupport_Exit();
 	return 0;
+#else /* !defined(J9ZTPF) */
+	Trc_PRT_ri_enableSupport_Entry();
+	Trc_PRT_ri_enableSupport_Exit();
+	return -1;
+#endif /* !defined(J9ZTPF) */
 }
 
 /**
@@ -165,6 +171,7 @@ j9ri_initialize(struct J9PortLibrary *portLibrary, struct J9RIParameters *riPara
 	int32_t ret_code = -1;
 	Trc_PRT_ri_initialize_Entry();
 
+#if !defined(J9ZTPF)
 	/*
 	 * syscall is s390_runtime_instr
 	 * errno values from syscall routine is as follows:
@@ -179,6 +186,7 @@ j9ri_initialize(struct J9PortLibrary *portLibrary, struct J9RIParameters *riPara
 	} else {
 		Trc_PRT_ri_initialize_Exception(errno);
 	}
+#endif /* !defined(J9ZTPF) */
 	Trc_PRT_ri_initialize_Exit();
 }
 
@@ -188,6 +196,7 @@ j9ri_deinitialize(struct J9PortLibrary *portLibrary, struct J9RIParameters *riPa
 	int32_t ret_code = -1;
 	Trc_PRT_ri_deinitialize_Entry();
 
+#if !defined(J9ZTPF)
 	/*
 	 * errno values from syscall routine is as follows:
 	 * EOPNOTSUPP -  RI facility is not available
@@ -199,6 +208,7 @@ j9ri_deinitialize(struct J9PortLibrary *portLibrary, struct J9RIParameters *riPa
 	} else {
 		Trc_PRT_ri_deinitialize_Exception(errno);
 	}
+#endif /* !defined(J9ZTPF) */
 	Trc_PRT_ri_deinitialize_Exit();
 }
 
