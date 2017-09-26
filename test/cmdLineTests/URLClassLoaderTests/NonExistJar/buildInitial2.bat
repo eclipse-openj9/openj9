@@ -31,5 +31,3 @@ cd Rogue
 cd ..
 dir *.jar
 cd ..
-
-

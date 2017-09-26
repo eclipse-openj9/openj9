@@ -28,5 +28,3 @@ set ZIP_FILE=%3
 @echo on
 
 %JRE_BIN%\j9 -cp %CLASSPATH% -jar ZipTester.jar %ZIP_FILE%
-
-
