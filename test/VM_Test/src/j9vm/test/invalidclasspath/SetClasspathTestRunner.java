@@ -85,9 +85,6 @@ public class SetClasspathTestRunner extends Runner {
 			customOptions += "-Xshareclasses:name=setclasspathtest,destroy ";
 			break;
 		}
-		if (Integer.parseInt(javaVersion) >= 90) {
-			customOptions += " --add-exports=openj9.sharedclasses/com.ibm.oti.shared=ALL-UNNAMED ";
-		}
 		return customOptions;
 	}
 	

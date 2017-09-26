@@ -30,7 +30,6 @@
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/VM_Test" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="excludeFiles" location="../J9 Exclude File Support/src"/>
 	<property name="data" location="./data" />
 	<property name="databin" location="./data/bin" />
@@ -48,7 +47,7 @@
 	</path>
 
 	<target name="init">
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 		<mkdir dir="${databin}" />
 		<mkdir dir="${databin}/InvalidClasspathResource1" />
@@ -64,7 +63,7 @@
 		<echo>===fork:				yes</echo>
 		<echo>===executable:			${compiler.javac}</echo>
 		<echo>===debug:				on</echo>
-		<echo>===destdir:				${dist}</echo>
+		<echo>===destdir:				${DEST}</echo>
 
 		<javac srcdir="${data}/InvalidClasspathResource1" destdir="${databin}/InvalidClasspathResource1" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp" />
 		<javac srcdir="${data}/InvalidClasspathResource2" destdir="${databin}/InvalidClasspathResource2" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp" />
@@ -79,7 +78,7 @@
 		<if>
 			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
 			<then>
-				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED --add-exports openj9.sharedclasses/com.ibm.oti.shared=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED --add-exports=com.ibm.management/com.ibm.lang.management.internal=ALL-UNNAMED" />
+				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED --add-exports=com.ibm.management/com.ibm.lang.management.internal=ALL-UNNAMED" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 					<src path="${excludeFiles}"/>
 					<!-- 133609: ClassPathSettingClassLoaderTest failed in SE90 -->
@@ -112,7 +111,7 @@
 		<jar jarfile="${databin}/JarFileUpdateTestRunnerResource2.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF">
 			<fileset dir="${databin}/JarFileUpdateTestRunnerResource2"/>
 		</jar>
-		<jar jarfile="${dist}/VM_Test.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF">
+		<jar jarfile="${DEST}/VM_Test.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF">
 			<fileset dir="${build}" />
 			<fileset dir="${excludeFiles}"/>
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />
@@ -120,12 +119,10 @@
 			<fileset dir="${data}" includes="ParentlessChild.class" />
 			<fileset dir="${properties}"/>
 		</jar>
-		<copy todir="${dist}">
+		<copy todir="${DEST}">
 			<fileset dir="${src}/../" includes="*.xml" />
 			<!--copy SharedClassesSysVTesting perl script -->
 			<fileset dir="${src}/../" includes=",**/*.pl" />
-		</copy>
-		<copy todir="${DEST}">
 			<fileset dir="${src}/../" includes="*.mk" />
 		</copy>
 	</target>

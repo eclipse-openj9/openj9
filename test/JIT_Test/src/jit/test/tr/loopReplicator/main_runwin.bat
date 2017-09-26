@@ -30,4 +30,3 @@ set TR_BreakOnLoad=1
 @echo on
 %DBG% %J9_EXEC%\java.exe -Xjit:verbose,noJitUntilMain Main ocif.xml 10
 @endlocal
-

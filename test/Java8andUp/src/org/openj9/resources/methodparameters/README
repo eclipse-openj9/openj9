@@ -31,6 +31,3 @@ There are two classes that needs to be compiled with different options.
 2- WithParams.java : This file needs to be compiled with parameters,
 	so that the methods in the class file have MethodParameters attribute.
 	Cmdline : <SDK>/bin/javac -parameters test/methodparameters/WithoutParams.java
-
-
-

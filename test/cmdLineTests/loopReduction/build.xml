@@ -30,14 +30,11 @@
 
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/loopReduction" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="src" location="." />
 
 	<target name="dist" description="generate the distribution">
-		<copy todir="${dist}">
-			<fileset dir="${src}" includes="*.xml"/>
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}" includes="*.xml"/>
 			<fileset dir="${src}" includes="*.mk"/>
 		</copy>
 	</target>

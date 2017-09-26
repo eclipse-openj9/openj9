@@ -133,8 +133,7 @@ sub generateOnDir {
 		return 1;
 	} elsif (@subdirsHavePlaylist) {
 		print "\nGenerating make file based on subdirs...\n";
-		my $makeFile = $absolutedir . "/" . $mkName;
-		subdir2make($makeFile, \@currentdirs, \@subdirsHavePlaylist, $allSubsets);
+		subdir2make($absolutedir, \@currentdirs, \@subdirsHavePlaylist, $allSubsets);
 		return 1;
 	}
 
@@ -148,8 +147,10 @@ sub generate {
 	my $makeFile         = $absolutedir . "/" . $mkName;
 
 	if ($output) {
-		my $outputdir = $output . '/' . join('/', @{$currentdirs});
-		make_path($outputdir);
+		my $outputdir = $output;
+		if (@{$currentdirs}) {
+			$outputdir .= '/' . join('/', @{$currentdirs});
+		}		make_path($outputdir);
 		$makeFile = $outputdir . "/" . $mkName;
 	}
 
@@ -296,85 +297,80 @@ sub genMK {
 				print Dumper(\%capabilityReqs_Hash);
 			}
 
-			foreach my $subset (@{$test->{'subsets'}}) {
+			# generate make target
+			my $name = $test->{'testCaseName'};
+			$name .= "_$count";
 
-				# generate make target
-				my $name = $test->{'testCaseName'};
-				# append subset in the test name when the test has more than one subset
-				if (scalar(@{$test->{'subsets'}}) > 1) {
-					$name .= "_$subset";
-				}
-				$name .= "_$count";
+			my $condition_platform = undef;
+			if (@allInvalidSpecs) {
+				my $string = join( ' ', @allInvalidSpecs );
+				$condition_platform = "$name\_INVALID_PLATFORM_CHECK";
+				print $fhOut "$condition_platform=\$(filter $string, \$(SPEC))\n";
+			}
 
-				my $condition_platform = undef;
-				if (@allInvalidSpecs) {
-					my $string = join( ' ', @allInvalidSpecs );
-					$condition_platform = "$name\_INVALID_PLATFORM_CHECK";
-					print $fhOut "$condition_platform=\$(filter $string, \$(SPEC))\n";
+			my @condition_capabilities = ();
+			if (@capabilityReqs_Arr) {
+				foreach my $capa_key (keys %capabilityReqs_Hash) {
+					my $condition_capsReqs = $name . "_" . $capa_key. "_CHECK";
+					print $fhOut "$condition_capsReqs=\$($capa_key)\n";
 				}
+			}
 
-				my @condition_capabilities = ();
-				if (@capabilityReqs_Arr) {
-					foreach my $capa_key (keys %capabilityReqs_Hash) {
-						my $condition_capsReqs = $name . "_" . $capa_key. "_CHECK";
-						print $fhOut "$condition_capsReqs=\$($capa_key)\n";
-					}
-				}
+			my $jvmtestroot = "\$(JVM_TEST_ROOT)\$(D)" . join("\$(D)", @{$currentdirs});
+			print $fhOut "$name: TEST_RESROOT=$jvmtestroot\n";
 
-				my $jvmtestroot = "\$(JVM_TEST_ROOT)\$(D)" . join("\$(D)", @{$currentdirs}) . "\$(D)$subset";
-				print $fhOut "$name: TEST_RESROOT=$jvmtestroot\n";
+			if ($jvmoptions) {
+				print $fhOut "$name: JVM_OPTIONS=\$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
+			} else {
+				print $fhOut "$name: JVM_OPTIONS=\$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
+			}
 
-				if ($jvmoptions) {
-					print $fhOut "$name: JVM_OPTIONS=\$(RESERVED_OPTIONS) $jvmoptions \$(EXTRA_OPTIONS)\n";
-				} else {
-					print $fhOut "$name: JVM_OPTIONS=\$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
+			print $fhOut "$name: TEST_GROUP=level.$group\n";
+			my $indent .= "\t";
+			print $fhOut "$name:\n";
+			print $fhOut "$indent\@echo \"\" | tee -a TestTargetResult;\n";
+			print $fhOut "$indent\@echo \"===============================================\" | tee -a TestTargetResult;\n";
+			print $fhOut "$indent\@echo \"Running test \$\@ ...\" | tee -a TestTargetResult;\n";
+			print $fhOut "$indent\@echo \"===============================================\" | tee -a TestTargetResult;\n";
+			if ($condition_platform) {
+				print $fhOut "ifeq (\$($condition_platform),)\n";
+			}
+			if (defined($capabilityReqs)) {
+				while (my ($key, $value) = each(%capabilityReqs_Hash)) {
+					my $condition_capsReqs = $name . "_" . $key. "_CHECK";
+					print $fhOut "ifeq (\$($condition_capsReqs), $value)\n";
 				}
+			}
 
-				print $fhOut "$name: TEST_GROUP=level.$group\n";
-				my $indent .= "\t";
-				print $fhOut "$name:\n";
-				print $fhOut "$indent\@echo \"\" | tee -a TestTargetResult;\n";
-				print $fhOut "$indent\@echo \"===============================================\" | tee -a TestTargetResult;\n";
-				print $fhOut "$indent\@echo \"Running test \$\@ ...\" | tee -a TestTargetResult;\n";
-				print $fhOut "$indent\@echo \"===============================================\" | tee -a TestTargetResult;\n";
-				if ($condition_platform) {
-					print $fhOut "ifeq (\$($condition_platform),)\n";
-				}
-				if (defined($capabilityReqs)) {
-					while (my ($key, $value) = each(%capabilityReqs_Hash)) {
-						my $condition_capsReqs = $name . "_" . $key. "_CHECK";
-						print $fhOut "ifeq (\$($condition_capsReqs), $value)\n";
-					}
-				}
+			if ($jvmoptions) {
+				print $fhOut "$indent\@echo \"test with $var\" | tee -a TestTargetResult;\n";
+			}
+			else {
+				print $fhOut "$indent\@echo \"test with NoOptions\" | tee -a TestTargetResult;\n";
+			}
+			my $command = $test->{'command'};
+			$command =~ s/^\s+//;
+			$command =~ s/\s+$//;
+			print $fhOut "$indent\{ $command; \} 2>&1 | tee -a TestTargetResult\n";
 
-				if ($jvmoptions) {
-					print $fhOut "$indent\@echo \"test with $var\" | tee -a TestTargetResult;\n";
-				}
-				else {
-					print $fhOut "$indent\@echo \"test with NoOptions\" | tee -a TestTargetResult;\n";
-				}
-				my $command = $test->{'command'};
-				$command =~ s/^\s+//;
-				$command =~ s/\s+$//;
-				print $fhOut "$indent\{ $command; \} 2>&1 | tee -a TestTargetResult\n";
-
-				if (defined($capabilityReqs)) {
-					foreach my $key (keys %capabilityReqs_Hash) {
-						print $fhOut "else\n";
-						print $fhOut "$indent\$(TEST_SKIP_STATUS) | tee -a TestTargetResult\n";
-						print $fhOut "endif\n";
-					}
-				}
-				if ($condition_platform) {
+			if (defined($capabilityReqs)) {
+				foreach my $key (keys %capabilityReqs_Hash) {
 					print $fhOut "else\n";
 					print $fhOut "$indent\$(TEST_SKIP_STATUS) | tee -a TestTargetResult\n";
 					print $fhOut "endif\n";
 				}
-				print $fhOut "\n";
-				my %testElement = ();
-				$testElement{"name"} = $name;
-				$testElement{"invalidSpecs"} = \@allInvalidSpecs;
+			}
+			if ($condition_platform) {
+				print $fhOut "else\n";
+				print $fhOut "$indent\$(TEST_SKIP_STATUS) | tee -a TestTargetResult\n";
+				print $fhOut "endif\n";
+			}
+			print $fhOut "\n";
+			my %testElement = ();
+			$testElement{"name"} = $name;
+			$testElement{"invalidSpecs"} = \@allInvalidSpecs;
 
+			foreach my $subset (@{$test->{'subsets'}}) {
 				#push test name to subset group
 				push(@{$testgroups{$group}{$subset}}, \%testElement);
 			}
@@ -388,7 +384,7 @@ sub genMK {
 		if ($currdirstr) {
 			$currdirstr .= "\$(D)";
 		}
-		print $fhOut "include \$(JVM_TEST_ROOT)\$(D)" . $currdirstr . "$subdir\$(D)autoGenTest.mk\n";
+		print $fhOut "-include \$(JVM_TEST_ROOT)\$(D)" . $currdirstr . "$subdir\$(D)autoGenTest.mk\n";
 	}
 
 	foreach my $eachsubset (sort @{$allSubsets}) {
@@ -552,7 +548,18 @@ sub jvmTestGen {
 }
 
 sub subdir2make {
-	my ($makeFile, $currentdirs, $subdirsHavePlaylist) = @_;
+	my ($absolutedir, $currentdirs, $subdirsHavePlaylist) = @_;
+
+	my $makeFile = $absolutedir . "/" . $mkName;
+	if ($output) {
+		my $outputdir = $output;
+		if (@{$currentdirs}) {
+			$outputdir .= '/' . join('/', @{$currentdirs});
+		}
+		make_path($outputdir);
+		$makeFile = $outputdir . "/" . $mkName;
+	}
+
 	open( my $fhOut, '>', $makeFile ) or die "Cannot create make file $makeFile";
 	my $mkname = basename($makeFile);
 	my %project = ();
@@ -563,7 +570,7 @@ sub subdir2make {
 		if ($currdirstr) {
 			$currdirstr .= "\$(D)";
 		}
-		print $fhOut "include \$(JVM_TEST_ROOT)\$(D)" . $currdirstr . "$subdir\$(D)$mkname\n";
+		print $fhOut "-include \$(JVM_TEST_ROOT)\$(D)" . $currdirstr . "$subdir\$(D)$mkname\n";
 	}
 
 	print $fhOut "\n";

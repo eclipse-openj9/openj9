@@ -30,7 +30,6 @@
 
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/shareClassTests/SCHelperCompatabilityTests" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src" location="."/>
 	<property name="build" location="./bin"/>
@@ -40,7 +39,7 @@
 	<import file="../testClasses/build.xml" />
 	
 	<target name="init">
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 	</target>
 
@@ -57,7 +56,7 @@
 		<echo>===fork:				yes</echo>
 		<echo>===executable:			${compiler.javac}</echo>
 		<echo>===debug:				on</echo>
-		<echo>===destdir:				${dist}</echo>	
+		<echo>===destdir:				${DEST}</echo>	
 
 		<copy todir="${build}">
 			<fileset dir="${src}" includes="*.xml,*.java" excludes="playlist.xml" />
@@ -132,13 +131,11 @@
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
-		<jar jarfile="${dist}/HelperCompatabilityTests.jar" filesonly="true">
+		<jar jarfile="${DEST}/HelperCompatabilityTests.jar" filesonly="true">
 			<fileset dir="${build}" />
 		</jar>
-		<copy todir="${dist}">
-			<fileset dir="${src}" includes="props_unix/**,props_win/**,*.xml" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}" includes="props_unix/**,props_win/**,*.xml" />
 			<fileset dir="${src}" includes="*.mk" />
 		</copy>
 	</target>

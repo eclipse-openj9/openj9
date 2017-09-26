@@ -30,7 +30,6 @@
 
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/proxyFieldAccess" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src.dir" location="${PROJECT_ROOT}/src"/>
 
@@ -40,7 +39,7 @@
 		<echo>===fork:				yes</echo>
 		<echo>===executable:		${compiler.javac}</echo>
 		<echo>===debug:				on</echo>
-		<echo>===destdir:			${dist}</echo>
+		<echo>===destdir:			${DEST}</echo>
 		<if>
 			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
 			<then>
@@ -64,18 +63,16 @@
 	</target>
 	
 	<target name="dist" depends="compile" description="generate the distribution">
-		<mkdir dir="${dist}" />
-		<jar jarfile="${dist}/testproxyfieldaccess.jar">
+		<mkdir dir="${DEST}" />
+		<jar jarfile="${DEST}/testproxyfieldaccess.jar">
 			<manifest>
 				<attribute name="Main-Class" value="defect.cmvc198986.TestProxyFieldAccess"/>
 			</manifest>
 			<fileset dir="${src.dir}" />
 			<fileset dir="${PROJECT_ROOT}" includes="*.properties,*.xml,*.mk" />
 		</jar>
-		<copy todir="${dist}">
-			<fileset dir="${PROJECT_ROOT}" includes="*.xml"/>
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${PROJECT_ROOT}" includes="*.xml"/>
 			<fileset dir="${PROJECT_ROOT}" includes="*.mk"/>
 		</copy>
 	</target>

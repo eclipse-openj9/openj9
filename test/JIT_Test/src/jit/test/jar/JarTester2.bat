@@ -28,5 +28,3 @@ set ZIP_FILE=%3
 @echo on
 
 %JRE_BIN%\j9 -cp %CLASSPATH% -Xint jit.test.jar.JarTester -jit:tosscode,testmode %ZIP_FILE%
-
-

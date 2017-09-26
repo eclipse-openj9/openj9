@@ -25,7 +25,7 @@
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <suite id="loopReduction" timeout="2700">
-	<variable name="PROGRAM" value="-cp $Q$$RESOURCES_DIR$$CPDL$$JVM_TEST_ROOT$/JIT_Test/$JAVA_VERSION$/jitt.jar$Q$ jit.test.loopReduction.Main" />
+	<variable name="PROGRAM" value="-cp $Q$$RESOURCES_DIR$$CPDL$$JVM_TEST_ROOT$/JIT_Test/jitt.jar$Q$ jit.test.loopReduction.Main" />
 	<variable name="SUCCESSFUL" value="SUCCESSFUL - LoopReduction" />
 	
 	<test id="default -verify">

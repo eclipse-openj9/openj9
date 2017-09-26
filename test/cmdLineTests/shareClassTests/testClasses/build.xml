@@ -35,7 +35,6 @@
 	<property name="SharedClassUtils_srddir" value="../utils/src/" />
 	
 	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/shareClassTests/testClasses" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 
 	<target name="AddTestClassesToPackage">
 		<!-- create the folders -->
@@ -309,8 +308,8 @@
 		<copy todir="${build}">
 			<fileset dir="./" includes="*.xml,*.java,*.jar"/>
 		</copy>	
-		<mkdir dir="${dist}"/>
-	    <jar jarfile="${dist}/SharedClassesTestClasses.jar" filesonly="true">
+		<mkdir dir="${DEST}"/>
+	    <jar jarfile="${DEST}/SharedClassesTestClasses.jar" filesonly="true">
 			<fileset dir="${build}"/>
 		</jar>
   	</target>

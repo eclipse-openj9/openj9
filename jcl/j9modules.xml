@@ -49,22 +49,6 @@
 			<case value="jdk.attach">
 				<removeexport package="com.ibm.tools.attach.spi" />
 				<removeprovides interface="com.sun.tools.attach.spi.AttachProvider" />
-				<property name="patch.zip" location="attach-patch.zip" />
-				<if>
-					<available file="${patch.zip}" type="file" />
-					<then>
-						<echo message="Applying attach patch." level="info" />
-						<unzip src="${patch.zip}" dest="${module.dir}/classes" overwrite="true" />
-					</then>
-					<else>
-						<echo message="Can't find attach patch: ${patch.zip}" level="info" />
-					</else>
-				</if>
-				<delete verbose="true">
-					<fileset dir="${module.dir}/classes">
-						<include name="com/ibm/tools/attach/spi/AttachProvider.class" />
-					</fileset>
-				</delete>
 			</case>
 			<case value="java.base">
 				<removeexport package="com.ibm.cuda" />

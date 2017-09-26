@@ -27,19 +27,19 @@
 		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer"/>
 	</listeners>
 	<test name="NativeMethodHandleTest">
-		<parameter name="path" value="${JVM_TEST_ROOT}/Panama/Panama"/>
+		<parameter name="path" value="${JVM_TEST_ROOT}/Panama"/>
 		<classes>
 			<class name="org.openj9.test.panama.NativeMethodHandleTest" />
 		</classes>
 	</test>
 	<test name="HigherLevelNativeMethodHandleTest">
-		<parameter name="path" value="${JVM_TEST_ROOT}/Panama/Panama"/>
+		<parameter name="path" value="${JVM_TEST_ROOT}/Panama"/>
 		<classes>
 			<class name="org.openj9.test.panama.HigherLevelNativeMethodHandleTest" />
 		</classes>
 	</test>
 	<test name="CustomFFINativeMethodHandleTest">
-		<parameter name="path" value="${JVM_TEST_ROOT}/Panama/Panama"/>
+		<parameter name="path" value="${JVM_TEST_ROOT}/Panama"/>
 		<classes>
 			<class name="org.openj9.test.panama.CustomFFINativeMethodHandleTest" />
 		</classes>

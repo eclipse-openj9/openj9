@@ -30,14 +30,13 @@
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/jvmtitests" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="src" location="./src"/>
 	<property name="build" location="./bin"/>
 	<property name="asm.jar" location="../../TestConfig/lib/asm-all.jar" />
 
 	<target name="init">
 		<mkdir dir="${build}" />
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 	</target>
 
 	<target name="compile" depends="init" description="compile the source ">
@@ -92,22 +91,20 @@
 
 	<target name="dist" depends="compile" description="generate the distribution">
 		<!-- Store all class files, and .c files in com.ibm.jvmti.tests.jar -->
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 
-		<copy todir="${dist}">
-			<fileset dir="${src}/../" includes="*.xml, jars/" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml, jars/" />
 			<fileset dir="${src}/../" includes="*.mk" />
 		</copy>
 
 		<!-- Generate getClassVersionNumbers.jar file and delete the class file of VersionedClass -->
-		<jar jarfile="${dist}/jars/getClassVersionNumbers.jar" basedir="${build}" filesonly="true"
+		<jar jarfile="${DEST}/jars/getClassVersionNumbers.jar" basedir="${build}" filesonly="true"
 			includes="com/ibm/jvmti/tests/getClassVersionNumbers/VersionedClass/VersionedClass.class" />
 		<delete file="${build}/com/ibm/jvmti/tests/getClassVersionNumbers/VersionedClass/VersionedClass.class" />
 
 		<!-- Generate general jvmtitest jar -->
-		<jar jarfile="${dist}/jvmtitest.jar" filesonly="true">
+		<jar jarfile="${DEST}/jvmtitest.jar" filesonly="true">
 			<fileset dir="${build}" />
 			<fileset dir="${src}" excludes="**/*.java, **/package.htm*" />
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />
