@@ -70,7 +70,7 @@ enum J9ServerMessageType
    VM_isMethodEnterTracingEnabled = 209;
    VM_isMethodExitTracingEnabled = 210;
    VM_getClassClassPointer = 211;
-//   VM_getClassLoader = 212; available
+   VM_setJ2IThunk = 212;
    VM_getClassOfMethod = 213;
    VM_getBaseComponentClass = 214;
    VM_getLeafComponentClassFromArrayClass = 215;

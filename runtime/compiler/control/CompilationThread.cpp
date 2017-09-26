@@ -42,6 +42,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9protos.h"
+#include "jitprotos.h"
 #include "vmaccess.h"
 #include "objhelp.h"
 #include "codegen/CodeGenerator.hpp"
@@ -81,6 +82,7 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9VMAccess.hpp"
 #include "runtime/RelocationRuntime.hpp"
+#include "runtime/RelocationTarget.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "env/j9method.h"
@@ -826,6 +828,30 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto offset = std::get<1>(recv);
          auto ignoreRTResolve = std::get<2>(recv);
          client->write(fe->getResolvedVirtualMethod(clazz, offset, ignoreRTResolve));
+         }
+         break;
+      case J9ServerMessageType::VM_setJ2IThunk:
+         {
+         auto recv = client->getRecvData<std::string, std::string>();
+         TR::VMAccessCriticalSection client_setJ2IThunk(fe);
+         std::string thunkData = std::get<0>(recv);
+         std::string signature = std::get<1>(recv);
+
+         // Allocate warm code memory to copy the thunk over to it
+         uint8_t *cold;
+         TR::MonitorTable::get()->readAcquireClassUnloadMonitor(TR::compInfoPT->getCompThreadId());
+         uint8_t *thunk = static_cast<uint8_t*>(fe->allocateCodeMemory(TR::comp(), thunkData.size(), 0, &cold, true));
+         TR::MonitorTable::get()->readReleaseClassUnloadMonitor(TR::compInfoPT->getCompThreadId());
+
+         memcpy(thunk, &thunkData[0], thunkData.size());
+         uint8_t *thunkAddress = thunk + 2 * sizeof(int32_t); // The location of the actual thunk without relocation data
+
+         // Perform the required relocation
+         void *vmHelper = j9ThunkVMHelperFromSignature(fe->_jitConfig, signature.size(), &signature[0]);
+         TR::compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation(thunkAddress, (UDATA)vmHelper);
+
+         fe->setJ2IThunk(&signature[0], signature.size(), (void *)thunkAddress, TR::comp());
+//         client->write(JAAS::Void());
          }
          break;
       case J9ServerMessageType::mirrorResolvedJ9Method:

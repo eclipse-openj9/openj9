@@ -745,3 +745,19 @@ TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMeth
    // JAAS TODO: ask client
    return true;
    }
+
+void *
+TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr, TR::Compilation *comp)
+   {
+   // The 32-bit size and offset are held before the thunkptr.
+   // The stored size does not include these two fields so we add 8.
+   char *thunkStart = (char *)thunkptr - 8;
+   size_t thunkSize = *((U_32 *)thunkStart) + 8;
+   std::string thunk(thunkStart, thunkSize);
+   std::string signature(signatureChars, signatureLength);
+
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_setJ2IThunk, thunk, signature);
+//   stream->read<JAAS::Void>();
+   return thunkptr;
+   }
