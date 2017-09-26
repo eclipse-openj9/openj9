@@ -2458,7 +2458,7 @@ J9::CodeGenerator::processRelocations()
 
    int32_t missedSite = -1;
 
-   if (self()->comp()->getOption(TR_AOT) != false)
+   if (self()->comp()->compileRelocatableCode())
       {
 //#if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || defined(TR_HOST_POWER))
       uint32_t inlinedCallSize = self()->comp()->getNumInlinedCallSites();
