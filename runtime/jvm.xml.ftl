@@ -1015,26 +1015,6 @@
 					tofile="${r"${kernel-classlib.target.dir}"}/vm.jar"
 					verbose="true" overwrite="yes" />
 
-				<!-- TODO remove this once the classes team stops updating tools.jar -->
-				<mkdir dir="${r"${output}/sun_attach/classes"}" />
-				<unzip src="src_jar/tools_vm.zip" dest="${r"${output}/sun_attach/classes"}" overwrite="true" />
-
-				<!-- change the provider class for com.sun.tools.attach.spi -->
-				<mkdir dir="${r"${output}/sun_attach/classes/META-INF/services/"}" />
-				<copy
-					file="jcl/com.sun.tools.attach.spi.AttachProvider"
-					tofile="${r"${output}/sun_attach/classes/META-INF/services/com.sun.tools.attach.spi.AttachProvider"}"
-					overwrite="yes" />
-				<echo message="update ${r"${output}/lib/tools.jar from ${output}/sun_attach/classes"}" />
-				<!-- touch files to force them to be updated in tools.jar -->
-				<touch>
-    				<fileset dir="${r"${output}/sun_attach/classes"}" />
-  				</touch>
-				<zip destfile="${r"${output}/lib/tools.jar"}"
-					basedir="${r"${output}/sun_attach/classes"}"
-					update="true" />
-				<delete dir="${r"${output}/sun_attach/classes"}" />
-
 				<copy
 					file="src_jar/dataaccess8.jar"
 					tofile="${r"${output}/${jre.dir}"}/lib/dataaccess.jar"
