@@ -2460,7 +2460,6 @@ J9::CodeGenerator::processRelocations()
 
    if (self()->comp()->compileRelocatableCode())
       {
-//#if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || defined(TR_HOST_POWER))
       uint32_t inlinedCallSize = self()->comp()->getNumInlinedCallSites();
 
       // Create temporary hashtable for ordering AOT guard relocations
@@ -2634,7 +2633,6 @@ J9::CodeGenerator::processRelocations()
 
                   traceMsg(self()->comp(), "\tinline site %d inlined method %p\n", i, inlinedMethod);
                   if (ramMethod == inlinedMethod)
-                  //if (((uintptrj_t)ramMethod == (uintptrj_t)aotMethodInfo->resolvedMethod->getPersistentIdentifier()) && orderedInlinedSiteListTable[counter].first)
                      {
                      traceMsg(self()->comp(), "\t\tmatch!\n");
                      siteIndex = i;
@@ -2688,7 +2686,7 @@ J9::CodeGenerator::processRelocations()
                }
             }
          }
-//#endif
+
       // Now call the platform specific processing of relocations
       self()->getAheadOfTimeCompile()->processRelocations();
       }
@@ -2696,7 +2694,7 @@ J9::CodeGenerator::processRelocations()
    for (auto aotIterator = self()->getExternalRelocationList().begin(); aotIterator != self()->getExternalRelocationList().end(); ++aotIterator)
       {
       // Traverse the AOT/external labels
-	  (*aotIterator)->apply(self());
+      (*aotIterator)->apply(self());
       }
    }
 
