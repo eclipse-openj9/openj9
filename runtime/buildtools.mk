@@ -40,7 +40,7 @@ OS            := $(shell uname)
 TRC_THRESHOLD ?= 1
 FREEMARKER_JAR ?= $(CURDIR)/buildtools/freemarker.jar
 
-ifneq (,$(findstring Windows,$(OS)))
+ifneq (,$(or $(findstring Windows,$(OS)),$(findstring CYGWIN,$(OS))))
 	PATHSEP := ;
 else
 	PATHSEP := :
@@ -150,7 +150,7 @@ configure : uma
 J9VM_GIT_DIR := $(firstword $(wildcard $(J9_ROOT)/.git) $(wildcard $(J9_ROOT)/workspace/.git))
 J9VM_SHA     := $(if $(J9VM_GIT_DIR),$(shell git -C $(dir $(J9VM_GIT_DIR)) rev-parse --short HEAD),developer.compile)
 SPEC_DIR     := buildspecs
-UMA_TOOL     := $(JAVA) -cp sourcetools/lib/om.jar$(PATHSEP)$(FREEMARKER_JAR)$(PATHSEP)sourcetools/lib/uma.jar com.ibm.j9.uma.Main
+UMA_TOOL     := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)$(FREEMARKER_JAR)$(PATHSEP)sourcetools/lib/uma.jar" com.ibm.j9.uma.Main
 UMA_OPTIONS  := -rootDir . -configDir $(SPEC_DIR) -buildSpecId $(SPEC)
 UMA_OPTIONS  += -buildId $(BUILD_ID) -buildTag $(J9VM_SHA) -jvf tr.source/jit.version
 UMA_OPTIONS  += $(UMA_OPTIONS_EXTRA)
@@ -164,7 +164,7 @@ uma : buildtools copya2e
 	$(UMA_TOOL) $(UMA_OPTIONS)
 
 # process constant pool definition file to generate jcl constant pool definitions and header file
-CONSTANTPOOL_TOOL    := $(JAVA) -cp sourcetools/lib/om.jar$(PATHSEP)sourcetools/lib/j9vmcp.jar com.ibm.oti.VMCPTool.Main
+CONSTANTPOOL_TOOL    := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)sourcetools/lib/j9vmcp.jar" com.ibm.oti.VMCPTool.Main
 CONSTANTPOOL_OPTIONS := -rootDir . -buildSpecId $(SPEC) -configDir $(SPEC_DIR) -jcls se7_basic,se9_before_b165,se9
 constantpool : buildtools
 	$(CONSTANTPOOL_TOOL) $(CONSTANTPOOL_OPTIONS)
