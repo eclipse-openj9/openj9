@@ -59,19 +59,19 @@
 		</copy>
 
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 			<then>
+				<javac srcdir="${build}/APITests" destdir="${build}" debug="true" debuglevel="lines,vars,source" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
+					<src path="${SharedClassUtils_srddir}"/>
+					<src path="${build}/APITests"/>
+				</javac>
+			</then>
+			<else>
 				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
 				<javac srcdir="${build}/APITests" destdir="${build}" classpath="${build}" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1" >
 					<src path="${build}/APITests"/>
 					<src path="${SharedClassUtils_srddir}"/>
 					<compilerarg line='${addExports}' />
-				</javac>
-			</then>
-			<else>
-				<javac srcdir="${build}/APITests" destdir="${build}" debug="true" debuglevel="lines,vars,source" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
-					<src path="${SharedClassUtils_srddir}"/>
-					<src path="${build}/APITests"/>
 				</javac>
 			</else>
 		</if>
@@ -83,9 +83,21 @@
 		<copy todir="${build}/Resources">
 			<fileset dir="./Resources/"/>
 		</copy>
-		<javac srcdir="${build}/Resources" destdir="${build}/Resources" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
-			<src path="${SharedClassUtils_srddir}"/>
-		</javac>
+		<if>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<then>
+				<javac srcdir="${build}/Resources" destdir="${build}/Resources" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+			</then>
+			<else>
+				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
+				<javac srcdir="${build}/Resources" destdir="${build}/Resources"  classpath="${build}" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
+					<src path="${SharedClassUtils_srddir}"/>
+					<compilerarg line='${addExports}' />
+				</javac>
+			</else>
+		</if>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
