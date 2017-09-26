@@ -23,6 +23,7 @@
 package com.ibm.tools.attach.target;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,7 +31,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Properties;
@@ -106,44 +106,33 @@ final class Attachment extends Thread implements Response {
 	 * @return true if successfully connected
 	 */
 	boolean connectToAttacher(int portNum) {
-
 		try {
-			InetAddress localHost;
-			try {
-				IPC.logMessage("connectToAttacher using \"localhost\" portNum=", portNum); //$NON-NLS-1$
-				localHost = InetAddress.getByName("localhost"); //$NON-NLS-1$
-				attacherSocket = new Socket(localHost, portNum);
-			} catch (UnknownHostException otherException) {
-				IPC.logMessage("connectToAttacher using getLocalHost() portNum=", portNum); //$NON-NLS-1$
-				localHost = InetAddress.getLocalHost();
-				attacherSocket = new Socket(localHost, portNum);
-			}
+			InetAddress localHost = InetAddress.getLoopbackAddress();
+			attacherSocket = new Socket(localHost, portNum);
 			IPC.logMessage("connectToAttacher localPort=",  attacherSocket.getLocalPort(), " remotePort=", Integer.toString(attacherSocket.getPort())); //$NON-NLS-1$//$NON-NLS-2$
 			responseStream = attacherSocket.getOutputStream();
 			commandStream = attacherSocket.getInputStream();
-			AttachmentConnection.streamSend(responseStream, Response.CONNECTED + ' '
-					+ key + ' ');
+			AttachmentConnection.streamSend(responseStream, Response.CONNECTED + ' ' + key + ' ');
+			return true;
 		} catch (IOException e) {
 			IPC.logMessage("connectToAttacher exception " + e.getMessage() + " " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
-			try {
-				if (null != responseStream) {
-					responseStream.close();
-				}
-				if (null != commandStream) {
-					commandStream.close();
-				}
-				if (null != attacherSocket) {
-					attacherSocket.close();
-				}
-			} catch (IOException e1) {
-				return false;
-			}
-			return false;
+			closeQuietly(responseStream);
+			closeQuietly(commandStream);
+			closeQuietly(attacherSocket);
 		} catch (Exception otherException) {
 			IPC.logMessage("connectToAttacher exception ", otherException.toString()); //$NON-NLS-1$
-			return false;
 		}
-		return true;
+		return false;
+	}
+
+	private static void closeQuietly(Closeable stream) {
+		if (null != stream) {
+			try {
+				stream.close();
+			} catch (IOException e1) {
+				// ignore
+			}
+		}
 	}
 
 	@Override
