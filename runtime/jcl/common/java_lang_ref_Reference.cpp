@@ -54,4 +54,19 @@ Java_java_lang_ref_Reference_reprocess(JNIEnv *env, jobject recv)
 	}
 }
 
+/* java.lang.ref.Reference: static private native boolean waitForReferenceProcessingImpl(); */
+jboolean JNICALL
+Java_java_lang_ref_Reference_waitForReferenceProcessingImpl(JNIEnv *env, jclass recv)
+{
+	jboolean result = JNI_FALSE;
+#if defined(J9VM_GC_FINALIZATION)
+	J9JavaVM *vm = ((J9VMThread*)env)->javaVM;
+	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+	if (0 != mmFuncs->j9gc_wait_for_reference_processing(vm)) {
+		result = JNI_TRUE;
+	}
+#endif
+	return result;
+}
+
 }

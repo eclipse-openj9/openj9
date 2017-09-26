@@ -32,7 +32,10 @@
 #include "vmaccess.h"
 #include "vm_internal.h"
 #include "omrlinkedlist.h"
+#include "j2sever.h"
 
+/* processReferenceMonitor is only used for Java 9 and later */
+#define J9_IS_PROCESS_REFERENCE_MONITOR_ENABLED(vm) ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) >= J2SE_19)
 
 UDATA initializeVMThreading(J9JavaVM *vm)
 {
@@ -64,8 +67,8 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 #ifdef J9VM_GC_FINALIZATION
 		omrthread_monitor_init_with_name(&vm->finalizeMasterMonitor, 0, "VM GC finalize master") ||
 		omrthread_monitor_init_with_name(&vm->finalizeRunFinalizationMutex, 0, "VM GC finalize run finalization") ||
+		(J9_IS_PROCESS_REFERENCE_MONITOR_ENABLED(vm) && omrthread_monitor_init_with_name(&vm->processReferenceMonitor, 0, "VM GC process reference")) ||
 #endif
-
 
 		omrthread_monitor_init_with_name(&vm->aotRuntimeInitMutex, 0, "VM AOT runtime init") ||
 
@@ -82,8 +85,6 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 	{
 		return 1;
 	}
-
-
 	return 0;
 }
 
@@ -143,6 +144,7 @@ void terminateVMThreading(J9JavaVM *vm)
 
 #ifdef J9VM_GC_FINALIZATION
 	if (vm->finalizeMasterMonitor) omrthread_monitor_destroy(vm->finalizeMasterMonitor);
+	if (NULL != vm->processReferenceMonitor) omrthread_monitor_destroy(vm->processReferenceMonitor);
 	if (vm->finalizeRunFinalizationMutex) omrthread_monitor_destroy(vm->finalizeRunFinalizationMutex);
 #endif
 
