@@ -74,9 +74,6 @@ public class InvokeDynamicWithMultipleOrphanComparisonTestRunner extends Runner 
 			/* cleanup the cache */
 			customOptions += " -Xshareclasses:enableBCI,destroy,name=invokedynamictestcache";
 		}
-		if (Integer.parseInt(javaVersion) >= 90) {
-			customOptions += " --add-exports=openj9.sharedclasses/com.ibm.oti.shared=ALL-UNNAMED ";
-		}
 		return customOptions;
 	}
 	

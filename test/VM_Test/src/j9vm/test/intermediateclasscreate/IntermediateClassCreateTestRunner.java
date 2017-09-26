@@ -104,9 +104,6 @@ public class IntermediateClassCreateTestRunner extends Runner {
 			customOptions += "-Xshareclasses:name=intermediateclasscreatetest,destroy ";
 			break;
 		}
-		if (Integer.parseInt(javaVersion) >= 90) {
-			customOptions += " --add-exports=openj9.sharedclasses/com.ibm.oti.shared=ALL-UNNAMED ";
-		}
 		return customOptions;
 	}
 	
