@@ -30,7 +30,6 @@
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/Panama" />
 	<property name="BUILDINFO_FSROOT" value="${BUILD_ROOT}" />
-	<property name="dist" location="${DEST}/Panama" />
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src"/>
@@ -41,9 +40,9 @@
 	<property name="target.level" value="1.9"/> -->
 
 	<target name="init">
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}"/>
-		<copy todir="${dist}">
+		<copy todir="${DEST}">
 			<fileset dir="${SRC_ROOT}/Panama" includes="libpanamatest.so" />
 			<fileset dir="${SRC_ROOT}/TestConfig/lib" includes="panamatest.jar" />
 		</copy>
@@ -55,28 +54,26 @@
 		<echo>===fork:				yes</echo>
 		<echo>===executable:			${compiler.javac}</echo>
 		<echo>===debug:				on</echo>
-		<echo>===destdir:				${dist}</echo>
+		<echo>===destdir:				${DEST}</echo>
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
 				<src path="${src}"/>
 				<src path="${transformerListener}" />
 				<classpath>
 					<pathelement location="../TestConfig/lib/testng.jar"/>
 					<pathelement location="../TestConfig/lib/jcommander.jar"/>
-					<pathelement location="${dist}/panamatest.jar"/>
+					<pathelement location="${DEST}/panamatest.jar"/>
 				</classpath>
 		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution" >
-		<mkdir dir="${dist}"/>
-		<jar jarfile="${dist}/PanamaTests.jar" filesonly="true">
+		<mkdir dir="${DEST}"/>
+		<jar jarfile="${DEST}/PanamaTests.jar" filesonly="true">
 			<fileset dir="${build}"/>
 			<fileset dir="${src}/../" includes="*.properties,*.xml"/>
 		</jar>
-		<copy todir="${dist}">
-			<fileset dir="${src}/../" includes="*.xml" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml" />
 			<fileset dir="${src}/../" includes="*.mk" />
 		</copy>
 	</target>

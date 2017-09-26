@@ -31,13 +31,12 @@
 	<!-- set global properties for this build -->
 	<property name="BUILD_ROOT" value="../" />
 	<property name="DEST" value="${BUILD_ROOT}/SharedCPEntryInvokerTests" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="src" location="./src"/>
 	<property name="build" location="./bin"/>
 	<property name="redefineclassagent" location="../cmdLineTests/jvmtitests/src"/>
 
 	<target name="init">
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 	</target>
 
@@ -47,7 +46,7 @@
 		<echo>===fork:				yes</echo>
 		<echo>===executable:			${compiler.javac}</echo>
 		<echo>===debug:				on</echo>
-		<echo>===destdir:				${dist}</echo>
+		<echo>===destdir:				${DEST}</echo>
 		<!-- Compile agent first, then tests -->
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
     			<src path="${redefineclassagent}"/>
@@ -65,15 +64,13 @@
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution" >
-		<jar jarfile="${dist}/SharedCPEntryInvokerTests.jar" filesonly="true" >
+		<jar jarfile="${DEST}/SharedCPEntryInvokerTests.jar" filesonly="true" >
 			<fileset dir="${build}"/>
 			<fileset dir="${src}"/>
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />
 		</jar>
-		<copy todir="${dist}">
-			<fileset dir="${src}/../" includes="*.xml" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml" />
 			<fileset dir="${src}/../" includes="*.mk" />
 		</copy>
 	</target>

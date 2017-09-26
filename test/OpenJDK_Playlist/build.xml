@@ -30,11 +30,10 @@
 
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/OpenJDK_Playlist" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="src" location="." />
 
 	<target name="init">
-		<mkdir dir="${dist}"/>
+		<mkdir dir="${DEST}"/>
 	</target>
 
 	<target name="dist" depends="init" description="generate the distribution">

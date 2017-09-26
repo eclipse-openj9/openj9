@@ -29,7 +29,7 @@
 	-DJAVATEST_ROOT="$(JAVATEST_ROOT)" \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DJAVA_EXECUTABLE_DIR="$(JAVA_BIN)" \
-	-DSTATLNKJAR="$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)jep178staticLinkingTest$(D)${JAVA_VERSION}$(D)jep178staticLinkingTest.jar" \
+	-DSTATLNKJAR="$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)jep178staticLinkingTest$(D)jep178staticLinkingTest.jar" \
 	-DTESTJEP178_STATIC="$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_static" \
 	-DTESTJEP178_DYNAMIC="$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_dynamic" \
 	-DAGENTLIBA=testjvmtiA \
@@ -56,7 +56,7 @@
 	-DJAVATEST_ROOT="$(JAVATEST_ROOT)" \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DJAVA_EXECUTABLE_DIR="$(JAVA_BIN)" \
-	-DSTATLNKJAR="$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)jep178staticLinkingTest$(D)${JAVA_VERSION}$(D)jep178staticLinkingTest.jar" \
+	-DSTATLNKJAR="$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)jep178staticLinkingTest$(D)jep178staticLinkingTest.jar" \
 	-DTESTJEP178_STATIC="$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_static" \
 	-DTESTJEP178_DYNAMIC="$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_dynamic" \
 	-DAGENTLIBA=testjvmtiA \

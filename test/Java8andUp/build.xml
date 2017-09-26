@@ -31,7 +31,6 @@
 	<!-- set global properties for this build -->
 	<property name="BUILD_ROOT" value="../" />
 	<property name="DEST" value="${BUILD_ROOT}/Java8andUp" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />
@@ -42,7 +41,7 @@
 	<property name="transformerListener" location="../Utils/src"/>
 
 	<target name="init">
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 		<mkdir dir="${build_resource}" />
 	</target>
@@ -125,7 +124,7 @@
 		<echo>===fork:				yes</echo>
 		<echo>===executable:			${compiler.javac}</echo>
 		<echo>===debug:				on</echo>
-		<echo>===destdir:				${dist}</echo>
+		<echo>===destdir:				${DEST}</echo>
 		<if>
 			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
 			<then>
@@ -253,20 +252,18 @@
 	</target>
 
 	<target name="dist" depends="pack_resources" description="generate the distribution">
-		<jar jarfile="${dist}/GeneralTest.jar" filesonly="true">
+		<jar jarfile="${DEST}/GeneralTest.jar" filesonly="true">
 			<fileset dir="${build}" />
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />
 		</jar>
-		<jar jarfile="${dist}/TestResources.jar" filesonly="true">
+		<jar jarfile="${DEST}/TestResources.jar" filesonly="true">
 			<fileset dir="${build_resource}" />
 		</jar>
 		<jar jarfile="${RESOURCES_DIR}/vmargs.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF">
 			<fileset dir="${build}" includes="org/openj9/test/vmArguments/*.class"/>
 		</jar>
-		<copy todir="${dist}">
-			<fileset dir="${src}/../" includes="*.xml,*.policy" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml,*.policy" />
 			<fileset dir="${src}/../" includes="*.mk" />
 		</copy>
 	</target>

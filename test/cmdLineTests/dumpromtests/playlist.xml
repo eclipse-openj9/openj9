@@ -33,7 +33,7 @@
 	-DEXE=$(JAVA_COMMAND) \
 	-DGENERAL_TEST_DIR=$(Q)$(JVM_TEST_ROOT)$(D)Java8andUp$(D)SE80$(Q) \
 	-DJDMPVIEW_EXE="$(JAVA_BIN)$(D)jdmpview" \
-	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)$(JAVA_VERSION)$(D)utils.jar$(Q) \
+	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)dumpromclasstests.xml$(Q) -explainExcludes \
 	-xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) \

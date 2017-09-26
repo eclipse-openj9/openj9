@@ -30,7 +30,6 @@
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/cmdline_options_testresources" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}"/>
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src"/>
@@ -39,7 +38,7 @@
 	<property name="build" location="./bin"/>
 
 	<target name="init">
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}"/>
 	</target>
 
@@ -49,7 +48,7 @@
 		<echo>===fork:				yes</echo>
 		<echo>===executable:			${compiler.javac}</echo>
 		<echo>===debug:				on</echo>
-		<echo>===destdir:				${dist}</echo>
+		<echo>===destdir:				${DEST}</echo>
 
 
 		<if>
@@ -81,7 +80,7 @@
 
 	<target name="dist" depends="compile" description="generate the distribution" >
 		<!-- Store all class files in cmdlinetestresources.jar file -->
-		<jar jarfile="${dist}/cmdlinetestresources.jar" filesonly="true">
+		<jar jarfile="${DEST}/cmdlinetestresources.jar" filesonly="true">
 			<fileset dir="${build}"/>
 			<fileset dir="${src}"/>
 		</jar>
