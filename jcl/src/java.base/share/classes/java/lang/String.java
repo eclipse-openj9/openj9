@@ -197,6 +197,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			}
 		}
 	}
+	
+	/**
+	 * This is a System property to enable sharing of the underlying value array in {@link #String.substring(int)} and 
+	 * {@link #String.substring(int, int)} if the offset is zero.
+	 */
+	static boolean enableSharingInSubstringWhenOffsetIsZero;
 
 	/*[IF Sidecar19-SE]*/
 	private final byte[] value;
@@ -3352,9 +3358,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (0 <= start && start <= len) {
 			// Check if the String is compressed
 			if (enableCompression && count >= 0) {
-				return new String(value, start, len - start, true);
+				return new String(value, start, len - start, true, enableSharingInSubstringWhenOffsetIsZero);
 			} else {
-				return new String(value, start, len - start, false);
+				return new String(value, start, len - start, false, enableSharingInSubstringWhenOffsetIsZero);
 			}
 		} else {
 			throw new StringIndexOutOfBoundsException(start);
@@ -3383,9 +3389,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (0 <= start && start <= end && end <= len) {
 			// Check if the String is compressed
 			if (enableCompression && count >= 0) {
-				return new String(value, start, end - start, true);
+				return new String(value, start, end - start, true, enableSharingInSubstringWhenOffsetIsZero);
 			} else {
-				return new String(value, start, end - start, false);
+				return new String(value, start, end - start, false, enableSharingInSubstringWhenOffsetIsZero);
 			}
 		} else {
 			throw new StringIndexOutOfBoundsException(start);
