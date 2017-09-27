@@ -4303,7 +4303,7 @@ written authorization of the copyright holder.
 			if (max == 1) {
 				return new String[] { this };
 			}
-			java.util.ArrayList<String> parts = new java.util.ArrayList<String>(max > 0 ? max : 10);
+			java.util.ArrayList<String> parts = new java.util.ArrayList<String>((max > 0 && max < 100) ? max : 10);
 
 			/*[IF Sidecar19-SE]*/
 			byte[]
