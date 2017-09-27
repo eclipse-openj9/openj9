@@ -102,6 +102,15 @@ public class AttachHandler extends Thread {
 	private static String nameProperty;
 	private static String pidProperty;
 	private static int numberOfTargets;
+	/*[IF Sidecar19-SE]*/
+	/*
+	 * As of Java 9, a VM cannot attach to itself unless explicitly enabled.
+	 * Grab the setting before the application has a chance to change it, 
+	 * but parse it lazily because we rarely need the value.
+	 */
+	public final static String allowAttachSelf = 
+			com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("jdk.attach.allowAttachSelf");  //$NON-NLS-1$
+	/*[ENDIF]*/
 	
 	/* only the attach handler thread uses syncFileLock */
 	/* [PR Jazz 30075] Make syncFileLock an instance variable since it is accessed only by the attachHandler singleton. */
@@ -127,20 +136,19 @@ public class AttachHandler extends Thread {
 			setAttachState(AttachStateValues.ATTACH_TERMINATED);
 			return;
 		}
-
 		/*
 		 *  set default behaviour:
 		 *  Java 6 R24 and later: disabled by default on z/OS, enabled on all other platforms
 		 *  Java 5: disabled by default on all platforms 
 		 */
 		/*[PR Jazz 59196 LIR: Disable attach API by default on z/OS (31972)]*/
-				boolean enableAttach = true;
-				String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
-				if ((null != osName) && (osName.equalsIgnoreCase("z/OS"))) { //$NON-NLS-1$
-					enableAttach = false;
-				}
-		String enableAttachProp = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("com.ibm.tools.attach.enable");  //$NON-NLS-1$
+		boolean enableAttach = true;
+		String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
+		if ((null != osName) && (osName.equalsIgnoreCase("z/OS"))) { //$NON-NLS-1$
+			enableAttach = false;
+		}
 		/* the system property overrides the default */
+		String enableAttachProp = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("com.ibm.tools.attach.enable");  //$NON-NLS-1$
 		if (null != enableAttachProp) {
 			if (enableAttachProp.equalsIgnoreCase("no")) { //$NON-NLS-1$
 				enableAttach = false;
