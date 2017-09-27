@@ -91,16 +91,7 @@ struct TR_SignatureCountPair
    int32_t count;
 };
 
-// Must be less than 8 because in some parts of the code (CHTable) we keep flags on a byte variable
-// Also, if this increases past 10, we need to expand the _activeThreadName and _suspendedThreadName
-// fields in TR::CompilationInfoPerThread as currently they have 1 char available for the thread number.
-//
-#define MAX_USABLE_COMP_THREADS 7
-#define MAX_DIAGNOSTIC_COMP_THREADS 1
-#define MAX_TOTAL_COMP_THREADS (MAX_USABLE_COMP_THREADS + MAX_DIAGNOSTIC_COMP_THREADS)
-#if (MAX_TOTAL_COMP_THREADS > 8)
-#error "MAX_TOTAL_COMP_THREADS should be less than 8"
-#endif
+#include "env/MaxCompilationThreads.hpp"
 
 #ifndef J9_INVOCATION_COUNT_MASK
 #define J9_INVOCATION_COUNT_MASK                   0x00000000FFFFFFFF
@@ -723,8 +714,8 @@ public:
    TR::CompilationInfoPerThread *getCompInfoForThread(J9VMThread *vmThread);
    int32_t getNumUsableCompilationThreads() const { return _compThreadIndex; }
    int32_t getNumTotalCompilationThreads() const { return _compThreadIndex + _numDiagnosticThreads; }
-   TR::CompilationInfoPerThreadBase *getCompInfoWithID(int32_t ID);
-   TR::Compilation *getCompilationWithID(int32_t ID);
+   TR::CompilationInfoPerThreadBase *getCompInfoWithID(size_t ID);
+   TR::Compilation *getCompilationWithID(size_t ID);
    TR::CompilationInfoPerThread *getFirstSuspendedCompilationThread();
    bool useMultipleCompilationThreads() { return (getNumUsableCompilationThreads() + _numDiagnosticThreads) > 1; }
    bool getRampDownMCT() const { return _rampDownMCT; }
