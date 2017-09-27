@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,6 @@
 #include "cs2/arrayof.h"                          // for ArrayOf
 #include "cs2/bitvectr.h"
 #include "cs2/listof.h"                           // for ListOf
-#include "cs2/tableof.h"                          // for TableOf
 #include "env/TRMemory.hpp"                       // for Allocator, etc
 #include "env/PersistentInfo.hpp"                 // for PersistentInfo
 #include "env/VMJ9.h"
