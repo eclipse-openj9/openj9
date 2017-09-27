@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,7 @@ using J9::RawAllocator;
 #endif // #ifndef TR_RAW_ALLOCATOR
 
 #include <new>
+#include "env/TypedAllocator.hpp"
 #include "j9.h"
 #undef min
 #undef max
@@ -94,6 +95,12 @@ public:
       }
 
    friend class SegmentAllocator;
+
+   template < typename T >
+   operator TR::typed_allocator< T, TR::RawAllocator >()
+      {
+      return TR::typed_allocator< T, TR::RawAllocator >(*this);
+      }
 
 private:
 

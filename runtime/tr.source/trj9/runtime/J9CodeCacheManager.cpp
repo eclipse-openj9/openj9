@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,6 +57,12 @@ J9::CodeCacheManager::self()
    return static_cast<TR::CodeCacheManager *>(this);
    }
 
+TR_FrontEnd *
+J9::CodeCacheManager::fe()
+   {
+   return _fe;
+   }
+
 TR_J9VMBase *
 J9::CodeCacheManager::fej9()
    {
@@ -71,21 +77,6 @@ J9::CodeCacheManager::initialize(bool useConsolidatedCache, uint32_t numberOfCod
 
    return self()->OMR::CodeCacheManager::initialize(useConsolidatedCache, numberOfCodeCachesToCreateAtStartup);
    }
-
-void *
-J9::CodeCacheManager::getMemory(size_t sizeInBytes)
-   {
-   PORT_ACCESS_FROM_JITCONFIG(TR::CodeCacheManager::jitConfig());
-   return j9mem_allocate_memory(sizeInBytes, J9MEM_CATEGORY_JIT);
-   }
-
-void
-J9::CodeCacheManager::freeMemory(void *memoryToFree)
-   {
-   PORT_ACCESS_FROM_JITCONFIG(TR::CodeCacheManager::jitConfig());
-   j9mem_free_memory(memoryToFree);
-   }
-
 
 void
 J9::CodeCacheManager::addCodeCache(TR::CodeCache *codeCache)
