@@ -405,7 +405,7 @@ int32_t TR::MonitorElimination::perform()
    _monitorStack->push(outerScope);
 
    bool attemptRedundantMonitors = true;
-   bool disableOSRwithTM = feGetEnv("TR_disableOSRwithTM") ? true: false;
+   static bool disableOSRwithTM = feGetEnv("TR_disableOSRwithTM") ? true: false;
    if (comp()->getOption(TR_EnableOSR) && disableOSRwithTM)
       {
       if (trace())
