@@ -24,9 +24,10 @@ pipeline {
     agent {label 'master'}
 
     environment {
-        HTTP        = 'https://'
-        SRC_REPO    = 'github.com/eclipse/omr.git'
-        TARGET_REPO = 'github.com/eclipse/openj9-omr.git'
+        HTTP         = 'https://'
+        SRC_REPO     = 'github.com/eclipse/omr.git'
+        TARGET_REPO  = 'github.com/eclipse/openj9-omr.git'
+        ARCHIVE_FILE = "OMR_COMMIT"
     }
     stages {
         stage('Mirror') {
@@ -54,7 +55,22 @@ pipeline {
                                         returnStdout: true
                                     ).trim()
                                 currentBuild.description = "${LAST_COMMIT}"
+
+                                current_sha = sh (
+                                        script: 'git rev-parse --short HEAD',
+                                        returnStdout: true
+                                    ).trim()
                             }
+
+                            // if there were changes, launch an acceptance build
+                            step([$class: 'CopyArtifact', optional: true, fingerprintArtifacts: true, projectName: 'Mirror-OMR-to-OpenJ9-OMR'])
+                            def default_sha = [omr_sha: 'Default']
+                            def previous = readProperties defaults: default_sha, file: "${ARCHIVE_FILE}"
+                            if ( previous.omr_sha != current_sha ) {
+                                build job: 'Pipeline-OMR-Acceptance', propagate: false, wait: false
+                                writeFile file: "${ARCHIVE_FILE}", text: "omr_sha=${current_sha}"
+                            }                            
+                            archiveArtifacts "${ARCHIVE_FILE}"
                         }
                     }
                 }
