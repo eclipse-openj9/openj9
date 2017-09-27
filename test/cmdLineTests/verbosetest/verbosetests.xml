@@ -25,7 +25,7 @@
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <suite id="Test -verbose parsing" timeout="900">
-	<variable name="PROGRAM" value="-cp $Q$$RESOURCES_DIR$$CPDL$$TESTNG$$CPDL$$JVM_TEST_ROOT$/JIT_Test/$JAVA_VERSION$/jitt.jar$Q$ org.testng.TestNG -d $REPORTDIR$ $Q$$JVM_TEST_ROOT$/JIT_Test/$JAVA_VERSION$/testng.xml$Q$ -testnames AllocationTest -groups $TEST_GROUP$" />
+	<variable name="PROGRAM" value="-cp $Q$$RESOURCES_DIR$$CPDL$$TESTNG$$CPDL$$JVM_TEST_ROOT$/JIT_Test/jitt.jar$Q$ org.testng.TestNG -d $REPORTDIR$ $Q$$JVM_TEST_ROOT$/JIT_Test/testng.xml$Q$ -testnames AllocationTest -groups $TEST_GROUP$" />
 	<variable name="VGC" value="<verbosegc" />
 	<variable name="VCLASS" value="class load: java/lang/Object" />
 	<variable name="VJNI" value="<JNI FindClass: java/lang/Class>" />

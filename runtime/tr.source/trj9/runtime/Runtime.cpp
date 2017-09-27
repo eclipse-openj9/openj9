@@ -1140,7 +1140,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
    // --------------------------------- X86 ------------------------------------
 
-   static const bool useNewX86ArrayTranslate = feGetEnv("TR_UseNewX86ArrayTranslate") != NULL;
+   static const bool useNewX86ArrayTranslate = feGetEnv("TR_UseOldX86ArrayTranslate") == NULL;
 
    SET(TR_X86resolveIPicClass,                        (void *)resolveIPicClass,                TR_Helper);
    SET(TR_X86populateIPicSlotClass,                   (void *)populateIPicSlotClass,           TR_Helper);
