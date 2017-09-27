@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import org.testng.log4testng.Logger;
 
@@ -173,19 +174,19 @@ class TargetManager {
 	}
 
 	public TargetManager(String cmdName, String targetId,
-			ArrayList<String> appArgs) {
+			List<String> appArgs) {
 		this.targetId = targetId;
 		this.proc = launchTarget(cmdName, targetId, null, null, appArgs);
 	}
 
 	public TargetManager(String cmdName, String targetId,
-			ArrayList<String> vmArgs, ArrayList<String> appArgs) {
+			List<String> vmArgs, ArrayList<String> appArgs) {
 		this.targetId = targetId;
 		this.proc = launchTarget(cmdName, targetId, null, vmArgs, appArgs);
 	}
 
 	public TargetManager(String cmdName, String targetId, String displayName,
-			ArrayList<String> vmArgs, ArrayList<String> appArgs) {
+			List<String> vmArgs, ArrayList<String> appArgs) {
 		this.targetId = targetId;
 		this.proc = launchTarget(cmdName, targetId, displayName, vmArgs,
 				appArgs);
@@ -197,8 +198,8 @@ class TargetManager {
 	 * @return launched process
 	 */
 	private Process launchTarget(String cmdName, String tgtId,
-			String myDisplayName, ArrayList<String> vmArgs,
-			ArrayList<String> appArgs) {
+			String myDisplayName, List<String> vmArgs,
+			List<String> appArgs) {
 		ArrayList<String> argBuffer = new ArrayList<String>();
 		String[] args = {};
 		this.displayName = myDisplayName;
@@ -465,6 +466,14 @@ class TargetManager {
 
 	public boolean isActive() {
 		return active;
+	}
+
+	public int waitFor() throws InterruptedException {
+		int result = -1;
+		if (!Objects.isNull(proc)) {
+			result = proc.waitFor();
+		}
+		return result;
 	}
 
 }
