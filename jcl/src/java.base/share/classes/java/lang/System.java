@@ -167,6 +167,13 @@ public final class System {
 			unsafe.putObject(unsafe.staticFieldBase(f2), unsafe.staticFieldOffset(f2), com.ibm.jit.JITHelpers.getHelpers());
 		} catch (NoSuchFieldException e) { }
 		
+		/**
+		 * When the System Property == true, then enable sharing in String.substring(int) and String.substring(int, int)
+		 * methods whenever offset is zero. Otherwise, disable sharing of the underlying value array. 
+		 */
+		String enableSharingInSubstringWhenOffsetIsZeroProperty = internalGetProperties().getProperty("java.lang.string.substring.share"); //$NON-NLS-1$
+		String.enableSharingInSubstringWhenOffsetIsZero = enableSharingInSubstringWhenOffsetIsZeroProperty == null || enableSharingInSubstringWhenOffsetIsZeroProperty.equalsIgnoreCase("true"); //$NON-NLS-1$
+		
 		// Set up standard in, out, and err.
 		/*[PR CMVC 193070] - OTT:Java 8 Test_JITHelpers test_getSuperclass NoSuchMet*/
 		/*[PR JAZZ 58297] - continue with the rules defined by JAZZ 57070 - Build a Java 8 J9 JCL using the SIDECAR18 preprocessor configuration */

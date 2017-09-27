@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,9 @@ class OMR_EXTENSIBLE CodeCacheManager : public OMR::CodeCacheManagerConnector
    TR::CodeCacheManager *self();
 
 public:
-   CodeCacheManager(TR_FrontEnd *fe) : OMR::CodeCacheManagerConnector(fe)
+   CodeCacheManager(TR_FrontEnd *fe, TR::RawAllocator rawAllocator) :
+      OMR::CodeCacheManagerConnector(rawAllocator),
+      _fe(fe)
       {
       _codeCacheManager = reinterpret_cast<TR::CodeCacheManager *>(this);
       }
@@ -62,12 +64,10 @@ public:
    static J9JITConfig *jitConfig()         { return _jitConfig; }
    static J9JavaVM *javaVM()               { return _javaVM; }
 
+   TR_FrontEnd *fe();
    TR_J9VMBase *fej9();
 
    TR::CodeCache *initialize(bool useConsolidatedCache, uint32_t numberOfCodeCachesToCreateAtStartup);
-
-   void *getMemory(size_t sizeInBytes);
-   void  freeMemory(void *memoryToFree);
 
    void addCodeCache(TR::CodeCache *codeCache);
 
@@ -104,6 +104,7 @@ public:
    void onClassRedefinition(TR_OpaqueMethodBlock *oldMethod, TR_OpaqueMethodBlock *newMethod);
 
 private :
+   TR_FrontEnd *_fe;
    static TR::CodeCacheManager *_codeCacheManager;
    static J9JITConfig *_jitConfig;
    static J9JavaVM *_javaVM;
