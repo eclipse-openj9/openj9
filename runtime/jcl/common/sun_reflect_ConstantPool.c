@@ -458,6 +458,56 @@ Java_sun_reflect_ConstantPool_getFieldAtIfLoaded0(JNIEnv *env, jobject unusedObj
 	return getFieldAt(env, constantPoolOop, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
 }
 
+/**
+ * Get the class name from a constant pool class element, which is located
+ * at the specified index in a class's constant pool.
+ *
+ * @param env[in]             the JNI env
+ * @param unusedObject[in]    unused
+ * @param constantPoolOop[in] the class - its constant pool is accessed
+ * @param cpIndex[in]         the constant pool index
+ *
+ * @return  instance of String which contains the class name or NULL in
+ *          case of error
+ *
+ * @throws  NullPointerException if constantPoolOop is null
+ * @throws  IllegalArgumentException if cpIndex has wrong type
+ */
+jobject JNICALL
+Java_java_lang_invoke_MethodHandle_getCPClassNameAt(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex)
+{
+	jobject classNameObject = NULL;
+	J9VMThread *vmThread = (J9VMThread *) env;
+	J9InternalVMFunctions *vmFunctions = vmThread->javaVM->internalVMFunctions;
+	J9MemoryManagerFunctions *gcFunctions = vmThread->javaVM->memoryManagerFunctions;
+	SunReflectCPResult result = NULL_POINTER_EXCEPTION;
+
+	if (NULL != constantPoolOop) {
+		UDATA cpType = J9CPTYPE_UNUSED;
+		J9ROMConstantPoolItem *romCPItem = NULL;
+		vmFunctions->internalEnterVMFromJNI(vmThread);
+		result = getROMCPItemAndType(vmThread, constantPoolOop, cpIndex, &cpType, &romCPItem);
+		if (OK == result) {
+			switch (cpType) {
+			case J9CPTYPE_CLASS: {
+				J9UTF8 *className = J9ROMCLASSREF_NAME((J9ROMClassRef*)romCPItem);
+				j9object_t internalClassNameObject = gcFunctions->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(className), (U_32) J9UTF8_LENGTH(className), 0);
+				classNameObject = vmFunctions->j9jni_createLocalRef(env, internalClassNameObject);
+				break;
+			}
+			default:
+				result = WRONG_CP_ENTRY_TYPE_EXCEPTION;
+				break;
+			}
+		}
+		vmFunctions->internalReleaseVMAccess(vmThread);
+	}
+
+	checkResult(env, result);
+
+	return classNameObject;
+}
+
 jobject JNICALL
 Java_sun_reflect_ConstantPool_getMemberRefInfoAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex)
 {
