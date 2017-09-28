@@ -75,34 +75,16 @@ TR_PersistentCHTable::commitSideEffectGuards(TR::Compilation *comp)
 
    for (TR_ClassLoadCheck * clc = comp->getClassesThatShouldNotBeLoaded()->getFirst(); clc; clc = clc->getNext())
       {
-      for (int32_t i = 0; i < CLASSHASHTABLE_SIZE; ++i)
+      TR_OpaqueClassBlock *clazz = comp->fej9()->getClassFromSignature(clc->_name, clc->_length, comp->getCurrentMethod());
+      if (clazz)
          {
-         for (TR_PersistentClassInfo *pci = _classes[i].getFirst(); pci; pci = pci->getNext())
+         TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(clazz, comp);
+         if (classInfo && classInfo->isInitialized())
             {
-            int32_t pciCachedNameLength = pci->getNameLength();
-            if (!pci->isInitialized()
-                || (pciCachedNameLength > -1 && pciCachedNameLength != clc->_length))
-               continue;
-
-            TR_OpaqueClassBlock *clazz = pci->getClassId();
-            int32_t length;
-            char *clazzName = TR::Compiler->cls.classNameChars(comp, clazz, length);
-            clazzName = classNameToSignature(clazzName, length, comp);
-            if (pciCachedNameLength == -1)
-               pci->setNameLength(length);
-            if ((length == clc->_length) &&
-                !strncmp(clc->_name, clazzName, length))
-               {
-               nopAssumptionIsValid = false;
-               break;
-               }
-            }
-         if (!nopAssumptionIsValid)
+            nopAssumptionIsValid = false;
             break;
+            }
          }
-
-      if (!nopAssumptionIsValid)
-         break;
       }
 
    if (nopAssumptionIsValid)
