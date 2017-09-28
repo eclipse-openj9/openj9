@@ -974,6 +974,9 @@ jobject JNICALL Java_java_lang_invoke_VarHandle_addAndGet(JNIEnv *env, jobject h
 void JNICALL Java_lang_ref_Finalizer_runAllFinalizersImpl(JNIEnv *env, jclass recv);
 void JNICALL Java_lang_ref_Finalizer_runFinalizationImpl(JNIEnv *env, jclass recv);
 
+/* sun_misc_URLClassLoader.c */
+jobject JNICALL Java_sun_misc_URLClassPath_getLookupCacheURLs(JNIEnv *env, jobject unusedObject, jobject classLoader);
+
 /* sun_reflect_ConstantPool.c */
 jint JNICALL Java_sun_reflect_ConstantPool_getSize0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop);
 jclass JNICALL Java_sun_reflect_ConstantPool_getClassAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);

@@ -34,6 +34,7 @@
 	<xi:include href="../uma/rcm_exports.xml"></xi:include>
 	<xi:include href="../uma/se8_exports.xml"></xi:include>
 	<xi:include href="../uma/se829_exports.xml"></xi:include>
+	<xi:include href="../uma/se8only_exports.xml"></xi:include>
 	
 	<xi:include href="../uma/sun_misc_Unsafe_objects.xml"></xi:include>	
 	<xi:include href="../uma/se6_vm-side_natives_objects.xml"></xi:include>
@@ -44,6 +45,7 @@
 	<xi:include href="../uma/jithelpers_objects.xml"></xi:include>
 	<xi:include href="../uma/rcm_objects.xml"></xi:include>
 	<xi:include href="../uma/se8_objects.xml"></xi:include>
+	<xi:include href="../uma/se8only_objects.xml"></xi:include>
 
 	<!-- vendor_jcl.xml can contain vendor specific configuration -->
 	<xi:include href="../uma/vendor_jcl.xml">
@@ -81,6 +83,7 @@
 			</group>
 			<group name="se8"/>
 			<group name="se829"/>
+			<group name="se8only"/>
 		</exports>
 		
 		<flags>
@@ -135,6 +138,7 @@
 			</group>
 			
 			<group name="se8"/>
+			<group name="se8only"/>
 			
 			<group name="vendor_jcl"/>
 			
