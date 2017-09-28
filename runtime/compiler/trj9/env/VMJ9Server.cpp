@@ -687,15 +687,6 @@ TR_J9ServerVM::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize,
    {
    if (comp->getOptimizationPlan()->_mandatoryCodeAddress)
       {
-      // TR_ASSERT(coldCodeSize==0, "We should not request a cold block for JAAS");
-      // JAAS TODO: We should always request a non cold block for JAAS, below is a temporary workaround to enforce this, 
-      // with the trick that making use of how current OMR::CodeGenerator::allocateCodeMemory method performs
-      if (warmCodeSize == 0)
-         {
-         warmCodeSize = coldCodeSize;
-         coldCodeSize = 0;
-         }
-
       uint8_t *warmCode = nullptr;
       // We must have reserved a code cache that contains _mandatoryCodeAddress
       TR::CodeCache * codeCache = comp->getCurrentCodeCache(); // This is the reserved code cache
@@ -704,6 +695,7 @@ TR_J9ServerVM::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize,
       bool hadClassUnloadMonitor;
       bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
 
+      // No cold code is allocated since needsContiguousAllocation returns true. The total code size is allocated as warm code.
       warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(warmCodeSize, coldCodeSize, &codeCache, coldCode, needsContiguousAllocation(), isMethodHeaderNeeded);
 
       acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
