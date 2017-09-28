@@ -36,8 +36,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 		<tstamp>
 			<format property="year" pattern="yyyy" />
 		</tstamp>
-		<property name="bottom" value="&amp;copy; Copyright (c) 2003, ${year} IBM Corp. and others" />
-		<property name="zip.dest.dir" location="../JavaID Development API docs/non-security/80_29_api/com.ibm.lang.management" />
+		<property name="bottom" value="Copyright &amp;copy; 2003, ${year} IBM Corp. and others" />
+		<property name="zip.dest.dir" location="../JavaID Development API docs/non-security/80_api/com.ibm.lang.management" />
 		<condition property="zip.dest.exists">
 			<available file="${zip.dest.dir}" />
 		</condition>
