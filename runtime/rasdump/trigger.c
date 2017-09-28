@@ -511,26 +511,26 @@ printLabelSpec(struct J9JavaVM *vm)
 	 * its argument list.
 	 */
 	const char *labelSpec =
-			"  %Y     year    1900..????\n"
-			"  %y     century   00..99\n"
-			"  %m     month 	01..12\n"
-			"  %d     day   	01..31\n"
-			"  %H     hour  	00..23\n"
-			"  %M     minute	00..59\n"
-			"  %S     second	00..59\n"
+			"  %%Y     year    1900..????\n"
+			"  %%y     century   00..99\n"
+			"  %%m     month 	01..12\n"
+			"  %%d     day   	01..31\n"
+			"  %%H     hour  	00..23\n"
+			"  %%M     minute	00..59\n"
+			"  %%S     second	00..59\n"
 			"\n"
-			"  %pid   process id\n"
-			"  %uid   user name\n"
+			"  %%pid   process id\n"
+			"  %%uid   user name\n"
 #ifdef J9ZOS390
-			"  %job   job name\n"
-			"  %jobid job ID\n"
-			"  %asid  ASID\n"
+			"  %%job   job name\n"
+			"  %%jobid job ID\n"
+			"  %%asid  ASID\n"
 #endif
-			"  %seq   dump counter\n"
-			"  %tick  msec counter\n"
-			"  %home  java home\n"
-			"  %last  last dump\n"
-			"  %event dump event\n"
+			"  %%seq   dump counter\n"
+			"  %%tick  msec counter\n"
+			"  %%home  java home\n"
+			"  %%last  last dump\n"
+			"  %%event dump event\n"
 			"\n";
 	j9tty_err_printf(PORTLIB, labelSpec);
 	return OMR_ERROR_NONE;
