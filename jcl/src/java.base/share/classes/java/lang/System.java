@@ -168,11 +168,12 @@ public final class System {
 		} catch (NoSuchFieldException e) { }
 		
 		/**
-		 * When the System Property == true, then enable sharing in String.substring(int) and String.substring(int, int)
-		 * methods whenever offset is zero. Otherwise, disable sharing of the underlying value array. 
+		 * When the System Property == true, then disable sharing (i.e. arraycopy the underlying value array) in 
+		 * String.substring(int) and String.substring(int, int) methods whenever offset is zero. Otherwise, enable 
+		 * sharing of the underlying value array.
 		 */
-		String enableSharingInSubstringWhenOffsetIsZeroProperty = internalGetProperties().getProperty("java.lang.string.substring.share"); //$NON-NLS-1$
-		String.enableSharingInSubstringWhenOffsetIsZero = enableSharingInSubstringWhenOffsetIsZeroProperty == null || enableSharingInSubstringWhenOffsetIsZeroProperty.equalsIgnoreCase("true"); //$NON-NLS-1$
+		String enableSharingInSubstringWhenOffsetIsZeroProperty = internalGetProperties().getProperty("java.lang.string.substring.nocopy"); //$NON-NLS-1$
+		String.enableSharingInSubstringWhenOffsetIsZero = enableSharingInSubstringWhenOffsetIsZeroProperty == null || enableSharingInSubstringWhenOffsetIsZeroProperty.equalsIgnoreCase("false"); //$NON-NLS-1$
 		
 		// Set up standard in, out, and err.
 		/*[PR CMVC 193070] - OTT:Java 8 Test_JITHelpers test_getSuperclass NoSuchMet*/
