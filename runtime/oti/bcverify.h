@@ -169,10 +169,29 @@ typedef struct J9BCVAlloc {
 	temp1 = POP; \
 	inconsistentStack |= (temp1 == BCV_BASE_TYPE_TOP);
 
-/* Must be 2 singles or a correctly ordered wide pair */
-#define POP_TOS_PAIR( temp1, temp2 )	\
+#define IS_WIDE_TYPE(temp)	\
+	(J9_ARE_ALL_BITS_SET((temp), BCV_BASE_TYPE_LONG) | J9_ARE_ALL_BITS_SET((temp), BCV_BASE_TYPE_DOUBLE))
+
+#define TYPE_PAIR_CHECK(temp1, temp2)	\
+	{ \
+		UDATA isWideType = IS_WIDE_TYPE(temp2); \
+		inconsistentStack |= IS_WIDE_TYPE(temp1); \
+		inconsistentStack |= ((BCV_BASE_TYPE_TOP == (temp1)) ? (!isWideType) : isWideType); \
+	}
+
+/* To ensure these two types on the current stack are 2 singles or a correctly ordered wide pair(long/double),
+ * there are 3 cases that need to be covered:
+ * 1) the second type (temp2) under the first type (temp1) must not be 'top' in any case.
+ * 2) the first type (temp1) must not be long/double in any case.
+ * 3) the type underneath (temp2) is long/double only when the first type (temp1) is 'top';
+ *    otherwise, the type underneath (temp2) must not be long/double.
+ * Note: if the first type (temp1) is not 'top', these two types could be other primitives
+ * (short, int, char, byte, boolean, float, etc) or object references.
+ */
+#define POP_TOS_PAIR(temp1, temp2)	\
 	temp1 = POP; \
-	POP_TOS_SINGLE ( temp2 );
+	POP_TOS_SINGLE(temp2); \
+	TYPE_PAIR_CHECK(temp1, temp2);
 
 #define POP_TOS_BASE_ARRAY( basetype ) \
 	temp1 = POP; \

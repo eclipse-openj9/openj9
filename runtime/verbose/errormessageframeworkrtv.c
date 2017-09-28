@@ -184,6 +184,7 @@ constructRtvMethodContextInfo(MethodContextInfo* methodInfo, J9BytecodeVerificat
 	/* Stackmap table */
 	methodInfo->stackMapData = NULL;
 	methodInfo->stackMapCount = 0;
+	methodInfo->stackMapLength = 0;
 
 	/* It is required to use the compressed stackmap table in the class file for the output format of framework
 	 * to print out data in the stackmap table so as to match Oracle's behavior.
@@ -193,6 +194,7 @@ constructRtvMethodContextInfo(MethodContextInfo* methodInfo, J9BytecodeVerificat
 	if (NULL != stackMapMethod) {
 		methodInfo->stackMapData = (U_8 *)(stackMapMethod + 1);
 		NEXT_U16(methodInfo->stackMapCount, methodInfo->stackMapData);
+		methodInfo->stackMapLength = (U_32)((verifyData->stackSize) * (verifyData->stackMapsCount));
 	}
 
 	/* Register callback functions dealing with the constant pool, the class name list, and the exception handler table */
@@ -886,7 +888,7 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 		printMessage(&msgBuf, "Expected return type 'V' in the function.");
 		break;
 	case BCV_ERR_WRONG_TOP_TYPE:
-		printMessage(&msgBuf, "The data type on 'stack' is long or double rather than a single-slot type.");
+		printMessage(&msgBuf, "The pair of data types on the top of 'stack' must be long, double or two non-top singles.");
 		break;
 	case BCV_ERR_INVALID_ARRAY_REFERENCE:
 	{
