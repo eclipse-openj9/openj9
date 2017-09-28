@@ -257,7 +257,16 @@ public abstract class ClassLoader {
 		
 		/*[IF Sidecar19-SE]*/
 		jdk.internal.misc.VM.initLevel(1);
-		System.bootLayer = jdk.internal.module.ModuleBootstrap.boot();
+		/*[IF Java18.3]*/
+		try {
+		/*[ENDIF]*/
+			System.bootLayer = jdk.internal.module.ModuleBootstrap.boot();
+		/*[IF Java18.3]*/
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			System.exit(1);
+		}
+		/*[ENDIF]*/
 		jdk.internal.misc.VM.initLevel(2);
 		String javaSecurityManager = System.internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
 		if (null != javaSecurityManager) {

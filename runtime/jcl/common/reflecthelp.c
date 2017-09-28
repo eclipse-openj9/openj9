@@ -161,7 +161,7 @@ getFieldTypeAnnotationsAsByteArray(JNIEnv *env, jobject jlrField) {
     enterVMFromJNI(vmThread);
     fieldObject = J9_JNI_UNWRAP_REFERENCE(jlrField);
     if (NULL != fieldObject) {
-        J9JNIFieldID *fieldID = vmThread->javaVM->reflectFunctions.idFromFieldObject(vmThread, fieldObject);
+        J9JNIFieldID *fieldID = vmThread->javaVM->reflectFunctions.idFromFieldObject(vmThread, NULL, fieldObject);
     	U_32 *annotationData = getFieldTypeAnnotationsDataFromROMField(fieldID->field);
     	if ( NULL != annotationData ) {
     		j9object_t annotationsByteArray = getAnnotationDataAsByteArray(vmThread, annotationData);
@@ -972,12 +972,17 @@ createConstructor(struct J9VMThread *vmThread, J9JNIMethodID *methodID, j9object
 }
 
 static struct J9JNIFieldID *
-idFromFieldObject(J9VMThread* vmThread, j9object_t fieldObject)
+idFromFieldObject(J9VMThread* vmThread, j9object_t declaringClassObject, j9object_t fieldObject)
 {
 	J9JNIFieldID *fieldID = NULL;
+	J9Class *declaringClass = NULL;
 	U_32 index = J9VMJAVALANGREFLECTFIELD_INTFIELDID(vmThread, fieldObject);
-	j9object_t declaringClassObject = J9VMJAVALANGREFLECTFIELD_DECLARINGCLASS(vmThread, fieldObject);
-	J9Class *declaringClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, declaringClassObject);
+	if (NULL == declaringClassObject) {
+		j9object_t declaringClassObjectTmp = J9VMJAVALANGREFLECTFIELD_DECLARINGCLASS(vmThread, fieldObject);
+		declaringClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, declaringClassObjectTmp);
+	} else {
+		declaringClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, declaringClassObject);
+	}
 	fieldID = (J9JNIFieldID *)(declaringClass->jniIDs[index]);
 
 	return fieldID;
@@ -1120,7 +1125,7 @@ reflectFieldToID(J9VMThread *vmThread, jobject reflectField)
 
 	field = J9_JNI_UNWRAP_REFERENCE(reflectField);
 	if (NULL != field) {
-		result = (jfieldID) idFromFieldObject(vmThread, field);
+		result = (jfieldID) idFromFieldObject(vmThread, NULL, field);
 	}
 	return result;
 }
@@ -1231,29 +1236,29 @@ exit:
 	return result;
 }
 
-jobject
-getDeclaredFieldHelper(JNIEnv *env, jobject declaringClass, jstring fieldName)
+/* The caller must have VM access. */
+j9object_t
+getFieldObjHelper(J9VMThread *vmThread, jclass declaringClass, jstring fieldName)
 {
-	J9VMThread *vmThread = (J9VMThread *)env;
-	J9JavaVM *vm = vmThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	jobject result = NULL;
+	J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
 	J9Class *clazz = NULL;
 	J9ROMClass *romClass = NULL;
 	J9ROMFieldShape *romField = NULL;
 	j9object_t fieldNameObj = NULL;
+	j9object_t fieldObj = NULL;
 	J9ROMFieldWalkState state;
 
-	vmFuncs->internalEnterVMFromJNI(vmThread);
+	Assert_JCL_mustHaveVMAccess(vmThread);
 
-	if (NULL == fieldName) {
+	if ((NULL == fieldName) || (NULL == declaringClass)) {
 		goto nullpointer;
 	}
 	fieldNameObj = J9_JNI_UNWRAP_REFERENCE(fieldName);
 	if (NULL == fieldNameObj) {
 		goto nullpointer;
 	}
-	clazz = J9VM_J9CLASS_FROM_JCLASS(vmThread, (jclass)declaringClass);
+	clazz = J9VM_J9CLASS_FROM_JCLASS(vmThread, declaringClass);
+	Assert_JCL_notNull(clazz);
 	romClass = clazz->romClass;
 
 	/* primitives/arrays don't have fields */
@@ -1269,18 +1274,15 @@ getDeclaredFieldHelper(JNIEnv *env, jobject declaringClass, jstring fieldName)
 
 		/* compare name with this field */
 		if (0 != vmFuncs->compareStringToUTF8(vmThread, fieldNameObj, 0, J9UTF8_DATA(romFieldName), J9UTF8_LENGTH(romFieldName))) {
-			j9object_t fieldObj = NULL;
 			UDATA inconsistentData = 0;
 
 			if (romField->modifiers & J9AccStatic) {
 				/* create static field object */
 				fieldObj = createStaticFieldObject(romField, clazz, clazz, vmThread, &inconsistentData);
-
 			} else {
 				/* create instance field object */
 				fieldObj = createInstanceFieldObject(romField, clazz, clazz, vmThread, &inconsistentData);
 			}
-
 			if (NULL != vmThread->currentException) {
 				goto done;
 			}
@@ -1291,11 +1293,6 @@ getDeclaredFieldHelper(JNIEnv *env, jobject declaringClass, jstring fieldName)
 
 			if (NULL == fieldObj) {
 				goto heapoutofmemory;
-			}
-
-			result = vmFuncs->j9jni_createLocalRef(env, fieldObj);
-			if (NULL == result) {
-				goto nativeoutofmemory;
 			}
 
 			goto done;
@@ -1316,11 +1313,26 @@ heapoutofmemory:
 	vmFuncs->setHeapOutOfMemoryError(vmThread);
 	goto done;
 
-nativeoutofmemory:
-	vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
-	goto done;
-
 done:
+	return fieldObj;
+}
+
+jobject
+getDeclaredFieldHelper(JNIEnv *env, jobject declaringClass, jstring fieldName)
+{
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
+	jobject result = NULL;
+	j9object_t fieldObj = NULL;
+
+	vmFuncs->internalEnterVMFromJNI(vmThread);
+	fieldObj = getFieldObjHelper(vmThread, (jclass)declaringClass, fieldName);
+	if (NULL != fieldObj) {
+		result = vmFuncs->j9jni_createLocalRef(env, fieldObj);
+		if (NULL == result) {
+			vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
+		}
+	}
 	vmFuncs->internalReleaseVMAccess(vmThread);
 	return result;
 }

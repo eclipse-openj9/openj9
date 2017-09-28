@@ -130,7 +130,7 @@ Java_java_lang_invoke_FieldVarHandle_unreflectField(JNIEnv *env, jobject handle,
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 	/* Can't fail as we know the field is not null */
 	fieldObject = J9_JNI_UNWRAP_REFERENCE(reflectField);
-	fieldID = reflectFunctions->idFromFieldObject(vmThread, fieldObject);
+	fieldID = reflectFunctions->idFromFieldObject(vmThread, NULL, fieldObject);
 
 	fieldOffset = fieldID->offset;
 	if (isStatic) {

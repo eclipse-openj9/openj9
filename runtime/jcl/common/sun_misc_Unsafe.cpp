@@ -29,6 +29,7 @@
 #include "j9port.h"
 #include "j2sever.h"
 #include "jclglob.h"
+#include "jcl_internal.h"
 #include "vmhook.h"
 
 #include <string.h>
@@ -539,7 +540,7 @@ Java_sun_misc_Unsafe_objectFieldOffset(JNIEnv *env, jobject receiver, jobject fi
 	if (NULL == field) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
-		J9JNIFieldID *fieldID = vm->reflectFunctions.idFromFieldObject(currentThread, J9_JNI_UNWRAP_REFERENCE(field));
+		J9JNIFieldID *fieldID = vm->reflectFunctions.idFromFieldObject(currentThread, NULL, J9_JNI_UNWRAP_REFERENCE(field));
 		J9ROMFieldShape *romField = fieldID->field;
 		if (NULL == romField) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
@@ -595,7 +596,7 @@ Java_sun_misc_Unsafe_staticFieldBase__Ljava_lang_reflect_Field_2(JNIEnv *env, jo
 	if (NULL == field) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
-		J9JNIFieldID *fieldID = vm->reflectFunctions.idFromFieldObject(currentThread, J9_JNI_UNWRAP_REFERENCE(field));
+		J9JNIFieldID *fieldID = vm->reflectFunctions.idFromFieldObject(currentThread, NULL, J9_JNI_UNWRAP_REFERENCE(field));
 		J9ROMFieldShape *romField = fieldID->field;
 		if (NULL == romField) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
@@ -621,7 +622,7 @@ Java_sun_misc_Unsafe_staticFieldOffset(JNIEnv *env, jobject receiver, jobject fi
 	if (NULL == field) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
-		J9JNIFieldID *fieldID = vm->reflectFunctions.idFromFieldObject(currentThread, J9_JNI_UNWRAP_REFERENCE(field));
+		J9JNIFieldID *fieldID = vm->reflectFunctions.idFromFieldObject(currentThread, NULL, J9_JNI_UNWRAP_REFERENCE(field));
 		J9ROMFieldShape *romField = fieldID->field;
 		if (NULL == romField) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
@@ -683,234 +684,164 @@ Java_jdk_internal_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver,
 	return JNI_FALSE;
 }
 
-void
-registerJdkInternalMiscUnsafeNatives(JNIEnv *env, jclass clazz) {
-	/* clazz can't be null */
-	JNINativeMethod natives[] = {
-		{
-			(char*)"defineClass",
-			(char*)"(Ljava/lang/String;[BIILjava/lang/ClassLoader;Ljava/security/ProtectionDomain;)Ljava/lang/Class;",
-			(void *)&Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader_2Ljava_security_ProtectionDomain_2
-		},
-		{
-			(char*)"defineAnonymousClass",
-			(char*)"(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;",
-			(void *)&Java_sun_misc_Unsafe_defineAnonymousClass
-		},
-		{
-			(char*)"pageSize",
-			(char*)"()I",
-			(void *)&Java_sun_misc_Unsafe_pageSize
-		},
-		{
-			(char*)"getLoadAverage",
-			(char*)"([DI)I",
-			(void *)&Java_sun_misc_Unsafe_getLoadAverage
-		},
-		{
-			(char*)"allocateMemory",
-			(char*)"(J)J",
-			(void *)&Java_sun_misc_Unsafe_allocateMemory
-		},
-		{
-			(char*)"freeMemory",
-			(char*)"(J)V",
-			(void *)&Java_sun_misc_Unsafe_freeMemory
-		},
-		{
-			(char*)"reallocateMemory",
-			(char*)"(JJ)J",
-			(void *)&Java_sun_misc_Unsafe_reallocateMemory
-		},
-		{
-			(char*)"ensureClassInitialized",
-			(char*)"(Ljava/lang/Class;)V",
-			(void *)&Java_sun_misc_Unsafe_ensureClassInitialized
-		},
-		{
-			(char*)"park",
-			(char*)"(ZJ)V",
-			(void *)&Java_sun_misc_Unsafe_park
-		},
-		{
-			(char*)"unpark",
-			(char*)"(Ljava/lang/Object;)V",
-			(void *)&Java_sun_misc_Unsafe_unpark
-		},
-		{
-			(char*)"throwException",
-			(char*)"(Ljava/lang/Throwable;)V",
-			(void *)&Java_sun_misc_Unsafe_throwException
-		},
-		{
-			(char*)"copyMemory",
-			(char*)"(Ljava/lang/Object;JLjava/lang/Object;JJ)V",
-			(void *)&Java_sun_misc_Unsafe_copyMemory__Ljava_lang_Object_2JLjava_lang_Object_2JJ
-		},
-		{
-			(char*)"objectFieldOffset",
-			(char*)"(Ljava/lang/reflect/Field;)J",
-			(void *)&Java_sun_misc_Unsafe_objectFieldOffset
-		},
-		{
-			(char*)"setMemory",
-			(char*)"(Ljava/lang/Object;JJB)V",
-			(void *)&Java_sun_misc_Unsafe_setMemory__Ljava_lang_Object_2JJB
-		},
-		{
-			(char*)"staticFieldBase",
-			(char*)"(Ljava/lang/reflect/Field;)Ljava/lang/Object;",
-			(void *)&Java_sun_misc_Unsafe_staticFieldBase__Ljava_lang_reflect_Field_2
-		},
-		{
-			(char*)"staticFieldOffset",
-			(char*)"(Ljava/lang/reflect/Field;)J",
-			(void *)&Java_sun_misc_Unsafe_staticFieldOffset
-		},
-		{
-			(char*)"unalignedAccess0",
-			(char*)"()Z",
-			(void *)&Java_sun_misc_Unsafe_unalignedAccess0
-		},
-		{
-			(char*)"isBigEndian0",
-			(char*)"()Z",
-			(void *)&Java_sun_misc_Unsafe_isBigEndian0
-		},
-		{
-			(char*)"getUncompressedObject",
-			(char*)"(J)Ljava/lang/Object;",
-			(void *)&Java_sun_misc_Unsafe_getUncompressedObject
-		},
-		{
-			(char*)"getJavaMirror",
-			(char*)"(J)Ljava/lang/Class;",
-			(void *)&Java_sun_misc_Unsafe_getJavaMirror
-		},
-		{
-			(char*)"getKlassPointer",
-			(char*)"(Ljava/lang/Object;)J",
-			(void *)&Java_sun_misc_Unsafe_getKlassPointer
-		},
-	};
-	env->RegisterNatives(clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
+jlong JNICALL
+Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, jclass clazz, jstring name)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	j9object_t fieldObj = NULL;
+	jlong offset = 0;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	fieldObj = getFieldObjHelper(currentThread, clazz, name);
+	if (NULL != fieldObj) {
+		J9JNIFieldID *fieldID = NULL;
+		J9ROMFieldShape *romField = NULL;
+
+		fieldID = vm->reflectFunctions.idFromFieldObject(currentThread, J9_JNI_UNWRAP_REFERENCE(clazz), fieldObj);
+		romField = fieldID->field;
+		if (NULL == romField) {
+			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+		} else if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
+			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
+		} else {
+			offset = (jlong)fieldID->offset + J9_OBJECT_HEADER_SIZE;
+		}
+	}
+	vmFuncs->internalReleaseVMAccess(currentThread);
+	
+	return offset;
 }
 
-void
-registerJdkInternalMiscUnsafeNativesB136(JNIEnv *env, jclass clazz) {
+/* register jdk.internal.misc.Unsafe natives common to Java 9, 18.3 and beyond */
+static void
+registerJdkInternalMiscUnsafeNativesCommon(JNIEnv *env, jclass clazz) {
 	/* clazz can't be null */
 	JNINativeMethod natives[] = {
 		{
 			(char*)"defineClass0",
 			(char*)"(Ljava/lang/String;[BIILjava/lang/ClassLoader;Ljava/security/ProtectionDomain;)Ljava/lang/Class;",
-			(void *)&Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader_2Ljava_security_ProtectionDomain_2
+			(void*)&Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader_2Ljava_security_ProtectionDomain_2
 		},
 		{
 			(char*)"defineAnonymousClass0",
 			(char*)"(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;",
-			(void *)&Java_sun_misc_Unsafe_defineAnonymousClass
+			(void*)&Java_sun_misc_Unsafe_defineAnonymousClass
 		},
 		{
 			(char*)"pageSize",
 			(char*)"()I",
-			(void *)&Java_sun_misc_Unsafe_pageSize
+			(void*)&Java_sun_misc_Unsafe_pageSize
 		},
 		{
 			(char*)"getLoadAverage0",
 			(char*)"([DI)I",
-			(void *)&Java_sun_misc_Unsafe_getLoadAverage
+			(void*)&Java_sun_misc_Unsafe_getLoadAverage
 		},
 		{
 			(char*)"allocateMemory0",
 			(char*)"(J)J",
-			(void *)&Java_sun_misc_Unsafe_allocateMemory
+			(void*)&Java_sun_misc_Unsafe_allocateMemory
 		},
 		{
 			(char*)"freeMemory0",
 			(char*)"(J)V",
-			(void *)&Java_sun_misc_Unsafe_freeMemory
+			(void*)&Java_sun_misc_Unsafe_freeMemory
 		},
 		{
 			(char*)"reallocateMemory0",
 			(char*)"(JJ)J",
-			(void *)&Java_sun_misc_Unsafe_reallocateMemory
+			(void*)&Java_sun_misc_Unsafe_reallocateMemory
 		},
 		{
 			(char*)"ensureClassInitialized0",
 			(char*)"(Ljava/lang/Class;)V",
-			(void *)&Java_sun_misc_Unsafe_ensureClassInitialized
+			(void*)&Java_sun_misc_Unsafe_ensureClassInitialized
 		},
 		{
 			(char*)"park",
 			(char*)"(ZJ)V",
-			(void *)&Java_sun_misc_Unsafe_park
+			(void*)&Java_sun_misc_Unsafe_park
 		},
 		{
 			(char*)"unpark",
 			(char*)"(Ljava/lang/Object;)V",
-			(void *)&Java_sun_misc_Unsafe_unpark
+			(void*)&Java_sun_misc_Unsafe_unpark
 		},
 		{
 			(char*)"throwException",
 			(char*)"(Ljava/lang/Throwable;)V",
-			(void *)&Java_sun_misc_Unsafe_throwException
+			(void*)&Java_sun_misc_Unsafe_throwException
 		},
 		{
 			(char*)"copyMemory0",
 			(char*)"(Ljava/lang/Object;JLjava/lang/Object;JJ)V",
-			(void *)&Java_sun_misc_Unsafe_copyMemory__Ljava_lang_Object_2JLjava_lang_Object_2JJ
+			(void*)&Java_sun_misc_Unsafe_copyMemory__Ljava_lang_Object_2JLjava_lang_Object_2JJ
 		},
 		{
 			(char*)"objectFieldOffset0",
 			(char*)"(Ljava/lang/reflect/Field;)J",
-			(void *)&Java_sun_misc_Unsafe_objectFieldOffset
+			(void*)&Java_sun_misc_Unsafe_objectFieldOffset
 		},
 		{
 			(char*)"setMemory0",
 			(char*)"(Ljava/lang/Object;JJB)V",
-			(void *)&Java_sun_misc_Unsafe_setMemory__Ljava_lang_Object_2JJB
+			(void*)&Java_sun_misc_Unsafe_setMemory__Ljava_lang_Object_2JJB
 		},
 		{
 			(char*)"staticFieldBase0",
 			(char*)"(Ljava/lang/reflect/Field;)Ljava/lang/Object;",
-			(void *)&Java_sun_misc_Unsafe_staticFieldBase__Ljava_lang_reflect_Field_2
+			(void*)&Java_sun_misc_Unsafe_staticFieldBase__Ljava_lang_reflect_Field_2
 		},
 		{
 			(char*)"staticFieldOffset0",
 			(char*)"(Ljava/lang/reflect/Field;)J",
-			(void *)&Java_sun_misc_Unsafe_staticFieldOffset
+			(void*)&Java_sun_misc_Unsafe_staticFieldOffset
 		},
 		{
 			(char*)"unalignedAccess0",
 			(char*)"()Z",
-			(void *)&Java_sun_misc_Unsafe_unalignedAccess0
+			(void*)&Java_sun_misc_Unsafe_unalignedAccess0
 		},
 		{
 			(char*)"isBigEndian0",
 			(char*)"()Z",
-			(void *)&Java_sun_misc_Unsafe_isBigEndian0
+			(void*)&Java_sun_misc_Unsafe_isBigEndian0
 		},
 		{
 			(char*)"getUncompressedObject",
 			(char*)"(J)Ljava/lang/Object;",
-			(void *)&Java_sun_misc_Unsafe_getUncompressedObject
+			(void*)&Java_sun_misc_Unsafe_getUncompressedObject
 		},
 	};
 	env->RegisterNatives(clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
 }
 
+/* register jdk.internal.misc.Unsafe natives for Java 18.3 */
+static void
+registerJdkInternalMiscUnsafeNativesJava18_3(JNIEnv *env, jclass clazz) {
+	/* clazz can't be null */
+	JNINativeMethod natives[] = {
+		{
+			(char*)"objectFieldOffset1",
+			(char*)"(Ljava/lang/Class;Ljava/lang/String;)J",
+			(void*)&Java_jdk_internal_misc_Unsafe_objectFieldOffset1
+		}
+	};
+	env->RegisterNatives(clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
+}
+
+/* class jdk.internal.misc.Unsafe only presents in Java 9 and beyond */
 void JNICALL
 Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM *vm = currentThread->javaVM;
 
 	Java_sun_misc_Unsafe_registerNatives(env, clazz);
-	
-	if (J2SE_VERSION(vm) >= J2SE_19) {
-		registerJdkInternalMiscUnsafeNativesB136(env, clazz);
-	} else {
-		registerJdkInternalMiscUnsafeNatives(env, clazz);
+	registerJdkInternalMiscUnsafeNativesCommon(env, clazz);
+	if (J2SE_SHAPE(currentThread->javaVM) >= J2SE_SHAPE_B1803) {
+		registerJdkInternalMiscUnsafeNativesJava18_3(env, clazz);
 	}
 }
 
