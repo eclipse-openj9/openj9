@@ -1675,11 +1675,9 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				if ((*J9UTF8_DATA(utf8string) == 'D') || (*J9UTF8_DATA(utf8string) == 'J')) {
 					DROP(1);
 				}
-				CHECK_STACK_UNDERFLOW;
 
 			} else {
 				/* JBgetfield/JBgetstatic - even bc's */
-				CHECK_STACK_UNDERFLOW;
 				stackTop = pushFieldType(verifyData, utf8string, stackTop);
 			}
 			break;
@@ -1713,7 +1711,6 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				) {
 
 					type = POP;
-					CHECK_STACK_UNDERFLOW;
 					if (J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) info)))[0] == '<') {
 
 						/* This is <init>, verify that this is a NEW or INIT object */
@@ -1738,7 +1735,6 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				} 
 			}
 
-			CHECK_STACK_UNDERFLOW;
 			stackTop = pushReturnType(verifyData, utf8string, stackTop);
 			break;
 
@@ -1891,7 +1887,6 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 
 		case RTV_BYTECODE_DUP:
 			type = POP;
-			CHECK_STACK_UNDERFLOW;
 			PUSH(type);
 			PUSH(type);
 			break;
@@ -1899,7 +1894,6 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 		case RTV_BYTECODE_DUPX1:
 			type = POP;
 			temp1 = POP;
-			CHECK_STACK_UNDERFLOW;
 			PUSH(type);
 			PUSH(temp1);
 			PUSH(type);
@@ -1909,7 +1903,6 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			type = POP;
 			temp1 = POP;
 			temp2 = POP;
-			CHECK_STACK_UNDERFLOW;
 			PUSH(type);
 			PUSH(temp2);
 			PUSH(temp1);
@@ -1919,7 +1912,6 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 		case RTV_BYTECODE_DUP2:
 			temp1 = POP;
 			temp2 = POP;
-			CHECK_STACK_UNDERFLOW;
 			PUSH(temp2);
 			PUSH(temp1);
 			PUSH(temp2);
@@ -1930,7 +1922,6 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			type = POP;
 			temp1 = POP;
 			temp2 = POP;
-			CHECK_STACK_UNDERFLOW;
 			PUSH(temp1);
 			PUSH(type);
 			PUSH(temp2);
@@ -1943,7 +1934,6 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 			temp1 = POP;
 			temp2 = POP;
 			temp3 = POP;
-			CHECK_STACK_UNDERFLOW;
 			PUSH(temp1);
 			PUSH(type);
 			PUSH(temp3);
@@ -1955,7 +1945,6 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 		case RTV_BYTECODE_SWAP:
 			type = POP;
 			temp1 = POP;
-			CHECK_STACK_UNDERFLOW;
 			PUSH(type);
 			PUSH(temp1);
 			break;

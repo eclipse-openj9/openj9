@@ -87,10 +87,12 @@ typedef struct J9BCVAlloc {
 	}
 
 #define DROP( x )	\
-	stackTop -= x;
+	stackTop -= x;	\
+	CHECK_STACK_UNDERFLOW
 
 #define POP	\
-	*(--stackTop)
+	*(--stackTop); \
+	CHECK_STACK_UNDERFLOW
 
 #define PUSH( t ) \
 	*stackTop = (UDATA) (t); \
@@ -147,7 +149,10 @@ typedef struct J9BCVAlloc {
 	inconsistentStack2 |= (foundType != expectedType);
 	
 #define POP_TOS( baseType )	\
-	inconsistentStack |= (POP != (UDATA) (baseType));
+	{	\
+		UDATA popTemp = POP;	\
+		inconsistentStack |= (popTemp != (UDATA) (baseType)); \
+	}
 
 #define POP_TOS_INTEGER	\
 	POP_TOS( BCV_BASE_TYPE_INT );
