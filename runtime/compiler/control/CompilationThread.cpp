@@ -411,7 +411,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->isInstanceOf(a, b, objectTypeIsFixed, castTypeIsFixed, optimizeForAOT));
          }
          break;
-      case J9ServerMessageType::VM_isInterfaceClass:
+/*      case J9ServerMessageType::VM_isInterfaceClass:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(fe->isInterfaceClass(clazz));
@@ -434,7 +434,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(fe->isAbstractClass(clazz));
          }
-         break;
+         break;*/
       case J9ServerMessageType::VM_getSystemClassFromClassName:
          {
          auto recv = client->getRecvData<std::string, bool>();
@@ -513,7 +513,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->jitStaticsAreSame(method1, cpIndex1, method2, cpIndex2));
          };
          break;
-      case J9ServerMessageType::VM_getClassNameChars:
+/*      case J9ServerMessageType::VM_getClassNameChars:
          {
          TR_OpaqueClassBlock * ramClass = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          int32_t length = 0;
@@ -521,7 +521,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          std::string classNameStr(classNameChars, length);
          client->write(classNameStr);
          }
-         break;
+         break;*/
       case J9ServerMessageType::VM_compiledAsDLTBefore:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_ResolvedMethod *>());
@@ -571,12 +571,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(classNameStr, nameStr, signatureStr);
          }
          break;
-      case J9ServerMessageType::VM_isPrimitiveClass:
+/*      case J9ServerMessageType::VM_isPrimitiveClass:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(fe->isPrimitiveClass(clazz));
          }
-         break;
+         break;*/
       case J9ServerMessageType::VM_isClassInitialized:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -607,7 +607,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getMethods(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getNumMethods:
+/*      case J9ServerMessageType::VM_getNumMethods:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(fe->getNumMethods(clazz));
@@ -618,7 +618,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(fe->getNumInnerClasses(clazz));
          }
-         break;
+         break;*/
       case J9ServerMessageType::VM_isPrimitiveArray:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -852,6 +852,89 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
 
          fe->setJ2IThunk(&signature[0], signature.size(), (void *)thunkAddress, TR::comp());
 //         client->write(JAAS::Void());
+         }
+         break;
+      case J9ServerMessageType::VM_sameClassLoaders:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *>();
+         TR_OpaqueClassBlock *class1 = std::get<0>(recv);
+         TR_OpaqueClassBlock *class2 = std::get<1>(recv);
+         client->write(fe->sameClassLoaders(class1, class2));
+         }
+         break;
+      case J9ServerMessageType::VM_isUnloadAssumptionRequired:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_ResolvedMethod *>();
+         TR_OpaqueClassBlock *clazz = std::get<0>(recv);
+         TR_ResolvedMethod *method = std::get<1>(recv);
+         client->write(fe->isUnloadAssumptionRequired(clazz, method));
+         }
+         break;
+      case J9ServerMessageType::VM_scanClassForReservation:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         fe->scanClassForReservation(clazz, TR::comp());
+         }
+         break;
+      case J9ServerMessageType::VM_getInstanceFieldOffset:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string, UDATA>();
+         TR_OpaqueClassBlock *clazz = std::get<0>(recv);
+         std::string field = std::get<1>(recv);
+         std::string sig = std::get<2>(recv);
+         UDATA options = std::get<3>(recv);
+         client->write(fe->getInstanceFieldOffset(clazz, const_cast<char*>(field.c_str()), field.length(),
+                  const_cast<char*>(sig.c_str()), sig.length(), options));
+         }
+         break;
+      case J9ServerMessageType::VM_getJavaLangClassHashCode:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         bool hashCodeComputed = false;
+         int32_t hashCode = fe->getJavaLangClassHashCode(TR::comp(), clazz, hashCodeComputed);
+         client->write(hashCode, hashCodeComputed);
+         }
+         break;
+      case J9ServerMessageType::VM_hasFinalizer:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->hasFinalizer(clazz));
+         }
+         break;
+      case J9ServerMessageType::VM_getClassDepthAndFlagsValue:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getClassDepthAndFlagsValue(clazz));
+         }
+         break;
+      case J9ServerMessageType::VM_getMethodFromName:
+         {
+         auto recv = client->getRecvData<std::string, std::string, std::string, TR_OpaqueMethodBlock *>();
+         std::string className = std::get<0>(recv);
+         std::string methodName = std::get<1>(recv);
+         std::string signature = std::get<2>(recv);
+         TR_OpaqueMethodBlock *callingMethod = std::get<3>(recv);
+         client->write(fe->getMethodFromName(const_cast<char*>(className.c_str()),
+                  const_cast<char*>(methodName.c_str()), const_cast<char*>(signature.c_str()), callingMethod));
+         }
+         break;
+      case J9ServerMessageType::VM_getMethodFromClass:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string, TR_OpaqueClassBlock *>();
+         TR_OpaqueClassBlock *methodClass = std::get<0>(recv);
+         std::string methodName = std::get<1>(recv);
+         std::string signature = std::get<2>(recv);
+         TR_OpaqueClassBlock *callingClass = std::get<3>(recv);
+         client->write(fe->getMethodFromClass(methodClass, const_cast<char*>(methodName.c_str()),
+                  const_cast<char*>(signature.c_str()), callingClass));
+         }
+         break;
+      case J9ServerMessageType::VM_isClassVisible:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *>();
+         TR_OpaqueClassBlock *sourceClass = std::get<0>(recv);
+         TR_OpaqueClassBlock *destClass = std::get<1>(recv);
+         client->write(fe->isClassVisible(sourceClass, destClass));
          }
          break;
       case J9ServerMessageType::mirrorResolvedJ9Method:

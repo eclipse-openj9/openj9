@@ -62,10 +62,10 @@ enum J9ServerMessageType
    VM_isClassLibraryMethod = 201;
    VM_getSuperClass = 202;
    VM_isInstanceOf = 203;
-   VM_isInterfaceClass = 204;
-   VM_isClassArray = 205;
-   VM_isClassFinal = 206;
-   VM_isAbstractClass = 207;
+//   VM_isInterfaceClass = 204;
+//   VM_isClassArray = 205;
+//   VM_isClassFinal = 206;
+//   VM_isAbstractClass = 207;
    VM_getSystemClassFromClassName = 208;
    VM_isMethodEnterTracingEnabled = 209;
    VM_isMethodExitTracingEnabled = 210;
@@ -82,18 +82,18 @@ enum J9ServerMessageType
    VM_classHasBeenReplaced = 221;
    VM_classHasBeenExtended = 222;
    VM_compiledAsDLTBefore = 223;
-   VM_getClassNameChars = 224;
+//   VM_getClassNameChars = 224;
    VM_getOverflowSafeAllocSize = 225;
    VM_isThunkArchetype = 226;
    VM_printTruncatedSignature = 227;
-   VM_isPrimitiveClass = 228;
+//   VM_isPrimitiveClass = 228;
    VM_isClassInitialized = 229;
    VM_getOSRFrameSizeInBytes = 230;
    VM_getByteOffsetToLockword = 231;
    VM_isString1 = 232;
    VM_getMethods = 233;
-   VM_getNumMethods = 234;
-   VM_getNumInnerClasses = 235;
+//   VM_getNumMethods = 234;
+//   VM_getNumInnerClasses = 235;
    VM_isPrimitiveArray = 236;
    VM_getAllocationSize = 237;
    VM_getObjectClass = 238;
@@ -125,6 +125,16 @@ enum J9ServerMessageType
    VM_scanReferenceSlotsInClassForOffset = 264;
    VM_findFirstHotFieldTenuredClassOffset = 265;
    VM_getResolvedVirtualMethod = 266;
+   VM_sameClassLoaders = 267;
+   VM_isUnloadAssumptionRequired = 268;
+   VM_scanClassForReservation = 269;
+   VM_getInstanceFieldOffset = 270;
+   VM_getJavaLangClassHashCode = 271;
+   VM_hasFinalizer = 272;
+   VM_getClassDepthAndFlagsValue = 273;
+   VM_getMethodFromName = 274;
+   VM_getMethodFromClass = 275;
+   VM_isClassVisible = 276;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

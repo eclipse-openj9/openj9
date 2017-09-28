@@ -61,7 +61,7 @@ TR_J9ServerVM::isInstanceOf(TR_OpaqueClassBlock *a, TR_OpaqueClassBlock *b, bool
    stream->write(JAAS::J9ServerMessageType::VM_isInstanceOf, a, b, objectTypeIsFixed, castTypeIsFixed, optimizeForAOT);
    return std::get<0>(stream->read<TR_YesNoMaybe>());
    }
-
+/*
 bool
 TR_J9ServerVM::isInterfaceClass(TR_OpaqueClassBlock *clazzPointer)
    {
@@ -93,7 +93,7 @@ TR_J9ServerVM::isAbstractClass(TR_OpaqueClassBlock *clazzPointer)
    stream->write(JAAS::J9ServerMessageType::VM_isAbstractClass, clazzPointer);
    return std::get<0>(stream->read<bool>());
    }
-
+*/
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT)
    {
@@ -234,7 +234,7 @@ TR_J9ServerVM::compiledAsDLTBefore(TR_ResolvedMethod *method)
    return 0;
 #endif
    }
-
+/*
 char *
 TR_J9ServerVM::getClassNameChars(TR_OpaqueClassBlock * ramClass, int32_t & length)
    {
@@ -246,7 +246,7 @@ TR_J9ServerVM::getClassNameChars(TR_OpaqueClassBlock * ramClass, int32_t & lengt
    length = className.length();
    return classNameChars;
    }
-
+*/
 uintptrj_t
 TR_J9ServerVM::getOverflowSafeAllocSize()
    {
@@ -286,7 +286,7 @@ TR_J9ServerVM::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMe
    J9UTF8 * signature = str2utf8((char*)&signatureStr[0], signatureStr.length(), trMemory, heapAlloc);
    return TR_J9VMBase::printTruncatedSignature(sigBuf, bufLen, className, name, signature);
    }
-
+/*
 bool
 TR_J9ServerVM::isPrimitiveClass(TR_OpaqueClassBlock * clazz)
    {
@@ -294,7 +294,7 @@ TR_J9ServerVM::isPrimitiveClass(TR_OpaqueClassBlock * clazz)
    stream->write(JAAS::J9ServerMessageType::VM_isPrimitiveClass, clazz);
    return std::get<0>(stream->read<bool>());
    }
-
+*/
 bool
 TR_J9ServerVM::isClassInitialized(TR_OpaqueClassBlock * clazz)
    {
@@ -334,7 +334,7 @@ TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * clazz)
    stream->write(JAAS::J9ServerMessageType::VM_getMethods, clazz);
    return std::get<0>(stream->read<void *>());
    }
-
+/*
 uint32_t
 TR_J9ServerVM::getNumMethods(TR_OpaqueClassBlock * clazz)
    {
@@ -350,7 +350,7 @@ TR_J9ServerVM::getNumInnerClasses(TR_OpaqueClassBlock * clazz)
    stream->write(JAAS::J9ServerMessageType::VM_getNumInnerClasses, clazz);
    return std::get<0>(stream->read<uint32_t>());
    }
-
+*/
 bool
 TR_J9ServerVM::isPrimitiveArray(TR_OpaqueClassBlock *clazz)
    {
@@ -430,14 +430,14 @@ TR_J9ServerVM::getStringUTF8Length(uintptrj_t objectPointer)
    stream->write(JAAS::J9ServerMessageType::VM_getStringUTF8Length, objectPointer);
    return std::get<0>(stream->read<intptrj_t>());
    }
-
+/*
 uintptrj_t
 TR_J9ServerVM::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock *clazz)
    {
    J9Class *j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
    return reinterpret_cast<uintptrj_t>(TR::compInfoPT->getAndCacheRemoteROMClass(j9clazz));
    }
-
+*/
 bool
 TR_J9ServerVM::classInitIsFinished(TR_OpaqueClassBlock *clazz)
    {
@@ -725,17 +725,85 @@ TR_J9ServerVM::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize,
 bool
 TR_J9ServerVM::sameClassLoaders(TR_OpaqueClassBlock * class1, TR_OpaqueClassBlock * class2)
    {
-   // conservative answer
-   // JAAS TODO: ask client
-   return false;
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_sameClassLoaders, class1, class2);
+   return std::get<0>(stream->read<bool>());
    }
 
 bool
-TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *)
+TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *clazz, TR_ResolvedMethod *methodBeingCompiled)
    {
-   // conservative answer
-   // JAAS TODO: ask client
-   return true;
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto mirror = static_cast<TR_ResolvedJ9JAASServerMethod *>(methodBeingCompiled)->getRemoteMirror();
+   stream->write(JAAS::J9ServerMessageType::VM_isUnloadAssumptionRequired, clazz, static_cast<TR_ResolvedMethod *>(mirror));
+   return std::get<0>(stream->read<bool>());
+   }
+
+void
+TR_J9ServerVM::scanClassForReservation (TR_OpaqueClassBlock *clazz, TR::Compilation *comp)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_scanClassForReservation, clazz);
+   }
+
+uint32_t
+TR_J9ServerVM::getInstanceFieldOffset(TR_OpaqueClassBlock *clazz, char *fieldName, uint32_t fieldLen, char *sig, uint32_t sigLen, UDATA options)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getInstanceFieldOffset, clazz, std::string(fieldName, fieldLen), std::string(sig, sigLen), options);
+   return std::get<0>(stream->read<uint32_t>());
+   }
+
+int32_t
+TR_J9ServerVM::getJavaLangClassHashCode(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, bool &hashCodeComputed)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getJavaLangClassHashCode, clazz);
+   auto recv = stream->read<int32_t, bool>();
+   hashCodeComputed = std::get<1>(recv);
+   return std::get<0>(recv);
+   }
+
+bool
+TR_J9ServerVM::hasFinalizer(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_hasFinalizer, clazz);
+   return std::get<0>(stream->read<bool>());
+   }
+
+uintptrj_t
+TR_J9ServerVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getClassDepthAndFlagsValue, clazz);
+   return std::get<0>(stream->read<uintptrj_t>());
+   }
+
+TR_OpaqueMethodBlock *
+TR_J9ServerVM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getMethodFromName, std::string(className, strlen(className)),
+         std::string(methodName, strlen(methodName)), std::string(signature, strlen(signature)), callingMethod);
+   return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+   }
+
+TR_OpaqueMethodBlock *
+TR_J9ServerVM::getMethodFromClass(TR_OpaqueClassBlock *methodClass, char *methodName, char *signature, TR_OpaqueClassBlock *callingClass)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getMethodFromClass, methodClass, std::string(methodName, strlen(methodName)),
+         std::string(signature, strlen(signature)), callingClass);
+   return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+   }
+
+bool
+TR_J9ServerVM::isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isClassVisible, sourceClass, destClass);
+   return std::get<0>(stream->read<bool>());
    }
 
 void *

@@ -6187,6 +6187,8 @@ TR_J9VM::getObjectAlignmentInBytes()
 TR_ResolvedMethod *
 TR_J9VM::getObjectNewInstanceImplMethod(TR_Memory * trMemory)
    {
+   // JAAS TODO:
+   TR_ASSERT(false, "JAAS hit TR_J9VM::getObjectNewInstanceImplMethod");
    TR::VMAccessCriticalSection getObjectNewInstanceImplMethod(this);
    J9Method * protoMethod;
    J9InternalVMFunctions * intFunc = vmThread()->javaVM->internalVMFunctions;
@@ -6331,6 +6333,10 @@ TR_J9VMBase::getByteCodeName(uint8_t opcode)
 void
 TR_J9VMBase::getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass)
    {
+   // JAAS TODO: Following three methods (getMethods, getNumMethods, createResolvedMethod) have been overrided,
+   // yet it is not clear whether the VMAccessCriticalSection is necessary, if yes, we need to override, otherwise ...
+   // so far running liberty doesn't hit this, add an assertion here to be noticed later when running something else
+   TR_ASSERT(false, "JAAS Hit TR_J9VMBase::getResolvedMethods");
    TR::VMAccessCriticalSection getResolvedMethods(this); // Prevent HCR
    J9Method * resolvedMethods = (J9Method *) getMethods(classPointer);
    uint32_t i;
