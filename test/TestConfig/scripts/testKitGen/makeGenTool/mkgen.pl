@@ -27,7 +27,7 @@ use feature 'say';
 
 use constant DEBUG => 0;
 
-my @allGroups = ( "sanity", "extended", "promotion", "openjdk" );
+my @allGroups = ( "sanity", "extended", "promotion", "openjdk", "external" );
 
 my $headerComments =
 	"########################################################\n"

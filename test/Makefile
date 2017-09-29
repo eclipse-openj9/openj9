@@ -26,12 +26,14 @@
 ################################################################################
 #
 # usage: 
-#	make [JAVA_BIN=/path/to/java/bin] [SPEC=linux_x86-64] [JTREG_DIR=/path/to/jtreg/harness] [all | sanity | extended | openjdk]
+#	make [JAVA_BIN=/path/to/java/bin] [SPEC=linux_x86-64] [JTREG_DIR=/path/to/jtreg/harness] [all | sanity | extended | external | openjdk]
 #
 # sanity tests only: 
 #	make sanity [JAVA_BIN=/path/to/java/bin] [SPEC=linux_x86-64]
 # extended tests only: 
 #	make extended [JAVA_BIN=/path/to/java/bin] [SPEC=linux_x86-64]
+#external tests only:
+#	make external [JAVA_BIN=/path/to/java/bin] [SPEC=linux_x86-64]
 # openjdk jtreg tests only:
 #	make openjdk [JAVA_BIN=/path/to/java/bin] [SPEC=linux_x86-64] [JTREG_DIR=/path/to/jtreg/harness]
 #################################################################################
@@ -116,6 +118,8 @@ jtreg: check_jtreg
 sanity: test_sanity
 
 extended: test_extended
+
+external: test_external
 
 openjdk : override ADD_CMD_ARGS := $(ADD_CMD_ARGS) JTREG_DIR=$(JTREG_DIR) JTREG_TEST_DIR=$(subst //,/,$(TOP_DIR)/jdk/test)
 openjdk: jtreg test_openjdk
