@@ -630,7 +630,7 @@ TR_J9ServerVM::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 
 // JAAS temporary HACK
 //=======================
 TR::CodeCache *
-TR_J9ServerVM::getDesignatedCodeCache(TR::Compilation *comp)
+TR_J9ServerVM::getDesignatedCodeCache(TR::Compilation *comp, size_t reqSize)
    {
    if (comp->getOptimizationPlan()->_mandatoryCodeAddress)
       {
@@ -667,8 +667,7 @@ TR_J9ServerVM::getDesignatedCodeCache(TR::Compilation *comp)
       }
    else
       {
-      // TODO: change this if we inherit directly from TR_J9VM
-      return TR_J9VM::getDesignatedCodeCache(comp);
+      return TR_J9VM::getDesignatedCodeCache(comp, reqSize);
       }
    }
 
@@ -809,15 +808,10 @@ TR_J9ServerVM::isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBl
 void *
 TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr, TR::Compilation *comp)
    {
-   // The 32-bit size and offset are held before the thunkptr.
-   // The stored size does not include these two fields so we add 8.
-   char *thunkStart = (char *)thunkptr - 8;
-   size_t thunkSize = *((U_32 *)thunkStart) + 8;
-   std::string thunk(thunkStart, thunkSize);
+   TR_J9VMBase::setJ2IThunk(signatureChars, signatureLength, thunkptr, comp);
    std::string signature(signatureChars, signatureLength);
-
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_setJ2IThunk, thunk, signature);
+   stream->write(JAAS::J9ServerMessageType::VM_setJ2IThunk, thunkptr, signature);
 //   stream->read<JAAS::Void>();
    return thunkptr;
    }

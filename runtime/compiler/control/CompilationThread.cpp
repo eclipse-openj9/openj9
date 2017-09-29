@@ -98,6 +98,8 @@
 #include "rpc/J9Server.h"
 #include "rpc/J9Client.h"
 #include "shcdatatypes.h" // for CompiledMethodWrapper
+#include "runtime/ArtifactManager.hpp"
+#include "runtime/CodeCacheMemorySegment.hpp"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -832,26 +834,10 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_setJ2IThunk:
          {
-         auto recv = client->getRecvData<std::string, std::string>();
-         TR::VMAccessCriticalSection client_setJ2IThunk(fe);
-         std::string thunkData = std::get<0>(recv);
+         auto recv = client->getRecvData<void*, std::string>();
+         void *thunk = std::get<0>(recv);
          std::string signature = std::get<1>(recv);
-
-         // Allocate warm code memory to copy the thunk over to it
-         uint8_t *cold;
-         TR::MonitorTable::get()->readAcquireClassUnloadMonitor(TR::compInfoPT->getCompThreadId());
-         uint8_t *thunk = static_cast<uint8_t*>(fe->allocateCodeMemory(TR::comp(), thunkData.size(), 0, &cold, true));
-         TR::MonitorTable::get()->readReleaseClassUnloadMonitor(TR::compInfoPT->getCompThreadId());
-
-         memcpy(thunk, &thunkData[0], thunkData.size());
-         uint8_t *thunkAddress = thunk + 2 * sizeof(int32_t); // The location of the actual thunk without relocation data
-
-         // Perform the required relocation
-         void *vmHelper = j9ThunkVMHelperFromSignature(fe->_jitConfig, signature.size(), &signature[0]);
-         TR::compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation(thunkAddress, (UDATA)vmHelper);
-
-         fe->setJ2IThunk(&signature[0], signature.size(), (void *)thunkAddress, TR::comp());
-//         client->write(JAAS::Void());
+         TR::compInfoPT->addThunkToBeRelocated(thunk, signature);
          }
          break;
       case J9ServerMessageType::VM_sameClassLoaders:
@@ -1750,6 +1736,27 @@ TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memor
       cacheRemoteROMClass(clazz, romClass);
       }
    return romClass;
+   }
+
+void
+TR::CompilationInfoPerThread::addThunkToBeRelocated(void *thunk, std::string signature)
+   {
+   _thunksToBeRelocated.emplace_back(thunk, signature);
+   }
+
+void
+TR::CompilationInfoPerThread::relocateThunks()
+   {
+   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, _compilationThread, TR_J9VMBase::J9_VM);
+   for (auto p : _thunksToBeRelocated)
+      {
+      void *thunk = p.first;
+      std::string signature = p.second;
+      void *vmHelper = j9ThunkVMHelperFromSignature(fe->_jitConfig, signature.size(), &signature[0]);
+      TR::compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation((uint8_t*) thunk, (UDATA)vmHelper);
+      fe->setJ2IThunk(&signature[0], signature.size(), thunk, TR::comp());
+      }
+   _thunksToBeRelocated.clear();
    }
 
 void
@@ -7702,6 +7709,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             !details.isNewInstanceThunk() &&
             //!entry->isJNINative() &&
             !details.isMethodHandleThunk() &&
+            !TR::CompilationInfo::isJSR292(details.getRomMethod()) &&
             //!TR::CompilationInfo::isCompiled(method) &&
             !entry->isDLTCompile() &&
             !entry->_doNotUseAotCodeFromSharedCache &&
@@ -7723,59 +7731,44 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
                TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
          }
-      // For JAAS_CLIENT, if the method is eligible for AOT compilation,
-      // transform this compilation request into an AOT load because
-      // the server will be performing the AOT compilation and the client
-      // will just load the code from SCC
-      if (eligibleForRelocatableCompile && _compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+
+      bool sharedClassTest = eligibleForRelocatableCompile &&
+         !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT);
+
+      bool isSecondAOTRun =
+         !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoAotSecondRunDetection) &&
+         TR::Options::sharedClassCache() &&
+         _compInfo.numMethodsFoundInSharedCache() >= TR::Options::_aotMethodThreshold &&
+         _compInfo._statNumAotedMethods <= TR::Options::_aotMethodCompilesThreshold;
+
+      if (!TR::Options::canJITCompile() && isSecondAOTRun) // detect second AOT run
          {
-         entry->_doAotLoad = true;
+         if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT))
+            TR::CompilationInfo::disableAOTCompilations();
+         TR::Options::getCmdLineOptions()->setOption(TR_DisableInterpreterProfiling, true);
          }
-      else
+
+      // Decide if we want an AOT vm or not
+      if (sharedClassTest)
          {
-         bool sharedClassTest = eligibleForRelocatableCompile &&
-            !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT);
-
-         bool isSecondAOTRun =
-            !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoAotSecondRunDetection) &&
-            TR::Options::sharedClassCache() &&
-            _compInfo.numMethodsFoundInSharedCache() >= TR::Options::_aotMethodThreshold &&
-            _compInfo._statNumAotedMethods <= TR::Options::_aotMethodCompilesThreshold;
-
-         if (!TR::Options::canJITCompile() && isSecondAOTRun) // detect second AOT run
+         if (TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT) || entry->isRemoteCompReq())
             {
-            if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT))
-               TR::CompilationInfo::disableAOTCompilations();
-            TR::Options::getCmdLineOptions()->setOption(TR_DisableInterpreterProfiling, true);
+            canDoRelocatableCompile = true;
             }
-
-         // Decide if we want an AOT vm or not
-         if (sharedClassTest)
+         else
             {
-            if (TR::Options::getAOTCmdLineOptions()->getOption(TR_ForceAOT) || entry->isRemoteCompReq())
-               {
+            // Heuristic: generate AOT only for downgraded compilations in the second run
+            if (!isSecondAOTRun &&
+                entry->_optimizationPlan->isOptLevelDowngraded())
                canDoRelocatableCompile = true;
-               }
-            else
-               {
-               // Heuristic: generate AOT only for downgraded compilations in the second run
-               if (!isSecondAOTRun &&
-                  entry->_optimizationPlan->isOptLevelDowngraded())
-                  canDoRelocatableCompile = true;
-               }
             }
          }
       }
-
    if (canDoRelocatableCompile && entry->_stream)
       {
       // JAAS TODO: use a Server VM here once frontend changes are stable
       vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM);
       entry->_useAotCompilation = true;
-      }
-   else if (entry->_stream)
-      {
-      comp()->failCompilation<TR::CompilationException>("Need to be able to do relocatable compile if performing remote compilation");
       }
    else if (canDoRelocatableCompile)
       {
@@ -8177,6 +8170,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
            || canDoRelocatableCompile
            || entry->isAotLoad()
           )
+          && (!entry->_stream || canDoRelocatableCompile)
 #if defined(TR_HOST_ARM)
           && !TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)
 #endif
@@ -8417,6 +8411,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                p->_optimizationPlan,
                (vm->isAOT_DEPRECATED_DO_NOT_USE() || that->_methodBeingCompiled->isAotLoad()),
                that->getCompThreadId());
+
+
+         // JAAS TODO determine if we care to support annotations
+         if (that->getCompilationInfo()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+            options->setOption(TR_EnableAnnotations,false);
 
          // Determine if known annotations exist and if so, keep annotations enabled
          if (!that->_methodBeingCompiled->isAotLoad() && !vm->isAOT_DEPRECATED_DO_NOT_USE() && options->getOption(TR_EnableAnnotations))
@@ -9158,6 +9157,15 @@ TR::CompilationInfoPerThreadBase::performAOTLoad(
    }
 
 
+struct JAASMetaDataRelocationInfo
+   {
+   U_32 metaDataOffset;
+   U_32 stackAllocMapOffset;
+   U_32 internalPointerMapOffset;
+   U_32 gcStackAtlasOffset;
+   };
+
+
 // This routine should only be called from wrappedCompile
 TR_MethodMetaData *
 TR::CompilationInfoPerThreadBase::compile(
@@ -9316,11 +9324,12 @@ TR::CompilationInfoPerThreadBase::compile(
       // Compile the method
       //
 
-      // For AOT we need to reserve a data cache to ensure contiguous memory
+      // For AOT/JAAS we need to reserve a data cache to ensure contiguous memory
       // For TOSS_CODE we need to reserve a data cache so that we know what dataCache
       // to reset when throwing the data away
       //
       if ((_jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
+            || compiler->getPersistentInfo()->getJaasMode() != NONJAAS_MODE
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
             || vm.isAOT_DEPRECATED_DO_NOT_USE()
 #endif //endif J9VM_INTERP_AOT_COMPILE_SUPPORT
@@ -9363,7 +9372,7 @@ TR::CompilationInfoPerThreadBase::compile(
             }
          }
 
-      if (vm.isAOT_DEPRECATED_DO_NOT_USE())
+      if (vm.isAOT_DEPRECATED_DO_NOT_USE() || _methodBeingCompiled->isRemoteCompReq())
          {
          TR_DataCache *dataCache = (TR_DataCache*)compiler->getReservedDataCache();
          TR_ASSERT(dataCache, "Must have a reserved dataCache for AOT compilations");
@@ -9386,8 +9395,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
       intptr_t rtn = 0;
 
-      if (_compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE ||
-         !_methodBeingCompiled->isAotLoad()) // Remote compilation requests appear as AOT loads
+      if (_compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE)
          {
          if (!_methodBeingCompiled->isAotLoad())
             {
@@ -9476,8 +9484,6 @@ TR::CompilationInfoPerThreadBase::compile(
                haveLockedClassUnloadMonitor = true;
                }
             compiler->cg()->reserveCodeCache(); // this will throw if we cannot reserve
-            if (haveLockedClassUnloadMonitor)
-               TR::MonitorTable::get()->readReleaseClassUnloadMonitor(getCompThreadId());
 
             size_t availableSpace = compiler->getCurrentCodeCache()->getFreeContiguousSpace();
             uint8_t *allocPtr = compiler->getCurrentCodeCache()->getWarmCodeAlloc();
@@ -9494,13 +9500,19 @@ TR::CompilationInfoPerThreadBase::compile(
             JAAS::J9ClientStream client;
             client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), allocPtr, availableSpace);
             uint32_t statusCode = compilationFailure;
-            std::string compiledMethodStr;
+            void *recvStartPC;
+            std::string codeCacheStr;
+            std::string dataCacheStr;
+            std::string metaRelocationInfo;
             try
                {
                while(!handleServerMessage(&client, compiler->fej9vm()));
-               auto recv = client.getRecvData<uint32_t, std::string>();
+               auto recv = client.getRecvData<uint32_t, void*, std::string, std::string, std::string>();
                statusCode = std::get<0>(recv);
-               compiledMethodStr = std::get<1>(recv);
+               recvStartPC = std::get<1>(recv);
+               codeCacheStr = std::get<2>(recv);
+               dataCacheStr = std::get<3>(recv);
+               metaRelocationInfo = std::get<4>(recv);
                if (statusCode >= compilationMaxError)
                   throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
                }
@@ -9513,28 +9525,97 @@ TR::CompilationInfoPerThreadBase::compile(
             JAAS::Status status = client.waitForFinish();
             if (status.ok() && (statusCode == compilationOK || statusCode == compilationNotNeeded))
                {
-               bool wireTransferSucceeded = true;
-               const void *compiledMethod = compiledMethodStr.size() == 0 ? nullptr : compiledMethodStr.data();
-               if (!compiledMethod)
-                  {
-                  wireTransferSucceeded = false;
-                  compiledMethod = findAotBodyInSCC(vmThread, romMethod);
-                  }
-               TR_ASSERT(compiledMethod, "compiled method must be nonnull");
-               // We need to "unwrap" the wrapper, as performAOTLoad expects this pointer to go directly into the data cache.
-               _methodBeingCompiled->setAotCodeToBeRelocated((void*)((CompiledMethodWrapper*) compiledMethod + 1));
-               reloRuntime()->setReloStartTime(getTimeWhenCompStarted());
                try
                   {
-                  metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
+                  reloRuntime()->setReloStartTime(getTimeWhenCompStarted());
+
+                  TR_ASSERT(recvStartPC, "must have startPC");
+                  TR_ASSERT(codeCacheStr.size(), "must have code cache");
+                  TR_ASSERT(dataCacheStr.size(), "must have data cache");
+
+                  // allocate space in code cache and copy over
+                  uint8_t *coldCode;
+                  uint8_t *newCodeStart = compiler->fej9vm()->allocateCodeMemory(compiler, codeCacheStr.size() - sizeof(OMR::CodeCacheMethodHeader), 0, &coldCode, true);
+                  newCodeStart -= sizeof(OMR::CodeCacheMethodHeader);
+                  TR_ASSERT(newCodeStart, "need code cache space");
+                  uint32_t blockSize = ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size;
+                  memcpy(newCodeStart, &codeCacheStr[0], codeCacheStr.size());
+                  ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size = blockSize; //make sure header size matches allocation (overwritten by memcpy)
+
+                  // data cache allocation adds size of header then returns pointer to byte after header
+                  TR_DataCache *dataCache = (TR_DataCache*)compiler->getReservedDataCache();
+                  TR_ASSERT(dataCache, "Must have a reserved dataCache for JAAS compilation requests");
+                  bool shouldRetryAllocation; //TODO
+                  uint32_t allocatedSize;
+                  uint8_t *newDataStart = compiler->fej9vm()->allocateDataCacheRecord(dataCacheStr.size() - sizeof(J9JITDataCacheHeader), compiler, false, &shouldRetryAllocation, 0, &allocatedSize);
+                  newDataStart -= sizeof(J9JITDataCacheHeader);
+                  memcpy(newDataStart, &dataCacheStr[0], dataCacheStr.size());
+
+                  JAASMetaDataRelocationInfo *relocationInfo = (JAASMetaDataRelocationInfo*) &metaRelocationInfo[0];
+
+                  // TODO: we might want to unlock this above near where it is locked, then lock it again just before allocating so
+                  // that it isn't held for a potentially long period while waiting on the network
+                  if (haveLockedClassUnloadMonitor)
+                     TR::MonitorTable::get()->readReleaseClassUnloadMonitor(getCompThreadId());
+
+                  OMR::CodeCacheMethodHeader* codeCacheHeader = (OMR::CodeCacheMethodHeader*) newCodeStart;
+                  J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader*) newDataStart;
+
+                  metaData = (J9JITExceptionTable*) ((uint8_t *)dataCacheHeader + relocationInfo->metaDataOffset);
+                  codeCacheHeader->_metaData = metaData;
+                  metaData->gcStackAtlas = (uint8_t *)metaData + relocationInfo->gcStackAtlasOffset;
+                  J9JITStackAtlas *vmAtlas = (J9JITStackAtlas *) metaData->gcStackAtlas;
+                  if (vmAtlas->stackAllocMap)
+                     vmAtlas->stackAllocMap = (uint8_t *)metaData + relocationInfo->stackAllocMapOffset;
+                  if (vmAtlas->internalPointerMap)
+                     vmAtlas->internalPointerMap = (uint8_t *)metaData + relocationInfo->internalPointerMapOffset;
+                  metaData->codeCacheAlloc = (UDATA) (codeCacheHeader + 1);
+                  OMR::RuntimeAssumption * raList = new (PERSISTENT_NEW) TR::SentinelRuntimeAssumption();
+                  comp()->setMetadataAssumptionList(raList); // copy this list to the compilation object as well (same view as for a JIT compilation)
+                  metaData->runtimeAssumptionList = raList;
+                  TR::compInfoPT->relocateThunks();
+
+                  //TR_ASSERT((uint8_t *)metaData->codeCacheAlloc == (uint8_t *)(codeCacheHeader + 1), "codeCache mismatch");
+                  TR_ASSERT((void *)metaData->startPC == recvStartPC, "startpc should match");
+                  TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
+
+                     {
+                     TR_TranslationArtifactManager *artifactManager = TR_TranslationArtifactManager::getGlobalArtifactManager();
+                     TR_TranslationArtifactManager::CriticalSection updateMetaData;
+                     int insertResult = artifactManager->insertArtifact(metaData);
+                     TR_ASSERT(insertResult, "insertArtifact failed");
+
+                     if (vm.isAnonymousClass(romClass))
+                        {
+                        J9Class *j9clazz = clazz;
+                        J9CLASS_EXTENDED_FLAGS_SET(j9clazz, J9ClassContainsJittedMethods);
+                        metaData->prevMethod = NULL;
+                        metaData->nextMethod = j9clazz->jitMetaDataList;
+                        if (j9clazz->jitMetaDataList)
+                           j9clazz->jitMetaDataList->prevMethod = metaData;
+                        j9clazz->jitMetaDataList = metaData;
+                        }
+                     else
+                        {
+                        J9ClassLoader * classLoader = clazz->classLoader;
+                        classLoader->flags |= J9CLASSLOADER_CONTAINS_JITTED_METHODS;
+                        metaData->prevMethod = NULL;
+                        metaData->nextMethod = classLoader->jitMetaDataList;
+                        if (classLoader->jitMetaDataList)
+                           classLoader->jitMetaDataList->prevMethod = metaData;
+                        classLoader->jitMetaDataList = metaData;
+                        }
+                     }
+
+                  setMetadata(metaData);
+
                   if (TR::Options::getVerboseOption(TR_VerboseJaas))
                      {
                      TR_VerboseLog::writeLineLocked(
                         TR_Vlog_JAAS,
-                        "Client successfully loaded method %s @ %s from %s following compilation request.",
+                        "Client successfully loaded method %s @ %s following compilation request.",
                         compiler->signature(),
-                        compiler->getHotnessName(),
-                        wireTransferSucceeded ? "over RPC" : "SCC"
+                        compiler->getHotnessName()
                         );
                      }
                   }
@@ -9545,10 +9626,9 @@ TR::CompilationInfoPerThreadBase::compile(
                      {
                      TR_VerboseLog::writeLineLocked(
                         TR_Vlog_JAAS,
-                        "Client failed to load method %s @ %s from %s following compilation request.",
+                        "Client failed to load method %s @ %s following compilation request.",
                         compiler->signature(),
-                        compiler->getHotnessName(),
-                        wireTransferSucceeded ? "over RPC" : "SCC"
+                        compiler->getHotnessName()
                         );
                      }
                   throw;
@@ -9619,7 +9699,7 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       _methodBeingCompiled->_compErrCode = compilationOK;
-      if (!_methodBeingCompiled->isAotLoad())
+      if (!_methodBeingCompiled->isAotLoad() && _compInfo.getPersistentInfo()->getJaasMode() != CLIENT_MODE)
          {
          class TraceMethodMetadata
             {
@@ -10483,396 +10563,413 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       {
       //if (vmThread)
       TR_ASSERT(vmThread, "We must always have a vmThread in compilationEnd()\n");
+      if (comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
          {
-         if (!(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
+         entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
+
+         CodeCache *codeCache = comp->getCurrentCodeCache();
+         OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader*) (comp->getOptimizationPlan()->_mandatoryCodeAddress);
+
+         TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
+         TR_ASSERT(dataCache, "A dataCache must be reserved for JAAS compilations\n");
+         J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
+         J9JITExceptionTable *metaData = TR::compInfoPT->getMetadata();
+
+         size_t codeSize = codeCache->getWarmCodeAlloc() - (uint8_t*)codeCacheHeader;
+         size_t dataSize = dataCache->getSegment()->heapAlloc - (uint8_t*)dataCacheHeader;
+
+         JAASMetaDataRelocationInfo metaRelocationInfo;
+         metaRelocationInfo.metaDataOffset = (uint8_t*) metaData - (uint8_t*) dataCacheHeader;
+         J9JITStackAtlas *gcStackAtlas = (J9JITStackAtlas*) metaData->gcStackAtlas;
+         metaRelocationInfo.gcStackAtlasOffset = (uint8_t*) gcStackAtlas - (uint8_t*) metaData;
+         metaRelocationInfo.stackAllocMapOffset = (uint8_t*) gcStackAtlas->stackAllocMap - (uint8_t*) metaData;
+         metaRelocationInfo.internalPointerMapOffset = (uint8_t*) gcStackAtlas->internalPointerMap - (uint8_t*) metaData;
+         //TR_ASSERT(((OMR::RuntimeAssumption*)metaData->runtimeAssumptionList)->getNextAssumptionForSameJittedBody() == metaData->runtimeAssumptionList, "assuming no assumptions");
+
+         std::string codeCacheStr((char*) codeCacheHeader, codeSize);
+         std::string dataCacheStr((char*) dataCacheHeader, dataSize);
+         std::string metaRelocationStr((char*) &metaRelocationInfo, sizeof(JAASMetaDataRelocationInfo));
+
+         entry->_stream->finishCompilation(compilationOK, startPC, codeCacheStr, dataCacheStr, metaRelocationStr);
+
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
             {
-            if (trvm->isAOT_DEPRECATED_DO_NOT_USE())
-               {
-               // Committing AOT compilation that succeeded
-               // We want to store AOT code in the cache
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                  "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
+            }
+         }
+      else if (!(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
+         {
+         if (trvm->isAOT_DEPRECATED_DO_NOT_USE())
+            {
+            // Committing AOT compilation that succeeded
+            // We want to store AOT code in the cache
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-               if (TR::Options::sharedClassCache())
+            if (TR::Options::sharedClassCache())
+               {
+               bool safeToStore;
+
+               TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+
+               if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes)
                   {
-                  bool safeToStore;
+                  safeToStore = true;
+                  }
+               else if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe)
+                  {
+                  // If validation has been performed, then a header already existed
+                  // or one was already been created in this JVM
+                  TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
+                  safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(jitConfig->javaVM, fe, vmThread);
+                  }
+               else
+                  {
+                  safeToStore = false;
+                  }
 
-                  TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+               J9JITExceptionTable *relocatedMetaData = NULL;
+               const U_8 *dataStart;
+               const U_8 *codeStart;
+               UDATA dataSize, codeSize;
+               UDATA classReloAmount = 0;
+               const U_8 *returnCode = NULL;
 
-                  if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes)
+               TR_ASSERT(comp, "AOT compilation that succeeded must have a compilation object");
+               J9JITDataCacheHeader *aotMethodHeader      = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
+               TR_ASSERT(aotMethodHeader, "The header must have been set");
+               TR_AOTMethodHeader   *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+
+               dataStart = (U_8 *)aotMethodHeaderEntry->compileMethodDataStartPC;
+               dataSize  = aotMethodHeaderEntry->compileMethodDataSize;
+               codeStart = (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC;
+               codeSize  = aotMethodHeaderEntry->compileMethodCodeSize;
+
+               aotMethodHeaderEntry->compileFirstClassLocation = (UDATA)jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
+               J9ROMMethod *romMethod = entry->isRemoteCompReq() ?
+                  ((TR_ResolvedJ9JAASServerMethod*)comp->getCurrentMethod())->romMethod() :
+                  J9_ROM_METHOD_FROM_RAM_METHOD(method);
+
+               if (safeToStore)
+                  {
+                  storedCompiledMethod =
+                     reinterpret_cast<const J9JITDataCacheHeader*>(
+                        jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
+                           vmThread,
+                           romMethod,
+                           dataStart,
+                           dataSize,
+                           codeStart,
+                           codeSize,
+                           0));
+                  switch(reinterpret_cast<uintptr_t>(storedCompiledMethod))
                      {
-                     safeToStore = true;
-                     }
-                  else if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe)
-                     {
-                     // If validation has been performed, then a header already existed
-                     // or one was already been created in this JVM
-                     TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-                     safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(jitConfig->javaVM, fe, vmThread);
-                     }
-                  else
-                     {
-                     safeToStore = false;
-                     }
-
-                  J9JITExceptionTable *relocatedMetaData = NULL;
-                  const U_8 *dataStart;
-                  const U_8 *codeStart;
-                  UDATA dataSize, codeSize;
-                  UDATA classReloAmount = 0;
-                  const U_8 *returnCode = NULL;
-
-                  TR_ASSERT(comp, "AOT compilation that succeeded must have a compilation object");
-                  J9JITDataCacheHeader *aotMethodHeader      = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-                  TR_ASSERT(aotMethodHeader, "The header must have been set");
-                  TR_AOTMethodHeader   *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
-
-                  dataStart = (U_8 *)aotMethodHeaderEntry->compileMethodDataStartPC;
-                  dataSize  = aotMethodHeaderEntry->compileMethodDataSize;
-                  codeStart = (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC;
-                  codeSize  = aotMethodHeaderEntry->compileMethodCodeSize;
-
-                  aotMethodHeaderEntry->compileFirstClassLocation = (UDATA)jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
-                  J9ROMMethod *romMethod = entry->isRemoteCompReq() ?
-                     ((TR_ResolvedJ9JAASServerMethod*)comp->getCurrentMethod())->romMethod() :
-                     J9_ROM_METHOD_FROM_RAM_METHOD(method);
-
-                  if (safeToStore)
-                     {
-                     // In server mode, we construct an AOT method cache entry on the heap, and send that over gRPC
-                     // rather than storing the body into the SCC.
-                     if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+                     case J9SHR_RESOURCE_STORE_FULL:
                         {
-                        size_t methodSize = sizeof(CompiledMethodWrapper) + dataSize + codeSize;
-                        storedCompiledMethod = (J9JITDataCacheHeader *) new (comp->trMemory()->trHeapMemory()) char[methodSize];
-                        CompiledMethodWrapper *methodWrapper = (CompiledMethodWrapper*) storedCompiledMethod;
-                        methodWrapper->romMethodOffset = 0; // JAAS TODO: it appears we do not need to set this! Why?
-                        methodWrapper->dataLength = dataSize;
-                        methodWrapper->codeLength = codeSize;
-                        memcpy(CMWDATA(methodWrapper), dataStart, dataSize);
-                        memcpy(CMWCODE(methodWrapper), codeStart, codeSize);
+                        if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
+                           j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_FULL);
+                        TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_FULL);
+                        disableAOTCompilations();
                         }
-                     else
+                        break;
+                     case J9SHR_RESOURCE_STORE_ERROR:
                         {
-                        storedCompiledMethod =
-                           reinterpret_cast<const J9JITDataCacheHeader*>(
-                              jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
-                                 vmThread,
-                                 romMethod,
-                                 dataStart,
-                                 dataSize,
-                                 codeStart,
-                                 codeSize,
-                                 0));
-                        switch(reinterpret_cast<uintptr_t>(storedCompiledMethod))
-                           {
-                           case J9SHR_RESOURCE_STORE_FULL:
-                              {
-                              if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
-                                 j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_FULL);
-                              TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_FULL);
-                              disableAOTCompilations();
-                              }
-                              break;
-                           case J9SHR_RESOURCE_STORE_ERROR:
-                              {
-                              if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
-                                 j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_ERROR);
-                              TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_STORE_ERROR);
-                              TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
-                              disableAOTCompilations();
-                              }
-                           }
+                        if (jitConfig->javaVM->sharedClassConfig->verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE)
+                           j9nls_printf( PORTLIB, J9NLS_WARNING,  J9NLS_RELOCATABLE_CODE_STORE_ERROR);
+                        TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::SHARED_CACHE_STORE_ERROR);
+                        TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+                        disableAOTCompilations();
                         }
                      }
-                  else
+                  }
+               else
+                  {
+                  if (TR::Options::getAOTCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
                      {
-                     if (TR::Options::getAOTCmdLineOptions()->getVerboseOption(TR_VerboseCompileEnd))
-                        {
-                        PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
-                        TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, " Failed AOT cache validation");
-                        }
-
-                     disableAOTCompilations();
+                     PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, " Failed AOT cache validation");
                      }
+
+                  disableAOTCompilations();
+                  }
 
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
 
-                  TR_Debug *debug = TR::Options::getDebug();
-                  bool canRelocateMethod = false;
-                  if (entry->isRemoteCompReq())
-                     canRelocateMethod = false;
-                  else if (debug)
+               TR_Debug *debug = TR::Options::getDebug();
+               bool canRelocateMethod = false;
+               if (entry->isRemoteCompReq())
+                  canRelocateMethod = false;
+               else if (debug)
+                  {
+                  TR_FilterBST *filter = NULL;
+                  J9UTF8 *className = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_className;
+                  J9UTF8 *name = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_name;
+                  J9UTF8 *signature = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_signature;
+                  char *methodSignature;
+                  char arr[1024];
+                  int32_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
+                  if (len < 1024)
+                     methodSignature = arr;
+                  else
+                     methodSignature = (char *) jitPersistentAlloc(len);
+
+                  if (methodSignature)
                      {
-                     TR_FilterBST *filter = NULL;
-                     J9UTF8 *className = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_className;
-                     J9UTF8 *name = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_name;
-                     J9UTF8 *signature = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_signature;
-                     char *methodSignature;
-                     char arr[1024];
-                     int32_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
-                     if (len < 1024)
-                        methodSignature = arr;
-                     else
-                        methodSignature = (char *) jitPersistentAlloc(len);
+                     sprintf(methodSignature, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
+                     //printf("methodSig: %s\n", methodSignature);
 
-                     if (methodSignature)
-                        {
-                        sprintf(methodSignature, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
-                        //printf("methodSig: %s\n", methodSignature);
-
-                        if (debug->methodSigCanBeRelocated(methodSignature, filter))
-                           canRelocateMethod = true;
-                        }
-                     else
+                     if (debug->methodSigCanBeRelocated(methodSignature, filter))
                         canRelocateMethod = true;
-
-                     if (methodSignature && (len >= 1024))
-                        jitPersistentFree(methodSignature);
                      }
                   else
+                     canRelocateMethod = true;
+
+                  if (methodSignature && (len >= 1024))
+                     jitPersistentFree(methodSignature);
+                  }
+               else
+                  {
+                  // Prevent the relocation if specific option is given
+                  if (!comp->getOption(TR_DisableDelayRelocationForAOTCompilations))
+                     canRelocateMethod = false;
+                  else
+                     canRelocateMethod = true;
+                  }
+
+               if (canRelocateMethod)
+                  {
+                  J9JITDataCacheHeader *cacheEntry;
+
+                  // Use same code cache as AOT compile
+                  //
+                  TR::CodeCache *aotMCCRuntimeCodeCache = comp->getCurrentCodeCache();
+                  TR_ASSERT(aotMCCRuntimeCodeCache, "Must have a reserved codeCache");
+                  cacheEntry = (J9JITDataCacheHeader *)dataStart;
+
+                  // If compilation and/or slot monitors are held, they must now be released in order to call the
+                  // AOT relocation.
+                  //
+                  if (entry->getMonitor())
                      {
-                     // Prevent the relocation if specific option is given
-                     if (!comp->getOption(TR_DisableDelayRelocationForAOTCompilations))
-                        canRelocateMethod = false;
-                     else
-                        canRelocateMethod = true;
+                     compInfo->debugPrint(vmThread, "\treleasing queue-slot monitor\n");
+                     compInfo->debugPrint(vmThread, "-AM\n");
+                     entry->releaseSlotMonitor(vmThread);
                      }
 
-                  if (canRelocateMethod)
+                  compInfo->debugPrint(vmThread, "\treleasing compilation monitor\n");
+                  compInfo->debugPrint(vmThread, "-CM\n");
+                  compInfo->releaseCompMonitor(vmThread);
+                  int32_t returnCode = 0;
+
+                  if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
                      {
-                     J9JITDataCacheHeader *cacheEntry;
+                     TR_VerboseLog::writeLineLocked(
+                        TR_Vlog_DISPATCH,
+                        "Applying relocations to newly AOT compiled body for %s @ %s",
+                        comp->signature(),
+                        comp->getHotnessName()
+                        );
+                     }
+                  try
+                     {
+                     TR::CompilationInfoPerThreadBase::InterruptibleOperation(*entry->_compInfoPT);
+                     // need to get a non-shared cache VM to relocate
+                     TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
+                     TR_ResolvedMethod *compilee = fe->createResolvedMethod(comp->trMemory(), (TR_OpaqueMethodBlock *)method);
+                     relocatedMetaData = entry->_compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
+                        vmThread,
+                        fe,
+                        aotMCCRuntimeCodeCache,
+                        cacheEntry,
+                        method,
+                        true,
+                        comp->getOptions(),
+                        comp,
+                        compilee
+                        );
+                     returnCode = entry->_compInfoPT->reloRuntime()->returnCode();
+                     }
+                  catch (std::exception &e)
+                     {
+                     // Relocation Failure
+                     returnCode = compilationAotRelocationInterrupted;
+                     }
 
-                     // Use same code cache as AOT compile
+                  // Reacquire the compilation and/or slot monitors
+                  //
+                  compInfo->debugPrint(vmThread, "\tacquiring compilation monitor\n");
+                  compInfo->acquireCompMonitor(vmThread);
+                  compInfo->debugPrint(vmThread, "+CM\n");
+
+                  if (entry->getMonitor())
+                     {
+                     // Acquire the queue slot monitor now
                      //
-                     TR::CodeCache *aotMCCRuntimeCodeCache = comp->getCurrentCodeCache();
-                     TR_ASSERT(aotMCCRuntimeCodeCache, "Must have a reserved codeCache");
-                     cacheEntry = (J9JITDataCacheHeader *)dataStart;
+                     compInfo->debugPrint(vmThread, "\tre-acquiring queue-slot monitor\n");
+                     entry->acquireSlotMonitor(vmThread);
+                     compInfo->debugPrint(vmThread, "+AM-", entry);
+                     }
 
-                     // If compilation and/or slot monitors are held, they must now be released in order to call the
-                     // AOT relocation.
-                     //
-                     if (entry->getMonitor())
-                        {
-                        compInfo->debugPrint(vmThread, "\treleasing queue-slot monitor\n");
-                        compInfo->debugPrint(vmThread, "-AM\n");
-                        entry->releaseSlotMonitor(vmThread);
-                        }
-
-                     compInfo->debugPrint(vmThread, "\treleasing compilation monitor\n");
-                     compInfo->debugPrint(vmThread, "-CM\n");
-                     compInfo->releaseCompMonitor(vmThread);
-                     int32_t returnCode = 0;
-
+                  if (relocatedMetaData)
+                     {
                      if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
                         {
-                        TR_VerboseLog::writeLineLocked(
-                           TR_Vlog_DISPATCH,
-                           "Applying relocations to newly AOT compiled body for %s @ %s",
-                           comp->signature(),
-                           comp->getHotnessName()
-                           );
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Successfully relocated metadata for %s", comp->signature());
                         }
-                     try
+
+                     startPC = reinterpret_cast<void *>(relocatedMetaData->startPC);
+
+                     if (J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
                         {
-                        TR::CompilationInfoPerThreadBase::InterruptibleOperation(*entry->_compInfoPT);
-                        // need to get a non-shared cache VM to relocate
-                        TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
-                        TR_ResolvedMethod *compilee = fe->createResolvedMethod(comp->trMemory(), (TR_OpaqueMethodBlock *)method);
-                        relocatedMetaData = entry->_compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
+                        OMR::CodeCacheMethodHeader *ccMethodHeader;
+                        ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
+                           jitConfig->javaVM->hookInterface,
                            vmThread,
-                           fe,
-                           aotMCCRuntimeCodeCache,
-                           cacheEntry,
                            method,
-                           true,
-                           comp->getOptions(),
-                           comp,
-                           compilee
+                           reinterpret_cast<void *>(relocatedMetaData->startPC),
+                           relocatedMetaData->endWarmPC - relocatedMetaData->startPC,
+                           "JIT warm body",
+                           relocatedMetaData
                            );
-                        returnCode = entry->_compInfoPT->reloRuntime()->returnCode();
-                        }
-                     catch (std::exception &e)
-                        {
-                        // Relocation Failure
-                        returnCode = compilationAotRelocationInterrupted;
-                        }
-
-                     // Reacquire the compilation and/or slot monitors
-                     //
-                     compInfo->debugPrint(vmThread, "\tacquiring compilation monitor\n");
-                     compInfo->acquireCompMonitor(vmThread);
-                     compInfo->debugPrint(vmThread, "+CM\n");
-
-                     if (entry->getMonitor())
-                        {
-                        // Acquire the queue slot monitor now
-                        //
-                        compInfo->debugPrint(vmThread, "\tre-acquiring queue-slot monitor\n");
-                        entry->acquireSlotMonitor(vmThread);
-                        compInfo->debugPrint(vmThread, "+AM-", entry);
-                        }
-
-                     if (relocatedMetaData)
-                        {
-                        if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+                        if (relocatedMetaData->startColdPC)
                            {
-                           TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Successfully relocated metadata for %s", comp->signature());
-                           }
-
-                        startPC = reinterpret_cast<void *>(relocatedMetaData->startPC);
-
-                        if (J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
-                           {
-                           OMR::CodeCacheMethodHeader *ccMethodHeader;
+                           // Register the cold code section too
+                           //
                            ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
                               jitConfig->javaVM->hookInterface,
                               vmThread,
                               method,
-                              reinterpret_cast<void *>(relocatedMetaData->startPC),
-                              relocatedMetaData->endWarmPC - relocatedMetaData->startPC,
-                              "JIT warm body",
+                              reinterpret_cast<void *>(relocatedMetaData->startColdPC),
+                              relocatedMetaData->endPC - relocatedMetaData->startColdPC,
+                              "JIT cold body",
                               relocatedMetaData
                               );
-                           if (relocatedMetaData->startColdPC)
+                           }
+                        ccMethodHeader = getCodeCacheMethodHeader(
+                           reinterpret_cast<char *>(relocatedMetaData->startPC),
+                           32,
+                           relocatedMetaData
+                           );
+                        if (ccMethodHeader && (relocatedMetaData->bodyInfo != NULL))
+                           {
+                           TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(reinterpret_cast<void *>(relocatedMetaData->startPC));
+                           if (linkageInfo->isRecompMethodBody())
                               {
-                              // Register the cold code section too
-                              //
                               ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
                                  jitConfig->javaVM->hookInterface,
                                  vmThread,
                                  method,
-                                 reinterpret_cast<void *>(relocatedMetaData->startColdPC),
-                                 relocatedMetaData->endPC - relocatedMetaData->startColdPC,
-                                 "JIT cold body",
+                                 ccMethodHeader->_eyeCatcher + 4,
+                                 relocatedMetaData->startPC - reinterpret_cast<uintptr_t>(ccMethodHeader->_eyeCatcher + 4),
+                                 "JIT method header",
                                  relocatedMetaData
                                  );
                               }
-                           ccMethodHeader = getCodeCacheMethodHeader(
-                              reinterpret_cast<char *>(relocatedMetaData->startPC),
-                              32,
-                              relocatedMetaData
-                              );
-                           if (ccMethodHeader && (relocatedMetaData->bodyInfo != NULL))
-                              {
-                              TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(reinterpret_cast<void *>(relocatedMetaData->startPC));
-                              if (linkageInfo->isRecompMethodBody())
-                                 {
-                                 ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
-                                    jitConfig->javaVM->hookInterface,
-                                    vmThread,
-                                    method,
-                                    ccMethodHeader->_eyeCatcher + 4,
-                                    relocatedMetaData->startPC - reinterpret_cast<uintptr_t>(ccMethodHeader->_eyeCatcher + 4),
-                                    "JIT method header",
-                                    relocatedMetaData
-                                    );
-                                 }
-                              }
                            }
-                        if (!entry->isRemoteCompReq())
-                           jitMethodTranslated(vmThread, method, startPC);
                         }
-                     else
+                     if (!entry->isRemoteCompReq())
+                        jitMethodTranslated(vmThread, method, startPC);
+                     }
+                  else
+                     {
+                     entry->_doNotUseAotCodeFromSharedCache = true;
+                     entry->_compErrCode = returnCode;
+                     startPC = NULL;
+
+                     if (entry->_compilationAttemptsLeft > 0)
                         {
-                        entry->_doNotUseAotCodeFromSharedCache = true;
-                        entry->_compErrCode = returnCode;
-                        startPC = NULL;
+                        entry->_tryCompilingAgain = true;
+                        }
 
-                        if (entry->_compilationAttemptsLeft > 0)
-                           {
-                           entry->_tryCompilingAgain = true;
-                           }
-
-                        if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
-                           {
-                           TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+                     if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
+                        {
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
                                                           "Failure while relocating for %s, return code = %d [%s]\n",
                                                           comp->signature(),
                                                           returnCode,
                                                           (returnCode >= 0) && (returnCode < compilationMaxError) ? compilationErrorNames[returnCode] : "unknown error");
-                           }
                         }
                      }
-
-                  /*
-                   * Method cannot be relocated or relocation has failed.
-                   */
-                  if (!canRelocateMethod || !relocatedMetaData)
-                     {
-                     // Must reclaim code cache, metadata, jittedBodyInfo, persistentMethodInfo,
-                     // assumptions and RI records that could have been allocated.
-                     //
-                     J9JITDataCacheHeader *aotMethodHeader      = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-                     TR_AOTMethodHeader   *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
-                     J9JITDataCacheHeader *cacheEntry = (J9JITDataCacheHeader *)aotMethodHeaderEntry->compileMethodDataStartPC;
-                     J9JITDataCacheHeader *exceptionTableCacheEntry = (J9JITDataCacheHeader *)((U_8 *)cacheEntry + aotMethodHeaderEntry->offsetToExceptionTable);
-                     J9JITExceptionTable *metaData = (J9JITExceptionTable *) (exceptionTableCacheEntry + 1);
-
-                     // The exception table is inserted in the AVL trees during the relocation
-                     // Since we didn't performed the relocation, we don't have to artifactManager->removeArtifact(metaData);
-
-                     // Delete any assumptions that might still exist in persistent memory
-                     // The metadata parameter is NULL meaning that we want to delete ALL assumptions, including those for JBI
-                     compInfo->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimAssumptions(comp->getMetadataAssumptionList(), NULL);
-                     metaData->runtimeAssumptionList = NULL;
-
-                     // reclaim code memory so we can use it for something else
-                     TR::CodeCacheManager::instance()->addFreeBlock(static_cast<void *>(metaData), reinterpret_cast<uint8_t *>(metaData->startPC));
-
-                     metaData->constantPool = 0; // mark metadata as unloaded
-
-                     TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
-                     TR_ASSERT(dataCache, "A dataCache must be reserved for AOT compilations\n");
-                     // Make sure we didn't allocate a new dataCache (the mark was set in the old cache)
-                     TR_ASSERT(dataCache->getAllocationMark() == (uint8_t*)comp->getAotMethodDataStart(),
-                        "AllocationMark=%p does not match aotMethodDataStart=%p",
-                        dataCache->getAllocationMark(), comp->getAotMethodDataStart());
-                     dataCache->resetAllocationToMark();
-                     // Reservation will be cancelled at end of compilation
-
-                     // Inform that metadata is now NULL
-                     if (compInfo->getCompInfoForCompOnAppThread())
-                        {
-                        compInfo->getCompInfoForCompOnAppThread()->setMetadata(NULL);
-                        }
-                     else
-                        {
-                        if (entry->_compInfoPT)
-                           entry->_compInfoPT->setMetadata(NULL);
-                        }
-                     // mark that compilation failed
-                     startPC = oldStartPC;
-                     }
-#else
-                  /* If in the unlikely circumstance that AOT runtime support is off but AOT compilation occurred,
-                   * we should fail the compilation */
-                  jitMethodFailedTranslation(vmThread, method);
-#endif /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
                   }
-               else
-#endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+
+               /*
+                * Method cannot be relocated or relocation has failed.
+                */
+               if (!canRelocateMethod || !relocatedMetaData)
                   {
+                  // Must reclaim code cache, metadata, jittedBodyInfo, persistentMethodInfo,
+                  // assumptions and RI records that could have been allocated.
+                  //
+                  J9JITDataCacheHeader *aotMethodHeader      = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
+                  TR_AOTMethodHeader   *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+                  J9JITDataCacheHeader *cacheEntry = (J9JITDataCacheHeader *)aotMethodHeaderEntry->compileMethodDataStartPC;
+                  J9JITDataCacheHeader *exceptionTableCacheEntry = (J9JITDataCacheHeader *)((U_8 *)cacheEntry + aotMethodHeaderEntry->offsetToExceptionTable);
+                  J9JITExceptionTable *metaData = (J9JITExceptionTable *) (exceptionTableCacheEntry + 1);
+
+                  // The exception table is inserted in the AVL trees during the relocation
+                  // Since we didn't performed the relocation, we don't have to artifactManager->removeArtifact(metaData);
+
+                  // Delete any assumptions that might still exist in persistent memory
+                  // The metadata parameter is NULL meaning that we want to delete ALL assumptions, including those for JBI
+                  compInfo->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimAssumptions(comp->getMetadataAssumptionList(), NULL);
+                  metaData->runtimeAssumptionList = NULL;
+
+                  // reclaim code memory so we can use it for something else
+                  TR::CodeCacheManager::instance()->addFreeBlock(static_cast<void *>(metaData), reinterpret_cast<uint8_t *>(metaData->startPC));
+
+                  metaData->constantPool = 0; // mark metadata as unloaded
+
+                  TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
+                  TR_ASSERT(dataCache, "A dataCache must be reserved for AOT compilations\n");
+                  // Make sure we didn't allocate a new dataCache (the mark was set in the old cache)
+                  TR_ASSERT(dataCache->getAllocationMark() == (uint8_t*)comp->getAotMethodDataStart(),
+                     "AllocationMark=%p does not match aotMethodDataStart=%p",
+                     dataCache->getAllocationMark(), comp->getAotMethodDataStart());
+                  dataCache->resetAllocationToMark();
+                  // Reservation will be cancelled at end of compilation
+
+                  // Inform that metadata is now NULL
+                  if (compInfo->getCompInfoForCompOnAppThread())
+                     {
+                     compInfo->getCompInfoForCompOnAppThread()->setMetadata(NULL);
+                     }
+                  else
+                     {
+                     if (entry->_compInfoPT)
+                        entry->_compInfoPT->setMetadata(NULL);
+                     }
+                  // mark that compilation failed
+                  startPC = oldStartPC;
+                  }
+#else
+               /* If in the unlikely circumstance that AOT runtime support is off but AOT compilation occurred,
+                * we should fail the compilation */
+               jitMethodFailedTranslation(vmThread, method);
+#endif /* J9VM_INTERP_AOT_RUNTIME_SUPPORT */
+               }
+            else
+#endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+               {
 #ifdef AOT_DEBUG
-                  fprintf(stderr, "ERROR: AOT compiling but shared class is not available. Method will run interpreted\n");
+               fprintf(stderr, "ERROR: AOT compiling but shared class is not available. Method will run interpreted\n");
 #endif
-                  TR_ASSERT(0, "shared classes flag not enabled yet we got an AOT compilation"); // This is a branch that is never expected to enter
-                  entry->_doNotUseAotCodeFromSharedCache = true;
-                  startPC = NULL;
+               TR_ASSERT(0, "shared classes flag not enabled yet we got an AOT compilation"); // This is a branch that is never expected to enter
+               entry->_doNotUseAotCodeFromSharedCache = true;
+               startPC = NULL;
 
-                  if (entry->_compilationAttemptsLeft > 0)
-                     {
-                     entry->_tryCompilingAgain = true;
-                     }
+               if (entry->_compilationAttemptsLeft > 0)
+                  {
+                  entry->_tryCompilingAgain = true;
+                  }
 
-                  if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
-                     {
-                     TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"Shared Class not available for AOT compile for %s", comp->signature());
-                     }
+               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"Shared Class not available for AOT compile for %s", comp->signature());
                   }
                }
-            else // Non-AOT compilation
-               {
-               jitMethodTranslated(vmThread, method, startPC);
-               }
+            }
+         else // Non-AOT compilation
+            {
+            jitMethodTranslated(vmThread, method, startPC);
             }
          }
 
@@ -10893,21 +10990,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
 
          TR::Recompilation::methodHasBeenRecompiled(oldStartPC, startPC, trvm);
-         }
-
-      if (entry && entry->_stream)
-         {
-         if (TR::Options::getVerboseOption(TR_VerboseJaas))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-                  "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
-            }
-         entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
-
-         CompiledMethodWrapper *wrapper = (CompiledMethodWrapper *) storedCompiledMethod;
-         size_t methodSize = sizeof(CompiledMethodWrapper) + wrapper->dataLength + wrapper->codeLength;
-
-         entry->_stream->finishCompilation(compilationOK, storedCompiledMethod, methodSize);
          }
       }
    else if (!oldStartPC)

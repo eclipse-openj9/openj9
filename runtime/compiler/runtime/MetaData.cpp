@@ -1598,7 +1598,8 @@ createMethodMetaData(
 
    populateInlineCalls(comp, vm, data, callSiteCursor, numberOfMapBytes);
 
-   if (!(vm->_jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && !vm->isAOT_DEPRECATED_DO_NOT_USE())
+   if (!(vm->_jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && !vm->isAOT_DEPRECATED_DO_NOT_USE() &&
+       comp->getPersistentInfo()->getJaasMode() != SERVER_MODE)
       {
       TR_TranslationArtifactManager *artifactManager = TR_TranslationArtifactManager::getGlobalArtifactManager();
       TR_TranslationArtifactManager::CriticalSection updateMetaData;

@@ -817,7 +817,7 @@ public:
    bool shouldPerformEDO(TR::Block *catchBlock,  TR::Compilation * comp);
 
    // Multiple code cache support
-   virtual TR::CodeCache *getDesignatedCodeCache( TR::Compilation *comp); // MCT
+   virtual TR::CodeCache *getDesignatedCodeCache( TR::Compilation *comp, size_t reqSize=0); // MCT
    virtual void setHasFailedCodeCacheAllocation(); // MCT
    void *getCCPreLoadedCodeAddress(TR::CodeCache *codeCache, TR_CCPreLoadedCode h, TR::CodeGenerator *cg);
 
@@ -1170,7 +1170,7 @@ public:
    virtual TR_OpaqueClassBlock *getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profiledInfo);
 
    // Multiple code cache support
-   virtual TR::CodeCache *getDesignatedCodeCache( TR::Compilation *comp); // MCT
+   virtual TR::CodeCache *getDesignatedCodeCache( TR::Compilation *comp, size_t reqSize=0); // MCT
 
    virtual void *getJ2IThunk(char *signatureChars, uint32_t signatureLength,  TR::Compilation *comp);
    virtual void *setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr,  TR::Compilation *comp);

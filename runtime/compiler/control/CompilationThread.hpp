@@ -360,6 +360,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    J9ROMClass            *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=nullptr);
    J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
    void                   cacheRemoteROMClass(J9Class *, J9ROMClass *);
+   void                   addThunkToBeRelocated(void *thunk, std::string signature);
+   void                   relocateThunks();
 
    private:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
@@ -377,6 +379,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   _initializationSucceeded;
    bool                   _isDiagnosticThread;
    CpuSelfThreadUtilization _compThreadCPU;
+   std::vector<std::pair<void *, std::string>> _thunksToBeRelocated;
 
    typedef TR::typed_allocator<std::pair<const J9Class *, J9ROMClass * const>, TR::PersistentAllocator &> ClassCacheMapAllocator;
    typedef std::unordered_map<J9Class *, J9ROMClass *, std::hash<J9Class *>, std::equal_to<J9Class *>, ClassCacheMapAllocator> PersistentClassMap;

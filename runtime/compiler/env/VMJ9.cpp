@@ -5347,7 +5347,7 @@ TR_J9VMBase::setHasFailedCodeCacheAllocation()
    }
 
 TR::CodeCache *
-TR_J9VMBase::getDesignatedCodeCache(TR::Compilation *comp) // MCT
+TR_J9VMBase::getDesignatedCodeCache(TR::Compilation *comp, size_t reqSize) // MCT
    {
    int32_t numReserved;
    int32_t compThreadID = comp ? comp->getCompThreadID() : -1;
@@ -5355,7 +5355,7 @@ TR_J9VMBase::getDesignatedCodeCache(TR::Compilation *comp) // MCT
    bool hadClassUnloadMonitor;
    bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
 
-   TR::CodeCache * result = TR::CodeCacheManager::instance()->reserveCodeCache(false, 0, compThreadID, &numReserved);
+   TR::CodeCache * result = TR::CodeCacheManager::instance()->reserveCodeCache(false, reqSize, compThreadID, &numReserved);
 
    acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
    if (!result)
@@ -5746,6 +5746,7 @@ TR_J9VMBase::getMethodSize(TR_OpaqueMethodBlock *method)
 
 int32_t TR_J9VMBase::getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex)
    {
+   return 0;
    return isAOT_DEPRECATED_DO_NOT_USE() ? -1 : (int32_t)getLineNumberForROMClass(_jitConfig->javaVM, (J9Method *) method, bcIndex);
    }
 
@@ -8751,13 +8752,13 @@ extern U_8 *align(U_8 *ptr, U_32 alignment);
 
 // Multiple codeCache support
 TR::CodeCache *
-TR_J9SharedCacheVM::getDesignatedCodeCache(TR::Compilation *comp)
+TR_J9SharedCacheVM::getDesignatedCodeCache(TR::Compilation *comp, size_t resSize)
    {
    int32_t numReserved;
    int32_t compThreadID = comp ? comp->getCompThreadID() : -1;
    bool hadClassUnloadMonitor;
    bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
-   TR::CodeCache * codeCache = TR::CodeCacheManager::instance()->reserveCodeCache(true, 0, compThreadID, &numReserved);
+   TR::CodeCache * codeCache = TR::CodeCacheManager::instance()->reserveCodeCache(true, resSize, compThreadID, &numReserved);
    acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
    // For AOT we need some alignment
    if (codeCache)
