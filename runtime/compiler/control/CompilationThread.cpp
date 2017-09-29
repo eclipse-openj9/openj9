@@ -7596,6 +7596,7 @@ bool isMethodIneligibleForAot(J9Method *method)
  * @param trMemory Reference to the TR_Memory associated with this compilation (input)
  * @param canDoRelocatableCompile Reference to a bool; indicates if the current compilation can be AOT compiled (output)
  * @param eligibleForRelocatableCompile Reference to a bool; Indicates if the current compilation is eligible for AOT (output)
+ * @param eligibleForRemoteCompile Reference to a bool; Indicates if the current compilation is eligible for JAAS (output)
  * @param reloRuntime Pointer to a TR_RelocationRuntime; NULL if JVM does not have AOT support (input)
  *
  * This method is used to perform a set of tasks needed before attempting a compilation.
@@ -7611,6 +7612,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                                                       TR_Memory &trMemory,
                                                       bool &canDoRelocatableCompile,
                                                       bool &eligibleForRelocatableCompile,
+                                                      bool &eligibleForRemoteCompile,
                                                       TR_RelocationRuntime *reloRuntime)
    {
    // Check to see if we find an AOT version in the shared cache
@@ -7701,23 +7703,11 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       // If yes, then change the type of the method and generate an AOT cookie
       //
       TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
-      if (entry->isRemoteCompReq())
-         {
-         // For remote compilations we cannot dereference the j9method pointer
-         eligibleForRelocatableCompile =
-            TR::Options::sharedClassCache() &&
-            !details.isNewInstanceThunk() &&
-            //!entry->isJNINative() &&
-            !details.isMethodHandleThunk() &&
-            !TR::CompilationInfo::isJSR292(details.getRomMethod()) &&
-            //!TR::CompilationInfo::isCompiled(method) &&
-            !entry->isDLTCompile() &&
-            !entry->_doNotUseAotCodeFromSharedCache &&
-            //reloRuntime->isROMClassInSharedCaches((UDATA)details.getRomClass(), javaVM) && // not in SCC anymore
-            !isMethodIneligibleForAot(details.getRomMethod(), details.getRomClass());
-         }
-      else
-         {
+
+      eligibleForRemoteCompile =
+         !TR::CompilationInfo::isJSR292(details.getRomMethod());
+
+      if (!entry->isRemoteCompReq()) {
          eligibleForRelocatableCompile =
             TR::Options::sharedClassCache() &&
             !details.isNewInstanceThunk() &&
@@ -7730,7 +7720,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             !isMethodIneligibleForAot(method) &&
             (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
                TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
-         }
+      }
 
       bool sharedClassTest = eligibleForRelocatableCompile &&
          !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT);
@@ -7764,11 +7754,10 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             }
          }
       }
-   if (canDoRelocatableCompile && entry->_stream)
+   if (eligibleForRemoteCompile && entry->_stream)
       {
-      // JAAS TODO: use a Server VM here once frontend changes are stable
-      vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM);
-      entry->_useAotCompilation = true;
+      _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SERVER_VM);
+      entry->_useAotCompilation = false;
       }
    else if (canDoRelocatableCompile)
       {
@@ -8110,6 +8099,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
    J9Method *method = entry->getMethodDetails().getMethod();
    bool canDoRelocatableCompile = false;
    bool eligibleForRelocatableCompile = false;
+   bool eligibleForRemoteCompile = false;
    _qszWhenCompStarted = getCompilationInfo()->getMethodQueueSize();
 
    TR_RelocationRuntime *reloRuntime = NULL;
@@ -8146,7 +8136,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
       preCompilationTasks(vmThread, javaVM, entry,
                           method, &aotCachedMethod, trMemory,
-                          canDoRelocatableCompile, eligibleForRelocatableCompile,
+                          canDoRelocatableCompile, eligibleForRelocatableCompile, eligibleForRemoteCompile,
                           reloRuntime);
 
       CompileParameters compParam(
@@ -8162,15 +8152,15 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
    if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
       TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-         "Compilation thread executing compile(): j9method=%p isAotLoad=%d canDoRelocatableCompile=%d eligibleForRelocatableCompile=%d _doNotUseAotCodeFromSharedCache=%d AOTfe=%d",
-          method, entry->isAotLoad(), canDoRelocatableCompile, eligibleForRelocatableCompile, entry->_doNotUseAotCodeFromSharedCache, _vm->isAOT_DEPRECATED_DO_NOT_USE());
+         "Compilation thread executing compile(): j9method=%p isAotLoad=%d canDoRelocatableCompile=%d eligibleForRelocatableCompile=%d eligibleForRemoteCompile=%d _doNotUseAotCodeFromSharedCache=%d AOTfe=%d",
+          method, entry->isAotLoad(), canDoRelocatableCompile, eligibleForRelocatableCompile, eligibleForRemoteCompile, entry->_doNotUseAotCodeFromSharedCache, _vm->isAOT_DEPRECATED_DO_NOT_USE());
 
       if (
           (TR::Options::canJITCompile()
            || canDoRelocatableCompile
            || entry->isAotLoad()
           )
-          && (!entry->_stream || canDoRelocatableCompile)
+          && (_compInfo.getPersistentInfo()->getJaasMode() == NONJAAS_MODE || eligibleForRemoteCompile)
 #if defined(TR_HOST_ARM)
           && !TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)
 #endif
