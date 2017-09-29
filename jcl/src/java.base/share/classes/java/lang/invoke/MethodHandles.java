@@ -53,9 +53,13 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
+/*[IF Sidecar19-SE-B175]
+import java.lang.Module;
+/*[ENDIF] Sidecar19-SE-B175*/
 /*[ELSE]*/
 import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
+
 
 /**
  * Factory class for creating and adapting MethodHandles.
@@ -140,7 +144,11 @@ public class MethodHandles {
 		
 		static final int INTERNAL_PRIVILEGED = 0x40;
 
+		/*[IF Sidecar19-SE-B175]
+		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE | MODULE;
+		/*[ELSE]*/
 		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE;
+		/*[ENDIF] Sidecar19-SE-B175*/
 		
 		private static final int NO_ACCESS = 0;
 		
@@ -149,7 +157,11 @@ public class MethodHandles {
 		static final int VARARGS = 0x80;
 		
 		/* single cached value of public Lookup object */
+		/*[IF Sidecar19-SE-B175]
+		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, Lookup.PUBLIC | Lookup.UNCONDITIONAL);
+		/*[ELSE]*/
 		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, Lookup.PUBLIC);
+		/*[ENDIF] Sidecar19-SE-B175*/
 		
 		/* single cached internal privileged lookup */
 		static Lookup internalPrivilegedLookup = new Lookup(MethodHandle.class, Lookup.INTERNAL_PRIVILEGED);
@@ -906,7 +918,39 @@ public class MethodHandles {
 			/*[IF ]*/
 			/* If the new lookup class differs from the old one, protected members will not be accessible by virtue of inheritance. (Protected members may continue to be accessible because of package sharing.) */
 			/*[ENDIF]*/
+			/*[IF !Sidecar19-SE-B175]
 			int newAccessMode = accessMode & ~PROTECTED;
+			/*[ELSE]*/
+			/* The UNCONDITIONAL bit is discarded if the new lookup class differs from the old one in Java 9 */
+			int newAccessMode = accessMode & ~UNCONDITIONAL;
+			
+			/* There are 3 cases to be addressed for the new lookup class from a different module:
+			 * 1) There is no access if the package containing the new lookup class is not exported to 
+			 *    the package containing the old one.
+			 * 2) There is no access if the old lookup class is in a named module
+			 *    Note: The public access will be reserved if the old lookup class is a public lookup.
+			 * 3) The MODULE access is removed if the old lookup class is in an unnamed module.
+			 */
+			Module accessClassModule = accessClass.getModule();
+			Module lookupClassModule = lookupClass.getModule();
+			
+			if (!Objects.equals(accessClassModule, lookupClassModule)) {
+				if (!lookupClassModule.isExported(lookupClass.getPackageName(), accessClassModule)) {
+					newAccessMode = NO_ACCESS;
+				} else if (accessClassModule.isNamed()) {
+					/* If the old lookup class is in a named module different from the new lookup class,
+					 * we should keep the public access only when it is a public lookup.
+					 */
+					if (Lookup.PUBLIC_LOOKUP == this) {
+						newAccessMode = PUBLIC;
+					} else {
+						newAccessMode = NO_ACCESS;
+					}
+				} else {
+					newAccessMode &= ~MODULE;
+				}
+			}
+			/*[ENDIF] Sidecar19-SE-B175*/
 			
 			/*[IF ]*/
 			/* If the new lookup class is in a different package than the old one, protected and default (package) members will not be accessible. */
@@ -915,23 +959,32 @@ public class MethodHandles {
 				newAccessMode &= ~(PACKAGE | PROTECTED);
 			}
 			
-			if ((newAccessMode & PRIVATE) == PRIVATE){
-				/*[IF ]*/
-				/* If the new lookup class is not within the same package member as the old one, private members will not be accessible. */
-				/*[ENDIF]*/
+			if (PRIVATE == (newAccessMode & PRIVATE)){
 				Class<?> a = getUltimateEnclosingClassOrSelf(accessClass);
 				Class<?> l = getUltimateEnclosingClassOrSelf(lookupClass);
 				if (a != l) {
+				/*[IF Sidecar19-SE-B175]
+				/* If the new lookup class is not within the same package member as the old one, private and protected members will not be accessible. */
+					newAccessMode &= ~(PRIVATE | PROTECTED);
+				/*[ELSE]*/
+				/* If the new lookup class is not within the same package member as the old one, private members will not be accessible. */
 					newAccessMode &= ~PRIVATE;
+				/*[ENDIF] Sidecar19-SE-B175*/
 				}
 			}
 			
 			/*[IF ]*/
 			/* If the new lookup class is not accessible to the old lookup class, then no members, not even public members, will be accessible. (In all other cases, public members will continue to be accessible.) */
 			/*[ENDIF]*/
-			if(!Modifier.isPublic(lookupClass.getModifiers())){
+			/* Treat a protected class as public as the access flag of a protected class
+			 * is set to public when compiled to a class file.
+			 */
+			int lookupClassModifiers = lookupClass.getModifiers();
+			if(!Modifier.isPublic(lookupClassModifiers)
+			&& !Modifier.isProtected(lookupClassModifiers)
+			){
 				if(isSamePackage(accessClass, lookupClass)) {
-					if ((accessMode & PACKAGE) == 0) {
+					if (0 == (accessMode & PACKAGE)) {
 						newAccessMode = NO_ACCESS;
 					}
 				} else {
@@ -1345,12 +1398,27 @@ public class MethodHandles {
 			case PUBLIC:
 				toString += "/public"; //$NON-NLS-1$
 				break;
+			/*[IF Sidecar19-SE-B175]
+			case PUBLIC | UNCONDITIONAL:
+				toString += "/publicLookup"; //$NON-NLS-1$
+				break;
+			case PUBLIC | MODULE:
+				toString += "/module"; //$NON-NLS-1$
+				break;
+			case PUBLIC | PACKAGE | MODULE:
+				toString += "/package"; //$NON-NLS-1$
+				break;
+			case PUBLIC | PACKAGE | PRIVATE | MODULE:
+				toString += "/private"; //$NON-NLS-1$
+				break;
+			/*[ELSE]*/
 			case PUBLIC | PACKAGE:
 				toString += "/package"; //$NON-NLS-1$
 				break;
 			case PUBLIC | PACKAGE | PRIVATE:
 				toString += "/private"; //$NON-NLS-1$
 				break;
+			/*[ENDIF] Sidecar19-SE-B175*/
 			}
 			return toString;
 		}
