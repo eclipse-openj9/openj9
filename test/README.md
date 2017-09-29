@@ -86,15 +86,18 @@ JAVA_VERSION=[SE80|SE90] (SE90 default value)
   * sanity tests
 
             make sanity
-  * external tests
-
-            make external
-  * openjdk tests
-
-            make openjdk
   * extended tests
 
             make extended
+  * external tests
+
+            make external
+  * perf tests
+
+            make perf
+  * openjdk tests
+
+            make openjdk
   * a specific individual test
 
             make _generalExtendedTest_0
