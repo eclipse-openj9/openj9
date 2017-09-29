@@ -283,8 +283,11 @@ openjdk: rmResultFile openjdk_$(JAVA_VERSION) resultsSummary
 external: JVM_TEST_ROOT := $(BUILD_ROOT)
 external: rmResultFile external_$(JAVA_VERSION) resultsSummary
 
-runtest: rmResultFile sanity_$(JAVA_VERSION) extended_$(JAVA_VERSION) openjdk_$(JAVA_VERSION) external_$(JAVA_VERSION) resultsSummary
-.NOTPARALLEL: extended sanity openjdk external runtest rmResultFile resultsSummary
+perf: JVM_TEST_ROOT := $(BUILD_ROOT)
+perf: rmResultFile perf_$(JAVA_VERSION) resultsSummary
+
+runtest: rmResultFile sanity_$(JAVA_VERSION) extended_$(JAVA_VERSION) openjdk_$(JAVA_VERSION) external_$(JAVA_VERSION) perf_$(JAVA_VERSION) resultsSummary
+.NOTPARALLEL: extended sanity openjdk external perf runtest rmResultFile resultsSummary
 
 # cleanup
 clean:

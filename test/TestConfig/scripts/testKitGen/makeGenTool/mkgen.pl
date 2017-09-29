@@ -27,7 +27,7 @@ use feature 'say';
 
 use constant DEBUG => 0;
 
-my @allGroups = ( "sanity", "extended", "promotion", "openjdk", "external" );
+my @allGroups = ( "sanity", "extended", "openjdk", "external", "perf" );
 
 my $headerComments =
 	"########################################################\n"
@@ -528,7 +528,10 @@ sub jvmTestGen {
 		}
 	}
 
+	my %hashSet = ();
+	
 	foreach my $group ( sort keys %container ) {
+		$hashSet{$group} = 1;
 		foreach my $testsubset ( @{$allSubsets} ) {
 			my $targetName = $group . "_" . $testsubset;
 			print $fhOut $targetName . ":";
@@ -544,6 +547,15 @@ sub jvmTestGen {
 		}
 	}
 
+	foreach my $group ( @allGroups ) {
+		if (!exists $hashSet{$group}) {
+			foreach my $testsubset ( @{$allSubsets} ) {
+				my $targetName = $group . "_" . $testsubset;
+				print $fhOut $targetName . ": ;\n\n";
+			}
+		}
+	}
+	
 	close $fhOut;
 }
 
