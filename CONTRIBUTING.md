@@ -90,7 +90,7 @@ Correct race in frobnicator
 
 This patch eliminates the race condition in issue #1234.
 
-Issue: #1234
+Fixes: #1234
 ```
 
 Sign off on your commit in the footer. By doing this, you assert original
@@ -111,6 +111,10 @@ or your commit will fail IP validation.
 It is important that you read and understand the legal considerations found
 below when signing off or contributing any commit.
 
+When appropriate, use the keywords described in the following help article to 
+automatically close issues.
+https://help.github.com/articles/closing-issues-using-keywords/
+
 ### Example commits
 
 Here is an example of a *good* commit:
@@ -129,7 +133,7 @@ The guidelines are changed to:
 - Encourage contributors to put more information into the commit
   message.
 
-Issue: #124
+Closes: #124
 Signed-off-by: Robert Young <rwy0717@gmail.com>
 ```
 
