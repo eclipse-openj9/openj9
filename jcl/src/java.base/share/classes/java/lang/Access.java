@@ -83,6 +83,14 @@ final class Access implements JavaLangAccess {
 	
 	/** Return the constant pool for a class. */
 	public native ConstantPool getConstantPool(java.lang.Class<?> arg0);
+	
+	/** 
+	 * Return the constant pool for a class. This will call the exact same
+	 * native as 'getConstantPool(java.lang.Class<?> arg0)'. We need this 
+	 * version so we can call it with InternRamClass instead of j.l.Class
+	 * (which is required by JAVALANGACCESS).
+	 */
+	public static native ConstantPool getConstantPool(Object arg0);
 
     /**
      * Returns the elements of an enum class or null if the

@@ -974,7 +974,19 @@ sendResolveInvokeDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA
 			nameString = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 			if (NULL != sigString) {
 				/* Run the method */
-				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(ramCP->ramClass);
+				/* skip one slot because we are passing a long */
+				currentThread->sp -= 2;
+				/*
+				 * Need to pass the ramClass so that we can get the
+				 * correct ramConstantPool. If we pass the classObject
+				 * we will always get the latest ramClass, which is not always
+				 * the correct one. In cases where we can have an
+				 * old method (caused by class redefinition) on the stack,
+				 * we will need to search the old ramClass to get the correct
+				 * constanPool. It is difficult to do this if we pass the
+				 * classObject.
+				 */
+				*(U_64*)currentThread->sp = (U_64)ramCP->ramClass;
 				*--currentThread->sp = (UDATA)nameString;
 				*--currentThread->sp = (UDATA)sigString;
 				currentThread->sp -= 2;

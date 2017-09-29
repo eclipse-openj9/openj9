@@ -33,8 +33,10 @@ import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.List;
 
+import java.util.Objects;
 // {{{ JIT support
 import java.util.concurrent.ConcurrentHashMap;
+
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.SharedSecrets;
@@ -46,11 +48,13 @@ import java.lang.invoke.LambdaForm;
 import sun.misc.Unsafe;
 import sun.misc.SharedSecrets;
 import sun.reflect.ConstantPool;
+
 /*[ENDIF]*/
 import com.ibm.jit.JITHelpers;
 import com.ibm.oti.util.Msg;
 // }}} JIT support
 import com.ibm.oti.vm.VM;
+import com.ibm.oti.vm.VMLangAccess;
 
 /**
  * A MethodHandle is a reference to a Java-level method.  It is typed according to the method's signature and can be
@@ -794,19 +798,19 @@ public abstract class MethodHandle {
 	/*
 	 * Return the result of J9_CP_TYPE(J9Class->romClass->cpShapeDescription, index)
 	 */
-	private static final native int getCPTypeAt(Class<?> clazz, int index);
+	private static final native int getCPTypeAt(Object internalRamClass, int index);
 
 	/*
 	 * sun.reflect.ConstantPool doesn't have a getMethodTypeAt method.  This is the 
 	 * equivalent for MethodType.
 	 */
-	private static final native MethodType getCPMethodTypeAt(Class<?> clazz, int index);
+	private static final native MethodType getCPMethodTypeAt(Object internalRamClass, int index);
 
 	/*
 	 * sun.reflect.ConstantPool doesn't have a getMethodHandleAt method.  This is the 
 	 * equivalent for MethodHandle.
 	 */
-	private static final native MethodHandle getCPMethodHandleAt(Class<?> clazz, int index);
+	private static final native MethodHandle getCPMethodHandleAt(Object internalRamClass, int index);
 	
 	/**
 	 * Get the class name from a constant pool class element, which is located
@@ -822,7 +826,7 @@ public abstract class MethodHandle {
 	 * @throws  IllegalArgumentException if <i>index</i> has wrong constant pool type
 	 */
 	private static final native String getCPClassNameAt(Class<?> clazz, int index);
-
+	
 	private static final int BSM_ARGUMENT_SIZE = Short.SIZE / Byte.SIZE;
 	private static final int BSM_ARGUMENT_COUNT_OFFSET = BSM_ARGUMENT_SIZE;
 	private static final int BSM_ARGUMENTS_OFFSET = BSM_ARGUMENT_SIZE * 2;
@@ -832,33 +836,48 @@ public abstract class MethodHandle {
 	private static final int BSM_OPTIONAL_ARGUMENTS_START_INDEX = 3;
 
 	@SuppressWarnings("unused")
-	private static final MethodHandle resolveInvokeDynamic(Class<?> clazz, String name, String methodDescriptor, long bsmData) throws Throwable {
+	private static final MethodHandle resolveInvokeDynamic(long j9class, String name, String methodDescriptor, long bsmData) throws Throwable {
 		Unsafe unsafe = getUnsafe();
 		MethodHandle result = null;
 		MethodType type = null;
 
 		try {
+			VMLangAccess access = VM.getVMLangAccess();
+			Object internalRamClass = access.createInternalRamClass(j9class);
+			JITHelpers jitHelper = getJITHelpers();
+			Class<?> classObject = null;
+			if (jitHelper.is32Bit()) {
+				classObject = jitHelper.getClassFromJ9Class32((int)j9class);
+			} else {
+				classObject = jitHelper.getClassFromJ9Class64(j9class);
+			}
+			
+			Objects.requireNonNull(classObject);
+			
 			try { 
-				type = MethodType.fromMethodDescriptorString(methodDescriptor, VM.getVMLangAccess().getClassloader(clazz));
+				type = MethodType.fromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject));
 			} catch (TypeNotPresentException e) {
 				throw throwNoClassDefFoundError(e);
 			}
 			int bsmIndex = unsafe.getShort(bsmData);
 			int bsmArgCount = unsafe.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
 			long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
-			MethodHandle bsm = getCPMethodHandleAt(clazz, bsmIndex);
+			MethodHandle bsm = getCPMethodHandleAt(internalRamClass, bsmIndex);
 			if (null == bsm) {
 				/*[MSG "K05cd", "unable to resolve 'bootstrap_method_ref' in '{0}' at index {1}"]*/
-				throw new NullPointerException(Msg.getString("K05cd", clazz.toString(), bsmIndex)); //$NON-NLS-1$
+				throw new NullPointerException(Msg.getString("K05cd", classObject.toString(), bsmIndex)); //$NON-NLS-1$
 			}
 			Object[] staticArgs = new Object[BSM_OPTIONAL_ARGUMENTS_START_INDEX + bsmArgCount];
 			/* Mandatory arguments */
-			staticArgs[BSM_LOOKUP_ARGUMENT_INDEX] = new MethodHandles.Lookup(clazz, false);
+			staticArgs[BSM_LOOKUP_ARGUMENT_INDEX] = new MethodHandles.Lookup(classObject, false);
 			staticArgs[BSM_NAME_ARGUMENT_INDEX] = name;
 			staticArgs[BSM_TYPE_ARGUMENT_INDEX] = type;
 		
 			/* Static optional arguments */
-			ConstantPool cp = SharedSecrets.getJavaLangAccess().getConstantPool(clazz);
+			/* internalRamClass is not a j.l.Class object but the ConstantPool natives know how to
+			 * get the internal constantPool from the j9class
+			 */
+			ConstantPool cp = access.getConstantPool(internalRamClass);
 
 			/* Check if we need to treat the last parameter specially when handling primitives.
 			 * The type of the varargs array will determine how primitive ints from the constantpool
@@ -871,13 +890,13 @@ public abstract class MethodHandle {
 			for (int i = 0; i < bsmArgCount; i++) {
 				int staticArgIndex = BSM_OPTIONAL_ARGUMENTS_START_INDEX + i;
 				short index = unsafe.getShort(bsmArgs + (i * BSM_ARGUMENT_SIZE));
-				int cpType = getCPTypeAt(clazz, index);
+				int cpType = getCPTypeAt(internalRamClass, index);
 				Object cpEntry = null;
 				switch (cpType) {
 				case 1:
 					cpEntry = cp.getClassAt(index);
 					if (cpEntry == null) {
-						throw throwNoClassDefFoundError(clazz, index);
+						throw throwNoClassDefFoundError(classObject, index);
 					}
 					break;
 				case 2:
@@ -915,13 +934,13 @@ public abstract class MethodHandle {
 					break;
 				case 13:
 					try {
-						cpEntry = getCPMethodTypeAt(clazz, index);
+						cpEntry = getCPMethodTypeAt(internalRamClass, index);
 					} catch (TypeNotPresentException e) {
 						throw throwNoClassDefFoundError(e);
 					}
 					break;
 				case 14:
-					cpEntry = getCPMethodHandleAt(clazz, index);
+					cpEntry = getCPMethodHandleAt(internalRamClass, index);
 					break;
 				default:
 					// Do nothing. The null check below will throw the appropriate exception.
