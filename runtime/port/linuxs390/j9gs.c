@@ -67,6 +67,7 @@ j9gs_initialize(struct J9PortLibrary *portLibrary, struct J9GSParameters *gsPara
 	int32_t ret_code = -1;
 	Trc_PRT_gs_initialize_Entry(gsParams,shiftAmount);
 
+#if !defined(J9ZTPF)
 	/*
 	 * syscall is _s390_guarded_storage
 	 * errno values from syscall routine is as follows:
@@ -86,6 +87,8 @@ j9gs_initialize(struct J9PortLibrary *portLibrary, struct J9GSParameters *gsPara
 		j9gs_load_gscb((void*)gsControlBlock);
 		gsParams->flags |= J9PORT_GS_INITIALIZED;
 	}
+#endif /* !defined(J9ZTPF) */
+
 	Trc_PRT_gs_initialize_Exit(ret_code, gsParams->flags);
 
 	return IS_GS_INITIALIZED(gsParams) ? 1 : 0;
@@ -95,6 +98,9 @@ int32_t
 j9gs_deinitialize(struct J9PortLibrary *portLibrary, struct J9GSParameters *gsParams)
 {
 	int32_t ret_code = -1;
+	Trc_PRT_gs_deinitialize_Entry(gsParams);
+
+#if !defined(J9ZTPF)
 	/*
 	 * syscall is _s390_guarded_storagee
 	 * errno values from syscall routine is as follows:
@@ -111,6 +117,8 @@ j9gs_deinitialize(struct J9PortLibrary *portLibrary, struct J9GSParameters *gsPa
 	} else {
 		Trc_PRT_gs_deinitialize_Exception(errno, gsParams->flags);
 	}
+#endif /* !defined(J9ZTPF) */
+
 	Trc_PRT_gs_deinitialize_Exit();
 
 	return IS_GS_INITIALIZED(gsParams) ? 0 : 1;

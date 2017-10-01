@@ -2232,6 +2232,7 @@ int isFileInDir(char *dir, char *file){
 	if (f) {
 		fclose(f);
 	}
+	free(fullpath);
 	return f!=0;
 }
 
