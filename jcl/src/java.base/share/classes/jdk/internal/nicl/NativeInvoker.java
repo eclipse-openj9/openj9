@@ -131,10 +131,16 @@ class NativeInvoker {
 		MethodType mt = MethodType.methodType(rtype, ptypes);
 		VMLangInvokeAccess access = com.ibm.oti.vm.VM.getVMLangInvokeAccess();
 		long nativeAddress = symbol.getAddress().addr(new PointerTokenImpl());
-		if (null != returnFilter) {
-			mh = MethodHandles.filterReturnValue(access.generateNativeMethodHandle(methodName, mt, nativeAddress, layoutStrings), returnFilter);
+
+		/* varargs are stored in the Object[], which is the last input argument of the method */
+		if ((ptypes.length > 0) && (ptypes[len-1] == Object[].class)) {
+			mh = access.generateNativeMethodHandleVararg(methodName, mt, symbol);
 		} else {
 			mh = access.generateNativeMethodHandle(methodName, mt, nativeAddress, layoutStrings);
+		}
+
+		if (null != returnFilter) {
+			mh = MethodHandles.filterReturnValue(mh, returnFilter);
 		}
 
 		if (isFilteredArg) {
@@ -148,8 +154,8 @@ class NativeInvoker {
 		if (null == layoutStrings) {
 			/** 
 			 * layoutStrings[0] stores the layout string of the return argument of the method.
-			 * The remaining layoutStrings array contains the layout string of the input arguments.
-			 */
+			 * The remaining layoutStrings[] contains the layout strings of the input arguments.
+			 **/
 			layoutStrings = new String[methodType.parameterCount() + 1];
 		}
 		layoutStrings[pos] = str;

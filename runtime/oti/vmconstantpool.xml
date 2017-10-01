@@ -92,6 +92,7 @@
 	<classref name="java/lang/invoke/MethodHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/PrimitiveHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/NativeMethodHandle" flags="opt_panama"/>
+	<classref name="java/lang/invoke/NativeMethodHandleVararg" flags="opt_panama"/>
 	<classref name="java/lang/invoke/ReceiverBoundHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/ConvertHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/CollectHandle" flags="opt_methodHandle"/>

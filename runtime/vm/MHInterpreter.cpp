@@ -2334,12 +2334,173 @@ VMINLINE FFI_Return
 VM_MHInterpreter::callFunctionFromNativeMethodHandle(void * nativeMethodStartAddress, UDATA *javaArgs, U_8 *returnType, j9object_t methodHandle)
 {
 	UDATA structReturnSize = 0;
-	FFI_Return result = nativeMethodHandleCallout(nativeMethodStartAddress, javaArgs, returnType, methodHandle, &(_currentThread->returnValue), &structReturnSize);
+	J9Class* methodHandleClass = J9OBJECT_CLAZZ(_currentThread, methodHandle);
+
+	FFI_Return result;
+	if (methodHandleClass == J9VMJAVALANGINVOKENATIVEMETHODHANDLEVARARG(_vm)) {
+		result = nativeMethodHandleVarargCallout(nativeMethodStartAddress, javaArgs, returnType, methodHandle, &(_currentThread->returnValue), &structReturnSize);
+	} else {
+		result = nativeMethodHandleCallout(nativeMethodStartAddress, javaArgs, returnType, methodHandle, &(_currentThread->returnValue), &structReturnSize);
+	}
 	
 	if (ffiSuccess == result) {
 		convertJNIReturnValue(*returnType, &(_currentThread->returnValue), methodHandle, structReturnSize);
 	}
 	return result;
+}
+
+VMINLINE FFI_Return
+VM_MHInterpreter::nativeMethodHandleVarargCallout(void *function, UDATA *javaArgs, U_8 *returnType, j9object_t methodHandle, void *returnStorage, UDATA* structReturnSize)
+{
+#if !defined(J9VM_ENV_LITTLE_ENDIAN)
+	const U_8 extraBytesBoolAndByte = 3;
+	const U_8 extraBytesShortAndChar = 2;
+#endif /* J9VM_ENV_LITTLE_ENDIAN */
+	FFI_Return ret = ffiOOM;
+	ffi_type **args = NULL;
+	void **values = NULL;
+#if FFI_NATIVE_RAW_API
+	/* Make sure we can fit a double in each sValues_raw[] slot but assuring we end up
+	 * with an int that is a  multiple of sizeof(ffi_raw)
+	 */
+	const U_8 valRawWorstCaseMulFactor = ((sizeof(double) - 1U)/sizeof(ffi_raw)) + 1U;
+	ffi_raw sValues_raw[valRawWorstCaseMulFactor * 16];
+	ffi_raw * values_raw = NULL;
+#endif /* FFI_NATIVE_RAW_API */
+
+	j9object_t methodType = getMethodHandleMethodType(methodHandle);
+	j9object_t argTypesObject = getMethodTypeArguments(methodType);
+	J9Class *returnTypeClass = getMethodTypeReturnClass(methodType);
+
+	FFITypeHelpers FFIHelpers = FFITypeHelpers(_currentThread);
+	U_32 argTypeCount = J9INDEXABLEOBJECT_SIZE(_currentThread, argTypesObject);
+
+	/**
+	 * The varargs are passed in an object[] via javaArgs. fixedArgCount is the number of non-vararg arguments. It is argType-1
+	 * because only the varargs inside of the object[] are part of the args array, not the object[] itself.
+	 * varargCount is the size of the object[]. It is found during the formation of args and values when javaArgs is traversed.
+	 */
+	U_32 fixedArgCount = argTypeCount - 1;
+	U_32 varargCount = 0;
+
+	*returnType = getJ9NativeTypeCode(returnTypeClass);
+
+	PORT_ACCESS_FROM_JAVAVM(_vm);
+
+	/* args[0] will store the ffi_type of the return argument of the method. The remaining args[] will store the ffi_type of the input arguments. */
+	args = (ffi_type **)j9mem_allocate_memory(sizeof(ffi_type *) * (argTypeCount+1), OMRMEM_CATEGORY_VM);
+	if (NULL == args) {
+		goto ffi_exit;
+	}
+
+	values = (void **)j9mem_allocate_memory(sizeof(void *) * fixedArgCount, OMRMEM_CATEGORY_VM);
+	if (NULL == values) {
+		goto ffi_exit;
+	}
+
+#if FFI_NATIVE_RAW_API
+	values_raw = (ffi_raw *)j9mem_allocate_memory((valRawWorstCaseMulFactor * sizeof(ffi_raw)) * fixedArgCount, OMRMEM_CATEGORY_VM);
+	if (NULL == values_raw) {
+		goto ffi_exit;
+	}
+#endif /* FFI_NATIVE_RAW_API */
+
+	{
+		IDATA offset = 0;
+		args[0] = (ffi_type *)FFIHelpers.getFFIType(returnTypeClass);
+		for (U_8 i = 0; i < argTypeCount; i++) {
+			args[i+1] = (ffi_type *)FFIHelpers.getFFIType(J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, J9JAVAARRAYOFOBJECT_LOAD(_currentThread, argTypesObject, i)));
+
+			/* i+1 because this loop is only forming the args and values array for the input arguments of the method. */
+			if ((&ffi_type_sint64 == args[i+1]) || (&ffi_type_double == args[i+1])) {
+				offset -= 1;
+			}
+
+			if (0 == javaArgs[offset]) {
+				values[i] = &(javaArgs[offset]);
+			} else if (i == (argTypeCount - 1)) {
+				/* The varargs are stored in an object[], which is the last input argument of the method in javaArgs. */
+				j9object_t varargs = (j9object_t)javaArgs[offset];
+				varargCount = J9INDEXABLEOBJECT_SIZE(_currentThread, varargs);
+
+				/* The object[] in args[i+1] will be overwritten by the first vararg in the object[]. */
+				FFIHelpers.freeStructFFIType(args[i+1]);
+
+				if (varargCount > 0) {
+					/* Resize the args and values array for the vararg arguments that are passed in through the object[]. */
+					args = (ffi_type **)j9mem_reallocate_memory(args, sizeof(ffi_type *) * (varargCount+fixedArgCount+1), OMRMEM_CATEGORY_VM);
+					if (NULL == args) {
+						goto ffi_exit;
+					}
+					values = (void **)j9mem_reallocate_memory(values, sizeof(void *) * (varargCount+fixedArgCount), OMRMEM_CATEGORY_VM);
+					if (NULL == values) {
+						goto ffi_exit;
+					}
+#if FFI_NATIVE_RAW_API
+					values_raw = (ffi_raw *)j9mem_reallocate_memory(values_raw, (valRawWorstCaseMulFactor * sizeof(ffi_raw)) * (varargCount+fixedArgCount), OMRMEM_CATEGORY_VM);
+					if (NULL == values_raw) {
+						goto ffi_exit;
+					}
+#endif /* FFI_NATIVE_RAW_API */
+
+					for (U_8 j = 0; j < varargCount; j++) {
+						args[j+i+1] = FFIHelpers.getFFITypeVararg(J9JAVAARRAYOFOBJECT_LOAD(_currentThread, varargs, j), &(values[i+j]));
+					}
+				}
+			} else {
+				values[i] = &(javaArgs[offset]);
+#if !defined(J9VM_ENV_LITTLE_ENDIAN)
+				if ((_vm->shortReflectClass == argTypes[i]) || (_vm->charReflectClass == argTypes[i])) {
+					values[i] = (void *)((UDATA)values[i] + extraBytesShortAndChar);
+				} else if ((_vm->byteReflectClass == argTypes[i]) || (_vm->booleanReflectClass == argTypes[i])) {
+					values[i] = (void *)((UDATA)values[i] + extraBytesBoolAndByte);
+				}
+#endif /*J9VM_ENV_LITTLE_ENDIAN */
+			}
+			offset -= 1;
+		}
+		ffi_status status = FFI_OK;
+
+		ffi_cif cif_t;
+		ffi_cif * const cif = &cif_t;
+		if (FFI_OK != ffi_prep_cif_var(cif, FFI_DEFAULT_ABI, fixedArgCount, (fixedArgCount + varargCount), args[0], &(args[1]))) {
+			ret = ffiFailed;
+			goto ffi_exit;
+		}
+
+		if (FFI_OK == status) {
+			/**
+			 * TODO Add ZOS support to perform the zaap offload switch. See VM_VMHelpers::beforeJNICall(_currentThread) and VM_VMHelpers::afterJNICall(_currentThread).
+			 * In these functions, the J9Method in the J9SFJNINativeMethodFrame is incorrect for Panama native calls.
+			 */
+			VM_VMAccess::inlineExitVMToJNI(_currentThread);
+#if FFI_NATIVE_RAW_API
+			ffi_ptrarray_to_raw(cif, values, values_raw);
+			ffi_raw_call(cif, FFI_FN(function), returnStorage, values_raw);
+#else /* FFI_NATIVE_RAW_API */
+			ffi_call(cif, FFI_FN(function), returnStorage, values);
+#endif /* FFI_NATIVE_RAW_API */
+			VM_VMAccess::inlineEnterVMFromJNI(_currentThread);
+			ret = ffiSuccess;
+		}
+	}
+ffi_exit:
+	for (U_32 i = 0; i < (varargCount+fixedArgCount+1); i++) {
+		FFIHelpers.freeStructFFIType(args[i]);
+	}
+	j9mem_free_memory(args);
+	/**
+	 * non-vararg values are references to values passed through javaArgs[]
+	 * vararg values are saved on the heap
+	 */
+	for (U_32 i = 0; i < varargCount; i++) {
+		j9mem_free_memory(values[i+fixedArgCount]);
+	}
+	j9mem_free_memory(values);
+#if FFI_NATIVE_RAW_API
+	j9mem_free_memory(values_raw);
+#endif /* FFI_NATIVE_RAW_API */
+	return ret;
 }
 
 VMINLINE FFI_Return
@@ -2354,20 +2515,20 @@ VM_MHInterpreter::nativeMethodHandleCallout(void *function, UDATA *javaArgs, U_8
 	void *sValues[16];
 	void **values = NULL;
 #if FFI_NATIVE_RAW_API
-	/* Make sure we can fit a double in each sValues_raw[] slot but assuring we end up 
+	/* Make sure we can fit a double in each sValues_raw[] slot but assuring we end up
 	 * with an int that is a  multiple of sizeof(ffi_raw)
 	 */
 	const U_8 valRawWorstCaseMulFactor = ((sizeof(double) - 1U)/sizeof(ffi_raw)) + 1U;
 	ffi_raw sValues_raw[valRawWorstCaseMulFactor * 16];
 	ffi_raw * values_raw = NULL;
 #endif /* FFI_NATIVE_RAW_API */
-	
+
 	j9object_t methodType = getMethodHandleMethodType(methodHandle);
 	j9object_t argTypesObject = getMethodTypeArguments(methodType);
 	UDATA argCount = getMethodTypeArgSlots(methodType);
 	J9Class *returnTypeClass = getMethodTypeReturnClass(methodType);
 	bool isMinimal =  argCount <= minimalCallout;
-	
+
 	U_32 argTypeCount = J9INDEXABLEOBJECT_SIZE(_currentThread, argTypesObject);
 
 	J9NativeCalloutData *nativeCalloutData = J9VMJAVALANGINVOKENATIVEMETHODHANDLE_J9NATIVECALLOUTDATAREF(_currentThread, methodHandle);
@@ -2382,7 +2543,7 @@ VM_MHInterpreter::nativeMethodHandleCallout(void *function, UDATA *javaArgs, U_8
 	*returnType = getJ9NativeTypeCode(returnTypeClass);
 
 	PORT_ACCESS_FROM_JAVAVM(_vm);
-	
+
 	if (isMinimal) {
 		values = sValues;
 #if FFI_NATIVE_RAW_API

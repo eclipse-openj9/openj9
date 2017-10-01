@@ -36,6 +36,9 @@
 #include "FFITypeHelpers.hpp"
 #include "ObjectAllocationAPI.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
+#ifdef J9VM_OPT_PANAMA
+#include "FFITypeHelpers.hpp"
+#endif /* J9VM_OPT_PANAMA */
 
 typedef struct ClassCastExceptionData {
 	J9Class * currentClass;
@@ -585,7 +588,10 @@ foundITable:
 #ifdef J9VM_OPT_PANAMA
 	VMINLINE VM_BytecodeAction
 	runNativeMethodHandle(j9object_t methodHandle);
-	
+
+	VMINLINE FFI_Return
+	nativeMethodHandleVarargCallout(void *function, UDATA *javaArgs, U_8 *returnType, j9object_t methodHandle, void *returnStorage, UDATA *structSize);
+
 	VMINLINE FFI_Return
 	callFunctionFromNativeMethodHandle(void * nativeMethodStartAddress, UDATA *javaArgs, U_8 *returnType, j9object_t methodHandle);
 

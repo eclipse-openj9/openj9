@@ -61,6 +61,12 @@ public class NativeMethodHandle extends PrimitiveHandle {
 		initJ9NativeCalloutDataRef(null);
 	}
 
+	/* This constructor is used via NativeInvoker for vararg methods. J9NativeCalloutDataRef is not initialized here. */
+	NativeMethodHandle(String methodName, MethodType type, LibrarySymbol symbol) throws IllegalAccessException {
+		super(type, null, methodName, KIND_NATIVE, 0, null);
+		this.vmSlot = symbol.getAddress().addr(new PointerTokenImpl());
+	}
+
 	@Override
 	protected ThunkTable thunkTable(){ return _thunkTable; }
 

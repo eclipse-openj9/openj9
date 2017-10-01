@@ -18,6 +18,7 @@
 				<exclude-if condition="spec.win_x86-64.*" />
 			</group>
 			<export name="ffi_prep_cif" />
+			<export name="ffi_prep_cif_var" />
 			<export name="ffi_call" />
 			<export name="ffi_type_void" />
 			<export name="ffi_type_uint8" />

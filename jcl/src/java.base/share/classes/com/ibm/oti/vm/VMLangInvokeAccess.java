@@ -25,6 +25,7 @@ package com.ibm.oti.vm;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.NativeMethodHandle;
+import java.lang.invoke.NativeMethodHandleVararg;
 import java.nicl.LibrarySymbol;
 
 /**
@@ -34,6 +35,17 @@ import java.nicl.LibrarySymbol;
  */
 
 public interface VMLangInvokeAccess {
+	/**
+	 * Create a new NativeMethodHandleVararg
+	 *
+	 * @param methodName - the name of the method
+	 * @param type - the MethodType of the method
+	 * @param symbol - the LibrarySymbol containing the address of the method
+	 * @return A new NativeMethodHandleVararg
+	 * @throws IllegalAccessException if fails to extract native address from symbol
+	 */
+	public NativeMethodHandle generateNativeMethodHandleVararg(String methodName, MethodType type, LibrarySymbol symbol) throws IllegalAccessException;
+
 	/**
 	 * Create a new NativeMethodHandle
 	 *

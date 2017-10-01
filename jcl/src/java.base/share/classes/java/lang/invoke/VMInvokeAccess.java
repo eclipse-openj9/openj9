@@ -34,6 +34,19 @@ import com.ibm.oti.vm.VMLangInvokeAccess;
  */
 final class VMInvokeAccess implements VMLangInvokeAccess {
 	/**
+	 * Create a new NativeMethodHandleVararg
+	 *
+	 * @param methodName - the name of the method
+	 * @param type - the MethodType of the method
+	 * @param symbol - the LibrarySymbol containing the address of the method
+	 * @return A new NativeMethodHandleVararg
+	 * @throws IllegalAccessException if fails to extract native address from symbol
+	 */
+	public NativeMethodHandle generateNativeMethodHandleVararg(String methodName, MethodType type, LibrarySymbol symbol) throws IllegalAccessException {
+		return new NativeMethodHandleVararg(methodName, type, symbol);
+	}
+
+	/**
 	 * Create a new NativeMethodHandle
 	 *
 	 * @param methodName - the name of the method

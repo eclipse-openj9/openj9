@@ -23,6 +23,55 @@
 #include "FFITypeHelpers.hpp"
 
 #ifdef J9VM_OPT_PANAMA
+ffi_type*
+FFITypeHelpers::getFFITypeVararg(j9object_t vararg, void **varargValue)
+{
+	PORT_ACCESS_FROM_JAVAVM(_vm);
+
+	ffi_type* typeFFI = NULL;
+	J9Class *varargClass = J9OBJECT_CLAZZ(_currentThread, vararg);
+
+	if (varargClass == J9VMJAVALANGINTEGER_OR_NULL(_vm)) {
+
+		U_32 *value = (U_32 *)j9mem_allocate_memory(sizeof(U_32), OMRMEM_CATEGORY_VM);
+		if (NULL == value) {
+			setNativeOutOfMemoryError(_currentThread, 0, 0);
+			goto done;
+		}
+		*value = J9VMJAVALANGINTEGER_VALUE(_currentThread, vararg);
+
+		*varargValue = value;
+		typeFFI = &ffi_type_sint32;
+	} else if (varargClass == J9VMJAVALANGDOUBLE_OR_NULL(_vm)) {
+
+		U_64 *value = (U_64 *)j9mem_allocate_memory(sizeof(U_64), OMRMEM_CATEGORY_VM);
+		if (NULL == value) {
+			setNativeOutOfMemoryError(_currentThread, 0, 0);
+			goto done;
+		}
+		*value = J9VMJAVALANGDOUBLE_VALUE(_currentThread, vararg);
+
+		*varargValue = value;
+		typeFFI = &ffi_type_double;
+	} else if (varargClass == J9VMJAVALANGCHARACTER_OR_NULL(_vm)) {
+
+		char *value = (char *)j9mem_allocate_memory(sizeof(char), OMRMEM_CATEGORY_VM);
+		if (NULL == value) {
+			setNativeOutOfMemoryError(_currentThread, 0, 0);
+			goto done;
+		}
+		*value = J9VMJAVALANGCHARACTER_VALUE(_currentThread, vararg);
+
+		*varargValue = value;
+		typeFFI = &ffi_type_uint16;
+	} else {
+		Assert_VM_unreachable();
+	}
+
+done:
+	return typeFFI;
+}
+
 ffi_type**
 FFITypeHelpers::getStructFFITypeElements(char **layout, bool inPtr)
 {

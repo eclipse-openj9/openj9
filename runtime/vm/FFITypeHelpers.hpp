@@ -256,6 +256,16 @@ doneGetArrayFFIType:
 	}
 
 	/**
+	 * @brief Convert argument or return type from J9Class to ffi_type for varargs.
+	 * Only primitive types are currently supported.
+	 * @param vararg[in] An object containing a vararg argument.
+	 * @param varargValue[in] A pointer that will store the value of the vararg argument.
+	 * @return The pointer to the ffi_type corresponding to the J9Class of the vararg argument.
+	 */
+	ffi_type*
+	getFFITypeVararg(j9object_t vararg, void **varagValue);
+
+	/**
 	 * @brief Create an array of elements for a custom FFI type
 	 * @param layout[in] A pointer to a c string describing the types of the struct elements
 	 * @param inPtr[in] Describes whether the current symbols are in a pointer
