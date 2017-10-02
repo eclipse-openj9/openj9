@@ -1736,3 +1736,13 @@ J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_TOP.system_action=The JVM will throw a 
 J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_TOP.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
+# First argument is the library name
+# Second argument is the module name
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL=Failed to load library %1$s required by module: %2$s
+# START NON-TRANSLATABLE
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.sample_input_1=j9shr29
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.sample_input_2=openj9.sharedclasses
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.explanation=The JVM failed to load the library required by the specified module.
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.system_action=The JVM continues.
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.user_response=No action required if the specified library won't be referenced.
+# END NON-TRANSLATABLE

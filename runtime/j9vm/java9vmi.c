@@ -32,6 +32,7 @@
 #include "jclprots.h"
 #include "jvminit.h"
 #include "util_api.h"
+#include "j9vmnls.h"
 
 #define J9TIME_NANOSECONDS_PER_SECOND         ((jlong) 1000000000)
 /* Need to do a |currentSecondsTime - secondsOffset| < (2^32) check to ensure that the
@@ -989,6 +990,18 @@ JVM_DefineModule(JNIEnv * env, jobject module, jstring version, jstring location
 							success = vmFuncs->setBootLoaderModulePatchPaths(vm, j9mod, (const char *)nameUTF);
 							if (FALSE == success) {
 								goto nativeOOM;
+							} else {
+								const char* moduleName = "openj9.sharedclasses";
+
+								if (0 == strcmp(nameUTF, moduleName)) {
+									J9VMDllLoadInfo *entry = FIND_DLL_TABLE_ENTRY(J9_SHARED_DLL_NAME);
+
+									if ((NULL == entry)
+										|| (J9_ARE_ALL_BITS_SET(entry->loadFlags, FAILED_TO_LOAD))
+									) {
+										j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL, J9_SHARED_DLL_NAME, moduleName);
+									}
+								}
 							}
 						}
 					} else {

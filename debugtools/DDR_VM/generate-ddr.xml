@@ -58,12 +58,12 @@
 			Refresh now so eclipse can begin compiling the structure stubs which
 			are required by the pointer types we're about to generate.
 			-->
-			<eclipse.refreshLocal resource="/DDR_VM-closed" />
+			<eclipse.refreshLocal resource="/DDR_VM" />
 
 			<generate-pointers version="@{version}" superset="@{superset}" />
 
 			<!-- Refresh again so eclipse can see the final content. -->
-			<eclipse.refreshLocal resource="/DDR_VM-closed" />
+			<eclipse.refreshLocal resource="/DDR_VM" />
 		</sequential>
 	</macrodef>
 
