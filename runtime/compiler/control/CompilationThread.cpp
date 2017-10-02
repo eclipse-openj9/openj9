@@ -9522,8 +9522,8 @@ TR::CompilationInfoPerThreadBase::compile(
                // allocate space in code cache and copy over
                uint8_t *coldCode;
                uint8_t *newCodeStart = compiler->fej9vm()->allocateCodeMemory(compiler, codeCacheStr.size() - sizeof(OMR::CodeCacheMethodHeader), 0, &coldCode, true);
-               newCodeStart -= sizeof(OMR::CodeCacheMethodHeader);
                TR_ASSERT(newCodeStart, "need code cache space");
+               newCodeStart -= sizeof(OMR::CodeCacheMethodHeader);
                uint32_t blockSize = ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size;
                memcpy(newCodeStart, &codeCacheStr[0], codeCacheStr.size());
                ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size = blockSize; //make sure header size matches allocation (overwritten by memcpy)
@@ -9534,6 +9534,7 @@ TR::CompilationInfoPerThreadBase::compile(
                bool shouldRetryAllocation; //TODO
                uint32_t allocatedSize;
                uint8_t *newDataStart = compiler->fej9vm()->allocateDataCacheRecord(dataCacheStr.size() - sizeof(J9JITDataCacheHeader), compiler, false, &shouldRetryAllocation, 0, &allocatedSize);
+               TR_ASSERT(newCodeStart, "need data cache space");
                newDataStart -= sizeof(J9JITDataCacheHeader);
                memcpy(newDataStart, &dataCacheStr[0], dataCacheStr.size());
 
