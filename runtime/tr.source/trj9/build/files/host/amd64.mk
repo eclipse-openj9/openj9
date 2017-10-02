@@ -20,6 +20,5 @@
 
 JIT_PRODUCT_SOURCE_FILES+=\
     tr.source/trj9/x/amd64/runtime/AMD64ArrayCopy.asm \
-    tr.source/trj9/x/amd64/runtime/AMD64ArrayTranslate.asm \
     tr.source/trj9/x/amd64/runtime/AMD64CompressString.asm \
     tr.source/trj9/x/amd64/runtime/AMD64Recompilation.asm

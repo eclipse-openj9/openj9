@@ -297,6 +297,10 @@ JIT_HELPER(outlinedNewArray);
 JIT_HELPER(outlinedNewObjectNoZeroInit);
 JIT_HELPER(outlinedNewArrayNoZeroInit);
 
+JIT_HELPER(_arrayTranslateTRTO);
+JIT_HELPER(_arrayTranslateTROTNoBreak);
+JIT_HELPER(_arrayTranslateTROT);
+
 // --------------------------------------------------------------------------------
 //                                   AMD64
 // --------------------------------------------------------------------------------
@@ -330,12 +334,6 @@ JIT_HELPER(_compressStringNoCheck);
 JIT_HELPER(_compressStringJ);
 JIT_HELPER(_compressStringNoCheckJ);
 JIT_HELPER(_andORString);
-JIT_HELPER(_arrayTranslateTRTO);
-JIT_HELPER(_arrayTranslateTROTNoBreak);
-JIT_HELPER(_arrayTranslateTROT);
-JIT_HELPER(_new_arrayTranslateTRTO);
-JIT_HELPER(_new_arrayTranslateTROTNoBreak);
-JIT_HELPER(_new_arrayTranslateTROT);
 JIT_HELPER(_encodeUTF16Big);
 JIT_HELPER(_encodeUTF16Little);
 
@@ -402,12 +400,6 @@ JIT_HELPER(_compressStringNoCheck);
 JIT_HELPER(_compressStringJ);
 JIT_HELPER(_compressStringNoCheckJ);
 JIT_HELPER(_andORString);
-JIT_HELPER(_arrayTranslateTRTO);
-JIT_HELPER(_arrayTranslateTROTNoBreak);
-JIT_HELPER(_arrayTranslateTROT);
-JIT_HELPER(_new_arrayTranslateTRTO);
-JIT_HELPER(_new_arrayTranslateTROTNoBreak);
-JIT_HELPER(_new_arrayTranslateTROT);
 JIT_HELPER(_encodeUTF16Big);
 JIT_HELPER(_encodeUTF16Little);
 
@@ -1140,8 +1132,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
    // --------------------------------- X86 ------------------------------------
 
-   static const bool useNewX86ArrayTranslate = feGetEnv("TR_UseOldX86ArrayTranslate") == NULL;
-
    SET(TR_X86resolveIPicClass,                        (void *)resolveIPicClass,                TR_Helper);
    SET(TR_X86populateIPicSlotClass,                   (void *)populateIPicSlotClass,           TR_Helper);
    SET(TR_X86populateIPicSlotCall,                    (void *)populateIPicSlotCall,            TR_Helper);
@@ -1225,18 +1215,9 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_AMD64compressStringJ,                       (void *)_compressStringJ,           TR_Helper);
    SET(TR_AMD64compressStringNoCheckJ,                (void *)_compressStringNoCheckJ,    TR_Helper);
    SET(TR_AMD64andORString,                           (void *)_andORString,               TR_Helper);
-   if (useNewX86ArrayTranslate)
-      {
-      SET(TR_AMD64arrayTranslateTRTO,                 (void *)_new_arrayTranslateTRTO,        TR_Helper);
-      SET(TR_AMD64arrayTranslateTROTNoBreak,          (void *)_new_arrayTranslateTROTNoBreak, TR_Helper);
-      SET(TR_AMD64arrayTranslateTROT,                 (void *)_new_arrayTranslateTROT,        TR_Helper);
-      }
-   else
-      {
-      SET(TR_AMD64arrayTranslateTRTO,                 (void *)_arrayTranslateTRTO,        TR_Helper);
-      SET(TR_AMD64arrayTranslateTROTNoBreak,          (void *)_arrayTranslateTROTNoBreak, TR_Helper);
-      SET(TR_AMD64arrayTranslateTROT,                 (void *)_arrayTranslateTROT,        TR_Helper);
-      }
+   SET(TR_AMD64arrayTranslateTRTO,                    (void *)_arrayTranslateTRTO,        TR_Helper);
+   SET(TR_AMD64arrayTranslateTROTNoBreak,             (void *)_arrayTranslateTROTNoBreak, TR_Helper);
+   SET(TR_AMD64arrayTranslateTROT,                    (void *)_arrayTranslateTROT,        TR_Helper);
    SET(TR_AMD64encodeUTF16Big,                        (void *)_encodeUTF16Big,            TR_Helper);
    SET(TR_AMD64encodeUTF16Little,                     (void *)_encodeUTF16Little,         TR_Helper);
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
@@ -1333,18 +1314,9 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_IA32compressStringJ,                        (void *)_compressStringJ,           TR_Helper);
    SET(TR_IA32compressStringNoCheckJ,                 (void *)_compressStringNoCheckJ,    TR_Helper);
    SET(TR_IA32andORString,                            (void *)_andORString,               TR_Helper);
-   if (useNewX86ArrayTranslate)
-      {
-      SET(TR_IA32arrayTranslateTRTO,                  (void *)_new_arrayTranslateTRTO,        TR_Helper);
-      SET(TR_IA32arrayTranslateTROTNoBreak,           (void *)_new_arrayTranslateTROTNoBreak, TR_Helper);
-      SET(TR_IA32arrayTranslateTROT,                  (void *)_new_arrayTranslateTROT,        TR_Helper);
-      }
-   else
-      {
-      SET(TR_IA32arrayTranslateTRTO,                  (void *)_arrayTranslateTRTO,        TR_Helper);
-      SET(TR_IA32arrayTranslateTROTNoBreak,           (void *)_arrayTranslateTROTNoBreak, TR_Helper);
-      SET(TR_IA32arrayTranslateTROT,                  (void *)_arrayTranslateTROT,        TR_Helper);
-      }
+   SET(TR_IA32arrayTranslateTRTO,                     (void *)_arrayTranslateTRTO,        TR_Helper);
+   SET(TR_IA32arrayTranslateTROTNoBreak,              (void *)_arrayTranslateTROTNoBreak, TR_Helper);
+   SET(TR_IA32arrayTranslateTROT,                     (void *)_arrayTranslateTROT,        TR_Helper);
    SET(TR_IA32encodeUTF16Big,                         (void *)_encodeUTF16Big,            TR_Helper);
    SET(TR_IA32encodeUTF16Little,                      (void *)_encodeUTF16Little,         TR_Helper);
 
