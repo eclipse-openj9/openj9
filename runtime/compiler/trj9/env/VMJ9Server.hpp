@@ -10,29 +10,8 @@ public:
       :TR_J9VM(jitConfig, compInfo, vmContext)
       {}
 
-   virtual bool isAOT_DEPRECATED_DO_NOT_USE() override                   { return false; }
-   virtual bool needClassAndMethodPointerRelocations() override          { return false; }
-   virtual bool supportsCodeCacheSnippets() override                     { return false; }
-   virtual bool canRelocateDirectNativeCalls() override                  { return false; }
-   virtual bool inlinedAllocationsMustBeVerified() override              { return true; }
-   virtual bool helpersNeedRelocation() override                         { return true; }
-   virtual bool supportsEmbeddedHeapBounds() override                    { return false; }
-   virtual bool supportsFastNanoTime() override                          { return false; }
-   virtual bool needRelocationsForStatics() override                     { return true; }
-   virtual bool forceUnresolvedDispatch() override                       { return true; }
-   virtual bool nopsAlsoProcessedByRelocations() override                { return true; }
-   virtual bool supportsGuardMerging() override                          { return false; }
-   virtual bool canDevirtualizeDispatch() override                       { return false; }
    virtual bool storeOffsetToArgumentsInVirtualIndirectThunks() override { return true; }
-   virtual bool callTargetsNeedRelocations() override                    { return true; }
-   virtual bool doStringPeepholing() override                            { return false; }
-   virtual bool hardwareProfilingInstructionsNeedRelocation() override   { return true; }
-   virtual bool supportsMethodEntryPadding() override                    { return false; }
-   virtual bool isBenefitInliningCheckIfFinalizeObject() override        { return true; }
    virtual bool needsContiguousAllocation() override                     { return true; }
-
-   virtual bool traceableMethodsCanBeInlined() override                  { return true; }
-   virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled() override    { return true; }
 
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT) override;
    virtual bool isClassLibraryClass(TR_OpaqueClassBlock *clazz) override;
