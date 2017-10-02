@@ -1849,7 +1849,8 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
       else
          {
          virtualThunk = fej9->getJ2IThunk(methodSymbol->getMethod(), comp());
-         if (!virtualThunk)
+         // in server mode, we always need to regenerate the thunk inside the code cache for this compilation
+         if (!virtualThunk || comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
             virtualThunk = fej9->setJ2IThunk(methodSymbol->getMethod(), generateVirtualIndirectThunk(callNode), comp());
          }
 
