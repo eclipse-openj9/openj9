@@ -55,6 +55,11 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 
 **Note:** Dependent changes can only be requested from an OpenJ9 Pull Request
 
+##### Other Pull Requests builds
+
+- To trigger a Line Endings Check
+   - `Jenkins line endings check`
+
 ### Overview of Builds
 
 #### Build
@@ -180,6 +185,14 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
         - Compile and Sanity tests on linux_ppc-64_cmprssptrs_le
     - Trigger:
         - Github PR comment `Jenkins test sanity`
+
+- PullRequest-LineEndingsCheck
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-LineEndingsCheck)](https://ci.eclipse.org/openj9/job/PullRequest-LineEndingsCheck)
+    - Description:
+        - Checks the files modified in a pull request have correct line endings
+    - Trigger:
+        - Automatically builds on every PR
+        - Retrigger with `Jenkins line endings check`
 
 #### Test
 
