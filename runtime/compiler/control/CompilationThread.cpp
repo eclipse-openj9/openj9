@@ -9443,196 +9443,188 @@ TR::CompilationInfoPerThreadBase::compile(
          }
       else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE) // Jaas Client Mode
          {
-         if (TR::Options::sharedClassCache() &&
-            _compInfo.reloRuntime()->isRomClassForMethodInSharedCache(method, _jitConfig->javaVM)) // if ROM method exists in SCC
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            {
+            TR_VerboseLog::writeLineLocked(
+               TR_Vlog_JAAS,
+               "Client sending compilation request to server for method %s @ %s.",
+               compiler->signature(),
+               compiler->getHotnessName()
+               );
+            }
+         TR_J9SharedCache *cache = vm.sharedCache();
+         // JAAS temporary HACK
+         // Reserve a code cache and send the server the virtual address where
+         // the compiled body will be loaded as well as the size of the space available
+
+         // Artificially acquire classUnloadMonitor because reserveCodeCache expects that
+         //
+         bool haveLockedClassUnloadMonitor = false;
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+         bool doAcquireClassUnloadMonitor = true;
+#else
+         bool doAcquireClassUnloadMonitor = compiler->getOption(TR_EnableHCR) || compiler->getOption(TR_FullSpeedDebug);
+#endif
+         if (doAcquireClassUnloadMonitor)
+            {
+            _compInfo.debugPrint(NULL, "\tcompilation thread acquiring class unload monitor\n");
+            TR::MonitorTable::get()->readAcquireClassUnloadMonitor(getCompThreadId());
+            haveLockedClassUnloadMonitor = true;
+            }
+         compiler->cg()->reserveCodeCache(); // this will throw if we cannot reserve
+
+         size_t availableSpace = compiler->getCurrentCodeCache()->getFreeContiguousSpace();
+         uint8_t *allocPtr = compiler->getCurrentCodeCache()->getWarmCodeAlloc();
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Client requesting to compile method at address %p freeSpace=%u", allocPtr, (uint32_t)availableSpace);
+
+         J9Class *clazz = J9_CLASS_FROM_METHOD(method);
+         J9ROMClass *romClass = clazz->romClass;
+         uint32_t romClassOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romClass)));
+         J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+         uint32_t romMethodOffset = uint32_t((uint8_t*) romMethod - (uint8_t*) romClass);
+         std::string romClassStr = packROMClass(romClass, compiler->trMemory());
+
+         JAAS::J9ClientStream client;
+         client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), allocPtr, availableSpace);
+         uint32_t statusCode = compilationFailure;
+         void *recvStartPC;
+         std::string codeCacheStr;
+         std::string dataCacheStr;
+         std::string metaRelocationInfo;
+         try
+            {
+            while(!handleServerMessage(&client, compiler->fej9vm()));
+            auto recv = client.getRecvData<uint32_t, void*, std::string, std::string, std::string>();
+            statusCode = std::get<0>(recv);
+            recvStartPC = std::get<1>(recv);
+            codeCacheStr = std::get<2>(recv);
+            dataCacheStr = std::get<3>(recv);
+            metaRelocationInfo = std::get<4>(recv);
+            if (statusCode >= compilationMaxError)
+               throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
+            }
+         catch (const JAAS::StreamFailure &e)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJaas))
-               {
-               TR_VerboseLog::writeLineLocked(
-                  TR_Vlog_JAAS,
-                  "Client sending compilation request to server for method %s @ %s.",
-                  compiler->signature(),
-                  compiler->getHotnessName()
-                  );
-               }
-            TR_J9SharedCache *cache = vm.sharedCache();
-            // JAAS temporary HACK
-            // Reserve a code cache and send the server the virtual address where
-            // the compiled body will be loaded as well as the size of the space available
-
-            // Artificially acquire classUnloadMonitor because reserveCodeCache expects that
-            //
-            bool haveLockedClassUnloadMonitor = false;
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-            bool doAcquireClassUnloadMonitor = true;
-#else
-            bool doAcquireClassUnloadMonitor = compiler->getOption(TR_EnableHCR) || compiler->getOption(TR_FullSpeedDebug);
-#endif
-            if (doAcquireClassUnloadMonitor)
-               {
-               _compInfo.debugPrint(NULL, "\tcompilation thread acquiring class unload monitor\n");
-               TR::MonitorTable::get()->readAcquireClassUnloadMonitor(getCompThreadId());
-               haveLockedClassUnloadMonitor = true;
-               }
-            compiler->cg()->reserveCodeCache(); // this will throw if we cannot reserve
-
-            size_t availableSpace = compiler->getCurrentCodeCache()->getFreeContiguousSpace();
-            uint8_t *allocPtr = compiler->getCurrentCodeCache()->getWarmCodeAlloc();
-            if (TR::Options::getVerboseOption(TR_VerboseJaas))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Client requesting to compile method at address %p freeSpace=%u", allocPtr, (uint32_t)availableSpace);
-
-            J9Class *clazz = J9_CLASS_FROM_METHOD(method);
-            J9ROMClass *romClass = clazz->romClass;
-            uint32_t romClassOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romClass)));
-            J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-            uint32_t romMethodOffset = uint32_t((uint8_t*) romMethod - (uint8_t*) romClass);
-            std::string romClassStr = packROMClass(romClass, compiler->trMemory());
-
-            JAAS::J9ClientStream client;
-            client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), allocPtr, availableSpace);
-            uint32_t statusCode = compilationFailure;
-            void *recvStartPC;
-            std::string codeCacheStr;
-            std::string dataCacheStr;
-            std::string metaRelocationInfo;
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, e.what());
+            compiler->failCompilation<JAAS::StreamFailure>(e.what());
+            }
+         JAAS::Status status = client.waitForFinish();
+         if (status.ok() && (statusCode == compilationOK || statusCode == compilationNotNeeded))
+            {
             try
                {
-               while(!handleServerMessage(&client, compiler->fej9vm()));
-               auto recv = client.getRecvData<uint32_t, void*, std::string, std::string, std::string>();
-               statusCode = std::get<0>(recv);
-               recvStartPC = std::get<1>(recv);
-               codeCacheStr = std::get<2>(recv);
-               dataCacheStr = std::get<3>(recv);
-               metaRelocationInfo = std::get<4>(recv);
-               if (statusCode >= compilationMaxError)
-                  throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
-               }
-            catch (const JAAS::StreamFailure &e)
-               {
+               reloRuntime()->setReloStartTime(getTimeWhenCompStarted());
+
+               TR_ASSERT(recvStartPC, "must have startPC");
+               TR_ASSERT(codeCacheStr.size(), "must have code cache");
+               TR_ASSERT(dataCacheStr.size(), "must have data cache");
+
+               // allocate space in code cache and copy over
+               uint8_t *coldCode;
+               uint8_t *newCodeStart = compiler->fej9vm()->allocateCodeMemory(compiler, codeCacheStr.size() - sizeof(OMR::CodeCacheMethodHeader), 0, &coldCode, true);
+               newCodeStart -= sizeof(OMR::CodeCacheMethodHeader);
+               TR_ASSERT(newCodeStart, "need code cache space");
+               uint32_t blockSize = ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size;
+               memcpy(newCodeStart, &codeCacheStr[0], codeCacheStr.size());
+               ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size = blockSize; //make sure header size matches allocation (overwritten by memcpy)
+
+               // data cache allocation adds size of header then returns pointer to byte after header
+               TR_DataCache *dataCache = (TR_DataCache*)compiler->getReservedDataCache();
+               TR_ASSERT(dataCache, "Must have a reserved dataCache for JAAS compilation requests");
+               bool shouldRetryAllocation; //TODO
+               uint32_t allocatedSize;
+               uint8_t *newDataStart = compiler->fej9vm()->allocateDataCacheRecord(dataCacheStr.size() - sizeof(J9JITDataCacheHeader), compiler, false, &shouldRetryAllocation, 0, &allocatedSize);
+               newDataStart -= sizeof(J9JITDataCacheHeader);
+               memcpy(newDataStart, &dataCacheStr[0], dataCacheStr.size());
+
+               JAASMetaDataRelocationInfo *relocationInfo = (JAASMetaDataRelocationInfo*) &metaRelocationInfo[0];
+
+               // TODO: we might want to unlock this above near where it is locked, then lock it again just before allocating so
+               // that it isn't held for a potentially long period while waiting on the network
+               if (haveLockedClassUnloadMonitor)
+                  TR::MonitorTable::get()->readReleaseClassUnloadMonitor(getCompThreadId());
+
+               OMR::CodeCacheMethodHeader* codeCacheHeader = (OMR::CodeCacheMethodHeader*) newCodeStart;
+               J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader*) newDataStart;
+
+               metaData = (J9JITExceptionTable*) ((uint8_t *)dataCacheHeader + relocationInfo->metaDataOffset);
+               codeCacheHeader->_metaData = metaData;
+               metaData->gcStackAtlas = (uint8_t *)metaData + relocationInfo->gcStackAtlasOffset;
+               J9JITStackAtlas *vmAtlas = (J9JITStackAtlas *) metaData->gcStackAtlas;
+               if (vmAtlas->stackAllocMap)
+                  vmAtlas->stackAllocMap = (uint8_t *)metaData + relocationInfo->stackAllocMapOffset;
+               if (vmAtlas->internalPointerMap)
+                  vmAtlas->internalPointerMap = (uint8_t *)metaData + relocationInfo->internalPointerMapOffset;
+               metaData->codeCacheAlloc = (UDATA) (codeCacheHeader + 1);
+               OMR::RuntimeAssumption * raList = new (PERSISTENT_NEW) TR::SentinelRuntimeAssumption();
+               comp()->setMetadataAssumptionList(raList); // copy this list to the compilation object as well (same view as for a JIT compilation)
+               metaData->runtimeAssumptionList = raList;
+               TR::compInfoPT->relocateThunks();
+
+               //TR_ASSERT((uint8_t *)metaData->codeCacheAlloc == (uint8_t *)(codeCacheHeader + 1), "codeCache mismatch");
+               TR_ASSERT((void *)metaData->startPC == recvStartPC, "startpc should match");
+               TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
+
+                  {
+                  TR_TranslationArtifactManager *artifactManager = TR_TranslationArtifactManager::getGlobalArtifactManager();
+                  TR_TranslationArtifactManager::CriticalSection updateMetaData;
+                  int insertResult = artifactManager->insertArtifact(metaData);
+                  TR_ASSERT(insertResult, "insertArtifact failed");
+
+                  if (vm.isAnonymousClass(romClass))
+                     {
+                     J9Class *j9clazz = clazz;
+                     J9CLASS_EXTENDED_FLAGS_SET(j9clazz, J9ClassContainsJittedMethods);
+                     metaData->prevMethod = NULL;
+                     metaData->nextMethod = j9clazz->jitMetaDataList;
+                     if (j9clazz->jitMetaDataList)
+                        j9clazz->jitMetaDataList->prevMethod = metaData;
+                     j9clazz->jitMetaDataList = metaData;
+                     }
+                  else
+                     {
+                     J9ClassLoader * classLoader = clazz->classLoader;
+                     classLoader->flags |= J9CLASSLOADER_CONTAINS_JITTED_METHODS;
+                     metaData->prevMethod = NULL;
+                     metaData->nextMethod = classLoader->jitMetaDataList;
+                     if (classLoader->jitMetaDataList)
+                        classLoader->jitMetaDataList->prevMethod = metaData;
+                     classLoader->jitMetaDataList = metaData;
+                     }
+                  }
+
+               setMetadata(metaData);
+
                if (TR::Options::getVerboseOption(TR_VerboseJaas))
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, e.what());
-               compiler->failCompilation<JAAS::StreamFailure>(e.what());
-               }
-            JAAS::Status status = client.waitForFinish();
-            if (status.ok() && (statusCode == compilationOK || statusCode == compilationNotNeeded))
-               {
-               try
                   {
-                  reloRuntime()->setReloStartTime(getTimeWhenCompStarted());
-
-                  TR_ASSERT(recvStartPC, "must have startPC");
-                  TR_ASSERT(codeCacheStr.size(), "must have code cache");
-                  TR_ASSERT(dataCacheStr.size(), "must have data cache");
-
-                  // allocate space in code cache and copy over
-                  uint8_t *coldCode;
-                  uint8_t *newCodeStart = compiler->fej9vm()->allocateCodeMemory(compiler, codeCacheStr.size() - sizeof(OMR::CodeCacheMethodHeader), 0, &coldCode, true);
-                  newCodeStart -= sizeof(OMR::CodeCacheMethodHeader);
-                  TR_ASSERT(newCodeStart, "need code cache space");
-                  uint32_t blockSize = ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size;
-                  memcpy(newCodeStart, &codeCacheStr[0], codeCacheStr.size());
-                  ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size = blockSize; //make sure header size matches allocation (overwritten by memcpy)
-
-                  // data cache allocation adds size of header then returns pointer to byte after header
-                  TR_DataCache *dataCache = (TR_DataCache*)compiler->getReservedDataCache();
-                  TR_ASSERT(dataCache, "Must have a reserved dataCache for JAAS compilation requests");
-                  bool shouldRetryAllocation; //TODO
-                  uint32_t allocatedSize;
-                  uint8_t *newDataStart = compiler->fej9vm()->allocateDataCacheRecord(dataCacheStr.size() - sizeof(J9JITDataCacheHeader), compiler, false, &shouldRetryAllocation, 0, &allocatedSize);
-                  newDataStart -= sizeof(J9JITDataCacheHeader);
-                  memcpy(newDataStart, &dataCacheStr[0], dataCacheStr.size());
-
-                  JAASMetaDataRelocationInfo *relocationInfo = (JAASMetaDataRelocationInfo*) &metaRelocationInfo[0];
-
-                  // TODO: we might want to unlock this above near where it is locked, then lock it again just before allocating so
-                  // that it isn't held for a potentially long period while waiting on the network
-                  if (haveLockedClassUnloadMonitor)
-                     TR::MonitorTable::get()->readReleaseClassUnloadMonitor(getCompThreadId());
-
-                  OMR::CodeCacheMethodHeader* codeCacheHeader = (OMR::CodeCacheMethodHeader*) newCodeStart;
-                  J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader*) newDataStart;
-
-                  metaData = (J9JITExceptionTable*) ((uint8_t *)dataCacheHeader + relocationInfo->metaDataOffset);
-                  codeCacheHeader->_metaData = metaData;
-                  metaData->gcStackAtlas = (uint8_t *)metaData + relocationInfo->gcStackAtlasOffset;
-                  J9JITStackAtlas *vmAtlas = (J9JITStackAtlas *) metaData->gcStackAtlas;
-                  if (vmAtlas->stackAllocMap)
-                     vmAtlas->stackAllocMap = (uint8_t *)metaData + relocationInfo->stackAllocMapOffset;
-                  if (vmAtlas->internalPointerMap)
-                     vmAtlas->internalPointerMap = (uint8_t *)metaData + relocationInfo->internalPointerMapOffset;
-                  metaData->codeCacheAlloc = (UDATA) (codeCacheHeader + 1);
-                  OMR::RuntimeAssumption * raList = new (PERSISTENT_NEW) TR::SentinelRuntimeAssumption();
-                  comp()->setMetadataAssumptionList(raList); // copy this list to the compilation object as well (same view as for a JIT compilation)
-                  metaData->runtimeAssumptionList = raList;
-                  TR::compInfoPT->relocateThunks();
-
-                  //TR_ASSERT((uint8_t *)metaData->codeCacheAlloc == (uint8_t *)(codeCacheHeader + 1), "codeCache mismatch");
-                  TR_ASSERT((void *)metaData->startPC == recvStartPC, "startpc should match");
-                  TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
-
-                     {
-                     TR_TranslationArtifactManager *artifactManager = TR_TranslationArtifactManager::getGlobalArtifactManager();
-                     TR_TranslationArtifactManager::CriticalSection updateMetaData;
-                     int insertResult = artifactManager->insertArtifact(metaData);
-                     TR_ASSERT(insertResult, "insertArtifact failed");
-
-                     if (vm.isAnonymousClass(romClass))
-                        {
-                        J9Class *j9clazz = clazz;
-                        J9CLASS_EXTENDED_FLAGS_SET(j9clazz, J9ClassContainsJittedMethods);
-                        metaData->prevMethod = NULL;
-                        metaData->nextMethod = j9clazz->jitMetaDataList;
-                        if (j9clazz->jitMetaDataList)
-                           j9clazz->jitMetaDataList->prevMethod = metaData;
-                        j9clazz->jitMetaDataList = metaData;
-                        }
-                     else
-                        {
-                        J9ClassLoader * classLoader = clazz->classLoader;
-                        classLoader->flags |= J9CLASSLOADER_CONTAINS_JITTED_METHODS;
-                        metaData->prevMethod = NULL;
-                        metaData->nextMethod = classLoader->jitMetaDataList;
-                        if (classLoader->jitMetaDataList)
-                           classLoader->jitMetaDataList->prevMethod = metaData;
-                        classLoader->jitMetaDataList = metaData;
-                        }
-                     }
-
-                  setMetadata(metaData);
-
-                  if (TR::Options::getVerboseOption(TR_VerboseJaas))
-                     {
-                     TR_VerboseLog::writeLineLocked(
-                        TR_Vlog_JAAS,
-                        "Client successfully loaded method %s @ %s following compilation request.",
-                        compiler->signature(),
-                        compiler->getHotnessName()
-                        );
-                     }
-                  }
-               catch (const std::exception &e)
-                  {
-                  // Log for JAAS mode and re-throw
-                  if (TR::Options::getVerboseOption(TR_VerboseJaas))
-                     {
-                     TR_VerboseLog::writeLineLocked(
-                        TR_Vlog_JAAS,
-                        "Client failed to load method %s @ %s following compilation request.",
-                        compiler->signature(),
-                        compiler->getHotnessName()
-                        );
-                     }
-                  throw;
+                  TR_VerboseLog::writeLineLocked(
+                     TR_Vlog_JAAS,
+                     "Client successfully loaded method %s @ %s following compilation request.",
+                     compiler->signature(),
+                     compiler->getHotnessName()
+                     );
                   }
                }
-            else
+            catch (const std::exception &e)
                {
-               compiler->failCompilation<TR::CompilationException>("JaaS compilation failed.");
+               // Log for JAAS mode and re-throw
+               if (TR::Options::getVerboseOption(TR_VerboseJaas))
+                  {
+                  TR_VerboseLog::writeLineLocked(
+                     TR_Vlog_JAAS,
+                     "Client failed to load method %s @ %s following compilation request.",
+                     compiler->signature(),
+                     compiler->getHotnessName()
+                     );
+                  }
+               throw;
                }
             }
          else
             {
-            compiler->failCompilation<TR::CompilationException>("ROMClass not in SCC; cannot send JaaS request.");
+            compiler->failCompilation<TR::CompilationException>("JaaS compilation failed.");
             }
          }
 
