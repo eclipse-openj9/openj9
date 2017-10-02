@@ -250,7 +250,6 @@ public abstract class VarHandle extends VarHandleInternal {
 	static final Lookup _lookup = Lookup.internalPrivilegedLookup;
 	
 	private final MethodHandle[] handleTable;
-	private final MethodType[] typeTable;
 	final Class<?> fieldType;
 	final Class<?>[] coordinateTypes;
 	final int modifiers;
@@ -264,11 +263,10 @@ public abstract class VarHandle extends VarHandleInternal {
 	 * @param typeTable An array of MethodTypes describing the exact descriptors to be used when invoking access modes on this VarHandle.
 	 * @param modifiers The field's modifiers.
 	 */
-	VarHandle(Class<?> fieldType, Class<?>[] coordinateTypes, MethodHandle[] handleTable, MethodType[] typeTable, int modifiers) {
+	VarHandle(Class<?> fieldType, Class<?>[] coordinateTypes, MethodHandle[] handleTable, int modifiers) {
 		this.fieldType = fieldType;
 		this.coordinateTypes = coordinateTypes;
 		this.handleTable = handleTable;
-		this.typeTable = typeTable;
 		this.modifiers = modifiers;
 	}
 	
@@ -317,7 +315,13 @@ public abstract class VarHandle extends VarHandleInternal {
 	 * @return The {@link MethodType} corresponding to the provided {@link AccessMode}.
 	 */
 	public final MethodType accessModeType(AccessMode accessMode) {
-		return typeTable[accessMode.ordinal()];
+		MethodType internalType = handleTable[accessMode.ordinal()].type;
+		int numOfArguments = internalType.arguments.length;
+		
+		// Drop the internal VarHandle argument
+		MethodType modifiedType = internalType.dropParameterTypes(numOfArguments - 1, numOfArguments);
+		
+		return modifiedType;
 	}
 	
 	/**
@@ -381,7 +385,6 @@ public abstract class VarHandle extends VarHandleInternal {
 	public final MethodHandle toMethodHandle(AccessMode accessMode) {
 		MethodHandle mh = handleTable[accessMode.ordinal()];
 		mh = MethodHandles.insertArguments(mh, mh.type.parameterCount() - 1, this);
-		mh = mh.cloneWithNewType(accessModeType(accessMode));
 		
 		if (!isAccessModeSupported(accessMode)) {
 			MethodType mt = mh.type;

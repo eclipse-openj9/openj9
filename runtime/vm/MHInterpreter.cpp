@@ -544,11 +544,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			/* Get MethodHandle for this operation from the VarHandle's handleTable */
 			j9object_t handleTable = J9VMJAVALANGINVOKEVARHANDLE_HANDLETABLE(_currentThread, varHandle);
 			j9object_t methodHandleFromTable = J9JAVAARRAYOFOBJECT_LOAD(_currentThread, handleTable, operation);
-
-			/* Get expected MethodType */
-			j9object_t typeTable = J9VMJAVALANGINVOKEVARHANDLE_TYPETABLE(_currentThread, varHandle);
-			j9object_t handleTypeFromTable = J9JAVAARRAYOFOBJECT_LOAD(_currentThread, typeTable, operation);
-
+			j9object_t handleTypeFromTable = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandleFromTable);
 			j9object_t accessModeType = J9VMJAVALANGINVOKEVARHANDLEINVOKEHANDLE_ACCESSMODETYPE(_currentThread, methodHandle);
 
 			if (accessModeType == handleTypeFromTable) {

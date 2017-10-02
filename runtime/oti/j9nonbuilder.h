@@ -4666,7 +4666,7 @@ typedef struct J9InternalVMFunctions {
 	struct J9Method*  ( *findJNIMethod)(struct J9VMThread* currentThread, J9Class* clazz, char* name, char* signature) ;
 	const char*  ( *getJ9VMVersionString)(struct J9JavaVM * vm) ;
 	j9object_t  ( *resolveMethodTypeRef)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
-	void  (JNICALL *sendFromMethodDescriptorString)(struct J9VMThread *vmThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, UDATA reserved3, UDATA reserved4) ;
+	void  (JNICALL *sendFromMethodDescriptorString)(struct J9VMThread *vmThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType, UDATA reserved4) ;
 	UDATA  ( *addToBootstrapClassLoaderSearch)(struct J9JavaVM * vm, const char * pathSegment, UDATA classLoaderType, BOOLEAN enforceJarRestriction) ;
 	UDATA  ( *addToSystemClassLoaderSearch)(struct J9JavaVM * vm, const char * pathSegment, UDATA classLoaderType, BOOLEAN enforceJarRestriction) ;
 	UDATA  ( *queryLogOptions)(struct J9JavaVM *vm, I_32 buffer_size, void *options_buffer, I_32 *data_size) ;

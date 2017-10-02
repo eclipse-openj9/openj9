@@ -861,7 +861,7 @@ sendRecordInitializationFailure(J9VMThread *currentThread, J9Class *clazz, j9obj
 }
 
 void JNICALL
-sendFromMethodDescriptorString(J9VMThread *currentThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, UDATA reserved3, UDATA reserved4)
+sendFromMethodDescriptorString(J9VMThread *currentThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType, UDATA reserved4)
 {
 	Trc_VM_sendFromMethodDescriptorString_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -875,7 +875,13 @@ sendFromMethodDescriptorString(J9VMThread *currentThread, J9UTF8 *descriptor, J9
 			*--currentThread->sp = (UDATA)descriptorString;
 			*--currentThread->sp = (UDATA)classLoader->classLoaderObject;
 			currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-			currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODTYPE_FROMMETHODDESCRIPTORSTRING_METHOD(vm);
+			if (NULL == appendArgType) {
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODTYPE_FROMMETHODDESCRIPTORSTRING_METHOD(vm);
+			} else {
+				/* If an appendArgType has been provided, push it on the stack and call a different MethodType factory method. */
+				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(appendArgType);
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODTYPE_FROMMETHODDESCRIPTORSTRINGAPPENDARG_METHOD(vm);
+			}
 			c_cInterpreter(currentThread);
 		}
 		restoreCallInFrame(currentThread);

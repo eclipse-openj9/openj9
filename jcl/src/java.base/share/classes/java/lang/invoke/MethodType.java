@@ -360,6 +360,22 @@ public final class MethodType implements Serializable {
 		return mt;
 	}
 	
+	/**
+	 * Internal helper method for generating a MethodType from a descriptor string,
+	 * and append an extra argument type.
+	 * 
+	 * VarHandle call sites use this method to generate the MethodType that matches
+	 * the VarHandle method implementation (extra VarHandle argument).
+	 */
+	@SuppressWarnings("unused")  /* Used by native code */
+	private static final MethodType fromMethodDescriptorStringAppendArg(String methodDescriptor, ClassLoader loader, Class<?> appendArgumentType) {
+		List<Class<?>> types = parseIntoClasses(methodDescriptor, loader);
+		Class<?> returnType = types.remove(types.size() - 1);
+		types.add(appendArgumentType);
+		
+		return methodType(returnType, types);
+	}
+	
 	/*
 	 * Convert the string from bytecode format to the format needed for ClassLoader#loadClass().
 	 * Change all '/' to '.'.

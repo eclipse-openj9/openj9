@@ -1302,7 +1302,7 @@ extern J9_CFUNC void  JNICALL internalRunStaticMethod (J9VMThread *vmContext, J9
 extern J9_CFUNC void  JNICALL sendCheckPackageAccess (J9VMThread *vmContext, J9Class * clazz, j9object_t protectionDomain, UDATA reserved1, UDATA reserved2);
 extern J9_CFUNC void  JNICALL sidecarInvokeReflectConstructor (J9VMThread *vmContext, jobject constructorRef, jobject recevierRef, jobjectArray argsRef, void *unused);
 extern J9_CFUNC void  JNICALL sidecarInvokeReflectConstructorImpl (J9VMThread *vmContext, jobject constructorRef, jobject recevierRef, jobjectArray argsRef, void *unused);
-extern J9_CFUNC void  JNICALL sendFromMethodDescriptorString (J9VMThread *vmThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, UDATA reserved3, UDATA reserved4);
+extern J9_CFUNC void  JNICALL sendFromMethodDescriptorString (J9VMThread *vmThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType, UDATA reserved4);
 extern J9_CFUNC void  JNICALL sendResolveMethodHandle (J9VMThread *vmThread, UDATA cpIndex, J9ConstantPool *ramCP, J9Class *definingClass, J9ROMNameAndSignature* nameAndSig);
 extern J9_CFUNC void  JNICALL sendForGenericInvoke (J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg, UDATA reserved4);
 extern J9_CFUNC void  JNICALL sendForGenericInvokeVarHandle (J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, j9object_t varHandle, UDATA reserved4);

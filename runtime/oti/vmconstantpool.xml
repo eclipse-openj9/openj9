@@ -312,7 +312,7 @@
 	<fieldref class="java/lang/invoke/ConstantDoubleHandle" name="value" signature="D" cast="U_64" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/InvokeGenericHandle" name="castType" signature="Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/VarHandle" name="handleTable" signature="[Ljava/lang/invoke/MethodHandle;" jcl="se9_before_b165,se9"/>
-	<fieldref class="java/lang/invoke/VarHandle" name="typeTable" signature="[Ljava/lang/invoke/MethodType;" jcl="se9_before_b165,se9"/>
+	<!--fieldref class="java/lang/invoke/VarHandle" name="typeTable" signature="[Ljava/lang/invoke/MethodType;" jcl="se9_before_b165,se9"/-->
 	<fieldref class="java/lang/invoke/VarHandle" name="modifiers" signature="I" jcl="se9_before_b165,se9"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="foldPosition" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="argumentIndices" signature="[I" flags="opt_methodHandle"/>
@@ -335,6 +335,7 @@
 	<staticmethodref class="java/lang/J9VMInternals" name="newInstanceImpl" signature="(Ljava/lang/Class;)Ljava/lang/Object;" flags="jit_newInstancePrototype"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="formatNoSuchMethod" signature="(Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;"/>
 	<staticmethodref class="java/lang/invoke/MethodType" name="fromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
+	<staticmethodref class="java/lang/invoke/MethodType" name="fromMethodDescriptorStringAppendArg" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/> 
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/> 
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="invokeWithArgumentsHelper" signature="(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/> 
