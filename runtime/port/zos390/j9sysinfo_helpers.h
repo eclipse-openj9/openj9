@@ -201,10 +201,10 @@ retrieveZGuestProcessorStats(struct J9PortLibrary *portLibrary, struct J9GuestPr
 }
 #endif /* __cplusplus */
 
-#pragma linkage(j9req_lpdatlen, OS_NOSTACK)
-#pragma linkage(j9req_lpdat, OS_NOSTACK)
+#pragma linkage(omrreq_lpdatlen, OS_NOSTACK)
+#pragma linkage(omrreq_lpdat, OS_NOSTACK)
 
-extern int j9req_lpdatlen(void);
-extern int j9req_lpdat(char* bufp);
+extern int omrreq_lpdatlen(void);
+extern int omrreq_lpdat(char* bufp);
 
 #endif /* SYSINFO_HELPERS_H_ */
