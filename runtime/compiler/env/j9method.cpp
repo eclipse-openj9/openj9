@@ -8447,6 +8447,8 @@ TR_ResolvedJ9JAASServerMethod::constantPoolHdr()
 bool
 TR_ResolvedJ9JAASServerMethod::isJNINative()
    {
+   if (supportsFastJNI(_fe))
+      return _jniTargetAddress != NULL;
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isJNINative, _remoteMirror);
    return std::get<0>(_stream->read<bool>());
    }
