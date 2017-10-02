@@ -380,7 +380,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   _initializationSucceeded;
    bool                   _isDiagnosticThread;
    CpuSelfThreadUtilization _compThreadCPU;
-   std::vector<std::pair<void *, std::string>> _thunksToBeRelocated;
+   typedef TR::typed_allocator<std::pair<void *, std::string>, TR::PersistentAllocator&> ThunkVectorAllocator;
+   std::vector<std::pair<void *, std::string>, ThunkVectorAllocator> _thunksToBeRelocated;
 
    typedef TR::typed_allocator<std::pair<const J9Class *, J9ROMClass * const>, TR::PersistentAllocator &> ClassCacheMapAllocator;
    typedef std::unordered_map<J9Class *, J9ROMClass *, std::hash<J9Class *>, std::equal_to<J9Class *>, ClassCacheMapAllocator> PersistentClassMap;

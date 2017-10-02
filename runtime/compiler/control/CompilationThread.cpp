@@ -1868,7 +1868,8 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
 TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
                                    : TR::CompilationInfoPerThreadBase(compInfo, jitConfig, id, true),
                                      _compThreadCPU(_compInfo.persistentMemory()->getPersistentInfo(), jitConfig, 490000000, id),
-                                     _cachedROMClasses(ClassCacheMapAllocator(TR::Compiler->persistentAllocator()))
+                                     _cachedROMClasses(ClassCacheMapAllocator(TR::Compiler->persistentAllocator())),
+                                     _thunksToBeRelocated(ThunkVectorAllocator(TR::Compiler->persistentAllocator()))
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    _initializationSucceeded = false;
