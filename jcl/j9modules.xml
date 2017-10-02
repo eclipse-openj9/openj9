@@ -46,10 +46,6 @@
 					</fileset>
 				</delete>
 			</case>
-			<case value="jdk.attach">
-				<removeexport package="com.ibm.tools.attach.spi" />
-				<removeprovides interface="com.sun.tools.attach.spi.AttachProvider" />
-			</case>
 			<case value="java.base">
 				<removeexport package="com.ibm.cuda" />
 				<removeexport package="com.ibm.dataaccess" />
