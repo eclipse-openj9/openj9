@@ -486,9 +486,15 @@ UMA_PASM_INCLUDES:=$(addprefix -I ,$(UMA_INCLUDES))
 </#if>
 
 <#if uma.spec.type.windows>
+ifdef USE_MINGW
+UMA_M4_INCLUDES = $(UMA_C_INCLUDES)
+else
+UMA_M4_INCLUDES = $(patsubst /I%,-I%,$(UMA_C_INCLUDES))
+endif
+
 #compilation rule for .m4 files
 %$(UMA_DOT_O): %.m4
-	m4 -DWIN32 $(UMA_M4_FLAGS) $(UMA_C_INCLUDES) $< > $*.asm
+	m4 -DWIN32 $(UMA_M4_FLAGS) $(UMA_M4_INCLUDES) $< > $*.asm
 	$(AS) $(ASFLAGS) $*.asm
 	-mv -f $*.asm $*.hold
 
