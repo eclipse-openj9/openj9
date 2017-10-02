@@ -33,7 +33,7 @@
 #include "control/OptionsUtil.hpp"
 #include "control/Options_inlines.hpp"            // for TR::Options, etc
 #include "control/Recompilation.hpp"              // for TR_Recompilation, etc
-#include "control/RecompilationInfo.hpp"              // for TR_Recompilation, etc
+#include "control/RecompilationInfo.hpp"          // for TR_Recompilation, etc
 #include "env/IO.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"                 // for PersistentInfo
@@ -818,11 +818,12 @@ TR_ValueProfiler::addProfilingTrees(
    TR::SymbolReference *profiler = comp()->getSymRefTab()->findOrCreateRuntimeHelper
       ((node->getDataType() == TR::Address? ( decrementRecompilationCounter ? TR_jitProfileWarmCompilePICAddress : (doBigDecimalProfiling ? TR_jitProfileBigDecimalValue : (doStringProfiling ? TR_jitProfileStringValue : TR_jitProfileAddress))) : (node->getType().isInt64() ? TR_jitProfileLongValue : TR_jitProfileValue)),
        false, false, true);
-
-#if defined(TR_TARGET_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_ARM)
+#if defined(TR_HOST_POWER) || defined(TR_HOST_ARM)
    profiler->getSymbol()->castToMethodSymbol()->setLinkage(TR_System);
 #else
+#ifndef TR_HOST_X86
    profiler->getSymbol()->castToMethodSymbol()->setPreservesAllRegisters();
+#endif
    profiler->getSymbol()->castToMethodSymbol()->setSystemLinkageDispatch();
 #endif
 
