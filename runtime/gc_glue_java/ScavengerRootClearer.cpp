@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "j9cfg.h"
+#include "j2sever.h"
 #include "ModronAssertions.h"
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
@@ -75,8 +76,10 @@ MM_ScavengerRootClearer::processReferenceList(MM_EnvironmentStandard *env, MM_He
 
 				referenceStats->_cleared += 1;
 
-				if (J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) {
-					/* Phantom objects keep their referent - scanning will be done after the enqueuing */
+				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
+				J9JavaVM * javaVM = (J9JavaVM*)env->getLanguageVM();
+				if ((J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) && ((J2SE_VERSION(javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
+					/* Scanning will be done after the enqueuing */
 					_scavenger->copyObjectSlot(env, &referentSlotObject);
 				} else {
 					referentSlotObject.writeReferenceToSlot(NULL);
