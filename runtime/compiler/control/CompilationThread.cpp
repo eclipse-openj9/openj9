@@ -9452,7 +9452,6 @@ TR::CompilationInfoPerThreadBase::compile(
                compiler->getHotnessName()
                );
             }
-         TR_J9SharedCache *cache = vm.sharedCache();
          // JAAS temporary HACK
          // Reserve a code cache and send the server the virtual address where
          // the compiled body will be loaded as well as the size of the space available
@@ -9480,7 +9479,6 @@ TR::CompilationInfoPerThreadBase::compile(
 
          J9Class *clazz = J9_CLASS_FROM_METHOD(method);
          J9ROMClass *romClass = clazz->romClass;
-         uint32_t romClassOffset = (uint32_t)(reinterpret_cast<uintptr_t>(cache->offsetInSharedCacheFromPointer((void*)romClass)));
          J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
          uint32_t romMethodOffset = uint32_t((uint8_t*) romMethod - (uint8_t*) romClass);
          std::string romClassStr = packROMClass(romClass, compiler->trMemory());
