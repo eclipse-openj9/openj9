@@ -32,7 +32,7 @@ import java.lang.reflect.Method;
 /**
  * Tests all MXBean getter methods to make sure calling them
  * does not crash the VM.
- * 
+ *
  * @author Alexei Svitkine
  *
  */
@@ -57,6 +57,12 @@ public class MXBeansGetterSanityTest {
 										|| methodName.equals("getUsageThreshold")
 										|| methodName.equals("getUsageThresholdCount"))) {
 							/* above the methods of MemoryPoolMXBeanImpl could be unsupported depends on the individual MemoryPoolMXBean */
+						} else if (mxBeanClass.getName().equals("com.ibm.lang.management.internal.UnixExtendedOperatingSystem")
+								&& methodName.equals("getHardwareModel")) {
+							/* above the methods of UnixExtendedOperatingSystem could be unsupported depends on the individual OS */
+						} else if (mxBeanClass.getName().equals("com.ibm.lang.management.internal.ExtendedRuntimeMXBeanImpl")
+								&& methodName.equals("getBootClassPath")) {
+							/* above the methods of ExtendedRuntimeMXBeanImpl could be unsupported depends on the individual JVM version */
 						} else {
 							e.printStackTrace();
 						}
