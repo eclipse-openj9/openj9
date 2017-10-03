@@ -2565,6 +2565,11 @@ jvmtiAddModuleProvides(jvmtiEnv* env,
 		jclass service,
 		jclass impl_class);
 
+jvmtiError JNICALL
+jvmtiIsModifiableModule(jvmtiEnv* env,
+		jobject module,
+		jboolean* is_modifiable_module_ptr);
+
 #ifdef __cplusplus
 }
 #endif

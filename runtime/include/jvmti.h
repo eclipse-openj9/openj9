@@ -1090,7 +1090,7 @@ typedef struct JVMTINativeInterface_ {
 	jvmtiError (JNICALL * AddModuleOpens)(jvmtiEnv* env, jobject module, const char* pkg_name, jobject to_module);
 	jvmtiError (JNICALL * AddModuleUses)(jvmtiEnv* env, jobject module, jclass service);
 	jvmtiError (JNICALL * AddModuleProvides)(jvmtiEnv* env, jobject module, jclass service, jclass impl_class);
-	void *reserved99;
+	jvmtiError (JNICALL * IsModifiableModule)(jvmtiEnv* env, jobject module, jboolean* is_modifiable_module_ptr);
 	jvmtiError (JNICALL * GetAllStackTraces)(jvmtiEnv* env,	jint max_frame_count,	jvmtiStackInfo** stack_info_ptr,	jint* thread_count_ptr);
 	jvmtiError (JNICALL * GetThreadListStackTraces)(jvmtiEnv* env,	jint thread_count,	const jthread* thread_list,	jint max_frame_count,	jvmtiStackInfo** stack_info_ptr);
 	jvmtiError (JNICALL * GetThreadLocalStorage)(jvmtiEnv* env,	jthread thread,	void** data_ptr);
@@ -1248,6 +1248,7 @@ struct _jvmtiEnv {
 	jvmtiError AddModuleOpens(jvmtiEnv* env, jobject module, const char* pkg_name, jobject to_module) { return functions->AddModuleOpens(this, module, pkg_name, to_module); }
 	jvmtiError AddModuleUses(jvmtiEnv* env, jobject module, jclass service) { return functions->AddModuleUses(this, module, service); }
 	jvmtiError AddModuleProvides(jvmtiEnv* env, jobject module, jclass service, jclass impl_class) { return functions->AddModuleProvides(this, module, service, impl_class); }
+	jvmtiError IsModifiableModule(jvmtiEnv* env, jobject module, jboolean* is_modifiable_module_ptr) { return functions->IsModifiableModule(this, module, is_modifiable_module_ptr); }
 	jvmtiError GetAllStackTraces (jint max_frame_count,	jvmtiStackInfo** stack_info_ptr,	jint* thread_count_ptr) { return functions->GetAllStackTraces(this, max_frame_count, stack_info_ptr, thread_count_ptr); }
 	jvmtiError GetThreadListStackTraces (jint thread_count,	const jthread* thread_list,	jint max_frame_count,	jvmtiStackInfo** stack_info_ptr) { return functions->GetThreadListStackTraces(this, thread_count, thread_list, max_frame_count, stack_info_ptr); }
 	jvmtiError GetThreadLocalStorage (jthread thread,	void** data_ptr) { return functions->GetThreadLocalStorage(this, thread, data_ptr); }
