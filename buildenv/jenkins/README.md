@@ -60,6 +60,9 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 - To trigger a Line Endings Check
    - `Jenkins line endings check`
 
+- To trigger a Copyright Check
+   - `Jenkins copyright check`
+
 ### Overview of Builds
 
 #### Build
@@ -193,6 +196,14 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Trigger:
         - Automatically builds on every PR
         - Retrigger with `Jenkins line endings check`
+
+- PullRequest-CopyrightCheck/badge
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-CopyrightCheck)](https://ci.eclipse.org/openj9/job/PullRequest-CopyrightCheck)
+    - Description:
+        - Checks the files modified in a pull request have copyright with current year
+    - Trigger:
+        - Automatically builds on every PR
+        - Retrigger with `Jenkins copyright check`
 
 #### Test
 
