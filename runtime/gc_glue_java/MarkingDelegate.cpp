@@ -28,6 +28,7 @@
 #include "j9cp.h"
 #include "j9modron.h"
 #include "j9nongenerated.h"
+#include "j2sever.h"
 #include "omrcomp.h"
 #include "omrsrp.h"
 
@@ -561,7 +562,9 @@ MM_MarkingDelegate::processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionD
 
 				referenceStats->_cleared += 1;
 
-				if (J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) {
+				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
+				J9JavaVM * javaVM = (J9JavaVM*)env->getLanguageVM();
+				if ((J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) && ((J2SE_VERSION(javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
 					_markingScheme->fixupForwardedSlot(&referentSlotObject);
 					referent = referentSlotObject.readReferenceFromSlot();
 
