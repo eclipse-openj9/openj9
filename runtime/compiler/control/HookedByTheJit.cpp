@@ -6979,10 +6979,15 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       }
    else
       {
-      if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZE_SEND_TARGET, jitHookInitializeSendTarget, OMR_GET_CALLSITE(), NULL))
+      // Do not register the hook that sets method invocation counts in JAAS server mode
+      // This ensures that interpreter will not send methods for compilation
+      if (compInfo->getPersistentInfo()->getJaasMode() != SERVER_MODE)
          {
-         j9tty_printf(PORTLIB, "Error: Unable to install send target hook\n");
-         return -1;
+         if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZE_SEND_TARGET, jitHookInitializeSendTarget, OMR_GET_CALLSITE(), NULL))
+            {
+            j9tty_printf(PORTLIB, "Error: Unable to install send target hook\n");
+            return -1;
+            }
          }
 #if defined (J9VM_INTERP_PROFILING_BYTECODES)
       TR_IProfiler *iProfiler = vmj9->getIProfiler();

@@ -306,9 +306,9 @@ j9jit_testarossa_err(
       event._eventType = TR_MethodEvent::InterpreterCounterTripped;
       // Experimental code: user may want to artificially delay the compilation
       // of methods to gather more IProfiler info
+      TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
       if (TR::Options::_compilationDelayTime > 0)
          {
-         TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
          if (!TR::CompilationInfo::isJNINative(method))
             {
             if (compInfo->getPersistentInfo()->getElapsedTime() < 1000 * TR::Options::_compilationDelayTime)
@@ -322,12 +322,10 @@ j9jit_testarossa_err(
                   }
                }
             }
-         else
-            {
-            if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
-               return 0;
-            }
          }
+      // Do not allow local compilations in JAAS server mode
+      if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+         return 0;
       }
 
    event._j9method = method;
