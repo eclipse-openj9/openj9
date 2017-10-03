@@ -453,7 +453,8 @@ endif
 
 SOLINK_EXTRA_ARGS+=-Wl,--version-script=$(SOLINK_VERSION_SCRIPT)
 
-ifeq ($(LIBCXX_STATIC),1)
+SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
+ifneq ($(SUPPORT_STATIC_LIBCXX),0)
     SOLINK_FLAGS+=-static-libstdc++
 endif
 
