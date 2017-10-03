@@ -686,3 +686,70 @@ done:
 	return rc;
 }
 
+/**
+ * Determines whether a module is modifiable. Currently, no criteria
+ * is specified to tag modules as modifiable. So, is_modifiable_module_ptr
+ * is set to JNI_TRUE for all modules. In case of error, is_modifiable_module_ptr
+ * is set to JNI_FALSE.
+ *
+ * @param [in]     env                      pointer to jvmtiEnv
+ * @param [in]     module                   module being checked
+ * @param [in/out] is_modifiable_module_ptr points to the boolean result
+ *
+ * @return jvmtiError, JVMTI_ERROR_NONE on success
+ *         jvmtiError, JVMTI_ERROR_INVALID_MODULE if module is not a module object
+ *         jvmtiError, JVMTI_ERROR_NULL_POINTER if module is NULL
+ *         jvmtiError, JVMTI_ERROR_NULL_POINTER if is_modifiable_module_ptr is NULL
+ *         jvmtiError, one of the universal errors
+ */
+jvmtiError JNICALL
+jvmtiIsModifiableModule(jvmtiEnv* env,
+		jobject module,
+		jboolean* is_modifiable_module_ptr)
+{
+	J9VMThread *currentThread = NULL;
+	J9JavaVM *vm = JAVAVM_FROM_ENV(env);
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	ENSURE_PHASE_LIVE(env);
+	ENSURE_NON_NULL(module);
+	ENSURE_NON_NULL(is_modifiable_module_ptr);
+
+	*is_modifiable_module_ptr = JNI_FALSE;
+
+	rc = getCurrentVMThread(vm, &currentThread);
+	if (JVMTI_ERROR_NONE == rc) {
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		j9object_t moduleObject = NULL;
+		J9Class *moduleJ9Class = NULL;
+
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+
+		moduleObject = J9_JNI_UNWRAP_REFERENCE(module);
+		if(J2SE_SHAPE(vm) < J2SE_SHAPE_B165) {
+			moduleJ9Class = J9VMJAVALANGREFLECTMODULE_OR_NULL(vm);
+		} else {
+			moduleJ9Class = J9VMJAVALANGMODULE_OR_NULL(vm);
+		}
+
+		Assert_JVMTI_notNull(moduleJ9Class);
+
+		if (!isSameOrSuperClassOf(moduleJ9Class, J9OBJECT_CLAZZ(currentThread, moduleObject))) {
+			rc = JVMTI_ERROR_INVALID_MODULE;
+		} else if (J9_IS_J9MODULE_UNNAMED(vm, J9OBJECT_ADDRESS_LOAD(currentThread, moduleObject, vm->modulePointerOffset))) {
+			*is_modifiable_module_ptr = JNI_TRUE;
+		} else {
+			/* No criteria specified to tag modules as unmodifiable.
+			 * Assuming all modules are modifiable at this point.
+			 * Thus, setting is_modifiable_module_ptr to JNI_TRUE for all modules.
+			 * REMINDER: Track future changes to the definition of jvmtiIsModifiableModule,
+			 * and appropriately update the implementation.
+			 */
+			*is_modifiable_module_ptr = JNI_TRUE;
+		}
+
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+
+done:
+	return rc;
+}

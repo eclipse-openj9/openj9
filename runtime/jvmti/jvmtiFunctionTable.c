@@ -122,7 +122,7 @@ jvmtiNativeInterface jvmtiFunctionTable = {
 	jvmtiAddModuleOpens,
 	jvmtiAddModuleUses,
 	jvmtiAddModuleProvides,
-	NULL,
+	jvmtiIsModifiableModule,
 	jvmtiGetAllStackTraces,
 	jvmtiGetThreadListStackTraces,
 	jvmtiGetThreadLocalStorage,
