@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "j9.h"
+#include "j2sever.h"
 #include "modron.h"
 
 #include "ArrayletObjectModel.hpp"
@@ -1208,8 +1209,9 @@ MM_RealtimeMarkingScheme::processReferenceList(MM_EnvironmentRealtime *env, MM_H
 
 				referenceStats->_cleared += 1;
 
-				if (J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) {
-					/* Phantom objects keep their referent - scanning will be done after the enqueuing */
+				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
+				if ((J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) && ((J2SE_VERSION(_javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
+					/* Scanning will be done after the enqueuing */
 					markObject(env, referent);
 				} else {
 					referentSlotObject.writeReferenceToSlot(NULL);
