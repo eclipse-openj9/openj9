@@ -4296,8 +4296,18 @@ J9::CodeGenerator::setUpForInstructionSelection()
 
    if (self()->comp()->getOption(TR_EnableOSR))
       {
+      TR::Block *block;
       for (tt = self()->comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
          {
+         if (tt->getNode()->getOpCodeValue() == TR::BBStart)
+            {
+            block = tt->getNode()->getBlock();
+            if (!block->isOSRCodeBlock())
+               {
+               tt = block->getExit();
+               continue;
+               }
+            }
          self()->eliminateLoadsOfLocalsThatAreNotStored(tt->getNode(), -1);
          }
 

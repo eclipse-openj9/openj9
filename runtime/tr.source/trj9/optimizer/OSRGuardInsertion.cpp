@@ -152,14 +152,16 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes)
       requiresAnalysis = false;
 
    // Create the fake region
-   TR_Structure *structure = fakeRegion(comp());
+   TR_Structure *structure = requiresAnalysis ? fakeRegion(comp()) : NULL;
    comp()->getFlowGraph()->setStructure(structure);
    TR_HCRGuardAnalysis *guardAnalysis = requiresAnalysis ? new (comp()->allocator()) TR_HCRGuardAnalysis(comp(), optimizer(), structure) : NULL;
 
    for (TR::Block *cursor = comp()->getStartBlock(); cursor != NULL; cursor = cursor->getNextBlock())
       {
-      if (!cursor->getLastRealTreeTop()) { continue; }
-      TR::Node *node = cursor->getLastRealTreeTop()->getNode();
+      TR::TreeTop *lastTree = cursor->getLastRealTreeTop();
+      if (!lastTree) { continue; }
+      TR::Node *node = lastTree->getNode();
+
       if (!node->isTheVirtualGuardForAGuardedInlinedCall()) { continue; }
       TR_VirtualGuard *guardInfo = comp()->findVirtualGuardInfo(node);
       TR_ASSERT(guardInfo, "we expect to get virtual guard info in HCRGuardRemoval!");
@@ -222,6 +224,17 @@ void TR_OSRGuardInsertion::removeHCRGuards(TR_BitVector &fearGeneratingNodes)
 
             TR::DebugCounter::prependDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "hcrGuardRemoval/success"), cursor->getExit());
             }
+         else if (guardInfo->mergedWithHCRGuard())
+            {
+            guardInfo->setMergedWithHCRGuard(false);
+            if (TR_FearPointAnalysis::virtualGuardsKillFear())
+               guardInfo->setMergedWithOSRGuard();
+            else
+               {
+               if (cursor->getNextBlock() && cursor->getNextBlock()->getEntry())
+                  fearGeneratingNodes.set(cursor->getNextBlock()->getEntry()->getNode()->getGlobalIndex());
+               }
+            }
          }
       else
          {
@@ -237,11 +250,16 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
    {
    static char *forceOSRInsertion = feGetEnv("TR_ForceOSRGuardInsertion");
 
+   if (!comp()->getFlowGraph()->getStructure())
+      comp()->getFlowGraph()->setStructure(fakeRegion(comp()));
+
    TR_FearPointAnalysis fearAnalysis(comp(), optimizer(), comp()->getFlowGraph()->getStructure(),
       fearGeneratingNodes, true, trace());
    // Structure is no longer needed after completing the fear analysis and
    // will potentially slow down manipulations to the CFG, so it is remove
    comp()->getFlowGraph()->invalidateStructure();
+
+   TR::TreeTop * cfgEnd = comp()->getFlowGraph()->findLastTreeTop();
 
    TR::Block *block = NULL;
    TR_SingleBitContainer fear(1, trMemory(), stackAlloc);
@@ -304,7 +322,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
 
          // If something went wrong with bookkeeping, due to the nature of the implicit OSR point,
          // this will return false
-         bool induceOSR = comp()->getMethodSymbol()->induceOSRAfter(cursor, nodeBCI, guard, false, 0);
+         bool induceOSR = comp()->getMethodSymbol()->induceOSRAfter(cursor, nodeBCI, guard, false, 0, &cfgEnd);
          if (trace())
             {
             if (induceOSR)
@@ -404,7 +422,7 @@ int32_t TR_OSRGuardInsertion::insertOSRGuards(TR_BitVector &fearGeneratingNodes)
                guard->getNode()->getFirstChild()->setByteCodeInfo(guardBCI);
                guard->getNode()->getSecondChild()->setByteCodeInfo(guardBCI);
 
-               bool induceOSR = targetMethod->induceOSRAfter(inductionPoint, nodeBCI, guard, false, comp()->getOSRInductionOffset(cursor->getNode()));
+               bool induceOSR = targetMethod->induceOSRAfter(inductionPoint, nodeBCI, guard, false, comp()->getOSRInductionOffset(cursor->getNode()), &cfgEnd);
                if (trace() && induceOSR)
                   traceMsg(comp(), "  OSR induction added successfully\n");
                else if (trace())
