@@ -681,8 +681,6 @@ public:
    virtual uint32_t     getX86ProcessorFeatureFlags();
    virtual uint32_t     getX86ProcessorFeatureFlags2();
    virtual uint32_t     getX86ProcessorFeatureFlags8();
-   virtual bool         getX86OSSupportsSSE();
-   virtual bool         getX86OSSupportsSSE2();
    virtual bool         getX86SupportsSSE4_1();
 
    virtual void *getJ2IThunk(char *signatureChars, uint32_t signatureLength,  TR::Compilation *comp);
@@ -1060,8 +1058,6 @@ public:
 
    virtual intptrj_t          methodTrampolineLookup( TR::Compilation *, TR::SymbolReference *symRef, void *callSite);
    virtual TR::CodeCache*    getResolvedTrampoline( TR::Compilation *, TR::CodeCache *curCache, J9Method * method, bool inBinaryEncoding);
-
-   virtual bool               testOSForSSESupport();
 
    virtual TR_IProfiler *         getIProfiler();
 

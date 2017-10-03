@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,8 +67,6 @@ extern void init_codert_vm_fntbl(J9JavaVM * vm);
 
 
 #if defined(TR_HOST_X86) && !defined(J9HAMMER)
-
-extern "C" bool doProcessorAndOSSupportSSE2(void * javaVM);
 
 enum TR_PatchingFenceTypes
    {
@@ -284,15 +282,9 @@ J9JITConfig * codert_onload(J9JavaVM * javaVM)
 
 #if defined(TR_HOST_X86) && !defined(J9HAMMER)
    /*
-    * REPLACE THIS WITH A FRONTEND CALL AND FRONTEND FLAG THAT CAN BE QUERIED
-    * FROM THE JIT RUNTIME.
+    * VM guarantees SSE/SSE2 are available
     */
-   if (doProcessorAndOSSupportSSE2(javaVM))
-      {
-      // default fence type is mfence
-      //
-      jitConfig->runtimeFlags |=  J9JIT_PATCHING_FENCE_TYPE;
-      }
+   jitConfig->runtimeFlags |=  J9JIT_PATCHING_FENCE_TYPE;
 #endif
 
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
@@ -609,34 +601,7 @@ TR_X86CPUIDBuffer *queryX86TargetCPUID(void * javaVM);
 
 #ifdef TR_HOST_X86
 #include "x/runtime/X86Runtime.hpp"
-
-   extern "C" BOOLEAN jitTestOSForSSESupport(void);
 #endif
-
-
-
-#if defined(TR_HOST_X86) && !defined(J9HAMMER)
-bool doProcessorAndOSSupportSSE2(void * javaVM)
-   {
-   PORT_ACCESS_FROM_JAVAVM((J9JavaVM *)javaVM);
-
-   if (j9sysinfo_get_env("TR_forceSSE2", 0, 0) != -1)
-      return true;
-
-   if (j9sysinfo_get_env("TR_forceX87", 0, 0) != -1)
-      return false;
-
-   // If the FXSR (bit 24) and SSE2 (bit 26) bits in the feature flags are not set, SSE2 is unavailable
-   // on this processor.
-   //
-   TR_X86CPUIDBuffer *cpuid = queryX86TargetCPUID(javaVM);
-   if (!cpuid || (cpuid->_featureFlags & 0x05000000) != 0x05000000)
-      return false;
-   return (bool) jitTestOSForSSESupport();
-   }
-
-#endif // defined(TR_HOST_X86) && !defined(J9HAMMER)
-
 
 static TR_X86CPUIDBuffer *initializeX86CPUIDBuffer(void * javaVM)
    {
