@@ -57,3 +57,5 @@ org.openj9.test.java.lang.Test_ClassLoader																				134754 generic-all
 org.openj9.test.attachAPI.TestAttachAPI:test_agntld01																	238 generic-all
 org.openj9.test.attachAPI.TestAttachAPI:test_agntld02																	238 generic-all
 org.openj9.test.attachAPI.TestAttachAPI:test_agntld03																	238 generic-all
+org.openj9.test.attachAPI.TestSunAttachClasses:testAgentLoading															238 generic-all
+org.openj9.test.attachAPI.TestManagementAgent:test_startLocalManagementAgent											241 generic-all
