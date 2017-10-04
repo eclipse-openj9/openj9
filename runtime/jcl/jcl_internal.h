@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,6 +66,17 @@ jbyteArray getMethodTypeAnnotationsAsByteArray(JNIEnv *env, jobject jlrMethod);
 j9object_t getMethodDefaultAnnotationData(struct J9VMThread *vmThread, struct J9Class *declaringClass, J9Method *ramMethod);
 
 jobjectArray getMethodParametersAsArray(JNIEnv *env, jobject jlrMethod);
+
+/**
+ * The caller must have VM access. 
+ * Build a java.lang.reflect.Field object for a field specified with a name and a declaring class.
+ * @param[in] vmThread The current vmThread.
+ * @param[in] declaringClass The declaring class. Must be non-null.
+ * @param[in] fieldName The name of the field.
+ * @return j9object_t a java.lang.reflect.Field
+ */
+j9object_t
+getFieldObjHelper(J9VMThread *vmThread, jclass declaringClass, jstring fieldName);
 
 /**
  * Build a java.lang.reflect.Field for a specified declared field.

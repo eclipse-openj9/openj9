@@ -43,7 +43,7 @@ Java_com_ibm_oti_reflect_AnnotationParser_getAnnotationsData__Ljava_lang_reflect
 	enterVMFromJNI(vmThread);
 	fieldObject = J9_JNI_UNWRAP_REFERENCE(jlrField);
 	if (NULL != fieldObject) {
-		J9JNIFieldID *fieldID = vmThread->javaVM->reflectFunctions.idFromFieldObject(vmThread, fieldObject);
+		J9JNIFieldID *fieldID = vmThread->javaVM->reflectFunctions.idFromFieldObject(vmThread, NULL, fieldObject);
 
 		j9object_t annotationsData = getFieldAnnotationData(vmThread, fieldID->declaringClass, fieldID);
 		if (NULL != annotationsData) {

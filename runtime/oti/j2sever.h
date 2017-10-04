@@ -29,6 +29,15 @@
 /*
  * Note: J2SE_LATEST has to be updated to highest Java version supported by VM
  * 		 This allows JVM operates with latest version when classlib.properties doesn't present.
+ * Additional note:
+ * 		 J2SE_LATEST will be kept as J2SE_19 while Java 18.3 raw build is being built.
+ * 		 When a separate Java 18.3 binary is required, a #ifdef flag will be introduced to define
+ * 		 J2SE_LATEST to different values accordingly such as following:
+ * 		 #if J9VM_JAVA9_BUILD > 9
+ * 		 	#define J2SE_LATEST  J2SE_1803
+ * 		 #else
+ * 		 	#define J2SE_LATEST  J2SE_19
+ * 		 #endif
  */
 #define J2SE_15  0x1500
 #define J2SE_16  0x1600
@@ -52,12 +61,22 @@
 /*
  * Note: J2SE_SHAPE_LATEST has to be updated to highest JCL level supported by VM
  * 		 This allows JVM operates with latest level when classlib.properties doesn't present.
+ * Additional note:
+ * 		 J2SE_SHAPE_LATEST will be kept as J2SE_SHAPE_B165 while Java 18.3 raw build is being built.
+ * 		 When a separate Java 18.3 binary is required, a #ifdef flag will be introduced to define
+ * 		 J2SE_SHAPE_B165 to different values accordingly such as following:
+ * 		 #if J9VM_JAVA9_BUILD > 9
+ * 		 	#define J2SE_SHAPE_LATEST  J2SE_SHAPE_B1803
+ * 		 #else
+ * 		 	#define J2SE_SHAPE_LATEST  J2SE_SHAPE_B165
+ * 		 #endif
  */
 #define J2SE_SHAPE_LATEST    	J2SE_SHAPE_B165
 #define J2SE_SHAPE_SUN     		0x10000
 #define J2SE_SHAPE_B136    		0x40000
 #define J2SE_SHAPE_B148    		0x50000
 #define J2SE_SHAPE_B165    		0x60000
+#define J2SE_SHAPE_B1803		0x70000
 #define J2SE_SHAPE_RAWPLUSJ9	0x80000
 #define J2SE_SHAPE_RAW	 		0x90000
 #define J2SE_SHAPE_MASK 		0xF0000
