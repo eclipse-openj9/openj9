@@ -342,7 +342,7 @@ void induceRecompilation_unwrapper(void **argsPtr, void **resultPtr)
 extern "C" {
 
 
-void _jitProfileParseBuffer(uintptrj_t vmThread)
+void J9FASTCALL _jitProfileParseBuffer(uintptrj_t vmThread)
    {
    J9VMThread *currentThread = (J9VMThread *)vmThread;
    J9JITConfig * jitConfg = currentThread->javaVM->jitConfig;
@@ -370,7 +370,7 @@ void _jitProfileParseBuffer(uintptrj_t vmThread)
 
 extern "C" {
 
-void _jitProfileWarmCompilePICAddress(uintptrj_t address, TR_WarmCompilePICAddressInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileWarmCompilePICAddress(uintptrj_t address, TR_WarmCompilePICAddressInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
    if (recompilationCounter)
       {
@@ -405,7 +405,7 @@ void _jitProfileWarmCompilePICAddress(uintptrj_t address, TR_WarmCompilePICAddre
    return;
 }
 
-void _jitProfileAddress(uintptrj_t value, TR_AddressInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileAddress(uintptrj_t value, TR_AddressInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
    if (recompilationCounter)
       {
@@ -461,7 +461,7 @@ void _jitProfileAddress(uintptrj_t value, TR_AddressInfo *info, int32_t maxNumVa
 
 
 extern "C" {
-void _jitProfileLongValue(uint64_t value, TR_LongValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileLongValue(uint64_t value, TR_LongValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
    if (recompilationCounter)
       {
@@ -526,7 +526,7 @@ void _jitProfileBigDecimalValue(uintptrj_t value, uintptrj_t bigdecimalj9class, 
     #endif
 #endif
 
-void _jitProfileBigDecimalValue(uintptrj_t value, uintptrj_t bigdecimalj9class, int32_t scaleOffset, int32_t flagOffset, TR_BigDecimalValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileBigDecimalValue(uintptrj_t value, uintptrj_t bigdecimalj9class, int32_t scaleOffset, int32_t flagOffset, TR_BigDecimalValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
    if (recompilationCounter)
       {
@@ -610,7 +610,7 @@ void _jitProfileBigDecimalValue(uintptrj_t value, uintptrj_t bigdecimalj9class, 
 
 
 extern "C" {
-void _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, int32_t lengthOffset, TR_StringValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, int32_t lengthOffset, TR_StringValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
 
    // charsOffset is the offset to the 'value' field in a String object relative to the start of the object.
@@ -714,7 +714,7 @@ void _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, int32_t lengt
 }
 
 extern "C" {
-void _jitProfileValue(uint32_t value, TR_ValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileValue(uint32_t value, TR_ValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
 
    if (info->getMaxValue() > value)
@@ -1173,6 +1173,15 @@ void initializeJitRuntimeHelperTable(char isSMP)
    SET(TR_jitProfileLongValue,                  (void *)_jitProfileLongValueWrap,         TR_Helper);
    SET(TR_jitProfileBigDecimalValue,            (void *)_jitProfileBigDecimalValueWrap,   TR_Helper);
    SET(TR_jitProfileStringValue,                (void *)_jitProfileStringValueWrap,       TR_Helper);
+   SET(TR_jitProfileParseBuffer,                (void *)_jitProfileParseBuffer,           TR_Helper);
+#elif defined(TR_HOST_X86)
+   SET(TR_jitProfileWarmCompilePICAddress,      (void *)_jitProfileWarmCompilePICAddress, TR_CHelper);
+   SET(TR_jitProfileAddress,                    (void *)_jitProfileAddress,               TR_CHelper);
+   SET(TR_jitProfileValue,                      (void *)_jitProfileValue,                 TR_CHelper);
+   SET(TR_jitProfileLongValue,                  (void *)_jitProfileLongValue,             TR_CHelper);
+   SET(TR_jitProfileBigDecimalValue,            (void *)_jitProfileBigDecimalValue,       TR_CHelper);
+   SET(TR_jitProfileStringValue,                (void *)_jitProfileStringValue,           TR_CHelper);
+   SET(TR_jitProfileParseBuffer,                (void *)_jitProfileParseBuffer,           TR_CHelper);
 #else
    SET(TR_jitProfileWarmCompilePICAddress,      (void *)_jitProfileWarmCompilePICAddress, TR_Helper);
    SET(TR_jitProfileAddress,                    (void *)_jitProfileAddress,               TR_Helper);
@@ -1180,10 +1189,10 @@ void initializeJitRuntimeHelperTable(char isSMP)
    SET(TR_jitProfileLongValue,                  (void *)_jitProfileLongValue,             TR_Helper);
    SET(TR_jitProfileBigDecimalValue,            (void *)_jitProfileBigDecimalValue,       TR_Helper);
    SET(TR_jitProfileStringValue,                (void *)_jitProfileStringValue,           TR_Helper);
+   SET(TR_jitProfileParseBuffer,                (void *)_jitProfileParseBuffer,           TR_Helper);
 #endif // TR_HOST_S390
 #endif // TR_HOST_POWER
 
-   SET(TR_jitProfileParseBuffer,                (void *)_jitProfileParseBuffer, TR_Helper);
 #if defined(J9ZOS390)
    SET_CONST(TR_prepareForOSR,                  (void *)_prepareForOSR);
 #else

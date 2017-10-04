@@ -248,12 +248,11 @@ TR::Block *TR_JitProfiler::createProfilingBlocks(TR::Node *profilingNode, TR::Bl
    TR::Node *vmThread = TR::Node::createWithSymRef(profilingNode, TR::loadaddr, 0, new (trHeapMemory()) TR::SymbolReference(getSymRefTab(), TR::RegisterMappedSymbol::createMethodMetaDataSymbol(trHeapMemory(),"vmThread")));
 
    TR::SymbolReference *parser = getSymRefTab()->findOrCreateRuntimeHelper(TR_jitProfileParseBuffer, false, false, true);
-#if defined(TR_TARGET_X86)
-   parser->getSymbol()->castToMethodSymbol()->setLinkage(TR_System);
-#else
+#ifndef TR_TARGET_X86
    parser->getSymbol()->castToMethodSymbol()->setPreservesAllRegisters();
-   parser->getSymbol()->castToMethodSymbol()->setSystemLinkageDispatch();
 #endif
+   parser->getSymbol()->castToMethodSymbol()->setSystemLinkageDispatch();
+
    TR::Node *parserCall = TR::Node::createWithSymRef(profilingNode, TR::call, 1, parser);
    parserCall->setAndIncChild(0, vmThread);
 
