@@ -1136,25 +1136,30 @@ onLoadInternal(
          jitConfig->dataCacheTotalKB = 192 * 1024;
 #endif
 #if defined(J9ZTPF)
-   /*
-    * The z/TPF OS does not have the ability to reserve memory. It allocates whatever it
-    * is asked to allocate. Allocate the code cache based on the maximum amount of memory the
-    * process is allowed to have. The MAXXMMES is found in cinfc table entry CMMMMES.
-    * MAXXMMES is specified as the number of 1MB frames.
-    */
-   uint16_t physMemory = *(uint16_t*)(cinfc_fast(CINFC_CMMMMES) + 8);
-   if (physMemory >= 512)
-      jitConfig->codeCacheTotalKB = 256 * 1024;
-   else if (physMemory >= 256)
-      jitConfig->codeCacheTotalKB = 96 * 1024;
-   else if (physMemory >= 128)
-      jitConfig->codeCacheTotalKB = 48 * 1024;
-   else if (physMemory >= 64)
-      jitConfig->codeCacheTotalKB = 32 * 1024;
-   else if (physMemory >= 32)
-      jitConfig->codeCacheTotalKB =  8 * 1024;
-   else
-      jitConfig->codeCacheTotalKB = 2048;
+#define ZTPF_PERCENTAGE_OF_MEMORY 20;
+         /*
+          * The z/TPF OS does not have the ability to reserve memory. It allocates whatever it
+          * is asked to allocate. Allocate the code cache based on a percentage (20%) of memory
+          * the process is allowed to have; cap the maximum at 256m and use a minimum of 1m for
+          * a small MAXXMMES. It is found in the z/TPF cinfc table entry CMMMMES.
+          * MAXXMMES is specified as the number of 1MB frames.
+          * Create a 2048 KB data cache. This set of default values for the z/TPF os can be
+          * overriden via the command line interface.
+          */
+         uint16_t physMemory = *(uint16_t*)(cinfc_fast(CINFC_CMMMMES) + 8);
+         if (physMemory < 64)
+            {
+            jitConfig->codeCacheTotalKB = 1024; // use a 1m code cache for small MAXXMMES
+            }
+        else
+            {
+            physMemory /= ZTPF_PERCENTAGE_OF_MEMORY;
+            if (physMemory > 256) //cap code cache at 256m
+               physMemory = 256;
+            jitConfig->codeCacheTotalKB = physMemory * 1024;
+            }
+        jitConfig->dataCacheKB = 2048;
+
 
 #endif
       }
