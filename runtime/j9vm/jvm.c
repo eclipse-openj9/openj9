@@ -1150,6 +1150,7 @@ VersionSetting SHAPE_SETTINGS[] = {
 		{"b135", J2SE_SHAPE_B136},
 		{"b148", J2SE_SHAPE_B148},
 		{"b165", J2SE_SHAPE_B165},
+		{"b1803", J2SE_SHAPE_B1803},
 };
 #define NUM_SHAPE_SETTINGS (sizeof(SHAPE_SETTINGS) / sizeof(VersionSetting))
 

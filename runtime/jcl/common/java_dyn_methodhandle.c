@@ -564,7 +564,7 @@ Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromField(JNIEnv *
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 	/* Can't fail as we know the field is not null */
 	fieldObject = J9_JNI_UNWRAP_REFERENCE(reflectField);
-	fieldID = reflectFunctions->idFromFieldObject(vmThread, fieldObject);
+	fieldID = reflectFunctions->idFromFieldObject(vmThread, NULL, fieldObject);
 
 	fieldOffset = fieldID->offset;
 	if (J9_JAVA_STATIC == (fieldID->field->modifiers & J9_JAVA_STATIC)) {

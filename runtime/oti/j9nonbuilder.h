@@ -4988,7 +4988,7 @@ typedef struct J9ReflectFunctionTable {
 	j9object_t  ( *createDeclaredMethodObject)(struct J9Method *ramMethod, struct J9Class *declaringClass, j9array_t parameterTypes, struct J9VMThread* vmThread) ;
 	j9object_t  ( *createMethodObject)(struct J9Method *ramMethod, struct J9Class *declaringClass, j9array_t parameterTypes, struct J9VMThread* vmThread) ;
 	void  ( *fillInReflectMethod)(j9object_t methodObject, struct J9Class *declaringClass, jmethodID methodID, struct J9VMThread *vmThread) ;
-	struct J9JNIFieldID*  ( *idFromFieldObject)(struct J9VMThread* vmStruct, j9object_t fieldObject) ;
+	struct J9JNIFieldID*  ( *idFromFieldObject)(struct J9VMThread* vmStruct, j9object_t declaringClassObject, j9object_t fieldObject) ;
 	struct J9JNIMethodID*  ( *idFromMethodObject)(struct J9VMThread* vmStruct, j9object_t methodObject) ;
 	struct J9JNIMethodID*  ( *idFromConstructorObject)(struct J9VMThread* vmStruct, j9object_t constructorObject) ;
 } J9ReflectFunctionTable;

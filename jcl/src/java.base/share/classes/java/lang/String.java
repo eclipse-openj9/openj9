@@ -71,6 +71,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	static final boolean enableCompression = com.ibm.oti.vm.VM.J9_STRING_COMPRESSION_ENABLED;
 	
 	/*[IF Sidecar19-SE]*/
+	/*[IF Java18.3]*/
+	private final byte coder;
+	/*[ENDIF]*/
 	static final byte LATIN1 = 0;
 	static final byte UTF16 = 1;
 	static final boolean COMPACT_STRINGS;
@@ -415,6 +418,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			value = byteArray;
 			count = byteArray.length / 2;
 		}
+		/*[IF Java18.3]*/
+		this.coder = coder();
+		/*[ENDIF]*/
 	}
 
 	static void checkBoundsOffCount(int offset, int count, int length) {
@@ -436,6 +442,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public String() {
 		value = emptyValue;
 		count = 0;
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -562,6 +571,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		} else {
 			throw new StringIndexOutOfBoundsException();
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -644,6 +656,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		} else {
 			throw new StringIndexOutOfBoundsException();
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -725,6 +740,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		} else {
 			throw new StringIndexOutOfBoundsException();
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -817,6 +835,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			value[slen] = c;
 			/*[ENDIF]*/
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -878,6 +899,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			System.arraycopy(data, 0, value, 0, data.length);
 			/*[ENDIF]*/
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -939,6 +963,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		} else {
 			throw new StringIndexOutOfBoundsException();
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/*[IF Sidecar19-SE]*/
@@ -1058,6 +1085,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				}
 			}
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 	
 	/*[IF Sidecar19-SE]*/
@@ -1173,6 +1203,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				}
 			}
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -1184,8 +1217,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public String(String string) {
 		value = string.value;
 		count = string.count;
-		
 		hashCode = string.hashCode;
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -1210,6 +1245,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			/*[ENDIF]*/
 			count = numChars;
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -1241,6 +1279,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				count = buffer.length();
 			}
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/*
@@ -1318,6 +1359,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			System.arraycopy(s2.value, 0, value, s1len, s2len);
 			/*[ENDIF]*/
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/*
@@ -1415,6 +1459,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			System.arraycopy(s3.value, 0, value, (s1len + s2len), s3len);
 			/*[ENDIF]*/
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/*
@@ -1555,6 +1602,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			System.arraycopy(s1.value, 0, value, 0, s1len);
 			/*[ENDIF]*/
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/*
@@ -1853,6 +1903,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				/*[ENDIF]*/
 			}
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/*
@@ -4522,6 +4575,9 @@ written authorization of the copyright holder.
 		} else {
 			throw new StringIndexOutOfBoundsException();
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -4553,6 +4609,9 @@ written authorization of the copyright holder.
 			value = chars;
 			count = builder.lengthInternal();
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -5025,6 +5084,9 @@ written authorization of the copyright holder.
 		} else {
 			throw new StringIndexOutOfBoundsException();
 		}
+		/*[IF Java18.3]*/
+		coder = coder();
+		/*[ENDIF]*/
 	}
 
 	/**
