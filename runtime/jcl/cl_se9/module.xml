@@ -35,7 +35,11 @@
 	<xi:include href="../uma/se8_exports.xml"></xi:include>
 	<xi:include href="../uma/se829_exports.xml"></xi:include>
 	<xi:include href="../uma/se9_exports.xml"></xi:include>
-	
+
+	<xi:include href="../uma/vendor_jcl_exports.xml">
+		<xi:fallback/>
+	</xi:include>
+
 	<xi:include href="../uma/sun_misc_Unsafe_objects.xml"></xi:include>	
 	<xi:include href="../uma/se6_vm-side_natives_objects.xml"></xi:include>
 	<xi:include href="../uma/se6_vm-side_lifecycle_objects.xml"></xi:include>

@@ -20,34 +20,6 @@
 	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 -->
 <exports group="jithelpers">
-	 <export name="Java_com_ibm_jit_crypto_JITAESCryptInHardware_isAESSupportedByHardwareImpl" />
-	 <export name="Java_com_ibm_jit_crypto_JITAESCryptInHardware_expandAESKeyInHardware" />
-	 <export name="Java_com_ibm_jit_crypto_JITAESCryptInHardware_doAESInHardware" />
-
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareDigest_z_1kimd_1native" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareDigest_z_1kimd_1supported" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareDigest_z_1klmd_1native" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareDigest_z_1klmd_1supported" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareDigest_getCryptoHardwareFeatures" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareDigest_sha256" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareDigest_sha512" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1km_1native" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1km_1supported" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareDigest_z_1kmac_1native" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareDigest_z_1kmac_1supported" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1kmc_1native" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1kmc_1supported" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1kmctr_1native" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1kmctr_1supported" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1kmgcm_1native" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1kmgcm_1supported" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1kmf_1native" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1kmf_1supported" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1kmo_1native" />
-	 <export name="Java_com_ibm_jit_crypto_JITFullHardwareCrypt_z_1kmo_1supported" />
-	 <export name="Java_com_ibm_jit_crypto_JITTRNGInHardware_isTRNGSupportedByHardwareImpl" />
-	 <export name="Java_com_ibm_jit_crypto_JITTRNGInHardware_randomImpl" />
-
 	<export name="Java_com_ibm_jit_JITHelpers_javaLangClassJ9ClassOffset" />
 	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectJ9ClassOffset" />
 	<export name="Java_com_ibm_jit_JITHelpers_objectHeaderHasBeenMovedInClass" />
