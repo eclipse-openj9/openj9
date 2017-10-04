@@ -5423,12 +5423,6 @@ TR_J9VMBase::getStringUTF8(uintptrj_t objectPointer, char *buffer, intptrj_t buf
    }
 
 uint32_t
-TR_J9VMBase::getVarHandleTypeTableOffset(TR::Compilation * comp)
-   {
-   return uint32_t(J9VMJAVALANGINVOKEVARHANDLE_TYPETABLE_OFFSET(vmThread()));
-   }
-
-uint32_t
 TR_J9VMBase::getVarHandleHandleTableOffset(TR::Compilation * comp)
    {
    return uint32_t(J9VMJAVALANGINVOKEVARHANDLE_HANDLETABLE_OFFSET(vmThread()));
