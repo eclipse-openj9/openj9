@@ -22,8 +22,7 @@
 
 Boolean FAIL = false
 String SRC_REPO = 'https://github.com/eclipse/openj9.git'
-String[] BAD_FILES
-String HASH = '#'
+def BAD_FILES = []
 String HASHES = '###################################'
 
 stage('Line Endings Check') {
@@ -60,14 +59,14 @@ stage('Line Endings Check') {
                                     default:
                                         echo "ERROR - should have CRLF line terminators: '${it}' type: '${TYPE}'"
                                         FAIL = true
-                                        BAD_FILES << new String("${it}")
+                                        BAD_FILES << "${it}"
                                 }
                             default:
                                 switch (TYPE) {
                                     case ~/.*CR.* line terminators.*/:
                                         echo "ERROR - should have LF line terminators: '${it}' type: '${TYPE}'"
                                         FAIL = true
-                                        BAD_FILES << new String("${it}")
+                                        BAD_FILES << "${it}"
                                         break
                                     default:
                                         echo "Good text file: '${it}' type: '${TYPE}'"
@@ -80,12 +79,10 @@ stage('Line Endings Check') {
             }
             if (FAIL) {
                 echo "${HASHES}"
-                echo "${HASH}"
-                echo "${HASH} The following files were modified and have incorrect line endings"
+                echo "The following files were modified and have incorrect line endings"
                 BAD_FILES.each() {
-                    echo "# ${it}"
+                    echo "${it}"
                 }
-                echo "${HASH}"
                 echo "${HASHES}"
                 sh 'exit 1'
             } else {
