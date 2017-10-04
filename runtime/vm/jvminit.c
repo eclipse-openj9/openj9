@@ -1956,7 +1956,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				if (!idleGCTuningSupported) {
 					vm->vmRuntimeStateListener.idleTuningFlags &= ~(J9_IDLE_TUNING_GC_ON_IDLE | J9_IDLE_TUNING_COMPACT_ON_IDLE);
 					if (J9_IDLE_TUNING_IGNORE_UNRECOGNIZED_OPTIONS != (vm->vmRuntimeStateListener.idleTuningFlags & J9_IDLE_TUNING_IGNORE_UNRECOGNIZED_OPTIONS)) {
-						j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED);
+						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED);
 						goto _error;
 					}
 				}
