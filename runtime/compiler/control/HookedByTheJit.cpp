@@ -601,6 +601,18 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       }
    }
 
+static void jitHookVMInitialized(J9HookInterface * * hook, UDATA eventNum, void * eventData, void * userData)
+   {
+   J9VMThread* vmThread = ((J9VMInitEvent *)eventData)->vmThread;
+   TR::CompilationInfo *compInfo = getCompilationInfo(vmThread->javaVM->jitConfig);
+   if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      {
+      fprintf(stderr, "\nJAAS server ready to accept incoming requests\n");
+      j9thread_sleep(10000000000);
+      }
+   }
+
+
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
 
 static int32_t interpreterProfilingState        = IPROFILING_STATE_OFF;
@@ -7042,6 +7054,13 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
 
       if (TR::Options::getVerboseOption(TR_VerboseJaas))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Started JaasServer listener thread: %p ", listener->getListenerThread());
+
+      // Give the JIT a chance to do stuff after the VM is initialized
+      if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jitHookVMInitialized, OMR_GET_CALLSITE(), NULL))
+         {
+         j9tty_printf(PORTLIB, "Error: Unable to install J9HOOK_VM_INITIALIZED\n");
+         return -1;
+         }
       }
  
    if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_START, jitHookLocalGCStart, OMR_GET_CALLSITE(), NULL) ||
