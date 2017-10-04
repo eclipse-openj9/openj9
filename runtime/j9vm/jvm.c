@@ -2210,8 +2210,9 @@ JNI_a2e_vsprintf(char *target, const char *format, va_list args)
 
 int isFileInDir(char *dir, char *file){
 	size_t length, dirLength;
-	char *fullpath;
-	FILE *f;
+	char *fullpath = NULL;
+	FILE *f = NULL;
+	int foundFile = 0;
 
 	dirLength = strlen(dir);
 	/* Constuct 'full' path */
@@ -2223,17 +2224,20 @@ int isFileInDir(char *dir, char *file){
 
 	length = dirLength + strlen(file) + 2; /* 2= '/' + null char */
 	fullpath = malloc(length);
-	strcpy(fullpath, dir);
-	fullpath[dirLength] = DIR_SEPARATOR;
-	strcpy(fullpath+dirLength+1, file);
+	if (NULL != fullpath) {
+		strcpy(fullpath, dir);
+		fullpath[dirLength] = DIR_SEPARATOR;
+		strcpy(fullpath+dirLength+1, file);
 
-	/* See if file exists - use fopen() for portability */
-	f = fopen(fullpath, "rb");
-	if (f) {
-		fclose(f);
+		/* See if file exists - use fopen() for portability */
+		f = fopen(fullpath, "rb");
+		if (NULL != f) {
+			foundFile = 1;
+			fclose(f);
+		}
+		free(fullpath);
 	}
-	free(fullpath);
-	return f!=0;
+	return foundFile;
 }
 
 
