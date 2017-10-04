@@ -46,15 +46,19 @@
 void
 ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::CodeGenerator* cg)
    {
+   TR::Node* synchronizedObjectNode = node->getChild(0);
+
    // Materialize the object register first because LPD can only deal with base-displacement type memory references and
    // because the object appears directly underneath the indirect load we are guaranteed not to have an index register
-   TR::Register* objectRegister = cg->evaluate(node->getChild(0));
-   TR::Register* lockRegister = cg->allocateRegister();
+   TR::Register* objectRegister = cg->evaluate(synchronizedObjectNode);
+
+   TR::Node* loadNode = node->getChild(1);
 
    // The logic for evaluating a particular load is non-trivial in both evaluation sequence and setting of the various
    // register flags (collected references, etc.). As such we evaluate the load preemptively and extract the
    // materialized memory reference directly from the load itself for use in LPD.
-   TR::Register* loadRegister = cg->evaluate(node->getChild(1));
+   TR::Register* loadRegister = cg->evaluate(loadNode);
+   TR::Register* lockRegister = cg->allocateRegister();
 
    TR::RegisterPair* registerPair = cg->allocateConsecutiveRegisterPair(lockRegister, loadRegister);
 
@@ -66,70 +70,111 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
 
    // Search for the load memory reference from the previously evaluated load
    TR::Instruction* loadInstruction = cg->comp()->getAppendInstruction();
-   // Sanity check for loads
-   TR_ASSERT_SAFE_FATAL(loadInstruction->isLoad(), "Expecting the append instruction to be a load");
 
-   // Sanity check for instruction kind as we are doing an unsafe cast following this
-   TR_ASSERT_SAFE_FATAL(loadInstruction->getKind() == OMR::Instruction::Kind::IsRX || loadInstruction->getKind() == OMR::Instruction::Kind::IsRXY, "Expecting the append instruction to be a load of kind RX or RXY\n");
+   TR_ASSERT_SAFE_FATAL(loadInstruction->isLoad() && (loadInstruction->getKind() == OMR::Instruction::Kind::IsRX || loadInstruction->getKind() == OMR::Instruction::Kind::IsRXY), "Expecting the append instruction to be a load of kind RX or RXY\n");
 
    TR::MemoryReference* loadMemoryReference = static_cast<TR::S390RXInstruction*>(loadInstruction)->getMemoryReference();
 
    TR_ASSERT_SAFE_FATAL(loadMemoryReference->getIndexRegister() == NULL, "Load memory reference must not have an index register\n");
 
-   int32_t lockWordOffset = node->getChild(2)->getConst<int32_t>();
+   // Recreate the memory reference since the load instruction will be moved to the OOL code section and the register
+   // allocated to hold value of the base register of the memory reference may not be valid in the main line path
+   loadMemoryReference = generateS390MemoryReference(*loadMemoryReference, 0, cg);
+
+   TR::Node* lockWordOffsetNode = node->getChild(2);
+
+   int32_t lockWordOffset = lockWordOffsetNode->getConst<int32_t>();
 
    TR::MemoryReference* lockMemoryReference = generateS390MemoryReference(objectRegister, lockWordOffset, cg);
 
    const bool generateCompressedLockWord = static_cast<TR_J9VMBase*>(cg->comp()->fe())->generateCompressedLockWord();
 
-   const bool generate32BitLoads = TR::Compiler->target.is32Bit() || (TR::Compiler->target.is64Bit() && generateCompressedLockWord && node->getChild(1)->getOpCodeValue() == TR::iloadi);
+   const bool is32BitLock = TR::Compiler->target.is32Bit() || generateCompressedLockWord;
+   const bool is32BitLoad = loadNode->getOpCodeValue() == TR::l2a || loadNode->getSymbolReference()->getSymbol()->getSize() == 4;
 
-   if (generate32BitLoads)
+   if (is32BitLock && is32BitLoad)
       {
-      TR::MemoryReference* reusedLoadMemoryReference = generateS390MemoryReference(*loadMemoryReference, 0, cg);
+      generateSSFInstruction(cg, TR::InstOpCode::LPD, node, registerPair, loadMemoryReference, lockMemoryReference);
 
-      generateSSFInstruction(cg, TR::InstOpCode::LPD, node, registerPair, reusedLoadMemoryReference, lockMemoryReference);
-
-      if (node->getChild(1)->getOpCodeValue() == TR::l2a)
+      if (loadNode->getOpCodeValue() == TR::l2a)
          {
          generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, loadRegister, loadRegister);
          }
       }
    else
       {
-      TR_ASSERT_SAFE_FATAL((lockWordOffset & 7) == 0 || (generateCompressedLockWord && (lockWordOffset & 3) == 0),
-            "Lockword must be aligned on a double-word boundary or on a word boundary if the lockword is compressed\n");
+      // LPDG requires memory references to be aligned to a double-wrod boundary
+      TR::MemoryReference* alignedLockMemoryReference = lockMemoryReference;
+      TR::MemoryReference* alignedLoadMemoryReference = loadMemoryReference;
 
-      if ((loadMemoryReference->getOffset() & 7) != 0)
+      bool lockRegisterRequiresShift = false;
+      bool loadRegisterRequiresShift = false;
+
+      bool lockRegisterRequires32BitLogicalSignExtension = false;
+      bool loadRegisterRequires32BitLogicalSignExtension = false;
+
+      if (is32BitLock)
          {
-         TR_ASSERT_SAFE_FATAL((loadMemoryReference->getOffset() & 3) == 0, "Integer field must be aligned on a word boundary\n");
-
-         TR::MemoryReference* alignedLoadMemoryReference = generateS390MemoryReference(*loadMemoryReference, -4, cg);
-
-         generateSSFInstruction(cg, TR::InstOpCode::LPDG, node, registerPair, alignedLoadMemoryReference, lockMemoryReference);
-
-         // For 64-bit uncompressed lockwords, when the load memory reference is not aligned to double-word boundaries,
-         // the loaded value is at the lower 32-bit. We need an AND to zero out the high half of loadRegister.
-         if (node->getChild(1)->getOpCodeValue() == TR::iloadi)
+         if ((lockWordOffset & 7) == 0)
             {
-            generateRILInstruction(cg, TR::InstOpCode::NIHF, node, loadRegister, static_cast<uintptrj_t>(0));
+            lockRegisterRequiresShift = true;
+            }
+         else
+            {
+            // This is because we must use LPDG to load a 32-bit value using displacement -4
+            TR_ASSERT_SAFE_FATAL((lockWordOffset & 3) == 0, "Lockword must be aligned on a word boundary\n");
+
+            lockRegisterRequires32BitLogicalSignExtension = true;
+            alignedLockMemoryReference = generateS390MemoryReference(*lockMemoryReference, -4, cg);
             }
          }
       else
          {
-         TR::MemoryReference* reusedLoadMemoryReference = generateS390MemoryReference(*loadMemoryReference, 0, cg);
+         // This is because we must use LPDG to load a 64-bit value
+         TR_ASSERT_SAFE_FATAL((lockWordOffset & 7) == 0, "Lockword must be aligned on a double-word boundary\n");
+         }
 
-         generateSSFInstruction(cg, TR::InstOpCode::LPDG, node, registerPair, reusedLoadMemoryReference, lockMemoryReference);
-
-         // We know we are generating for a 64-bit target. Furthermore we know the field we are loading is on a double-
-         // word boundary. However if we are loading an integer it only occupies 32-bits of storage, and since we must
-         // use LPDG to load the field it means the field will be generated in the most significant 32-bits of the
-         // loaded register. Hence we must carry out a right shift to move the loaded value into the least significant
-         // 32-bits of the respective register.
-         if (node->getChild(1)->getOpCodeValue() == TR::iloadi)
+      if (is32BitLoad)
+         {
+         if ((loadMemoryReference->getOffset() & 7) == 0)
             {
-            generateRSInstruction(cg, TR::InstOpCode::SRLG, node, loadRegister, loadRegister, 32);
+            loadRegisterRequiresShift = true;
             }
+         else
+            {
+            // This is because we must use LPDG to load a 32-bit value using displacement -4
+            TR_ASSERT_SAFE_FATAL((loadMemoryReference->getOffset() & 3) == 0, "Field must be aligned on a word boundary\n");
+
+            loadRegisterRequires32BitLogicalSignExtension = true;
+            alignedLoadMemoryReference = generateS390MemoryReference(*loadMemoryReference, -4, cg);
+            }
+         }
+      else
+         {
+         // This is because we must use LPDG to load a 64-bit value
+         TR_ASSERT_SAFE_FATAL((loadMemoryReference->getOffset() & 7) == 0, "Field must be aligned on a double-word boundary\n");
+         }
+
+      generateSSFInstruction(cg, TR::InstOpCode::LPDG, node, registerPair, alignedLoadMemoryReference, alignedLockMemoryReference);
+
+      if (lockRegisterRequiresShift)
+         {
+         generateRSInstruction(cg, TR::InstOpCode::SRLG, node, lockRegister, lockRegister, 32);
+         }
+
+      if (loadRegisterRequiresShift)
+         {
+         generateRSInstruction(cg, TR::InstOpCode::SRLG, node, loadRegister, loadRegister, 32);
+         }
+
+      if (lockRegisterRequires32BitLogicalSignExtension)
+         {
+         generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, lockRegister, lockRegister);
+         }
+
+      if (loadRegisterRequires32BitLogicalSignExtension)
+         {
+         generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, loadRegister, loadRegister);
          }
       }
 
@@ -143,7 +188,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
    // Mask out the recursion and lock reservation bits
    generateRIInstruction(cg, TR::InstOpCode::NILL, node, lockRegister,  ~(OBJECT_HEADER_LOCK_RECURSION_MASK | OBJECT_HEADER_LOCK_RESERVED));
 
-   if (generate32BitLoads)
+   if (is32BitLock && is32BitLoad)
       {
       // Now check if we loaded the lock of the current thread
       generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node, lockRegister, cg->getMethodMetaDataRealRegister(), TR::InstOpCode::COND_BE, mergeLabel, false);
@@ -161,8 +206,10 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
       }
 
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, slowPathLabel);
-   TR::Node *monentNode = node->getChild(3);
-   TR::Node *monexitNode = node->getChild(4);
+
+   TR::Node *monentSymbolReferenceNode = node->getChild(3);
+   TR::Node *monexitSymbolReferenceNode = node->getChild(4);
+
    TR_S390OutOfLineCodeSection* outOfLineCodeSection = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(slowPathLabel, mergeLabel, cg);
    cg->getS390OutOfLineCodeSectionList().push_front(outOfLineCodeSection);
    outOfLineCodeSection->swapInstructionListsWithCompilation();
@@ -174,12 +221,12 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
    TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
    
    // Calling helper with call node which should NULL
-   helperLink->buildDirectDispatch(monentNode);
+   helperLink->buildDirectDispatch(monentSymbolReferenceNode);
 
    // Move the original load to the synchronized region
    loadInstruction->move(helperCallLabelInstr);
 
-   helperLink->buildDirectDispatch(monexitNode);
+   helperLink->buildDirectDispatch(monexitSymbolReferenceNode);
 
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, mergeLabel);
 
@@ -187,13 +234,11 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, mergeLabel, conditions);
 
-   for (auto i = 0; i < 3; ++i)
-      {
-      cg->decReferenceCount(node->getChild(i));
-      }
-   
-   cg->recursivelyDecReferenceCount(monentNode);
-   cg->recursivelyDecReferenceCount(monexitNode);
+   cg->decReferenceCount(synchronizedObjectNode);
+   cg->decReferenceCount(loadNode);
+   cg->decReferenceCount(lockWordOffsetNode);
+   cg->recursivelyDecReferenceCount(monentSymbolReferenceNode);
+   cg->recursivelyDecReferenceCount(monexitSymbolReferenceNode);
    cg->stopUsingRegister(lockRegister);
    cg->stopUsingRegister(registerPair);
    }
@@ -205,11 +250,17 @@ ReduceSynchronizedFieldLoad::perform()
 
    if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
       {
-      if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad))
+      // When concurrent scavenge is enabled we need to load the object reference using a read barrier however
+      // there is no guarded load alternative for the LPD instruction. As such this optimization cannot be carried
+      // out for object reference loads under concurrent scavenge.
+      if (!TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
          {
-         traceMsg(cg->comp(), "Performing ReduceSynchronizedFieldLoad\n");
+         if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad))
+            {
+            traceMsg(cg->comp(), "Performing ReduceSynchronizedFieldLoad\n");
 
-         transformed = performOnTreeTops(cg->comp()->getStartTree(), NULL);
+            transformed = performOnTreeTops(cg->comp()->getStartTree(), NULL);
+            }
          }
       }
 
@@ -263,12 +314,14 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                   }
                }
 
-            // Look for object or integer loads. When concurrent scavenge is enabled we need to load the object
-            // reference using a read barrier however there is no guarded load alternative for the LPD instruction.
-            // As such this optimization cannot be carried out for object reference loads under concurrent scavenge.
-            if ((lookaheadChildNode->getOpCodeValue() == TR::aloadi && !TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads()) ||
-                  lookaheadChildNode->getOpCodeValue() == TR::iloadi)
+            if (lookaheadChildNode->getOpCode().isLoadIndirect())
                {
+               // Disallow this optimization for 64-bit loads on 31-bit JVM due to register pairs
+               if (TR::Compiler->target.is32Bit() && lookaheadChildNode->getSymbolReference()->getSymbol()->getSize() == 8)
+                  {
+                  continue;
+                  }
+
                TR::Node* synchronizedObjectNode = monentNode->getChild(0);
 
                // Make sure the object we are synchronizing on is the same object we are loading from
@@ -313,13 +366,13 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                      }
 
                   // Skip global register stores of the loaded value since this is a NOP at codegen time
-                  if (lookaheadChildNode->getOpCodeValue() == TR::aRegStore || lookaheadChildNode->getOpCodeValue() == TR::iRegStore)
+                  if (lookaheadChildNode->getOpCodeValue() == TR::aRegStore || lookaheadChildNode->getOpCodeValue() == TR::iRegStore || lookaheadChildNode->getOpCodeValue() == TR::lRegStore)
                      {
                      if (lookaheadChildNode->getChild(0) == loadNode)
                         {
                         if (cg->comp()->getOption(TR_TraceCG))
                            {
-                           traceMsg(cg->comp(), "Skipping (a|i)regStore [%p]\n", lookaheadChildNode);
+                           traceMsg(cg->comp(), "Skipping (a|i|l)regStore [%p]\n", lookaheadChildNode);
                            }
 
                         if (!advanceIterator(iter, endTreeTop))
@@ -364,17 +417,10 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                            traceMsg(cg->comp(), "Lock word offset = %d\n", lockWordOffset);
                            }
 
+                        // LPD(G) is an SSF instruction with a 12-bit displacement
                         if (lockWordOffset > 0 && lockWordOffset < 4096)
                            {
-                           const bool generateCompressedLockWord = static_cast<TR_J9VMBase*>(cg->comp()->fe())->generateCompressedLockWord();
-
-                           // TODO: We need to think harder about 64-bit support to make sure the fields we are loading
-                           // are on a double-word boundary for use with LPD. We need to be careful about how we handle
-                           // compressed lock words and 64-bit fields in all cases. 64-bit support is disabled at the
-                           // moment via the following mechanism.
-                           const bool generate32BitLoads = TR::Compiler->target.is32Bit() || (TR::Compiler->target.is64Bit() && generateCompressedLockWord && loadNode->getOpCodeValue() == TR::iloadi);
-
-                           if (generate32BitLoads && performTransformation(cg->comp(), "%sReplacing monent [%p] monexit [%p] synchronized region with fabricated call\n", OPT_DETAILS, monentNode, monexitNode))
+                           if (performTransformation(cg->comp(), "%sReplacing monent [%p] monexit [%p] synchronized region with fabricated call\n", OPT_DETAILS, monentNode, monexitNode))
                               {
                               transformed = true;
 
@@ -389,8 +435,10 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                               TR::Node* lockWordOffsetNode = TR::Node::iconst (loadNode, lockWordOffset);
 
                               callNode->setAndIncChild(2, lockWordOffsetNode);
+
                               TR::Node* monentSymbolReferenceNode = TR::Node::createWithSymRef(loadNode, TR::call, 1, synchronizedObjectNode, monentNode->getSymbolReference());
                               TR::Node* monexitSymbolReferenceNode = TR::Node::createWithSymRef(loadNode, TR::call, 1, synchronizedObjectNode, monexitNode->getSymbolReference());
+
                               callNode->setAndIncChild(3, monentSymbolReferenceNode);
                               callNode->setAndIncChild(4, monexitSymbolReferenceNode);
 

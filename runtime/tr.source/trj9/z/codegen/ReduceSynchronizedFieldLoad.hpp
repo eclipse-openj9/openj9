@@ -78,12 +78,12 @@ class ReduceSynchronizedFieldLoad
     *
     *     call <synchronizedFieldLoad>
     *       object
-    *       aloadi / iloadi / l2a
+    *       aloadi / iloadi / lloadi / l2a
     *       iconst
     *       call jitMonitorEntry
-    *          ==> object
+    *          ==>object
     *       call jitMonitorExit
-    *          ==> object
+    *          ==>object
     *
     *     It carries five children:
     *
