@@ -25,7 +25,7 @@ String SRC_REPO = 'https://github.com/eclipse/openj9.git'
 def BAD_FILES = []
 String HASHES = '###################################'
 
-stage('Line Endings Check') {
+stage('Copyright Check') {
     node ('master') {
         timestamps {
             git url: SRC_REPO
@@ -38,55 +38,34 @@ stage('Line Endings Check') {
             ).trim()
             echo FILES
             def FILES_LIST = FILES.split("\\r?\\n")
+            DATE_YEAR = sh (
+                script: "date +%Y",
+                returnStdout: true
+            ).trim()
             FILES_LIST.each() {
                 println "Checking file: '${it}'"
-                TYPE = sh (
-                    script: "file -b '${it}'",
-                    returnStdout: true
-                ).trim()
-
-                switch (TYPE) {
-                    case ~/empty/:
-                        echo "Empty file: '${it}'"
-                        break
-                    case ~/.*text.*/:
-                        switch (it.toLowerCase()) {
-                            case ~/.*\.bat|.*\.cmd/:
-                                switch(TYPE) {
-                                    case ~/.*CRLF line terminators.*/:
-                                        echo "Good windows script: '${it}' type: '${TYPE}'"
-                                        break
-                                    default:
-                                        echo "ERROR - should have CRLF line terminators: '${it}' type: '${TYPE}'"
-                                        FAIL = true
-                                        BAD_FILES << "${it}"
-                                }
-                            default:
-                                switch (TYPE) {
-                                    case ~/.*CR.* line terminators.*/:
-                                        echo "ERROR - should have LF line terminators: '${it}' type: '${TYPE}'"
-                                        FAIL = true
-                                        BAD_FILES << "${it}"
-                                        break
-                                    default:
-                                        echo "Good text file: '${it}' type: '${TYPE}'"
-                                        break
-                                }
-                        }
-                    default:
-                        echo "Non-text file: '${it}' type: '${TYPE}'"
+                RESULT = sh (
+                    script: "grep -qE 'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR} IBM Corp. and others' '${it}'",
+                    returnStatus: true)
+                if(RESULT != 0) {
+                    echo "FAILURE - Copyright date in file: '${it}' appears to be incorrect"
+                    FAIL = true
+                    BAD_FILES << "${it}"
+                } else {
+                    echo "Copyright date in file: appears to be correct"
                 }
+
             }
             if (FAIL) {
                 echo "${HASHES}"
-                echo "The following files were modified and have incorrect line endings"
+                echo "The following files were modified and have incorrect copyrights"
                 BAD_FILES.each() {
                     echo "${it}"
                 }
                 echo "${HASHES}"
                 sh 'exit 1'
             } else {
-                echo "All modified files appear to have correct line endings"
+                echo "All modified files appear to have correct copyrights"
             }
         }
     }

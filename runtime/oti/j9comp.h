@@ -26,5 +26,8 @@
 #include "omrcomp.h"
 
 #define J9_GET_CALLSITE() OMR_GET_CALLSITE()
+#define J9_ARE_ANY_BITS_SET(value, bits) OMR_ARE_ANY_BITS_SET((value), (bits))
+#define J9_ARE_ALL_BITS_SET(value, bits) OMR_ARE_ALL_BITS_SET((value), (bits))
+#define J9_ARE_NO_BITS_SET(value, bits) OMR_ARE_NO_BITS_SET((value), (bits))
 
 #endif /* j9comp_h */
