@@ -4678,7 +4678,6 @@ typedef struct J9InternalVMFunctions {
 	void*  ( *jniArrayAllocateMemoryFromThread)(struct J9VMThread* vmThread, UDATA sizeInBytes) ;
 	void  ( *jniArrayFreeMemoryFromThread)(struct J9VMThread* vmThread, void* location) ;
 	void  (JNICALL *sendForGenericInvoke)(struct J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg, UDATA reserved4) ;
-	void  (JNICALL *sendForGenericInvokeVarHandle)(struct J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, j9object_t varHandle, UDATA reserved4) ;
 	void  (JNICALL *jitFillOSRBuffer)(struct J9VMThread *vmContext, void *osrBlock, UDATA reserved1, UDATA reserved2, UDATA reserved3) ;
 	void  (JNICALL *sendResolveMethodHandle)(struct J9VMThread *vmThread, UDATA cpIndex, J9ConstantPool *ramCP, J9Class *definingClass, J9ROMNameAndSignature* nameAndSig) ;
 	j9object_t  ( *resolveInvokeDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;

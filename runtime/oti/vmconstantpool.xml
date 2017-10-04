@@ -312,7 +312,6 @@
 	<fieldref class="java/lang/invoke/ConstantDoubleHandle" name="value" signature="D" cast="U_64" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/InvokeGenericHandle" name="castType" signature="Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/VarHandle" name="handleTable" signature="[Ljava/lang/invoke/MethodHandle;" jcl="se9_before_b165,se9"/>
-	<!--fieldref class="java/lang/invoke/VarHandle" name="typeTable" signature="[Ljava/lang/invoke/MethodType;" jcl="se9_before_b165,se9"/-->
 	<fieldref class="java/lang/invoke/VarHandle" name="modifiers" signature="I" jcl="se9_before_b165,se9"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="foldPosition" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="argumentIndices" signature="[I" flags="opt_methodHandle"/>
@@ -341,7 +340,6 @@
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="invokeWithArgumentsHelper" signature="(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/> 
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="constructorPlaceHolder" signature="(Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="forGenericInvoke" signature="(Ljava/lang/invoke/MethodType;Z)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
-	<specialmethodref class="java/lang/invoke/MethodHandle" name="forGenericInvokeVarHandle" signature="(Ljava/lang/invoke/MethodType;Ljava/lang/invoke/VarHandle;)Ljava/lang/invoke/MethodHandle;" jcl="se9_before_b165,se9"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="returnFilterPlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="foldHandlePlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="guardWithTestPlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>

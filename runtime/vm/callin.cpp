@@ -944,25 +944,6 @@ sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9objec
 }
 
 void JNICALL
-sendForGenericInvokeVarHandle(J9VMThread *currentThread, j9object_t methodHandle, j9object_t methodType, j9object_t varHandle, UDATA reserved4)
-{
-	Trc_VM_sendForGenericInvokeVarHandle_Entry(currentThread);
-	J9VMEntryLocalStorage newELS;
-	
-	/* Run the method */
-	if (buildCallInStackFrame(currentThread, &newELS, true, false)) {
-		*--currentThread->sp = (UDATA)methodHandle;
-		*--currentThread->sp = (UDATA)methodType;
-		*--currentThread->sp = (UDATA)varHandle;
-		currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-		currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLE_FORGENERICINVOKEVARHANDLE_METHOD(currentThread->javaVM);
-		c_cInterpreter(currentThread);
-		restoreCallInFrame(currentThread);
-	}
-	Trc_VM_sendForGenericInvokeVarHandle_Exit(currentThread);
-}
-
-void JNICALL
 sendResolveInvokeDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature *nameAndSig, U_16 *bsmData)
 {
 	Trc_VM_sendResolveInvokeDynamic_Entry(currentThread);

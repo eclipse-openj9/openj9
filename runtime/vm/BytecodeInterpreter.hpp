@@ -7779,7 +7779,7 @@ done:
 					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 					pushObjectInSpecialFrame(REGISTER_ARGS, varHandle);
 					updateVMStruct(REGISTER_ARGS);
-					sendForGenericInvokeVarHandle(_currentThread, methodHandle, callSiteType, varHandle, 0 /* reserved */);
+					sendForGenericInvoke(_currentThread, methodHandle, callSiteType, FALSE /* dropFirstArg */, 0 /* reserved */);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					varHandle = popObjectInSpecialFrame(REGISTER_ARGS);
 					restoreGenericSpecialStackFrame(REGISTER_ARGS);
