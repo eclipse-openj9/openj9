@@ -2250,7 +2250,7 @@ TR_MarkHotField::mark(J9Class * clazz, bool isFixedClass)
       // hot fields marked, we need another word for this
       if (_comp->getOption(TR_TraceMarkingOfHotFields))
          {
-         J9ROMClass* romClass = ((J9Class *)clazz)->romClass;
+         J9ROMClass* romClass = TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *)clazz);
          J9UTF8* name = J9ROMCLASS_CLASSNAME(romClass);
          printf("Rejected class %.*s for hot field marking because it's marked for tenured alignment\n", J9UTF8_LENGTH(name), J9UTF8_DATA(name));
          }
@@ -4261,14 +4261,14 @@ TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Comp
 // Creates a node to initialize the local object flags field
 //
 TR::Node *
-TR_J9VMBase::initializeLocalObjectFlags(TR::Compilation * comp, TR::Node * allocationNode, J9Class * ramClass)
+TR_J9VMBase::initializeLocalObjectFlags(TR::Compilation * comp, TR::Node * allocationNode, TR_OpaqueClassBlock * ramClass)
    {
    TR::VMAccessCriticalSection initializeLocalObjectFlags(this);
 
 #if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT)
    int32_t initValue = 0;
 #else
-   int32_t initValue = ramClass->romClass->instanceShape;
+   int32_t initValue = TR::Compiler->cls.romClassOf(ramClass)->instanceShape;
 #endif
 
    if (!TR::Options::getCmdLineOptions()->realTimeGC())
@@ -4303,7 +4303,7 @@ TR_J9VMBase::initializeLocalObjectHeader(TR::Compilation * comp, TR::Node * allo
    TR::StaticSymbol     * classSym  = classNode->getSymbol()->castToStaticSymbol();
    TR_OpaqueClassBlock * ramClass  = (TR_OpaqueClassBlock *) classSym->getStaticAddress();
 
-   prevTree = initializeClazzFlagsMonitorFields(comp, prevTree, allocationNode, classNode, (J9Class*) ramClass);
+   prevTree = initializeClazzFlagsMonitorFields(comp, prevTree, allocationNode, classNode, ramClass);
    }
 
 // Create trees to initialize the header of an array that is being allocated on the stack
@@ -4319,7 +4319,7 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
    */
    TR::TreeTop * prevTree = allocationTreeTop;
    TR::ILOpCodes kind = allocationNode->getOpCodeValue();
-   J9Class * ramClass = 0;
+   TR_OpaqueClassBlock * ramClass = 0;
 
    switch (kind)
       {
@@ -4328,7 +4328,7 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
          TR_ASSERT(allocationNode->getSecondChild()->getOpCode().isLoadConst(), "Expecting const child \n");
          int32_t arrayClassIndex = allocationNode->getSecondChild()->getInt();
          struct J9Class ** arrayClasses = &_jitConfig->javaVM->booleanArrayClass;
-         ramClass = arrayClasses[arrayClassIndex - 4];
+         ramClass = (TR_OpaqueClassBlock *)arrayClasses[arrayClassIndex - 4];
          }
          break;
 
@@ -4339,8 +4339,7 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
          TR::StaticSymbol    * classSym    = classSymRef->getSymbol()->getStaticSymbol();
          TR_ASSERT(!classSymRef->isUnresolved(), "Cannot allocate an array with unresolved base class");
          TR_OpaqueClassBlock* clazz = (TR_OpaqueClassBlock*)classSym->getStaticAddress();
-         ramClass = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
-         ramClass = ramClass->arrayClass;
+         ramClass = getArrayClassFromComponentClass(clazz);
          }
          break;
 
@@ -4349,8 +4348,8 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
       }
 
 
-   J9ROMClass * romClass = ramClass->romClass;
-   TR::Node *classNode = TR::Node::createWithSymRef(allocationNode, TR::loadaddr, 0, comp->getSymRefTab()->findOrCreateClassSymbol(comp->getMethodSymbol(), -1, convertClassPtrToClassOffset(ramClass)));
+   J9ROMClass * romClass = TR::Compiler->cls.romClassOf(ramClass);
+   TR::Node *classNode = TR::Node::createWithSymRef(allocationNode, TR::loadaddr, 0, comp->getSymRefTab()->findOrCreateClassSymbol(comp->getMethodSymbol(), -1, ramClass));
 
    prevTree = initializeClazzFlagsMonitorFields(comp, prevTree, allocationNode, classNode, ramClass);
 
@@ -4404,7 +4403,7 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
 
 
 TR::TreeTop* TR_J9VMBase::initializeClazzFlagsMonitorFields(TR::Compilation* comp, TR::TreeTop* prevTree,
-   TR::Node* allocationNode, TR::Node* classNode, J9Class* ramClass)
+   TR::Node* allocationNode, TR::Node* classNode, TR_OpaqueClassBlock* ramClass)
    {
    // -----------------------------------------------------------------------------------
    // Initialize the clazz field
@@ -4438,7 +4437,7 @@ TR::TreeTop* TR_J9VMBase::initializeClazzFlagsMonitorFields(TR::Compilation* com
    // Initialize the monitor field
    // -----------------------------------------------------------------------------------
 
-   int32_t lwOffset = getByteOffsetToLockword((TR_OpaqueClassBlock *)ramClass);
+   int32_t lwOffset = getByteOffsetToLockword(ramClass);
    if (lwOffset > 0)
       {
       // Initialize the monitor field
@@ -5168,7 +5167,7 @@ TR_J9VMBase::typeReferenceStringObject(TR_OpaqueClassBlock *clazz)
       return TR_maybe;
    if (isInterfaceClass(clazz))
       {
-      J9UTF8 * className = J9ROMCLASS_CLASSNAME(((J9Class *)clazz)->romClass);
+      J9UTF8 * className = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf(clazz));
       int32_t len = J9UTF8_LENGTH(className);
       if ((len == 20 && strncmp(utf8Data(className), "java/io/Serializable", 20) == 0) ||
           (len == 22 && strncmp(utf8Data(className), "java/lang/CharSequence",22) == 0) ||

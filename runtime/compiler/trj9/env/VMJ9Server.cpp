@@ -815,3 +815,81 @@ TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void 
 //   stream->read<JAAS::Void>();
    return thunkptr;
    }
+
+void
+TR_J9ServerVM::markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t alignFromStart)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_markClassForTenuredAlignment, clazz, alignFromStart);
+   }
+
+int32_t *
+TR_J9ServerVM::getReferenceSlotsInClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getReferenceSlotsInClass, clazz);
+   return std::get<0>(stream->read<int32_t *>());
+   }
+
+uint32_t
+TR_J9ServerVM::getMethodSize(TR_OpaqueMethodBlock *method)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getMethodSize, method);
+   return std::get<0>(stream->read<uint32_t>());
+   }
+
+void *
+TR_J9ServerVM::addressOfFirstClassStatic(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_addressOfFirstClassStatic, clazz);
+   return std::get<0>(stream->read<void *>());
+   }
+
+void *
+TR_J9ServerVM::getStaticFieldAddress(TR_OpaqueClassBlock *clazz, unsigned char *fieldName, uint32_t fieldLen, unsigned char *sig, uint32_t sigLen)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getStaticFieldAddress, clazz, std::string(reinterpret_cast<char*>(fieldName), fieldLen), std::string(reinterpret_cast<char*>(sig), sigLen));
+   return std::get<0>(stream->read<void *>());
+   }
+
+int32_t
+TR_J9ServerVM::getInterpreterVTableSlot(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getInterpreterVTableSlot, method, clazz);
+   return std::get<0>(stream->read<int32_t>());
+   }
+
+void
+TR_J9ServerVM::revertToInterpreted(TR_OpaqueMethodBlock *method)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_revertToInterpreted, method);
+   }
+
+void *
+TR_J9ServerVM::getLocationOfClassLoaderObjectPointer(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getLocationOfClassLoaderObjectPointer, clazz);
+   return std::get<0>(stream->read<void *>());
+   }
+
+bool
+TR_J9ServerVM::isOwnableSyncClass(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isOwnableSyncClass, clazz);
+   return std::get<0>(stream->read<bool>());
+   }
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getClassFromMethodBlock(TR_OpaqueMethodBlock *method)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getClassFromMethodBlock, method);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }

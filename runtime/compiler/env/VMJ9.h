@@ -353,7 +353,7 @@ public:
    virtual TR_Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0, TR_OpaqueClassBlock * = 0);
    virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory *, TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, char *signature, int32_t signatureLength, TR_ResolvedMethod *);
-   void * getStaticFieldAddress(TR_OpaqueClassBlock *, unsigned char *, uint32_t, unsigned char *, uint32_t);
+   virtual void * getStaticFieldAddress(TR_OpaqueClassBlock *, unsigned char *, uint32_t, unsigned char *, uint32_t);
    virtual int32_t getInterpreterVTableSlot(TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *);
    virtual int32_t getVTableSlot(TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *);
    virtual uint32_t           offsetOfIsOverriddenBit();
@@ -399,7 +399,7 @@ public:
 
    virtual int32_t            getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex);
    virtual bool               isJavaOffloadEnabled();
-   uint32_t                   getMethodSize(TR_OpaqueMethodBlock *method);
+   virtual uint32_t           getMethodSize(TR_OpaqueMethodBlock *method);
    virtual void *             getMethods(TR_OpaqueClassBlock *classPointer);
    virtual uint32_t           getNumInnerClasses(TR_OpaqueClassBlock *classPointer);
    virtual uint32_t           getNumMethods(TR_OpaqueClassBlock *classPointer);
@@ -812,7 +812,7 @@ public:
    virtual int32_t *          getReferenceSlotsInClass( TR::Compilation *, TR_OpaqueClassBlock *classPointer);
    virtual void               initializeLocalObjectHeader( TR::Compilation *, TR::Node * allocationNode,  TR::TreeTop * allocationTreeTop);
    virtual void               initializeLocalArrayHeader ( TR::Compilation *, TR::Node * allocationNode,  TR::TreeTop * allocaitonTreeTop);
-   virtual TR::TreeTop*        initializeClazzFlagsMonitorFields(TR::Compilation*, TR::TreeTop* prevTree, TR::Node* allocationNode, TR::Node* classNode, J9Class* ramClass);
+   virtual TR::TreeTop*        initializeClazzFlagsMonitorFields(TR::Compilation*, TR::TreeTop* prevTree, TR::Node* allocationNode, TR::Node* classNode, TR_OpaqueClassBlock* ramClass);
 
    bool shouldPerformEDO(TR::Block *catchBlock,  TR::Compilation * comp);
 
@@ -906,7 +906,7 @@ public:
    TR::TreeTop * lowerMultiANewArray( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    TR::TreeTop * lowerToVcall( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
 
-   TR::Node * initializeLocalObjectFlags( TR::Compilation *, TR::Node * allocationNode, J9Class * ramClass);
+   TR::Node * initializeLocalObjectFlags( TR::Compilation *, TR::Node * allocationNode, TR_OpaqueClassBlock * ramClass);
 
    virtual bool             testOSForSSESupport();
    virtual J9JITConfig *getJ9JITConfig() { return _jitConfig; }

@@ -923,6 +923,74 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->isClassVisible(sourceClass, destClass));
          }
          break;
+      case J9ServerMessageType::VM_markClassForTenuredAlignment:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, uint32_t>();
+         TR_OpaqueClassBlock *clazz = std::get<0>(recv);
+         uint32_t alignFromStart = std::get<1>(recv);
+         fe->markClassForTenuredAlignment(TR::comp(), clazz, alignFromStart);
+         }
+         break;
+      case J9ServerMessageType::VM_getReferenceSlotsInClass:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getReferenceSlotsInClass(TR::comp(), clazz));
+         }
+         break;
+      case J9ServerMessageType::VM_getMethodSize:
+         {
+         TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
+         client->write(fe->getMethodSize(method));
+         }
+         break;
+      case J9ServerMessageType::VM_addressOfFirstClassStatic:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->addressOfFirstClassStatic(clazz));
+         }
+         break;
+      case J9ServerMessageType::VM_getStaticFieldAddress:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string>();
+         TR_OpaqueClassBlock *clazz = std::get<0>(recv);
+         std::string fieldName = std::get<1>(recv);
+         std::string sigName = std::get<2>(recv);
+         client->write(fe->getStaticFieldAddress(clazz, reinterpret_cast<unsigned char*>(const_cast<char*>(fieldName.c_str())), fieldName.length(),
+                 reinterpret_cast<unsigned char*>(const_cast<char*>(sigName.c_str())), sigName.length()));
+         }
+         break;
+      case J9ServerMessageType::VM_getInterpreterVTableSlot:
+         {
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *>();
+         TR_OpaqueMethodBlock *method = std::get<0>(recv);
+         TR_OpaqueClassBlock *clazz = std::get<1>(recv);
+         client->write(fe->getInterpreterVTableSlot(method, clazz));
+         }
+         break;
+      case J9ServerMessageType::VM_revertToInterpreted:
+         {
+         TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
+         fe->revertToInterpreted(method);
+         }
+         break;
+      case J9ServerMessageType::VM_getLocationOfClassLoaderObjectPointer:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getLocationOfClassLoaderObjectPointer(clazz));
+         }
+         break;
+      case J9ServerMessageType::VM_isOwnableSyncClass:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->isOwnableSyncClass(clazz));
+         }
+         break;
+      case J9ServerMessageType::VM_getClassFromMethodBlock:
+         {
+         TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
+         client->write(fe->getClassFromMethodBlock(method));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only

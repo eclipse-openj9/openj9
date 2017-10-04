@@ -97,6 +97,16 @@ public:
    virtual TR_OpaqueMethodBlock *getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod) override;
    virtual TR_OpaqueMethodBlock *getMethodFromClass(TR_OpaqueClassBlock *methodClass, char *methodName, char *signature, TR_OpaqueClassBlock *callingClass) override;
    virtual bool isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBlock *destClass) override;
+   virtual void markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t alignFromStart) override;
+   virtual int32_t * getReferenceSlotsInClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz) override;
+   virtual uint32_t getMethodSize(TR_OpaqueMethodBlock *method) override;
+   virtual void * addressOfFirstClassStatic(TR_OpaqueClassBlock *clazz) override;
+   virtual void * getStaticFieldAddress(TR_OpaqueClassBlock *clazz, unsigned char *fieldName, uint32_t fieldLen, unsigned char *sig, uint32_t sigLen) override;
+   virtual int32_t getInterpreterVTableSlot(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz) override;
+   virtual void revertToInterpreted(TR_OpaqueMethodBlock *method) override;
+   virtual void * getLocationOfClassLoaderObjectPointer(TR_OpaqueClassBlock *clazz) override;
+   virtual bool isOwnableSyncClass(TR_OpaqueClassBlock *clazz) override;
+   virtual TR_OpaqueClassBlock * getClassFromMethodBlock(TR_OpaqueMethodBlock *method) override;
    };
 
 #endif // VMJ9SERVER_H

@@ -135,6 +135,16 @@ enum J9ServerMessageType
    VM_getMethodFromName = 274;
    VM_getMethodFromClass = 275;
    VM_isClassVisible = 276;
+   VM_markClassForTenuredAlignment = 277;
+   VM_getReferenceSlotsInClass = 278;
+   VM_getMethodSize = 279;
+   VM_addressOfFirstClassStatic = 280;
+   VM_getStaticFieldAddress = 281;
+   VM_getInterpreterVTableSlot = 282;
+   VM_revertToInterpreted = 283;
+   VM_getLocationOfClassLoaderObjectPointer = 284;
+   VM_isOwnableSyncClass = 285;
+   VM_getClassFromMethodBlock = 286;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;
