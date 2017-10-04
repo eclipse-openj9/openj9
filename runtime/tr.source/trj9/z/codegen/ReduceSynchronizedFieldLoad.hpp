@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,27 +31,25 @@
 #include "infra/ILWalk.hpp"
 
 /** \brief
- *
- *  Reduces synchronized regions around a single field load into a codegen inlined recognized method call which
- *  generates a hardware optimized instruction sequence which is semantically equivalent to the synchronized field
- *  load.
+ *     Reduces synchronized regions around a single field load into a codegen inlined recognized method call which
+ *     generates a hardware optimized instruction sequence which is semantically equivalent to the synchronized field
+ *     load.
  *
  *  \details
+ *     This codegen phase pass pattern matches the following tree sequences (modulo NOP trees such as aRegLoad):
  *
- *  This codegen phase pass pattern matches the following tree sequences (modulo NOP trees such as aRegLoad):
+ *     \code
+ *     monent
+ *       object
+ *     aloadi / iloadi / i2a
+ *       ==> object
+ *     monexitfence
+ *     monexit
+ *       ==> object
+ *     \endcode
  *
- *  <code>
- *  monent
- *    object
- *  aloadi / iloadi / i2a
- *    ==> object
- *  monexitfence
- *  monexit
- *    ==> object
- *  </code>
- *
- *  And replaces the entire treetop sequence, excluding the monexitfence, with a call to a codegen inlined method
- *  <synchronizedFieldLoad>.
+ *     And replaces the entire treetop sequence, excluding the monexitfence, with a call to a codegen inlined method
+ *     <synchronizedFieldLoad>.
  */
 class ReduceSynchronizedFieldLoad
    {
@@ -104,47 +102,47 @@ class ReduceSynchronizedFieldLoad
    static void inlineSynchronizedFieldLoad(TR::Node* node, TR::CodeGenerator* cg);
 
    /** \brief
-    *      Performs the optimization on this compilation unit.
+    *     Performs the optimization on this compilation unit.
     *
     *  \return
-    *      true if any transformation was performed; false otherwise.
+    *     true if any transformation was performed; false otherwise.
     */
    bool perform();
 
    /** \brief
-    *      Performs the optimization on this compilation unit.
+    *     Performs the optimization on this compilation unit.
     *
     *  \param startTreeTop
-    *      The tree top on which to begin looking for opportunities to perform this optimization.
+    *     The tree top on which to begin looking for opportunities to perform this optimization.
     *
     *  \param endTreeTop
-    *      The tree top on which to end looking for opportunities to perform this optimization.
+    *     The tree top on which to end looking for opportunities to perform this optimization.
     *
     *  \return
-    *      true if any transformation was performed; false otherwise.
+    *     true if any transformation was performed; false otherwise.
     */
    bool performOnTreeTops(TR::TreeTop* startTreeTop, TR::TreeTop* endTreeTop);
 
    private:
 
    /** \brief
-    *      Advances \p iter one tree top forward, ignoring extended basic block boundaries by skipping over
-    *      <c>TR::BBStart</c> and <c>TR::BBEnd</c> nodes, and while taking into account the \p endTreeTop.
+    *     Advances \p iter one tree top forward, ignoring extended basic block boundaries by skipping over
+    *     <c>TR::BBStart</c> and <c>TR::BBEnd</c> nodes, and while taking into account the \p endTreeTop.
     *
     *  \param iter
-    *      The iterator used to look for opportunities to advance forward.
+    *     The iterator used to look for opportunities to advance forward.
     *
     *  \param endTreeTop
-    *      The tree top on which to end looking for opportunities to perform this optimization.
+    *     The tree top on which to end looking for opportunities to perform this optimization.
     *
     *  \return
-    *      True if the iterator was successfully advanced and the search for optimization opportunity should continue;
-    *      false otherwise.
+    *     true if the iterator was successfully advanced and the search for optimization opportunity should continue;
+    *     false otherwise.
     */
    bool advanceIterator(TR::TreeTopIterator& iter, TR::TreeTop* endTreeTop);
 
    /** \brief
-    *      The cached code generator used to generate the instructions.
+    *     The cached code generator used to generate the instructions.
     */
    TR::CodeGenerator * cg;
    };
