@@ -43,6 +43,7 @@
 #include "trj9/ilgen/ClassLookahead.hpp"
 #include "trj9/ilgen/J9ByteCode.hpp"
 #include "trj9/ilgen/J9ByteCodeIlGenerator.hpp"
+#include "infra/Bit.hpp"               //for trailingZeroes
 
 #define BDCLASSLEN 20
 #define BDCLASS "java/math/BigDecimal"
@@ -5541,7 +5542,58 @@ break
          else
             callNodeTreeTop->getNode()->setChild(0, callNode = resultNode);
          }
+      }
+   else if (resolvedMethodSymbol &&
+       !isPeekingMethod() &&
+       (resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32 ||
+        resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64))
+      {
+      TR::Node* obj = callNode->getChild(1);
+      TR::Node* vftLoad = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, obj, symRefTab()->findOrCreateVftSymbolRef());
+      if (resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32)
+         {
+         resultNode = TR::Node::create(callNode, TR::a2i, 1, vftLoad);
+         }
+      else
+         {
+         resultNode = TR::Node::create(callNode, TR::a2l, 1, vftLoad);
+         }
+      // Handle NullCHK
+      if (callNodeTreeTop->getNode()->getOpCode().isNullCheck())
+         TR::Node::recreate(callNodeTreeTop->getNode(), TR::treetop);
+      callNodeTreeTop->getNode()->setAndIncChild(0, resultNode);
+      // Decrement ref count for the call
+      callNode->recursivelyDecReferenceCount();
+      callNode = resultNode;
+      }
+   else if (resolvedMethodSymbol &&
+       !isPeekingMethod() &&
+       resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_isArray)
+      {
+      TR::Node* obj = callNode->getChild(1);
+      TR::Node* vftLoad = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, obj, symRefTab()->findOrCreateVftSymbolRef());
 
+      if (TR::Compiler->target.is32Bit())
+         {
+         resultNode = TR::Node::createWithSymRef(callNode, TR::iloadi, 1, vftLoad, symRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
+         }
+      else
+         {
+         resultNode = TR::Node::createWithSymRef(callNode, TR::lloadi, 1, vftLoad, symRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
+         resultNode = TR::Node::create(callNode, TR::l2i, 1, resultNode);
+         }
+
+      int32_t andMask = comp()->fej9()->getFlagValueForArrayCheck();
+      int32_t shiftAmount = trailingZeroes(andMask);
+      resultNode  = TR::Node::create(callNode, TR::iand, 2, resultNode, TR::Node::iconst(callNode, andMask));
+      resultNode  = TR::Node::create(callNode, TR::iushr, 2, resultNode, TR::Node::iconst(callNode, shiftAmount));
+      // Handle NullCHK
+      if (callNodeTreeTop->getNode()->getOpCode().isNullCheck())
+         TR::Node::recreate(callNodeTreeTop->getNode(), TR::treetop);
+      callNodeTreeTop->getNode()->setAndIncChild(0, resultNode);
+      // Decrement ref count for the call
+      callNode->recursivelyDecReferenceCount();
+      callNode = resultNode;
       }
    else if (symbol->isNative() && isDirectCall)
       {

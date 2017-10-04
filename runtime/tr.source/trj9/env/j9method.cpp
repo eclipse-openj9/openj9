@@ -3203,6 +3203,9 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    static X JITHelperMethods[] =
       {
       {x(TR::com_ibm_jit_JITHelpers_is32Bit,                                  "is32Bit", "()Z")},
+      {x(TR::com_ibm_jit_JITHelpers_isArray,                                  "isArray", "(Ljava/lang/Object;)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64,                   "getJ9ClassFromObject64", "(Ljava/lang/Object;)J")},
+      {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32,                   "getJ9ClassFromObject32", "(Ljava/lang/Object;)I")},
       {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromClass32,                    "getJ9ClassFromClass32", "(Ljava/lang/Class;)I")},
       {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromClass64,                    "getJ9ClassFromClass64", "(Ljava/lang/Class;)J")},
       {x(TR::com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class32,           "getBackfillOffsetFromJ9Class32", "(I)I")},
