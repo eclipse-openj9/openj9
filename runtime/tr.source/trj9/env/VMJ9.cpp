@@ -116,6 +116,7 @@
 #include "trj9/runtime/HWProfiler.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "trj9/env/J9JitMemory.hpp"
+#include "infra/Bit.hpp"               //for trailingZeroes
 
 #ifdef LINUX
 #include <signal.h>
@@ -3250,7 +3251,7 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
 
    TR::RecognizedMethod rm = target->_calleeSymbol ? target->_calleeSymbol->getRecognizedMethod() : target->_calleeMethod->getRecognizedMethod();
 
-   // Don't inline methods that are going to be reduced in UnsafeFastPath
+   // Don't inline methods that are going to be reduced in ilgen or UnsafeFastPath
    switch (rm)
       {
       case TR::com_ibm_jit_JITHelpers_getByteFromArray:
@@ -3290,6 +3291,9 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
       case TR::com_ibm_jit_JITHelpers_putObjectInObject:
       case TR::com_ibm_jit_JITHelpers_putObjectInObjectVolatile:
       case TR::com_ibm_jit_JITHelpers_byteToCharUnsigned:
+      case TR::com_ibm_jit_JITHelpers_isArray:
+      case TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32:
+      case TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64:
             return DontInline_Callee;
       default:
          break;
@@ -7473,6 +7477,72 @@ TR_J9VMBase::releaseCodeEstimator(TR::Compilation *comp, TR_EstimateCodeSize *es
    comp->allocator().deallocate(estimator, sizeof(TR_J9EstimateCodeSize));
    }
 
+void
+TR_J9VM::transformJavaLangClassIsArray(TR::Compilation * comp, TR::Node * callNode, TR::TreeTop * treeTop)
+   {
+   // Example for the transformation
+   // treetop (may be null check)
+   //   icalli                   <= callNode
+   //     aload <parm 1>         <= jlClass
+   //
+   //
+   // Final: (when target.is32Bit() == true)
+   //
+   // NULLCHK (if there is a null check)
+   //   PassThrough
+   //     aload <parm 1>         <= jlClass
+   // treetop
+   //   iushr 
+   //    iand
+   //     iloadi <classAndDepthFlags>
+   //       aloadi <classFromJavaLangClass>
+   //        aload <parm 1>         <= jlClass
+   //    iconst J9AccClassArray
+   //   iconst shiftAmount
+
+   int andMask = comp->fej9()->getFlagValueForArrayCheck();
+   TR::Node * classFlag, *jlClass, * andConstNode;
+   TR::SymbolReferenceTable *symRefTab = comp->getSymRefTab();
+
+   jlClass = callNode->getFirstChild();
+
+   if (treeTop->getNode()->getOpCode().isNullCheck())
+      {
+      // Put the call under its own tree after the NULLCHK
+      //
+      TR::TreeTop::create(comp, treeTop, TR::Node::create(TR::treetop, 1, callNode));
+
+      // Replace the call under the nullchk with a PassThrough of the jlClass
+      //
+      TR::Node *nullChk = treeTop->getNode();
+      nullChk->getAndDecChild(0); // Decrement ref count of callNode
+      nullChk->setAndIncChild(0, TR::Node::create(TR::PassThrough, 1, jlClass));
+      }
+
+   TR::Node * vftLoad = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, jlClass, comp->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
+
+   if (TR::Compiler->target.is32Bit())
+      {
+      classFlag = TR::Node::createWithSymRef(callNode, TR::iloadi, 1, vftLoad, symRefTab->findOrCreateClassAndDepthFlagsSymbolRef());
+      }
+   else
+      {
+      classFlag = TR::Node::createWithSymRef(callNode, TR::lloadi, 1, vftLoad, symRefTab->findOrCreateClassAndDepthFlagsSymbolRef());
+      classFlag = TR::Node::create(callNode, TR::l2i, 1, classFlag);
+      }
+
+   // Decrement the ref count of jlClass since the call is going to be transmuted and its first child is not needed anymore
+   callNode->getAndDecChild(0);
+   TR::Node::recreate(callNode, TR::iushr);
+   callNode->setNumChildren(2);
+
+   andConstNode = TR::Node::create(callNode, TR::iconst, 0, andMask);
+   TR::Node * andNode   = TR::Node::create(TR::iand, 2, classFlag, andConstNode);
+   callNode->setAndIncChild(0, andNode);
+
+   int32_t shiftAmount = trailingZeroes(andMask);
+   callNode->setAndIncChild(1, TR::Node::iconst(callNode, shiftAmount));
+   }
 
 void
 TR_J9VM::transformJavaLangClassIsArrayOrIsPrimitive(TR::Compilation * comp, TR::Node * callNode, TR::TreeTop * treeTop, int32_t andMask)
@@ -7622,7 +7692,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
    switch (methodID)
       {
       case TR::java_lang_Class_isArray:
-         transformJavaLangClassIsArrayOrIsPrimitive(comp, callNode, callNodeTreeTop, J9AccClassArray);
+         transformJavaLangClassIsArray(comp, callNode, callNodeTreeTop);
          return callNode;
       case TR::java_lang_Class_isPrimitive:
          transformJavaLangClassIsArrayOrIsPrimitive(comp, callNode, callNodeTreeTop, J9AccClassInternalPrimitiveType);

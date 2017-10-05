@@ -855,8 +855,16 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
    // If we need conversion or java/lang/Class is not loaded yet, we generate old sequence of tests
    if (conversionNeeded || javaLangClass == NULL)
       {
-      TR::Node *romClassLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, vftLoad, comp()->getSymRefTab()->findOrCreateClassRomPtrSymbolRef());
-      TR::Node *isArrayField = TR::Node::createWithSymRef(TR::iloadi, 1, 1, romClassLoad, comp()->getSymRefTab()->findOrCreateClassIsArraySymbolRef());
+      TR::Node *isArrayField = NULL;
+      if (TR::Compiler->target.is32Bit())
+         {
+         isArrayField = TR::Node::createWithSymRef(TR::iloadi, 1, 1, vftLoad, comp()->getSymRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
+         }
+      else
+         {
+         isArrayField = TR::Node::createWithSymRef(TR::lloadi, 1, 1, vftLoad, comp()->getSymRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
+         isArrayField = TR::Node::create(TR::l2i, 1, isArrayField);
+         }
       TR::Node *andConstNode = TR::Node::create(isArrayField, TR::iconst, 0, TR::Compiler->cls.flagValueForArrayCheck(comp()));
       TR::Node * andNode   = TR::Node::create(TR::iand, 2, isArrayField, andConstNode);
       TR::Node *isArrayNode = TR::Node::createif(TR::ificmpeq, andNode, andConstNode, NULL);
@@ -1732,7 +1740,6 @@ TR_J9InlinerPolicy::inlineGetClassAccessFlags(TR::ResolvedMethodSymbol *calleeSy
    TR::Node *nullCheckNode = TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, j9cNode, comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(callerSymbol));
    TR::TreeTop *nullCheckTree = TR::TreeTop::create(comp(), nullCheckNode);
    TR::Node *romclassNode = TR::Node::createWithSymRef(TR::aloadi, 1, 1, j9cNode, comp()->getSymRefTab()->findOrCreateClassRomPtrSymbolRef());
-   TR::SymbolReference *classAccessFlagsRef = comp()->getSymRefTab()->findOrCreateClassIsArraySymbolRef();
    TR::Node *classAccessFlagsNode = TR::Node::createWithSymRef(TR::iloadi, 1, 1, romclassNode, comp()->getSymRefTab()->findOrCreateClassIsArraySymbolRef());
    TR::Node *modifiersNode = TR::Node::createStore(modifiersSymRef, classAccessFlagsNode);
    TR::TreeTop *modifiersTree = TR::TreeTop::create(comp(), modifiersNode);
