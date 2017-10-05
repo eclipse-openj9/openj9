@@ -41,6 +41,7 @@
 #include "omrversionstrings.h"
 #include "j9modron.h"
 #include "omr.h"
+#include "vendor_version.h"
 
 /* The vm version which must match the JCL.
  * It has the format 0xAABBCCCC
@@ -188,6 +189,11 @@ jint computeFullVersionString(J9JavaVM* vm)
 	strcat(vminfo, "\nOMR      - ");
 	strcat(vminfo, gcVersion);
 #endif /* J9VM_GC_MODRON_GC */
+
+#if defined(VENDOR_VERSION_STRING)
+	strcat(fullversion, "\n" VENDOR_VERSION_STRING);
+	strcat(vminfo, "\n" VENDOR_VERSION_STRING);
+#endif /* VENDOR_VERSION_STRING */
 
 	(*VMI)->SetSystemProperty(VMI, "java.vm.info", vminfo);
 	/*[PR 114306] System property java.fullversion is not initialized properly */
