@@ -2845,10 +2845,14 @@ getStringUTF8Length(J9VMThread *vmThread,j9object_t string);
 
 
 /**
-* @brief
-* @param *vm
-* @param *string
-* @return UDATA
+* Check incoming class name characters and return following values accordingly:
+* 	CLASSNAME_INVALID - if there is a character '/';
+* 	CLASSNAME_VALID_NON_ARRARY - if it is valid and there is no '[' at beginning of class name string;
+* 	CLASSNAME_VALID_ARRARY - if it is valid and there is a '[' at beginning of class name string.
+*
+* @param[in] *vmThread current thread
+* @param[in] string the class name string
+* @return a UDATA to indicate the nature of incoming class name string, see descriptions above.
 */
 UDATA
 verifyQualifiedName(J9VMThread *vmThread, j9object_t string);

@@ -458,33 +458,37 @@ getStringUTF8Length(J9VMThread *vmThread, j9object_t string)
 	return utf8Length;
 }
 
-
 UDATA 
 verifyQualifiedName(J9VMThread *vmThread, j9object_t string)
 {
 	UDATA unicodeLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
 	j9object_t unicodeBytes = J9VMJAVALANGSTRING_VALUE(vmThread, string);
-	UDATA i;
-	UDATA rc = TRUE;
+	UDATA i = 0;
+	UDATA rc = CLASSNAME_VALID_NON_ARRARY;
 
 	if (unicodeLength == 0) {
-		return FALSE;
+		return CLASSNAME_INVALID;
 	}
 
 	if (IS_STRING_COMPRESSED(vmThread, string)) {
-		for (i = 0; i < unicodeLength; i++) {
+		if ('[' == J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, 0)) {
+			rc = CLASSNAME_VALID_ARRARY;
+		}
+		for (i = 1; i < unicodeLength; i++) {
 			U_8 c = J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i);
 			if (c == '/') {
-				rc = FALSE;
+				rc = CLASSNAME_INVALID;
 				break;
 			}
-
 		}
 	} else {
+		if ('[' == J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, 0)) {
+			rc = CLASSNAME_VALID_ARRARY;
+		}
 		for (i = 0; i < unicodeLength; i++) {
 			U_16 c = J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i);
 			if (c == '/') {
-				rc = FALSE;
+				rc = CLASSNAME_INVALID;
 				break;
 			}
 		}

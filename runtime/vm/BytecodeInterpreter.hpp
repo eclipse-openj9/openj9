@@ -3846,7 +3846,7 @@ done:
 		if (NULL != className) {
 			J9ClassLoader *loader = J9VMJAVALANGCLASSLOADER_VMREF(_currentThread, classloaderObject);
 			if (NULL != loader) {
-				if (verifyQualifiedName(_currentThread, className)) {
+				if (CLASSNAME_INVALID != verifyQualifiedName(_currentThread, className)) {
 					buildInternalNativeStackFrame(REGISTER_ARGS);
 					updateVMStruct(REGISTER_ARGS);
 					j9Class = internalFindClassString(_currentThread, NULL, className, loader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
@@ -3936,7 +3936,7 @@ done:
 		} else {
 			loader = _vm->systemClassLoader;
 		}
-		if (verifyQualifiedName(_currentThread, className)) {
+		if (CLASSNAME_VALID_NON_ARRARY == verifyQualifiedName(_currentThread, className)) {
 			updateVMStruct(REGISTER_ARGS);
 			j9Class = internalFindClassString(_currentThread, NULL, className, loader, J9_FINDCLASS_FLAG_USE_LOADER_CP_ENTRIES);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
@@ -3958,45 +3958,6 @@ done:
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
 		returnObjectFromINL(REGISTER_ARGS, J9VM_J9CLASS_TO_HEAPCLASS(j9Class), 2);
 done:
-		return rc;
-	}
-
-	/* com.ibm.oti.vm.VM: protected static native Class findClassInModuleOrNull(String moduleName, String className, ClassLoader classLoader); */
-	VMINLINE VM_BytecodeAction
-	inlVMFindClassInModuleOrNull(REGISTER_ARGS_LIST)
-	{
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		j9object_t classloaderObject = *(j9object_t*)_sp;
-		j9object_t className = *(j9object_t*)(_sp + 1);
-		j9object_t moduleName = *(j9object_t*)(_sp + 2);
-		J9Class *j9Class = NULL;
-		J9ClassLoader *loader = NULL;
-
-		buildInternalNativeStackFrame(REGISTER_ARGS);
-
-		if (NULL == className) {
-			goto done;
-		}
-
-		/* This native is only called for the boot loader, so vmRef is guaranteed to be initialized. */
-		loader = J9VMJAVALANGCLASSLOADER_VMREF(_currentThread, classloaderObject);
-		if (verifyQualifiedName(_currentThread, className)) {
-			UDATA options = J9_FINDCLASS_FLAG_USE_LOADER_CP_ENTRIES | J9_FINDCLASS_FLAG_FIND_MODULE_ON_FAIL;
-
-			updateVMStruct(REGISTER_ARGS);
-			j9Class = internalFindClassString(_currentThread, moduleName, className, loader, options);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			if (VM_VMHelpers::exceptionPending(_currentThread)) {
-				/* The VMStruct is already updated */
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				/* This method is not expected to throw any exception. If any exception has occurred, discard it and return NULL */
-				VM_VMHelpers::clearException(_currentThread);
-			}
-		}
-
-done:
-		restoreInternalNativeStackFrame(REGISTER_ARGS);
-		returnObjectFromINL(REGISTER_ARGS, J9VM_J9CLASS_TO_HEAPCLASS(j9Class), 3);
 		return rc;
 	}
 
@@ -4170,7 +4131,7 @@ done:
 		}
 
 		/* Make sure the name is legal */
-		if (!verifyQualifiedName(_currentThread, classNameObject)) {
+		if (CLASSNAME_INVALID == verifyQualifiedName(_currentThread, classNameObject)) {
 			goto throwCNFE;
 		}
 
@@ -8432,7 +8393,6 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASSLOADER_FIND_LOADED_CLASS_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_VM_FIND_CLASS_OR_NULL),
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_VM_FIND_CLASS_IN_MODULE_OR_NULL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_CLASS_FORNAMEIMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_THREAD_INTERRUPTED),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_VM_GET_CP_INDEX_IMPL),
@@ -8971,8 +8931,6 @@ runMethod: {
 		PERFORM_ACTION(inlClassLoaderFindLoadedClassImpl(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_VM_FIND_CLASS_OR_NULL):
 		PERFORM_ACTION(inlVMFindClassOrNull(REGISTER_ARGS));
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_VM_FIND_CLASS_IN_MODULE_OR_NULL):
-		PERFORM_ACTION(inlVMFindClassInModuleOrNull(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_CLASS_FORNAMEIMPL):
 		PERFORM_ACTION(inlClassForNameImpl(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_THREAD_INTERRUPTED):

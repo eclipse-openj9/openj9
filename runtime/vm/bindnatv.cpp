@@ -164,7 +164,6 @@ static inlMapping mappings[] = {
 	{ "Java_java_lang_reflect_Array_newArrayImpl__Ljava_lang_Class_2I", J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL },
 	{ "Java_java_lang_ClassLoader_findLoadedClassImpl__Ljava_lang_String_2", J9_BCLOOP_SEND_TARGET_INL_CLASSLOADER_FIND_LOADED_CLASS_IMPL },
 	{ "Java_java_lang_VMAccess_findClassOrNull__Ljava_lang_String_2Ljava_lang_ClassLoader_2", J9_BCLOOP_SEND_TARGET_INL_VM_FIND_CLASS_OR_NULL },
-	{ "Java_com_ibm_oti_vm_VM_findClassInModuleOrNull__Ljava_lang_String_2Ljava_lang_String_2Ljava_lang_ClassLoader_2", J9_BCLOOP_SEND_TARGET_INL_VM_FIND_CLASS_IN_MODULE_OR_NULL },
 	{ "Java_java_lang_Class_forNameImpl__Ljava_lang_String_2ZLjava_lang_ClassLoader_2", J9_BCLOOP_SEND_TARGET_CLASS_FORNAMEIMPL },
 	{ "Java_java_lang_Thread_interrupted__", J9_BCLOOP_SEND_TARGET_INL_THREAD_INTERRUPTED },
 	{ "Java_com_ibm_oti_vm_VM_getCPIndexImpl__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_VM_GET_CP_INDEX_IMPL},

@@ -47,39 +47,8 @@ Fast_java_lang_VMAccess_findClassOrNull(J9VMThread *currentThread, j9object_t cl
 		} else {
 			loader = vm->systemClassLoader;
 		}
-		if (verifyQualifiedName(currentThread, className)) {
+		if (CLASSNAME_VALID_NON_ARRARY == verifyQualifiedName(currentThread, className)) {
 			j9Class = internalFindClassString(currentThread, NULL, className, loader, J9_FINDCLASS_FLAG_USE_LOADER_CP_ENTRIES);
-			if (VM_VMHelpers::exceptionPending(currentThread)) {
-				J9Class *exceptionClass = J9VMJAVALANGCLASSNOTFOUNDEXCEPTION(vm);
-				/* If the current exception is ClassNotFoundException, discard it. */
-				if (exceptionClass == J9OBJECT_CLAZZ(currentThread, currentThread->currentException)) {
-					VM_VMHelpers::clearException(currentThread);
-				}
-			} else {
-				classObject = J9VM_J9CLASS_TO_HEAPCLASS(j9Class);
-			}
-		}
-	}
-	return classObject;
-}
-
-/* com.ibm.oti.vm.VM: protected static native Class findClassInModuleOrNull(String moduleName, String className, ClassLoader classLoader); */
-j9object_t JNICALL
-Fast_com_ibm_oti_vm_VM_findClassInModuleOrNull(J9VMThread *currentThread, j9object_t moduleName, j9object_t className, j9object_t classloaderObject)
-{
-	j9object_t classObject = NULL;
-	if (NULL == className) {
-		setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-	} else {
-		J9JavaVM *vm = currentThread->javaVM;
-		J9Class *j9Class = NULL;
-		J9ClassLoader *loader = NULL;
-		/* This native is only called for the boot loader, so vmRef is guaranteed to be initialized. */
-		loader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, classloaderObject);
-		if (verifyQualifiedName(currentThread, className)) {
-			UDATA options = J9_FINDCLASS_FLAG_USE_LOADER_CP_ENTRIES | J9_FINDCLASS_FLAG_FIND_MODULE_ON_FAIL;
-
-			j9Class = internalFindClassString(currentThread, moduleName, className, loader, options);
 			if (VM_VMHelpers::exceptionPending(currentThread)) {
 				J9Class *exceptionClass = J9VMJAVALANGCLASSNOTFOUNDEXCEPTION(vm);
 				/* If the current exception is ClassNotFoundException, discard it. */
@@ -192,8 +161,6 @@ Fast_com_ibm_oti_vm_VM_isBootstrapClassLoader(J9VMThread *currentThread, j9objec
 
 J9_FAST_JNI_METHOD_TABLE(com_ibm_oti_vm_VM)
 	J9_FAST_JNI_METHOD("findClassOrNull", "(Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/Class;", Fast_java_lang_VMAccess_findClassOrNull,
-		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
-	J9_FAST_JNI_METHOD("findClassInModuleOrNull", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/Class;", Fast_com_ibm_oti_vm_VM_findClassInModuleOrNull,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS | J9_FAST_JNI_DO_NOT_PASS_RECEIVER)
 	J9_FAST_JNI_METHOD("getClassPathEntryType", "(Ljava/lang/ClassLoader;I)I", Fast_com_ibm_oti_vm_VM_getClassPathEntryType,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
