@@ -78,9 +78,9 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 			}
 			bufferedReader.close();
 		} catch(FileNotFoundException ex) {
-			logger.info("Unable to open file " + excludeFile);
+			logger.info("Unable to open file " + excludeFile, ex);
 		} catch(IOException ex) {
-			logger.info("Error reading file " + excludeFile);
+			logger.info("Error reading file " + excludeFile, ex);
 		}
 	}
 
