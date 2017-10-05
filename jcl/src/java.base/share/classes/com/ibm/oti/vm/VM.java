@@ -231,23 +231,6 @@ public final static native long getUid();
  */
 static private final native boolean isBootstrapClassLoader(ClassLoader loader); 
 
-/*[IF Sidecar19-SE]*/
-/**
- * Native used to find and load a class in a module using the VM. 
- * If it fails to find the class or any exception occurs in finding the class then it returns null. 
- *
- * @return 		java.lang.Class
- *					the class or null.
- * @param		moduleName String
- * 					the name of the module from which to load the class
- * @param 		className String
- *					the name of the class to search for.
- * @param		classLoader
- *					the classloader to do the work
- */
-static native Class findClassInModuleOrNull(String moduleName, String className, ClassLoader classLoader);
-/*[ENDIF]*/
-
 /**
  * Ensures that the caller of the method where this check is made is a bootstrap class. 
  * 

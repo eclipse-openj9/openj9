@@ -39,6 +39,10 @@
 #define J9VM_OBJECT_MONITOR_CACHE_SIZE  32
 #define J9VM_ASYNC_MAX_HANDLERS 32
 
+#define CLASSNAME_INVALID			0
+#define CLASSNAME_VALID_NON_ARRARY	1
+#define CLASSNAME_VALID_ARRARY		2
+
 /* @ddr_namespace: map_to_type=J9JITDataCacheConstants */
 /* Constants from J9JITDataCacheConstants */
 #define J9DataTypeAotMethodHeader 0x80
