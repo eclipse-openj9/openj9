@@ -38,6 +38,8 @@
 
 #include "BuildResult.hpp"
 
+// change 4
+
 /*
  * It is not guaranteed that slot1 value for constantpool index=0 entry will be zero. 
  * Therefore check the index first, if it is zero, return zero instead of returning the value in slot1. 
