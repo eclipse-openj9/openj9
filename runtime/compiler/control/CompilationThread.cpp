@@ -637,6 +637,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getObjectClass:
          {
+         TR::VMAccessCriticalSection getObjectClass(fe);
          uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
          client->write(fe->getObjectClass(objectPointer));
          }
