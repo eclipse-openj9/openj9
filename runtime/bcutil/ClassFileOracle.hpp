@@ -20,6 +20,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
+
+// change 1
+// change 2
 /*
  * ClassFileOracle.hpp
  */
