@@ -277,6 +277,7 @@ public class ConfigurationImpl implements IConfiguration, ISinglePredicateEvalua
 				platform = new PlatformZOS(this);
 			} else if ( configurationName.startsWith("aix")
 					|| configurationName.startsWith("linux") 
+				        || configurationName.startsWith("mac")
 					|| configurationName.startsWith("ose")
 					|| configurationName.startsWith("qnx") ) {
 				platform = new PlatformUnix(this);
