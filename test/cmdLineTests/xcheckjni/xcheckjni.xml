@@ -57,7 +57,7 @@
  </test>
 
  <test id="memorycheck">
-  <command>$EXE$ $CP$ -Xcheck:jni -Xgcthreads1 -Xcheck:memory j9vm.test.jnichk.BufferOverrun</command>
+  <command>$EXE$ $CP$ -Xint -Xcheck:jni -Xgcthreads1 -Xcheck:memory j9vm.test.jnichk.BufferOverrun</command>
   <output regex="no">Memory error(s) discovered</output>
  </test>
 
