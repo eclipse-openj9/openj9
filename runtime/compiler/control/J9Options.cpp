@@ -2102,6 +2102,7 @@ J9::Options::fePostProcessJIT(void * base)
       self()->setOption(TR_DisableCHOpts);
       self()->setFixedOptLevel(noOpt);
       self()->setOption(TR_DisableSharedCacheHints);
+      self()->setOption(TR_DisableKnownObjectTable);
       if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
          {
          _samplingFrequency = 0; // disable sampling (including samplingThread)
@@ -2137,6 +2138,7 @@ J9::Options::fePostProcessAOT(void * base)
       self()->setOption(TR_DisableCHOpts);
       self()->setFixedOptLevel(noOpt);
       self()->setOption(TR_DisableSharedCacheHints);
+      self()->setOption(TR_DisableKnownObjectTable);
       }
 
    return true;
