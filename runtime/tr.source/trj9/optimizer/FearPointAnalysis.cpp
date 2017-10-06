@@ -40,18 +40,26 @@ bool TR_FearPointAnalysis::virtualGuardsKillFear()
    return kill;
    }
 
-static bool containsPrepareForOSR(TR::Block *block)
+bool TR_FearPointAnalysis::containsPrepareForOSR(TR::Block *block)
    {
+#ifdef DEBUG
+   bool debugResult = false
    for (TR::TreeTop *tt = block->getEntry(); tt != block->getExit(); tt = tt->getNextTreeTop())
-       {
-       if (tt->getNode()->getOpCode().isCheck() || tt->getNode()->getOpCodeValue() == TR::treetop)
-          {
-          if (tt->getNode()->getFirstChild()->getOpCode().isCall()
-              && tt->getNode()->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_prepareForOSR)
-             return true;
-          }
-       }
-   return false;
+      {
+      if (tt->getNode()->getOpCode().isCheck() || tt->getNode()->getOpCodeValue() == TR::treetop)
+         {
+         if (tt->getNode()->getFirstChild()->getOpCode().isCall()
+             && tt->getNode()->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_prepareForOSR)
+            {
+            debugResult = true;
+            break;
+            }
+         }
+      }
+   TR_ASSERT(debugResult == block->isOSRCodeBlock(), "prepareForOSR calls should only appear in OSRCodeBlocks");
+#endif
+
+   return block->isOSRCodeBlock();
    }
 
 int32_t TR_FearPointAnalysis::getNumberOfBits() { return 1; }
