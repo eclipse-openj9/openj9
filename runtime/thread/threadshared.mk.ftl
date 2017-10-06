@@ -88,6 +88,10 @@ MODULE_SHARED_LIBS += rt
 MODULE_SHARED_LIBS += pthread
 endif
 
+ifeq (osx,$(OMR_HOST_OS))
+GLOBAL_LDFLAGS+=-install_name lib$(MODULE_NAME).dylib
+endif
+
 include $(top_srcdir)/omrmakefiles/rules.mk
 
 ifeq (win,$(OMR_HOST_OS))
