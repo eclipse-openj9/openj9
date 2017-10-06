@@ -261,6 +261,9 @@ private:
    // Dynamic Loop Transfer
    void         genDLTransfer(TR::Block *);
 
+   // OSR
+   void stashPendingPushLivenessForOSR(int32_t offset = 0);
+
    void inlineJitCheckIfFinalizeObject(TR::Block *);
 
    // support for dual symbols, to generate adjunct symbol of the dual
