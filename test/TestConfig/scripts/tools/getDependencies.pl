@@ -26,7 +26,7 @@ use warnings;
 use Getopt::Long;
 use File::Spec;
 use File::Path qw(make_path);
-
+use Digest::SHA;
 
 #define test src root path
 my $path;
@@ -53,30 +53,60 @@ print "-------------------------------------------- \n";
 print "path is set to $path \n";
 print "task is set to $task \n";
 
-#define downlaod links
-my @urls = (
-	'http://central.maven.org/maven2/org/ow2/asm/asm-all/5.0.1/asm-all-5.0.1.jar',
-	'http://central.maven.org/maven2/commons-cli/commons-cli/1.2/commons-cli-1.2.jar',
-	'http://central.maven.org/maven2/org/apache/commons/commons-exec/1.1/commons-exec-1.1.jar',
-	'http://central.maven.org/maven2/org/javassist/javassist/3.20.0-GA/javassist-3.20.0-GA.jar',
-	'http://central.maven.org/maven2/junit/junit/4.10/junit-4.10.jar',
-	'http://central.maven.org/maven2/org/testng/testng/6.10/testng-6.10.jar',
-	'http://central.maven.org/maven2/com/beust/jcommander/1.48/jcommander-1.48.jar',
-	'https://adopt-openjdk.ci.cloudbees.com/view/OpenJDK/job/asmtools/ws/asmtools-6.0-build/release/lib/asmtools.jar'
-	);
+# Define a a hash for each dependent jar
+# Contents in the hash should be: url => , fname =>, sha1 =>
+my %asm_all = (
+	url => 'http://central.maven.org/maven2/org/ow2/asm/asm-all/5.0.1/asm-all-5.0.1.jar',
+	fname => 'asm-all.jar',
+	sha1 => '2f7553f50b0d14ed811b849c282da8c1ffc32aae'
+);
+my %commons_cli = (
+	url => 'http://central.maven.org/maven2/commons-cli/commons-cli/1.2/commons-cli-1.2.jar',
+	fname => 'commons-cli.jar',
+	sha1 => '2bf96b7aa8b611c177d329452af1dc933e14501c'
+);
+my %commons_exec = (
+	url => 'http://central.maven.org/maven2/org/apache/commons/commons-exec/1.1/commons-exec-1.1.jar',
+	fname => 'commons-exec.jar',
+	sha1 => '07dfdf16fade726000564386825ed6d911a44ba1'
+);
+my %javassist = (
+	url => 'http://central.maven.org/maven2/org/javassist/javassist/3.20.0-GA/javassist-3.20.0-GA.jar',
+	fname => 'javassist.jar',
+	sha1 => 'a9cbcdfb7e9f86fbc74d3afae65f2248bfbf82a0'
+);
+my %junit4 = (
+	url => 'http://central.maven.org/maven2/junit/junit/4.10/junit-4.10.jar',
+	fname => 'junit4.jar',
+	sha1 => 'e4f1766ce7404a08f45d859fb9c226fc9e41a861'
+);
+my %testng = (
+	url => 'http://central.maven.org/maven2/org/testng/testng/6.10/testng-6.10.jar',
+	fname => 'testng.jar',
+	sha1 => '368d38d0f6906934b572e1a26441b6f47c58b134'
+);
+my %jcommander = (
+	url => 'http://central.maven.org/maven2/com/beust/jcommander/1.48/jcommander-1.48.jar',
+	fname => 'jcommander.jar',
+	sha1 => 'bfcb96281ea3b59d626704f74bc6d625ff51cbce'
+);
+my %asmtools = (
+	url => 'https://adopt-openjdk.ci.cloudbees.com/view/OpenJDK/job/asmtools/ws/asmtools-6.0-build/release/lib/asmtools.jar',
+	fname => 'asmtools.jar',
+	sha1 => 'd57dfcdd591635d31372cfcc18474a8ca6442171'
+);
 
-#define jar file names stored under TestConfig/lib,
-#this array should be in the same order of @urls
-my @filenames = (
-	'asm-all.jar',
-	'commons-cli.jar',
-	'commons-exec.jar',
-	'javassist.jar',
-	'junit4.jar',
-	'testng.jar',
-	'jcommander.jar',
-	'asmtools.jar'
-	);
+# Put all dependent jars hash to array to prepare dowloading
+my @jars_info = (
+	\%asm_all,
+	\%commons_cli,
+	\%commons_exec,
+	\%javassist,
+	\%junit4,
+	\%testng,
+	\%jcommander,
+	\%asmtools
+);
 
 print "-------------------------------------------- \n";
 print "Starting download third party dependent jars \n";
@@ -84,9 +114,11 @@ print "-------------------------------------------- \n";
 if ( $task eq "default" ) {
 
 	print "downloading dependent third party jars to $path \n";
-	for my $i (0 .. $#urls) {
-		my $url = $urls[$i];
-		my $filename = $path . $sep . $filenames[$i];
+	my $sha = Digest::SHA->new();
+	my $digest;
+	for my $i (0 .. $#jars_info) {
+		my $url = $jars_info[$i]{url};
+		my $filename = $path . $sep . $jars_info[$i]{fname};
 
 		if ( -e $filename) {
 			print "$filename exits, skip downloading \n"
@@ -98,6 +130,16 @@ if ( $task eq "default" ) {
 			} else {
 				die "ERROR: downloading $url failed, return code: $? \n";
 			}
+		}
+
+		# validate dependencies sha1 sum
+		$sha->addfile($filename);
+		$digest = $sha->hexdigest ;
+		if ( $digest ne $jars_info[$i]{sha1}) {
+			print "Expected sha1 is: $jars_info[$i]{sha1}, \n";
+			print "Actual sha1 is  : $digest. \n";
+			print "Please delete $filename and rerun the program!";
+			die "ERROR: sha1 sum check error. \n";
 		}
 	}
 	print "downloaded dependent third party jars successfully \n";

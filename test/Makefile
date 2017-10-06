@@ -103,7 +103,7 @@ endif
 test_%: compile
 	@echo Running $(patsubst test_%,%,$@) tests
 	(cd $(OPENJ9TEST_SRC_DIR)/TestConfig && \
-		$(MAKE) $(ADD_CMD_ARGS) $(patsubst test_%,%,$@))
+		$(MAKE) $(ADD_CMD_ARGS) $(patsubst test_%,_%,$@))
 
 check_jtreg:
 	$(call check_variable_defined,JTREG_DIR,Please provide a JTREG_DIR value (path to OpenJDK jtreg harness)!)
