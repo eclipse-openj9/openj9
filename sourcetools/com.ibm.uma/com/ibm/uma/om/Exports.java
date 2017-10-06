@@ -43,6 +43,10 @@ public class Exports extends PredicateList {
 		exports.add(export);
 	}
 	
+	public void addExports(Exports exps) {
+		exports.addAll(exps.getExports());
+	}
+	
 	public Vector<Export> getExports() {
 		return exports;
 	}

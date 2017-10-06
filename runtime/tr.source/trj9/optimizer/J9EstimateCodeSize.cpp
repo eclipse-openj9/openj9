@@ -1337,7 +1337,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          callGraphEnabled = false; // TODO: Work out why this doesn't function properly on subsequent passes
       if (callGraphEnabled && recurseDown)
          {
-         TR_OpaqueMethodBlock *method = prevCallStack->_method->getPersistentIdentifier();
+         TR_OpaqueMethodBlock *method = calltarget->_myCallSite->_callerResolvedMethod->getPersistentIdentifier();
          uint32_t bcIndex = calltarget->_myCallSite->_bcInfo.getByteCodeIndex();
          int32_t callCount = profileManager->getCallGraphProfilingCount(method,
                bcIndex, comp());

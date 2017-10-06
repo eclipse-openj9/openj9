@@ -64,7 +64,11 @@ public class Module extends PredicateList {
 	}
 	
 	public void addExports(String group, Exports exps) {
-		exports.put(group, exps);
+		if ( exports.containsKey(group) ) {
+			exports.get(group).addExports(exps);
+		} else {
+			exports.put(group, exps);
+		}
 	}
 	
 	public void addObjects(String group, Objects objs) {
