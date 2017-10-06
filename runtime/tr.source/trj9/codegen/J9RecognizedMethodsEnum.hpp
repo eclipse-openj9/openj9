@@ -1033,6 +1033,10 @@
    java_lang_invoke_VarHandle_getAndBitwiseXor,
    java_lang_invoke_VarHandle_getAndBitwiseXorAcquire,
    java_lang_invoke_VarHandle_getAndBitwiseXorRelease,
+   java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod,
+   java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod,
+   java_lang_invoke_InstanceFieldVarHandle_InstanceFieldVarHandleOperations_OpMethod,
+   java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod,
    java_lang_invoke_VirtualHandle_virtualCall,
    java_lang_invoke_VirtualHandle_invokeExact,
 

@@ -34,6 +34,7 @@
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
 #include "env/VMJ9.h"
+#include "env/j9method.h"
 #include "il/ILOpCodes.hpp"                    // for ILOpCodes::treetop, etc
 #include "il/ILOps.hpp"                        // for ILOpCode, TR::ILOpCode
 #include "il/Node.hpp"                         // for Node, etc
@@ -335,6 +336,48 @@ int32_t TR_UnsafeFastPath::perform()
                break;
             }
 
+         // Handle VarHandle operation methods
+         bool isStatic = false;
+         TR::RecognizedMethod callerMethod = methodSymbol->getRecognizedMethod();
+         TR::RecognizedMethod calleeMethod = symbol->getRecognizedMethod();
+         if (TR_J9MethodBase::isVarHandleOperationMethod(callerMethod) &&
+             TR_J9MethodBase::isUnsafeGetPutWithObjectArg(calleeMethod))
+            {
+            switch (callerMethod)
+               {
+               case TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod:
+                  isStatic = true;
+                  break;
+               default:
+                  break;
+               }
+
+            switch (callerMethod)
+               {
+               case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
+               case TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod:
+                  isArrayOperation = true;
+                  break;
+               default:
+                  break;
+               }
+
+            if (isArrayOperation)
+               type = TR_J9MethodBase::unsafeDataTypeForArray(calleeMethod);
+            else
+               type = TR_J9MethodBase::unsafeDataTypeForObject(calleeMethod);
+
+
+            if (TR_J9MethodBase::isUnsafePut(calleeMethod))
+               value = node->getChild(3);
+
+            if (TR_J9MethodBase::isVolatileUnsafe(calleeMethod))
+               isVolatile = true;
+
+            if (trace())
+               traceMsg(comp(), "VarHandle operation: isArrayOperation %d type %s value %p isVolatile %d on node %p\n", isArrayOperation, J9::DataType::getName(type), value, isVolatile, node);
+            }
+
          bool mightBeArraylets = isArrayOperation && TR::Compiler->om.canGenerateArraylets();
 
          // Skip inlining of helpers for arraylets if unsafe for arraylets is disabled
@@ -349,13 +392,37 @@ int32_t TR_UnsafeFastPath::perform()
 
          if (type != TR::NoType && performTransformation(comp(), "%s Found unsafe/JITHelpers calls, turning node [" POINTER_PRINTF_FORMAT "] into a load/store\n", optDetailString(), node))
             {
+
             TR::SymbolReference * unsafeSymRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, false, isVolatile);
+
+            // Change the object child to the starting address of static fields in J9Class
+            if (isStatic)
+               {
+               TR::Node *jlClass = node->getChild(1);
+               TR::Node *j9Class =
+                  TR::Node::createWithSymRef(TR::aloadi, 1, 1, jlClass,
+                                  comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
+               TR::Node *ramStatics =
+                  TR::Node::createWithSymRef(TR::aloadi, 1, 1, j9Class,
+                                  comp()->getSymRefTab()->findOrCreateRamStaticsFromClassSymbolRef());
+               node->setAndIncChild(1, ramStatics);
+               jlClass->recursivelyDecReferenceCount();
+               offset = node->getChild(2);
+               // The offset for a static field is low taged, mask out the last bit to get the real offset
+               TR::Node *newOffset =
+                  TR::Node::create(offset, TR::land, 2, offset,
+                                  TR::Node::lconst(offset, ~1));
+               node->setAndIncChild(2, newOffset);
+               offset->recursivelyDecReferenceCount();
+               }
 
             // Anchor children of the call node to preserve their values
             anchorAllChildren(node, tt);
 
+            // When accessing a static field, object is the starting address of static fields
             object = node->getChild(1);
-            object->setIsNonNull(true);
+            if (!isStatic)
+               object->setIsNonNull(true);
 
             if (isByIndex)
                {

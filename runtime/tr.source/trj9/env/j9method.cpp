@@ -3072,6 +3072,16 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V,        "putDoubleVolatile",  "(Ljava/lang/Object;JD)V")},
       {x(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "putObjectVolatile",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
 
+      {x(TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V,       "putBooleanRelease", "(Ljava/lang/Object;JZ)V")},
+      {x(TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V,          "putByteRelease",    "(Ljava/lang/Object;JB)V")},
+      {x(TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V,          "putCharRelease",    "(Ljava/lang/Object;JC)V")},
+      {x(TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V,         "putShortRelease",   "(Ljava/lang/Object;JS)V")},
+      {x(TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V,           "putIntRelease",     "(Ljava/lang/Object;JI)V")},
+      {x(TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V,          "putLongRelease",    "(Ljava/lang/Object;JJ)V")},
+      {x(TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V,         "putFloatRelease",   "(Ljava/lang/Object;JF)V")},
+      {x(TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V,        "putDoubleRelease",  "(Ljava/lang/Object;JD)V")},
+      {x(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "putObjectRelease",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
+
       {x(TR::sun_misc_Unsafe_putInt_jlObjectII_V,           "putInt",     "(Ljava/lang/Object;II)V")},
 
       {x(TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z,        "getBoolean", "(Ljava/lang/Object;J)Z")},
@@ -3093,6 +3103,16 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F,          "getFloatVolatile",   "(Ljava/lang/Object;J)F")},
       {x(TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D,         "getDoubleVolatile",  "(Ljava/lang/Object;J)D")},
       {x(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject,  "getObjectVolatile",  "(Ljava/lang/Object;J)Ljava/lang/Object;")},
+
+      {x(TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z,        "getBooleanAcquire", "(Ljava/lang/Object;J)Z")},
+      {x(TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B,           "getByteAcquire",    "(Ljava/lang/Object;J)B")},
+      {x(TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C,           "getCharAcquire",    "(Ljava/lang/Object;J)C")},
+      {x(TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S,          "getShortAcquire",   "(Ljava/lang/Object;J)S")},
+      {x(TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I,            "getIntAcquire",     "(Ljava/lang/Object;J)I")},
+      {x(TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J,           "getLongAcquire",    "(Ljava/lang/Object;J)J")},
+      {x(TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F,          "getFloatAcquire",   "(Ljava/lang/Object;J)F")},
+      {x(TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D,         "getDoubleAcquire",  "(Ljava/lang/Object;J)D")},
+      {x(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject,  "getObjectAcquire",  "(Ljava/lang/Object;J)Ljava/lang/Object;")},
 
       {x(TR::sun_misc_Unsafe_putByte_JB_V,                  "putByte",    "(JB)V")},
       {x(TR::sun_misc_Unsafe_putShort_JS_V,                 "putShort",   "(JS)V")},
@@ -4504,6 +4524,22 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
             else if (!strncmp(name, "dispatchJ9Method_", 17))
                setRecognizedMethodInfo(TR::java_lang_invoke_ComputedCalls_dispatchJ9Method);
             }
+         else if ((classNameLen >= 59 + 3 && classNameLen <= 59 + 7) && !strncmp(className, "java/lang/invoke/ArrayVarHandle$ArrayVarHandleOperations$Op", 59))
+            {
+            setRecognizedMethodInfo(TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod);
+            }
+         else if ((classNameLen >= 71 + 3 && classNameLen <= 71 + 7) && !strncmp(className, "java/lang/invoke/StaticFieldVarHandle$StaticFieldVarHandleOperations$Op", 71))
+            {
+            setRecognizedMethodInfo(TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod);
+            }
+         else if ((classNameLen >= 75 + 3 && classNameLen <= 75 + 7) && !strncmp(className, "java/lang/invoke/InstanceFieldVarHandle$InstanceFieldVarHandleOperations$Op", 75))
+            {
+            setRecognizedMethodInfo(TR::java_lang_invoke_InstanceFieldVarHandle_InstanceFieldVarHandleOperations_OpMethod);
+            }
+         else if ((classNameLen >= 75 + 3 && classNameLen <= 75 + 7) && !strncmp(className, "java/lang/invoke/ByteArrayViewVarHandle$ByteArrayViewVarHandleOperations$Op", 75))
+            {
+            setRecognizedMethodInfo(TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod);
+            }
          }
       }
    #if defined(TR_HOST_X86)
@@ -5247,6 +5283,247 @@ TR_J9MethodBase::isUnsafeWithObjectArg(TR::Compilation * c)
       	return false;
       }
 
+   return false;
+   }
+
+bool
+TR_J9MethodBase::isUnsafeGetPutWithObjectArg(TR::RecognizedMethod rm)
+   {
+   switch (rm)
+      {
+      case TR::sun_misc_Unsafe_putByte_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putChar_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_putShort_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putInt_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putLong_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putFloat_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putDouble_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z:
+      case TR::sun_misc_Unsafe_getByte_jlObjectJ_B:
+      case TR::sun_misc_Unsafe_getChar_jlObjectJ_C:
+      case TR::sun_misc_Unsafe_getShort_jlObjectJ_S:
+      case TR::sun_misc_Unsafe_getInt_jlObjectJ_I:
+      case TR::sun_misc_Unsafe_getLong_jlObjectJ_J:
+      case TR::sun_misc_Unsafe_getFloat_jlObjectJ_F:
+      case TR::sun_misc_Unsafe_getDouble_jlObjectJ_D:
+      case TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject:
+      case TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z:
+      case TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B:
+      case TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C:
+      case TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S:
+      case TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I:
+      case TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J:
+      case TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F:
+      case TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D:
+      case TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject:
+      case TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putCharOrdered_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_putShortOrdered_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putIntOrdered_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V:
+         return true;
+      default:
+         return false;
+      }
+
+   return false;
+   }
+
+TR::DataType
+TR_J9MethodBase::unsafeDataTypeForObject(TR::RecognizedMethod rm)
+   {
+   switch (rm)
+      {
+      case TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z:
+      case TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_getByte_jlObjectJ_B:
+      case TR::sun_misc_Unsafe_putByte_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_getChar_jlObjectJ_C:
+      case TR::sun_misc_Unsafe_putChar_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_getShort_jlObjectJ_S:
+      case TR::sun_misc_Unsafe_putShort_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_getInt_jlObjectJ_I:
+      case TR::sun_misc_Unsafe_putInt_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z:
+      case TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B:
+      case TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C:
+      case TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S:
+      case TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I:
+      case TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V:
+         return TR::Int32;
+      case TR::sun_misc_Unsafe_getLong_jlObjectJ_J:
+      case TR::sun_misc_Unsafe_putLong_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J:
+      case TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V:
+         return TR::Int64;
+      case TR::sun_misc_Unsafe_getFloat_jlObjectJ_F:
+      case TR::sun_misc_Unsafe_putFloat_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F:
+      case TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V:
+         return TR::Float;
+      case TR::sun_misc_Unsafe_getDouble_jlObjectJ_D:
+      case TR::sun_misc_Unsafe_putDouble_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D:
+      case TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V:
+         return TR::Double;
+      case TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject:
+      case TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject:
+      case TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V:
+         return TR::Address;
+      default:
+         TR_ASSERT(false, "Method is not supported\n");
+      }
+   return TR::NoType;
+   }
+
+TR::DataType
+TR_J9MethodBase::unsafeDataTypeForArray(TR::RecognizedMethod rm)
+   {
+   switch (rm)
+      {
+      case TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z:
+      case TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_getByte_jlObjectJ_B:
+      case TR::sun_misc_Unsafe_putByte_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z:
+      case TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B:
+      case TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V:
+         return TR::Int8;
+      case TR::sun_misc_Unsafe_getChar_jlObjectJ_C:
+      case TR::sun_misc_Unsafe_putChar_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_getShort_jlObjectJ_S:
+      case TR::sun_misc_Unsafe_putShort_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C:
+      case TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S:
+      case TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V:
+         return TR::Int16;
+      case TR::sun_misc_Unsafe_getInt_jlObjectJ_I:
+      case TR::sun_misc_Unsafe_putInt_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I:
+      case TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V:
+         return TR::Int32;
+      case TR::sun_misc_Unsafe_getLong_jlObjectJ_J:
+      case TR::sun_misc_Unsafe_putLong_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J:
+      case TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V:
+         return TR::Int64;
+      case TR::sun_misc_Unsafe_getFloat_jlObjectJ_F:
+      case TR::sun_misc_Unsafe_putFloat_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F:
+      case TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V:
+         return TR::Float;
+      case TR::sun_misc_Unsafe_getDouble_jlObjectJ_D:
+      case TR::sun_misc_Unsafe_putDouble_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D:
+      case TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V:
+         return TR::Double;
+      case TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject:
+      case TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject:
+      case TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V:
+         return TR::Address;
+      default:
+         TR_ASSERT(false, "Method is not supported\n");
+      }
+   return TR::NoType;
+   }
+
+bool
+TR_J9MethodBase::isVolatileUnsafe(TR::RecognizedMethod rm)
+   {
+   switch (rm)
+      {
+      case TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z:
+      case TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B:
+      case TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C:
+      case TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S:
+      case TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I:
+      case TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J:
+      case TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F:
+      case TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D:
+      case TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject:
+      case TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V:
+         return true;
+      default:
+         return false;
+      }
+   return false;
+   }
+
+// Might need to add more unsafe put methods to this list
+bool
+TR_J9MethodBase::isUnsafePut(TR::RecognizedMethod rm)
+   {
+   switch (rm)
+      {
+      case TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putByte_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putChar_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_putShort_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putInt_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putLong_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putFloat_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putDouble_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V:
+         return true;
+      default:
+         return false;
+      }
+   return false;
+   }
+
+bool
+TR_J9MethodBase::isVarHandleOperationMethod(TR::RecognizedMethod rm)
+   {
+   switch (rm)
+      {
+      case TR::java_lang_invoke_ArrayVarHandle_ArrayVarHandleOperations_OpMethod:
+      case TR::java_lang_invoke_StaticFieldVarHandle_StaticFieldVarHandleOperations_OpMethod:
+      case TR::java_lang_invoke_InstanceFieldVarHandle_InstanceFieldVarHandleOperations_OpMethod:
+      case TR::java_lang_invoke_ByteArrayViewVarHandle_ByteArrayViewVarHandleOperations_OpMethod:
+         return true;
+      default:
+         return false;
+      }
    return false;
    }
 
