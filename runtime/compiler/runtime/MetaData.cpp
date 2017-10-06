@@ -1244,7 +1244,7 @@ static void populateInlineCalls(
       if (autos != 0)
          inlinedCallSite->_byteCodeInfo.setIsSameReceiver(1);
 
-      if (vm->isAOT_DEPRECATED_DO_NOT_USE())
+      if (vm->isAOT_DEPRECATED_DO_NOT_USE() || TR::comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
          {
          inlinedCallSite->_methodInfo = (TR_OpaqueMethodBlock*)-1;
          }
@@ -1254,7 +1254,7 @@ static void populateInlineCalls(
       	 traceMsg(comp, "inlineIdx %d, callSiteCursor %p, inlinedCallSite->methodInfo = %p\n", i, callSiteCursor, inlinedCallSite->_methodInfo);
       	 }
 
-      if (!vm->isAOT_DEPRECATED_DO_NOT_USE()) // For AOT, we should only have returned resolved info about a method if the method came from same class loaders.
+      if (!vm->isAOT_DEPRECATED_DO_NOT_USE() && TR::comp()->getPersistentInfo()->getJaasMode() != SERVER_MODE) // For AOT, we should only have returned resolved info about a method if the method came from same class loaders.
          {
          J9Class *j9clazz = (J9Class *) J9_CLASS_FROM_CP(((J9RAMConstantPoolItem *) J9_CP_FROM_METHOD(((J9Method *) inlinedCallSite->_methodInfo))));
          TR_OpaqueClassBlock *clazzOfInlinedMethod = ((TR_J9VMBase*) comp->fej9())->convertClassPtrToClassOffset(j9clazz);

@@ -13,6 +13,9 @@ public:
    virtual bool storeOffsetToArgumentsInVirtualIndirectThunks() override { return true; }
    virtual bool needsContiguousAllocation() override                     { return true; }
 
+   virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool) override
+      { return; }
+
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT) override;
    virtual bool isClassLibraryClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override;
