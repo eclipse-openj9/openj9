@@ -110,6 +110,13 @@ public:
    virtual void * getLocationOfClassLoaderObjectPointer(TR_OpaqueClassBlock *clazz) override;
    virtual bool isOwnableSyncClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getClassFromMethodBlock(TR_OpaqueMethodBlock *method) override;
+   virtual U_8 * fetchMethodExtendedFlagsPointer(J9Method *method) override;
+   virtual bool stringEquals(TR::Compilation *comp, uintptrj_t* stringLocation1, uintptrj_t*stringLocation2, int32_t& result) override;
+   virtual bool getStringHashCode(TR::Compilation *comp, uintptrj_t* stringLocation, int32_t& result) override;
+   virtual int32_t getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex) override;
+   virtual TR_OpaqueMethodBlock * getObjectNewInstanceImplMethod() override;
+   virtual uintptrj_t getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcInfo) override;
+   virtual TR_OpaqueClassBlock * getClassFromStatic(void *staticAddress) override;
    };
 
 #endif // VMJ9SERVER_H

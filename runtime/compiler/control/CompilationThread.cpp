@@ -992,6 +992,56 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getClassFromMethodBlock(method));
          }
          break;
+      case J9ServerMessageType::VM_fetchMethodExtendedFlagsPointer:
+         {
+         J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
+         client->write(fe->fetchMethodExtendedFlagsPointer(method));
+         }
+         break;
+      case J9ServerMessageType::VM_stringEquals:
+         {
+         auto recv = client->getRecvData<uintptrj_t *, uintptrj_t *>();
+         uintptrj_t *stringLocation1 = std::get<0>(recv);
+         uintptrj_t *stringLocation2 = std::get<1>(recv);
+         int32_t result;
+         bool isEqual = fe->stringEquals(TR::comp(), stringLocation1, stringLocation2, result);
+         client->write(result, isEqual);
+         }
+         break;
+      case J9ServerMessageType::VM_getStringHashCode:
+         {
+         uintptrj_t *stringLocation = std::get<0>(client->getRecvData<uintptrj_t *>());
+         int32_t result;
+         bool isGet = fe->getStringHashCode(TR::comp(), stringLocation, result);
+         client->write(result, isGet);
+         }
+         break;
+      case J9ServerMessageType::VM_getLineNumberForMethodAndByteCodeIndex:
+         {
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, int32_t>();
+         TR_OpaqueMethodBlock *method = std::get<0>(recv);
+         int32_t bcIndex = std::get<1>(recv);
+         client->write(fe->getLineNumberForMethodAndByteCodeIndex(method, bcIndex));
+         }
+         break;
+      case J9ServerMessageType::VM_getObjectNewInstanceImplMethod:
+         {
+         client->getRecvData<JAAS::Void>();
+         client->write(fe->getObjectNewInstanceImplMethod());
+         }
+         break;
+      case J9ServerMessageType::VM_getBytecodePC:
+         {
+         TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
+         client->write(TR::Compiler->mtd.bytecodeStart(method));
+         }
+         break;
+      case J9ServerMessageType::VM_getClassFromStatic:
+         {
+         void *staticAddress = std::get<0>(client->getRecvData<void *>());
+         client->write(fe->getClassFromStatic(staticAddress));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only

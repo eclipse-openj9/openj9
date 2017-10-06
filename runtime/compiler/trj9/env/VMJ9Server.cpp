@@ -893,3 +893,64 @@ TR_J9ServerVM::getClassFromMethodBlock(TR_OpaqueMethodBlock *method)
    stream->write(JAAS::J9ServerMessageType::VM_getClassFromMethodBlock, method);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
+
+U_8 *
+TR_J9ServerVM::fetchMethodExtendedFlagsPointer(J9Method *method)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_fetchMethodExtendedFlagsPointer, method);
+   return std::get<0>(stream->read<U_8 *>());
+   }
+
+bool
+TR_J9ServerVM::stringEquals(TR::Compilation *comp, uintptrj_t* stringLocation1, uintptrj_t*stringLocation2, int32_t& result)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_stringEquals, stringLocation1, stringLocation2);
+   auto recv = stream->read<int32_t, bool>();
+   result = std::get<0>(recv);
+   return std::get<1>(recv);
+   }
+
+bool
+TR_J9ServerVM::getStringHashCode(TR::Compilation *comp, uintptrj_t* stringLocation, int32_t& result)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getStringHashCode, stringLocation);
+   auto recv = stream->read<int32_t, bool>();
+   result = std::get<0>(recv);
+   return std::get<1>(recv);
+   }
+
+int32_t
+TR_J9ServerVM::getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getLineNumberForMethodAndByteCodeIndex, method, bcIndex);
+   return std::get<0>(stream->read<int32_t>());
+   }
+
+TR_OpaqueMethodBlock *
+TR_J9ServerVM::getObjectNewInstanceImplMethod()
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getObjectNewInstanceImplMethod, JAAS::Void());
+   return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+   }
+
+uintptrj_t
+TR_J9ServerVM::getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcInfo)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getBytecodePC, method);
+   uintptrj_t methodStart = std::get<0>(stream->read<uintptrj_t>());
+   return methodStart + (uintptrj_t)(bcInfo.getByteCodeIndex());
+   }
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getClassFromStatic(void *staticAddress)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getClassFromStatic, staticAddress);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }

@@ -285,8 +285,8 @@ public:
    static bool isBigDecimalConvertersClass(J9UTF8 * className);
 
    int32_t *getStringClassEnableCompressionFieldAddr(TR::Compilation *comp, bool isVettedForAOT);
-   bool stringEquals(TR::Compilation * comp, uintptrj_t* stringLocation1, uintptrj_t* stringLocation2, int32_t& result);
-   bool getStringHashCode(TR::Compilation * comp, uintptrj_t* stringLocation, int32_t& result);
+   virtual bool stringEquals(TR::Compilation * comp, uintptrj_t* stringLocation1, uintptrj_t* stringLocation2, int32_t& result);
+   virtual bool getStringHashCode(TR::Compilation * comp, uintptrj_t* stringLocation, int32_t& result);
 
    virtual bool isThunkArchetype(J9Method * method);
 
@@ -905,6 +905,7 @@ public:
    TR::TreeTop * lowerContigArrayLength( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    TR::TreeTop * lowerMultiANewArray( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    TR::TreeTop * lowerToVcall( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
+   virtual U_8 * fetchMethodExtendedFlagsPointer(J9Method *method); // wrapper method of fetchMethodExtendedFlagsPointer in util/extendedmethodblockaccess.c, for JAAS override purpose
 
    TR::Node * initializeLocalObjectFlags( TR::Compilation *, TR::Node * allocationNode, TR_OpaqueClassBlock * ramClass);
 
@@ -1064,6 +1065,7 @@ public:
    virtual const char *       sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_t bufLen, TR_Memory *memory);
 
    virtual TR_ResolvedMethod * getObjectNewInstanceImplMethod(TR_Memory *);
+   virtual TR_OpaqueMethodBlock * getObjectNewInstanceImplMethod();
 
    virtual intptrj_t          methodTrampolineLookup( TR::Compilation *, TR::SymbolReference *symRef, void *callSite);
    virtual TR::CodeCache*    getResolvedTrampoline( TR::Compilation *, TR::CodeCache *curCache, J9Method * method, bool inBinaryEncoding);

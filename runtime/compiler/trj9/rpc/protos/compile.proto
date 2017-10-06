@@ -145,6 +145,13 @@ enum J9ServerMessageType
    VM_getLocationOfClassLoaderObjectPointer = 284;
    VM_isOwnableSyncClass = 285;
    VM_getClassFromMethodBlock = 286;
+   VM_fetchMethodExtendedFlagsPointer = 287;
+   VM_stringEquals = 288;
+   VM_getStringHashCode = 289;
+   VM_getLineNumberForMethodAndByteCodeIndex = 290;
+   VM_getObjectNewInstanceImplMethod = 291;
+   VM_getBytecodePC = 292;
+   VM_getClassFromStatic = 293;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

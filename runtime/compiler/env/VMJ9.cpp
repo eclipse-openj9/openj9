@@ -2320,7 +2320,7 @@ TR_MarkHotField::markHotField(J9Class * clazz, bool rootClass)
          printf("hot field %*s with bitValue=%x and slotIndex=%d found while compiling \n   %s\n", len, s, _bitValue, _slotIndex, _comp->signature());
          }
 
-      J9ROMClass* romClass = ((J9Class *)clazz)->romClass;
+      J9ROMClass* romClass = TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock*)clazz);
       J9UTF8* name = J9ROMCLASS_CLASSNAME(romClass);
       printf("%*smarked field as hot in class %.*s\n", depth(), " ", J9UTF8_LENGTH(name), J9UTF8_DATA(name));
       }
@@ -3543,6 +3543,12 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
    treeTop->setNode(methodCall);
 
    return treeTop;
+   }
+
+U_8 *
+TR_J9VMBase::fetchMethodExtendedFlagsPointer(J9Method *method)
+   {
+   return fetchMethodExtendedFlagsPointer(method);
    }
 
 static void lowerContiguousArrayLength(TR::Compilation *comp, TR::Node *root)
@@ -5745,7 +5751,6 @@ TR_J9VMBase::getMethodSize(TR_OpaqueMethodBlock *method)
 
 int32_t TR_J9VMBase::getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex)
    {
-   return 0;
    return isAOT_DEPRECATED_DO_NOT_USE() ? -1 : (int32_t)getLineNumberForROMClass(_jitConfig->javaVM, (J9Method *) method, bcIndex);
    }
 
@@ -6187,8 +6192,14 @@ TR_J9VM::getObjectAlignmentInBytes()
 TR_ResolvedMethod *
 TR_J9VM::getObjectNewInstanceImplMethod(TR_Memory * trMemory)
    {
-   // JAAS TODO:
-   TR_ASSERT(TR::comp()->getPersistentInfo()->getJaasMode() == NONJAAS_MODE, "JAAS hit TR_J9VM::getObjectNewInstanceImplMethod");
+   TR_OpaqueMethodBlock *protoMethod = getObjectNewInstanceImplMethod();
+   TR_ResolvedMethod * result = createResolvedMethod(trMemory, protoMethod, 0);
+   return result;
+   }
+
+TR_OpaqueMethodBlock *
+TR_J9VM::getObjectNewInstanceImplMethod()
+   {
    TR::VMAccessCriticalSection getObjectNewInstanceImplMethod(this);
    J9Method * protoMethod;
    J9InternalVMFunctions * intFunc = vmThread()->javaVM->internalVMFunctions;
@@ -6197,8 +6208,7 @@ TR_J9VM::getObjectNewInstanceImplMethod(TR_Memory * trMemory)
    J9Class * jlObject = intFunc->internalFindKnownClass(vmThread(), J9VMCONSTANTPOOL_JAVALANGOBJECT, J9_FINDKNOWNCLASS_FLAG_EXISTING_ONLY);
    protoMethod = (J9Method *) intFunc->javaLookupMethod(vmThread(), jlObject, (J9ROMNameAndSignature *) &newInstancePrototypeNameAndSig, NULL, J9_LOOK_DIRECT_NAS | J9_LOOK_VIRTUAL | J9_LOOK_NO_THROW);
    protoMethod->constantPool = (J9ConstantPool *) ((UDATA) protoMethod->constantPool | J9_STARTPC_METHOD_IS_OVERRIDDEN);
-   TR_ResolvedMethod * result = createResolvedMethod(trMemory, (TR_OpaqueMethodBlock *) protoMethod, 0);
-   return result;
+   return (TR_OpaqueMethodBlock *)protoMethod;
    }
 
 uintptrj_t
