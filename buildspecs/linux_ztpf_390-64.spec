@@ -188,7 +188,7 @@
 		<flag id="module_cpo_common" value="true"/>
 		<flag id="module_cpo_controller" value="true"/>
 		<flag id="module_ddr" value="true"/>
-		<flag id="module_ddr_gdb_plugin" value="true"/>
+		<flag id="module_ddr_gdb_plugin" value="false"/>
 		<flag id="module_ddrext" value="true"/>
 		<flag id="module_exe" value="true"/>
 		<flag id="module_exe.j9" value="true"/>

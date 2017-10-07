@@ -174,9 +174,9 @@ ESCAPED_JAVA := $(subst \,/,$(JAVA))
 PLATFORM	 := $(if $(wildcard buildtools/j9ddr-autoblob.jar),$(shell $(JAVA) -cp buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GetNativeDirectory))
 SUPERSET     := superset.$(SPEC).dat
 
-#For z/TPF change platform because of cross-build
+#Trigger cross-compilation & use linux_x86 DDR configuration
 ifeq (linux_ztpf_390-64, $(SPEC))
-	PLATFORM := linux_ztpf_390-64
+	PLATFORM := linux_x86
 	OS := ztpf
 endif
 
