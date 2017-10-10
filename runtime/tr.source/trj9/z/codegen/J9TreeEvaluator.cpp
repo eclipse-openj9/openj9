@@ -15579,6 +15579,9 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
       debugObj->addInstructionComment(cursor, "Start of BCDCHK OOL sequence");
       }
 
+   // Debug counter for tracking how often we fall back to the OOL path of the DAA intrinsic
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "DAA/OOL/(%s)/%p", cg->comp()->signature(), node), 1, TR::DebugCounter::Undetermined);
+
    // Evaluate the callNode, duplicate and evaluate the address node, and then copy the
    // correct results back to the mainline storage ref or register
    TR::Register* callResultReg = cg->evaluate(callNode);
@@ -18736,15 +18739,24 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
    TR::Register* lengthReg = cg->allocateRegister();
    generateRRInstruction(cg, TR::InstOpCode::LR, node, lengthReg, precisionReg);
    generateRSInstruction(cg, TR::InstOpCode::SRA, pdOpNode, lengthReg, lengthReg, 0x1, NULL);
-   generateRIInstruction(cg, TR::InstOpCode::AGHI, node, lengthReg, 0x1);
 
    TR::MemoryReference* sourceMR = generateS390MemoryReference(callAddrReg, 0, cg);
+   static bool disableTPBeforePD2I = feGetEnv("TR_DisableTPBeforePD2I") != NULL;
 
    if(isUseVectorBCD)
       {
       // variable length load + vector convert to binary
       TR::Register* vPDReg = cg->allocateRegister(TR_VRF);
       generateVRSdInstruction(cg, TR::InstOpCode::VLRLR, node, lengthReg, vPDReg, sourceMR);
+
+      if (!disableTPBeforePD2I)
+         {
+         generateVRRgInstruction(cg, TR::InstOpCode::VTP, node, vPDReg);
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC,
+                                       TR::InstOpCode::COND_MASK7,
+                                       node, cg->getCurrentBCDCHKHandlerLabel());
+         }
+
       generateVRRiInstruction(cg, conversionOp, node, returnReg, vPDReg, 1);      // set CC for overflow
       cg->stopUsingRegister(vPDReg);
       }
@@ -18791,6 +18803,30 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
       */
       generateRXInstruction(cg, TR::InstOpCode::LA, node, zapTargetBaseReg, ZAPtargetMR);
 
+      if (!disableTPBeforePD2I)
+         {
+         TR::Register* tempLengthForTP = cg->allocateRegister();
+
+         if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+            {
+            generateRSInstruction(cg, TR::InstOpCode::SLAK, node, tempLengthForTP, lengthReg, 4);
+            }
+         else
+            {
+            generateRRInstruction(cg, TR::InstOpCode::LR, node, tempLengthForTP, lengthReg);
+            generateRSInstruction(cg, TR::InstOpCode::SLA, node, tempLengthForTP, 4);
+            }
+
+         auto* testPackedInstruction = generateRSLInstruction(cg, TR::InstOpCode::TP, node, 0, generateS390MemoryReference(*sourceMR, 0, cg));
+
+         generateEXDispatch(node, cg, tempLengthForTP, testPackedInstruction);
+
+         // Fallback to the OOL path if anything is wrong with the input packed decimal
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK7, node, cg->getCurrentBCDCHKHandlerLabel());
+
+         cg->stopUsingRegister(tempLengthForTP);
+         }
+
       TR::Instruction* instrZAP = generateSS2Instruction(cg, TR::InstOpCode::ZAP, node,
                                                          tempSRSize - 1,
                                                          generateS390MemoryReference(zapTargetBaseReg, 0, cg),
@@ -18826,6 +18862,12 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
    cg->stopUsingRegister(lengthReg);
    pdOpNode->setRegister(returnReg);
 
+   // Create a debug counter to track how often we execute the inline path for variable operations
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(),
+                                                               "DAA/variable/inline/(%s)/%p",
+                                                               cg->comp()->signature(), node),
+                            1, TR::DebugCounter::Undetermined);
+
    cg->traceBCDExit("pd2lVariableEvaluator",node);
 
    return returnReg;
@@ -18847,6 +18889,15 @@ J9::Z::TreeEvaluator::generateVectorPackedToBinaryConversion(TR::Node * node, TR
    TR::Node *pdValueNode = node->getFirstChild();
    TR::Register *vPdValueReg = cg->evaluate(pdValueNode);
    TR_ASSERT(vPdValueReg->getKind() == TR_VRF || vPdValueReg->getKind() == TR_FPR, "Vector register expected.");
+
+   static bool disableTPBeforePD2I = feGetEnv("TR_DisableTPBeforePD2I") != NULL;
+   if (!disableTPBeforePD2I)
+      {
+      generateVRRgInstruction(cg, TR::InstOpCode::VTP, node, vPdValueReg);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC,
+                                    TR::InstOpCode::COND_MASK7, node,
+                                    cg->getCurrentBCDCHKHandlerLabel());
+      }
 
    // Convert to signed binary of either 32-bit or 64-bit long
    generateVRRiInstruction(cg, op, node, rResultReg, vPdValueReg, 0x1);
@@ -18892,6 +18943,14 @@ J9::Z::TreeEvaluator::generatePackedToBinaryConversion(TR::Node * node, TR::Inst
    TR_StorageReference *firstStorageReference = firstReg->getStorageReference();
    sourceMR = reuseS390LeftAlignedMemoryReference(sourceMR, firstChild, firstStorageReference, cg, requiredSourceSize, false); // enforceSSLimits=false for CVB
 
+   static bool disableTPBeforePD2I = feGetEnv("TR_DisableTPBeforePD2I") != NULL;
+
+   if (!disableTPBeforePD2I)
+      {
+      generateRSLInstruction(cg, TR::InstOpCode::TP, node, firstReg->getSize() - 1, generateS390RightAlignedMemoryReference(*sourceMR, firstChild, 0, cg, false));
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK7, node, cg->getCurrentBCDCHKHandlerLabel());
+      }
+
    TR::Instruction *inst = NULL;
    if (op == TR::InstOpCode::CVB)
       inst = generateRXInstruction(cg, op, node, targetReg, sourceMR);
@@ -18912,6 +18971,9 @@ J9::Z::TreeEvaluator::generatePackedToBinaryConversion(TR::Node * node, TR::Inst
       cg->stopUsingRegister(targetReg);
       targetReg = targetRegPair;
       }
+
+   // Create a debug counter to track how often we execute the inline path
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "DAA/inline/(%s)/%p", cg->comp()->signature(), node), 1, TR::DebugCounter::Undetermined);
 
    cg->decReferenceCount(firstChild);
    node->setRegister(targetReg);
