@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,26 +67,31 @@ J9_FAST_JNI_CLASS_TABLE(fastJNINatives)
 J9_FAST_JNI_CLASS_TABLE_END
 
 static bool
-removePrefixes(J9JVMTIData *jvmtiData, U_8 *methodNameData, UDATA methodNameLength, UDATA *prefixOffset, UDATA retransformFlag)
+removePrefixes(J9JVMTIData *jvmtiData, U_8 **methodNameData, UDATA *methodNameLength, const char *entryData, UDATA entryLength, UDATA retransformFlag)
 {
 	bool match = false;
 	J9JVMTIEnv *j9env = NULL;
-	UDATA offset = *prefixOffset;
+	U_8 *localData = *methodNameData;
+	UDATA localLength = *methodNameLength;
 
 	JVMTI_ENVIRONMENTS_REVERSE_DO(jvmtiData, j9env) {
 		if ((j9env->flags & J9JVMTIENV_FLAG_RETRANSFORM_CAPABLE) == retransformFlag) {
 			jint prefixCount = j9env->prefixCount;
 			char *prefix = j9env->prefixes;
-
+	
 			/* Remove the prefixes */
 			while (0 != prefixCount) {
 				size_t prefixLength = strlen(prefix);
-				if ((offset + prefixLength) < methodNameLength) {
-					if (0 == memcmp(prefix, methodNameData + offset, prefixLength)) {
-						match = true;
-						goto done;
+				if (prefixLength < localLength) {
+					if (0 == memcmp(localData, prefix, prefixLength)) {
+						/* Prefix found at the beginning of the name - remove it */
+						localData += prefixLength;
+						localLength -= prefixLength;
+						if ((entryLength == localLength) && (0 == memcmp(localData, entryData, entryLength))) {
+							match = true;
+							goto done;
+						}
 					}
-					offset += prefixLength;
 				}
 				prefix += (prefixLength + 1);
 				prefixCount -= 1;
@@ -95,6 +100,8 @@ removePrefixes(J9JVMTIData *jvmtiData, U_8 *methodNameData, UDATA methodNameLeng
 		JVMTI_ENVIRONMENTS_REVERSE_NEXT_DO(jvmtiData, j9env);
 	}
 done:
+	*methodNameData = localData;
+	*methodNameLength = localLength;
 	return match;
 }
 
@@ -133,7 +140,9 @@ jniNativeMethodProperties(J9VMThread *currentThread, J9Method *jniNativeMethod, 
 				/* Search the class table for the method*/
 				while (NULL != methodDescriptor->methodName) {
 					if (J9UTF8_DATA_EQUALS(methodSignatureData, methodSignatureLength, methodDescriptor->methodSignature, methodDescriptor->methodSignatureLength)) {
-						if (J9UTF8_DATA_EQUALS(methodNameData, methodNameLength, methodDescriptor->methodName, methodDescriptor->methodNameLength)) {
+						const char *entryData = methodDescriptor->methodName;
+						UDATA entryLength = methodDescriptor->methodNameLength;
+						if (J9UTF8_DATA_EQUALS(methodNameData, methodNameLength, entryData, entryLength)) {
 found:
 							address = methodDescriptor->function;
 							flags = methodDescriptor->flags;
@@ -176,13 +185,14 @@ found:
 						/* Strip JVMTI native method prefixes and continue looking for the name */
 						J9JVMTIData *jvmtiData = (J9JVMTIData*)currentThread->javaVM->jvmtiData;
 						if (NULL != jvmtiData) {
-							UDATA prefixOffset = 0;
+							U_8 *tempData = methodNameData;
+							UDATA tempLength = methodNameLength;
 							/* Remove prefixes for retransform-capable agents */
-							if (removePrefixes(jvmtiData, methodNameData, methodNameLength, &prefixOffset, J9JVMTIENV_FLAG_RETRANSFORM_CAPABLE)) {
+							if (removePrefixes(jvmtiData, &tempData, &tempLength, entryData, entryLength, J9JVMTIENV_FLAG_RETRANSFORM_CAPABLE)) {
 								goto found;
 							}
 							/* Remove prefixes for retransform-incapable agents */
-							if (removePrefixes(jvmtiData, methodNameData, methodNameLength, &prefixOffset, 0)) {
+							if (removePrefixes(jvmtiData, &tempData, &tempLength, entryData, entryLength, 0)) {
 								goto found;
 							}
 						}
