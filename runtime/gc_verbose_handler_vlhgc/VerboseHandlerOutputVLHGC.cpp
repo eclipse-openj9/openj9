@@ -458,12 +458,6 @@ MM_VerboseHandlerOutputVLHGC::handleConcurrentEndInternal(J9HookInterface** hook
 	MM_ConcurrentPhaseStatsBase *stats = (MM_ConcurrentPhaseStatsBase *)event->concurrentStats;
 	MM_VerboseWriterChain* writer = _manager->getWriterChain();
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(event->currentThread);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	const char *type = "GMP work packet processing";
-	/* Use the ID of the GMP as our context ID - TODO:  Determine if the concurrent start event is a more appropriate context */
-	UDATA contextId = stats->_cycleID;
-	char tagTemplate[200];
-	getTagTemplate(tagTemplate, sizeof(tagTemplate), _manager->getIdAndIncrement(), type, contextId, j9time_current_time_millis());
 
 	const char *reasonForTermination = NULL;
 	UDATA bytesScanned = stats->_bytesScanned;
