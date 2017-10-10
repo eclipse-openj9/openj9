@@ -368,4 +368,3 @@ TraceEvent=Trc_BCU_readFileFromJImage_LookupFailed_V1 NoEnv Overhead=1 Level=2 T
 TraceEvent=Trc_BCU_readFileFromJImage_LookupPassed_V1 NoEnv Overhead=1 Level=2 Template="BCU readFileFromJImage lookup passed for resource %s/%s"
 
 TraceEvent=Trc_BCU_searchClassInCPEntry_UnexpectedCPE Noenv Overhead=1 Level=3 Template="BCU searchClassInCPEntry did not expect class path entry %s type %i to be searched for the class"
-

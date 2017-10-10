@@ -23,6 +23,5 @@
 Executable=ddrext
 DATFileName=J9TraceFormat.dat
 
-
 TraceAssert=Assert_ddrext_true noEnv Overhead=1 Level=1 Assert="(P1)"
 TraceAssert=Assert_ddrext_false noEnv Overhead=1 Level=1 Assert="!(P1)"

@@ -185,4 +185,3 @@ TraceException=Trc_RTV_verifyBytecodes_OutOfMemoryException Overhead=1 Level=1 T
 TraceException=Trc_RTV_verifyExceptions_OutOfMemoryException Overhead=1 Level=1 Template="verifyExceptions - %.*s %.*s%.*s - Out of Memory Exception"
 TraceException=Trc_RTV_j9rtv_verifyArguments_OutOfMemoryException Overhead=1 Level=1 Template="j9rtv_verifyArguments - %.*s %.*s%.*s - Out of Memory Exception"
 TraceException=Trc_RTV_j9rtv_verifyArguments_InaccessibleClass Overhead=1 Level=1 Template="j9rtv_verifyArguments - %.*s %.*s%.*s - Inaccessible class"
-

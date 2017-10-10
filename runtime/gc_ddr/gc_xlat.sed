@@ -24,10 +24,12 @@
 s/[^[:print:][:blank:]]$//
 1i\
 /* Preprocessed to add J9DDRStructTableGC as a friend. Do not edit this version! */
+1i\
+class J9DDRStructTableGC;
 s/class .*{$/&\
-        friend class J9DDRStructTableGC;/
+        friend class ::J9DDRStructTableGC;/
 /class .*[^;{]$/{
         N
         s/^\(.*\n{.*\)$/\1\
-        friend class J9DDRStructTableGC;/
+        friend class ::J9DDRStructTableGC;/
 }
