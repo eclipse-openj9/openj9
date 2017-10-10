@@ -41,6 +41,7 @@
 #include "omrversionstrings.h"
 #include "j9modron.h"
 #include "omr.h"
+#include "vendor_version.h"
 
 /* The vm version which must match the JCL.
  * It has the format 0xAABBCCCC
@@ -50,9 +51,6 @@
  * BB is the required level of JCL to run the vm
  */
 #define JCL_VERSION 0x06040270
-
-
-/* this file is owned by the VM-team.  Please do not modify it without consulting the VM team */
 
 extern void *jclConfig;
 
@@ -160,11 +158,6 @@ jint computeFullVersionString(J9JavaVM* vm)
 			aotEnabled = 1;
 		}
 	}
-
-#if !defined(OPENJ9_REPO)
-#define OPENJ9_REPO "OpenJ9   - "
-#endif /* !OPENJ9_REPO */
-
 	strcat(fullversion, " (JIT ");
 	strcat(fullversion, jitEnabled ? "en" : "dis");
 	strcat(vminfo, " (JIT ");
@@ -173,8 +166,8 @@ jint computeFullVersionString(J9JavaVM* vm)
 	strcat(fullversion, aotEnabled ? "en" : "dis");
 	strcat(vminfo, "abled, AOT ");
 	strcat(vminfo, aotEnabled ? "en" : "dis");
-	strcat(fullversion, "abled)\n" OPENJ9_REPO);
-	strcat(vminfo, "abled)\n" OPENJ9_REPO);
+	strcat(fullversion, "abled)\nOpenJ9   - ");
+	strcat(vminfo, "abled)\nOpenJ9   - ");
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
 	vmVersion = J9VM_VERSION_STRING;
@@ -188,6 +181,11 @@ jint computeFullVersionString(J9JavaVM* vm)
 	strcat(vminfo, "\nOMR      - ");
 	strcat(vminfo, gcVersion);
 #endif /* J9VM_GC_MODRON_GC */
+
+#if defined(VENDOR_VERSION_STRING)
+	strcat(fullversion, "\n" VENDOR_VERSION_STRING);
+	strcat(vminfo, "\n" VENDOR_VERSION_STRING);
+#endif /* VENDOR_VERSION_STRING */
 
 	(*VMI)->SetSystemProperty(VMI, "java.vm.info", vminfo);
 	/*[PR 114306] System property java.fullversion is not initialized properly */
