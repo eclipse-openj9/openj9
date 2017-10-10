@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2010 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@ extern "C" {
 
 	const J9DDRStructDefinition* getDDR_CPPStructTable(void* portLib)
 	{
-		OMRPORT_ACCESS_FROM_OMRPORT(portLib);
+		OMRPORT_ACCESS_FROM_OMRPORT((OMRPortLibrary *)portLib);
 		omrtty_printf("WARNING: CPP support structure table was not generated and has been stubbed out. See ddr.readme.\n");
 	
 		return structStubs;
