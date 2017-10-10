@@ -9,20 +9,24 @@
   or the Apache License, Version 2.0 which accompanies this distribution and
   is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-  This Source Code is also Distributed under one or more Secondary Licenses,
-  as those terms are defined by the Eclipse Public License, v. 2.0: GNU
-  General Public License, version 2 with the GNU Classpath Exception [1]
-  and GNU General Public License, version 2 with the OpenJDK Assembly
-  Exception [2].
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
 
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 -->
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-	<testCaseName>openj9_jsr292Test_SE90</testCaseName>
+		<testCaseName>openj9_jsr292Test_SE90</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-modules mods.modulea,mods.moduleb,mods.modulec --module-path $(Q)$(TEST_RESROOT)$(D)mods$(Q) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	-cp $(Q)$(TEST_RESROOT)$(D)openj9_jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testngSE90.xml$(Q) \
@@ -38,12 +42,13 @@
 		</subsets>
 	</test>
 	
-		<test>
+	<test>
 		<testCaseName>openj9_jsr292Test_JitCount0_SE90</testCaseName>
 		<variations>
 			<variation>-Xjit:count=0</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-modules mods.modulea,mods.moduleb,mods.modulec --module-path $(Q)$(TEST_RESROOT)$(D)mods$(Q) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	-cp $(Q)$(TEST_RESROOT)$(D)openj9_jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testngSE90.xml$(Q) \

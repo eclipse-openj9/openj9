@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,15 +19,17 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-package com.ibm.j9.jsr292;
+package mods.modulea.package1;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 
-public class CustomLoadedClass2 implements ICustomLoadedClass {
-	public Lookup getLookup() {
+public class ModuleExample {
+	public static Lookup getLookup() {
 		return MethodHandles.lookup();
 	}
 	
-	public static int addStatic(int a, int b) { return a + b + 1; }
+	public static Lookup getPublicLookup() {
+		return MethodHandles.publicLookup();
+	}
 }
