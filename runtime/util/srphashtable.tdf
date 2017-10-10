@@ -50,5 +50,3 @@ TraceExit=Trc_srpHashTableReset_Exit Overhead=1 Level=3 Noenv Template="srpHashT
 TraceEntry=Trc_srpHashTableFindNode_Entry Overhead=1 Level=3 Noenv Template="srpHashTableFindNode(srptable=%p, key=%p)" 
 TraceException=Trc_srpHashTableFindNode_srptableNodesCanNotBeLocated Overhead=1 Level=1 NoEnv Template="SRP HashTable nodes can not be located. (srptable = %p)"
 TraceExit=Trc_srpHashTableFindNode_Exit Overhead=1 Level=3 Noenv Template="srpHashTableFindNode(srpNode=%p, SRP_GET(srpNode,void*)=%p)"
-
-

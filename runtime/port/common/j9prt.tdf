@@ -34,8 +34,6 @@ TraceException=Trc_PRT_file_open_Exit2 Obsolete Group=j9file Overhead=1 Level=1 
 TraceException=Trc_PRT_file_open_Exit3 Obsolete Group=j9file Overhead=1 Level=1 NoEnv Template="j9file_open returns failure, os errno = %d, portable errno = %d"
 TraceException=Trc_PRT_file_open_Exit4 Obsolete Group=j9file Overhead=1 Level=1 NoEnv Template="j9file_open returns failure, stat error"
 
-
-
 // j9shmem trace points
 TraceEntry=Trc_PRT_shmem_createFile_Entry Obsolete Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem createFile: Entry"
 TraceExit=Trc_PRT_shmem_createFile_Exit1 Obsolete Group=j9shmem Overhead=1 Level=1 NoEnv Template="j9shmem createFile: base file already exists!"
