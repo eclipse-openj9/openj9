@@ -236,6 +236,11 @@ TR_J9VMBase::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueCla
    return false;
    }
 
+bool
+TR_J9VMBase::isMethodBreakpointed(TR_OpaqueMethodBlock *method)
+   {
+   return jitIsMethodBreakpointed(vmThread(), (J9Method *)method);
+   }
 
 // Points to address: what if vmThread is not the compilation thread.
 // What if the compilation thread does not have the classUnloadMonitor.

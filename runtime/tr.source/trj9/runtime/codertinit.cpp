@@ -100,6 +100,8 @@ extern "C" UDATA jitAMD64Handler(J9VMThread* vmThread, U_32 sigType, void* sigIn
 extern "C" void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRedefinedClass *classList);
 #endif
 
+extern "C" void jitMethodBreakpointed(J9VMThread * currentThread, J9Method *j9method);
+
 extern "C" void jitDiscardPendingCompilationsOfNatives(J9VMThread *vmThread, J9Class *clazz);
 
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
@@ -516,6 +518,7 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
    jitConfig->jitClassesRedefined = jitClassesRedefined;
 #endif
    jitConfig->jitDiscardPendingCompilationsOfNatives = jitDiscardPendingCompilationsOfNatives;
+   jitConfig->jitMethodBreakpointed = jitMethodBreakpointed;
 
    initializeCodertFunctionTable(javaVM);
 

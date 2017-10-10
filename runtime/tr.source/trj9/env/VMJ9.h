@@ -989,6 +989,7 @@ public:
    virtual bool shouldDelayAotLoad() { return false; }
 
    virtual void *getLocationOfClassLoaderObjectPointer(TR_OpaqueClassBlock *classPointer);
+   virtual bool isMethodBreakpointed(TR_OpaqueMethodBlock *method);
 
    protected:
 #if defined(TR_TARGET_S390)

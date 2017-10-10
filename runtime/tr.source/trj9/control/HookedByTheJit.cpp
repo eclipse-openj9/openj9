@@ -3184,6 +3184,26 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
 
 #endif // #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390))
 
+void jitMethodBreakpointed(J9VMThread * vmThread, J9Method *j9method)
+   {
+   reportHook(vmThread, "jitMethodbreakpointed", "j9method %p\n", j9method);
+   J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   TR_RuntimeAssumptionTable *rat = compInfo->getPersistentInfo()->getRuntimeAssumptionTable();
+   OMR::RuntimeAssumption **headPtr = rat->getBucketPtr(RuntimeAssumptionOnMethodBreakPoint, TR_RuntimeAssumptionTable::hashCode((uintptrj_t)j9method));
+   TR_PatchNOPedGuardSiteOnMethodBreakPoint *cursor = (TR_PatchNOPedGuardSiteOnMethodBreakPoint *)(*headPtr);
+   while (cursor)
+      {
+      if (cursor->matches((uintptrj_t)j9method))
+         {
+         TR::PatchNOPedGuardSite::compensate(0, cursor->getLocation(), cursor->getDestination());
+         }
+      cursor = (TR_PatchNOPedGuardSiteOnMethodBreakPoint *)cursor->getNext();
+      }
+
+   reportHookFinished(vmThread, "jitMethodbreakpointed");
+   }
+
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 static void jitHookInterruptCompilation(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
