@@ -45,6 +45,7 @@ enum TR_RuntimeAssumptionKind
    RuntimeAssumptionOnClassRedefinitionUPIC,
    RuntimeAssumptionOnClassRedefinitionNOP,
    RuntimeAssumptionOnMutableCallSiteChange,
+   RuntimeAssumptionOnMethodBreakPoint,
    LastAssumptionKind,
    // If you add another kind, add its name to the runtimeAssumptionKindNames array
    RuntimeAssumptionSentinel // This is special as there is no hashtable associated with it and we only create one of them
@@ -61,6 +62,7 @@ char const * const runtimeAssumptionKindNames[LastAssumptionKind] =
    "ClassRedefinitionUPIC",
    "ClassRedefinitionNOP",
    "MutableCallSiteChange",
+   "OnMethodBreakpoint",
    };
 
 struct TR_RatHT
