@@ -132,6 +132,10 @@ if ( $task eq "default" ) {
 			}
 		}
 
+		# TODO check samtools.jar file
+		if ($jars_info[$i]{fname} eq "asmtools.jar") {
+			next;
+		}
 		# validate dependencies sha1 sum
 		$sha->addfile($filename);
 		$digest = $sha->hexdigest ;
