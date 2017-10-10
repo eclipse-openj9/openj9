@@ -1735,22 +1735,64 @@ public class MethodHandles {
 		return Lookup.PUBLIC_LOOKUP;
 	}
 	
-	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar19-SE-B175]*/
 	/**
-	 * Return a MethodHandles.Lookup object that is only able to access <code>private</code> members.
+	 * Return a MethodHandles.Lookup object with full capabilities including the access 
+	 * to the <code>private</code> members in the requested class
 	 * 
 	 * @param targetClass - the requested class containing private members
 	 * @param callerLookup - a Lookup object specific to the caller
 	 * @return a MethodHandles.Lookup object with private access to the requested class
+	 * @throws NullPointerException - if targetClass or callerLookup is null
 	 * @throws IllegalArgumentException - if the requested Class is a primitive type or an array class
-	 * @throws NullPointerException - if any of the arguments are null
 	 * @throws IllegalAccessException - if access checking fails
 	 * @throws SecurityException - if the SecurityManager prevents access
 	 */
-	public static MethodHandles.Lookup privateLookupIn(Class<?> targetClass, MethodHandles.Lookup callerLookup) throws IllegalArgumentException, NullPointerException, IllegalAccessException, SecurityException {
-		throw new UnsupportedOperationException("The method has not yet been implemented for now"); //$NON-NLS-1$
+	public static MethodHandles.Lookup privateLookupIn(Class<?> targetClass, MethodHandles.Lookup callerLookup) throws NullPointerException, IllegalArgumentException, IllegalAccessException, SecurityException {
+		if (Objects.isNull(targetClass) || Objects.isNull(callerLookup)) {
+			/*[MSG "K065S", "Both the requested class and the caller lookup must not be null"]*/
+			throw new NullPointerException(com.ibm.oti.util.Msg.getString("K065S")); //$NON-NLS-1$
+		}
+		
+		if (targetClass.isPrimitive() || targetClass.isArray()) {
+			/*[MSG "K065T", "The target class: {0} must not be a primitive type or an array class"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065T", targetClass.getCanonicalName())); //$NON-NLS-1$
+		}
+		
+		Module targetClassModule = targetClass.getModule();
+		String targetClassPackageName = targetClass.getPackageName();
+		Module accessClassModule = callerLookup.accessClass.getModule();
+		
+		/* Check whether the named module containing the old lookup can read the module containing the target class.
+		 * Note: an unnamed module can read any module.
+		 */
+		if (!accessClassModule.canRead(targetClassModule)) {
+			/*[MSG "K065U", "The module: {0} containing the old lookup can't read the module: {1}"]*/
+			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065U", accessClassModule.getName(), targetClassModule.getName())); //$NON-NLS-1$
+		}
+		
+		/* Check whether the module has the package (containing the target class) opened to
+		 * the module containing the old lookup.
+		 */
+		if (!targetClassModule.isOpen(targetClassPackageName, accessClassModule)) {
+			/*[MSG "K065V", "The package: {0} containing the target class is not opened to the module: {1}"]*/
+			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065V", targetClassPackageName, accessClassModule.getName())); //$NON-NLS-1$
+		}
+		
+		int callerLookupMode = callerLookup.lookupModes();
+		if (Lookup.MODULE != (Lookup.MODULE & callerLookupMode)) {
+			/*[MSG "K065W", "The access mode: 0x{0} of the caller lookup doesn't have the MODULE mode : 0x{1}"]*/
+			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065W", Integer.toHexString(callerLookupMode), Integer.toHexString(Lookup.MODULE))); //$NON-NLS-1$
+		}
+		
+		SecurityManager secmgr = System.getSecurityManager();
+		if (null != secmgr) {
+			secmgr.checkPermission(com.ibm.oti.util.ReflectPermissions.permissionSuppressAccessChecks);
+		}
+		
+		return new Lookup(targetClass);
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] Sidecar19-SE-B175*/
 	
 	/**
 	 * Gets the underlying Member of the provided <code>target</code> MethodHandle. This is done through an unchecked crack of the MethodHandle.
@@ -1773,7 +1815,7 @@ public class MethodHandles {
 		}
 		SecurityManager secmgr = System.getSecurityManager();
 		if (null != secmgr) {
-			secmgr.checkPermission(new ReflectPermission("suppressAccessChecks")); //$NON-NLS-1$
+			secmgr.checkPermission(com.ibm.oti.util.ReflectPermissions.permissionSuppressAccessChecks);
 		}
 		MethodHandleInfo mhi = Lookup.IMPL_LOOKUP.revealDirect(target);
 		T result = mhi.reflectAs(expected, Lookup.IMPL_LOOKUP);

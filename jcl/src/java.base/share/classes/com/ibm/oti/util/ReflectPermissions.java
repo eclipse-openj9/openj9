@@ -1,5 +1,8 @@
+/*[INCLUDE-IF Sidecar18-SE]*/
+package com.ibm.oti.util;
+
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,15 +22,19 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-package com.ibm.j9.jsr292;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.reflect.ReflectPermission;
 
-public class CustomLoadedClass2 implements ICustomLoadedClass {
-	public Lookup getLookup() {
-		return MethodHandles.lookup();
-	}
-	
-	public static int addStatic(int a, int b) { return a + b + 1; }
+/**
+ * ReflectPermission objects represent access to reflection
+ * support.
+ *
+ * @author		IBM
+ * @version		initial
+ */
+public class ReflectPermissions {
+	/**
+	 * ReflectPermission "suppressAccessChecks"
+	 */
+	public static final ReflectPermission permissionSuppressAccessChecks = new ReflectPermission("suppressAccessChecks");	//$NON-NLS-1$
 }
