@@ -52,9 +52,6 @@
  */
 #define JCL_VERSION 0x06040270
 
-
-/* this file is owned by the VM-team.  Please do not modify it without consulting the VM team */
-
 extern void *jclConfig;
 
 static UDATA
@@ -161,11 +158,6 @@ jint computeFullVersionString(J9JavaVM* vm)
 			aotEnabled = 1;
 		}
 	}
-
-#if !defined(OPENJ9_REPO)
-#define OPENJ9_REPO "OpenJ9   - "
-#endif /* !OPENJ9_REPO */
-
 	strcat(fullversion, " (JIT ");
 	strcat(fullversion, jitEnabled ? "en" : "dis");
 	strcat(vminfo, " (JIT ");
@@ -174,8 +166,8 @@ jint computeFullVersionString(J9JavaVM* vm)
 	strcat(fullversion, aotEnabled ? "en" : "dis");
 	strcat(vminfo, "abled, AOT ");
 	strcat(vminfo, aotEnabled ? "en" : "dis");
-	strcat(fullversion, "abled)\n" OPENJ9_REPO);
-	strcat(vminfo, "abled)\n" OPENJ9_REPO);
+	strcat(fullversion, "abled)\nOpenJ9   - ");
+	strcat(vminfo, "abled)\nOpenJ9   - ");
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
 	vmVersion = J9VM_VERSION_STRING;
