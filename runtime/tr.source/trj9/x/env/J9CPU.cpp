@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,6 @@ CPU::getX86ProcessorSignature(TR::Compilation *comp)
    return comp->fej9()->getX86ProcessorSignature();
    }
 
-
 uint32_t
 CPU::getX86ProcessorFeatureFlags(TR::Compilation *comp)
    {
@@ -68,18 +67,5 @@ CPU::testOSForSSESupport(TR::Compilation *comp)
    return comp->fej9()->testOSForSSESupport();
    }
 
-bool
-CPU::getX86OSSupportsSSE(TR::Compilation *comp)
-   {
-   return comp->fej9()->getX86OSSupportsSSE();
-   }
-
-bool
-CPU::getX86OSSupportsSSE2(TR::Compilation *comp)
-   {
-   return comp->fej9()->getX86OSSupportsSSE2();
-   }
-
 }
-
 }

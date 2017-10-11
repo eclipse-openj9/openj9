@@ -22,6 +22,5 @@ JIT_PRODUCT_SOURCE_FILES+=\
     tr.source/trj9/x/i386/runtime/J9IA32ArrayCopy.asm \
     tr.source/trj9/x/i386/runtime/J9IA32ArrayTranslate.asm \
     tr.source/trj9/x/i386/runtime/J9IA32CompressString.asm \
-    tr.source/trj9/x/i386/runtime/IA32cpuid.asm \
     tr.source/trj9/x/i386/runtime/J9IA32Math64.asm \
     tr.source/trj9/x/i386/runtime/IA32Recompilation.asm
