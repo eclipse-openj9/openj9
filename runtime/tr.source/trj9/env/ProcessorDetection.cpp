@@ -564,19 +564,7 @@ TR_J9VMBase::getPPCProcessorType()
 
 // -----------------------------------------------------------------------------
 
-extern "C" BOOLEAN jitTestOSForSSESupport(void);
-
 extern TR_X86CPUIDBuffer *queryX86TargetCPUID(void * javaVM);
-
-bool
-TR_J9VM::testOSForSSESupport()
-   {
-   #if defined(TR_HOST_X86)
-      return jitTestOSForSSESupport() != 0;
-   #else
-      return TR_J9VMBase::testOSForSSESupport();
-   #endif
-   }
 
 char TR_J9VMBase::x86VendorID[] = {'U','n','k','n','o','w','n','B','r','a','n','d','\0'};
 bool TR_J9VMBase::x86VendorIDInitialized = false;
@@ -637,37 +625,7 @@ TR_J9VMBase::getX86ProcessorFeatureFlags8()
 bool
 TR_J9VMBase::testOSForSSESupport()
    {
-   return false;
-   }
-
-bool
-TR_J9VMBase::getX86OSSupportsSSE()
-   {
-   // If the FXSR (bit 24) and SSE (bit 25) bits in the feature flags are not set, SSE is unavailable
-   // on this processor.
-   //
-
-   uint32_t flags = getX86ProcessorFeatureFlags();
-
-   // Note do not move above call within the if statement below as sh-4
-   // compiler aborts at high opt
-   if ((flags & 0x03000000) != 0x03000000)
-      return false;
-
-   return testOSForSSESupport();
-   }
-
-bool
-TR_J9VMBase::getX86OSSupportsSSE2()
-   {
-   // If the FXSR (bit 24) and SSE2 (bit 26) bits in the feature flags are not set, SSE is unavailable
-   // on this processor.
-   //
-   uint32_t flags = getX86ProcessorFeatureFlags();
-   if ((flags & 0x05000000) != 0x05000000)
-      return false;
-
-   return testOSForSSESupport();
+   return true; // VM guarantees SSE/SSE2 are available
    }
 
 bool
