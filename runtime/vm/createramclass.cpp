@@ -2575,9 +2575,9 @@ computeDone:
 			}
 			if (classLoader == javaVM->systemClassLoader) {
 				/* We don't add class location entries with locationType, LOAD_LOCATION_UNKNOWN, in the classLocationHashTable.
-				 * This should save footprint.
+				 * This should save footprint. Same applies for classes created with Unsafe.defineclass or Unsafe.defineAnonClass.
 				 */
-				if ((NULL == classBeingRedefined) && (LOAD_LOCATION_UNKNOWN != locationType)) {
+				if ((NULL == classBeingRedefined) && (LOAD_LOCATION_UNKNOWN != locationType) && (!J9ROMCLASS_IS_UNSAFE(romClass))) {
 					J9ClassLocation classLocation;
 
 					classLocation.clazz = ramClass;

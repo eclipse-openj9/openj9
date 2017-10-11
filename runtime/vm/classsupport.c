@@ -490,7 +490,6 @@ resolveKnownClass(J9JavaVM * vm, UDATA index)
  * @param classNameLength Length of the class name
  * @param classLoader Class loader object
  * @param options
- * @param flags contains 0 or BOOTSTRAP_ENTRIES_ONLY
  * @param [in/out] localBuffer contains values for entryIndex, loadLocationType and cpEntryUsed. This pointer can't be NULL.
  * @return pointer to class if locally defined, 0 if not defined, -1 if we cannot do dynamic load
  *
@@ -500,7 +499,7 @@ resolveKnownClass(J9JavaVM * vm, UDATA index)
  */
 
 static IDATA
-callFindLocallyDefinedClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, UDATA options, UDATA flags, J9TranslationLocalBuffer *localBuffer) {
+callFindLocallyDefinedClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, UDATA options, J9TranslationLocalBuffer *localBuffer) {
 	IDATA findResult = -1;
 	J9TranslationBufferSet *dynamicLoadBuffers = vmThread->javaVM->dynamicLoadBuffers;
 	J9ROMClass* returnVal = NULL;
@@ -530,15 +529,15 @@ callFindLocallyDefinedClass(J9VMThread* vmThread, J9Module *j9module, U_8* class
 																		 vmThread, 
 																		 (const char *)className, 
 																		 classNameLength,
-																		 classLoader, 
-																		 flags,
+																		 classLoader,
 																		 &classFound,
 																		 returnPointer);
-			if (returnVal != NULL){
+
+			if (returnVal != NULL) {
 				findResult = classFound;
 			} else {
 				findResult = dynamicLoadBuffers->findLocallyDefinedClassFunction(vmThread, j9module, className, (U_32)classNameLength, classLoader, classPathEntries,
-						classLoader->classPathEntryCount, options, flags, localBuffer);
+						classLoader->classPathEntryCount, options, localBuffer);
 				if ((-1 == findResult) && (J9_PRIVATE_FLAGS_REPORT_ERROR_LOADING_CLASS & vmThread->privateFlags)) {
 					vmThread->privateFlags |= J9_PRIVATE_FLAGS_FAILED_LOADING_REQUIRED_CLASS;
 				}
@@ -589,14 +588,8 @@ attemptDynamicClassLoad(J9VMThread* vmThread, J9Module *j9module, U_8* className
 		IDATA findResult = -1;
 		J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL};
 
-		if (J9_JCL_FLAG_CLASSLOADERS & vmThread->javaVM->jclFlags) {
-			findResult = callFindLocallyDefinedClass(vmThread, j9module, className, classNameLength, classLoader, options, 0, &localBuffer);
-		} else {
-			findResult = callFindLocallyDefinedClass(vmThread, j9module, className, classNameLength, classLoader, options, BCU_BOOTSTRAP_ENTRIES_ONLY, &localBuffer);
-			if (-1 == findResult) {
-				findResult = callFindLocallyDefinedClass(vmThread, j9module, className, classNameLength, classLoader, options, BCU_NON_BOOTSTRAP_ENTRIES_ONLY, &localBuffer);
-			}
-		}
+		findResult = callFindLocallyDefinedClass(vmThread, j9module, className, classNameLength, classLoader, options, &localBuffer);
+
 		if (-1 != findResult) {
 			J9TranslationBufferSet *dynamicLoadBuffers = vmThread->javaVM->dynamicLoadBuffers;
 
