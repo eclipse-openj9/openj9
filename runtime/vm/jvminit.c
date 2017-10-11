@@ -333,11 +333,7 @@ static UDATA sigxfszHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void
 /* SSE2 support on 32 bit linux_x86 and win_x86 */
 #ifdef J9VM_ENV_SSE2_SUPPORT_DETECTION
 
-/* Must be static as set by the Linux signal handler */
-static BOOLEAN osSupportsSSE = FALSE;
-
 extern U_32 J9SSE2cpuidFeatures(void);
-extern U_32 J9SSE2GetMXCSR(void);
 static BOOLEAN isSSE2SupportedOnX86();
 #endif /* J9VM_ENV_SSE2_SUPPORT_DETECTION */
 
@@ -6298,10 +6294,12 @@ done:
 #define SSE2_FLAG 0x05000000
 
 #ifdef LINUX
+/* Must be static as set by the Linux signal handler */
+static BOOLEAN osSupportsSSE = FALSE;
 static void
 handleSIGILLForSSE(int signal, struct sigcontext context)
 {
-	/* The STMXCSR instruction (in J9SSE2GetMXCSR()) is four bytes long.
+	/* The STMXCSR instruction is four bytes long.
 	* The instruction pointer must be incremented manually to avoid
 	* repeating the exception-throwing instruction.
 	*/
@@ -6316,33 +6314,30 @@ isSSE2SupportedOnX86() {
 	BOOLEAN result = FALSE;
 
 	if ((J9SSE2cpuidFeatures() & SSE2_FLAG) == SSE2_FLAG) {
-		/* CPU supports SSE2  - now determine if OS does */
-		U_32 mxcsr;
 
 #if defined(WIN32)
 		/* Use Structured Exception Handling when building on Win32. */
-
 		__try {
-			mxcsr = J9SSE2GetMXCSR();
-			osSupportsSSE = TRUE;
+			_mm_getcsr();
+			result = TRUE;
 		}
 		__except(EXCEPTION_EXECUTE_HANDLER)
 		{
-			osSupportsSSE = FALSE;
+			result = FALSE;
 		}
 #elif defined(LINUX)
 		/* Use POSIX signals when building on Linux. If an "illegal instruction"
 		 * signal is encountered, the signal handler will set osSupportsSSE to FALSE.
 		 */
+		U_32 mxcsr = 0;
 		struct sigaction oldHandler;
-
 		OMRSIG_SIGACTION(SIGILL, NULL, &oldHandler);
 		OMRSIG_SIGNAL(SIGILL, (void (*)(int)) handleSIGILLForSSE);
 		osSupportsSSE = TRUE;
-		mxcsr = J9SSE2GetMXCSR();
+		asm("stmxcsr %0"::"m"(mxcsr) : );
 		OMRSIG_SIGACTION(SIGILL, &oldHandler, NULL);
-#endif
 		result = osSupportsSSE;
+#endif
 	}
 	return result;
 }

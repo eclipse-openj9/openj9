@@ -25,19 +25,6 @@
 	_TEXT SEGMENT PARA USE32 PUBLIC 'CODE'
 
 	public J9SSE2cpuidFeatures
-	public J9SSE2GetMXCSR
-
-; Prototype: U_32 J9SSE2GetMXCSR(void);
-; - throws an Illegal Instruction exception if the OS does not support SSE instructions
-; - otherwise, returns the content of the MXCSR.
-	align	16
-
-J9SSE2GetMXCSR PROC NEAR
-	sub	esp, 4
-	stmxcsr [esp]
-	pop	eax
-	ret
-J9SSE2GetMXCSR ENDP
 
 	align 16
 
