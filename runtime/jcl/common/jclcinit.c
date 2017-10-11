@@ -182,10 +182,10 @@ jint computeFullVersionString(J9JavaVM* vm)
 	strcat(vminfo, gcVersion);
 #endif /* J9VM_GC_MODRON_GC */
 
-#if defined(VENDOR_VERSION_STRING)
-	strcat(fullversion, "\n" VENDOR_VERSION_STRING);
-	strcat(vminfo, "\n" VENDOR_VERSION_STRING);
-#endif /* VENDOR_VERSION_STRING */
+#if defined(VENDOR_SHORT_NAME) && defined(VENDOR_SHA)
+	strcat(fullversion, "\n" VENDOR_SHORT_NAME "      - " VENDOR_SHA);
+	strcat(vminfo, "\n" VENDOR_SHORT_NAME "      - " VENDOR_SHA);
+#endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
 
 	(*VMI)->SetSystemProperty(VMI, "java.vm.info", vminfo);
 	/*[PR 114306] System property java.fullversion is not initialized properly */
