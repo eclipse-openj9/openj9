@@ -3425,7 +3425,7 @@ private static Method getAccessibleMethod(Class<?> cls, String name) {
  */
 private class MethodInfo {
 	ArrayList<Method> jlrMethods;
-	private Method me;
+	Method me;
 	private final int myHash;
 	private Class<?>[] paramTypes;
 	private Class<?> returnType;
@@ -3582,12 +3582,6 @@ private class MethodInfo {
 		}
 	}
 
-	private boolean methodAOverridesMethodB(Class<?> methodAClass,	boolean methodAIsAbstract, boolean methodAClassIsInterface,
-			Class<?> methodBClass, boolean methodBIsAbstract, boolean methodBClassIsInterface) {
-		return (methodBIsAbstract && methodBClassIsInterface && !methodAIsAbstract && !methodAClassIsInterface) ||
-		(methodBClass.isAssignableFrom(methodAClass) && (!methodAClassIsInterface || !methodAIsAbstract));
-	}
-	
 	public void update(MethodInfo otherMi) {
 		if (null == otherMi.jlrMethods) {
 			update(otherMi.me);
@@ -3600,6 +3594,20 @@ private class MethodInfo {
 		return myHash;
 	}
 	
+}
+
+static boolean methodAOverridesMethodB(Class<?> methodAClass,	boolean methodAIsAbstract, boolean methodAClassIsInterface,
+		Class<?> methodBClass, boolean methodBIsAbstract, boolean methodBClassIsInterface) {
+	return (methodBIsAbstract && methodBClassIsInterface && !methodAIsAbstract && !methodAClassIsInterface) ||
+			(methodBClass.isAssignableFrom(methodAClass)
+					/*[IF !Sidecar19-SE]*/
+					/*
+					 * In Java 8, abstract methods in subinterfaces do not hide abstract methods in superinterfaces.
+					 * This is fixed in Java 9.
+					 */
+					&& (!methodAClassIsInterface || !methodAIsAbstract)
+					/*[ENDIF]*/
+					);
 }
 
 /*[PR 125873] Improve reflection cache */

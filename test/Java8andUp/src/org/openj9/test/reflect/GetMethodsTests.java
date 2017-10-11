@@ -37,40 +37,51 @@ import java.util.Iterator;
 import java.util.List;
 
 public class GetMethodsTests {
-
 	public static final Logger logger = Logger.getLogger(GetMethodsTests.class);
+	private final static boolean isJava8 = System.getProperty("java.specification.version").equals("1.8");  //$NON-NLS-1$//$NON-NLS-2$
 
 	private AsmLoader loader;
 
-	@BeforeClass(groups = { "level.extended", "j9vm_SE80" })
+	@BeforeClass(groups = { "level.sanity", "j9vm_SE80" })
 	public void setupTestCases() {
 		loader = new AsmLoader(GetMethodsTests.class.getClassLoader());
 		AsmTestcaseGenerator generator = new AsmTestcaseGenerator(loader, new String[] { "m", "w" });
 		generator.getDefenderSupersendTestcase();
 	}
 
-	@Test(groups = { "level.extended", "j9vm_SE80" })
+	@Test(groups = { "level.sanity", "j9vm_SE80" })
 	public void testGetMethods() {
 		try {
 			HashMap<String, String[]> methodLists = makeMethodLists();
 			for (String className : methodLists.keySet()) {
 				@SuppressWarnings("rawtypes") Class testClass = loader.loadClass(className);
 				logger.debug("Checking methods in " + className);
-				String methodNames[] = getSortedMethodList(testClass);
+				String actualMethodNames[] = getSortedMethodList(testClass);
 				List<String> expectedNames = Arrays.asList(methodLists.get(className));
-				Iterator<String> nameIterator = expectedNames.iterator();
-				for (String actualname : methodNames) {
-					AssertJUnit.assertTrue("too few methods for " + className, nameIterator.hasNext());
-					String expectedName = nameIterator.next();
-					AssertJUnit.assertEquals("wrong methods list for " + className, expectedName, actualname);
+				Iterator<String> expectedNameIterator = expectedNames.iterator();
+				logger.debug(concatenateStrings("expected methods:", expectedNames)); //$NON-NLS-1$
+				logger.debug(concatenateStrings("actual methods:", Arrays.asList(actualMethodNames))); //$NON-NLS-1$
+				for (String actualname : actualMethodNames) {
+					AssertJUnit.assertTrue("too many methods for " + className, expectedNameIterator.hasNext()); //$NON-NLS-1$
+					String expectedName = expectedNameIterator.next();
+					AssertJUnit.assertEquals("wrong methods list for " + className, expectedName, actualname); //$NON-NLS-1$
 				}
-				AssertJUnit.assertFalse("too many methods for " + className, nameIterator.hasNext());
+				AssertJUnit.assertFalse("too few methods for " + className, expectedNameIterator.hasNext()); //$NON-NLS-1$
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			Assert.fail("unexpected exception: " + e);
 		}
 
+	}
+
+	private static String concatenateStrings(String message, Iterable<String> stringList) {
+		StringBuilder nameBuffer = new StringBuilder(message);
+		for (String s: stringList) {
+			nameBuffer.append("\n\t"); //$NON-NLS-1$
+			nameBuffer.append(s);
+		}
+		return nameBuffer.toString();
 	}
 
 	public static String[] getSortedMethodList(@SuppressWarnings("rawtypes") Class testClass) {
@@ -99,36 +110,38 @@ public class GetMethodsTests {
 		return methName.toString();
 	}
 
-	HashMap<String, String[]> methodLists = new HashMap<>();
-
 	static HashMap<String, String[]> makeMethodLists() {
+		/* 
+		 * Class.getMethods() erroneously included methods in superinterfaces which are
+		 * overridden in subinterfaces.  This has been corrected in Java 9.
+		 */
+		String[] methodList_C_I_SupDuperSupA = isJava8? new String[] {
+				"org.openj9.test.reflect.SuperA.abstractInSuperA_abstractInSuperDuper()void",
+				"org.openj9.test.reflect.SuperA.abstractInSuperA_defaultInSuperDuper()void",
+				"org.openj9.test.reflect.SuperA.defaultInSuperA_abstractInSuperDuper()void",
+				"org.openj9.test.reflect.SuperA.defaultInSuperA_defaultInSuperDuper()void",
+				/* 
+				 * include these because of a known issue in Java 8:
+				 * JDK-8029459 (reflect) getMethods returns methods that are not members of the class
+				 */
+				"org.openj9.test.reflect.SuperDuper.abstractInSuperA_abstractInSuperDuper()void",
+				"org.openj9.test.reflect.SuperDuper.abstractInSuperA_defaultInSuperDuper()void" 
+				}:
+			new String[] {
+					"org.openj9.test.reflect.SuperA.abstractInSuperA_abstractInSuperDuper()void",
+					"org.openj9.test.reflect.SuperA.abstractInSuperA_defaultInSuperDuper()void",
+					"org.openj9.test.reflect.SuperA.defaultInSuperA_abstractInSuperDuper()void",
+					"org.openj9.test.reflect.SuperA.defaultInSuperA_defaultInSuperDuper()void"};
 		HashMap<String, String[]> methodLists = new HashMap<>();
-		methodLists.put("org.openj9.test.reflect.C_CSuperA_SuperDuper", concatenateObjectMethods(new String[] {
-				"org.openj9.test.reflect.SuperA.abstractInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.abstractInSuperA_defaultInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.defaultInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.defaultInSuperA_defaultInSuperDuper()void",
-				"org.openj9.test.reflect.SuperDuper.abstractInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperDuper.abstractInSuperA_defaultInSuperDuper()void" }));
-		methodLists.put("org.openj9.test.reflect.C_I_SupDuperSupA", concatenateObjectMethods(new String[] {
-				"org.openj9.test.reflect.SuperA.abstractInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.abstractInSuperA_defaultInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.defaultInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.defaultInSuperA_defaultInSuperDuper()void",
-				"org.openj9.test.reflect.SuperDuper.abstractInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperDuper.abstractInSuperA_defaultInSuperDuper()void" }));
+		
+		methodLists.put("org.openj9.test.reflect.C_CSuperA_SuperDuper", concatenateObjectMethods(methodList_C_I_SupDuperSupA));
+		methodLists.put("org.openj9.test.reflect.C_I_SupDuperSupA", concatenateObjectMethods(methodList_C_I_SupDuperSupA));
 		methodLists.put("org.openj9.test.reflect.C_SuperA", concatenateObjectMethods(new String[] {
 				"org.openj9.test.reflect.SuperA.abstractInSuperA_abstractInSuperDuper()void",
 				"org.openj9.test.reflect.SuperA.abstractInSuperA_defaultInSuperDuper()void",
 				"org.openj9.test.reflect.SuperA.defaultInSuperA_abstractInSuperDuper()void",
 				"org.openj9.test.reflect.SuperA.defaultInSuperA_defaultInSuperDuper()void" }));
-		methodLists.put("org.openj9.test.reflect.I_SupDuper_SupA", new String[] {
-				"org.openj9.test.reflect.SuperA.abstractInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.abstractInSuperA_defaultInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.defaultInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.defaultInSuperA_defaultInSuperDuper()void",
-				"org.openj9.test.reflect.SuperDuper.abstractInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperDuper.abstractInSuperA_defaultInSuperDuper()void" });
+		methodLists.put("org.openj9.test.reflect.I_SupDuper_SupA", methodList_C_I_SupDuperSupA);
 		methodLists.put("org.openj9.test.reflect.SuperA", new String[] {
 				"org.openj9.test.reflect.SuperA.abstractInSuperA_abstractInSuperDuper()void",
 				"org.openj9.test.reflect.SuperA.abstractInSuperA_defaultInSuperDuper()void",

@@ -1256,7 +1256,7 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<tags>
-			<tag>extended</tag>
+			<tag>sanity</tag>
 		</tags>
 		<subsets>
 			<subset>SE80</subset>
