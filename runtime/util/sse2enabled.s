@@ -24,23 +24,8 @@
        	##assume cs:flat,ds:flat,ss:flat
         .globl J9SSE2cpuidFeatures
         .type J9SSE2cpuidFeatures,@function
-        .globl J9SSE2GetMXCSR
-        .type J9SSE2GetMXCSR,@function
 
         .text
-
-## Prototype: U_32 J9SSE2GetMXCSR(void)
-## - throws an Illegal Instruction exception if the OS does not support SSE instructions
-## - otherwise, returns the content of the MXCSR.
-	.align	16
-
-J9SSE2GetMXCSR:
-	sub	$4, %esp
-	stmxcsr (%esp)
-	pop	%eax
-	ret
-END_J9SSE2GetMXCSR:
-	.size J9SSE2GetMXCSR,END_J9SSE2GetMXCSR - J9SSE2GetMXCSR
 
 	.align 16
 
