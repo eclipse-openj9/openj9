@@ -62,7 +62,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
 
    TR::RegisterPair* registerPair = cg->allocateConsecutiveRegisterPair(lockRegister, loadRegister);
 
-   TR::RegisterDependencyConditions* conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 7, cg);
+   TR::RegisterDependencyConditions* conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg);
 
    conditions->addPostCondition(registerPair, TR::RealRegister::EvenOddPair);
    conditions->addPostCondition(loadRegister, TR::RealRegister::LegalEvenOfPair);
@@ -175,6 +175,16 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
       if (loadRegisterRequires32BitLogicalSignExtension)
          {
          generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, loadRegister, loadRegister);
+         }
+      }
+
+   if (loadNode->getOpCodeValue() == TR::l2a)
+      {
+      if (loadNode->getFirstChild()->getOpCodeValue() == TR::lshl)
+         {
+         auto shiftValue = loadNode->getFirstChild()->getSecondChild()->getConst<uint32_t>();
+
+         generateRSInstruction(cg, TR::InstOpCode::SLLG, node, loadRegister, loadRegister, shiftValue);
          }
       }
 
@@ -303,7 +313,6 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
             {
             TR::Node* loadNode = lookaheadChildNode = lookaheadChildNode->getChild(0);
 
-            // TODO: Implement support for compreesedRefs shift > 0
             if (lookaheadChildNode->getOpCodeValue() == TR::l2a)
                {
                TR::Node* l2aChildNode = lookaheadChildNode->getChild(0);
@@ -311,6 +320,17 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                if (l2aChildNode->isUnneededConversion())
                   {
                   lookaheadChildNode = l2aChildNode->getChild(0);
+
+                  // There may or may not be a compression sequence at this point
+                  if (lookaheadChildNode->getOpCodeValue() == TR::lshl && lookaheadChildNode->containsCompressionSequence())
+                     {
+                     lookaheadChildNode = lookaheadChildNode->getChild(0);
+
+                     if (lookaheadChildNode->getOpCodeValue() == TR::iu2l && lookaheadChildNode->isUnneededConversion())
+                        {
+                        lookaheadChildNode = lookaheadChildNode->getChild(0);
+                        }
+                     }
                   }
                }
 
