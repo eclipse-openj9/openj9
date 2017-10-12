@@ -24,6 +24,14 @@ package java.lang;
  *******************************************************************************/
 
 import java.util.Properties;
+
+/*[IF Sidecar19-SE]*/
+import jdk.internal.reflect.ConstantPool;
+/*[ELSE]*/
+import sun.reflect.ConstantPool;
+/*[ENDIF]*/
+
+
 import com.ibm.oti.vm.*;
 
 /**
@@ -174,4 +182,25 @@ final class VMAccess implements VMLangAccess {
 		return Package.getSystemPackage(name);
 	}
 	/*[ENDIF]*/
+
+	/**
+	 * Returns a InternalRamClass object.
+	 * 
+	 * @param addr - the native addr of the J9Class
+	 * @return A InternalRamClass reference object
+	 */ 
+	@Override
+	public Object createInternalRamClass(long addr) {
+		return new InternalRamClass(addr);
+	}
+	
+	/**
+	 * Returns a ConstanPool object
+	 * @param internalRamClass An object ref to a j9class
+	 * @return ContanstPool instance
+	 */
+	@Override
+	public ConstantPool getConstantPool(Object internalRamClass) {
+		return Access.getConstantPool(internalRamClass);
+	}
 }

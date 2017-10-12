@@ -25,6 +25,9 @@
 #include "jclprots.h"
 #include "jclglob.h"
 #include "jniidcacheinit.h"
+#include "j9.h"
+
+#define J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, j9ClassRef) J9VMJAVALANGINTERNALRAMCLASS_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(j9ClassRef))
 
 typedef enum {
 	OK,
@@ -43,7 +46,7 @@ clearException(J9VMThread *vmThread)
 static SunReflectCPResult
 getRAMConstantRefAndType(J9VMThread *vmThread, jobject constantPoolOop, jint cpIndex, UDATA *cpType, J9RAMConstantRef **ramConstantRef)
 {
-	J9Class *ramClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, constantPoolOop);
+	J9Class *ramClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
 	J9ROMClass *romClass = ramClass->romClass;
 	SunReflectCPResult result = CP_INDEX_OUT_OF_BOUNDS_EXCEPTION;
 
@@ -72,7 +75,7 @@ getRAMConstantRef(J9VMThread *vmThread, jobject constantPoolOop, jint cpIndex, U
 static SunReflectCPResult
 getROMCPItemAndType(J9VMThread *vmThread, jobject constantPoolOop, jint cpIndex, UDATA *cpType, J9ROMConstantPoolItem **romCPItem)
 {
-	J9Class *ramClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, constantPoolOop);
+	J9Class *ramClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
 	J9ROMClass *romClass = ramClass->romClass;
 	SunReflectCPResult result = CP_INDEX_OUT_OF_BOUNDS_EXCEPTION;
 
@@ -109,7 +112,7 @@ getJ9ClassAt(J9VMThread *vmThread, jobject constantPoolOop, jint cpIndex, UDATA 
 		if (NULL != ramClassRefWrapper->value) {
 			*clazz = ramClassRefWrapper->value;
 		} else {
-			J9Class *cpClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, constantPoolOop);
+			J9Class *cpClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
 			*clazz = vmFunctions->resolveClassRef(vmThread, J9_CP_FROM_CLASS(cpClass), cpIndex, resolveFlags);
 		}
 	}
@@ -146,7 +149,7 @@ getStringAt(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpI
 		vmFunctions->internalEnterVMFromJNI(vmThread);
 		result = getRAMConstantRef(vmThread, constantPoolOop, cpIndex, cpType, (J9RAMConstantRef **) &ramStringRef);
 		if (OK == result) {
-			J9Class *ramClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, constantPoolOop);
+			J9Class *ramClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
 			j9object_t stringObject = J9STATIC_OBJECT_LOAD(vmThread, ramClass, &ramStringRef->stringObject);
 
 			if (NULL == stringObject) {
@@ -199,11 +202,13 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 
 	if (NULL != constantPoolOop) {
 		J9RAMConstantRef *ramConstantRef = NULL;
+		jclass jlClass = NULL;
+
 		vmFunctions->internalEnterVMFromJNI(vmThread);
 		result = getRAMConstantRefAndType(vmThread, constantPoolOop, cpIndex, &cpType, &ramConstantRef);
 		if (OK == result) {
 			J9Method *method = NULL;
-			J9Class *cpClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, constantPoolOop);
+			J9Class *cpClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
 			J9ConstantPool *constantPool = J9_CP_FROM_CLASS(cpClass);
 			switch (cpType) {
 #if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
@@ -265,13 +270,20 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 			}
 			if (NULL != method) {
 				methodID = (jmethodID) vmFunctions->getJNIMethodID(vmThread, method);
+				jlClass = vmFunctions->j9jni_createLocalRef(env, cpClass->classObject);
 			}
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
-	}
 
-	if (NULL != methodID) {
-		returnValue = (*env)->ToReflectedMethod(env, constantPoolOop, methodID, J9CPTYPE_STATIC_METHOD == cpType);
+		vmFunctions->internalReleaseVMAccess(vmThread);
+
+		if (NULL != methodID) {
+			if (NULL != jlClass) {
+				returnValue = (*env)->ToReflectedMethod(env, jlClass, methodID, J9CPTYPE_STATIC_METHOD == cpType);
+			} else {
+				throwNativeOOMError(env, 0, 0);
+			}
+		}
+
 	}
 
 	checkResult(env, result);
@@ -291,6 +303,8 @@ getFieldAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFlag
 
 	if (NULL != constantPoolOop) {
 		J9RAMConstantRef *ramConstantRef = NULL;
+		jclass jlClass = NULL;
+		
 		vmFunctions->internalEnterVMFromJNI(vmThread);
 retry:
 		ramConstantRef = NULL;
@@ -298,7 +312,7 @@ retry:
 		if (OK == result) {
 			J9ROMFieldShape *resolvedField = NULL;
 			UDATA offset = 0;
-			J9Class *cpClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, constantPoolOop);
+			J9Class *cpClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
 			J9ConstantPool *constantPool = J9_CP_FROM_CLASS(cpClass);
 			switch (cpType) {
 			case J9CPTYPE_FIELD: {
@@ -330,15 +344,22 @@ retry:
 						 */
 						goto retry;
 					}
+
+					jlClass = vmFunctions->j9jni_createLocalRef(env, cpClass->classObject);
 				}
 			}
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
-	}
 
-	if (NULL != fieldID) {
-		/* The isStatic argument is ignored. */
-		returnValue = (*env)->ToReflectedField(env, constantPoolOop, fieldID, FALSE);
+		vmFunctions->internalReleaseVMAccess(vmThread);
+
+		if (NULL != fieldID) {
+			if (NULL != jlClass) {
+				/* The isStatic argument is ignored. */
+				returnValue = (*env)->ToReflectedField(env, jlClass, fieldID, FALSE);
+			} else {
+				throwNativeOOMError(env, 0, 0);
+			}
+		}
 	}
 
 	checkResult(env, result);
@@ -407,7 +428,7 @@ Java_sun_reflect_ConstantPool_getSize0(JNIEnv *env, jobject unusedObject, jobjec
 	if (NULL != constantPoolOop) {
 		vmFunctions->internalEnterVMFromJNI(vmThread);
 		{
-			J9Class *ramClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, constantPoolOop);
+			J9Class *ramClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
 			if (NULL != ramClass) {
 				J9ROMClass *romClass = ramClass->romClass;
 				returnValue = romClass->romConstantPoolCount;
@@ -647,7 +668,7 @@ Java_java_lang_invoke_MethodHandle_getCPTypeAt(JNIEnv *env, jclass unusedClass, 
 		J9ROMClass *romClass;
 		result = CP_INDEX_OUT_OF_BOUNDS_EXCEPTION;
 		vmFunctions->internalEnterVMFromJNI(vmThread);
-		ramClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, constantPoolOop);
+		ramClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
 		romClass = ramClass->romClass;
 
 		if ((0 <= cpIndex) && ((U_32)cpIndex < romClass->romConstantPoolCount)) {
@@ -680,7 +701,7 @@ Java_java_lang_invoke_MethodHandle_getCPMethodTypeAt(JNIEnv *env, jclass unusedC
 		vmFunctions->internalEnterVMFromJNI(vmThread);
 		result = getRAMConstantRef(vmThread, constantPoolOop, cpIndex, J9CPTYPE_METHOD_TYPE, (J9RAMConstantRef **) &ramMethodTypeRef);
 		if (OK == result) {
-			J9Class *ramClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, constantPoolOop);
+			J9Class *ramClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
 			j9object_t methodTypeObject = J9STATIC_OBJECT_LOAD(vmThread, ramClass, &ramMethodTypeRef->type);
 
 			if (NULL == methodTypeObject) {
@@ -715,7 +736,7 @@ Java_java_lang_invoke_MethodHandle_getCPMethodHandleAt(JNIEnv *env, jclass unuse
 		vmFunctions->internalEnterVMFromJNI(vmThread);
 		result = getRAMConstantRef(vmThread, constantPoolOop, cpIndex, J9CPTYPE_METHODHANDLE, (J9RAMConstantRef **) &ramMethodHandleRef);
 		if (OK == result) {
-			J9Class *ramClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, constantPoolOop);
+			J9Class *ramClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
 			j9object_t methodHandleObject = J9STATIC_OBJECT_LOAD(vmThread, ramClass, &ramMethodHandleRef->methodHandle);
 
 			if (NULL == methodHandleObject) {

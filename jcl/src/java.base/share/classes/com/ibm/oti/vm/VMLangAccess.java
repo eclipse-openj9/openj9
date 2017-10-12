@@ -3,8 +3,15 @@ package com.ibm.oti.vm;
 
 import java.util.Properties;
 
+/*[IF Sidecar19-SE]*/
+import jdk.internal.reflect.ConstantPool;
+/*[ELSE]*/
+import sun.reflect.ConstantPool;
+/*[ENDIF]*/
+
+
 /*******************************************************************************
- * Copyright (c) 2012, 2014 IBM Corp. and others
+ * Copyright (c) 2012, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,4 +129,19 @@ public interface VMLangAccess {
 	public Package getSystemPackage(String name);
 	/*[ENDIF]*/
 	
+	/**
+	 * Returns an InternalRamClass object.
+	 * 
+	 * @param addr - the native addr of the J9Class
+	 * @return An InternalRamClass object
+	 */ 
+	public Object createInternalRamClass(long addr);
+	
+	/**
+	 * Returns a ConstanPool object
+	 * 
+	 * @param internalRamClass An object ref to an internalRamClass
+	 * @return ContanstPool instance
+	 */
+	public ConstantPool getConstantPool(Object internalRamClass);
 }
