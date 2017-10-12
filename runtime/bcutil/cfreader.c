@@ -1572,6 +1572,26 @@ checkMethods(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_3
 
 		} 
 
+		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<init>", 6)) {
+
+			/* check no invalid flags set */
+			if (value & ~CFR_INIT_METHOD_ACCESS_MASK) {
+				errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;
+				goto _errorFound;
+			}
+
+			/* Java SE 9 Edition:
+			 * A method is an instance initialization method if
+			 * it is defined in a class (not an interface).
+			 */
+			if (vmVersionShifted >= BCT_Java9MajorVersionShifted) {
+				if (classfile->accessFlags & CFR_ACC_INTERFACE) {
+					errorCode = J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE__ID;
+					goto _errorFound;
+				}
+			}
+		}
+
 		/* Check interface-method-only access flag constraints. */
 		if (classfile->accessFlags & CFR_ACC_INTERFACE) {
 			if (classfileVersion < BCT_Java8MajorVersionShifted) {
@@ -1609,13 +1629,7 @@ checkMethods(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_3
 		}
 
 		/* handling method of generic classes (non-interface) */
-		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<init>", 6)) {
-			/* check no invalid flags set */
-			if (value & ~CFR_INIT_METHOD_ACCESS_MASK) {
-				errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;	
-				goto _errorFound;
-			}
-		} else if (value & CFR_ACC_ABSTRACT) {
+		if (value & CFR_ACC_ABSTRACT) {
  			/* check abstract methods */
 			if (value & ~CFR_ABSTRACT_METHOD_ACCESS_MASK) {
 				errorCode = J9NLS_CFR_ERR_ABSTRACT_METHOD__ID;
@@ -2538,7 +2552,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 	/* Make sure that following verification uses the class file version number */
-	vmVersionShifted = flags & BCT_MajorClassFileVersionMask;;
+	vmVersionShifted = flags & BCT_MajorClassFileVersionMask;
 	flags &= ~BCT_MajorClassFileVersionMask;
 	flags |= ((UDATA) classfile->majorVersion) << BCT_MajorClassFileVersionMaskShift;
 	
