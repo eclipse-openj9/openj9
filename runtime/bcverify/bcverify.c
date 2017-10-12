@@ -478,16 +478,21 @@ parseLocals (J9BytecodeVerificationData * verifyData, U_8** stackMapData, J9Bran
 			}
 			liveStack->stackElements[localsCount] = BCV_BASE_TYPE_TOP;
 
-			/* Possibly remove a double or long (counts as 1 local, but two slots).
-			 * A double or a long is pushed as <top, double|long>
+			/* Check long/double type as long as there still remains local variables
+			 * in the stackmap frame.
 			 */
-			stackEntry = liveStack->stackElements[localsCount - 1];
-			if ((stackEntry == BCV_BASE_TYPE_DOUBLE) || (stackEntry == BCV_BASE_TYPE_LONG)) {
-				localsCount--;
-				if (localsCount < 0) {
-					goto _underflow;
+			if (localsCount > 0) {
+				/* Possibly remove a double or long (counts as 1 local, but two slots).
+				 * A double or a long is pushed as <top, double|long>
+				 */
+				stackEntry = liveStack->stackElements[localsCount - 1];
+				if ((BCV_BASE_TYPE_DOUBLE == stackEntry) || (BCV_BASE_TYPE_LONG == stackEntry)) {
+					localsCount--;
+					if (localsCount < 0) {
+						goto _underflow;
+					}
+					liveStack->stackElements[localsCount] = BCV_BASE_TYPE_TOP;
 				}
-				liveStack->stackElements[localsCount] = BCV_BASE_TYPE_TOP;
 			}
 		}
 
@@ -499,7 +504,7 @@ parseLocals (J9BytecodeVerificationData * verifyData, U_8** stackMapData, J9Bran
 				goto _overflow;
 			}
 			liveStack->stackElements[localsCount++] = stackEntry;
-			if ((stackEntry == BCV_BASE_TYPE_DOUBLE) || (stackEntry == BCV_BASE_TYPE_LONG)) {
+			if ((BCV_BASE_TYPE_DOUBLE == stackEntry) || (BCV_BASE_TYPE_LONG == stackEntry)) {
 				if (localsCount >= maxLocals) {
 					/* Oveflow */
 					goto _overflow;

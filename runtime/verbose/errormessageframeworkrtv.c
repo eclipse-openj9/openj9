@@ -230,7 +230,7 @@ pushLiveStackToVerificationTypeBuffer(StackMapFrame* stackMapFrame, J9BytecodeVe
 
 	/* 'locals' on liveStack */
 
-	/* Determine the count of local varibles on 'locals' (liveStack) starting from the right end of 'locals'.
+	/* Determine the count of local variables on 'locals' (liveStack) starting from the right end of 'locals'.
 	 * Note: It is true that placeholders ('top') always occur on the right end of 'locals'.
 	 * e.g. data1, data2, data3, top, top, top, ...
 	 * However, local variables can be updated at any place of 'locals' in the bytecode
@@ -868,7 +868,7 @@ generateJ9RtvExceptionDetails(J9BytecodeVerificationData* verifyData, U_8* initM
 		printCurrentStack = printStackFrame;
 		break;
 	case BCV_ERR_STACKMAP_FRAME_LOCALS_UNDERFLOW:
-		printMessage(&msgBuf, "The count of local varibles in the stackmap frame is less than 0.");
+		printMessage(&msgBuf, "The count of local variables in the stackmap frame is less than 0.");
 		break;
 	case BCV_ERR_STACKMAP_FRAME_LOCALS_OVERFLOW:
 		printMessage(&msgBuf, "Exceeded max local size %u in the stackmap frame.", verifyData->errorTempData);
