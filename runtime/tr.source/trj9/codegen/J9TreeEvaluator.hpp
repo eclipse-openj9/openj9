@@ -54,6 +54,14 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
       ClassEqualityTest,                // Needs object class: y, needs cast class: y
       SuperClassTest,                   // Needs object class: y, needs cast class: y
       CastClassCacheTest,               // Needs object class: y, needs cast class: y
+      /* Currently following two tests are only made available for z Systems
+       * to make sure consumer of this API on other platform do not need to
+       * make any changes in their implementations.
+       */
+#if defined(TR_HOST_S390)
+      DynamicCacheObjectClassTest,      // Needs object class: y, needs cast class: n
+      DynamicCacheDynamicCastClassTest, // Needs object class: y, needs cast class: y
+#endif
       HelperCall,                       // Needs object class: n, needs cast class: y
 
       InstanceOfOrCheckCastMaxSequences
