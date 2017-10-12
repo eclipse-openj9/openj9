@@ -535,6 +535,7 @@ public:
    virtual int32_t            getITableEntryJitVTableOffset();  // Must add this to the negation of an itable entry to get a jit vtable offset
    virtual int32_t            convertITableIndexToOffset(uintptrj_t itableIndex);
    virtual uintptrj_t         getOffsetOfJavaLangClassFromClassField();
+   virtual uintptrj_t         getOffsetOfInitializeStatusFromClassField();
    virtual uintptrj_t         getOffsetOfClassFromJavaLangClassField();
    virtual uintptrj_t         getOffsetOfRamStaticsFromClassField();
    virtual uintptrj_t         getOffsetOfInstanceShapeFromClassField();

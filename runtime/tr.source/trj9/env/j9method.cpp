@@ -3298,6 +3298,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::com_ibm_jit_JITHelpers_compareAndSwapLongInArray,                "compareAndSwapLongInArray", "(Ljava/lang/Object;JJJ)Z")},
       {x(TR::com_ibm_jit_JITHelpers_compareAndSwapObjectInArray,              "compareAndSwapObjectInArray", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
       {x(TR::com_ibm_jit_JITHelpers_byteToCharUnsigned,                       "byteToCharUnsigned", "(B)C")},
+      {x(TR::com_ibm_jit_JITHelpers_getClassInitializeStatus,                 "getClassInitializeStatus", "(Ljava/lang/Class;)I")},
       {  TR::unknownMethod}
       };
 

@@ -89,6 +89,8 @@ public final class VM {
 	
 	public static final int J9_ACC_CLASS_INTERNAL_PRIMITIVE_TYPE;
 
+	public static final int J9CLASS_INIT_SUCCEEDED;
+
 	/* Valid types for J9_JIT_STRING_DEDUP_POLICY are:
 	 *  - J9_JIT_STRING_DEDUP_POLICY_DISABLED
 	 *  - J9_JIT_STRING_DEDUP_POLICY_FAVOUR_HIGHER
@@ -161,6 +163,7 @@ public final class VM {
 		
 		J9_ACC_CLASS_INTERNAL_PRIMITIVE_TYPE = 0;
 		J9_ACC_CLASS_ARRAY = 0;
+		J9CLASS_INIT_SUCCEEDED = 0;
 		
 		J9_JIT_STRING_DEDUP_POLICY = 0;
 		

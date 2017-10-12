@@ -740,6 +740,7 @@
    com_ibm_jit_JITHelpers_compareAndSwapObjectInArray,
    com_ibm_jit_JITHelpers_byteToCharUnsigned,
    com_ibm_jit_JITHelpers_jitHelpers,
+   com_ibm_jit_JITHelpers_getClassInitializeStatus,
 
    com_ibm_jit_DecimalFormatHelper_formatAsDouble,
    com_ibm_jit_DecimalFormatHelper_formatAsFloat,

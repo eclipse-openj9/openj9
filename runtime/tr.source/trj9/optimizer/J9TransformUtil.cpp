@@ -1077,6 +1077,33 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
       }
 
    TR::SymbolReference *symRef = node->getSymbolReference();
+   if (!symRef->isUnresolved() && symRef == comp->getSymRefTab()->findInitializeStatusFromClassSymbolRef())
+      {
+      J9Class* clazz = (J9Class*)baseAddress;
+      traceMsg(comp, "Looking at node %p with initializeStatusFromClassSymbol, class %p initialize status is %d\n", node, clazz, clazz->initializeStatus);
+      // Only fold the load if the class has been initialized
+      if (clazz->initializeStatus == J9ClassInitSucceeded)
+         {
+         if (node->getDataType() == TR::Int32)
+            {
+            if (changeIndirectLoadIntoConst(node, TR::iconst, removedNode, comp))
+               node->setInt(J9ClassInitSucceeded);
+            else
+               return false;
+            }
+         else
+            {
+            if (changeIndirectLoadIntoConst(node, TR::lconst, removedNode, comp))
+               node->setLongInt(J9ClassInitSucceeded);
+            else
+               return false;
+            }
+         return true;
+         }
+      else
+         return false;
+      }
+
    if (!fej9->canDereferenceAtCompileTime(symRef, comp))
       {
       traceMsg(comp, "Abort transformIndirectLoadChain - cannot dereference at compile time!\n");

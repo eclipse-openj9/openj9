@@ -1479,6 +1479,28 @@ J9::SymbolReferenceTable::findOrCreateClassFromJavaLangClassSymbolRef()
    return element(classFromJavaLangClassSymbol);
    }
 
+TR::SymbolReference *
+J9::SymbolReferenceTable::findInitializeStatusFromClassSymbolRef()
+   {
+   return element(initializeStatusFromClassSymbol);
+   }
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateInitializeStatusFromClassSymbolRef()
+   {
+   if (!element(initializeStatusFromClassSymbol))
+      {
+      TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+      TR::Symbol * sym = NULL;
+      if (TR::Compiler->target.is64Bit())
+         sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int64);
+      else
+         sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int32);
+      element(initializeStatusFromClassSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), initializeStatusFromClassSymbol, sym);
+      element(initializeStatusFromClassSymbol)->setOffset(fej9->getOffsetOfInitializeStatusFromClassField());
+      }
+   return element(initializeStatusFromClassSymbol);
+   }
 
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateClassRomPtrSymbolRef()
