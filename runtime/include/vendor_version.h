@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,52 +20,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include "compile/Compilation.hpp"
-#include "env/CompilerEnv.hpp"
-#include "env/CPU.hpp"
-#include "env/VMJ9.h"
-
-namespace J9
-{
-
-namespace X86
-{
-
-const char *
-CPU::getX86ProcessorVendorId(TR::Compilation *comp)
-   {
-   return comp->fej9()->getX86ProcessorVendorId();
-   }
-
-uint32_t
-CPU::getX86ProcessorSignature(TR::Compilation *comp)
-   {
-   return comp->fej9()->getX86ProcessorSignature();
-   }
-
-uint32_t
-CPU::getX86ProcessorFeatureFlags(TR::Compilation *comp)
-   {
-   return comp->fej9()->getX86ProcessorFeatureFlags();
-   }
-
-uint32_t
-CPU::getX86ProcessorFeatureFlags2(TR::Compilation *comp)
-   {
-   return comp->fej9()->getX86ProcessorFeatureFlags2();
-   }
-
-uint32_t
-CPU::getX86ProcessorFeatureFlags8(TR::Compilation *comp)
-   {
-   return comp->fej9()->getX86ProcessorFeatureFlags8();
-   }
-
-bool
-CPU::testOSForSSESupport(TR::Compilation *comp)
-   {
-   return comp->fej9()->testOSForSSESupport();
-   }
-
-}
-}
+/* Example usage for repo and sha.  This value will be inserted into the
+ * java.fullversion and java.vm.info system properties
+ * #define VENDOR_VERSION_STRING "<repo name> - <sha>"
+ * or descriptive string
+ * #define VENDOR_VERSION_STRING "Add some experimental code to java.base"
+ */

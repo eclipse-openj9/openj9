@@ -759,4 +759,3 @@ TraceEvent=Trc_VM_CreateRAMClassFromROMClass_nestTopLoaded Overhead=1 Level=3 Te
 TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotSamePackage Overhead=1 Level=1 Template="The nest top class (RAM class=%p, class loader=%p, this class loader=%p) is not in the same package."
 TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotSameClassLoader Overhead=1 Level=1 Template="The nest top class (RAM class=%p, class loader=%p, this class loader=%p) has not been loaded by the same class loader."
 TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotVerified Overhead=1 Level=1 Template="The nest top (nest top class=%p, class loader=%p, this class loader=%p) does not claim the nest member (nest member=%p)."
-

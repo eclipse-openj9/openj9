@@ -22,11 +22,9 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/x/runtime/VirtualGuardRuntime.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    tr.source/trj9/x/runtime/IA32sse.c \
     tr.source/trj9/x/runtime/X86LockReservation.asm \
     tr.source/trj9/x/runtime/X86ArrayTranslate.asm \
     tr.source/trj9/x/runtime/X86Codert.asm \
-    tr.source/trj9/x/runtime/X86CPUID.asm \
     tr.source/trj9/x/runtime/X86PicBuilder.pasm \
     tr.source/trj9/x/runtime/X86PicBuilderC.cpp \
     tr.source/trj9/x/runtime/X86RelocationTarget.cpp \

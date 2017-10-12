@@ -41,6 +41,38 @@ class LambdaForm {
 	LambdaForm(String str, int num, Name[] names, boolean flag) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+	/*[IF Java18.3]*/
+	LambdaForm(int a, Name[] b, int c) {
+		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	LambdaForm(int a, Name[] b, int c, Kind d) {
+		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	LambdaForm(int a, Name[] b, int c, boolean d, MethodHandle e) {
+		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	LambdaForm(int a, Name[] b, int c, boolean d, MethodHandle e, Kind f) {
+		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	LambdaForm(int a, Name[] b) {
+		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	LambdaForm(int a, Name[] b, Kind c) {
+		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	LambdaForm(int a, Name[] b, boolean c) {
+		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	LambdaForm(int a, Name[] b, boolean c, Kind d) {
+		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	LambdaForm(Name[] a, Name[] b, Name c) {
+		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	LambdaForm(Name[] a, Name[] b, Name c, boolean d) {
+		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	/*[ENDIF]*/
 	
 	static class NamedFunction {
 		NamedFunction(MethodHandle mh) {
@@ -55,6 +87,14 @@ class LambdaForm {
 		NamedFunction(Method m) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
+		/*[IF Java18.3]*/
+		NamedFunction(MethodHandle a, MethodHandleImpl.Intrinsic b){
+			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+		NamedFunction(MemberName a, MethodHandle b, MethodHandleImpl.Intrinsic c){
+			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
+		/*[ENDIF]*/
 		
 		MethodHandle resolvedHandle() {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -74,6 +114,11 @@ class LambdaForm {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 	}
+	/*[IF Java18.3]*/
+	enum Kind {
+		PLACEHOLDER;
+	}
+	/*[ENDIF]*/
 	
 	@interface Hidden{
 	}

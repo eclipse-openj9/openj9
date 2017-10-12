@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,8 +62,6 @@ public:
    uint32_t getX86ProcessorFeatureFlags8(TR::Compilation *comp);
 
    bool testOSForSSESupport(TR::Compilation *comp);
-   bool getX86OSSupportsSSE(TR::Compilation *comp);
-   bool getX86OSSupportsSSE2(TR::Compilation *comp);
    };
 
 }
