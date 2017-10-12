@@ -46,8 +46,8 @@ abstract class FieldVarHandle extends VarHandle {
 	 * @param handleTable The array of MethodHandles implementing the AccessModes.
 	 * @param typeTable The VarHandle instance specific MethodTypes used to validate invocations.
 	 */
-	FieldVarHandle(Class<?> lookupClass, String fieldName, Class<?> fieldType, Class<?> accessClass, boolean isStatic, Class<?>[] coordinateTypes, MethodHandle[] handleTable, MethodType[] typeTable) {
-		super(fieldType, coordinateTypes, handleTable, typeTable, 0);
+	FieldVarHandle(Class<?> lookupClass, String fieldName, Class<?> fieldType, Class<?> accessClass, boolean isStatic, Class<?>[] coordinateTypes, MethodHandle[] handleTable) {
+		super(fieldType, coordinateTypes, handleTable, 0);
 		this.definingClass = lookupClass;
 		this.fieldName = fieldName;
 		int header = (isStatic ? 0 : VM.OBJECT_HEADER_SIZE);
@@ -64,8 +64,8 @@ abstract class FieldVarHandle extends VarHandle {
 	 * @param handleTable The array of MethodHandles implementing the AccessModes.
 	 * @param typeTable The VarHandle instance specific MethodTypes used to validate invocations.
 	 */
-	FieldVarHandle(Field field, boolean isStatic, Class<?>[] coordinateTypes, MethodHandle[] handleTable, MethodType[] typeTable) {
-		super(field.getType(), coordinateTypes, handleTable, typeTable, 0);
+	FieldVarHandle(Field field, boolean isStatic, Class<?>[] coordinateTypes, MethodHandle[] handleTable) {
+		super(field.getType(), coordinateTypes, handleTable, 0);
 		this.definingClass = field.getDeclaringClass();
 		this.fieldName = field.getName();
 		int header = (isStatic ? 0 : VM.OBJECT_HEADER_SIZE);
