@@ -721,6 +721,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::VM_getReferenceFieldAtAddress:
          {
+         TR::VMAccessCriticalSection getReferenceFieldAtAddress(fe);
          uintptrj_t fieldAddress = std::get<0>(client->getRecvData<uintptrj_t>());
          client->write(fe->getReferenceFieldAtAddress(fieldAddress));
          }
@@ -841,6 +842,13 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR::compInfoPT->addThunkToBeRelocated(thunk, signature);
          }
          break;
+      case J9ServerMessageType::VM_setInvokeExactJ2IThunk:
+         {
+         auto recv = client->getRecvData<void*>();
+         void *thunk = std::get<0>(recv);
+         TR::compInfoPT->addInvokeExactThunkToBeRelocated((TR_J2IThunk*) thunk);
+         }
+         break;
       case J9ServerMessageType::VM_sameClassLoaders:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *>();
@@ -914,6 +922,26 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_OpaqueClassBlock *callingClass = std::get<3>(recv);
          client->write(fe->getMethodFromClass(methodClass, const_cast<char*>(methodName.c_str()),
                   const_cast<char*>(signature.c_str()), callingClass));
+         }
+         break;
+      case J9ServerMessageType::VM_createMethodHandleArchetypeSpecimen:
+         {
+         auto recv = client->getRecvData<uintptrj_t*>();
+         uintptrj_t *methodHandleLocation = std::get<0>(recv);
+         intptrj_t length;
+         char *thunkableSignature;
+            {
+            TR::VMAccessCriticalSection createMethodHandleArchetypeSpecimen(fe);
+            TR_OpaqueMethodBlock *archetype = fe->lookupMethodHandleThunkArchetype(*methodHandleLocation);
+            uintptrj_t signatureString = fe->getReferenceField(fe->getReferenceField(
+               *methodHandleLocation,
+               "thunks",             "Ljava/lang/invoke/ThunkTuple;"),
+               "thunkableSignature", "Ljava/lang/String;");
+            length = fe->getStringUTF8Length(signatureString);
+            thunkableSignature = (char*)trMemory->allocateStackMemory(length+1);
+            fe->getStringUTF8(signatureString, thunkableSignature, length+1);
+            client->write(archetype, std::string(thunkableSignature, length));
+            }
          }
          break;
       case J9ServerMessageType::VM_isClassVisible:
@@ -1378,6 +1406,79 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(method->isSubjectToPhaseChange(TR::comp()));
+      case J9ServerMessageType::ResolvedMethod_getResolvedHandleMethod:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method*, I_32>();
+         auto mirror = std::get<0>(recv);
+         I_32 cpIndex = std::get<1>(recv);
+         TR::VMAccessCriticalSection getResolvedHandleMethod(fe);
+
+#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
+         bool unresolvedInCP = mirror->isUnresolvedMethodTypeTableEntry(cpIndex);
+         TR_OpaqueMethodBlock *dummyInvokeExact = fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;", mirror->getNonPersistentIdentifier());
+         J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(mirror->cp()->romConstantPool + cpIndex);
+         J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+         int32_t signatureLength;
+         char   *signature = utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig), signatureLength);
+#else
+         bool unresolvedInCP = mirror->isUnresolvedMethodType(cpIndex);
+         TR_OpaqueMethodBlock *dummyInvokeExact = fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;", mirror->getNonPersistentIdentifier());
+         J9ROMMethodTypeRef *romMethodTypeRef = (J9ROMMethodTypeRef *)(mirror->cp()->romConstantPool + cpIndex);
+         int32_t signatureLength;
+         char   *signature = utf8Data(J9ROMMETHODTYPEREF_SIGNATURE(romMethodTypeRef), signatureLength);
+#endif
+         client->write(dummyInvokeExact, std::string(signature, signatureLength), unresolvedInCP);
+         }
+         break;
+#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
+      case J9ServerMessageType::ResolvedMethod_methodTypeTableEntryAddress:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method*, I_32>();
+         auto mirror = std::get<0>(recv);
+         I_32 cpIndex = std::get<1>(recv);
+         client->write(mirror->methodTypeTableEntryAddress(cpIndex));
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_isUnresolvedMethodTypeTableEntry:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method*, I_32>();
+         auto mirror = std::get<0>(recv);
+         I_32 cpIndex = std::get<1>(recv);
+         client->write(mirror->isUnresolvedMethodTypeTableEntry(cpIndex));
+         }
+         break;
+#endif
+      case J9ServerMessageType::ResolvedMethod_isUnresolvedCallSiteTableEntry:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method*, int32_t>();
+         auto mirror = std::get<0>(recv);
+         int32_t callSiteIndex = std::get<1>(recv);
+         client->write(mirror->isUnresolvedCallSiteTableEntry(callSiteIndex));
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_callSiteTableEntryAddress:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method*, int32_t>();
+         auto mirror = std::get<0>(recv);
+         int32_t callSiteIndex = std::get<1>(recv);
+         client->write(mirror->callSiteTableEntryAddress(callSiteIndex));
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_getResolvedDynamicMethod:
+         {
+         auto recv = client->getRecvData<int32_t, J9Class *, TR_OpaqueMethodBlock*>();
+         int32_t callSiteIndex = std::get<0>(recv);
+         J9Class *clazz = std::get<1>(recv);
+         TR_OpaqueMethodBlock *method = std::get<2>(recv);
+
+         TR::VMAccessCriticalSection getResolvedDynamicMethod(fe);
+         J9ROMClass *romClass = clazz->romClass;
+         bool unresolvedInCP = (clazz->callSites[callSiteIndex] == NULL);
+         J9SRP                 *namesAndSigs = (J9SRP*)J9ROMCLASS_CALLSITEDATA(romClass);
+         J9ROMNameAndSignature *nameAndSig   = NNSRP_GET(namesAndSigs[callSiteIndex], J9ROMNameAndSignature*);
+         J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+         TR_OpaqueMethodBlock *dummyInvokeExact = fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;", method);
+         client->write(dummyInvokeExact, std::string(utf8Data(signature), J9UTF8_LENGTH(signature)), unresolvedInCP);
          }
          break;
       case J9ServerMessageType::CompInfo_isCompiled:
@@ -1488,6 +1589,86 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          uintptrj_t classChainOffsetInSharedCache = fe->sharedCache()->lookupClassChainOffsetInSharedCacheFromClass(j9class);
          client->write(classChainOffsetInSharedCache);
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_derefUintptrjPtr:
+         client->write(*std::get<0>(client->getRecvData<uintptrj_t*>()));
+         break;
+      case J9ServerMessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup:
+         {
+         auto recv = client->getRecvData<uintptrj_t>();
+         TR::VMAccessCriticalSection invokeILGenMacrosInvokeExactAndFixup(fe);
+         uintptrj_t methodHandle = std::get<0>(recv);
+         uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(
+            methodHandle,
+            "type",             "Ljava/lang/invoke/MethodType;"),
+            "methodDescriptor", "Ljava/lang/String;");
+         intptrj_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
+         char *methodDescriptor = (char*)alloca(methodDescriptorLength+1);
+         fe->getStringUTF8(methodDescriptorRef, methodDescriptor, methodDescriptorLength+1);
+         client->write(std::string(methodDescriptor, methodDescriptorLength));
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_invokeExplicitCastHandleConvertArgs:
+         {
+         auto recv = client->getRecvData<uintptrj_t*>();
+         TR::VMAccessCriticalSection invokeExplicitCastHandleConvertArgs(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
+         uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+            methodHandle,
+            "next",             "Ljava/lang/invoke/MethodHandle;"),
+            "type",             "Ljava/lang/invoke/MethodType;"),
+            "methodDescriptor", "Ljava/lang/String;");
+         size_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
+         char *methodDescriptor = (char*)alloca(methodDescriptorLength+1);
+         fe->getStringUTF8(methodDescriptorRef, methodDescriptor, methodDescriptorLength+1);
+         client->write(std::string(methodDescriptor, methodDescriptorLength));
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_targetTypeL:
+         {
+         auto recv = client->getRecvData<uintptrj_t*, int32_t>();
+         int32_t argIndex = std::get<1>(recv);
+         TR::VMAccessCriticalSection targetTypeL(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
+         // We've already loaded the handle once, but must reload it because we released VM access in between.
+         uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+                                                      methodHandle,
+                                                      "next",             "Ljava/lang/invoke/MethodHandle;"),
+                                                      "type",             "Ljava/lang/invoke/MethodType;"),
+                                                      "arguments",        "[Ljava/lang/Class;");
+         TR_OpaqueClassBlock *parmClass = (TR_OpaqueClassBlock*)(intptrj_t)fe->getInt64Field(fe->getReferenceElement(arguments, argIndex),
+                                                                          "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
+         client->write(parmClass);
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_invokeDirectHandleDirectCall:
+         {
+         auto recv = client->getRecvData<uintptrj_t*, bool, bool>();
+         TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fe);
+         uintptrj_t methodHandle   = *std::get<0>(recv);
+         int64_t vmSlot         = fe->getInt64Field(methodHandle, "vmSlot");
+         bool isInterface = std::get<1>(recv);
+         bool isVirtual = std::get<2>(recv);
+         TR_OpaqueMethodBlock * j9method;
+
+         uintptrj_t jlClass = fe->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
+         if (isInterface)
+             {
+             TR_OpaqueClassBlock *clazz = fe->getClassFromJavaLangClass(jlClass);
+             j9method = (TR_OpaqueMethodBlock*)&(((J9Class *)clazz)->ramMethods[vmSlot]);
+             }
+         else if (isVirtual)
+            {
+            TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptrj_t)fe->getClassFromJavaLangClass(jlClass)) + J9JIT_INTERP_VTABLE_OFFSET);
+            int32_t index = (int32_t)((vmSlot - J9JIT_INTERP_VTABLE_OFFSET) / sizeof(vtable[0]));
+            j9method = vtable[index];
+            }
+         else
+            {
+            j9method = (TR_OpaqueMethodBlock*)(intptrj_t)vmSlot;
+            }
+         client->write(j9method, vmSlot);
          }
          break;
       default:
@@ -1886,6 +2067,12 @@ TR::CompilationInfoPerThread::addThunkToBeRelocated(void *thunk, std::string sig
    }
 
 void
+TR::CompilationInfoPerThread::addInvokeExactThunkToBeRelocated(TR_J2IThunk *thunk)
+   {
+   _invokeExactThunksToBeRelocated.emplace_back(thunk);
+   }
+
+void
 TR::CompilationInfoPerThread::relocateThunks()
    {
    TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, _compilationThread, TR_J9VMBase::J9_VM);
@@ -1898,6 +2085,11 @@ TR::CompilationInfoPerThread::relocateThunks()
       fe->setJ2IThunk(&signature[0], signature.size(), thunk, TR::comp());
       }
    _thunksToBeRelocated.clear();
+   for (TR_J2IThunk *thunk : _invokeExactThunksToBeRelocated)
+      {
+      fe->setInvokeExactJ2IThunk(thunk, TR::comp());
+      }
+   _invokeExactThunksToBeRelocated.clear();
    }
 
 void
@@ -2010,7 +2202,8 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
                                    : TR::CompilationInfoPerThreadBase(compInfo, jitConfig, id, true),
                                      _compThreadCPU(_compInfo.persistentMemory()->getPersistentInfo(), jitConfig, 490000000, id),
                                      _cachedROMClasses(ClassCacheMapAllocator(TR::Compiler->persistentAllocator())),
-                                     _thunksToBeRelocated(ThunkVectorAllocator(TR::Compiler->persistentAllocator()))
+                                     _thunksToBeRelocated(ThunkVectorAllocator(TR::Compiler->persistentAllocator())),
+                                     _invokeExactThunksToBeRelocated(InvokeExactThunkVectorAllocator(TR::Compiler->persistentAllocator()))
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    _initializationSucceeded = false;
@@ -6235,8 +6428,9 @@ void *TR::CompilationInfo::compileRemoteMethod(J9VMThread * vmThread, TR::IlGene
                                                void *oldStartPC, TR_CompilationErrorCode *compErrCode,
                                                bool *queued, TR_OptimizationPlan * optimizationPlan, void *extra)
    {
-   TR_ASSERT(!(extra && (details.isNewInstanceThunk() || details.isMethodHandleThunk() || details.isMethodInProgress())),
-      "In server mode, we should not be receiving requests of detail NewInstanceThunk, MethodHandleThunk and MethodInProgress.");
+   TR_ASSERT(details.isRemoteMethod(), "compileRemoteMethod can only compile remote methods (duh)");
+   //TR_ASSERT(!(extra && (details.isNewInstanceThunk() || details.isMethodHandleThunk() || details.isMethodInProgress())),
+      //"In server mode, we should not be receiving requests of detail NewInstanceThunk, MethodHandleThunk and MethodInProgress.");
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
       {
@@ -6340,8 +6534,8 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
    TR_J9VMBase * fe = TR_J9VMBase::get(_jitConfig, vmThread);
 
    TR_ASSERT(!(extra && requireAsyncCompile != TR_yes), "If RPC info is passed, an async compile should be requested");
-   TR_ASSERT(!(extra && (details.isNewInstanceThunk() || details.isMethodHandleThunk() || details.isMethodInProgress())),
-             "In server mode, we should not be receiving requests of detail NewInstanceThunk, MethodHandleThunk and MethodInProgress.");
+   //TR_ASSERT(!(extra && (details.isNewInstanceThunk() || details.isMethodHandleThunk() || details.isMethodInProgress())),
+             //"In server mode, we should not be receiving requests of detail NewInstanceThunk, MethodHandleThunk and MethodInProgress.");
    TR_ASSERT(!fe->isAOT_DEPRECATED_DO_NOT_USE(), "We need a non-AOT vm here.");
 
    J9Method *method = details.getMethod();
@@ -7846,8 +8040,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       //
       TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
 
-      eligibleForRemoteCompile =
-         !TR::CompilationInfo::isJSR292(details.getRomMethod());
+      eligibleForRemoteCompile = true;
+         //!TR::CompilationInfo::isJSR292(details.getRomMethod());
 
       if (!entry->isRemoteCompReq()) {
          eligibleForRelocatableCompile =
@@ -8468,7 +8662,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       if (details.isMethodHandleThunk())
          {
          J9::MethodHandleThunkDetails &mhDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
-         compilee = vm->createMethodHandleArchetypeSpecimen(p->trMemory(), method, mhDetails.getHandleRef());
+         compilee = vm->createMethodHandleArchetypeSpecimen(p->trMemory(), mhDetails.getHandleRef());
          TR_ASSERT(compilee, "Cannot queue a thunk compilation for a MethodHandle without a suitable archetype");
          }
       else if (details.isNewInstanceThunk())
@@ -9625,23 +9819,24 @@ TR::CompilationInfoPerThreadBase::compile(
          J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
          uint32_t romMethodOffset = uint32_t((uint8_t*) romMethod - (uint8_t*) romClass);
          std::string romClassStr = packROMClass(romClass, compiler->trMemory());
+         std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
 
          JAAS::J9ClientStream client;
-         client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), allocPtr, availableSpace);
+         
+         TR_VerboseLog::writeLineLocked( TR_Vlog_JAAS, "details vtable=%p name=%s", *(uintptr_t*)&details, details.name());
+         client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), allocPtr, availableSpace, detailsStr);
          uint32_t statusCode = compilationFailure;
-         void *recvStartPC;
          std::string codeCacheStr;
          std::string dataCacheStr;
          std::string metaRelocationInfo;
          try
             {
             while(!handleServerMessage(&client, compiler->fej9vm()));
-            auto recv = client.getRecvData<uint32_t, void*, std::string, std::string, std::string>();
+            auto recv = client.getRecvData<uint32_t, std::string, std::string, std::string>();
             statusCode = std::get<0>(recv);
-            recvStartPC = std::get<1>(recv);
-            codeCacheStr = std::get<2>(recv);
-            dataCacheStr = std::get<3>(recv);
-            metaRelocationInfo = std::get<4>(recv);
+            codeCacheStr = std::get<1>(recv);
+            dataCacheStr = std::get<2>(recv);
+            metaRelocationInfo = std::get<3>(recv);
             if (statusCode >= compilationMaxError)
                throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
             }
@@ -9658,7 +9853,6 @@ TR::CompilationInfoPerThreadBase::compile(
                {
                reloRuntime()->setReloStartTime(getTimeWhenCompStarted());
 
-               TR_ASSERT(recvStartPC, "must have startPC");
                TR_ASSERT(codeCacheStr.size(), "must have code cache");
                TR_ASSERT(dataCacheStr.size(), "must have data cache");
 
@@ -9710,7 +9904,6 @@ TR::CompilationInfoPerThreadBase::compile(
                TR::compInfoPT->relocateThunks();
 
                //TR_ASSERT((uint8_t *)metaData->codeCacheAlloc == (uint8_t *)(codeCacheHeader + 1), "codeCache mismatch");
-               TR_ASSERT((void *)metaData->startPC == recvStartPC, "startpc should match");
                TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
 
                   {
@@ -10596,6 +10789,48 @@ TR::CompilationInfo::emitJvmpiExtendedDataBuffer(TR::Compilation *&compiler, J9V
 extern J9_CFUNC void  jitMethodHandleTranslated (J9VMThread *currentThread, j9object_t methodHandle, j9object_t arg, void *jitEntryPoint, void *intrpEntryPoint);
 #endif
 
+void
+TR::CompilationInfo::remoteCompilationEnd(TR::IlGeneratorMethodDetails &details, J9JITConfig *jitConfig, TR_FrontEnd *fe,
+                                          TR_MethodToBeCompiled *entry, TR::Compilation *comp)
+   {
+   entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
+
+   CodeCache *codeCache = comp->getCurrentCodeCache();
+   OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader*) (comp->getOptimizationPlan()->_mandatoryCodeAddress);
+
+   TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
+   TR_ASSERT(dataCache, "A dataCache must be reserved for JAAS compilations\n");
+   J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
+   J9JITExceptionTable *metaData = TR::compInfoPT->getMetadata();
+
+   size_t codeSize = codeCache->getWarmCodeAlloc() - (uint8_t*)codeCacheHeader;
+   size_t dataSize = dataCache->getSegment()->heapAlloc - (uint8_t*)dataCacheHeader;
+
+   JAASMetaDataRelocationInfo metaRelocationInfo;
+   metaRelocationInfo.metaDataOffset = (uint8_t*) metaData - (uint8_t*) dataCacheHeader;
+   metaRelocationInfo.inlinedCallSitesOffset = metaData->inlinedCalls ?
+      (uint8_t *)metaData->inlinedCalls - (uint8_t *)metaData : 0;
+   metaRelocationInfo.osrInfoOffset = metaData->osrInfo ?
+      (uint8_t *)metaData->osrInfo - (uint8_t *)metaData : 0;
+   J9JITStackAtlas *gcStackAtlas = (J9JITStackAtlas*) metaData->gcStackAtlas;
+   metaRelocationInfo.gcStackAtlasOffset = (uint8_t*) gcStackAtlas - (uint8_t*) metaData;
+   metaRelocationInfo.stackAllocMapOffset = (uint8_t*) gcStackAtlas->stackAllocMap - (uint8_t*) metaData;
+   metaRelocationInfo.internalPointerMapOffset = (uint8_t*) gcStackAtlas->internalPointerMap - (uint8_t*) metaData;
+   //TR_ASSERT(((OMR::RuntimeAssumption*)metaData->runtimeAssumptionList)->getNextAssumptionForSameJittedBody() == metaData->runtimeAssumptionList, "assuming no assumptions");
+
+   std::string codeCacheStr((char*) codeCacheHeader, codeSize);
+   std::string dataCacheStr((char*) dataCacheHeader, dataSize);
+   std::string metaRelocationStr((char*) &metaRelocationInfo, sizeof(JAASMetaDataRelocationInfo));
+
+   entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr, metaRelocationStr);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJaas))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                                     "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
+      }
+   }
+
 // static method
 void *
 TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details, J9JITConfig *jitConfig, void *startPC,
@@ -10609,10 +10844,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    TR_DataCache *dataCache = NULL;
    const J9JITDataCacheHeader *storedCompiledMethod = nullptr;
 
-   // In JAAS Server mode, we currently do not need to reply when details include NewInstanceThunk/MethodInProgress/MethodHandleThunk
-   // as the server will not see these types of requests.
    if (details.isNewInstanceThunk())
       {
+      TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
       J9::NewInstanceThunkDetails &mhDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
       J9Class *clazz = mhDetails.getClass();
       if (startPC)
@@ -10634,6 +10868,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
    if (details.isMethodInProgress())
       {
+      TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
       J9::MethodInProgressDetails & dltDetails = static_cast<J9::MethodInProgressDetails &>(details);
 #ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
       if (startPC)
@@ -10663,25 +10898,37 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       {
       if (startPC)
          {
-         J9::MethodHandleThunkDetails &mhDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
-         uintptrj_t thunks = trvm->getReferenceField(*mhDetails.getHandleRef(), "thunks", "Ljava/lang/invoke/ThunkTuple;");
-         int64_t jitEntryPoint = (int64_t)(intptrj_t)startPC + TR_LinkageInfo::get(startPC)->getJitEntryOffset();
+         if (comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+            {
+            remoteCompilationEnd(details, jitConfig, fe, entry, comp);
+            }
+         else
+            {
+            //TODO: Verify this gets executed on the client
+            J9::MethodHandleThunkDetails &mhDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
+            uintptrj_t thunks = trvm->getReferenceField(*mhDetails.getHandleRef(), "thunks", "Ljava/lang/invoke/ThunkTuple;");
+            int64_t jitEntryPoint = (int64_t)(intptrj_t)startPC + TR_LinkageInfo::get(startPC)->getJitEntryOffset();
 
 #if defined(JIT_METHODHANDLE_TRANSLATED)
-         jitMethodHandleTranslated(vmThread, *mhDetails.getHandleRef(), mhDetails.getArgRef()? *mhDetails.getArgRef() : NULL, jitEntryPoint, startPC);
+            jitMethodHandleTranslated(vmThread, *mhDetails.getHandleRef(), mhDetails.getArgRef()? *mhDetails.getArgRef() : NULL, jitEntryPoint, startPC);
 #else
-         // This doesn't need to be volatile.  On 32-bit, we don't care about
-         // word-tearing because it's a 32-bit address; on 64-bit, we don't get
-         // word-tearing of aligned 64-bit stores on any platform we care about.
-         //
-         trvm->setInt64Field(thunks, "invokeExactThunk",    jitEntryPoint);
-         trvm->setInt64Field(thunks, "i2jInvokeExactThunk", (intptrj_t)startPC);
+            // This doesn't need to be volatile.  On 32-bit, we don't care about
+            // word-tearing because it's a 32-bit address; on 64-bit, we don't get
+            // word-tearing of aligned 64-bit stores on any platform we care about.
+            //
+            trvm->setInt64Field(thunks, "invokeExactThunk",    jitEntryPoint);
+            trvm->setInt64Field(thunks, "i2jInvokeExactThunk", (intptrj_t)startPC);
 #endif
-         deleteMethodHandleRef(mhDetails, vmThread, trvm);
+            deleteMethodHandleRef(mhDetails, vmThread, trvm);
+            }
          }
       else
          {
          // TODO:JSR292: Handle compile failures gracefully
+         if (entry && entry->_stream)
+            {
+            entry->_stream->finishCompilation(compilationFailure);
+            }
          }
       return startPC;
       }
@@ -10694,42 +10941,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       TR_ASSERT(vmThread, "We must always have a vmThread in compilationEnd()\n");
       if (comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
          {
-         entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
-
-         CodeCache *codeCache = comp->getCurrentCodeCache();
-         OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader*) (comp->getOptimizationPlan()->_mandatoryCodeAddress);
-
-         TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
-         TR_ASSERT(dataCache, "A dataCache must be reserved for JAAS compilations\n");
-         J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-         J9JITExceptionTable *metaData = TR::compInfoPT->getMetadata();
-
-         size_t codeSize = codeCache->getWarmCodeAlloc() - (uint8_t*)codeCacheHeader;
-         size_t dataSize = dataCache->getSegment()->heapAlloc - (uint8_t*)dataCacheHeader;
-
-         JAASMetaDataRelocationInfo metaRelocationInfo;
-         metaRelocationInfo.metaDataOffset = (uint8_t*) metaData - (uint8_t*) dataCacheHeader;
-         metaRelocationInfo.inlinedCallSitesOffset = metaData->inlinedCalls ?
-                  (uint8_t *)metaData->inlinedCalls - (uint8_t *)metaData : 0;
-         metaRelocationInfo.osrInfoOffset = metaData->osrInfo ?
-                  (uint8_t *)metaData->osrInfo - (uint8_t *)metaData : 0;
-         J9JITStackAtlas *gcStackAtlas = (J9JITStackAtlas*) metaData->gcStackAtlas;
-         metaRelocationInfo.gcStackAtlasOffset = (uint8_t*) gcStackAtlas - (uint8_t*) metaData;
-         metaRelocationInfo.stackAllocMapOffset = (uint8_t*) gcStackAtlas->stackAllocMap - (uint8_t*) metaData;
-         metaRelocationInfo.internalPointerMapOffset = (uint8_t*) gcStackAtlas->internalPointerMap - (uint8_t*) metaData;
-         //TR_ASSERT(((OMR::RuntimeAssumption*)metaData->runtimeAssumptionList)->getNextAssumptionForSameJittedBody() == metaData->runtimeAssumptionList, "assuming no assumptions");
-
-         std::string codeCacheStr((char*) codeCacheHeader, codeSize);
-         std::string dataCacheStr((char*) dataCacheHeader, dataSize);
-         std::string metaRelocationStr((char*) &metaRelocationInfo, sizeof(JAASMetaDataRelocationInfo));
-
-         entry->_stream->finishCompilation(compilationOK, startPC, codeCacheStr, dataCacheStr, metaRelocationStr);
-
-         if (TR::Options::getVerboseOption(TR_VerboseJaas))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
-                  "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
-            }
+         remoteCompilationEnd(details, jitConfig, fe, entry, comp);
          }
       else if (!(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
          {

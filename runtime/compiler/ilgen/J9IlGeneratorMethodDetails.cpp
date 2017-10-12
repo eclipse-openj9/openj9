@@ -46,10 +46,10 @@ IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR:
    // The if nest below covers every concrete subclass of IlGeneratorMethodDetails.
    // If other is not one of these classes, then it will assert.
 
+   if (other.isRemoteMethod()) // this check has to go first because we can be both remote and X
+      return &storage.createRemoteMethodDetails(other, other.getMethod(), other.getRomClass(), other.getRomMethod(), other.getClass());
    if (other.isOrdinaryMethod())
       return new (&storage) TR::IlGeneratorMethodDetails(static_cast<const TR::IlGeneratorMethodDetails &>(other));
-   else if (other.isRemoteMethod())
-      return new *&storage) RemoteMethodDetails(static_cast<const RemoteMethodDetails &>(other));
    else if (other.isDumpMethod())
       return new (&storage) DumpMethodDetails(static_cast<const DumpMethodDetails &>(other));
    else if (other.isNewInstanceThunk())
@@ -68,9 +68,20 @@ IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR:
    return NULL; // error case
    }
 
+IlGeneratorMethodDetails::IlGeneratorMethodDetails(J9Method * const method) :
+   OMR::IlGeneratorMethodDetailsConnector()
+   {
+   _method = method;
+   _class = J9_CLASS_FROM_METHOD(_method);
+   _romClass = _class->romClass;
+   _romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_method);
+   }
 
 IlGeneratorMethodDetails::IlGeneratorMethodDetails(const TR::IlGeneratorMethodDetails & other) :
-   _method(other.getMethod())
+   _method(other.getMethod()),
+   _class(other.getClass()),
+   _romClass(other.getRomClass()),
+   _romMethod(other.getRomMethod())
    {
    }
 
@@ -78,8 +89,10 @@ IlGeneratorMethodDetails::IlGeneratorMethodDetails(const TR::IlGeneratorMethodDe
 IlGeneratorMethodDetails::IlGeneratorMethodDetails(TR_ResolvedMethod *method)
    {
    _method = (J9Method *)(method->getPersistentIdentifier());
+   _class = J9_CLASS_FROM_METHOD(_method);
+   _romClass = _class->romClass;
+   _romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_method);
    }
-
 
 bool
 IlGeneratorMethodDetails::sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
@@ -115,6 +128,32 @@ TR::IlGeneratorMethodDetails & IlGeneratorMethodDetails::create(
 
    return * new (&target) TR::IlGeneratorMethodDetails((J9Method *)j9method->getNonPersistentIdentifier());
 
+   }
+
+TR::IlGeneratorMethodDetails & IlGeneratorMethodDetails::createRemoteMethodDetails(const TR::IlGeneratorMethodDetails &other,
+                                                                                   J9Method * const method,
+                                                                                   const J9ROMClass *romClass,
+                                                                                   const J9ROMMethod *romMethod,
+                                                                                   J9Class *clazz)
+   {
+   if (other.isDumpMethod())
+      return * new (self()) RemoteMethodDetails<DumpMethodDetails>(static_cast<const DumpMethodDetails &>(other), method, romClass, romMethod, clazz);
+   else if (other.isNewInstanceThunk())
+      return * new (self()) RemoteMethodDetails<NewInstanceThunkDetails>(static_cast<const NewInstanceThunkDetails &>(other), method, romClass, romMethod, clazz);
+   else if (other.isMethodInProgress())
+      return * new (self()) RemoteMethodDetails<MethodInProgressDetails>(static_cast<const MethodInProgressDetails &>(other), method, romClass, romMethod, clazz);
+   else if (other.isMethodHandleThunk())
+      {
+      if (static_cast<const MethodHandleThunkDetails &>(other).isShareable())
+         return * new (self()) RemoteMethodDetails<ShareableInvokeExactThunkDetails>(static_cast<const ShareableInvokeExactThunkDetails &>(other), method, romClass, romMethod, clazz);
+      else if (static_cast<const MethodHandleThunkDetails &>(other).isCustom())
+         return * new (self()) RemoteMethodDetails<CustomInvokeExactThunkDetails>(static_cast<const CustomInvokeExactThunkDetails &>(other), method, romClass, romMethod, clazz);
+      }
+   if (other.isOrdinaryMethod() || other.isRemoteMethod())
+      return * new (self()) RemoteMethodDetails<TR::IlGeneratorMethodDetails>(static_cast<const TR::IlGeneratorMethodDetails &>(other), method, romClass, romMethod, clazz);
+
+   TR_ASSERT(0, "Unexpected IlGeneratorMethodDetails object\n");
+   return *(self());
    }
 
 
@@ -156,24 +195,6 @@ void
 IlGeneratorMethodDetails::printDetails(TR_FrontEnd *fe, TR::FILE *file)
    {
    trfprintf(file, "%s", fe->sampleSignature((TR_OpaqueMethodBlock *)(self()->getMethod())));
-   }
-
-J9Class *
-IlGeneratorMethodDetails::getClass() const
-   {
-   return J9_CLASS_FROM_METHOD(self()->getMethod());
-   }
-
-const J9ROMClass *
-IlGeneratorMethodDetails::getRomClass() const
-   {
-   return self()->getClass()->romClass;
-   }
-
-const J9ROMMethod *
-IlGeneratorMethodDetails::getRomMethod() const
-   {
-   return J9_ROM_METHOD_FROM_RAM_METHOD(self()->getMethod());
    }
 
 void

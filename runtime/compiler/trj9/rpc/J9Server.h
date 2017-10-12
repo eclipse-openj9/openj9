@@ -40,7 +40,7 @@ public:
 
    void finish();
    void cancel();   // Same as finish, but with Status::CANCELLED
-   void finishCompilation(uint32_t statusCode, void *startPC = nullptr, std::string codeCache = "", std::string dataCache = "", std::string metaDataRelocation = "");
+   void finishCompilation(uint32_t statusCode, std::string codeCache = "", std::string dataCache = "", std::string metaDataRelocation = "");
    void acceptNewRPC();
 
 private:

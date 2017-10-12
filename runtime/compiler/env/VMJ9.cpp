@@ -4588,6 +4588,12 @@ TR_J9VMBase::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *t
    return thunkptr;
    }
 
+void
+TR_J9VMBase::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
+   {
+   comp->getPersistentInfo()->getInvokeExactJ2IThunkTable()->addThunk((TR_J2IThunk*) thunkptr, this);
+   }
+
 void *
 TR_J9VMBase::findPersistentJ2IThunk(char *signatureChars)
    {

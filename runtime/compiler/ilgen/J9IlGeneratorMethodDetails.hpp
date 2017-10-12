@@ -67,10 +67,7 @@ public:
       _method = NULL;
       }
 
-   IlGeneratorMethodDetails(J9Method * const method) :
-      OMR::IlGeneratorMethodDetailsConnector(),
-      _method(method)
-   { }
+   IlGeneratorMethodDetails(J9Method * const method);
 
    IlGeneratorMethodDetails(TR_ResolvedMethod *method);
 
@@ -79,6 +76,11 @@ public:
    static TR::IlGeneratorMethodDetails & create(TR::IlGeneratorMethodDetails & target, TR_ResolvedMethod *method);
 
    static TR::IlGeneratorMethodDetails * clone(TR::IlGeneratorMethodDetails & storage, const TR::IlGeneratorMethodDetails & source);
+   TR::IlGeneratorMethodDetails & createRemoteMethodDetails(const TR::IlGeneratorMethodDetails &other,
+                                                            J9Method * const method,
+                                                            const J9ROMClass *romClass,
+                                                            const J9ROMMethod *romMethod,
+                                                            J9Class *clazz);
 
    virtual const char * name() const { return "OrdinaryMethod"; }
 
@@ -92,9 +94,9 @@ public:
    virtual bool supportsInvalidation() const { return true; }
 
    J9Method *getMethod() const { return _method; }
-   virtual J9Class *getClass() const;
-   virtual const J9ROMClass *getRomClass() const;
-   virtual const J9ROMMethod *getRomMethod() const;
+   virtual J9Class *getClass() const { return _class; }
+   virtual const J9ROMClass *getRomClass() const { return _romClass; }
+   virtual const J9ROMMethod *getRomMethod() const { return _romMethod; }
 
    virtual TR_IlGenerator *getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
                                           TR_FrontEnd * fe,
@@ -119,20 +121,17 @@ protected:
    //    must be able to transmute itself into any kind of IlGeneratorMethodDetails in place (i.e. via placement new)
 
    J9Method *_method;
+   J9Class *_class;
+   const J9ROMMethod *_romMethod;
+   const J9ROMClass *_romClass;
    union
       {
-      J9Class *_class;
       int32_t _byteCodeIndex;
       struct
          {
          uintptrj_t *_handleRef;
          uintptrj_t *_argRef;
          } _methodHandleData;
-      struct
-         {
-         const J9ROMClass *_romClass;
-         const J9ROMMethod *_romMethod;
-         } _romData;
       } _data;
 
    };

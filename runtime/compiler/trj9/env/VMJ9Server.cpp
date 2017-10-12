@@ -970,3 +970,29 @@ TR_J9ServerVM::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
    stream->write(JAAS::J9ServerMessageType::VM_isClassLoadedBySystemClassLoader, clazz);
    return std::get<0>(stream->read<bool>());
    }
+
+void
+TR_J9ServerVM::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
+   {
+   TR_J9VMBase::setInvokeExactJ2IThunk(thunkptr, comp);
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_setInvokeExactJ2IThunk, thunkptr);
+//   stream->read<JAAS::Void>();
+   }
+
+TR_ResolvedMethod *
+TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_createMethodHandleArchetypeSpecimen, methodHandleLocation);
+   auto recv = stream->read<TR_OpaqueMethodBlock*, std::string>();
+   TR_OpaqueMethodBlock *archetype = std::get<0>(recv);
+   std::string thunkableSignature = std::get<1>(recv);
+   if (!archetype)
+      return nullptr;
+
+   TR_ResolvedMethod *result = createResolvedMethodWithSignature(trMemory, archetype, NULL, &thunkableSignature[0], thunkableSignature.length(), owningMethod);
+   result->convertToMethod()->setArchetypeSpecimen();
+   result->setMethodHandleLocation(methodHandleLocation);
+   return result;
+   }

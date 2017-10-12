@@ -736,6 +736,7 @@ public:
    virtual char    *getJ2IThunkSignatureForDispatchVirtual(char *invokeHandleSignature, uint32_t signatureLength,  TR::Compilation *comp);
    virtual TR::Node *getEquivalentVirtualCallNodeForDispatchVirtual(TR::Node *node,  TR::Compilation *comp);
    virtual bool     needsInvokeExactJ2IThunk(TR::Node *node,  TR::Compilation *comp);
+   virtual void setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp);
 
    virtual void *findPersistentJ2IThunk(char *signatureChars);
    virtual void *findPersistentThunk(char *signatureChars, uint32_t signatureLength);

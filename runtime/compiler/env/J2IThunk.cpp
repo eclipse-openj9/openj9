@@ -51,7 +51,7 @@ TR_J2IThunk::allocate(
    {
    int16_t terseSignatureBufLength = thunkTable->terseSignatureLength(signature)+1;
    int16_t totalSize = (int16_t)sizeof(TR_J2IThunk) + codeSize + terseSignatureBufLength;
-   TR_J2IThunk *result = (TR_J2IThunk*)cg->allocateCodeMemory(totalSize, true, false);
+   TR_J2IThunk *result = (TR_J2IThunk*)cg->allocateCodeMemory(totalSize, false, true);
    result->_codeSize  = codeSize;
    result->_totalSize = totalSize;
    thunkTable->getTerseSignature(result->terseSignature(), terseSignatureBufLength, signature);

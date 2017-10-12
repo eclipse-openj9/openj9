@@ -35,6 +35,7 @@ static J9Method *ramMethodFromRomMethod(J9JITConfig *jitConfig, J9VMThread *vmTh
 static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
    J9ROMClass* romClass, const J9ROMMethod* romMethod,
    J9Method* ramMethod, J9Class *clazz, JAAS::J9ServerStream *rpc, TR_Hotness optLevel,
+   TR::IlGeneratorMethodDetails *clientDetails,
    uint8_t *mandatoryCodeAddress = nullptr, size_t availableCodeSpace = 0)  // JAAS temporary HACK
    {
    J9UTF8 *methodNameUTF = J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature);
@@ -79,8 +80,11 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             plan->_mandatoryCodeAddress = mandatoryCodeAddress;
             plan->_availableCodeSpace = availableCodeSpace;
             }
-         J9::RemoteMethodDetails details(ramMethod, romClass, romMethod, clazz);
-         result = (IDATA)compInfo->compileRemoteMethod(vmThread, details, romMethod, romClass, 0, &compErrCode, &queued, plan, rpc);
+         TR::IlGeneratorMethodDetails details;
+         TR_VerboseLog::writeLineLocked( TR_Vlog_JAAS, "details vtable=%p client vtable=%p", *(uintptr_t*)&details, *(uintptr_t*)clientDetails);
+         //TR_ASSERT(*(uintptr_t*)clientDetails == *(uintptr_t*)&remoteDetails, "oops, vtables are not the same! gotta copy all the data instead!");
+         TR::IlGeneratorMethodDetails &remoteDetails = details.createRemoteMethodDetails(*clientDetails, ramMethod, romClass, romMethod, clazz);
+         result = (IDATA)compInfo->compileRemoteMethod(vmThread, remoteDetails, romMethod, romClass, 0, &compErrCode, &queued, plan, rpc);
 
          if (newPlanCreated)
             {
@@ -132,7 +136,7 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
    {
    try
       {
-      auto req = stream->read<std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, uint8_t*, size_t>();
+      auto req = stream->read<std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, uint8_t*, size_t, std::string>();
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
@@ -147,7 +151,9 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       TR_Hotness opt = std::get<4>(req);
       uint8_t *allocPtr = std::get<5>(req);
       size_t allocSize = std::get<6>(req);
-      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, allocPtr, allocSize);
+      std::string detailsStr = std::get<7>(req);
+      TR::IlGeneratorMethodDetails *details = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
+      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, allocPtr, allocSize);
       }
    catch (const JAAS::StreamFailure &e)
       {

@@ -58,6 +58,33 @@ public:
 namespace J9
 {
 
+template <typename T>
+class RemoteMethodDetails : public T
+   {
+public:
+   RemoteMethodDetails(const T &other, J9Method * const method, const J9ROMClass *romClass, const J9ROMMethod *romMethod, J9Class *clazz) : T(other)
+      {
+      // need this to make symbol resolution happy
+      this->_method = method;
+      this->_romClass = romClass;
+      this->_romMethod = romMethod;
+      this->_class = clazz;
+      }
+
+   virtual bool isRemoteMethod() const { return true; }
+   virtual bool isOrdinaryMethod() const { return false; }
+
+   virtual const char * name() const { return T::name() + 1; }
+
+   virtual bool sameAs(IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
+      {
+      // hard to tell when pointers can come from different clients
+      // the conservative answer will hopefully be ok
+      return false;
+      }
+
+   };
+
 class DumpMethodDetails : public TR::IlGeneratorMethodDetails
    {
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
@@ -65,7 +92,7 @@ class DumpMethodDetails : public TR::IlGeneratorMethodDetails
 public:
    DumpMethodDetails(J9Method * const method) : TR::IlGeneratorMethodDetails(method) { }
    DumpMethodDetails(TR_ResolvedMethod *method) : TR::IlGeneratorMethodDetails(method) { }
-   DumpMethodDetails(const DumpMethodDetails & other) : TR::IlGeneratorMethodDetails(other.getMethod()) { }
+   DumpMethodDetails(const DumpMethodDetails & other) : TR::IlGeneratorMethodDetails(other) { }
 
    virtual const char * name()     const { return "DumpMethod"; }
 
@@ -81,48 +108,6 @@ public:
    virtual bool supportsInvalidation() { return false; }
    };
 
-// This class is used for remote compilation requests (from a different process)
-class RemoteMethodDetails : public TR::IlGeneratorMethodDetails
-   {
-   // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
-
-   public:
-      //RemoteMethodDetails(J9Method * const method) : TR::IlGeneratorMethodDetails(method) { }
-      //RemoteMethodDetails(TR_ResolvedMethod *method) : TR::IlGeneratorMethodDetails(method) { }
-      RemoteMethodDetails(const RemoteMethodDetails & other) : TR::IlGeneratorMethodDetails(other.getMethod()) 
-         {
-         _data._romData._romClass = other.getRomClass();
-         _data._romData._romMethod = other.getRomMethod();
-         _clazz = other.getClass();
-         }
-      RemoteMethodDetails(J9Method * const method, const J9ROMClass *romClass, const J9ROMMethod *romMethod, J9Class *clazz) : TR::IlGeneratorMethodDetails(method) 
-         {
-         _data._romData._romClass = romClass;
-         _data._romData._romMethod = romMethod;
-         _clazz = clazz;
-         }
-      const J9ROMClass  *getRomClass()  const { return _data._romData._romClass; }
-      const J9ROMMethod *getRomMethod() const { return _data._romData._romMethod; }
-      J9Class *getClass() const { return _clazz; }
-
-      virtual const char * name()        const { return "RemoteMethod"; }
-
-      virtual bool isOrdinaryMethod()    const { return false; }
-      virtual bool isRemoteMethod()      const { return true; }
-
-
-      virtual bool sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
-         {
-         return false; // JAAS TODO: two requests from two clients should be considered different
-         }
-
-      //virtual bool supportsInvalidation() const { return false; }
-   private:
-      // NOTE: we cannot use _data._class because _data is union and 
-      // _class is aliased with _romData._romClass.
-      // (defined in ilgen/J9IlGeneratorMethodDetails.hpp)
-      J9Class *_clazz;
-   };
 
 class MethodInProgressDetails : public TR::IlGeneratorMethodDetails
    {
@@ -140,7 +125,7 @@ public:
       _data._byteCodeIndex = byteCodeIndex;
       }
    MethodInProgressDetails(const MethodInProgressDetails & other) :
-      TR::IlGeneratorMethodDetails(other.getMethod())
+      TR::IlGeneratorMethodDetails(other)
       {
       _data._byteCodeIndex = other.getByteCodeIndex();
       }
@@ -184,17 +169,17 @@ public:
    NewInstanceThunkDetails(J9Method * const method, J9Class *clazz) :
       TR::IlGeneratorMethodDetails(method)
       {
-      _data._class = clazz;
+      _class = clazz;
       }
    NewInstanceThunkDetails(TR_ResolvedMethod *method, J9Class *clazz) :
       TR::IlGeneratorMethodDetails(method)
       {
-      _data._class = clazz;
+      _class = clazz;
       }
    NewInstanceThunkDetails(const NewInstanceThunkDetails & other) :
-      TR::IlGeneratorMethodDetails(other.getMethod())
+      TR::IlGeneratorMethodDetails(other)
       {
-      _data._class = other.getClass();
+      _class = other.getClass();
       }
 
    virtual const char * name()         const { return "NewInstanceThunk"; }
@@ -202,8 +187,6 @@ public:
    virtual bool isOrdinaryMethod()     const { return false; }
    virtual bool isNewInstanceThunk()   const { return true; }
    virtual bool supportsInvalidation() const { return false; }
-
-   J9Class *getClass()                 const { return _data._class; }
 
    bool isThunkFor(J9Class *clazz)     const { return clazz == getClass(); }
 
@@ -226,6 +209,7 @@ class ArchetypeSpecimenDetails : public TR::IlGeneratorMethodDetails
 public:
    ArchetypeSpecimenDetails(J9Method * const method) : TR::IlGeneratorMethodDetails(method) { }
    ArchetypeSpecimenDetails(TR_ResolvedMethod *method) : TR::IlGeneratorMethodDetails(method) { }
+   ArchetypeSpecimenDetails(const ArchetypeSpecimenDetails &other) : TR::IlGeneratorMethodDetails(other) { }
 
    virtual const char * name()        const { return "ArchetypeSpecimen"; }
 
@@ -263,6 +247,12 @@ public:
       {
       _data._methodHandleData._handleRef = handleRef;
       _data._methodHandleData._argRef = argRef;
+      }
+   MethodHandleThunkDetails(const MethodHandleThunkDetails &other) :
+      ArchetypeSpecimenDetails(other)
+      {
+      _data._methodHandleData._handleRef = other.getHandleRef();
+      _data._methodHandleData._argRef = other.getArgRef();
       }
 
    virtual const char * name()         const { return "MethodHandleThunk"; }
@@ -303,7 +293,7 @@ public:
    ShareableInvokeExactThunkDetails(TR_ResolvedMethod *method, uintptrj_t *handleRef, uintptrj_t *argRef) :
       MethodHandleThunkDetails(method, handleRef, argRef) { }
    ShareableInvokeExactThunkDetails(const ShareableInvokeExactThunkDetails & other) :
-      MethodHandleThunkDetails(other.getMethod(), other.getHandleRef(), other.getArgRef()) { }
+      MethodHandleThunkDetails(other) { }
 
    virtual const char * name() const { return "SharableInvokeExactThunk"; }
 
@@ -324,7 +314,7 @@ public:
    CustomInvokeExactThunkDetails(TR_ResolvedMethod *method, uintptrj_t *handleRef, uintptrj_t *argRef) :
       MethodHandleThunkDetails(method, handleRef, argRef) { }
    CustomInvokeExactThunkDetails(const CustomInvokeExactThunkDetails & other) :
-      MethodHandleThunkDetails(other.getMethod(), other.getHandleRef(), other.getArgRef()) { }
+      MethodHandleThunkDetails(other) { }
 
    virtual const char * name() const { return "CustomInvokeExactThunk"; }
 

@@ -46,6 +46,7 @@
 #include "runtime/RelocationRuntime.hpp"
 #include "env/J9SegmentCache.hpp"
 #include "env/VMJ9Server.hpp"
+#include "env/J2IThunk.hpp"
 
 #define METHOD_POOL_SIZE_THRESHOLD 64
 #define MAX_SAMPLING_FREQUENCY     0x7FFFFFFF
@@ -362,6 +363,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
    void                   cacheRemoteROMClass(J9Class *, J9ROMClass *);
    void                   addThunkToBeRelocated(void *thunk, std::string signature);
+   void                   addInvokeExactThunkToBeRelocated(TR_J2IThunk *thunk);
    void                   relocateThunks();
 
    private:
@@ -382,6 +384,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    CpuSelfThreadUtilization _compThreadCPU;
    typedef TR::typed_allocator<std::pair<void *, std::string>, TR::PersistentAllocator&> ThunkVectorAllocator;
    std::vector<std::pair<void *, std::string>, ThunkVectorAllocator> _thunksToBeRelocated;
+   typedef TR::typed_allocator<TR_J2IThunk *, TR::PersistentAllocator&> InvokeExactThunkVectorAllocator;
+   std::vector<TR_J2IThunk *, InvokeExactThunkVectorAllocator> _invokeExactThunksToBeRelocated;
 
    typedef TR::typed_allocator<std::pair<const J9Class *, J9ROMClass * const>, TR::PersistentAllocator &> ClassCacheMapAllocator;
    typedef std::unordered_map<J9Class *, J9ROMClass *, std::hash<J9Class *>, std::equal_to<J9Class *>, ClassCacheMapAllocator> PersistentClassMap;

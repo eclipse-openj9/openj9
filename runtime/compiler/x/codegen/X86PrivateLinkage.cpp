@@ -54,6 +54,7 @@
 #include "x/codegen/StackOverflowCheckSnippet.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
+#include "control/CompilationThread.hpp"
 
 #ifdef TR_TARGET_64BIT
 #include "x/amd64/codegen/AMD64GuardedDevirtualSnippet.hpp"
@@ -1829,7 +1830,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
                char *j2iSignature = fej9->getJ2IThunkSignatureForDispatchVirtual(methodSymbol->getMethod()->signatureChars(), methodSymbol->getMethod()->signatureLength(), comp());
                int32_t signatureLen = strlen(j2iSignature);
                virtualThunk = fej9->getJ2IThunk(j2iSignature, signatureLen, comp());
-               if (!virtualThunk)
+               if (!virtualThunk || comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
                   {
                   virtualThunk = fej9->setJ2IThunk(j2iSignature, signatureLen,
                      generateVirtualIndirectThunk(
@@ -1838,10 +1839,10 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
                }
                break;
             default:
-               if (fej9->needsInvokeExactJ2IThunk(callNode, comp()))
+               if (fej9->needsInvokeExactJ2IThunk(callNode, comp()) || comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
                   {
-                  comp()->getPersistentInfo()->getInvokeExactJ2IThunkTable()->addThunk(
-                     generateInvokeExactJ2IThunk(callNode, methodSymbol->getMethod()->signatureChars()), fej9);
+                  TR_J2IThunk *thunk = generateInvokeExactJ2IThunk(callNode, methodSymbol->getMethod()->signatureChars());
+                  fej9->setInvokeExactJ2IThunk(thunk, comp());
                   }
                break;
             }

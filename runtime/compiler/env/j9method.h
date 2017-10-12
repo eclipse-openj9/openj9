@@ -209,7 +209,6 @@ public:
 
    virtual TR_ResolvedMethod    *owningMethod();
    virtual void                  setOwningMethod(TR_ResolvedMethod *parent);
-   virtual bool                  owningMethodDoesntMatter();
    virtual bool                  canAlwaysShareSymbolDespiteOwningMethod(TR_ResolvedMethod *other);
 
    virtual char *                classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len);
@@ -472,6 +471,7 @@ public:
 
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm);
 
+   virtual bool                  owningMethodDoesntMatter();
 
 protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }
@@ -624,9 +624,16 @@ public:
    virtual char * classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
    virtual char * classSignatureOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
    virtual char * fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
-   virtual void *stringConstant(int32_t cpIndex) override;
-   virtual bool owningMethodDoesntMatter() override;
    virtual bool isSubjectToPhaseChange(TR::Compilation *comp) override;
+   virtual void * stringConstant(int32_t cpIndex) override;
+   virtual TR_ResolvedMethod *getResolvedHandleMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP) override;
+#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
+   virtual bool isUnresolvedMethodTypeTableEntry(int32_t cpIndex) override;
+   virtual void * methodTypeTableEntryAddress(int32_t cpIndex) override;
+#endif
+   virtual bool isUnresolvedCallSiteTableEntry(int32_t callSiteIndex) override;
+   virtual void * callSiteTableEntryAddress(int32_t callSiteIndex) override;
+   virtual TR_ResolvedMethod * getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override

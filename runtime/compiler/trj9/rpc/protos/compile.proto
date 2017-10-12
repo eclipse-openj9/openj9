@@ -56,6 +56,12 @@ enum J9ServerMessageType
    ResolvedMethod_getRemoteROMString = 125;
    ResolvedMethod_fieldOrStaticName = 126;
    ResolvedMethod_getRemoteROMClass = 127;
+   ResolvedMethod_getResolvedHandleMethod = 128;
+   ResolvedMethod_isUnresolvedMethodTypeTableEntry = 129;
+   ResolvedMethod_methodTypeTableEntryAddress = 130;
+   ResolvedMethod_isUnresolvedCallSiteTableEntry = 131;
+   ResolvedMethod_callSiteTableEntryAddress = 132;
+   ResolvedMethod_getResolvedDynamicMethod = 133;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;
@@ -152,6 +158,8 @@ enum J9ServerMessageType
    VM_getObjectNewInstanceImplMethod = 291;
    VM_getBytecodePC = 292;
    VM_getClassFromStatic = 293;
+   VM_setInvokeExactJ2IThunk = 294;
+   VM_createMethodHandleArchetypeSpecimen = 295;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;
@@ -176,6 +184,29 @@ enum J9ServerMessageType
 
    // For TR_J9SharedCache
    SharedCache_getClassChainOffsetInSharedCache = 500;
+
+   // For runFEMacro
+   runFEMacro_invokeCollectHandleNumArgsToCollect = 600;
+   runFEMacro_invokeExplicitCastHandleConvertArgs = 601;
+   runFEMacro_targetTypeL = 602;
+   runFEMacro_invokeILGenMacrosInvokeExactAndFixup = 603;
+   runFEMacro_invokeArgumentMoverHandlePermuteArgs = 604;
+   runFEMacro_invokePermuteHandlePermuteArgs = 605;
+   runFEMacro_invokeGuardWithTestHandleNumGuardArgs = 606;
+   runFEMacro_invokeInsertHandle = 607;
+   runFEMacro_invokeDirectHandleDirectCall = 608;
+   runFEMacro_invokeSpreadHandleArrayArg = 609;
+   runFEMacro_invokeSpreadHandle = 610;
+   runFEMacro_invokeFoldHandle = 611;
+   runFEMacro_invokeFoldHandle2 = 612;
+   runFEMacro_invokeFinallyHandle = 613;
+   runFEMacro_invokeFilderArgumentsHandle = 614;
+   runFEMacro_invokeFilterArgumentsHandle = 615;
+   runFEMacro_invokeCatchHandle = 616;
+   runFEMacro_invokeILGenMacros = 617;
+   runFEMacro_invokeILGenMacros2 = 618;
+   runFEMacro_invokeILGenMacros3 = 619;
+   runFEMacro_derefUintptrjPtr = 620;
    }
 
 message J9ServerMessage

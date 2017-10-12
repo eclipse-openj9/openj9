@@ -820,22 +820,23 @@ TR_ResolvedJ9MethodBase::setOwningMethod(TR_ResolvedMethod *parent)
    }
 
 bool
-TR_ResolvedJ9MethodBase::owningMethodDoesntMatter()
+TR_ResolvedJ9Method::owningMethodDoesntMatter()
    {
+   
    // Returning true here allows us to ignore the owning method, which lets us
    // share symrefs more aggressively and other goodies, but usually ignoring
    // the owning method will confuse inliner and others, so only do so when
    // it's known not to matter.
 
    static char *aggressiveJSR292Opts = feGetEnv("TR_aggressiveJSR292Opts");
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(((J9Class*)containingClass())->romClass);
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClassPtr());
    if (aggressiveJSR292Opts && strchr(aggressiveJSR292Opts, '3'))
       {
       if (J9UTF8_LENGTH(className) >= 17 && !strncmp((char*)J9UTF8_DATA(className), "java/lang/invoke/", 17))
          {
          return true;
          }
-      else switch (getRecognizedMethod())
+      else switch (TR_ResolvedJ9MethodBase::getRecognizedMethod())
          {
          case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress: // This is just a getter that's practically always inlined
             return true;
@@ -5952,6 +5953,7 @@ TR_ResolvedJ9Method::stringConstant(I_32 cpIndex)
 void *
 TR_ResolvedJ9Method::methodTypeConstant(I_32 cpIndex)
    {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    J9RAMMethodTypeRef *ramMethodTypeRef = (J9RAMMethodTypeRef *)(literals() + cpIndex);
    return &ramMethodTypeRef->type;
@@ -5960,6 +5962,7 @@ TR_ResolvedJ9Method::methodTypeConstant(I_32 cpIndex)
 bool
 TR_ResolvedJ9Method::isUnresolvedMethodType(I_32 cpIndex)
    {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    return *(intptrj_t*)methodTypeConstant(cpIndex) == 0;
    }
@@ -5967,6 +5970,7 @@ TR_ResolvedJ9Method::isUnresolvedMethodType(I_32 cpIndex)
 void *
 TR_ResolvedJ9Method::methodHandleConstant(I_32 cpIndex)
    {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    J9RAMMethodHandleRef *ramMethodHandleRef = (J9RAMMethodHandleRef *)(literals() + cpIndex);
    return &ramMethodHandleRef->methodHandle;
@@ -5975,6 +5979,7 @@ TR_ResolvedJ9Method::methodHandleConstant(I_32 cpIndex)
 bool
 TR_ResolvedJ9Method::isUnresolvedMethodHandle(I_32 cpIndex)
    {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    return *(intptrj_t*)methodHandleConstant(cpIndex) == 0;
    }
@@ -5995,6 +6000,7 @@ TR_ResolvedJ9Method::isUnresolvedCallSiteTableEntry(int32_t callSiteIndex)
 void *
 TR_ResolvedJ9Method::varHandleMethodTypeTableEntryAddress(int32_t cpIndex)
    {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
    J9Class *ramClass = constantPoolHdr();
@@ -6546,12 +6552,17 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
 
       if (unresolvedInCP)
          {
+         
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
+               TR_VerboseLog::writeLineLocked( TR_Vlog_JAAS, "Dynamic unresolvedInCP");
+         *unresolvedInCP = true;
          // "unresolvedInCP" is a bit of a misnomer here, but we can describe
          // something equivalent by checking the callSites table.
          //
-         *unresolvedInCP = (ramClass->callSites[callSiteIndex] == NULL);
+         //*unresolvedInCP = (ramClass->callSites[callSiteIndex] == NULL);
          }
 
+      // TODO: get rom string from here
       J9SRP                 *namesAndSigs = (J9SRP*)J9ROMCLASS_CALLSITEDATA(romClass);
       J9ROMNameAndSignature *nameAndSig   = NNSRP_GET(namesAndSigs[callSiteIndex], J9ROMNameAndSignature*);
       J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
@@ -7094,7 +7105,11 @@ getMethodHandleThunkDetails(TR_J9ByteCodeIlGenerator *ilgen, TR::Compilation *co
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::IlGeneratorMethodDetails & details = ilgen->methodDetails();
-   if (details.isMethodHandleThunk())
+   if (details.isRemoteMethod())
+      {
+      comp->failCompilation<TR::ILGenFailure>("Methods containing ILGen macros are currently not supported for remote compilations.");
+      }
+   else if (details.isMethodHandleThunk())
       {
       return & static_cast<J9::MethodHandleThunkDetails &>(details);
       }
@@ -7135,6 +7150,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
       case TR::java_lang_invoke_CollectHandle_collectionStart:
       case TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure");
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -7196,7 +7212,18 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          uintptrj_t methodDescriptorRef;
          intptrj_t methodDescriptorLength;
          char *methodDescriptor;
-
+         
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeExplicitCastHandleConvertArgs, thunkDetails->getHandleRef());
+            auto recv = stream->read<std::string>();
+            std::string methodDescriptorString = std::get<0>(recv);
+            methodDescriptorLength = methodDescriptorString.length();
+            methodDescriptor = (char*)alloca(methodDescriptorLength+1);
+            memcpy(methodDescriptor, &methodDescriptorString[0], methodDescriptorLength);
+            methodDescriptor[methodDescriptorLength] = 0;
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeExplicitCastHandleConvertArgs(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -7285,6 +7312,13 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                uintptrj_t arguments;
                TR_OpaqueClassBlock *parmClass;
 
+               if (auto stream = TR::CompilationInfo::getStream())
+                  {
+                  stream->write(JAAS::J9ServerMessageType::runFEMacro_targetTypeL, thunkDetails->getHandleRef(), argIndex);
+                  auto recv = stream->read<TR_OpaqueClassBlock*>();
+                  parmClass = std::get<0>(recv);
+                  }
+               else
                   {
                   TR::VMAccessCriticalSection targetTypeL(fej9);
                   // We've already loaded the handle once, but must reload it because we released VM access in between.
@@ -7353,10 +7387,24 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          intptrj_t methodDescriptorLength;
          char *methodDescriptor;
 
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
+            receiverHandle = std::get<0>(stream->read<uintptrj_t>());
+            methodHandle = returnFromArchetype ? receiverHandle : walkReferenceChain(methodHandleExpression, receiverHandle);
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup, methodHandle);
+            auto recv = stream->read<std::string>();
+            std::string methodDescriptorString = std::get<0>(recv);
+            methodDescriptorLength = methodDescriptorString.length();
+            methodDescriptor = (char*)alloca(methodDescriptorLength+1);
+            memcpy(methodDescriptor, &methodDescriptorString[0], methodDescriptorLength);
+            methodDescriptor[methodDescriptorLength] = 0;
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeILGenMacrosInvokeExactAndFixup(fej9);
             receiverHandle = *thunkDetails->getHandleRef();
-            methodHandle   = returnFromArchetype? receiverHandle : walkReferenceChain(methodHandleExpression, receiverHandle);
+            methodHandle = returnFromArchetype ? receiverHandle : walkReferenceChain(methodHandleExpression, receiverHandle);
             methodDescriptorRef = fej9->getReferenceField(fej9->getReferenceField(
                methodHandle,
                "type",             "Ljava/lang/invoke/MethodType;"),
@@ -7440,6 +7488,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          return true;
       case TR::java_lang_invoke_ArgumentMoverHandle_permuteArgs:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
@@ -7557,6 +7606,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          return true;
       case TR::java_lang_invoke_GuardWithTestHandle_numGuardArgs:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure");
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -7583,6 +7633,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
       case TR::java_lang_invoke_InsertHandle_numSuffixArgs:
       case TR::java_lang_invoke_InsertHandle_numValuesToInsert:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
@@ -7638,6 +7689,14 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          int64_t vmSlot;
          uintptrj_t jlClass;
 
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeDirectHandleDirectCall, thunkDetails->getHandleRef(), isInterface, isVirtual);
+            auto recv = stream->read<TR_OpaqueMethodBlock*, int64_t>();
+            j9method = std::get<0>(recv);
+            vmSlot = std::get<1>(recv);
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fej9);
             methodHandle   = *thunkDetails->getHandleRef();
@@ -7767,6 +7826,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          return true;
       case TR::java_lang_invoke_SpreadHandle_arrayArg:
          {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
@@ -7847,6 +7907,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
       case TR::java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray:
       case TR::java_lang_invoke_SpreadHandle_spreadStart:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure");
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -7896,6 +7957,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_FoldHandle_argIndices:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for argIndices()
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
@@ -7938,6 +8000,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_FoldHandle_foldPosition:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for foldPosition()
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -7957,6 +8020,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_FoldHandle_argumentsForCombiner:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR::Node *placeholder = genNodeAndPopChildren(TR::icall, 1, placeholderWithDummySignature());
 
          char *placeholderSignature = placeholder->getSymbol()->castToMethodSymbol()->getMethod()->signatureChars();
@@ -7990,6 +8054,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_FinallyHandle_numFinallyTargetArgsToPassThrough:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for numFinallyTargetArgsToPassThrough()
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -8026,6 +8091,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
       case TR::java_lang_invoke_FilterArgumentsHandle_numSuffixArgs:
       case TR::java_lang_invoke_FilterArgumentsHandle_numArgsToFilter:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure");
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -8067,6 +8133,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_FilterArgumentsHandle_filterArguments:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 2, "assertion failure");
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -8190,6 +8257,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_CatchHandle_numCatchTargetArgsToPassThrough:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
@@ -8212,6 +8280,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_ILGenMacros_parameterCount:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
@@ -8234,6 +8303,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_ILGenMacros_arrayLength:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
@@ -8252,6 +8322,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_ILGenMacros_getField:
          {
+         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
@@ -8982,16 +9053,82 @@ TR_ResolvedJ9JAASServerMethod::stringConstant(I_32 cpIndex)
    return (void *) ((U_8 *)&(((J9RAMStringRef *) romLiterals())[cpIndex].stringObject));
    }
 
-bool
-TR_ResolvedJ9JAASServerMethod::owningMethodDoesntMatter()
-   {
-   // JAAS TODO: This is a safe default - we may want to revisit to enable more aggresive JSR292 optimizations
-   return false;
-   }
 
 bool
 TR_ResolvedJ9JAASServerMethod::isSubjectToPhaseChange(TR::Compilation *comp)
    {
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isSubjectToPhaseChange, _remoteMirror);
    return std::get<0>(_stream->read<bool>());
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9JAASServerMethod::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP)
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+#if TURN_OFF_INLINING
+   return 0;
+#else
+
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getResolvedHandleMethod, _remoteMirror, cpIndex);
+   auto recv = _stream->read<TR_OpaqueMethodBlock *, std::string, bool>();
+   auto dummyInvokeExact = std::get<0>(recv);
+   auto signature = std::get<1>(recv);
+   if (unresolvedInCP)
+      *unresolvedInCP = std::get<2>(recv);
+
+   return _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvokeExact, NULL, &signature[0], signature.length(), this);
+#endif 
+   }
+
+#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
+void *
+TR_ResolvedJ9JAASServerMethod::methodTypeTableEntryAddress(int32_t cpIndex)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_methodTypeTableEntryAddress, _remoteMirror, cpIndex);
+   return std::get<0>(_stream->read<void*>());
+   }
+
+bool
+TR_ResolvedJ9JAASServerMethod::isUnresolvedMethodTypeTableEntry(int32_t cpIndex)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isUnresolvedMethodTypeTableEntry, _remoteMirror, cpIndex);
+   return std::get<0>(_stream->read<bool>());
+   }
+#endif
+
+bool
+TR_ResolvedJ9JAASServerMethod::isUnresolvedCallSiteTableEntry(int32_t callSiteIndex)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isUnresolvedCallSiteTableEntry, _remoteMirror, callSiteIndex);
+   return std::get<0>(_stream->read<bool>());
+   }
+
+void *
+TR_ResolvedJ9JAASServerMethod::callSiteTableEntryAddress(int32_t callSiteIndex)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_callSiteTableEntryAddress, _remoteMirror, callSiteIndex);
+   return std::get<0>(_stream->read<void*>());
+   }
+
+TR_ResolvedMethod *
+TR_ResolvedJ9JAASServerMethod::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callSiteIndex, bool * unresolvedInCP)
+   {
+   TR_ASSERT(callSiteIndex != -1, "callSiteIndex shouldn't be -1");
+
+#if TURN_OFF_INLINING
+   return 0;
+#else
+
+   J9Class    *ramClass = constantPoolHdr();
+   J9ROMClass *romClass = romClassPtr();
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getResolvedDynamicMethod, callSiteIndex, ramClass, getNonPersistentIdentifier());
+   auto recv = _stream->read<TR_OpaqueMethodBlock*, std::string, bool>();
+   TR_OpaqueMethodBlock *dummyInvokeExact = std::get<0>(recv);
+   std::string signature = std::get<1>(recv);
+   if (unresolvedInCP)
+      *unresolvedInCP = std::get<2>(recv);
+   TR_ResolvedMethod *result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvokeExact, NULL, &signature[0], signature.size(), this);
+
+   return result;
+#endif
    }
