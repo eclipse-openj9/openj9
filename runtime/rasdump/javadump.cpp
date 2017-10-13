@@ -48,6 +48,7 @@
 #include "omr.h"
 #include "omrutilbase.h"
 #include "j9version.h"
+#include "vendor_version.h"
 
 #include "zip_api.h"
 
@@ -992,6 +993,11 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	_OutputStream.writeCharacters("1CIOMRVERSION  ");
 	_OutputStream.writeCharacters(_VirtualMachine->memoryManagerFunctions->omrgc_get_version(_VirtualMachine->omrVM));
 	_OutputStream.writeCharacters("\n");
+
+#if defined(VENDOR_SHORT_NAME) && defined(VENDOR_SHA)
+	/* Write the Vendor version data */
+	_OutputStream.writeCharacters("1CI" VENDOR_SHORT_NAME "VERSION  " VENDOR_SHA "\n");
+#endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	_OutputStream.writeCharacters("1CIJITMODES    ");
