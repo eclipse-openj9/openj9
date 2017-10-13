@@ -27,9 +27,9 @@ else
    _TEXT segment para use32 public 'CODE'
 endif
 
-   public  _new_arrayTranslateTRTO
-   public  _new_arrayTranslateTROTNoBreak
-   public  _new_arrayTranslateTROT
+   public  _arrayTranslateTRTO
+   public  _arrayTranslateTROTNoBreak
+   public  _arrayTranslateTROT
    align 16
 
    ; pseudocode:
@@ -38,7 +38,7 @@ endif
    ;   if (chararray[i] && DX != 0) break; //DX is the register
    ;   else bytearray[i] = (byte) chararray[i])
    ; return i
-   _new_arrayTranslateTRTO proc                      ;TO stands for Two bytes to One byte
+   _arrayTranslateTRTO proc                      ;TO stands for Two bytes to One byte
    ifdef TR_HOST_64BIT
       mov ecx, ecx
    endif
@@ -86,13 +86,13 @@ endif
    doneTO:   ;EAX is result register
       ret
 
-   _new_arrayTranslateTRTO endp
+   _arrayTranslateTRTO endp
 
    ; pseudocode:
    ; int i;
    ; for (i = 0; i < N; i++)
    ;   chararray[i] = (char) bytearray[i];
-   _new_arrayTranslateTROTNoBreak proc               ;OT stands for One byte to Two bytes
+   _arrayTranslateTROTNoBreak proc               ;OT stands for One byte to Two bytes
    ifdef TR_HOST_64BIT
       mov ecx, ecx
    endif
@@ -155,7 +155,7 @@ endif
       jnz  failedloopOTNoBreak
       jmp  doneOTNoBreak
 
-   _new_arrayTranslateTROTNoBreak endp
+   _arrayTranslateTROTNoBreak endp
 
 
    ; pseudocode:
@@ -164,7 +164,7 @@ endif
    ;   if (bytearray[i] < 0) break;
    ;   else chararray[i] = (char) bytearray[i];
    ; return i;
-   _new_arrayTranslateTROT proc                      ;OT stands for One byte to Two bytes
+   _arrayTranslateTROT proc                      ;OT stands for One byte to Two bytes
    ifdef TR_HOST_64BIT
       mov ecx, ecx
    endif
@@ -247,7 +247,7 @@ endif
       jnz  failedloopOT
       jmp doneOT
 
-   _new_arrayTranslateTROT endp
+   _arrayTranslateTROT endp
 
 _TEXT ends
 
