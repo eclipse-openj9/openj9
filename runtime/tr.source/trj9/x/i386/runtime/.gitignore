@@ -20,7 +20,6 @@
 
 /IA32cpuid.s
 /J9IA32ArrayCopy.s
-/J9IA32ArrayTranslate.s
 /J9IA32CompressString.s
 /J9IA32Math64.s
 /IA32Recompilation.s

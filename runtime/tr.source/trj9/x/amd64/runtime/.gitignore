@@ -19,7 +19,6 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
 /AMD64ArrayCopy.s
-/AMD64ArrayTranslate.s
 /AMD64CompressString.s
 /AMD64cpuid.s
 /AMD64Recompilation.s
