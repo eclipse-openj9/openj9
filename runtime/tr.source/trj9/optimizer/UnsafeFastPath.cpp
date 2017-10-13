@@ -406,6 +406,15 @@ int32_t TR_UnsafeFastPath::perform()
             {
             TR::SymbolReference * unsafeSymRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, false, isVolatile);
 
+            // some helpers are special - we know they are accessing an array and we know the kind of that array
+            // so use the more helpful symref if we can
+            switch (calleeMethod)
+               {
+               case TR::java_lang_StringUTF16_getChar:
+                  unsafeSymRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Int8);
+                  break;
+               }
+
             // Change the object child to the starting address of static fields in J9Class
             if (isStatic)
                {

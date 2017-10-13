@@ -1088,6 +1088,7 @@
    java_lang_StringCoding_encode,
    java_lang_StringCoding_StringDecoder_decode,
    java_lang_StringCoding_StringEncoder_encode,
+   java_lang_StringCoding_implEncodeISOArray,
 
    java_util_Arrays_copyOf_byte,
    java_util_Arrays_copyOf_short,
