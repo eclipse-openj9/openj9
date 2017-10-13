@@ -364,6 +364,7 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			vm->jclFlags |=
 				J9_JCL_FLAG_REFERENCE_OBJECTS | 
 				J9_JCL_FLAG_FINALIZATION | 
+				J9_JCL_FLAG_CLASSLOADERS | 
 				J9_JCL_FLAG_THREADGROUPS;
 			vm->jclSysPropBuffer = NULL;
 			

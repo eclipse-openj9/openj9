@@ -1121,6 +1121,7 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<data type="const char*" name="className" description="name of class to find" />
 		<data type="UDATA" name="classNameLength" description="length of the className param" />
 		<data type="struct J9ClassLoader*" name="classloader" description="caller classloader" />
+		<data type="UDATA" name="flags" description="flags that control how class is loaded" />
 		<data type="IDATA*" name="classFound" description="returns non zero if class was found" />
 		<data type="IDATA*" return="true" name="result" description="returns non zero if the hook ran" />
 	</event>
