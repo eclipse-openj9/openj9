@@ -149,6 +149,16 @@ int32_t TR_UnsafeFastPath::perform()
          bool isVolatile = false;
          bool isArrayOperation = false;
          bool isByIndex = false;
+         int32_t objectChild = 1;
+         int32_t offsetChild = 2;
+
+         switch (symbol->getRecognizedMethod())
+            {
+            case TR::java_lang_StringUTF16_getChar:
+               objectChild = 0;
+               offsetChild = 1;
+               break;
+            }
 
          // Check for array operation
          switch (symbol->getRecognizedMethod())
@@ -190,6 +200,7 @@ int32_t TR_UnsafeFastPath::perform()
             case TR::com_ibm_jit_JITHelpers_putLongInArray:
             case TR::com_ibm_jit_JITHelpers_putObjectInArrayVolatile:
             case TR::com_ibm_jit_JITHelpers_putObjectInArray:
+            case TR::java_lang_StringUTF16_getChar:
                isArrayOperation = true;
                break;
             default:
@@ -223,6 +234,7 @@ int32_t TR_UnsafeFastPath::perform()
             case TR::com_ibm_jit_JITHelpers_getByteFromArray:
                type = TR::Int8;
                break;
+            case TR::java_lang_StringUTF16_getChar:
             case TR::com_ibm_jit_JITHelpers_getCharFromArrayByIndex:
                isByIndex = true;
                type = TR::Int16;
@@ -392,27 +404,26 @@ int32_t TR_UnsafeFastPath::perform()
 
          if (type != TR::NoType && performTransformation(comp(), "%s Found unsafe/JITHelpers calls, turning node [" POINTER_PRINTF_FORMAT "] into a load/store\n", optDetailString(), node))
             {
-
             TR::SymbolReference * unsafeSymRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, false, isVolatile);
 
             // Change the object child to the starting address of static fields in J9Class
             if (isStatic)
                {
-               TR::Node *jlClass = node->getChild(1);
+               TR::Node *jlClass = node->getChild(objectChild);
                TR::Node *j9Class =
                   TR::Node::createWithSymRef(TR::aloadi, 1, 1, jlClass,
                                   comp()->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
                TR::Node *ramStatics =
                   TR::Node::createWithSymRef(TR::aloadi, 1, 1, j9Class,
                                   comp()->getSymRefTab()->findOrCreateRamStaticsFromClassSymbolRef());
-               node->setAndIncChild(1, ramStatics);
+               node->setAndIncChild(objectChild, ramStatics);
                jlClass->recursivelyDecReferenceCount();
-               offset = node->getChild(2);
+               offset = node->getChild(offsetChild);
                // The offset for a static field is low taged, mask out the last bit to get the real offset
                TR::Node *newOffset =
                   TR::Node::create(offset, TR::land, 2, offset,
                                   TR::Node::lconst(offset, ~1));
-               node->setAndIncChild(2, newOffset);
+               node->setAndIncChild(offsetChild, newOffset);
                offset->recursivelyDecReferenceCount();
                }
 
@@ -420,20 +431,20 @@ int32_t TR_UnsafeFastPath::perform()
             anchorAllChildren(node, tt);
 
             // When accessing a static field, object is the starting address of static fields
-            object = node->getChild(1);
+            object = node->getChild(objectChild);
             if (!isStatic)
                object->setIsNonNull(true);
 
             if (isByIndex)
                {
-               index = node->getChild(2);
+               index = node->getChild(offsetChild);
                index->setIsNonNegative(true);
 
                offset = J9::TransformUtil::calculateOffsetFromIndexInContiguousArray(comp(), index, type);
                }
             else
                {
-               offset = node->getChild(2);
+               offset = node->getChild(offsetChild);
                offset->setIsNonNegative(true);
 
                // Index is not used in the non-arraylet case so no need to compute it

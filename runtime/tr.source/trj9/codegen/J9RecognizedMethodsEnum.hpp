@@ -196,6 +196,8 @@
    java_lang_String_unsafeCharAt,
    java_lang_String_split_str_int,
 
+   java_lang_StringUTF16_getChar,
+
    java_lang_StringBuffer_append,
    java_lang_StringBuffer_capacityInternal,
    java_lang_StringBuffer_ensureCapacityImpl,

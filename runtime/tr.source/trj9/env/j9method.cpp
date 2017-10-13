@@ -3302,6 +3302,12 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {  TR::unknownMethod}
       };
 
+   static X StringUTF16Methods[] =
+      {
+      { x(TR::java_lang_StringUTF16_getChar,                                  "getChar", "([BI)C")},
+      { TR::unknownMethod }
+      };
+
    static X DecimalFormatHelperMethods[] =
       {
       {x(TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble,                  "formatAsDouble", "(Ljava/text/DecimalFormat;Ljava/math/BigDecimal;)Ljava/lang/String;")},
@@ -4158,6 +4164,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    static Y class21[] =
       {
       { "java/lang/ClassLoader", ClassLoaderMethods },
+      { "java/lang/StringUTF16", StringUTF16Methods },
       { 0 }
       };
 
