@@ -226,6 +226,9 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, slowPathLabel);
 
+   // Generate a dynamic debug counter for the fallback path whose execution should be extremely rare
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/success/OOL/%s", cg->comp()->signature()));
+
    TR::LabelSymbol* helperCallLabel = generateLabelSymbol(cg);
    TR::Instruction* helperCallLabelInstr = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, helperCallLabel);
    TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
@@ -474,12 +477,38 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                                  {
                                  (*i)->unlink(true);
                                  }
+
+                              TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/success/%s", cg->comp()->signature()));
                               }
                            }
+                        else
+                           {
+                           TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/lockword-out-of-bounds/%s", cg->comp()->signature()));
+                           }
+                        }
+                     else
+                        {
+                        TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/monexit-synchronized-object-mismatch/%s", cg->comp()->signature()));
                         }
                      }
+                  else
+                     {
+                     TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/monexit-not-found/%s", cg->comp()->signature()));
+                     }
+                  }
+               else
+                  {
+                  TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/load-synchronized-object-mismatch/%s", cg->comp()->signature()));
                   }
                }
+            else
+               {
+               TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/load-not-found/%s", cg->comp()->signature()));
+               }
+            }
+         else
+            {
+            TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/treetop-or-compressedRefs-not-found/%s", cg->comp()->signature()));
             }
          }
       }
@@ -496,6 +525,8 @@ ReduceSynchronizedFieldLoad::advanceIterator(TR::TreeTopIterator& iter, TR::Tree
       {
       --iter;
 
+      TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/advanceIterator/%s", cg->comp()->signature()));
+
       return false;
       }
 
@@ -511,6 +542,8 @@ ReduceSynchronizedFieldLoad::advanceIterator(TR::TreeTopIterator& iter, TR::Tree
 
       if (nextTreeTop == NULL || nextTreeTop == endTreeTop || !nextTreeTop->getNode()->getBlock()->isExtensionOfPreviousBlock())
          {
+         TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/advanceIterator/%s", cg->comp()->signature()));
+
          return false;
          }
       else
