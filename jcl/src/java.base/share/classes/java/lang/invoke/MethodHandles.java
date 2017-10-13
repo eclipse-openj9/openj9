@@ -2934,48 +2934,50 @@ public class MethodHandles {
 	public static final  MethodHandle dropArgumentsToMatch(MethodHandle originalHandle, int skippedArgumentCount, List<Class<?>> valueTypes, int location) {
 		/* implicit null checks */
 		MethodType originalType = originalHandle.type;
-		Class<?>[] valueTypesCopy = new Class<?>[valueTypes.size()];
+		Class<?>[] valueTypesCopy = valueTypes.toArray(new Class<?>[valueTypes.size()]);
+		Class<?>[] ptypes = originalType.parameterArray();
+
+		int valueTypesSize = valueTypesCopy.length;
+		int originalParameterCount = ptypes.length;
 
 		/* check if indexing is in range */
-		if ((0 > skippedArgumentCount) ||
-			(skippedArgumentCount > originalType.parameterCount())) {
+		if ((skippedArgumentCount < 0) ||
+			(skippedArgumentCount > originalParameterCount)) {
+			/*[MSG "K0670", "Variable skippedArgumentCount out of range"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0670")); //$NON-NLS-1$
 		}
-		if ((0 > location) ||
-			(valueTypes.size() < location) ||
-			(valueTypes.size() < location + originalType.parameterCount() - skippedArgumentCount)) {
+		if ((location < 0) ||
+			(valueTypesSize < location + (originalParameterCount - skippedArgumentCount))) {
+			/*[MSG "K0671", "Index location out of range"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0671")); //$NON-NLS-1$
 		}
 
 		/* check for void.class in list during clone process */
-		for (int i = 0; i < valueTypes.size(); i++) {
-			if (valueTypes.get(i) == void.class) {
+		for (int i = 0; i < valueTypesSize; i++) {
+			if (valueTypesCopy[i] == void.class) {
+				/*[MSG "K0672", "Invalid entry void.class found in argument list valueTypes"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0672")); //$NON-NLS-1$
-			}
-			else if (valueTypes.get(i) == null) {
+			} else if (valueTypesCopy[i] == null) {
+				/*[MSG "K0673", "Invalid entry null found in argument list valueTypes"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0673")); //$NON-NLS-1$
 			}
-			else {
-				valueTypesCopy[i] = valueTypes.get(i);
-			}
 		}
-
-		Class<?>[] ptypes = originalType.parameterArray();
 
 		/* check if sublist match */
 		for (int i = skippedArgumentCount; i < ptypes.length; i++) {
 			if (ptypes[i] != valueTypesCopy[i + location - skippedArgumentCount]) {
+				/*[MSG "K0674", "Original handle types does not match given types at location"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0674")); //$NON-NLS-1$
 			}
 		}
 
 		/* replace the sublist with new valueTypes */
-		MethodType permuteType = originalType.dropParameterTypes(skippedArgumentCount, originalType.parameterCount()).appendParameterTypes(valueTypesCopy);
+		MethodType permuteType = originalType.dropParameterTypes(skippedArgumentCount, originalParameterCount).appendParameterTypes(valueTypesCopy);
 
 		/* construct permutation indexes */
-		int[] permute = new int[originalType.parameterCount()];
+		int[] permute = new int[originalParameterCount];
 		int originalIndex = 0;
-		for (int i = 0; i < originalType.parameterCount(); i++) {
+		for (int i = 0; i < originalParameterCount; i++) {
 			if (originalIndex == skippedArgumentCount) {
 				originalIndex += location;
 			}

@@ -200,34 +200,26 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 	 * test for empty original parameter list
 	 */
     @Test(groups = {"level.extended"})
-	public static void test_dropArgumentsToMatch_empty_original() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findStatic(Hash_Methods.class, "hash_void", MethodType.methodType(String.class));
-			MethodType typeList = h1.type().insertParameterTypes(0, char.class, int.class);
+	public static void test_dropArgumentsToMatch_empty_original() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findStatic(Hash_Methods.class, "hash_void", MethodType.methodType(String.class));
+		MethodType typeList = h1.type().insertParameterTypes(0, char.class, int.class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 0, typeList.parameterList(), 0);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 0, typeList.parameterList(), 0);
 
-			Assert.assertEquals(h1.invoke('c', 2), "abc", "Transformed method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Assert.assertEquals(h1.invoke('c', 2), "abc", "Transformed method handle did not return expected result");
 	}
 
 	/**
 	 * test for empty valueList
 	 */
 	@Test(groups = {"level.extended"})
-	public static void test_dropArgumentsToMatch_empty_valueList() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findStatic(Hash_Methods.class, "hash_void", MethodType.methodType(String.class));
-			MethodType typeList = h1.type();
+	public static void test_dropArgumentsToMatch_empty_valueList() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findStatic(Hash_Methods.class, "hash_void", MethodType.methodType(String.class));
+		MethodType typeList = h1.type();
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 0, typeList.parameterList(), 0);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 0, typeList.parameterList(), 0);
 
-			Assert.assertEquals(h1.invoke(), "abc", "Transformed method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Assert.assertEquals(h1.invoke(), "abc", "Transformed method handle did not return expected result");
 	}
 
 	/**
@@ -235,17 +227,13 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 	 * ie. [M] + [P...M...A] => P...M...A
 	 */
 	@Test(groups = { "level.extended" })
-	public static void test_dropArgumentsToMatch_no_skip() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findVirtual(String.class, "concat", MethodType.methodType(String.class, String.class));
-			MethodType typeList = h1.type().insertParameterTypes(1, String.class, String.class);
+	public static void test_dropArgumentsToMatch_no_skip() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(String.class, "concat", MethodType.methodType(String.class, String.class));
+		MethodType typeList = h1.type().insertParameterTypes(1, String.class, String.class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 0, typeList.parameterList(), 1);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 0, typeList.parameterList(), 1);
 
-			Assert.assertEquals(h1.invoke("a", "x", "y", "b"), "xy", "Transformed method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Assert.assertEquals(h1.invoke("a", "x", "y", "b"), "xy", "Transformed method handle did not return expected result");
 	}
 
 	/**
@@ -253,17 +241,13 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 	 * ie. [M] + [P...M...A] => P...M...A
 	 */
 	@Test(groups = { "level.extended" })
-	public static void test_dropArgumentsToMatch_skip_all() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findVirtual(String.class, "concat", MethodType.methodType(String.class, String.class));
-			MethodType typeList = h1.type().insertParameterTypes(1, String.class, String.class);
+	public static void test_dropArgumentsToMatch_skip_all() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(String.class, "concat", MethodType.methodType(String.class, String.class));
+		MethodType typeList = h1.type().insertParameterTypes(1, String.class, String.class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 0);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 0);
 
-			Assert.assertEquals(h1.invoke("x", "y", "a", "b", "c", "d"), "xy", "Transformed method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Assert.assertEquals(h1.invoke("x", "y", "a", "b", "c", "d"), "xy", "Transformed method handle did not return expected result");
 	}
 
 	/**
@@ -271,19 +255,15 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 	 * ie. [S...M] + [M...A] => S...M...A
 	 */
 	@Test(groups = { "level.extended" })
-	public static void test_dropArgumentsToMatch_prefix_list() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_multi_arguments", MethodType.methodType(String.class, String.class, String.class, String.class, String.class));
+	public static void test_dropArgumentsToMatch_prefix_list() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_multi_arguments", MethodType.methodType(String.class, String.class, String.class, String.class, String.class));
 
-			/* Method with rtype = String, ptype = [String, String, boolean, char, int, long, String, String] */
-			MethodType typeList = MethodType.methodType(String.class, String.class, String.class, boolean.class, char.class, int.class, long.class, String.class, String.class);
+		/* Method with rtype = String, ptype = [String, String, boolean, char, int, long, String, String] */
+		MethodType typeList = MethodType.methodType(String.class, String.class, String.class, boolean.class, char.class, int.class, long.class, String.class, String.class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 3, typeList.parameterList(), 0);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 3, typeList.parameterList(), 0);
 
-			Assert.assertEquals(h1.invoke(new Hash_Methods(), "a", "b", "c", "d", true, 'e', 1, 2, "f", "g"), "abcd", "Method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Assert.assertEquals(h1.invoke(new Hash_Methods(), "a", "b", "c", "d", true, 'e', 1, 2, "f", "g"), "abcd", "Method handle did not return expected result");
 	}
 
 	/**
@@ -291,20 +271,16 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 	 * ie. [S...M] + [P...M] => S...P...M
 	 */
 	@Test(groups = { "level.extended" })
-	public static void test_dropArgumentsToMatch_suffix_list() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_multi_arguments", MethodType.methodType(String.class, String.class, String.class, String.class, String.class));
+	public static void test_dropArgumentsToMatch_suffix_list() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_multi_arguments", MethodType.methodType(String.class, String.class, String.class, String.class, String.class));
 
-			/* Method with rtype = String, ptype = [boolean, char, int, long, String, String] */
-			MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, String.class, String.class);
+		/* Method with rtype = String, ptype = [boolean, char, int, long, String, String] */
+		MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, String.class, String.class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 3, typeList.parameterList(), 4);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 3, typeList.parameterList(), 4);
 
-			Hash_Methods hm = new Hash_Methods();
-			Assert.assertEquals(h1.invoke(hm, "a", "b", true, 'e', 1, 2, "c", "d"), "abcd", "Method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Hash_Methods hm = new Hash_Methods();
+		Assert.assertEquals(h1.invoke(hm, "a", "b", true, 'e', 1, 2, "c", "d"), "abcd", "Method handle did not return expected result");
 	}
 
 	/**
@@ -312,140 +288,111 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 	 * ie. [S...M] + [P...M...A] => S...P...M...A
 	 */
 	@Test(groups = { "level.extended" })
-	public static void test_dropArgumentsToMatch_normal_sublist() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_multi_arguments", MethodType.methodType(String.class, String.class, String.class, String.class, String.class));
+	public static void test_dropArgumentsToMatch_normal_sublist() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_multi_arguments", MethodType.methodType(String.class, String.class, String.class, String.class, String.class));
 
-			/* Method with rtype = String, ptype = [boolean, char, int, long, String, String, boolean, char, int, long] */
-			MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, String.class, String.class, boolean.class, char.class, int.class, long.class);
+		/* Method with rtype = String, ptype = [boolean, char, int, long, String, String, boolean, char, int, long] */
+		MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, String.class, String.class, boolean.class, char.class, int.class, long.class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 3, typeList.parameterList(), 4);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 3, typeList.parameterList(), 4);
 
-			Hash_Methods hm = new Hash_Methods();
-			Assert.assertEquals(h1.invoke(hm, "a", "b", true, 'e', 1, 2, "c", "d", false, 'f', 3, 4), "abcd", "Method handle did not return expected result");
-
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Hash_Methods hm = new Hash_Methods();
+		Assert.assertEquals(h1.invoke(hm, "a", "b", true, 'e', 1, 2, "c", "d", false, 'f', 3, 4), "abcd", "Method handle did not return expected result");
 	}
 
 	/**
 	 * test where handle parameter list is of type boolean
 	 */
 	@Test(groups = { "level.extended" })
-	public static void test_dropArgumentsToMatch_normal_sublist_boolean() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_boolean", MethodType.methodType(String.class, boolean.class, boolean.class));
+	public static void test_dropArgumentsToMatch_normal_sublist_boolean() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_boolean", MethodType.methodType(String.class, boolean.class, boolean.class));
 
-			/* Method with rtype = String, ptype = [boolean, char, int, long, boolean, String] */
-			MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, boolean.class, String.class);
+		/* Method with rtype = String, ptype = [boolean, char, int, long, boolean, String] */
+		MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, boolean.class, String.class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
 
-			Hash_Methods hm = new Hash_Methods();
-			Assert.assertEquals(h1.invoke(hm, true, false, 'a', 1, 2, true, "b"), "true", "Method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Hash_Methods hm = new Hash_Methods();
+		Assert.assertEquals(h1.invoke(hm, true, false, 'a', 1, 2, true, "b"), "true", "Method handle did not return expected result");
 	}
 
 	/**
 	 * test where handle parameter list is of type byte
 	 */
 	@Test(groups = { "level.extended" })
-	public static void test_dropArgumentsToMatch_normal_sublist_byte() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_byte", MethodType.methodType(String.class, byte.class, byte.class));
+	public static void test_dropArgumentsToMatch_normal_sublist_byte() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_byte", MethodType.methodType(String.class, byte.class, byte.class));
 
-			/* Method with rtype = String, ptype = [boolean, char, int, long, byte, String] */
-			MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, byte.class, String.class);
+		/* Method with rtype = String, ptype = [boolean, char, int, long, byte, String] */
+		MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, byte.class, String.class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
 
-			Hash_Methods hm = new Hash_Methods();
-			Assert.assertEquals(h1.invoke(hm, (byte)97, true, 'c', 1, 2, (byte)98, "d"), "ab", "Method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Hash_Methods hm = new Hash_Methods();
+		Assert.assertEquals(h1.invoke(hm, (byte)97, true, 'c', 1, 2, (byte)98, "d"), "ab", "Method handle did not return expected result");
 	}
 
 	/**
 	 * test where handle parameter list is of type char
 	 */
 	@Test(groups = { "level.extended" })
-	public static void test_dropArgumentsToMatch_normal_sublist_char() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_char", MethodType.methodType(String.class, char.class, char.class));
+	public static void test_dropArgumentsToMatch_normal_sublist_char() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_char", MethodType.methodType(String.class, char.class, char.class));
 
-			/* Method with rtype = String, ptype = [boolean, char, int, long, char, String] */
-			MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, char.class, String.class);
+		/* Method with rtype = String, ptype = [boolean, char, int, long, char, String] */
+		MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, char.class, String.class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
 
-			Hash_Methods hm = new Hash_Methods();
-			Assert.assertEquals(h1.invoke(hm, 'a', true, 'c', 1, 2, 'b', "d"), "ab", "Method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Hash_Methods hm = new Hash_Methods();
+		Assert.assertEquals(h1.invoke(hm, 'a', true, 'c', 1, 2, 'b', "d"), "ab", "Method handle did not return expected result");
 	}
 
 	/**
 	 * test where handle parameter list is of type int
 	 */
 	@Test(groups = { "level.extended" })
-	public static void test_dropArgumentsToMatch_normal_sublist_int() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_int", MethodType.methodType(String.class, int.class, int.class));
+	public static void test_dropArgumentsToMatch_normal_sublist_int() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_int", MethodType.methodType(String.class, int.class, int.class));
 
-			/* Method with rtype = String, ptype = [boolean, char, int, long, int, String] */
-			MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, int.class, String.class);
+		/* Method with rtype = String, ptype = [boolean, char, int, long, int, String] */
+		MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, int.class, String.class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
 
-			Hash_Methods hm = new Hash_Methods();
-			Assert.assertEquals(h1.invoke(hm, 1, true, 'a', 3, 4, 2, "b"), "12", "Method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Hash_Methods hm = new Hash_Methods();
+		Assert.assertEquals(h1.invoke(hm, 1, true, 'a', 3, 4, 2, "b"), "12", "Method handle did not return expected result");
 	}
 
 	/**
 	 * test where handle parameter list is of type double
 	 */
 	@Test(groups = { "level.extended" })
-	public static void test_dropArgumentsToMatch_normal_sublist_double() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_double", MethodType.methodType(String.class, double.class, double.class));
+	public static void test_dropArgumentsToMatch_normal_sublist_double() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_double", MethodType.methodType(String.class, double.class, double.class));
 
-			/* Method with rtype = String, ptype = [boolean, char, int, long, double, String] */
-			MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, double.class, String.class);
+		/* Method with rtype = String, ptype = [boolean, char, int, long, double, String] */
+		MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, double.class, String.class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
 
-			Hash_Methods hm = new Hash_Methods();
-			Assert.assertEquals(h1.invoke(hm, 1, true, 'a', 3, 4, 2, "b"), "1.02.0", "Method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Hash_Methods hm = new Hash_Methods();
+		Assert.assertEquals(h1.invoke(hm, 1, true, 'a', 3, 4, 2, "b"), "1.02.0", "Method handle did not return expected result");
 	}
 
 	/**
 	 * test where handle parameter list is of type int[]
 	 */
 	@Test(groups = { "level.extended" })
-	public static void test_dropArgumentsToMatch_normal_sublist_Array() {
-		try {
-			MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_array", MethodType.methodType(String.class, int[].class, int[].class));
+	public static void test_dropArgumentsToMatch_normal_sublist_Array() throws Throwable {
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_array", MethodType.methodType(String.class, int[].class, int[].class));
 
-			/* Method with rtype = String, ptype = [boolean, char, int, long, int[], int[]] */
-			MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, int[].class, int[].class);
+		/* Method with rtype = String, ptype = [boolean, char, int, long, int[], int[]] */
+		MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, int[].class, int[].class);
 
-			h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
+		h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
 
-			Hash_Methods hm = new Hash_Methods();
-			Assert.assertEquals(h1.invoke(hm, new int[] {1, 2}, true, 'a', 5, 6, new int[] {3,4}, null), "1234", "Method handle did not return expected result");
-		} catch (Throwable t) {
-			Assert.fail("No Exceptions/throwable expected from dropArgumentsToMatch.", t);
-		}
+		Hash_Methods hm = new Hash_Methods();
+		Assert.assertEquals(h1.invoke(hm, new int[] {1, 2}, true, 'a', 5, 6, new int[] {3,4}, null), "1234", "Method handle did not return expected result");
 	}
 }
