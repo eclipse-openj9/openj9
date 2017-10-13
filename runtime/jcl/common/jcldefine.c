@@ -145,11 +145,6 @@ retry:
 	tempClassBytes = classBytes;
 	tempLength = length;
 
-	/* Try to find classLocation. Ignore return code because there are valid cases where it might not find it (ie. bytecode spinning).
-	 * If the class is not found the default class location is fine.
-	 */
-	dynFuncs->findLocallyDefinedClassFunction(currentThread, NULL, utf8Name, utf8Length, classLoader, classLoader->classPathEntries, classLoader->classPathEntryCount, FALSE, &localBuffer);
-
 	/* skip if we are anonClass */
 	if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
 		/* Check for romClass cookie, it indicates that we are  defining a class out of a JXE not from class bytes */
@@ -169,7 +164,7 @@ retry:
 																			protectionDomain ? *(j9object_t*)protectionDomain : NULL,
 																			NULL,
 																			J9_CP_INDEX_NONE,
-																			localBuffer.loadLocationType,
+																			LOAD_LOCATION_UNKNOWN,
 																			NULL,
 																			hostClass);
 				/* Done if a class was found or and exception is pending, otherwise try to define the bytes */
