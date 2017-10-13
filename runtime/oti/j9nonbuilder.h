@@ -1800,7 +1800,7 @@ typedef struct J9TranslationBufferSet {
 	U_8* classFileError;
 	UDATA classFileSize;
 	void* romClassBuilder;
-	IDATA  ( *findLocallyDefinedClassFunction)(struct J9VMThread * vmThread, struct J9Module * j9module, U_8 * className, U_32 classNameLength, struct J9ClassLoader * classLoader, struct J9ClassPathEntry * classPath, UDATA classPathEntryCount, UDATA options, struct J9TranslationLocalBuffer *localBuffer) ;
+	IDATA  ( *findLocallyDefinedClassFunction)(struct J9VMThread * vmThread, struct J9Module * j9module, U_8 * className, U_32 classNameLength, struct J9ClassLoader * classLoader, struct J9ClassPathEntry * classPath, UDATA classPathEntryCount, UDATA options, UDATA flags, struct J9TranslationLocalBuffer *localBuffer) ;
 	struct J9Class*  ( *internalDefineClassFunction)(struct J9VMThread* vmThread, void* className, UDATA classNameLength, U_8* classData, UDATA classDataLength, j9object_t classDataObject, struct J9ClassLoader* classLoader, j9object_t protectionDomain, UDATA options, struct J9ROMClass *existingROMClass, struct J9Class *hostClass, struct J9TranslationLocalBuffer *localBuffer) ;
 	I_32  ( *closeZipFileFunction)(struct J9VMInterface* vmi, struct VMIZipFile* zipFile) ;
 	void  ( *reportStatisticsFunction)(struct J9JavaVM * javaVM, struct J9ClassLoader* loader, struct J9ROMClass* romClass, struct J9TranslationLocalBuffer *localBuffer) ;
@@ -1809,6 +1809,8 @@ typedef struct J9TranslationBufferSet {
 } J9TranslationBufferSet;
 
 #define BCU_UNUSED_2  2
+#define BCU_BOOTSTRAP_ENTRIES_ONLY  16
+#define BCU_NON_BOOTSTRAP_ENTRIES_ONLY  32
 #define BCU_VERBOSE  1
 #define BCU_TRACK_UTF8DATA  4
 #define BCU_UNUSED_40  64
