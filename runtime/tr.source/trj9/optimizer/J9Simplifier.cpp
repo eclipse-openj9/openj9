@@ -833,7 +833,7 @@ J9::Simplifier::simplifyiOrPatterns(TR::Node *node)
    secondChild = node->getSecondChild();
    if (!disableIORByteSwap &&
        !TR::Compiler->target.cpu.isBigEndian() &&  // the bigEndian case needs more thought
-       comp()->cg()->getSupportsIbyteswap() && secondChild->getOpCodeValue() == TR::ior)
+       secondChild->getOpCodeValue() == TR::ior)
       {
       /*
          A common application pattern for reading from a byte array and performing endianness conversion
@@ -940,11 +940,9 @@ J9::Simplifier::simplifyiOrPatterns(TR::Node *node)
              (getArrayBaseAddr(byte4) == addr1) && (getArrayOffset(byte4, initialConstantOffset+3) == offset1) &&
               performTransformation(comp(), "%sconvert ior to ibyteswap node [" POINTER_PRINTF_FORMAT "]\n", optDetailString(), node))
             {
-            TR::Node::recreate(node, TR::ibyteswap);
+            TR::Node::recreateWithSymRef(node, TR::iloadi, getSymRefTab()->findOrCreateUnsafeSymbolRef(TR::Int32));
             node->setNumChildren(1);
-
-            TR::Node * widerLoad = TR::Node::createWithSymRef(node, TR::iloadi, 1, byte4, getSymRefTab()->findOrCreateUnsafeSymbolRef(TR::Int32));
-            node->setAndIncChild(0, widerLoad);
+            node->setAndIncChild(0, byte4);
 
             // now remove the two children
             firstChild->recursivelyDecReferenceCount();

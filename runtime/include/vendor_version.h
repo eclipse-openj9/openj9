@@ -20,9 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-/* Example usage for repo and sha.  This value will be inserted into the
- * java.fullversion and java.vm.info system properties
- * #define VENDOR_VERSION_STRING "<repo name> - <sha>"
- * or descriptive string
- * #define VENDOR_VERSION_STRING "Add some experimental code to java.base"
+/* Example usage for inclusion of a vendor name and repository sha.  These values
+ * will be inserted into the java.fullversion and java.vm.info system properties
+ * and in a generated javacore file.
+ *
+ * #define VENDOR_SHORT_NAME "ABC"
+ * #define VENDOR_SHA "1a2b3c4"
  */
