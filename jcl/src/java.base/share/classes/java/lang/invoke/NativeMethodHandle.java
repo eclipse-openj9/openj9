@@ -26,6 +26,11 @@ import java.nicl.LibrarySymbol;
 
 import jdk.internal.nicl.types.PointerTokenImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
 /**
  * A NativeMethodHandle is a reference to a native method.  It is typed with Java carrier types (Java equivalent of native types)
  * It can be invoked in the same ways as a MethodHandle
@@ -35,6 +40,9 @@ import jdk.internal.nicl.types.PointerTokenImpl;
 public class NativeMethodHandle extends PrimitiveHandle {
 
 	private static final ThunkTable _thunkTable = new ThunkTable();
+
+	/* argTypes and retType of the MethodType is used to check if J9NativecalloutDataRef can be reused */
+	private static final Map<List<Class<?>>, Long> J9NativeCalloutDataRefMap = new HashMap<>();
 
 	private long J9NativeCalloutDataRef;
 
@@ -53,12 +61,12 @@ public class NativeMethodHandle extends PrimitiveHandle {
 	NativeMethodHandle(String methodName, MethodType type, long nativeAddress, String[] layoutStrings) throws IllegalAccessException {
 		super(type, null, methodName, KIND_NATIVE, 0, null);
 		this.vmSlot = nativeAddress;
-		initJ9NativeCalloutDataRef(layoutStrings);
+		setJ9NativeCalloutDataRef(layoutStrings);
 	}
 
 	NativeMethodHandle(NativeMethodHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
-		initJ9NativeCalloutDataRef(null);
+		setJ9NativeCalloutDataRef(null);
 	}
 
 	@Override
@@ -76,6 +84,36 @@ public class NativeMethodHandle extends PrimitiveHandle {
 		 *  to share.
 		 */
 		return thunkTable().get(new ThunkKey(ThunkKey.computeThunkableType(type())));
+	}
+
+	@SuppressWarnings("boxing")
+	private void setJ9NativeCalloutDataRef(String[] layoutStrings) {
+		/*
+		 * J9NativeCalloutDataRef sharing using J9NativeCalloutDataRefMap is only supported for primitives.
+		 * The layoutStrings array for primitive methods is null.
+		 */
+		if (null == layoutStrings) {
+			Class<?> argTypes[] = this.type().parameterArray();
+
+			/*
+			 * Types is the key of the map. Its first element is retType and its remaining elements
+			 * are the the argTypes of the method.
+			 */
+			List<Class<?>> types = new ArrayList<Class<?>>();
+			types.add(this.type().returnType);
+			for (int i = 0; i < argTypes.length; i++) {
+				types.add(argTypes[i]);
+			}
+
+			if (J9NativeCalloutDataRefMap.containsKey(types)) {
+				this.J9NativeCalloutDataRef = J9NativeCalloutDataRefMap.get(types);
+			} else {
+				initJ9NativeCalloutDataRef(layoutStrings);
+				J9NativeCalloutDataRefMap.put(types, this.J9NativeCalloutDataRef);
+			}
+		} else {
+			initJ9NativeCalloutDataRef(layoutStrings);
+		}
 	}
 
 	private void checkIfPrimitiveType(MethodType newType) {
