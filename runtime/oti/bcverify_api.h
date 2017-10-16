@@ -270,7 +270,7 @@ j9rtv_verifyBytecodes (J9BytecodeVerificationData *verifyData);
 */
 IDATA 
 j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, U_8 * segment,
-										U_8 * segmentLength, U_8 * freePointer, U_32 flags, I_32 *hasRET);
+										U_8 * segmentLength, U_8 * freePointer, U_32 vmVersionShifted, U_32 flags, I_32 *hasRET);
 
 /**
  * 	Check the validity of a method signature.

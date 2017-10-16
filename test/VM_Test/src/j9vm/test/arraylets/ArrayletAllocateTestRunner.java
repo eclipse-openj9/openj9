@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,8 @@ import j9vm.runner.Runner;
 
 public class ArrayletAllocateTestRunner extends Runner {
 
+	private final String customizedHeapOptions = "-Xms65m -Xmx65m";
+	
 	public ArrayletAllocateTestRunner(String className, String exeName, String bootClassPath, String userClassPath, String javaVersion) {
 		super(className, exeName, bootClassPath, userClassPath, javaVersion);
 	}
@@ -32,7 +34,17 @@ public class ArrayletAllocateTestRunner extends Runner {
 	/* See CMVC 172289 -- this test triggers excessive GC in gencon. Disable excessive until the defect is resolved. */
 	@Override
 	public String getCustomCommandLineOptions() {
-		return super.getCustomCommandLineOptions() + " -Xdisableexcessivegc ";
+		return super.getCustomCommandLineOptions() + " -Xdisableexcessivegc";
+	}
+	
+	/* 
+	 * Override getCommandLine() to change heapOptions
+	 */
+	@Override
+	public String getCommandLine() {
+		return super.exeName + " " + customizedHeapOptions + " " + getCustomCommandLineOptions() + " "
+			+ super.getJ9VMSystemPropertiesString() + " " + super.getBootClassPathOption() + " "
+			+ super.getUserClassPathOption() + " ";
 	}
 
 }
