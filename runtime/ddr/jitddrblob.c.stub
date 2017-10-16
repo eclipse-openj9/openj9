@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2010 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,10 +26,11 @@
 
 static const J9DDRStructDefinition structStubs[] = { { 0, 0, 0, 0, 0 } };
 
-const J9DDRStructDefinition* getJITAutomatedStructTable(void* portLib)
+const J9DDRStructDefinition *
+getJITAutomatedStructTable(struct OMRPortLibrary *portLib)
 {
-	OMRPORT_ACCESS_FROM_OMRPORT((OMRPortLibrary *)portLib);
-	OMRPORTLIB->tty_printf(OMRPORTLIB, "WARNING: JIT Automated structure table was not generated and has been stubbed out. See ddr.readme.\n");
+	OMRPORT_ACCESS_FROM_OMRPORT(portLib);
+	omrtty_printf("WARNING: JIT Automated structure table was not generated and has been stubbed out. See ddr.readme.\n");
 
 	return structStubs;
 }

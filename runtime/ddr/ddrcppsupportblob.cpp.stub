@@ -24,15 +24,14 @@
 #include "j9.h"
 #include "j9ddr.h"
 
-extern "C" {
-	static const J9DDRStructDefinition structStubs[] = { { 0, 0, 0, 0, 0 } };
+static const J9DDRStructDefinition structStubs[] = { { 0, 0, 0, 0, 0 } };
 
-	const J9DDRStructDefinition* getDDR_CPPStructTable(void* portLib)
-	{
-		OMRPORT_ACCESS_FROM_OMRPORT((OMRPortLibrary *)portLib);
-		omrtty_printf("WARNING: CPP support structure table was not generated and has been stubbed out. See ddr.readme.\n");
-	
-		return structStubs;
-	}
-};
+extern "C"
+const J9DDRStructDefinition *
+getDDR_CPPStructTable(struct OMRPortLibrary *portLib)
+{
+	OMRPORT_ACCESS_FROM_OMRPORT(portLib);
+	omrtty_printf("WARNING: CPP support structure table was not generated and has been stubbed out. See ddr.readme.\n");
 
+	return structStubs;
+}

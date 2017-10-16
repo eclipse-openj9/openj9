@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,43 +22,47 @@
 #include "j9ddr.h"
 #include "ddrtable.h"
 
-extern const J9DDRStructDefinition* getJITStructTable(void);
-extern const J9DDRStructDefinition* getAlgorithmVersionStructTable(void);
-/* Generated struct table functions take a portLib to allow stub functions
- * to print warning messages.*/
-extern const J9DDRStructDefinition* getJITAutomatedStructTable(void* portLib);
-extern const J9DDRStructDefinition* getOmrStructTable(void* portLib);
-extern const J9DDRStructDefinition* getVMStructTable(void* portLib);
-extern const J9DDRStructDefinition* getStackWalkerStructTable(void* portLib);
-extern const J9DDRStructDefinition* getHyPortStructTable(void* portLib);
-extern const J9DDRStructDefinition* getJ9PortStructTable(void* portLib);
-extern const J9DDRStructDefinition* getGCStructTable(void *portLib);
-extern const J9DDRStructDefinition* getDDR_CPPStructTable(void *portLib);
+extern const J9DDRStructDefinition *getJITStructTable(void);
+extern const J9DDRStructDefinition *getAlgorithmVersionStructTable(void);
 
-const J9DDRStructDefinition**
-initializeDDRComponents(OMRPortLibrary* portLib)
+/*
+ * Generated struct table functions take a portLib
+ * to allow stub functions to print warning messages.
+ */
+extern const J9DDRStructDefinition *getJITAutomatedStructTable(struct OMRPortLibrary *portLib);
+extern const J9DDRStructDefinition *getOmrStructTable(struct OMRPortLibrary *portLib);
+extern const J9DDRStructDefinition *getVMStructTable(struct OMRPortLibrary *portLib);
+extern const J9DDRStructDefinition *getStackWalkerStructTable(struct OMRPortLibrary *portLib);
+extern const J9DDRStructDefinition *getHyPortStructTable(struct OMRPortLibrary *portLib);
+extern const J9DDRStructDefinition *getJ9PortStructTable(struct OMRPortLibrary *portLib);
+extern const J9DDRStructDefinition *getGCStructTable(struct OMRPortLibrary *portLib);
+extern const J9DDRStructDefinition *getDDR_CPPStructTable(struct OMRPortLibrary *portLib);
+
+const J9DDRStructDefinition **
+initializeDDRComponents(OMRPortLibrary *portLib)
 {
-	const J9DDRStructDefinition** list;
-	UDATA i = 0;
 	OMRPORT_ACCESS_FROM_OMRPORT(portLib);
 
-	list = omrmem_allocate_memory((J9DDR_COMPONENT_COUNT+1) * sizeof(J9DDRStructDefinition*), OMRMEM_CATEGORY_VM);
-	if(NULL == list) {
-		return NULL;
-	}
+	const J9DDRStructDefinition **list = omrmem_allocate_memory(
+			(J9DDR_COMPONENT_COUNT + 1) * sizeof(J9DDRStructDefinition *),
+			OMRMEM_CATEGORY_VM);
 
-	list[i++] = getOmrStructTable(portLib);
-	list[i++] = getVMStructTable(portLib);
-	list[i++] = getStackWalkerStructTable(portLib);
-	list[i++] = getGCStructTable(portLib);
-	list[i++] = getHyPortStructTable(portLib);
-	list[i++] = getJ9PortStructTable(portLib);
-	list[i++] = getAlgorithmVersionStructTable();
-	list[i++] = getJITStructTable();
-	list[i++] = getJITAutomatedStructTable(portLib);
-	list[i++] = getDDR_CPPStructTable(portLib);
-	list[i] = NULL;
-	/*increment i here if it needs to be used further*/
+	if (NULL != list) {
+		UDATA i = 0;
+
+		list[i++] = getOmrStructTable(portLib);
+		list[i++] = getVMStructTable(portLib);
+		list[i++] = getStackWalkerStructTable(portLib);
+		list[i++] = getGCStructTable(portLib);
+		list[i++] = getHyPortStructTable(portLib);
+		list[i++] = getJ9PortStructTable(portLib);
+		list[i++] = getAlgorithmVersionStructTable();
+		list[i++] = getJITStructTable();
+		list[i++] = getJITAutomatedStructTable(portLib);
+		list[i++] = getDDR_CPPStructTable(portLib);
+		list[i] = NULL;
+		/* increment i here if it needs to be used further */
+	}
 
 	return list;
 }
