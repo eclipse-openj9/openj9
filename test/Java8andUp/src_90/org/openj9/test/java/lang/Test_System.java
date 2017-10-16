@@ -146,7 +146,8 @@ public class Test_System {
 	public void test_getProperties() {
 		Properties p = System.getProperties();
  		AssertJUnit.assertTrue("Incorrect properties returned", p.getProperty(
- 				"java.version").indexOf("9", 0) == 0);
+ 				"java.version").indexOf("9", 0) == 0 || p.getProperty(
+ 		 		"java.version").indexOf("10", 0) == 0);
 
 		// ensure spec'ed properties are non-null. See System.getProperties()
 		// spec.
@@ -179,7 +180,8 @@ public class Test_System {
 	@Test
 	public void test_getProperty() {
  		AssertJUnit.assertTrue("Incorrect properties returned", System.getProperty(
- 				"java.version").indexOf("9", 0) == 0);
+ 				"java.version").indexOf("9", 0) == 0 || System.getProperty(
+ 		 		"java.version").indexOf("10", 0) == 0);
 
 		boolean is8859_1 = true;
 		String encoding = System.getProperty("file.encoding");
@@ -219,7 +221,8 @@ public class Test_System {
 	public void test_getProperty2() {
  		AssertJUnit.assertTrue("Failed to return correct property value: "
  				+ System.getProperty("java.version", "99999"), System
- 				.getProperty("java.version", "99999").indexOf("9", 0) >= 0);
+ 				.getProperty("java.version", "99999").indexOf("9", 0) >= 0 || System
+ 				.getProperty("java.version", "99999").indexOf("10", 0) >= 0);
 
 		AssertJUnit.assertTrue("Failed to return correct property value", System
 				.getProperty("bogus.prop", "bogus").equals("bogus"));
