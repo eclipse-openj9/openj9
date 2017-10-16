@@ -6899,6 +6899,22 @@ TR_J9ByteCodeIlGenerator::genNewArray(int32_t typeIndex)
    if (_methodSymbol->skipZeroInitializationOnNewarrays())
      node->setCanSkipZeroInitialization(true);
 
+   // special case for handling Arrays.copyOf in the StringEncoder fast paths for Java 9+
+   if (!comp()->isOutermostMethod()
+       && _methodSymbol->getRecognizedMethod() == TR::java_util_Arrays_copyOf_byte)
+     {
+     int32_t callerIndex = comp()->getCurrentInlinedCallSite()->_byteCodeInfo.getCallerIndex();
+     TR::ResolvedMethodSymbol *caller = callerIndex > -1 ? comp()->getInlinedResolvedMethodSymbol(callerIndex) : comp()->getMethodSymbol();
+     switch (caller->getRecognizedMethod())
+        {
+        case TR::java_lang_StringCoding_encode8859_1:
+        case TR::java_lang_StringCoding_encodeASCII:
+        case TR::java_lang_StringCoding_encodeUTF8:
+           node->setCanSkipZeroInitialization(true);
+           break;
+        }
+     }
+
    bool separateInitializationFromAllocation;
    switch (_methodSymbol->getRecognizedMethod())
       {

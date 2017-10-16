@@ -538,6 +538,9 @@ static TR::RecognizedMethod canSkipZeroInitializationOnNewarrays[] =
    //TR::java_util_Arrays_copyOf,
    TR::java_io_Writer_write_lStringII,
    TR::java_io_Writer_write_I,
+   TR::java_lang_StringCoding_encode8859_1,
+   TR::java_lang_StringCoding_encodeASCII,
+   TR::java_lang_StringCoding_encodeUTF8,
    TR::unknownMethod
    };
 
