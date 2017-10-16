@@ -37,35 +37,38 @@ stage('Copyright Check') {
                 returnStdout: true
             ).trim()
             echo FILES
-            def FILES_LIST = FILES.split("\\r?\\n")
-            DATE_YEAR = sh (
-                script: "date +%Y",
-                returnStdout: true
-            ).trim()
-            FILES_LIST.each() {
-                println "Checking file: '${it}'"
-                RESULT = sh (
-                    script: "grep -qE 'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR} IBM Corp. and others' '${it}'",
-                    returnStatus: true)
-                if(RESULT != 0) {
-                    echo "FAILURE - Copyright date in file: '${it}' appears to be incorrect"
-                    FAIL = true
-                    BAD_FILES << "${it}"
-                } else {
-                    echo "Copyright date in file: appears to be correct"
-                }
-
-            }
-            if (FAIL) {
-                echo "${HASHES}"
-                echo "The following files were modified and have incorrect copyrights"
-                BAD_FILES.each() {
-                    echo "${it}"
-                }
-                echo "${HASHES}"
-                sh 'exit 1'
+            if (FILES == "") {
+                echo "There are no files to check for copyrights"
             } else {
-                echo "All modified files appear to have correct copyrights"
+                def FILES_LIST = FILES.split("\\r?\\n")
+                DATE_YEAR = sh (
+                    script: "date +%Y",
+                    returnStdout: true
+                ).trim()
+                FILES_LIST.each() {
+                    println "Checking file: '${it}'"
+                    RESULT = sh (
+                        script: "grep -qE 'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR} IBM Corp. and others' '${it}'",
+                        returnStatus: true)
+                    if(RESULT != 0) {
+                        echo "FAILURE - Copyright date in file: '${it}' appears to be incorrect"
+                        FAIL = true
+                        BAD_FILES << "${it}"
+                    } else {
+                        echo "Copyright date in file: appears to be correct"
+                    }
+                }
+                if (FAIL) {
+                    echo "${HASHES}"
+                    echo "The following files were modified and have incorrect copyrights"
+                    BAD_FILES.each() {
+                        echo "${it}"
+                    }
+                    echo "${HASHES}"
+                    sh 'exit 1'
+                } else {
+                    echo "All modified files appear to have correct copyrights"
+                }
             }
         }
     }
