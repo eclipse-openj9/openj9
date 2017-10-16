@@ -174,7 +174,8 @@ findArgInVMArgs(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA match
 					success = FALSE;
 					optionValueOperations(PORTLIB, j9vm_args, optionCntr, GET_OPTION, &valueString, 0, ':', 0, NULL);		/* assumes ':' */
 					if (valueString) {
-						if (cursor = strrchr(valueString, ':')) {			/* Skip past any additional sub-options eg. -Xdump:java:<value> */
+						cursor = strrchr(valueString, ':');			/* Skip past any additional sub-options eg. -Xdump:java:<value> */
+						if (NULL != cursor) {
 							++cursor;
 						} else {
 							cursor = valueString;
@@ -187,7 +188,10 @@ findArgInVMArgs(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA match
 									break;
 								}
 							}
-							if (cursor = strchr(cursor, ',')) ++cursor;		/* skip to next option */
+							cursor = strchr(cursor, ',');
+							if (NULL != cursor) {
+								cursor += 1; /* skip to next option */
+							}
 						}
 					}
 				}
@@ -455,8 +459,10 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 						break;
 					case MAP_TWO_COLONS_TO_ONE :
 						cursor = j9vm_args->actualVMArgs->options[element].optionString;
-						if (cursor = strchr(cursor, ':')) {
-							if (cursor = strchr(++cursor, ':')) {
+						cursor = strchr(cursor, ':');
+						if (NULL != cursor) {
+							cursor = strchr(++cursor, ':');
+							if (NULL != cursor) {
 								if (bufSize > 0) {
 									strncpy(*valuesBuffer, ++cursor, (bufSize-1));
 									if (strlen(cursor) > (bufSize-1)) {
