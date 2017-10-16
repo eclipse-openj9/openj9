@@ -27,7 +27,7 @@
 java.base
 
 openj9.cuda
-com.ibm.dataaccess
+openj9.dataaccess
 openj9.sharedclasses
 com.ibm.traceformat
 jdk.attach
