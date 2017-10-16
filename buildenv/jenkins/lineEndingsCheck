@@ -37,56 +37,60 @@ stage('Line Endings Check') {
                 returnStdout: true
             ).trim()
             echo FILES
-            def FILES_LIST = FILES.split("\\r?\\n")
-            FILES_LIST.each() {
-                println "Checking file: '${it}'"
-                TYPE = sh (
-                    script: "file -b '${it}'",
-                    returnStdout: true
-                ).trim()
-
-                switch (TYPE) {
-                    case ~/empty/:
-                        echo "Empty file: '${it}'"
-                        break
-                    case ~/.*text.*/:
-                        switch (it.toLowerCase()) {
-                            case ~/.*\.bat|.*\.cmd/:
-                                switch(TYPE) {
-                                    case ~/.*CRLF line terminators.*/:
-                                        echo "Good windows script: '${it}' type: '${TYPE}'"
-                                        break
-                                    default:
-                                        echo "ERROR - should have CRLF line terminators: '${it}' type: '${TYPE}'"
-                                        FAIL = true
-                                        BAD_FILES << "${it}"
-                                }
-                            default:
-                                switch (TYPE) {
-                                    case ~/.*CR.* line terminators.*/:
-                                        echo "ERROR - should have LF line terminators: '${it}' type: '${TYPE}'"
-                                        FAIL = true
-                                        BAD_FILES << "${it}"
-                                        break
-                                    default:
-                                        echo "Good text file: '${it}' type: '${TYPE}'"
-                                        break
-                                }
-                        }
-                    default:
-                        echo "Non-text file: '${it}' type: '${TYPE}'"
-                }
-            }
-            if (FAIL) {
-                echo "${HASHES}"
-                echo "The following files were modified and have incorrect line endings"
-                BAD_FILES.each() {
-                    echo "${it}"
-                }
-                echo "${HASHES}"
-                sh 'exit 1'
+            if (FILES == "") {
+                echo "There are no files to check for line endings"
             } else {
-                echo "All modified files appear to have correct line endings"
+                def FILES_LIST = FILES.split("\\r?\\n")
+                FILES_LIST.each() {
+                    println "Checking file: '${it}'"
+                    TYPE = sh (
+                        script: "file -b '${it}'",
+                        returnStdout: true
+                    ).trim()
+
+                    switch (TYPE) {
+                        case ~/empty/:
+                            echo "Empty file: '${it}'"
+                            break
+                        case ~/.*text.*/:
+                            switch (it.toLowerCase()) {
+                                case ~/.*\.bat|.*\.cmd/:
+                                    switch(TYPE) {
+                                        case ~/.*CRLF line terminators.*/:
+                                            echo "Good windows script: '${it}' type: '${TYPE}'"
+                                            break
+                                        default:
+                                            echo "ERROR - should have CRLF line terminators: '${it}' type: '${TYPE}'"
+                                            FAIL = true
+                                            BAD_FILES << "${it}"
+                                    }
+                                default:
+                                    switch (TYPE) {
+                                        case ~/.*CR.* line terminators.*/:
+                                            echo "ERROR - should have LF line terminators: '${it}' type: '${TYPE}'"
+                                            FAIL = true
+                                            BAD_FILES << "${it}"
+                                            break
+                                        default:
+                                            echo "Good text file: '${it}' type: '${TYPE}'"
+                                            break
+                                    }
+                            }
+                        default:
+                            echo "Non-text file: '${it}' type: '${TYPE}'"
+                    }
+                }
+                if (FAIL) {
+                    echo "${HASHES}"
+                    echo "The following files were modified and have incorrect line endings"
+                    BAD_FILES.each() {
+                        echo "${it}"
+                    }
+                    echo "${HASHES}"
+                    sh 'exit 1'
+                } else {
+                    echo "All modified files appear to have correct line endings"
+                }
             }
         }
     }
