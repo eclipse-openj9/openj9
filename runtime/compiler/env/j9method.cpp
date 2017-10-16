@@ -8981,3 +8981,10 @@ TR_ResolvedJ9JAASServerMethod::stringConstant(I_32 cpIndex)
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    return (void *) ((U_8 *)&(((J9RAMStringRef *) romLiterals())[cpIndex].stringObject));
    }
+
+bool
+TR_ResolvedJ9JAASServerMethod::owningMethodDoesntMatter()
+   {
+   // JAAS TODO: This is a safe default - we may want to revisit to enable more aggresive JSR292 optimizations
+   return false;
+   }
