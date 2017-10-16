@@ -33,17 +33,19 @@ For the purpose of this example, we assume you have an OpenJ9 SDK ready for test
 
 ```
 cd openj9/test/TestConfig
-export JAVA_BIN=<path to java bin that you wish to test>
+export JAVA_BIN=<path to JDK bin directory that you wish to test>
 export SPEC=linux_x86-64_cmprssptrs
 make -f run_configure.mk
 make test
 ```
 
 # Tasks in OpenJ9 Test
+
 1. Configure environment:
 * required environment variables
+
 ```
-JAVA_BIN=<path to java bin that you wish to test>
+JAVA_BIN=<path to JDK bin directory that you wish to test>
 SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] platform_on_which_to_test
 JAVA_VERSION=[SE80|SE90] (SE90 default value)
 ```
