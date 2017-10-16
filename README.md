@@ -62,10 +62,14 @@ To get started, read our [Contribution Guide](CONTRIBUTING.md).
 Where can I learn more?
 =======================
 
-Presentations
--------------
+Videos and Presentations
+------------------------
 
-- [J9: Under the hood of the next open source JVM](https://www.slideshare.net/DanHeidinga/j9-under-the-hood-of-the-next-open-source-jvm)
+- [JavaOne 2017: John Duimovich and Mike Milenkovich having fun chatting about Eclipse OpenJ9 (and EE4J)](https://www.youtube.com/watch?v=4g9SdVCPlnk)
+- [JavaOne 2017: Holly Cummins interviewing Dan Heidinga and Mark Stoodley on Eclipse OpenJ9 and OMR](https://www.youtube.com/watch?v=c1LVXqD3cII)
+- [JavaOne 2017: Open sourcing the IBM J9 Java Virtual Machine](https://www.slideshare.net/MarkStoodley/javaone-2017-mark-stoodley-open-sourcing-ibm-j9-jvm)
+- [JavaOne 2017: Eclipse OpenJ9 Under the hood of the next open source JVM](https://www.slideshare.net/DanHeidinga/javaone-2017-eclipse-openj9-under-the-hood-of-the-jvm)
+- [JavaOne 2017: Ask the OpenJ9 Architects](https://www.youtube.com/watch?v=qb5ennM_pgc)
 
 
 Copyright (c) 2017, 2017 IBM Corp. and others
