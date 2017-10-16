@@ -1784,9 +1784,10 @@ private static String getNonArrayClassPackageName(Class<?> clz) {
 /**
  * Answers the name of the package to which the receiver belongs.
  * For example, Object.class.getPackageName() returns "java.lang".
- * Returns null if this class represents an array type, a primitive type or void
+ * Returns "java.lang" if this class represents a primitive type or void,
+ * and the element type's package name in the case of an array type.
  *
- * @return		the receiver's package name.
+ * @return String the receiver's package name
  *
  * @see			#getPackage
  */
@@ -2159,14 +2160,17 @@ public String toGenericString() {
 
 /**
  * Returns the Package of which this class is a member.
- * A class has a Package iff it was loaded from a SecureClassLoader
+ * A class has a Package iff it was loaded from a SecureClassLoader.
  *
- * @return		Package the Package of which this class is a member or null
- *
+ * @return Package the Package of which this class is a member
+ * or null in the case of primitive or array types
  */
 public Package getPackage() {
+	if (isArray() || isPrimitive()) {
+		return null;
+	}
 	String packageName = getPackageName();
-	if (packageName == null) {
+	if (null == packageName) {
 		return null;
 	} else {
 /*[IF Sidecar19-SE]*/
