@@ -2320,6 +2320,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	UDATA i;
 	I_32 hasRET = 0;
 	UDATA syntheticFound = FALSE;
+	U_32 vmVersionShifted = 0;
 
 	Trc_BCU_j9bcutil_readClassFileBytes_Entry();
 
@@ -2537,7 +2538,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 	/* Make sure that following verification uses the class file version number */
-	U_32 vmVersionShifted = flags & BCT_MajorClassFileVersionMask;;
+	vmVersionShifted = flags & BCT_MajorClassFileVersionMask;;
 	flags &= ~BCT_MajorClassFileVersionMask;
 	flags |= ((UDATA) classfile->majorVersion) << BCT_MajorClassFileVersionMaskShift;
 	
