@@ -106,6 +106,9 @@
 		<makefilestubs>
 			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+			<makefilestub data="ifeq ($(OPENJ9_BUILD),true)"/>
+			<makefilestub data="vm_scar$(UMA_DOT_O) : CFLAGS += -DOPENJ9_BUILD"/>
+			<makefilestub data="endif"/>
 		</makefilestubs>
 
 		<vpaths>

@@ -405,6 +405,11 @@ ifeq ($(HOST_ARCH),x)
         SOLINK_FLAGS+=-m64
         SOLINK_SLINK+=dl m
     endif
+    
+    SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
+    ifneq ($(SUPPORT_STATIC_LIBCXX),0)
+        SOLINK_FLAGS+=-static-libstdc++
+    endif
 endif
 
 ifeq ($(HOST_ARCH),p)
@@ -417,6 +422,11 @@ ifeq ($(HOST_ARCH),p)
         SOLINK_FLAGS+=-m64 -fpic
         SOLINK_SLINK+=stdc++ dl m pthread
     endif
+    
+    SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
+    ifneq ($(SUPPORT_STATIC_LIBCXX),0)
+        SOLINK_FLAGS+=-static-libstdc++
+    endif
 endif
 
 ifeq ($(HOST_ARCH),z)
@@ -427,6 +437,11 @@ ifeq ($(HOST_ARCH),z)
     
     ifeq ($(HOST_BITS),64)
         SOLINK_SLINK+=stdc++
+    endif
+    
+    SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
+    ifneq ($(SUPPORT_STATIC_LIBCXX),0)
+        SOLINK_FLAGS+=-static-libstdc++
     endif
 endif
 
@@ -453,10 +468,4 @@ endif
 
 SOLINK_EXTRA_ARGS+=-Wl,--version-script=$(SOLINK_VERSION_SCRIPT)
 
-SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
-ifneq ($(SUPPORT_STATIC_LIBCXX),0)
-    SOLINK_FLAGS+=-static-libstdc++
-endif
-
 SOLINK_FLAGS+=$(SOLINK_FLAGS_EXTRA)
-

@@ -298,7 +298,7 @@ scarInit(J9JavaVM * vm)
 	}
 #endif
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(OPENJ9_BUILD)
 	switch (jclVersion) {
 	case J2SE_17:
 		dbgwrapperStr = "dbgwrapper70";
@@ -318,7 +318,7 @@ scarInit(J9JavaVM * vm)
 		/* If library can not be found, print a warning and proceed anyway as the dependency on this library may have been removed. */
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB, dbgwrapperStr, result);
 	}
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) && !defined(OPENJ9_BUILD) */
 
 	
 #if defined(J9VM_INTERP_MINIMAL_JCL)
