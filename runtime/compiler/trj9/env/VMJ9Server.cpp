@@ -828,7 +828,14 @@ TR_J9ServerVM::getReferenceSlotsInClass(TR::Compilation *comp, TR_OpaqueClassBlo
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_getReferenceSlotsInClass, clazz);
-   return std::get<0>(stream->read<int32_t *>());
+   std::string slotsStr = std::get<0>(stream->read<std::string>());
+   if (slotsStr == "")
+      return nullptr;
+   int32_t *refSlots = (int32_t *)comp->trHeapMemory().allocate(slotsStr.size());
+   if (!refSlots)
+      throw std::bad_alloc();
+   memcpy(refSlots, &slotsStr[0], slotsStr.size());
+   return refSlots;
    }
 
 uint32_t

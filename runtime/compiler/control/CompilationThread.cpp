@@ -935,7 +935,17 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::VM_getReferenceSlotsInClass:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(fe->getReferenceSlotsInClass(TR::comp(), clazz));
+         int32_t *start = fe->getReferenceSlotsInClass(TR::comp(), clazz);
+         if (!start)
+            client->write("");
+         else
+            {
+            int32_t numSlots = 0;
+            for (; start[numSlots]; ++numSlots);
+            // Copy the null terminated array into a string
+            std::string slotsStr((char *) start, (1 + numSlots) * sizeof(int32_t));
+            client->write(slotsStr);
+            }
          }
          break;
       case J9ServerMessageType::VM_getMethodSize:
