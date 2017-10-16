@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2015 IBM Corp. and others
+ * Copyright (c) 2010, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,11 +35,6 @@
 
 #undef SRPHASHTABLE_DEBUG
 
-#ifdef SRPHASHTABLE_DEBUG
-#define srpHashTable_printf j9tty_printf
-#else
-#define srpHashTable_printf
-#endif
 /*This is used in debug mode. It defines info of how many nodes to be printed*/
 #define NUMBEROFNODESTOPRINT 25
 
@@ -158,7 +153,9 @@ srpHashTableNew(
 
 	/*Allocate memory for struct J9SRPHashTable*/
 	srpHashTable = OMRPORT_FROM_J9PORT(PORTLIB)->mem_allocate_memory(OMRPORT_FROM_J9PORT(PORTLIB), sizeof(J9SRPHashTable), tableName, OMRMEM_CATEGORY_VM);
-	srpHashTable_printf(PORTLIB, "srpHashTableNew <%s>: tableSize=%d, srpTable=%p\n", tableName, tableSize, srpHashTable);
+#ifdef SRPHASHTABLE_DEBUG
+	j9tty_printf(PORTLIB, "srpHashTableNew <%s>: tableSize=%d, srpTable=%p\n", tableName, tableSize, srpHashTable);
+#endif 
 	if (!srpHashTable) {
 		Trc_srpHashTableNew_failedToAllocMemoryForSRPHashTable(tableSize, entrySize);
 		Trc_srpHashTableNew_Exit(NULL);
@@ -268,7 +265,9 @@ srpHashTableNewInRegion(
 
 	/*Allocate memory for struct J9SRPHashTable*/
 	srpHashTableTemp = OMRPORT_FROM_J9PORT(PORTLIB)->mem_allocate_memory(OMRPORT_FROM_J9PORT(PORTLIB), sizeof(J9SRPHashTable), tableName, OMRMEM_CATEGORY_VM);
-	srpHashTable_printf(PORTLIB, "srpHashTableNewInRegion <%s>: srpTable=%p\n", tableName, srpHashTable);
+#ifdef SRPHASHTABLE_DEBUG
+	j9tty_printf(PORTLIB, "srpHashTableNewInRegion <%s>: srpTable=%p\n", tableName, srpHashTable);
+#endif
 	if (!srpHashTableTemp) {
 		return NULL;
 	}
@@ -421,7 +420,9 @@ srpHashTableRecreate(
 
 	/*Allocate memory for struct J9SRPHashTable*/
 	srpHashTable = OMRPORT_FROM_J9PORT(PORTLIB)->mem_allocate_memory(OMRPORT_FROM_J9PORT(PORTLIB), sizeof(J9SRPHashTable), tableName, OMRMEM_CATEGORY_VM);
-	srpHashTable_printf(PORTLIB, "srpHashTableNew <%s>: tableSize=%d, srpTable=%p\n", tableName, srpHashTableInternal->tableSize, srpHashTable);
+#ifdef SRPHASHTABLE_DEBUG
+	j9tty_printf(PORTLIB, "srpHashTableNew <%s>: tableSize=%d, srpTable=%p\n", tableName, srpHashTableInternal->tableSize, srpHashTable);
+#endif
 	if (!srpHashTable) {
 		return NULL;
 	}
@@ -453,7 +454,9 @@ srpHashTableFree(J9SRPHashTable *srptable)
 {
 	PORT_ACCESS_FROM_PORT(srptable->portLibrary);
 
-	srpHashTable_printf(PORTLIB, "hashTableFree <%s>: table=%p\n", srptable->tableName, srptable);
+#ifdef SRPHASHTABLE_DEBUG
+	j9tty_printf(PORTLIB, "hashTableFree <%s>: table=%p\n", srptable->tableName, srptable);
+#endif
 
 	if (srptable) {
 		if ((srptable->flags & SRPHASHTABLE_CREATED_BY_SRPHASHTABLENEW) != 0) {
@@ -489,7 +492,9 @@ srpHashTableFind(J9SRPHashTable *srptable, void *key)
 	J9SRP * srpnode = 0;
 	PORT_ACCESS_FROM_PORT(srptable->portLibrary);
 
-	srpHashTable_printf(PORTLIB, "srpHashTableFind <%s>: srptable=%p key=%p\n", srptable->tableName, srptable, key);
+#ifdef SRPHASHTABLE_DEBUG
+	j9tty_printf(PORTLIB, "srpHashTableFind <%s>: srptable=%p key=%p\n", srptable->tableName, srptable, key);
+#endif
 
 	srpnode = srpHashTableFindNode(srptable, key);
 
@@ -526,7 +531,9 @@ srpHashTableAdd(J9SRPHashTable *srptable, void *key)
 
 	PORT_ACCESS_FROM_PORT(srptable->portLibrary);
 
-	srpHashTable_printf(PORTLIB, "srpHashTableAdd <%s>: srptable=%p key=%p\n", srptable->tableName, srptable, key);
+#ifdef SRPHASHTABLE_DEBUG
+	j9tty_printf(PORTLIB, "srpHashTableAdd <%s>: srptable=%p key=%p\n", srptable->tableName, srptable, key);
+#endif
 
 	/*
 	 * Find the right node in the hash array to make the insertion at. Node
@@ -535,7 +542,9 @@ srpHashTableAdd(J9SRPHashTable *srptable, void *key)
 	srpnode = srpHashTableFindNode(srptable, key);
 	if (*srpnode != 0) {
 		/* If entry is already hashed, return it */
-		srpHashTable_printf(PORTLIB, "--->ENTRY IS ALREADY HASHED\n");
+#ifdef SRPHASHTABLE_DEBUG
+		j9tty_printf(PORTLIB, "--->ENTRY IS ALREADY HASHED\n");
+#endif
 		return SRP_GET(*srpnode, void *);
 	}
 
@@ -577,12 +586,16 @@ srpHashTableRemove(J9SRPHashTable *srptable, void *key)
 
 	PORT_ACCESS_FROM_PORT(srptable->portLibrary);
 
-	srpHashTable_printf(PORTLIB, "srpHashTableRemove <%s>: table=%p, key=%p\n", srptable->tableName, srptable, key);
+#ifdef SRPHASHTABLE_DEBUG
+	j9tty_printf(PORTLIB, "srpHashTableRemove <%s>: table=%p, key=%p\n", srptable->tableName, srptable, key);
+#endif
 
 	srpnode = srpHashTableFindNode(srptable, key);
 	removedNode = SRP_GET(*srpnode, void *);
 	if (removedNode == NULL) {
-		srpHashTable_printf(PORTLIB, "\nRESULT : \tENTRY DOES NOT EXIST\n\n");
+#ifdef SRPHASHTABLE_DEBUG
+		j9tty_printf(PORTLIB, "\nRESULT : \tENTRY DOES NOT EXIST\n\n");
+#endif
 		/* failed to find a node matching entry */
 		return 1;
 	}
@@ -621,7 +634,9 @@ srpHashTableForEachDo(J9SRPHashTable *srptable, J9SRPHashTableDoFn doFn, void *o
 
 	Assert_srphashtable_true(NULL != nodes);
 
-	srpHashTable_printf(PORTLIB, "srpHashTableForEachDo <%s>: table=%p\n", srptable->tableName, srptable);
+#ifdef SRPHASHTABLE_DEBUG
+	j9tty_printf(PORTLIB, "srpHashTableForEachDo <%s>: table=%p\n", srptable->tableName, srptable);
+#endif
 
 	/* find the first non-empty bucket */
 	while ((bucketIndex < srptableInternal->tableSize) && (0 == nodes[bucketIndex])) {
@@ -923,7 +938,9 @@ srpHashTableFindNode(J9SRPHashTable *srptable, void *key)
 
 	/* calculate the key hash */
 	hash = srptable->hashFn(key, srptable->functionUserData) % srptable->srpHashtableInternal->tableSize;
-	srpHashTable_printf(PORTLIB, "HASH = %d, ENTRY VALUE = %d\n", hash, *((UDATA *)key));
+#ifdef SRPHASHTABLE_DEBUG
+	j9tty_printf(PORTLIB, "HASH = %d, ENTRY VALUE = %d\n", hash, *((UDATA *)key));
+#endif
 
 	/* find the right node for given key hash */
 	srpnodes = J9SRPHASHTABLEINTERNAL_NODES(srptable->srpHashtableInternal);
@@ -935,7 +952,9 @@ srpHashTableFindNode(J9SRPHashTable *srptable, void *key)
 
 	srpnode = &(srpnodes[hash]);
 
-	srpHashTable_printf(PORTLIB, "srphashTableFindNode <%s>:  key=%p hash=%x in node=%x->%x\n", srptable->tableName, key, hash, srpnode, srpnode);
+#ifdef SRPHASHTABLE_DEBUG
+	j9tty_printf(PORTLIB, "srphashTableFindNode <%s>:  key=%p hash=%x in node=%x->%x\n", srptable->tableName, key, hash, srpnode, srpnode);
+#endif
 	/*
 	 * Look through the node looking for the correct key, use user supplied
 	 * key compare function if available
