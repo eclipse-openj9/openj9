@@ -73,37 +73,29 @@ sub resultReporter {
 				while ( $result = <$fhIn> ) {
 					if ($result =~ /Running test (.*) \.\.\.\n/) {
 						$testName = $1;
-					} elsif ($result =~ /_PASSED\n$/) {
+					} elsif ($result eq ($testName . "_PASSED\n")) {
 						$result =~ s/_PASSED\n$//;
 						push (@passed, $result);
 						$numOfPassed++;
 						$numOfTotal++;
 						$tapString .= "ok " . $numOfTotal . " - " . $result . "\n";
 						if ($diagnostic eq 'all') {
-							if ($testName eq $result) {
-								$output .= "  ...\n";
-								$tapString .= $output;
-							} else {
-								print "warning: test description does not match test result, drop test diagnostic information!" if $tapFile;
-							}
+							$output .= "  ...\n";
+							$tapString .= $output;
 						}
 						last;
-					} elsif ($result =~ /_FAILED\n$/) {
+					} elsif ($result eq ($testName . "_FAILED\n")) {
 						$result =~ s/_FAILED\n$//;
 						push (@failed, $result);
 						$numOfFailed++;
 						$numOfTotal++;
 						$tapString .= "not ok " . $numOfTotal . " - " . $result . "\n";
 						if (($diagnostic eq 'failure') || ($diagnostic eq 'all')) {
-							if ($testName eq $result) {
-								$output .= "  ...\n";
-								$tapString .= $output;
-							} else {
-								print "warning: test description does not match test result, drop test diagnostic information!" if $tapFile;
-							}
+							$output .= "  ...\n";
+							$tapString .= $output;
 						}
 						last;
-					} elsif ($result =~ /_SKIPPED\n$/) {
+					} elsif ($result eq ($testName . "_SKIPPED\n")) {
 						$result =~ s/_SKIPPED\n$//;
 						push (@skipped, $result);
 						$numOfSkipped++;
