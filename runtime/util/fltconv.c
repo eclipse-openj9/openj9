@@ -90,7 +90,7 @@ helperCConvertDoubleToInteger(jdouble src)
 	if (src >= 2147483648.0) {
 		result = 0x7FFFFFFF;
 	} else if (src <= -2147483648.0) {
-		result = -1 << 31;
+		result = (I_32)(((U_32)-1) << 31);
 	} else {
 		result = (I_32)src;
 	}
@@ -193,7 +193,7 @@ helperCConvertFloatToInteger(jfloat src)
 	if (src >= 2147483648.0) {
 		result = 0x7FFFFFFF;
 	}else if (src <= -2147483648.0) {
-		result = -1 << 31;
+		result = (I_32)(((U_32)-1) << 31);
 	} else {
 		result = (I_32)src;
 	}
