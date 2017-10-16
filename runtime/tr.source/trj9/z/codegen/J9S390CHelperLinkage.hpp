@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,26 +64,108 @@ public:
 	virtual TR::RealRegister::RegNum setCAAPointerRegister(TR::RealRegister::RegNum r) { return _CAAPointerRegister = r; }
 	virtual TR::RealRegister::RegNum getCAAPointerRegister() { return _CAAPointerRegister; }
 #endif
-#endif  
+#endif
+   /** \brief
+    *       Setter for private member _preservedRegisterMapForGC
+    *
+    *  \param m
+    *       An 32-bit unsigned mapping for GC marking all preserved registers
+    *
+    *  \return
+    *      Returns _preservedRegisterMapForGC after setting it to m
+    */  
+   virtual uint32_t setPreservedRegisterMapForGC(uint32_t m) {return _preservedRegisterMapForGC = m; }
+   /** \brief
+    *       Getter for private member _preservedRegisterMapForGC
+    *
+    *  \return
+    *      Returns private member _preservedRegisterMapForGC
+    */  
+   virtual uint32_t getPreservedRegisterMapForGC() {return _preservedRegisterMapForGC; }
 
    virtual TR::Register * buildIndirectDispatch(TR::Node * callNode) 
       { 
       TR_ASSERT(false, "Indirect dispatch is currently not supported");
       return NULL; 
       }
+
+   /** \brief
+    *       Builds the direct dispatch sequence for given node using C Helper linkage
+    *
+    *  \param callNode
+    *       TR::Node* for which helper dispatch sequence will be generated
+    *
+    *  \return
+    *      Returns TR::Register* which contains return value from helper call
+    */  
    virtual TR::Register * buildDirectDispatch(TR::Node * callNode)
       {
-      return buildDirectDispatch(callNode,NULL);
+      return buildDirectDispatch(callNode, static_cast<TR::RegisterDependencyConditions**>(NULL));
       }
-   TR::Register* buildDirectDispatch(TR::Node *callNode, TR_Stack<TR::Register*>& paramInRegister)
+
+   /** \brief
+    *       Overloaded function that builds the direct dispatch sequence for given node using C Helper linkage
+    *       with additional returnReg parameter from consumer
+    *
+    *  \param callNode
+    *       TR::Node* for which helper dispatch sequence will be generated
+    *
+    *  \param returnReg
+    *       TR::Register* allocated by consumer of this API. Dispatch sequence will use this register to store return value from helper
+    *       instead from allocating new register.
+    *
+    *  \return
+    *      Returns TR::Register* which contains return value from helper call
+    */  
+   TR::Register* buildDirectDispatch(TR::Node *callNode, TR::Register *returnReg)
+      {
+      return buildDirectDispatch(callNode, NULL, returnReg);
+      }
+
+   /** \brief
+    *       Overloaded function that builds the direct dispatch sequence for given node using C Helper linkage
+    *       using already evaluated parameters from paramInRegister and is passed stores result in returnReg
+    *
+    *  \param callNode
+    *       TR::Node* for which helper dispatch sequence will be generated
+    *
+    *  \param &paramInRegister
+    *       A stack of TR::Register* which will be used to prepare arguments for helper call instead of evaluating children of callNode
+    * 
+    *  \param returnReg
+    *       TR::Register* allocated by consumer of this API. If passed dispatch sequence will use this register to store return value from helper
+    *       instead from allocating new register.
+    *
+    *  \return
+    *      Returns TR::Register* which contains return value from helper call
+    */  
+   TR::Register* buildDirectDispatch(TR::Node *callNode, TR_Stack<TR::Register*>& paramInRegister, TR::Register *returnReg=NULL)
    	{
-   	return buildDirectDispatch(callNode, NULL, paramInRegister);
+   	return buildDirectDispatch(callNode, NULL, paramInRegister, returnReg);
    	}
-   TR::Register *buildDirectDispatch(TR::Node *callNode, TR::RegisterDependencyConditions** deps)
+
+   /** \brief
+    *       Overloaded function to be used within internal control flow to build the direct dispatch sequence for given node using C Helper linkage
+    *
+    *  \param callNode
+    *       TR::Node* for which helper dispatch sequence will be generated
+    *
+    *  \param **deps
+    *       A register dependency condition which will be filled with helper call condition so that consumer can combine with the dependency condition
+    *       of internal control flow and attach it to merge label
+    * 
+    *  \param returnReg
+    *       TR::Register* allocated by consumer of this API. If passed dispatch sequence will use this register to store return value from helper
+    *       instead from allocating new register.
+    *
+    *  \return
+    *      Returns TR::Register* which contains return value from helper call
+    */  
+   TR::Register *buildDirectDispatch(TR::Node *callNode, TR::RegisterDependencyConditions** deps, TR::Register *returnReg=NULL)
    	{
    	TR_Stack<TR::Register*> paramInRegisters(cg()->trMemory());
-   	return buildDirectDispatch(callNode, deps, paramInRegisters);
+   	return buildDirectDispatch(callNode, deps, paramInRegisters, returnReg);
    	}
-   TR::Register *buildDirectDispatch(TR::Node *callNode, TR::RegisterDependencyConditions** deps, TR_Stack<TR::Register*>& paramInRegisters);
+   TR::Register *buildDirectDispatch(TR::Node *callNode, TR::RegisterDependencyConditions** deps, TR_Stack<TR::Register*>& paramInRegisters, TR::Register *returnReg);
    };
 }

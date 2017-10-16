@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -126,6 +126,9 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
       setIntegerArgumentRegister(2, TR::RealRegister::GPR4);
       setIntegerArgumentRegister(3, TR::RealRegister::GPR5);
       setIntegerArgumentRegister(4, TR::RealRegister::GPR6);
+      // Hardcoding register map for GC can lead to subtle bugs if linkage is changed and we did not change register map for GC.
+      // TODO We should write a function that goes through the list of preserved registers and prepare register map for GC.
+      setPreservedRegisterMapForGC(0x0000BFC0);
       // GPR5 needs to be stored before using it as argument register.
       // Right now setting number of integer argument registers to 3.
       // TODO When we add support for more than 3 arguments, we should change this number to 5.
@@ -135,7 +138,14 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
       {
       // 31-Bit zOS will need GPR12 for CAA register so it won't be preserved. For all other variant it is preserved
       if (TR::Compiler->target.is64Bit())
-         setRegisterFlag(TR::RealRegister::GPR12, Preserved); 
+         {
+         setPreservedRegisterMapForGC(0x0000FF00); 
+         setRegisterFlag(TR::RealRegister::GPR12, Preserved);
+         }
+      else
+         {
+         setPreservedRegisterMapForGC(0x0000EF00); 
+         }
       if (enableVectorLinkage)
          {
          setRegisterFlag(TR::RealRegister::VRF16, Preserved);
@@ -147,6 +157,9 @@ TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Li
          setRegisterFlag(TR::RealRegister::VRF22, Preserved);
          setRegisterFlag(TR::RealRegister::VRF23, Preserved);
          }
+
+      setRegisterFlag(TR::RealRegister::GPR14, Preserved);
+
       setReturnAddressRegister (TR::RealRegister::GPR7 );
       setIntegerReturnRegister (TR::RealRegister::GPR3 );
       setLongReturnRegister    (TR::RealRegister::GPR3 );
@@ -252,13 +265,16 @@ class RealRegisterManager
  *    \param callNode The node for which you are generating a heleper call
  *    \param deps The pre register dependency conditions that will be filled by this function to attach within ICF
  *    \param paramInRegisters Stack of registers that contains arguments to be passed to the helper function,
- *           if passed empty stack, this function will evaluate children of node to prepare arguments
+ *           if passed empty stack, this function will clobber evaluate children of node to prepare arguments
+ *    \param returnReg TR::Register* allocated by consumer of this API to hold the result of the helper call,
+ *           If passed, this function uses it to store return value from helper instead of allocating new register
  *    \return TR::Register *helperReturnResult, gets the return value of helper function and return to the evaluator. 
  */
-TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, TR::RegisterDependencyConditions **deps, TR_Stack<TR::Register*>& paramInRegisters)
+TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, TR::RegisterDependencyConditions **deps, TR_Stack<TR::Register*>& paramInRegisters, TR::Register *returnReg)
    {
    RealRegisterManager RealRegisters(cg());
    bool isHelperCallWithinICF = deps != NULL;
+   // TODO: Currently only jitInstanceOf is fast path helper. Need to modify following condition if we add support for other fast path only helpers
    bool isFastPathOnly = callNode->getOpCodeValue() == TR::instanceof;
    traceMsg(comp(),"%s: Internal Control Flow in OOL : %s\n",callNode->getOpCode().getName(),isHelperCallWithinICF  ? "true" : "false" );
    for (int i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastHPR; i++)
@@ -268,23 +284,34 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
          RealRegisters.use((TR::RealRegister::RegNum)i);
          }
       }
-
+   TR::RegisterDependencyConditions *childNodeRegDeps = NULL;
    // An empty list passed here means we need to evaluate child of the node to prepare argument lists.
    if (paramInRegisters.isEmpty())
-   	{
-   	// TODO For Time Being, it is expected that param number won't increase beyond 3 need to fix this when support for stack is there
-   	for (int i=0; i< callNode->getNumChildren(); i++)
-   		{
-   		if (i < self()->getNumIntegerArgumentRegisters())
-   			paramInRegisters.push(cg()->evaluate(callNode->getChild(i)));
-   		else
-   			TR_ASSERT(false,"Parameters on Stack not supported yet");
-   		}
-   	}
+      {
+      childNodeRegDeps = generateRegisterDependencyConditions(0,callNode->getNumChildren(), cg());
+      // TODO For Time Being, it is expected that param number won't increase beyond 3 need to fix this when support for stack is there
+      for (int i=0; i< callNode->getNumChildren(); i++)
+         {
+         if (i < self()->getNumIntegerArgumentRegisters())
+            paramInRegisters.push(cg()->gprClobberEvaluate(callNode->getChild(i)));
+         else
+            TR_ASSERT(false,"Parameters on Stack not supported yet");
+         childNodeRegDeps->addPostConditionIfNotAlreadyInserted(callNode->getChild(i)->getRegister(), TR::RealRegister::AssignAny);
+         }
+      }
    
    TR::Register *vmThreadRegister = cg()->getMethodMetaDataRealRegister();
+   TR::RegisterDependencyConditions* preDeps = generateRegisterDependencyConditions(paramInRegisters.size()+1, 0, cg());
+   TR::Register *vmThreadArgReg = cg()->allocateRegister();
+   
    // First argument to any helper function is vmThread
-   paramInRegisters.push(vmThreadRegister);
+   generateRRInstruction(cg(), TR::InstOpCode::getLoadRegOpCode(), callNode, vmThreadArgReg, vmThreadRegister);
+   preDeps->addPreCondition(vmThreadArgReg, getIntegerArgumentRegister(0));
+   
+   int iter=1;
+   while (!paramInRegisters.isEmpty())
+      preDeps->addPreCondition(paramInRegisters.pop(), getIntegerArgumentRegister(iter++));
+   
    TR::Register *javaStackPointerRegister = NULL;
   /* On zOS, we need to use GPR7 as return address for fastPath helper calls
    * Following line will use the System linkage's return address register for fast path
@@ -298,36 +325,13 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
    uint32_t pointerSize = TR::Compiler->target.is64Bit() ? 7 : 3;
 #endif
 
-   // Loading argument registers for the helper.
-   TR::list<TR::Register*> argRegList(getTypedAllocator<TR::Register*>(comp()->allocator()));
-   while (!paramInRegisters.isEmpty())
-      {
-      TR::Register *argReg = cg()->allocateRegister();
-      TR::Register* param = paramInRegisters.pop();
-      generateRRInstruction(cg(), TR::InstOpCode::getLoadRegOpCode(), callNode, argReg, param);
-      argRegList.push_back(argReg);
-      }
-
-   TR::RegisterDependencyConditions* preDeps = generateRegisterDependencyConditions(argRegList.size(), 0, cg());
-
    // Filling up the pre-dependencies for the helper call
-   int iter=0;
-   for (auto reg = argRegList.begin(); reg != argRegList.end(); reg++)
-      preDeps->addPreCondition(*reg, getIntegerArgumentRegister(iter++));
-
    TR::RegisterDependencyConditions * postDeps = RealRegisters.buildRegisterDependencyConditions(regRANum);
    // If buildDirectDispatch is called within ICF we need to pass the dependencies which will be used there, else we need single dependencylist to be attached to the BRASL
-   TR::RegisterDependencyConditions *dummyDeps = NULL;
+   // We return postdependency conditions back to evaluator to merge with ICF condition and attach to merge label 
    if (isHelperCallWithinICF )
-   	{
-      // We return postdependency conditions back to evaluator to merge with ICF condition and attach to merge label 
-   	*deps = postDeps;
-   	dummyDeps = preDeps;
-   	}
-   else
-      {
-      dummyDeps = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(preDeps, postDeps, cg());
-      }
+      *deps = childNodeRegDeps == NULL ? postDeps : new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(postDeps, childNodeRegDeps, cg());
+   
    int padding = 0;
    uint32_t offsetJ9SP =  static_cast<uint32_t>(offsetof(J9VMThread, sp));
    TR::Instruction *cursor = NULL;
@@ -351,80 +355,87 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
     */
 
    if (isFastPathOnly)
-   	{
+      {
       // Storing Java Stack Pointer
-	   javaStackPointerRegister = cg()->getStackPointerRealRegister();
+      javaStackPointerRegister = cg()->getStackPointerRealRegister();
       cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), callNode, javaStackPointerRegister, generateS390MemoryReference(vmThreadRegister, offsetJ9SP, cg()));
 #if defined(J9ZOS390)
       padding += 2;
       // Loading DSAPointer Register
       DSAPointerReg = RealRegisters.use(getDSAPointerRegister());
-		generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, DSAPointerReg, generateS390MemoryReference(vmThreadRegister, offsetOfSSP, cg()));
-		generateSS1Instruction(cg(), TR::InstOpCode::XC, callNode, pointerSize,
-			generateS390MemoryReference(vmThreadRegister, offsetOfSSP, cg()),
-			generateS390MemoryReference(vmThreadRegister, offsetOfSSP, cg()));
+      generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, DSAPointerReg, generateS390MemoryReference(vmThreadRegister, offsetOfSSP, cg()));
+      generateSS1Instruction(cg(), TR::InstOpCode::XC, callNode, pointerSize,
+         generateS390MemoryReference(vmThreadRegister, offsetOfSSP, cg()),
+	 generateS390MemoryReference(vmThreadRegister, offsetOfSSP, cg()));
 #if defined(TR_HOST_32BIT)
-		padding += 2;
+      padding += 2;
       // Loading CAA Pointer Register
-		TR::Register *CAAPointerReg = RealRegisters.use(getCAAPointerRegister());
+      TR::Register *CAAPointerReg = RealRegisters.use(getCAAPointerRegister());
       TR_J9VMBase *fej9 = (TR_J9VMBase *) cg()->comp()->fe();
       int32_t J9TR_CAA_save_offset = fej9->getCAASaveOffset();
-		generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, CAAPointerReg, generateS390MemoryReference(DSAPointerReg, J9TR_CAA_save_offset, cg()));
+      generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, CAAPointerReg, generateS390MemoryReference(DSAPointerReg, J9TR_CAA_save_offset, cg()));
 #endif
 #endif
-   	}
-
-	TR::SymbolReference * callSymRef = callNode->getSymbolReference();
-	intptrj_t destAddr = (intptrj_t) callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethodAddress();
-	cursor = new (cg()->trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRASL, callNode, regRA, destAddr, callSymRef, cg());
-	if (isFastPathOnly)
-		{
+      }
+   TR::SymbolReference * callSymRef = callNode->getSymbolReference();
+   intptrj_t destAddr = (intptrj_t) callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethodAddress();
+   cursor = new (cg()->trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRASL, callNode, regRA, destAddr, callSymRef, cg());
+   cursor->setDependencyConditions(preDeps);
+   if (isFastPathOnly)
+      {
 #if defined(J9ZOS390)
       // We need following padding as return from C function will skip the XPLink eyecatcher, padding ensures entry to valid instruction 
-		cursor = new (cg()->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, padding, callNode, cursor, cg());
+      cursor = new (cg()->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, padding, callNode, cursor, cg());
       // Storing DSA Register back
-		cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), callNode, DSAPointerReg, generateS390MemoryReference(vmThreadRegister, offsetOfSSP, cg()), cursor);
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), callNode, DSAPointerReg, generateS390MemoryReference(vmThreadRegister, offsetOfSSP, cg()), cursor);
 #endif
       // Reloading Java Stack pointer
-		cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, javaStackPointerRegister, generateS390MemoryReference(vmThreadRegister, offsetJ9SP, cg()), cursor);
-		}
-	else
-		{
-      // Fastpath helper do not expects GC call in-between so only attaching them for normal dual mode helpers 
-		cursor->setNeedsGCMap(0x0000FFFF);
-		}
-   if (dummyDeps)
-      cursor->setDependencyConditions(dummyDeps);
-// Logic To Handle Return Register
-   TR::Register *returnReg = NULL;
-   TR::DataType returnType = callNode->getDataType(); 
-   switch(returnType)
+      cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, javaStackPointerRegister, generateS390MemoryReference(vmThreadRegister, offsetJ9SP, cg()), cursor);
+      }
+   else
       {
-      case TR::NoType:
-         traceMsg(comp(), "ReturnType = %s\n",returnType.toString());
-         break;
-      case TR::Address:
-         traceMsg(comp(), "ReturnType = %s\n",returnType.toString());
-         returnReg = cg()->allocateCollectedReferenceRegister();
-         break;
-      case TR::Int8:
-      case TR::Int16:
-      case TR::Int32:
+      // Fastpath helper do not expects GC call in-between so only attaching them for normal dual mode helpers
+      // As GC map is attached to instruction after RA is done, it is guaranteed that all the non-preserved register by system linkage are either stored in preserved register
+      // Or spilled to stack. We only need to mark preserved register in GC map. Only possiblity of non-preserved register containing a live object is in argument to helper which should be a clobberable copy of actual object. 
+      cursor->setNeedsGCMap(getPreservedRegisterMapForGC());
+      }
+
+   // If helper call is fast path helper call and is not within ICF,
+   // We need to attach post dependency to the restoring of java stack pointer.
+   // This will assure that reverse spilling occurs after restoring of java stack pointer
+   if (!isHelperCallWithinICF)
+      cursor->setDependencyConditions(postDeps);
+   preDeps->stopUsingDepRegs(cg());
+   // Logic To Handle Return Register
+   TR::DataType returnType = callNode->getDataType();
+   if (returnReg == NULL)
+      {
+      switch(returnType)
+         {
+         case TR::NoType:
+            traceMsg(comp(), "ReturnType = %s\n",returnType.toString());
+            break;
+         case TR::Address:
+            traceMsg(comp(), "ReturnType = %s\n",returnType.toString());
+            returnReg = cg()->allocateCollectedReferenceRegister();
+            break;
+         case TR::Int8:
+         case TR::Int16:
+         case TR::Int32:
 #ifdef TR_TARGET_64BIT
-      case TR::Int64:
+         case TR::Int64:
 #endif
-         traceMsg(comp(), "ReturnType = %s\n",returnType.toString());
-         returnReg = cg()->allocateRegister();
-         break;
-      default:
-         TR_ASSERT(false, "Unsupported Call return data type: %s\n", returnType.toString());
-         break;
+            traceMsg(comp(), "ReturnType = %s\n",returnType.toString());
+            returnReg = cg()->allocateRegister();
+            break;
+         default:
+            TR_ASSERT(false, "Unsupported Call return data type: %s\n", returnType.toString());
+            break;
+         }
       }
-   if (returnReg)
-      {
+   // We need to fill returnReg only if it requested by evaluator or node returns value or address
+   if (returnReg != NULL)
       generateRRInstruction(cg(), TR::InstOpCode::getLoadRegOpCode(), callNode, returnReg,  RealRegisters.use(isFastPathOnly ? getIntegerReturnRegister():getLongHighReturnRegister()), cursor);
-      }
-   for (auto reg = argRegList.begin(); reg != argRegList.end(); reg++)
-      cg()->stopUsingRegister(*reg);
+   
    return returnReg;
    }

@@ -3578,7 +3578,7 @@ static void
 VMarrayStoreCHKEvaluator(
       TR::Node * node,
       TR::S390CHelperLinkage *helperLink,
-      TR_Stack<TR::Register*>& paramInRegisters,
+      TR::Node *callNode,
       TR::Register * srcReg,
       TR::Register * owningObjectReg,
       TR::Register * t1Reg,
@@ -3752,7 +3752,7 @@ VMarrayStoreCHKEvaluator(
    cg->getS390OutOfLineCodeSectionList().push_front(arrayStoreCHKOOL);
    arrayStoreCHKOOL->swapInstructionListsWithCompilation();
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, helperCallLabel);
-   TR::Register *dummyResReg = helperLink->buildDirectDispatch(node, paramInRegisters);
+   TR::Register *dummyResReg = helperLink->buildDirectDispatch(callNode);
    if (dummyResReg)
       cg->stopUsingRegister(dummyResReg);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, wbLabel);
@@ -3773,7 +3773,8 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::Node * firstChild = node->getFirstChild();
    TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-
+   // As arguments to ArrayStoreCHKEvaluator helper function is children of first child,
+   // We need to create a dummy call node for helper call with children containing arguments to helper call. 
    bool doWrtBar = (gcMode == TR_WrtbarOldCheck ||
                     gcMode == TR_WrtbarCardMarkAndOldCheck ||
                     gcMode == TR_WrtbarAlways);
@@ -3885,7 +3886,9 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       classReg = cg->evaluate(classChild);
       srcReg = cg->evaluate(sourceChild);
       }
-
+   TR::Node *callNode = TR::Node::createWithSymRef(node, TR::call, 2, node->getSymbolReference());
+   callNode->setChild(0, sourceChild);
+   callNode->setChild(1, classChild);
    mr1 = generateS390MemoryReference(firstChild, cg);
 
    TR::Register *compressedReg = srcReg;
@@ -3929,9 +3932,6 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       // as it needs not be exec'd
       generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCodeFromNode(sourceChild), node, srcReg, 0, TR::InstOpCode::COND_BE, (doWrtBar || doCrdMrk)?simpleStoreLabel:wbLabel, false, true);
       }
-   TR_Stack<TR::Register*> paramInRegisters(cg->trMemory());
-   paramInRegisters.push(srcReg);
-   paramInRegisters.push(classReg);
    TR::S390CHelperLinkage *helperLink = static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
    if (nopASC)
       {
@@ -3948,7 +3948,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       outlinedSlowPath->swapInstructionListsWithCompilation();
 
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, oolASCLabel);
-      TR::Register *dummyResReg = helperLink->buildDirectDispatch(node,paramInRegisters);
+      TR::Register *dummyResReg = helperLink->buildDirectDispatch(callNode);
       if (dummyResReg)
          cg->stopUsingRegister(dummyResReg);
 
@@ -3956,7 +3956,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       outlinedSlowPath->swapInstructionListsWithCompilation();
       }
    else
-      VMarrayStoreCHKEvaluator(node, helperLink, paramInRegisters, srcReg, classReg, txReg, tyReg, litPoolBaseReg, owningObjectRegVal, srcRegVal, wbLabel, conditions, cg);
+      VMarrayStoreCHKEvaluator(node, helperLink, callNode, srcReg, classReg, txReg, tyReg, litPoolBaseReg, owningObjectRegVal, srcRegVal, wbLabel, conditions, cg);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, wbLabel);
 
@@ -5712,11 +5712,11 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
          conditions->addPostConditionIfNotAlreadyInserted(castClassReg, TR::RealRegister::AssignAny);
          }
          helperReturnLabel = generateLabelSymbol(cg);
-         helperReturnRegister = helperLink->buildDirectDispatch(node);
-         conditions->addPostCondition(helperReturnRegister, TR::RealRegister::AssignAny);
-         outlinedConditions->addPostCondition(helperReturnRegister, TR::RealRegister::AssignAny);
+         resultReg = helperLink->buildDirectDispatch(node, resultReg);
+         conditions->addPostConditionIfNotAlreadyInserted(resultReg, TR::RealRegister::AssignAny);
+         outlinedConditions->addPostCondition(resultReg, TR::RealRegister::AssignAny);
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, helperReturnLabel, outlinedConditions);
-         generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, (needResult) ? resultReg:helperReturnRegister, helperReturnRegister);
+         generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, resultReg, resultReg);
 
       if (doneOOLLabel)
          {
@@ -5748,7 +5748,8 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
    cg->decReferenceCount(castClassNode);
    if (needResult)
       node->setRegister(resultReg);
-   cg->stopUsingRegister(helperReturnRegister);
+   else
+      cg->stopUsingRegister(resultReg);
    return resultReg;
    }
 
@@ -8537,7 +8538,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR::S390CHelperLinkage *helperLink = static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
       if (opCode == TR::New || TR::Compiler->target.is32Bit())
          {
-         tempResReg = helperLink->buildDirectDispatch(node);
+         resReg = helperLink->buildDirectDispatch(node, resReg);
          }
       else
          {
@@ -8555,13 +8556,12 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             }
          paramInRegisters.push(copyEnumReg);
          paramInRegisters.push(copyClassReg);
-         tempResReg = helperLink->buildDirectDispatch(node, paramInRegisters);
+         helperLink->buildDirectDispatch(node, paramInRegisters, resReg);
          }
          /* Copying the return value from the temporary register to the actual register that is returned */
-      cursorHeapAlloc = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, resReg, tempResReg);
       /* Generating the branch to jump back to the merge label:
        * BRCL    J(0xf), Label L00YZ, labelTargetAddr=0xZZZZZZZZ*/
-      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneLabel, cursorHeapAlloc);
+      generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneLabel);
       heapAllocOOL->swapInstructionListsWithCompilation();
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       ///============================ STAGE 6: Initilize the new object header ==========================///
@@ -8688,8 +8688,6 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          cg->decReferenceCount(litPoolBaseChild);
          }
 
-      if (tempResReg)
-         cg->stopUsingRegister(tempResReg);
       if (classReg)
          cg->stopUsingRegister(classReg);
       if (copyClassReg)

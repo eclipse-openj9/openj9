@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright (c) 2010, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,6 +55,7 @@ import com.ibm.j9ddr.autoblob.xmlparser.StructureXMLParser;
  * @author andhall
  *
  */
+@SuppressWarnings("nls")
 public class GenerateBlobC
 {
 
@@ -211,7 +212,7 @@ public class GenerateBlobC
 		}
 	}
 	
-	private static void loadTypes(SortedSet<UserDefinedType> typesToWrite, Collection<? extends UserDefinedType> toLoad, GenerateBlobCConfig config)
+	static void loadTypes(SortedSet<UserDefinedType> typesToWrite, Collection<? extends UserDefinedType> toLoad, GenerateBlobCConfig config)
 	{
 		for (UserDefinedType t : toLoad) {
 			if (t.shouldBeInBlob()) {
@@ -270,10 +271,10 @@ public class GenerateBlobC
 			out.println("class " + className);
 			out.println("{");
 			out.println("public:");
-			out.println("\tstatic const J9DDRStructDefinition* getStructTable();");
+			out.println("\tstatic const J9DDRStructDefinition *getStructTable();");
 			out.println("};");
 			out.println();
-			out.println("const J9DDRStructDefinition* " + className + "::getStructTable()");
+			out.println("const J9DDRStructDefinition *" + className + "::getStructTable()");
 			out.println("{");
 		}
 	}
@@ -302,7 +303,7 @@ public class GenerateBlobC
 		}
 		out.println("J9DDRStructTableEnd");
 		out.println();
-		out.println("const J9DDRStructDefinition* get" + config.autoblobConfiguration.getName() + "StructTable(void * portLib)");
+		out.println("const J9DDRStructDefinition *get" + config.autoblobConfiguration.getName() + "StructTable(struct OMRPortLibrary *portLib)");
 		out.println("{");
 		out.println("\treturn J9DDR_" + config.autoblobConfiguration.getName() + "_structs;");
 		out.println("}");
@@ -322,7 +323,7 @@ public class GenerateBlobC
 		out.println("}");
 		out.println("extern \"C\" {");
 		out.println();
-		out.println("\tconst J9DDRStructDefinition* get" + config.autoblobConfiguration.getName() + "StructTable(void * portLib)");
+		out.println("\tconst J9DDRStructDefinition *get" + config.autoblobConfiguration.getName() + "StructTable(struct OMRPortLibrary *portLib)");
 		out.println("\t{");
 		out.println("\t\treturn " + getCPlusPlusClassName(config) + "::getStructTable();");
 		out.println("\t}");
