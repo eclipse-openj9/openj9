@@ -50,7 +50,7 @@ enum J9ServerMessageType
    ResolvedMethod_getResolvedInterfaceMethod_3 = 119; // arity 3
    ResolvedMethod_getResolvedInterfaceMethodOffset = 120;
    ResolvedMethod_getUnresolvedStaticMethodInCP = 121;
-//   ResolvedMethod_storeValidationRecordIfNecessary = 122; available
+   ResolvedMethod_isSubjectToPhaseChange = 122;
    ResolvedMethod_getUnresolvedSpecialMethodInCP = 123;
    ResolvedMethod_getUnresolvedFieldInCP = 124;
    ResolvedMethod_getRemoteROMString = 125;

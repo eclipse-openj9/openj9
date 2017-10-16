@@ -626,6 +626,7 @@ public:
    virtual char * fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
    virtual void *stringConstant(int32_t cpIndex) override;
    virtual bool owningMethodDoesntMatter() override;
+   virtual bool isSubjectToPhaseChange(TR::Compilation *comp) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override

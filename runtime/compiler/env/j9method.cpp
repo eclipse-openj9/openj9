@@ -8988,3 +8988,10 @@ TR_ResolvedJ9JAASServerMethod::owningMethodDoesntMatter()
    // JAAS TODO: This is a safe default - we may want to revisit to enable more aggresive JSR292 optimizations
    return false;
    }
+
+bool
+TR_ResolvedJ9JAASServerMethod::isSubjectToPhaseChange(TR::Compilation *comp)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isSubjectToPhaseChange, _remoteMirror);
+   return std::get<0>(_stream->read<bool>());
+   }
