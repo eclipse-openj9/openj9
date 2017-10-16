@@ -3928,91 +3928,11 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
 
       weight = applyArgumentHeuristics(map,weight, calltarget);
 
-         if (calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_checkPackedDecimal_2bInlined1     ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_checkPackedDecimal_2bInlined2     ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertExternalDecimalToLong        ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertUnicodeDecimalToLong         ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertExternalDecimalToInteger     ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertUnicodeDecimalToInteger      ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertLongToExternalDecimal        ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertLongToUnicodeDecimal         ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertIntegerToExternalDecimal     ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertIntegerToUnicodeDecimal      ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertExternalDecimalToBigInteger  ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertExternalDecimalToBigDecimal  ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertUnicodeDecimalToBigInteger   ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertUnicodeDecimalToBigDecimal   ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertBigIntegerToExternalDecimal  ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertBigIntegerToUnicodeDecimal   ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertBigDecimalToExternalDecimal  ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertBigDecimalToUnicodeDecimal   ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_slowSignedPackedToBigDecimal        ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_slowBigDecimalToSignedPacked        ||
-
-             //wrapper methods: i2pd, pd2i, ed<->pd, ud<->pd
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger            ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_ByteBuffer ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong               ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_ByteBuffer    ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal            ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal_ByteBuffer ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertLongToPackedDecimal               ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertLongToPackedDecimal_ByteBuffer    ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToUnicodeDecimal     ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertUnicodeDecimalToPackedDecimal     ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertExternalDecimalToPackedDecimal    ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToExternalDecimal    ||
-
-             //wrapper methods: marshaller class
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayMarshaller_writeShort       ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayMarshaller_writeShortLength ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayMarshaller_writeInt         ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayMarshaller_writeIntLength   ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayMarshaller_writeLong        ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayMarshaller_writeLongLength  ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayMarshaller_writeFloat       ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayMarshaller_writeDouble      ||
-
-             //wrapper methods: unmarshaller class
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readShort      ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readShortLength||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readInt        ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readIntLength  ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readLong       ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readLongLength ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readFloat      ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readDouble     ||
-
-             //wrapper methods: byte array utilities
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayUtils_trailingZeros            ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_ByteArrayUtils_trailingZerosByteAtATime ||
-
-             //wrapper methods: arithmetics
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_addPackedDecimal       ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_dividePackedDecimal    ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_multiplyPackedDecimal  ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_subtractPackedDecimal  ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_remainderPackedDecimal ||
-
-             //wrapper methods: comparisons
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_equalsPackedDecimal              ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_notEqualsPackedDecimal           ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_greaterThanPackedDecimal         ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_greaterThanOrEqualsPackedDecimal ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_lessThanPackedDecimal            ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_lessThanOrEqualsPackedDecimal    ||
-
-             //wrapper methods: shifts
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_shiftLeftPackedDecimal ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_shiftRightPackedDecimal||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_checkPackedDecimal     ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_checkPackedDecimal_2bInlined1  ||
-             calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_dataaccess_PackedDecimal_checkPackedDecimal_2bInlined2
-             )
-            {
-            weight = 1;
-            heuristicTrace(tracer(),"Setting DAA wrapper methods weights to minimum(%d).", weight);
-            }
+      if (calltarget->_calleeMethod->isDAAWrapperMethod())
+         {
+         weight = 1;
+         heuristicTrace(tracer(),"Setting DAA wrapper methods weights to minimum(%d).", weight);
+         }
 
 #ifdef ENABLE_SPMD_SIMD
          if (/*calltarget->_calleeSymbol->getRecognizedMethod() == TR::com_ibm_simt_SPMDKernel_execute ||*/
