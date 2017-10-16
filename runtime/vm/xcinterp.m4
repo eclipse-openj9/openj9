@@ -167,7 +167,7 @@ cInterpreter:
 	mov _rax,uword ptr J9TR_VMThread_javaVM[_rbp]
 	CALL_C_WITH_VMTHREAD(uword ptr J9TR_JavaVM_bytecodeLoop[_rax],0)
 	cmp _rax,J9TR_bcloop_exit_interpreter
-	je short cInterpExit
+	je SHORT_JMP cInterpExit
 	RESTORE_PRESERVED_REGS
 	SWITCH_TO_JAVA_STACK
 	jmp uword ptr J9TR_VMThread_tempSlot[_rbp]

@@ -442,7 +442,17 @@ UMA_PASM_INCLUDES:=$(addprefix -I ,$(UMA_INCLUDES))
 	-rm -f $*.i2
 	$(AS) $(ASFLAGS) -o $*.o $*.s
 	-rm -f $*.s
+</#if>
 
+<#if uma.spec.type.osx>
+#compilation rule for .m4 files
+%$(UMA_DOT_O): %.m4
+	m4 -DOSX $(UMA_M4_FLAGS) $(UMA_C_INCLUDES) $< > $*.s
+	$(AS) $(ASFLAGS) -o $*.o $*.s
+	-mv -f $*.s $*.hold
+</#if>
+
+<#if uma.spec.type.linux>
 #compilation rule for .m4 files
 %$(UMA_DOT_O): %.m4
 	m4 $(UMA_M4_FLAGS) $(UMA_C_INCLUDES) $< > $*.s
