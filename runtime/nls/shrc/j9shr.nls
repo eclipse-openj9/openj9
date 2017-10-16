@@ -6623,3 +6623,10 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting 
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
 # END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=Disable caching of classes loaded by the bootstrap class loader.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
+# END NON-TRANSLATABLE
