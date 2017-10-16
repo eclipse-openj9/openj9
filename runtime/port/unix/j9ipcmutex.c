@@ -38,13 +38,14 @@
 #include <errno.h>
 #include "j9port.h"
 
-
+#if !defined(OSX) /* OSX provides this union in it's sys/sem.h */
 /* arg for semctl semaphore system calls. */
 union semun {
 	int val;
     struct semid_ds *buf;
     uint16_t *array;
 };
+#endif /* OSX */
 
 
 

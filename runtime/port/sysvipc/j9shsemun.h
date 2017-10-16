@@ -27,6 +27,7 @@
 #if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
 /* union semun is defined by including <sys/sem.h> */
 #else
+#if !defined(OSX)
 /* according to X/OPEN we have to define it ourselves */
 union semun {
 	int val;                    /* value for SETVAL */
@@ -34,6 +35,7 @@ union semun {
 	unsigned short int* array;  /* array for GETALL, SETALL */
 	struct seminfo* __buf;      /* buffer for IPC_INFO */
 };
+#endif /* OSX */
 #endif
 
 #endif     /* j9shsemun_h */

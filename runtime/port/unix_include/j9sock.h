@@ -45,7 +45,11 @@
 #include <xti.h>
 #elif !defined(J9ZTPF)
 #include <netinet/tcp.h>
+#if defined(OSX)
+#include <stdlib.h>
+#else /* OSX */
 #include <malloc.h>
+#endif /* !OSX */
 #include <sys/socketvar.h>
 #endif /* defined(J9ZOS390) */
 
