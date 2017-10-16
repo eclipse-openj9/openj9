@@ -277,6 +277,6 @@
 		<flag id="thr_lockReservation" value="true"/>
 		<flag id="thr_smartDeflation" value="true"/>
 		<flag id="uma_gnuDebugSymbols" value="true"/>
-		<flag id="uma_supportsIpv6" value="true"/>
+		<flag id="uma_supportsIpv6" value="false"/>
 	</flags>
 </spec>
