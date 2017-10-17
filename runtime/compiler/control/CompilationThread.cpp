@@ -1406,6 +1406,8 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
          client->write(method->isSubjectToPhaseChange(TR::comp()));
+         }
+         break;
       case J9ServerMessageType::ResolvedMethod_getResolvedHandleMethod:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, I_32>();
@@ -6438,8 +6440,6 @@ void *TR::CompilationInfo::compileRemoteMethod(J9VMThread * vmThread, TR::IlGene
                                                bool *queued, TR_OptimizationPlan * optimizationPlan, void *extra)
    {
    TR_ASSERT(details.isRemoteMethod(), "compileRemoteMethod can only compile remote methods (duh)");
-   //TR_ASSERT(!(extra && (details.isNewInstanceThunk() || details.isMethodHandleThunk() || details.isMethodInProgress())),
-      //"In server mode, we should not be receiving requests of detail NewInstanceThunk, MethodHandleThunk and MethodInProgress.");
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
       {
@@ -6543,8 +6543,6 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
    TR_J9VMBase * fe = TR_J9VMBase::get(_jitConfig, vmThread);
 
    TR_ASSERT(!(extra && requireAsyncCompile != TR_yes), "If RPC info is passed, an async compile should be requested");
-   //TR_ASSERT(!(extra && (details.isNewInstanceThunk() || details.isMethodHandleThunk() || details.isMethodInProgress())),
-             //"In server mode, we should not be receiving requests of detail NewInstanceThunk, MethodHandleThunk and MethodInProgress.");
    TR_ASSERT(!fe->isAOT_DEPRECATED_DO_NOT_USE(), "We need a non-AOT vm here.");
 
    J9Method *method = details.getMethod();
@@ -8049,8 +8047,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       //
       TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
 
-      eligibleForRemoteCompile = true;
-         //!TR::CompilationInfo::isJSR292(details.getRomMethod());
+      eligibleForRemoteCompile = true; // Everything, yay!
 
       if (!entry->isRemoteCompReq()) {
          eligibleForRelocatableCompile =

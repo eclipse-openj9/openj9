@@ -330,10 +330,9 @@ TR_J9ServerVM::isString(TR_OpaqueClassBlock * clazz)
 void *
 TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * clazz)
    {
-   // JAAS TODO: Base implementation returns a pointer to the start of an array.
-   // A proper override should return the entire array.
-   // Where possible, calling methods should be overridden to run on the client instead.
-   TR_ASSERT(false, "SERVER_VM called getMethods(TR_OpaqueClassBlock *)");
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getMethods, clazz);
+   return std::get<0>(stream->read<void *>());
    }
 uint32_t
 TR_J9ServerVM::getNumMethods(TR_OpaqueClassBlock * clazz)
