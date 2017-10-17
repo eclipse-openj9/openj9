@@ -23,5 +23,8 @@
 <module>
 	<artifact type="shared" name="win_64">
 		<include-if condition="spec.flags.module_windbg and spec.flags.J9VM_ENV_DATA64" />
+		<includes>
+			<include path="j9include"/>
+		</includes>
 	</artifact>
 </module>
