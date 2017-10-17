@@ -6096,6 +6096,12 @@ TR_J9VMBase::canAllocateInlineClass(TR_OpaqueClassBlock *clazzOffset)
    return true;
    }
 
+bool
+TR_J9VMBase::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
+   {
+   return getSystemClassLoader() == getClassLoader(clazz);
+   }
+
 TR_OpaqueClassBlock *
 TR_J9VMBase::convertClassPtrToClassOffset(J9Class *clazzPtr)
    {

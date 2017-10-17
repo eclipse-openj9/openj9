@@ -962,3 +962,11 @@ TR_J9ServerVM::getClassFromStatic(void *staticAddress)
    stream->write(JAAS::J9ServerMessageType::VM_getClassFromStatic, staticAddress);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
+
+bool
+TR_J9ServerVM::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_isClassLoadedBySystemClassLoader, clazz);
+   return std::get<0>(stream->read<bool>());
+   }

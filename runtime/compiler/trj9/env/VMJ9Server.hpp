@@ -63,7 +63,6 @@ public:
    virtual const char *sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_t bufLen, TR_Memory *memory) override;
    virtual TR_OpaqueClassBlock * getHostClass(TR_OpaqueClassBlock *clazzOffset) override;
    virtual intptrj_t getStringUTF8Length(uintptrj_t objectPointer) override;
-//   virtual uintptrj_t getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock *) override;
    virtual bool classInitIsFinished(TR_OpaqueClassBlock *) override;
    virtual TR_OpaqueClassBlock *getClassFromNewArrayType(int32_t arrayType) override;
    virtual bool isCloneable(TR_OpaqueClassBlock *clazzPointer) override;
@@ -117,6 +116,7 @@ public:
    virtual TR_OpaqueMethodBlock * getObjectNewInstanceImplMethod() override;
    virtual uintptrj_t getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcInfo) override;
    virtual TR_OpaqueClassBlock * getClassFromStatic(void *staticAddress) override;
+   virtual bool isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz) override;
    };
 
 #endif // VMJ9SERVER_H
