@@ -9293,6 +9293,7 @@ struct JAASMetaDataRelocationInfo
    {
    U_32 metaDataOffset;
    U_32 inlinedCallSitesOffset;
+   U_32 osrInfoOffset;
    U_32 stackAllocMapOffset;
    U_32 internalPointerMapOffset;
    U_32 gcStackAtlasOffset;
@@ -9694,6 +9695,8 @@ TR::CompilationInfoPerThreadBase::compile(
                codeCacheHeader->_metaData = metaData;
                metaData->inlinedCalls = relocationInfo->inlinedCallSitesOffset ?
                         (uint8_t *)metaData + relocationInfo->inlinedCallSitesOffset : nullptr;
+               metaData->osrInfo = relocationInfo->osrInfoOffset ?
+                        (uint8_t *)metaData + relocationInfo->osrInfoOffset : nullptr;
                metaData->gcStackAtlas = (uint8_t *)metaData + relocationInfo->gcStackAtlasOffset;
                J9JITStackAtlas *vmAtlas = (J9JITStackAtlas *) metaData->gcStackAtlas;
                if (vmAtlas->stackAllocMap)
@@ -10708,6 +10711,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          metaRelocationInfo.metaDataOffset = (uint8_t*) metaData - (uint8_t*) dataCacheHeader;
          metaRelocationInfo.inlinedCallSitesOffset = metaData->inlinedCalls ?
                   (uint8_t *)metaData->inlinedCalls - (uint8_t *)metaData : 0;
+         metaRelocationInfo.osrInfoOffset = metaData->osrInfo ?
+                  (uint8_t *)metaData->osrInfo - (uint8_t *)metaData : 0;
          J9JITStackAtlas *gcStackAtlas = (J9JITStackAtlas*) metaData->gcStackAtlas;
          metaRelocationInfo.gcStackAtlasOffset = (uint8_t*) gcStackAtlas - (uint8_t*) metaData;
          metaRelocationInfo.stackAllocMapOffset = (uint8_t*) gcStackAtlas->stackAllocMap - (uint8_t*) metaData;
