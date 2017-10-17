@@ -22695,6 +22695,12 @@ J9::Z::TreeEvaluator::simpleWideningOrTruncation(TR::Node *node,
    return targetReg;
    }
 
+/*
+ * \brief
+ * Generate non-exception throwing intructions for pdModifyPrecision node to narrow or widen packed decimals.
+ * The generated instruction sequence does not validate the source packed decimals. Any invalid packed
+ * decimals will be loaded as is and modified as if their digits and signs were valid.
+*/
 TR::Register *
 J9::Z::TreeEvaluator::pdModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -22708,14 +22714,26 @@ J9::Z::TreeEvaluator::pdModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenera
            !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD)
            || isEnableVectorBCD)
       {
-      // This VPSOP is to truncate packed decimal values and is expected to produce
-      // decimal overflows. Don't check condition code in this case.
-      targetReg = vectorPerformSignOperationHelper(node, cg,
-                                                   true,
-                                                   node->getDecimalPrecision(),
-                                                   true,
-                                                   SignOperationType::maintain,
-                                                   false, 0, false);
+      int32_t targetPrec = node->getDecimalPrecision();
+      targetReg = cg->allocateRegister(TR_VRF);
+
+      int32_t imm = 0x0FFFF >> (TR_VECTOR_REGISTER_SIZE - TR::DataType::packedDecimalPrecisionToByteLength(targetPrec));
+      TR::Register* pdReg = cg->evaluate(node->getFirstChild());
+      TR::Register* maskReg = cg->allocateRegister(TR_VRF);
+      generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, maskReg, imm, 0);
+
+      if (targetPrec % 2 == 0)
+         {
+         TR::Register* shiftAmountReg = cg->allocateRegister(TR_VRF);
+         generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, shiftAmountReg, 4, 0);
+         generateVRRcInstruction(cg, TR::InstOpCode::VSRL, node, maskReg, maskReg, shiftAmountReg, 0, 0, 0);
+         cg->stopUsingRegister(shiftAmountReg);
+         }
+
+      generateVRRcInstruction(cg, TR::InstOpCode::VN, node, targetReg, pdReg, maskReg, 0, 0, 0);
+
+      cg->stopUsingRegister(maskReg);
+      cg->decReferenceCount(node->getFirstChild());
       }
    else
       {
