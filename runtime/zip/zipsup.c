@@ -1009,7 +1009,7 @@ readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry
 	ZIP_NEXT_U32(sig, current);
 
 	if (enumerationPointer) {
-		if ((sig == ZIP_CentralEnd)) {
+		if (sig == ZIP_CentralEnd) {
 			result = ZIP_ERR_NO_MORE_ENTRIES;
 			goto finished;
 		}
