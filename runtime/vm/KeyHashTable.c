@@ -467,7 +467,7 @@ hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass* 
 
 	key.tag = (UDATA)romClass | TAG_ROM_CLASS;
 
-	if (isSystemClassLoader && (LOAD_LOCATION_UNKNOWN == locationType)) {
+	if (isSystemClassLoader && (J9ROMCLASS_IS_UNSAFE(romClass) || (LOAD_LOCATION_UNKNOWN == locationType))) {
 		key.tag |= TAG_GENERATED_PACKAGE;
 	}
 

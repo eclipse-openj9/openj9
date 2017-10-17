@@ -18729,19 +18729,27 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
       regPair = cg->allocateConsecutiveRegisterPair(LReg, HReg);
       }
 
-   // byte-length = precision/2 + 1
    TR::Register* callAddrReg = cg->evaluate(pdAddressNode);
    TR::Register* precisionReg = cg->evaluate(pdOpNode->getChild(2));
+   TR::Register* lengthReg = cg->allocateRegister();
    TR_ASSERT(precisionReg && (precisionReg->getKind() == TR_GPR), "precision should be a 32bit GPR");
 
-   TR::Register* lengthReg = cg->allocateRegister();
-   generateRRInstruction(cg, TR::InstOpCode::LR, node, lengthReg, precisionReg);
-   generateRSInstruction(cg, TR::InstOpCode::SRA, pdOpNode, lengthReg, lengthReg, 0x1, NULL);
+   // byteLength = precision/2 + 1. Note that the length codes of all instructions are (byteLength-1).
+   // Thus, lengthCode = precision/2
+   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+      {
+      generateRSInstruction(cg, TR::InstOpCode::SRAK, pdOpNode, lengthReg, precisionReg, 0x1, NULL);
+      }
+   else
+      {
+      generateRRInstruction(cg, TR::InstOpCode::LR, pdOpNode, lengthReg, precisionReg);
+      generateRSInstruction(cg, TR::InstOpCode::SRA, pdOpNode, lengthReg, 0x1);
+      }
 
    TR::MemoryReference* sourceMR = generateS390MemoryReference(callAddrReg, 0, cg);
    static bool disableTPBeforePD2I = feGetEnv("TR_DisableTPBeforePD2I") != NULL;
 
-   if(isUseVectorBCD)
+   if (isUseVectorBCD)
       {
       // variable length load + vector convert to binary
       TR::Register* vPDReg = cg->allocateRegister(TR_VRF);
@@ -22687,6 +22695,12 @@ J9::Z::TreeEvaluator::simpleWideningOrTruncation(TR::Node *node,
    return targetReg;
    }
 
+/*
+ * \brief
+ * Generate non-exception throwing intructions for pdModifyPrecision node to narrow or widen packed decimals.
+ * The generated instruction sequence does not validate the source packed decimals. Any invalid packed
+ * decimals will be loaded as is and modified as if their digits and signs were valid.
+*/
 TR::Register *
 J9::Z::TreeEvaluator::pdModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
@@ -22700,14 +22714,26 @@ J9::Z::TreeEvaluator::pdModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenera
            !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD)
            || isEnableVectorBCD)
       {
-      // This VPSOP is to truncate packed decimal values and is expected to produce
-      // decimal overflows. Don't check condition code in this case.
-      targetReg = vectorPerformSignOperationHelper(node, cg,
-                                                   true,
-                                                   node->getDecimalPrecision(),
-                                                   true,
-                                                   SignOperationType::maintain,
-                                                   false, 0, false);
+      int32_t targetPrec = node->getDecimalPrecision();
+      targetReg = cg->allocateRegister(TR_VRF);
+
+      int32_t imm = 0x0FFFF >> (TR_VECTOR_REGISTER_SIZE - TR::DataType::packedDecimalPrecisionToByteLength(targetPrec));
+      TR::Register* pdReg = cg->evaluate(node->getFirstChild());
+      TR::Register* maskReg = cg->allocateRegister(TR_VRF);
+      generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, maskReg, imm, 0);
+
+      if (targetPrec % 2 == 0)
+         {
+         TR::Register* shiftAmountReg = cg->allocateRegister(TR_VRF);
+         generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, shiftAmountReg, 4, 0);
+         generateVRRcInstruction(cg, TR::InstOpCode::VSRL, node, maskReg, maskReg, shiftAmountReg, 0, 0, 0);
+         cg->stopUsingRegister(shiftAmountReg);
+         }
+
+      generateVRRcInstruction(cg, TR::InstOpCode::VN, node, targetReg, pdReg, maskReg, 0, 0, 0);
+
+      cg->stopUsingRegister(maskReg);
+      cg->decReferenceCount(node->getFirstChild());
       }
    else
       {

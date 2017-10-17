@@ -240,10 +240,12 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 		_constantPoolMap->computeConstantPoolMapAndSizes();
 		if (!constantPoolMap->isOK()) {
 			_buildResult = _constantPoolMap->getBuildResult();
-		}
-		_constantPoolMap->findVarHandleMethodRefs();
-		if (!constantPoolMap->isOK()) {
-			_buildResult = _constantPoolMap->getBuildResult();
+		} else {
+			/* computeConstantPoolMapAndSizes must complete successfully before calling findVarHandleMethodRefs */
+			_constantPoolMap->findVarHandleMethodRefs();
+			if (!constantPoolMap->isOK()) {
+				_buildResult = _constantPoolMap->getBuildResult();
+			}
 		}
 	}
 

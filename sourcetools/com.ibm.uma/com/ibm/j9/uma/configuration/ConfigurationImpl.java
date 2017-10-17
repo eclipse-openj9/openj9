@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 
 import com.ibm.j9.uma.configuration.freemarker.Features;
 import com.ibm.j9.uma.configuration.freemarker.Source;
+import com.ibm.j9.uma.platform.PlatformOSX;
 import com.ibm.j9.uma.platform.PlatformUnix;
 import com.ibm.j9.uma.platform.PlatformWindows;
 import com.ibm.j9.uma.platform.PlatformZOS;
@@ -280,6 +281,8 @@ public class ConfigurationImpl implements IConfiguration, ISinglePredicateEvalua
 					|| configurationName.startsWith("ose")
 					|| configurationName.startsWith("qnx") ) {
 				platform = new PlatformUnix(this);
+			} else if ( configurationName.startsWith("osx") ) {
+				platform = new PlatformOSX(this);
 			}
 			
 		}
