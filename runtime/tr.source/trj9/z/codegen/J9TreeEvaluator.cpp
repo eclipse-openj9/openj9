@@ -18729,19 +18729,27 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
       regPair = cg->allocateConsecutiveRegisterPair(LReg, HReg);
       }
 
-   // byte-length = precision/2 + 1
    TR::Register* callAddrReg = cg->evaluate(pdAddressNode);
    TR::Register* precisionReg = cg->evaluate(pdOpNode->getChild(2));
+   TR::Register* lengthReg = cg->allocateRegister();
    TR_ASSERT(precisionReg && (precisionReg->getKind() == TR_GPR), "precision should be a 32bit GPR");
 
-   TR::Register* lengthReg = cg->allocateRegister();
-   generateRRInstruction(cg, TR::InstOpCode::LR, node, lengthReg, precisionReg);
-   generateRSInstruction(cg, TR::InstOpCode::SRA, pdOpNode, lengthReg, lengthReg, 0x1, NULL);
+   // byteLength = precision/2 + 1. Note that the length codes of all instructions are (byteLength-1).
+   // Thus, lengthCode = precision/2
+   if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
+      {
+      generateRSInstruction(cg, TR::InstOpCode::SRAK, pdOpNode, lengthReg, precisionReg, 0x1, NULL);
+      }
+   else
+      {
+      generateRRInstruction(cg, TR::InstOpCode::LR, pdOpNode, lengthReg, precisionReg);
+      generateRSInstruction(cg, TR::InstOpCode::SRA, pdOpNode, lengthReg, 0x1);
+      }
 
    TR::MemoryReference* sourceMR = generateS390MemoryReference(callAddrReg, 0, cg);
    static bool disableTPBeforePD2I = feGetEnv("TR_DisableTPBeforePD2I") != NULL;
 
-   if(isUseVectorBCD)
+   if (isUseVectorBCD)
       {
       // variable length load + vector convert to binary
       TR::Register* vPDReg = cg->allocateRegister(TR_VRF);
