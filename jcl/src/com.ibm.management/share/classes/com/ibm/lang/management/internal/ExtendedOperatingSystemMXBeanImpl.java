@@ -293,7 +293,11 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	@Deprecated
 	/*[ENDIF]*/
 	public final long getProcessCpuTimeByNS() {
-		return this.getProcessCpuTime() * 100;
+		long cpuTimeNS = this.getProcessCpuTime();
+		if (CpuTimePrecisionHolder.precision == CpuTimePrecisionHolder.NO_SCALE_FACTOR) {
+			cpuTimeNS *= CpuTimePrecisionHolder.NS_SCALE_FACTOR;
+		}
+		return cpuTimeNS;
 	}
 
 	/**
@@ -615,10 +619,12 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 */
 	private final static class CpuTimePrecisionHolder {
 		static final int precision = getPrecision();
-
+		static final int NS_SCALE_FACTOR = 100;
+		static final int NO_SCALE_FACTOR = 1;
+		
 		private static int getPrecision() {
 			boolean is100ns = Boolean.getBoolean("com.ibm.lang.management.OperatingSystemMXBean.isCpuTime100ns"); //$NON-NLS-1$
-			int precisionVaue = is100ns? 1: 100; /* if 1 ns resolution, scale the result up by 100 */
+			int precisionVaue = is100ns ? NO_SCALE_FACTOR : NS_SCALE_FACTOR; /* if 1 ns resolution, scale the result up by 100 */
 			return precisionVaue;
 		}
 	}
