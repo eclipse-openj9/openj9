@@ -27,7 +27,7 @@
 
 	<test id="Ensure -XXnosuballoc32bitmem is recognized on all platforms">
 		<command>$EXE$ -Xcompressedrefs -XXnosuballoc32bitmem -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output regex="no" type="failure">Command-line option unrecognised</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -38,7 +38,7 @@
 
 	<test id="Generate a javacore without -XXnosuballoc32bitmem">
 		<command>$EXE$ -Xcompressedrefs -Xdump:java:events=vmstop,file=testjavacore.txt -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output regex="no" type="failure">Command-line option unrecognised</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -53,7 +53,7 @@
 	
 	<test id="Generate a javacore with -XXnosuballoc32bitmem">
 		<command>$EXE$ -Xcompressedrefs -XXnosuballoc32bitmem -Xdump:java:events=vmstop,file=testjavacore.txt -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output regex="no" type="failure">Command-line option unrecognised</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>

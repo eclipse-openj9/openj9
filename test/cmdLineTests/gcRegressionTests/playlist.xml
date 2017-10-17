@@ -33,7 +33,7 @@
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)gcRegressionTests.jar$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
 		-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -Xint -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)gcRegressionTests.xml$(Q) \
-		-verbose -explainExcludes -nonZeroExitWhenError; \
+		-verbose -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)gcRegressionTests_excludes.xml$(Q) -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<tags>
 			<tag>sanity</tag>
