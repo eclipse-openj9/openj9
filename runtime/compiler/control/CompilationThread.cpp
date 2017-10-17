@@ -9830,7 +9830,7 @@ TR::CompilationInfoPerThreadBase::compile(
          JAAS::J9ClientStream client;
          
          TR_VerboseLog::writeLineLocked( TR_Vlog_JAAS, "details vtable=%p name=%s", *(uintptr_t*)&details, details.name());
-         client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), allocPtr, availableSpace, detailsStr);
+         client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), allocPtr, availableSpace, detailsStr, details.getType());
          uint32_t statusCode = compilationFailure;
          std::string codeCacheStr;
          std::string dataCacheStr;

@@ -6,6 +6,7 @@
 #include "rpc/types.h"
 #include "rpc/ProtobufTypeConvert.hpp"
 #include "j9.h"
+#include "ilgen/J9IlGeneratorMethodDetails.hpp"
 
 namespace JAAS
 {
@@ -18,12 +19,12 @@ public:
       {}
 
 
-   void buildCompileRequest(std::string romClassStr, uint32_t mOffset, J9Method *method, J9Class* clazz, TR_Hotness optLevel, uint8_t *allocPtr, size_t sz, std::string detailsStr)
+   void buildCompileRequest(std::string romClassStr, uint32_t mOffset, J9Method *method, J9Class* clazz, TR_Hotness optLevel, uint8_t *allocPtr, size_t sz, std::string detailsStr, J9::IlGeneratorMethodDetailsType detailsType)
       {
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->Compile(_ctx.get());
 
-      write(romClassStr, mOffset, method, clazz, optLevel, allocPtr, sz, detailsStr);
+      write(romClassStr, mOffset, method, clazz, optLevel, allocPtr, sz, detailsStr, detailsType);
       }
 
    Status waitForFinish()

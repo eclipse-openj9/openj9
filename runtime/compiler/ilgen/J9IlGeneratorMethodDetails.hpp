@@ -55,6 +55,19 @@ namespace TR { class SymbolReferenceTable;}
 
 namespace J9
 {
+enum IlGeneratorMethodDetailsType
+   {
+   EMPTY = 0,
+   ORDINARY_METHOD = 1<<0,
+   REMOTE_METHOD = 1<<1,
+   DUMP_METHOD = 1<<2,
+   NEW_INSTANCE_THUNK = 1<<3,
+   METHOD_IN_PROGRESS = 1<<4,
+   ARCHETYPE_SPECIMEN = 1<<5,
+   METHOD_HANDLE_THUNK = 1<<6,
+   SHAREABLE_THUNK = 1<<7,
+   CUSTOM_THUNK = 1<<8,
+   };
 
 class OMR_EXTENSIBLE IlGeneratorMethodDetails : public OMR::IlGeneratorMethodDetailsConnector
    {
@@ -77,6 +90,7 @@ public:
 
    static TR::IlGeneratorMethodDetails * clone(TR::IlGeneratorMethodDetails & storage, const TR::IlGeneratorMethodDetails & source);
    TR::IlGeneratorMethodDetails & createRemoteMethodDetails(const TR::IlGeneratorMethodDetails &other,
+                                                            const IlGeneratorMethodDetailsType type,
                                                             J9Method * const method,
                                                             const J9ROMClass *romClass,
                                                             const J9ROMMethod *romMethod,
@@ -93,6 +107,7 @@ public:
    virtual bool isMethodHandleThunk()  const { return false; }
    virtual bool supportsInvalidation() const { return true; }
 
+   IlGeneratorMethodDetailsType getType() const;
    J9Method *getMethod() const { return _method; }
    virtual J9Class *getClass() const { return _class; }
    virtual const J9ROMClass *getRomClass() const { return _romClass; }
