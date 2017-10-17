@@ -548,12 +548,23 @@ public class PlatformWindows extends PlatformImplementation {
 	@Override
 	public void writeTopLevelTargets(StringBuffer buffer) throws UMAException {
 		super.writeTopLevelTargets(buffer);
-		try {
-			// Add the rebase targets
-			writeRebaseTargets(buffer);
-			writeTweakedPhaseTargets(buffer);
-		} catch (IOException e) {
-			throw new UMAException(e);
+
+		if ( configuration.isFlagSet("build_openj9") ) {
+			// No rebase in openj9 builds
+			// ReBase.exe has been removed since Windows SDK 8. It could be replaced with "editbin /REBASE":
+			//	e.g.
+			//		editbin /REBASE:BASE=0x7FFFF750000,DOWN /DYNAMICBASE:NO /NOLOGO <list of *.ddl files>
+			buffer.append("\n");
+			buffer.append("export UMA_SINGLE_REBASE=1\n");
+			buffer.append("\n\n");
+		} else {
+			try {
+				// Add the rebase targets
+				writeRebaseTargets(buffer);
+				writeTweakedPhaseTargets(buffer);
+			} catch (IOException e) {
+				throw new UMAException(e);
+			}
 		}
 	}
 
