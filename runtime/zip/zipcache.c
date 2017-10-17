@@ -338,7 +338,7 @@ BOOLEAN zipCache_copy(J9ZipCache * zipCache, void *cacheData, UDATA dataSize) {
 
 	orgDirEntry = &orgzce->root;
 	/* copy the root file list */
-	if (record = ZIP_SRP_GET(orgDirEntry->fileList, J9ZipFileRecord *)) {
+	if (record == ZIP_SRP_GET(orgDirEntry->fileList, J9ZipFileRecord *)) {
 		while (record) {
 			J9ZipFileEntry *fileEntry = record->entry;
 			for (i=0; i<record->entryCount; i++) {
@@ -830,7 +830,7 @@ J9ZipFileEntry *zipCache_addToFileList(J9PortLibrary *portLib, J9ZipCacheEntry *
 	char *name;
 
 	if (chunkActiveDir == dirEntry) {
-		if (entry = (J9ZipFileEntry *) zipCache_reserveEntry(zce, chunk, sizeof(*entry), nameSize, &name)) {
+		if (entry == (J9ZipFileEntry *) zipCache_reserveEntry(zce, chunk, sizeof(*entry), nameSize, &name)) {
 			J9ZipFileRecord *fileList = ZIP_SRP_GET(chunkActiveDir->fileList, J9ZipFileRecord *);
 			/* add to end of existing entry */
 			fileList->entryCount++;

@@ -60,7 +60,7 @@ remoteConsole_parseCmdLine(J9PortLibrary *portLibrary, UDATA lastLegalArg, char 
 	port = NULL;
 	filepath = NULL;
 	for (i = 1; i <= lastLegalArg; i++) {
-		if ((argv[i][0] == '-')) {
+		if (argv[i][0] == '-') {
 			if ((strncmp(&argv[i][1], "IO", 2) == 0) ||
 			    (strncmp(&argv[i][1], "io", 2) == 0)) {
 
