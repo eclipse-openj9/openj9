@@ -52,7 +52,6 @@
               <xs:element type="xs:string" name="platformRequirements" minOccurs="0"/>
               <xs:element type="xs:string" name="id" minOccurs="0"/>
               <xs:element type="xs:string" name="dependencies" minOccurs="0"/>
-              <xs:element type="xs:string" name="subsets" minOccurs="0"/>
               <xs:element name="tags" minOccurs="0">
                 <xs:complexType>
                   <xs:sequence>

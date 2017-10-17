@@ -29,8 +29,8 @@
 			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	ulimit -f 4000 && \
-	ulimit && \
+	ulimit -f 4000 &amp;&amp; \
+	ulimit &amp;&amp; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)sigxfszHandlingTest.xml$(Q) \

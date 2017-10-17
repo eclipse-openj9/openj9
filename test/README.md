@@ -23,7 +23,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 # How-to Run Tests
 Prerequisites:
 
-  * perl 5.10.1 or above with JSON and Text::CSV module installed
+  * perl 5.10.1 or above with JSON, XML::Parser and Text::CSV module installed
   * make 3.81 or above (recommend make 4.1 or above on windows)
   * wget 1.14 or above
   * ant 1.7.1 or above with ant-contrib.jar

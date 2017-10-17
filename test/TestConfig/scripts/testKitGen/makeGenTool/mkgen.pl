@@ -24,6 +24,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use feature 'say';
+use XML::Parser;
 
 use constant DEBUG => 0;
 
@@ -44,6 +45,12 @@ my $graphSpecs = '';
 my $modes_hs = '';
 my $sp_hs = '';
 my %tests = ();
+my $parseTests = [];
+my $parseTest = {};
+my $parentEle = '';
+my $currentEle = '';
+my $eleStr = '';
+my $eleArr = [];
 
 sub runmkgen {
 	$projectRootDir = $_[0];
@@ -162,82 +169,120 @@ sub generate {
 sub xml2make {
 	my ( $playlistXML, $makeFile, $currentdirs, $subdirsHavePlaylist )
 	  = @_;
-	my $tests = parseXML($playlistXML);
+	$parseTests = [];
+	parseXML($playlistXML);
 	my $testgroups =
-	  genMK( $makeFile, $tests, $currentdirs, $subdirsHavePlaylist );
+	  genMK( $makeFile, $parseTests, $currentdirs, $subdirsHavePlaylist );
 	return $testgroups;
 }
 
-sub parseXML {
-	my ($playlistXML) = @_;
-	open( my $fhIn, '<', $playlistXML ) or die "Cannot open file $_[0]";
-	my @tests = ();
-	while ( my $line = <$fhIn> ) {
-		my %test;
-		my $testlines;
-		if ( $line =~ /\<test\>/ ) {
-			$testlines .= $line;
-			while ( my $testline = <$fhIn> ) {
-				$testlines .= $testline;
-				if ( $testline =~ /\<\/test\>/ ) {
-					last;
-				}
-			}
+sub handle_start {
+	my ($p, $elt) = @_;
+	if ($elt eq 'test') {
+		$eleStr = '';
+		$parseTest = {};
+	} elsif ($elt eq 'testCaseName') {
+		$eleStr = '';
+		$currentEle = 'testCaseName';
+	} elsif ($elt eq 'command') {
+		$eleStr = '';
+		$currentEle = 'command';
+	} elsif ($elt eq 'platformRequirements') {
+		$eleStr = '';
+		$currentEle = 'platformRequirements';
+	} elsif ($elt eq 'capabilities') {
+		$eleStr = '';
+		$currentEle = 'capabilities';
+	} elsif ($elt eq 'variations') {
+		$eleStr = '';
+		$eleArr = [];
+		$currentEle = 'variations';
+		$parentEle = 'variations';
+	} elsif ($elt eq 'variation') {
+		$eleStr = '';
+		$currentEle = 'variation';
+	} elsif ($elt eq 'tags') {
+		$eleStr = '';
+		$eleArr = [];
+		$currentEle = 'tags';
+		$parentEle = 'tags';
+	} elsif ($elt eq 'tag') {
+		$eleStr = '';
+		$currentEle = 'tag';
+	}  elsif ($elt eq 'subsets') {
+		$eleStr = '';
+		$eleArr = [];
+		$currentEle = 'subsets';
+		$parentEle = 'subsets';
+	} elsif ($elt eq 'subset') {
+		$eleStr = '';
+		$currentEle = 'subset';
+	}
+}
 
-			$test{'testCaseName'} =
-			  getElementByTag( $testlines, 'testCaseName' );
-			$test{'command'} = getElementByTag( $testlines, 'command' );
-			$test{'platformRequirements'} =
-			  getElementByTag( $testlines, 'platformRequirements' );
-			$test{'capabilities'} = getElementByTag( $testlines, 'capabilities');
-			my $variations = getElementByTag( $testlines, 'variations' );
-			my $variation = getElementsByTag( $testlines, 'variation' );
-			if ( !@{$variation} ) {
-				$variation = [''];
+sub handle_end {
+	my ($p, $elt) = @_;
+	if ($elt eq 'test') {
+		# variation defaults to noOption
+		if (!defined $parseTest->{'variation'}) {
+			$parseTest->{'variation'} = [''];
+		}
+		# tag defaults to 'sanity'
+		if (!defined $parseTest->{'group'}) {
+			$parseTest->{'group'} = 'sanity';
+		}
+		# subset defaults to all
+		if (!defined $parseTest->{'subsets'}) {
+			$parseTest->{'subsets'} = $allSubsets;
+		}
+		push( @{$parseTests}, $parseTest );
+	} elsif (($elt eq 'testCaseName') && ($currentEle eq 'testCaseName')) {
+		$parseTest->{'testCaseName'} = $eleStr;
+	} elsif (($elt eq 'command') && ($currentEle eq 'command')) {
+		$parseTest->{'command'} = $eleStr;
+	} elsif (($elt eq 'platformRequirements') && ($currentEle eq 'platformRequirements')) {
+		$parseTest->{'platformRequirements'} = $eleStr;
+	} elsif (($elt eq 'capabilities') && ($currentEle eq 'capabilities')) {
+		$parseTest->{'capabilities'} = $eleStr;
+	} elsif (($elt eq 'variation') && ($currentEle eq 'variation') && ($parentEle eq 'variations')) {
+		push (@{$eleArr}, $eleStr);
+	} elsif (($elt eq 'variations') && ($parentEle eq 'variations')) {
+		if (@{$eleArr}) {
+			$parseTest->{'variation'} = $eleArr;
+		}
+	} elsif (($elt eq 'tag') && ($currentEle eq 'tag') && ($parentEle eq 'tags')) {
+		push (@{$eleArr}, $eleStr);
+	} elsif (($elt eq 'tags') && ($parentEle eq 'tags')) {
+		foreach my $eachtag ( @{$eleArr} ) {
+			if ( grep(/^$eachtag$/, @allGroups) ) {
+				$parseTest->{'group'} = $eachtag;
+				last;
 			}
-			$test{'variation'} = $variation;
-
-			my $tags = getElementByTag( $testlines, 'tags' );
-			my $tag = getElementsByTag( $testlines, 'tag' );
-			foreach my $eachtag ( @{$tag} ) {
-				if ( grep(/^$eachtag$/, @allGroups) ) {
-					$test{'group'} = $eachtag;
-					last;
-				}
+		}
+	} elsif (($elt eq 'subset') && ($currentEle eq 'subset') && ($parentEle eq 'subsets')) {
+		push (@{$eleArr}, $eleStr);
+	} elsif (($elt eq 'subsets') && ($parentEle eq 'subsets')) {
+		foreach my $eachsubset ( @{$eleArr} ) {
+			if ( grep(/^$eachsubset$/, @{$allSubsets}) ) {
+				push (@{$parseTest->{'subsets'}}, $eachsubset)
+			} else {
+				die "Error: unrecognized subset " . $eachsubset . " defined.";
 			}
-			# defaults to 'sanity'
-			if (!defined $test{'group'}) {
-				$test{'group'} = 'sanity';
-			}
-
-			my $subset = getElementsByTag( $testlines, 'subset' );
-			foreach my $eachsubset ( @{$subset} ) {
-				if ( grep(/^$eachsubset$/, @{$allSubsets}) ) {
-					push (@{$test{'subsets'}}, $eachsubset)
-				} else {
-					die "Error: unrecognized subset " . $eachsubset . " defined for test " . $test{'testCaseName'} . ".";
-				}
-			}
-			# defaults to all subsets
-			if (!defined $test{'subsets'}) {
-				$test{'subsets'} = $allSubsets;
-			}
-
-			push( @tests, \%test );
 		}
 	}
-	close $fhIn;
-	return \@tests;
 }
 
-sub getElementByTag {
-	my ($element) = $_[0] =~ /\<$_[1]\>(.*)\<\/$_[1]\>/s;
-	return $element;
+sub handle_char {
+	my ($p, $str) = @_;
+	$eleStr .= $str;
 }
 
-sub getElementsByTag {
-	my (@elements) = $_[0] =~ /\<$_[1]\>(.*?)\<\/$_[1]\>/sg;
-	return \@elements;
+sub parseXML {
+	my ( $playlistXML ) = @_;
+	my $parser = new XML::Parser(Handlers => {Start => \&handle_start,
+										End   => \&handle_end,
+										Char  => \&handle_char});
+	$parser->parsefile($playlistXML);
 }
 
 sub genMK {
