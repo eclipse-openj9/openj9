@@ -113,6 +113,8 @@ all: $(TARGETS)
 <#include "targets.mk.ztpf.inc.ftl">
 <#elseif uma.spec.type.linux>
 <#include "targets.mk.linux.inc.ftl">
+<#elseif uma.spec.type.osx>
+<#include "targets.mk.osx.inc.ftl">
 </#if>
 
 # Add OMR include paths
@@ -430,7 +432,7 @@ UMA_PASM_INCLUDES:=$(addprefix -I ,$(UMA_INCLUDES))
 	-mv -f $*.s $*.hold
 </#if>
 
-<#if uma.spec.type.linux>
+<#if uma.spec.type.linux || uma.spec.type.osx>
 # compilation rule for .spp files - translate ! to newline and ^ to #
 %$(UMA_DOT_O): %.spp
 	$(CPP) $(CPPFLAGS) -o $*.i $*.spp
@@ -584,7 +586,7 @@ endif
 
 .PHONY : all clean ddrgen
 
-<#if uma.spec.type.windows || uma.spec.type.linux>
+<#if uma.spec.type.windows || uma.spec.type.linux || uma.spec.type.osx>
 # GNU make magic, replace the .o in UMA_OBJECTS with .d's
 UMA_DEPS := $(filter-out %.res,$(UMA_OBJECTS))
 UMA_DEPS := $(UMA_DEPS:$(UMA_DOT_O)=.d)

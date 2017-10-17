@@ -68,6 +68,7 @@
 			<library name="socket" type="macro"/>			
 			<library name="iconv" type="system">
 				<include-if condition="spec.aix_.*"/>
+				<include-if condition="spec.osx_.*"/>
 			</library>
 			<library name="perfstat" type="system">
 				<include-if condition="spec.aix_.*"/>

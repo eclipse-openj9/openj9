@@ -74,9 +74,9 @@ createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value)
 	}
 #if defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_ARM)
 	return omrstr_printf(line, sizeof(line), "#define %s %zu\n", name, value);
-#elif defined(LINUX) /* J9VM_ARCH_POWER || J9VM_ARCH_ARM */
+#elif defined(LINUX) || defined(OSX) /* J9VM_ARCH_POWER || J9VM_ARCH_ARM */
 	return omrstr_printf(line, sizeof(line), "%s = %zu\n", name, value);
-#elif defined(WIN32) /* LINUX */
+#elif defined(WIN32) /* LINUX  || OSX */
 	return omrstr_printf(line, sizeof(line), "%s equ %zu\n", name, value);
 #elif defined(J9ZOS390) /* WIN32 */
 	return omrstr_printf(line, sizeof(line), "%s EQU %zu\n", name, value);
