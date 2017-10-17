@@ -157,6 +157,7 @@
 		<builder id="OS9PPC"/>
 		<builder id="OSEPPC"/>
 		<builder id="OSOpenHC"/>
+		<builder id="OSX"/>
 		<builder id="PowerMac"/>
 		<builder id="RIM 386"/>
 		<builder id="RS6000"/>
