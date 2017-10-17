@@ -335,7 +335,6 @@ TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * clazz)
    // Where possible, calling methods should be overridden to run on the client instead.
    TR_ASSERT(false, "SERVER_VM called getMethods(TR_OpaqueClassBlock *)");
    }
-/*
 uint32_t
 TR_J9ServerVM::getNumMethods(TR_OpaqueClassBlock * clazz)
    {
@@ -351,7 +350,6 @@ TR_J9ServerVM::getNumInnerClasses(TR_OpaqueClassBlock * clazz)
    stream->write(JAAS::J9ServerMessageType::VM_getNumInnerClasses, clazz);
    return std::get<0>(stream->read<uint32_t>());
    }
-*/
 bool
 TR_J9ServerVM::isPrimitiveArray(TR_OpaqueClassBlock *clazz)
    {

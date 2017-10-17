@@ -609,7 +609,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getMethods(clazz));
          }
          break;
-/*      case J9ServerMessageType::VM_getNumMethods:
+      case J9ServerMessageType::VM_getNumMethods:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(fe->getNumMethods(clazz));
@@ -620,7 +620,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(fe->getNumInnerClasses(clazz));
          }
-         break;*/
+         break;
       case J9ServerMessageType::VM_isPrimitiveArray:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -1481,6 +1481,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(dummyInvokeExact, std::string(utf8Data(signature), J9UTF8_LENGTH(signature)), unresolvedInCP);
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_shouldFailSetRecognizedMethodInfoBecauseOfHCR:
+         {
+         auto mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method*>());
+         client->write(mirror->shouldFailSetRecognizedMethodInfoBecauseOfHCR());
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
@@ -1592,7 +1598,10 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          }
          break;
       case J9ServerMessageType::runFEMacro_derefUintptrjPtr:
+         {
+         TR::VMAccessCriticalSection deref(fe);
          client->write(*std::get<0>(client->getRecvData<uintptrj_t*>()));
+         }
          break;
       case J9ServerMessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup:
          {

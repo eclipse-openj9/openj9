@@ -4646,6 +4646,25 @@ void TR_ResolvedJ9Method::construct(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd 
    #endif
    }
 
+bool
+TR_ResolvedJ9Method::shouldFailSetRecognizedMethodInfoBecauseOfHCR()
+   {
+   TR_OpaqueClassBlock *clazz = fej9()->getClassOfMethod(getPersistentIdentifier());
+   J9JITConfig * jitConfig = fej9()->getJ9JITConfig();
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   TR_PersistentClassInfo *clazzInfo = NULL;
+   if (compInfo->getPersistentInfo()->getPersistentCHTable())
+      {
+      clazzInfo = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, fej9());
+      }
+
+   if (!clazzInfo)
+      return true;
+   else if (clazzInfo->classHasBeenRedefined())
+      return true;
+   return false;
+   }
+
 void
 TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
    {
@@ -4657,23 +4676,8 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
         TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR) &&
        !isNative())
       {
-      TR_OpaqueClassBlock *clazz = fej9()->getClassOfMethod(getPersistentIdentifier());
-      J9JITConfig * jitConfig = fej9()->getJ9JITConfig();
-      TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
-      TR_PersistentClassInfo *clazzInfo = NULL;
-      if (compInfo->getPersistentInfo()->getPersistentCHTable())
-         {
-         clazzInfo = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, fej9());
-         }
-
-      if (!clazzInfo)
-         {
+      if (shouldFailSetRecognizedMethodInfoBecauseOfHCR())
          failBecauseOfHCR = true;
-         }
-      else if (clazzInfo->classHasBeenRedefined())
-         {
-         failBecauseOfHCR = true;
-         }
       }
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug))
@@ -5010,6 +5014,7 @@ TR_ResolvedJ9Method::isSameMethod(TR_ResolvedMethod * m2)
          return false;
 
       bool sameMethodHandle;
+      TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
 
          {
          TR::VMAccessCriticalSection isSameMethod(fej9());
@@ -6552,17 +6557,12 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
 
       if (unresolvedInCP)
          {
-         
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
-               TR_VerboseLog::writeLineLocked( TR_Vlog_JAAS, "Dynamic unresolvedInCP");
-         *unresolvedInCP = true;
          // "unresolvedInCP" is a bit of a misnomer here, but we can describe
          // something equivalent by checking the callSites table.
          //
-         //*unresolvedInCP = (ramClass->callSites[callSiteIndex] == NULL);
+         *unresolvedInCP = (ramClass->callSites[callSiteIndex] == NULL);
          }
 
-      // TODO: get rom string from here
       J9SRP                 *namesAndSigs = (J9SRP*)J9ROMCLASS_CALLSITEDATA(romClass);
       J9ROMNameAndSignature *nameAndSig   = NNSRP_GET(namesAndSigs[callSiteIndex], J9ROMNameAndSignature*);
       J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
@@ -7105,11 +7105,7 @@ getMethodHandleThunkDetails(TR_J9ByteCodeIlGenerator *ilgen, TR::Compilation *co
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    TR::IlGeneratorMethodDetails & details = ilgen->methodDetails();
-   if (details.isRemoteMethod())
-      {
-      comp->failCompilation<TR::ILGenFailure>("Methods containing ILGen macros are currently not supported for remote compilations.");
-      }
-   else if (details.isMethodHandleThunk())
+   if (details.isMethodHandleThunk())
       {
       return & static_cast<J9::MethodHandleThunkDetails &>(details);
       }
@@ -8534,7 +8530,7 @@ TR_ResolvedJ9JAASServerMethod::isInterpreted()
 void
 TR_ResolvedJ9JAASServerMethod::setRecognizedMethodInfo(TR::RecognizedMethod rm)
    {
-   setMandatoryRecognizedMethod(rm);
+   TR_ResolvedJ9Method::setRecognizedMethodInfo(rm);
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_setRecognizedMethodInfo, _remoteMirror, rm);
    _stream->read<JAAS::Void>();
    }
@@ -9131,4 +9127,11 @@ TR_ResolvedJ9JAASServerMethod::getResolvedDynamicMethod(TR::Compilation * comp, 
 
    return result;
 #endif
+   }
+
+bool
+TR_ResolvedJ9JAASServerMethod::shouldFailSetRecognizedMethodInfoBecauseOfHCR()
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_shouldFailSetRecognizedMethodInfoBecauseOfHCR, _remoteMirror);
+   return std::get<0>(_stream->read<bool>());
    }

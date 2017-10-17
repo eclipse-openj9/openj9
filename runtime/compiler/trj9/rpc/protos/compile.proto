@@ -62,6 +62,7 @@ enum J9ServerMessageType
    ResolvedMethod_isUnresolvedCallSiteTableEntry = 131;
    ResolvedMethod_callSiteTableEntryAddress = 132;
    ResolvedMethod_getResolvedDynamicMethod = 133;
+   ResolvedMethod_shouldFailSetRecognizedMethodInfoBecauseOfHCR = 134;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;
@@ -98,8 +99,8 @@ enum J9ServerMessageType
    VM_getByteOffsetToLockword = 231;
    VM_isString1 = 232;
    VM_getMethods = 233;
-//   VM_getNumMethods = 234;
-//   VM_getNumInnerClasses = 235;
+   VM_getNumMethods = 234;
+   VM_getNumInnerClasses = 235;
    VM_isPrimitiveArray = 236;
    VM_getAllocationSize = 237;
    VM_getObjectClass = 238;

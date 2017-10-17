@@ -469,6 +469,7 @@ public:
    virtual char *fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);
    virtual char *fieldOrStaticSignatureChars (int32_t cpIndex, int32_t & len);
 
+   virtual bool shouldFailSetRecognizedMethodInfoBecauseOfHCR();
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm);
 
    virtual bool                  owningMethodDoesntMatter();
@@ -594,6 +595,7 @@ public:
    virtual J9Class *constantPoolHdr() override;
    virtual bool isJNINative() override;
    virtual bool isInterpreted() override;
+   virtual bool shouldFailSetRecognizedMethodInfoBecauseOfHCR() override;
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm) override;
    virtual J9ClassLoader *getClassLoader() override;
    virtual bool staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override;
