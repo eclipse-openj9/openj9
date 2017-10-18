@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,6 +54,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
       ClassEqualityTest,                // Needs object class: y, needs cast class: y
       SuperClassTest,                   // Needs object class: y, needs cast class: y
       CastClassCacheTest,               // Needs object class: y, needs cast class: y
+      DynamicCacheObjectClassTest,      // Needs object class: y, needs cast class: n
+      DynamicCacheDynamicCastClassTest, // Needs object class: y, needs cast class: y
       HelperCall,                       // Needs object class: n, needs cast class: y
 
       InstanceOfOrCheckCastMaxSequences

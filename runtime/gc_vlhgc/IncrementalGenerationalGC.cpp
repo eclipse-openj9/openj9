@@ -79,8 +79,8 @@
 /**
  * Initialization
  */
-MM_IncrementalGenerationalGC::MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *env, MM_CollectorLanguageInterface *cli, MM_HeapRegionManager *manager)
-	: MM_GlobalCollector(env, cli)
+MM_IncrementalGenerationalGC::MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager)
+	: MM_GlobalCollector()
 	, _javaVM((J9JavaVM*)env->getOmrVM()->_language_vm)
 	, _extensions(MM_GCExtensions::getExtensions(env))
 	, _portLibrary(((J9JavaVM *)(env->getLanguageVM()))->portLibrary)
@@ -111,13 +111,13 @@ MM_IncrementalGenerationalGC::MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *
 }
 
 MM_IncrementalGenerationalGC *
-MM_IncrementalGenerationalGC::newInstance(MM_EnvironmentVLHGC *env, MM_CollectorLanguageInterface *cli, MM_HeapRegionManager *manager)
+MM_IncrementalGenerationalGC::newInstance(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager)
 {
 	MM_IncrementalGenerationalGC *globalGC;
 		
 	globalGC = (MM_IncrementalGenerationalGC *)env->getForge()->allocate(sizeof(MM_IncrementalGenerationalGC), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (globalGC) {
-		new(globalGC) MM_IncrementalGenerationalGC(env, cli, manager);
+		new(globalGC) MM_IncrementalGenerationalGC(env, manager);
 		if (!globalGC->initialize(env)) { 
         	globalGC->kill(env);
         	globalGC = NULL;

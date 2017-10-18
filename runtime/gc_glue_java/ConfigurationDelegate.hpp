@@ -32,7 +32,7 @@
 #include "sizeclasses.h"
 
 #include "ClassLoaderManager.hpp"
-#include "CollectorLanguageInterface.hpp"
+#include "ConcurrentGC.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
 #include "GlobalAllocationManager.hpp"
@@ -299,7 +299,8 @@ public:
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
 			vmThread->cardTableVirtualStart = (U_8*)j9gc_incrementalUpdate_getCardTableVirtualStart(omrVM);
 			vmThread->cardTableShiftSize = j9gc_incrementalUpdate_getCardTableShiftValue(omrVM);
-			if (!extensions->optimizeConcurrentWB || (CONCURRENT_OFF < extensions->collectorLanguageInterface->concurrentGC_getConcurrentStats()->getExecutionMode())) {
+			MM_ConcurrentGC *concurrentGC = (MM_ConcurrentGC *)extensions->getGlobalCollector();
+			if (!extensions->optimizeConcurrentWB || (CONCURRENT_OFF < concurrentGC->getConcurrentGCStats()->getExecutionMode())) {
 				vmThread->privateFlags |= J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE;
 			}
 #else

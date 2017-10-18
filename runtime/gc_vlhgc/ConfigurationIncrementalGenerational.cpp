@@ -77,7 +77,7 @@ MM_ConfigurationIncrementalGenerational::createGlobalCollector(MM_EnvironmentBas
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	MM_HeapRegionManager *heapRegionManager = extensions->heapRegionManager;
 
-	return MM_IncrementalGenerationalGC::newInstance(env, extensions->collectorLanguageInterface, heapRegionManager);
+	return MM_IncrementalGenerationalGC::newInstance(env, heapRegionManager);
 }
 
 /**

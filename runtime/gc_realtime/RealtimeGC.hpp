@@ -306,8 +306,8 @@ public:
 
 	virtual bool isMarked(void *objectPtr);
 
-	MM_RealtimeGC(MM_EnvironmentBase *env, MM_CollectorLanguageInterface *cli)
-		: MM_GlobalCollector(env, cli)
+	MM_RealtimeGC(MM_EnvironmentBase *env)
+		: MM_GlobalCollector()
 		, _javaVM((J9JavaVM*)env->getOmrVM()->_language_vm)
 		, _extensions(MM_GCExtensions::getExtensions(env))
 		, _currentGCThreadPriority(-1)

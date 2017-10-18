@@ -549,7 +549,7 @@ public class PlatformWindows extends PlatformImplementation {
 	public void writeTopLevelTargets(StringBuffer buffer) throws UMAException {
 		super.writeTopLevelTargets(buffer);
 
-		if ( configuration.isFlagSet("build_openj9") ) {
+		if ( !configuration.isFlagSet("uma_windowsRebase") ) {
 			// No rebase in openj9 builds
 			// ReBase.exe has been removed since Windows SDK 8. It could be replaced with "editbin /REBASE":
 			//	e.g.

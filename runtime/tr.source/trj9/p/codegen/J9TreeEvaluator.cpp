@@ -3797,6 +3797,12 @@ TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator2(TR::Node *node, T
             if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ArrayOfJavaLangObjectTest\n", node->getOpCode().getName());
             genInstanceOfOrCheckCastObjectArrayTest(node, cr0Reg, objectClassReg, nextSequenceLabel, srm, cg);
             break;
+         case DynamicCacheObjectClassTest:
+            TR_ASSERT_FATAL(false, "%s: DynamicCacheObjectClassTest is not implemented on P\n", node->getOpCode().getName());
+            break;
+         case DynamicCacheDynamicCastClassTest: 
+            TR_ASSERT_FATAL(false, "%s: DynamicCacheDynamicCastClassTest is not implemented on P\n", node->getOpCode().getName());
+            break;
          case HelperCall:
             TR_ASSERT(false, "Doesn't make sense, HelperCall should be the terminal sequence");
             break;
