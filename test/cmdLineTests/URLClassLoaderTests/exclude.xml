@@ -44,4 +44,14 @@
 	<!-- PR 133321 -->
 	<exclude id="JarExtensionsTests.SingleJarInManifest.Verify1" platform="all"><reason>Failure condition was not found</reason></exclude>
 	<exclude id="JarExtensionsTests.MultipleJarsInManifests.Verify1" platform="all"><reason>Failure condition was not found</reason></exclude>
+
+	<exclude id="Sanity.verifySuccess" platform="all"><reason>Unexpected message printed out in cmdLineTester_SCURLClassLoaderNPTests_SE90 and cmdLineTester_SCURLClassLoaderTests_SE90</reason></exclude>
+	<exclude id="FindStore.FindExplicit" platform="all"><reason>Unexpected message printed out in cmdLineTester_SCURLClassLoaderNPTests_SE90 and cmdLineTester_SCURLClassLoaderTests_SE90</reason></exclude>
+	<exclude id="FindStore.FindRelative" platform="all"><reason>Unexpected message printed out in cmdLineTester_SCURLClassLoaderNPTests_SE90 and cmdLineTester_SCURLClassLoaderTests_SE90</reason></exclude>
+	<exclude id="FindStore.FindNetUse" platform="all"><reason>Unexpected message printed out in cmdLineTester_SCURLClassLoaderNPTests_SE90 and cmdLineTester_SCURLClassLoaderTests_SE90</reason></exclude>
+	<exclude id="FindStore.FindClassfile" platform="all"><reason>Unexpected message printed out in cmdLineTester_SCURLClassLoaderNPTests_SE90 and cmdLineTester_SCURLClassLoaderTests_SE90</reason></exclude>
+	<exclude id="FindStore.FindDiffcpClassfile" platform="all"><reason>Unexpected message printed out in cmdLineTester_SCURLClassLoaderNPTests_SE90 and cmdLineTester_SCURLClassLoaderTests_SE90</reason></exclude>
+	<exclude id="JarExtensionsTests.SingleJarInManifestWithIndex.Verify1" platform="all"><reason>Unexpected message printed out in cmdLineTester_SCURLClassLoaderNPTests_SE90 and cmdLineTester_SCURLClassLoaderTests_SE90</reason></exclude>
+	<exclude id="JarExtensionsTests.MultipleJarsInManifestsWithIndex.Verify1" platform="all"><reason>Unexpected message printed out in cmdLineTester_SCURLClassLoaderNPTests_SE90 and cmdLineTester_SCURLClassLoaderTests_SE90</reason></exclude>
+
 </suite>

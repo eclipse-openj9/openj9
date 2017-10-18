@@ -420,26 +420,26 @@
   
  <test id="Test entitledcpus option accepted">
   <command>$EXE$ -Xentitledcpus5 $VERSION$ </command>   		
-  <output regex="no" type="success">java version</output>
+  <output regex="no" type="success">version</output>
   <output regex="no" type="failure">JVMJ9VM013W</output> 
  </test>
 
  <test id="Test entitledcpus negative value">
   <command>$EXE$ -Xentitledcpus-1 $VERSION$ </command>
   <output regex="no" type="success">JVMJ9VM013W</output>   
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
  </test>
 	
  <test id="Test entitledcpus non-numeric value">
   <command>$EXE$ -XentitledcpusZ $VERSION$ </command>  
   <output regex="no" type="success">JVMJ9VM013W</output>   
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
  </test>
 	
  <test id="Test entitledcpus alphanumeric value">
   <command>$EXE$ -Xentitledcpus123Z $VERSION$ </command>  
   <output regex="no" type="success">JVMJ9VM013W</output>   
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
  </test>
  
  
@@ -458,18 +458,18 @@
  <test id="Verify a very long (~1500 bytes) command line option">
   <command>$EXE$ -Djava.home=$INVALIDVERYLONGOPTION$ $VERSION$</command>
   <output regex="no" type="success">Error: Could not create the Java Virtual Machine</output>
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
  </test> 
  
  <test id="Test combining options -Xint and -XtlhPrefetch">
   <command>$EXE$ -Xint -XtlhPrefetch -version</command>
-  <output regex="no" type="success">java version</output>
+  <output regex="no" type="success">version</output>
   <output regex="no" type="failure">JVMJ9VM007E</output>
  </test>
   
  <test id="Test option -Xtrace:output" timeout="60">
   <command>$EXE$ -Xtrace:output=testTraceOutput.trc -version</command>
-  <output regex="no" type="success">java version</output>
+  <output regex="no" type="success">version</output>
  </test>
   
  <test id="-XX:-InterleaveMemory">

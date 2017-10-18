@@ -34,50 +34,50 @@
 
  <test id="test -XX:+IgnoreUnrecognizedVMOptions, bad option: --abc=def.ghi">
   <command>$EXE$ $IGNOREUNRECOGNIZEDVMOPTIONS$ $BADOPTION1$ -version</command>
-  <output type="success" caseSensitive="no" regex="no">java version</output>
+  <output type="success" caseSensitive="no" regex="no">version</output>
   <output type="failure" caseSensitive="no" regex="no">Command-line option unrecognised</output>
  </test>
  
  <test id="test -XX:+IgnoreUnrecognizedVMOptions, bad option: -Xtr:minimizeUserCPU,what">
   <command>$EXE$ $IGNOREUNRECOGNIZEDVMOPTIONS$ $BADOPTION2$ -version</command>
-  <output type="success" caseSensitive="no" regex="no">java version</output>
+  <output type="success" caseSensitive="no" regex="no">version</output>
   <output type="failure" caseSensitive="no" regex="no">Command-line option unrecognised</output>
  </test>
  
  <test id="test -XX:-IgnoreUnrecognizedVMOptions, bad option: --abc=def.ghi">
   <command>$EXE$ $NOIGNOREUNRECOGNIZEDVMOPTIONS$ $BADOPTION1$ -version</command>
   <output type="success" caseSensitive="no" regex="no">Command-line option unrecognised</output>
-  <output type="failure" caseSensitive="no" regex="no">java version</output>
+  <output type="failure" caseSensitive="no" regex="no">version</output>
  </test>
  
  <test id="test -XX:-IgnoreUnrecognizedVMOptions, bad option: -Xtr:minimizeUserCPU,what">
   <command>$EXE$ $NOIGNOREUNRECOGNIZEDVMOPTIONS$ $BADOPTION2$ -version</command>
   <output type="success" caseSensitive="no" regex="no">Command-line option unrecognised</output>
-  <output type="failure" caseSensitive="no" regex="no">java version</output>
+  <output type="failure" caseSensitive="no" regex="no">version</output>
  </test>
  
   <test id="test -XX:-IgnoreUnrecognizedVMOptions -XX:+IgnoreUnrecognizedVMOptions, bad option: --abc=def.ghi">
   <command>$EXE$ $NOIGNOREUNRECOGNIZEDVMOPTIONS$ $BADOPTION1$ $IGNOREUNRECOGNIZEDVMOPTIONS$ -version</command>
-  <output type="success" caseSensitive="no" regex="no">java version</output>
+  <output type="success" caseSensitive="no" regex="no">version</output>
   <output type="failure" caseSensitive="no" regex="no">Command-line option unrecognised</output>
  </test>
  
  <test id="test -XX:-IgnoreUnrecognizedVMOptions -XX:+IgnoreUnrecognizedVMOptions, bad option: -Xtr:minimizeUserCPU,what">
   <command>$EXE$ $NOIGNOREUNRECOGNIZEDVMOPTIONS$ $BADOPTION2$ $IGNOREUNRECOGNIZEDVMOPTIONS$ -version</command>
-  <output type="success" caseSensitive="no" regex="no">java version</output>
+  <output type="success" caseSensitive="no" regex="no">version</output>
   <output type="failure" caseSensitive="no" regex="no">Command-line option unrecognised</output>
  </test>
  
  <test id="test -XX:+IgnoreUnrecognizedVMOptions -XX:-IgnoreUnrecognizedVMOptions, bad option: --abc=def.ghi">
   <command>$EXE$ $IGNOREUNRECOGNIZEDVMOPTIONS$ $BADOPTION1$ $NOIGNOREUNRECOGNIZEDVMOPTIONS$ -version</command>
   <output type="success" caseSensitive="no" regex="no">Command-line option unrecognised</output>
-  <output type="failure" caseSensitive="no" regex="no">java version</output>
+  <output type="failure" caseSensitive="no" regex="no">version</output>
  </test>
  
  <test id="test -XX:+IgnoreUnrecognizedVMOptions -XX:-IgnoreUnrecognizedVMOptions, bad option: -Xtr:minimizeUserCPU,what">
   <command>$EXE$ $IGNOREUNRECOGNIZEDVMOPTIONS$ $BADOPTION2$ $NOIGNOREUNRECOGNIZEDVMOPTIONS$ -version</command>
   <output type="success" caseSensitive="no" regex="no">Command-line option unrecognised</output>
-  <output type="failure" caseSensitive="no" regex="no">java version</output>
+  <output type="failure" caseSensitive="no" regex="no">version</output>
  </test>
 
 </suite>

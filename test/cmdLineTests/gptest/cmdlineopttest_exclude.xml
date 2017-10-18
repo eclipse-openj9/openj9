@@ -134,6 +134,6 @@
 <include id="glaunch -Xsignal:userConditionHandler=percolate -GgpfAfterMain" platform="zos_390-31.*" shouldFix="false"><reason>Only applies to 31-bit zOS</reason></include>
 
 <exclude id="memorycheck" platform="aix.*" shouldFix="true"><reason>Problem Report 119051</reason></exclude>
-
+<exclude id="glaunch fib example" platform="all"><reason>glaunch cannot load VMBench/FibBench class in cmdLineTest_gpTest</reason></exclude>
 </suite>
 

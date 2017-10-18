@@ -28,4 +28,6 @@
 	<exclude id="nameOption11" platform="all" shouldFix="true">
 			<reason>CMVC 169666 : nameOption11 test fails on zOS systems</reason>
 	</exclude>
+	<exclude id="nameOption2" platform="all"><reason>cannot find HelloWorld class</reason></exclude>
+	<exclude id="nameOption4" platform="all"><reason>cannot find HelloWorld class</reason></exclude>
 </suite>

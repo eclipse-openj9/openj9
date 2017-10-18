@@ -27,7 +27,7 @@
 		<testCaseName>cmdLineTester_SCCommandLineOptionTests_win</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
-			<variation>Mode610</variation>	
+			<variation>Mode610</variation>
 		</variations>
 		<command>$(MKDIR) -p $(REPORTDIR); \
 	$(CD) $(REPORTDIR); \

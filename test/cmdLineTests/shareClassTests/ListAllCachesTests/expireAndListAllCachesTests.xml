@@ -57,35 +57,35 @@
 	
 	<test id="Expire & List 1: Create nonpersistent shared cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$NP,nonpersistent -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
 	
 	<test id="Expire & List 2: Create Java 6 nonpersistent shared cache" timeout="600" runPath=".">
 		<command>$JAVA6_EXE$ $currentMode$NP,nonpersistent -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
 	
 	<test id="Expire & List 3: Create Java 6 persistent shared cache" timeout="600" runPath=".">
 		<command>$JAVA6_EXE$ $currentMode$P,persistent -version</command>
-		<output type="success" caseSensitive="yes" regex="no"  javaUtilRegex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no"  javaUtilRegex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
 	
 	<test id="Expire & List 4: Create persistent shared cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$P,persistent -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
 
 	<test id="Expire & List 5: expire persistent cache." timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$P,persistent,expire=0 -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>

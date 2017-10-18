@@ -36,9 +36,22 @@
 	</target>
 
 	<target name="build" depends="dist">
-		<subant target="">
-			<fileset dir="." includes="*/build.xml" />
-		</subant>
+		<if>
+			<equals arg1="${JCL_VERSION}" arg2="latest" />
+			<then>
+				<subant target="">
+					<fileset dir="." includes="*/build.xml">
+						<exclude name="jvmtitests/build.xml" />
+						<exclude name="proxyFieldAccess/build.xml" />
+					</fileset>
+				</subant>
+			</then>
+			<else>
+				<subant target="">
+					<fileset dir="." includes="*/build.xml" />
+				</subant>
+			</else>
+		</if>
 	</target>
 	
 	<target name="dist" depends="init">

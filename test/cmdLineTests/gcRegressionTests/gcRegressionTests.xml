@@ -108,22 +108,22 @@
  </test>
  <test id="-Xmaxf0.75">
  	<command>$EXE$ -Xmaxf0.75 -version</command>
- 	<output regex="no" type="success">java version</output><!-- Ensure 0.75 is accepted as a valid input -->
+ 	<output regex="no" type="success">version</output><!-- Ensure 0.75 is accepted as a valid input -->
  	<output regex="no" type="success">JVMJ9VM007E</output><!--  Command-line option unrecognised, required since -Xmaxf is not supported when gc_realtime is enabled -->
  </test>
  <test id="-Xmaxf1">
  	<command>$EXE$ -Xmaxf1 -version</command>
- 	<output regex="no" type="success">java version</output><!-- Ensure 1 is accepted as a valid input -->
+ 	<output regex="no" type="success">version</output><!-- Ensure 1 is accepted as a valid input -->
  	<output regex="no" type="success">JVMJ9VM007E</output><!--  Command-line option unrecognised, required since -Xmaxf is not supported when gc_realtime is enabled -->
  </test>
  <test id="-Xmaxf1.0">
  	<command>$EXE$ -Xmaxf1.0 -version</command>
- 	<output regex="no" type="success">java version</output><!-- Ensure 1.0 is accepted as a valid input -->
+ 	<output regex="no" type="success">version</output><!-- Ensure 1.0 is accepted as a valid input -->
  	<output regex="no" type="success">JVMJ9VM007E</output><!--  Command-line option unrecognised, required since -Xmaxf is not supported when gc_realtime is enabled -->
  </test>
  <test id="-Xmaxf1.00">
  	<command>$EXE$ -Xmaxf1.00 -version</command>
- 	<output regex="no" type="success">java version</output<!-- Ensure 1.00 is accepted as a valid input -->
+ 	<output regex="no" type="success">version</output<!-- Ensure 1.00 is accepted as a valid input -->
  	<output regex="no" type="success">JVMJ9VM007E</output><!-- Command-line option unrecognised, required since -Xmaxf is not supported when gc_realtime is enabled -->
  </test>
 
@@ -328,17 +328,17 @@
   <exec command="rm foo.*.log" />
   <command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -verbose:gc -Xverbosegclog:foo/bar/foo.log -version</command>
   <output regex="yes" type="success">JVMJ9GC063E.*'foo/bar/foo\.log'.*</output>
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
  </test>
   -->
   
  <test id="-verbose:gc -Xverbosegclog:<verylong>,10,10 - use a very long log file name">
   <exec command="rm foo.*.log" />
   <command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -verbose:gc -Xverbosegclog:foo.#######################################################################################################################################################################################################################################################################################################################.log,10,10 -version</command>
-  <!-- two success modes -- unable to open file (with correct name), or java version printed -->
+  <!-- two success modes -- unable to open file (with correct name), or version printed -->
   <!-- use a regex to allow for translated messages -->
   <output regex="yes" type="success">JVMJ9GC063E.*'foo\.001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001001\.log'.*</output>
-  <output regex="no" type="success">java version</output>
+  <output regex="no" type="success">version</output>
  </test>
  <test id="-verbose:gc -Xcheck:memory - check for memory corruption">
   <command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -verbose:gc -Dibm.java9.forceCommonCleanerShutdown=true -Xcheck:memory:ignoreUnfreedCallsite=zip/:dbgwrapper:unknown:wrapper -version</command>
