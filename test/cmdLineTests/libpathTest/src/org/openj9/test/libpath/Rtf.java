@@ -64,8 +64,7 @@ public class Rtf {
 					+ System.getProperty("com.ibm.oti.vm.bootstrap.library.path"));
 		}
 
-		ProcessBuilder pb = new ProcessBuilder(args[0], "-Xnocompressedrefs",
-				"-Dcom.sun.management.jmxremote", "-cp", args[1], "org.openj9.test.libpath.RtfChild");
+		ProcessBuilder pb = new ProcessBuilder(args[0], "-Dcom.sun.management.jmxremote", "-cp", args[1], "org.openj9.test.libpath.RtfChild");
 
 		System.out.println("launching child");
 		Process p = pb.start();

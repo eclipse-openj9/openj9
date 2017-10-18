@@ -5641,6 +5641,31 @@ break
       callNode->recursivelyDecReferenceCount();
       callNode = resultNode;
       }
+   else if (resolvedMethodSymbol &&
+       resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getClassInitializeStatus &&
+       !isPeekingMethod())
+      {
+      TR::Node* jlClass = callNode->getChild(1);
+      TR::Node* j9Class = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, jlClass, symRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
+
+      if (TR::Compiler->target.is32Bit())
+         {
+         resultNode = TR::Node::createWithSymRef(callNode, TR::iloadi, 1, j9Class, symRefTab()->findOrCreateInitializeStatusFromClassSymbolRef());
+         }
+      else
+         {
+         resultNode = TR::Node::createWithSymRef(callNode, TR::lloadi, 1, j9Class, symRefTab()->findOrCreateInitializeStatusFromClassSymbolRef());
+         resultNode = TR::Node::create(callNode, TR::l2i, 1, resultNode);
+         }
+
+      // Properly handle the checks
+      if (callNodeTreeTop->getNode()->getOpCode().isNullCheck())
+         TR::Node::recreate(callNodeTreeTop->getNode(), TR::treetop);
+      callNodeTreeTop->getNode()->setAndIncChild(0, resultNode);
+      // Decrement ref count for the call
+      callNode->recursivelyDecReferenceCount();
+      callNode = resultNode;
+      }
    else if (symbol->isNative() && isDirectCall)
       {
       if (!comp()->getOption(TR_DisableInliningOfNatives) &&

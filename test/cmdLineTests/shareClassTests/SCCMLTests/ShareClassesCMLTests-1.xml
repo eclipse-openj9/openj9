@@ -114,7 +114,7 @@
 	
 	<test id="Test 1: Create a cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -125,7 +125,7 @@
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xnolinenumbers[\s]*= false</output>
 		<output type="required" caseSensitive="yes" regex="no">Cache contains only classes with line numbers</output>
-		<output type="failure" caseSensitive="yes" regex="no">java version</output>
+		<output type="failure" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -144,7 +144,7 @@
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xnolinenumbers[\s]*= false</output>
 		<output type="required" caseSensitive="yes" regex="no">Cache contains classes with line numbers and classes without line numbers</output>
-		<output type="failure" caseSensitive="yes" regex="no">java version</output>
+		<output type="failure" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -153,7 +153,7 @@
 	
 	<test id="Test 3: Build a new cache with -Xnolinenumbers" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xnolinenumbers $currentMode$,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -164,7 +164,7 @@
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xnolinenumbers[\s]*= true</output>
 		<output type="required" caseSensitive="yes" regex="no">Cache contains only classes without line numbers</output>
-		<output type="failure" caseSensitive="yes" regex="no">java version</output>
+		<output type="failure" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -184,7 +184,7 @@
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xnolinenumbers[\s]*= true</output>
 		<output type="required" caseSensitive="yes" regex="no">Cache contains classes with line numbers and classes without line numbers</output>
-		<output type="failure" caseSensitive="yes" regex="no">java version</output>
+		<output type="failure" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -193,7 +193,7 @@
 
 	<test id="Test 4 - d: Build a new cache with -Xnolinenumbers and mprotect=all" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xnolinenumbers $currentMode$,reset,mprotect=all -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -204,7 +204,7 @@
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xnolinenumbers[\s]*= true</output>
 		<output type="required" caseSensitive="yes" regex="no">Cache contains only classes without line numbers</output>
-		<output type="failure" caseSensitive="yes" regex="no">java version</output>
+		<output type="failure" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -224,7 +224,7 @@
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xnolinenumbers[\s]*= true</output>
 		<output type="required" caseSensitive="yes" regex="no">Cache contains classes with line numbers and classes without line numbers</output>
-		<output type="failure" caseSensitive="yes" regex="no">java version</output>
+		<output type="failure" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -235,7 +235,7 @@
 		
 	<test id="Test 5: Create a cache with 500K memory and ensure vm starts successfully" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xscmx500k $currentMode$,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -254,7 +254,7 @@
 
 	<test id="Test 6: ensure vm starts with the option -Xshareclasses:readonly" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,readonly -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -403,7 +403,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 18: JAZZ 31882 -Xshareclasses:verboseIO testing" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,verboseIO -version</command>
 		<output type="success" caseSensitive="yes" regex="no">[-Xshareclasses verbose I/O output enabled]</output>
@@ -481,7 +481,7 @@
 	
 	<test id="Test 26: CMVC 168131 : Create a non persistent cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -500,7 +500,7 @@
 	
 	<test id="Test 28: CMVC 168131 : Re-create by failing buildid match" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,testBadBuildId -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -529,7 +529,7 @@
 	
 	<test id="Test 31: CMVC 168131 : Create a non persistent cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xscmx32m $currentMode$,nonpersistent -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -547,7 +547,7 @@
 	
 	<test id="Test 33: CMVC 168131 : Re-create by failing buildid match" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,testBadBuildId -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -577,7 +577,7 @@
 	
 	<test id="Test 36: LIR 1445.1 : Debug Area PrintStats Test : Create a test cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -586,7 +586,7 @@
 	</test>
 	
 	<test id="Test 37: LIR 1445.1 : Debug Area PrintStats Test : Ensure -Xshareclasses:printStats cache contains debug area info" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>		
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area size[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area used bytes[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area % used[\s]*= [\d]*%</output>
@@ -614,7 +614,7 @@
 	
 	<test id="Test 39: LIR 1445.1 : Debug Area PrintStats Test : Create a test cache with -Xscdmx0m" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xscdmx0m $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -623,7 +623,7 @@
 	</test>
 	
 	<test id="Test 40: LIR 1445.1 : Debug Area PrintStats Test : Ensure -Xshareclasses:printStats cache contains debug area info" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>		
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area size[\s]*= 0</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area used bytes[\s]*= 0</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area % used[\s]*= 100%</output>
@@ -650,7 +650,7 @@
 	
 	<test id="Test 42: LIR 1445.1 : Debug Area PrintStats Test : Create a test cache with -Xscdmx3m & java core with -Xnolinenumbers" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xdump:java:events=vmstop,file=javacore.txt -Xscdmx3m $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -659,7 +659,7 @@
 	</test>
 	
 	<test id="Test 43: LIR 1445.1 : Debug Area PrintStats Test : Ensure debug area is 3 MB in size and contains data" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>		
+		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area size[\s]*= 3145728</output>
 
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area size[\s]*= 0</output>
@@ -672,7 +672,7 @@
 	</test>
 	
 	<test id="Test 44: LIR 1445.1 : Debug Area PrintStats Test : This test checks the following: 1.) Ensure debug area is 3 MB in size and contains data (when using printDetails) 2.) Ensure printStats does not override printDetails and the extra information expected with printDetails option is present " timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,printStats,printDetails -version</command>		
+		<command>$JAVA_EXE$ $currentMode$,printStats,printDetails -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">metadata start address[\s]*= 0x[\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">runtime flags[\s]*= 0x[\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">cache generation[\s]*= [\d]*</output>
@@ -704,7 +704,7 @@
 
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">metadata start address[\s]*= 0x0\s</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">runtime flags[\s]*= 0x0\s</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">cache generation[\s]*= 0</output>		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">cache generation[\s]*= 0</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area used bytes[\s]*= 0</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area % used[\s]*= 0%</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class LocalVariableTable bytes[\s]*= 0</output>

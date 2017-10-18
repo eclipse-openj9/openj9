@@ -41,7 +41,7 @@
  	<test id="Test softmx value greater than mx">
   		<command>$EXE$ $VERBOSE_SIZE$ -Xmx256m -Xsoftmx512m $VERSION$ </command>  
 		<output regex="no" type="success">-Xsoftmx too large for heap</output>  		
-  		<output regex="no" type="failure">java version</output>
+  		<output regex="no" type="failure">version</output>
   		<output regex="no" type="failure">-Xsoftmx512M</output>
   		<output regex="no" type="failure">soft memory maximum</output>  
  	</test>
@@ -49,7 +49,7 @@
  	<test id="Test softmx value less than minimum allowed heap size">
   		<command>$EXE$ $VERBOSE_SIZE$ -Xmx256m -Xsoftmx2m $VERSION$ </command>  
 		<output regex="no" type="success">-Xsoftmx too small</output>  		
-  		<output regex="no" type="failure">java version</output>
+  		<output regex="no" type="failure">version</output>
   		<output regex="no" type="failure">-Xsoftmx2M</output>
   		<output regex="no" type="failure">soft memory maximum</output>  
  	</test>

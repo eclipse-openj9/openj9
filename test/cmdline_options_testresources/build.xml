@@ -57,7 +57,7 @@
 				<if>
 					<equals arg1="${JCL_VERSION}" arg2="latest"/>
 					<then>
-						<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED" />
+						<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED" />
 					</then>
 					<else>
 						<property name="addExports" value='--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED' />

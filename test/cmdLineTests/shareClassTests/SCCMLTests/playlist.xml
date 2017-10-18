@@ -31,7 +31,7 @@
 		</variations>
 		<command>$(MKDIR) -p $(REPORTDIR); \
 	$(CD) $(REPORTDIR); \
-	cp $(Q)$(TEST_RESROOT)$(D)..$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
+	cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \

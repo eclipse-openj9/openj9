@@ -128,22 +128,10 @@ public abstract class MethodHandle {
 	
 	static final int PUBLIC_FINAL_NATIVE = Modifier.PUBLIC | Modifier.FINAL | Modifier.NATIVE | 0x1000 /* Synthetic */;
 	
-	private static final class UnsafeGetter {
-		public static final Unsafe myUnsafe = Unsafe.getUnsafe();
-	}
+	static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
-	static final Unsafe getUnsafe() {
-		return UnsafeGetter.myUnsafe;
-	}
-	
-	private static final class JITHelpersGetter {
-		public static final JITHelpers myJITHelpers = JITHelpers.getHelpers();
-	}
+	static final JITHelpers JITHELPERS = JITHelpers.getHelpers();
 
-	static final JITHelpers getJITHelpers() {
-		return JITHelpersGetter.myJITHelpers;
-	}
-	
 	private static final int CUSTOM_THUNK_INVOCATION_COUNT = 1000;
 	private static final int DONT_CHECK_FOR_A_WHILE_COUNT  = -1000000000;
 
@@ -228,11 +216,10 @@ public abstract class MethodHandle {
 	}
 
 	static long getJ9ClassFromClass(Class<?> c) {
-		JITHelpers h = getJITHelpers();
-		if (h.is32Bit()) {
-			return h.getJ9ClassFromClass32(c);
+		if (JITHELPERS.is32Bit()) {
+			return JITHELPERS.getJ9ClassFromClass32(c);
 		} else {
-			return h.getJ9ClassFromClass64(c);
+			return JITHELPERS.getJ9ClassFromClass64(c);
 		}
 	}
 
@@ -273,8 +260,6 @@ public abstract class MethodHandle {
 		enforceArityLimit(kind, this.type);
 		/* Must be called even laster as it uses the method type */
 		this.thunks = computeThunks(thunkArg);
-		/* Touch JITHelpers to make sure CP entries are resolved when needed later */
-		getJ9ClassFromClass(MethodHandle.class);
 	}
 	
 	MethodHandle(MethodHandle original, MethodType newType) {
@@ -837,19 +822,17 @@ public abstract class MethodHandle {
 
 	@SuppressWarnings("unused")
 	private static final MethodHandle resolveInvokeDynamic(long j9class, String name, String methodDescriptor, long bsmData) throws Throwable {
-		Unsafe unsafe = getUnsafe();
 		MethodHandle result = null;
 		MethodType type = null;
 
 		try {
 			VMLangAccess access = VM.getVMLangAccess();
 			Object internalRamClass = access.createInternalRamClass(j9class);
-			JITHelpers jitHelper = getJITHelpers();
 			Class<?> classObject = null;
-			if (jitHelper.is32Bit()) {
-				classObject = jitHelper.getClassFromJ9Class32((int)j9class);
+			if (JITHELPERS.is32Bit()) {
+				classObject = JITHELPERS.getClassFromJ9Class32((int)j9class);
 			} else {
-				classObject = jitHelper.getClassFromJ9Class64(j9class);
+				classObject = JITHELPERS.getClassFromJ9Class64(j9class);
 			}
 			
 			Objects.requireNonNull(classObject);
@@ -859,8 +842,8 @@ public abstract class MethodHandle {
 			} catch (TypeNotPresentException e) {
 				throw throwNoClassDefFoundError(e);
 			}
-			int bsmIndex = unsafe.getShort(bsmData);
-			int bsmArgCount = unsafe.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
+			int bsmIndex = UNSAFE.getShort(bsmData);
+			int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
 			long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
 			MethodHandle bsm = getCPMethodHandleAt(internalRamClass, bsmIndex);
 			if (null == bsm) {
@@ -889,7 +872,7 @@ public abstract class MethodHandle {
 
 			for (int i = 0; i < bsmArgCount; i++) {
 				int staticArgIndex = BSM_OPTIONAL_ARGUMENTS_START_INDEX + i;
-				short index = unsafe.getShort(bsmArgs + (i * BSM_ARGUMENT_SIZE));
+				short index = UNSAFE.getShort(bsmArgs + (i * BSM_ARGUMENT_SIZE));
 				int cpType = getCPTypeAt(internalRamClass, index);
 				Object cpEntry = null;
 				switch (cpType) {

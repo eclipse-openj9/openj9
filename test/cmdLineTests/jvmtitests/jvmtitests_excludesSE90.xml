@@ -50,8 +50,4 @@
 		<reason>Testcase requires retransform support, which will be implemented under JAZZ 19331</reason>
 	</exclude>
 
-	<exclude id="rc012" platform="all" shouldFix="true" >
-		<reason>JAZZ 133850: jvmtitests_hrc failed at rc012 testRedefineRunningMethod with java.lang.IllegalArgumentException: Wrong type at constant pool index" </reason>
-	</exclude>
-
 </suite>

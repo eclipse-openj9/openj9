@@ -31,7 +31,7 @@
 
  <test id="-Xgc:suballocatorInitialSize=100m">
   <command>$EXE$ -Xgc:suballocatorInitialSize=100m -version</command>
-  <output regex="no" type="success">java version</output>
+  <output regex="no" type="success">version</output>
   <output regex="no" type="required">Runtime Environment</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
@@ -41,7 +41,7 @@
 
  <test id="-Xgc:suballocatorCommitSize=10m">
   <command>$EXE$ -Xgc:suballocatorCommitSize=10m -version</command>
-  <output regex="no" type="success">java version</output>
+  <output regex="no" type="success">version</output>
   <output regex="no" type="required">Runtime Environment</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
@@ -56,7 +56,7 @@
   <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
   <output regex="no" type="failure">Runtime Environment</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
@@ -69,7 +69,7 @@
   <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
   <output regex="no" type="failure">Runtime Environment</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
@@ -82,7 +82,7 @@
   <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
   <output regex="no" type="failure">Runtime Environment</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
@@ -95,7 +95,7 @@
   <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
   <output regex="no" type="failure">Runtime Environment</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
@@ -103,7 +103,7 @@
 
  <test id="-Xgc:suballocatorCommitSize=256m -Xgc:suballocatorInitialSize=512m">
   <command>$EXE$ -Xgc:suballocatorCommitSize=256m -Xgc:suballocatorInitialSize=512m -version</command>
-  <output regex="no" type="success">java version</output>
+  <output regex="no" type="success">version</output>
   <output regex="no" type="required">Runtime Environment</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
@@ -113,7 +113,7 @@
 
  <test id="-Xgc:suballocatorCommitSize=1m -Xgc:suballocatorInitialSize=1m">
   <command>$EXE$ -Xgc:suballocatorCommitSize=1m -Xgc:suballocatorInitialSize=1m -version</command>
-  <output regex="no" type="success">java version</output>
+  <output regex="no" type="success">version</output>
   <output regex="no" type="required">Runtime Environment</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
@@ -123,7 +123,7 @@
 
  <test id="-Xmcrs100m">
   <command>$EXE$ -Xmcrs100m -version</command>
-  <output regex="no" type="success">java version</output>
+  <output regex="no" type="success">version</output>
   <output regex="no" type="required">Runtime Environment</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
@@ -137,7 +137,7 @@
   <output regex="no" type="success">JVMJ9GC036E</output>
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
   <output regex="no" type="failure">Runtime Environment</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
@@ -145,7 +145,7 @@
 
  <test id="-Xmcrs10m -Xgc:suballocatorCommitSize=80m">
   <command>$EXE$ -Xmcrs10m -Xgc:suballocatorCommitSize=80m -version</command>
-  <output regex="no" type="success">java version</output>
+  <output regex="no" type="success">version</output>
   <output regex="no" type="required">Runtime Environment</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
@@ -159,7 +159,7 @@
   <output regex="no" type="success">JVMJ9GC038E</output>
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
   <output regex="no" type="failure">Runtime Environment</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
@@ -169,7 +169,7 @@
   <command>$EXE$ -Xmcrs4294967040 -version</command>
   <output regex="no" type="success">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
-  <output regex="no" type="failure">java version</output>
+  <output regex="no" type="failure">version</output>
   <output regex="no" type="failure">Runtime Environment</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>

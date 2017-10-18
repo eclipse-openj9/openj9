@@ -109,7 +109,7 @@ sub generateOnDir {
 	while ( my $entry = readdir $dir ) {
 		next if $entry eq '.' or $entry eq '..';
 		# temporarily exclude projects for CCM build (i.e., when JCL_VERSION is latest)
-		my $latestDisabledDir = "cmdline_options_tester cmdline_options_testresources cmdLineTests Jsr292 Jsr335 Panama NativeTest UnsafeTest SharedCPEntryInvokerTests gcCheck classvertest";
+		my $latestDisabledDir = "jvmtitests proxyFieldAccess classesdbgddrext dumpromtests jep178staticLinkingTest getCallerClassTests pltest Jsr292 Jsr335 Panama NativeTest UnsafeTest SharedCPEntryInvokerTests gcCheck classvertest";
 		# Temporarily exclude SVT_Modularity tests from integration build where we are still using b148 JCL level
 		my $currentDisableDir= "SVT_Modularity OpenJ9_Jsr_292_API";
 		if ((($JCL_VERSION eq "latest") and ($latestDisabledDir !~ $entry )) or (($JCL_VERSION eq "current") and ($currentDisableDir !~ $entry ))) {

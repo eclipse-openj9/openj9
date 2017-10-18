@@ -1659,6 +1659,11 @@ int32_t *TR_J9VMBase::getCurrentLocalsMapForDLT(TR::Compilation *comp)
    return currentBundles;
    }
 
+UDATA TR_J9VMBase::getOffsetOfInitializeStatusFromClassField()
+   {
+   return offsetof(J9Class, initializeStatus);
+   }
+
 UDATA TR_J9VMBase::getOffsetOfJavaLangClassFromClassField()
    {
    return offsetof(J9Class, classObject);
@@ -3299,6 +3304,7 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
       case TR::com_ibm_jit_JITHelpers_isArray:
       case TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32:
       case TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64:
+      case TR::com_ibm_jit_JITHelpers_getClassInitializeStatus:
             return DontInline_Callee;
       default:
          break;

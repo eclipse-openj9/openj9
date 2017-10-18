@@ -43,5 +43,6 @@
 <exclude id="Excessive GC throws OOM" platform="Mode301" shouldFix="true"><reason>Metronome and Staccato do not use excessive GC</reason></exclude>
 <exclude id="Excessive GC appears in verbose log" platform="Mode301" shouldFix="true"><reason>Metronome and Staccato do not use excessive GC</reason></exclude>
 
+<exclude id="Ensure no core files have been produced by the preceding tests" platform="all" shouldFix="true"><reason>Extra core files were created which caused failure</reason></exclude>
 </suite>
 

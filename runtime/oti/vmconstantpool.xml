@@ -392,6 +392,7 @@
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_SIZE" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="FJ9OBJECT_SIZE" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_CLASS_DEPTH_AND_FLAGS_OFFSET" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_INIT_SUCCEEDED" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_SUPERCLASSES_OFFSET" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_ROMCLASS_OFFSET" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9ROMCLASS_MODIFIERS_OFFSET" signature="I"/>
