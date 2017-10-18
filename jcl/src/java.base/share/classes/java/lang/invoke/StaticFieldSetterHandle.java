@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2009 IBM Corp. and others
+ * Copyright (c) 2009, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,45 +56,45 @@ final class StaticFieldSetterHandle extends FieldHandle {
 	private final void invokeExact_thunkArchetype_V(int    newValue, int argPlaceholder) {
 		initializeClassIfRequired();
 		if (Modifier.isVolatile(final_modifiers))
-			getUnsafe().putIntVolatile(defc, vmSlot, newValue);
+			UNSAFE.putIntVolatile(defc, vmSlot, newValue);
 		else
-			getUnsafe().putInt        (defc, vmSlot, newValue);
+			UNSAFE.putInt        (defc, vmSlot, newValue);
 	}
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(long   newValue, int argPlaceholder) {
 		initializeClassIfRequired();
 		if (Modifier.isVolatile(final_modifiers))
-			getUnsafe().putLongVolatile(defc, vmSlot, newValue);
+			UNSAFE.putLongVolatile(defc, vmSlot, newValue);
 		else
-			getUnsafe().putLong        (defc, vmSlot, newValue);
+			UNSAFE.putLong        (defc, vmSlot, newValue);
 	}
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(float  newValue, int argPlaceholder) {
 		initializeClassIfRequired();
 		if (Modifier.isVolatile(final_modifiers))
-			getUnsafe().putFloatVolatile(defc, vmSlot, newValue);
+			UNSAFE.putFloatVolatile(defc, vmSlot, newValue);
 		else
-			getUnsafe().putFloat        (defc, vmSlot, newValue);
+			UNSAFE.putFloat        (defc, vmSlot, newValue);
 	}
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(double newValue, int argPlaceholder) {
 		initializeClassIfRequired();
 		if (Modifier.isVolatile(final_modifiers))
-			getUnsafe().putDoubleVolatile(defc, vmSlot, newValue);
+			UNSAFE.putDoubleVolatile(defc, vmSlot, newValue);
 		else
-			getUnsafe().putDouble        (defc, vmSlot, newValue);
+			UNSAFE.putDouble        (defc, vmSlot, newValue);
 	}
 
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object newValue, int argPlaceholder) {
 		initializeClassIfRequired();
 		if (Modifier.isVolatile(final_modifiers))
-			getUnsafe().putObjectVolatile(defc, vmSlot, newValue);
+			UNSAFE.putObjectVolatile(defc, vmSlot, newValue);
 		else
-			getUnsafe().putObject        (defc, vmSlot, newValue);
+			UNSAFE.putObject        (defc, vmSlot, newValue);
 	}
 
 	private static final ThunkTable _thunkTable = new ThunkTable();

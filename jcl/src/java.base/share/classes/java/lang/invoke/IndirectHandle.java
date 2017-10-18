@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2009 IBM Corp. and others
+ * Copyright (c) 2009, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,9 +47,9 @@ abstract class IndirectHandle extends PrimitiveHandle {
 		long receiverClass = getJ9ClassFromClass(receiver.getClass());
 		long result; 
 		if (VTABLE_ENTRY_SIZE == 4) {
-			result = getUnsafe().getInt(receiverClass - vtableOffset(receiver));
+			result = UNSAFE.getInt(receiverClass - vtableOffset(receiver));
 		} else { 
-			result = getUnsafe().getLong(receiverClass - vtableOffset(receiver));
+			result = UNSAFE.getLong(receiverClass - vtableOffset(receiver));
 		}
 		return result;
 	}

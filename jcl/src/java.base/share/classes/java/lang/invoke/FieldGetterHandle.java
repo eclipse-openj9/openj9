@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2009 IBM Corp. and others
+ * Copyright (c) 2009, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,41 +56,41 @@ final class FieldGetterHandle extends FieldHandle {
 	@FrameIteratorSkip
 	private final int    invokeExact_thunkArchetype_I(Object receiver, int argPlaceholder) {
 		if (Modifier.isVolatile(final_modifiers))
-			return getUnsafe().getIntVolatile(receiver, vmSlot+HEADER_SIZE);
+			return UNSAFE.getIntVolatile(receiver, vmSlot + HEADER_SIZE);
 		else
-			return getUnsafe().getInt        (receiver, vmSlot+HEADER_SIZE);
+			return UNSAFE.getInt        (receiver, vmSlot + HEADER_SIZE);
 	}
 
 	@FrameIteratorSkip
 	private final long   invokeExact_thunkArchetype_J(Object receiver, int argPlaceholder) {
 		if (Modifier.isVolatile(final_modifiers))
-			return getUnsafe().getLongVolatile(receiver, vmSlot+HEADER_SIZE);
+			return UNSAFE.getLongVolatile(receiver, vmSlot + HEADER_SIZE);
 		else
-			return getUnsafe().getLong        (receiver, vmSlot+HEADER_SIZE);
+			return UNSAFE.getLong        (receiver, vmSlot + HEADER_SIZE);
 	}
 
 	@FrameIteratorSkip
 	private final float  invokeExact_thunkArchetype_F(Object receiver, int argPlaceholder) {
 		if (Modifier.isVolatile(final_modifiers))
-			return getUnsafe().getFloatVolatile(receiver, vmSlot+HEADER_SIZE);
+			return UNSAFE.getFloatVolatile(receiver, vmSlot + HEADER_SIZE);
 		else
-			return getUnsafe().getFloat        (receiver, vmSlot+HEADER_SIZE);
+			return UNSAFE.getFloat        (receiver, vmSlot + HEADER_SIZE);
 	}
 
 	@FrameIteratorSkip
 	private final double invokeExact_thunkArchetype_D(Object receiver, int argPlaceholder) {
 		if (Modifier.isVolatile(final_modifiers))
-			return getUnsafe().getDoubleVolatile(receiver, vmSlot+HEADER_SIZE);
+			return UNSAFE.getDoubleVolatile(receiver, vmSlot + HEADER_SIZE);
 		else
-			return getUnsafe().getDouble        (receiver, vmSlot+HEADER_SIZE);
+			return UNSAFE.getDouble        (receiver, vmSlot + HEADER_SIZE);
 	}
 
 	@FrameIteratorSkip
 	private final Object invokeExact_thunkArchetype_L(Object receiver, int argPlaceholder) {
 		if (Modifier.isVolatile(final_modifiers))
-			return getUnsafe().getObjectVolatile(receiver, vmSlot+HEADER_SIZE);
+			return UNSAFE.getObjectVolatile(receiver, vmSlot + HEADER_SIZE);
 		else
-			return getUnsafe().getObject        (receiver, vmSlot+HEADER_SIZE);
+			return UNSAFE.getObject        (receiver, vmSlot + HEADER_SIZE);
 	}
 
 	private static final ThunkTable _thunkTable = new ThunkTable();
