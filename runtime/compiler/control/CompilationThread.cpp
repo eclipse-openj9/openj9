@@ -6559,7 +6559,7 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
    if (newInstanceThunkDetails)
       clazz = newInstanceThunkDetails->getClass();
    else
-      clazz = (J9Class*)J9JitMemory::convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(details.getMethod()));
+      clazz = details.getClass();
 
    bool verbose = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest);
    if (verbose)
@@ -6958,8 +6958,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
    // See JTC-JAT 56314
    if (details.isOrdinaryMethod() || details.isMethodInProgress())
       {
-      J9Method    *method    = (J9Method*)details.getMethod();
-      J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+      const J9ROMMethod *romMethod = details.getRomMethod();
 
       if (_J9ROMMETHOD_J9MODIFIER_IS_SET(romMethod, J9AccMethodFrameIteratorSkip))
          {
@@ -6999,7 +6998,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          // other JVM added the method to the cache meanwhile. The net effect is that the said
          // method may have its count bumped up and compiled later
          //
-         if (javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method)))
+         if (javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, details.getRomMethod()))
             {
             TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
             if (
@@ -7381,7 +7380,7 @@ void *TR::CompilationInfo::compileOnApplicationThread(J9VMThread * vmThread, TR:
 
       if (vmThread && TR::Options::sharedClassCache() && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) &&
           details.isOrdinaryMethod() && !isJNINative(method) && !isCompiled(method) &&
-          vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method)))
+          vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, details.getRomMethod()))
          {
          TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
          if (
