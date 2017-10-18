@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ const U_32 newArrayParamConversion[] = {
 0,
 0,
 0,
-(BCV_BASE_TYPE_BYTE_BIT | BCV_TAG_BASE_ARRAY_OR_NULL),		/* 4 */
+(BCV_BASE_TYPE_BOOL_BIT | BCV_TAG_BASE_ARRAY_OR_NULL),		/* 4 */
 (BCV_BASE_TYPE_CHAR_BIT | BCV_TAG_BASE_ARRAY_OR_NULL),		/* 5 */
 (BCV_BASE_TYPE_FLOAT_BIT | BCV_TAG_BASE_ARRAY_OR_NULL),		/* 6 */
 (BCV_BASE_TYPE_DOUBLE_BIT | BCV_TAG_BASE_ARRAY_OR_NULL),	/* 7 */
@@ -67,7 +67,7 @@ BCV_BASE_TYPE_INT_BIT,	BCV_BASE_TYPE_LONG_BIT,		0,							0,
 0,						0,							0,							0,
 0,						0,							BCV_BASE_TYPE_SHORT_BIT,	0, 
 0,						0,							0,							0,
-0,						BCV_BASE_TYPE_BYTE_BIT,		0}; 
+0,						BCV_BASE_TYPE_BOOL_BIT,		0};
 
 /* mapping characters A..Z,[ */
 const U_32 argTypeCharConversion[] = {
@@ -134,5 +134,6 @@ BCV_BASE_ARRAY_TYPE_DOUBLE,		/* B - CFR_STACKMAP_TYPE_DOUBLE_ARRAY */
 BCV_BASE_ARRAY_TYPE_LONG,		/* C - CFR_STACKMAP_TYPE_LONG_ARRAY */
 BCV_BASE_ARRAY_TYPE_SHORT,		/* D - CFR_STACKMAP_TYPE_SHORT_ARRAY */
 BCV_BASE_ARRAY_TYPE_BYTE,		/* E - CFR_STACKMAP_TYPE_BYTE_ARRAY */
-BCV_BASE_ARRAY_TYPE_CHAR		/* F - CFR_STACKMAP_TYPE_CHAR_ARRAY */
+BCV_BASE_ARRAY_TYPE_CHAR,		/* F - CFR_STACKMAP_TYPE_CHAR_ARRAY */
+BCV_BASE_ARRAY_TYPE_BOOL		/* 10 - CFR_STACKMAP_TYPE_BOOL_ARRAY */
 };

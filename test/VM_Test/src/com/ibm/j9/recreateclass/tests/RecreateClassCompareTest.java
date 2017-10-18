@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,10 +129,11 @@ public class RecreateClassCompareTest extends TestCase {
 
 	public void testStackMapTableTestWithBooleanArray() throws Exception {
 		System.out.println("Start testStackMapTableTestWithBooleanArray");
-		/* Recreated StackMapTableWithByteBooleanArrayTest is expected to have byte array instead of boolean array 
-		 * in verification_type array of StackMapTable.
+		/* To follow the Java 9 Spec in which boolean arrays are different from byte arrays
+		 * in terms of verfication type, Recreated StackMapTableWithByteBooleanArrayTest is 
+		 * expected to keep boolean array in verification_type array of StackMapTable.
 		 */
-		runTest(StackMapTableWithByteBooleanArrayTest.class, 1);
+		runTest(StackMapTableWithByteBooleanArrayTest.class, 0);
 		System.out.println("End testStackMapTableTestWithBooleanArray");
 	}
 	
