@@ -127,7 +127,6 @@
 	<flags>
 		<flag id="arch_x86" value="true"/>
 		<flag id="build_SE6_package" value="true"/>
-		<flag id="build_autobuild" value="true"/>
 		<flag id="build_dropToHursley" value="true"/>
 		<flag id="build_dropToToronto" value="true"/>
 		<flag id="build_j2se" value="true"/>
