@@ -609,7 +609,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getMethods(clazz));
          }
          break;
-      case J9ServerMessageType::VM_getNumMethods:
+      /*case J9ServerMessageType::VM_getNumMethods:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(fe->getNumMethods(clazz));
@@ -620,7 +620,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(fe->getNumInnerClasses(clazz));
          }
-         break;
+         break;*/
       case J9ServerMessageType::VM_isPrimitiveArray:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
