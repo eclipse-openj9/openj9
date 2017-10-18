@@ -290,5 +290,6 @@
 		<flag id="thr_lockNursery" value="true"/>
 		<flag id="thr_lockReservation" value="true"/>
 		<flag id="thr_smartDeflation" value="true"/>
+		<flag id="uma_windowsRebase" value="true"/>
 	</flags>
 </spec>

@@ -2316,4 +2316,8 @@ Pass J9PORT_SIG_OPTIONS_ZOS_USE_CEEHDLR into j9sig_set_options()  before the fir
 		<description>Compile tracegenc and run it to generate tracefiles</description>
 		<ifRemoved>Run java version of tracegenc</ifRemoved>
 	</flag>
+	<flag id="uma_windowsRebase">
+		<description>This enables the rebase targets generation for windows platforms</description>
+		<ifRemoved></ifRemoved>
+	</flag>
 </flags>
