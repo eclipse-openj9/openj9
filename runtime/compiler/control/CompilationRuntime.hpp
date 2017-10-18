@@ -577,7 +577,7 @@ public:
       method->extra = reinterpret_cast<void *>(value);
       }
 
-   static uint32_t getMethodBytecodeSize(J9ROMMethod * romMethod);
+   static uint32_t getMethodBytecodeSize(const J9ROMMethod * romMethod);
    static uint32_t getMethodBytecodeSize(J9Method* method);
 
    static bool isJSR292(const J9ROMMethod *romMethod); // Check to see if the J9AccMethodHasMethodHandleInvokes flag is set

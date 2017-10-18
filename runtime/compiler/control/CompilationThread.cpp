@@ -1886,7 +1886,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
        !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold))
       {
       TR::PersistentInfo *persistentInfo = getPersistentInfo();
-      J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+      const J9ROMMethod * romMethod = entry->getMethodDetails().getRomMethod();
       TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, NULL);
 
       // Don't downgrade if method is JSR292. See CMVC 200145
@@ -1991,7 +1991,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
          // Always downgrade J9VMInternals because they are expensive
          if (!doDowngrade)
             {
-            J9UTF8 * className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
+            J9UTF8 * className = J9ROMCLASS_CLASSNAME(entry->getMethodDetails().getRomClass());
             if (className->length == 23 && !memcmp(utf8Data(className), "java/lang/J9VMInternals", 23))
                {
                doDowngrade = true;
@@ -2692,7 +2692,7 @@ void TR::CompilationInfo::releaseLogMonitor()
    }
 
 uint32_t
-TR::CompilationInfo::getMethodBytecodeSize(J9ROMMethod * romMethod)
+TR::CompilationInfo::getMethodBytecodeSize(const J9ROMMethod * romMethod)
    {
    return (romMethod->bytecodeSizeHigh << 16) + romMethod->bytecodeSizeLow;
    }
@@ -5713,7 +5713,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          // While we cannot anticipate that classLoadPhase will last till the method
          // is extracted from the queue, this is the best estimate
          J9Method *method = details.getMethod();
-         if (TR::CompilationInfo::isJSR292(method))
+         if (TR::CompilationInfo::isJSR292(details.getRomMethod()))
             {
             entryWeight = (uint32_t)TR::Options::_weightOfJSR292;
             }
@@ -5726,7 +5726,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          else
             {
             // Smaller methods are easier to compile
-            J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+            const J9ROMMethod * romMethod = details.getRomMethod();
             uint32_t methodSize = getMethodBytecodeSize(romMethod);
 
             if (methodSize < 8)
