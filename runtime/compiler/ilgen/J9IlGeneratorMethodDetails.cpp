@@ -173,7 +173,7 @@ TR::IlGeneratorMethodDetails & IlGeneratorMethodDetails::createRemoteMethodDetai
       }
    else if (type & ARCHETYPE_SPECIMEN)
       return * new (self()) RemoteMethodDetails<ArchetypeSpecimenDetails>(static_cast<const ArchetypeSpecimenDetails &>(other), method, romClass, romMethod, clazz);
-   if ((type & ORDINARY_METHOD) || (type & REMOTE_METHOD))
+   if (type & ORDINARY_METHOD)
       return * new (self()) RemoteMethodDetails<TR::IlGeneratorMethodDetails>(static_cast<const TR::IlGeneratorMethodDetails &>(other), method, romClass, romMethod, clazz);
 
    TR_ASSERT(0, "Unexpected IlGeneratorMethodDetails object\n");
