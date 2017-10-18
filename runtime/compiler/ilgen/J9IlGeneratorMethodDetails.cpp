@@ -88,10 +88,11 @@ IlGeneratorMethodDetails::IlGeneratorMethodDetails(const TR::IlGeneratorMethodDe
 
 IlGeneratorMethodDetails::IlGeneratorMethodDetails(TR_ResolvedMethod *method)
    {
+   TR_ResolvedJ9Method *resolvedMethod = static_cast<TR_ResolvedJ9Method *>(method);
    _method = (J9Method *)(method->getPersistentIdentifier());
-   _class = J9_CLASS_FROM_METHOD(_method);
-   _romClass = _class->romClass;
-   _romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_method);
+   _class = (J9Class *)(resolvedMethod->classOfMethod());
+   _romClass = resolvedMethod->romClassPtr();
+   _romMethod = resolvedMethod->romMethod();
    }
 
 IlGeneratorMethodDetailsType
@@ -137,17 +138,17 @@ TR::IlGeneratorMethodDetails & IlGeneratorMethodDetails::create(
    TR_ResolvedJ9Method * j9method = static_cast<TR_ResolvedJ9Method *>(method);
 
    if (j9method->isNewInstanceImplThunk())
-      return * new (&target) NewInstanceThunkDetails((J9Method *)j9method->getNonPersistentIdentifier(), (J9Class *)j9method->classOfMethod());
+      return * new (&target) NewInstanceThunkDetails(j9method, (J9Class *)j9method->classOfMethod());
 
    else if (j9method->convertToMethod()->isArchetypeSpecimen())
       {
       if (j9method->getMethodHandleLocation())
-         return * new (&target) CustomInvokeExactThunkDetails((J9Method *)j9method->getNonPersistentIdentifier(), j9method->getMethodHandleLocation(), NULL);
+         return * new (&target) CustomInvokeExactThunkDetails(j9method, j9method->getMethodHandleLocation(), NULL);
       else
-         return * new (&target) ArchetypeSpecimenDetails((J9Method *)j9method->getNonPersistentIdentifier());
+         return * new (&target) ArchetypeSpecimenDetails(j9method);
       }
 
-   return * new (&target) TR::IlGeneratorMethodDetails((J9Method *)j9method->getNonPersistentIdentifier());
+   return * new (&target) TR::IlGeneratorMethodDetails(j9method);
 
    }
 
