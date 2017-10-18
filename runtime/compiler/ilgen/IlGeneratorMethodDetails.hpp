@@ -29,6 +29,7 @@
 #include "env/IO.hpp"
 #include "env/jittypes.h"
 #include "infra/Annotations.hpp"
+#include <string>
 
 namespace TR
 {
@@ -61,9 +62,12 @@ namespace J9
 template <typename T>
 class RemoteMethodDetails : public T
    {
+   static std::string _name;
 public:
    RemoteMethodDetails(const T &other, J9Method * const method, const J9ROMClass *romClass, const J9ROMMethod *romMethod, J9Class *clazz) : T(other)
       {
+      if (_name.length() == 0)
+         _name = std::string("Remote") + T::name();
       // need this to make symbol resolution happy
       this->_method = method;
       this->_romClass = romClass;
@@ -72,9 +76,8 @@ public:
       }
 
    virtual bool isRemoteMethod() const { return true; }
-   virtual bool isOrdinaryMethod() const { return false; }
 
-   virtual const char * name() const { return T::name() + 1; }
+   virtual const char * name() const { return _name.c_str(); }
 
    virtual bool sameAs(IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
       {
@@ -84,6 +87,8 @@ public:
       }
 
    };
+template <typename T>
+std::string RemoteMethodDetails<T>::_name = "";
 
 class DumpMethodDetails : public TR::IlGeneratorMethodDetails
    {

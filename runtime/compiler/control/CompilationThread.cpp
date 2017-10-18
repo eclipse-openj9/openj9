@@ -5685,7 +5685,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          isJNINativeMethodRequest = isJNINative(method);
          if (method && async
             && (getInvocationCount(method) == 0)           // this will filter out JNI natives
-            && !(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccNative)) // Never change the extra field of a native method
+            && !(details.getRomMethod()->modifiers & J9AccNative)) // Never change the extra field of a native method
             {
             setJ9MethodVMExtra(method, J9_JIT_QUEUED_FOR_COMPILATION);
             }
