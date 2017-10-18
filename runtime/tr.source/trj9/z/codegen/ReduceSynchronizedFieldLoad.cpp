@@ -103,7 +103,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
       }
    else
       {
-      // LPDG requires memory references to be aligned to a double-wrod boundary
+      // LPDG requires memory references to be aligned to a double-word boundary
       TR::MemoryReference* alignedLockMemoryReference = lockMemoryReference;
       TR::MemoryReference* alignedLoadMemoryReference = loadMemoryReference;
 
@@ -130,7 +130,6 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
          }
       else
          {
-         // This is because we must use LPDG to load a 64-bit value
          TR_ASSERT_SAFE_FATAL((lockWordOffset & 7) == 0, "Lockword must be aligned on a double-word boundary\n");
          }
 
@@ -151,7 +150,6 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
          }
       else
          {
-         // This is because we must use LPDG to load a 64-bit value
          TR_ASSERT_SAFE_FATAL((loadMemoryReference->getOffset() & 7) == 0, "Field must be aligned on a double-word boundary\n");
          }
 
@@ -263,17 +261,11 @@ ReduceSynchronizedFieldLoad::perform()
 
    if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
       {
-      // When concurrent scavenge is enabled we need to load the object reference using a read barrier however
-      // there is no guarded load alternative for the LPD instruction. As such this optimization cannot be carried
-      // out for object reference loads under concurrent scavenge.
-      if (!TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad))
          {
-         if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad))
-            {
-            traceMsg(cg->comp(), "Performing ReduceSynchronizedFieldLoad\n");
+         traceMsg(cg->comp(), "Performing ReduceSynchronizedFieldLoad\n");
 
-            transformed = performOnTreeTops(cg->comp()->getStartTree(), NULL);
-            }
+         transformed = performOnTreeTops(cg->comp()->getStartTree(), NULL);
          }
       }
 
@@ -315,6 +307,16 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
          if (lookaheadChildNode->getOpCodeValue() == TR::treetop || lookaheadChildNode->getOpCodeValue() == TR::compressedRefs)
             {
             TR::Node* loadNode = lookaheadChildNode = lookaheadChildNode->getChild(0);
+
+            // When concurrent scavenge is enabled we need to load the object reference using a read barrier however
+            // there is no guarded load alternative for the LPD instruction. As such this optimization cannot be carried
+            // out for object reference loads under concurrent scavenge.
+            if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && loadNode->getDataType().isAddress())
+               {
+               TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/read-barrier/%s", cg->comp()->signature()));
+
+               continue;
+               }
 
             if (lookaheadChildNode->getOpCodeValue() == TR::l2a)
                {
