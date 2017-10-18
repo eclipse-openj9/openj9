@@ -96,6 +96,7 @@
 			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_arrayLength"/>
 			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_arrayConstructor"/>
 			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_dropLookupMode"/>
+			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_dropArgumentsToMatch"/>
 		</classes>
 	</test>
 

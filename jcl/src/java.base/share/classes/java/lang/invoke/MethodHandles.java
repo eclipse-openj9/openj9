@@ -2928,11 +2928,64 @@ public class MethodHandles {
 	 * @param originalHandle the original method handle to be transformed
 	 * @param skippedArgumentCount the number of argument to be skipped from the original method handle
 	 * @param valueTypes a List of the argument types to be inserted
-	 * @param location the location of the first argument to be removed
+	 * @param location the (zero-indexed) location of the first argument to be removed
 	 * @return a MethodHandle representing a transformed handle as described above
 	 */
-	public static MethodHandle dropArgumentsToMatch(MethodHandle originalHandle, int skippedArgumentCount, List<Class<?>> valueTypes, int location) {
-		throw new UnsupportedOperationException("The method has not yet been implemented for now"); //$NON-NLS-1$
+	public static final  MethodHandle dropArgumentsToMatch(MethodHandle originalHandle, int skippedArgumentCount, List<Class<?>> valueTypes, int location) {
+		/* implicit null checks */
+		MethodType originalType = originalHandle.type;
+		Class<?>[] valueTypesCopy = valueTypes.toArray(new Class<?>[valueTypes.size()]);
+		Class<?>[] ptypes = originalType.parameterArray();
+
+		int valueTypesSize = valueTypesCopy.length;
+		int originalParameterCount = ptypes.length;
+
+		/* check if indexing is in range */
+		if ((skippedArgumentCount < 0) ||
+			(skippedArgumentCount > originalParameterCount)) {
+			/*[MSG "K0670", "Variable skippedArgumentCount out of range"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0670")); //$NON-NLS-1$
+		}
+		if ((location < 0) ||
+			(valueTypesSize < location + (originalParameterCount - skippedArgumentCount))) {
+			/*[MSG "K0671", "Index location out of range"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0671")); //$NON-NLS-1$
+		}
+
+		/* check for void.class in list during clone process */
+		for (int i = 0; i < valueTypesSize; i++) {
+			if (valueTypesCopy[i] == void.class) {
+				/*[MSG "K0672", "Invalid entry void.class found in argument list valueTypes"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0672")); //$NON-NLS-1$
+			} else if (valueTypesCopy[i] == null) {
+				/*[MSG "K0673", "Invalid entry null found in argument list valueTypes"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0673")); //$NON-NLS-1$
+			}
+		}
+
+		/* check if sublist match */
+		for (int i = skippedArgumentCount; i < ptypes.length; i++) {
+			if (ptypes[i] != valueTypesCopy[i + location - skippedArgumentCount]) {
+				/*[MSG "K0674", "Original handle types does not match given types at location"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0674")); //$NON-NLS-1$
+			}
+		}
+
+		/* replace the sublist with new valueTypes */
+		MethodType permuteType = originalType.dropParameterTypes(skippedArgumentCount, originalParameterCount).appendParameterTypes(valueTypesCopy);
+
+		/* construct permutation indexes */
+		int[] permute = new int[originalParameterCount];
+		int originalIndex = 0;
+		for (int i = 0; i < originalParameterCount; i++) {
+			if (originalIndex == skippedArgumentCount) {
+				originalIndex += location;
+			}
+			permute[i] = originalIndex++;
+		}
+
+		assert(validatePermutationArray(permuteType, originalType, permute));
+		return originalHandle.permuteArguments(permuteType, permute);
 	}
 	/*[ENDIF]*/
 	

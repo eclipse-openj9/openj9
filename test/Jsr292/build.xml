@@ -166,6 +166,7 @@
 					<exclude name="**/SamePackageExample.java" />
 					<exclude name="**/LookupAPITests_FindClass.java" />
 					<exclude name="**/LookupAPITests_AccessClass.java"/>
+					<exclude name="**/MethodHandleAPI_dropArgumentsToMatch.java" />
 					
 					<!-- exclude non test files for indyn test -->
 					<exclude name="**/indyn/BootstrapMethods.java" />
