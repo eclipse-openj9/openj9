@@ -1791,9 +1791,8 @@ jitGetOwnedObjectMonitors(J9StackWalkState *walkState)
 			) {
 
 			if (liveMonitorMap) {
-				U_8 *inlineMonitorMask;
-
-				if (inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite)) {
+				U_8 *inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite);
+				if (NULL != inlineMonitorMask) {
 					walkLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, inlineMonitorMask, numberOfMapBits);
 				}
 			}
@@ -1844,9 +1843,8 @@ countOwnedObjectMonitors(J9StackWalkState *walkState)
 			) {
 
 			if (liveMonitorMap) {
-				U_8 *inlineMonitorMask;
-
-				if (inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite)) {
+				U_8 *inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite);
+				if (NULL != inlineMonitorMask) {
 					countLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, inlineMonitorMask, numberOfMapBits);
 				}
 			}
