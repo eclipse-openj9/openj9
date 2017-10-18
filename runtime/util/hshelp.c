@@ -744,7 +744,8 @@ fixSubclassHierarchy(J9VMThread * currentThread, J9HashTable * classPairs)
 		 * was replaced itself, make sure we use the new superclass 
 		 */
 		exemplar.originalRAMClass = superclass;
-		if (result = hashTableFind(classPairs, &exemplar)) {
+		result = hashTableFind(classPairs, &exemplar);
+		if (NULL != result) {
 			if (NULL != result->replacementClass.ramClass) {
 				/* we found the original superclass inside the old-new
 				 * mapping table and have determined a new RAM class
@@ -871,7 +872,8 @@ fixITables(J9VMThread * currentThread, J9HashTable * classPairs)
 
 			while (superClass) {
 				exemplar.originalRAMClass = superClass;
-				if (result = hashTableFind(classPairs, &exemplar)) {
+				result = hashTableFind(classPairs, &exemplar);
+				if (NULL != result) {
 					if (result->replacementClass.ramClass) {
 
 						/* Get the iTable of the replaced superclass */
@@ -1684,7 +1686,8 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 							J9JVMTIClassPair exemplar;
 							J9JVMTIClassPair * result;
 							exemplar.originalRAMClass = ((J9RAMClassRef *) ramConstantPool)[i].value;
-							if (result = hashTableFind(classHashTable, &exemplar)) {
+							result = hashTableFind(classHashTable, &exemplar);
+							if (NULL != result) {
 								((J9RAMClassRef *) ramConstantPool)[i].value = result->replacementClass.ramClass;
 								((J9RAMClassRef *) ramConstantPool)[i].modifiers = result->replacementClass.romClass->modifiers;
 							}

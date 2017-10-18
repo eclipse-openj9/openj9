@@ -102,7 +102,6 @@
 		<property name="uma_make_cmd_cxx_exe_ld" value="$(CXX)"/>
 		<property name="uma_make_cmd_dll_ld" value="$(CC)"/>
 		<property name="uma_make_cmd_exe_ld" value="$(CC)"/>
-		<property name="uma_make_cmd_interp_gcc" value="gcc-4.6"/>
 		<property name="uma_make_cmd_ranlib" value="ranlib"/>
 		<property name="uma_processor" value="amd64"/>
 		<property name="uma_type" value="unix,osx"/>
