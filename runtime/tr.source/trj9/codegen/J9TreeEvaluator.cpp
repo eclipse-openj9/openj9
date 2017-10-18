@@ -218,6 +218,11 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
    bool isInstanceOf = instanceOfOrCheckCastNode->getOpCodeValue() == TR::instanceof;
    bool mayBeNull = !instanceOfOrCheckCastNode->isReferenceNonNull() && !objectNode->isNonNull();
 
+   // By default maxOnsiteCacheSlotForInstanceOf is set to 0 which means cache is disable.
+   // To enable test pass JIT option maxOnsiteCacheSlotForInstanceOf=<number_of_slots>
+   bool createDynamicCacheTests = cg->comp()->getOptions()->getMaxOnsiteCacheSlotForInstanceOf() > 0;
+
+
    uint32_t i = 0;
    uint32_t numProfiledClasses = 0;
 
@@ -245,6 +250,8 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
       // There is a possibility of attempt to cast object to another class and having cache on that object updated by helper.
       // Before going to helper checking the cache.
       sequences[i++] = CastClassCacheTest;
+      if (createDynamicCacheTests)
+         sequences[i++] = DynamicCacheObjectClassTest;
       sequences[i++] = HelperCall;
       }
    // Cast class is a runtime variable, still not a lot of room to be fancy.
@@ -261,7 +268,9 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
       if (cg->supportsInliningOfIsInstance() && 
          instanceOfOrCheckCastNode->getOpCodeValue() == TR::instanceof && 
          instanceOfOrCheckCastNode->getSecondChild()->getOpCodeValue() != TR::loadaddr)
-         sequences[i++] = SuperClassTest; 
+         sequences[i++] = SuperClassTest;
+      if (createDynamicCacheTests)
+         sequences[i++] = DynamicCacheDynamicCastClassTest;
       sequences[i++] = HelperCall;
       }
 
@@ -426,7 +435,8 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
                {
                sequences[i++] = CastClassCacheTest;
                }
-
+            if (createDynamicCacheTests)
+               sequences[i++] = DynamicCacheObjectClassTest;
             sequences[i++] = HelperCall;
             }
          // Cast class is an abstract class, we can skip the class equality test, a superclass test is enough.

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,6 +72,22 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    
    static int32_t _maxCheckcastProfiledClassTests;
    static int32_t getCheckcastMaxProfiledClassTests() {return _maxCheckcastProfiledClassTests;}
+
+   static int32_t _maxOnsiteCacheSlotForInstanceOf;
+   /** \brief
+    *     Returns the _maxOnsiteCacheSlotForInstanceOf
+    *
+    *  \details
+    *     maxOnsiteCacheSlotForInstanceOf node defines number of onsite cache slots to generate per site of instanceOf
+    *     Set this value to 0 to disable generation of onsite cache test for instanceOf
+    *
+    */
+   static int32_t getMaxOnsiteCacheSlotForInstanceOf() {return _maxOnsiteCacheSlotForInstanceOf;}
+   /** \brief
+    *     Setter for _maxOnsiteCacheSlotForInstanceOf
+    *
+    */
+   static int32_t setMaxOnsiteCacheSlotForInstanceOf(int32_t m) {return _maxOnsiteCacheSlotForInstanceOf = m;}
 
    static int32_t _resetCountThreshold;
 
