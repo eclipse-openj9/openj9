@@ -43,11 +43,11 @@
 #define TUNINGFORK_STACCATO_EVENT_SPACE_VERSION 200
 
 MM_StaccatoGC *
-MM_StaccatoGC::newInstance(MM_EnvironmentBase *env, MM_CollectorLanguageInterface *cli)
+MM_StaccatoGC::newInstance(MM_EnvironmentBase *env)
 {
 	MM_StaccatoGC *globalGC = (MM_StaccatoGC *)env->getForge()->allocate(sizeof(MM_StaccatoGC), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (globalGC) {
-		new(globalGC) MM_StaccatoGC(env, cli);
+		new(globalGC) MM_StaccatoGC(env);
 		if (!globalGC->initialize(env)) {
 			globalGC->kill(env);
 			globalGC = NULL;   			

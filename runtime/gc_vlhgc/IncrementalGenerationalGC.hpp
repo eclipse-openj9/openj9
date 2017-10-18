@@ -220,7 +220,7 @@ protected:
 	void reportPGCMarkEnd(MM_EnvironmentBase *env);
 
 public:
-	static MM_IncrementalGenerationalGC *newInstance(MM_EnvironmentVLHGC *env, MM_CollectorLanguageInterface *cli, MM_HeapRegionManager *manager);
+	static MM_IncrementalGenerationalGC *newInstance(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager);
 	/**
 	 * initialize TaxationThreshold during jvm initialize
 	 * @param env[in] the current thread
@@ -420,7 +420,7 @@ public:
 		return _schedulingDelegate.getCurrentEdenSizeInBytes(env);
 	}
 
-	MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *env, MM_CollectorLanguageInterface *cli, MM_HeapRegionManager *manager);
+	MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager);
 
 	friend class MM_MasterGCThread;
 

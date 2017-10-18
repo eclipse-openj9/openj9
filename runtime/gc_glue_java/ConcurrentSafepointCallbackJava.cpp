@@ -88,7 +88,7 @@ void
 MM_ConcurrentSafepointCallbackJava::vmInitialized(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData)
 {
 	J9VMInitEvent* event = (J9VMInitEvent *)eventData;
-	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(event->vmThread->omrVMThread);
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(event->vmThread->omrVMThread);
 	registerAsyncEventHandler(env, (MM_ConcurrentSafepointCallbackJava*) userData);
 }
 
@@ -120,7 +120,7 @@ void
 MM_ConcurrentSafepointCallbackJava::vmTerminating(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData)
 {
 	J9VMShutdownEvent* event = (J9VMShutdownEvent *)eventData;
-	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(event->vmThread->omrVMThread);
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(event->vmThread->omrVMThread);
 	J9JavaVM *javaVM = (J9JavaVM*) env->getLanguageVM();
 
 	MM_ConcurrentSafepointCallbackJava *callback = (MM_ConcurrentSafepointCallbackJava*) userData;
@@ -138,7 +138,7 @@ void
 MM_ConcurrentSafepointCallbackJava::reportGlobalGCComplete(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData)
 {
 	MM_GlobalGCEndEvent *event = (MM_GlobalGCEndEvent *)eventData;
-	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(event->currentThread);
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(event->currentThread);
 	J9JavaVM *javaVM = (J9JavaVM*) env->getLanguageVM();
 
 	MM_ConcurrentSafepointCallbackJava *callback = (MM_ConcurrentSafepointCallbackJava*) userData;
@@ -169,7 +169,7 @@ MM_ConcurrentSafepointCallbackJava::registerCallback(MM_EnvironmentBase *env, Sa
 }
 
 void
-MM_ConcurrentSafepointCallbackJava::requestCallback(MM_EnvironmentStandard *env)
+MM_ConcurrentSafepointCallbackJava::requestCallback(MM_EnvironmentBase *env)
 {
 	Assert_MM_false(NULL == _handler);
 	Assert_MM_false(NULL == _userData);
@@ -179,7 +179,7 @@ MM_ConcurrentSafepointCallbackJava::requestCallback(MM_EnvironmentStandard *env)
 }
 
 void
-MM_ConcurrentSafepointCallbackJava::cancelCallback(MM_EnvironmentStandard *env)
+MM_ConcurrentSafepointCallbackJava::cancelCallback(MM_EnvironmentBase *env)
 {
 	J9JavaVM *javaVM = (J9JavaVM*) env->getLanguageVM();
 	javaVM->internalVMFunctions->J9CancelAsyncEvent(javaVM, NULL, _asyncEventKey);
