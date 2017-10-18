@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -294,4 +294,12 @@ bool
 J9::ClassEnv::getStringFieldByName(TR::Compilation *comp, TR::SymbolReference *stringRef, TR::SymbolReference *fieldRef, void* &pResult)
    {
    return comp->fej9()->getStringFieldByName(comp, stringRef, fieldRef, pResult);
+   }
+
+uintptrj_t
+J9::ClassEnv::getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassBlock* arrayClass)
+   {
+   TR_ASSERT(TR::Compiler->cls.isClassArray(comp, arrayClass), "Class must be array");
+   int32_t logElementSize = ((J9ROMArrayClass*)((J9Class*)arrayClass)->romClass)->arrayShape & 0x0000FFFF;
+   return 1 << logElementSize;
    }

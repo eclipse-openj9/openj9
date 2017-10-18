@@ -2002,7 +2002,7 @@ int32_t TR_J9VMBase::getArrayletMask(int32_t width)
    return mask;
    }
 
-int32_t TR_J9VMBase::getArrayletLeafIndex(int32_t index, int32_t elementSize)
+int32_t TR_J9VMBase::getArrayletLeafIndex(int64_t index, int32_t elementSize)
    {
    TR::Compilation* comp = TR::comp();
    TR_ASSERT(TR::Compiler->om.canGenerateArraylets(), "not supposed to be generating arraylets!");
@@ -2014,7 +2014,7 @@ int32_t TR_J9VMBase::getArrayletLeafIndex(int32_t index, int32_t elementSize)
    return  arrayletIndex;
    }
 
-int32_t TR_J9VMBase::getLeafElementIndex(int32_t index , int32_t elementSize)
+int32_t TR_J9VMBase::getLeafElementIndex(int64_t index , int32_t elementSize)
    {
    TR::Compilation* comp = TR::comp();
    TR_ASSERT(TR::Compiler->om.canGenerateArraylets(), "not supposed to be generating arraylets!");
@@ -4410,6 +4410,8 @@ TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Comp
    //
    if (fieldRef->isUnresolved())
       return false;
+   if (comp->getSymRefTab()->isImmutableArrayShadow(fieldRef))
+      return true;
    if (fieldRef->getSymbol()->isShadow())
       {
       if (fieldRef->getReferenceNumber() < comp->getSymRefTab()->getNumPredefinedSymbols())
@@ -4422,6 +4424,7 @@ TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Comp
          case TR::Symbol::Java_lang_invoke_MethodHandle_defc:         // JTC 83328: Delete once VM changes promote.  Moved to PrimitiveHandle
          case TR::Symbol::Java_lang_invoke_PrimitiveHandle_rawModifiers:
          case TR::Symbol::Java_lang_invoke_PrimitiveHandle_defc:
+         case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
             {
             return true;
             }

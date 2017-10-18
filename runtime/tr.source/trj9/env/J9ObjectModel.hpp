@@ -67,8 +67,16 @@ public:
 
    uintptrj_t discontiguousArrayHeaderSizeInBytes();
 
+   // For array access
    bool isDiscontiguousArray(int32_t sizeInBytes);
    bool isDiscontiguousArray(int32_t sizeInElements, int32_t elementSize);
+   bool isDiscontiguousArray(TR::Compilation* comp, uintptrj_t objectPointer);
+   intptrj_t getArrayLengthInElements(TR::Compilation* comp, uintptrj_t objectPointer);
+   uintptrj_t getArrayLengthInBytes(TR::Compilation* comp, uintptrj_t objectPointer);
+   uintptrj_t getArrayElementWidthInBytes(TR::DataType type);
+   uintptrj_t getArrayElementWidthInBytes(TR::Compilation* comp, uintptrj_t objectPointer);
+   uintptrj_t getAddressOfElement(TR::Compilation* comp, uintptrj_t objectPointer, int64_t offset);
+   uintptrj_t decompressReference(TR::Compilation* comp, uintptrj_t compressedReference);
 
    bool generateCompressedObjectHeaders();
 

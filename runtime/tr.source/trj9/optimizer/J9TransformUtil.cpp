@@ -123,12 +123,13 @@ static bool isFinalFieldPointingAtRepresentableNativeStruct(TR::SymbolReference 
 static bool isJavaField(TR::SymbolReference *symRef, TR::Compilation *comp)
    {
    TR::Symbol *symbol = symRef->getSymbol();
-   return symbol->isShadow() && symRef->getCPIndex() >= 0;
-   }
+   if (symbol->isShadow() &&
+       (symRef->getCPIndex() >= 0 ||
+        // java/lang/invoke/VarHandle.handleTable can be fabricated by VarHandleTransformer, thus does not have a valid cp index
+        symbol->getRecognizedField() == TR::Symbol::Java_lang_invoke_VarHandle_handleTable))
+      return true;
 
-static bool isJavaObjectReferenceFieldOfJavaObject(TR::SymbolReference *symRef, TR::Compilation *comp)
-   {
-   return isJavaField(symRef, comp) && symRef->getSymbol()->isCollectedReference();
+   return false;
    }
 
 static bool isFieldOfJavaObject(TR::SymbolReference *symRef, TR::Compilation *comp)
@@ -154,6 +155,38 @@ static bool isFinalFieldPointingAtUnrepresentableNativeStruct(TR::SymbolReferenc
    return isFinalFieldPointingAtNativeStruct(symRef, comp) && !isFinalFieldPointingAtRepresentableNativeStruct(symRef, comp);
    }
 
+static bool isArrayWithConstantElements(TR::SymbolReference *symRef, TR::Compilation *comp)
+   {
+   TR::Symbol *symbol = symRef->getSymbol();
+   if (symbol->isShadow() && !symRef->isUnresolved())
+      {
+      switch (symbol->getRecognizedField())
+         {
+         case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
+            return true;
+         default:
+            break;
+         }
+      }
+   return false;
+   }
+
+static bool isFabricatedVarHandleField(TR::SymbolReference *symRef, TR::Compilation *comp)
+   {
+   TR::Symbol *symbol = symRef->getSymbol();
+   if (symbol->isShadow() && symRef->getCPIndex() < 0)
+      {
+      switch (symbol->getRecognizedField())
+         {
+         case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
+            return true;
+         default:
+            break;
+         }
+      }
+   return false;
+   }
+
 static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, TR::Compilation *comp)
    {
    // Return true only if loading the given field from the given struct will
@@ -172,15 +205,36 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, TR::C
       // check that, then we shouldn't be in this function in the first place.
 
       TR_OpaqueClassBlock *objectClass = fej9->getObjectClass((uintptrj_t)curStruct);
-      TR_OpaqueClassBlock *fieldClass  = field->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, field->getCPIndex());
-      //
-      // TODO: getDeclaringClassFromFieldOrStatic would be better, but it's a
-      // little scarier because it's new.  getClassFromFieldOrStatic should be
-      // more conservative in this case, so probably more suitable for
-      // r13.java.
+      TR_OpaqueClassBlock *fieldClass = NULL;
+      if (isFabricatedVarHandleField(field, comp))
+         fieldClass = fej9->getSystemClassFromClassName("java/lang/invoke/VarHandle", strlen("java/lang/invoke/VarHandle"));
+      else
+         {
+         //
+         // TODO: getDeclaringClassFromFieldOrStatic would be better, but it's a
+         // little scarier because it's new.  getClassFromFieldOrStatic should be
+         // more conservative in this case, so probably more suitable for
+         // r13.java.
+         fieldClass = field->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, field->getCPIndex());
+         }
+
+      if (fieldClass == NULL)
+         return false;
 
       TR_YesNoMaybe objectContainsField = fej9->isInstanceOf(objectClass, fieldClass, true);
       return objectContainsField == TR_yes;
+      }
+   else if (comp->getSymRefTab()->isImmutableArrayShadow(field))
+      {
+      TR_OpaqueClassBlock *arrayClass = fej9->getObjectClass((uintptrj_t)curStruct);
+      if (!fej9->isClassArray(arrayClass) ||
+          (field->getSymbol()->isCollectedReference() &&
+          fej9->isPrimitiveArray(arrayClass)) ||
+          (!field->getSymbol()->isCollectedReference() &&
+          fej9->isReferenceArray(arrayClass)))
+         return false;
+
+      return true;
       }
    else if (isFieldOfJavaObject(field, comp))
       {
@@ -199,7 +253,7 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, TR::C
          }
       }
    else if (isFinalFieldOfNativeStruct(field, comp))
-   {
+      {
       // These are implicitly verified by virtue of being verifiable
       //
       return true;
@@ -214,93 +268,118 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, TR::C
    return true;
    }
 
+
+/**
+ * Dereference through indirect load chain and return the address of field for curNode
+ *
+ * @param baseStruct The value of baseNode
+ * @param curNode The field to be dereferenced
+ * @param comp The compilation object needed in the dereference process
+ *
+ * @return The address of the field or NULL if dereference failed due to incorrect trees or types
+ *
+ * The concepts of "verified" and "verifiable" are used here, they're explained in
+ * J9::TransformUtil::transformIndirectLoadChainImpl
+ */
 static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode, TR::Node *curNode, TR::Compilation *comp)
    {
-   // IMPORTANT NOTE on "interpreting" code at compile time:
-   //
-   // Sometimes we're looking at dead code on impossible paths.  In that case,
-   // the node symbol info might not match the actual type of the data it is
-   // manipulating.
-   //
-   // To make this facility easier to use, we have decided to tolerate certain
-   // kinds of mismatches between the trees and the actual data being examined.
-   // We return NULL to indicate we have been unable to perform the
-   // dereference.  (Null is otherwise not a valid result of this function,
-   // since the caller of this function is always intending to dereference the
-   // result.)
-   //
-   // The onus is on the caller to make sure baseStruct/baseNode meets certain
-   // rules (see below) but beyond that, this function must verify that the
-   // actual data structure being walked matches the nodes closely enough to
-   // prevent the jit from doing something wrong.
-   //
-   // This function must return NULL unless we can verify that (1) the
-   // structure we're loading from is of the correct type, and (2) the pointer
-   // we're returning is itself verifiable.
-   //
-   // In this narrow usage, "correct type" really means that subsequent
-   // dereferences are guaranteed to "work properly" in the sense that they
-   // won't crash the jit.  If the data does not match the trees, it is valid
-   // to return nonsensical answers (garbage in, garbage out) but it is not
-   // valid to crash.
-   //
-   // "Verifiable" in #2 means that we must be able to perform the verification
-   // in #1.  What that means depends on the type of data we're looking at.
-   // In the case of a Java object, those are self-describing.  It is enough
-   // merely to know that a pointer is the address of a Java object in order to
-   // declare it "verifiable", and the verification step can do the rest.  In
-   // the case of a C struct, there is generally no way to verify it, so the
-   // verification step for a C struct is, of necessity, trivial, and therefore
-   // the "verifiable" criterion itself perform the entire verification.  (This
-   // corresponds to the fact that Java can do dynamic type checking while C
-   // does all type checking statically.)
-   //
-   // This leads us to the following situation:
-   //
-   //   For Java object references:
-   //    - Verifiable if it is known to point at an object or null
-   //    - Verified if it is non-null and points to an object that contains the field being loaded
-   //   For C structs pointers:
-   //    - Verifiable if it is known to point to a struct of the proper type or null
-   //    - Verified trivially by virtue of being verifiable and non null
-   //
-   // The onus is on the caller to ensure that baseStruct/baseNode is
-   // verifiable.  This is why we have separated the notion of "verifiable"
-   // from "verified": there is less burden on the caller if it only needs to
-   // ensure verifiability.
-   //
    if (baseNode == curNode)
       {
-      // End of recursion
-      //
-      return baseStruct;
-      //
-      // Since baseStruct/baseNode are deemed verifiable by the caller, result
-      // is now verifiable a priori.
+      TR_ASSERT(false, "dereferenceStructPointerChain has no idea what to dereference");
+      traceMsg(comp, "Caller has already dereferenced node %p, returning NULL as dereferenceStructPointerChain has no idea what to dereference\n", curNode);
+      return NULL;
       }
    else
       {
-      uint8_t *curStruct = (uint8_t*)dereferenceStructPointerChain(baseStruct, baseNode, curNode->getFirstChild(), comp);
+      TR_ASSERT(curNode != NULL, "Field node is NULL");
+      TR_ASSERT(curNode->getOpCode().hasSymbolReference(), "Node must have a symref");
+
+      TR::SymbolReference *symRef = curNode->getSymbolReference();
+      TR::Symbol *symbol = symRef->getSymbol();
+      TR::Node *addressChildNode = symbol->isArrayShadowSymbol() ? curNode->getFirstChild()->getFirstChild() : curNode->getFirstChild();
+
+      // The addressChildNode must has a symRef so that we can verify it
+      if (!addressChildNode->getOpCode().hasSymbolReference())
+         return NULL;
+
+      // Use uintptrj_t for pointer arithmetic operations and to save type conversions
+      uintptrj_t curStruct = 0;
+      if (addressChildNode == baseNode)
+         {
+         // baseStruct is the value of baseNode, dereference is not needed
+         curStruct = (uintptrj_t)baseStruct;
+         // baseStruct/baseNode are deemed verifiable by the caller         }
+         }
+      else
+         {
+         TR::SymbolReference *addressChildSymRef = addressChildNode->getSymbolReference();
+         // Get the address of struct containing current field and dereference it
+         void* addressChildAddress = dereferenceStructPointerChain(baseStruct, baseNode, addressChildNode, comp);
+
+         if (addressChildAddress == NULL)
+            {
+            return NULL;
+            }
+         // Since we're going to dereference a field from addressChild, addressChild must be a java reference or a native struct
+         else if (addressChildSymRef->getSymbol()->isCollectedReference())
+            {
+            curStruct = comp->fej9()->getReferenceFieldAtAddress((uintptrj_t)addressChildAddress);
+            }
+         else // Native struct
+            {
+            TR_ASSERT(isFinalFieldPointingAtNativeStruct(addressChildSymRef, comp), "dereferenceStructPointerChain should be dealing with reference fields");
+            curStruct = *(uintptrj_t*)addressChildAddress;
+            }
+         }
+
+      // Get the field address of curNode
       if (curStruct)
          {
-         if (verifyFieldAccess(curStruct, curNode->getSymbolReference(), comp))
+         if (verifyFieldAccess((void*)curStruct, symRef, comp))
             {
-            if (isJavaObjectReferenceFieldOfJavaObject(curNode->getSymbolReference(), comp))
+            uintptrj_t fieldAddress = 0;
+            // The offset of a java field is in its symRef
+            if (isJavaField(symRef, comp))
                {
-               uintptrj_t fieldAddress = (uintptrj_t)(curStruct + curNode->getSymbolReference()->getOffset());
-               TR_J9VM *vm = (TR_J9VM*)(comp->fe());
-               return (void*)vm->getReferenceFieldAtAddress(fieldAddress);
+               fieldAddress = curStruct + symRef->getOffset();
+               }
+            else if (comp->getSymRefTab()->isImmutableArrayShadow(symRef))
+               {
+               TR::Node* offsetNode = curNode->getFirstChild()->getSecondChild();
+               if (!offsetNode->getOpCode().isLoadConst())
+                  return NULL;
+
+               int64_t offset = 0;
+               if (offsetNode->getDataType() == TR::Int64)
+                  offset = offsetNode->getUnsignedLongInt();
+               else
+                  offset = offsetNode->getUnsignedInt();
+
+               uint64_t arrayLengthInBytes = TR::Compiler->om.getArrayLengthInBytes(comp, curStruct);
+               int64_t minOffset = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+               int64_t maxOffset = arrayLengthInBytes + TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+
+               // Check array bound
+               if (offset < minOffset ||
+                   offset >= maxOffset)
+                  {
+                  traceMsg(comp, "Offset %d is out of bound [%d, %d] for %s on array shadow %p!\n", offset, minOffset, maxOffset, symRef->getName(comp->getDebug()), curNode);
+                  return NULL;
+                  }
+
+               fieldAddress = TR::Compiler->om.getAddressOfElement(comp, curStruct, offset);
                }
             else
                {
-               TR_ASSERT(isFinalFieldPointingAtNativeStruct(curNode->getSymbolReference(), comp), "dereferenceStructPointerChain should be dealing with reference fields");
-               uint8_t **fieldAddress = (uint8_t**)(curStruct + curNode->getSymbolReference()->getOffset());
-               return *fieldAddress;
+               TR_ASSERT(isFinalFieldPointingAtNativeStruct(symRef, comp), "dereferenceStructPointerChain should be dealing with reference fields");
+               fieldAddress = curStruct + symRef->getOffset();
                }
+
+            return (void*)fieldAddress;
             }
          else
             {
-            traceMsg(comp, "Unable to verify field access to %s on %p!\n", curNode->getSymbolReference()->getName(comp->getDebug()), curNode);
+            traceMsg(comp, "Unable to verify field access to %s on %p!\n", symRef->getName(comp->getDebug()), curNode);
             return NULL;
             }
          }
@@ -878,6 +957,9 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
 
    TR_J9VMBase *fej9 = comp->fej9();
 
+   if (symRef->hasKnownObjectIndex())
+      return false;
+
    // Check for loads of static final primitive fields on classes that have finished initializing.
    //
    if (!symRef->isUnresolved()
@@ -1043,7 +1125,12 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
    return false; // Indicates we did nothing
    }
 
-
+/** Dereference node and fold it into a constant when possible.
+ *
+ *  The jit can tolerate certain mismatches between the tree and the data to be
+ *  manipulated as long as *baseReferenceLocation/baseExpression is "verifiable".
+ *  see comment in J9::TransformUtil::transformIndirectLoadChainImpl
+ */
 bool
 J9::TransformUtil::transformIndirectLoadChainAt(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, uintptrj_t *baseReferenceLocation, TR::Node **removedNode)
    {
@@ -1052,7 +1139,14 @@ J9::TransformUtil::transformIndirectLoadChainAt(TR::Compilation *comp, TR::Node 
    return result;
    }
 
-
+/** Dereference node and fold it into a constant when possible.
+ *
+ *  The jit can tolerate certain mismatches between the tree and the data to be
+ *  manipulated as long as baseKnownObject/baseExpression is "verifiable".
+ *  In this case, since the data is a java object reference, baseExpression must
+ *  be a java object reference in order to be "verifiable".
+ *  Please see comment in J9::TransformUtil::transformIndirectLoadChainImpl
+ */
 bool
 J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, TR::KnownObjectTable::Index baseKnownObject, TR::Node **removedNode)
    {
@@ -1061,7 +1155,69 @@ J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *n
    return result;
    }
 
-
+/** Dereference node and fold it into a constant when possible
+ *
+ *  @parm comp The compilation object
+ *  @parm node The node to be folded
+ *  @parm baseExpression The start of the indirect load chain
+ *  @parm baseAddress Value of baseExpression
+ *  @parm removedNode Pointer to the removed node if removal happens
+ *
+ *  @return true if the load chain has been folded, false otherwise
+ *
+ *  IMPORTANT NOTE on "interpreting" code at compile time:
+ *
+ *  Sometimes we're looking at dead code on impossible paths. In that case,
+ *  the node symbol info might not match the actual type of the data it is
+ *  manipulating.
+ *
+ *  To make this facility easier to use, we have decided to tolerate certain
+ *  kinds of mismatches between the trees and the actual data being examined.
+ *  We return false to indicate we have been unable to perform the
+ *  dereference.  (false is otherwise not a valid result of this function,
+ *  since the caller of this function is always intending to dereference the
+ *  result.)
+ *
+ *  The onus is on the caller to make sure baseAddress/baseExpression meets certain
+ *  rules (see below) but beyond that, this function must verify that the
+ *  actual data structure being walked matches the nodes closely enough to
+ *  prevent the jit from doing something wrong.
+ *
+ *  This function must must verify that the structure we're loading from is
+ *  of the correct type before the dereference.
+ *
+ *  In this narrow usage, "correct type" really means that subsequent
+ *  dereferences are guaranteed to "work properly" in the sense that they
+ *  won't crash the jit.  If the data does not match the trees, it is valid
+ *  to return nonsensical answers (garbage in, garbage out) but it is not
+ *  valid to crash.
+ *
+ *  To be able to perform the verification, the data/tree we're looking at must be
+ *  "verifiable". What that means depends on the type of data we're looking at.
+ *  In the case of a Java object, those are self-describing.  It is enough
+ *  merely to know that a pointer is the address of a Java object in order to
+ *  declare it "verifiable", and the verification step can do the rest.  In
+ *  the case of a C struct, there is generally no way to verify it, so the
+ *  verification step for a C struct is, of necessity, trivial, and therefore
+ *  the "verifiable" criterion itself perform the entire verification.  (This
+ *  corresponds to the fact that Java can do dynamic type checking while C
+ *  does all type checking statically.)
+ *
+ *  This leads us to the following situation:
+ *
+ *    For Java object references:
+ *     - Verifiable if it is known to point at an object or null
+ *     - Verified if it is non-null and points to an object that contains the field being loaded
+ *    For C structs pointers:
+ *     - Verifiable if it is known to point to a struct of the proper type or null
+ *     - Verified trivially by virtue of being verifiable and non null
+ *
+ *  The onus is on the caller to ensure that baseAddress/baseExpression is
+ *  verifiable.  This is why we have separated the notion of "verifiable"
+ *  from "verified": there is less burden on the caller if it only needs to
+ *  ensure verifiability.
+ *
+ */
 bool
 J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, void *baseAddress, TR::Node **removedNode)
    {
@@ -1077,6 +1233,11 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
       }
 
    TR::SymbolReference *symRef = node->getSymbolReference();
+
+   if (symRef->hasKnownObjectIndex())
+      return false;
+
+   // Fold initializeStatus field in J9Class whose finality is conditional on the value it is holding
    if (!symRef->isUnresolved() && symRef == comp->getSymRefTab()->findInitializeStatusFromClassSymbolRef())
       {
       J9Class* clazz = (J9Class*)baseAddress;
@@ -1110,13 +1271,11 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
       return false;
       }
 
-   // Dereference the chain starting from baseAddress and ending with the
-   // structure (which may be a Java object) that contains the field we want to read.
-   //
-   uint8_t *structure = (uint8_t*)dereferenceStructPointerChain(baseAddress, baseExpression, node->getFirstChild(), comp);
-   if (!verifyFieldAccess(structure, node->getSymbolReference(), comp))
+   // Dereference the chain starting from baseAddress and get the field address
+   void *fieldAddress = dereferenceStructPointerChain(baseAddress, baseExpression, node, comp);
+   if (!fieldAddress)
       {
-      traceMsg(comp, "Abort transformIndirectLoadChain - cannot verify field access to %s in %p!\n", symRef->getName(comp->getDebug()), structure);
+      traceMsg(comp, "Abort transformIndirectLoadChain - cannot verify/dereference field access to %s in %p!\n", symRef->getName(comp->getDebug()), baseAddress);
       return false;
       }
 
@@ -1128,7 +1287,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
       {
       case TR::Int32:
          {
-         int32_t value = *(int32_t*)(structure + symRef->getOffset());
+         int32_t value = *(int32_t*)fieldAddress;
          if (changeIndirectLoadIntoConst(node, TR::iconst, removedNode, comp))
             node->setInt(value);
          else
@@ -1137,7 +1296,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
          break;
       case TR::Int64:
          {
-         int64_t value = *(int64_t*)(structure + symRef->getOffset());
+         int64_t value = *(int64_t*)fieldAddress;
          if (changeIndirectLoadIntoConst(node, TR::lconst, removedNode, comp))
             node->setLongInt(value);
          else
@@ -1146,7 +1305,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
          break;
       case TR::Float:
          {
-         float value = *(float*)(structure + symRef->getOffset());
+         float value = *(float*)fieldAddress;
          if (changeIndirectLoadIntoConst(node, TR::fconst, removedNode, comp))
             node->setFloat(value);
          else
@@ -1155,7 +1314,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
          break;
       case TR::Double:
          {
-         double value = *(double*)(structure + symRef->getOffset());
+         double value = *(double*)fieldAddress;
          if (changeIndirectLoadIntoConst(node, TR::dconst, removedNode, comp))
             node->setDouble(value);
          else
@@ -1170,7 +1329,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
                {
                if (changeIndirectLoadIntoConst(node, TR::loadaddr, removedNode, comp))
                   {
-                  TR_OpaqueClassBlock *value = *(TR_OpaqueClassBlock**)(structure + symRef->getOffset());
+                  TR_OpaqueClassBlock *value = *(TR_OpaqueClassBlock**)fieldAddress;
                   node->setSymbolReference(comp->getSymRefTab()->findOrCreateClassSymbol(comp->getMethodSymbol(), -1, value));
                   }
                else
@@ -1191,12 +1350,12 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
             // remaining natives are hopeless.
             return false;
             }
-         else if (symRef->getSymbol()->isCollectedReference() && !symRef->hasKnownObjectIndex())
+         else if (symRef->getSymbol()->isCollectedReference())
             {
-            uintptrj_t value = fej9->getReferenceFieldAtAddress(structure + symRef->getOffset());
+            uintptrj_t value = fej9->getReferenceFieldAtAddress((uintptrj_t)fieldAddress);
             if (value)
                {
-               TR::SymbolReference *improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), &value);
+               TR::SymbolReference *improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(symRef, &value, isArrayWithConstantElements(symRef, comp));
                if (  improvedSymRef->hasKnownObjectIndex()
                   && performTransformation(comp, "O^O transformIndirectLoadChain: %s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), value))
                   {
@@ -1410,7 +1569,6 @@ TR::Node * J9::TransformUtil::calculateOffsetFromIndexInContiguousArray(TR::Comp
 
    return offset;
    }
-
 
 /**
  * Calculate element index given its offset in the array

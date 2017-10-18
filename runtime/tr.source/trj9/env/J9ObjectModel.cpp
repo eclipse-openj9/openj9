@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -456,4 +456,108 @@ bool
 J9::ObjectModel::shouldGenerateReadBarriersForFieldLoads()
    {
    return _shouldGenerateReadBarriersForFieldLoads;
+   }
+
+bool
+J9::ObjectModel::isDiscontiguousArray(TR::Compilation* comp, uintptrj_t objectPointer)
+   {
+   TR_ASSERT(TR::Compiler->vm.hasAccess(comp), "isDicontiguousArray requires VM access");
+   TR_ASSERT(TR::Compiler->cls.isClassArray(comp, TR::Compiler->cls.objectClass(comp, (objectPointer))), "Object is not an array");
+
+   int32_t length = *(int32_t*)(objectPointer + TR::Compiler->om.offsetOfContiguousArraySizeField());
+
+   if (TR::Compiler->om.canGenerateArraylets()
+       && length == 0)
+      return true;
+
+   return false;
+   }
+
+/**
+ * \brief
+ *    Get the address of an element given its offset into the array.
+ * \parm comp
+ *    Current compilation.
+ *
+ * \parm objectPointer.
+ *    Pointer to the array.
+ *
+ * \parm offset
+ *    The offset of the element in bytes. It should contain the array header. If
+ *    objectPointer is a discontiguous array, offset should be an integer that's
+ *    calculated as if the array was a contiguous array.
+ *
+ * \return
+ *    The address of the element.
+ */
+uintptrj_t
+J9::ObjectModel::getAddressOfElement(TR::Compilation* comp, uintptrj_t objectPointer, int64_t offset)
+   {
+   TR_ASSERT(TR::Compiler->vm.hasAccess(comp), "getAddressOfElement requires VM access");
+   TR_ASSERT(TR::Compiler->cls.isClassArray(comp, TR::Compiler->cls.objectClass(comp, (objectPointer))), "Object is not an array");
+   TR_ASSERT(offset >= TR::Compiler->om.contiguousArrayHeaderSizeInBytes() &&
+             offset < TR::Compiler->om.getArrayLengthInBytes(comp, objectPointer) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), "Array is out of bound");
+
+   // If the array is contiguous, return the addition of objectPointer and offset
+   if (!TR::Compiler->om.isDiscontiguousArray(comp, objectPointer))
+      return objectPointer + offset;
+
+   // The following code handles discontiguous array
+   //
+   // Treat the array as a byte array, so the element size is 1
+   uintptrj_t elementSize = 1;
+   int64_t elementIndex = offset - TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+
+   uintptrj_t leafIndex = comp->fej9()->getArrayletLeafIndex(elementIndex, elementSize);
+   uintptrj_t elementIndexInLeaf = comp->fej9()->getLeafElementIndex(elementIndex, elementSize);
+   uintptrj_t dataStart = objectPointer + TR::Compiler->om.discontiguousArrayHeaderSizeInBytes();
+
+   if (comp->useCompressedPointers())
+      {
+      uint32_t *spine = (uint32_t*)dataStart;
+      dataStart = spine[leafIndex];
+      dataStart = TR::Compiler->om.decompressReference(comp, dataStart);
+      }
+   else
+      {
+      uintptrj_t *spine = (uintptrj_t*)dataStart;
+      dataStart = spine[leafIndex];
+      }
+
+   return dataStart + elementIndexInLeaf * elementSize;
+   }
+
+uintptrj_t
+J9::ObjectModel::getArrayElementWidthInBytes(TR::DataType type)
+   {
+   if (type == TR::Address)
+      return TR::Compiler->om.sizeofReferenceField();
+   else
+      return TR::Symbol::convertTypeToSize(type);
+   }
+
+uintptrj_t
+J9::ObjectModel::getArrayElementWidthInBytes(TR::Compilation* comp, uintptrj_t objectPointer)
+   {
+   TR_ASSERT(TR::Compiler->vm.hasAccess(comp), "Must haveAccess in getArrayElementWidthInBytes");
+   return TR::Compiler->cls.getArrayElementWidthInBytes(comp, TR::Compiler->cls.objectClass(comp, (objectPointer)));
+   }
+
+uintptrj_t
+J9::ObjectModel::getArrayLengthInBytes(TR::Compilation* comp, uintptrj_t objectPointer)
+   {
+   TR_ASSERT(TR::Compiler->vm.hasAccess(comp), "Must haveAccess in getArrayLengthInBytes");
+   return (uintptrj_t)TR::Compiler->om.getArrayLengthInElements(comp, objectPointer) * TR::Compiler->om.getArrayElementWidthInBytes(comp, objectPointer);
+   }
+
+intptrj_t
+J9::ObjectModel::getArrayLengthInElements(TR::Compilation* comp, uintptrj_t objectPointer)
+   {
+   return comp->fej9()->getArrayLengthInElements(objectPointer);
+   }
+
+uintptrj_t
+J9::ObjectModel::decompressReference(TR::Compilation* comp, uintptrj_t compressedReference)
+   {
+   return (compressedReference << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress();
    }
