@@ -64,11 +64,22 @@ define({LABEL},$1)
 
 },{	dnl WIN32
 
+ifdef({OSX},{ 
+
+define({FILE_START},{
+	.intel_syntax noprefix
+	.text
+})
+
+},{	dnl OSX
+
 define({FILE_START},{
 	.intel_syntax noprefix
 	.arch pentium4
 	.text
 })
+
+})	dnl OSX
 
 define({FILE_END})
 
@@ -80,14 +91,22 @@ define({START_PROC},{
 
 define({END_PROC},{
 END_$1:
+ifdef({OSX},{
+
+},{	dnl OSX
 	.size $1,END_$1 - $1
+})	dnl OSX
 })
 
 define({DECLARE_PUBLIC},{.global $1})
 
 define({DECLARE_EXTERN},{.extern $1})
 
+ifdef({OSX},{
+define({LABEL},$1)
+},{	dnl OSX
 define({LABEL},.$1)
+})	dnl OSX
 
 })	dnl WIN32
 
