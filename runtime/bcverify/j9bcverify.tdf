@@ -95,12 +95,12 @@ TraceAssert=Assert_RTV_validateClassLoadingConstraints Overhead=2 Level=5 NoEnv 
 TraceAssert=Assert_RTV_true Overhead=1 Level=1 NoEnv Assert="P1"
 TraceAssert=Assert_RTV_notEqual Overhead=1 Level=1 NoEnv Assert="P1 != P2"
 
-TraceEntry=Trc_RTV_checkAllClassLoadingConstraints_Entry NoEnv Overhead=1 Level=2 Template="checkAllClassLoadingConstraints(ramClass=%p -- %.*s)"
-TraceEvent=Trc_RTV_checkAllClassLoadingConstraints_CheckSuperclassMethod NoEnv Overhead=1 Level=2 Template="Found method overridden from a superclass in a different loader: %p"
-TraceException=Trc_RTV_checkAllClassLoadingConstraints_SuperclassViolation NoEnv Overhead=1 Level=1 Template="Method overridden from superclass violates a class loading constraint: romMethod %p in %.*s"
-TraceEvent=Trc_RTV_checkAllClassLoadingConstraints_CheckInterfaceMethod NoEnv Overhead=1 Level=2 Template="Found method overridden from an interface in a different loader: %p"
-TraceException=Trc_RTV_checkAllClassLoadingConstraints_InterfaceViolation NoEnv Overhead=1 Level=1 Template="Method overridden from interface violates a class loading constraint: romMethod %p in %.*s"
-TraceExit=Trc_RTV_checkAllClassLoadingConstraints_Exit NoEnv Overhead=1 Level=2 Template="checkAllClassLoadingConstraints -- return %p"
+TraceEntry=Trc_RTV_checkAllClassLoadingConstraints_Entry Obsolete NoEnv Overhead=1 Level=2 Template="checkAllClassLoadingConstraints(ramClass=%p -- %.*s)"
+TraceEvent=Trc_RTV_checkAllClassLoadingConstraints_CheckSuperclassMethod Obsolete NoEnv Overhead=1 Level=2 Template="Found method overridden from a superclass in a different loader: %p"
+TraceException=Trc_RTV_checkAllClassLoadingConstraints_SuperclassViolation Obsolete NoEnv Overhead=1 Level=1 Template="Method overridden from superclass violates a class loading constraint: romMethod %p in %.*s"
+TraceEvent=Trc_RTV_checkAllClassLoadingConstraints_CheckInterfaceMethod Obsolete NoEnv Overhead=1 Level=2 Template="Found method overridden from an interface in a different loader: %p"
+TraceException=Trc_RTV_checkAllClassLoadingConstraints_InterfaceViolation Obsolete NoEnv Overhead=1 Level=1 Template="Method overridden from interface violates a class loading constraint: romMethod %p in %.*s"
+TraceExit=Trc_RTV_checkAllClassLoadingConstraints_Exit Obsolete NoEnv Overhead=1 Level=2 Template="checkAllClassLoadingConstraints -- return %p"
 
 TraceEntry=Trc_RTV_checkClassLoadingConstraintsForSignature_Entry Overhead=1 Level=3 Template="checkClassLoadingConstraintsForSignature(loader1=%p, loader2=%p, sig1=%p, sig2=%p -- %.*s)"
 TraceExit=Trc_RTV_checkClassLoadingConstraintsForSignature_Exit Overhead=1 Level=3 Template="checkClassLoadingConstraintsForSignature(result=%zu)"

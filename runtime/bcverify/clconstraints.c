@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,116 +61,6 @@ validateArgs (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loade
 		}
 		seg = seg->nextSegment;
 	}
-}
-
-/*
- * Returns NULL if no constraints have been violated, or a pointer to the first method which
- * violates a constraint if constraints have been violated.
- * 
- * Note that in the case of interface methods, the pointer to the violating method may point
- * to an inherited method (i.e. the pointer may be to some superclass).
- * 
- */
-J9ROMMethod *
-checkAllClassLoadingConstraints (J9BytecodeVerificationData * verifyData, J9Class * ramClass)
-{
-	UDATA *superVTable;
-	UDATA *vTable = (UDATA *) (ramClass + 1);
-	UDATA i, superCount;
-	UDATA count = *vTable;
-	UDATA classDepth = J9CLASS_DEPTH(ramClass);
-	J9Class *superclass;
-	J9ITable *iTable = (J9ITable *) ramClass->iTable;
-	J9ITable *superITable;
-
-	/* there are no class loading constraints on Object, so we can ignore that case */
-	if (classDepth == 0) {
-		return NULL;
-	}
-
-	Trc_RTV_checkAllClassLoadingConstraints_Entry(ramClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(ramClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(ramClass->romClass)));
-
-	superclass = ramClass->superclasses[classDepth - 1];
-	superVTable = (UDATA *) (superclass + 1);
-	superCount = *superVTable;
-	superITable = (J9ITable*)superclass->iTable;
-
-	/* skip the size and the first entry (unresolved method) */
-	for (i = 2; i <= count; i++) {
-		J9Method *method = (J9Method *) vTable[i];
-		if (J9_CLASS_FROM_METHOD(method) == ramClass) {
-			/* the method was declared in this class */
-			if (i <= superCount) {
-				/* this method overrides a superclass method */
-				J9Method *superMethod = (J9Method *) superVTable[i];
-				J9ClassLoader *methodClassLoader = J9_CLASS_FROM_METHOD(superMethod)->classLoader;
-				if (methodClassLoader != ramClass->classLoader) {
-					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-					J9UTF8 *sig = J9ROMMETHOD_GET_SIGNATURE(ramClass->romClass, romMethod);
-					J9ROMMethod *superRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(superMethod);
-					J9UTF8 *superSig = J9ROMMETHOD_GET_SIGNATURE(ramClass->romClass, superRomMethod);
-
-					Trc_RTV_checkAllClassLoadingConstraints_CheckSuperclassMethod(superMethod);
-
-					if (j9bcv_checkClassLoadingConstraintsForSignature(verifyData->vmStruct,
-							ramClass->classLoader, 
-							methodClassLoader, 
-							sig,
-							superSig)
-					) {
-						Trc_RTV_checkAllClassLoadingConstraints_SuperclassViolation(romMethod, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(ramClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(ramClass->romClass)));
-						Trc_RTV_checkAllClassLoadingConstraints_Exit(romMethod);
-						return romMethod;
-					}
-				}
-			}
-		}
-	}
-
-	if (ramClass->romClass->modifiers & J9AccInterface) {
-		return NULL;
-	}
-
-	while (iTable != superITable) {
-		J9ClassLoader *interfaceClassLoader = iTable->interfaceClass->classLoader;
-		UDATA iTableSize = iTable->interfaceClass->romClass->romMethodCount;
-		UDATA *iTableCursor = (UDATA *) (iTable + 1);
-		for (i = 0; i < iTableSize; i++) {
-			J9Method* iMethod = iTable->interfaceClass->ramMethods + i;
-			IDATA vTableOffset = (IDATA) *iTableCursor++;
-			
-			if (vTableOffset > 0) {
-				J9Method *concreteMethod = *((J9Method **) ((U_8*) ramClass + vTableOffset));
-				J9ClassLoader *concreteClassLoader = (J9_CLASS_FROM_METHOD(concreteMethod))->classLoader;
-				
-				if (concreteClassLoader != interfaceClassLoader) {
-					J9ROMMethod *iRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(iMethod);
-					J9Class *methodClass = J9_CLASS_FROM_METHOD(iMethod);
-					J9UTF8 *iSig = J9ROMMETHOD_GET_SIGNATURE(methodClass->romClass, iRomMethod);
-					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(concreteMethod);
-					J9UTF8 *sig = J9ROMMETHOD_GET_SIGNATURE(methodClass->romClass, romMethod);
-	
-					Trc_RTV_checkAllClassLoadingConstraints_CheckInterfaceMethod(iMethod);
-	
-					if (j9bcv_checkClassLoadingConstraintsForSignature(verifyData->vmStruct,
-						concreteClassLoader, 
-						interfaceClassLoader, 
-						sig,
-						iSig)
-					) {
-						Trc_RTV_checkAllClassLoadingConstraints_InterfaceViolation(romMethod, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(ramClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(ramClass->romClass)));
-						Trc_RTV_checkAllClassLoadingConstraints_Exit(romMethod);
-						return romMethod;
-					}
-				}
-			}
-		}
-		iTable = iTable->next;
-	}
-
-	Trc_RTV_checkAllClassLoadingConstraints_Exit(NULL);
-
-	return NULL;
 }
 
 
