@@ -116,7 +116,13 @@ class LambdaForm {
 	}
 	/*[IF Java18.3]*/
 	enum Kind {
-		PLACEHOLDER;
+		CONVERT,
+		SPREAD,
+		COLLECT,
+		GUARD,
+		GUARD_WITH_CATCH,
+		LOOP,
+		TRY_FINALLY
 	}
 	/*[ENDIF]*/
 	
