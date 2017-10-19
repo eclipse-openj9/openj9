@@ -8239,8 +8239,8 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
    else // compilation will not be retried, either because it succeeded or because we don't want to
       {
       TR_PersistentJittedBodyInfo *bodyInfo;
-      // JAAS TODO: this needs to be fixed once JAAS can process DLT compilations
-      if (entry->isDLTCompile() && !startPC && TR::CompilationInfo::isCompiled(method) && // DLT compilation that failed too many times
+      // JAAS: Can not acquire the jitted body info on the server
+      if (!entry->isRemoteCompReq() && entry->isDLTCompile() && !startPC && TR::CompilationInfo::isCompiled(method) && // DLT compilation that failed too many times
          (bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(method->extra)))  // do not use entry->_oldStartPC which is probably 0. Use the most up-to-date startPC
          bodyInfo->getMethodInfo()->setHasFailedDLTCompRetrials(true);
 
