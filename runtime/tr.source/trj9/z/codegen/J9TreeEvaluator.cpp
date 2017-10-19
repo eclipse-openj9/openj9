@@ -23201,7 +23201,8 @@ J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
    // skip the shift and just return i2pd results.
    bool isSkipShift = node->getOpCodeValue() == TR::pdshlOverflow &&
            (firstChild->getOpCodeValue() == TR::i2pd ||
-            firstChild->getOpCodeValue() == TR::l2pd);
+            firstChild->getOpCodeValue() == TR::l2pd) &&
+           firstChild->isSingleRefUnevaluated();
 
    int32_t shiftAmount = (int32_t)shiftAmountNode->get64bitIntegralValue();
    uint8_t decimalPrecision = node->getDecimalPrecision();
