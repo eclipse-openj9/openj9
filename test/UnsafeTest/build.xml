@@ -22,10 +22,10 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 -->
 
-<project name="OpenJ9 Unsupported Tests" default="build" basedir=".">
+<project name="OpenJ9 Unsafe Tests" default="build" basedir=".">
 	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
-		Build OpenJ9 Unsupported Tests
+		Build OpenJ9 Unsafe Tests
 	</description>
 
 	<!-- set global properties for this build -->
@@ -76,7 +76,7 @@
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
-		<jar jarfile="${DEST}/OpenJ9Unsupported.jar" filesonly="true">
+		<jar jarfile="${DEST}/OpenJ9Unsafe.jar" filesonly="true">
 			<fileset dir="${build}" />
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />
 		</jar>

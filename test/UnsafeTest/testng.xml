@@ -23,7 +23,7 @@
 -->
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="OpenJ9 Unsupported Tests" parallel="none" verbose="2">
+<suite name="OpenJ9 Unsafe Tests" parallel="none" verbose="2">
 	<listeners>
 		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer"/>
 	</listeners>
