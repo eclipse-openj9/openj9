@@ -1550,6 +1550,8 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 	J9ROMMethodTypeRef *romMethodTypeRef = NULL;
 	J9UTF8 *lookupSig = NULL;
 
+	Trc_VM_sendResolveMethodTypeRefInto_Entry(vmThread, ramCP, cpIndex, resolveFlags);
+
 	/* Check if already resolved */
 	if (ramCPEntry->type != NULL) {
 		return ramCPEntry->type;
@@ -1588,13 +1590,66 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 		}
 	}
 
+	/* perform visibility checks for the returnType and all parameters */
+	if (NULL != methodType) {
+		/* check returnType */
+		J9Class *senderClass = ramCP->ramClass;
+		J9Class *returnTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(vmThread, methodType));
+		J9Class *illegalClass = NULL;
+		IDATA visibilityReturnCode = 0;
+
+		if (J9ROMCLASS_IS_ARRAY(senderClass->romClass)) {
+			senderClass = ((J9ArrayClass *)senderClass)->leafComponentType;
+		}
+		if (J9ROMCLASS_IS_ARRAY(returnTypeClass->romClass)) {
+			returnTypeClass = ((J9ArrayClass *)returnTypeClass)->leafComponentType;
+		}
+
+		visibilityReturnCode = checkVisibility(vmThread, senderClass, returnTypeClass, returnTypeClass->romClass->modifiers, resolveFlags);
+
+		if (J9_VISIBILITY_ALLOWED != visibilityReturnCode) {
+			illegalClass = returnTypeClass;
+		} else {
+			/* check paramTypes */
+			j9object_t argTypesObject = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(vmThread, methodType);
+			U_32 typeCount = J9INDEXABLEOBJECT_SIZE(vmThread, argTypesObject);
+
+			for (UDATA i = 0; i < typeCount; i++) {
+				J9Class *paramClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9JAVAARRAYOFOBJECT_LOAD(vmThread, argTypesObject, i));
+
+				if (J9ROMCLASS_IS_ARRAY(paramClass->romClass)) {
+					paramClass = ((J9ArrayClass *)paramClass)->leafComponentType;
+				}
+
+				visibilityReturnCode = checkVisibility(vmThread, senderClass, paramClass, paramClass->romClass->modifiers, resolveFlags);
+
+				if (J9_VISIBILITY_ALLOWED != visibilityReturnCode) {
+					illegalClass = paramClass;
+					break;
+				}
+			}
+		}
+		if (NULL != illegalClass) {
+			char *errorMsg = illegalAccessMessage(vmThread, illegalClass->romClass->modifiers, senderClass, illegalClass, visibilityReturnCode);
+			if (NULL == errorMsg) {
+				setNativeOutOfMemoryError(vmThread, 0, 0);
+			} else {
+				setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, errorMsg);
+			}
+			Trc_VM_sendResolveMethodTypeRefInto_Exception(vmThread, senderClass, illegalClass, visibilityReturnCode);
+			methodType = NULL;
+		}
+	}
+
 	/* Only write the value in if its not null */
-	if (methodType != NULL) {
+	if (NULL != methodType ) {
 		J9Class *clazz = J9_CLASS_FROM_CP(ramCP);
 		j9object_t *methodTypeObjectP = &ramCPEntry->type;
 		/* Overwriting NULL with an immortal pointer, so no exception can occur */
 		J9STATIC_OBJECT_STORE(vmThread, clazz, methodTypeObjectP, methodType);
 	}
+
+	Trc_VM_sendResolveMethodTypeRefInto_Exit(vmThread, methodType);
 
 	return methodType;
 }
