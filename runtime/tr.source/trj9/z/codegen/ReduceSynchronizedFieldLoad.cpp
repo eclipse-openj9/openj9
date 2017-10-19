@@ -144,7 +144,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
             // This is because we must use LPDG to load a 32-bit value using displacement -4
             TR_ASSERT_SAFE_FATAL((loadMemoryReference->getOffset() & 3) == 0, "Field must be aligned on a word boundary\n");
 
-            loadRegisterRequires32BitLogicalSignExtension = true;
+            loadRegisterRequires32BitLogicalSignExtension = loadNode->getDataType().isAddress();
             alignedLoadMemoryReference = generateS390MemoryReference(*loadMemoryReference, -4, cg);
             }
          }
