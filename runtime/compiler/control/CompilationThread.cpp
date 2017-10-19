@@ -1542,6 +1542,13 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(JAAS::Void());
          }
          break;
+      case J9ServerMessageType::CompInfo_insertDLTRecord:
+         {
+         auto recv = client->getRecvData<J9Method *, int32_t, void *>();
+         auto compInfo = TR::CompilationInfo::get();
+         compInfo->insertDLTRecord(std::get<0>(recv), std::get<1>(recv), std::get<2>(recv));
+         }
+         break;
       case J9ServerMessageType::ClassEnv_classFlagsValue:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -4017,6 +4024,12 @@ void *TR::CompilationInfo::searchForDLTRecord(J9Method *method, int32_t bcIndex)
 
 void TR::CompilationInfo::insertDLTRecord(J9Method *method, int32_t bcIndex, void *dltEntry)
    {
+   if (getStream())
+      {
+      getStream()->write(JAAS::J9ServerMessageType::CompInfo_insertDLTRecord, method, bcIndex, dltEntry);
+      return;
+      }
+
    int32_t hashVal = (intptrj_t)method * bcIndex % DLT_HASHSIZE;
    if (hashVal < 0)
       hashVal = -hashVal;
@@ -9941,6 +9954,9 @@ TR::CompilationInfoPerThreadBase::compile(
 
                setMetadata(metaData);
 
+               if (_methodBeingCompiled->isDLTCompile())
+                  jitMarkMethodReadyForDLT(vmThread, method);
+
                if (TR::Options::getVerboseOption(TR_VerboseJaas))
                   {
                   TR_VerboseLog::writeLineLocked(
@@ -10873,14 +10889,16 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
    if (details.isMethodInProgress())
       {
-      TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
-      J9::MethodInProgressDetails & dltDetails = static_cast<J9::MethodInProgressDetails &>(details);
 #ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
       if (startPC)
          {
+         J9::MethodInProgressDetails & dltDetails = static_cast<J9::MethodInProgressDetails &>(details);
          TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
          compInfo->insertDLTRecord(dltDetails.getMethod(), dltDetails.getByteCodeIndex(), startPC);
-         jitMarkMethodReadyForDLT(vmThread, dltDetails.getMethod());
+         if (comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+            remoteCompilationEnd(details, jitConfig, fe, entry, comp);
+         else
+            jitMarkMethodReadyForDLT(vmThread, dltDetails.getMethod());
          }
 #endif // ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
       if ((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && comp && (dataCache = (TR_DataCache *)comp->getReservedDataCache()))
