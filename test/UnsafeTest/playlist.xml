@@ -33,7 +33,7 @@
 			<variation>-DScenario=Compiled</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
- 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)OpenJ9Unsupported.jar$(P).$(Q) \
+ 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)OpenJ9Unsafe.jar$(P).$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames UnsafeTests \
 	-groups $(TEST_GROUP) \
@@ -56,7 +56,7 @@
 			<variation>-DScenario=Compiled</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
- 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)OpenJ9Unsupported.jar$(P).$(Q) \
+ 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)OpenJ9Unsafe.jar$(P).$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames UnsafeTests \
 	-groups $(TEST_GROUP) \

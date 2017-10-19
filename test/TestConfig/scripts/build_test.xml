@@ -81,7 +81,6 @@
 						<exclude name="Jsr292/build.xml" />
 						<exclude name="Jsr335/build.xml" />
 						<exclude name="NativeTest/build.xml" />
-						<exclude name="UnsafeTest/build.xml" />
 						<exclude name="SharedCPEntryInvokerTests/build.xml" />
 						<exclude name="Valhalla/build.xml" />
 						<exclude name="Panama/build.xml" />
