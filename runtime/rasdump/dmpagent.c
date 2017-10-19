@@ -321,9 +321,9 @@ static const J9RASdumpSpec rasDumpSpecs[] =
 		  400,
 
 		  J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS
-#ifndef J9ZOS390
+#if !defined(J9ZOS390) && !defined(J9ZTPF)
 			| J9RAS_DUMP_DO_PREEMPT_THREADS
-#endif
+#endif /* !defined(J9ZOS390) && !defined(J9ZTPF) */
 		  , NULL
 		}
 	},
