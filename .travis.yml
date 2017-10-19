@@ -75,7 +75,9 @@ script:
   - set -e
   # Point the get_sources script at the OpenJ9 repo that's already been cloned to disk.
   # Results in a copy of the source (disk space =( ) but no new network activity so overall a win.
-  - cd openj9-openjdk-jdk9 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$TRAVIS_COMMIT
+  - OPENJ9_SHA=$(git -C $TRAVIS_BUILD_DIR rev-parse HEAD)
+  - if test x"$OPENJ9_SHA" != x"$TRAVIS_COMMIT" ; then echo "Warning using SHA $OPENJ9_SHA instead of $TRAVIS_COMMIT." ; fi
+  - cd openj9-openjdk-jdk9 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA
   # Based on https://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/ travis container
   # builds have 2 cores and 4 gigs of memory.  Attempt to double provision the number of cores for the make...
   # Limit number of jobs to work around g++ internal compiler error.
