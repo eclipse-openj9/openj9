@@ -159,7 +159,9 @@ public class ExternalMessagesExtension extends BuilderExtension {
 				// add the existing messages to the found messages (unless the
 				// message was already in the found messages)
 				for (Map.Entry<String, String> entry : existingMessages.entrySet()) {
-					messages.putIfAbsent(entry.getKey(), entry.getValue());
+					if (messages.get(entry.getKey()) == null) {
+						messages.put(entry.getKey(), entry.getValue());
+					}
 				}
 			}
 			writeMessages();
