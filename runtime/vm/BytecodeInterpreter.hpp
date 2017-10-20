@@ -7755,12 +7755,9 @@ done:
 			/* Get MethodHandle for this operation from the VarHandles handleTable */
 			j9object_t handleTable = J9VMJAVALANGINVOKEVARHANDLE_HANDLETABLE(_currentThread, varHandle);
 			j9object_t methodHandle = J9JAVAARRAYOFOBJECT_LOAD(_currentThread, handleTable, operation);
+			j9object_t handleType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
 
-			/* Get expected MethodType */
-			j9object_t typeTable = J9VMJAVALANGINVOKEVARHANDLE_TYPETABLE(_currentThread, varHandle);
-			j9object_t handleType = J9JAVAARRAYOFOBJECT_LOAD(_currentThread, typeTable, operation);
-
-			/* Get call site MethodType using binary search */
+			/* Get call site MethodType */
 			j9object_t volatile callSiteType = NULL;
 			J9Class *ramClass = J9_CLASS_FROM_CP(ramConstantPool);
 			J9ROMClass *romClass = ramClass->romClass;
@@ -7774,14 +7771,15 @@ done:
 				if (cachedHandle != NULL) {
 					cachedHandleType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, cachedHandle);
 				}
-				if (cachedHandleType != NULL && VM_VMHelpers::doMethodTypesMatchIgnoringLastArgument(_currentThread, callSiteType, cachedHandleType)) {
+				if (cachedHandleType == callSiteType) {
+					/* The cached AsTypeHandle was applicable to this call site. Use the cache. */
 					methodHandle = cachedHandle;
 				} else {
 					/* Create generic invocation handle */
 					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 					pushObjectInSpecialFrame(REGISTER_ARGS, varHandle);
 					updateVMStruct(REGISTER_ARGS);
-					sendForGenericInvokeVarHandle(_currentThread, methodHandle, callSiteType, varHandle, 0 /* reserved */);
+					sendForGenericInvoke(_currentThread, methodHandle, callSiteType, FALSE /* dropFirstArg */, 0 /* reserved */);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					varHandle = popObjectInSpecialFrame(REGISTER_ARGS);
 					restoreGenericSpecialStackFrame(REGISTER_ARGS);

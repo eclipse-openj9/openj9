@@ -77,7 +77,7 @@ addAndGet
 #define VarHandleParam "Ljava/lang/invoke/VarHandle;"
 #define JSR292_MethodHandle   "java/lang/invoke/MethodHandle"
 #define JSR292_asType              "asType"
-#define JSR292_asTypeSig           "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/VarHandle;)Ljava/lang/invoke/MethodHandle;"
+#define JSR292_asTypeSig           "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;"
 #define JSR292_invokeExactTargetAddress    "invokeExactTargetAddress"
 #define JSR292_invokeExactTargetAddressSig "()J"
 #define JSR292_invokeExact    "invokeExact"
@@ -301,7 +301,7 @@ int32_t TR_VarHandleTransformer::perform()
                }
             // Convert MH
             TR::SymbolReference *typeConversionSymRef = comp()->getSymRefTab()->methodSymRefFromName(methodSymbol, JSR292_MethodHandle, JSR292_asType, JSR292_asTypeSig, OMR::MethodSymbol::Static);
-            TR::Node * convertedMethodHandle = TR::Node::createWithSymRef(TR::acall, 3, 3, methodHandle, callSiteMethodType, varHandle, typeConversionSymRef);
+            TR::Node * convertedMethodHandle = TR::Node::createWithSymRef(TR::acall, 2, 2, methodHandle, callSiteMethodType, typeConversionSymRef);
             convertedMethodHandle->copyByteCodeInfo(node);
             callTree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, convertedMethodHandle)));
 

@@ -737,7 +737,6 @@ public:
    virtual char     *getStringUTF8      (uintptrj_t objectPointer, char *buffer, intptrj_t bufferSize);
 
    virtual uint32_t getVarHandleHandleTableOffset(TR::Compilation *);
-   virtual uint32_t getVarHandleTypeTableOffset(TR::Compilation *);
 
    virtual void reportILGeneratorPhase();
    virtual void reportOptimizationPhase(OMR::Optimizations);

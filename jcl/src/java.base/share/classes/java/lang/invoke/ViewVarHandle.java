@@ -23,8 +23,8 @@
 package java.lang.invoke;
 
 abstract class ViewVarHandle extends VarHandle {
-	ViewVarHandle(Class<?> fieldType, Class<?>[] coordinateTypes, MethodHandle[] handleTable, MethodType[] typeTable, int modifiers) {
-		super(fieldType, coordinateTypes, handleTable, typeTable, modifiers);
+	ViewVarHandle(Class<?> fieldType, Class<?>[] coordinateTypes, MethodHandle[] handleTable, int modifiers) {
+		super(fieldType, coordinateTypes, handleTable, modifiers);
 	}
 	
 	@Override

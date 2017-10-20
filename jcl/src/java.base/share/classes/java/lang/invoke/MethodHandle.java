@@ -1097,25 +1097,6 @@ public abstract class MethodHandle {
 		return asType(newType);
 	}
 	
-	/*[IF Sidecar19-SE]*/
-	/*
-	 * Used to convert an invokehandlegeneric bytecode into an AsTypeHandle + invokeExact OR to
-	 * convert an InvokeGenericHandle into an AsTypeHandle.
-	 * 
-	 * Allows us to only have the conversion logic for the AsTypeHandle and not worry about any
-	 * other similar conversions.
-	 */
-	@SuppressWarnings("unused")  /* Used by builder */
-	@VMCONSTANTPOOL_METHOD
-	private final MethodHandle forGenericInvokeVarHandle(MethodType newType, VarHandle varHandle) {
-		newType = newType.appendParameterTypes(varHandle.getClass());
-		if (this.type == newType) {
-			return this;
-		}
-		return asType(newType);
-	}
-	/*[ENDIF]*/
-	
 	@SuppressWarnings("unused")
 	@VMCONSTANTPOOL_METHOD
 	private static final MethodHandle sendResolveMethodHandle(

@@ -304,7 +304,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	jniArrayAllocateMemoryFromThread,
 	jniArrayFreeMemoryFromThread,
 	sendForGenericInvoke,
-	sendForGenericInvokeVarHandle,
 	jitFillOSRBuffer,
 	sendResolveMethodHandle,
 	resolveInvokeDynamic,

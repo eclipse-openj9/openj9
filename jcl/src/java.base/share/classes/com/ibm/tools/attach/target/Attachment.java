@@ -33,7 +33,12 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Objects;
 import java.util.Properties;
+/*[IF Sidecar19-SE-B165]*/
+import jdk.internal.vm.VMSupport;
+/*[ENDIF]*/
+import static com.ibm.tools.attach.target.IPC.LOCAL_CONNECTOR_ADDRESS;
 
 /**
  * This class handles established connections initiated by another VM
@@ -218,7 +223,7 @@ final class Attachment extends Thread implements Response {
 					agentProperties = IPC.receiveProperties(cmdStream, true);
 				}
 				/*[PR 102391 properties may be appended to the command]*/
-				IPC.logMessage("startAgent:"+ cmd); //$NON-NLS-1$
+				IPC.logMessage("startAgent:" +  cmd); //$NON-NLS-1$
 				if (startAgent(agentProperties)) {
 					AttachmentConnection.streamSend(respStream, Response.ACK);
 				} else {
@@ -390,16 +395,38 @@ final class Attachment extends Thread implements Response {
 			if (null != MethodRefsHolder.startLocalManagementAgentMethod) {	/* forces initialization */			
 				MethodRefsHolder.startLocalManagementAgentMethod.invoke(null);
 			} else {
-				throw new IbmAttachOperationFailedException("startLocalManagementAgent cannot access "+START_LOCAL_MANAGEMENT_AGENT);		 //$NON-NLS-1$
+				throw new IbmAttachOperationFailedException("startLocalManagementAgent cannot access " + START_LOCAL_MANAGEMENT_AGENT);		 //$NON-NLS-1$
 			}
 		} catch (Throwable e) {
-			throw new IbmAttachOperationFailedException("startLocalManagementAgent error starting agent:"+e.getClass()+" "+e.getMessage());		 //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IbmAttachOperationFailedException("startLocalManagementAgent error starting agent:" + e.getClass() + " " + e.getMessage());		 //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		String addr = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(IPC.LOCAL_CONNECTOR_ADDRESS);
-		if (null == addr) {
-			throw new IbmAttachOperationFailedException("startLocalManagementAgent: "+IPC.LOCAL_CONNECTOR_ADDRESS+" not defined");		 //$NON-NLS-1$ //$NON-NLS-2$
+		/*
+		 * sun.management.Agent.startLocalManagementAgent() in Java 8 sets 
+		 * c.s.m.j.localConnectorAddress in System.properties.
+		 * jdk.internal.agent.Agent.startLocalManagementAgent() in Java 9 sets 
+		 * c.s.m.j.localConnectorAddress in a different Properties object.
+		 */
+		Properties systemProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
+		String addr;
+		/*[IF Sidecar19-SE-B165]*/
+		synchronized (systemProperties) {
+			addr = systemProperties.getProperty(LOCAL_CONNECTOR_ADDRESS);
+			if (Objects.isNull(addr)) {
+				addr = VMSupport.getAgentProperties().getProperty(LOCAL_CONNECTOR_ADDRESS);
+				if (!Objects.isNull(addr)) {
+					systemProperties.setProperty(LOCAL_CONNECTOR_ADDRESS, addr);
+				}
+			}
 		}
-		IPC.logMessage(IPC.LOCAL_CONNECTOR_ADDRESS+"=", addr); //$NON-NLS-1$
+		/*[ELSE] Sidecar19-SE-B165 */
+		addr = systemProperties.getProperty(LOCAL_CONNECTOR_ADDRESS);
+		/*[ENDIF] Sidecar19-SE-B165*/
+		if (Objects.isNull(addr)) {
+			/* startLocalAgent() should have set the property. */
+			IPC.logMessage(LOCAL_CONNECTOR_ADDRESS + " not set"); //$NON-NLS-1$
+			throw new IbmAttachOperationFailedException("startLocalManagementAgent: " + LOCAL_CONNECTOR_ADDRESS + " not defined"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		IPC.logMessage(LOCAL_CONNECTOR_ADDRESS + "=", addr); //$NON-NLS-1$
 		return addr;
 	}
 }
