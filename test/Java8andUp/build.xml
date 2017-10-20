@@ -165,6 +165,7 @@
 					<src path="${src}" />
 					<src path="${src_80}" />
 					<src path="${transformerListener}" />
+					<exclude name="**/Cmvc194280.java" />
 					<exclude name="**/resources/**"/>
 					<exclude name="**/gpu/**"/>
 					<!-- requires special compilation methods -->

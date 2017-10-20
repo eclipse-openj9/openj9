@@ -273,9 +273,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	shutdownJVMRI,
 	getOwnedObjectMonitors,
 	fixUnsafeMethods,
-	triggerExceptionCatchEvent,
-	triggerMethodEnterEvent,
-	triggerMethodReturnEvent,
 #if !defined(J9VM_SIZE_SMALL_CODE)
 	fieldIndexTableRemove,
 #endif /* J9VM_SIZE_SMALL_CODE */

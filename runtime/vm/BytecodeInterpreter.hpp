@@ -1674,7 +1674,7 @@ throwStackOverflow:
 			if (J9_CHECK_ASYNC_POP_FRAMES == action) {
 				UDATA executeAsyncCheck = FALSE;
 				updateVMStruct(REGISTER_ARGS);
-				ALWAYS_TRIGGER_J9HOOK_VM_POP_FRAMES_INTERRUPT(_currentThread->javaVM->hookInterface, _currentThread, executeAsyncCheck);
+				ALWAYS_TRIGGER_J9HOOK_VM_POP_FRAMES_INTERRUPT(_vm->hookInterface, _currentThread, executeAsyncCheck);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				if (executeAsyncCheck) {
 					rc = GOTO_ASYNC_CHECK;
@@ -2041,16 +2041,23 @@ done:
 				goto done;
 			}
 		}
-
-		if (tracing || J9_EVENT_IS_HOOKED(_currentThread->javaVM->hookInterface, J9HOOK_VM_NATIVE_METHOD_ENTER)) {
-			UDATA relativeBP = _arg0EA - bp;
-			updateVMStruct(REGISTER_ARGS);
-			triggerNativeMethodEnterEvent(_currentThread, _sendMethod, _arg0EA, tracing);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			bp = _arg0EA - relativeBP;
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
-				goto done;
+		{
+			bool enterHooked = J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_NATIVE_METHOD_ENTER);
+			if (tracing || enterHooked) {
+				UDATA relativeBP = _arg0EA - bp;
+				updateVMStruct(REGISTER_ARGS);		
+				if (tracing) {
+					UTSI_TRACEMETHODENTER_FROMVM(_vm, _currentThread, _sendMethod, _arg0EA, 0);
+				}
+				if (enterHooked) {
+					ALWAYS_TRIGGER_J9HOOK_VM_NATIVE_METHOD_ENTER(_vm->hookInterface, _currentThread, _sendMethod, _arg0EA);
+				}
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				bp = _arg0EA - relativeBP;
+				if (immediateAsyncPending()) {
+					rc = GOTO_ASYNC_CHECK;
+					goto done;
+				}
 			}
 		}
 		/* If the stack grew, receiverAddress is still pointing to the correct slot
@@ -2089,15 +2096,38 @@ done:
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 			goto done;
 		}
-		if (tracing || J9_EVENT_IS_HOOKED(_currentThread->javaVM->hookInterface, J9HOOK_VM_NATIVE_METHOD_RETURN)) {
-			UDATA relativeBP = _arg0EA - bp;
-			updateVMStruct(REGISTER_ARGS);
-			triggerNativeMethodReturnEvent(_currentThread, _sendMethod, returnType, tracing);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			bp = _arg0EA - relativeBP;
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
-				goto done;
+		{
+			bool exitHooked = J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_NATIVE_METHOD_RETURN);
+			if (tracing || exitHooked) {
+				UDATA relativeBP = _arg0EA - bp;
+				updateVMStruct(REGISTER_ARGS);
+				UDATA returnValue[2];
+				void * returnValuePtr = returnValue;
+				jobject returnRef = (jobject) _currentThread->returnValue2;	/* The JNI send target put the returned ref here in the object case */
+				returnValue[0] = _currentThread->returnValue;
+				returnValue[1] = _currentThread->returnValue2;
+				if (returnType == J9NtcObject) {
+					PUSH_OBJECT_IN_SPECIAL_FRAME(_currentThread, (j9object_t) returnValue[0]);
+					returnValuePtr = _currentThread->sp;
+				}
+				/* Currently not called when an exception is pending, so always use NULL for exceptionPtr */
+				if (tracing) {
+					UTSI_TRACEMETHODEXIT_FROMVM(_vm, _currentThread, _sendMethod, NULL, returnValuePtr, 0);
+				}
+				if (exitHooked) {
+					ALWAYS_TRIGGER_J9HOOK_VM_NATIVE_METHOD_RETURN(_vm->hookInterface, _currentThread, _sendMethod, FALSE, returnValuePtr, returnRef);
+				}
+				if (returnType == J9NtcObject) {
+					returnValue[0] = (UDATA) POP_OBJECT_IN_SPECIAL_FRAME(_currentThread);
+				}
+				_currentThread->returnValue = returnValue[0];
+				_currentThread->returnValue2 = returnValue[1];
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				bp = _arg0EA - relativeBP;
+				if (immediateAsyncPending()) {
+					rc = GOTO_ASYNC_CHECK;
+					goto done;
+				}
 			}
 		}
 		{
@@ -2893,7 +2923,6 @@ done:
 		/* The cache is only filled in for public constructors, and only if the class can be instantiated and is initialized */
 		J9Method *method = j9clazz->initializerCache;
 		J9StackWalkState *walkState = NULL;
-		J9JavaVM * vm = _currentThread->javaVM;
 		if (NULL == method) {
 			/* Ensure this class is instantiable */
 			if (J9_UNEXPECTED(!VM_VMHelpers::classCanBeInstantiated(j9clazz))) {
@@ -2910,7 +2939,7 @@ done:
 			walkState->userData3 = (void *) FALSE;
 			walkState->frameWalkFunction = cInterpGetStackClassIterator;
 
-			if (J2SE_18 <= (J2SE_VERSION(vm) & J2SE_VERSION_MASK)) {
+			if ((J2SE_VERSION(_vm) & J2SE_VERSION_MASK) >= J2SE_18) {
 				walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
 			}
 
@@ -3872,7 +3901,6 @@ done:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		I_32 depth = *(I_32*)_sp;
 		J9ClassLoader *loader = NULL;
-		J9JavaVM * vm = _currentThread->javaVM;
 
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 
@@ -3882,7 +3910,7 @@ done:
 		walkState->userData3 = (void *) FALSE;
 		walkState->frameWalkFunction = cInterpGetStackClassIterator;
 
-		if (J2SE_18 <= (J2SE_VERSION(vm) & J2SE_VERSION_MASK)) {
+		if ((J2SE_VERSION(_vm) & J2SE_VERSION_MASK) >= J2SE_18) {
 			walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
 		}
 
@@ -4234,7 +4262,6 @@ done:
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		I_32 depth = *(I_32*)_sp;
-		J9JavaVM * vm = _currentThread->javaVM;
 
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 
@@ -4244,7 +4271,7 @@ done:
 		walkState->userData3 = (void *) FALSE;
 		walkState->frameWalkFunction = cInterpGetStackClassIterator;
 
-		if (J2SE_18 <= (J2SE_VERSION(vm) & J2SE_VERSION_MASK)) {
+		if ((J2SE_VERSION(_vm) & J2SE_VERSION_MASK) >= J2SE_18) {
 			walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
 		}
 
@@ -6377,7 +6404,7 @@ done:
 				/* Ignore <init> or <clinit> methods */
 				if ((0 != nameLength) && (name[0] != '<')) {
 					/* Resolve special method ref when _sendMethod == initialSpecialMethod */
-					if (_sendMethod == _currentThread->javaVM->initialMethods.initialSpecialMethod) {
+					if (_sendMethod == _vm->initialMethods.initialSpecialMethod) {
 						buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 						updateVMStruct(REGISTER_ARGS);
 						_sendMethod = resolveSpecialMethodRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
