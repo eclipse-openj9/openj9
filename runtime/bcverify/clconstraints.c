@@ -78,14 +78,12 @@ j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread* vmThread, J9ClassLoa
 	UDATA rc = 0;
 	J9JavaVM *javaVM = vmThread->javaVM;
 	JavaVM* jniVM = (JavaVM*)javaVM;
-    J9ThreadEnv* threadEnv;
-	(*jniVM)->GetEnv(jniVM, (void**)&threadEnv, J9THREAD_VERSION_1_1);
 
 	Trc_RTV_checkClassLoadingConstraintsForSignature_Entry(vmThread, loader1, loader2, sig1, sig2, J9UTF8_LENGTH(sig1), J9UTF8_DATA(sig1));
 	Assert_RTV_true(J9UTF8_LENGTH(sig1) == J9UTF8_LENGTH(sig2));
 	Assert_RTV_validateClassLoadingConstraints(vmThread, loader1, loader2, J9UTF8_DATA(sig1), J9UTF8_DATA(sig2), J9UTF8_LENGTH(sig1));
 
-	threadEnv->monitor_enter(javaVM->classTableMutex);
+	omrthread_monitor_enter(javaVM->classTableMutex);
 	for (;;) {
 		/* find a 'L', indicating the beginning of a class name */
 		while (index  < length && J9UTF8_DATA(sig1)[index] != 'L') {
@@ -111,7 +109,7 @@ j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread* vmThread, J9ClassLoa
 
 		index = endIndex;
 	}
-	threadEnv->monitor_exit(javaVM->classTableMutex);
+	omrthread_monitor_exit(javaVM->classTableMutex);
 
 	Trc_RTV_checkClassLoadingConstraintsForSignature_Exit(vmThread, rc);
 

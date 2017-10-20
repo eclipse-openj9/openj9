@@ -4645,9 +4645,6 @@ typedef struct J9InternalVMFunctions {
 	int  ( *shutdownJVMRI)(struct J9JavaVM* vm) ;
 	IDATA  ( *getOwnedObjectMonitors)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, struct J9ObjectMonitorInfo *info, IDATA infoLen) ;
 	void  ( *fixUnsafeMethods)(struct J9VMThread* vmStruct, jclass classRef) ;
-	j9object_t  ( *triggerExceptionCatchEvent)(struct J9VMThread* currentThread, j9object_t exception, UDATA* popProtectedFrame) ;
-	void  ( *triggerMethodEnterEvent)(struct J9VMThread* currentThread, struct J9Method* method, void* arg0EA, UDATA methodType, UDATA tracing) ;
-	void  ( *triggerMethodReturnEvent)(struct J9VMThread* currentThread, struct J9Method* method, UDATA poppedByException, void* returnValuePtr, UDATA methodType, UDATA tracing) ;
 #if !defined(J9VM_SIZE_SMALL_CODE)
 	void  ( *fieldIndexTableRemove)(struct J9JavaVM* javaVM, struct J9Class *ramClass) ;
 #endif /* J9VM_SIZE_SMALL_CODE */

@@ -729,18 +729,6 @@ createStackTraceThrowable (J9VMThread *currentThread,  const UDATA *frames, UDAT
 extern J9_CFUNC j9object_t
 getStackTraceForThread (J9VMThread * vmThread, J9VMThread *targetThread, UDATA skipCount);
 
-/* J9SourceJclHookHelpers*/
-extern J9_CFUNC void
-triggerClassInitializeEvent (J9VMThread* vmThread, J9Class* clazz);
-extern J9_CFUNC void
-triggerClassInitializeFailedEvent (J9VMThread* vmThread, J9Class* clazz);
-extern J9_CFUNC UDATA
-triggerClassPreinitializeEvent (J9VMThread* vmThread, J9Class* clazz);
-extern J9_CFUNC void
-triggerClassLoaderInitializedEvent(J9VMThread* vmThread, J9ClassLoader* classLoader);
-extern J9_CFUNC void  
-triggerClassPrepareEvent(J9VMThread* currentThread, J9Class* clazz);
-
 /* J9SourceJclStandardInit*/
 jint JCL_OnUnload (J9JavaVM* vm, void* reserved);
 jint standardPreconfigure ( JavaVM *jvm);
