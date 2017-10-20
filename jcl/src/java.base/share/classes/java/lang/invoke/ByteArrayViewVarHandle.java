@@ -22,11 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-import static java.lang.invoke.MethodType.methodType;
 import static java.lang.invoke.ByteArrayViewVarHandle.ByteArrayViewVarHandleOperations.*;
+import static java.lang.invoke.MethodType.methodType;
 
 import java.nio.ByteOrder;
-import java.util.Objects;
 import jdk.internal.misc.Unsafe;
 
 final class ByteArrayViewVarHandle extends ViewVarHandle {
@@ -59,9 +58,9 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0624", type)); //$NON-NLS-1$
 		}
 		
-		MethodType getter = methodType(type, byte[].class, int.class, ByteArrayViewVarHandle.class);
-		MethodType setter = methodType(void.class, byte[].class, int.class, type, ByteArrayViewVarHandle.class);
-		MethodType compareAndSet = methodType(boolean.class, byte[].class, int.class, type, type, ByteArrayViewVarHandle.class);
+		MethodType getter = methodType(type, byte[].class, int.class, VarHandle.class);
+		MethodType setter = methodType(void.class, byte[].class, int.class, type, VarHandle.class);
+		MethodType compareAndSet = methodType(boolean.class, byte[].class, int.class, type, type, VarHandle.class);
 		MethodType compareAndExchange = compareAndSet.changeReturnType(type);
 		MethodType getAndSet = setter.changeReturnType(type);
 		MethodType[] lookupTypes = populateMTs(getter, setter, compareAndSet, compareAndExchange, getAndSet);
@@ -70,28 +69,12 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 	}
 	
 	/**
-	 * Populates the static MethodType[] corresponding to the provided type. 
-	 * 
-	 * @param type The type to create MethodType for.
-	 * @return The populated MethodType[].
-	 */
-	static final MethodType[] populateMTs(Class<?> type) {
-		MethodType getter = methodType(type, byte[].class, int.class);
-		MethodType setter = methodType(void.class, byte[].class, int.class, type);
-		MethodType compareAndSet = methodType(boolean.class, byte[].class, int.class, type, type);
-		MethodType compareAndExchange = compareAndSet.changeReturnType(type);
-		MethodType getAndSet = setter.changeReturnType(type);
-		
-		return populateMTs(getter, setter, compareAndSet, compareAndExchange, getAndSet);
-	}
-	
-	/**
 	 * Constructs a VarHandle that can access elements of a byte array as wider types.
 	 * 
 	 * @param viewArrayType The component type used when viewing elements of the array. 
 	 */
 	ByteArrayViewVarHandle(Class<?> viewArrayType, ByteOrder byteOrder) {
-		super(viewArrayType, COORDINATE_TYPES, populateMHs(viewArrayType, byteOrder), populateMTs(viewArrayType), 0);
+		super(viewArrayType, COORDINATE_TYPES, populateMHs(viewArrayType, byteOrder), 0);
 	}
 
 	/**
@@ -118,135 +101,135 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpChar extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Character.BYTES;
 			
-			private static final char get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final char get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				return _unsafe.getChar(receiver, offset);
 			}
 
-			private static final void set(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, char value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putChar(receiver, offset, value);
 			}
 
-			private static final char getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final char getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getCharVolatile(receiver, offset);
 			}
 
-			private static final void setVolatile(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, char value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putCharVolatile(receiver, offset, value);
 			}
 
-			private static final char getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final char getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getCharOpaque(receiver, offset);
 			}
 
-			private static final void setOpaque(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, char value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putCharOpaque(receiver, offset, value);
 			}
 
-			private static final char getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final char getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getCharAcquire(receiver, offset);
 			}
 
-			private static final void setRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putCharRelease(receiver, offset, value);
 			}
 
-			private static final boolean compareAndSet(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char compareAndExchange(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final char compareAndExchange(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char compareAndExchangeAcquire(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final char compareAndExchangeAcquire(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char compareAndExchangeRelease(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final char compareAndExchangeRelease(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndSet(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndSet(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndSetAcquire(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndSetAcquire(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndSetRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndSetRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndAdd(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndAdd(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndAddAcquire(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndAddAcquire(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndAddRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndAddRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseAnd(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseAnd(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseAndAcquire(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseAndAcquire(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseAndRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseAndRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseOr(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseOr(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseOrAcquire(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseOrAcquire(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseOrRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseOrRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseXor(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseXor(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseXorAcquire(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseXorAcquire(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseXorRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseXorRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		}
@@ -254,47 +237,47 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpDouble extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Double.BYTES;
 			
-			private static final double get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final double get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				return _unsafe.getDouble(receiver, offset);
 			}
 
-			private static final void set(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putDouble(receiver, offset, value);
 			}
 
-			private static final double getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final double getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getDoubleVolatile(receiver, offset);
 			}
 
-			private static final void setVolatile(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putDoubleVolatile(receiver, offset, value);
 			}
 
-			private static final double getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final double getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getDoubleOpaque(receiver, offset);
 			}
 
-			private static final void setOpaque(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putDoubleOpaque(receiver, offset, value);
 			}
 
-			private static final double getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final double getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getDoubleAcquire(receiver, offset);
 			}
 
-			private static final void setRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putDoubleRelease(receiver, offset, value);
 			}
 
-			private static final boolean compareAndSet(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndSetDouble(receiver, offset, testValue, newValue);
@@ -303,7 +286,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final double compareAndExchange(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final double compareAndExchange(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndExchangeDouble(receiver, offset, testValue, newValue);
@@ -312,17 +295,17 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final double compareAndExchangeAcquire(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final double compareAndExchangeAcquire(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.compareAndExchangeDoubleAcquire(receiver, offset, testValue, newValue);
 			}
 
-			private static final double compareAndExchangeRelease(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final double compareAndExchangeRelease(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.compareAndExchangeDoubleRelease(receiver, offset, testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, offset, testValue, newValue);
@@ -331,7 +314,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetDoubleAcquire(receiver, offset, testValue, newValue);
@@ -340,7 +323,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetDoubleRelease(receiver, offset, testValue, newValue);
@@ -349,7 +332,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, offset, testValue, newValue);
@@ -358,66 +341,66 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final double getAndSet(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndSet(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetDouble(receiver, offset, value);
 			}
 
-			private static final double getAndSetAcquire(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndSetAcquire(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetDoubleAcquire(receiver, offset, value);
 			}
 
-			private static final double getAndSetRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndSetRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetDoubleRelease(receiver, offset, value);
 			}
 
-			private static final double getAndAdd(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndAdd(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndAddAcquire(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndAddAcquire(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndAddRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndAddRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseAnd(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseAnd(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseAndAcquire(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseAndAcquire(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseAndRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseAndRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseOr(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseOr(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseOrAcquire(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseOrAcquire(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseOrRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseOrRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseXor(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseXor(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseXorAcquire(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseXorAcquire(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseXorRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseXorRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		}
@@ -425,47 +408,47 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpFloat extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Float.BYTES;
 			
-			private static final float get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final float get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				return _unsafe.getFloat(receiver, offset);
 			}
 
-			private static final void set(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putFloat(receiver, offset, value);
 			}
 
-			private static final float getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final float getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getFloatVolatile(receiver, offset);
 			}
 
-			private static final void setVolatile(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putFloatVolatile(receiver, offset, value);
 			}
 
-			private static final float getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final float getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getFloatOpaque(receiver, offset);
 			}
 
-			private static final void setOpaque(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putFloatOpaque(receiver, offset, value);
 			}
 
-			private static final float getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final float getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getFloatAcquire(receiver, offset);
 			}
 
-			private static final void setRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putFloatRelease(receiver, offset, value);
 			}
 
-			private static final boolean compareAndSet(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndSetFloat(receiver, offset, testValue, newValue);
@@ -474,7 +457,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final float compareAndExchange(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final float compareAndExchange(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndExchangeFloat(receiver, offset, testValue, newValue);
@@ -483,17 +466,17 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final float compareAndExchangeAcquire(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final float compareAndExchangeAcquire(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.compareAndExchangeFloatAcquire(receiver, offset, testValue, newValue);
 			}
 
-			private static final float compareAndExchangeRelease(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final float compareAndExchangeRelease(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.compareAndExchangeFloatRelease(receiver, offset, testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, offset, testValue, newValue);
@@ -502,7 +485,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetFloatAcquire(receiver, offset, testValue, newValue);
@@ -511,7 +494,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/
 				return _unsafe.weakCompareAndSetFloatRelease(receiver, offset, testValue, newValue);
@@ -520,7 +503,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, offset, testValue, newValue);
@@ -529,66 +512,66 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final float getAndSet(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndSet(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetFloat(receiver, offset, value);
 			}
 
-			private static final float getAndSetAcquire(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndSetAcquire(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetFloatAcquire(receiver, offset, value);
 			}
 
-			private static final float getAndSetRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndSetRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetFloatRelease(receiver, offset, value);
 			}
 		
-			private static final float getAndAdd(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndAdd(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndAddAcquire(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndAddAcquire(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndAddRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndAddRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseAnd(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseAnd(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseAndAcquire(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseAndAcquire(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseAndRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseAndRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseOr(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseOr(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseOrAcquire(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseOrAcquire(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseOrRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseOrRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseXor(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseXor(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseXorAcquire(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseXorAcquire(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseXorRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseXorRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		}
@@ -596,47 +579,47 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpInt extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Integer.BYTES;
 			
-			private static final int get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final int get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				return _unsafe.getInt(receiver, offset);
 			}
 
-			private static final void set(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putInt(receiver, offset, value);
 			}
 
-			private static final int getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final int getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getIntVolatile(receiver, offset);
 			}
 
-			private static final void setVolatile(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putIntVolatile(receiver, offset, value);
 			}
 
-			private static final int getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final int getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getIntOpaque(receiver, offset);
 			}
 
-			private static final void setOpaque(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putIntOpaque(receiver, offset, value);
 			}
 
-			private static final int getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final int getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getIntAcquire(receiver, offset);
 			}
 
-			private static final void setRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putIntRelease(receiver, offset, value);
 			}
 
-			private static final boolean compareAndSet(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndSetInt(receiver, offset, testValue, newValue);
@@ -645,7 +628,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/
 			}
 
-			private static final int compareAndExchange(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final int compareAndExchange(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndExchangeInt(receiver, offset, testValue, newValue);
@@ -654,17 +637,17 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final int compareAndExchangeAcquire(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final int compareAndExchangeAcquire(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.compareAndExchangeIntAcquire(receiver, offset, testValue, newValue);
 			}
 
-			private static final int compareAndExchangeRelease(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final int compareAndExchangeRelease(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.compareAndExchangeIntRelease(receiver, offset, testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetIntPlain(receiver, offset, testValue, newValue);
@@ -673,7 +656,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetIntAcquire(receiver, offset, testValue, newValue);
@@ -682,7 +665,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetIntRelease(receiver, offset, testValue, newValue);
@@ -691,7 +674,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetIntPlain(receiver, offset, testValue, newValue);
@@ -700,77 +683,77 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final int getAndSet(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndSet(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetInt(receiver, offset, value);
 			}
 
-			private static final int getAndSetAcquire(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndSetAcquire(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetIntAcquire(receiver, offset, value);
 			}
 
-			private static final int getAndSetRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndSetRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetIntRelease(receiver, offset, value);
 			}
 
-			private static final int getAndAdd(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndAdd(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndAddInt(receiver, offset, value);
 			}
 
-			private static final int getAndAddAcquire(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndAddAcquire(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndAddIntAcquire(receiver, offset, value);
 			}
 
-			private static final int getAndAddRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndAddRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndAddIntRelease(receiver, offset, value);
 			}
 
-			private static final int getAndBitwiseAnd(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseAnd(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseAndInt(receiver, offset, value);
 			}
 
-			private static final int getAndBitwiseAndAcquire(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseAndAcquire(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseAndIntAcquire(receiver, offset, value);
 			}
 
-			private static final int getAndBitwiseAndRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseAndRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseAndIntRelease(receiver, offset, value);
 			}
 
-			private static final int getAndBitwiseOr(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseOr(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseOrInt(receiver, offset, value);
 			}
 
-			private static final int getAndBitwiseOrAcquire(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseOrAcquire(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseOrIntAcquire(receiver, offset, value);
 			}
 
-			private static final int getAndBitwiseOrRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseOrRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseOrIntRelease(receiver, offset, value);
 			}
 
-			private static final int getAndBitwiseXor(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseXor(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseXorInt(receiver, offset, value);
 			}
 
-			private static final int getAndBitwiseXorAcquire(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseXorAcquire(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseXorIntAcquire(receiver, offset, value);
 			}
 
-			private static final int getAndBitwiseXorRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseXorRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseXorIntRelease(receiver, offset, value);
 			}
@@ -779,47 +762,47 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpLong extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Long.BYTES;
 			
-			private static final long get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final long get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				return _unsafe.getLong(receiver, offset);
 			}
 
-			private static final void set(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putLong(receiver, offset, value);
 			}
 
-			private static final long getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final long getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getLongVolatile(receiver, offset);
 			}
 
-			private static final void setVolatile(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putLongVolatile(receiver, offset, value);
 			}
 
-			private static final long getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final long getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getLongOpaque(receiver, offset);
 			}
 
-			private static final void setOpaque(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putLongOpaque(receiver, offset, value);
 			}
 
-			private static final long getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final long getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getLongAcquire(receiver, offset);
 			}
 
-			private static final void setRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putLongRelease(receiver, offset, value);
 			}
 
-			private static final boolean compareAndSet(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndSetLong(receiver, offset, testValue, newValue);
@@ -828,7 +811,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final long compareAndExchange(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final long compareAndExchange(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndExchangeLong(receiver, offset, testValue, newValue);
@@ -837,17 +820,17 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final long compareAndExchangeAcquire(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final long compareAndExchangeAcquire(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.compareAndExchangeLongAcquire(receiver, offset, testValue, newValue);
 			}
 
-			private static final long compareAndExchangeRelease(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final long compareAndExchangeRelease(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.compareAndExchangeLongRelease(receiver, offset, testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetLongPlain(receiver, offset, testValue, newValue);
@@ -856,7 +839,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetLongAcquire(receiver, offset, testValue, newValue);
@@ -865,7 +848,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetLongRelease(receiver, offset, testValue, newValue);
@@ -874,7 +857,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetLongPlain(receiver, offset, testValue, newValue);
@@ -883,77 +866,77 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final long getAndSet(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndSet(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetLong(receiver, offset, value);
 			}
 
-			private static final long getAndSetAcquire(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndSetAcquire(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetLongAcquire(receiver, offset, value);
 			}
 
-			private static final long getAndSetRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndSetRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndSetLongRelease(receiver, offset, value);
 			}
 
-			private static final long getAndAdd(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndAdd(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndAddLong(receiver, offset, value);
 			}
 
-			private static final long getAndAddAcquire(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndAddAcquire(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndAddLongAcquire(receiver, offset, value);
 			}
 
-			private static final long getAndAddRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndAddRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndAddLongRelease(receiver, offset, value);
 			}
 
-			private static final long getAndBitwiseAnd(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseAnd(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseAndLong(receiver, offset, value);
 			}
 
-			private static final long getAndBitwiseAndAcquire(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseAndAcquire(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseAndLongAcquire(receiver, offset, value);
 			}
 
-			private static final long getAndBitwiseAndRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseAndRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseAndLongRelease(receiver, offset, value);
 			}
 
-			private static final long getAndBitwiseOr(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseOr(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseOrLong(receiver, offset, value);
 			}
 
-			private static final long getAndBitwiseOrAcquire(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseOrAcquire(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseOrLongAcquire(receiver, offset, value);
 			}
 
-			private static final long getAndBitwiseOrRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseOrRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseOrLongRelease(receiver, offset, value);
 			}
 
-			private static final long getAndBitwiseXor(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseXor(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseXorLong(receiver, offset, value);
 			}
 
-			private static final long getAndBitwiseXorAcquire(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseXorAcquire(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseXorLongAcquire(receiver, offset, value);
 			}
 
-			private static final long getAndBitwiseXorRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseXorRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getAndBitwiseXorLongRelease(receiver, offset, value);
 			}
@@ -962,135 +945,135 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpShort extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Short.BYTES;
 			
-			private static final short get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final short get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				return _unsafe.getShort(receiver, offset);
 			}
 
-			private static final void set(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, short value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putShort(receiver, offset, value);
 			}
 
-			private static final short getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final short getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getShortVolatile(receiver, offset);
 			}
 
-			private static final void setVolatile(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, short value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putShortVolatile(receiver, offset, value);
 			}
 
-			private static final short getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final short getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getShortOpaque(receiver, offset);
 			}
 
-			private static final void setOpaque(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, short value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putShortOpaque(receiver, offset, value);
 			}
 
-			private static final short getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final short getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				return _unsafe.getShortAcquire(receiver, offset);
 			}
 
-			private static final void setRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putShortRelease(receiver, offset, value);
 			}
 
-			private static final boolean compareAndSet(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short compareAndExchange(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final short compareAndExchange(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short compareAndExchangeAcquire(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final short compareAndExchangeAcquire(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short compareAndExchangeRelease(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final short compareAndExchangeRelease(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndSet(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndSet(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndSetAcquire(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndSetAcquire(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndSetRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndSetRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndAdd(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndAdd(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndAddAcquire(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndAddAcquire(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndAddRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndAddRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseAnd(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseAnd(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseAndAcquire(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseAndAcquire(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseAndRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseAndRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseOr(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseOr(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseOrAcquire(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseOrAcquire(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseOrRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseOrRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseXor(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseXor(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseXorAcquire(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseXorAcquire(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseXorRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseXorRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		}
@@ -1098,139 +1081,139 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpCharConvertEndian extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Character.BYTES;
 			
-			private static final char get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final char get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				char result = _unsafe.getChar(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void set(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, char value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putChar(receiver, offset, convertEndian(value));
 			}
 		
-			private static final char getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final char getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				char result = _unsafe.getCharVolatile(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setVolatile(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, char value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putCharVolatile(receiver, offset, convertEndian(value));
 			}
 		
-			private static final char getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final char getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				char result = _unsafe.getCharOpaque(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setOpaque(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, char value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putCharOpaque(receiver, offset, convertEndian(value));
 			}
 		
-			private static final char getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final char getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				char result = _unsafe.getCharAcquire(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putCharRelease(receiver, offset, convertEndian(value));
 			}
 		
-			private static final boolean compareAndSet(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char compareAndExchange(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final char compareAndExchange(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char compareAndExchangeAcquire(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final char compareAndExchangeAcquire(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char compareAndExchangeRelease(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final char compareAndExchangeRelease(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, char testValue, char newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndSet(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndSet(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndSetAcquire(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndSetAcquire(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndSetRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndSetRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndAdd(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndAdd(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndAddAcquire(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndAddAcquire(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndAddRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndAddRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseAnd(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseAnd(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseAndAcquire(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseAndAcquire(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseAndRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseAndRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseOr(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseOr(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseOrAcquire(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseOrAcquire(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseOrRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseOrRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseXor(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseXor(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseXorAcquire(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseXorAcquire(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final char getAndBitwiseXorRelease(byte[] receiver, int index, char value, ByteArrayViewVarHandle varHandle) {
+			private static final char getAndBitwiseXorRelease(byte[] receiver, int index, char value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		}
@@ -1238,51 +1221,51 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpDoubleConvertEndian extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Double.BYTES;
 			
-			private static final double get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final double get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				double result = _unsafe.getDouble(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void set(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putDouble(receiver, offset, convertEndian(value));
 			}
 		
-			private static final double getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final double getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				double result = _unsafe.getDoubleVolatile(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setVolatile(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putDoubleVolatile(receiver, offset, convertEndian(value));
 			}
 		
-			private static final double getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final double getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				double result = _unsafe.getDoubleOpaque(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setOpaque(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putDoubleOpaque(receiver, offset, convertEndian(value));
 			}
 		
-			private static final double getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final double getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				double result = _unsafe.getDoubleAcquire(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putDoubleRelease(receiver, offset, convertEndian(value));
 			}
 		
-			private static final boolean compareAndSet(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndSetDouble(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1291,7 +1274,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final double compareAndExchange(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final double compareAndExchange(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				double result = _unsafe.compareAndExchangeDouble(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1301,19 +1284,19 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 				return convertEndian(result);
 			}
 		
-			private static final double compareAndExchangeAcquire(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final double compareAndExchangeAcquire(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				double result = _unsafe.compareAndExchangeDoubleAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
 				return convertEndian(result);
 			}
 		
-			private static final double compareAndExchangeRelease(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final double compareAndExchangeRelease(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				double result = _unsafe.compareAndExchangeDoubleRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
 				return convertEndian(result);
 			}
 		
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1322,7 +1305,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetDoubleAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1331,7 +1314,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetDoubleRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1340,7 +1323,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, double testValue, double newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1349,69 +1332,69 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final double getAndSet(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndSet(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				double result = _unsafe.getAndSetDouble(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final double getAndSetAcquire(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndSetAcquire(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				double result = _unsafe.getAndSetDoubleAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final double getAndSetRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndSetRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				double result = _unsafe.getAndSetDoubleRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final double getAndAdd(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndAdd(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final double getAndAddAcquire(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndAddAcquire(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final double getAndAddRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndAddRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final double getAndBitwiseAnd(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseAnd(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final double getAndBitwiseAndAcquire(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseAndAcquire(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final double getAndBitwiseAndRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseAndRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final double getAndBitwiseOr(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseOr(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final double getAndBitwiseOrAcquire(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseOrAcquire(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final double getAndBitwiseOrRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseOrRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final double getAndBitwiseXor(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseXor(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final double getAndBitwiseXorAcquire(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseXorAcquire(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final double getAndBitwiseXorRelease(byte[] receiver, int index, double value, ByteArrayViewVarHandle varHandle) {
+			private static final double getAndBitwiseXorRelease(byte[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		}
@@ -1419,51 +1402,51 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpFloatConvertEndian extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Float.BYTES;
 			
-			private static final float get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final float get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				float result = _unsafe.getFloat(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void set(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putFloat(receiver, offset, convertEndian(value));
 			}
 		
-			private static final float getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final float getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				float result = _unsafe.getFloatVolatile(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setVolatile(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putFloatVolatile(receiver, offset, convertEndian(value));
 			}
 		
-			private static final float getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final float getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				float result = _unsafe.getFloatOpaque(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setOpaque(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putFloatOpaque(receiver, offset, convertEndian(value));
 			}
 		
-			private static final float getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final float getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				float result = _unsafe.getFloatAcquire(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putFloatRelease(receiver, offset, convertEndian(value));
 			}
 		
-			private static final boolean compareAndSet(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndSetFloat(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1472,7 +1455,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final float compareAndExchange(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final float compareAndExchange(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/
 				float result = _unsafe.compareAndExchangeFloat(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1482,19 +1465,19 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 				return convertEndian(result);
 			}
 		
-			private static final float compareAndExchangeAcquire(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final float compareAndExchangeAcquire(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				float result = _unsafe.compareAndExchangeFloatAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
 				return convertEndian(result);
 			}
 		
-			private static final float compareAndExchangeRelease(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final float compareAndExchangeRelease(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				float result = _unsafe.compareAndExchangeFloatRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
 				return convertEndian(result);
 			}
 		
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1503,7 +1486,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetFloatAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1512,7 +1495,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/
 				return _unsafe.weakCompareAndSetFloatRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1521,7 +1504,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, float testValue, float newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1530,69 +1513,69 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final float getAndSet(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndSet(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				float result = _unsafe.getAndSetFloat(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final float getAndSetAcquire(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndSetAcquire(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				float result = _unsafe.getAndSetFloatAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final float getAndSetRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndSetRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				float result = _unsafe.getAndSetFloatRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final float getAndAdd(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndAdd(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndAddAcquire(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndAddAcquire(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndAddRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndAddRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndBitwiseAnd(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseAnd(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndBitwiseAndAcquire(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseAndAcquire(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndBitwiseAndRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseAndRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndBitwiseOr(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseOr(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndBitwiseOrAcquire(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseOrAcquire(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndBitwiseOrRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseOrRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndBitwiseXor(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseXor(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndBitwiseXorAcquire(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseXorAcquire(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		
-			private static final float getAndBitwiseXorRelease(byte[] receiver, int index, float value, ByteArrayViewVarHandle varHandle) {
+			private static final float getAndBitwiseXorRelease(byte[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		}
@@ -1600,51 +1583,51 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpIntConvertEndian extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Integer.BYTES;
 			
-			private static final int get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final int get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				int result = _unsafe.getInt(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void set(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putInt(receiver, offset, convertEndian(value));
 			}
 		
-			private static final int getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final int getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getIntVolatile(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setVolatile(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putIntVolatile(receiver, offset, convertEndian(value));
 			}
 		
-			private static final int getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final int getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getIntOpaque(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setOpaque(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putIntOpaque(receiver, offset, convertEndian(value));
 			}
 		
-			private static final int getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final int getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getIntAcquire(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putIntRelease(receiver, offset, convertEndian(value));
 			}
 		
-			private static final boolean compareAndSet(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndSetInt(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1653,7 +1636,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final int compareAndExchange(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final int compareAndExchange(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				int result = _unsafe.compareAndExchangeInt(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1663,19 +1646,19 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 				return convertEndian(result);
 			}
 		
-			private static final int compareAndExchangeAcquire(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final int compareAndExchangeAcquire(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.compareAndExchangeIntAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
 				return convertEndian(result);
 			}
 		
-			private static final int compareAndExchangeRelease(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final int compareAndExchangeRelease(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.compareAndExchangeIntRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
 				return convertEndian(result);
 			}
 		
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/
 				return _unsafe.weakCompareAndSetIntPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1684,7 +1667,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetIntAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1693,7 +1676,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetIntRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1702,7 +1685,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, int testValue, int newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/
 				return _unsafe.weakCompareAndSetIntPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1711,91 +1694,91 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final int getAndSet(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndSet(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndSetInt(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndSetAcquire(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndSetAcquire(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndSetIntAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndSetRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndSetRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndSetIntRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndAdd(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndAdd(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndAddInt(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndAddAcquire(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndAddAcquire(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndAddIntAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndAddRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndAddRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndAddIntRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndBitwiseAnd(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseAnd(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndBitwiseAndInt(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndBitwiseAndAcquire(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseAndAcquire(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndBitwiseAndIntAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndBitwiseAndRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseAndRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndBitwiseAndIntRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndBitwiseOr(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseOr(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndBitwiseOrInt(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndBitwiseOrAcquire(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseOrAcquire(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndBitwiseOrIntAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndBitwiseOrRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseOrRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndBitwiseOrIntRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndBitwiseXor(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseXor(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndBitwiseXorInt(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndBitwiseXorAcquire(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseXorAcquire(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndBitwiseXorIntAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final int getAndBitwiseXorRelease(byte[] receiver, int index, int value, ByteArrayViewVarHandle varHandle) {
+			private static final int getAndBitwiseXorRelease(byte[] receiver, int index, int value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				int result = _unsafe.getAndBitwiseXorIntRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
@@ -1805,51 +1788,51 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpLongConvertEndian extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Long.BYTES;
 			
-			private static final long get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final long get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				long result = _unsafe.getLong(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void set(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putLong(receiver, offset, convertEndian(value));
 			}
 		
-			private static final long getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final long getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getLongVolatile(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setVolatile(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putLongVolatile(receiver, offset, convertEndian(value));
 			}
 		
-			private static final long getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final long getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getLongOpaque(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setOpaque(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putLongOpaque(receiver, offset, convertEndian(value));
 			}
 		
-			private static final long getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final long getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getLongAcquire(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putLongRelease(receiver, offset, convertEndian(value));
 			}
 		
-			private static final boolean compareAndSet(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.compareAndSetLong(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1858,7 +1841,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final long compareAndExchange(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final long compareAndExchange(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				long result = _unsafe.compareAndExchangeLong(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1868,19 +1851,19 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 				return convertEndian(result);
 			}
 		
-			private static final long compareAndExchangeAcquire(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final long compareAndExchangeAcquire(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.compareAndExchangeLongAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
 				return convertEndian(result);
 			}
 		
-			private static final long compareAndExchangeRelease(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final long compareAndExchangeRelease(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.compareAndExchangeLongRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
 				return convertEndian(result);
 			}
 		
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/
 				return _unsafe.weakCompareAndSetLongPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1889,7 +1872,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetLongAcquire(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1898,7 +1881,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetLongRelease(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1907,7 +1890,7 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, long testValue, long newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 /*[IF Sidecar19-SE-B174]*/				
 				return _unsafe.weakCompareAndSetLongPlain(receiver, offset, convertEndian(testValue), convertEndian(newValue));
@@ -1916,91 +1899,91 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 /*[ENDIF]*/				
 			}
 		
-			private static final long getAndSet(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndSet(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndSetLong(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndSetAcquire(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndSetAcquire(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndSetLongAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndSetRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndSetRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndSetLongRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndAdd(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndAdd(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndAddLong(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndAddAcquire(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndAddAcquire(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndAddLongAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndAddRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndAddRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndAddLongRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndBitwiseAnd(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseAnd(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndBitwiseAndLong(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndBitwiseAndAcquire(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseAndAcquire(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndBitwiseAndLongAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndBitwiseAndRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseAndRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndBitwiseAndLongRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndBitwiseOr(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseOr(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndBitwiseOrLong(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndBitwiseOrAcquire(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseOrAcquire(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndBitwiseOrLongAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndBitwiseOrRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseOrRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndBitwiseOrLongRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndBitwiseXor(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseXor(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndBitwiseXorLong(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndBitwiseXorAcquire(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseXorAcquire(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndBitwiseXorLongAcquire(receiver, offset, convertEndian(value));
 				return convertEndian(result);
 			}
 		
-			private static final long getAndBitwiseXorRelease(byte[] receiver, int index, long value, ByteArrayViewVarHandle varHandle) {
+			private static final long getAndBitwiseXorRelease(byte[] receiver, int index, long value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				long result = _unsafe.getAndBitwiseXorLongRelease(receiver, offset, convertEndian(value));
 				return convertEndian(result);
@@ -2010,139 +1993,139 @@ final class ByteArrayViewVarHandle extends ViewVarHandle {
 		static final class OpShortConvertEndian extends ByteArrayViewVarHandleOperations {
 			private static final int BYTES = Short.BYTES;
 			
-			private static final short get(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final short get(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				short result = _unsafe.getShort(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void set(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, short value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, true);
 				_unsafe.putShort(receiver, offset, convertEndian(value));
 			}
 		
-			private static final short getVolatile(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final short getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				short result = _unsafe.getShortVolatile(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setVolatile(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, short value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putShortVolatile(receiver, offset, convertEndian(value));
 			}
 		
-			private static final short getOpaque(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final short getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				short result = _unsafe.getShortOpaque(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setOpaque(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, short value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putShortOpaque(receiver, offset, convertEndian(value));
 			}
 		
-			private static final short getAcquire(byte[] receiver, int index, ByteArrayViewVarHandle varHandle) {
+			private static final short getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				short result = _unsafe.getShortAcquire(receiver, offset);
 				return convertEndian(result);
 			}
 		
-			private static final void setRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				long offset = checkAndComputeOffset(receiver, BYTES, index, false);
 				_unsafe.putShortRelease(receiver, offset, convertEndian(value));
 			}
 			
-			private static final boolean compareAndSet(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short compareAndExchange(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final short compareAndExchange(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short compareAndExchangeAcquire(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final short compareAndExchangeAcquire(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short compareAndExchangeRelease(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final short compareAndExchangeRelease(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSet(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, short testValue, short newValue, ByteArrayViewVarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndSet(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndSet(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndSetAcquire(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndSetAcquire(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndSetRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndSetRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndAdd(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndAdd(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndAddAcquire(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndAddAcquire(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndAddRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndAddRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseAnd(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseAnd(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseAndAcquire(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseAndAcquire(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseAndRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseAndRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseOr(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseOr(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseOrAcquire(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseOrAcquire(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseOrRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseOrRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseXor(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseXor(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseXorAcquire(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseXorAcquire(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final short getAndBitwiseXorRelease(byte[] receiver, int index, short value, ByteArrayViewVarHandle varHandle) {
+			private static final short getAndBitwiseXorRelease(byte[] receiver, int index, short value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		}

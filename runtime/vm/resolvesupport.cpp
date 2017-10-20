@@ -1306,7 +1306,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				/* Call VM Entry point to create the MethodType - Result is put into the
 				 * vmThread->returnValue as entry points don't "return" in the expected way
 				 */
-				sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, 0, 0);
+				sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, NULL, 0);
 				methodType = (j9object_t) vmStruct->returnValue;
 
 				/* check if an exception is already pending */
@@ -1466,8 +1466,13 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 
 					/* Call VM Entry point to create the MethodType - Result is put into the
 					 * vmThread->returnValue as entry points don't "return" in the expected way
+					 *
+					 * NB! An extra VarHandle argument is appended to the MethodType's argument list,
+					 * so the returned MethodType doesn't represent the provided method signature.
+					 * E.g. the MethodType for "(I)I" will have the following descriptor string:
+					 *     "(Ijava/lang/invoke/VarHandle;)I"
 					 */
-					sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, 0, 0);
+					sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, J9VMJAVALANGINVOKEVARHANDLE_OR_NULL(vm), 0);
 					methodType = (j9object_t)vmStruct->returnValue;
 
 					/* Check if an exception is already pending */
@@ -1568,7 +1573,7 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 	 */
 	romMethodTypeRef = ((J9ROMMethodTypeRef *) &(J9_ROM_CP_FROM_CP(ramCP)[cpIndex]));
 	lookupSig = J9ROMMETHODTYPEREF_SIGNATURE(romMethodTypeRef);
-	sendFromMethodDescriptorString(vmThread, lookupSig, J9_CLASS_FROM_CP(ramCP)->classLoader, 0, 0);
+	sendFromMethodDescriptorString(vmThread, lookupSig, J9_CLASS_FROM_CP(ramCP)->classLoader, NULL, 0);
 	methodType = (j9object_t) vmThread->returnValue;
 
 	/* check if an exception is already pending */

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,9 +32,11 @@ abstract class VarHandleInvokeHandle extends PrimitiveHandle {
 	final MethodType accessModeType;
 
 	VarHandleInvokeHandle(AccessMode accessMode, MethodType accessModeType, byte kind) {
+		// Prepend a VarHandle receiver argument to match the how this MethodHandle will be invoked
 		super(accessModeType.insertParameterTypes(0, VarHandle.class), null, null, kind, null);
 		this.operation = accessMode.ordinal();
-		this.accessModeType = accessModeType;
+		// Append a VarHandle argument to match the VarHandle's internal method signature
+		this.accessModeType = accessModeType.appendParameterTypes(VarHandle.class);
 	}
 
 	VarHandleInvokeHandle(VarHandleInvokeHandle originalHandle, MethodType newType) {
@@ -57,16 +59,12 @@ abstract class VarHandleInvokeHandle extends PrimitiveHandle {
 }
 
 final class VarHandleInvokeExactHandle extends VarHandleInvokeHandle {
-	MethodType handleTableMHType;
-
 	VarHandleInvokeExactHandle(AccessMode accessMode, MethodType accessModeType) {
 		super(accessMode, accessModeType, KIND_VARHANDLEINVOKEEXACT);
-		handleTableMHType = null;
 	}
 
 	VarHandleInvokeExactHandle(VarHandleInvokeExactHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
-		handleTableMHType = originalHandle.handleTableMHType;
 	}
 
 	@Override
@@ -101,32 +99,19 @@ final class VarHandleInvokeExactHandle extends VarHandleInvokeHandle {
 			doCustomizationLogic();
 		}
 
-		/* For a fixed access mode, the MethodHandle from the handle table will
-		 * have different types for different subclasses of VarHandle, even when
-		 * excluding the last argument whose type is one of the subclasses of VarHandle.
-		 */
-		MethodType nextType = (null == handleTableMHType) ?
-				accessModeType.appendParameterTypes(varHandle.getClass()) : handleTableMHType;
-		ILGenMacros.typeCheck(next, nextType);
-		if (null == handleTableMHType) {
-			handleTableMHType = nextType;
-		}
+		ILGenMacros.typeCheck(next, accessModeType);
 		return ILGenMacros.invokeExact_X(next, ILGenMacros.placeholder(argPlaceholder, varHandle));
 	}
 	// }}} JIT support
 }
 
 final class VarHandleInvokeGenericHandle extends VarHandleInvokeHandle {
-	final MethodType handleTableMHType;
-
 	VarHandleInvokeGenericHandle(AccessMode accessMode, MethodType accessModeType) {
 		super(accessMode, accessModeType, KIND_VARHANDLEINVOKEGENERIC);
-		handleTableMHType = accessModeType.appendParameterTypes(VarHandle.class);
 	}
 
 	VarHandleInvokeGenericHandle(VarHandleInvokeGenericHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
-		handleTableMHType = originalHandle.handleTableMHType;
 	}
 
 	@Override
@@ -160,7 +145,7 @@ final class VarHandleInvokeGenericHandle extends VarHandleInvokeHandle {
 		if (!ILGenMacros.isCustomThunk()) {
 			doCustomizationLogic();
 		}
-		return ILGenMacros.invokeExact_X(next.asType(handleTableMHType), ILGenMacros.placeholder(argPlaceholder, varHandle));
+		return ILGenMacros.invokeExact_X(next.asType(accessModeType), ILGenMacros.placeholder(argPlaceholder, varHandle));
 	}
 	// }}} JIT support
 }
