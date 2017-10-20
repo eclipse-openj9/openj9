@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1465,17 +1465,8 @@ createMethodMetaData(
 
    data->startPC = (UDATA)comp->cg()->getCodeStart();
    data->endPC = (UDATA)comp->cg()->getCodeEnd();
-   data->startColdPC = (UDATA)comp->cg()->getColdCodeStart();
-
-   if (data->startColdPC)
-      {
-      data->endWarmPC = (UDATA)comp->cg()->getWarmCodeEnd();
-      }
-   else
-      {
-      data->endWarmPC = data->endPC;
-      }
-
+   data->startColdPC = (UDATA)0;
+   data->endWarmPC = data->endPC;
    data->codeCacheAlloc = (UDATA)comp->cg()->getBinaryBufferStart();
 
    data->flags = 0;

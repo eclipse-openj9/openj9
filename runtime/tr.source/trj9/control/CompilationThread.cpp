@@ -7801,15 +7801,6 @@ TR::CompilationInfoPerThreadBase::compile(
                compiler->cg()->getCodeStart()
                );
 
-            if (compiler->cg()->getColdCodeStart())
-               {
-               TR_VerboseLog::write(
-                  POINTER_PRINTF_FORMAT "] & [" POINTER_PRINTF_FORMAT "-",
-                  compiler->cg()->getWarmCodeEnd(),
-                  compiler->cg()->getColdCodeStart()
-                  );
-               }
-
             TR_VerboseLog::write(
                POINTER_PRINTF_FORMAT "] for %s @ %s",
                compiler->cg()->getCodeEnd(),
