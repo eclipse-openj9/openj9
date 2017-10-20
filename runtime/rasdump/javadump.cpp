@@ -4335,11 +4335,11 @@ JavaCoreDumpWriter::writeThread(J9VMThread* vmThread, J9PlatformThread *nativeTh
 			frame = frame->parent_frame;
 		}
 	} else {
-#if defined(J9ZOS390) || defined(J9ZTPF)
+#if defined(J9ZOS390)
 		_OutputStream.writeCharacters("3XMTHREADINFO3           No native callstack available on this platform\n");
-#else /* defined(J9ZOS390) || defined(J9ZTPF) */
+#else
 		_OutputStream.writeCharacters("3XMTHREADINFO3           No native callstack available for this thread\n");
-#endif /* defined(J9ZOS390) || defined(J9ZTPF) */
+#endif
 		_OutputStream.writeCharacters("NULL\n");
 	}
 
