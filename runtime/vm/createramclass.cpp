@@ -122,10 +122,10 @@ static J9Class* markInterfaces(J9ROMClass *romClass, J9Class *superclass, J9Clas
 static void unmarkInterfaces(J9Class *interfaceHead);
 static void createITable(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClass, J9ITable ***previousLink, UDATA **currentSlot, UDATA depth);
 static UDATA* initializeRAMClassITable(J9VMThread* vmStruct, J9Class *ramClass, J9Class *superclass, UDATA* currentSlot, J9Class *interfaceHead, IDATA maxInterfaceDepth);
-static UDATA addInterfaceMethods(J9VMThread *vmStruct, J9Class *interfaceClass, UDATA vTableWriteIndex, UDATA *vTableAddress, J9Class *superclass, J9ROMClass *romClass, UDATA *defaultConflictCount, J9Pool *equivalentSets, UDATA *equivSetCount);
-static UDATA* computeVTable(J9VMThread *vmStruct, J9Class *superclass, J9ROMClass *taggedClass, UDATA packageID, J9ROMMethod ** methodRemapArray, J9Class *interfaceHead, UDATA *defaultConflictCount, UDATA interfaceCount, UDATA inheritedInterfaceCount);
+static UDATA addInterfaceMethods(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *interfaceClass, UDATA vTableWriteIndex, UDATA *vTableAddress, J9Class *superclass, J9ROMClass *romClass, UDATA *defaultConflictCount, J9Pool *equivalentSets, UDATA *equivSetCount);
+static UDATA* computeVTable(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *superclass, J9ROMClass *taggedClass, UDATA packageID, J9ROMMethod ** methodRemapArray, J9Class *interfaceHead, UDATA *defaultConflictCount, UDATA interfaceCount, UDATA inheritedInterfaceCount);
 static void copyVTable(J9VMThread *vmStruct, J9Class *ramClass, J9Class *superclass, UDATA *vTable, UDATA defaultConflictCount);
-static UDATA processVTableMethod(J9VMThread *vmThread, UDATA *vTableAddress, J9Class *superclass, J9ROMClass *romClass, J9ROMMethod *romMethod, UDATA localPackageID, UDATA vTableWriteIndex, void *storeValue);
+static UDATA processVTableMethod(J9VMThread *vmThread, J9ClassLoader *classLoader, UDATA *vTableAddress, J9Class *superclass, J9ROMClass *romClass, J9ROMMethod *romMethod, UDATA localPackageID, UDATA vTableWriteIndex, void *storeValue);
 static VMINLINE UDATA growNewVTableSlot(UDATA *vTableAddress, UDATA vTableWriteIndex, void *storeValue);
 static UDATA getVTableIndexForNameAndSigStartingAt(UDATA *vTable, J9UTF8 *name, J9UTF8 *signature, UDATA vTableIndex);
 static UDATA checkPackageAccess(J9VMThread *vmThread, J9Class *foundClass, UDATA classPreloadFlags);
@@ -404,7 +404,7 @@ typedef enum {
 
 
 static UDATA
-addInterfaceMethods(J9VMThread *vmStruct, J9Class *interfaceClass, UDATA vTableWriteIndex, UDATA *vTableAddress, J9Class *superclass, J9ROMClass *romClass, UDATA *defaultConflictCount, J9Pool *equivalentSets, UDATA *equivSetCount)
+addInterfaceMethods(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *interfaceClass, UDATA vTableWriteIndex, UDATA *vTableAddress, J9Class *superclass, J9ROMClass *romClass, UDATA *defaultConflictCount, J9Pool *equivalentSets, UDATA *equivSetCount)
 {
 	J9ROMClass *interfaceROMClass = interfaceClass->romClass;
 	UDATA count = interfaceROMClass->romMethodCount;
@@ -547,6 +547,24 @@ add_existing:
 							break;
 						}
 						if (J9_JAVA_PUBLIC == (vTableMethod->modifiers & J9_JAVA_PUBLIC)) {
+							J9ClassLoader *interfaceLoader = interfaceClass->classLoader;
+							J9ClassLoader *vTableMethodLoader = classLoader;
+							if (NULL != methodClass) {
+								vTableMethodLoader = methodClass->classLoader;
+							}
+							if (interfaceLoader != vTableMethodLoader) {
+								if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, vTableMethodLoader, interfaceLoader, vTableMethodSigUTF, interfaceMethodSigUTF)) {
+									J9UTF8 *vTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(romClass);
+									if (NULL != methodClass) {
+										vTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(methodClass->romClass);
+									}
+									J9UTF8 *interfaceClassNameUTF = J9ROMCLASS_CLASSNAME(interfaceClass->romClass);
+									setClassLoadingConstraintOverrideError(vmStruct, J9ROMCLASS_CLASSNAME(romClass), vTableMethodLoader, vTableMethodClassNameUTF, interfaceLoader, interfaceClassNameUTF, interfaceClassNameUTF, J9UTF8_DATA(vTableMethodNameUTF), J9UTF8_LENGTH(vTableMethodNameUTF), J9UTF8_DATA(vTableMethodSigUTF), J9UTF8_LENGTH(vTableMethodSigUTF));
+									vTableWriteIndex = 0;
+									goto done;
+								}
+
+							}
 							goto continueInterfaceScan;
 						}
 					}
@@ -649,12 +667,13 @@ continueProcessingVTable: ;
  * The caller must hold the class table mutex or exclusive access.
  */
 static UDATA *
-computeVTable(J9VMThread *vmStruct, J9Class *superclass, J9ROMClass *taggedClass, UDATA packageID, J9ROMMethod ** methodRemapArray, J9Class *interfaceHead, UDATA *defaultConflictCount, UDATA interfaceCount, UDATA inheritedInterfaceCount)
+computeVTable(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *superclass, J9ROMClass *taggedClass, UDATA packageID, J9ROMMethod ** methodRemapArray, J9Class *interfaceHead, UDATA *defaultConflictCount, UDATA interfaceCount, UDATA inheritedInterfaceCount)
 {
 	J9JavaVM *vm = vmStruct->javaVM;
 	J9ROMClass *romClass = taggedClass;
 	UDATA maxSlots;
 	UDATA *vTableAddress = NULL;
+	bool vTableAllocated = false;
 
 	PORT_ACCESS_FROM_VMC(vmStruct);
 
@@ -717,6 +736,7 @@ computeVTable(J9VMThread *vmStruct, J9Class *superclass, J9ROMClass *taggedClass
 	if (NULL == vTableAddress) {
 		if (maxSlots > vm->vTableScratchSize) {
 			vTableAddress = (UDATA *)j9mem_allocate_memory(maxSlots, J9MEM_CATEGORY_CLASSES);
+			vTableAllocated = true;
 		} else {
 			vTableAddress = vm->vTableScratch;
 		}
@@ -765,8 +785,11 @@ computeVTable(J9VMThread *vmStruct, J9Class *superclass, J9ROMClass *taggedClass
 					&& J9_ARE_NO_BITS_SET(romMethod->modifiers, J9_JAVA_STATIC)
 					&& ('<' != J9UTF8_DATA(methodName)[0])
 					) {
-						vTableWriteIndex = processVTableMethod(vmStruct, vTableAddress, superclass, romClass, romMethod,
+						vTableWriteIndex = processVTableMethod(vmStruct, classLoader, vTableAddress, superclass, romClass, romMethod,
 								packageID, vTableWriteIndex, (J9ROMMethod *)((UDATA)romMethod + ROM_METHOD_ID_TAG));
+						if (0 == vTableWriteIndex) {
+							goto fail;
+						}
 					}
 					if (i > 1) {
 						if (methodRemapArray == NULL) {
@@ -794,9 +817,7 @@ computeVTable(J9VMThread *vmStruct, J9Class *superclass, J9ROMClass *taggedClass
 					/* No memset required as interfaces will be completely initialized */
 					interfaces = (J9Class **)j9mem_allocate_memory(totalInterfaces * sizeof(J9Class *), J9MEM_CATEGORY_CLASSES);
 					if (NULL == interfaces) {
-						/* TODO: tracepoint? */
-						vTableAddress = NULL;
-						goto done;
+						goto fail;
 					}
 				}
 
@@ -829,8 +850,7 @@ computeVTable(J9VMThread *vmStruct, J9Class *superclass, J9ROMClass *taggedClass
 				J9Pool *equivalentSet = pool_new(sizeof(J9EquivalentEntry),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary));
 				if (NULL == equivalentSet) {
 					setNativeOutOfMemoryError(vmStruct, 0, 0);
-					vTableAddress = NULL;
-					goto done;
+					goto fail;
 				}
 				UDATA equivSetCount = 0;
 				for (i = totalInterfaces; i > 0; i--) {
@@ -840,7 +860,16 @@ computeVTable(J9VMThread *vmStruct, J9Class *superclass, J9ROMClass *taggedClass
 						j9tty_printf(PORTLIB, "\n\t<%.*s>", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 					}
 #endif /* VERBOSE_INTERFACE_METHODS */
-					vTableWriteIndex = addInterfaceMethods(vmStruct, interfaces[i - 1], vTableWriteIndex, vTableAddress, superclass, romClass, defaultConflictCount, equivalentSet, &equivSetCount);
+					vTableWriteIndex = addInterfaceMethods(vmStruct, classLoader, interfaces[i - 1], vTableWriteIndex, vTableAddress, superclass, romClass, defaultConflictCount, equivalentSet, &equivSetCount);
+					if (0 == vTableWriteIndex) {
+						if (NULL != equivalentSet) {
+							pool_kill(equivalentSet);
+						}
+						if (interfaces != localBuffer) {
+							j9mem_free_memory(interfaces);
+						}
+						goto fail;
+					}
 				}
 				if (equivSetCount > 0) {
 					processEquivalentSets(vmStruct, defaultConflictCount, vTableWriteIndex, vTableAddress);
@@ -860,6 +889,12 @@ computeVTable(J9VMThread *vmStruct, J9Class *superclass, J9ROMClass *taggedClass
 	
 done:
 	return vTableAddress;
+fail:
+	if (vTableAllocated) {
+		j9mem_free_memory(vTableAddress);
+	}
+	vTableAddress = NULL;
+	goto done;
 }
 
 
@@ -1085,7 +1120,7 @@ fillJITVTableSlot(J9VMThread *vmStruct, UDATA *currentSlot, J9Method *currentMet
 #endif
 
 static UDATA
-processVTableMethod(J9VMThread *vmThread, UDATA *vTableAddress, J9Class *superclass, J9ROMClass *romClass, J9ROMMethod *romMethod, UDATA localPackageID, UDATA vTableWriteIndex, void *storeValue)
+processVTableMethod(J9VMThread *vmThread, J9ClassLoader *classLoader, UDATA *vTableAddress, J9Class *superclass, J9ROMClass *romClass, J9ROMMethod *romMethod, UDATA localPackageID, UDATA vTableWriteIndex, void *storeValue)
 {
 	BOOLEAN anyOverrides = FALSE;
 	J9UTF8 *nameUTF = J9ROMMETHOD_NAME(romMethod);
@@ -1109,17 +1144,19 @@ processVTableMethod(J9VMThread *vmThread, UDATA *vTableAddress, J9Class *supercl
 		{
 			/* fetch vTable entry */
 			J9Method *superclassVTableMethod = (J9Method *)superclassVTable[superclassVTableIndex];
+			J9Class *superclassVTableMethodClass = J9_CLASS_FROM_METHOD(superclassVTableMethod);
+			J9ROMMethod *superclassVTableROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(superclassVTableMethod);
 				/* Assumes that the new method is at least as visible as the superclass method.
 				 * The subclass method overrides the superclass method if the superclass method
 				 * could run in this class.
 				 */
-				UDATA modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(superclassVTableMethod)->modifiers;
+				UDATA modifiers = superclassVTableROMMethod->modifiers;
 				/* Private methods are not overridden. */
 				if ((modifiers & J9_JAVA_PRIVATE) != J9_JAVA_PRIVATE) {
 					/* Protected and public are always overridden. */
 					if (((modifiers & (J9_JAVA_PROTECTED | J9_JAVA_PUBLIC)) != 0) ||
 							/* Default is overridden by any method in the same package. */
-							(J9_CLASS_FROM_METHOD(superclassVTableMethod)->packageID == localPackageID))
+							(superclassVTableMethodClass->packageID == localPackageID))
 					{
 						if ((((UDATA)storeValue & VTABLE_SLOT_TAG_MASK) == ROM_METHOD_ID_TAG)
 						|| (vTableAddress[superclassVTableIndex] == (UDATA)superclassVTableMethod)
@@ -1130,6 +1167,19 @@ processVTableMethod(J9VMThread *vmThread, UDATA *vTableAddress, J9Class *supercl
 							}
 							/* fill in vtable, override parent slot */
 							if (!isPrivate) {
+								J9ClassLoader *superclassVTableMethodLoader = superclassVTableMethodClass->classLoader;
+								if (superclassVTableMethodLoader != classLoader) {
+									J9UTF8 *superclassVTableMethodSigUTF = J9ROMMETHOD_SIGNATURE(superclassVTableROMMethod);
+									if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmThread, classLoader, superclassVTableMethodLoader, sigUTF, superclassVTableMethodSigUTF)) {
+										J9UTF8 *superclassVTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(superclassVTableMethodClass->romClass);
+										J9UTF8 *newClassNameUTF = J9ROMCLASS_CLASSNAME(romClass);
+										J9UTF8 *superclassVTableMethodNameUTF = J9ROMMETHOD_NAME(superclassVTableROMMethod);
+										setClassLoadingConstraintOverrideError(vmThread, J9ROMCLASS_CLASSNAME(romClass), classLoader, newClassNameUTF, superclassVTableMethodLoader, superclassVTableMethodClassNameUTF, superclassVTableMethodClassNameUTF, J9UTF8_DATA(superclassVTableMethodNameUTF), J9UTF8_LENGTH(superclassVTableMethodNameUTF), J9UTF8_DATA(superclassVTableMethodSigUTF), J9UTF8_LENGTH(superclassVTableMethodSigUTF));
+										vTableWriteIndex = 0;
+										goto done;
+									}
+
+								}
 								vTableAddress[superclassVTableIndex] = (UDATA)storeValue;
 							}
 	
@@ -1177,6 +1227,7 @@ processVTableMethod(J9VMThread *vmThread, UDATA *vTableAddress, J9Class *supercl
 		}
 #endif
 	}
+done:
 	return vTableWriteIndex;
 }
 
@@ -1941,7 +1992,7 @@ fail:
 		} else {
 			interfaceHead = markInterfaces(romClass, superclass, hostClassLoader, &foundCloneable, &interfaceCount, &inheritedInterfaceCount, &maxInterfaceDepth);
 			/* Compute the number of slots required for the interpreter and jit (if enabled) vTables. */
-			vTable = computeVTable(vmThread, superclass, romClass, packageID, methodRemapArray, interfaceHead, &defaultConflictCount, interfaceCount, inheritedInterfaceCount);
+			vTable = computeVTable(vmThread, classLoader, superclass, romClass, packageID, methodRemapArray, interfaceHead, &defaultConflictCount, interfaceCount, inheritedInterfaceCount);
 			if (vTable == NULL) {
 				classSize = 0;
 				unmarkInterfaces(interfaceHead);
