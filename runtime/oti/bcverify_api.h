@@ -164,16 +164,6 @@ bcvIsInitOrClinit (J9CfrConstantPoolInfo * info);
 
 /**
 * @brief
-* @param verifyData
-* @param ramClass
-* @return J9ROMMethod *
-*/
-J9ROMMethod *
-checkAllClassLoadingConstraints (J9BytecodeVerificationData * verifyData, J9Class * ramClass);
-
-
-/**
-* @brief
 * @param vmThread
 * @param loader1
 * @param loader2

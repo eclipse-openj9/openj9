@@ -1746,3 +1746,39 @@ J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.explanation=The JVM failed to load t
 J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.system_action=The JVM continues.
 J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.user_response=No action required if the specified library won't be referenced.
 # END NON-TRANSLATABLE
+
+# Message for LinkageError when a class loading constraint violation occurs when overriding a method
+# arguments 1 and 2 are the overridden method's class's name
+# arguments 3 and 4 are the overridden method name
+# arguments 5 and 6 are the overridden method's signature
+# arguments 7 and 8 are classloader name
+# argument 9 is the classloader's identity hashcode
+# arguments 10 and 11 are classloader's class
+# arguments 12 and 13 are the other classloader name
+# argument 14 is the other classloader's identity hashcode
+# arguments 15 and 16 are the other classloader's class
+# arguments 17 and 18 are the name of class being created
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=loading constraint violation when overriding method \"%2$.*1$s.%4$.*3$s%6$.*5$s\" during creation of class \"%18$.*17$s\": loader \"%8$.*7$s@%9$x\" of class \"%11$.*10$s\" and loader \"%13$.*12$s@%14$x\" of class \"%16$.*15$s\" have different types for the method signature
+# START NON-TRANSLATABLE
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_1=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_2=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_3=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_4=method
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_5=15
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_6=()LLoadedTwice;
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_7=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_8=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_9=2011a4e
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_10=8
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_11=Violator
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_12=6
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_13=Loader
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_14=200b50c
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_15=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_16=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_17=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_18=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.explanation=A class loading constraint has been violated.  The two class loader's have different classes for one of the class names in the signature.
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.system_action=A java/lang/LinkageError will be thrown
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.user_response=Examine the use of ClassLoaders to determine why a class of the same name is loaded in two different loaders
+# END NON-TRANSLATABLE

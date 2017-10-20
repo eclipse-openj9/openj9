@@ -2615,16 +2615,6 @@ _fallBack:
 		
 		romMethod = J9_NEXT_ROM_METHOD(romMethod);
 	}
-	
-	if (clazz && (result == BCV_SUCCESS)) {
-		verifyData->romMethod = checkAllClassLoadingConstraints (verifyData, clazz);
-		if (verifyData->romMethod) {
-			verifyData->errorModule = J9NLS_BCV_ERR_CLASSLOADING_CONSTRAINT__MODULE;
-			verifyData->errorCode = J9NLS_BCV_ERR_CLASSLOADING_CONSTRAINT__ID;
-			result = BCV_ERR_INTERNAL_ERROR;
-		}
-	}
-
 
 _done:
 	verifyData->vmStruct->omrVMThread->vmState = oldState;
