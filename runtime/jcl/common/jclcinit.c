@@ -115,14 +115,11 @@ jint computeFullVersionString(J9JavaVM* vm)
 		strcat(vminfo, "?.?.? ");
 	}
 
-	strcat(fullversion, "IBM J9 ");
-	strcat(fullversion, EsVersionString " ");
+	sprintf (strchr(fullversion, '\0'), "IBM J9  %s", EsVersionString " ");
 	osname = j9sysinfo_get_OS_type();
 	if (NULL != osname) {
-		strcat(fullversion, osname);
-		strcat(fullversion, " ");
-		strcat(vminfo, osname);
-		strcat(vminfo, " ");
+		sprintf (strchr(fullversion, '\0'), "%s ", osname);
+		sprintf (strchr(vminfo, '\0'), "%s ", osname);
 	}
 	osarch = j9sysinfo_get_CPU_architecture();
 	strcat(fullversion, osarch);
@@ -158,8 +155,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 			aotEnabled = 1;
 		}
 	}
-	strcat(fullversion, " (JIT ");
-	strcat(fullversion, jitEnabled ? "en" : "dis");
+	sprintf (strchr(fullversion, '\0'), " (JIT %s", jitEnabled ? "en" : "dis");
 	strcat(vminfo, " (JIT ");
 	strcat(vminfo, jitEnabled ? "en" : "dis");
 	strcat(fullversion, "abled, AOT ");
@@ -178,8 +174,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 	gcVersion = OMR_VERSION_STRING;
 	strcat(fullversion, "\nOMR      - ");
 	strcat(fullversion, gcVersion);
-	strcat(vminfo, "\nOMR      - ");
-	strcat(vminfo, gcVersion);
+	sprintf (strchr(vminfo, '\0'), "\nOMR      - %s", gcVersion);
 #endif /* J9VM_GC_MODRON_GC */
 
 #if defined(VENDOR_SHORT_NAME) && defined(VENDOR_SHA)
@@ -516,7 +511,7 @@ intializeVMConstants(J9VMThread *currentThread)
 	if (JNI_OK != rc) {
 		goto done;
 	}
-	
+
 	rc = initializeStaticIntField(currentThread, vmClass, J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_STRING_COMPRESSION_ENABLED, (I_32)IS_STRING_COMPRESSION_ENABLED_VM(vm));
 	if (JNI_OK != rc) {
 		goto done;
@@ -571,7 +566,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 
 	/* CANNOT hold VM Access while calling registerBootstrapLibrary */
 	vmFuncs->internalReleaseVMAccess(vmThread);
-	
+
 	if (vmFuncs->registerBootstrapLibrary(vmThread, dllName, &nativeLibrary, FALSE) != J9NATIVELIB_LOAD_OK) {
 		return 1;
 	}
@@ -579,7 +574,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	/* If we have a JitConfig, add the JIT dll to the bootstrap loader so we can add JNI natives in the JIT */
 	if (NULL != vm->jitConfig) {
 		J9NativeLibrary* jitLibrary = NULL;
-	
+
 		if (vmFuncs->registerBootstrapLibrary(vmThread, J9_JIT_DLL_NAME, &jitLibrary, FALSE) != J9NATIVELIB_LOAD_OK) {
 			return 1;
 		}
@@ -665,7 +660,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 		return 1;
 	}
 
-	/* Initialize early since sendInitialize() uses this */ 
+	/* Initialize early since sendInitialize() uses this */
 	if (initializeStaticMethod(vm, J9VMCONSTANTPOOL_JAVALANGJ9VMINTERNALS_INITIALIZATIONALREADYFAILED)) {
 		return 1;
 	}
@@ -679,7 +674,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	if ((NULL == stringClass) || (NULL != vmThread->currentException)) {
 		return 1;
 	}
-	
+
 	/* Initialize the java.lang.String.compressionFlag static field early enough so that we have
 	 * access to it during the resolution of other classes in which Strings may need to be created
 	 * in StringTable.cpp
