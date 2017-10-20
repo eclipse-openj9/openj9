@@ -601,7 +601,7 @@ public:
    TR_MethodToBeCompiled *requestExistsInCompilationQueue(TR::IlGeneratorMethodDetails & details, TR_FrontEnd *fe);
 
    TR_MethodToBeCompiled *addMethodToBeCompiled(TR::IlGeneratorMethodDetails &details, void *pc, CompilationPriority priority,
-      bool async, TR_OptimizationPlan *optPlan, bool *queued, TR_YesNoMaybe methodIsInSharedCache, void *extra);
+      bool async, TR_OptimizationPlan *optPlan, bool *queued, TR_YesNoMaybe methodIsInSharedCache, void *extra = nullptr);
 
    void                   queueEntry(TR_MethodToBeCompiled *entry);
    void                   recycleCompilationEntry(TR_MethodToBeCompiled *cur);
@@ -630,7 +630,7 @@ public:
    void resumeCompilationThread();
    void purgeMethodQueue(TR_CompilationErrorCode errorCode);
    void *compileMethod(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
-      TR_YesNoMaybe async, TR_CompilationErrorCode *, bool *queued, TR_OptimizationPlan *optPlan, void *extra=NULL);
+      TR_YesNoMaybe async, TR_CompilationErrorCode *, bool *queued, TR_OptimizationPlan *optPlan);
    void *compileRemoteMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details,
                              const J9ROMMethod *romMethod, const J9ROMClass* romClass,
                              void *oldStartPC, TR_CompilationErrorCode *compErrCode,
@@ -640,7 +640,7 @@ public:
                                     TR_OptimizationPlan *optPlan);
    void *compileOnSeparateThread(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
                                  TR_YesNoMaybe async, TR_CompilationErrorCode*,
-                                 bool *queued, TR_OptimizationPlan *optPlan, void *extra);
+                                 bool *queued, TR_OptimizationPlan *optPlan);
    void invalidateRequestsForUnloadedMethods(TR_OpaqueClassBlock *unloadedClass, J9VMThread * vmThread, bool hotCodeReplacement);
    void invalidateRequestsForNativeMethods(J9Class * clazz, J9VMThread * vmThread);
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)

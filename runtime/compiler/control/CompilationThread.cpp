@@ -6550,12 +6550,9 @@ void *TR::CompilationInfo::compileRemoteMethod(J9VMThread * vmThread, TR::IlGene
 void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details, void *oldStartPC,
                                         TR_YesNoMaybe requireAsyncCompile,
                                         TR_CompilationErrorCode *compErrCode,
-                                        bool *queued, TR_OptimizationPlan * optimizationPlan, void *extra)
+                                        bool *queued, TR_OptimizationPlan * optimizationPlan)
    {
-   // JAAS TODO: eliminate extra parameter since compileRemoteMethod can be used for JAAS
    TR_J9VMBase * fe = TR_J9VMBase::get(_jitConfig, vmThread);
-
-   TR_ASSERT(!(extra && requireAsyncCompile != TR_yes), "If RPC info is passed, an async compile should be requested");
    TR_ASSERT(!fe->isAOT_DEPRECATED_DO_NOT_USE(), "We need a non-AOT vm here.");
 
    J9Method *method = details.getMethod();
@@ -6743,7 +6740,7 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
       {
       // AOT goes to application thread?
       if (useSeparateCompilationThread() && !fe->isAOT_DEPRECATED_DO_NOT_USE())
-         startPC = compileOnSeparateThread(vmThread, details, oldStartPC, requireAsyncCompile, compErrCode, queued, optimizationPlan, extra);
+         startPC = compileOnSeparateThread(vmThread, details, oldStartPC, requireAsyncCompile, compErrCode, queued, optimizationPlan);
       else
          startPC = compileOnApplicationThread(vmThread, details, oldStartPC, compErrCode, optimizationPlan);
       }
@@ -6788,7 +6785,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
                                                   void *oldStartPC, TR_YesNoMaybe requireAsyncCompile,
                                                   TR_CompilationErrorCode *compErrCode,
                                                   bool *queued,
-                                                  TR_OptimizationPlan * optimizationPlan, void *extra)
+                                                  TR_OptimizationPlan * optimizationPlan)
    {
    void *startPC = NULL;
 
@@ -7142,7 +7139,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
 
    TR_MethodToBeCompiled *entry =
       addMethodToBeCompiled(details, oldStartPC, compPriority, async,
-                            optimizationPlan, queued, methodIsInSharedCache, extra);
+                            optimizationPlan, queued, methodIsInSharedCache);
 
    if (entry == NULL)
       {
@@ -9840,7 +9837,6 @@ TR::CompilationInfoPerThreadBase::compile(
          std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
 
          JAAS::J9ClientStream client;
-         
          client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), allocPtr, availableSpace, detailsStr, details.getType());
          uint32_t statusCode = compilationFailure;
          std::string codeCacheStr;
