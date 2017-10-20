@@ -39,7 +39,6 @@
 	<object name="jcldefine" />
 	<object name="jclexception" />
 	<object name="jclglob" />
-	<object name="jclhookhelp" />
 	<object name="jclreflect" />
 	<object name="jclvm" />
 	<object name="log" />
