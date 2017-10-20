@@ -39,8 +39,8 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 			return String.valueOf(a && b);
 		}
 
-		public String hash_byte(byte a, byte b) {
-			return new String(new byte[] {a, b});
+		public int hash_byte(byte a, byte b) {
+			return a+b;
 		}
 
 		public String hash_char(char a, char b) {
@@ -321,7 +321,7 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 	 */
 	@Test(groups = { "level.extended" })
 	public static void test_dropArgumentsToMatch_normal_sublist_byte() throws Throwable {
-		MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_byte", MethodType.methodType(String.class, byte.class, byte.class));
+		MethodHandle h1 = MethodHandles.lookup().findVirtual(Hash_Methods.class, "hash_byte", MethodType.methodType(int.class, byte.class, byte.class));
 
 		/* Method with rtype = String, ptype = [boolean, char, int, long, byte, String] */
 		MethodType typeList = MethodType.methodType(String.class, boolean.class, char.class, int.class, long.class, byte.class, String.class);
@@ -329,7 +329,8 @@ public class MethodHandleAPI_dropArgumentsToMatch {
 		h1 = MethodHandles.dropArgumentsToMatch(h1, 2, typeList.parameterList(), 4);
 
 		Hash_Methods hm = new Hash_Methods();
-		Assert.assertEquals(h1.invoke(hm, (byte)97, true, 'c', 1, 2, (byte)98, "d"), "ab", "Method handle did not return expected result");
+
+		Assert.assertEquals(h1.invoke(hm, (byte)3, true, 'c', 1, 2, (byte)4, "d"), 7, "Method handle did not return expected result");
 	}
 
 	/**
