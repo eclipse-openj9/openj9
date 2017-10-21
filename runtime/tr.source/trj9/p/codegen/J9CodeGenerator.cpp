@@ -272,8 +272,9 @@ J9::Power::CodeGenerator::lowerTreeIfNeeded(
    }
 
 
-bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method) {
-   if (OMR::Power::CodeGenerator::suppressInliningOfRecognizedMethod(method))
+bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
+   {
+   if (self()->isMethodInAtomicLongGroup(method))
       {
       return true;
       }

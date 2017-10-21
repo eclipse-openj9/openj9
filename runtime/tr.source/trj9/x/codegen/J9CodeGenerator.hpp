@@ -65,6 +65,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 
    bool enableAESInHardwareTransformations();
 
+   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
+
    };
 
 }

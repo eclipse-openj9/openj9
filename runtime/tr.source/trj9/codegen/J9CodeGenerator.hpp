@@ -39,6 +39,7 @@ namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
 #include "env/IO.hpp"      // for POINTER_PRINTF_FORMAT
 #include "env/jittypes.h"  // for uintptr_t
 #include "infra/List.hpp"  // for List, etc
+#include "codegen/RecognizedMethods.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "optimizer/Dominators.hpp"
@@ -104,6 +105,8 @@ public:
    TR::Linkage *createLinkageForCompilation();
 
    bool enableAESInHardwareTransformations() {return false;}
+
+   bool isMethodInAtomicLongGroup(TR::RecognizedMethod rm);
 
    // OSR
    //
