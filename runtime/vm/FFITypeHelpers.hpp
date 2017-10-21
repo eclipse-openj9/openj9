@@ -25,18 +25,12 @@
 
 #include "ut_j9vm.h"
 #include "vm_internal.h"
+#include "UnsafeAPI.hpp"
 #ifdef J9VM_OPT_PANAMA
-#include "ffi.h"
+#include "NativeCalloutHelpers.h"
 #endif /* J9VM_OPT_PANAMA */
 
 #define J9VM_LAYOUT_STRING_ON_STACK_LIMIT 128
-
-#ifdef J9VM_OPT_PANAMA
-typedef struct J9NativeCalloutData {
-	ffi_type **arguments;
-	ffi_cif *cif;
-} J9NativeCalloutData;
-#endif /* J9VM_OPT_PANAMA */
 
 class FFITypeHelpers
 {
@@ -112,6 +106,8 @@ public:
 
 		UDATA result = 0;
 		*typeFFI = NULL;
+		void *cachedTypeFFI = NULL;
+		J9NativeStructData *structData = NULL;
 		UDATA structSize = UDATA_MAX;
 		UDATA length = getStringUTF8Length(_currentThread, layoutStringObject);
 		char bufOnStackLocal[J9VM_LAYOUT_STRING_ON_STACK_LIMIT];
@@ -129,10 +125,51 @@ public:
 			goto doneGetCustomFFIType;
 		}
 		layout[length] = '\0';
-		structSize = getIntFromLayout(&layout);
-		*typeFFI = getStructFFIType(&layout, false);
+
+		/* Find cached ffi_type for the struct from nativeStructDataHashTable */
+		cachedTypeFFI = nativeStructDataHashTableFind(_vm->systemClassLoader->nativeStructDataHashTable, layout);
+		if (NULL != cachedTypeFFI) {
+			*typeFFI = (ffi_type *)cachedTypeFFI;
+			structSize = getIntFromLayout(&layout);
+		} else {
+			/* Create structData to cache in nativeStructDataHashTable */
+			structData = (J9NativeStructData *)j9mem_allocate_memory(sizeof(J9NativeStructData), OMRMEM_CATEGORY_VM);
+			if (NULL == structData) {
+				goto doneGetCustomFFIType;
+			}
+			if (buf != bufOnStackLocal) {
+				structData->layoutString = layout;
+			} else {
+				structData->layoutString = (char *) j9mem_allocate_memory(sizeof(char) * (length + 1), OMRMEM_CATEGORY_VM);
+				if (NULL == structData->layoutString) {
+					j9mem_free_memory(structData);
+					structData = NULL;
+					goto doneGetCustomFFIType;
+				}
+				if (UDATA_MAX == copyFromStringIntoUTF8(_currentThread, layoutStringObject, structData->layoutString)) {
+					j9mem_free_memory(structData->layoutString);
+					structData->layoutString = NULL;
+					j9mem_free_memory(structData);
+					structData = NULL;
+					goto doneGetCustomFFIType;
+				}
+				(structData->layoutString)[length] = '\0';
+			}
+			structSize = getIntFromLayout(&layout);
+			*typeFFI = getStructFFIType(&layout, false);
+			structData->structType = *typeFFI;
+			/* Cache structData in nativeStructDataHashTable */
+			if (NULL == hashTableAdd(_vm->systemClassLoader->nativeStructDataHashTable, structData)) {
+				j9mem_free_memory(structData->layoutString);
+				structData->layoutString = NULL;
+				j9mem_free_memory(structData);
+				structData = NULL;
+				goto doneGetCustomFFIType;
+			}
+		}
 doneGetCustomFFIType:
-		if (buf != bufOnStackLocal) {
+		/* TODO: Need to cleanup cached structData */
+		if ((NULL != cachedTypeFFI) && (buf != bufOnStackLocal)) {
 			j9mem_free_memory(buf);
 		}
 		return structSize;

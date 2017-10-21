@@ -30,6 +30,9 @@
 #include "j2sever.h"
 #include "objhelp.h"
 #include "vmaccess.h"
+#ifdef J9VM_OPT_PANAMA
+#include "NativeCalloutHelpers.h"
+#endif /* J9VM_OPT_PANAMA */
 
 #include <string.h>
 
@@ -45,6 +48,10 @@
 #define INITIAL_MODULE_HASHTABLE_SIZE	1
 #define INITIAL_PACKAGE_HASHTABLE_SIZE	1
 #define INITIAL_CLASSLOCATION_HASHTABLE_SIZE 64
+#ifdef J9VM_OPT_PANAMA
+#define INITIAL_NATIVECALLOUTDATA_HASHTABLE_SIZE 1
+#define INITIAL_NATIVESRUCTDATA_HASHTABLE_SIZE 1
+#endif /* J9VM_OPT_PANAMA */
 #define J9STATIC_ONUNLOAD               "JNI_OnUnload_"
 #define J9STATIC_ONUNLOAD_LENGTH        sizeof(J9STATIC_ONUNLOAD)
 #define J9DYNAMIC_ONUNLOAD              "JNI_OnUnload"
@@ -176,6 +183,11 @@ allocateClassLoader(J9JavaVM *javaVM)
 		classLoader->classHashTable = hashClassTableNew(javaVM, INITIAL_CLASSHASHTABLE_SIZE);
 		classLoader->moduleHashTable = hashModuleTableNew(javaVM, INITIAL_MODULE_HASHTABLE_SIZE);
 		classLoader->packageHashTable = hashPackageTableNew(javaVM, INITIAL_PACKAGE_HASHTABLE_SIZE);
+#ifdef J9VM_OPT_PANAMA
+		classLoader->nativeCalloutDataHashTable = hashNativeCalloutDataNew(javaVM, INITIAL_NATIVECALLOUTDATA_HASHTABLE_SIZE);
+		classLoader->nativeStructDataHashTable = hashNativeStructDataNew(javaVM, INITIAL_NATIVESRUCTDATA_HASHTABLE_SIZE);
+#endif /* J9VM_OPT_PANAMA */
+
 		/* Allocate classLocationHashTable only for bootloader which is the first classloader to be allocated.
 		 * The classLoader being allocated must be the bootloader if javaVM->systemClassLoader is NULL.
 		 */
@@ -393,7 +405,19 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 		hashTableFree(classLoader->packageHashTable);
 		classLoader->packageHashTable = NULL;
 	}
+	#ifdef J9VM_OPT_PANAMA
+	if (NULL != classLoader->nativeCalloutDataHashTable) {
+		J9HashTableState nativeCalloutDataWalkState;
 
+		J9NativeCalloutData* nativeCalloutData = (J9NativeCalloutData*)hashTableStartDo(classLoader->nativeCalloutDataHashTable, &nativeCalloutDataWalkState);
+		while (NULL != nativeCalloutData) {
+			freeJ9NativeCalloutDataRef(vmThread, (void *)nativeCalloutData);
+			nativeCalloutData = (J9NativeCalloutData*)hashTableNextDo(&nativeCalloutDataWalkState);
+		}
+		hashTableFree(classLoader->nativeCalloutDataHashTable);
+		classLoader->nativeCalloutDataHashTable = NULL;
+	}
+	#endif /* J9VM_OPT_PANAMA */
 	/* Free the ROM class orphans class table */
 	if (NULL != classLoader->romClassOrphansHashTable) {
 		hashTableFree(classLoader->romClassOrphansHashTable);

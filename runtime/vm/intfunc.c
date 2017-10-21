@@ -344,6 +344,10 @@ J9InternalVMFunctions J9InternalFunctions = {
 	hashPackageTableNew,
 	hashModuleExtraInfoTableNew,
 	hashClassLocationTableNew,
+#ifdef J9VM_OPT_PANAMA
+	hashNativeCalloutDataNew,
+	hashNativeStructDataNew,
+#endif /* J9VM_OPT_PANAMA */
 	findModuleForPackageUTF8,
 	findModuleForPackage,
 	findModuleInfoForModule,

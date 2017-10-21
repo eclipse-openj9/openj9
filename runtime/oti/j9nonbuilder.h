@@ -3053,6 +3053,10 @@ typedef struct J9ClassLoader {
 	struct J9HashTable* packageHashTable;
 	struct J9HashTable* moduleExtraInfoHashTable;
 	struct J9HashTable* classLocationHashTable;
+#ifdef J9VM_OPT_PANAMA
+	struct J9HashTable* nativeCalloutDataHashTable;
+	struct J9HashTable* nativeStructDataHashTable;
+#endif /* J9VM_OPT_PANAMA */
 } J9ClassLoader;
 
 #define J9CLASSLOADER_TENANT_SHARING_CLASSLOADER  0x200
@@ -4716,6 +4720,10 @@ typedef struct J9InternalVMFunctions {
 	struct J9HashTable* ( *hashPackageTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;
 	struct J9HashTable* ( *hashModuleExtraInfoTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;
 	struct J9HashTable* ( *hashClassLocationTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;
+#ifdef J9VM_OPT_PANAMA
+	struct J9HashTable* ( *hashNativeCalloutDataNew)(struct J9JavaVM * vm, U_32 initialSize) ;
+	struct J9HashTable* ( *hashNativeStructDataNew)(struct J9JavaVM * vm, U_32 initialSize) ;
+#endif /* J9VM_OPT_PANAMA */
 	struct J9Module* ( *findModuleForPackageUTF8)(struct J9VMThread *currentThread, struct J9ClassLoader *classLoader, struct J9UTF8 *packageName);
 	struct J9Module* ( *findModuleForPackage)(struct J9VMThread *currentThread, struct J9ClassLoader *classLoader, U_8 *packageName, U_32 packageNameLen);
 	struct J9ModuleExtraInfo* ( *findModuleInfoForModule)(struct J9VMThread *currentThread, struct J9ClassLoader *classLoader, J9Module *j9module);
