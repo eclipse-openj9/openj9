@@ -1798,6 +1798,35 @@ findModuleForPackage(J9VMThread *currentThread, J9ClassLoader *classLoader, U_8 
 J9ModuleExtraInfo *
 findModuleInfoForModule(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module *j9module);
 
+/* ---------------- NativeCalloutDataHashTable.c ---------------- */
+
+#ifdef J9VM_OPT_PANAMA
+/**
+ * @brief Create the J9NativeCalloutData hash table
+ * @param initialSize initial size
+ * @return Pointer to new hash table
+ */
+J9HashTable*
+hashNativeCalloutDataNew(J9JavaVM *javaVM, U_32 initialSize);
+
+/**
+ * @brief Create the J9NativeStructData hash table
+ * @param initialSize initial size
+ * @return Pointer to new hash table
+ */
+J9HashTable*
+hashNativeStructDataNew(J9JavaVM *javaVM, U_32 initialSize);
+
+/**
+ * @brief Locates J9NativeStructData struct with the ffi_type of the layoutString from nativeStructDataHashTable
+ * @param hashTable J9HashTable that stores J9NativeStructData
+ * @param layoutString A char pointer to a string describing the type contents of the struct
+ * @return Void pointer to a J9NativeStructData struct for the given layoutString, or NULL if not found
+ */
+void*
+nativeStructDataHashTableFind(J9HashTable *hashTable, char *layoutString);
+#endif /* J9VM_OPT_PANAMA */
+
 /* ---------------- lookupmethod.c ---------------- */
 
 /**
