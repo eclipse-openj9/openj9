@@ -1518,6 +1518,7 @@
 						</loadfile>
 
 						<delete file="${r"${output}"}/jmods/com.ibm.sharedclasses.jmod" quiet="true" />
+						<delete file="${r"${output}"}/jmods/com.ibm.dataaccess.jmod" quiet="true" />
 
 						<!-- List all modules; because we're only concerned with those not updated for J9 JCL, order isn't significant. -->
 						<pathconvert property="prop.jmods.list" pathsep=";">

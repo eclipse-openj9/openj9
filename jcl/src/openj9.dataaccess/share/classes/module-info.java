@@ -20,6 +20,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-module com.ibm.dataaccess {
+module openj9.dataaccess {
 	exports com.ibm.dataaccess;
 }
