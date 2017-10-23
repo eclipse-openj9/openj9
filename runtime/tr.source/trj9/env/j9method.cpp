@@ -2987,6 +2987,10 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {
       {x(TR::java_lang_StringCoding_decode, "decode", "(Ljava/nio/charset/Charset;[BII)[C")},
       {x(TR::java_lang_StringCoding_encode, "encode", "(Ljava/nio/charset/Charset;[CII)[B")},
+      {x(TR::java_lang_StringCoding_implEncodeISOArray, "implEncodeISOArray", "([BI[BII)I")},
+      {x(TR::java_lang_StringCoding_encode8859_1,       "encode8859_1",       "(B[B)[B")},
+      {x(TR::java_lang_StringCoding_encodeASCII,        "encodeASCII",        "(B[B)[B")},
+      {x(TR::java_lang_StringCoding_encodeUTF8,         "encodeUTF8",         "(B[B)[B")},
       {  TR::unknownMethod}
       };
 
@@ -3300,6 +3304,12 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::com_ibm_jit_JITHelpers_byteToCharUnsigned,                       "byteToCharUnsigned", "(B)C")},
       {x(TR::com_ibm_jit_JITHelpers_getClassInitializeStatus,                 "getClassInitializeStatus", "(Ljava/lang/Class;)I")},
       {  TR::unknownMethod}
+      };
+
+   static X StringUTF16Methods[] =
+      {
+      { x(TR::java_lang_StringUTF16_getChar,                                  "getChar", "([BI)C")},
+      { TR::unknownMethod }
       };
 
    static X DecimalFormatHelperMethods[] =
@@ -4158,6 +4168,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    static Y class21[] =
       {
       { "java/lang/ClassLoader", ClassLoaderMethods },
+      { "java/lang/StringUTF16", StringUTF16Methods },
       { 0 }
       };
 

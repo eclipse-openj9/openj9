@@ -368,6 +368,7 @@ J9::Compilation::isConverterMethod(TR::RecognizedMethod rm)
    switch (rm)
       {
       case TR::sun_nio_cs_ISO_8859_1_Encoder_encodeISOArray:
+      case TR::java_lang_StringCoding_implEncodeISOArray:
       case TR::sun_nio_cs_ISO_8859_1_Decoder_decodeISO8859_1:
       case TR::sun_nio_cs_US_ASCII_Encoder_encodeASCII:
       case TR::sun_nio_cs_US_ASCII_Decoder_decodeASCII:
@@ -402,6 +403,7 @@ J9::Compilation::canTransformConverterMethod(TR::RecognizedMethod rm)
    switch (rm)
       {
       case TR::sun_nio_cs_ISO_8859_1_Encoder_encodeISOArray:
+      case TR::java_lang_StringCoding_implEncodeISOArray:
          return genTRxx || self()->cg()->getSupportsArrayTranslateTRTO255() || self()->cg()->getSupportsArrayTranslateTRTO() || genSIMD;
 
       case TR::sun_nio_cs_ISO_8859_1_Decoder_decodeISO8859_1:

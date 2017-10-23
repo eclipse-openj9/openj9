@@ -2423,14 +2423,19 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int currentLength = lengthInternal();
 		
 		/*[IF Sidecar19-SE]*/
+		byte[] buffer = value;
 		// Check if the String is compressed
 		if (enableCompression && count >= 0) {
-			byte[] buffer = new byte[currentLength];
-			compressedArrayCopy(value, 0, buffer, 0, currentLength);
+			if (buffer.length != currentLength) {
+				buffer = new byte[currentLength];
+				compressedArrayCopy(value, 0, buffer, 0, currentLength);
+			}
 			return StringCoding.encode(String.LATIN1, buffer);
 		} else {
-			byte[] buffer = new byte[currentLength * 2];
-			decompressedArrayCopy(value, 0, buffer, 0, currentLength);
+			if (buffer.length != currentLength << 1) {
+				buffer = new byte[currentLength << 1];
+				decompressedArrayCopy(value, 0, buffer, 0, currentLength);
+			}
 			return StringCoding.encode(String.UTF16, buffer);
 		}
 		/*[ELSE]*/
@@ -2521,16 +2526,20 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 
 		int currentLength = lengthInternal();
-		
 		/*[IF Sidecar19-SE]*/
+		byte[] buffer = value;
 		// Check if the String is compressed
 		if (enableCompression && count >= 0) {
-			byte[] buffer = new byte[currentLength];
-			compressedArrayCopy(value, 0, buffer, 0, currentLength);
+			if (buffer.length != currentLength) {
+				buffer = new byte[currentLength];
+				compressedArrayCopy(value, 0, buffer, 0, currentLength);
+			}
 			return StringCoding.encode(encoding, String.LATIN1, buffer);
 		} else {
-			byte[] buffer = new byte[currentLength * 2];
-			decompressedArrayCopy(value, 0, buffer, 0, currentLength);
+			if (buffer.length != currentLength << 1) {
+				buffer = new byte[currentLength << 1];
+				decompressedArrayCopy(value, 0, buffer, 0, currentLength);
+			}
 			return StringCoding.encode(encoding, String.UTF16, buffer);
 		}
 		/*[ELSE]*/
@@ -5102,14 +5111,19 @@ written authorization of the copyright holder.
 		int currentLength = lengthInternal();
 		
 		/*[IF Sidecar19-SE]*/
+		byte[] buffer = value;
 		// Check if the String is compressed
 		if (enableCompression && count >= 0) {
-			byte[] buffer = new byte[currentLength];
-			compressedArrayCopy(value, 0, buffer, 0, currentLength);
+			if (buffer.length != currentLength) {
+				buffer = new byte[currentLength];
+				compressedArrayCopy(value, 0, buffer, 0, currentLength);
+			}
 			return StringCoding.encode(charset, String.LATIN1, buffer);
 		} else {
-			byte[] buffer = new byte[currentLength * 2];
-			decompressedArrayCopy(value, 0, buffer, 0, currentLength);
+			if (buffer.length != currentLength << 1) {
+				buffer = new byte[currentLength << 1];
+				decompressedArrayCopy(value, 0, buffer, 0, currentLength);
+			}
 			return StringCoding.encode(charset, String.UTF16, buffer);
 		}
 		/*[ELSE]*/
