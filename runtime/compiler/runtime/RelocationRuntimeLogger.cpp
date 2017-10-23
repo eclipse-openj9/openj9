@@ -164,11 +164,11 @@ TR_RelocationRuntimeLogger::exceptionTable()
    JITRT_PRINTF(jitConfig())(jitConfig(), "%-14s",   "gcStackAtlas");
    JITRT_PRINTF(jitConfig())(jitConfig(), "%-12s\n", "bodyInfo");
 
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12x",   data->startPC);
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12x",   data->endPC);
+   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12p",   data->startPC);
+   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12p",   data->endPC);
    JITRT_PRINTF(jitConfig())(jitConfig(), "%-8x",    data->size);
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-14x",   data->gcStackAtlas);
-   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12x\n", data->bodyInfo);
+   JITRT_PRINTF(jitConfig())(jitConfig(), "%-14p",   data->gcStackAtlas);
+   JITRT_PRINTF(jitConfig())(jitConfig(), "%-12p\n", data->bodyInfo);
 
    JITRT_PRINTF(jitConfig())(jitConfig(), "%-12s\n", "inlinedCalls");
    JITRT_PRINTF(jitConfig())(jitConfig(), "%-12x\n", data->inlinedCalls);
