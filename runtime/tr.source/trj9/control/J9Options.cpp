@@ -1911,6 +1911,8 @@ J9::Options::fePreProcess(void * base)
    // SR5. In addition several performance issues on SPARK workloads have been reported which seem to concurrently
    // access StringBuffer objects from multiple threads.
    self()->setOption(TR_DisableLockResevation);
+   // Setting number of onsite cache slots for instanceOf node to 4 on IBM Z
+   self()->setMaxOnsiteCacheSlotForInstanceOf(4);
 #endif
 
    // Process the deterministic mode
