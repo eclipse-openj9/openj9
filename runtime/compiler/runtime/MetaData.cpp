@@ -1519,12 +1519,14 @@ createMethodMetaData(
       }
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-   if (vm->isAOT_DEPRECATED_DO_NOT_USE())
+   bool isJAASMode = comp->getPersistentInfo()->getJaasMode() == SERVER_MODE;
+   if (vm->isAOT_DEPRECATED_DO_NOT_USE() || isJAASMode)
       {
       TR::CodeCache * codeCache = comp->getCurrentCodeCache(); // MCT
 
       /* Align code caches */
-      codeCache->alignWarmCodeAlloc(3);
+      if (!isJAASMode)
+         codeCache->alignWarmCodeAlloc(3);
 
       J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
       TR_AOTMethodHeader *aotMethodHeaderEntry =  (TR_AOTMethodHeader *)(aotMethodHeader + 1);

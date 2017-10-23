@@ -47,6 +47,7 @@
 #include "objhelp.h"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Instruction.hpp"
+#include "codegen/AheadOfTimeCompile.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
@@ -2049,7 +2050,7 @@ TR::CompilationInfoPerThread::relocateThunks()
    TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, _compilationThread, TR_J9VMBase::J9_VM);
    for (auto p : _thunksToBeRelocated)
       {
-      void *thunk = p.first;
+      void *thunk = (U_8 *)p.first - (U_8 *)TR::compInfoPT->reloRuntime()->aotMethodHeaderEntry()->compileMethodCodeStartPC + (U_8 *)TR::compInfoPT->reloRuntime()->newMethodCodeStart();
       std::string signature = p.second;
       void *vmHelper = j9ThunkVMHelperFromSignature(fe->_jitConfig, signature.size(), &signature[0]);
       TR::compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation((uint8_t*) thunk, (UDATA)vmHelper);
@@ -9774,7 +9775,7 @@ TR::CompilationInfoPerThreadBase::compile(
          compiler->cg()->reserveCodeCache(); // this will throw if we cannot reserve
 
          size_t availableSpace = compiler->getCurrentCodeCache()->getFreeContiguousSpace();
-         uint8_t *allocPtr = compiler->getCurrentCodeCache()->getWarmCodeAlloc();
+         uint8_t *allocPtr = NULL; compiler->getCurrentCodeCache()->getWarmCodeAlloc();
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Client requesting to compile method at address %p freeSpace=%u", allocPtr, (uint32_t)availableSpace);
 
@@ -9818,55 +9819,17 @@ TR::CompilationInfoPerThreadBase::compile(
                TR_ASSERT(codeCacheStr.size(), "must have code cache");
                TR_ASSERT(dataCacheStr.size(), "must have data cache");
 
-               // allocate space in code cache and copy over
-               uint8_t *coldCode;
-               uint8_t *newCodeStart = compiler->fej9vm()->allocateCodeMemory(compiler, codeCacheStr.size() - sizeof(OMR::CodeCacheMethodHeader), 0, &coldCode, true);
-               TR_ASSERT(newCodeStart, "need code cache space");
-               newCodeStart -= sizeof(OMR::CodeCacheMethodHeader);
-               TR_ASSERT(newCodeStart == allocPtr, "allocation is not where expected");
-               uint32_t blockSize = ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size;
-               memcpy(newCodeStart, &codeCacheStr[0], codeCacheStr.size());
-               ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size = blockSize; //make sure header size matches allocation (overwritten by memcpy)
-
-               // data cache allocation adds size of header then returns pointer to byte after header
-               TR_DataCache *dataCache = (TR_DataCache*)compiler->getReservedDataCache();
-               TR_ASSERT(dataCache, "Must have a reserved dataCache for JAAS compilation requests");
-               bool shouldRetryAllocation; //TODO
-               uint32_t allocatedSize;
-               uint8_t *newDataStart = compiler->fej9vm()->allocateDataCacheRecord(dataCacheStr.size() - sizeof(J9JITDataCacheHeader), compiler, false, &shouldRetryAllocation, 0, &allocatedSize);
-               TR_ASSERT(newCodeStart, "need data cache space");
-               newDataStart -= sizeof(J9JITDataCacheHeader);
-               memcpy(newDataStart, &dataCacheStr[0], dataCacheStr.size());
-
                JAASMetaDataRelocationInfo *relocationInfo = (JAASMetaDataRelocationInfo*) &metaRelocationInfo[0];
+
+               metaData = reloRuntime()->prepareRelocateJITCodeAndData(vmThread, compiler->fej9vm(), compiler->getCurrentCodeCache(), (uint8_t *)&codeCacheStr[0], (J9JITDataCacheHeader *)&dataCacheStr[0], method, false, comp()->getOptions(), comp(), compilee);
 
                // TODO: we might want to unlock this above near where it is locked, then lock it again just before allocating so
                // that it isn't held for a potentially long period while waiting on the network
                if (haveLockedClassUnloadMonitor)
                   TR::MonitorTable::get()->readReleaseClassUnloadMonitor(getCompThreadId());
 
-               OMR::CodeCacheMethodHeader* codeCacheHeader = (OMR::CodeCacheMethodHeader*) newCodeStart;
-               J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader*) newDataStart;
-
-               metaData = (J9JITExceptionTable*) ((uint8_t *)dataCacheHeader + relocationInfo->metaDataOffset);
-               codeCacheHeader->_metaData = metaData;
-               metaData->inlinedCalls = relocationInfo->inlinedCallSitesOffset ?
-                        (uint8_t *)metaData + relocationInfo->inlinedCallSitesOffset : nullptr;
-               metaData->osrInfo = relocationInfo->osrInfoOffset ?
-                        (uint8_t *)metaData + relocationInfo->osrInfoOffset : nullptr;
-               metaData->gcStackAtlas = (uint8_t *)metaData + relocationInfo->gcStackAtlasOffset;
-               J9JITStackAtlas *vmAtlas = (J9JITStackAtlas *) metaData->gcStackAtlas;
-               if (vmAtlas->stackAllocMap)
-                  vmAtlas->stackAllocMap = (uint8_t *)metaData + relocationInfo->stackAllocMapOffset;
-               if (vmAtlas->internalPointerMap)
-                  vmAtlas->internalPointerMap = (uint8_t *)metaData + relocationInfo->internalPointerMapOffset;
-               metaData->codeCacheAlloc = (UDATA) (codeCacheHeader + 1);
-               OMR::RuntimeAssumption * raList = new (PERSISTENT_NEW) TR::SentinelRuntimeAssumption();
-               comp()->setMetadataAssumptionList(raList); // copy this list to the compilation object as well (same view as for a JIT compilation)
-               metaData->runtimeAssumptionList = raList;
                TR::compInfoPT->relocateThunks();
 
-               //TR_ASSERT((uint8_t *)metaData->codeCacheAlloc == (uint8_t *)(codeCacheHeader + 1), "codeCache mismatch");
                TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
 
                   {
@@ -10762,7 +10725,16 @@ TR::CompilationInfo::remoteCompilationEnd(TR::IlGeneratorMethodDetails &details,
    entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
 
    CodeCache *codeCache = comp->getCurrentCodeCache();
+#if 0
    OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader*) (comp->getOptimizationPlan()->_mandatoryCodeAddress);
+#else
+   J9JITDataCacheHeader *aotMethodHeader      = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
+   TR_ASSERT(aotMethodHeader, "The header must have been set");
+   TR_AOTMethodHeader   *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+
+   U_8 *codeStart = (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC;
+   OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader*)codeStart;
+#endif
 
    TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
    TR_ASSERT(dataCache, "A dataCache must be reserved for JAAS compilations\n");

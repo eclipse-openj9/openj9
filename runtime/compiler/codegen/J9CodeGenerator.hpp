@@ -115,6 +115,8 @@ public:
    // --------------------------------------
    // AOT Relocations
    //
+   void addExternalRelocation(TR::Relocation *r, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node);
+   void addExternalRelocation(TR::Relocation *r, TR::RelocationDebugInfo *info);
 
    void processRelocations();
 

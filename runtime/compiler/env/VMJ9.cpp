@@ -2041,7 +2041,6 @@ static void switchCodeCache(TR::Compilation *comp, TR::CodeCache *oldCache, TR::
 uint8_t *
 TR_J9VMBase::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t ** coldCode, bool isMethodHeaderNeeded)
    {
-   TR_ASSERT(comp->getPersistentInfo()->getJaasMode() != SERVER_MODE, "Should not reach this code for SERVER mode");
    TR::CodeCache * codeCache = comp->getCurrentCodeCache(); // This is the reserved code cache
    if (NULL == codeCache)
       {

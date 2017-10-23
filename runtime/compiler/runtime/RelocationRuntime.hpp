@@ -182,6 +182,17 @@ class TR_RelocationRuntime {
                                                          TR::Compilation *compilation,
                                                          TR_ResolvedMethod *resolvedMethod);
 
+      J9JITExceptionTable *prepareRelocateJITCodeAndData(J9VMThread* vmThread,
+                                                         TR_FrontEnd *fe,
+                                                         TR::CodeCache *cc,
+                                                         uint8_t *code,
+                                                         const J9JITDataCacheHeader *cacheEntry,
+                                                         J9Method *theMethod,
+                                                         bool shouldUseCompiledCopy,
+                                                         TR::Options *options,
+                                                         TR::Compilation *compilation,
+                                                         TR_ResolvedMethod *resolvedMethod);
+
       virtual bool storeAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread);
       virtual TR_AOTHeader *createAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe);
       virtual bool validateAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread);
@@ -382,6 +393,17 @@ private:
 
       static const char aotHeaderKey[];
       static const UDATA aotHeaderKeyLength;
+};
+
+class TR_JAASRelocationRuntime : public TR_RelocationRuntime {
+public:
+      TR_ALLOC(TR_Memory::Relocation)
+      void * operator new(size_t, J9JITConfig *);
+      TR_JAASRelocationRuntime(J9JITConfig *jitCfg) : TR_RelocationRuntime(jitCfg) {}
+private:
+      virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize);
+      virtual uint8_t * allocateSpaceInDataCache(UDATA metaDataSize, UDATA type);
+      virtual void initializeCacheDeltas();
 };
 
 #endif   // RELOCATION_RUNTIME_INCL

@@ -605,12 +605,17 @@ TR_PersistentMethodInfo::get(TR::Compilation *comp)
 TR_PersistentMethodInfo *
 TR_PersistentMethodInfo::get(TR_ResolvedMethod * feMethod)
    {
+   // XXX: Needs fixing for JAAS, startPC is a client PC, server needs to ask the client for body and/or method info
+#if 0
    if (feMethod->isInterpreted() || feMethod->isJITInternalNative())
       return 0;
 
    void *startPC = (void *)feMethod->startAddressForInterpreterOfJittedMethod();
    TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
    return bodyInfo ? bodyInfo->getMethodInfo() : 0;
+#else
+   return NULL;
+#endif
    }
 
 TR_PersistentJittedBodyInfo::TR_PersistentJittedBodyInfo(

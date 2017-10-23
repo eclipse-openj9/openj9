@@ -714,7 +714,10 @@ TR_J9ServerVM::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize,
       }
    else
       {
-      return TR_J9VM::allocateCodeMemory(comp, warmCodeSize, coldCodeSize, coldCode, isMethodHeaderNeeded);
+      uint8_t *warmCode = TR_J9VM::allocateCodeMemory(comp, warmCodeSize, coldCodeSize, coldCode, isMethodHeaderNeeded);
+      if (!comp->getAotMethodCodeStart())
+         comp->setAotMethodCodeStart(warmCode - sizeof(OMR::CodeCacheMethodHeader));
+      return warmCode;
       }
    }
 

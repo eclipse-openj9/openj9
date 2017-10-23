@@ -2024,7 +2024,7 @@ void TR::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
       cg()->stopUsingRegister(nativeMethodReg);
       }
    else if (methodSymRef->isUnresolved() || methodSymbol->isInterpreted()
-            || (cg()->comp()->compileRelocatableCode() && !methodSymbol->isHelper()) )
+            || ((cg()->comp()->compileRelocatableCode() || cg()->comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE) && !methodSymbol->isHelper()) )
       {
       TR::LabelSymbol *label   = generateLabelSymbol(cg());
 
