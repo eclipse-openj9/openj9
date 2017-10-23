@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -332,7 +332,7 @@ void induceRecompilation_unwrapper(void **argsPtr, void **resultPtr)
       compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u Disable further compilation. OOM", (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u Disable further compilation due to OOM while inducing a recompilation", (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
          }
       }
    }
