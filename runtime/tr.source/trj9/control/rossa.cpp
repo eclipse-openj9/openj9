@@ -369,7 +369,7 @@ j9jit_testarossa_err(
          compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u Disable further compilation. OOM", (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u Disable further compilation due to OOM while creating an optimization plan", (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
             }
          }
       }
