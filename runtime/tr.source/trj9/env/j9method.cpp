@@ -2987,10 +2987,11 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {
       {x(TR::java_lang_StringCoding_decode, "decode", "(Ljava/nio/charset/Charset;[BII)[C")},
       {x(TR::java_lang_StringCoding_encode, "encode", "(Ljava/nio/charset/Charset;[CII)[B")},
-      {x(TR::java_lang_StringCoding_implEncodeISOArray, "implEncodeISOArray", "([BI[BII)I")},
-      {x(TR::java_lang_StringCoding_encode8859_1,       "encode8859_1",       "(B[B)[B")},
-      {x(TR::java_lang_StringCoding_encodeASCII,        "encodeASCII",        "(B[B)[B")},
-      {x(TR::java_lang_StringCoding_encodeUTF8,         "encodeUTF8",         "(B[B)[B")},
+      //Temporarily disable these recognitions due to failures
+      //{x(TR::java_lang_StringCoding_implEncodeISOArray, "implEncodeISOArray", "([BI[BII)I")},
+      //{x(TR::java_lang_StringCoding_encode8859_1,       "encode8859_1",       "(B[B)[B")},
+      //{x(TR::java_lang_StringCoding_encodeASCII,        "encodeASCII",        "(B[B)[B")},
+      //{x(TR::java_lang_StringCoding_encodeUTF8,         "encodeUTF8",         "(B[B)[B")},
       {  TR::unknownMethod}
       };
 
