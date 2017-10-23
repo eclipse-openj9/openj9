@@ -5,6 +5,9 @@
 	<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 	<classpathentry kind="lib" path="/binaries/vm/ibm/dtfj.pkg.tck-head.jar"/>
 	<classpathentry kind="lib" path="/binaries/common/third/ant-1.8.1.jar"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/pConfig SIDECAR18-DTFJ"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/pConfig SIDECAR18-TRACEFORMAT"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/pConfig SIDECAR18-SE"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="output" path="bin"/>
