@@ -196,6 +196,8 @@
    java_lang_String_unsafeCharAt,
    java_lang_String_split_str_int,
 
+   java_lang_StringUTF16_getChar,
+
    java_lang_StringBuffer_append,
    java_lang_StringBuffer_capacityInternal,
    java_lang_StringBuffer_ensureCapacityImpl,
@@ -1086,6 +1088,10 @@
    java_lang_StringCoding_encode,
    java_lang_StringCoding_StringDecoder_decode,
    java_lang_StringCoding_StringEncoder_encode,
+   java_lang_StringCoding_implEncodeISOArray,
+   java_lang_StringCoding_encode8859_1,
+   java_lang_StringCoding_encodeASCII,
+   java_lang_StringCoding_encodeUTF8,
 
    java_util_Arrays_copyOf_byte,
    java_util_Arrays_copyOf_short,

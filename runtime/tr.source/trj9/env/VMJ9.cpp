@@ -3305,6 +3305,7 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
       case TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32:
       case TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64:
       case TR::com_ibm_jit_JITHelpers_getClassInitializeStatus:
+      case TR::java_lang_StringUTF16_getChar:
             return DontInline_Callee;
       default:
          break;
