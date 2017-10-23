@@ -1314,3 +1314,13 @@ J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.system_action=The JVM will throw a verifi
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE
+
+# <init> method cannot be in an Interface in Java 9
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE=Interface cannot have a method named <init>
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
