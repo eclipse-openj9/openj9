@@ -30,8 +30,8 @@ else ifeq (,$(findstring $(SPEC_LEVEL),1.8 8))
 $(error Unsupported SPEC_LEVEL: $(SPEC_LEVEL))
 endif
 
-ifndef BUILD_ROOT
-$(error BUILD_ROOT is undefined)
+ifndef WORKSPACE
+$(error WORKSPACE is undefined)
 endif
 
 define \n
@@ -46,8 +46,6 @@ JAVA       := $(JAVA_BIN)/java
 JAR        := $(JAVA_BIN)/jar
 
 # set up build path
-ROOT_DIR   := $(shell cd $(BUILD_ROOT); pwd)
-WORKSPACE  := $(ROOT_DIR)/workspace
 J9_JCL     := $(WORKSPACE)/jcl
 
 JAVAC_ARGS := -verbose -g -Xlint:unchecked -source 1.8 -target 1.8
