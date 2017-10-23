@@ -166,6 +166,8 @@
 			<flag name="TR_TARGET_S390">
 				<include-if condition="spec.flags.module_jit_s390"/>
 			</flag>
+			<flag name="J9PORT_LIBRARY_DEFINE"/>
+			<flag name="OMRPORT_LIBRARY_DEFINE"/>
 		</flags>
 		<includes>
 			<include path="j9include"/>
