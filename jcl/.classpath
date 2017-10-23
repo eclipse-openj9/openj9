@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 /*******************************************************************************
  * Copyright (c) 2017, 2017 IBM Corp. and others
@@ -21,8 +22,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
  -->
-
-<?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/java.base/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/java.desktop/share/classes"/>
