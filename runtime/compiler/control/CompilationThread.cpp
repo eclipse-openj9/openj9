@@ -10069,7 +10069,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
       if (compiler->getOption(TR_BreakAfterCompile))
          {
-         fprintf(stderr, "\n=== Finished compiling %s at %p ===\n", compiler->signature(), compiler->cg()->getCodeStart());
+         fprintf(stderr, "\n=== Finished compiling %s at %p ===\n", compiler->signature(), metaData->startPC);
          TR::Compiler->debug.breakPoint();
          }
 
