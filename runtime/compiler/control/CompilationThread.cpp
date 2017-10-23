@@ -5562,13 +5562,11 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       if (compMethod)
          {
          queueWeight += compMethod->_weight; // QW
-         if (compMethod->getMethodDetails().sameAs(details, fe))
+         // JAAS: Even if a method is already being compiled, we plan to recompile it for the new request
+         if (!rpc && compMethod->getMethodDetails().sameAs(details, fe))
             {
             if (!compMethod->_unloadedMethod) // Redefinition; see cmvc 192606 and RTC 36898
                {
-               // We should not yet receive a request to compile something already being compiled
-               TR_ASSERT(!rpc, "Received request to compile a method already being compiled\n");
-
                // If the priority has increased, use the new priority.
                //
                if (compMethod->_priority < priority)
@@ -5592,11 +5590,9 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
    // after the compilation completes and we have updated the J9Method etc.
    // in which case the compilation is already done and we should not even try to enqueue
 
-   if (cur)
+   // JAAS: Even if a method is already queued, we plan to recompile it for the new request
+   if (!rpc && cur)
       {
-      // We should not yet receive a request to compile something already being compiled
-      TR_ASSERT(!rpc, "Received request to compile a method already queued for compilation\n");
-
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
          TR_VerboseLog::writeLineLocked(TR_Vlog_CR,"%p     Already present in compilation queue. OldPriority=%x NewPriority=%x entry=%p",
             _jitConfig->javaVM->internalVMFunctions->currentVMThread(_jitConfig->javaVM), cur->_priority, priority, cur);
