@@ -969,34 +969,34 @@ j9sock_getaddrinfo_address(struct J9PortLibrary *portLibrary, j9addrinfo_t handl
 {
 	int32_t rc = 0;
 	OSADDRINFO *addr;
-    void *sock_addr;
+	void *sock_addr;
 #ifndef IPv6_FUNCTION_SUPPORT
 	char ** addr_list;
 #endif /* IPv6_FUNCTION_SUPPORT */
-    int i;
+	int i;
 
 	/* If we have the IPv6 functions available we cast to an OSADDRINFO structure otherwise a OSHOSTENET structure */
 #ifdef IPv6_FUNCTION_SUPPORT
-	     addr = (OSADDRINFO *) handle->addr_info;
-	     for( i=0; i<index; i++ ) {
-		     addr = addr->ai_next;
-         }
-	     if( addr->ai_family == OS_AF_INET6 ) {			
-			sock_addr = ((OSSOCKADDR_IN6 *)addr->ai_addr)->sin6_addr.s6_addr;
-			memcpy( address, sock_addr, 16 );
-			*scope_id =  ((OSSOCKADDR_IN6 *)addr->ai_addr)->sin6_scope_id;
-         } else {
-			sock_addr = &((OSSOCKADDR *)addr->ai_addr)->sin_addr.s_addr;
-			memcpy( address, sock_addr, 4 );
-	     }
+	addr = (OSADDRINFO *) handle->addr_info;
+	for( i=0; i<index; i++ ) {
+		addr = addr->ai_next;
+	}
+	if( addr->ai_family == OS_AF_INET6 ) {
+		sock_addr = ((OSSOCKADDR_IN6 *)addr->ai_addr)->sin6_addr.s6_addr;
+		memcpy( address, sock_addr, 16 );
+		*scope_id =  ((OSSOCKADDR_IN6 *)addr->ai_addr)->sin6_scope_id;
+	} else {
+		sock_addr = &((OSSOCKADDR *)addr->ai_addr)->sin_addr.s_addr;
+		memcpy( address, sock_addr, 4 );
+	}
 #else
-		addr_list = ((OSHOSTENT *) handle->addr_info)->h_addr_list;
-	    for( i=0; i<index; i++ ) { 
-			if( addr_list[i] == NULL ) {
-				return J9PORT_ERROR_SOCKET_VALUE_NULL;
-            }
+	addr_list = ((OSHOSTENT *) handle->addr_info)->h_addr_list;
+	for( i=0; i<index; i++ ) {
+		if( addr_list[i] == NULL ) {
+			return J9PORT_ERROR_SOCKET_VALUE_NULL;
 		}
-        memcpy( address, addr_list[index], 4 );
+	}
+	memcpy( address, addr_list[index], 4 );
 #endif
 
 	return rc;
@@ -1052,26 +1052,26 @@ j9sock_getaddrinfo_create_hints(struct J9PortLibrary *portLibrary, j9addrinfo_t 
 #if defined(IPv6_FUNCTION_SUPPORT)
 #define addrinfohints (ptBuffers->addr_info_hints).addr_info
 
-		/* Initialized the pt buffers if necessary */
-		ptBuffers = j9sock_ptb_get(portLibrary);
-		if (NULL == ptBuffers) {
+	/* Initialized the pt buffers if necessary */
+	ptBuffers = j9sock_ptb_get(portLibrary);
+	if (NULL == ptBuffers) {
+		return J9PORT_ERROR_SOCKET_SYSTEMFULL;
+	}
+
+	if (NULL == addrinfohints) {
+		addrinfohints = omrmem_allocate_memory(sizeof(OSADDRINFO), OMRMEM_CATEGORY_PORT_LIBRARY);
+		if (NULL == addrinfohints) {
 			return J9PORT_ERROR_SOCKET_SYSTEMFULL;
 		}
+	}
+	memset(addrinfohints, 0, sizeof(OSADDRINFO));
 
-		if (NULL == addrinfohints) {
-			addrinfohints = omrmem_allocate_memory(sizeof(OSADDRINFO), OMRMEM_CATEGORY_PORT_LIBRARY);
-			if (NULL == addrinfohints) {
-				return J9PORT_ERROR_SOCKET_SYSTEMFULL;
-			}
-		}
-		memset(addrinfohints, 0, sizeof(OSADDRINFO));
-
-		addrinfo = (OSADDRINFO*) addrinfohints;
-		addrinfo->ai_flags = flags;
-		addrinfo->ai_family = map_addr_family_J9_to_OS( family );
-		addrinfo->ai_socktype = map_sockettype_J9_to_OS( socktype );
-		addrinfo->ai_protocol = map_protocol_family_J9_to_OS( protocol );
-		*result = &ptBuffers->addr_info_hints;
+	addrinfo = (OSADDRINFO*) addrinfohints;
+	addrinfo->ai_flags = flags;
+	addrinfo->ai_family = map_addr_family_J9_to_OS( family );
+	addrinfo->ai_socktype = map_sockettype_J9_to_OS( socktype );
+	addrinfo->ai_protocol = map_protocol_family_J9_to_OS( protocol );
+	*result = &ptBuffers->addr_info_hints;
 
 #undef addrinfohints
 #endif  /*IPv6_FUNCTION_SUPPORT*/
@@ -1102,22 +1102,22 @@ j9sock_getaddrinfo_family(struct J9PortLibrary *portLibrary, j9addrinfo_t handle
 {
 	int32_t rc = 0;
 	OSADDRINFO *addr;
-    int i;
+    	int i;
 
 	/* If we have the IPv6 functions then we'll cast to a OSADDRINFO othewise we have a hostent */
 #ifdef IPv6_FUNCTION_SUPPORT
-	     addr = (OSADDRINFO *) handle->addr_info;
-	     for( i=0; i<index; i++ ) {
-		     addr = addr->ai_next;
-         }
+	addr = (OSADDRINFO *) handle->addr_info;
+	for( i=0; i<index; i++ ) {
+		addr = addr->ai_next;
+	}
 
-		if( addr->ai_family == OS_AF_INET4 ) {
-			*family = J9ADDR_FAMILY_AFINET4;
-		} else {
-			*family = J9ADDR_FAMILY_AFINET6;
-		}
-#else
+	if( addr->ai_family == OS_AF_INET4 ) {
 		*family = J9ADDR_FAMILY_AFINET4;
+	} else {
+		*family = J9ADDR_FAMILY_AFINET6;
+	}
+#else
+	*family = J9ADDR_FAMILY_AFINET4;
 #endif
 
 	return rc;
@@ -1173,33 +1173,33 @@ j9sock_getaddrinfo_name(struct J9PortLibrary *portLibrary, j9addrinfo_t handle, 
 #ifndef IPv6_FUNCTION_SUPPORT
 	char ** alias_list;
 #endif /* IPv6_FUNCTION_SUPPORT */
-    int i;
+	int i;
 	OSADDRINFO *addr;
 
 	/* If we have the IPv6 functions available we cast to an OSADDRINFO structure otherwise a OSHOSTENET structure */
 #ifdef IPv6_FUNCTION_SUPPORT
 
-	     addr = (OSADDRINFO *) handle->addr_info;
-	     for( i=0; i<index; i++ ) {
-		     addr = addr->ai_next;
-         }		
-		 if( addr->ai_canonname == NULL ) {
-			name[0] = 0;
-		 } else {
-		    strcpy( name, addr->ai_canonname );
-		 }
+	addr = (OSADDRINFO *) handle->addr_info;
+	for( i=0; i<index; i++ ) {
+		addr = addr->ai_next;
+	}
+	if( addr->ai_canonname == NULL ) {
+		name[0] = 0;
+	} else {
+		strcpy( name, addr->ai_canonname );
+	}
 #else
-		alias_list = ((OSHOSTENT *) handle->addr_info)->h_aliases;
-	    for( i=0; i<index; i++ ) { 
-			if( alias_list[i] == NULL ) {
-				return J9PORT_ERROR_SOCKET_VALUE_NULL;
-            }
+	alias_list = ((OSHOSTENT *) handle->addr_info)->h_aliases;
+	for( i=0; i<index; i++ ) {
+		if( alias_list[i] == NULL ) {
+			return J9PORT_ERROR_SOCKET_VALUE_NULL;
 		}
-		if( alias_list[index] == NULL ) {
-			name[0] = 0;
-		} else {
-			strcpy( name, alias_list[index] );
-		}
+	}
+	if( alias_list[index] == NULL ) {
+		name[0] = 0;
+	} else {
+		strcpy( name, alias_list[index] );
+	}
 #endif
 
 	return rc;
