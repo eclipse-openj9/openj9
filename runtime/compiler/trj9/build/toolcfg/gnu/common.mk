@@ -114,13 +114,15 @@ CX_OPTFLAG?=$(CX_DEFAULTOPT)
 CX_FLAGS_PROD+=$(CX_OPTFLAG)
 
 ifeq ($(HOST_ARCH),x)
+    CX_FLAGS+=-mfpmath=sse -msse -msse2 -fno-strict-aliasing -fno-math-errno -fno-rounding-math -fno-trapping-math -fno-signaling-nans
+    
     ifeq ($(HOST_BITS),32)
-        CX_FLAGS+=-m32 -fpic -fno-strict-aliasing
+        CX_FLAGS+=-m32 -fpic
     endif
     
     ifeq ($(HOST_BITS),64)
         CX_DEFINES+=J9HAMMER
-        CX_FLAGS+=-m64 -fPIC -fno-strict-aliasing
+        CX_FLAGS+=-m64 -fPIC
     endif
 endif
 
