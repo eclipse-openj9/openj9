@@ -1459,8 +1459,7 @@ void TR::PPCPrivateLinkage::createEpilogue(TR::Instruction *cursor)
                                        (comp()->isDLT() && !cg()->getSnippetList().empty()) ||
                                        bodySymbol->isEHAware()            ||
                                        cg()->canExceptByTrap()            ||
-                                       (machine->getLinkRegisterKilled() &&
-                                        cg()->restoreRegister(TR::RealRegister::lr, blockNumber)));
+                                       machine->getLinkRegisterKilled());
 
    bool                     saveLR = restoreLR || machine->getLinkRegisterKilled();
 
@@ -1494,11 +1493,8 @@ void TR::PPCPrivateLinkage::createEpilogue(TR::Instruction *cursor)
          TR_BitVector *p = cg()->getPreservedRegsInPrologue();
          for (regIndex=savedFirst; regIndex<=TR::RealRegister::LastGPR; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex+1))
             {
-            if (cg()->restoreRegister(regIndex, blockNumber))
-               {
-               if (!p || p->get((uint32_t)regIndex))
-                  cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
-               }
+            if (!p || p->get((uint32_t)regIndex))
+                cursor = generateTrg1MemInstruction(cg(),TR::InstOpCode::Op_load, currentNode, machine->getPPCRealRegister(regIndex), new (trHeapMemory()) TR::MemoryReference(stackPtr, saveSize, TR::Compiler->om.sizeofReferenceAddress(), cg()), cursor);
 
             saveSize = saveSize + TR::Compiler->om.sizeofReferenceAddress();
             }
