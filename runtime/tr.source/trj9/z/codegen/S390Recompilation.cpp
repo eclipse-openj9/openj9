@@ -274,7 +274,7 @@ TR_S390Recompilation::generatePrePrologue()
       bodyInfoDataConstant = cursor;
       }
 
-   int32_t preprologueSize = CalcCodeSize(comp->getFirstInstruction(), cursor);
+   int32_t preprologueSize = CalcCodeSize(cg->getFirstInstruction(), cursor);
 
    // Adjust the size for the magic header
    preprologueSize += sizeof(int32_t);

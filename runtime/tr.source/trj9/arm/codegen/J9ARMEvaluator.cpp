@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -426,7 +426,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
       directCallEvaluator(instanceOfNode, cg);
       TR::Node::recreate(instanceOfNode, childOpCode);
 
-      iCursor = comp->getAppendInstruction();
+      iCursor = cg->getAppendInstruction();
       while (iCursor->getOpCodeValue() != ARMOp_bl)
          iCursor = iCursor->getPrev();
       conditions = iCursor->getDependencyConditions();
@@ -530,7 +530,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
          cg->stopUsingRegister(scratch2Reg);
          }
 
-      iCursor = comp->getAppendInstruction();
+      iCursor = cg->getAppendInstruction();
       generateLabelInstruction(cg, ARMOp_label, node, doneLabel, conditions);
       conditions->stopAddingConditions();
       cg->decReferenceCount(objectNode);
@@ -711,7 +711,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
       directCallEvaluator(node, cg);
       TR::Node::recreate(node, opCode);
 
-      iCursor = comp->getAppendInstruction();
+      iCursor = cg->getAppendInstruction();
       while (iCursor->getOpCodeValue() != ARMOp_bl)
          iCursor = iCursor->getPrev();
       conditions = iCursor->getDependencyConditions();
@@ -780,7 +780,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
          scratch2Reg = nonFixedDependency(cg, conditions, NULL, TR_GPR);
          }
 
-      iCursor = comp->getAppendInstruction();
+      iCursor = cg->getAppendInstruction();
       generateLabelInstruction(cg, ARMOp_label, node, doneLabel, conditions);
       cg->decReferenceCount(objectNode);
       cg->decReferenceCount(castClassNode);

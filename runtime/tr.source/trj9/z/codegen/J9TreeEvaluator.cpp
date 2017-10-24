@@ -3922,7 +3922,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    conditions->addPostCondition(owningObjectRegVal,  TR::RealRegister::AssignAny);
 
    doneLabel->setEndInternalControlFlow();
-   TR::Instruction *current = comp->getAppendInstruction();
+   TR::Instruction *current = cg->getAppendInstruction();
    TR_ASSERT( current != NULL, "Could not get current instruction");
 
    if (node->getNumChildren()==2)
@@ -8609,7 +8609,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR::Instruction *firstInstruction;
       srm->addScratchRegistersToDependencyList(conditions);
 
-      current = comp->getAppendInstruction();
+      current = cg->getAppendInstruction();
 
       TR_ASSERT(current != NULL, "Could not get current instruction");
 
@@ -9910,10 +9910,10 @@ J9::Z::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(TR::CodeGenera
    // emitted postRA, we have to attach it ourselves.
    if (postRA)
       {
-      TR::Instruction *appendInstruction = comp->getAppendInstruction();
+      TR::Instruction *appendInstruction = cg->getAppendInstruction();
       appendInstruction->setNext(RIOnOffOOL->getFirstInstruction());
       RIOnOffOOL->getFirstInstruction()->setPrev(appendInstruction);
-      comp->setAppendInstruction(RIOnOffOOL->getAppendInstruction());
+      cg->setAppendInstruction(RIOnOffOOL->getAppendInstruction());
       }
 #endif /* TR_HOST_S390 */
    return preced;
@@ -12691,7 +12691,7 @@ TR_J9VMBase::generateBinaryEncodingPrologue(
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
-   data->cursorInstruction = comp->getFirstInstruction();
+   data->cursorInstruction = cg->getFirstInstruction();
    data->estimate = 0;
    TR::Recompilation * recomp = comp->getRecompilationInfo();
 
@@ -12750,7 +12750,7 @@ TR_J9VMBase::generateBinaryEncodingPrologue(
       cg->generateVMCallHelperPrePrologue(NULL);
       }
 
-   data->cursorInstruction = comp->getFirstInstruction();
+   data->cursorInstruction = cg->getFirstInstruction();
 
    static char *disableAlignJITEP = feGetEnv("TR_DisableAlignJITEP");
 
@@ -13173,7 +13173,7 @@ J9::Z::TreeEvaluator::pd2udslEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       }
    else
       {
-      TR_ASSERT(comp->getAppendInstruction()->getOpCodeValue() == TR::InstOpCode::UNPKU,
+      TR_ASSERT(cg->getAppendInstruction()->getOpCodeValue() == TR::InstOpCode::UNPKU,
                 "the previous instruction should be an UNPKU\n");
 
       TR::LabelSymbol * startLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
