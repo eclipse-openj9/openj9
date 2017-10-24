@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2010 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,19 +20,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include <stdlib.h>
 #include "j9.h"
 #include "j9ddr.h"
 
-extern "C" {
-	static const J9DDRStructDefinition structStubs[] = { { 0, 0, 0, 0, 0 } };
+static const J9DDRStructDefinition structStubs[] = { { 0, 0, 0, 0, 0 } };
 
-	const J9DDRStructDefinition* getGCStructTable(void* portLib)
-	{
-		OMRPORT_ACCESS_FROM_OMRPORT((OMRPortLibrary *)portLib);
-		OMRPORTLIB->tty_printf(OMRPORTLIB, "WARNING: GC structure table was not generated and has been stubbed out. See ddr.readme.\n");
-	
-		return structStubs;
-	}
-};
+extern "C"
+const J9DDRStructDefinition *
+getGCStructTable(struct OMRPortLibrary *portLib)
+{
+	portLib->tty_printf(portLib, "WARNING: GC structure table was not generated and has been stubbed out. See ddr.readme.\n");
 
+	return structStubs;
+}

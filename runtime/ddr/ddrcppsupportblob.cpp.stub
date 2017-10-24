@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include <stdlib.h>
 #include "j9.h"
 #include "j9ddr.h"
 
@@ -30,8 +29,7 @@ extern "C"
 const J9DDRStructDefinition *
 getDDR_CPPStructTable(struct OMRPortLibrary *portLib)
 {
-	OMRPORT_ACCESS_FROM_OMRPORT(portLib);
-	omrtty_printf("WARNING: CPP support structure table was not generated and has been stubbed out. See ddr.readme.\n");
+	portLib->tty_printf(portLib, "WARNING: CPP support structure table was not generated and has been stubbed out. See ddr.readme.\n");
 
 	return structStubs;
 }
