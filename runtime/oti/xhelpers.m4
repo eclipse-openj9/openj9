@@ -26,6 +26,8 @@ ifdef({WIN32},{
 
 ifdef({ASM_J9VM_ENV_DATA64},{
 
+define({SHORT_JMP},{short})
+
 define({FILE_START},{
 	OPTION NOSCOPED
 	_TEXT SEGMENT 'CODE'
@@ -66,12 +68,16 @@ define({LABEL},$1)
 
 ifdef({OSX},{ 
 
+define({SHORT_JMP},{})
+
 define({FILE_START},{
 	.intel_syntax noprefix
 	.text
 })
 
 },{	dnl OSX
+
+define({SHORT_JMP},{short})
 
 define({FILE_START},{
 	.intel_syntax noprefix
