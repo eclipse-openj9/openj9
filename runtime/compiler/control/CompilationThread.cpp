@@ -262,57 +262,6 @@ jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, v
 
 
 // For JaaS
-// Packs the ROMClass of a given method into a std::string to be transfered to the server.
-// The name and signature of the given method are appended to the end of the cloned class body and the
-// self referential pointers to them are updated to deal with possible interning. The method name
-// and signature are needed on the server to construct the required ResolvedMethod.
-static std::string packROMClassWithMethod(J9ROMClass *origRomClass, uint64_t methodIndex, TR_Memory *trMemory)
-   {
-   J9ROMMethod *origRomMethod = J9ROMCLASS_ROMMETHODS(origRomClass);
-   for (size_t i = methodIndex; i; --i)
-      {
-      origRomMethod = nextROMMethod(origRomMethod);
-      }
-   J9UTF8 *name = J9ROMMETHOD_GET_NAME(origRomClass, origRomMethod);
-   J9UTF8 *signature = J9ROMMETHOD_GET_SIGNATURE(origRomClass, origRomMethod);
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(origRomClass);
-
-   // Each J9UTF8 holds a char array and a U_16 to store the length of the char array
-   size_t nameSize = name->length + sizeof(U_16);
-   size_t sigSize = signature->length + sizeof(U_16);
-   size_t classNameSize = className->length + sizeof(U_16);
-
-   // Make a cloned ROMClass with extra space at the end
-   J9ROMClass *romClass = (J9ROMClass *)trMemory->allocateHeapMemory(origRomClass->romSize + nameSize + sigSize + classNameSize);
-   if (!romClass)
-      throw std::bad_alloc();
-   memcpy(romClass, origRomClass, origRomClass->romSize);
-
-   // Copy the J9UTF8s to the extra space allocated at the end
-   char *namePos = (char *)romClass + romClass->romSize;
-   memcpy(namePos, name, nameSize);
-   char *signaturePos = (char *)namePos + nameSize;
-   memcpy(signaturePos, signature, sigSize);
-   char *classNamePos = (char *)signaturePos + sigSize;
-   memcpy(classNamePos, className, classNameSize);
-
-   // Find the romMethod in the cloned romClass to modify the self referential pointers
-   J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
-   for (size_t i = methodIndex; i; --i)
-      {
-      romMethod = nextROMMethod(romMethod);
-      }
-   // Update the J9SRPs
-   NNSRP_SET(romMethod->nameAndSignature.name, namePos);
-   NNSRP_SET(romMethod->nameAndSignature.signature, signaturePos);
-   NNSRP_SET(romClass->className, classNamePos);
-
-   // Return the cloned ROMClass as a byte array
-   std::string romClassStr((char *) romClass, romClass->romSize + nameSize + sigSize + classNameSize);
-   trMemory->freeMemory(romClass, heapAlloc);
-   return romClassStr;
-   }
-
 static size_t methodStringsLength(J9ROMMethod *method)
    {
    J9UTF8 *name = J9ROMMETHOD_NAME(method);
@@ -320,6 +269,10 @@ static size_t methodStringsLength(J9ROMMethod *method)
    return name->length + sig->length + 2 * sizeof(U_16);
    }
 
+// Packs a ROMClass into a std::string to be transfered to the server.
+// The name and signature of all methods are appended to the end of the cloned class body and the
+// self referential pointers to them are updated to deal with possible interning. The method names
+// and signature are needed on the server but may be interned globally on the client.
 static std::string packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
    {
    //JAAS TODO: Add comments
