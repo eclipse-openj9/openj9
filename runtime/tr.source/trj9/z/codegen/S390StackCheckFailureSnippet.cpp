@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,11 +82,6 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
       requireRAStore = true;
 
    bool requireRALoad  = requireRAStore;
-
-   if (cg()->specializedEpilogues())
-      {
-      requireRALoad = true;
-      }
 
    // These are assumption checks to make sure our offsets to data constants at the end are correct.
    intptrj_t startOfHelperBASR = -1;
@@ -432,11 +427,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390StackCheckFailureSnippet * snippet)
    bool is64BitTarget = TR::Compiler->target.is64Bit();
    bool requireRAStore = !linkage->getRaContextRestoreNeeded();
    bool requireRALoad  = requireRAStore;
-
-   if (_cg->specializedEpilogues())
-      {
-      requireRALoad = true;
-      }
 
    int32_t frameSize = snippet->getFrameSize();
 

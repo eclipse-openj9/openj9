@@ -1728,21 +1728,8 @@ TR::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
    bool enableBranchPreload = cg()->supportsBranchPreload();
 #endif
 
-   bool specializedEpilogues = cg()->specializedEpilogues();
-   if (specializedEpilogues)
-      {
-      blockNumber = cursor->getNext()->getBlockIndex();
-      TR_ASSERT( blockNumber > 0, "TR::S390PrivateLinkage - blockNumber should be positive\n");
-      }
-
    dep = cursor->getNext()->getDependencyConditions();
    offset = getOffsetToRegSaveArea();
-
-   bool restoreRAReg = true;
-   if (specializedEpilogues && !restoreRegister(getReturnAddressRegister(), blockNumber))
-      {
-      restoreRAReg = false;
-      }
 
    // Do Return Address restore
    uint32_t adjustSize = frameSize - getOffsetToFirstLocal();
@@ -1762,7 +1749,7 @@ TR::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
                     comp()->getOption(TR_FullSpeedDebug);  // CMVC 195232 - FSD can modify RA slot at a GC point.
    setRaContextRestoreNeeded(restoreRA);
 
-   if (getRaContextRestoreNeeded() && restoreRAReg)
+   if (getRaContextRestoreNeeded())
       {
       cursor = generateRXYInstruction(cg(), TR::InstOpCode::getExtendedLoadOpCode(), nextNode,
                                       getS390RealRegister(getReturnAddressRegister()),
@@ -1791,15 +1778,7 @@ TR::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
    lastUsedReg = getLastRestoredRegister(TR::RealRegister::GPR6, TR::RealRegister::GPR12);
    rsa = generateS390MemoryReference(spReg, offset, cg());
 
-   int8_t numNeededToRestore = -1;
-   if (specializedEpilogues)
-      {
-      numNeededToRestore = getNumRegsToRestore(firstUsedReg, lastUsedReg, blockNumber);
-      }
-
-   if (lastUsedReg != TR::RealRegister::NoReg &&
-       ((specializedEpilogues && numNeededToRestore > 0) ||
-       !specializedEpilogues))
+   if (lastUsedReg != TR::RealRegister::NoReg)
       {
       if (firstUsedReg != lastUsedReg)
          {
