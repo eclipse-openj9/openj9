@@ -2144,24 +2144,13 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
 
       bool OSRTooExpensive = false;
       if ((n->getNumChildren() > 0) && !comp()->getOption(TR_EnableOSROnGuardFailure) && comp()->getHCRMode() != TR::osr &&
-
-          (((comp()->getNumLoopNestingLevels() == 0) &&
-            ((((int32_t) _stack->size()) > osrPPSThreshOutsideLoops) || true ||
-             ((((int32_t) _stack->size() + (int32_t) comp()->getNumLivePendingPushSlots())) > osrTotalPPSThreshOutsideLoops))) ||
-
+          (((comp()->getNumLoopNestingLevels() == 0))) ||
            ((comp()->getNumLoopNestingLevels() >= osrLoopNestingThresh) &&
             ((((int32_t) _stack->size()) > osrPPSThresh) ||
              ((((int32_t) _stack->size() + (int32_t) comp()->getNumLivePendingPushSlots())) > osrTotalPPSThresh))) ||
-
-           (n->getFirstChild()->getOpCode().isCallIndirect() &&
-            (n->getFirstChild()->getSymbolReference()->isUnresolved() || true || // turned OSR off for indirect calls for 727 due to failed guards being seen
-             n->getFirstChild()->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->virtualMethodIsOverridden() ||
-             comp()->getPersistentInfo()->isClassLoadingPhase() ||
-             (comp()->getOption(TR_EnableHCR) &&
-              (!n->getFirstChild()->getSecondChild()->getOpCode().isLoadVarDirect() || !n->getFirstChild()->getSecondChild()->getSymbol()->isParm())) ||
-             (n->getFirstChild()->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->maxBytecodeIndex() > osrIndirectCallBCThresh)))
-           ))
+           (n->getFirstChild()->getOpCode().isCallIndirect() ))
         {
+
         OSRTooExpensive = true;
         if (n->getFirstChild()->getOpCode().isCall() && !comp()->getOption(TR_FullSpeedDebug) && comp()->getOption(TR_EnableOSR))
            {
