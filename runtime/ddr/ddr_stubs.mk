@@ -20,20 +20,14 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 ###############################################################################
 
-#Target to copy the stub files into place iff the automated files
-#haven't been generated.
 ifndef DISABLE_STUBS
+
+# Copy stubs into place if generated files are not available.
+
 %.c : %.c.stub
-	( \
-	if [ ! -f $@ ] ; then \
-		cp $^ $@;\
-	fi ;\
-	)
+	test -f $@ || cp $^ $@
 
 %.cpp : %.cpp.stub
-	( \
-	if [ ! -f $@ ] ; then \
-		cp $^ $@;\
-	fi ;\
-	)
-endif
+	test -f $@ || cp $^ $@
+
+endif # DISABLE_STUBS

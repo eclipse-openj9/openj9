@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-#include <stdlib.h>
 #include "j9.h"
 #include "j9ddr.h"
 
@@ -29,8 +28,7 @@ static const J9DDRStructDefinition structStubs[] = { { 0, 0, 0, 0, 0 } };
 const J9DDRStructDefinition *
 getHyPortStructTable(struct OMRPortLibrary *portLib)
 {
-	OMRPORT_ACCESS_FROM_OMRPORT(portLib);
-	omrtty_printf("WARNING: HyPort Structure Table was not generated and has been stubbed out. See ddr.readme.\n");
+	portLib->tty_printf(portLib, "WARNING: HyPort Structure Table was not generated and has been stubbed out. See ddr.readme.\n");
 
 	return structStubs;
 }
