@@ -4282,8 +4282,61 @@ written authorization of the copyright holder.
 	 *
 	 * @since 1.4
 	 */
-	public String replaceAll(String expr, String substitute) {
-		return Pattern.compile(expr).matcher(this).replaceAll(substitute);
+	public String replaceAll(String regex, String substitute) {
+		// this is a fast path to handle replacements of 1 character with another or the deletion of
+		// a single character (common operations when dealing with things like package names, file
+		// system paths etc). In these simple cases a linear scan of the string is all that is necessary
+		// and we can avoid the cost of building a full regex pattern matcher
+		if (regex != null && substitute != null && regex.lengthInternal() == 1 && !hasMetaChars(regex)) {
+			int substituteLength = substitute.lengthInternal();
+			int length = lengthInternal();
+			if (substituteLength < 2) {
+				if (enableCompression && isCompressed() && (substituteLength == 0 || substitute.isCompressed())) {
+					/*[IF Sidecar19-SE]*/
+					byte[] newChars = new byte[length];
+					/*[ELSE]*/
+					char[] newChars = new char[(length + 1) >> 1];
+					/*[ENDIF]*/
+					byte toReplace = helpers.getByteFromArrayByIndex(regex, 0);
+					byte replacement = (byte)-1;  // assign dummy value that will never be used
+					if (substituteLength == 1) {
+						replacement = helpers.getByteFromArrayByIndex(substitute, 0);
+					}
+					int newCharIndex = 0;
+					for (int i = 0; i < length; ++i) {
+						byte current = helpers.getByteFromArrayByIndex(value, i);
+						if (current != toReplace) {
+							helpers.putByteInArrayByIndex(newChars, newCharIndex++, current);
+						} else if (substituteLength == 1) {
+							helpers.putByteInArrayByIndex(newChars, newCharIndex++, replacement);
+						}
+					}
+					return new String(newChars, 0, newCharIndex, true);
+				} else if (!enableCompression || !isCompressed()) {
+					/*[IF Sidecar19-SE]*/
+					byte[] newChars = new byte[length << 1];
+					/*[ELSE]*/
+					char[] newChars = new char[length];
+					/*[ENDIF]*/
+					char toReplace = regex.charAtInternal(0);
+					char replacement = (char)-1; // assign dummy value that will never be used
+					if (substituteLength == 1) {
+						replacement = substitute.charAtInternal(0);
+					}
+					int newCharIndex = 0;
+					for (int i = 0; i < length; ++i) {
+						char current = helpers.getCharFromArrayByIndex(value, i);
+						if (current != toReplace) {
+							helpers.putCharInArrayByIndex(newChars, newCharIndex++, current);
+						} else if (substituteLength == 1) {
+							helpers.putCharInArrayByIndex(newChars, newCharIndex++, replacement);
+						}
+					}
+					return new String(newChars, 0, newCharIndex, false);
+				}
+			}
+		}
+		return Pattern.compile(regex).matcher(this).replaceAll(substitute);
 	}
 
 	/**
