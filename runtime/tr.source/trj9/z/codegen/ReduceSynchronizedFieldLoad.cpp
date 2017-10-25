@@ -263,9 +263,14 @@ ReduceSynchronizedFieldLoad::perform()
       {
       if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad))
          {
-         traceMsg(cg->comp(), "Performing ReduceSynchronizedFieldLoad\n");
+         static const bool enableReduceSynchronizedFieldLoad = feGetEnv("TR_EnableReduceSynchronizedFieldLoad") != NULL;
 
-         transformed = performOnTreeTops(cg->comp()->getStartTree(), NULL);
+         if (enableReduceSynchronizedFieldLoad)
+            {
+            traceMsg(cg->comp(), "Performing ReduceSynchronizedFieldLoad\n");
+
+            transformed = performOnTreeTops(cg->comp()->getStartTree(), NULL);
+            }
          }
       }
 
