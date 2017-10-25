@@ -24,10 +24,12 @@
 </#list>
 
 # Define the Java Version we are compiling
+# This VERSION_MAJOR variable will be overridden by command line option 
+# when there is one such as VERSION_MAJOR=xx.
 VERSION_MAJOR:=9
 export VERSION_MAJOR
 
-# Define a default target of the root directoy for all targets.
+# Define a default target of the root directory for all targets.
 ifndef UMA_TARGET_PATH
   UMA_TARGET_PATH=$(UMA_PATH_TO_ROOT)
 endif
