@@ -2072,7 +2072,7 @@ J9::Z::TreeEvaluator::instanceofEvaluator(TR::Node * node, TR::CodeGenerator * c
    if (comp->getOption(TR_OptimizeForSpace) || comp->getOption(TR_DisableInlineInstanceOf))
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
-      TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
+      TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->getLinkage(TR_CHelper));
       TR::Node::recreate(node, TR::icall);
       TR::Register * targetRegister = helperLink->buildDirectDispatch(node);
       for (auto i=0; i < node->getNumChildren(); i++)
@@ -3940,7 +3940,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       // as it needs not be exec'd
       generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCodeFromNode(sourceChild), node, srcReg, 0, TR::InstOpCode::COND_BE, (doWrtBar || doCrdMrk)?simpleStoreLabel:wbLabel, false, true);
       }
-   TR::S390CHelperLinkage *helperLink = static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
+   TR::S390CHelperLinkage *helperLink = static_cast<TR::S390CHelperLinkage*>(cg->getLinkage(TR_CHelper));
    if (nopASC)
       {
       // Speculatively NOP the array store check if VP is able to prove that the ASC
@@ -5533,7 +5533,7 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
       outlinedSlowPath->swapInstructionListsWithCompilation();
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, helperCallLabel);
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOf/(%s)/Helper", comp->signature()),1,TR::DebugCounter::Undetermined);
-   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
+   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->getLinkage(TR_CHelper));
    resultReg = helperLink->buildDirectDispatch(node, resultReg);
    if (generateDynamicCache)
       {
@@ -6327,7 +6327,7 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator2(TR::Node * node, TR::CodeGenerator *
 
 
    srm->addScratchRegistersToDependencyList(conditions);
-   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
+   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->getLinkage(TR_CHelper));
    // We will be generating sequence to call Helper if we have either GoToFalse or HelperCall Test
    if (numSequencesRemaining > 0 && *iter != GoToTrue)
       {
@@ -6704,7 +6704,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
-   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
+   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->getLinkage(TR_CHelper));
 
    if (comp->getOption(TR_OptimizeForSpace) ||
        (comp->getOption(TR_FullSpeedDebug) && node->isSyncMethodMonitor()) ||
@@ -7146,7 +7146,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
-   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
+   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->getLinkage(TR_CHelper));
    if (comp->getOption(TR_OptimizeForSpace) ||
        comp->getOption(TR_DisableInlineMonExit) ||
        comp->getOption(TR_FullSpeedDebug))  // Required for Live Monitor Meta Data in FSD.
