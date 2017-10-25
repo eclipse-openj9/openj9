@@ -2147,75 +2147,83 @@ J9::Z::TreeEvaluator::checkcastAndNULLCHKEvaluator(TR::Node * node, TR::CodeGene
    }
 
 /**   \brief Generates helper call sequence for all VMNew nodes.
+ *  
+ *    \param node
+ *       A new allocation node for which helper call is going to be generated
+ *
+ *    \param cg
+ *       The code generator used to generate the instructions.
+ *
+ *    \param doInlineAllocation
+ *       A boolean to notify if we have generated inline allocation sequence or not
+ *
+ *    \param
+ *       A register to store return value from helper
+ *
+ *    \return
+ *       A register that contains return value from helper.
+ *    
  *    \details
- *    This helper function will check the node handles special cases when we have iConst or iRegLoad in 64-Bit VM
+ *       Generates a helper call sequence for all new allocation nodes. It also handles special cases where we need to generate 64-bit extended children of call node
  */
 TR::Register *
-J9::Z::TreeEvaluator::generateHelperCallForVMNewEvaluators(TR::Node *node, TR::CodeGenerator *cg)
+J9::Z::TreeEvaluator::generateHelperCallForVMNewEvaluators(TR::Node *node, TR::CodeGenerator *cg, bool doInlineAllocation, TR::Register *resReg)
    {
-   TR::S390CHelperLinkage *helperLink = static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
+   TR::S390CHelperLinkage *helperLink = static_cast<TR::S390CHelperLinkage*>(cg->getLinkage(TR_CHelper));
    TR::ILOpCodes opCode = node->getOpCodeValue();
-   if (TR::Compiler->target.is64Bit())
+   TR::Node *helperCallNode = TR::Node::createWithSymRef(node, TR::acall, (opCode == TR::New || opCode == TR::variableNew)  ? 1 : 2, node->getSymbolReference());
+   TR::Node *firstChild = node->getFirstChild();
+   if (!(opCode == TR::New || opCode == TR::variableNew))
       {
-   // For 64 bit target we need to make sure we use whole 64 bit register even for loading integers as helper expects arguments like that
-   // If first child in constant load and we already have node evaluated before, just use LGFR instruction to extend sign
-   // Else evaluate node by loading constant value.
-      TR::Node *sizeNode = node->getFirstChild();
-      if (sizeNode->getOpCode().isLoadConst())
+      // For 64 bit target we need to make sure we use whole 64 bit register even for loading integers as helper expects arguments like that
+      // For these scenarios where children of original node is 32-bit we generate a following helper call node
+      // acall
+      //   #IF (firstChild ->iconst || iRegLoad ) && 64-bit platform
+      //   -> i2l
+      //       -> firstChild
+      //   #ELSE
+      //   ->firstChild
+      //   #ENDIF
+      //   #IF (secondChild -> iconst || iRegLoad) && 64-bit platform
+      //   -> i2l
+      //       -> secondChild
+      //   #ELSE
+      //   ->secondChild
+      //   #ENDIF
+      // If we generate i2l node, we need to artificially set reference count of node to 1.
+      // After helper call is generated we decrese reference count of this node so that a register will be marked dead for RA. 
+      TR::Node *secondChild = node->getSecondChild();
+      if (TR::Compiler->target.is64Bit())
          {
-         TR::Register *oldSizeReg = sizeNode->getRegister();
-         if (oldSizeReg)
+         if (firstChild->getOpCode().isLoadConst() || firstChild->getOpCodeValue() == TR::iRegLoad)
             {
-            generateRRInstruction(cg, TR::InstOpCode::LGFR, node, oldSizeReg, oldSizeReg);
+            firstChild = TR::Node::create(TR::i2l, 1, firstChild);
+            firstChild->setReferenceCount(1);
             }
-         else
+         if (secondChild->getOpCode().isLoadConst() || secondChild->getOpCodeValue() == TR::iRegLoad)
             {
-            TR::Register *sizeReg = cg->allocateRegister();
-            int32_t sizeVal = sizeNode->getInt();
-            if (sizeVal < MIN_IMMEDIATE_VAL || sizeVal > MAX_IMMEDIATE_VAL)
-               generateRILInstruction(cg, TR::InstOpCode::LGFI, node, sizeReg, sizeVal);
-            else
-               generateRIInstruction(cg, TR::InstOpCode::LGHI , node, sizeReg, sizeVal);
-            sizeNode->setRegister(sizeReg);
+            secondChild = TR::Node::create(TR::i2l, 1, secondChild);
+            secondChild->setReferenceCount(1);
             }
          }
-      else if (node->getFirstChild()->getOpCodeValue() == TR::iRegLoad)
-         {
-         TR::Register *sizeReg = cg->evaluate(sizeNode);
-         generateRRInstruction(cg, TR::InstOpCode::LGFR, node, sizeReg, sizeReg);
-         }
-
-      if (opCode == TR::newarray || opCode == TR::anewarray)
-         {
-         TR::Node *typeNode = node->getSecondChild();
-         if (typeNode->getOpCode().isLoadConst())
-            {
-            TR::Register *oldTypeReg = typeNode->getRegister();
-            if (oldTypeReg)
-               {
-               generateRRInstruction(cg, TR::InstOpCode::LGFR, node, oldTypeReg, oldTypeReg);
-               }
-            else
-               {
-               TR::Register *typeReg = cg->allocateRegister();
-               generateRIInstruction(cg, TR::InstOpCode::LGHI , node, typeReg, typeNode->getInt());
-               typeNode->setRegister(typeReg);
-               }
-            }
-         else if(typeNode->getOpCodeValue() == TR::iRegLoad)
-            {
-            TR::Register *typeReg = cg->evaluate(typeNode);
-            generateRRInstruction(cg, TR::InstOpCode::LGFR, node, typeReg, typeReg);
-            }
-         }
+      helperCallNode->setChild(1, secondChild);
       }
-   TR::Node::recreate(node, TR::acall);
-   TR::Register *targetRegister = helperLink->buildDirectDispatch(node);
-   TR::Node::recreate(node, opCode);
-   node->setRegister(targetRegister);
-   for (auto i=0; i<node->getNumChildren(); i++)
-      cg->decReferenceCount(node->getChild(i));
-   return targetRegister;
+   helperCallNode->setChild(0, firstChild);
+   resReg = helperLink->buildDirectDispatch(helperCallNode, resReg);
+   for (auto i=0; i < helperCallNode->getNumChildren(); i++)
+      {
+      if (helperCallNode->getChild(i)->getOpCodeValue() == TR::i2l)
+         cg->decReferenceCount(helperCallNode->getChild(i));
+      }
+   // For some cases, we can not generate inline allocation sequence such as variableNew*. In these cases only helper call is generated.
+   // So for these cases we need to decrease reference count of node here.
+   if (!doInlineAllocation)
+      {
+      node->setRegister(resReg);
+      for (auto i=0; i<node->getNumChildren(); i++)
+         cg->decReferenceCount(node->getChild(i));
+      }
+   return resReg;
    }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -8721,30 +8729,8 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       cursorHeapAlloc = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, callLabel);
       if (debugObj)
          debugObj->addInstructionComment(cursorHeapAlloc, "Denotes start of OOL for heap alloc");
-      TR::S390CHelperLinkage *helperLink = static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
-      if (opCode == TR::New || TR::Compiler->target.is32Bit())
-         {
-         resReg = helperLink->buildDirectDispatch(node, resReg);
-         }
-      else
-         {
-         TR_Stack<TR::Register*> paramInRegisters(cg->trMemory());
-         if (firstChild->getOpCode().isLoadConst() || firstChild->getOpCodeValue() == TR::iRegLoad)
-            {
-            copyEnumReg = cg->allocateRegister();
-            generateRRInstruction(cg, TR::InstOpCode::LGFR, node, copyEnumReg, enumReg);
-            }
-
-         if (secondChild->getOpCode().isLoadConst() || secondChild->getOpCodeValue() == TR::iRegLoad)
-            {
-            copyClassReg = cg->allocateRegister();
-            generateRRInstruction(cg, TR::InstOpCode::LGFR, node, copyClassReg, classReg);
-            }
-         paramInRegisters.push(copyEnumReg);
-         paramInRegisters.push(copyClassReg);
-         helperLink->buildDirectDispatch(node, paramInRegisters, resReg);
-         }
-         /* Copying the return value from the temporary register to the actual register that is returned */
+      generateHelperCallForVMNewEvaluators(node, cg, true, resReg);
+      /* Copying the return value from the temporary register to the actual register that is returned */
       /* Generating the branch to jump back to the merge label:
        * BRCL    J(0xf), Label L00YZ, labelTargetAddr=0xZZZZZZZZ*/
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneLabel);
