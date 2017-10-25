@@ -27,24 +27,23 @@
  * note: J2SE_15 needed for shared classes cache introspection but not supported by JVM.
  */
 /*
- * Note: J2SE_LATEST has to be updated to highest Java version supported by VM
- * 		 This allows JVM operates with latest version when classlib.properties doesn't present.
- * Additional note:
- * 		 J2SE_LATEST will be kept as J2SE_19 while Java 18.3 raw build is being built.
- * 		 When a separate Java 18.3 binary is required, a #ifdef flag will be introduced to define
- * 		 J2SE_LATEST to different values accordingly such as following:
- * 		 #if J9VM_JAVA9_BUILD > 9
- * 		 	#define J2SE_LATEST  J2SE_1803
- * 		 #else
- * 		 	#define J2SE_LATEST  J2SE_19
- * 		 #endif
+ * Note: J2SE_LATEST is the highest Java version supported by VM for a JCL level.
+ *       This allows JVM operates with latest version when neither classlib.properties
+ *       nor release file presents.
  */
 #define J2SE_15  0x1500
 #define J2SE_16  0x1600
 #define J2SE_17  0x1700
 #define J2SE_18  0x1800
 #define J2SE_19  0x1900
-#define J2SE_LATEST  J2SE_19
+#define J2SE_2018_3  0xB700            /* 0xB7 is 183 which refers to Java 18.3 */
+#if JAVA_SPEC_VERSION == 8
+	#define J2SE_LATEST  J2SE_18
+#elif JAVA_SPEC_VERSION == 9
+	#define J2SE_LATEST  J2SE_19
+#else
+	#define J2SE_LATEST  J2SE_2018_3
+#endif
 
 /**
  * Masks for extracting major and full versions.
@@ -59,19 +58,17 @@
  *  J2SE_SHAPE_RAW = Pure Oracle code without any IBM modifications
  */
 /*
- * Note: J2SE_SHAPE_LATEST has to be updated to highest JCL level supported by VM
- * 		 This allows JVM operates with latest level when classlib.properties doesn't present.
- * Additional note:
- * 		 J2SE_SHAPE_LATEST will be kept as J2SE_SHAPE_B165 while Java 18.3 raw build is being built.
- * 		 When a separate Java 18.3 binary is required, a #ifdef flag will be introduced to define
- * 		 J2SE_SHAPE_B165 to different values accordingly such as following:
- * 		 #if J9VM_JAVA9_BUILD > 9
- * 		 	#define J2SE_SHAPE_LATEST  J2SE_SHAPE_B1803
- * 		 #else
- * 		 	#define J2SE_SHAPE_LATEST  J2SE_SHAPE_B165
- * 		 #endif
+ * Note: J2SE_SHAPE_LATEST is the highest JCL level supported by VM for a JCL level.
+ *       This allows JVM operates with latest level when neither classlib.properties
+ *       nor release file presents.
  */
-#define J2SE_SHAPE_LATEST    	J2SE_SHAPE_B165
+#if JAVA_SPEC_VERSION == 8
+	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_SUN
+#elif JAVA_SPEC_VERSION == 9
+	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_B165
+#else
+	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_B1803
+#endif
 #define J2SE_SHAPE_SUN     		0x10000
 #define J2SE_SHAPE_B136    		0x40000
 #define J2SE_SHAPE_B148    		0x50000

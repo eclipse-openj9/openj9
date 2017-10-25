@@ -183,6 +183,7 @@ static J9StringBuffer * j9binBuffer = NULL;
 static J9StringBuffer * jrebinBuffer = NULL;
 static J9StringBuffer * j9libBuffer = NULL;
 static J9StringBuffer * j9libvmBuffer = NULL;
+static J9StringBuffer * j9Buffer = NULL;
 static BOOLEAN jvmInSubdir=TRUE;
 
 #if !CALL_BUNDLED_FUNCTIONS_DIRECTLY
@@ -337,9 +338,10 @@ static void freeGlobals(void)
 
 	free(j9libvmBuffer);
 	j9libvmBuffer = NULL;
+	
+	free(j9Buffer);
+	j9Buffer = NULL;
 }
-
-
 
 static J9StringBuffer* jvmBufferEnsure(J9StringBuffer* buffer, UDATA len) {
 
@@ -521,6 +523,8 @@ preloadLibraries(void)
 
 	j9libBuffer = jvmBufferCat(NULL, jvmBufferData(jrebinBuffer));
 	truncatePath(jvmBufferData(j9libBuffer));
+	j9Buffer = jvmBufferCat(NULL, jvmBufferData(j9libBuffer));
+	truncatePath(jvmBufferData(j9Buffer));
 	j9libBuffer = jvmBufferCat(j9libBuffer, DIR_SEPARATOR_STR "lib");
 
 	j9libvmBuffer = jvmBufferCat(NULL, jvmBufferData(j9libBuffer));
@@ -534,7 +538,8 @@ preloadLibraries(void)
 	DBG_MSG(("jrebinBuffer  = <%s>\n", jvmBufferData(jrebinBuffer)));
 	DBG_MSG(("j9libBuffer   = <%s>\n", jvmBufferData(j9libBuffer)));
 	DBG_MSG(("j9libvmBuffer = <%s>\n", jvmBufferData(j9libvmBuffer)));
-
+	DBG_MSG(("j9Buffer      = <%s>\n", jvmBufferData(j9Buffer)));
+	
 #if !CALL_BUNDLED_FUNCTIONS_DIRECTLY
 	vmDLL = (HINSTANCE) preloadLibrary(vmDllName, TRUE);
 	preloadLibrary(J9_HOOKABLE_DLL_NAME, TRUE);
@@ -924,11 +929,14 @@ preloadLibraries(void)
 	truncatePath(jvmBufferData(j9libBuffer));
 #endif /* J9VM_JAVA9_BUILD < 150 */
 	j9libvmBuffer = jvmBufferCat(NULL, jvmBufferData(j9binBuffer));
+	j9Buffer = jvmBufferCat(NULL, jvmBufferData(jrebinBuffer));
+	truncatePath(jvmBufferData(j9Buffer));
 
 	DBG_MSG(("j9binBuffer   = <%s>\n", jvmBufferData(j9binBuffer)));
 	DBG_MSG(("jrebinBuffer  = <%s>\n", jvmBufferData(jrebinBuffer)));
 	DBG_MSG(("j9libBuffer   = <%s>\n", jvmBufferData(j9libBuffer)));
 	DBG_MSG(("j9libvmBuffer = <%s>\n", jvmBufferData(j9libvmBuffer)));
+	DBG_MSG(("j9Buffer      = <%s>\n", jvmBufferData(j9Buffer)));
 
 	addToLibpath(jvmBufferData(jrebinBuffer), TRUE);
 
@@ -1218,73 +1226,156 @@ decodeSetting(const char* key, const char* value, VersionSetting* settings, IDAT
 }
 
 /**
- * Loads the classlib.properties file and initialize the bootstrap
- * classpath based on data found there.
- * @param vm
- * @param cursor
- * @return TRUE on success, FALSE otherwise.
+ * Attempt loading 'classlib.properties' file, and get Java version info.
+ * If the file is found, 'version' and 'shape' values are retrieved
+ * and decoded as J2SE_xx and J2SE_SHAPE_xx accordingly.
+ * 'J2SE_xx | J2SE_SHAPE_xx' is returned;
+ * Otherwise, 0 is returned.
+ *
+ * @return 'J2SE_xx | J2SE_SHAPE_xx' decoded from 'version' and 'shape' values in 'classlib.properties';
+ *         or 0 if otherwise.
  */
 static UDATA
 getVersionFromClasslibPropertiesFile(void)
 {
-	if (-1 != jvmSEVersion) {
-		return jvmSEVersion;
-	} else {
-		PORT_ACCESS_FROM_PORT(&j9portLibrary);
-		J9StringBuffer * propsPathBuffer = NULL;
-		j9props_file_t classlibProps;
-		const char* shape;
-		const char* version;
-		UDATA decoded, finalVersion = 0;
+	PORT_ACCESS_FROM_PORT(&j9portLibrary);
+	J9StringBuffer *propsPathBuffer = NULL;
+	j9props_file_t propsFile = NULL;
+	UDATA finalVersion = 0;
 
-		propsPathBuffer = jvmBufferCat(propsPathBuffer, jvmBufferData(j9libBuffer));
-		propsPathBuffer = jvmBufferCat(propsPathBuffer, DIR_SEPARATOR_STR "classlib.properties");
+	propsPathBuffer = jvmBufferCat(propsPathBuffer, jvmBufferData(j9libBuffer));
+	propsPathBuffer = jvmBufferCat(propsPathBuffer, DIR_SEPARATOR_STR "classlib.properties");
+	propsFile = props_file_open(PORTLIB, jvmBufferData(propsPathBuffer), NULL, 0);
+	free(propsPathBuffer);
+	propsPathBuffer = NULL;
 
-		classlibProps = props_file_open(PORTLIB, jvmBufferData(propsPathBuffer), NULL, 0);
-
-		free(propsPathBuffer);
-		propsPathBuffer = NULL;
-
-		if (NULL == classlibProps) {
-	#ifdef DEBUG
-		printf("Could not open %s\n", classlibProps);
-	#endif
-			return J2SE_LATEST|J2SE_SHAPE_LATEST;
-		}
-
-		shape = props_file_get(classlibProps, "shape");
+	if (NULL != propsFile) {
+		const char *shape = NULL;
+		const char *version = NULL;
+		UDATA decoded = 0;
+		
+		shape = props_file_get(propsFile, "shape");
 		if (NULL == shape) {
-	#ifdef DEBUG
-		printf("No 'shape' property in %s\n", classlibProps);
-	#endif
+#ifdef DEBUG
+			printf("No 'shape' property in %s\n", propsFile);
+#endif
 			goto bail;
 		}
 
-		version = props_file_get(classlibProps, "version");
+		version = props_file_get(propsFile, "version");
 		if (NULL == version) {
-	#ifdef DEBUG
-		printf("No 'version' property in %s\n", classlibProps);
-	#endif
+#ifdef DEBUG
+			printf("No 'version' property in %s\n", propsFile);
+#endif
 			goto bail;
 		}
 	
 		decoded = decodeSetting("shape", shape, SHAPE_SETTINGS, NUM_SHAPE_SETTINGS);
-		if (decoded == 0) {
+		if (0 == decoded) {
 			goto bail;
 		}
 		finalVersion |= decoded;
 	
 		decoded = decodeSetting("version", version, VERSION_SETTINGS, NUM_VERSION_SETTINGS);
-		if (decoded == 0) {
+		if (0 == decoded) {
 			goto bail;
 		}
 		finalVersion |= decoded;
 
-	bail:
-		props_file_close(classlibProps);
-		jvmSEVersion = finalVersion;
-		return finalVersion;
+bail:
+		props_file_close(propsFile);
+	} else {
+#ifdef DEBUG
+		printf("Could not open %s\n", propsFile);
+#endif
 	}
+	
+	return finalVersion;
+}
+
+/**
+ * Attempt loading 'release' file, and get Java version info.
+ * If the file is found, 'JAVA_VERSION' value is retrieved and decoded as following:
+ * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_SUN';
+ * "9"         --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
+ * "10"        --- Java 18.3, 'J2SE_2018_3 | J2SE_SHAPE_B1803';
+ * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
+ * Note: 'release' file contains JAVA_VERSION="10" for Java 18.3 at this moment.
+ * Otherwise, 0 is returned.
+ *
+ * @return 'J2SE_18 | J2SE_SHAPE_SUN', 'J2SE_19 | J2SE_SHAPE_B165',
+ *         'J2SE_2018_3 | J2SE_SHAPE_B1803', 'J2SE_LATEST | J2SE_SHAPE_LATEST'
+ *         according to the 'JAVA_VERSION' value found in 'release';
+ *         or 0 if otherwise.
+ */
+static UDATA
+getVersionFromReleaseFile(void)
+{
+	PORT_ACCESS_FROM_PORT(&j9portLibrary);
+	J9StringBuffer *propsPathBuffer = NULL;
+	j9props_file_t propsFile = NULL;
+	UDATA finalVersion = 0;
+
+	propsPathBuffer = jvmBufferCat(propsPathBuffer, jvmBufferData(j9Buffer));
+	propsPathBuffer = jvmBufferCat(propsPathBuffer, DIR_SEPARATOR_STR "release");
+	propsFile = props_file_open(PORTLIB, jvmBufferData(propsPathBuffer), NULL, 0);
+	free(propsPathBuffer);
+	propsPathBuffer = NULL;
+	if (NULL != propsFile) {
+		const char *version = props_file_get(propsFile, "JAVA_VERSION");
+		if (NULL != version) {
+#define	 JAVA_VERSION_8 "\"1.8.0" /* its usual format is "1.8.0_xxx" */
+			if (!strncmp(version, JAVA_VERSION_8, sizeof(JAVA_VERSION_8) - 1)) {
+#undef   JAVA_VERSION_8
+				finalVersion = J2SE_18 | J2SE_SHAPE_SUN;
+			} else if (!strcmp(version, "\"9\"")) {
+				finalVersion = J2SE_19 | J2SE_SHAPE_B165;
+			} else if (!strcmp(version, "\"10\"")) {
+				finalVersion = J2SE_2018_3 | J2SE_SHAPE_B1803;
+			} else {
+				/* Assume latest Java version and shape */
+				finalVersion = J2SE_LATEST | J2SE_SHAPE_LATEST;
+			}
+		} else {
+#ifdef DEBUG
+			printf("No 'JAVA_VERSION' property in %s\n", propsFile);
+#endif
+		}
+		props_file_close(propsFile);
+	} else {
+#ifdef DEBUG
+		printf("Could not open %s\n", propsFile);
+#endif
+	}
+
+	return finalVersion;
+}
+
+/**
+ * Get Java version of running JVM
+ * Attempt getting the Java version info from 'classlib.properties' first,
+ * if not successful, try 'release' file next,
+ * if still no version info found, 'J2SE_LATEST | J2SE_SHAPE_LATEST' is returned 
+ *
+ * @return 'J2SE_xx | J2SE_SHAPE_xx' decoded from 'classlib.properties' or 'release',
+ *         or 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
+ */
+static UDATA
+getVersionFromPropertiesFile(void)
+{
+	if (-1 == jvmSEVersion) {
+		UDATA finalVersion = 0;
+
+		finalVersion = getVersionFromClasslibPropertiesFile();
+		if (0 == finalVersion) {
+			finalVersion = getVersionFromReleaseFile();
+			if (0 == finalVersion) {
+				return J2SE_LATEST | J2SE_SHAPE_LATEST;
+			}
+		}
+		jvmSEVersion = finalVersion;
+	}
+	return jvmSEVersion;
 }
 
 typedef struct J9SpecialArguments {
@@ -1786,7 +1877,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 	/* Register the J9 memory categories with the port library */
 	j9portLibrary.omrPortLibrary.port_control(&j9portLibrary.omrPortLibrary, J9PORT_CTLDATA_MEM_CATEGORIES_SET, (UDATA)&j9MasterMemCategorySet);
 
-	j2seVersion = getVersionFromClasslibPropertiesFile();
+	j2seVersion = getVersionFromPropertiesFile();
 	if (J2SE_17 > j2seVersion) {
 		fprintf(stderr, "Invalid version 0x%" J9PRIz "x detected in classlib.properties!\n", j2seVersion);
 		result = JNI_ERR;
@@ -5051,7 +5142,7 @@ jint JNICALL
 JVM_GetInterfaceVersion(void)
 {
 	jint result = 4;
-	UDATA j2seVersion = getVersionFromClasslibPropertiesFile();
+	UDATA j2seVersion = getVersionFromPropertiesFile();
 
 	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_19) {
 		result = 5;
