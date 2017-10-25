@@ -6900,7 +6900,7 @@ TR_J9ByteCodeIlGenerator::genNewArray(int32_t typeIndex)
      node->setCanSkipZeroInitialization(true);
 
    // special case for handling Arrays.copyOf in the StringEncoder fast paths for Java 9+
-   if (!comp()->isOutermostMethod()
+   if (!comp()->isOutermostMethod() && !comp()->isPeekingMethod()
        && _methodSymbol->getRecognizedMethod() == TR::java_util_Arrays_copyOf_byte)
      {
      int32_t callerIndex = comp()->getCurrentInlinedCallSite()->_byteCodeInfo.getCallerIndex();
