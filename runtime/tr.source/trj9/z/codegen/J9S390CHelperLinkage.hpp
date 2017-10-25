@@ -122,50 +122,6 @@ public:
       return buildDirectDispatch(callNode, NULL, returnReg);
       }
 
-   /** \brief
-    *       Overloaded function that builds the direct dispatch sequence for given node using C Helper linkage
-    *       using already evaluated parameters from paramInRegister and is passed stores result in returnReg
-    *
-    *  \param callNode
-    *       TR::Node* for which helper dispatch sequence will be generated
-    *
-    *  \param &paramInRegister
-    *       A stack of TR::Register* which will be used to prepare arguments for helper call instead of evaluating children of callNode
-    * 
-    *  \param returnReg
-    *       TR::Register* allocated by consumer of this API. If passed dispatch sequence will use this register to store return value from helper
-    *       instead from allocating new register.
-    *
-    *  \return
-    *      Returns TR::Register* which contains return value from helper call
-    */  
-   TR::Register* buildDirectDispatch(TR::Node *callNode, TR_Stack<TR::Register*>& paramInRegister, TR::Register *returnReg=NULL)
-   	{
-   	return buildDirectDispatch(callNode, NULL, paramInRegister, returnReg);
-   	}
-
-   /** \brief
-    *       Overloaded function to be used within internal control flow to build the direct dispatch sequence for given node using C Helper linkage
-    *
-    *  \param callNode
-    *       TR::Node* for which helper dispatch sequence will be generated
-    *
-    *  \param **deps
-    *       A register dependency condition which will be filled with helper call condition so that consumer can combine with the dependency condition
-    *       of internal control flow and attach it to merge label
-    * 
-    *  \param returnReg
-    *       TR::Register* allocated by consumer of this API. If passed dispatch sequence will use this register to store return value from helper
-    *       instead from allocating new register.
-    *
-    *  \return
-    *      Returns TR::Register* which contains return value from helper call
-    */  
-   TR::Register *buildDirectDispatch(TR::Node *callNode, TR::RegisterDependencyConditions** deps, TR::Register *returnReg=NULL)
-   	{
-   	TR_Stack<TR::Register*> paramInRegisters(cg()->trMemory());
-   	return buildDirectDispatch(callNode, deps, paramInRegisters, returnReg);
-   	}
-   TR::Register *buildDirectDispatch(TR::Node *callNode, TR::RegisterDependencyConditions** deps, TR_Stack<TR::Register*>& paramInRegisters, TR::Register *returnReg);
+   TR::Register *buildDirectDispatch(TR::Node *callNode, TR::RegisterDependencyConditions** deps, TR::Register *returnReg=NULL);
    };
 }
