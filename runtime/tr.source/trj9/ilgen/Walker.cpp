@@ -2188,13 +2188,26 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
             _couldOSRAtNextBC = true;
             if ((n->getOpCode().isCheck() || n->getOpCodeValue() == TR::treetop) && n->getFirstChild()->getOpCode().isCall())
                {
-               // The current stack should contain the current method's state prior to the call,
-               // with the call's arguments popped off. If this call is later inlined, it may
-               // contain an OSR transition. Therefore, it is necessary to save the current
-               // method's state now, so that it is available when the transition is made.
-               handlePendingPushSaveSideEffects(n);
-               saveStack(-1);
-               stashPendingPushLivenessForOSR();
+               // Calls are only OSR points for their first evaluation. Other references to the call,
+               // that are also anchored under checks or treetops, are not OSR points. This can be
+               // identified based on a node checklist, as the reference count may be unreliable.
+               //
+               if (!_processedOSRNodes->contains(n->getFirstChild()))
+                  {
+                  _processedOSRNodes->add(n->getFirstChild());
+
+                  // The current stack should contain the current method's state prior to the call,
+                  // with the call's arguments popped off. If this call is later inlined, it may
+                  // contain an OSR transition. Therefore, it is necessary to save the current
+                  // method's state now, so that it is available when the transition is made.
+                  handlePendingPushSaveSideEffects(n);
+                  saveStack(-1);
+                  stashPendingPushLivenessForOSR();
+                  }
+               else if (comp()->getOption(TR_TraceOSR))
+                  {
+                  traceMsg(comp(), "Skipping OSR stack state for repeated call n%dn in treetop n%dn\n", n->getFirstChild()->getGlobalIndex(), n->getGlobalIndex());
+                  }
 
                return _block->append(TR::TreeTop::create(comp(), n));
                }
