@@ -28,7 +28,7 @@ define({CALL_SLOW_PATH_ONLY_HELPER},{
 	SAVE_ALL_REGS
 	FASTCALL_C_WITH_VMTHREAD(old_slow_$1,1)
 	test _rax,_rax
-	je short LABEL(L_done_$1)
+	je SHORT_JMP LABEL(L_done_$1)
 	jmp _rax
 LABEL(L_done_$1):
 	RESTORE_ALL_REGS
@@ -43,7 +43,7 @@ define({CALL_SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE},{
 	SAVE_ALL_REGS
 	FASTCALL_C_WITH_VMTHREAD(old_slow_$1,1)
 	test _rax,_rax
-	je short LABEL(L_done_$1)
+	je SHORT_JMP LABEL(L_done_$1)
 	jmp _rax
 LABEL(L_done_$1):
 	RESTORE_ALL_REGS
@@ -145,12 +145,12 @@ define({OLD_DUAL_MODE_HELPER},{
 	SAVE_C_VOLATILE_REGS
 	FASTCALL_C_WITH_VMTHREAD(old_fast_$1,1)
 	test _rax,_rax
-	je LABEL(L_done_$1)
+	je SHORT_JMP LABEL(L_done_$1)
 	SAVE_C_NONVOLATILE_REGS
 	SAVE_C_NONVOLATILE_JIT_FP_ARG_REGS
 	FASTCALL_INDIRECT_WITH_VMTHREAD(_rax)
 	test _rax,_rax
-	je short LABEL(L_slow_$1)
+	je SHORT_JMP LABEL(L_slow_$1)
 	jmp _rax
 LABEL(L_slow_$1):
 	RESTORE_C_NONVOLATILE_REGS
@@ -170,12 +170,12 @@ define({OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE},{
 	SAVE_C_VOLATILE_REGS
 	FASTCALL_C_WITH_VMTHREAD(old_fast_$1,1)
 	test _rax,_rax
-	je LABEL(L_done_$1)
+	je SHORT_JMP LABEL(L_done_$1)
 	SAVE_C_NONVOLATILE_REGS
 	SAVE_C_NONVOLATILE_JIT_FP_ARG_REGS
 	FASTCALL_INDIRECT_WITH_VMTHREAD(_rax)
 	test _rax,_rax
-	je short LABEL(L_slow_$1)
+	je SHORT_JMP LABEL(L_slow_$1)
 	jmp _rax
 LABEL(L_slow_$1):
 	RESTORE_C_NONVOLATILE_REGS
@@ -192,7 +192,7 @@ define({NEW_DUAL_MODE_HELPER},{
 	pop uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	call FASTCALL_SYMBOL(fast_$1,$2+1)
 	test _rax,_rax
-	jne short LABEL(L_slow_$1)
+	jne SHORT_JMP LABEL(L_slow_$1)
 	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	mov _rax,uword ptr J9TR_VMThread_returnValue[_rbp]
 	ret
@@ -201,7 +201,7 @@ LABEL(L_slow_$1):
 	SAVE_C_NONVOLATILE_REGS
 	FASTCALL_INDIRECT_WITH_VMTHREAD(_rax)
 	test _rax,_rax
-	jne short LABEL(L_exception_$1)
+	jne SHORT_JMP LABEL(L_exception_$1)
 	RESTORE_C_NONVOLATILE_REGS
 	SWITCH_TO_JAVA_STACK
 	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
@@ -218,7 +218,7 @@ define({NEW_DUAL_MODE_HELPER_NO_RETURN_VALUE},{
 	pop uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	call FASTCALL_SYMBOL(fast_$1,$2+1)
 	test _rax,_rax
-	jne short LABEL(L_slow_$1)
+	jne SHORT_JMP LABEL(L_slow_$1)
 	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	ret
 LABEL(L_slow_$1):
@@ -226,7 +226,7 @@ LABEL(L_slow_$1):
 	SAVE_C_NONVOLATILE_REGS
 	FASTCALL_INDIRECT_WITH_VMTHREAD(_rax)
 	test _rax,_rax
-	jne short LABEL(L_exception_$1)
+	jne SHORT_JMP LABEL(L_exception_$1)
 	RESTORE_C_NONVOLATILE_REGS
 	SWITCH_TO_JAVA_STACK
 	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
@@ -247,7 +247,7 @@ define({NEW_DUAL_MODE_ALLOCATION_HELPER},{
 	SWITCH_TO_C_STACK
 	call FASTCALL_SYMBOL(fast_$1,$2+1)
 	test _rax,_rax
-	jne short LABEL(L_slow_$1)
+	jne SHORT_JMP LABEL(L_slow_$1)
 	SWITCH_TO_JAVA_STACK
 	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	mov _rax,uword ptr J9TR_VMThread_returnValue[_rbp]
@@ -256,7 +256,7 @@ LABEL(L_slow_$1):
 	SAVE_C_NONVOLATILE_REGS
 	FASTCALL_INDIRECT_WITH_VMTHREAD(_rax)
 	test _rax,_rax
-	jne short LABEL(L_exception_$1)
+	jne SHORT_JMP LABEL(L_exception_$1)
 	RESTORE_C_NONVOLATILE_REGS
 	SWITCH_TO_JAVA_STACK
 	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
@@ -287,7 +287,7 @@ define({NEW_DUAL_MODE_ALLOCATION_HELPER},{
 	ifelse($2,0,,$2,1,,$2,2,{push eax})
 	call FASTCALL_SYMBOL(fast_$1,$2+1)
 	test _rax,_rax
-	jne short LABEL(L_slow_$1)
+	jne SHORT_JMP LABEL(L_slow_$1)
 	SWITCH_TO_JAVA_STACK
 	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
 	mov _rax,uword ptr J9TR_VMThread_returnValue[_rbp]
@@ -296,7 +296,7 @@ LABEL(L_slow_$1):
 	SAVE_C_NONVOLATILE_REGS
 	FASTCALL_INDIRECT_WITH_VMTHREAD(_rax)
 	test _rax,_rax
-	jne short LABEL(L_exception_$1)
+	jne SHORT_JMP LABEL(L_exception_$1)
 	RESTORE_C_NONVOLATILE_REGS
 	SWITCH_TO_JAVA_STACK
 	push uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
