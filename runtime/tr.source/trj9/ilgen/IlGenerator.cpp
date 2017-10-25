@@ -59,7 +59,8 @@ TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
      _invokeSpecialInterface(NULL),
      _invokeSpecialInterfaceCalls(NULL),
      _invokeSpecialSeen(false),
-     _couldOSRAtNextBC(false)
+     _couldOSRAtNextBC(false),
+     _processedOSRNodes(NULL)
    {
    static const char *noLookahead = feGetEnv("TR_noLookahead");
    _noLookahead = (noLookahead || comp->getOption(TR_DisableLookahead)) ? true : false;
@@ -106,6 +107,12 @@ TR_J9ByteCodeIlGenerator::TR_J9ByteCodeIlGenerator(
          }
       _argPlaceholderSignatureOffset = curArg - signatureChars;
       }
+
+   if (comp->getOption(TR_EnableOSR)
+       && !comp->isPeekingMethod()
+       && comp->isOSRTransitionTarget(TR::postExecutionOSR)
+       && !_cannotAttemptOSR)
+      _processedOSRNodes = new (trStackMemory()) TR::NodeChecklist(comp);
    }
 
 bool

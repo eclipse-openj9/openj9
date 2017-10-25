@@ -374,6 +374,9 @@ private:
    TR_OpaqueClassBlock              *_invokeSpecialInterface;
    TR_BitVector                     *_invokeSpecialInterfaceCalls;
    bool                              _invokeSpecialSeen;
+
+   // OSR
+   TR::NodeChecklist                *_processedOSRNodes;
    };
 
 #endif
