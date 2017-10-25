@@ -111,12 +111,18 @@ public:
 		/* Enable string constant collection by default if we support class unloading */
 		extensions->collectStringConstants = true;
 
-		/* note that these are the default thresholds but Realtime Configurations override these values, in their initialize methods (hence it is key for them to call their super initialize, first) */
+		/*
+		 *  note that these are the default thresholds but Realtime Configurations override these values, in their initialize methods
+		 * (hence it is key for them to call their super initialize, first)
+		 */
+#define DYNAMIC_CLASS_UNLOADING_THRESHOLD			6
+#define DYNAMIC_CLASS_UNLOADING_KICKOFF_THRESHOLD	80000
+
 		if (!extensions->dynamicClassUnloadingThresholdForced) {
-			extensions->dynamicClassUnloadingThreshold = 6;
+			extensions->dynamicClassUnloadingThreshold = DYNAMIC_CLASS_UNLOADING_THRESHOLD;
 		}
 		if (!extensions->dynamicClassUnloadingKickoffThresholdForced) {
-			extensions->dynamicClassUnloadingKickoffThreshold = 0;
+			extensions->dynamicClassUnloadingKickoffThreshold = DYNAMIC_CLASS_UNLOADING_KICKOFF_THRESHOLD;
 		}
 		return true;
 	}
