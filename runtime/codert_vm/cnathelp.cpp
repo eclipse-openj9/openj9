@@ -2491,12 +2491,12 @@ fast_jitCollapseJNIReferenceFrame(J9VMThread *currentThread)
 }
 
 UDATA J9FASTCALL
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 fast_jitInstanceOf(J9VMThread *currentThread, j9object_t object, J9Class *castClass)
-#else /* J9VM_ARCH_X86 */
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitInstanceOf(J9VMThread *currentThread, J9Class *castClass, j9object_t object)
-#endif /* J9VM_ARCH_X86 */
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 	JIT_HELPER_PROLOGUE();
 	UDATA isInstance = 0;
@@ -2545,12 +2545,12 @@ fast_jitNewObjectNoZeroInit(J9VMThread *currentThread, J9Class *objectClass)
 }
 
 void* J9FASTCALL
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 fast_jitANewArray(J9VMThread *currentThread, I_32 size, J9Class *elementClass)
-#else /* J9VM_ARCH_X86 */
+#else /* J9VM_ARCH_X86  || J9VM_ARCH_S390*/
 fast_jitANewArray(J9VMThread *currentThread, J9Class *elementClass, I_32 size)
-#endif /* J9VM_ARCH_X86 */
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitANewArray(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2563,12 +2563,12 @@ fast_jitANewArray(J9VMThread *currentThread, J9Class *elementClass, I_32 size)
 }
 
 void* J9FASTCALL
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 fast_jitANewArrayNoZeroInit(J9VMThread *currentThread, I_32 size, J9Class *elementClass)
-#else /* J9VM_ARCH_X86 */
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitANewArrayNoZeroInit(J9VMThread *currentThread, J9Class *elementClass, I_32 size)
-#endif /* J9VM_ARCH_X86 */
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitANewArrayNoZeroInit(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2581,12 +2581,12 @@ fast_jitANewArrayNoZeroInit(J9VMThread *currentThread, J9Class *elementClass, I_
 }
 
 void* J9FASTCALL
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 fast_jitNewArray(J9VMThread *currentThread, I_32 size, I_32 arrayType)
-#else /* J9VM_ARCH_X86 */
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitNewArray(J9VMThread *currentThread, I_32 arrayType, I_32 size)
-#endif /* J9VM_ARCH_X86 */
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitNewArray(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2599,12 +2599,12 @@ fast_jitNewArray(J9VMThread *currentThread, I_32 arrayType, I_32 size)
 }
 
 void* J9FASTCALL
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 fast_jitNewArrayNoZeroInit(J9VMThread *currentThread, I_32 size, I_32 arrayType)
-#else /* J9VM_ARCH_X86 */
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitNewArrayNoZeroInit(J9VMThread *currentThread, I_32 arrayType, I_32 size)
-#endif /* J9VM_ARCH_X86 */
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitNewArrayNoZeroInit(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2617,12 +2617,12 @@ fast_jitNewArrayNoZeroInit(J9VMThread *currentThread, I_32 arrayType, I_32 size)
 }
 
 void* J9FASTCALL
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 fast_jitCheckCast(J9VMThread *currentThread, j9object_t object, J9Class *castClass)
-#else /* J9VM_ARCH_X86 */
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitCheckCast(J9VMThread *currentThread, J9Class *castClass, j9object_t object)
-#endif /* J9VM_ARCH_X86 */
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitCheckCast(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2641,12 +2641,12 @@ fast_jitCheckCast(J9VMThread *currentThread, J9Class *castClass, j9object_t obje
 }
 
 void* J9FASTCALL
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 fast_jitCheckCastForArrayStore(J9VMThread *currentThread, j9object_t object, J9Class *castClass)
-#else /* J9VM_ARCH_X86 */
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitCheckCastForArrayStore(J9VMThread *currentThread, J9Class *castClass, j9object_t object)
-#endif /* J9VM_ARCH_X86 */
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitCheckCastForArrayStore(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2746,12 +2746,12 @@ fast_jitMonitorExit(J9VMThread *currentThread, j9object_t syncObject)
 }
 
 void* J9FASTCALL
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 fast_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread, j9object_t objectBeingStored, j9object_t destinationObject)
-#else /* J9VM_ARCH_X86 */
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread, j9object_t destinationObject, j9object_t objectBeingStored)
-#endif /* J9VM_ARCH_X86 */
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2764,12 +2764,12 @@ fast_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread, j9object_t d
 }
 
 void* J9FASTCALL
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 fast_jitTypeCheckArrayStore(J9VMThread *currentThread, j9object_t objectBeingStored, j9object_t destinationObject)
-#else /* J9VM_ARCH_X86 */
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitTypeCheckArrayStore(J9VMThread *currentThread, j9object_t destinationObject, j9object_t objectBeingStored)
-#endif /* J9VM_ARCH_X86 */
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 	JIT_HELPER_PROLOGUE();
 	/* Not omitting NULL check */
