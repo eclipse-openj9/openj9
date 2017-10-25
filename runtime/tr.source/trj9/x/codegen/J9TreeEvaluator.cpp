@@ -13004,6 +13004,8 @@ inlineAtomicStampedReference_doubleWordSet(
    return true;
    }
 
+// Note that this function must have behaviour consistent with the OMR function
+// willNotInlineCompareAndSwapNative in omr/compiler/x/codegen/OMRCodeGenerator.cpp
 static bool
 inlineCompareAndSwapNative(
       TR::Node *node,
@@ -13020,6 +13022,9 @@ inlineCompareAndSwapNative(
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
    TR_X86OpCodes op;
+
+   TR::SymbolReference *callSymRef = node->getSymbolReference();
+   TR::MethodSymbol *methodSymbol = callSymRef->getSymbol()->castToMethodSymbol();
 
    if (TR::Compiler->om.canGenerateArraylets() && !node->isUnsafeGetPutCASCallOnNonArray())
       return false;
@@ -13051,6 +13056,15 @@ inlineCompareAndSwapNative(
 
       op = LCMPXCHG8BMem;
       }
+
+   // In Java9 the sun.misc.Unsafe JNI methods have been moved to jdk.internal,
+   // with a set of wrappers remaining in sun.misc to delegate to the new package.
+   // We can be called in this function for the wrappers (which we will
+   // not be converting to assembly), the new jdk.internal JNI methods or the
+   // Java8 sun.misc JNI methods (both of which we will convert). We can
+   // differentiate between these cases by testing with isNative() on the method.
+   if (!methodSymbol->isNative())
+      return false;
 
    cg->recursivelyDecReferenceCount(firstChild);
 
@@ -16103,4 +16117,3 @@ J9::X86::TreeEvaluator::andORStringEvaluator(TR::Node *node, TR::CodeGenerator *
    node->setRegister(resultReg);
    return resultReg;
    }
-

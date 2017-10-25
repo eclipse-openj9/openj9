@@ -666,7 +666,10 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
       if (self()->comp()->useCompressedPointers())
          {
          TR::MethodSymbol *methodSymbol = parent->getSymbol()->castToMethodSymbol();
+         // Unsafe could be the jdk.internal JNI method or the sun.misc ordinary method wrapper,
+         // so test for isNative to distinguish between them
          if ((methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z) &&
+               methodSymbol->isNative() &&
                (!TR::Compiler->om.canGenerateArraylets() || parent->isUnsafeGetPutCASCallOnNonArray()) && parent->isSafeForCGToFastPathUnsafeCall())
             {
             TR_BitVector childrenToBeLowered(parent->getNumChildren(), self()->comp()->trMemory(), stackAlloc);
