@@ -716,7 +716,16 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 
 						funcs->internalEnterVMFromJNI(vmThread);
 						packageName = getPackageName(packageIDList[i], &packageNameLength);
-						packageString = funcs->catUtfToString4(vmThread, packageName, packageNameLength, (U_8*)"/", 1, NULL, 0, NULL, 0);
+						/*
+						 * java.lang.Package.getSystemPackages() expects a trailing slash in Java 8
+						 * but no trailing slash in Java 9.
+						 */
+						if (J2SE_VERSION(vm) >= J2SE_19) {
+							packageString = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmThread,
+									(U_8*) packageName, packageNameLength, 0);
+						} else {
+							packageString = funcs->catUtfToString4(vmThread, packageName, packageNameLength, (U_8*)"/", 1, NULL, 0, NULL, 0);
+						}
 						if (packageString) {
 							packageStringRef = funcs->j9jni_createLocalRef(env, packageString);
 						}
