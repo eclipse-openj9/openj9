@@ -1393,7 +1393,7 @@ TR::Node * J9::TransformUtil::calculateOffsetFromIndexInContiguousArray(TR::Comp
 
    if (shift)
       {
-      TR::Node *shiftNode = TR::Node::create(constOp, 0);
+      TR::Node *shiftNode = TR::Node::create(TR::iconst, 0);
       shiftNode->setConstValue(shift);
       offset = TR::Node::create(shlOp, 2, offset, shiftNode);
       }
