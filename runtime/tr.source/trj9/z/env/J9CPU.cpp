@@ -41,6 +41,7 @@
 
 #if defined(J9ZTPF)
 #include <tpf/c_pi1dt.h> // for access to machine type.
+#include <tpf/c_cinfc.h> // for access to cinfc table.
 #endif
 
 #include "control/Options_inlines.hpp"
@@ -206,10 +207,13 @@ CPU::TO_PORTLIB_get390zLinuxMachineType()
 
 #if defined(J9ZTPF)
    TR_S390MachineType ret_machine = TR_Z10;  /* return value, z/TPF default */
+   const int pi1modArraySize = 5;
+   char processorName[pi1modArraySize] = {0};
    struct pi1dt *pid;
    /* machine hardware name */
    pid = (struct pi1dt *)cinfc_fast(CINFC_CMMPID);
-   int machine = (int)(pid->pi1pids.pi1mslr.pi1mod);
+   sprintf(processorName, "%4.X", pid->pi1pids.pi1mslr.pi1mod);
+   int machine = atoi(processorName);
 
    // Scan list of unsupported machines - We do not initialize the JIT for such hardware.
    for (int i = 0; i < sizeof(S390UnsupportedMachineTypes) / sizeof(int); ++i)
