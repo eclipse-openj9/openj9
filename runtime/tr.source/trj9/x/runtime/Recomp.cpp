@@ -27,10 +27,8 @@
 #include "env/jittypes.h"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/Runtime.hpp"
+#include "x/runtime/X86Runtime.hpp"
 #include "trj9/env/VMJ9.h"
-
-extern "C" int32_t compareAndExchange2(uint16_t *ptr, uint16_t, uint16_t);
-extern "C" void _patchingFence16(void *startAddr);
 
 #if defined(TR_HOST_X86) && defined(TR_HOST_64BIT)
 #define IS_32BIT_RIP(x,rip)  ((intptrj_t)(x) == (intptrj_t)(rip) + (int32_t)((intptrj_t)(x) - (intptrj_t)(rip)))
@@ -155,7 +153,7 @@ void J9::Recompilation::fixUpMethodCode(void *startPC)
       uint16_t newInstruction = jitEntryJmpInstruction(startPC, START_PC_TO_RECOMPILE_SAMPLING);
       uint16_t oldInstruction = *(uint16_t*)((uint8_t*)startPC + START_PC_TO_ORIGINAL_ENTRY_BYTES);
       uint16_t *startBytes = (uint16_t*)((uint8_t*)startPC + jitEntryOffset(startPC));
-      compareAndExchange2(startBytes, oldInstruction, newInstruction);
+      AtomicCompareAndSwap(startBytes, oldInstruction, newInstruction);
       }
    }
 
@@ -207,7 +205,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
       offset = ((char*)helperAddr) - startByte - 5;
 
       *((int16_t*)startByte) = SPIN_LOOP_INSTRUCTION;
-      _patchingFence16(startByte);
+      patchingFence16(startByte);
       *((int32_t*)(startByte+2)) = offset >> 8;
 
       // Offset from CALL's return address to oldStartPC
@@ -217,7 +215,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
 
       // Finish patching and unlock spin loop
       //
-      _patchingFence16(startByte);
+      patchingFence16(startByte);
       *((int16_t*)startByte) = ((offset & 0xFF) << 8) | CALL_INSTRUCTION;
 
       bytesToSaveAtStart = 7 + jitEntryOffset(oldStartPC); // the new call instruction + 2-byte offset; TODO: this could be 5 on IA32

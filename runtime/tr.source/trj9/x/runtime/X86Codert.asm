@@ -1580,8 +1580,6 @@ ifndef TR_HOST_64BIT
 
       public   clearFPStack
 
-include x/i386/runtime/IA32AsmUtil.inc
-
 jitReleaseVMAccess PROC NEAR
                 pusha
                 push       ebp
@@ -1615,8 +1613,6 @@ else
 ;                                    64-BIT
 ;
 ; --------------------------------------------------------------------------------
-
-include x/amd64/runtime/AMD64AsmUtil.inc
 
 jitReleaseVMAccess proc
         ; Save system-linkage volatile regs
