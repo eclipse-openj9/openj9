@@ -90,7 +90,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
    const bool generateCompressedLockWord = static_cast<TR_J9VMBase*>(cg->comp()->fe())->generateCompressedLockWord();
 
    const bool is32BitLock = TR::Compiler->target.is32Bit() || generateCompressedLockWord;
-   const bool is32BitLoad = loadNode->getOpCodeValue() == TR::l2a || loadNode->getSymbolReference()->getSymbol()->getSize() == 4;
+   const bool is32BitLoad = loadNode->getOpCodeValue() == TR::l2a || J9::DataType::getSize(loadNode->getDataType()) == 4;
 
    if (is32BitLock && is32BitLoad)
       {
@@ -347,7 +347,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
             if (lookaheadChildNode->getOpCode().isLoadIndirect())
                {
                // Disallow this optimization for 64-bit loads on 31-bit JVM due to register pairs
-               if (TR::Compiler->target.is32Bit() && lookaheadChildNode->getSymbolReference()->getSymbol()->getSize() == 8)
+               if (TR::Compiler->target.is32Bit() && J9::DataType::getSize(loadNode->getDataType()) == 8)
                   {
                   continue;
                   }
