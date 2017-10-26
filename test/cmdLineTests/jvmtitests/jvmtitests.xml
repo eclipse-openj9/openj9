@@ -204,11 +204,6 @@
 		<return type="success" value="0"/>
 	</test>
 
-	<test id="emexnr001">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:emexnr001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
-		<return type="success" value="0"/>
-	</test>
-
  	<test id="gctcti001">
 		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:gctcti001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
@@ -274,11 +269,6 @@
 		<return type="success" value="0"/>
 	</test>
 
-	<test id="ecla001">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:ecla001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
-		<return type="success" value="0"/>
-	</test>
-
 	<test id="rat001">
 		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rat001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
@@ -296,16 +286,6 @@
 
 	<test id="gmcpn001">
 		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:gmcpn001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
-		<return type="success" value="0"/>
-	</test>
-
-	<test id="smee001">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:smee001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
-		<return type="success" value="0"/>
-	</test>
-
-	<test id="smee002">
-		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:smee002 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 

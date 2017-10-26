@@ -79,9 +79,6 @@
 		<export name="Java_com_ibm_jvmti_tests_eventThreadStart_ets001_check"/>
 		<export name="Java_com_ibm_jvmti_tests_eventVMObjectAllocation_evmoa001_didTestRun"/>
 		<export name="Java_com_ibm_jvmti_tests_eventMethodEntryGrow_emeng001_emeng001NativeMethod"/>
-		<export name="Java_com_ibm_jvmti_tests_eventMethodExitNoRc_emexnr001_sampleNativeMethod"/>
-		<export name="Java_com_ibm_jvmti_tests_eventMethodExitNoRc_emexnr001_checkJavaMethodExit"/>
-		<export name="Java_com_ibm_jvmti_tests_eventMethodExitNoRc_emexnr001_checkNativeMethodExit"/>
 		<export name="Java_com_ibm_jvmti_tests_eventMethodExit_emex001_sampleNativeMethod"/>
 		<export name="Java_com_ibm_jvmti_tests_eventMethodExit_emex001_checkJavaMethodExit"/>
 		<export name="Java_com_ibm_jvmti_tests_eventMethodExit_emex001_checkNativeMethodExit"/>
@@ -126,7 +123,6 @@
 		<export name="Java_com_ibm_jvmti_tests_getHeapFreeTotalMemory_ghftm001_getCycleStartCount"/>
 		<export name="Java_com_ibm_jvmti_tests_getHeapFreeTotalMemory_ghftm001_getCycleEndCount"/>
 		<export name="Java_com_ibm_jvmti_tests_getMethodAndClassNames_gmcpn001_check"/>
-        <export name="Java_com_ibm_jvmti_tests_eventClassLoadArrays_ecla001_checkEventClassLoadArrays"/>
 		<export name="Java_com_ibm_jvmti_tests_removeAllTags_rat001_tryRemoveAllTags"/>
 		<export name="Java_com_ibm_jvmti_tests_traceSubscription_ts001_tryRegisterTraceSubscriber"/>
 		<export name="Java_com_ibm_jvmti_tests_traceSubscription_ts001_tryFlushTraceData"/>
@@ -140,12 +136,6 @@
 		<export name="Java_com_ibm_jvmti_tests_traceSubscription_ts002_getTracePointCount2"/>
 		<export name="Java_com_ibm_jvmti_tests_traceSubscription_ts002_hasAlarmTriggered1"/>
 		<export name="Java_com_ibm_jvmti_tests_traceSubscription_ts002_hasAlarmTriggered2"/>
-		<export name="Java_com_ibm_jvmti_tests_selectiveMethodEntryExit_smee001_setSelectiveMethodEntryExit"/>
-		<export name="Java_com_ibm_jvmti_tests_selectiveMethodEntryExit_smee001_clearSelectiveMethodEntryExit"/>
-		<export name="Java_com_ibm_jvmti_tests_selectiveMethodEntryExit_smee001_checkSelectiveMethodEntryExit"/>
-		<export name="Java_com_ibm_jvmti_tests_selectiveMethodEntryExit_smee002_checkNonSelectiveMethodEntryExit"/>
-		<export name="Java_com_ibm_jvmti_tests_selectiveMethodEntryExit_smee002_trySetSelectiveMethodEntryExit"/>
-		<export name="Java_com_ibm_jvmti_tests_selectiveMethodEntryExit_smee002_tryClearSelectiveMethodEntryExit"/>
 		<export name="Java_com_ibm_jvmti_tests_decompResolveFrame_ResolveFrameClassloader_checkFrame"/>
 		<export name="Java_com_ibm_jvmti_tests_decompResolveFrame_decomp002_singleStep"/>
 		<export name="Java_com_ibm_jvmti_tests_decompResolveFrame_decomp003_startStepping"/>
