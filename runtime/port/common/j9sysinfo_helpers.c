@@ -192,7 +192,7 @@ getX86CPUID(uint32_t leaf, uint32_t *cpuInfo)
 	/* Specific CPUID instruction available in Windows */
 	__cpuid(cpuInfo, cpuInfo[0]);
 
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(OSX)
 #if defined(J9X86)
 	__asm volatile
 	("mov %%ebx, %%edi;"

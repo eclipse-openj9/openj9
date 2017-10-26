@@ -1614,7 +1614,10 @@ openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile,
 			}
 		} else {
 #if defined (__GNUC__) || defined (AIXPPC)
-#if defined (__GNUC__)
+#if defined (OSX) 
+			/*Use ._key for OSX*/
+			if (buf.shm_perm._key != controlinfo->common.ftok_key)
+#elif defined (__GNUC__)
 			/*Use .__key for __GNUC__*/
 			if (buf.shm_perm.__key != controlinfo->common.ftok_key)
 #endif

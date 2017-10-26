@@ -99,7 +99,7 @@ typedef struct sockaddr_storage OSSOCKADDR_STORAGE; /* IPv6 */
 #endif /* !defined(J9ZTPF) */
 #endif /* !WIN32 */
 
-#if defined(LINUX) || defined(AIXPPC) || defined (J9ZOS390)
+#if defined(LINUX) || defined(AIXPPC) || defined (J9ZOS390) || defined(OSX)
 #define SOCKET_CAST(x) ((struct j9socket_struct*)  x)->sock
 #else /* defined(LINUX) || defined(AIXPPC) || defined (J9ZOS390) */
 /* all the non-unix ports use this variant */
@@ -110,7 +110,7 @@ typedef struct sockaddr_storage OSSOCKADDR_STORAGE; /* IPv6 */
 #else /* NO_LVALUE_CASTING */
 #define SOCKET_CAST(x) ((OSSOCKET)x)
 #endif /* !NO_LVALUE_CASTING */
-#endif /* defined(LINUX) || defined(AIXPPC) || defined (J9ZOS390) */
+#endif /* defined(LINUX) || defined(AIXPPC) || defined (J9ZOS390) || defined(OSX) */
 
 
 typedef struct j9sockaddr_struct {
@@ -122,7 +122,7 @@ typedef struct j9sockaddr_struct {
 } j9sockaddr_struct;
 
 typedef struct j9fdset_struct {
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 	intptr_t fd;       /* fd == -1 indicates the j9fdset is "empty" fd. */
 #else
 	fd_set handle;

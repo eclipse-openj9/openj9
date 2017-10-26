@@ -1770,7 +1770,7 @@ getZipEntryUsingDirectory(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry
 					result = ZIP_ERR_FILE_READ_ERROR;
 					break;
 				}
-				if (0 == strncmp(fileName, readBuffer, fileNameLength)) {
+				if (0 == strncmp(fileName, (const char*)readBuffer, fileNameLength)) {
 					zipFile->pointer = (I_32)(localHeaderOffset + offsetCorrection);
 					seekResult = j9file_seek(zipFile->fd,zipFile->pointer, EsSeekSet); /* go to the actual entry */
 					if (isSeekFailure(seekResult, zipFile->pointer)) {

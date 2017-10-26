@@ -2207,7 +2207,7 @@ findObjectDeadlockedThreads(J9VMThread *currentThread,
 	IDATA deadCount = -1;
 	J9VMThread *vmThread;
 	J9HashTable *hashTable;
-	struct ThreadChain *thrChain;
+	ThreadChain *thrChain;
 	UDATA visit = 0;
 	IDATA i, index;
 	j9object_t *deadlockedThreads = NULL;
@@ -2234,7 +2234,7 @@ findObjectDeadlockedThreads(J9VMThread *currentThread,
 	}
 
 	/* Allocate the destination array */
-	thrChain = (struct ThreadChain *)j9mem_allocate_memory(threadCount * sizeof(struct ThreadChain), OMRMEM_CATEGORY_VM);
+	thrChain = (ThreadChain *)j9mem_allocate_memory(threadCount * sizeof(ThreadChain), OMRMEM_CATEGORY_VM);
 	if (NULL == thrChain) {
 		goto findDeadlock_fail;
 	}

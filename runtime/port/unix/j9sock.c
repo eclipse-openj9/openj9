@@ -55,11 +55,13 @@
 #include "atoe.h"
 #endif
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 #include <poll.h>
+#if defined(Linux)
 #define IPV6_FLOWINFO_SEND      33
 #define HAS_RTNETLINK 1
-#endif
+#endif /* LINUX */
+#endif /* LINUX || OSX */
 
 #if defined(HAS_RTNETLINK)
 #include <asm/types.h>
@@ -1225,7 +1227,7 @@ j9sock_getaddrinfo_name(struct J9PortLibrary *portLibrary, j9addrinfo_t handle, 
 int32_t
 j9sock_gethostbyaddr(struct J9PortLibrary *portLibrary, char *addr, int32_t length, int32_t type, j9hostent_t handle)
 {
-#if defined(J9ZTPF)
+#if defined(J9ZTPF) || defined(OSX) /* HACK: temporarily disable this function */
     int herr = NO_RECOVERY;
     OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 
@@ -1347,6 +1349,9 @@ j9sock_gethostbyaddr(struct J9PortLibrary *portLibrary, char *addr, int32_t leng
 int32_t
 j9sock_gethostbyname(struct J9PortLibrary *portLibrary, const char *name, j9hostent_t handle)
 {
+#if OSX /* HACK! */
+ return -1;
+#else
 #if !HOSTENT_DATA_R
 	OSHOSTENT *result;
 #endif
@@ -1440,6 +1445,7 @@ j9sock_gethostbyname(struct J9PortLibrary *portLibrary, const char *name, j9host
 #undef hostentBuffer
 
 	return 0;
+#endif
 }
 
 
@@ -1494,7 +1500,7 @@ j9sock_getnameinfo(struct J9PortLibrary *portLibrary, j9sockaddr_t in_addr, int3
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	/* On z/TPF we don't support this option of returning the host name from the in_addr */
-#if defined(J9ZTPF)
+#if defined(J9ZTPF) || defined(OSX) /* HACK! */
 	int herr = NO_RECOVERY;
 	J9SOCKDEBUGH( "<gethostbyaddr failed, err=%d>\n", herr);
 	return omrerror_set_last_error(herr, findHostError(herr));
@@ -3901,7 +3907,7 @@ j9sock_fdset_isset(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdse
  *
  * @return	0 if success, a socket error if a failure occurred
  */
-#ifdef LINUX || OSX
+#if defined(LINUX) || defined(OSX)
 static int32_t
 disconnectSocket(struct J9PortLibrary *portLibrary, j9socket_t sock, socklen_t fromlen)
 {

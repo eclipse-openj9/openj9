@@ -1281,13 +1281,15 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 					/* Executed with StackMap or StackMapTable */
 					NEXT_U16(slotCount, entries);
 					localSlots = slotCount;
-					if (errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end)) {
+					errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end);
+					if (0 != errorCode) {
 						goto _failedCheck;
 					}
 					NEXT_U16(slotCount, entries);
 				}
 
-				if (errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end)) {
+				errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end);
+				if (0 != errorCode) {
 					goto _failedCheck;
 				}
 			}

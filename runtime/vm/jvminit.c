@@ -316,9 +316,6 @@ extern void populateRASNetData (J9JavaVM *javaVM, J9RAS *rasStruct);
 const U_8 J9CallInReturnPC[] = { 0xFF, 0x00, 0x00, 0xFF }; /* impdep2, parm, parm, impdep2 */
 const U_8 J9Impdep1PC[] = { 0xFE, 0x00, 0x00, 0xFE }; /* impdep1, parm, parm, impdep1 */
 
-/* used as the default value for the imageHeaders list -- make sure that this is in the text segment on Palm! */
-static const void* const nullPtr = NULL;
-
 static jint (JNICALL * vprintfHookFunction)(FILE *fp, const char *format, va_list args) = NULL;
 static IDATA (* portLibrary_file_write_text) (struct OMRPortLibrary *portLibrary, IDATA fd, const char *buf, IDATA nbytes) = NULL;
 

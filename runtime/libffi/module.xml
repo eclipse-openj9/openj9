@@ -41,6 +41,7 @@
 			<!-- override makefile default rule for building .S files -->
 			<makefilestub data="COMPILE.S=$(CC) $(addprefix -Xassembler ,$(ASFLAGS)) $(CPPFLAGS) $(TARGET_MACH) -c">
 				<include-if condition="spec.linux.*" />
+				<include-if condition="spec.osx.*" />
 				<exclude-if condition="spec.flags.arch_power and not spec.flags.env_gcc or spec.flags.arch_s390" />
 			</makefilestub>
 
@@ -121,6 +122,7 @@
 
 			<makefilestub data="FFI_PRECONF_DIR := xa">
 				<include-if condition="spec.linux_x86.* and spec.flags.J9VM_ENV_DATA64" />
+				<include-if condition="spec.osx.* and spec.flags.J9VM_ENV_DATA64" />
 			</makefilestub>
 			<makefilestub data="FFI_PRECONF_DIR := xi">
 				<include-if condition="spec.linux_x86.* and not spec.flags.J9VM_ENV_DATA64" />
@@ -200,6 +202,9 @@
 			<vpath pattern="ffi64.c" path="x86" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.flags.arch_x86 and spec.flags.J9VM_ENV_DATA64" />
 			</vpath>
+			<vpath pattern="darwin64.S" path="x86" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.osx.*" />
+			</vpath>
 			<vpath pattern="unix64.S" path="x86" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_x86-64.*" />
 			</vpath>
@@ -208,6 +213,7 @@
 			</vpath>
 			<vpath pattern="sysv.S" path="x86" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.linux_x86.*" />
+				<include-if condition="spec.osx.*" />
 			</vpath>
 			<!-- Yes, we need to include this even on linux -->
 			<vpath pattern="win32.S" path="x86" augmentObjects="true" type="relativepath">
