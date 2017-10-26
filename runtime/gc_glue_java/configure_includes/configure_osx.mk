@@ -19,8 +19,6 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 ###############################################################################
 
-TEMP_TARGET_DATASIZE:=64
-
 include $(CONFIG_INCL_DIR)/configure_common.mk
 
 CONFIGURE_ARGS += \
@@ -42,7 +40,6 @@ CONFIGURE_ARGS += \
   --enable-OMR_THR_YIELD_ALG \
   --enable-OMR_GC_ARRAYLETS \
   --enable-OMR_THR_SPIN_WAKE_CONTROL
-
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.dylib arlibext=.a objext=.o
 
