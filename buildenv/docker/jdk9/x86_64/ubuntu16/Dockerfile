@@ -38,6 +38,7 @@ RUN apt-get update \
     git-core \
     libasound2-dev \
     libcups2-dev \
+    libdwarf-dev \
     libelf-dev \
     libfreetype6-dev \
     libnuma-dev \

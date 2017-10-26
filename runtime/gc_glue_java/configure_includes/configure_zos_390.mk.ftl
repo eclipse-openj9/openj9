@@ -21,12 +21,10 @@
 ###############################################################################
 
 include $(CONFIG_INCL_DIR)/configure_common.mk
-# Detect 64-bit vs. 31-bit
-# This overrides the value calculated in configure_common.mk
-ifneq (,$(findstring -64,$(SPEC)))
-  TEMP_TARGET_DATASIZE:=64
-else
-  TEMP_TARGET_DATASIZE:=31
+
+# Override datasize for 31-bit specs.
+ifeq (,$(findstring -64,$(SPEC)))
+  TEMP_TARGET_DATASIZE := 31
 endif
 
 # Notes (on disabled flags):
