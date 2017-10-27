@@ -349,14 +349,17 @@ TR_J9InlinerPolicy::mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, T
    return false;
    }
 
-/* Identify methods for which the benefits of inlining them into the caller
-   are particularly significant.
+/**  Test for methods that we wish to inline whenever possible.
+
+   Identify methods for which the benefits of inlining them into the caller
+   are particularly significant and which might not otherwise be chosen by
+   the inliner.
 */
 bool
 TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::Node *callNode)
    {
-   // if we are passed a null calleeMethod then we can only return false
-   if (!calleeMethod) return false;
+   if (!calleeMethod) 
+      return false;
 
    if (isInlineableJNI(calleeMethod, callNode))
       return true;
@@ -370,18 +373,16 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress:
          return true;
       default:
-       break;
+         break;
       }
 
-   // we rely on inlining compareAndSwap so we see the inner native call and can special case it
-   // get/putLongVolatile is not supported by all codegens so we want to inline to expose the native
-   // if we haven't special cased it in the walker
    switch (calleeMethod->getRecognizedMethod())
       {
       case TR::java_lang_J9VMInternals_fastIdentityHashCode:
       case TR::java_lang_Class_getSuperclass:
       case TR::java_lang_String_regionMatches:
       case TR::java_lang_Class_newInstance:
+      // we rely on inlining compareAndSwap so we see the inner native call and can special case it
       case TR::com_ibm_jit_JITHelpers_compareAndSwapIntInObject:
       case TR::com_ibm_jit_JITHelpers_compareAndSwapLongInObject:
       case TR::com_ibm_jit_JITHelpers_compareAndSwapObjectInObject:
@@ -401,19 +402,20 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::java_util_HashMap_get:
       case TR::java_util_HashMap_getNode:
          return true;
+         
+      // In Java9 the following enum values match both sun.misc.Unsafe and
+      // jdk.internal.misc.Unsafe The sun.misc.Unsafe methods are simple
+      // wrappers to call jdk.internal impls, and we want to inline them. Since
+      // the same code can run with Java8 classes where sun.misc.Unsafe has the
+      // JNI impl, we need to differentiate by testing with isNative(). If it is
+      // native, then we don't need to inline it as it will be handled
+      // elsewhere.
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
-         // In Java9 the above enum values match both sun.misc.Unsafe and
-         // jdk.internal.misc.Unsafe The sun.misc.Unsafe methods are simple
-         // wrappers to call jdk.internal impls, and we want to inline them.
-         // Since the same code can run with Java8 classes where sun.misc.Unsafe
-         // has the JNI impl, we need to differentiate by testing with
-         // isNative(). If it is native, then we don't need to inline it as it
-         // will be handled elsewhere.
          return !calleeMethod->isNative();
       default:
-       break;
+         break;
       }
 
    return false;

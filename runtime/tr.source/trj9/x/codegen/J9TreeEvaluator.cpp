@@ -13004,8 +13004,12 @@ inlineAtomicStampedReference_doubleWordSet(
    return true;
    }
 
-// Note that this function must have behaviour consistent with the OMR function
-// willNotInlineCompareAndSwapNative in omr/compiler/x/codegen/OMRCodeGenerator.cpp
+/** Replaces a call to an Unsafe CAS method with inline instructions.
+   @return true if the call was replaced, false if it was not.
+
+   Note that this function must have behaviour consistent with the OMR function
+   willNotInlineCompareAndSwapNative in omr/compiler/x/codegen/OMRCodeGenerator.cpp
+*/
 static bool
 inlineCompareAndSwapNative(
       TR::Node *node,
@@ -13022,9 +13026,6 @@ inlineCompareAndSwapNative(
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
    TR_X86OpCodes op;
-
-   TR::SymbolReference *callSymRef = node->getSymbolReference();
-   TR::MethodSymbol *methodSymbol = callSymRef->getSymbol()->castToMethodSymbol();
 
    if (TR::Compiler->om.canGenerateArraylets() && !node->isUnsafeGetPutCASCallOnNonArray())
       return false;
@@ -13063,8 +13064,11 @@ inlineCompareAndSwapNative(
    // not be converting to assembly), the new jdk.internal JNI methods or the
    // Java8 sun.misc JNI methods (both of which we will convert). We can
    // differentiate between these cases by testing with isNative() on the method.
-   if (!methodSymbol->isNative())
-      return false;
+   {
+      TR::MethodSymbol *methodSymbol = node->getSymbol()->getMethodSymbol();
+      if (methodSymbol && !methodSymbol->isNative())
+         return false;
+   }
 
    cg->recursivelyDecReferenceCount(firstChild);
 
