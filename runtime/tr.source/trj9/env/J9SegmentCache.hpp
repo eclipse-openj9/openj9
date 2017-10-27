@@ -33,19 +33,19 @@ class J9SegmentCache : public J9SegmentProvider
    {
 public:
 
-   J9SegmentCache(size_t defaultSegmentSize, J9SegmentProvider &backingProvider);
+   J9SegmentCache(size_t cachedSegmentSize, J9SegmentProvider &backingProvider);
    J9SegmentCache(J9SegmentCache &donor);
 
    ~J9SegmentCache() throw();
 
    virtual J9MemorySegment& request(size_t requiredSize);
    virtual void release(J9MemorySegment& segment) throw();
-   virtual size_t getPreferredSegmentSize() { return _defaultSegmentSize; }
+   virtual size_t getPreferredSegmentSize() { return _cachedSegmentSize; }
 
    J9SegmentCache &ref() { return *this; }
 
 private:
-   size_t _defaultSegmentSize;
+   size_t _cachedSegmentSize;
    J9SegmentProvider &_backingProvider;
    J9MemorySegment *_firstSegment;
    bool _firstSegmentInUse;

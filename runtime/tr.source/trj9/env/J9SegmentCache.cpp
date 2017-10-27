@@ -24,16 +24,16 @@
 #include "j9.h"
 #include "infra/Assert.hpp"
 
-J9::J9SegmentCache::J9SegmentCache(size_t defaultSegmentSize, J9SegmentProvider &backingProvider) :
-   _defaultSegmentSize(defaultSegmentSize),
+J9::J9SegmentCache::J9SegmentCache(size_t cachedSegmentSize, J9SegmentProvider &backingProvider) :
+   _cachedSegmentSize(cachedSegmentSize),
    _backingProvider(backingProvider),
-   _firstSegment(&_backingProvider.request(_defaultSegmentSize)),
+   _firstSegment(&_backingProvider.request(_cachedSegmentSize)),
    _firstSegmentInUse(false)
    {
    }
 
 J9::J9SegmentCache::J9SegmentCache(J9SegmentCache &donor) :
-   _defaultSegmentSize(donor._defaultSegmentSize),
+   _cachedSegmentSize(donor._cachedSegmentSize),
    _backingProvider(donor._backingProvider),
    _firstSegment(donor._firstSegment),
    _firstSegmentInUse(false)
@@ -54,7 +54,7 @@ J9::J9SegmentCache::request(size_t requiredSize)
    TR_ASSERT(_firstSegment, "Segment was stolen");
    if (
       _firstSegmentInUse
-      || requiredSize > _defaultSegmentSize
+      || requiredSize > _cachedSegmentSize
       )
       {
       return _backingProvider.request(requiredSize);
