@@ -84,9 +84,7 @@ if ( !$projectRootDir ) {
 }
 
 if ( !$graphSpecs ) {
-	$graphSpecs =
-	"aix_ppc,aix_ppc-64,aix_ppc-64_cmprssptrs,aix_ppc-64_cmprssptrs_purec,aix_ppc-64_purec,aix_ppc_purec,linux_390,linux_390-64,linux_390-64_cmprssptrs,linux_390-64_cmprssptrs_purec,linux_390-64_cs,linux_390-64_purec,linux_390_purec,linux_arm,linux_ppc-64_cmprssptrs_le,linux_ppc-64_cmprssptrs_le_cs,linux_ppc-64_cmprssptrs_le_purec,linux_ppc-64_le,linux_ppc-64_le_purec,linux_x86,linux_x86-64,linux_x86-64_cmprssptrs,linux_x86-64_cmprssptrs_cs,linux_x86-64_cmprssptrs_purec,linux_x86-64_purec,linux_x86_purec,win_x86,win_x86-64,win_x86-64_cmprssptrs,win_x86-64_cmprssptrs_purec,win_x86-64_purec,win_x86_purec,zos_390,zos_390-64,zos_390-64_cmprssptrs,zos_390-64_cmprssptrs_cs,zos_390-64_cmprssptrs_purec,zos_390-64_purec,zos_390_purec";
-	print "graphSpecs is not provided. Set graphSpecs = $graphSpecs\n";
+	die "Please provide graphSpecs!"
 }
 
 # run make file generator
