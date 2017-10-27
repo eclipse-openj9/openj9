@@ -40,6 +40,7 @@ public:
 
    virtual J9MemorySegment& request(size_t requiredSize);
    virtual void release(J9MemorySegment& segment) throw();
+   virtual size_t getPreferredSegmentSize() { return _defaultSegmentSize; }
 
    J9SegmentCache &ref() { return *this; }
 
