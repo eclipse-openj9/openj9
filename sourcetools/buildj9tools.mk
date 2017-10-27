@@ -30,6 +30,8 @@
 #   DEST_DIR: the location to copy the J9 Java tools generated binaries
 ################################################################################
 
+include ../../spec.gmk
+
 DEST_DIR    := lib
 EMPTY       :=
 LIB_DIR     := lib
@@ -37,6 +39,7 @@ OS          := $(shell uname)
 PATH_SEP    := $(if $(or $(findstring Windows,$(OS)),$(findstring CYGWIN,$(OS))),;,:)
 SPACE       := $(EMPTY) $(EMPTY)
 WORK_PFX    := build-
+PREV_JAVA   := $(shell expr $(VERSION_MAJOR) - 1)
 
 # compiler settings
 ifdef BOOT_JDK
@@ -46,7 +49,7 @@ ifdef DEV_TOOLS
   JAVA_BIN  ?= $(DEV_TOOLS)/ibm-jdk-1.8.0/bin
 else
   # requires Java 8 or 9
-  JAVA      := java8
+  JAVA      := java$(PREV_JAVA)
   JAVA_BIN  ?= $(dir $(realpath $(shell which $(JAVA))))
 endif
 endif
@@ -57,7 +60,7 @@ endif
 JAVAC       := $(JAVA_BIN)javac
 JAR         := $(JAVA_BIN)jar
 
-SPEC_LEVEL  ?= 8
+SPEC_LEVEL  ?= $(PREV_JAVA)
 JAVAC_FLAGS := -nowarn -source $(SPEC_LEVEL) -target $(SPEC_LEVEL)
 
 JAR_TARGETS :=
