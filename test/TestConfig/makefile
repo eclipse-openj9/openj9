@@ -216,12 +216,12 @@ endif
 
 .PHONY: _$(TESTTARGET) $(TESTTARGET)
 $(TESTTARGET): JVM_TEST_ROOT := $(BUILD_ROOT)
-_$(TESTTARGET): setup_$(TESTTARGET) $(TESTTARGET)
+_$(TESTTARGET): setup_$(TESTTARGET) rmResultFile $(TESTTARGET) resultsSummary
 	@$(ECHO) $@ done
 
 setup_%:
 	@$(ECHO)
-	@$(ECHO) Running test _$(TESTTARGET)
+	@$(ECHO) Running $(TESTTARGET)
 	$(JAVA_COMMAND) -version
 
 #######################################
@@ -236,7 +236,7 @@ endif
 
 .PHONY: test_$(DIRTARGET)
 $(DIRTARGET): JVM_TEST_ROOT := $(BUILD_ROOT)
-test_$(DIRTARGET): rmResultFile $(DIRTARGET)_$(JAVA_VERSION) resultsSummary
+test_$(DIRTARGET): setup_$(DIRTARGET) rmResultFile $(DIRTARGET)_$(JAVA_VERSION) resultsSummary
 
 test: compile runtest
 	@$(ECHO) "All Tests Completed"
@@ -282,21 +282,21 @@ resultsSummary:
 	@perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)testKitGen$(D)resultsSummary$(D)resultsSum.pl --failuremk=$(Q)$(FAILEDTAGETS)$(Q) --resultFile=$(Q)$(TEMPRESULTFILE)$(Q) --tapFile=$(Q)$(TAPRESULTFILE)$(Q) --diagnostic=failure
 
 sanity: JVM_TEST_ROOT := $(BUILD_ROOT)
-sanity: rmResultFile sanity_$(JAVA_VERSION) resultsSummary
+sanity: setup_sanity rmResultFile sanity_$(JAVA_VERSION) resultsSummary
 
 extended: JVM_TEST_ROOT := $(BUILD_ROOT)
-extended: rmResultFile extended_$(JAVA_VERSION) resultsSummary
+extended: setup_extended rmResultFile extended_$(JAVA_VERSION) resultsSummary
 
 openjdk: JVM_TEST_ROOT := $(BUILD_ROOT)
-openjdk: rmResultFile openjdk_$(JAVA_VERSION) resultsSummary
+openjdk: setup_openjdk rmResultFile openjdk_$(JAVA_VERSION) resultsSummary
 
 external: JVM_TEST_ROOT := $(BUILD_ROOT)
-external: rmResultFile external_$(JAVA_VERSION) resultsSummary
+external: setup_external rmResultFile external_$(JAVA_VERSION) resultsSummary
 
 perf: JVM_TEST_ROOT := $(BUILD_ROOT)
-perf: rmResultFile perf_$(JAVA_VERSION) resultsSummary
+perf: setup_sanity rmResultFile perf_$(JAVA_VERSION) resultsSummary
 
-runtest: rmResultFile sanity_$(JAVA_VERSION) extended_$(JAVA_VERSION) openjdk_$(JAVA_VERSION) external_$(JAVA_VERSION) perf_$(JAVA_VERSION) resultsSummary
+runtest: setup_perf rmResultFile sanity_$(JAVA_VERSION) extended_$(JAVA_VERSION) openjdk_$(JAVA_VERSION) external_$(JAVA_VERSION) perf_$(JAVA_VERSION) resultsSummary
 .NOTPARALLEL: extended sanity openjdk external perf runtest rmResultFile resultsSummary
 
 # cleanup
