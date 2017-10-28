@@ -264,6 +264,8 @@ public:
    bool _gpuCanUseReadOnlyCache;
    bool _gpuUseOldLdgCalls;
 
+   TR_BitVector *getLiveMonitors() {return _liveMonitors;}
+   TR_BitVector *setLiveMonitors(TR_BitVector *v) {return (_liveMonitors = v);}
 
 private:
 
@@ -318,6 +320,7 @@ private:
 
    RefinedAliasWalkCollector _refinedAliasWalkCollector;
 
+   TR_BitVector *_liveMonitors;
 
 public:
 

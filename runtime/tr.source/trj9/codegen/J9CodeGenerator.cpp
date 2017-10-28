@@ -50,6 +50,7 @@
 #include "il/symbol/AutomaticSymbol.hpp"  // for AutomaticSymbol
 #include "il/symbol/StaticSymbol.hpp"     // for StaticSymbol
 #include "il/symbol/LabelSymbol.hpp"      // for LabelSymbol
+#include "infra/BitVector.hpp"                      // for TR_BitVector, etc
 #include "infra/List.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/TransformUtil.hpp"
@@ -65,7 +66,8 @@
 J9::CodeGenerator::CodeGenerator() :
       OMR::CodeGeneratorConnector(),
    _gpuSymbolMap(self()->comp()->allocator()),
-   _stackLimitOffsetInMetaData(self()->comp()->fej9()->thisThreadGetStackLimitOffset())
+   _stackLimitOffsetInMetaData(self()->comp()->fej9()->thisThreadGetStackLimitOffset()),
+   _liveMonitors(NULL)
    {
    }
 
