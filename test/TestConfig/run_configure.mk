@@ -37,12 +37,19 @@ ifneq (,$(findstring Win,$(OS)))
 CURRENT_DIR := $(subst \,/,$(CURRENT_DIR))
 endif
 
+ifndef SPEC
+$(error Please provide SPEC that matches the current platform (e.g. SPEC=linux_x86-64))
+else
+export SPEC:=$(SPEC)
+$(info set SPEC to $(SPEC))
+endif
+
 autoconfig:
 	perl configure.pl
 
 autogen: autoconfig
 	cd $(CURRENT_DIR)$(D)scripts$(D)testKitGen; \
-	perl testKitGen.pl $(OPTS); \
+	perl testKitGen.pl --graphSpecs=$(SPEC) $(OPTS); \
 	cd $(CURRENT_DIR);
 
 AUTOGEN_FILES = $(wildcard $(CURRENT_DIR)$(D)jvmTest.mk)
