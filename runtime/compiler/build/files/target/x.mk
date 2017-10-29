@@ -52,6 +52,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/x/codegen/X86BinaryEncoding.cpp \
     omr/compiler/x/codegen/X86Debug.cpp \
     omr/compiler/x/codegen/X86FPConversionSnippet.cpp \
+    omr/compiler/x/codegen/X86FastCallLinkage.cpp \
     omr/compiler/x/codegen/X86SystemLinkage.cpp \
     omr/compiler/x/codegen/XMMBinaryArithmeticAnalyser.cpp
 
@@ -73,7 +74,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/codegen/PassJNINullSnippet.cpp \
     compiler/x/codegen/RecompilationSnippet.cpp \
     compiler/x/codegen/WriteBarrierSnippet.cpp \
-    compiler/x/codegen/X86HelperLinkage.cpp \
     compiler/x/codegen/X86PrivateLinkage.cpp \
     compiler/x/codegen/X86Recompilation.cpp \
     compiler/x/env/J9CPU.cpp \
