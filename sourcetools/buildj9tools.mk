@@ -48,7 +48,7 @@ else
 ifdef DEV_TOOLS
   JAVA_BIN  ?= $(DEV_TOOLS)/ibm-jdk-1.8.0/bin
 else
-  # requires Java 8 or 9
+  # requires previous or identical Java version
   JAVA      := java$(PREV_JAVA)
   JAVA_BIN  ?= $(dir $(realpath $(shell which $(JAVA))))
 endif
