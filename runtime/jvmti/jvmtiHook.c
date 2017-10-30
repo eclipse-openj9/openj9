@@ -96,7 +96,6 @@ static void jvmtiHookDynamicCodeUnload (J9HookInterface** hook, UDATA eventNum, 
 static void jvmtiHookDynamicCodeLoad (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 #endif /* INTERP_NATIVE_SUPPORT */
 static void jvmtiHookMethodExit (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
-static void jvmtiHookMethodExitNoRc (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void jvmtiFreeClassData (void * userData, void * address);
 static void jvmtiHookPopFramesInterrupt (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static IDATA hookReserve (J9JVMTIHookInterfaceWithID* hookInterfaceWithID, UDATA eventNum, J9HookFunction function, const char *callsite, void* userData);
@@ -288,7 +287,6 @@ jvmtiHookMethodEnter(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 {
 	J9JVMTIEnv * j9env = userData;
 	jvmtiEventMethodEntry callback = j9env->callbacks.MethodEntry;
-	jvmtiExtensionEvent extensionCallback = J9JVMTI_EXTENSION_CALLBACK(j9env, J9JVMTI_EVENT_COM_IBM_METHOD_ENTRY_EXTENDED);
 
 	Trc_JVMTI_jvmtiHookMethodEnter_Entry();
 
@@ -296,7 +294,7 @@ jvmtiHookMethodEnter(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 
 	/* Call the event callback */
 
-	if (callback != NULL || extensionCallback != NULL) {
+	if (callback != NULL) {
 		J9VMThread * currentThread;
 		J9Method * method;
 		jthread threadRef;
@@ -313,38 +311,6 @@ jvmtiHookMethodEnter(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 
 			currentThread = data->currentThread;
 			method = data->method;
-		}
-
-		if (j9env->flags & J9JVMTIENV_FLAG_SELECTIVE_NOTIFY_ENTRY_EXIT) {
-			U_8 *pmethodflags = fetchMethodExtendedFlagsPointer(method);
-
-			if ((*pmethodflags &  J9_JVMTI_METHOD_SELECTIVE_ENTRY_EXIT) == 0) {
-				TRACE_JVMTI_EVENT_RETURN(jvmtiHookMethodEnter);
-			}
-		}
-
-		if (prepareForEvent(j9env, currentThread, currentThread, J9JVMTI_EVENT_COM_IBM_METHOD_ENTRY_EXTENDED, &threadRef, &hadVMAccess, TRUE, 0, &javaOffloadOldState)) {
-			J9JavaVM * vm = currentThread->javaVM;
-			jmethodID methodID;
-
-			methodID = getCurrentMethodID(currentThread, method);
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
-			if (methodID != NULL) {
-				if (extensionCallback != NULL) {
-					jint type = COM_IBM_METHOD_ENTRY_EXTENDED_INTERPRETED;
-
-					if (eventNum == J9HOOK_VM_NATIVE_METHOD_ENTER) {
-						type = COM_IBM_METHOD_ENTRY_EXTENDED_NATIVE;
-					} else if (((J9VMMethodEnterEvent *) eventData)->methodType != 0) {
-						type = COM_IBM_METHOD_ENTRY_EXTENDED_COMPILED;
-					}
-
-					/* TODO: handle other types */
-
-					extensionCallback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, type);
-				}
-			}
-			finishedEvent(currentThread, J9JVMTI_EVENT_COM_IBM_METHOD_ENTRY_EXTENDED, hadVMAccess, javaOffloadOldState);
 		}
 
 		if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_METHOD_ENTRY, &threadRef, &hadVMAccess, TRUE, 0, &javaOffloadOldState)) {
@@ -514,14 +480,6 @@ processEvent(J9JVMTIEnv* j9env, jint event, J9HookRedirectorFunction redirectorF
 
 		/* Extension Events */
 
-		case J9JVMTI_EVENT_COM_IBM_METHOD_ENTRY_EXTENDED:
-			return	redirectorFunction(vmHook, J9HOOK_VM_METHOD_ENTER, jvmtiHookMethodEnter, OMR_GET_CALLSITE(), j9env) ||
-						redirectorFunction(vmHook, J9HOOK_VM_NATIVE_METHOD_ENTER, jvmtiHookMethodEnter, OMR_GET_CALLSITE(), j9env);
-
-		case J9JVMTI_EVENT_COM_IBM_METHOD_EXIT_NO_RC:
-			return	redirectorFunction(vmHook, J9HOOK_VM_METHOD_RETURN, jvmtiHookMethodExitNoRc, OMR_GET_CALLSITE(), j9env) ||
-						redirectorFunction(vmHook, J9HOOK_VM_NATIVE_METHOD_RETURN, jvmtiHookMethodExitNoRc, OMR_GET_CALLSITE(), j9env);
-
 		case J9JVMTI_EVENT_COM_IBM_INSTRUMENTABLE_OBJECT_ALLOC:
 			return redirectorFunction(vmHook, J9HOOK_VM_OBJECT_ALLOCATE_INSTRUMENTABLE, jvmtiHookObjectAllocate, OMR_GET_CALLSITE(), j9env);
 
@@ -537,7 +495,6 @@ processEvent(J9JVMTIEnv* j9env, jint event, J9HookRedirectorFunction redirectorF
 		case J9JVMTI_EVENT_COM_IBM_GARBAGE_COLLECTION_CYCLE_FINISH:
 			return redirectorFunction(gcOmrHook, J9HOOK_MM_OMR_GC_CYCLE_END, jvmtiHookGCCycleEnd, OMR_GET_CALLSITE(), j9env);
 
-#if defined (J9VM_INTERP_NATIVE_SUPPORT)
 		case J9JVMTI_EVENT_COM_IBM_COMPILING_START:
 			if (jitHook != NULL) {
 				return redirectorFunction(jitHook, J9HOOK_JIT_COMPILING_START, jvmtiHookCompilingStart, OMR_GET_CALLSITE(), j9env);
@@ -551,11 +508,6 @@ processEvent(J9JVMTIEnv* j9env, jint event, J9HookRedirectorFunction redirectorF
 			} else {
 				return 0;
 			}
-#endif
-
-		case J9JVMTI_EVENT_COM_IBM_ARRAY_CLASS_LOAD:
-			return redirectorFunction(vmHook, J9HOOK_VM_CLASS_LOAD, jvmtiHookClassLoad, OMR_GET_CALLSITE(), j9env);
-
 	}
 
 	return 0;
@@ -691,7 +643,6 @@ jvmtiHookClassLoad(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 {
 	J9VMClassLoadEvent * data = eventData;
 	J9JVMTIEnv * j9env = userData;
-	jvmtiExtensionEvent extensionCallback = J9JVMTI_EXTENSION_CALLBACK(j9env, J9JVMTI_EVENT_COM_IBM_ARRAY_CLASS_LOAD);
 
 	Trc_JVMTI_jvmtiHookClassLoad_Entry();
 
@@ -717,25 +668,6 @@ jvmtiHookClassLoad(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 				currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, (jclass) classRef);
 				finishedEvent(currentThread, JVMTI_EVENT_CLASS_LOAD, hadVMAccess, javaOffloadOldState);
-			}
-		}
-	} else {
-		/* For the extended event, report only arrays */
-		if (extensionCallback != NULL) {
-			if (J9ROMCLASS_IS_PRIMITIVE_TYPE(data->clazz->romClass) == 0) {
-				J9VMThread * currentThread = data->currentThread;
-				jthread threadRef;
-				UDATA hadVMAccess;
-				UDATA javaOffloadOldState = 0;
-
-				if (prepareForEvent(j9env, currentThread, currentThread, J9JVMTI_EVENT_COM_IBM_ARRAY_CLASS_LOAD, &threadRef, &hadVMAccess, TRUE, 1, &javaOffloadOldState)) {
-					j9object_t * classRef = (j9object_t*) currentThread->arg0EA;
-
-					*classRef = J9VM_J9CLASS_TO_HEAPCLASS(data->clazz);
-					currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
-					extensionCallback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, (jclass) classRef);
-					finishedEvent(currentThread, J9JVMTI_EVENT_COM_IBM_ARRAY_CLASS_LOAD, hadVMAccess, javaOffloadOldState);
-				}
 			}
 		}
 	}
@@ -1420,14 +1352,6 @@ jvmtiHookMethodExit(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 			valueAddress = data->returnValuePtr;
 		}
 
-		if (j9env->flags & J9JVMTIENV_FLAG_SELECTIVE_NOTIFY_ENTRY_EXIT) {
-			U_8 *pmethodflags = fetchMethodExtendedFlagsPointer(method);
-
-			if ((*pmethodflags &  J9_JVMTI_METHOD_SELECTIVE_ENTRY_EXIT) == 0) {
-				TRACE_JVMTI_EVENT_RETURN(jvmtiHookMethodExit);
-			}
-		}
-
 		if (!poppedByException) {
 			J9UTF8 * signature = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(method)->ramClass->romClass,J9_ROM_METHOD_FROM_RAM_METHOD(method));
 
@@ -1458,65 +1382,6 @@ jvmtiHookMethodExit(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 	}
 
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookMethodExit);
-}
-
-static void
-jvmtiHookMethodExitNoRc(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
-{
-	J9JVMTIEnv * j9env = userData;
-	jvmtiExtensionEvent callback = *J9JVMTI_EXTENSION_CALLBACK(j9env, J9JVMTI_EVENT_COM_IBM_METHOD_EXIT_NO_RC);
-
-	Trc_JVMTI_jvmtiHookMethodExitNoRc_Entry();
-
-	ENSURE_EVENT_PHASE_LIVE(jvmtiHookMethodExitNoRc, j9env);
-
-	/* Call the event callback */
-
-	if (callback != NULL) {
-		J9VMThread * currentThread;
-		J9Method * method;
-		UDATA poppedByException;
-		jthread threadRef;
-		UDATA hadVMAccess;
-		UDATA javaOffloadOldState = 0;
-
-		if (eventNum == J9HOOK_VM_NATIVE_METHOD_RETURN) {
-			J9VMNativeMethodReturnEvent * data = eventData;
-
-			currentThread = data->currentThread;
-			method = data->method;
-			poppedByException = data->poppedByException;
-		} else {
-			J9VMMethodReturnEvent * data = eventData;
-
-			currentThread = data->currentThread;
-			method = data->method;
-			poppedByException = data->poppedByException;
-		}
-
-		if (j9env->flags & J9JVMTIENV_FLAG_SELECTIVE_NOTIFY_ENTRY_EXIT) {
-			U_8 *pmethodflags = fetchMethodExtendedFlagsPointer(method);
-
-			if ((*pmethodflags &  J9_JVMTI_METHOD_SELECTIVE_ENTRY_EXIT) == 0) {
-				TRACE_JVMTI_EVENT_RETURN(jvmtiHookMethodExit);
-			}
-		}
-
-		if (prepareForEvent(j9env, currentThread, currentThread, J9JVMTI_EVENT_COM_IBM_METHOD_EXIT_NO_RC, &threadRef, &hadVMAccess, TRUE, 0, &javaOffloadOldState)) {
-			J9JavaVM * vm = currentThread->javaVM;
-			jmethodID methodID;
-
-			methodID = getCurrentMethodID(currentThread, method);
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
-			if (methodID != NULL) {
-				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jboolean) poppedByException);
-			}
-			vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-			finishedEvent(currentThread, J9JVMTI_EVENT_COM_IBM_METHOD_EXIT_NO_RC, hadVMAccess, javaOffloadOldState);
-		}
-	}
-
-	TRACE_JVMTI_EVENT_RETURN(jvmtiHookMethodExitNoRc);
 }
 
 
@@ -3415,31 +3280,4 @@ jvmtiHookVmDumpEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 	}
 
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVmDumpEnd);
-}
-
-
-void
-asyncEventHandler(J9VMThread* currentThread, IDATA handlerKey, void* userData)
-{
-	J9JVMTIEnv * j9env = userData;
-	jvmtiExtensionEvent callback = *J9JVMTI_EXTENSION_CALLBACK(j9env, J9JVMTI_EVENT_ASYNC);
-
-	Trc_JVMTI_asyncEventHandler_Entry();
-
-	ENSURE_EVENT_PHASE_START_OR_LIVE(asyncEventHandler, j9env);
-
-	/* Call the event callback */
-
-	if (callback != NULL) {
-		jthread threadRef;
-		UDATA hadVMAccess;
-		UDATA javaOffloadOldState = 0;
-
-		if (prepareForEvent(j9env, currentThread, currentThread, J9JVMTI_EVENT_ASYNC, &threadRef, &hadVMAccess, FALSE, 0, &javaOffloadOldState)) {
-			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef);
-			finishedEvent(currentThread, J9JVMTI_EVENT_ASYNC, hadVMAccess, javaOffloadOldState);
-		}
-	}
-
-	TRACE_JVMTI_EVENT_RETURN(asyncEventHandler);
 }

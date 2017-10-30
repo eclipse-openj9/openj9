@@ -2192,16 +2192,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
          }
       }
 
-   // Determine whether selective method enter/exit hooks are supported
-   //
-#if defined(J9VM_DEBUG_ATTRIBUTE_SELECTIVE_METHOD_ENTER_EXIT)
-   if (jitConfig->javaVM->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_SELECTIVE_METHOD_ENTER_EXIT)
-      {
-      self()->setOption(TR_EnableSelectiveEnterExitHooks);
-      doAOT = false;
-      }
-#endif
-
    // Determine whether or not to disable allocation inlining
    //
    J9MemoryManagerFunctions * mmf = javaVM->memoryManagerFunctions;
@@ -2215,15 +2205,12 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
 #if 0
    // Determine whether or not to disable inlining
    //
-   if ((javaVM->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_ALLOW_INLINING_WITH_METHOD_ENTER_EXIT) == 0)
+   if ((TR::Options::getCmdLineOptions()->getOption(TR_ReportMethodEnter) ||
+        TR::Options::getCmdLineOptions()->getOption(TR_ReportMethodExit)))
       {
-      if ((TR::Options::getCmdLineOptions()->getOption(TR_ReportMethodEnter) ||
-           TR::Options::getCmdLineOptions()->getOption(TR_ReportMethodExit)))
-         {
-         self()->setDisabled(inlining, true);
-         printf("disabling inlining due to trace setting\n");
-         doAOT = false;
-         }
+      self()->setDisabled(inlining, true);
+      printf("disabling inlining due to trace setting\n");
+      doAOT = false;
       }
 #endif
 
