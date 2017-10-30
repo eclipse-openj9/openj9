@@ -173,12 +173,12 @@ void J9FASTCALL fast_jitVolatileWriteDouble(J9VMThread *currentThread, U_64 *add
 #endif /* !J9VM_ENV_DATA64 */
 void J9FASTCALL fast_jitCheckIfFinalizeObject(J9VMThread *currentThread, j9object_t object);
 void J9FASTCALL fast_jitCollapseJNIReferenceFrame(J9VMThread *currentThread);
-#if defined(J9VM_ARCH_X86)
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
 UDATA J9FASTCALL fast_jitInstanceOf(J9VMThread *currentThread, j9object_t object, J9Class *castClass);
-#else /* J9VM_ARCH_X86 */
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 UDATA J9FASTCALL fast_jitInstanceOf(J9VMThread *currentThread, J9Class *castClass, j9object_t object);
-#endif /* J9VM_ARCH_X86 */
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 UDATA J9FASTCALL fast_jitObjectHashCode(J9VMThread *currentThread, j9object_t object);
 
 #ifdef __cplusplus
