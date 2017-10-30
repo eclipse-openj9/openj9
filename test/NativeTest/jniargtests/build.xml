@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+
+<!--
+   Copyright (c) 2006, 2017 IBM Corp. and others
+
+   This program and the accompanying materials are made available under
+   the terms of the Eclipse Public License 2.0 which accompanies this
+   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+   or the Apache License, Version 2.0 which accompanies this distribution and
+   is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+   This Source Code may also be made available under the following
+   Secondary Licenses when the conditions for such availability set
+   forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+   General Public License, version 2 with the GNU Classpath
+   Exception [1] and GNU General Public License, version 2 with the
+   OpenJDK Assembly Exception [2].
+
+   [1] https://www.gnu.org/software/classpath/license.html
+   [2] http://openjdk.java.net/legal/assembly-exception.html
+
+   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+-->
+
+<project name="JNIARGTESTS" default="build" basedir=".">
+	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+	<description>JNIARGTESTS</description>
+
+	<!-- set global properties for this build -->
+	<property name="DEST" value="${BUILD_ROOT}/NativeTest/jniargtests" />
+	<property name="PROJECT_ROOT" location="." />
+	<property name="src" location="."/>
+	<property name="build" location="./bin"/>
+
+	<target name="init">
+		<mkdir dir="${DEST}" />
+		<mkdir dir="${build}" />
+	</target>
+	<target name="compile" depends="init" description="compile the source " >
+			<echo>Ant version is ${ant.version}</echo>
+			<echo>============COMPILER SETTINGS============</echo>
+			<echo>===fork:				yes</echo>
+			<echo>===executable:			${compiler.javac}</echo>
+			<echo>===debug:				on</echo>
+			<echo>===destdir:				${DEST}</echo>
+		
+			<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+				<src path="${src}" />
+			</javac>
+	</target>
+	<target name="dist" depends="compile" description="generate the distribution" >
+		<jar jarfile="${DEST}/jniargtests.jar" filesonly="true">
+			<manifest>
+				<attribute name="Main-Class" value="JniArgTests"/>
+			</manifest>
+			<fileset dir="${build}" />
+			<fileset dir="${src}" />
+		</jar>
+		<copy todir="${DEST}">
+			<fileset dir="${src}/" includes="*.xml" />
+		</copy>
+		
+	</target>
+
+	<target name="clean" depends="dist" description="clean up" >
+		<!-- Delete the ${build} directory tree -->
+		<delete dir="${build}" />
+	</target>
+	<target name="build" >
+		<antcall target="clean" inheritall="true" />
+	</target>
+</project>
+
