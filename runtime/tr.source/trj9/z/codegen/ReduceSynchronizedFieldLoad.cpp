@@ -229,7 +229,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
 
    TR::LabelSymbol* helperCallLabel = generateLabelSymbol(cg);
    TR::Instruction* helperCallLabelInstr = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, helperCallLabel);
-   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->createLinkage(TR_CHelper));
+   TR::S390CHelperLinkage *helperLink =  static_cast<TR::S390CHelperLinkage*>(cg->getLinkage(TR_CHelper));
    
    // Calling helper with call node which should NULL
    helperLink->buildDirectDispatch(monentSymbolReferenceNode);

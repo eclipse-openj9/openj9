@@ -264,13 +264,11 @@ class RealRegisterManager
  *    It generates sequence that prepares parameters for the JIT helper function and generate a helper call.
  *    \param callNode The node for which you are generating a heleper call
  *    \param deps The pre register dependency conditions that will be filled by this function to attach within ICF
- *    \param paramInRegisters Stack of registers that contains arguments to be passed to the helper function,
- *           if passed empty stack, this function will clobber evaluate children of node to prepare arguments
  *    \param returnReg TR::Register* allocated by consumer of this API to hold the result of the helper call,
  *           If passed, this function uses it to store return value from helper instead of allocating new register
  *    \return TR::Register *helperReturnResult, gets the return value of helper function and return to the evaluator. 
  */
-TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, TR::RegisterDependencyConditions **deps, TR_Stack<TR::Register*>& paramInRegisters, TR::Register *returnReg)
+TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, TR::RegisterDependencyConditions **deps, TR::Register *returnReg)
    {
    RealRegisterManager RealRegisters(cg());
    bool isHelperCallWithinICF = deps != NULL;
@@ -284,33 +282,21 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
          RealRegisters.use((TR::RealRegister::RegNum)i);
          }
       }
-   TR::RegisterDependencyConditions *childNodeRegDeps = NULL;
-   // An empty list passed here means we need to evaluate child of the node to prepare argument lists.
-   if (paramInRegisters.isEmpty())
-      {
-      childNodeRegDeps = generateRegisterDependencyConditions(0,callNode->getNumChildren(), cg());
-      // TODO For Time Being, it is expected that param number won't increase beyond 3 need to fix this when support for stack is there
-      for (int i=0; i< callNode->getNumChildren(); i++)
-         {
-         if (i < self()->getNumIntegerArgumentRegisters())
-            paramInRegisters.push(cg()->gprClobberEvaluate(callNode->getChild(i)));
-         else
-            TR_ASSERT(false,"Parameters on Stack not supported yet");
-         childNodeRegDeps->addPostConditionIfNotAlreadyInserted(callNode->getChild(i)->getRegister(), TR::RealRegister::AssignAny);
-         }
-      }
-   
+   TR::RegisterDependencyConditions *childNodeRegDeps = generateRegisterDependencyConditions(0,callNode->getNumChildren(), cg());
+   TR::RegisterDependencyConditions* preDeps = generateRegisterDependencyConditions(callNode->getNumChildren()+1, 0, cg());
    TR::Register *vmThreadRegister = cg()->getMethodMetaDataRealRegister();
-   TR::RegisterDependencyConditions* preDeps = generateRegisterDependencyConditions(paramInRegisters.size()+1, 0, cg());
    TR::Register *vmThreadArgReg = cg()->allocateRegister();
-   
-   // First argument to any helper function is vmThread
    generateRRInstruction(cg(), TR::InstOpCode::getLoadRegOpCode(), callNode, vmThreadArgReg, vmThreadRegister);
    preDeps->addPreCondition(vmThreadArgReg, getIntegerArgumentRegister(0));
-   
-   int iter=1;
-   while (!paramInRegisters.isEmpty())
-      preDeps->addPreCondition(paramInRegisters.pop(), getIntegerArgumentRegister(iter++));
+   // TODO For Time Being, it is expected that param number won't increase beyond 3 need to fix this when support for stack is there
+   for (int i=0; i< callNode->getNumChildren(); i++)
+      {
+      if (i < self()->getNumIntegerArgumentRegisters()-1)
+         preDeps->addPreCondition(cg()->gprClobberEvaluate(callNode->getChild(i)), getIntegerArgumentRegister(i+1));
+      else
+         TR_ASSERT(false,"Parameters on Stack not supported yet");
+      childNodeRegDeps->addPostConditionIfNotAlreadyInserted(callNode->getChild(i)->getRegister(), TR::RealRegister::AssignAny);
+      }
    
    TR::Register *javaStackPointerRegister = NULL;
   /* On zOS, we need to use GPR7 as return address for fastPath helper calls
@@ -325,12 +311,11 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
    uint32_t pointerSize = TR::Compiler->target.is64Bit() ? 7 : 3;
 #endif
 
-   // Filling up the pre-dependencies for the helper call
    TR::RegisterDependencyConditions * postDeps = RealRegisters.buildRegisterDependencyConditions(regRANum);
    // If buildDirectDispatch is called within ICF we need to pass the dependencies which will be used there, else we need single dependencylist to be attached to the BRASL
    // We return postdependency conditions back to evaluator to merge with ICF condition and attach to merge label 
    if (isHelperCallWithinICF )
-      *deps = childNodeRegDeps == NULL ? postDeps : new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(postDeps, childNodeRegDeps, cg());
+      *deps = new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(postDeps, childNodeRegDeps, cg());
    
    int padding = 0;
    uint32_t offsetJ9SP =  static_cast<uint32_t>(offsetof(J9VMThread, sp));

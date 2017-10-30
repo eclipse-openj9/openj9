@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *checkcastEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *checkcastAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *generateHelperCallForVMNewEvaluators(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *generateHelperCallForVMNewEvaluators(TR::Node *node, TR::CodeGenerator *cg, bool doInlineAllocation = false, TR::Register *resReg = NULL);
    static TR::Register *newObjectEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *newArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *anewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
