@@ -39,7 +39,7 @@ OS          := $(shell uname)
 PATH_SEP    := $(if $(or $(findstring Windows,$(OS)),$(findstring CYGWIN,$(OS))),;,:)
 SPACE       := $(EMPTY) $(EMPTY)
 WORK_PFX    := build-
-PREV_JAVA   := $(shell expr $(VERSION_MAJOR) - 1)
+PREV_JAVA   := $(shell if [ "$(VERSION_SPECIFICATION)" = "" ]; then echo "7"; else expr $(VERSION_SPECIFICATION) - 1; fi)
 
 # compiler settings
 ifdef BOOT_JDK
