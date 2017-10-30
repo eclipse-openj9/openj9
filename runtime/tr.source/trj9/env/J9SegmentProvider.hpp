@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,7 @@ class J9SegmentProvider
 public:
    virtual J9MemorySegment& request(size_t requiredSize) = 0;
    virtual void release(J9MemorySegment& segment) throw() = 0;
+   virtual size_t getPreferredSegmentSize() { return 0; }
 
 protected:
    J9SegmentProvider();
