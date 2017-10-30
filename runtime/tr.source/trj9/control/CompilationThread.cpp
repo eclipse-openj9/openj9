@@ -6145,7 +6145,8 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
    TR::RawAllocator rawAllocator(javaVM);
    J9::SystemSegmentProvider defaultSegmentProvider(
       1 << 16,
-      1 << 24,
+      (0 != scratchSegmentProvider.getPreferredSegmentSize()) ? scratchSegmentProvider.getPreferredSegmentSize()
+                                                              : 1 << 24,
       TR::Options::getScratchSpaceLimit(),
       scratchSegmentProvider,
       rawAllocator
