@@ -62,7 +62,7 @@
 			<variation>NoOptions</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
-	-cp $(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)tests$(D)jniarg$(D)jniargtests.jar$(Q) JniArgTests ; \
+	-cp $(Q)$(TEST_RESROOT)$(D)jniargtests$(D)jniargtests.jar$(Q) JniArgTests ; \
 	$(TEST_STATUS)</command>
 		<tags>
 			<tag>sanity</tag>
