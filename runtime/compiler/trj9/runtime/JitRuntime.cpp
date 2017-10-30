@@ -1157,6 +1157,8 @@ JIT_HELPER(_induceRecompilation);
 
 void initializeJitRuntimeHelperTable(char isSMP)
    {
+   runtimeHelpers.initialize();
+
    #define SET runtimeHelpers.setAddress
    #define SET_CONST runtimeHelpers.setConstant
 

@@ -124,6 +124,22 @@ const TR::RealRegister::RegNum TR::X86HelperCallSite::IntParamRegisters[] =
 #endif
    };
 
+const TR::RealRegister::RegNum TR::X86HelperCallSite::FloatParamRegisters[] =
+   {
+#ifdef TR_TARGET_64BIT
+   TR::RealRegister::xmm0,
+   TR::RealRegister::xmm1,
+   TR::RealRegister::xmm2,
+   TR::RealRegister::xmm3,
+#ifdef WINDOWS
+   TR::RealRegister::xmm4,
+   TR::RealRegister::xmm5,
+   TR::RealRegister::xmm6,
+   TR::RealRegister::xmm7,
+#endif
+#endif
+   };
+
 const TR::RealRegister::RegNum TR::X86HelperCallSite::CallerSavedRegisters[] =
    {
    TR::RealRegister::eax,
@@ -194,8 +210,9 @@ const bool   TR::X86HelperCallSite::RegisterParameterShadowOnStack = true;
 #else
 const bool   TR::X86HelperCallSite::RegisterParameterShadowOnStack = false;
 #endif
-const size_t TR::X86HelperCallSite::NumberOfIntParamRegisters = sizeof(IntParamRegisters) / sizeof(IntParamRegisters[0]);
-const size_t TR::X86HelperCallSite::StackIndexAdjustment      = RegisterParameterShadowOnStack ? 0 : NumberOfIntParamRegisters;
+const size_t TR::X86HelperCallSite::NumberOfIntParamRegisters   = sizeof(IntParamRegisters)   / sizeof(IntParamRegisters[0]);
+const size_t TR::X86HelperCallSite::NumberOfFloatParamRegisters = sizeof(FloatParamRegisters) / sizeof(FloatParamRegisters[0]);
+const size_t TR::X86HelperCallSite::StackIndexAdjustment        = RegisterParameterShadowOnStack ? 0 : NumberOfIntParamRegisters;
 
 // Code below should not need the #define
 
@@ -233,38 +250,101 @@ TR::Register* TR::X86HelperCallSite::BuildCall()
       {
       RealRegisters.Use(CallerSavedRegisters[i]);
       }
-   // Find the return register, EAX/RAX
+   // Find the return register, EAX/RAX/XMM0
    TR::Register* EAX = RealRegisters.Use(TR::RealRegister::eax);
+   TR::Register* XMM0 = RealRegisters.Use(TR::RealRegister::xmm0);
 
    // Build parameters, parameters in _Params are Right-to-Left (RTL)
-   int NumberOfParamOnStack = 0;
-   for (size_t i = 0; i < _Params.size(); i++)
+   TR::Register* IntParams[NumberOfIntParamRegisters] = {};
+   TR::Register* FloatParams[NumberOfFloatParamRegisters] = {};
+   TR_Stack<TR::Register*> StackParams(cg()->trMemory());
+
+   size_t IntParamIndex = 0;
+#ifndef WINDOWS
+   size_t FloatParamIndex = 0;
+#else
+   auto& FloatParamIndex = IntParamIndex;
+#endif
+   
+   for (size_t i = _Params.size(); i > 0; i--)
       {
-      size_t index = _Params.size() - i - 1;
-      if (index < NumberOfIntParamRegisters)
+      auto param = _Params[i-1];
+      switch(param->getKind())
+         {
+         case TR_GPR:
+            if (IntParamIndex < NumberOfIntParamRegisters)
+               {
+               IntParams[IntParamIndex++] = param;
+               }
+            else
+               {
+               StackParams.push(param);
+               }
+            break;
+         case TR_FPR:
+            if (FloatParamIndex < NumberOfFloatParamRegisters)
+               {
+               FloatParams[FloatParamIndex++] = param;
+               }
+            else
+               {
+               StackParams.push(param);
+               if(TR::Compiler->target.is32Bit() && !param->isSinglePrecision())
+                  {
+                  StackParams.push(NULL);
+                  }
+               }
+            break;
+         default:
+            TR_ASSERT(false, "Unsupported call param data type: #%d", (int)param->getKind());
+         }
+      }
+
+   // Reserve stack for parameters
+   auto SizeOfParamsOnStack = StackParams.size()*StackSlotSize;
+   if (CalleeCleanup && SizeOfParamsOnStack > 0)
+      {
+      generateRegImmInstruction(SUBRegImms(), _Node, ESP, SizeOfParamsOnStack, cg());
+      }
+   // Parameters passed by stack
+   while(!StackParams.isEmpty())
+      {
+      auto param = StackParams.pop();
+      if(param)
+         {
+         auto opcode = param->getKind() == TR_GPR ? SMemReg() :
+                       param->isSinglePrecision() ? MOVSSMemReg : MOVSDMemReg;
+         generateMemRegInstruction(opcode,
+                                   _Node,
+                                   generateX86MemoryReference(ESP, StackParams.size()*StackSlotSize, cg()),
+                                   param,
+                                   cg());
+         }
+      }
+   // Parameters passed by FPR
+   for (size_t i = NumberOfFloatParamRegisters; i > 0; i--)
+      {
+      auto param = FloatParams[i-1];
+      if(param)
+         {
+         generateRegRegInstruction(MOVDQURegReg,
+                                   _Node,
+                                   RealRegisters.Use(FloatParamRegisters[i-1]),
+                                   param,
+                                   cg());
+         }
+      }
+   // Parameters passed by GPR
+   for (size_t i = NumberOfIntParamRegisters; i > 0; i--)
+      {
+      auto param = IntParams[i-1];
+      if(param)
          {
          generateRegRegInstruction(MOVRegReg(),
                                    _Node,
-                                   RealRegisters.Use(IntParamRegisters[index]),
-                                   _Params[i],
+                                   RealRegisters.Use(IntParamRegisters[i-1]),
+                                   param,
                                    cg());
-         }
-      else
-         {
-         NumberOfParamOnStack++;
-         if (CalleeCleanup)
-            {
-            generateRegInstruction(PUSHReg, _Node, _Params[i], cg());
-            }
-         else
-            {
-            size_t offset = StackSlotSize * (index - StackIndexAdjustment);
-            generateMemRegInstruction(SMemReg(),
-                                      _Node,
-                                      generateX86MemoryReference(ESP, offset, cg()),
-                                      _Params[i],
-                                      cg());
-            }
          }
       }
 
@@ -278,18 +358,15 @@ TR::Register* TR::X86HelperCallSite::BuildCall()
    instr->setNeedsGCMap(PreservedRegisterMapForGC);
 
    // Stack adjustment
+   if (CalleeCleanup)
       {
-      int SizeOfParamOnStack = StackSlotSize * (NumberOfParamOnStack + NumberOfIntParamRegisters - StackIndexAdjustment);
-      if (CalleeCleanup)
+      instr->setAdjustsFramePointerBy(-SizeOfParamsOnStack);
+      }
+   else
+      {
+      if (SizeOfParamsOnStack > cg()->getLargestOutgoingArgSize())
          {
-         instr->setAdjustsFramePointerBy(-SizeOfParamOnStack);
-         }
-      else
-         {
-         if (SizeOfParamOnStack > cg()->getLargestOutgoingArgSize())
-            {
-            cg()->setLargestOutgoingArgSize(SizeOfParamOnStack);
-            }
+         cg()->setLargestOutgoingArgSize(SizeOfParamsOnStack);
          }
       }
 
@@ -301,6 +378,7 @@ TR::Register* TR::X86HelperCallSite::BuildCall()
          break;
       case TR::Address:
          ret = cg()->allocateCollectedReferenceRegister();
+         generateRegRegInstruction(MOVRegReg(), _Node, ret, EAX, cg());
          break;
       case TR::Int8:
       case TR::Int16:
@@ -309,14 +387,15 @@ TR::Register* TR::X86HelperCallSite::BuildCall()
       case TR::Int64:
 #endif
          ret = cg()->allocateRegister();
+         generateRegRegInstruction(MOVRegReg(), _Node, ret, EAX, cg());
+         break;
+      case TR::Double:
+         ret = cg()->allocateRegister(TR_FPR);
+         generateRegRegInstruction(MOVDQURegReg, _Node, ret, XMM0, cg());
          break;
       default:
          TR_ASSERT(false, "Unsupported call return data type: #%d", (int)_ReturnType);
          break;
-      }
-   if (ret)
-      {
-      generateRegRegInstruction(MOVRegReg(), _Node, ret, EAX, cg());
       }
    return ret;
 }

@@ -52,6 +52,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/x/codegen/OMRRealRegister.cpp \
     omr/compiler/x/codegen/OMRRegisterDependency.cpp \
     omr/compiler/x/codegen/OMRSnippet.cpp \
+    omr/compiler/x/codegen/X86FastCallLinkage.cpp \
     omr/compiler/x/codegen/X86SystemLinkage.cpp \
     omr/compiler/x/codegen/XMMBinaryArithmeticAnalyser.cpp \
     omr/compiler/x/codegen/OMRCodeGenerator.cpp \
@@ -76,7 +77,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/trj9/x/codegen/WriteBarrierSnippet.cpp \
     compiler/trj9/x/codegen/J9AheadOfTimeCompile.cpp \
     compiler/trj9/x/codegen/X86PrivateLinkage.cpp \
-    compiler/trj9/x/codegen/X86HelperLinkage.cpp \
     compiler/trj9/x/codegen/X86Recompilation.cpp \
     compiler/trj9/x/codegen/J9LinkageUtils.cpp \
     compiler/trj9/x/env/J9CPU.cpp \

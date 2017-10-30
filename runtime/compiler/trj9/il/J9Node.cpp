@@ -323,7 +323,7 @@ J9::Node::processJNICall(TR::TreeTop * callNodeTreeTop, TR::ResolvedMethodSymbol
       return self();
       }
 
-#if defined(TR_TARGET_POWER)
+#if defined(TR_TARGET_POWER) || defined(TR_TARGET_X86)
    if (((methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_update) ||
         (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes) ||
         (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer)) &&

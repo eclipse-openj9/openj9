@@ -39,6 +39,9 @@ J9::X86::AMD64::CodeGenerator::createLinkage(TR_LinkageConventions lc)
 
    switch (lc)
       {
+      case TR_FastCall:
+         linkage = new (self()->trHeapMemory()) TR::X86FastCallLinkage(self());
+         break;
       case TR_CHelper:
          linkage = new (self()->trHeapMemory()) TR::X86HelperLinkage(self());
          break;
