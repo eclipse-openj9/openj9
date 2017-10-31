@@ -25,11 +25,11 @@
 #include "j2sever.h"
 
 typedef struct {
-	char * errorName;
+	const char *errorName;
 	jvmtiError errorValue;
 } J9JvmtiErrorMapping;
 
-static J9JvmtiErrorMapping errorMap[] = {
+static const J9JvmtiErrorMapping errorMap[] = {
 	{ "JVMTI_ERROR_NONE" , 0 },
 	{ "JVMTI_ERROR_INVALID_THREAD" , 10 },
 	{ "JVMTI_ERROR_INVALID_THREAD_GROUP" , 11 },
@@ -191,7 +191,7 @@ jvmtiGetErrorName(jvmtiEnv* env,
 	jvmtiError error,
 	char** name_ptr)
 {
-	J9JvmtiErrorMapping * mapping;
+	const J9JvmtiErrorMapping *mapping = NULL;
 	jvmtiError rc = JVMTI_ERROR_ILLEGAL_ARGUMENT;
 	PORT_ACCESS_FROM_JVMTI(env);
 
