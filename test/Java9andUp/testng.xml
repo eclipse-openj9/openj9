@@ -88,8 +88,13 @@
 		</classes>
 	</test>
 	<test name="constantPoolTagTests">
-                <classes>
-                        <class name="org.openj9.test.constantPoolTags.ConstantPoolTagTests" />
-                </classes>
-        </test>
+		<classes>
+			<class name="org.openj9.test.constantPoolTags.ConstantPoolTagTests" />
+		</classes>
+	</test>
+	<test name="Test_Class">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Class" />
+		</classes>
+	</test>
 </suite> <!-- Suite -->
