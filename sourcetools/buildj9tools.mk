@@ -57,7 +57,7 @@ endif
 JAVAC       := $(JAVA_BIN)javac
 JAR         := $(JAVA_BIN)jar
 
-SPEC_LEVEL  ?= 8
+SPEC_LEVEL  ?= 7
 JAVAC_FLAGS := -nowarn -source $(SPEC_LEVEL) -target $(SPEC_LEVEL)
 
 JAR_TARGETS :=
