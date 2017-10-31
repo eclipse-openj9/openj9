@@ -22,24 +22,10 @@
 
 # Exclude tests temporarily
 
-#Temporarily keep them as comment to facilitate testing
-#org.openj9.test.jsr335.interfacePrivateMethod.Test_ITestRunner															123456 generic-all
-#org.openj9.test.jsr335.interfacePrivateMethod.Test_ValidateReflectionWithExtensionMethods:testGetDeclaredMethodsOnC		   AN-https://github.ibm.com/runtimes/test/issues/45 linux_x86-64
-#org.openj9.test.jsr335.interfacePrivateMethod.Test_ReflectionAndMethodHandles:testFindMethodsUsingGetMethods 456789 	linux_x86-64
-#org.openj9.test.java.lang.management.TestMemoryMXBean:testInvoke                         #214 generic-all
 org.openj9.test.vm.Test_MsgHelp:test_loadMessages_EN																	                 AN-https://github.ibm.com/runtimes/test/issues/46 generic-all
-#org.openj9.test.java.lang.Test_Class:testDefaultMethodInheritance														DaveW-58 generic-all
-#org.openj9.test.java.lang.Test_Class:testInterfaceMethodInheritance														DaveW-58 generic-all
 org.openj9.test.java.lang.Test_Class:test_getModifiers_classTypes														JTC-JAT-133182 generic-all
 org.openj9.test.java.lang.Test_Class:test_hideUnsafe																	BPW-https://github.ibm.com/runtimes/test/issues/109 generic-all
-#org.openj9.test.java.lang.Test_Class:test_reflectConstructor															BPW-https://github.ibm.com/runtimes/test/issues/110 generic-all
-#org.openj9.test.java.lang.Test_Class:test_reflectField																	BPW-https://github.ibm.com/runtimes/test/issues/110 generic-all generic-all
-#org.openj9.test.java.lang.Test_Class:test_reflectMethod																	BPW-https://github.ibm.com/runtimes/test/issues/110 generic-all generic-all
 org.openj9.test.java.lang.Test_J9VMInternals:test_checkPackageAccess													BPW-https://github.ibm.com/runtimes/test/issues/59 generic-all
-#org.openj9.test.java.lang.Test_String:test_toLowerCase																	BPW-https://github.ibm.com/runtimes/test/issues/77 generic-all
-#org.openj9.test.java.lang.Test_Thread:test_stop3																		BPW-https://github.ibm.com/runtimes/test/issues/85 generic-all
-#org.openj9.test.java.lang.Test_Thread:test_stop4																		BPW-https://github.ibm.com/runtimes/test/issues/91 generic-all
-#org.openj9.test.java.lang.Test_Thread:test_stop5																		BPW-https://github.ibm.com/runtimes/test/issues/93 generic-all
 org.openj9.test.java.security.Test_AccessController:test_doPrivilegedFrameStackWalking									124199 generic-all
 org.openj9.test.java.security.Test_AccessController:test_doPrivilegedWithCombiner4										124199 generic-all
 org.openj9.test.java.security.Test_AccessController:test_doPrivileged_createAccessControlContext						124199 generic-all
@@ -59,3 +45,5 @@ org.openj9.test.attachAPI.TestAttachAPI:test_agntld02																	238 generi
 org.openj9.test.attachAPI.TestAttachAPI:test_agntld03																	238 generic-all
 org.openj9.test.attachAPI.TestSunAttachClasses:testAgentLoading															238 generic-all
 org.openj9.test.vmArguments.VmArgumentTests:testCrNocr																	244 generic-all
+j9vm.test.softmx.SoftmxRemoteTest																						480 generic-all
+
