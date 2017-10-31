@@ -573,8 +573,14 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
          }
       }
    else if (scalarOp.isBranch() || node->getOpCodeValue()==TR::BBEnd ||
-            node->getOpCodeValue()==TR::BBStart || node->getOpCodeValue()==TR::asynccheck)
+            node->getOpCodeValue()==TR::BBStart || node->getOpCodeValue()==TR::asynccheck || 
+            (node->getOpCodeValue()==TR::compressedRefs && node->getFirstChild()->getOpCode().isLoad()))
       {
+      //Compressed ref treetops with a load can be ignored due to the load 
+      // either being present under another tree top in the loop, which
+      // will be processed, or not used at all. Stores under a compressed ref
+      // tree top, will need to be handled differently
+
       //ignore
       return true;
       }
