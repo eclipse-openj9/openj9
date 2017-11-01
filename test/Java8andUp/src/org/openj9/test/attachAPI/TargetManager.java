@@ -25,12 +25,13 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -445,14 +446,8 @@ class TargetManager {
 			if (logName.endsWith(".log")) {
 				if (printLogs) {
 					try {
-						BufferedReader rdr = new BufferedReader(new FileReader(
-								f));
-						logger.debug("Dumping " + f.getName());
-						String l;
-						while (null != (l = rdr.readLine())) {
-							logger.debug(l);
-						}
-						rdr.close();
+						logger.debug("Log file " + f.getName()+":\n" 
+								+ (new String(Files.readAllBytes(Paths.get(f.toURI())))));
 					} catch (FileNotFoundException e) {
 						e.printStackTrace();
 					} catch (IOException e) {
