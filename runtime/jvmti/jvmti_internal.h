@@ -505,15 +505,6 @@ jvmtiSetExtensionEventCallback(jvmtiEnv* env,
 	jvmtiExtensionEvent callback);
 
 
-/**
-* @brief
-* @param env
-* @return jvmtiError
-*/
-jvmtiError
-isOKToEnableMethodEntryExit(jvmtiEnv* env);
-
-
 /* ---------------- jvmtiField.c ---------------- */
 
 /**
@@ -1271,16 +1262,6 @@ UDATA
 findDecompileInfo(J9VMThread *currentThread, J9VMThread *targetThread, UDATA depth, J9StackWalkState *walkState);
 
 /* ---------------- jvmtiHook.c ---------------- */
-
-/**
-* @brief
-* @param *vmThread
-* @param handlerKey
-* @param *userData
-* @return void
-*/
-void
-asyncEventHandler(J9VMThread* vmThread, IDATA handlerKey, void* userData);
 
 /**
 * @brief

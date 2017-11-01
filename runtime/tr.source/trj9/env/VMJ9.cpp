@@ -3505,9 +3505,7 @@ TR_J9VMBase::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
 bool
 TR_J9VMBase::isSelectiveMethodEnterExitEnabled()
    {
-   if (_jitConfig->javaVM->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_SELECTIVE_METHOD_ENTER_EXIT)
-      return true;
-   else return false;
+   return false;
    }
 
 bool
@@ -3531,8 +3529,7 @@ TR_J9VMBase::canMethodExitEventBeHooked()
 bool
 TR_J9VMBase::methodsCanBeInlinedEvenIfEventHooksEnabled()
    {
-   J9JavaVM *javaVM = _jitConfig->javaVM;
-   return ((javaVM->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_ALLOW_INLINING_WITH_METHOD_ENTER_EXIT) != 0);
+   return false;
    }
 
 

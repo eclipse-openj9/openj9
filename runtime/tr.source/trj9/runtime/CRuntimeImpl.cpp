@@ -210,7 +210,7 @@ void _prepareForOSR(uintptrj_t vmThreadArg, int32_t currentInlinedSiteIndex, int
       {
       uint8_t* osrBufferPtr = (uint8_t*)vmThread->osrBuffer + vmThread->osrFrameIndex;
       printf("contents of OSR buffer (%p):\n", osrBufferPtr);
-      int numIntsToPrint =  (totalNumSlots * sizeof(UDATA) + J9SIZEOF_J9OSRFrame) / 4 ;
+      int numIntsToPrint =  (totalNumSlots * sizeof(UDATA) + sizeof(J9OSRFrame)) / 4 ;
       for (int i = 0; i < numIntsToPrint; i++)
          {
          printf("%.8x ", *(uint32_t*)(osrBufferPtr + 4*i));
