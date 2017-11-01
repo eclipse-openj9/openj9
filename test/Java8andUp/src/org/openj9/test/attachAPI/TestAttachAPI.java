@@ -59,7 +59,7 @@ public class TestAttachAPI extends AttachApiTest {
 	final String JVMTITSTNAME = "test:gmhc001";
 	private final String DUMP_LOGS = "j9vm.test.attach.dumplogs";
 	private String myProcessId;
-	final boolean dumpLogs = getDumpLogs();
+	final boolean dumpLogs = Boolean.getBoolean(DUMP_LOGS);
 	private File commonDir;
 	@BeforeMethod
 	protected void setUp(Method testMethod) {
@@ -105,11 +105,6 @@ public class TestAttachAPI extends AttachApiTest {
 				fail("Could not initialize attach API");
 			}
 		}
-	}
-
-	private boolean getDumpLogs() {
-		String keepLogsValue = System.getProperty(DUMP_LOGS, "yes");
-		return keepLogsValue.equalsIgnoreCase("yes");
 	}
 
 	@AfterMethod
