@@ -44,16 +44,9 @@
  *-----------------------------------------------------------------------------
  */
 
-#define COM_IBM_GET_POTENTIAL_EXTENDED_CAPABILITIES "com.ibm.GetPotentialExtendedCapabilities"
-#define COM_IBM_ADD_EXTENDED_CAPABILITIES "com.ibm.AddExtendedCapabilities"
-#define COM_IBM_RELINQUISH_EXTENDED_CAPABILITIES "com.ibm.RelinquishExtendedCapabilities"
-#define COM_IBM_GET_EXTENDED_CAPABILITIES "com.ibm.GetExtendedCapabilities"
-
 #define COM_IBM_COMPILING_START "com.ibm.CompilingStart"
 #define COM_IBM_COMPILING_END "com.ibm.CompilingEnd"
 
-#define COM_IBM_METHOD_ENTRY_EXTENDED       "com.ibm.MethodEntryExtended"
-#define COM_IBM_METHOD_EXIT_NO_RC           "com.ibm.MethodExitNoRc"
 #define COM_IBM_INSTRUMENTABLE_OBJECT_ALLOC "com.ibm.InstrumentableObjectAlloc"
 
 #define COM_IBM_SET_VM_TRACE "com.ibm.SetVmTrace"
@@ -70,18 +63,7 @@
 #define COM_IBM_SET_VM_JLM "com.ibm.SetVmJlm"
 #define COM_IBM_SET_VM_JLM_DUMP "com.ibm.SetVmJlmDump"
 
-#define COM_IBM_ALLOW_INLINING_WITH_METHOD_ENTER_EXIT "com.ibm.AllowMethodInliningWithMethodEnterExit"
-#define COM_IBM_ALLOW_DIRECT_JNI_WITH_METHOD_ENTER_EXIT "com.ibm.AllowDirectJNIWithMethodEnterExit"
-#define COM_IBM_SET_VM_AND_COMPILING_CONTROL_OPTIONS "com.ibm.SetVmAndCompilingControlOptions"
-#define COM_IBM_SET_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY "com.ibm.jvmtiSetMethodSelectiveEntryExitNotification"
-#define COM_IBM_SET_EXTENDED_EVENT_NOTIFICATION_MODE "com.ibm.jvmtiSetExtendedEventNotificationMode"
-#define COM_IBM_CLEAR_METHOD_SELECTIVE_ENTRY_EXIT_NOTIFY "com.ibm.jvmtiClearMethodSelectiveEntryExitNotification"
-
 #define COM_IBM_GET_OS_THREAD_ID "com.ibm.GetOSThreadID"
-
-#define COM_IBM_SIGNAL_ASYNC_EVENT "com.ibm.SignalAsyncEvent"
-#define COM_IBM_CANCEL_ASYNC_EVENT "com.ibm.CancelAsyncEvent"
-#define COM_IBM_ASYNC_EVENT "com.ibm.AsyncEvent"
 
 #define COM_IBM_GET_STACK_TRACE_EXTENDED "com.ibm.GetStackTraceExtended"
 #define COM_IBM_GET_ALL_STACK_TRACES_EXTENDED "com.ibm.GetAllStackTracesExtended"
@@ -95,8 +77,6 @@
 
 #define COM_IBM_ITERATE_SHARED_CACHES "com.ibm.IterateSharedCaches"
 #define COM_IBM_DESTROY_SHARED_CACHE "com.ibm.DestroySharedCache"
-
-#define COM_IBM_ARRAY_CLASS_LOAD "com.ibm.ArrayClassLoad"
 
 #define COM_IBM_REMOVE_ALL_TAGS   "com.ibm.RemoveAllTags"
 
@@ -177,10 +157,6 @@ enum {
 	COM_IBM_JLM_START_TIME_STAMP = 1,
 	COM_IBM_JLM_STOP = 2,
 	COM_IBM_JLM_STOP_TIME_STAMP = 3
-};
-
-enum {
-	COM_IBM_ENABLE_SELECTIVE_METHOD_ENTRY_EXIT_NOTIFICATION = 0
 };
 
 enum {

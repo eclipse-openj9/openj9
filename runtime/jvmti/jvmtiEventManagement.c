@@ -128,18 +128,10 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
  
 				case JVMTI_EVENT_METHOD_ENTRY:
 					ENSURE_CAPABILITY(env, can_generate_method_entry_events);
-					rc = isOKToEnableMethodEntryExit(env);
-					if (rc != JVMTI_ERROR_NONE) {
-						JVMTI_ERROR(rc);
-					}					
 					break;
  
 				case JVMTI_EVENT_METHOD_EXIT:
 					ENSURE_CAPABILITY(env, can_generate_method_exit_events);
-					rc = isOKToEnableMethodEntryExit(env);
-					if (rc != JVMTI_ERROR_NONE) {
-						JVMTI_ERROR(rc);
-					}					
 					break;
  
 				case JVMTI_EVENT_COMPILED_METHOD_LOAD:
