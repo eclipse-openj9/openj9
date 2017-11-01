@@ -48,34 +48,30 @@ ifneq (,$(findstring cmprssptrs,$(SPEC)))
 VM_SUBDIR=compressedrefs
 endif
 
+ifneq (,$(findstring le,$(SPEC)))
+	ARCH_DIR=ppc64le
+else ifneq (,$(findstring ppc-64,$(SPEC)))
+	ARCH_DIR=ppc64
+else ifneq (,$(findstring ppc,$(SPEC)))
+	ARCH_DIR=ppc
+else ifneq (,$(findstring arm,$(SPEC)))
+	ARCH_DIR=arm
+else ifneq (,$(findstring 390-64,$(SPEC)))
+	ARCH_DIR=s390x
+else ifneq (,$(findstring 390,$(SPEC)))
+	ARCH_DIR=s390
+else ifneq (,$(findstring linux_x86-64,$(SPEC)))
+	ARCH_DIR=amd64
+else ifneq (,$(findstring linux_x86,$(SPEC)))
+	ARCH_DIR=i386
+endif
+
 ifneq (,$(findstring win,$(SPEC)))
 	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_BIN)$(D)$(VM_SUBDIR)
-	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
-else ifneq (,$(findstring le,$(SPEC)))
-	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)ppc64le$(D)$(VM_SUBDIR)
-	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
-else ifneq (,$(findstring ppc-64,$(SPEC)))
-	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)ppc64$(D)$(VM_SUBDIR)
-	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
-else ifneq (,$(findstring ppc,$(SPEC)))
-	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)ppc$(D)$(VM_SUBDIR)
-	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
-else ifneq (,$(findstring arm,$(SPEC)))
-	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)arm$(D)$(VM_SUBDIR)
-	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
-else ifneq (,$(findstring 390-64,$(SPEC)))
-	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)s390x$(D)$(VM_SUBDIR)
-	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
-else ifneq (,$(findstring 390,$(SPEC)))
-	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)s390$(D)$(VM_SUBDIR)
-	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
-else ifneq (,$(findstring linux_x86-64,$(SPEC)))
-	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)amd64$(D)$(VM_SUBDIR)
-	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
-else ifneq (,$(findstring linux_x86,$(SPEC)))
-	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)i386$(D)$(VM_SUBDIR)
-	ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
+else
+	JAVA_SHARED_LIBRARIES_DIR:=$(JAVA_LIB_DIR)$(D)$(ARCH_DIR)$(D)$(VM_SUBDIR)
 endif
+ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(JAVA_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
 
 ifneq ($(DEBUG),)
 $(info JAVA_SHARED_LIBRARIES_DIR is set to $(JAVA_SHARED_LIBRARIES_DIR))
