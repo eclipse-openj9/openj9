@@ -4183,6 +4183,7 @@ typedef struct J9MemoryManagerFunctions {
 #if defined(J9VM_GC_FINALIZATION)
 	int  ( *j9gc_finalizer_startup)(struct J9JavaVM * vm) ;
 	void  ( *j9gc_finalizer_shutdown)(struct J9JavaVM * vm) ;
+	UDATA ( *j9gc_wait_for_reference_processing)(struct J9JavaVM * vm) ;
 	void  ( *runFinalization)(struct J9VMThread *vmThread) ;
 #endif /* J9VM_GC_FINALIZATION */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -5125,6 +5126,8 @@ typedef struct J9JavaVM {
 	UDATA daemonThreadCount;
 	omrthread_t finalizeMasterThread;
 	omrthread_monitor_t finalizeMasterMonitor;
+	omrthread_monitor_t processReferenceMonitor; /* the monitor for synchronizing between reference process and j9gc_wait_for_reference_processing() (only for Java 9 and later) */
+	UDATA processReferenceActive;
 	IDATA finalizeMasterFlags;
 	UDATA exclusiveAccessResponseCount;
 	j9object_t destroyVMState;

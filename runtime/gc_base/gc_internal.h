@@ -122,6 +122,7 @@ extern J9_CFUNC void J9ResetThreadLocalHeap(J9VMThread *vmContext, UDATA flush);
 extern J9_CFUNC void j9gc_objaccess_storeObjectToInternalVMSlot(J9VMThread *vmThread, j9object_t *destSlot, j9object_t value);
 extern J9_CFUNC jint  JNICALL queryGCStatus(JavaVM *vm, jint *nHeaps, GCStatus *status, jint statusSize);
 extern J9_CFUNC int j9gc_finalizer_startup(J9JavaVM * vm);
+extern J9_CFUNC UDATA j9gc_wait_for_reference_processing(J9JavaVM *vm);
 extern J9_CFUNC UDATA j9gc_get_maximum_heap_size(J9JavaVM *javaVM);
 extern J9_CFUNC I_32 j9gc_get_jit_string_dedup_policy(J9JavaVM *javaVM);
 extern J9_CFUNC void* j9gc_objaccess_staticReadAddress(J9VMThread *vmThread, J9Class *clazz, void **srcSlot, UDATA isVolatile);
