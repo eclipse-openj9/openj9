@@ -553,6 +553,17 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 
 		fns->internalEnterVMFromJNI(env);
 		
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+		if(slaveData->mode != FINALIZE_SLAVE_MODE_CL_UNLOAD)
+#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+		{
+			if ((NULL != vm->processReferenceMonitor) && (0 != finalizeListManager->getReferenceCount())) {
+				omrthread_monitor_enter(vm->processReferenceMonitor);
+				vm->processReferenceActive = 1;
+				omrthread_monitor_exit(vm->processReferenceMonitor);
+			}
+		}
+
 		do {
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -592,9 +603,23 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 			}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-			// processing will release/acquire VM access
+			/* processing will release/acquire VM access */
 			process(env, finalizeJob, j9VMInternalsClass, runFinalizeMID, referenceEnqueueImplMID);
 
+			if ((NULL != vm->processReferenceMonitor) && (0 != vm->processReferenceActive)) {
+				omrthread_monitor_enter(vm->processReferenceMonitor);
+				if (0 == finalizeListManager->getReferenceCount()) {
+					/* There is no more pending reference. */
+					vm->processReferenceActive = 0;
+				}
+				/*
+				 * Notify any waiters that progress has been made.
+				 * This improves latency for Reference.waitForReferenceProcessing() and try to
+				 * avoid the performance issue if there are many of pending references in the queue.
+				 */
+				omrthread_monitor_notify_all(vm->processReferenceMonitor);
+				omrthread_monitor_exit(vm->processReferenceMonitor);
+			}
 
 			fns->jniResetStackReferences((JNIEnv *)env);
 
@@ -603,7 +628,6 @@ static int J9THREAD_PROC FinalizeSlaveThread(void *arg)
 				break;
 			}
 		} while (true);
-
 
 		fns->internalReleaseVMAccess(env);
 
@@ -866,6 +890,26 @@ int j9gc_finalizer_startup(J9JavaVM * vm)
 	omrthread_monitor_exit(vm->finalizeMasterMonitor);
 
 	return 0;
+}
+
+/**
+ * Check if processing reference is active
+ *
+ * @param vm  Pointer to the Java VM
+ * @return 1 if processing reference is active, otherwise return 0.
+ */
+UDATA j9gc_wait_for_reference_processing(J9JavaVM *vm)
+{
+	UDATA ret = 0;
+	if (NULL != vm->processReferenceMonitor) {
+		omrthread_monitor_enter(vm->processReferenceMonitor);
+		if (0 != vm->processReferenceActive) {
+			omrthread_monitor_wait(vm->processReferenceMonitor);
+			ret = 1;
+		}
+		omrthread_monitor_exit(vm->processReferenceMonitor);
+	}
+	return ret;
 }
 
 /**
