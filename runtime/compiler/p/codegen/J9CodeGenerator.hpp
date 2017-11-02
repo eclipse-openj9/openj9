@@ -89,6 +89,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 
    bool enableAESInHardwareTransformations();
 
+   void insertPrefetchIfNecessary(TR::Node *node, TR::Register *targetRegister);
+
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    bool suppressInliningOfCryptoMethod(TR::RecognizedMethod method);
    bool inlineCryptoMethod(TR::Node *node, TR::Register *&resultReg);
