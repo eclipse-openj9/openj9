@@ -218,6 +218,9 @@
 			<include path="$(OMRPORT_SRCDIR)linuxamd64" type="relativepath">
 				<include-if condition="spec.linux_x86-64.*"/>
 			</include>
+			<include path="$(OMRPORT_SRCDIR)osx" type="relativepath">
+				<include-if condition="spec.osx_x86-64.*"/>
+			</include>
 			<include path="$(OMRPORT_SRCDIR)linux386" type="relativepath">
 				<include-if condition="spec.linux_x86.*"/>
 			</include>
@@ -306,6 +309,9 @@
 
 			<vpath pattern="%" path="linuxamd64" augmentIncludes="true" type="relativepath">
 				<include-if condition="spec.linux_x86-64.*"/>
+			</vpath>
+			<vpath pattern="%" path="osx" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.osx_x86-64.*"/>
 			</vpath>
 			<vpath pattern="%" path="linux386" augmentIncludes="true" type="relativepath">
 				<include-if condition="spec.linux_x86.*"/>
