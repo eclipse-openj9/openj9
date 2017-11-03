@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2016 IBM Corp. and others
+ * Copyright (c) 2012, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,35 @@ package com.ibm.lang.management;
  * The IBM-specific interface for the runtime system of the virtual machine.
  */
 public interface RuntimeMXBean extends java.lang.management.RuntimeMXBean {
+
+	/**
+	 * enum type defines the different states of the VM Idle 
+	 */
+	public enum VMIdleStates {
+		/* Below constant values reflect J9VMRuntimeStateListener.vmRuntimeState
+		 * from the VM and the VM constants J9VM_RUNTIME_STATE_ACTIVE and
+		 * J9VM_RUNTIME_STATE_IDLE. These values need to match the VM values.
+		 */
+		INVALID(-1, "Invalid"),
+		ACTIVE(1, "Active"),
+		IDLE(2, "Idle");
+
+		private int stateVal;
+		private String stateName;
+
+		private VMIdleStates(int val, String name) {
+			this.stateVal = val;
+			this.stateName = name;
+		}
+
+		public int idleStateValue() {
+			return this.stateVal;
+		}
+
+		public String idleStateName() {
+			return this.stateName;
+		}
+	}
 
 	/**
 	 * Returns a double value which holds the system load average calculated for
@@ -68,4 +97,15 @@ public interface RuntimeMXBean extends java.lang.management.RuntimeMXBean {
 	 */
 	public double getVMGeneratedCPULoad();
 
+	/**
+	 * Returns current JVM Idle state.
+	 *
+	 * @return JVM idle state value - i.e active / idle
+	 */
+	public VMIdleStates getVMIdleState();
+
+	/**
+	 * Return true if JVM state is idle. Otherwise returns false
+	 */
+	public boolean isVMIdle();
 }

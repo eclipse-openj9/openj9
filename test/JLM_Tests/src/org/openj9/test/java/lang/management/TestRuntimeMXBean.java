@@ -92,6 +92,8 @@ public class TestRuntimeMXBean {
 		attribs.put("CPULoad", new AttributeData(Double.TYPE.getName(), true, false, false));
 		attribs.put("ProcessID", new AttributeData(Long.TYPE.getName(), true, false, false));
 		attribs.put("VMGeneratedCPULoad", new AttributeData(Double.TYPE.getName(), true, false, false));
+		attribs.put("VMIdleState", new AttributeData(String.class.getName(), true, false, false));
+		attribs.put("VMIdle", new AttributeData(Boolean.TYPE.getName(), true, false, true));
 	}// end static initializer
 
 	private RuntimeMXBean rb;
@@ -617,14 +619,19 @@ public class TestRuntimeMXBean {
 		// Print description and the class name (not necessarily identical).
 		logger.debug("MBean description for " + rb.getClass().getName() + ": " + mbi.getDescription());
 
-		// Sixteen attributes - none writable - and three IBM specific.
+		// Sixteen attributes - none writable - and five IBM specific.
 		MBeanAttributeInfo[] attributes = mbi.getAttributes();
 		AssertJUnit.assertNotNull(attributes);
-		AssertJUnit.assertTrue(attributes.length == 20);
+		AssertJUnit.assertTrue(attributes.length == 22);
 		for (int i = 0; i < attributes.length; i++) {
 			MBeanAttributeInfo info = attributes[i];
 			AssertJUnit.assertNotNull(info);
 			AllManagementTests.validateAttributeInfo(info, TestRuntimeMXBean.ignoredAttributes, attribs);
 		} // end for
+	}
+
+	@Test
+	public final void testVMIdleState() {
+		AssertJUnit.assertTrue(com.ibm.lang.management.RuntimeMXBean.VMIdleStates.INVALID != ((com.ibm.lang.management.RuntimeMXBean)rb).getVMIdleState());
 	}
 }

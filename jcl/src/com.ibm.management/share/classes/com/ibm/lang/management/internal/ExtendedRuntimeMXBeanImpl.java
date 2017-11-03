@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,4 +79,32 @@ public final class ExtendedRuntimeMXBeanImpl extends RuntimeMXBeanImpl implement
 		return os.getSystemLoadAverage() / os.getAvailableProcessors();
 	}
 
+	private native int getVMIdleStateImpl();
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public VMIdleStates getVMIdleState() {
+		int vmIdleState = getVMIdleStateImpl();
+
+		for (VMIdleStates idleState : VMIdleStates.values()) {
+			if (vmIdleState == idleState.idleStateValue()) {
+				return idleState;
+			}
+		}
+		/* control never reaches here */
+		return VMIdleStates.INVALID;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean isVMIdle() {
+		if (VMIdleStates.IDLE == getVMIdleState()) {
+			return true;
+		}
+		return false;
+	}
 }
