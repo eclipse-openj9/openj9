@@ -92,7 +92,7 @@ static omrthread_tls_key_t potentialPendingExceptionKey;
 IDATA
 J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 {
-	extern J9CONST_TABLE struct JNINativeInterface_ JNICheckTable;
+	extern const struct JNINativeInterface_ JNICheckTable;
 	J9HookInterface** hook;
 	J9VMDllLoadInfo* loadInfo;
 	IDATA rc;

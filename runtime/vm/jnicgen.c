@@ -26,7 +26,7 @@
 #include "j9consts.h"
 #include "vmaccess.h"
 
-extern J9CONST_TABLE struct JNINativeInterface_ EsJNIFunctions;
+extern const struct JNINativeInterface_ EsJNIFunctions;
 
 #define RUN_CALLIN_METHOD(env, receiver, cls, methodID, args) \
 		RUN_CALLIN_METHOD_HELPER(env, receiver, cls, methodID, args)
