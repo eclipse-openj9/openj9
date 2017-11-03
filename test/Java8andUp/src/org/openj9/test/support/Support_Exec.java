@@ -153,9 +153,9 @@ public class Support_Exec {
 			execArgs = new String[baseArgsArray.length + args.length];
 			System.arraycopy(baseArgsArray, 0, execArgs, 0,
 					baseArgsArray.length);
-		} else if (vendor.indexOf("IBM") != -1) {
+		} else if (vendor.indexOf("IBM") != -1 || vendor.indexOf("OpenJ9") != -1) {
 			String full = System.getProperty("java.fullversion");
-			logger.debug("***" + full + "***");
+			logger.info("***" + full + "***");
 			boolean jitDisabled = false;
 			if (full != null && full.indexOf("(JIT disabled") >= 0) {
 				jitDisabled = true;
