@@ -22,24 +22,18 @@
 include $(CONFIG_INCL_DIR)/configure_common.mk
 
 CONFIGURE_ARGS += \
-  --enable-OMR_EXAMPLE \
-  --enable-OMR_GC \
-  --enable-OMR_JITBUILDER \
-  --enable-OMR_PORT \
-  --enable-OMR_THREAD \
-  --enable-OMR_OMRSIG \
+  --enable-debug \
+  --enable-OMR_THR_THREE_TIER_LOCKING \
+  --enable-OMR_THR_YIELD_ALG \
+  --enable-OMR_THR_SPIN_WAKE_CONTROL \
   --enable-OMRTHREAD_LIB_UNIX \
   --enable-OMR_ARCH_X86 \
   --enable-OMR_ENV_DATA64 \
   --enable-OMR_ENV_LITTLE_ENDIAN \
+  --enable-OMR_GC_IDLE_HEAP_MANAGER \
   --enable-OMR_GC_TLH_PREFETCH_FTA \
   --enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
-  --enable-OMR_TEST_COMPILER \
-  --enable-OMR_THR_FORK_SUPPORT \
-  --enable-OMR_THR_THREE_TIER_LOCKING \
-  --enable-OMR_THR_YIELD_ALG \
-  --enable-OMR_GC_ARRAYLETS \
-  --enable-OMR_THR_SPIN_WAKE_CONTROL
+  --enable-OMR_PORT_NUMA_SUPPORT
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.dylib arlibext=.a objext=.o
 
