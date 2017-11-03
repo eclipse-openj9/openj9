@@ -155,7 +155,7 @@ I_32 numCodeSets (void);
 
 /* X86 for MS compilers, __i386__ for GNU compilers */
 
-#if !defined(J9_SOFT_FLOAT) && (defined(_X86_) || defined (WIN32_IBMC) || defined (__i386__) || defined(J9HAMMER))
+#if !defined(J9_SOFT_FLOAT) && (defined(_X86_) || defined (WIN32_IBMC) || defined (__i386__) || defined(J9HAMMER) || defined(OSX))
 
 #define 	J9_SETUP_FPU_STATE() helperInitializeFPU()
 
