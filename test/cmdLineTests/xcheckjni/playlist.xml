@@ -28,7 +28,8 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND)' -Xint -jar $(CMDLINETESTER_JAR) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND)' -Xint -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)xcheckjni.xml$(Q) -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<tags>
