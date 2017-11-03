@@ -36,7 +36,7 @@
 #define JVM_DEFAULT_ERROR_BUFFER_SIZE 256
 #endif /* WIN32 */
 
-#ifdef LINUX
+#if defined(LINUX)
 #if !defined(_GNU_SOURCE)
 /* defining _GNU_SOURCE allows the use of dladdr() in dlfcn.h */
 #define _GNU_SOURCE
@@ -56,7 +56,7 @@
 #define LAUNCHERS
 #include "jvm.h"
 
-#ifdef J9UNIX
+#if defined(J9UNIX) || defined(OSX)
 #include <sys/socket.h>
 #include <dlfcn.h>
 #include <sys/ioctl.h>
@@ -71,11 +71,11 @@
 
 
 /* required for poll support on some Unix platforms (called in JVM_Available) */
-#if defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390)
+#if defined(LINUX) || defined(OSX) || defined(AIXPPC) || defined(J9ZOS390)
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 #include <poll.h>
 #elif defined(AIXPPC)
 #include <sys/poll.h>
