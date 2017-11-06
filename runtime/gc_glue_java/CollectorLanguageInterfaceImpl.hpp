@@ -96,12 +96,6 @@ public:
 
 	static MM_CollectorLanguageInterfaceImpl *getInterface(MM_CollectorLanguageInterface *cli) { return (MM_CollectorLanguageInterfaceImpl *)cli; }
 
-#if defined(OMR_GC_MODRON_COMPACTION)
-	virtual void compactScheme_languageMasterSetupForGC(MM_EnvironmentBase *env);
-	virtual void compactScheme_fixupRoots(MM_EnvironmentBase *env, MM_CompactScheme *compactScheme);
-	virtual void compactScheme_workerCleanupAfterGC(MM_EnvironmentBase *env);
-	virtual void compactScheme_verifyHeap(MM_EnvironmentBase *env, MM_MarkMap *markMap);
-#endif /* OMR_GC_MODRON_COMPACTION */
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	virtual void scavenger_masterSetupForGC(MM_EnvironmentBase *env);
@@ -142,16 +136,6 @@ public:
 
 protected:
 private:
-
-	/*
-	 * Compactor, Private
-	 */
-
-	void private_compactScheme_verifyHeapMixedObject(omrobjectptr_t objectPtr, MM_MarkMap *markMap);
-	void private_compactScheme_verifyHeapObjectSlot(omrobjectptr_t object, MM_MarkMap *markMap);
-	void private_compactScheme_verifyHeapArrayObject(omrobjectptr_t objectPtr, MM_MarkMap *markMap);
-
-	void private_compactScheme_setupForOwnableSynchronizerProcessing(MM_EnvironmentBase *env);
 
 	/*
 	 * ParallelScavenger, Private
