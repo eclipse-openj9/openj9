@@ -302,8 +302,102 @@ OpenJDK  - 437530c based on jdk-9+181)
 ## Windows
 :ledger:
 
-:construction:
-We haven't created a full build process for Windows yet? Watch this space!
+The following instructions guide you through the process of building a Windows OpenJDK V9 binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows 7, 8, and 10.
+
+### 1. Prepare your system
+:ledger:
+You must install a number of software dependencies to create a suitable build environment on your system:
+
+- [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
+- [Windows JDK 8](https://adoptopenjdk.net/releases.html#x64_win), which is used as the boot JDK.
+- [Microsoft Visual Studio 2013]( https://go.microsoft.com/fwlink/?LinkId=532495), which is the same compiler level used by OpenJDK. Later levels of this compiler are not supported.
+- [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
+- [Freetype2 V2.3](https://www.freetype.org/download.html)
+
+
+   You can download Visual Studio, Freemarker, and Freetype manually or obtain them using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
+
+- Open a cygwin terminal and change to the `/temp` directory:
+```
+cd /cygdrive/c/temp
+```
+
+- Run the following commands:
+```
+wget https://go.microsoft.com/fwlink/?LinkId=532495 -O vs2013.exe
+wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
+wget http://download.savannah.gnu.org/releases/freetype/freetype-2.5.3.tar.gz
+```
+- Before installing Visual Studio, change the permissions on the installation file by running `chmod u+x vs2013.exe`.
+- Install Visual Studio by running the file `vs2013.exe`.
+
+- To unpack the Freemarker and Freetype compressed files, run:
+```
+tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
+tar --one-top-level=/cygdrive/c/temp/freetype --strip-components=1 -xzf freetype-2.5.3.tar.gz
+```
+
+### 2. Get the source
+:ledger:
+First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches.
+
+Run the following command in the Cygwin terminal:
+```
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk9
+```
+Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
+```
+cd openj9-openjdk-jdk9
+```
+Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
+
+```
+bash ./get_source.sh
+```
+### 3. Configure
+:ledger:
+When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
+```
+bash configure --disable-warnings-as-errors --with-toolchain-version=2013 --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar --with-freetype-src=/cygdrive/c/temp/freetype
+```
+
+:pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories. If Java 8 is not available on the path, add the `--with-boot-jdk=<path_to_jdk8>` configuration option.
+
+### 4. build
+:ledger:
+Now you're ready to build OpenJDK with OpenJ9:
+```
+make all
+```
+
+Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre)
+- **build/windows-x86_64-normal-server-release/images/jdk**
+- **build/windows-x86_64-normal-server-release/images/jre**
+
+### 5. Test
+:ledger:
+For a simple test, try running the `java -version` command.
+Change to the /jdk directory:
+```
+cd build/windows-x86_64-normal-server-release/images/jdk
+```
+Run:
+```
+./bin/java -version
+```
+
+Here is some sample output:
+
+```
+openjdk version "9-internal"
+OpenJDK Runtime Environment (build 9-internal+0-adhoc.Administrator.openj9-openjdk-jdk9)
+Eclipse OpenJ9 VM (build 2.9, JRE 9 Windows 8.1 amd64-64 Compressed References 20171031_000000 (JIT enabled, AOT enabled)
+OpenJ9   - 68d6fdb
+OMR      - 7c3d3d72
+OpenJDK  - 198304337b based on jdk-9+181)
+```
+
+:ledger: *Congratulations!* :tada:
 
 ----------------------------------
 
