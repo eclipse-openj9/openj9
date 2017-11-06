@@ -2,7 +2,7 @@
 
 package com.ibm.oti.vm;
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,6 +108,8 @@ public final class VM {
 	
 	public static final int OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS;
 	
+	public static final boolean IS_BIG_ENDIAN;
+	
 	private static String[] cachedVMArgs;
 	/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
 	/*[PR CMVC 191554] Provide access to ClassLoader methods to improve performance */
@@ -170,6 +172,8 @@ public final class VM {
 		J9_STRING_COMPRESSION_ENABLED = false;
 		
 		OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS = 0;
+		
+		IS_BIG_ENDIAN = false;
 }
 /**
  * Prevents this class from being instantiated.

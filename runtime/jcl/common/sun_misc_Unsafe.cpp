@@ -683,9 +683,24 @@ Java_sun_misc_Unsafe_getKlassPointer(JNIEnv *env, jobject receiver, jobject addr
 jboolean JNICALL
 Java_jdk_internal_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass clazz)
 {
-	/* stub implementation */
-	assert(!"Java_jdk_internal_misc_Unsafe_shouldBeInitialized is unimplemented");
-	return JNI_FALSE;
+	jboolean result = JNI_FALSE;
+
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	if (NULL == clazz) {
+		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		j9object_t classObject = J9_JNI_UNWRAP_REFERENCE(clazz);
+		J9Class *j9clazz =  J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
+		if (VM_VMHelpers::classRequiresInitialization(currentThread, j9clazz)) {
+			result = JNI_TRUE;
+		}
+	}
+	vmFuncs->internalReleaseVMAccess(currentThread);
+
+	return result;
 }
 
 jlong JNICALL
@@ -742,6 +757,11 @@ registerJdkInternalMiscUnsafeNativesCommon(JNIEnv *env, jclass clazz) {
 			(char*)"getLoadAverage0",
 			(char*)"([DI)I",
 			(void*)&Java_sun_misc_Unsafe_getLoadAverage
+		},
+		{
+			(char*)"shouldBeInitialized0",
+			(char*)"(Ljava/lang/Class;)Z",
+			(void*)&Java_jdk_internal_misc_Unsafe_shouldBeInitialized
 		},
 		{
 			(char*)"allocateMemory0",

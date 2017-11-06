@@ -403,4 +403,5 @@
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_JIT_STRING_DEDUP_POLICY" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_STRING_COMPRESSION_ENABLED" signature="Z"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="IS_BIG_ENDIAN" signature="Z"/>
 </vmconstantpool>
