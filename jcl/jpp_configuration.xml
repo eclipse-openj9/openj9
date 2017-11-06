@@ -78,7 +78,6 @@
 		<source path="src/openj9.cuda/share/classes" />
 		<source path="src/openj9.dataaccess/share/classes"/>
 		<source path="src/openj9.gpu/share/classes" />
-		<source path="src/com.ibm.management/share/classes"/>
 		<source path="src/openj9.sharedclasses/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
@@ -102,7 +101,6 @@
 		<source path="src/openj9.cuda/share/classes" />
 		<source path="src/openj9.dataaccess/share/classes"/>
 		<source path="src/openj9.gpu/share/classes" />
-		<source path="src/com.ibm.management/share/classes"/>
 		<source path="src/openj9.sharedclasses/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
@@ -125,7 +123,6 @@
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
@@ -152,7 +149,6 @@
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
@@ -179,7 +175,6 @@
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
@@ -206,7 +201,6 @@
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
@@ -233,7 +227,6 @@
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
@@ -260,7 +253,6 @@
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
@@ -287,7 +279,6 @@
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
@@ -314,7 +305,6 @@
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
@@ -341,7 +331,6 @@
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190.jar"/>
@@ -368,7 +357,6 @@
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
@@ -394,7 +382,6 @@
 		<source path="src/jdk.attach/share/classes"/>
 		<source path="src/openj9.jvm/share/classes"/>
 		<source path="src/openj9.dataaccess/share/classes"/>
-		<source path="src/com.ibm.management/share/classes"/>
 		<source path="src/openj9.sharedclasses/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>

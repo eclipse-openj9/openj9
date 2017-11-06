@@ -21,5 +21,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 module jdk.management {
-	exports com.sun.management.internal to com.ibm.management;
+	exports com.ibm.lang.management;
+	exports com.ibm.virtualization.management;
+	provides sun.management.spi.PlatformMBeanProvider with com.ibm.lang.management.internal.PlatformMBeanProvider;
 }

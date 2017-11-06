@@ -22,10 +22,9 @@
  *******************************************************************************/
 module java.management {
 	requires java.logging;
-	exports com.ibm.java.lang.management.internal to com.ibm.management, jdk.management;
-	exports sun.management.spi to com.ibm.management;
+	exports com.ibm.java.lang.management.internal to jdk.management;
 	/*[IF Open-Module-Support]*/
-	opens java.lang.management to com.ibm.management;
+	opens java.lang.management to jdk.management;
 	/*[ENDIF]*/
 	uses com.ibm.sharedclasses.spi.SharedClassProvider;
 }
