@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2015 IBM Corp. and others
+ * Copyright (c) 1998, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ char* getDefaultBootstrapClassPath(J9JavaVM * vm, char* javaHome)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	char separator = (char) j9sysinfo_get_classpathSeparator();
-	extern const char* J9CONST_TABLE jclBootstrapClassPath[];
+	extern const char* const jclBootstrapClassPath[];
 	extern char* jclBootstrapClassPathAllocated[];
 	char **entry = NULL;
 	char *path = NULL;

@@ -4280,7 +4280,7 @@ checkGetObjectRefType(JNIEnv *env, jobject obj)
 }
 
 
-J9CONST_TABLE struct JNINativeInterface_ JNICheckTable = {
+const struct JNINativeInterface_ JNICheckTable = {
 	NULL,
 	NULL,
 	NULL,
