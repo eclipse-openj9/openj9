@@ -3917,9 +3917,12 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
    Candidate               *candidate, *next;
    bool                     needToSniff = false;
 
+   // In Java9 sun_misc_Unsafe_putInt might be the wrapper which could potentially be redefined,
+   // so add a check for isNative to be conservative.
    if (methodSymbol && _methodSymbol &&
        (_methodSymbol->getRecognizedMethod() == TR::java_math_BigDecimal_longString1C) &&
-       (methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putInt_jlObjectII_V))
+       (methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putInt_jlObjectII_V) &&
+       (methodSymbol->isNative()))
       {
       if (trace())
          traceMsg(comp(), "Ignoring escapes via call [%p] \n", node);
@@ -8471,6 +8474,3 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::NodeChecklist& vi
 
    return true;
    }
-
-
-

@@ -349,57 +349,73 @@ TR_J9InlinerPolicy::mustBeInlinedEvenInDebug(TR_ResolvedMethod * calleeMethod, T
    return false;
    }
 
+/**  Test for methods that we wish to inline whenever possible.
+
+   Identify methods for which the benefits of inlining them into the caller
+   are particularly significant and which might not otherwise be chosen by
+   the inliner.
+*/
 bool
 TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::Node *callNode)
    {
-   if (calleeMethod && isInlineableJNI(calleeMethod, callNode))
+   if (!calleeMethod) 
+      return false;
+
+   if (isInlineableJNI(calleeMethod, callNode))
       return true;
 
-   if (calleeMethod && calleeMethod->isDAAWrapperMethod())
+   if (calleeMethod->isDAAWrapperMethod())
       return true;
 
-   if (calleeMethod)
+   switch (calleeMethod->convertToMethod()->getMandatoryRecognizedMethod())
       {
-      switch (calleeMethod->convertToMethod()->getMandatoryRecognizedMethod())
-         {
-         case TR::java_lang_invoke_MethodHandle_asType:
-         case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress:
-            return true;
-         default:
-          break;
-         }
+      case TR::java_lang_invoke_MethodHandle_asType:
+      case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress:
+         return true;
+      default:
+         break;
+      }
 
+   switch (calleeMethod->getRecognizedMethod())
+      {
+      case TR::java_lang_J9VMInternals_fastIdentityHashCode:
+      case TR::java_lang_Class_getSuperclass:
+      case TR::java_lang_String_regionMatches:
+      case TR::java_lang_Class_newInstance:
       // we rely on inlining compareAndSwap so we see the inner native call and can special case it
-      // get/putLongVolatile is not supported by all codegens so we want to inline to expose the native
-      // if we haven't special cased it in the walker
-      switch (calleeMethod->getRecognizedMethod())
-         {
-         case TR::java_lang_J9VMInternals_fastIdentityHashCode:
-         case TR::java_lang_Class_getSuperclass:
-         case TR::java_lang_String_regionMatches:
-         case TR::java_lang_Class_newInstance:
-         case TR::com_ibm_jit_JITHelpers_compareAndSwapIntInObject:
-         case TR::com_ibm_jit_JITHelpers_compareAndSwapLongInObject:
-         case TR::com_ibm_jit_JITHelpers_compareAndSwapObjectInObject:
-         case TR::com_ibm_jit_JITHelpers_compareAndSwapIntInArray:
-         case TR::com_ibm_jit_JITHelpers_compareAndSwapLongInArray:
-         case TR::com_ibm_jit_JITHelpers_compareAndSwapObjectInArray:
-         case TR::com_ibm_jit_JITHelpers_jitHelpers:
-         case TR::java_lang_String_charAtInternal_I:
-         case TR::java_lang_String_charAtInternal_IB:
-         case TR::java_lang_String_length:
-         case TR::java_lang_String_lengthInternal:
-         case TR::java_lang_String_isCompressed:
-         case TR::java_lang_StringBuffer_capacityInternal:
-         case TR::java_lang_StringBuffer_lengthInternalUnsynchronized:
-         case TR::java_lang_StringBuilder_capacityInternal:
-         case TR::java_lang_StringBuilder_lengthInternal:
-         case TR::java_util_HashMap_get:
-         case TR::java_util_HashMap_getNode:
-            return true;
-         default:
-          break;
-         }
+      case TR::com_ibm_jit_JITHelpers_compareAndSwapIntInObject:
+      case TR::com_ibm_jit_JITHelpers_compareAndSwapLongInObject:
+      case TR::com_ibm_jit_JITHelpers_compareAndSwapObjectInObject:
+      case TR::com_ibm_jit_JITHelpers_compareAndSwapIntInArray:
+      case TR::com_ibm_jit_JITHelpers_compareAndSwapLongInArray:
+      case TR::com_ibm_jit_JITHelpers_compareAndSwapObjectInArray:
+      case TR::com_ibm_jit_JITHelpers_jitHelpers:
+      case TR::java_lang_String_charAtInternal_I:
+      case TR::java_lang_String_charAtInternal_IB:
+      case TR::java_lang_String_length:
+      case TR::java_lang_String_lengthInternal:
+      case TR::java_lang_String_isCompressed:
+      case TR::java_lang_StringBuffer_capacityInternal:
+      case TR::java_lang_StringBuffer_lengthInternalUnsynchronized:
+      case TR::java_lang_StringBuilder_capacityInternal:
+      case TR::java_lang_StringBuilder_lengthInternal:
+      case TR::java_util_HashMap_get:
+      case TR::java_util_HashMap_getNode:
+         return true;
+         
+      // In Java9 the following enum values match both sun.misc.Unsafe and
+      // jdk.internal.misc.Unsafe The sun.misc.Unsafe methods are simple
+      // wrappers to call jdk.internal impls, and we want to inline them. Since
+      // the same code can run with Java8 classes where sun.misc.Unsafe has the
+      // JNI impl, we need to differentiate by testing with isNative(). If it is
+      // native, then we don't need to inline it as it will be handled
+      // elsewhere.
+      case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
+      case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
+      case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
+         return !calleeMethod->isNative();
+      default:
+         break;
       }
 
    return false;
@@ -2016,10 +2032,6 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
    }
 
 
-/* PLEASE, PLEASE KEEP THIS FUNCTION IN SYNC WITH isInlineableJNI in VMJ9.cpp
-   When we refactor inlineCallTarget2 and findInlineTargets it will be COMPLETELY
-   removed from TR_InlinerBase
-*/
 bool
 TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode)
    {
@@ -2101,11 +2113,15 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
       case TR::sun_misc_Unsafe_loadFence:
       case TR::sun_misc_Unsafe_storeFence:
       case TR::sun_misc_Unsafe_fullFence:
+         return true;
 
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
-         return true;
+         // In Java9 sun/misc/Unsafe methods are simple Java wrappers to JNI
+         // methods in jdk.internal, and the enum values above match both. Only
+         // return true for the methods that are native.
+         return method->isNative();
 
       case TR::sun_misc_Unsafe_staticFieldBase:
          return false; // todo
@@ -2150,6 +2166,7 @@ TR_J9InlinerPolicy::tryToInline(TR_CallTarget * calltarget, TR_CallStack * callS
 
    if (OMR_InlinerPolicy::tryToInlineGeneral(calltarget, callStack, toInline))
       return true;
+
    return false;
    }
 
