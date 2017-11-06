@@ -38,7 +38,7 @@
 //#include "bcdump.h"
 
 
-const char * J9CONST_TABLE maciek_JavaBCNames[] = {
+const char * const maciek_JavaBCNames[] = {
 "JBnop" /* 0 */,
 "JBaconstnull" /* 1 */,
 "JBiconstm1" /* 2 */,

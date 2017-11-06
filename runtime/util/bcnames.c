@@ -22,7 +22,7 @@
 
 #include "j9comp.h"
 
-const char * J9CONST_TABLE JavaBCNames[] = {
+const char * const JavaBCNames[] = {
 "JBnop" /* 0 */,
 "JBaconstnull" /* 1 */,
 "JBiconstm1" /* 2 */,
@@ -294,7 +294,7 @@ const char * J9CONST_TABLE JavaBCNames[] = {
 "JBimpdep2" /* 255 */
 };
 
-const char * J9CONST_TABLE sunJavaBCNames[] = {
+const char * const sunJavaBCNames[] = {
 "JBnop" /* 0 */,
 "JBaconstnull" /* 1 */,
 "JBiconstm1" /* 2 */,

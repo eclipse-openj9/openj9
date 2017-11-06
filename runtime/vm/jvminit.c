@@ -159,7 +159,7 @@ typedef struct {
 #define FUNCTION_THREAD_INIT "threadInitStages"
 #define FUNCTION_ZERO_INIT	"zeroInitStages"
 
-static J9CONST_TABLE struct J9VMIgnoredOption ignoredOptionTable[] = {
+static const struct J9VMIgnoredOption ignoredOptionTable[] = {
 	{ IGNORE_ME_STRING, EXACT_MATCH },
 	{ VMOPT_XDEBUG, EXACT_MATCH },
 	{ VMOPT_XNOAGENT, EXACT_MATCH },
