@@ -1324,3 +1324,35 @@ J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.user_response=Contact the provider of th
 
 # END NON-TRANSLATABLE
 
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE=Unknown constant tag 19 in class file
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE=Unknown constant tag 20 in class file
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=Constant pool entry not valid in class files with versions < 53.0
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS=module-info is not a class because access_flag ACC_MODULE is set
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+

@@ -56,9 +56,9 @@ print "task is set to $task \n";
 # Define a a hash for each dependent jar
 # Contents in the hash should be: url => , fname =>, sha1 =>
 my %asm_all = (
-	url => 'http://central.maven.org/maven2/org/ow2/asm/asm-all/5.0.1/asm-all-5.0.1.jar',
+	url => 'http://central.maven.org/maven2/org/ow2/asm/asm-all/6.0_BETA/asm-all-6.0_BETA.jar',
 	fname => 'asm-all.jar',
-	sha1 => '2f7553f50b0d14ed811b849c282da8c1ffc32aae'
+	sha1 => '535f141f6c8fc65986a3469839a852a3266d1025'
 );
 my %commons_cli = (
 	url => 'http://central.maven.org/maven2/commons-cli/commons-cli/1.2/commons-cli-1.2.jar',
