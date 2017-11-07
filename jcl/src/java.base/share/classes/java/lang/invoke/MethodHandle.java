@@ -1270,11 +1270,15 @@ public abstract class MethodHandle {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
+	protected MethodHandle getTarget() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	
 	MethodHandle setVarargs(MemberName member) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
-	MethodHandle asTypeUncached(MethodType newType) {
+	public MethodHandle asTypeUncached(MethodType newType) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
