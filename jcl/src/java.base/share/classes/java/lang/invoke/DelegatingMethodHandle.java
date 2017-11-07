@@ -55,4 +55,5 @@ abstract class DelegatingMethodHandle extends MethodHandle {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	/*[ENDIF]*/
+	protected abstract MethodHandle getTarget();
 }
