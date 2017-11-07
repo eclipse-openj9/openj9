@@ -82,9 +82,4 @@
 			<class name="org.openj9.test.varhandle.VarHandleInvokerTest" />
 		</classes>
 	</test>
-	<test name="defineModuleAsClassTest">
-		<classes>
-			<class name="org.openj9.test.defineModuleAsClass.DefineModuleAsClassTest" />
-		</classes>
-	</test>
 </suite> <!-- Suite -->
