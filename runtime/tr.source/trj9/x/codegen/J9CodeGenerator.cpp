@@ -383,3 +383,18 @@ J9::X86::CodeGenerator::enableAESInHardwareTransformations()
    else
       return false;
    }
+
+bool
+J9::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
+   {
+   if ((method==TR::java_lang_Object_clone) ||
+      (method==TR::java_lang_Integer_rotateLeft))
+      {
+      return true;
+      }
+   else
+      {
+      return false;
+      }
+   }
+

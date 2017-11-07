@@ -253,6 +253,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
       }
 #endif
 
+   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
+
    bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION

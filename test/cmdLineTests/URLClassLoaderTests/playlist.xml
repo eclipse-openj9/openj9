@@ -59,7 +59,7 @@
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLClassLoaderTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_HOME='$(JDK_HOME)' -DPATHSEP=$(Q)$(D)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DCPDL=$(Q)$(P)$(Q) -DSCMODE=210 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
-	-config $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.xml$(Q) -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-config $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.xml$(Q) -xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
@@ -107,7 +107,7 @@
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLClassLoaderTests.jar; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_HOME='$(JDK_HOME)' -DPATHSEP=$(Q)$(D)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DCPDL=$(Q)$(P)$(Q) -DSCMODE=211 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
-	-config $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.xml$(Q) -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-config $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.xml$(Q) -xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
