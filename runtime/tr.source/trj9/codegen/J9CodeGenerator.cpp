@@ -4620,3 +4620,31 @@ J9::CodeGenerator::needRelocationsForStatics()
    {
    return self()->fej9()->needRelocationsForStatics();
    }
+
+
+bool
+J9::CodeGenerator::isMethodInAtomicLongGroup(TR::RecognizedMethod rm)
+   {
+   switch (rm)
+      {
+      case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
+      case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
+      case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
+         return true;
+
+      default:
+         return false;
+      }
+   }
+

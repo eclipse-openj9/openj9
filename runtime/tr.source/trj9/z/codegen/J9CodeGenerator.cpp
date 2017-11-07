@@ -3826,3 +3826,91 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperPrePrologue(TR::Instr
 
    return cursor;
    }
+
+bool
+J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
+   {
+   if (self()->isMethodInAtomicLongGroup(method))
+      return true;
+
+   if (!self()->comp()->compileRelocatableCode() && !self()->comp()->getOption(TR_DisableDFP) && TR::Compiler->target.cpu.getS390SupportsDFP())
+      {
+      if (method == TR::java_math_BigDecimal_DFPIntConstructor ||
+          method == TR::java_math_BigDecimal_DFPLongConstructor || 
+          method == TR::java_math_BigDecimal_DFPLongExpConstructor ||
+          method == TR::java_math_BigDecimal_DFPAdd ||
+          method == TR::java_math_BigDecimal_DFPSubtract ||
+          method == TR::java_math_BigDecimal_DFPMultiply ||
+          method == TR::java_math_BigDecimal_DFPDivide || 
+          method == TR::java_math_BigDecimal_DFPScaledAdd ||
+          method == TR::java_math_BigDecimal_DFPScaledSubtract ||
+          method == TR::java_math_BigDecimal_DFPScaledMultiply ||
+          method == TR::java_math_BigDecimal_DFPScaledDivide ||
+          method == TR::java_math_BigDecimal_DFPRound || 
+          method == TR::java_math_BigDecimal_DFPSetScale ||
+          method == TR::java_math_BigDecimal_DFPCompareTo || 
+          method == TR::java_math_BigDecimal_DFPSignificance ||
+          method == TR::java_math_BigDecimal_DFPExponent ||
+          method == TR::java_math_BigDecimal_DFPBCDDigits ||
+          method == TR::java_math_BigDecimal_DFPUnscaledValue ||
+          method == TR::java_math_BigDecimal_DFPConvertPackedToDFP ||
+          method == TR::java_math_BigDecimal_DFPConvertDFPToPacked)
+         {
+         return true;
+         }
+
+      if (method == TR::com_ibm_dataaccess_DecimalData_DFPConvertPackedToDFP ||
+          method == TR::com_ibm_dataaccess_DecimalData_DFPConvertDFPToPacked)
+         {
+         return true;
+         }
+      }
+
+   if (method == TR::java_lang_Integer_highestOneBit ||
+       method == TR::java_lang_Integer_numberOfLeadingZeros ||
+       method == TR::java_lang_Integer_numberOfTrailingZeros ||
+       method == TR::java_lang_Long_highestOneBit ||
+       method == TR::java_lang_Long_numberOfLeadingZeros ||
+       method == TR::java_lang_Long_numberOfTrailingZeros)
+      {
+      return true;
+      }
+
+   if (method == TR::java_lang_Long_reverseBytes  ||
+       method == TR::java_lang_Integer_reverseBytes  ||
+       method == TR::java_lang_Short_reverseBytes ||
+       method == TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet ||
+       method == TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd ||
+       method == TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement ||
+       method == TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement ||
+       method == TR::java_util_concurrent_atomic_AtomicInteger_getAndSet ||
+       method == TR::java_util_concurrent_atomic_AtomicInteger_addAndGet ||
+       method == TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet ||
+       method == TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet ||
+       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_incrementAndGet ||
+       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_decrementAndGet ||
+       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet ||
+       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndIncrement ||
+       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndDecrement ||
+       method == TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndAdd)
+      {
+      return true;
+      }
+
+   // Transactional Memory
+   if (self()->getSupportsTM())
+      {
+      if (method == TR::java_util_concurrent_ConcurrentHashMap_tmEnabled ||
+          method == TR::java_util_concurrent_ConcurrentHashMap_tmPut ||
+          method == TR::java_util_concurrent_ConcurrentHashMap_tmRemove ||
+          method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer ||
+          method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll ||
+          method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled)
+          {
+          return true;
+          }
+      }
+
+   return false;
+   }
+
