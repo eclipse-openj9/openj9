@@ -203,7 +203,7 @@ createExceptionTable(
          *(uint32_t *)cursor = e->_instructionEndPC, cursor += 4;
          *(uint32_t *)cursor = e->_instructionHandlerPC, cursor += 4;
          *(uint32_t *)cursor = e->_catchType, cursor += 4;
-         if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
+         if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE() || comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
             *(uintptrj_t *)cursor = (uintptrj_t)e->_byteCodeInfo.getCallerIndex(), cursor += sizeof(uintptrj_t);
          else
             *(uintptrj_t *)cursor = (uintptrj_t)e->_method->resolvedMethodAddress(), cursor += sizeof(uintptrj_t);
