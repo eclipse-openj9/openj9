@@ -42,25 +42,10 @@ public class ConstantPoolTagTests {
 
 	private static Logger logger = Logger.getLogger(ConstantPoolTagTests.class);
 
-	private static final String JAVA_VERSION = System.getProperty("java.version");
-
-	private static final int classFileVersionJava8 = 52;
-	private static final int classFileVersionJava9 = 53; 
+	private static final int classFileVersionJava9 = 53;
 
 	public static final int CONSTANT_Module = 19;
 	public static final int CONSTANT_Package = 20; 
-
-	private int getJavaVersion() {
-		return isJava8() ? classFileVersionJava8 : classFileVersionJava9;
-	}
-
-	private boolean isJava8() {
-		return JAVA_VERSION.startsWith("1.8.0");
-	}
-
-	private boolean isJava9() {
-		return JAVA_VERSION.startsWith("1.9.0") || JAVA_VERSION.startsWith("9");
-	}
 
 	/**
 	 * Creates byte code for a class or module with constant pool
@@ -122,7 +107,7 @@ public class ConstantPoolTagTests {
 
 		logger.debug(className);
 
-		final byte[] classBytes = generateClass(className, getJavaVersion(), tagList);
+		final byte[] classBytes = generateClass(className, classFileVersionJava9, tagList);
 
 		Assert.assertFalse(loadClass(className, classBytes));
 	}
@@ -134,7 +119,7 @@ public class ConstantPoolTagTests {
 
 		logger.debug(className);
 
-		final byte[] classBytes = generateClass(className, getJavaVersion(), tagList);
+		final byte[] classBytes = generateClass(className, classFileVersionJava9, tagList);
 
 		Assert.assertFalse(loadClass(className, classBytes));
 	}
@@ -146,7 +131,7 @@ public class ConstantPoolTagTests {
 
 		logger.debug(className);
 
-		final byte[] classBytes = generateClass(className, getJavaVersion(), tagList);
+		final byte[] classBytes = generateClass(className, classFileVersionJava9, tagList);
 
 		Assert.assertFalse(loadClass(className, classBytes));
 	}
