@@ -2875,8 +2875,8 @@ TR_IPBCDataCallGraph::getData(TR::Compilation *comp)
       {
       traceMsg(comp, "\nMax weight %d, current sum weight %d\n", maxWeight, sumWeight);
       }
-
-   if (((float)maxWeight/(float)sumWeight)<0.1f)
+   // prevent potential division by zero
+   if (sumWeight && ((float)maxWeight/(float)sumWeight) < 0.1f)
       {
 //#ifdef VERBOSE_INLINING_PROFILING
       TR_IProfiler::_STATS_weakProfilingRatio ++;
