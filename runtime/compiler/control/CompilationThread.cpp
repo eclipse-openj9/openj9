@@ -9869,9 +9869,10 @@ TR::CompilationInfoPerThreadBase::compile(
                   {
                   TR_VerboseLog::writeLineLocked(
                      TR_Vlog_JAAS,
-                     "Client successfully loaded method %s @ %s following compilation request.",
+                     "Client successfully loaded method %s @ %s following compilation request. [metaData=%p, startPC=%p]",
                      compiler->signature(),
-                     compiler->getHotnessName()
+                     compiler->getHotnessName(),
+                     metaData, metaData->startPC
                      );
                   }
                }
@@ -11290,6 +11291,12 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                   "Server has failed to compile");
+            }
+         static bool breakAfterFailedCompile = feGetEnv("TR_breakAfterFailedCompile") != NULL;
+         if (breakAfterFailedCompile)
+            {
+                 fprintf(stderr, "\n=== Failed to compile %s  ===\n", comp->signature());
+                 TR::Compiler->debug.breakPoint();
             }
          entry->_stream->finishCompilation(compilationFailure);
          }
