@@ -29,9 +29,9 @@ module java.base {
   exports com.ibm.oti.vm to com.ibm.management, java.management, jdk.attach, openj9.jvm, openj9.sharedclasses;
   exports com.ibm.oti.util to com.ibm.management, java.management, jdk.attach, jdk.management, openj9.sharedclasses;
   exports com.ibm.tools.attach.target to jdk.attach;
-  exports jdk.internal.org.objectweb.asm to com.ibm.dtfj, com.ibm.dtfjview;
+  exports jdk.internal.org.objectweb.asm to openj9.dtfj, com.ibm.dtfjview;
   // Following allows dtfj/dtfjview modules invoke module addReads & addExports programmatically via reflection APIs
-  exports jdk.internal.module to com.ibm.dtfj, com.ibm.dtfjview;
+  exports jdk.internal.module to openj9.dtfj, com.ibm.dtfjview;
   /*[IF Valhalla-MVT]*/
   exports jdk.experimental.value;
   exports jvm.internal.value;
