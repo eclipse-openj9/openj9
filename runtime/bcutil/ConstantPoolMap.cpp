@@ -45,20 +45,16 @@ ConstantPoolMap::ConstantPoolMap(BufferManager *bufferManager, ROMClassCreationC
 	_constantPoolEntries(NULL),
 	_romConstantPoolEntries(NULL),
 	_romConstantPoolTypes(NULL),
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	_staticSplitEntries(NULL),
 	_specialSplitEntries(NULL),
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	_methodTypeCount(0),
 	_varHandleMethodTypeCount(0),
 	_varHandleMethodTypeLookupTable(NULL),
 	_callSiteCount(0),
 	_ramConstantPoolCount(0),
 	_romConstantPoolCount(0),
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	_staticSplitEntryCount(0),
 	_specialSplitEntryCount(0),
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	_buildResult(OutOfMemory)
 {
 }
@@ -102,11 +98,7 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 		J9CPTYPE_CLASS,  /* CFR_CONSTANT_Class   */
 		J9CPTYPE_STRING, /* CFR_CONSTANT_String  */
 		J9CPTYPE_FIELD,  /* CFR_CONSTANT_Fieldref */
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		J9CPTYPE_UNUSED, /* CFR_CONSTANT_Methodref */
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-		J9CPTYPE_SHARED_METHOD, /* CFR_CONSTANT_Methodref */
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		J9CPTYPE_INTERFACE_METHOD, /* CFR_CONSTANT_InterfaceMethodref */
 		J9CPTYPE_UNUSED, /* CFR_CONSTANT_NameAndType */
 		J9CPTYPE_UNUSED, /* 13 */
@@ -116,11 +108,6 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 		J9CPTYPE_UNUSED, /* 17 */
 		J9CPTYPE_UNUSED, /* CFR_CONSTANT_InvokeDynamic */
 	};
-
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-	/* Assumes order: INVOKE_STATIC, INVOKE_VIRTUAL & INVOKE_SPECIAL, INVOKE_HANDLEEXACT & INVOKE_HANDLEGENERIC */
-	static const U_8 methodRefMap[3] = {J9CPTYPE_STATIC_METHOD, J9CPTYPE_INSTANCE_METHOD, J9CPTYPE_HANDLE_METHOD};
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	ROMClassVerbosePhase v(_context, ConstantPoolMapping, &_buildResult);
 
@@ -141,14 +128,12 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 					break;
 				case CFR_CONSTANT_InterfaceMethodref: /* fall through */
 				case CFR_CONSTANT_Methodref:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 					if (isStaticSplit(cfrCPIndex)) {
 						_staticSplitEntryCount += 1;
 					}
 					if (isSpecialSplit(cfrCPIndex)) {
 						_specialSplitEntryCount += 1;
 					}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 					/* fall through */
 				case CFR_CONSTANT_Fieldref: /* fall through */
 				case CFR_CONSTANT_Class:
@@ -190,17 +175,13 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 
 	_romConstantPoolEntries = (U_16 *) _bufferManager->alloc(_romConstantPoolCount * sizeof(U_16));
 	_romConstantPoolTypes = (U_8 *) _bufferManager->alloc(_romConstantPoolCount * sizeof(U_8));
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	_staticSplitEntries = (U_16 *) _bufferManager->alloc(_staticSplitEntryCount * sizeof(U_16));
 	_specialSplitEntries = (U_16 *) _bufferManager->alloc(_specialSplitEntryCount * sizeof(U_16));
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	if ((NULL == _romConstantPoolEntries)
 		|| (NULL == _romConstantPoolTypes)
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		|| (NULL == _staticSplitEntries)
 		|| (NULL == _specialSplitEntries)
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	) {
 		_buildResult = OutOfMemory;
 		return;
@@ -211,10 +192,8 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 	U_16 romCPIndex = U_16(ldcCPIndex + ldcSlotCount);
 	U_16 doubleSlotIndex = _ramConstantPoolCount;
 	U_16 currentCallSiteIndex = 0;
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	U_16 staticSplitTableIndex = 0;
 	U_16 specialSplitTableIndex = 0;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	/*
 	 * Fill in entries, ignoring InvokeDynamic, Utf8 and NameAndType entries.
@@ -240,7 +219,6 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 					_romConstantPoolTypes[doubleSlotIndex] = cpTypeMap[cpTag];
 					SET_ROM_CP_INDEX(cfrCPIndex, 0, doubleSlotIndex++);
 					break;
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 				case CFR_CONSTANT_InterfaceMethodref: /* fall through */
 				case CFR_CONSTANT_Methodref: {
 					if (isStaticSplit(cfrCPIndex)) {
@@ -270,27 +248,6 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 					SET_ROM_CP_INDEX(cfrCPIndex, 0, romCPIndex++);
 					break;
 				}
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-				case CFR_CONSTANT_Methodref: {
-					UDATA splitCount = 0;
-					UDATA splitIndex = 0;
-					for (UDATA i = 0; i < SPLIT_FLAG_COUNT; i++) {
-						if (isMarked(cfrCPIndex, i)) {
-							splitCount += 1;
-							splitIndex = i;
-						}
-					}
-					_romConstantPoolEntries[romCPIndex] = cfrCPIndex;
-					if (1 == splitCount) {
-						_romConstantPoolTypes[romCPIndex] = methodRefMap[splitIndex];
-					} else {
-						_romConstantPoolTypes[romCPIndex] = cpTypeMap[cpTag];
-					}
-					SET_ROM_CP_INDEX(cfrCPIndex, 0, romCPIndex++);
-					break;
-				}
-				case CFR_CONSTANT_InterfaceMethodref: /* fall through */
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				case CFR_CONSTANT_Fieldref: /* fall through */
 				case CFR_CONSTANT_Class: /* fall through */
 				case CFR_CONSTANT_String: /* fall through */
@@ -499,9 +456,6 @@ ConstantPoolMap::constantPoolDo(ConstantPoolVisitor *visitor)
 				visitor->visitString(cfrCPIndex);
 				break;
 			case J9CPTYPE_FIELD: /* fall through */
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-			case J9CPTYPE_SHARED_METHOD: /* fall through */
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			case J9CPTYPE_INSTANCE_METHOD: /* fall through */
 			case J9CPTYPE_HANDLE_METHOD: /* fall through */
 			case J9CPTYPE_STATIC_METHOD: /* fall through */

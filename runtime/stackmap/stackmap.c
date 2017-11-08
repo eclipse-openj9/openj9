@@ -468,23 +468,17 @@ mapStack(UDATA *scratch, UDATA totalStack, U_8 * map, J9ROMClass * romClass, J9R
 			case JBinvokevirtual:
 			case JBinvokespecial:
 			case JBinvokeinterface:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 			case JBinvokespecialsplit:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				POP();
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 			case JBinvokestaticsplit:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			case JBinvokestatic: {
 				index = PARAM_16(bcIndex, 1);
-				
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
+
 				if (JBinvokestaticsplit == bc) {
 					index = *(U_16 *)(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(romClass) + index);
 				} else if (JBinvokespecialsplit == bc) {
 					index = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(romClass) + index);
 				}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				utf8Signature =
 						J9ROMNAMEANDSIGNATURE_SIGNATURE(
 								J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) (&(pool[index]))));

@@ -1272,7 +1272,6 @@ ClassFileWriter::rewriteBytecode(J9ROMMethod * method, U_32 length, U_8 * code)
 			break;
 		}
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		case JBinvokestaticsplit: {
 			U_16 cpIndex = *(U_16 *) (code + index + 1);
 			/* treat cpIndex as index into static split table */
@@ -1292,7 +1291,6 @@ ClassFileWriter::rewriteBytecode(J9ROMMethod * method, U_32 length, U_8 * code)
 			writeU16At(cpIndex, code + index + 1);
 			break;
 		}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 		case JBiloadw: /* Fall-through */
 		case JBlloadw: /* Fall-through */

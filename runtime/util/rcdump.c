@@ -86,10 +86,8 @@ static I_32 dumpRomField ( J9ROMFieldShape *romField, J9PortLibrary *portLib, U_
 static I_32 dumpSourceFileName (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpCPShapeDescription ( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpCallSiteData ( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 static I_32 dumpStaticSplitSideTable( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpSpecialSplitSideTable( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 static void printMethodExtendedModifiers(J9PortLibrary *portLib, U_32 modifiers);
 /*
 	Dump a printed representation of the specified @romClass to stdout.
@@ -219,11 +217,9 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 
 	dumpCallSiteData(portLib, romClass, flags);
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	/* dump split side tables */
 	dumpStaticSplitSideTable(portLib, romClass, flags);
 	dumpSpecialSplitSideTable(portLib, romClass, flags);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	j9tty_printf( PORTLIB, "\n");
 	return BCT_ERR_NO_ERROR;
@@ -234,11 +230,7 @@ static I_32 dumpCPShapeDescription( J9PortLibrary *portLib, J9ROMClass *romClass
 	U_32 *cpDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
 	U_32 descriptionLong;
 	U_32 i, j, k, numberOfLongs;
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	char symbols[] = ".CSIFJDi.vxyzTHA";
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-	char symbols[] = ".CSIFJDisvxyzTHA";
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	PORT_ACCESS_FROM_PORT( portLib );
 
@@ -527,9 +519,6 @@ dumpCallSiteData(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 						j9tty_printf(PORTLIB, "\n");
 						break;
 
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-					case J9CPTYPE_SHARED_METHOD:
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 					case J9CPTYPE_HANDLE_METHOD:
 					case J9CPTYPE_INSTANCE_METHOD:
 					case J9CPTYPE_STATIC_METHOD:
@@ -573,9 +562,7 @@ dumpCallSiteData(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 						break;
 
 					case J9CPTYPE_UNUSED:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 					case J9CPTYPE_UNUSED8:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 					default:
 						/* unknown cp type */
 						j9tty_printf(PORTLIB, "      <unknown type>\n");
@@ -588,7 +575,6 @@ dumpCallSiteData(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 	return BCT_ERR_NO_ERROR;
 }
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 static I_32
 dumpStaticSplitSideTable(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 {
@@ -624,7 +610,6 @@ dumpSpecialSplitSideTable(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 fla
 
 	return BCT_ERR_NO_ERROR;
 }
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 static I_32
 dumpAnnotationInfo( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)

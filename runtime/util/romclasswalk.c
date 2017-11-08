@@ -46,10 +46,8 @@ static void allSlotsInCPShapeDescriptionDo (J9ROMClass* romClass, J9ROMClassWalk
 static void allSlotsInCallSiteDataDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static UDATA allSlotsInMethodParametersDataDo(J9ROMClass* romClass, U_8* cursor, J9ROMClassWalkCallbacks* callbacks, void* userData);
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 static void allSlotsInStaticSplitMethodRefIndexesDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
 static void allSlotsInSpecialSplitMethodRefIndexesDo (J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 static void nullSlotCallback(J9ROMClass*, U_32, void*, const char*, void*);
 static void nullSectionCallback(J9ROMClass*, void*, UDATA, const char*, void*);
 static BOOLEAN defaultValidateRangeCallback(J9ROMClass*, void*, UDATA, void*);
@@ -150,12 +148,10 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, optionalInfo);
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, maxBranchCount);
 	SLOT_CALLBACK(romClass, J9ROM_U32,  romClass, methodTypeCount);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, staticSplitMethodRefCount);
 	SLOT_CALLBACK(romClass, J9ROM_U16,  romClass, specialSplitMethodRefCount);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, staticSplitMethodRefIndexes);
 	SLOT_CALLBACK(romClass, J9ROM_SRP,  romClass, specialSplitMethodRefIndexes);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	/* walk interfaces SRPs block */
 	srpCursor = J9ROMCLASS_INTERFACES(romClass);
@@ -193,10 +189,8 @@ void allSlotsInROMClassDo(J9ROMClass* romClass,
 	allSlotsInConstantPoolDo(romClass, callbacks, userData);
 	allSlotsInCallSiteDataDo(romClass, callbacks, userData);
 	allSlotsInOptionalInfoDo(romClass, callbacks, userData);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	allSlotsInStaticSplitMethodRefIndexesDo(romClass, callbacks, userData);
 	allSlotsInSpecialSplitMethodRefIndexesDo(romClass, callbacks, userData);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 }
 
 static void allSlotsInROMMethodsSectionDo(J9ROMClass *romClass, J9ROMClassWalkCallbacks *callbacks, void *userData)
@@ -509,10 +503,8 @@ static void allSlotsInBytecodesDo(J9ROMClass* romClass, J9ROMMethod* method, J9R
 			case JBanewarray:
 			case JBcheckcast:
 			case JBinstanceof:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)			
 			case JBinvokestaticsplit:
 			case JBinvokespecialsplit:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				callbacks->slotCallback(romClass, J9ROM_U16, pc, "bcArg16", userData);
 				pc += 2;
 				break;
@@ -677,9 +669,6 @@ static void allSlotsInConstantPoolDo(J9ROMClass* romClass, J9ROMClassWalkCallbac
 				callbacks->slotCallback(romClass, J9ROM_U32, &((J9ROMFieldRef *)&constantPool[index])->classRefCPIndex, "cpFieldClassRef", userData);
 				break;
 
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-			case J9CPTYPE_SHARED_METHOD:
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			case J9CPTYPE_HANDLE_METHOD:
 			case J9CPTYPE_INSTANCE_METHOD:
 			case J9CPTYPE_STATIC_METHOD:
@@ -699,9 +688,7 @@ static void allSlotsInConstantPoolDo(J9ROMClass* romClass, J9ROMClassWalkCallbac
 				break;
 
 			case J9CPTYPE_UNUSED:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 			case J9CPTYPE_UNUSED8:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				callbacks->slotCallback(romClass, J9ROM_U64, &constantPool[index], "cpFieldUnused", userData);
 				break;
 
@@ -788,7 +775,6 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 	callbacks->sectionCallback(romClass, optionalInfo, (UDATA)cursor - (UDATA)optionalInfo, "optionalInfo", userData);
 }
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 static void 
 allSlotsInStaticSplitMethodRefIndexesDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callbacks, void* userData)
 {
@@ -830,7 +816,6 @@ allSlotsInSpecialSplitMethodRefIndexesDo(J9ROMClass* romClass, J9ROMClassWalkCal
 		}
 	}
 }
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 #ifndef SWAP2BE
 #ifdef J9VM_ENV_LITTLE_ENDIAN

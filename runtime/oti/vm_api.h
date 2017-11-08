@@ -2275,7 +2275,6 @@ J9Method *
 resolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 /**
  * @brief
  * @param *vmStruct
@@ -2286,7 +2285,6 @@ resolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInde
  */
 J9Method *   
 resolveStaticSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA splitTableIndex, UDATA resolveFlags);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 /**
  * @brief
@@ -2395,7 +2393,6 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 J9Method *   
 resolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 /**
  * @brief
  * @param *vmStruct
@@ -2406,7 +2403,6 @@ resolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInd
  */
 J9Method *   
 resolveSpecialSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA splitTableIndex, UDATA resolveFlags);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 /**
  * @brief

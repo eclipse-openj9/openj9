@@ -25,13 +25,9 @@
 #include "rommeth.h"
 #include "ute.h"
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-
 #define J9_IS_STATIC_SPLIT_TABLE_INDEX(value)		J9_ARE_ALL_BITS_SET(value, J9_STATIC_SPLIT_TABLE_INDEX_FLAG)
 #define J9_IS_SPECIAL_SPLIT_TABLE_INDEX(value) 		J9_ARE_ALL_BITS_SET(value, J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG)
 #define J9_IS_SPLIT_TABLE_INDEX(value)				J9_ARE_ANY_BITS_SET(value, J9_STATIC_SPLIT_TABLE_INDEX_FLAG | J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG)
-
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 J9_DECLARE_CONSTANT_UTF8(newInstancePrototypeName, "newInstancePrototype");
 J9_DECLARE_CONSTANT_UTF8(newInstancePrototypeSig, "(Ljava/lang/Class;)Ljava/lang/Object;");
@@ -580,7 +576,6 @@ jitGetRealCPIndex(J9VMThread *currentThread, J9ROMClass *romClass, UDATA cpOrSpl
 {
 	UDATA realCPIndex = cpOrSplitIndex;
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	if (J9_IS_SPLIT_TABLE_INDEX(cpOrSplitIndex)) {
 		UDATA splitTableIndex = cpOrSplitIndex & J9_SPLIT_TABLE_INDEX_MASK;
 
@@ -590,7 +585,6 @@ jitGetRealCPIndex(J9VMThread *currentThread, J9ROMClass *romClass, UDATA cpOrSpl
 			realCPIndex = *(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(romClass) + splitTableIndex);
 		}
 	}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	return realCPIndex;
 }
 
@@ -610,7 +604,6 @@ jitGetJ9MethodUsingIndex(J9VMThread *currentThread, J9ConstantPool *constantPool
 {
 	J9Method *method = NULL;
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	if (J9_IS_SPLIT_TABLE_INDEX(cpOrSplitIndex)) {
 		UDATA splitTableIndex = cpOrSplitIndex & J9_SPLIT_TABLE_INDEX_MASK;
 		J9Class *clazz = J9_CLASS_FROM_CP(constantPool);
@@ -620,9 +613,7 @@ jitGetJ9MethodUsingIndex(J9VMThread *currentThread, J9ConstantPool *constantPool
 		} else {
 			method = clazz->specialSplitMethodTable[splitTableIndex];
 		}
-	} else
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-	{
+	} else {
 		method = ((J9RAMStaticMethodRef*)(constantPool + cpOrSplitIndex))->method;
 	}
 	return method;
@@ -645,12 +636,9 @@ jitResolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *constantPool, UD
 {
 	J9Method *method = NULL;
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	if (J9_IS_STATIC_SPLIT_TABLE_INDEX(cpOrSplitIndex)) {
 		method = vmStruct->javaVM->internalVMFunctions->resolveStaticSplitMethodRef(vmStruct, constantPool, (cpOrSplitIndex & J9_SPLIT_TABLE_INDEX_MASK), resolveFlags);
-	} else
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-	{
+	} else {
 		method = vmStruct->javaVM->internalVMFunctions->resolveStaticMethodRef(vmStruct, constantPool, cpOrSplitIndex, resolveFlags);
 	}
 	return method;
@@ -674,12 +662,9 @@ jitResolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *constantPool, U
 {
 	J9Method *method = NULL;
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	if (J9_IS_SPECIAL_SPLIT_TABLE_INDEX(cpOrSplitIndex)) {
 		method = vmStruct->javaVM->internalVMFunctions->resolveSpecialSplitMethodRef(vmStruct, constantPool, (cpOrSplitIndex & J9_SPLIT_TABLE_INDEX_MASK), resolveFlags);
-	} else
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-	{
+	} else {
 		method = vmStruct->javaVM->internalVMFunctions->resolveSpecialMethodRef(vmStruct, constantPool, cpOrSplitIndex, resolveFlags);
 	}
 	return method;

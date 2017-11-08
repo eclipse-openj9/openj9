@@ -1690,13 +1690,11 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				bcIndex += 2;
 			}
 			index = PARAM_16(bcIndex, 1);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 			if (JBinvokestaticsplit == bc) {
 				index = *(U_16 *)(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(romClass) + index);
 			} else if (JBinvokespecialsplit == bc) {
 				index = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(romClass) + index);
 			}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			if (bc == JBinvokedynamic) {
 				/* TODO invokedynamic should allow for a 3 byte index.  Adjust 'index' to include the other byte */
 				utf8string = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_SIGNATURE(SRP_PTR_GET(callSiteData + index, J9ROMNameAndSignature*))));
@@ -1708,14 +1706,10 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 
 			if ((JBinvokestatic != bc) 
 				&& (JBinvokedynamic != bc)
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 				&& (JBinvokestaticsplit != bc)
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			) {
 				if ((JBinvokespecial == bc) 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 					|| (JBinvokespecialsplit == bc)
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				) {
 
 					type = POP;

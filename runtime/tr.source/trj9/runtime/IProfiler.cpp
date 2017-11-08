@@ -741,10 +741,8 @@ bool isSpecialOrStatic(U_8 byteCode)
    {
    return ((byteCode == JBinvokestatic)
           || (byteCode == JBinvokespecial)
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
           || (byteCode == JBinvokestaticsplit)
           || (byteCode == JBinvokespecialsplit)
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
           );
    }
 
@@ -966,10 +964,8 @@ TR_IProfiler::addSampleData(TR_IPBytecodeHashTableEntry *entry, uintptrj_t data,
          return true;
       case JBinvokestatic:
       case JBinvokespecial:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
       case JBinvokestaticsplit:
       case JBinvokespecialsplit:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
       case JBinvokeinterface:
       case JBinvokeinterface2:
       case JBinvokevirtual:
@@ -1432,10 +1428,8 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
          // Exclude JBinvokestatic and JBinvokespecial because they are not tracked by interpreter
          if (bytecode != JBinvokestatic
             && bytecode != JBinvokespecial
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
             && bytecode != JBinvokestaticsplit
             && bytecode != JBinvokespecialsplit
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
             )
             _readSampleRequestsHistory->incTotalReadSampleRequests();
          // If I prefer HT data, or, if I already searched the SCC for this pc,
@@ -1474,10 +1468,8 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
                // Those samples belong to not-taken paths that couldn't have been profiled anyway
                if (bytecode != JBinvokestatic
                   && bytecode != JBinvokespecial
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
                   && bytecode != JBinvokestaticsplit
                   && bytecode != JBinvokespecialsplit
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
                   && !methodProfileExistsInSCC)
                   {
                   _readSampleRequestsHistory->incFailedReadSampleRequests();
@@ -1496,10 +1488,8 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
                {
                if (bytecode != JBinvokestatic
                   && bytecode != JBinvokespecial
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
                   && bytecode != JBinvokestaticsplit
                   && bytecode != JBinvokespecialsplit
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
                   )
                   _readSampleRequestsHistory->incTotalReadSampleRequests();
 #ifdef PERSISTENCE_VERBOSE
@@ -4033,10 +4023,8 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
             break;
          case JBinvokestatic:
          case JBinvokespecial:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
          case JBinvokestaticsplit:
          case JBinvokespecialsplit:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
             {
             addSample = false; // never store these in the IProfiler hashtable
             caller = *(J9Method**)cursor;
@@ -4046,12 +4034,10 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
             J9ConstantPool* ramCP = J9_CP_FROM_METHOD(caller);
             uint16_t cpIndex = readU16(pc + 1);
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
             if (JBinvokestaticsplit == cpIndex)
                cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG;
             if (JBinvokespecialsplit == cpIndex)
                cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
             J9Method * callee = jitGetJ9MethodUsingIndex(vmThread, ramCP, cpIndex);
 
             if ((javaVM->initialMethods.initialStaticMethod == callee) ||

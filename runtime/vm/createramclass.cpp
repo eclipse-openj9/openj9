@@ -59,10 +59,8 @@ enum J9ClassFragments {
 	RAM_CALL_SITES_FRAGMENT,
 	RAM_METHOD_TYPES_FRAGMENT,
 	RAM_VARHANDLE_METHOD_TYPES_FRAGMENT,
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	RAM_STATIC_SPLIT_TABLE_FRAGMENT,
 	RAM_SPECIAL_SPLIT_TABLE_FRAGMENT,
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	RAM_CLASS_FRAGMENT_COUNT
 };
 
@@ -1978,11 +1976,8 @@ fail:
 		/* add in the varhandle method types */
 		classSize += romClass->varHandleMethodTypeCount;
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		/* add in the static and special split tables */
 		classSize += (romClass->staticSplitMethodRefCount + romClass->specialSplitMethodRefCount);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-
 
 		romWalkResult = fieldOffsetsStartDo(javaVM, romClass, superclass, &romWalkState,
 			(J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE |
@@ -2212,7 +2207,6 @@ fail:
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].alignedSize = romClass->varHandleMethodTypeCount * sizeof(j9object_t);
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].address = NULL;
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 			/* static split table fragment */
 			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].alignment = sizeof(UDATA);
@@ -2224,8 +2218,6 @@ fail:
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].alignedSize = romClass->specialSplitMethodRefCount * sizeof(J9Method *);
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].address = NULL;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-
 
 			if (fastHCR) {
 				/* For shared fragments, set alignedSize and prefixSize to 0 to make internalAllocateRAMClass() ignore them. */
@@ -2273,10 +2265,8 @@ fail:
 				ramClass->callSites = (j9object_t *) allocationRequests[RAM_CALL_SITES_FRAGMENT].address;
 				ramClass->methodTypes = (j9object_t *) allocationRequests[RAM_METHOD_TYPES_FRAGMENT].address;
 				ramClass->varHandleMethodTypes = (j9object_t *) allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].address;
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 				ramClass->staticSplitMethodTable = (J9Method **) allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].address;
 				ramClass->specialSplitMethodTable = (J9Method **) allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].address;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			}
 		}
 		

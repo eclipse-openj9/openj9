@@ -50,9 +50,6 @@ static J9Class* internalFindArrayClass(J9VMThread* vmThread, J9Module *j9module,
 
 extern J9Method initialStaticMethod;
 extern J9Method initialSpecialMethod;
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-extern J9Method initialSharedMethod;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 UDATA
 totalStaticSlotsForClass( J9ROMClass *romClass ) {
@@ -339,37 +336,14 @@ internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread)
 					((J9RAMFieldRef *) ramConstantPool)[i].valueOffset = -1;
 					break;
 
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-				case J9CPTYPE_SHARED_METHOD: {
-					J9UTF8 *nameUTF, *className;
-					J9ROMClassRef *romClassRef;
-					UDATA methodIndex = sizeof(J9Class) + sizeof(UDATA);
-					romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
-					romClassRef = ((J9ROMClassRef *) romConstantPool) + romMethodRef->classRefCPIndex;
-					className = J9ROMCLASSREF_NAME(romClassRef);
-					nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-					nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nas);
-					if ((J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), "java/lang/invoke/MethodHandle"))
-					&& (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), "invokeExact")
-					|| J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), "invoke"))) {
-						methodIndex = methodTypeIndex++;
-					}
-					((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (methodIndex << 8) +
-						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
-					((J9RAMMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialSharedMethod;
-					break;
-				}
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				case J9CPTYPE_HANDLE_METHOD:
 					romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 					nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 					((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (methodTypeIndex << 8) +
 						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
 					methodTypeIndex++;
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 					/* In case MethodHandle.invoke[Exact] is called via invokestatic */
 					((J9RAMMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialStaticMethod;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 					break;
 
 				case J9CPTYPE_INSTANCE_METHOD:
@@ -381,13 +355,11 @@ internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread)
 					break;
 
 				case J9CPTYPE_STATIC_METHOD:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 					romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 					nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 					/* In case this CP entry is shared with invokevirtual */
 					((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = ((sizeof(J9Class) + sizeof(UDATA)) << 8) +
 						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 					((J9RAMStaticMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialStaticMethod;
 					break;
 

@@ -551,11 +551,7 @@ tryAgain:
 			}
 		}
 	}
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	if (NULL != ramCPEntry)
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-	if ((NULL != ramCPEntry) && ((NULL == cpClass) || (J9CPTYPE_SHARED_METHOD != J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(cpClass->romClass), cpIndex))))
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	{
 		ramCPEntry->method = method;
 	}
@@ -583,11 +579,7 @@ resolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInde
 			&& (J9_CLASS_FROM_METHOD(method)->initializeStatus == (UDATA)vmStruct)
 		) {
 			return (J9Method *) -1;
-		} else 
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-		if (J9CPTYPE_SHARED_METHOD != J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(J9_CLASS_FROM_CP(ramCP)->romClass), cpIndex))
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-		{
+		} else {
 			((J9RAMStaticMethodRef *)&ramCP[cpIndex])->method = ramStaticMethodRef->method;
 		}
 	}
@@ -596,7 +588,6 @@ resolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInde
 }
 
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 J9Method *   
 resolveStaticSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA splitTableIndex, UDATA resolveFlags)
 {
@@ -621,7 +612,6 @@ resolveStaticSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA s
 
 	return method;
 }
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 
 void *    
@@ -1168,11 +1158,7 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 	
 	method = getMethodForSpecialSend(vmStruct, currentClass, resolvedClass, method);
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	if (NULL != ramCPEntry)
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-	if ((NULL != ramCPEntry) && (J9CPTYPE_SHARED_METHOD != J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(currentClass->romClass), cpIndex)))
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	{
 		ramCPEntry->method = method;
 	}
@@ -1191,7 +1177,6 @@ resolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInd
 }
 
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 J9Method *   
 resolveSpecialSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA splitTableIndex, UDATA resolveFlags)
 {
@@ -1207,7 +1192,6 @@ resolveSpecialSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA 
 	}
 	return method;
 }
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 
 UDATA   

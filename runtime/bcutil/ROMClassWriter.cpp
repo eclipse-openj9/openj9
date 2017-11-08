@@ -305,13 +305,9 @@ ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *cl
 	_intermediateClassDataSRPKey(srpKeyProducer->generateKey()),
 	_annotationInfoClassSRPKey(srpKeyProducer->generateKey()),
 	_typeAnnotationInfoSRPKey(srpKeyProducer->generateKey()),
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	_callSiteDataSRPKey(srpKeyProducer->generateKey()),
 	_staticSplitTableSRPKey(srpKeyProducer->generateKey()),
 	_specialSplitTableSRPKey(srpKeyProducer->generateKey()),
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES */
-	_callSiteDataSRPKey(srpKeyProducer->generateKey()),
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES */
 	_varHandleMethodTypeLookupTableSRPKey(srpKeyProducer->generateKey())
 {
 	_methodNotes = (MethodNotes *) _bufferManager->alloc(classFileOracle->getMethodsCount() * sizeof(MethodNotes));
@@ -404,12 +400,10 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 		cursor->writeSRP(_callSiteDataSRPKey, Cursor::SRP_TO_GENERIC);
 		cursor->writeU32(_classFileOracle->getClassFileSize(), Cursor::GENERIC);
 		cursor->writeU32((U_32)_classFileOracle->getConstantPoolCount(), Cursor::GENERIC);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		cursor->writeU16(_constantPoolMap->getStaticSplitEntryCount(), Cursor::GENERIC);
 		cursor->writeU16(_constantPoolMap->getSpecialSplitEntryCount(), Cursor::GENERIC);
 		cursor->writeSRP(_staticSplitTableSRPKey, Cursor::SRP_TO_GENERIC);
 		cursor->writeSRP(_specialSplitTableSRPKey, Cursor::SRP_TO_GENERIC);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		cursor->writeSRP(_varHandleMethodTypeLookupTableSRPKey, Cursor::SRP_TO_GENERIC);
 		cursor->padToAlignment(sizeof(U_64), Cursor::GENERIC);
 	}
@@ -432,10 +426,8 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writeOptionalInfo(cursor);
 	writeCallSiteData(cursor, markAndCountOnly);
 	writeVarHandleMethodTypeLookupTable(cursor, markAndCountOnly);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	writeStaticSplitTable(cursor, markAndCountOnly);
 	writeSpecialSplitTable(cursor, markAndCountOnly);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	cursor->padToAlignment(sizeof(U_64), Cursor::GENERIC); // TODO why U_64 alignment and not U_32
 
 	/*
@@ -685,9 +677,7 @@ class ROMClassWriter::Helper :
 	private ClassFileOracle::VerificationTypeInfoVisitor,
 	private ClassFileOracle::BootstrapMethodVisitor,
 	private ClassFileOracle::MethodParametersVisitor,
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	private ConstantPoolMap::SplitEntryVisitor,
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	private ConstantPoolMap::CallSiteVisitor
 {
 public:
@@ -833,7 +823,6 @@ public:
 		}
 	}
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	void writeStaticSplitTable()
 	{
 		if (!_markAndCountOnly) {
@@ -847,7 +836,7 @@ public:
 			_constantPoolMap->specialSplitEntriesDo(this); /* visitSplitEntry */
 		}
 	}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
+
 private:
 	/*
 	 * Implement interfaces
@@ -1044,13 +1033,11 @@ private:
 	{
 		_cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(nameAndSignatureIndex), Cursor::SRP_TO_NAME_AND_SIGNATURE);
 	}
-	
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
+
 	void visitSplitEntry(U_16 cpIndex)
 	{
 		_cursor->writeU16(cpIndex, Cursor::GENERIC);
 	}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	Cursor *_cursor;
 	ClassFileOracle *_classFileOracle;
@@ -1729,7 +1716,6 @@ ROMClassWriter::writeVarHandleMethodTypeLookupTable(Cursor *cursor, bool markAnd
 	}
 }
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 void
 ROMClassWriter::writeStaticSplitTable(Cursor *cursor, bool markAndCountOnly)
 {
@@ -1751,7 +1737,6 @@ ROMClassWriter::writeSpecialSplitTable(Cursor *cursor, bool markAndCountOnly)
 		Helper(cursor, markAndCountOnly, _classFileOracle, _srpKeyProducer, _srpOffsetTable, _constantPoolMap, size).writeSpecialSplitTable();
 	}
 }
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 void
 ROMClassWriter::writeByteCodes(Cursor* cursor, ClassFileOracle::MethodIterator *methodIterator)
@@ -1775,7 +1760,6 @@ ROMClassWriter::writeByteCodes(Cursor* cursor, ClassFileOracle::MethodIterator *
 				*dest = _constantPoolMap->getCallSiteIndex(entry->cpIndex);
 				break;
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 			case ConstantPoolMap::INVOKE_STATIC:
 				if (_constantPoolMap->isStaticSplit(entry->cpIndex)) {
 					code[entry->codeIndex - 1] = JBinvokestaticsplit;
@@ -1793,7 +1777,6 @@ ROMClassWriter::writeByteCodes(Cursor* cursor, ClassFileOracle::MethodIterator *
 					*dest = _constantPoolMap->getROMClassCPIndex(entry->cpIndex, entry->type);
 				}
 				break;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 			default:
 				*dest = _constantPoolMap->getROMClassCPIndex(entry->cpIndex, entry->type);
