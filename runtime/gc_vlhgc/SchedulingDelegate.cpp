@@ -290,14 +290,6 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 
 	estimateMacroDefragmentationWork(env);
 	
-	if (isFirstPGCAfterGMP()) {
-		calculatePGCCompactionRate(env, edenCountBeforeCollect * _regionManager->getRegionSize());
-		calculateHeapOccupancyTrend(env);
-		calculateScannableBytesRatio(env);
-
-		firstPGCAfterGMPCompleted();
-	}
-	
 	/* Calculate the time spent in the current Partial GC */
 	U_64 partialGcEndTime = j9time_hires_clock();
 	U_64 pgcTime = j9time_hires_delta(_partialGcStartTime, partialGcEndTime, J9PORT_TIME_DELTA_IN_MILLISECONDS);
@@ -786,6 +778,7 @@ MM_SchedulingDelegate::getDesiredCompactWork()
 	return desiredCompactWork;
 }
 
+/*
 bool
 MM_SchedulingDelegate::isFirstPGCAfterGMP()
 {
@@ -797,6 +790,7 @@ MM_SchedulingDelegate::firstPGCAfterGMPCompleted()
 {
 	_didGMPCompleteSinceLastReclaim = false;
 }
+*/
 
 void
 MM_SchedulingDelegate::copyForwardCompleted(MM_EnvironmentVLHGC *env)
