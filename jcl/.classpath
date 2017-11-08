@@ -37,7 +37,7 @@
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.gpu/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/com.ibm.management/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.sharedclasses/share/classes"/>
-	<classpathentry excluding="**/module-info.java" kind="src" path="src/com.ibm.traceformat/share/classes"/>
+	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.traceformat/share/classes"/>
 	<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>

@@ -29,7 +29,7 @@ java.base
 openj9.cuda
 openj9.dataaccess
 openj9.sharedclasses
-com.ibm.traceformat
+openj9.traceformat
 jdk.attach
 openj9.jvm
 
