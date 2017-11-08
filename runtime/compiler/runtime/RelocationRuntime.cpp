@@ -510,7 +510,6 @@ TR_RelocationRuntime::prepareRelocateJITCodeAndData(J9VMThread* vmThread,
             newCodeStart = allocateSpaceInCodeCache(codeSize-sizeof(OMR::CodeCacheMethodHeader));
             if (newCodeStart)
                {
-               TR_ASSERT(_codeCache->isReserved(), "codeCache must be reserved"); // MCT
                newCodeStart = ((U_8*)newCodeStart) - sizeof(OMR::CodeCacheMethodHeader);
                // Before copying, memorize the real size of the block returned by the code cache manager
                // and fix it later
