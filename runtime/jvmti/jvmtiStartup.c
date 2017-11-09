@@ -120,40 +120,89 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 	switch(stage) {
 
 		case ALL_VM_ARGS_CONSUMED :
+		{
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			char optionsBuf[OPTIONSBUFF_LEN];
+			char* optionsPtr = (char*)optionsBuf;
+			UDATA buflen = OPTIONSBUFF_LEN;
+			IDATA option_rc = 0;
+
 			if (initializeJVMTI(vm) != JNI_OK) {
 				goto _error;
 			}
 
 			agentIndex = FIND_AND_CONSUME_ARG_FORWARD( STARTSWITH_MATCH, OPT_AGENTLIB_COLON, NULL);
 			while (agentIndex >= 0) {
-				char optionsBuf[OPTIONSBUFF_LEN];
-				char* optionsPtr = (char*)optionsBuf;
 				UDATA libraryLength;
 				char *options;
 				UDATA optionsLength;
 
-				COPY_OPTION_VALUE(agentIndex, ':', &optionsPtr, OPTIONSBUFF_LEN);
+				do {
+					option_rc = COPY_OPTION_VALUE(agentIndex, ':', &optionsPtr, buflen);
+					if (OPTION_BUFFER_OVERFLOW == option_rc) {
+						if (optionsPtr != (char*)optionsBuf) {
+							j9mem_free_memory(optionsPtr);
+							optionsPtr = NULL;
+						}
+						buflen *= 2;
+						optionsPtr = (char*)j9mem_allocate_memory(buflen, OMRMEM_CATEGORY_VM);
+						if (NULL == optionsPtr) {
+							goto _error;
+						}
+					}
+				} while (OPTION_BUFFER_OVERFLOW == option_rc);
+
 				parseLibraryAndOptions(optionsPtr, &libraryLength, &options, &optionsLength);
 				if (createAgentLibrary(vm, optionsPtr, libraryLength, options, optionsLength, TRUE, NULL) != JNI_OK) {
+					if (optionsPtr != (char*)optionsBuf) {
+						j9mem_free_memory(optionsPtr);
+						optionsPtr = NULL;
+					}
 					goto _error;
 				}
 				agentIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, OPT_AGENTLIB_COLON, NULL, agentIndex);
 			}
+			if (optionsPtr != (char*)optionsBuf) {
+				j9mem_free_memory(optionsPtr);
+				optionsPtr = NULL;
+			}
 
 			agentIndex = FIND_AND_CONSUME_ARG_FORWARD( STARTSWITH_MATCH, OPT_AGENTPATH_COLON, NULL);
+			optionsPtr = (char*)optionsBuf;
+			buflen = OPTIONSBUFF_LEN;
 			while (agentIndex >= 0) {
-				char optionsBuf[OPTIONSBUFF_LEN];
-				char* optionsPtr = (char*)optionsBuf;
 				UDATA libraryLength;
 				char *options;
 				UDATA optionsLength;
 
-				COPY_OPTION_VALUE(agentIndex, ':', &optionsPtr, OPTIONSBUFF_LEN);
+				do {
+					option_rc = COPY_OPTION_VALUE(agentIndex, ':', &optionsPtr, buflen);
+					if (OPTION_BUFFER_OVERFLOW == option_rc) {
+						if (optionsPtr != (char*)optionsBuf) {
+							j9mem_free_memory(optionsPtr);
+							optionsPtr = NULL;
+						}
+						buflen *= 2;
+						optionsPtr = (char*)j9mem_allocate_memory(buflen, OMRMEM_CATEGORY_VM);
+						if (NULL == optionsPtr) {
+							goto _error;
+						}
+					}
+				} while (OPTION_BUFFER_OVERFLOW == option_rc);
+
 				parseLibraryAndOptions(optionsPtr, &libraryLength, &options, &optionsLength);
 				if (createAgentLibrary(vm, optionsPtr, libraryLength, options, optionsLength, FALSE, NULL) != JNI_OK) {
+					if (optionsPtr != (char*)optionsBuf) {
+						j9mem_free_memory(optionsPtr);
+						optionsPtr = NULL;
+					}
 					goto _error;
 				}
 				agentIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, OPT_AGENTPATH_COLON, NULL, agentIndex);
+			}
+			if (optionsPtr != (char*)optionsBuf) {
+				j9mem_free_memory(optionsPtr);
+				optionsPtr = NULL;
 			}
 
 			/* -Xrun libraries that have an Agent_OnLoad are treated like -agentlib: */
@@ -165,6 +214,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			vm->loadAgentLibraryOnAttach = &loadAgentLibraryOnAttach;
 
 			break;
+		}
 
 		case JIT_INITIALIZED:
 			/* Register this module with trace */

@@ -1270,7 +1270,7 @@ public abstract class MethodHandle {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
-	protected MethodHandle getTarget() {
+	MethodHandle getTarget() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
@@ -1278,7 +1278,7 @@ public abstract class MethodHandle {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
-	public MethodHandle asTypeUncached(MethodType newType) {
+	MethodHandle asTypeUncached(MethodType newType) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
