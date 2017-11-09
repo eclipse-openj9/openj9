@@ -260,7 +260,7 @@
 		<jar jarfile="${DEST}/TestResources.jar" filesonly="true">
 			<fileset dir="${build_resource}" />
 		</jar>
-		<jar jarfile="${RESOURCES_DIR}/vmargs.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF">
+		<jar jarfile="${RESOURCES_DIR}/vmargs_${JAVA_VERSION}.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF">
 			<fileset dir="${build}" includes="org/openj9/test/vmArguments/*.class"/>
 		</jar>
 		<copy todir="${DEST}">
