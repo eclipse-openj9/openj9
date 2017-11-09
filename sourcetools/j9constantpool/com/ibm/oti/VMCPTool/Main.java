@@ -174,16 +174,18 @@ public class Main implements Constants {
 	private static final String optionRootDir = "-rootDir";
 	private static final String optionConfigDir = "-configDir";
 	private static final String optionOutputDir = "-outputDir";
+	private static final String optionCmakeCache = "-cmakeCache";
 	private static final String constantPool = "vmconstantpool.xml";
-	
+
 	private static String buildSpecId = null;
 	private static String jcls = null;
 	private static String configDirectory = null;
 	private static String rootDirectory = ".";
 	private static String outputDirectory = null;
+	private static String cmakeCache = null;
 
-	private static BuildSpec buildSpec;
-	private static FlagDefinitions flagDefs;
+
+	private static IFlagInfo flagInfo;
 	private static HashMap<String,JCLRuntimeFlag> runtimeFlagDefs; 
 
 	private static boolean parseOptions(String[] args) {
@@ -202,17 +204,52 @@ public class Main implements Constants {
 					buildSpecId = args[++i];
 				} else if (arg.equalsIgnoreCase(optionOutputDir)) {
 					outputDirectory = args[++i];
+				} else if (arg.equalsIgnoreCase(optionCmakeCache)) {
+					cmakeCache = args[++i];
+				} else {
+					System.err.printf("Unrecognized option '%s'\n", arg);
+					return false;
 				}
 			}
 		} catch (ArrayIndexOutOfBoundsException e) {
 			return false;
 		}
-		
-		return jcls != null && rootDirectory != null && configDirectory != null && buildSpecId != null;
+
+		boolean isValid = true;
+		if (jcls == null) {
+			System.err.printf("ERROR: required argument '%s' not given\n", optionJcls);
+			isValid = false;
+		}
+
+		if (rootDirectory == null) {
+			System.err.printf("ERROR: required argument '%s' not given\n", optionRootDir);
+			isValid = false;
+		}
+
+		if (cmakeCache == null ) {
+			if (configDirectory == null) {
+				System.err.printf("ERROR: required argument '%s' not given\n", optionConfigDir);
+				isValid = false;
+			}
+			if (buildSpecId == null) {
+				System.err.printf("ERROR: required argument '%s' not given\n", optionBuildSpecId);
+				isValid = false;
+			}
+		}
+
+		return isValid;
 	}
 	
 	private static void printHelp() {
-		System.err.println(Main.class.getName() + " " + optionRootDir + " <directory> " + optionConfigDir + " <directory> " +  optionOutputDir + " <directory> " + optionBuildSpecId + " <specId> " + optionJcls + " max,xtr,cldc11,...");
+		System.err.println(Main.class.getName() + ":");
+		System.err.println();
+		System.err.println("Usage:");
+
+		String commonOptStr = "\t" + optionRootDir + " <directory> [" +  optionOutputDir + " <directory>] ";
+		String trailingOptStr =  optionJcls + " max,xtr,cldc11,...";
+
+		System.err.println(commonOptStr + optionConfigDir + " <directory> " + optionBuildSpecId + "<specId> " + trailingOptStr);
+		System.err.println(commonOptStr + optionCmakeCache + " <cacheFile> " + trailingOptStr);
 	}
 
 	public static void main(String[] args) throws Throwable {
@@ -221,85 +258,25 @@ public class Main implements Constants {
 			System.exit(0);
 		}
 		
-		ObjectFactory factory = new ObjectFactory(new ConfigDirectory(configDirectory));
-		factory.initialize();
-		buildSpec = factory.getBuildSpec(buildSpecId);
-		flagDefs = factory.getFlagDefinitions();
-		
-		ConstantPool pool = parseConstantPool();
-	
+		if (cmakeCache != null) {
+			if (configDirectory != null) {
+				System.err.println("Ignoring option " + optionConfigDir);
+			}
+			if (buildSpecId != null) {
+				System.err.println("Ignoring option " + optionBuildSpecId);
+			}
+			flagInfo = new CmakeFlagInfo(cmakeCache);
+		} else {
+			flagInfo = new UmaFlagInfo(configDirectory, buildSpecId);
+		}
 
+		ConstantPool pool = parseConstantPool();
 		writeHeader(pool);
-		
+
 		StringTokenizer tokenizer = new StringTokenizer(jcls, ",");
 		while (tokenizer.hasMoreTokens()) {
-			writeDefinition(pool, tokenizer.nextToken(), getAllSetFlags());
+			writeDefinition(pool, tokenizer.nextToken(), flagInfo.getAllSetFlags());
 		}
-	}
-
-	// Stolen from com.ibm.j9.uma.configuration.ConfigurationImpl
-	// TODO note this is a big hack until we can convert module.xmls to use this new version of the flags.
-	private static String transformFlag(String oldFlag) {
-		if (!oldFlag.startsWith("J9VM_")) { 
-			return oldFlag;
-		}
-		
-		// hack some special cases in 
-		if ( oldFlag.equals("J9VM_IVE_JXE_OERELOCATOR")) return "ive_jxeOERelocator";
-		
-		String newFlag = oldFlag.substring(5); // trim off the J9VM_
-		int pos = newFlag.indexOf("_") + 1;
-		String flag = newFlag.substring(0, pos).toLowerCase();
-		boolean makeUpper = false;
-		while ( true ) {
-			int last = pos;
-			pos = newFlag.indexOf("_", last);
-			if ( pos < 0 ) {
-				if ( last >= newFlag.length() )	break;
-				else pos = newFlag.length();
-			}
-			if (makeUpper) {
-				flag += newFlag.substring(last, ++last).toUpperCase();
-			} else { 
-				makeUpper = true;
-			}
-			flag += newFlag.substring(last, pos).toLowerCase();
-			pos += 1;
-		}
-		return flag;
-	}
-
-	// Stolen from com.ibm.j9.uma.configuration.ConfigurationImpl
-	private static boolean isFlagValid(String flag) {
-		flag = transformFlag(flag);
-		if (flagDefs.getFlagDefinition(flag) == null ) {
-			return false;
-		}
-		return true;
-	}
-
-	// Stolen from com.ibm.j9.uma.configuration.ConfigurationImpl
-	private static boolean isFlagSet(String flagId) {
-		flagId = transformFlag(flagId);
-		if ( isFlagValid(flagId) ) {
-			Flag flag = buildSpec.getFlags().get(flagId);
-			if ( flag != null ) {
-				return flag.getState();
-			}
-		}
-		return false;
-	}
-
-	// Stolen from com.ibm.j9.uma.configuration.ConfigurationImpl
-	private static Set<String> getAllSetFlags() {
-		HashSet<String> allSetFlags = new HashSet<String>();
-		for( String flagId : buildSpec.getFlags().keySet() ) {
-			if ( isFlagSet(flagId) ) { 
-				allSetFlags.add(flagId);
-			}
-		}
-		
-		return allSetFlags;
 	}
 
 	private static File getOutputFile(String directory, String fileName) throws FileNotFoundException {
@@ -431,7 +408,7 @@ public class Main implements Constants {
 					String flagName = flagsNode.getTextContent();
 					
 					/* validate flags used in constantpool.xml  */
-					if (flagDefs.getFlagDefinition(flagName) == null) {
+					if (!flagInfo.isFlagValid(flagName)) {
 						System.err.println("Invalid flag used ->" + flagName);
 						System.exit(-1);
 					}
