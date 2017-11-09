@@ -43,7 +43,6 @@ DEPSUFF=.depend.mk
 AS_PATH?=as
 CC_PATH?=xlc_r
 CXX_PATH?=xlC_r
-ASPP_PATH?=cp
 SED_PATH?=sed
 PERL_PATH?=perl
 SHAREDLIB_PATH?=makeC++SharedLib_r
@@ -147,13 +146,13 @@ endif
 S_FLAGS+=$(S_FLAGS_EXTRA)
 
 #
-# Now setup ASPP
+# Now setup SPP
 #
-ASPP_CMD?=$(CC_PATH)
+SPP_CMD?=$(CC_PATH)
 
-ASPP_INCLUDES=$(PRODUCT_INCLUDES)
+SPP_INCLUDES=$(PRODUCT_INCLUDES)
 
-ASPP_DEFINES+=\
+SPP_DEFINES+=\
     $(PRODUCT_DEFINES) \
     $(HOST_DEFINES) \
     $(TARGET_DEFINES) \
@@ -162,17 +161,17 @@ ASPP_DEFINES+=\
     _XOPEN_SOURCE_EXTENDED=1 \
     _ALL_SOURCE \
     SUPPORTS_THREAD_LOCAL \
-    $(ASPP_DEFINES_EXTRA)
+    $(SPP_DEFINES_EXTRA)
 
 ifeq ($(BUILD_CONFIG),debug)
-    ASPP_FLAGS+=$(ASPP_FLAGS_DEBUG)
+    SPP_FLAGS+=$(SPP_FLAGS_DEBUG)
 endif
 
 ifeq ($(BUILD_CONFIG),prod)
-    ASPP_FLAGS+=$(ASPP_FLAGS_PROD)
+    SPP_FLAGS+=$(SPP_FLAGS_PROD)
 endif
     
-ASPP_FLAGS+=$(ASPP_FLAGS_EXTRA)
+SPP_FLAGS+=$(SPP_FLAGS_EXTRA)
 
 # Now setup IPP
 IPP_CMD?=$(SED_PATH)
@@ -186,9 +185,6 @@ ifeq ($(BUILD_CONFIG),prod)
 endif
 
 IPP_FLAGS+=$(IPP_FLAGS_EXTRA)
-
-# Now setup SPP
-SPP_CMD?=$(ASPP_PATH)
 
 #
 # Finally setup the linker
