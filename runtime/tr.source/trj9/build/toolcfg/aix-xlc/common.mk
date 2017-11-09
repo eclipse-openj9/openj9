@@ -187,9 +187,6 @@ endif
 
 IPP_FLAGS+=$(IPP_FLAGS_EXTRA)
 
-# Now setup SPP
-SPP_CMD?=$(ASPP_PATH)
-
 #
 # Finally setup the linker
 #
