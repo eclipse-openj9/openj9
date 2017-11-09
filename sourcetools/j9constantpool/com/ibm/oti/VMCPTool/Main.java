@@ -173,12 +173,14 @@ public class Main implements Constants {
 	private static final String optionJcls = "-jcls";
 	private static final String optionRootDir = "-rootDir";
 	private static final String optionConfigDir = "-configDir";
+	private static final String optionOutputDir = "-outputDir";
 	private static final String constantPool = "vmconstantpool.xml";
 	
 	private static String buildSpecId = null;
 	private static String jcls = null;
 	private static String configDirectory = null;
 	private static String rootDirectory = ".";
+	private static String outputDirectory = null;
 
 	private static BuildSpec buildSpec;
 	private static FlagDefinitions flagDefs;
@@ -198,6 +200,8 @@ public class Main implements Constants {
 					configDirectory = args[++i];
 				} else if (arg.equalsIgnoreCase(optionBuildSpecId)) {
 					buildSpecId = args[++i];
+				} else if (arg.equalsIgnoreCase(optionOutputDir)) {
+					outputDirectory = args[++i];
 				}
 			}
 		} catch (ArrayIndexOutOfBoundsException e) {
@@ -208,7 +212,7 @@ public class Main implements Constants {
 	}
 	
 	private static void printHelp() {
-		System.err.println(Main.class.getName() + " " + optionRootDir + " <directory> " + optionConfigDir + " <directory> " + optionBuildSpecId + " <specId> " + optionJcls + " max,xtr,cldc11,...");
+		System.err.println(Main.class.getName() + " " + optionRootDir + " <directory> " + optionConfigDir + " <directory> " +  optionOutputDir + " <directory> " + optionBuildSpecId + " <specId> " + optionJcls + " max,xtr,cldc11,...");
 	}
 
 	public static void main(String[] args) throws Throwable {
@@ -297,13 +301,22 @@ public class Main implements Constants {
 		
 		return allSetFlags;
 	}
-	
-	private static File getFile(String directory, String fileName) throws FileNotFoundException {
-		File dir = new File(rootDirectory, directory);
+
+	private static File getOutputFile(String directory, String fileName) throws FileNotFoundException {
+		File dir;
+		// If -outputDir was not set on commandline, default to outputting in the root directory
+		if (outputDirectory == null) {
+			dir = new File(rootDirectory, directory);
+		} else {
+			// Note: if -outputDir was specified we output all files in that directory (not in any sub directories)
+			// so we ignore the directory argument
+			dir = new File(outputDirectory);
+		}
+
 		File file = new File(dir, fileName);
 		return file;
 	}
-	
+
 	private static void printOn(PrintWriter out, String[] lines) {
 		for (int i = 0; i < lines.length; i++) {
 			out.println(lines[i]);
@@ -324,7 +337,7 @@ public class Main implements Constants {
 		out.flush();
 		out.close();
 		
-		writeToDisk(getFile("jcl", "j9vmconstantpool_" + jcl + ".c"), buffer);
+		writeToDisk(getOutputFile("jcl", "j9vmconstantpool_" + jcl + ".c"), buffer);
 	}
 	
 	private static void writeHeader(ConstantPool pool) throws Throwable {
@@ -367,7 +380,7 @@ public class Main implements Constants {
 
 		out.flush();
 		out.close();
-		writeToDisk(getFile("oti", "j9vmconstantpool.h"),buffer);
+		writeToDisk(getOutputFile("oti", "j9vmconstantpool.h"),buffer);
 	}
 
 	private static ConstantPool parseConstantPool() throws IOException {
