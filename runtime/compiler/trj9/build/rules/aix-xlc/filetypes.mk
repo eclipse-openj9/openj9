@@ -103,10 +103,12 @@ endef # DEF_RULE.ipp
 
 RULE.ipp=$(eval $(DEF_RULE.ipp))
 
-# Compile .aspp file into .ipp file
-define DEF_RULE.aspp
+#
+# Compile .spp file into .o file
+#
+define DEF_RULE.spp
 $(1).ipp: $(2) | jit_createdirs
-	$$(ASPP_CMD) $$(ASPP_FLAGS) $$(patsubst %,-D%,$$(ASPP_DEFINES)) $$(patsubst %,-I'%',$$(ASPP_INCLUDES)) -E $$< > $$@
+	$$(SPP_CMD) $$(SPP_FLAGS) $$(patsubst %,-D%,$$(SPP_DEFINES)) $$(patsubst %,-I'%',$$(SPP_INCLUDES)) -E $$< > $$@
 
 JIT_DIR_LIST+=$(dir $(1))
 
@@ -114,23 +116,6 @@ jit_cleanobjs::
 	rm -f $(1).ipp
 
 $(call RULE.ipp,$(1),$(1).ipp)
-endef
-
-RULE.aspp=$(eval $(DEF_RULE.aspp))
-
-#
-# Compile .spp file into .o file
-#
-define DEF_RULE.spp
-$(1).aspp: $(2) | jit_createdirs
-	$$(SPP_CMD) $$(SPP_FLAGS) $$< $$@
-
-JIT_DIR_LIST+=$(dir $(1))
-
-jit_cleanobjs::
-	rm -f $(1).aspp
-
-$(call RULE.aspp,$(1),$(1).aspp)
 endef # DEF_RULE.spp
 
 RULE.spp=$(eval $(DEF_RULE.spp))
