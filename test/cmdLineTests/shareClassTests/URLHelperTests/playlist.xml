@@ -36,7 +36,7 @@
 	$(CONVERT_TO_EBCDIC_CMD) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_HOME='$(JDK_HOME)' -DPATHSEP=$(Q)$(D)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DCPDL=$(Q)$(P)$(Q) -DSCMODE=210 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
-	-config $(Q)$(TEST_RESROOT)$(D)URLHelperTests_80.xml$(Q) \
+	-config $(Q)$(TEST_RESROOT)$(D)URLHelperTests_80.xml$(Q) -xids all,$(PLATFORM),$(JAVA_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
@@ -60,7 +60,7 @@
 	$(CONVERT_TO_EBCDIC_CMD) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_HOME='$(JDK_HOME)' -DPATHSEP=$(Q)$(D)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DCPDL=$(Q)$(P)$(Q) -DSCMODE=210 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
-	-config $(Q)$(TEST_RESROOT)$(D)URLHelperTests.xml$(Q) -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-config $(Q)$(TEST_RESROOT)$(D)URLHelperTests.xml$(Q) -xids all,$(PLATFORM),$(JAVA_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
