@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -389,19 +389,18 @@ void TR_CpuEntitlement::computeAndCacheCpuEntitlement()
    _numTargetCpu = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
    if (_numTargetCpu == 0)
       _numTargetCpu = 1; // some correction in case we get it wrong
-   uint32_t numTargetCpuEntitlement = _numTargetCpu * 100;
    if (isHypervisorPresent())
       {
       _guestCpuEntitlement = computeGuestCpuEntitlement();
       // If the number of target CPUs is smaller (bind the JVM to a subset of CPUs), use that value
-      if (numTargetCpuEntitlement < _guestCpuEntitlement || _guestCpuEntitlement <= 0)
-         _jvmCpuEntitlement = numTargetCpuEntitlement;
+      if (_numTargetCpu < _guestCpuEntitlement || _guestCpuEntitlement <= 0)
+         _jvmCpuEntitlement = _numTargetCpu * 100;
       else
          _jvmCpuEntitlement = _guestCpuEntitlement;
       }
    else
       {
-      _jvmCpuEntitlement = numTargetCpuEntitlement;
+      _jvmCpuEntitlement = _numTargetCpu * 100;
       }
    }
 

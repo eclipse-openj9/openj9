@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -187,12 +187,7 @@ struct TR_CpuEntitlement
 public:
    // The constructor cannot set all fields correctly because we have to make
    // sure te portlib is up and running
-   void init(J9JITConfig *jitConfig)
-      {
-      _hypervisorPresent = TR_maybe;
-      _jitConfig = jitConfig;
-      computeAndCacheCpuEntitlement();
-      }
+   void init(J9JITConfig *jitConfig) { _jitConfig = jitConfig; computeAndCacheCpuEntitlement();}
    bool isHypervisorPresent();
    void computeAndCacheCpuEntitlement(); // used during bootstrap and periodically in samplerThreadProc
    uint32_t getNumTargetCPUs()     const { return _numTargetCpu; }  // num CPUs the JVM is pinned to. Guaranteed >= 1
