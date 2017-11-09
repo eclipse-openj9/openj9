@@ -5644,13 +5644,16 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          }
       else if (details.isOrdinaryMethod()) // ordinary interpreted methods
          {
-         J9Method *method = details.getMethod();
-         isJNINativeMethodRequest = isJNINative(method);
-         if (method && async
-            && (getInvocationCount(method) == 0)           // this will filter out JNI natives
-            && !(details.getRomMethod()->modifiers & J9AccNative)) // Never change the extra field of a native method
+         if (!rpc) // If this is a remote compilation we don't need to modify the extra field
             {
-            setJ9MethodVMExtra(method, J9_JIT_QUEUED_FOR_COMPILATION);
+            J9Method *method = details.getMethod();
+            isJNINativeMethodRequest = isJNINative(method);
+            if (method && async
+               && (getInvocationCount(method) == 0)           // this will filter out JNI natives
+               && !(details.getRomMethod()->modifiers & J9AccNative)) // Never change the extra field of a native method
+               {
+               setJ9MethodVMExtra(method, J9_JIT_QUEUED_FOR_COMPILATION);
+               }
             }
          _intervalStats._numFirstTimeCompilationsInInterval++;
          _numQueuedFirstTimeCompilations++;
