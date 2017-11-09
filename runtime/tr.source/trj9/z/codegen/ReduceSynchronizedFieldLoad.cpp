@@ -246,7 +246,7 @@ ReduceSynchronizedFieldLoad::perform()
 
    if (cg->getS390ProcessorInfo()->supportsArch(TR_S390ProcessorInfo::TR_z196))
       {
-      if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad))
+      if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad) && cg->comp()->getMethodSymbol()->mayContainMonitors())
          {
          traceMsg(cg->comp(), "Performing ReduceSynchronizedFieldLoad\n");
 
