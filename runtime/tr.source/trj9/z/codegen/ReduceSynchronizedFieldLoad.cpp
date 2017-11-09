@@ -316,6 +316,16 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                         break;
                         }
 
+                     // When concurrent scavenge is enabled we need to load the object reference using a read barrier however
+                     // there is no guarded load alternative for the LPD instruction. As such this optimization cannot be carried
+                     // out for object reference loads under concurrent scavenge.
+                     if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && loadNode->getDataType().isAddress())
+                        {
+                        TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/read-barrier/%s", cg->comp()->signature()));
+                        
+                        break;
+                        }
+
                      int32_t lockWordOffset = static_cast<TR_J9VMBase*>(cg->comp()->fe())->getByteOffsetToLockword(static_cast<TR_OpaqueClassBlock*>(cg->getMonClass(monentNode)));
 
                      if (cg->comp()->getOption(TR_TraceCG))
@@ -396,10 +406,10 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
    {
    TR::PreorderNodeIterator iter(startTreeTop, cg->comp());
 
-   // First iterate though all the nodes from the start treetop until we reach the monitor provided so that all nodes
+   // First iterate through all the nodes from the start treetop until we reach the monitor provided so that all nodes
    // seen thus far would have already been visited, and hence we will not recurse into them in the subsequent for loop
    // since a reference was already seen. This enables us to carry out the reduce synchronized field load optimization
-   // even if there are sideeffect nodes within the monitored region - as long as those sideeffect nodes have been
+   // even if there are side-effect nodes within the monitored region - as long as those side-effect nodes have been
    // evaluated outside of the monitored region.
    for (; iter != monentTreeTop->getNextTreeTop(); ++iter)
       {
