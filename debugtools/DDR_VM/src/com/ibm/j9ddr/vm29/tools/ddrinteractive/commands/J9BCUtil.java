@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -644,11 +644,9 @@ public class J9BCUtil {
 		/* dump callsite data */
 		dumpCallSiteData(out, romClass);
 		
-		if (J9BuildFlags.interp_useSplitSideTables) {
-			/* dump split side tables */
-			dumpStaticSplitSideTable(out, romClass);
-			dumpSpecialSplitSideTable(out, romClass);
-		}
+		/* dump split side tables */
+		dumpStaticSplitSideTable(out, romClass);
+		dumpSpecialSplitSideTable(out, romClass);
 	}
 
 	private static void dumpCPShapeDescription(PrintStream out, J9ROMClassPointer romClass, long flags) throws CorruptDataException {
@@ -657,9 +655,7 @@ public class J9BCUtil {
 		long i, j, k, numberOfLongs;
 		char symbols[] = new char[] { '.', 'C', 'S', 'I', 'F', 'J', 'D', 'i', 's', 'v', 'x', 'y', 'z', 'T', 'H', 'A' };
 		
-		if (J9BuildFlags.interp_useSplitSideTables) {
-			symbols[(int)J9CPTYPE_UNUSED8] = '.';
-		}
+		symbols[(int)J9CPTYPE_UNUSED8] = '.';
 
 		numberOfLongs = (romClass.romConstantPoolCount().longValue() + J9ConstantPool.J9_CP_DESCRIPTIONS_PER_U32 - 1) / J9ConstantPool.J9_CP_DESCRIPTIONS_PER_U32;
 
@@ -995,7 +991,6 @@ public class J9BCUtil {
 								+ " " + J9UTF8Helper.stringValue(nameAndSig.signature()));
 					} else if ((shapeDesc == J9CPTYPE_INSTANCE_METHOD)
 								|| (shapeDesc == J9CPTYPE_STATIC_METHOD)
-								|| ((!J9BuildFlags.interp_useSplitSideTables) && (shapeDesc == J9CPTYPE_SHARED_METHOD))
 								|| (shapeDesc == J9CPTYPE_HANDLE_METHOD)
 								|| (shapeDesc == J9CPTYPE_INTERFACE_METHOD)) {
 						J9ROMMethodRefPointer romMethodRef = J9ROMMethodRefPointer.cast(item);

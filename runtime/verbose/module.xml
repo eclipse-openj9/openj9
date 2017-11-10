@@ -138,9 +138,7 @@
 			<vpath pattern="MethodMetaData.c" path="../tr.source/trj9/runtime" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</vpath>
-			<vpath pattern="ctsupport.c" path="j9jit_vm" augmentObjects="true">
-				<include-if condition="spec.flags.J9VM_INTERP_USE_SPLIT_SIDE_TABLES"/>
-			</vpath>
+			<vpath pattern="ctsupport.c" path="j9jit_vm" augmentObjects="true"/>
 		</vpaths>
 
 		<libraries>
