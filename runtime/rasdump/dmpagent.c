@@ -338,9 +338,9 @@ static const J9RASdumpSpec rasDumpSpecs[] =
 #endif
 		"Output file",
 		doHeapDump,
-		{ J9RAS_DUMP_ON_GP_FAULT | J9RAS_DUMP_ON_USER_SIGNAL,
-		  NULL,
-		  1, 0,
+		{ J9RAS_DUMP_ON_EXCEPTION_SYSTHROW,
+		  "java/lang/OutOfMemoryError",
+		  1, 4,
 		  "heapdump.%Y" "%m%d.%H" "%M" "%S.%pid.%seq.phd",
 		  "PHD",
 		  500,
