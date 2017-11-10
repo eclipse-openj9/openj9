@@ -4,5 +4,5 @@ NumberOfClassesToLoad0=2
 LoadClasses0=B,E
 NumberOfClassesToFind0=2
 FindClasses0=B,E
-Results0=true,true
+Results0=false,false
 BatchFileToRun=/bin/sh ./batchfiles/StaleClassPathTest5.sh
