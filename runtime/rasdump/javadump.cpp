@@ -73,6 +73,28 @@
 /* Safety margin for stack allocation of AVL tree for thread walk */
 #define STACK_SAFETY_MARGIN 25000
 
+/* macro for getting OS distribution detaiils */
+#define OPENJ9_REDHAT_STRING "Red Hat"
+#define OPENJ9_UBUNTU_STRING "Ubuntu"
+#define OPENJ9_SUSE_STRING "SUSE"
+
+
+#define OPENJ9_REDHAT_DISTRIBUTION 1
+#define OPENJ9_UBUNTU_DISTRIBUTION 2
+#define OPENJ9_SUSE_DISTRIBUTION 3
+
+#define OPENJ9_PROC_VERSION_FILE "/proc/version"
+#define OPENJ9_VERSION_INFO_SIZE   1000
+
+#define OPENJ9_REDHAT_OS_DISTRIBUTION_INFO_FILE "/etc/redhat-release"
+#define OPENJ9_UBUNTU_OS_DISTRIBUTION_INFO_FILE "/etc/os-release"
+#define OPENJ9_SUSE_OS_DISTRIBUTION_INFO_FILE "/etc/SuSE-release"
+#define OPENJ9_PRETTY_NAME  "PRETTY_NAME"
+
+
+
+
+
 /* Callback Function prototypes */
 UDATA writeFrameCallBack          (J9VMThread* vmThread, J9StackWalkState* state);
 UDATA writeExceptionFrameCallBack (J9VMThread* vmThread, void* userData, J9ROMClass* romClass, J9ROMMethod* romMethod, J9UTF8* sourceFile, UDATA lineNumber, J9ClassLoader* classLoader);
@@ -88,6 +110,42 @@ static jvmtiIterationControl spaceIteratorCallback  (J9JavaVM* vm, J9MM_IterateS
 static jvmtiIterationControl regionIteratorCallback (J9JavaVM* vm, J9MM_IterateRegionDescriptor* regionDescription, void* userData);
 static UDATA getObjectMonitorCount	(J9JavaVM *vm);
 static UDATA getAllocatedVMThreadCount (J9JavaVM *vm);
+
+
+/**
+ * This function is used to get the Redhat OS distribution details
+ * @param [out] OS Distribution Name
+ *
+ * @return returns 0 on success, any other -1 code on failure
+ */
+
+static int getRedhatDistributionInfo(char *strDistributionVersion);
+/**
+ * This function is used to get the SuSE OS distribution details
+ *@param [out] OS Distribution Name
+ *
+ * @return returns 0 on success, any other -1 code on failure
+ */
+
+static int getSuseDistributionInfo(char *strDistributionVersion);
+
+/**
+ * This function is used to get the Ubuntu OS distribution details
+ * @param [out] OS Distribution Name
+ *
+ * @return returns 0 on success, any other -1 code on failure
+ */
+
+static int getUbuntuDistributionInfo(char *strDistributionVersion);
+/**
+ * This function is used to get theOS distribution details
+ * @param [out] OS Distribution Name
+ *
+ * @return returns 0 on success, any other -1 code on failure
+ */
+
+static int getOsDistributionName(char *strOSdirstibution);
+
 
 /* sig_protect functions and handlers */
 extern "C" {
@@ -849,6 +907,9 @@ JavaCoreDumpWriter::writeProcessorSection(void)
 		"NULL           ================================\n"
 	);
 
+	char strOsDirstibution[OPENJ9_VERSION_INFO_SIZE] = "";
+    getOsDistributionName(strOsDirstibution);
+
 #ifdef J9VM_RAS_EYECATCHERS
 	/* Write the operating system description */
 	J9RAS* j9ras = _VirtualMachine->j9ras;
@@ -863,6 +924,7 @@ JavaCoreDumpWriter::writeProcessorSection(void)
 	const char* osName         = j9sysinfo_get_OS_type();
 	const char* osVersion      = j9sysinfo_get_OS_version();
 	const char* osArchitecture = j9sysinfo_get_CPU_architecture();
+
 	int         numberOfCpus   = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
 
 	if (osName == NULL) {
@@ -883,6 +945,11 @@ JavaCoreDumpWriter::writeProcessorSection(void)
 	_OutputStream.writeCharacters(osName);
 	_OutputStream.writeCharacters(" ");
 	_OutputStream.writeCharacters(osVersion);
+	_OutputStream.writeCharacters("\n");
+
+	/* Write the operating system distribution information */
+	_OutputStream.writeCharacters("2XHOSDISTRO     OS Distribution         : ");
+	_OutputStream.writeCharacters(strOsDirstibution);
 	_OutputStream.writeCharacters("\n");
 
 	/* Write the processor description */
@@ -5795,4 +5862,123 @@ getAllocatedVMThreadCount(J9JavaVM *vm)
 	}
 
 	return count;
+}
+
+/**
+ * This function is used to get the Redhat OS distribution details
+ * @param [out] OS Distribution Name
+ *
+ * @return returns 0 on success, any other -1 code on failure
+ */
+static int 
+getRedhatDistributionInfo(char *strDistributionVersion)
+{
+	int nSuccess = -1;
+	char strLine [OPENJ9_VERSION_INFO_SIZE] = "";
+	FILE *fpVersion = NULL;
+	/*read redhat Os distribution info file */
+	fpVersion = fopen(OPENJ9_REDHAT_OS_DISTRIBUTION_INFO_FILE, "r");
+	if (NULL != fpVersion) {
+		if(NULL != fgets(strLine, OPENJ9_VERSION_INFO_SIZE, fpVersion)) {
+			strcpy(strDistributionVersion, strLine);
+			fclose(fpVersion);
+			nSuccess = 0;
+		}
+	}
+	return nSuccess;
+}
+
+/**
+ * This function is used to get the SuSE OS distribution details
+ *@param [out] OS Distribution Name
+ *
+ * @return returns 0 on success, any other -1 code on failure
+ */
+static int 
+getSuseDistributionInfo(char *strDistributionVersion)
+{
+	int nSuccess = -1;
+	char strLine[OPENJ9_VERSION_INFO_SIZE] = "";
+	FILE *fpVersion = NULL;
+	/*read suse Os distribution info file */
+	fpVersion = fopen(OPENJ9_SUSE_OS_DISTRIBUTION_INFO_FILE, "r");
+	if (NULL != fpVersion) {
+		if(NULL != fgets(strLine, OPENJ9_VERSION_INFO_SIZE, fpVersion)) {
+			strcpy(strDistributionVersion, strLine);
+			fclose(fpVersion);
+			nSuccess = 0;
+		}
+	}
+    	return nSuccess;
+}
+/**
+ * This function is used to get the Ubuntu OS distribution details
+ * @param [out] OS Distribution Name
+ *
+ * @return returns 0 on success, any other -1 code on failure
+ */
+static int 
+getUbuntuDistributionInfo(char *strDistributionVersion)
+{
+	int nSuccess = -1;
+	char strLine[OPENJ9_VERSION_INFO_SIZE]="";
+	FILE *fpVersion=NULL;
+	fpVersion = fopen(OPENJ9_UBUNTU_OS_DISTRIBUTION_INFO_FILE, "r");
+	if (fpVersion!=NULL) {
+		while (NULL != fgets(strLine, OPENJ9_VERSION_INFO_SIZE, fpVersion)) {
+			if (NULL != strstr(strLine, OPENJ9_PRETTY_NAME) ) {
+				char *strTok = strtok(strLine, "PRETTY_NAME=");
+				strcpy(strDistributionVersion,strTok);
+			}
+		}
+		nSuccess =0;
+		fclose(fpVersion);
+	}
+	return nSuccess;
+}
+/**
+ * This function is used to get theOS distribution details
+ * @param [out] OS Distribution Name
+ *
+ * @return returns 0 on success, any other -1 code on failure
+ */
+static int 
+getOsDistributionName(char *strOSdirstibution)
+{
+	int nSuccess = -1;
+	int nDistributionType = 0;
+	FILE *fpVersion = NULL;
+	
+	strcpy(strOSdirstibution, "[not available]");
+	fpVersion = fopen(OPENJ9_PROC_VERSION_FILE, "r");
+	
+	if(NULL != fpVersion) {
+		char strVersion[OPENJ9_VERSION_INFO_SIZE] = "";
+		if(NULL != fgets(strVersion, OPENJ9_VERSION_INFO_SIZE, fpVersion)) {
+			/* Check the distribution type */
+			if (NULL != strstr(strVersion, OPENJ9_REDHAT_STRING)) {
+				nDistributionType = OPENJ9_REDHAT_DISTRIBUTION;
+			} else if (NULL != strstr(strVersion, OPENJ9_UBUNTU_STRING)){
+				nDistributionType = OPENJ9_UBUNTU_DISTRIBUTION;
+			} else if (strstr(strVersion,OPENJ9_SUSE_STRING)!=NULL) {
+				nDistributionType = OPENJ9_SUSE_DISTRIBUTION;
+			}
+		}
+   		/* read the full details of distribution now */
+		switch (nDistributionType) {
+			case OPENJ9_REDHAT_DISTRIBUTION:
+				nSuccess = getRedhatDistributionInfo(strOSdirstibution);
+			break;
+			case OPENJ9_UBUNTU_DISTRIBUTION:
+				nSuccess = getUbuntuDistributionInfo(strOSdirstibution);
+			break;
+			case OPENJ9_SUSE_DISTRIBUTION:
+				nSuccess = getSuseDistributionInfo(strOSdirstibution);
+			break;
+			default:
+			break;
+		}
+		fclose(fpVersion);
+	}
+	return nSuccess;
 }
