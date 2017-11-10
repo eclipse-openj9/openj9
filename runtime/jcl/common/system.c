@@ -476,8 +476,12 @@ Java_java_lang_System_startSNMPAgent(JNIEnv *env, jclass jlClass)
 	if (J9_ARE_ALL_BITS_SET(vm->jclFlags, J9_JCL_FLAG_COM_SUN_MANAGEMENT_PROP)) {
 		jclass smAClass = NULL;
 		jmethodID startAgent = NULL;
-
-		smAClass = (*env)->FindClass(env, "sun/management/Agent");
+		
+		if ((J2SE_VERSION(vm) >= J2SE_19) && (J2SE_SHAPE(vm) >= J2SE_SHAPE_B165)) {
+			smAClass = (*env)->FindClass(env, "jdk/internal/agent/Agent");
+		} else {
+			smAClass = (*env)->FindClass(env, "sun/management/Agent");
+		}
 		if (NULL != smAClass) {
 			startAgent = (*env)->GetStaticMethodID(env, smAClass, "startAgent", "()V");
 			if (NULL != startAgent) {
