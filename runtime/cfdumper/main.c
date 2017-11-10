@@ -142,16 +142,16 @@ static I_32 processAllFiles (char** files, U_32 flags);
 static void dumpStackMap (J9CfrAttributeStackMap * stackMap, J9CfrClassFile* classfile, U_32 tabLevel);
 static int parseCommandLine (int argc, char** argv, char** envp);
 static void dumpAnnotationElement (J9CfrClassFile* classfile, J9CfrAnnotationElement *element, U_32 tabLevel);
-static void sun_formatMethod (J9CfrClassFile* classfile, J9CfrMethod* method, char *formatString, IDATA length);
+static void sun_formatMethod (J9CfrClassFile* classfile, J9CfrMethod* method, char *formatString, IDATA length, U_32 flags);
 static I_32 processROMFile (char* requestedFile, U_32 flags);
 static BOOLEAN validateROMClassAddressRange (J9ROMClass *romClass, void *address, UDATA length, void *userData);
 static I_32 processROMClass (J9ROMClass* romClass, char* requestedFile, U_32 flags);
-static void dumpMethod (J9CfrClassFile* classfile, J9CfrMethod* method);
-static void sun_formatField (J9CfrClassFile* classfile, J9CfrField* field, char *formatString, IDATA length);
+static void dumpMethod (J9CfrClassFile* classfile, J9CfrMethod* method, U_32 flags);
+static void sun_formatField (J9CfrClassFile* classfile, J9CfrField* field, char *formatString, IDATA length, U_32 flags);
 static void printMethod (J9CfrClassFile* classfile, J9CfrMethod* method);
 static I_32 processFilesInZIP (char* zipFilename, char** files, U_32 flags);
 static I_32 processDirectory (char* dir, BOOLEAN recursive, U_32 flags);
-static void dumpField (J9CfrClassFile* classfile, J9CfrField* field);
+static void dumpField (J9CfrClassFile* classfile, J9CfrField* field, U_32 flags);
 static void j9_formatBytecode (J9ROMClass* romClass, J9ROMMethod* method, U_8* bcStart, U_8* bytes, U_8 bc, U_32 bytesLength, U_32 decode, char *formatString, IDATA length, U_32 flags);
 static void j9_formatBytecodes (J9ROMClass* romClass, J9ROMMethod* method, U_8* bytecodes, U_32 bytecodesLength, char *formatString, IDATA stringLength, U_32 flags);
 static void dumpHelpText ( J9PortLibrary *portLib, int argc, char **argv);
@@ -161,7 +161,7 @@ static void j9_formatClass (J9ROMClass* romClass, char *formatString, IDATA leng
 static J9ROMClass *translateClassBytes (U_8 * data, U_32 dataLength, char *requestedFile, U_32 flags);
 static void printDisassembledMethod (J9CfrClassFile* classfile, J9CfrMethod* method, BOOLEAN bigEndian, U_8* bytecodes, U_32 bytecodesLength);
 static void printDisassembledMethods (J9CfrClassFile *classfile);
-static void dumpClassFile (J9CfrClassFile* classfile);
+static void dumpClassFile (J9CfrClassFile* classfile, U_32 flags);
 static U_8 * dumpStackMapSlots (J9CfrClassFile* classfile, U_8 * slotData, U_16 slotCount);
 static I_32 processClassFile (J9CfrClassFile* classfile, U_32 dataLength, char* requestedFile, U_32 flags);
 static I_32 getBytes (const char* filename, U_8** dataHandle);
@@ -169,9 +169,9 @@ static void reportClassLoadError (J9CfrError* error, char* requestedFile);
 static void printField (J9CfrClassFile* classfile, J9CfrField* field);
 static J9CfrClassFile* loadClassFromBytes (U_8* data, U_32 dataLength, char* requestedFile, U_32 flags);
 static U_8* loadBytes (char* requestedFile, U_32* lengthReturn, U_32 flags);
-static void sun_formatClass (J9CfrClassFile* classfile, char *formatString, IDATA length);
+static void sun_formatClass (J9CfrClassFile* classfile, char *formatString, IDATA length, U_32 flags);
 static I_32 writeOutputFile (U_8 *fileData, U_32 length, char* filename, char *extension);
-static void dumpAttribute (J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_32 tabLevel);
+static void dumpAttribute (J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_32 tabLevel, U_32 flags);
 static I_32 convertToClassFilename(const char **files, char ***classFiles, I_32 *fileCount);
 static I_32 processFilesInJImage(J9JImage *jimage, char* jimageFileName, char** files, U_32 flags);
 static I_32 convertToJImageLocations(J9JImage *jimage, char **files, JImageMatchInfo ** output, I_32 *fileCount);
@@ -422,7 +422,7 @@ _end:
 	return result;
 }
 
-static void dumpClassFile(J9CfrClassFile* classfile)
+static void dumpClassFile(J9CfrClassFile* classfile, U_32 flags)
 {
 	U_32 i;
 	U_32 index;
@@ -433,7 +433,7 @@ static void dumpClassFile(J9CfrClassFile* classfile)
 	j9tty_printf( PORTLIB, "Version: %i.%i\n", classfile->majorVersion, classfile->minorVersion);
 	j9tty_printf( PORTLIB, "Constant Pool Size: %i\n", classfile->constantPoolCount);
 	j9tty_printf( PORTLIB, "Access Flags: 0x%X ( ", classfile->accessFlags);
-	printModifiers(PORTLIB, classfile->accessFlags, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_CLASS);
+	printModifiers(PORTLIB, classfile->accessFlags, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_CLASS, flags);
 	j9tty_printf( PORTLIB, " )\n");
 	index = classfile->constantPool[classfile->thisClass].slot1;
 	j9tty_printf( PORTLIB, "ThisClass: %i -> %s\n", classfile->thisClass, classfile->constantPool[index].bytes);
@@ -449,26 +449,26 @@ static void dumpClassFile(J9CfrClassFile* classfile)
 	j9tty_printf( PORTLIB, "Fields (%i):\n", classfile->fieldsCount);
 	for(i = 0; i < classfile->fieldsCount; i++)
 	{
-		dumpField(classfile, &(classfile->fields[i]));
+		dumpField(classfile, &(classfile->fields[i]), flags);
 		j9tty_printf( PORTLIB, "\n");
 	}
 	j9tty_printf( PORTLIB, "Methods (%i):\n", classfile->methodsCount);
 	for(i = 0; i < classfile->methodsCount; i++)
 	{
-		dumpMethod(classfile, &(classfile->methods[i]));
+		dumpMethod(classfile, &(classfile->methods[i]), flags);
 		j9tty_printf( PORTLIB, "\n");
 	}
 	j9tty_printf( PORTLIB, "Attributes (%i):\n", classfile->attributesCount);
 	for(i = 0; i < classfile->attributesCount; i++)
 	{
-		dumpAttribute(classfile, classfile->attributes[i], 1);
+		dumpAttribute(classfile, classfile->attributes[i], 1, flags);
 	}
 	j9tty_printf( PORTLIB, "\n");
 	return;
 }
 
 
-static void dumpField(J9CfrClassFile* classfile, J9CfrField* field)
+static void dumpField(J9CfrClassFile* classfile, J9CfrField* field, U_32 flags)
 {
 	U_32 i;
 
@@ -477,12 +477,12 @@ static void dumpField(J9CfrClassFile* classfile, J9CfrField* field)
 	j9tty_printf( PORTLIB, "  Name: %i -> %s\n", field->nameIndex, classfile->constantPool[field->nameIndex].bytes);
 	j9tty_printf( PORTLIB, "  Signature: %i -> %s\n", field->descriptorIndex, classfile->constantPool[field->descriptorIndex].bytes);
 	j9tty_printf( PORTLIB, "  Access Flags: 0x%X ( ", field->accessFlags);
-	printModifiers(PORTLIB, field->accessFlags, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_FIELD);
+	printModifiers(PORTLIB, field->accessFlags, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_FIELD, flags);
 	j9tty_printf( PORTLIB, " )\n");
 	j9tty_printf( PORTLIB, "  Attributes (%i):\n", field->attributesCount);
 	for(i = 0; i < field->attributesCount; i++)
 	{
-		dumpAttribute(classfile, field->attributes[i], 2);
+		dumpAttribute(classfile, field->attributes[i], 2, flags);
 	}
 	return;
 }
@@ -499,7 +499,7 @@ static void dumpRawData(char *message,	U_32 rawDataLength, U_8 *rawData) {
 }
 
 
-static void dumpMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
+static void dumpMethod(J9CfrClassFile* classfile, J9CfrMethod* method, U_32 flags)
 {
 	U_32 i;
 
@@ -508,18 +508,18 @@ static void dumpMethod(J9CfrClassFile* classfile, J9CfrMethod* method)
 	j9tty_printf( PORTLIB, "  Name: %i -> %s\n", method->nameIndex, classfile->constantPool[method->nameIndex].bytes);
 	j9tty_printf( PORTLIB, "  Signature: %i -> %s\n", method->descriptorIndex, classfile->constantPool[method->descriptorIndex].bytes);
 	j9tty_printf( PORTLIB, "  Access Flags: 0x%X ( ", method->accessFlags);
-	printModifiers(PORTLIB, method->accessFlags, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_METHOD);
+	printModifiers(PORTLIB, method->accessFlags, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_METHOD, flags);
 	j9tty_printf( PORTLIB, " )\n");
 	j9tty_printf( PORTLIB, "  Attributes (%i):\n", method->attributesCount);
 	for(i = 0; i < method->attributesCount; i++)
 	{
-		dumpAttribute(classfile, method->attributes[i], 2);
+		dumpAttribute(classfile, method->attributes[i], 2, flags);
 	}
 	return;
 }
 
 
-static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_32 tabLevel)
+static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_32 tabLevel, U_32 flags)
 {
 	U_16 index, index2;
 	J9CfrAttributeCode* code;
@@ -610,7 +610,7 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			for(i = 0; i < tabLevel + 1; i++) j9tty_printf( PORTLIB, "  ");
 			j9tty_printf( PORTLIB, "Attributes (%i):\n", code->attributesCount);
 			for(j = 0; j < code->attributesCount; j++)
-				dumpAttribute(classfile, code->attributes[j], tabLevel + 2);
+				dumpAttribute(classfile, code->attributes[j], tabLevel + 2, flags);
 			break;
 
 		case CFR_ATTRIBUTE_Exceptions:
@@ -655,7 +655,7 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 
 				for(j = 0; j < tabLevel + 2; j++) j9tty_printf( PORTLIB, "  ");
 				j9tty_printf( PORTLIB, "Inner Class Access Flags: 0x%X ( ", classes->classes[i].innerClassAccessFlags);
-				printModifiers(PORTLIB, classes->classes[i].innerClassAccessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS);
+				printModifiers(PORTLIB, classes->classes[i].innerClassAccessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS, flags);
 				j9tty_printf( PORTLIB, " )\n");
 			}
 			break;
@@ -814,7 +814,7 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 				if (0 != ((J9CfrAttributeMethodParameters *)attrib)->flags[i]) {
 					for(j = 0; j < maxLength - ((U_32)strlen((const char*)bytes)) + ((U_32)strlen("Name")); j++) j9tty_printf( PORTLIB, " ");
 					j9tty_printf( PORTLIB, "0x%x ( ", ((J9CfrAttributeMethodParameters *)attrib)->flags[i]);
-					printModifiers(PORTLIB, ((J9CfrAttributeMethodParameters *)attrib)->flags[i], ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHODPARAMETER);
+					printModifiers(PORTLIB, ((J9CfrAttributeMethodParameters *)attrib)->flags[i], ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHODPARAMETER, flags);
 					j9tty_printf( PORTLIB, " )\n");
 				} else {
 					j9tty_printf( PORTLIB, "\n");
@@ -2330,7 +2330,7 @@ static I_32 processClassFile(J9CfrClassFile* classfile, U_32 dataLength, char* r
 			break;
 
 		case ACTION_structure:
-			dumpClassFile(classfile);
+			dumpClassFile(classfile, flags);
 			break;
 
 		case ACTION_bytecodes:
@@ -2339,14 +2339,14 @@ static I_32 processClassFile(J9CfrClassFile* classfile, U_32 dataLength, char* r
 			break;
 
 		case ACTION_formatClass:
-			sun_formatClass(classfile, options.actionString, strlen(options.actionString));
+			sun_formatClass(classfile, options.actionString, strlen(options.actionString), flags);
 			j9tty_printf(PORTLIB, "\n");
 			break;
 
 		case ACTION_formatFields:
 			for(i = 0; i < classfile->fieldsCount; i++)
 			{
-				sun_formatField(classfile, &(classfile->fields[i]), options.actionString, strlen(options.actionString));
+				sun_formatField(classfile, &(classfile->fields[i]), options.actionString, strlen(options.actionString), flags);
 				j9tty_printf(PORTLIB, "\n");
 			}
 			break;
@@ -2354,7 +2354,7 @@ static I_32 processClassFile(J9CfrClassFile* classfile, U_32 dataLength, char* r
 		case ACTION_formatMethods:
 			for(i = 0; i < classfile->methodsCount; i++)
 			{
-				sun_formatMethod(classfile, &(classfile->methods[i]), options.actionString, strlen(options.actionString));
+				sun_formatMethod(classfile, &(classfile->methods[i]), options.actionString, strlen(options.actionString), flags);
 				j9tty_printf(PORTLIB, "\n");
 			}
 			break;
@@ -3039,7 +3039,7 @@ static I_32 processROMClass(J9ROMClass* romClass, char* requestedFile, U_32 flag
 			if (options.options & OPTION_dumpPreverifyData) {
 				newFlags |= BCT_DumpPreverifyData;
 			}
-			j9bcutil_dumpRomClass(romClass, PORTLIB, (J9TranslationBufferSet *)translationBuffers, newFlags);
+			j9bcutil_dumpRomClass(romClass, PORTLIB, (J9TranslationBufferSet *)translationBuffers, newFlags, flags);
 			break;
 
 		case ACTION_transformRomClass:
@@ -4083,7 +4083,7 @@ static void sun_formatBytecodes(J9CfrClassFile* classfile, J9CfrMethod* method, 
 			x			hex, lowercase
 			X			hex, uppercase
 */
-static void sun_formatClass(J9CfrClassFile* classfile, char *formatString, IDATA length)
+static void sun_formatClass(J9CfrClassFile* classfile, char *formatString, IDATA length, U_32 flags)
 {
 	U_16 cpIndex;
 	U_8* string;
@@ -4192,26 +4192,26 @@ static void sun_formatClass(J9CfrClassFile* classfile, char *formatString, IDATA
 						{
 							case 'd':
 								j9tty_printf(PORTLIB, "%i ( ", classfile->accessFlags);
-								printModifiers(PORTLIB, classfile->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS);
+								printModifiers(PORTLIB, classfile->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS, flags);
 								j9tty_printf( PORTLIB, " )");
 								break;
 
 							case 'x':
 								j9tty_printf(PORTLIB, "%08x ( ", classfile->accessFlags);
-								printModifiers(PORTLIB, classfile->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS);
+								printModifiers(PORTLIB, classfile->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS, flags);
 								j9tty_printf( PORTLIB, " )");
 								break;
 
 							case 'X':
 								j9tty_printf(PORTLIB, "%08X ( ", classfile->accessFlags);
-								printModifiers(PORTLIB, classfile->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS);
+								printModifiers(PORTLIB, classfile->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS, flags);
 								j9tty_printf( PORTLIB, " )");
 								break;
 
 							case '\0':
 							case 'a':
 							default:
-								printModifiers(PORTLIB, classfile->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS);
+								printModifiers(PORTLIB, classfile->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS, flags);
 								break;
 						}
 						modifier = '\0';
@@ -4265,7 +4265,7 @@ static void sun_formatClass(J9CfrClassFile* classfile, char *formatString, IDATA
 			x			hex, lowercase
 			X			hex, uppercase
 */
-static void sun_formatField(J9CfrClassFile* classfile, J9CfrField* field, char *formatString, IDATA length)
+static void sun_formatField(J9CfrClassFile* classfile, J9CfrField* field, char *formatString, IDATA length, U_32 flags)
 {
 	J9CfrConstantPoolInfo info;
 	U_16 cpIndex;
@@ -4437,26 +4437,26 @@ static void sun_formatField(J9CfrClassFile* classfile, J9CfrField* field, char *
 						{
 							case 'd':
 								j9tty_printf(PORTLIB, "%i ( ", field->accessFlags);
-								printModifiers(PORTLIB, field->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD);
+								printModifiers(PORTLIB, field->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD, flags);
 								j9tty_printf( PORTLIB, " )");
 								break;
 
 							case 'x':
 								j9tty_printf(PORTLIB, "%08x ( ", field->accessFlags);
-								printModifiers(PORTLIB, field->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD);
+								printModifiers(PORTLIB, field->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD, flags);
 								j9tty_printf( PORTLIB, " )");
 								break;
 
 							case 'X':
 								j9tty_printf(PORTLIB, "%08X ( ", field->accessFlags);
-								printModifiers(PORTLIB, field->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD);
+								printModifiers(PORTLIB, field->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD, flags);
 								j9tty_printf( PORTLIB, " )");
 								break;
 
 							case '\0':
 							case 'a':
 							default:
-								printModifiers(PORTLIB, field->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD);
+								printModifiers(PORTLIB, field->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD, flags);
 								break;
 						}
 						modifier = '\0';
@@ -4511,7 +4511,7 @@ static void sun_formatField(J9CfrClassFile* classfile, J9CfrField* field, char *
 			x			hex, lowercase
 			X			hex, uppercase
 */
-static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, char *formatString, IDATA length)
+static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, char *formatString, IDATA length, U_32 flags)
 {
 	J9CfrAttributeExceptions* exceptions;
 	U_8* string;
@@ -4736,26 +4736,26 @@ static void sun_formatMethod(J9CfrClassFile* classfile, J9CfrMethod* method, cha
 						{
 							case 'd':
 								j9tty_printf(PORTLIB, "%i ( ", method->accessFlags);
-								printModifiers(PORTLIB, method->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHOD);
+								printModifiers(PORTLIB, method->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHOD, flags);
 								j9tty_printf( PORTLIB, " )");
 								break;
 
 							case 'x':
 								j9tty_printf(PORTLIB, "%08x ( ", method->accessFlags);
-								printModifiers(PORTLIB, method->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHOD);
+								printModifiers(PORTLIB, method->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHOD, flags);
 								j9tty_printf( PORTLIB, " )");
 								break;
 
 							case 'X':
 								j9tty_printf(PORTLIB, "%08X ( ", method->accessFlags);
-								printModifiers(PORTLIB, method->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHOD);
+								printModifiers(PORTLIB, method->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHOD, flags);
 								j9tty_printf( PORTLIB, " )");
 								break;
 
 							case '\0':
 							case 'a':
 							default:
-								printModifiers(PORTLIB, method->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHOD);
+								printModifiers(PORTLIB, method->accessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHOD, flags);
 								break;
 						}
 						modifier = '\0';
@@ -4940,7 +4940,7 @@ static void j9_formatClass(J9ROMClass* romClass, char *formatString, IDATA lengt
 							case '\0':
 							case 'a':
 							default:
-								printModifiers(PORTLIB, romClass->modifiers, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_CLASS);
+								printModifiers(PORTLIB, romClass->modifiers, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_CLASS, flags);
 								break;
 						}
 						modifier = '\0';
@@ -5238,7 +5238,7 @@ static void j9_formatField(J9ROMClass* romClass, J9ROMFieldShape* field, char *f
 							case '\0':
 							case 'a':
 							default:
-								printModifiers(PORTLIB, field->modifiers, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_FIELD);
+								printModifiers(PORTLIB, field->modifiers, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_FIELD, flags);
 								break;
 						}
 						modifier = '\0';
@@ -5547,7 +5547,7 @@ static void j9_formatMethod(J9ROMClass* romClass, J9ROMMethod* method, char *for
 							case '\0':
 							case 'a':
 							default:
-								printModifiers(PORTLIB, method->modifiers, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_METHOD);
+								printModifiers(PORTLIB, method->modifiers, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_METHOD, flags);
 								break;
 						}
 						modifier = '\0';

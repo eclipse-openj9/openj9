@@ -28,6 +28,7 @@
  * the macro JBaload0getfield in bcnames.h.
  */
 #include "j9.h"
+#include "j2sever.h"
 #include "bcnames.h"
 #include "bcutil.h"
 #include "cfr.h"
@@ -495,7 +496,11 @@ ClassFileWriter::writeClassFile()
 	writeU16(_romClass->minorVersion);
 	writeU16(_romClass->majorVersion);
 	writeConstantPool();
-	writeU16(_romClass->modifiers & CFR_CLASS_ACCESS_MASK);
+	if (J2SE_VERSION(_javaVM) >= J2SE_19) {
+		writeU16(_romClass->modifiers & CFR_CLASS_ACCESS_MASK_9);
+	} else {
+		writeU16(_romClass->modifiers & CFR_CLASS_ACCESS_MASK);
+	}
 	writeU16(indexForClass(J9ROMCLASS_CLASSNAME(_romClass)));
 	/* Super class name is NULL only for java/lang/Object */
 	if (NULL != J9ROMCLASS_SUPERCLASSNAME(_romClass)) {

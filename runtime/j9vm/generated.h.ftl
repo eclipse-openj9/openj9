@@ -45,7 +45,7 @@ extern "C" {
  * makefile generation.
  *
  * DO NOT ADD PROTOTYPES MANUALLY, instead modify the table in:
- * VM_Redirector\redirector\forwarders.ftl
+ * redirector/forwarders.ftl
  *
  * Generated prototypes for all forwarded functions, see
  * redirector/forwarders.ftl for source data.

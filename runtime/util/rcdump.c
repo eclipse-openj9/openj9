@@ -81,8 +81,8 @@ static I_32 dumpNest (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpSimpleName (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpUTF ( J9UTF8 *utfString, J9PortLibrary *portLib, U_32 flags);
 static I_32 dumpSourceDebugExtension (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
-static I_32 dumpRomStaticField ( J9ROMFieldShape *romStatic, J9PortLibrary *portLib, U_32 flags);
-static I_32 dumpRomField ( J9ROMFieldShape *romField, J9PortLibrary *portLib, U_32 flags);
+static I_32 dumpRomStaticField ( J9ROMFieldShape *romStatic, J9PortLibrary *portLib, U_32 flags, U_32 vmFlags);
+static I_32 dumpRomField ( J9ROMFieldShape *romField, J9PortLibrary *portLib, U_32 flags, U_32 vmFlags);
 static I_32 dumpSourceFileName (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpCPShapeDescription ( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 static I_32 dumpCallSiteData ( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
@@ -93,7 +93,7 @@ static void printMethodExtendedModifiers(J9PortLibrary *portLib, U_32 modifiers)
 	Dump a printed representation of the specified @romClass to stdout.
 	Answer zero on success */
 
-IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9TranslationBufferSet *translationBuffers, U_32 flags)
+IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9TranslationBufferSet *translationBuffers, U_32 flags, U_32 vmFlags)
 {
 	U_32 i;
 	J9ROMFieldShape *currentField;
@@ -129,7 +129,7 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 	dumpEnclosingMethod(portLib, romClass, flags);
 
 	j9tty_printf( PORTLIB,  "Oracle Access Flags (0x%X): ", romClass->modifiers);
-	printModifiers(PORTLIB, romClass->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS);
+	printModifiers(PORTLIB, romClass->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS, vmFlags);
 	j9tty_printf( PORTLIB,  "\n");
 	j9tty_printf( PORTLIB,  "J9 Access Flags (0x%X): ", romClass->extraModifiers);
 	j9_printClassExtraModifiers(portLib, romClass->extraModifiers);
@@ -162,7 +162,7 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 		}
 		j9tty_printf( PORTLIB, "\n");
 		j9tty_printf( PORTLIB,  "Member Access Flags (0x%X): ", romClass->memberAccessFlags);
-		printModifiers(PORTLIB, romClass->memberAccessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS);
+		printModifiers(PORTLIB, romClass->memberAccessFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_CLASS, vmFlags);
 
 		j9tty_printf( PORTLIB,  "\n");
 	}
@@ -189,9 +189,9 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 	currentField = romFieldsStartDo(romClass, &state);
 	while (currentField != NULL) {
 		if (currentField->modifiers & J9AccStatic) {
-			dumpRomStaticField( currentField, portLib, flags);
+			dumpRomStaticField( currentField, portLib, flags, vmFlags);
 		} else {
-			dumpRomField( currentField, portLib, flags);
+			dumpRomField( currentField, portLib, flags, vmFlags);
 		}
 		j9tty_printf( PORTLIB, "\n");
 		currentField = romFieldsNextDo(&state);
@@ -203,7 +203,7 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 	currentMethod = (J9ROMMethod *) J9ROMCLASS_ROMMETHODS(romClass);
 
 	for(i = 0; i < romClass->romMethodCount; i++) {
-		j9bcutil_dumpRomMethod( currentMethod, romClass, portLib, flags, i );
+		j9bcutil_dumpRomMethod( currentMethod, romClass, portLib, flags, i, vmFlags);
 
 		j9tty_printf( PORTLIB, "\n");
 		currentMethod = nextROMMethod(currentMethod);
@@ -287,7 +287,7 @@ dumpNative( J9PortLibrary *portLib, J9ROMMethod * romMethod, U_32 flags)
 	Dump a printed representation of the specified @romField to stdout.
 	Answer zero on success */
 
-static I_32 dumpRomField( J9ROMFieldShape *romField, J9PortLibrary *portLib, U_32 flags)
+static I_32 dumpRomField( J9ROMFieldShape *romField, J9PortLibrary *portLib, U_32 flags, U_32 vmFlags)
 {
 	PORT_ACCESS_FROM_PORT( portLib );
 
@@ -300,7 +300,7 @@ static I_32 dumpRomField( J9ROMFieldShape *romField, J9PortLibrary *portLib, U_3
 	j9tty_printf( PORTLIB,  "\n");
 
 	j9tty_printf( PORTLIB, "  Access Flags (%X): ", romField->modifiers);
-	printModifiers(PORTLIB, romField->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD);
+	printModifiers(PORTLIB, romField->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD, vmFlags);
 	j9tty_printf( PORTLIB, "\n");
 	return BCT_ERR_NO_ERROR;
 }
@@ -311,7 +311,7 @@ static I_32 dumpRomField( J9ROMFieldShape *romField, J9PortLibrary *portLib, U_3
 	Dump a printed representation of the specified @romStatic to stdout.
 	Answer zero on success */
 
-static I_32 dumpRomStaticField( J9ROMFieldShape *romStatic, J9PortLibrary *portLib, U_32 flags)
+static I_32 dumpRomStaticField( J9ROMFieldShape *romStatic, J9PortLibrary *portLib, U_32 flags, U_32 vmFlags)
 {
 	PORT_ACCESS_FROM_PORT( portLib );
 
@@ -324,7 +324,7 @@ static I_32 dumpRomStaticField( J9ROMFieldShape *romStatic, J9PortLibrary *portL
 	j9tty_printf( PORTLIB,  "\n");
 
 	j9tty_printf( PORTLIB, "  Access Flags (%X): ", romStatic->modifiers);
-	printModifiers(PORTLIB, romStatic->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD);
+	printModifiers(PORTLIB, romStatic->modifiers, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_FIELD, vmFlags);
 	j9tty_printf( PORTLIB, "\n");
 
 	return BCT_ERR_NO_ERROR;
@@ -866,7 +866,7 @@ dumpSimpleName(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 	Dump a printed representation of the specified @romMethod to stdout.
 	Answer zero on success */
 
-I_32 j9bcutil_dumpRomMethod( J9ROMMethod *romMethod, J9ROMClass *romClass, J9PortLibrary *portLib, U_32 flags, U_32 methodIndex)
+I_32 j9bcutil_dumpRomMethod( J9ROMMethod *romMethod, J9ROMClass *romClass, J9PortLibrary *portLib, U_32 flags, U_32 methodIndex, U_32 vmFlags)
 {
 	I_32 i;
 	J9SRP *currentThrowName;
@@ -884,7 +884,7 @@ I_32 j9bcutil_dumpRomMethod( J9ROMMethod *romMethod, J9ROMClass *romClass, J9Por
 	j9tty_printf( PORTLIB,  "\n");
 
 	j9tty_printf( PORTLIB, "  Access Flags (%X): ", romMethod->modifiers);
-	printModifiers(PORTLIB, (U_32)romMethod->modifiers, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_METHOD);
+	printModifiers(PORTLIB, (U_32)romMethod->modifiers, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_METHOD, vmFlags);
 	j9tty_printf( PORTLIB,  "\n");
 
 	j9tty_printf( PORTLIB, "  Extended modfiers (%X): ", getExtendedModifiersDataFromROMMethod(romMethod));
@@ -945,7 +945,7 @@ I_32 j9bcutil_dumpRomMethod( J9ROMMethod *romMethod, J9ROMClass *romClass, J9Por
 				dumpUTF( parameterNameUTF8, portLib, 0);
 			}
 			j9tty_printf( PORTLIB, "    0x%x ( ", parameters[i].flags);
-			printModifiers(PORTLIB, parameters[i].flags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHODPARAMETER);
+			printModifiers(PORTLIB, parameters[i].flags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHODPARAMETER, vmFlags);
 			j9tty_printf( PORTLIB, " )\n");
 		}
 		j9tty_printf( PORTLIB, "\n");
@@ -1045,14 +1045,15 @@ dumpModifierWord(J9PortLibrary *portLib, U_32 modifiers, J9ModifierInfo *modInfo
 }
 
 void
-printModifiers(J9PortLibrary *portLib, U_32 modifiers, modifierScope modScope, modifierSource modifierSrc)
+printModifiers(J9PortLibrary *portLib, U_32 modifiers, modifierScope modScope, modifierSource modifierSrc, U_32 vmFlags)
 {
+	U_32 version = vmFlags & BCT_MajorClassFileVersionMask;
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	switch (modifierSrc)
 	{
 		case MODIFIERSOURCE_CLASS :
-			modifiers &= CFR_CLASS_ACCESS_MASK;
+			modifiers &= (version >= BCT_Java9MajorVersionShifted) ? CFR_CLASS_ACCESS_MASK_9 : CFR_CLASS_ACCESS_MASK;
 			break;
 
 		case MODIFIERSOURCE_METHOD :
