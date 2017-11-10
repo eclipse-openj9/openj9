@@ -404,25 +404,19 @@ fixReturns(UDATA *scratch, U_8 * map, J9ROMClass * romClass, J9ROMMethod * romMe
 			case JBinvokehandlegeneric:
 			case JBinvokevirtual:
 			case JBinvokespecial:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 			case JBinvokespecialsplit:
-#endif  /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			case JBinvokeinterface:
 				depth--;
 			case JBinvokedynamic:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 			case JBinvokestaticsplit:
-#endif  /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			case JBinvokestatic: {
 				index = PARAM_16(bcIndex, 1);
-				
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
+
 				if (JBinvokestaticsplit == bc) {
 					index = *(U_16 *)(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(romClass) + index);
 				} else if (JBinvokespecialsplit == bc) {
 					index = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(romClass) + index);
 				}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				if (bc == JBinvokedynamic) {
 					/* TODO 3 byte index */
 					utf8Signature = (J9UTF8 *) (J9ROMNAMEANDSIGNATURE_SIGNATURE(SRP_PTR_GET(callSiteData + index, J9ROMNameAndSignature*)));

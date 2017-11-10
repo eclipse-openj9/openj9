@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -442,12 +442,9 @@ IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 		case JBinvokeinterface:
 		case JBinvokehandle:
 		case JBinvokehandlegeneric:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		case JBinvokestaticsplit:
 		case JBinvokespecialsplit:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			_GETNEXT_U16(index, bcIndex);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)			
 			if (JBinvokestaticsplit == bc) {
 				U_16 *splitTable = J9ROMCLASS_STATICSPLITMETHODREFINDEXES(romClass);
 				index = splitTable[index];
@@ -455,7 +452,6 @@ IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 				U_16 *splitTable = J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(romClass);
 				index = splitTable[index];
 			}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			info = &constantPool[index];
 			outputFunction(userData, "%i ", index);
 			DUMP_UTF(J9ROMCLASSREF_NAME((J9ROMClassRef *) &constantPool[((J9ROMMethodRef *) info)->classRefCPIndex]));	/* dump declaringClassName */

@@ -111,13 +111,11 @@ public:
 	{
 		virtual void visitCallSite(U_16 nameAndSignatureCfrCPIndex, U_16 bootstrapMethodIndex) = 0;
 	};
-	
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
+
 	struct SplitEntryVisitor
 	{
 		virtual void visitSplitEntry(U_16 cpIndex) = 0;
 	};
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	ConstantPoolMap(BufferManager *bufferManager, ROMClassCreationContext *context);
 	~ConstantPoolMap();
@@ -150,7 +148,6 @@ public:
 		}
 	}
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	void staticSplitEntriesDo(SplitEntryVisitor *visitor)
 	{
 		for (U_16 i = 0; i < _staticSplitEntryCount; i++) {
@@ -164,7 +161,6 @@ public:
 			visitor->visitSplitEntry(_specialSplitEntries[i]);
 		}
 	}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	U_32 getMethodTypeCount() const { return _methodTypeCount; }
 	U_32 getVarHandleMethodTypeCount() const { return _varHandleMethodTypeCount; }
@@ -173,10 +169,8 @@ public:
 	U_32 getCallSiteCount() const { return _callSiteCount; }
 	U_16 getRAMConstantPoolCount() const { return _ramConstantPoolCount; }
 	U_16 getROMConstantPoolCount() const { return _romConstantPoolCount; }
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	U_16 getStaticSplitEntryCount() const { return _staticSplitEntryCount; }
 	U_16 getSpecialSplitEntryCount() const { return _specialSplitEntryCount; }
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	U_16 getROMClassCPIndex(U_16 cfrCPIndex, UDATA splitType) const
 	{
@@ -197,10 +191,8 @@ public:
 		return romClassCPIndex + index;
 	}
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	U_16 getStaticSplitTableIndex(U_16 cfrCPIndex) { return _constantPoolEntries[cfrCPIndex].staticSplitTableIndex; }
 	U_16 getSpecialSplitTableIndex(U_16 cfrCPIndex) { return _constantPoolEntries[cfrCPIndex].specialSplitTableIndex; }
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	void mark(U_16 cfrCPIndex) { _constantPoolEntries[cfrCPIndex].isReferenced = true; }
 	void mark(U_16 cfrCPIndex, UDATA useType)
@@ -222,7 +214,6 @@ public:
 	bool isUTF8ConstantReferenced(U_16 cfrCPIndex) const { return isMarked(cfrCPIndex); }
 	bool isNATConstantReferenced(U_16 cfrCPIndex)  const { return isMarked(cfrCPIndex); }
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	bool isStaticSplit(U_16 cfrCPIndex) const
 	{
 		/* A CP index needs to be added to static split side table if any of the following is true:
@@ -252,7 +243,6 @@ public:
 
 	bool hasStaticSplitTable() const { return _staticSplitEntryCount != 0; }
 	bool hasSpecialSplitTable() const { return _specialSplitEntryCount != 0; }
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	bool hasCallSites() const { return 0 != _callSiteCount; }
 	bool hasVarHandleMethodRefs() const { return 0 != _varHandleMethodTypeCount; }
@@ -308,15 +298,10 @@ private:
 		SPLIT1 = 0,
 		SPLIT2 = 1,
 		SPLIT3 = 2,
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		SPLIT4 = 3,
 		SPLIT5 = 4,
 		/* SPLIT_FLAG_COUNT is the number of possible split types. */
 		SPLIT_FLAG_COUNT = 5
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-		/* SPLIT_FLAG_COUNT is the number of possible split types. */
-		SPLIT_FLAG_COUNT = 3
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	};
 
 	struct ConstantPoolEntry
@@ -324,10 +309,8 @@ private:
 		/* If callSiteReferenceCount > 0 then romCPIndexes[0] is the Call Site base index for this entry. */
 		U_32 callSiteReferenceCount;
 		U_16 currentCallSiteIndex;
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		U_16 staticSplitTableIndex; /* maps this cpIndex to J9ROMClass.staticSplitMethodRefIndexes */
-		U_16 specialSplitTableIndex; /* maps this cpIndex to J9ROMClass.specialSplitMethodRefIndexes */		
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
+		U_16 specialSplitTableIndex; /* maps this cpIndex to J9ROMClass.specialSplitMethodRefIndexes */
 		U_16 romCPIndex;
 		bool isUsedBy[SPLIT_FLAG_COUNT];
 		bool isReferenced;
@@ -341,20 +324,16 @@ private:
 	ConstantPoolEntry *_constantPoolEntries;
 	U_16 *_romConstantPoolEntries;
 	U_8 *_romConstantPoolTypes;
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	U_16 *_staticSplitEntries;
 	U_16 *_specialSplitEntries;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	U_32 _methodTypeCount;
 	U_16 _varHandleMethodTypeCount;
 	U_16 *_varHandleMethodTypeLookupTable;
 	U_32 _callSiteCount;
 	U_16 _ramConstantPoolCount;
 	U_16 _romConstantPoolCount;
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)	
 	U_16 _staticSplitEntryCount;
 	U_16 _specialSplitEntryCount;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	BuildResult _buildResult;
 
 public:
@@ -369,21 +348,12 @@ public:
 		PUT_FIELD = SPLIT1,
 		GET_FIELD = SPLIT1,
 		NEW = SPLIT1,
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		INVOKE_HANDLEGENERIC = SPLIT5,
 		INVOKE_HANDLEEXACT = SPLIT5,
 		INVOKE_STATIC = SPLIT4,
 		INVOKE_SPECIAL = SPLIT3,
 		INVOKE_VIRTUAL = SPLIT2,
 		INVOKE_INTERFACE = SPLIT1,
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-		INVOKE_HANDLEGENERIC = SPLIT3,
-		INVOKE_HANDLEEXACT = SPLIT3,
-		INVOKE_INTERFACE = SPLIT1,
-		INVOKE_SPECIAL = SPLIT2,
-		INVOKE_VIRTUAL = SPLIT2,
-		INVOKE_STATIC = SPLIT1,
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		ANEW_ARRAY = SPLIT1,
 		CHECK_CAST = SPLIT1,
 		INSTANCE_OF = SPLIT1,

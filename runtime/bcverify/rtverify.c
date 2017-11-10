@@ -1521,13 +1521,11 @@ _illegalPrimitiveReturn:
 				bc = JBinvokeinterface;
 			}
 			index = PARAM_16(bcIndex, 1);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 			if (JBinvokestaticsplit == bc) {
 				index = *(U_16 *)(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(romClass) + index);
 			} else if (JBinvokespecialsplit == bc) {
 				index = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(romClass) + index);
 			}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			info = &constantPool[index];
 			utf8string = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) info))));
 			cpIndex = ((J9ROMMethodRef *) info)->classRefCPIndex;
@@ -1553,18 +1551,14 @@ _illegalPrimitiveReturn:
 			}
 			
 			if ((JBinvokestatic != bc)
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 				&& (JBinvokestaticsplit != bc)
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			) {
 				IDATA reasonCode = 0;
 
 				type = POP;		/* Remove the receiver from the stack */
 				switch (bc) {
 				case JBinvokespecial:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 				case JBinvokespecialsplit:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 					CHECK_STACK_UNDERFLOW;
 					/* cannot use isInitMethod here b/c invokespecial may be invoking a different <init> method then the one we are in */
 					if (J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) info)))[0] == '<') {

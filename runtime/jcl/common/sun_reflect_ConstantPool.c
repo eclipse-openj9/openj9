@@ -211,20 +211,6 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 			J9Class *cpClass = J9CLASS_FROMCPINTERNALRAMCLASS(vmThread, constantPoolOop);
 			J9ConstantPool *constantPool = J9_CP_FROM_CLASS(cpClass);
 			switch (cpType) {
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-			case J9CPTYPE_SHARED_METHOD:
-				/* Check for resolved static/special first, then try to resolve as virtual, then static, then special */
-				method = ((J9RAMMethodRef *) ramConstantRef)->method;
-				if ((NULL == method) || (NULL == method->constantPool)) {
-					if (0 == vmFunctions->resolveVirtualMethodRef(vmThread, constantPool, cpIndex, resolveFlags, &method)) {
-						method = vmFunctions->resolveStaticMethodRef(vmThread, constantPool, cpIndex, resolveFlags);
-					}
-					if (NULL == method) {
-						method = vmFunctions->resolveSpecialMethodRef(vmThread, constantPool, cpIndex, resolveFlags);
-					}
-				}
-				break;
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			case J9CPTYPE_HANDLE_METHOD: /* fall through */
 			case J9CPTYPE_INSTANCE_METHOD:
 				/* Check for resolved special first, then try to resolve as virtual, then special and then static */
@@ -234,7 +220,6 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 						clearException(vmThread);
 						method = vmFunctions->resolveSpecialMethodRef(vmThread, constantPool, cpIndex, resolveFlags);
 					}
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 					if (NULL == method) {
 						clearException(vmThread);
 						/* Do not update the cp entry for type J9CPTYPE_INSTANCE_METHOD when resolving the method ref as
@@ -244,7 +229,6 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 						 */
 						method = vmFunctions->resolveStaticMethodRefInto(vmThread, constantPool, cpIndex, resolveFlags, NULL);
 					}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				}
 				break;
 			case J9CPTYPE_STATIC_METHOD:
@@ -254,9 +238,7 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 					method = vmFunctions->resolveStaticMethodRef(vmThread, constantPool, cpIndex, resolveFlags);
 					if (NULL == method) {
 						clearException(vmThread);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 						vmFunctions->resolveVirtualMethodRef(vmThread, constantPool, cpIndex, resolveFlags, &method);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 					}
 				}
 				break;
@@ -555,9 +537,6 @@ Java_sun_reflect_ConstantPool_getMemberRefInfoAt0(JNIEnv *env, jobject unusedObj
 			U_32 classRefCPIndex = 0;
 			J9ROMNameAndSignature *nameAndSignature = NULL;
 			switch (cpType) {
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-			case J9CPTYPE_SHARED_METHOD: /* fall thru */
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			case J9CPTYPE_HANDLE_METHOD: /* fall thru */
 			case J9CPTYPE_INSTANCE_METHOD: /* fall thru */
 			case J9CPTYPE_STATIC_METHOD: /* fall thru */

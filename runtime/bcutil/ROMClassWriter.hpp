@@ -138,10 +138,8 @@ private:
 	void writeOptionalInfo(Cursor *cursor);
 	void writeCallSiteData(Cursor *cursor, bool markAndCountOnly);
 	void writeVarHandleMethodTypeLookupTable(Cursor *cursor, bool markAndCountOnly);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	void writeStaticSplitTable(Cursor *cursor, bool markAndCountOnly);
 	void writeSpecialSplitTable(Cursor *cursor, bool markAndCountOnly);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	void writeByteCodes(Cursor *cursor, ClassFileOracle::MethodIterator *methodIterator);
 	U_32 computeNativeSignatureSize(U_8 *methodDescriptor);
 	void writeNativeSignature(Cursor *cursor, U_8 *methodDescriptor, U_8 nativeArgCount);
@@ -171,10 +169,8 @@ private:
 	UDATA _typeAnnotationInfoSRPKey;
 	UDATA _callSiteDataSRPKey;	
 	UDATA _varHandleMethodTypeLookupTableSRPKey;
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)	
 	UDATA _staticSplitTableSRPKey;
 	UDATA _specialSplitTableSRPKey;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 };
 
 #endif /* ROMCLASSWRITER_HPP_ */

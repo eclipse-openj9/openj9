@@ -1840,14 +1840,6 @@ done:
 		return runMethodCompiled;
 	}
 
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-	VMINLINE VM_BytecodeAction
-	initialSharedMethod(REGISTER_ARGS_LIST)
-	{
-		return (JBinvokestatic == *_pc) ? initialStaticMethod(REGISTER_ARGS) : initialSpecialMethod(REGISTER_ARGS);
-	}
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-
 	VMINLINE VM_BytecodeAction
 	initialStaticMethod(REGISTER_ARGS_LIST)
 	{
@@ -6440,7 +6432,6 @@ exit:
 		return rc;
 	}
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	VMINLINE VM_BytecodeAction
 	invokespecialsplit(REGISTER_ARGS_LIST)
 	{
@@ -6474,7 +6465,6 @@ exit:
 		}
 		return rc;
 	}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	VMINLINE VM_BytecodeAction
 	invokestatic(REGISTER_ARGS_LIST)
@@ -6486,7 +6476,6 @@ exit:
 		return GOTO_RUN_METHOD;
 	}
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	VMINLINE VM_BytecodeAction
 	invokestaticsplit(REGISTER_ARGS_LIST)
 	{
@@ -6517,7 +6506,6 @@ exit:
 		}
 		return rc;
 	}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	VMINLINE VM_BytecodeAction
 	invokeinterfaceOffset(REGISTER_ARGS_LIST, UDATA offset)
@@ -8281,13 +8269,8 @@ public:
 		JUMP_TABLE_ENTRY(JBinvokeinterface2),
 		JUMP_TABLE_ENTRY(JBinvokehandle),
 		JUMP_TABLE_ENTRY(JBinvokehandlegeneric),
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		JUMP_TABLE_ENTRY(JBinvokestaticsplit),
 		JUMP_TABLE_ENTRY(JBinvokespecialsplit),
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
@@ -8313,9 +8296,6 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_STATIC),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_SPECIAL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL),
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_SHARED),
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_UNSATISFIED_OR_ABSTRACT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_COUNT_NON_SYNC),
@@ -8727,10 +8707,6 @@ runMethod: {
 		PERFORM_ACTION(initialSpecialMethod(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL):
 		PERFORM_ACTION(initialVirtualMethod(REGISTER_ARGS));
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_SHARED):
-		PERFORM_ACTION(initialSharedMethod(REGISTER_ARGS));
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_UNSATISFIED_OR_ABSTRACT):
 		PERFORM_ACTION(throwUnsatisfiedLinkOrAbstractMethodError(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT):
@@ -9769,14 +9745,12 @@ executeBytecodeFromLocal:
 		JUMP_TARGET(JBinvokehandlegeneric):
 			SINGLE_STEP();
 			PERFORM_ACTION(invokehandlegeneric(REGISTER_ARGS));
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		JUMP_TARGET(JBinvokestaticsplit):
 			SINGLE_STEP();
 			PERFORM_ACTION(invokestaticsplit(REGISTER_ARGS));
 		JUMP_TARGET(JBinvokespecialsplit):
 			SINGLE_STEP();
 			PERFORM_ACTION(invokespecialsplit(REGISTER_ARGS));
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		JUMP_TARGET(JBretFromNative0):
 			/* No single step for this bytecode */
 			PERFORM_ACTION(retFromNative0(REGISTER_ARGS));
