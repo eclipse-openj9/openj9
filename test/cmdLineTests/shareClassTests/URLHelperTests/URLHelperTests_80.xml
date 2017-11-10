@@ -63,6 +63,7 @@
 	
 	<test id="destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -81,6 +82,7 @@
 	
 	<test id="destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -98,6 +100,7 @@
 	
 	<test id="destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -116,6 +119,7 @@
 	
 	<test id="destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -134,6 +138,7 @@
 	
 	<test id="destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -152,6 +157,7 @@
 	
 	<test id="destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -169,6 +175,7 @@
 	
 	<test id="destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -186,6 +193,7 @@
 	
 	<test id="destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -221,6 +229,7 @@
 	
 	<test id="destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -238,6 +247,7 @@
 	
 	<test id="destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
@@ -255,6 +265,7 @@
 	
 	<test id="destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
