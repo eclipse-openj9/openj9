@@ -322,6 +322,170 @@ static BOOLEAN librariesLoaded(void);
 #define LD_ENV_PATH "LIBPATH"
 #endif /* defined(J9ZTPF) */
 
+#define J9_SIG_ERR -1
+
+#define J9_PRE_DEFINED_HANDLER_CHECK 2
+#define J9_OLDHANDLER_SAME_AS_NEWHANDLER 2
+
+#define J9_SIG_PREFIX "SIG"
+
+/* Chosen based upon signal names listed in signalMap below. */
+#define J9_SIGNAME_BUFFER_LENGTH 16
+
+static void dummySignalHandler(jint sigNum);
+static BOOLEAN isSignalSpecial(jint sigNum);
+static BOOLEAN isSignalUsedByVM(jint sigNum);
+
+typedef struct {
+	const char *signalName;
+	jint signalValue;
+} J9SignalMapping;
+
+#if defined(WIN32)
+#define J9_SIGNAL_MAP_ENTRY(name, value) { name, value }
+#else /* defined(WIN32) */
+#define J9_SIGNAL_MAP_ENTRY(name, value) { "SIG" name, value }
+#endif /* defined(WIN32) */
+
+static const J9SignalMapping signalMap[] = {
+#if defined(SIGABRT)
+	J9_SIGNAL_MAP_ENTRY("ABRT", SIGABRT),
+#endif /* defined(SIGABRT) */
+#if defined(SIGALRM)
+	J9_SIGNAL_MAP_ENTRY("ALRM", SIGALRM),
+#endif /* defined(SIGALRM) */
+#if defined(SIGBREAK)
+	J9_SIGNAL_MAP_ENTRY("BREAK", SIGBREAK),
+#endif /* defined(SIGBREAK) */
+#if defined(SIGBUS)
+	J9_SIGNAL_MAP_ENTRY("BUS", SIGBUS),
+#endif /* defined(SIGBUS) */
+#if defined(SIGCHLD)
+	J9_SIGNAL_MAP_ENTRY("CHLD", SIGCHLD),
+#endif /* defined(SIGCHLD) */
+#if defined(SIGCONT)
+	J9_SIGNAL_MAP_ENTRY("CONT", SIGCONT),
+#endif /* defined(SIGCONT) */
+#if defined(SIGCPUFAIL)
+	J9_SIGNAL_MAP_ENTRY("CPUFAIL", SIGCPUFAIL),
+#endif /* defined(SIGCPUFAIL) */
+#if defined(SIGDANGER)
+	J9_SIGNAL_MAP_ENTRY("DANGER", SIGDANGER),
+#endif /* defined(SIGDANGER) */
+#if defined(SIGEMT)
+	J9_SIGNAL_MAP_ENTRY("EMT", SIGEMT),
+#endif /* defined(SIGEMT) */
+#if defined(SIGFPE)
+	J9_SIGNAL_MAP_ENTRY("FPE", SIGFPE),
+#endif /* defined(SIGFPE) */
+#if defined(SIGGRANT)
+	J9_SIGNAL_MAP_ENTRY("GRANT", SIGGRANT),
+#endif /* defined(SIGGRANT) */
+#if defined(SIGHUP)
+	J9_SIGNAL_MAP_ENTRY("HUP", SIGHUP),
+#endif /* defined(SIGHUP) */
+#if defined(SIGILL)
+	J9_SIGNAL_MAP_ENTRY("ILL", SIGILL),
+#endif /* defined(SIGILL) */
+#if defined(SIGINFO)
+	J9_SIGNAL_MAP_ENTRY("INFO", SIGINFO),
+#endif /* defined(SIGINFO) */
+#if defined(SIGINT)
+	J9_SIGNAL_MAP_ENTRY("INT", SIGINT),
+#endif /* defined(SIGINT) */
+#if defined(SIGIO)
+	J9_SIGNAL_MAP_ENTRY("IO", SIGIO),
+#endif /* defined(SIGIO) */
+#if defined(SIGKILL)
+	J9_SIGNAL_MAP_ENTRY("KILL", SIGKILL),
+#endif /* defined(SIGKILL) */
+#if defined(SIGMIGRATE)
+	J9_SIGNAL_MAP_ENTRY("MIGRATE", SIGMIGRATE),
+#endif /* defined(SIGMIGRATE) */
+#if defined(SIGMSG)
+	J9_SIGNAL_MAP_ENTRY("MSG", SIGMSG),
+#endif /* defined(SIGMSG) */
+#if defined(SIGPIPE)
+	J9_SIGNAL_MAP_ENTRY("PIPE", SIGPIPE),
+#endif /* defined(SIGPIPE) */
+#if defined(SIGPOLL)
+	J9_SIGNAL_MAP_ENTRY("POLL", SIGPOLL),
+#endif /* defined(SIGPOLL) */
+#if defined(SIGPRE)
+	J9_SIGNAL_MAP_ENTRY("PRE", SIGPRE),
+#endif /* defined(SIGPRE) */
+#if defined(SIGPROF)
+	J9_SIGNAL_MAP_ENTRY("PROF", SIGPROF),
+#endif /* defined(SIGPROF) */
+#if defined(SIGPWR)
+	J9_SIGNAL_MAP_ENTRY("PWR", SIGPWR),
+#endif /* defined(SIGPWR) */
+#if defined(SIGQUIT)
+	J9_SIGNAL_MAP_ENTRY("QUIT", SIGQUIT),
+#endif /* defined(SIGQUIT) */
+#if defined(SIGRETRACT)
+	J9_SIGNAL_MAP_ENTRY("RETRACT", SIGRETRACT),
+#endif /* defined(SIGRETRACT) */
+#if defined(SIGSAK)
+	J9_SIGNAL_MAP_ENTRY("SAK", SIGSAK),
+#endif /* defined(SIGSAK) */
+#if defined(SIGSEGV)
+	J9_SIGNAL_MAP_ENTRY("SEGV", SIGSEGV),
+#endif /* defined(SIGSEGV) */
+#if defined(SIGSOUND)
+	J9_SIGNAL_MAP_ENTRY("SOUND", SIGSOUND),
+#endif /* defined(SIGSOUND) */
+#if defined(SIGSTKFLT)
+	J9_SIGNAL_MAP_ENTRY("STKFLT", SIGSTKFLT),
+#endif /* defined(SIGSTKFLT) */
+#if defined(SIGSTOP)
+	J9_SIGNAL_MAP_ENTRY("STOP", SIGSTOP),
+#endif /* defined(SIGSTOP) */
+#if defined(SIGSYS)
+	J9_SIGNAL_MAP_ENTRY("SYS", SIGSYS),
+#endif /* defined(SIGSYS) */
+#if defined(SIGTERM)
+	J9_SIGNAL_MAP_ENTRY("TERM", SIGTERM),
+#endif /* defined(SIGTERM) */
+#if defined(SIGTRAP)
+	J9_SIGNAL_MAP_ENTRY("TRAP", SIGTRAP),
+#endif /* defined(SIGTRAP) */
+#if defined(SIGTSTP)
+	J9_SIGNAL_MAP_ENTRY("TSTP", SIGTSTP),
+#endif /* defined(SIGTSTP) */
+#if defined(SIGTTIN)
+	J9_SIGNAL_MAP_ENTRY("TTIN", SIGTTIN),
+#endif /* defined(SIGTTIN) */
+#if defined(SIGTTOU)
+	J9_SIGNAL_MAP_ENTRY("TTOU", SIGTTOU),
+#endif /* defined(SIGTTOU) */
+#if defined(SIGUNUSED)
+	J9_SIGNAL_MAP_ENTRY("UNUSED", SIGUNUSED),
+#endif /* defined(SIGUNUSED) */
+#if defined(SIGURG)
+	J9_SIGNAL_MAP_ENTRY("URG", SIGURG),
+#endif /* defined(SIGURG) */
+#if defined(SIGUSR1)
+	J9_SIGNAL_MAP_ENTRY("USR1", SIGUSR1),
+#endif /* defined(SIGUSR1) */
+#if defined(SIGUSR2)
+	J9_SIGNAL_MAP_ENTRY("USR2", SIGUSR2),
+#endif /* defined(SIGUSR2) */
+#if defined(SIGVTALRM)
+	J9_SIGNAL_MAP_ENTRY("VTALRM", SIGVTALRM),
+#endif /* defined(SIGVTALRM) */
+#if defined(SIGWINCH)
+	J9_SIGNAL_MAP_ENTRY("WINCH", SIGWINCH),
+#endif /* defined(SIGWINCH) */
+#if defined(SIGXCPU)
+	J9_SIGNAL_MAP_ENTRY("XCPU", SIGXCPU),
+#endif /* defined(SIGXCPU) */
+#if defined(SIGXFSZ)
+	J9_SIGNAL_MAP_ENTRY("XFSZ", SIGXFSZ),
+#endif /* defined(SIGXFSZ) */
+	{NULL, J9_SIG_ERR}
+};
+
 static void freeGlobals(void)
 {
 	free(newPath);
@@ -4232,97 +4396,250 @@ JVM_NativePath(char* path)
 	return path;
 }
 
+/**
+ * Checks if a signal is special.
+ *
+ * @param sigNum Integer value of the signal
+ *
+ * @returns TRUE if the signal is special
+ *          FALSE if the signal is not special
+ */
+static BOOLEAN
+isSignalSpecial(jint sigNum)
+{
+	return
+#if defined(SIGHUP)
+		(SIGHUP == sigNum) ||
+#endif /* defined(SIGHUP) */
+#if defined(SIGINT)
+		(SIGINT == sigNum) ||
+#endif /* defined(SIGINT) */
+#if defined(SIGQUIT)
+		(SIGQUIT == sigNum) ||
+#endif /* defined(SIGQUIT) */
+#if defined(SIGTERM)
+		(SIGTERM == sigNum) ||
+#endif /* defined(SIGTERM) */
+		FALSE;
+}
 
 /**
- * Method stub for method not yet implemented.
+ * Check if a signal is used by the VM.
+ *
+ * @param sigNum Integer value of the signal
+ *
+ * @returns TRUE if the signal is used by the VM
+ *          FALSE if the signal is not used by the VM
+ */
+static BOOLEAN
+isSignalUsedByVM(jint sigNum)
+{
+	return
+#if defined(SIGFPE)
+		(SIGFPE == sigNum) ||
+#endif /* defined(SIGFPE) */
+#if defined(SIGILL)
+		(SIGILL == sigNum) ||
+#endif /* defined(SIGILL) */
+#if defined(SIGSEGV)
+		(SIGSEGV == sigNum) ||
+#endif /* defined(SIGSEGV) */
+		FALSE;
+}
+
+/**
+ * Send a signal to the calling process or thread. If "-Xrs"
+ * commandline option is specified, then signals such as SIGQUIT,
+ * SIGHUP, SIGINT and SIGTERM are ignored.
+ *
+ * @param sigNum Integer value of the signal to be sent to the
+ *               calling process or thread
+ *
+ * @returns JNI_TRUE if the signal is successfully raised/sent
+ *          JNI_FALSE if the signal is not sent
  */
 jboolean JNICALL
 JVM_RaiseSignal(jint sigNum)
 {
+	jboolean rc = JNI_FALSE;
+	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
 
 	Trc_SC_RaiseSignal_Entry(sigNum);
 
-	/**** TBD :: ignore certain signals when -Xrs is on ****/
-	raise(sigNum);
+	if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS)
+			&& isSignalSpecial(sigNum)) {
+		/* Ignore signal */
+	} else {
+		raise(sigNum);
+		rc = JNI_TRUE;
+	}
 
-	Trc_SC_RaiseSignal_Exit(JNI_TRUE);
+	Trc_SC_RaiseSignal_Exit(rc);
 
-	return JNI_TRUE;
+	return rc;
 }
 
+/**
+ * This is a stub for the pre-defined handler. The pre-defined
+ * handler is supposed to be used in JVM_RegisterSignal when
+ * the special value of J9_PRE_DEFINED_HANDLER_CHECK (2) is specified
+ * in the handler. It hasn't been implemented since its functionality
+ * is not known.
+ *
+ * TODO: Implement the pre-defined handler.
+ *
+ * @param sigNum Integer value of the signal to be sent to the
+ *               calling process or thread
+ *
+ * @returns void
+ */
+static void
+dummySignalHandler(int sigNum) {
+
+}
 
 /**
- * Method stub for method not yet implemented.
+ * Register a signal handler for a signal. Signals such as SIGFPE,
+ * SIGILL and SIGSEGV are used by the VM; so, we don't register
+ * a signal handler for these signals. If "-Xrs" commandline option
+ * is specified, then signals such as SIGQUIT, SIGHUP, SIGINT
+ * and SIGTERM are also ignored; thus, we don't register a signal
+ * handler for these signals. If handler has the special value of
+ * J9_PRE_DEFINED_HANDLER_CHECK (2), then handler is changed to
+ * dummySignalHandler before it is registered. If the old handler
+ * is same as the new handler, then a special value,
+ * J9_OLDHANDLER_SAME_AS_NEWHANDLER (2) is returned.
+ *
+ * @param sigNum Integer value of the signal to be sent to the
+ *                  calling process or thread
+ * @param handler New handler to be associated to the signal
+ *
+ * @returns address of the old signal handler on success
+ *          J9_SIG_ERR (-1) in case of error
  */
 void* JNICALL
 JVM_RegisterSignal(jint sigNum, void* handler)
 {
+	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
+	void *oldHandler = (void *)J9_SIG_ERR;
+
+#if !defined(WIN32)
+	struct sigaction newSignalAction = {{0}};
+	struct sigaction oldSignalAction = {{0}};
+#endif /* !defined(WIN32) */
 
 	Trc_SC_RegisterSignal();
 
-	/**** TBD :: allow signal handler registration (thru portlib?) ****/
-	return (void *) -1;
+	if (isSignalUsedByVM(sigNum)) {
+		/* Don't allow user to register a native handler since
+		 * the signal is already used by the VM.
+		 */
+	} else if (J9_ARE_NO_BITS_SET(javaVM->sigFlags, J9_SIG_XRS)
+			&& isSignalSpecial(sigNum)) {
+		/* Don't allow user to register a native handler since
+		 * the signal is already used by the VM.
+		 */
+	} else {
+		/* Register the signal */
+#if defined(WIN32)
+		if ((void *)J9_PRE_DEFINED_HANDLER_CHECK == handler) {
+			handler = (void *)dummySignalHandler;
+		}
+		oldHandler = OMRSIG_SIGNAL(sigNum, handler);
+#else /* defined(WIN32) */
+		sigemptyset(&newSignalAction.sa_mask);
+#if !defined(J9ZTPF)
+		newSignalAction.sa_flags = SA_RESTART;
+#else /* !defined(J9ZTPF) */
+		newSignalAction.sa_flags = 0;
+#endif /* !defined(J9ZTPF) */
+		if ((void *)J9_PRE_DEFINED_HANDLER_CHECK == handler) {
+			newSignalAction.sa_handler = dummySignalHandler;
+		} else {
+			newSignalAction.sa_handler = (void (*)(int))handler;
+		}
+		OMRSIG_SIGACTION(sigNum, &newSignalAction, &oldSignalAction);
+#endif /* defined(WIN32) */
+	}
+
+#if defined(WIN32)
+	if (((void *)J9_SIG_ERR != oldHandler) && (handler == oldHandler)) {
+		oldHandler = (void *)J9_OLDHANDLER_SAME_AS_NEWHANDLER;
+	} else {
+		oldHandler = (void *)oldHandler;
+	}
+#else /* defined(WIN32) */
+	if ((NULL == oldSignalAction.sa_handler)
+			|| (newSignalAction.sa_handler != oldSignalAction.sa_handler)) {
+		oldHandler = (void *)oldSignalAction.sa_handler;
+	} else {
+		oldHandler = (void *)J9_OLDHANDLER_SAME_AS_NEWHANDLER;
+	}
+#endif /* defined(WIN32) */
+
+	return oldHandler;
 }
 
 
 /**
- * Method stub for method not yet implemented.
+ * Return the integer value of the signal given the name of the
+ * signal.
+ *
+ * @param  sigName Name of the signal
+ *
+ * @returns Integer value of the signal on success
+ *          J9_SIG_ERR (-1) on failure
  */
 jint JNICALL
-JVM_FindSignal(const char* sigName)
+JVM_FindSignal(const char *sigName)
 {
+	const J9SignalMapping *mapping = NULL;
+	jint signalValue = J9_SIG_ERR;
+	BOOLEAN nameHasSigPrefix = FALSE;
+	const char *fullSigName = sigName;
+#if !defined(WIN32)
+	char nameWithSIGPrefix[J9_SIGNAME_BUFFER_LENGTH] = {0};
+#endif /* !defined(WIN32) */
 
 	Trc_SC_FindSignal_Entry(sigName);
 
-#define J9_MAP_SIGNAL(ID) ID##U
-#define J9_RETURN_SIGNAL(ID) \
-	const int ID##U = -1; Trc_SC_FindSignal_Exit(J9_MAP_SIGNAL(ID)); return J9_MAP_SIGNAL(ID);
-#define J9_MATCH_SIGNAL(ID) \
-	if (strcmp(sigName, #ID) == 0) {J9_RETURN_SIGNAL(SIG##ID)}
+	if (NULL != sigName) {
+		size_t sigPrefixLength = sizeof(J9_SIG_PREFIX) - 1;
 
-	/* POSIX */
-	J9_MATCH_SIGNAL(HUP)
-	J9_MATCH_SIGNAL(INT)
-	J9_MATCH_SIGNAL(QUIT)
-	J9_MATCH_SIGNAL(ABRT)
-	J9_MATCH_SIGNAL(KILL)
-	J9_MATCH_SIGNAL(ALRM)
-	J9_MATCH_SIGNAL(TERM)
+#if !defined(WIN32)
+		if (0 != strncmp(sigName, J9_SIG_PREFIX, sigPrefixLength)) {
+			/* nameWithSIGPrefix is a char buffer of length J9_SIGNAME_BUFFER_LENGTH.
+			 * We are concatenating SIG + sigName, and storing the new string in
+			 * nameWithSIGPrefix. We want to make sure that the concatenated string
+			 * fits inside nameWithSIGPrefix. We also know that all known signal names
+			 * have less than J9_SIGNAME_BUFFER_LENGTH chars. If the concatenated
+			 * string doesn't fit inside nameWithSIGPrefix, then we can consider signal
+			 * name to be unknown. In sigNameLength, +1 is for the NULL terminator.
+			 */
+			size_t sigNameLength = sigPrefixLength + strlen(sigName) + 1;
+			if (sigNameLength <= J9_SIGNAME_BUFFER_LENGTH) {
+				strcpy(nameWithSIGPrefix, J9_SIG_PREFIX);
+				strcat(nameWithSIGPrefix, sigName);
+				fullSigName = nameWithSIGPrefix;
+			} else {
+				goto exit;
+			}
+		}
+#endif /* !defined(WIN32) */
 
-	/* POSIX 1003.1-2001 */
-	J9_MATCH_SIGNAL(BUS)
-	J9_MATCH_SIGNAL(CHLD)
-	J9_MATCH_SIGNAL(CONT)
-	J9_MATCH_SIGNAL(FPE)
-	J9_MATCH_SIGNAL(ILL)
-	J9_MATCH_SIGNAL(PIPE)
-	J9_MATCH_SIGNAL(SEGV)
-	J9_MATCH_SIGNAL(STOP)
-	J9_MATCH_SIGNAL(TSTP)
-	J9_MATCH_SIGNAL(TTIN)
-	J9_MATCH_SIGNAL(TTOU)
-	J9_MATCH_SIGNAL(URG)
-	J9_MATCH_SIGNAL(USR1)
-	J9_MATCH_SIGNAL(USR2)
+		for (mapping = signalMap; NULL != mapping->signalName; mapping++) {
+			if (0 == strcmp(fullSigName, mapping->signalName)) {
+				signalValue = mapping->signalValue;
+				break;
+			}
+		}
+	}
 
-	/* POSIX 1003.1-2001 with XSI */
-	J9_MATCH_SIGNAL(POLL)
-	J9_MATCH_SIGNAL(PROF)
-	J9_MATCH_SIGNAL(SYS)
-	J9_MATCH_SIGNAL(TRAP)
-	J9_MATCH_SIGNAL(VTALRM)
-	J9_MATCH_SIGNAL(XCPU)
-	J9_MATCH_SIGNAL(XFSZ)
-
-	/* Miscellaneous */
-	J9_MATCH_SIGNAL(IO)
-	J9_MATCH_SIGNAL(WINCH)
-	J9_MATCH_SIGNAL(PWR)
-	J9_MATCH_SIGNAL(UNUSED)
-	J9_MATCH_SIGNAL(BREAK)
-
-	Trc_SC_FindSignal_Exit(-1);
-	return -1;
+#if !defined(WIN32)
+exit:
+#endif /* !defined(WIN32) */
+	Trc_SC_FindSignal_Exit(signalValue);
+	return signalValue;
 }
 
 
