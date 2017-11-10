@@ -1142,6 +1142,15 @@ printTraceWhat(J9PortLibrary* portLibrary)
 	j9tty_err_printf(PORTLIB, "Trace engine configuration\n");
 	j9tty_err_printf(PORTLIB, "--------------------------\n");
 	if( NULL != option) {
+		while ( NULL != *cursor ) {
+			option = walkTraceConfig(cursor);
+			if (0 == strcmp (option,"none")) break;
+		}
+		if (0 != strcmp (option,"none")) {
+			cursor_ptr = NULL;
+			cursor = &cursor_ptr;
+			option = walkTraceConfig(cursor);
+		}
 		j9tty_err_printf(PORTLIB, "-Xtrace:%s\n", option);
 		while ( NULL != *cursor ) {
 			option = walkTraceConfig(cursor);
