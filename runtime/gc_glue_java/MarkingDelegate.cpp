@@ -544,8 +544,11 @@ MM_MarkingDelegate::processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionD
 		omrobjectptr_t nextReferenceObj = _extensions->accessBarrier->getReferenceLink(referenceObj);
 
 		GC_SlotObject referentSlotObject(_extensions->getOmrVM(), &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, referenceObj));
-		omrobjectptr_t referent = referentSlotObject.readReferenceFromSlot();
-		if (NULL != referent) {
+
+		if (NULL != referentSlotObject.readReferenceFromSlot()) {
+			_markingScheme->fixupForwardedSlot(&referentSlotObject);
+			omrobjectptr_t referent = referentSlotObject.readReferenceFromSlot();
+
 			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9_JAVA_CLASS_REFERENCE_MASK;
 			if (_markingScheme->isMarked(referent)) {
 				if (J9_JAVA_CLASS_REFERENCE_SOFT == referenceObjectType) {
@@ -565,9 +568,6 @@ MM_MarkingDelegate::processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionD
 				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
 				J9JavaVM * javaVM = (J9JavaVM*)env->getLanguageVM();
 				if ((J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) && ((J2SE_VERSION(javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
-					_markingScheme->fixupForwardedSlot(&referentSlotObject);
-					referent = referentSlotObject.readReferenceFromSlot();
-
 					/* Phantom objects keep their referent - scanning will be done after the enqueuing */
 					_markingScheme->inlineMarkObject(env, referent);
 				} else {
