@@ -1200,7 +1200,6 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 			signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef*)romCPItem));
 			break;
 		}
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		case JBinvokespecialsplit: {
 			/* cpIndex is actually an index into split table. Access the split table to get real constant pool index */
 			J9ROMClass *romClass = J9_CLASS_FROM_METHOD(callingMethod)->romClass;
@@ -1218,7 +1217,6 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 			signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef*)romCPItem));
 			break;
 		}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		case JBinvokedynamic: {
 			/* invokedynamic has no receiver, all pushed arguments are described by the signature
 			 * in the call site data.

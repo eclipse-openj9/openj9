@@ -1522,12 +1522,10 @@ old_slow_jitResolveSpecialMethod(J9VMThread *currentThread)
 	DECLARE_JIT_INT_PARM(cpIndex, 3);
 	J9Method *method = NULL;
 	buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_SPECIAL_METHOD, parmCount, true, 0, jitEIP);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	/* If cpIndex has the J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG bit set, it is an index into split table, otherwise it is an index in constant pool */
 	if (J9_ARE_ANY_BITS_SET(cpIndex, J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG)) {
 		method = currentThread->javaVM->internalVMFunctions->resolveSpecialSplitMethodRef(currentThread, ramConstantPool, cpIndex & J9_SPLIT_TABLE_INDEX_MASK, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 	} else
-#endif /* J9VM_INTERP_USE_SPLIT_SIDE_TABLES */
 	{
 		method = currentThread->javaVM->internalVMFunctions->resolveSpecialMethodRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 	}
@@ -1548,12 +1546,10 @@ old_slow_jitResolveStaticMethod(J9VMThread *currentThread)
 	DECLARE_JIT_INT_PARM(cpIndex, 3);
 	UDATA method = 0;
 	buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_STATIC_METHOD, parmCount, true, 0, jitEIP);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	/* If cpIndex has the J9_STATIC_SPLIT_TABLE_INDEX_FLAG bit set, it is an index into split table, otherwise it is an index in constant pool */
 	if (J9_ARE_ANY_BITS_SET(cpIndex, J9_STATIC_SPLIT_TABLE_INDEX_FLAG)) {
 		method = (UDATA)currentThread->javaVM->internalVMFunctions->resolveStaticSplitMethodRef(currentThread, ramConstantPool, cpIndex & J9_SPLIT_TABLE_INDEX_MASK, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 	} else
-#endif /* J9VM_INTERP_USE_SPLIT_SIDE_TABLES */
 	{
 		method = (UDATA)currentThread->javaVM->internalVMFunctions->resolveStaticMethodRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 	}

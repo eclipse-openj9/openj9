@@ -6007,7 +6007,6 @@ classrefAscii:
 									case 'a':
 									default:
 										info = &constantPool[u16];
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 										if (JBinvokestaticsplit == bc) {
 											U_16 cpIndex = *(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(romClass) + u16);
 											info = &constantPool[cpIndex];
@@ -6015,7 +6014,6 @@ classrefAscii:
 											U_16 cpIndex = *(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(romClass) + u16);
 											info = &constantPool[cpIndex];
 										}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 										info2 = &constantPool[((J9ROMMethodRef *) info)->classRefCPIndex];
 										utfLength = J9UTF8_LENGTH(J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info2));
 										string = ((U_8*) J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info2)) + 2;
@@ -6584,10 +6582,8 @@ static void j9_formatBytecodes(J9ROMClass* romClass, J9ROMMethod* method, U_8* b
 				case JBinvokeinterface:
 				case JBinvokehandle:
 				case JBinvokehandlegeneric:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 				case JBinvokestaticsplit:
 				case JBinvokespecialsplit:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 					j9_formatBytecode(romClass, method, bytecodes, bcIndex, bc, 3, CFR_DECODE_J9_METHODREF, formatString, stringLength, flags);
 					pc += 2;
 					bcIndex += 3;

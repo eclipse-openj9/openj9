@@ -292,10 +292,6 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 	Trc_JCL_initializeKnownClasses_Entry(vm->mainThread);
 
 	for (i = 0; i < constPoolCount; i++) {
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-		/* Shared methodrefs are not supported in the VM constant pool */
-		Assert_JCL_false(J9CPTYPE_SHARED_METHOD == J9_CP_TYPE(cpShapeDescription, i));
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		if (J9CPTYPE_FIELD == J9_CP_TYPE(cpShapeDescription, i)) {
 			J9ROMClassRef* romClassRef = &romClassConstantPool[romMethodConstantPool[i].classRefCPIndex];
 
