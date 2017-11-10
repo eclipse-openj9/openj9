@@ -2052,7 +2052,8 @@ TR::CompilationInfoPerThread::relocateThunks()
    _thunksToBeRelocated.clear();
    for (TR_J2IThunk *thunk : _invokeExactThunksToBeRelocated)
       {
-      fe->setInvokeExactJ2IThunk(thunk, TR::comp());
+      void *realThunk = (U_8 *)thunk - (U_8 *)TR::compInfoPT->reloRuntime()->aotMethodHeaderEntry()->compileMethodCodeStartPC + (U_8 *)TR::compInfoPT->reloRuntime()->newMethodCodeStart();
+      fe->setInvokeExactJ2IThunk(realThunk, TR::comp());
       }
    _invokeExactThunksToBeRelocated.clear();
    }
