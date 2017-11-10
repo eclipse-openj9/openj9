@@ -171,7 +171,6 @@ enum J9ServerMessageType
    CompInfo_isJSR292 = 305;
    CompInfo_getMethodBytecodeSize = 306;
    CompInfo_setJ9MethodExtra = 307;
-   CompInfo_insertDLTRecord = 308;
 
    // For J9::ClassEnv Methods
    ClassEnv_classFlagsValue = 400;
