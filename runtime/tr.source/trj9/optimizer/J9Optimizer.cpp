@@ -663,8 +663,8 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::treeSimplification                                                         },
    { OMR::loopReduction                                                              },
    { OMR::blockShuffling                                                             },
-   { OMR::idiomRecognition,                          OMR::IfLoopsAndNotProfiling     },
 #endif
+   { OMR::idiomRecognition,                          OMR::IfLoopsAndNotProfiling     },
    { OMR::blockSplitter                                                         },
    { OMR::treeSimplification                                                    }, // revisit; not really required ?
    { OMR::virtualGuardHeadMerger                                                },
