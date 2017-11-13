@@ -23,10 +23,11 @@
 
 use strict;
 use warnings;
+use Digest::SHA;
 use Getopt::Long;
+use File::Copy;
 use File::Spec;
 use File::Path qw(make_path);
-use Digest::SHA;
 
 #define test src root path
 my $path;
@@ -91,8 +92,8 @@ my %jcommander = (
 	sha1 => 'bfcb96281ea3b59d626704f74bc6d625ff51cbce'
 );
 my %asmtools = (
-	url => 'https://adopt-openjdk.ci.cloudbees.com/view/OpenJDK/job/asmtools/ws/asmtools-6.0-build/release/lib/asmtools.jar',
-	fname => 'asmtools.jar',
+	url => 'https://ci.adoptopenjdk.net/view/Dependencies/job/asmtools/lastSuccessfulBuild/artifact/asmtools-6.0.tar.gz',
+	fname => 'asmtools-6.0.tar.gz',
 	sha1 => 'd57dfcdd591635d31372cfcc18474a8ca6442171'
 );
 
@@ -128,12 +129,24 @@ if ( $task eq "default" ) {
 			if ($? == 0 ) {
 				print "--> file downloaded to $filename \n";
 			} else {
+				print $output;
 				die "ERROR: downloading $url failed, return code: $? \n";
 			}
 		}
 
 		# TODO check samtools.jar file
-		if ($jars_info[$i]{fname} eq "asmtools.jar") {
+		if (index($jars_info[$i]{fname}, "asmtools") != -1) {
+			my $untar = `tar -zxvf $path/asmtools-6.0.tar.gz -C $path`;
+			if ($? != 0 ) {
+				print $untar;
+				die "ERROR: untar $path/asmtools-6.0.tar.gz failed"
+			}
+			my $unzip = `unzip $path/asmtools-6.0.zip -d $path`;
+			if ($? != 0 ) {
+				print $unzip;
+				die "ERROR: untar $path/asmtools-6.0.tar.gz failed"
+			}
+			copy("$path/asmtools-6.0/lib/asmtools.jar", $path) or die "Copy failed: $!";
 			next;
 		}
 		# validate dependencies sha1 sum
