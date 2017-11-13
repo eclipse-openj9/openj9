@@ -133,7 +133,8 @@ lookupSpecialMethod(J9VMThread *currentThread, J9Class *lookupClass, J9UTF8 *nam
 		J9Class *resolvedClass = J9_CLASS_FROM_METHOD(method);
 		if (isForVirtualLookup || isDirectSuperInterface(currentThread, resolvedClass, specialCaller)) {
 			/* CMVC 197763 seq#4: Use the method's class, not the lookupClass, as the resolvedClass arg.  LookupClass may be unrelated */
-			method = getMethodForSpecialSend(currentThread, specialCaller, resolvedClass, method);
+			method = getMethodForSpecialSend(currentThread, specialCaller, resolvedClass, method, J9_LOOK_VIRTUAL | J9_LOOK_NO_VISIBILITY_CHECK);
+			Assert_JCL_notNull(method);
 		} else {
 			setIncompatibleClassChangeErrorInvalidDefenderSupersend(currentThread, resolvedClass, specialCaller);
 			method = NULL;
@@ -623,7 +624,8 @@ Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromMethod(JNIEnv 
 				/* Handle methods which aren't in the VTable, such as private methods and Object.getClass */
 				vmSlotValue = (UDATA) methodID->method;
 			} else {
-				vmSlotValue = (UDATA)getMethodForSpecialSend(vmThread, j9SpecialToken, J9_CLASS_FROM_METHOD(methodID->method), methodID->method);
+				vmSlotValue = (UDATA)getMethodForSpecialSend(vmThread, j9SpecialToken, J9_CLASS_FROM_METHOD(methodID->method), methodID->method, J9_LOOK_VIRTUAL | J9_LOOK_NO_VISIBILITY_CHECK);
+				Assert_JCL_true(0 != vmSlotValue);
 			}
 			break;
 		default:

@@ -3306,6 +3306,7 @@ typedef struct J9ROMMethod {
 	U_16 tempCount;
 } J9ROMMethod;
 
+#define J9ROMMETHOD_NAMEANDSIGNATURE(base) (&((base)->nameAndSignature))
 #define J9ROMMETHOD_NAME(base) NNSRP_GET((&((base)->nameAndSignature))->name, struct J9UTF8*)
 #define J9ROMMETHOD_SIGNATURE(base) NNSRP_GET((&((base)->nameAndSignature))->signature, struct J9UTF8*)
 /* @ddr_namespace: map_to_type=J9JNIReferenceFrame */
