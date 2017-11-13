@@ -64,7 +64,7 @@
 					<src path="${src_current}"/>
 					<src path="${TestUtilities}" />
 					<src path="${transformerListener}" />
-					<compilerarg line="--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
+					<compilerarg line="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
 					<classpath>
 						<pathelement location="../TestConfig/lib/asm-all.jar" />
 						<pathelement location="../TestConfig/lib/testng.jar"/>
@@ -78,7 +78,7 @@
 					<src path="${src_latest}"/>
 					<src path="${TestUtilities}" />
 					<src path="${transformerListener}" />
-					<compilerarg line="--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
+					<compilerarg line="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
 					<classpath>
 						<pathelement location="../TestConfig/lib/asm-all.jar" />
 						<pathelement location="../TestConfig/lib/testng.jar"/>
