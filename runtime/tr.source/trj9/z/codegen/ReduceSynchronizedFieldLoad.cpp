@@ -250,9 +250,9 @@ ReduceSynchronizedFieldLoad::perform()
          {
          traceMsg(cg->comp(), "Performing ReduceSynchronizedFieldLoad\n");
 
-         for (TR::TextualExtendedBlockIterator iter(cg->comp()); iter.getEntry() != NULL; ++iter)
+         for (TR::TreeTopOrderExtendedBlockIterator iter(cg->comp()); iter.getFirst() != NULL; ++iter)
             {
-            transformed = performOnTreeTops(iter.getEntry()->getEntry(), iter.getExit()->getExit());
+            transformed = performOnTreeTops(iter.getFirst()->getEntry(), iter.getLast()->getExit());
             }
          }
       }
