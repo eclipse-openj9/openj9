@@ -25,13 +25,4 @@
 <!DOCTYPE suite SYSTEM "excludes.dtd">
 <?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
 <suite id="DataHelperTests Excluded Test Case List">
-	<exclude id="simple caching of a resource, with security on" platform="SE90" shouldFix="true">
-			<reason>PR133325 class sun.security.provider.PolicyFile (in module java.base) cannot access class com.ibm.oti.shared.SharedClassPermission</reason>
-	</exclude>
-	<exclude id="simple caching of a resource, with security on but readonly policy" platform="SE90" shouldFix="true">
-			<reason>PR133325 class sun.security.provider.PolicyFile (in module java.base) cannot access class com.ibm.oti.shared.SharedClassPermission</reason>
-	</exclude>
-	<exclude id="caching of multiple resources, security on" platform="SE90" shouldFix="true">
-			<reason>PR133325 class sun.security.provider.PolicyFile (in module java.base) cannot access class com.ibm.oti.shared.SharedClassPermission</reason>
-	</exclude>
 </suite>
