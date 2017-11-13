@@ -3404,9 +3404,16 @@ public class MethodHandles {
 		Class<?> bodyReturnType = bodyType.returnType;
 		
 		/* The signature of the body handle must be either (V, A...)V or (A...)void */
-		if ((void.class != bodyReturnType) && (bodyReturnType != bodyType.arguments[0])) {
+		if ((void.class != bodyReturnType) 
+				&& (hasNoArgs(bodyType)
+						|| (bodyReturnType != bodyType.arguments[0]))) {
+			String argList = "void";
+			if (! hasNoArgs(bodyType)) {
+				argList = bodyType.arguments[0].getName();
+			}
+			
 			/*[MSG "K065D", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
-			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D", bodyReturnType.getName(), bodyType.arguments[0].getName())); //$NON-NLS-1$
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D", bodyReturnType.getName(), argList)); //$NON-NLS-1$
 		}
 		
 		/* The Java 9 doc says the loop result type is the result type V of the body handle,
@@ -3534,18 +3541,22 @@ public class MethodHandles {
 		MethodType bodyType = bodyHandle.type;
 		Class<?> bodyReturnType = bodyType.returnType;
 		Class<?>[] bodyParamTypes = bodyType.arguments;
-		Class<?> bodyParamType1 = bodyParamTypes[0];
 		
 		/* The signature of the body handle must be either (V,I,A...)V or (I,A...)void */
 		if (void.class == bodyReturnType) {
-			if (int.class != bodyParamType1) {
+			if (hasNoArgs(bodyType) || (int.class != bodyParamTypes[0])) {
 				/*[MSG "K065G", "The 1st parameter type of the body handle with a void return type must be int: {0}"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065G", bodyType.toMethodDescriptorString())); //$NON-NLS-1$
 			}
 		} else {
-			if (bodyReturnType != bodyParamType1) {
+			if (hasNoArgs(bodyType) || (bodyReturnType != bodyParamTypes[0])) {
+				String argType = "void";
+				if (! hasNoArgs(bodyType)) {
+					argType = bodyParamTypes[0].getName();
+				}
+				
 				/*[MSG "K065D", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D", bodyReturnType.getName(), bodyParamType1.getName())); //$NON-NLS-1$
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D", bodyReturnType.getName(), argType)); //$NON-NLS-1$
 			}
 			
 			if (bodyParamTypes.length < 2) {
@@ -3835,6 +3846,10 @@ public class MethodHandles {
 		return loopBody;
 	}
 	
+	private static boolean hasNoArgs(MethodType type) {
+		return (0 == type.arguments.length);
+	}
+	
 	/* Wrap the logic of clause validation, construction of parameter list for each handle,
 	 * as well as the population of missing handles/parameters in handle into a builder pattern.
 	 */
@@ -3895,11 +3910,6 @@ public class MethodHandles {
 			}
 			
 			int handleCount = currentClause.length;
-			if (0 == handleCount) {
-				/*[MSG "K0654", "No method handle exists in the clause: {0}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0654", Arrays.toString(currentClause))); //$NON-NLS-1$
-			}
-			
 			if (handleCount > COUNT_OF_HANDLES) {
 				/*[MSG "K0655", "At most 4 method handles are allowed in each clause: {0}"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0655", Arrays.toString(currentClause))); //$NON-NLS-1$	
@@ -3907,7 +3917,7 @@ public class MethodHandles {
 			
 			MethodHandle[] newClause = new MethodHandle[COUNT_OF_HANDLES];
 			
-			MethodHandle initHandle = currentClause[0];
+			MethodHandle initHandle = (handleCount >= 1) ? currentClause[0] : null;
 			MethodHandle stepHandle = (handleCount >= 2) ? currentClause[1] : null;
 			MethodHandle predHandle = (handleCount >= 3) ? currentClause[2] : null;
 			MethodHandle finiHandle = (COUNT_OF_HANDLES == handleCount) ? currentClause[3] : null;
@@ -4070,11 +4080,14 @@ public class MethodHandles {
 			return MethodType.methodType(loopReturnType, longestLoopParamTypes);
 		}
 		
-		/* Get the suffixes (A*) of parameter types from a non-init handle by truncating the iteration variable types (V...) */
+		/* Get the suffixes (A*) of parameter types from a non-init handle by truncating
+		 * the iteration variable types (V...). Make sure iteration variables are
+		 * effectively identical.
+		 */
 		private Class<?>[] getSuffixOfParamTypesFromNonInitHandle(Class<?>[] handleParamTypes) throws IllegalArgumentException {
 			Class<?>[] suffixOfParamTypes = null;
-			int suffixLength = handleParamTypes.length - iterationVarTypesLength;
-			/* There are there cases in terms of a non-init handle as follows:
+			
+			/* There are three cases in terms of a non-init handle as follows:
 			 * (1) If suffixLength > 0, it means the handle comes with all iteration variables (V...)
 			 *     and probably part of loop variables (A*) that should be extracted from here.
 			 * (2) If suffixLength == 0, it means the handle comes with all iteration variables (V...) 
@@ -4084,14 +4097,22 @@ public class MethodHandles {
 			 * In all these cases above, all missing variables will be filled up against (V..., A...) 
 			 * later in setMissingParamTypesOfHandle().
 			 */
-			if (suffixLength > 0) {
-				for (int loopVarIndex = 0; loopVarIndex < iterationVarTypesLength; loopVarIndex++) {
-					if (handleParamTypes[loopVarIndex] != iterationVarTypes.get(loopVarIndex)) {
-						/*[MSG "K065A", "The prefixes of parameter types of a non-init handle: {0} is not effectively identical to the iteration variable types: {1}"]*/
-						throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065A",  //$NON-NLS-1$
-								new Object[] {Arrays.toString(handleParamTypes), iterationVarTypes.toArray()}));
-					}
+			int suffixLength = handleParamTypes.length - iterationVarTypesLength;
+			
+			int minVarTypesLength = iterationVarTypesLength;
+			if (minVarTypesLength > handleParamTypes.length) {
+				minVarTypesLength = handleParamTypes.length;
+			}
+			
+			for (int loopVarIndex = 0; loopVarIndex < minVarTypesLength; loopVarIndex++) {
+				if (handleParamTypes[loopVarIndex] != iterationVarTypes.get(loopVarIndex)) {
+					/*[MSG "K065A", "The prefixes of parameter types of a non-init handle: {0} is not effectively identical to the iteration variable types: {1}"]*/
+					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065A",  //$NON-NLS-1$
+							new Object[] {Arrays.toString(handleParamTypes), iterationVarTypes.toArray()}));
 				}
+			}
+			
+			if (suffixLength > 0) {
 				suffixOfParamTypes = new Class<?>[suffixLength];
 				System.arraycopy(handleParamTypes, iterationVarTypesLength, suffixOfParamTypes, 0, suffixLength);
 			}
