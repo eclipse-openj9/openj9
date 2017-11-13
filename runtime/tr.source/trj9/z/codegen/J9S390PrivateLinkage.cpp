@@ -2282,7 +2282,7 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
             generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, RegRA, generateS390MemoryReference(classReg, offset, cg()));
          cursor = generateRIInstruction(cg(), TR::InstOpCode::getLoadHalfWordImmOpCode(), callNode, RegZero, offset);
          }
-      else if (offset > -524288)
+      else
          {
          cursor =
             generateRXYInstruction(cg(), TR::InstOpCode::getExtendedLoadOpCode(), callNode, RegRA,
@@ -2320,39 +2320,6 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
             {
             cursor = generateLoad32BitConstant(cg(), callNode, offset, RegZero, false);
             }
-         }
-      else // Pre-TRex
-         {
-         // J9 depends on the following dispatch sequence to find the JIT vtable offset of the virtual call
-         // so if this changes, we need to notify J9
-         TR::Register * tempReg = cg()->allocateRegister();
-         generateRRInstruction(cg(), TR::InstOpCode::getLoadRegOpCode(), callNode, tempReg, classReg);
-         postDeps->addPostCondition(tempReg, TR::RealRegister::AssignAny);
-
-         // offset in vft
-         if (offset >= (-32768) || unresolvedSnippet)
-            {
-            cursor = generateRIInstruction(cg(), TR::InstOpCode::getAddHalfWordImmOpCode(), callNode, tempReg, offset);
-
-            if (unresolvedSnippet)
-               {
-               ((TR::S390VirtualUnresolvedSnippet *)unresolvedSnippet)->setPatchVftInstruction(cursor);
-               }
-            cursor = generateRIInstruction(cg(), TR::InstOpCode::getLoadHalfWordImmOpCode(), callNode, RegZero, offset);
-            }
-         else
-            {
-            if (TR::Compiler->target.is64Bit())
-               cursor = genLoadLongConstant(cg(), callNode, (int64_t)offset, RegZero);
-            else
-               cursor = generateLoad32BitConstant(cg(), callNode, offset, RegZero, false);
-            cursor = generateRRInstruction(cg(), TR::InstOpCode::getAddRegOpCode(), callNode, tempReg, RegZero);
-            }
-
-         // load virtual function address
-         cursor = generateRXInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, RegRA, generateS390MemoryReference(tempReg, 0, cg()));
-
-         cg()->stopUsingRegister(tempReg);
          }
 
       gcPoint = new (trHeapMemory()) TR::S390RRInstruction(TR::InstOpCode::BASR, callNode, RegRA, RegRA, cg());
