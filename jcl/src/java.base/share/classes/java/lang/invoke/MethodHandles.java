@@ -478,21 +478,28 @@ public class MethodHandles {
 		 * @throws IllegalAccessException If the {@link Class} is not accessible from {@link #accessClass}. 
 		 */
 		private void checkClassAccess(Class<?> targetClass) throws IllegalAccessException {
-			int modifiers = targetClass.getModifiers();
-			
-			if (Modifier.isPublic(modifiers)) {
-				/* Already determined that we have more than "no access" (public access) */
-				return;
-			} else if (Modifier.isProtected(modifiers)) {
-				/* Already determined that we have more than "no access" (public access) */
-				if (!accessClass.isInterface()) {
+			if (NO_ACCESS != accessMode) {
+				/* target class should always be accessible to the lookup class when they are the same class */
+				if (accessClass == targetClass) {
 					return;
 				}
-			} else {
-				if (((PACKAGE == (accessMode & PACKAGE)) || Modifier.isPrivate(accessMode)) && isSamePackage(accessClass, targetClass)) {
+				
+				int modifiers = targetClass.getModifiers();
+				if (Modifier.isPublic(modifiers)) {
+					/* Already determined that we have more than "no access" (public access) */
 					return;
+				} else if (Modifier.isProtected(modifiers)) {
+					/* Already determined that we have more than "no access" (public access) for a protected nested class */
+					if (!accessClass.isInterface()) {
+						return;
+					}
+				} else {
+					if (((PACKAGE == (accessMode & PACKAGE)) || Modifier.isPrivate(accessMode)) && isSamePackage(accessClass, targetClass)) {
+						return;
+					}
 				}
 			}
+			
 			/*[MSG "K0587", "'{0}' no access to: '{1}'"]*/
 			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0587", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
 		}
