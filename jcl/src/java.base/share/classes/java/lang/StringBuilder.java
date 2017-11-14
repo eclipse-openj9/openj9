@@ -32,6 +32,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.InvalidObjectException;
 
+/*[IF Sidecar19-SE]*/
+import java.util.stream.IntStream;
+/*[ENDIF]*/
+
 /**
  * StringBuilder is not thread safe. For a synchronized implementation, use
  * StringBuffer.
@@ -3431,4 +3435,19 @@ char[] getValue() {
 /*[ENDIF]*/
 	return value;
 }
+
+/*[IF Sidecar19-SE]*/
+	@Override
+	public IntStream chars() {
+		/* Following generic CharSequence method invoking need to be updated with optimized implementation specifically for this class */
+		return CharSequence.super.chars();
+	}
+	
+	@Override
+	public IntStream codePoints() {
+		/* Following generic CharSequence method invoking need to be updated with optimized implementation specifically for this class */
+		return CharSequence.super.codePoints();
+	}
+/*[ENDIF]*/
+
 }

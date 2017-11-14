@@ -301,7 +301,7 @@ public abstract class VarHandle extends VarHandleInternal {
 	 * 
 	 * @return The parameters required to access the field.
 	 */
-	public List<Class<?>> coordinateTypes() {
+	public final List<Class<?>> coordinateTypes() {
 		return Collections.unmodifiableList(Arrays.<Class<?>>asList(coordinateTypes));
 	}
 	
@@ -332,7 +332,7 @@ public abstract class VarHandle extends VarHandleInternal {
 	 * @param accessMode The {@link AccessMode} to check support for.
 	 * @return A boolean value indicating whether the {@link AccessMode} is supported.
 	 */
-	public boolean isAccessModeSupported(AccessMode accessMode) {
+	public final boolean isAccessModeSupported(AccessMode accessMode) {
 		switch (accessMode) {
 		case GET:
 		case GET_VOLATILE:
