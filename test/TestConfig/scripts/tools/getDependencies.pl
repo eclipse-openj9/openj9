@@ -130,7 +130,9 @@ if ( $task eq "default" ) {
 				print "--> file downloaded to $filename \n";
 			} else {
 				print $output;
-				die "ERROR: downloading $url failed, return code: $? \n";
+				my $returnCode = $? ;
+				unlink $filename or die "Can't delete '$filename': $! \n";
+				die "ERROR: downloading $url failed, return code: $returnCode \n";
 			}
 		}
 
