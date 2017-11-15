@@ -9823,6 +9823,7 @@ TR::CompilationInfoPerThreadBase::compile(
                uint8_t *newCodeStart = compiler->fej9vm()->allocateCodeMemory(compiler, codeCacheStr.size() - sizeof(OMR::CodeCacheMethodHeader), 0, &coldCode, true);
                TR_ASSERT(newCodeStart, "need code cache space");
                newCodeStart -= sizeof(OMR::CodeCacheMethodHeader);
+               TR_ASSERT(newCodeStart == allocPtr, "allocation is not where expected");
                uint32_t blockSize = ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size;
                memcpy(newCodeStart, &codeCacheStr[0], codeCacheStr.size());
                ((OMR::CodeCacheMethodHeader*)newCodeStart)->_size = blockSize; //make sure header size matches allocation (overwritten by memcpy)

@@ -2067,7 +2067,11 @@ TR_J9VMBase::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, u
    bool hadClassUnloadMonitor;
    bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
 
-   uint8_t *warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(warmCodeSize, coldCodeSize, &codeCache, coldCode, needsContiguousAllocation(), isMethodHeaderNeeded);
+   // Override contiguous allocation for the jaas client
+   bool useContiguousAllocation = needsContiguousAllocation();
+   useContiguousAllocation |= comp->getPersistentInfo()->getJaasMode() == CLIENT_MODE;
+
+   uint8_t *warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(warmCodeSize, coldCodeSize, &codeCache, coldCode, useContiguousAllocation, isMethodHeaderNeeded);
 
    acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
 
