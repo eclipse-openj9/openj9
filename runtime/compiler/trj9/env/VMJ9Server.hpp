@@ -12,6 +12,7 @@ public:
 
    virtual bool storeOffsetToArgumentsInVirtualIndirectThunks() override { return true; }
    virtual bool needsContiguousAllocation() override                     { return true; }
+   virtual bool supportsEmbeddedHeapBounds() override                    { return false; }
 
    virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool) override
       { return; }
