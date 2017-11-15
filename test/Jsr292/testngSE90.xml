@@ -30,7 +30,6 @@
 	<test name="jsr292Test">
 		<classes>
 			<class name="com.ibm.j9.jsr292.AdaptorTests"/>
-			<class name="com.ibm.j9.jsr292.LookupInTests"/>
 			<class name="com.ibm.j9.jsr292.LookupAPITests_Find"/>
 			<class name="com.ibm.j9.jsr292.LookupAPITests_Unreflect"/>
 			<class name="com.ibm.j9.jsr292.Crash"/>
