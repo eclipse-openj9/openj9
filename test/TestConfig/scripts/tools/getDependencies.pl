@@ -136,19 +136,19 @@ if ( $task eq "default" ) {
 			}
 		}
 
-		# TODO check samtools.jar file
+		# TODO check asmtools.jar file
 		if (index($jars_info[$i]{fname}, "asmtools") != -1) {
-			my $untar = `tar -zxvf $path/asmtools-6.0.tar.gz -C $path`;
-			if ($? != 0 ) {
-				print $untar;
-				die "ERROR: untar $path/asmtools-6.0.tar.gz failed"
+			if (! -e "$path/asmtools.jar"){
+				my $untar = `tar -zxvf $path/asmtools-6.0.tar.gz -C $path`;
+				if ($? != 0 ) {
+					die;
+				}
+				my $unzip = `unzip -o $path/asmtools-6.0.zip -d $path`;
+				if ($? != 0 ) {
+					die;
+				}
+				copy("$path/asmtools-6.0/lib/asmtools.jar", $path) or die "Copy failed: $!";
 			}
-			my $unzip = `unzip $path/asmtools-6.0.zip -d $path`;
-			if ($? != 0 ) {
-				print $unzip;
-				die "ERROR: untar $path/asmtools-6.0.tar.gz failed"
-			}
-			copy("$path/asmtools-6.0/lib/asmtools.jar", $path) or die "Copy failed: $!";
 			next;
 		}
 		# validate dependencies sha1 sum
