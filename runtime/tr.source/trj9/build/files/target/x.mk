@@ -59,28 +59,28 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/x/codegen/OMRRegisterIterator.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    tr.source/trj9/x/codegen/J9UnresolvedDataSnippet.cpp \
-    tr.source/trj9/x/codegen/J9CodeGenerator.cpp \
-    tr.source/trj9/x/codegen/AllocPrefetchSnippet.cpp \
-    tr.source/trj9/x/codegen/J9Linkage.cpp \
-    tr.source/trj9/x/codegen/J9Snippet.cpp \
-    tr.source/trj9/x/codegen/CallSnippet.cpp \
-    tr.source/trj9/x/codegen/CheckFailureSnippet.cpp \
-    tr.source/trj9/x/codegen/ForceRecompilationSnippet.cpp \
-    tr.source/trj9/x/codegen/GuardedDevirtualSnippet.cpp \
-    tr.source/trj9/x/codegen/J9TreeEvaluator.cpp \
-    tr.source/trj9/x/codegen/J9X86Instruction.cpp \
-    tr.source/trj9/x/codegen/JNIPauseSnippet.cpp \
-    tr.source/trj9/x/codegen/PassJNINullSnippet.cpp \
-    tr.source/trj9/x/codegen/RecompilationSnippet.cpp \
-    tr.source/trj9/x/codegen/ScratchArgHelperCallSnippet.cpp \
-    tr.source/trj9/x/codegen/WriteBarrierSnippet.cpp \
-    tr.source/trj9/x/codegen/J9AheadOfTimeCompile.cpp \
-    tr.source/trj9/x/codegen/X86PrivateLinkage.cpp \
-    tr.source/trj9/x/codegen/X86HelperLinkage.cpp \
-    tr.source/trj9/x/codegen/X86Recompilation.cpp \
-    tr.source/trj9/x/codegen/J9LinkageUtils.cpp \
-    tr.source/trj9/x/env/J9CPU.cpp \
+    compiler/trj9/x/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/trj9/x/codegen/J9CodeGenerator.cpp \
+    compiler/trj9/x/codegen/AllocPrefetchSnippet.cpp \
+    compiler/trj9/x/codegen/J9Linkage.cpp \
+    compiler/trj9/x/codegen/J9Snippet.cpp \
+    compiler/trj9/x/codegen/CallSnippet.cpp \
+    compiler/trj9/x/codegen/CheckFailureSnippet.cpp \
+    compiler/trj9/x/codegen/ForceRecompilationSnippet.cpp \
+    compiler/trj9/x/codegen/GuardedDevirtualSnippet.cpp \
+    compiler/trj9/x/codegen/J9TreeEvaluator.cpp \
+    compiler/trj9/x/codegen/J9X86Instruction.cpp \
+    compiler/trj9/x/codegen/JNIPauseSnippet.cpp \
+    compiler/trj9/x/codegen/PassJNINullSnippet.cpp \
+    compiler/trj9/x/codegen/RecompilationSnippet.cpp \
+    compiler/trj9/x/codegen/ScratchArgHelperCallSnippet.cpp \
+    compiler/trj9/x/codegen/WriteBarrierSnippet.cpp \
+    compiler/trj9/x/codegen/J9AheadOfTimeCompile.cpp \
+    compiler/trj9/x/codegen/X86PrivateLinkage.cpp \
+    compiler/trj9/x/codegen/X86HelperLinkage.cpp \
+    compiler/trj9/x/codegen/X86Recompilation.cpp \
+    compiler/trj9/x/codegen/J9LinkageUtils.cpp \
+    compiler/trj9/x/env/J9CPU.cpp \
     omr/compiler/x/env/OMRDebugEnv.cpp \
     omr/compiler/x/env/OMRCPU.cpp
 

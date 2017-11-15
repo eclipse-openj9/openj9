@@ -22,9 +22,9 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/z/runtime/VirtualGuardRuntime.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    tr.source/trj9/z/runtime/PicBuilder.m4 \
-    tr.source/trj9/z/runtime/Math.m4 \
-    tr.source/trj9/z/runtime/S390RelocationTarget.cpp \
-    tr.source/trj9/z/runtime/Recompilation.m4 \
-    tr.source/trj9/z/runtime/Recomp.cpp \
-    tr.source/trj9/z/runtime/ValueProf.m4
+    compiler/trj9/z/runtime/PicBuilder.m4 \
+    compiler/trj9/z/runtime/Math.m4 \
+    compiler/trj9/z/runtime/S390RelocationTarget.cpp \
+    compiler/trj9/z/runtime/Recompilation.m4 \
+    compiler/trj9/z/runtime/Recomp.cpp \
+    compiler/trj9/z/runtime/ValueProf.m4

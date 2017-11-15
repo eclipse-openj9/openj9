@@ -382,7 +382,7 @@ LIBCDEFS := $(wildcard /ztpf/$(UMA_ZTPF_ROOT)/base/lib/libCDEFSFORASM.so)
 	$(AS) $(ASFLAGS) $<
 <#elseif uma.spec.type.ztpf>
 %$(UMA_DOT_O): %.asm
-	perl $(UMA_PATH_TO_ROOT)tr.source/makelib/masm2gas.pl $(UMA_MASM2GAS_FLAGS) $(UMA_C_INCLUDES) $*.asm
+	perl $(UMA_PATH_TO_ROOT)compiler/makelib/masm2gas.pl $(UMA_MASM2GAS_FLAGS) $(UMA_C_INCLUDES) $*.asm
 	$(AS) $(ASFLAGS) -alshd=$*.lst -o $*.o $*.s
 	-rm $*.s
 	tpfobjpp -O ONotApplicable -g gNotApplicable -c PUT14.1  -f $(LIBCDEFS) $@

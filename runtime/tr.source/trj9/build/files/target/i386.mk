@@ -26,7 +26,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/x/i386/codegen/OMRTreeEvaluator.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    tr.source/trj9/x/i386/codegen/J9CodeGenerator.cpp \
-    tr.source/trj9/x/i386/codegen/IA32JNILinkage.cpp \
-    tr.source/trj9/x/i386/codegen/IA32PrivateLinkage.cpp \
-    tr.source/trj9/x/i386/codegen/IA32J9SystemLinkage.cpp
+    compiler/trj9/x/i386/codegen/J9CodeGenerator.cpp \
+    compiler/trj9/x/i386/codegen/IA32JNILinkage.cpp \
+    compiler/trj9/x/i386/codegen/IA32PrivateLinkage.cpp \
+    compiler/trj9/x/i386/codegen/IA32J9SystemLinkage.cpp

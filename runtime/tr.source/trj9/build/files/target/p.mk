@@ -49,22 +49,22 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/p/env/OMRCPU.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    tr.source/trj9/p/codegen/J9UnresolvedDataSnippet.cpp \
-    tr.source/trj9/p/codegen/J9CodeGenerator.cpp \
-    tr.source/trj9/p/codegen/J9TreeEvaluator.cpp \
-    tr.source/trj9/p/codegen/GenerateInstructions.cpp \
-    tr.source/trj9/p/codegen/J9PPCSnippet.cpp \
-    tr.source/trj9/p/codegen/J9AheadOfTimeCompile.cpp \
-    tr.source/trj9/p/codegen/PPCPrivateLinkage.cpp \
-    tr.source/trj9/p/codegen/PPCJNILinkage.cpp \
-    tr.source/trj9/p/codegen/InterfaceCastSnippet.cpp \
-    tr.source/trj9/p/codegen/CallSnippet.cpp \
-    tr.source/trj9/p/codegen/StackCheckFailureSnippet.cpp \
-    tr.source/trj9/p/codegen/DFPTreeEvaluator.cpp \
-    tr.source/trj9/p/codegen/J9PPCInstruction.cpp \
-    tr.source/trj9/p/codegen/ForceRecompilationSnippet.cpp \
-    tr.source/trj9/p/codegen/PPCRecompilation.cpp \
-    tr.source/trj9/p/codegen/PPCRecompilationSnippet.cpp \
-    tr.source/trj9/p/codegen/Trampoline.cpp \
-    tr.source/trj9/p/env/J9CPU.cpp \
+    compiler/trj9/p/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/trj9/p/codegen/J9CodeGenerator.cpp \
+    compiler/trj9/p/codegen/J9TreeEvaluator.cpp \
+    compiler/trj9/p/codegen/GenerateInstructions.cpp \
+    compiler/trj9/p/codegen/J9PPCSnippet.cpp \
+    compiler/trj9/p/codegen/J9AheadOfTimeCompile.cpp \
+    compiler/trj9/p/codegen/PPCPrivateLinkage.cpp \
+    compiler/trj9/p/codegen/PPCJNILinkage.cpp \
+    compiler/trj9/p/codegen/InterfaceCastSnippet.cpp \
+    compiler/trj9/p/codegen/CallSnippet.cpp \
+    compiler/trj9/p/codegen/StackCheckFailureSnippet.cpp \
+    compiler/trj9/p/codegen/DFPTreeEvaluator.cpp \
+    compiler/trj9/p/codegen/J9PPCInstruction.cpp \
+    compiler/trj9/p/codegen/ForceRecompilationSnippet.cpp \
+    compiler/trj9/p/codegen/PPCRecompilation.cpp \
+    compiler/trj9/p/codegen/PPCRecompilationSnippet.cpp \
+    compiler/trj9/p/codegen/Trampoline.cpp \
+    compiler/trj9/p/env/J9CPU.cpp \
     omr/compiler/p/env/OMRDebugEnv.cpp

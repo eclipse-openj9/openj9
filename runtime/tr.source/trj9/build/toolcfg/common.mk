@@ -27,10 +27,10 @@ OMR_DIR ?= $(J9SRC)/omr
 
 PRODUCT_INCLUDES=\
     $(OMR_INCLUDES_FOR_JIT) \
-    $(FIXED_SRCBASE)/tr.source/trj9/$(TARGET_ARCH)/$(TARGET_SUBARCH) \
-    $(FIXED_SRCBASE)/tr.source/trj9/$(TARGET_ARCH) \
-    $(FIXED_SRCBASE)/tr.source/trj9 \
-    $(FIXED_SRCBASE)/tr.source \
+    $(FIXED_SRCBASE)/compiler/trj9/$(TARGET_ARCH)/$(TARGET_SUBARCH) \
+    $(FIXED_SRCBASE)/compiler/trj9/$(TARGET_ARCH) \
+    $(FIXED_SRCBASE)/compiler/trj9 \
+    $(FIXED_SRCBASE)/compiler \
     $(FIXED_SRCBASE)/omr/compiler/$(TARGET_ARCH)/$(TARGET_SUBARCH) \
     $(FIXED_SRCBASE)/omr/compiler/$(TARGET_ARCH) \
     $(FIXED_SRCBASE)/omr/compiler \

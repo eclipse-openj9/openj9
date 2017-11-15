@@ -54,8 +54,8 @@
 		</dependencies>
 
 		<commands>
-			<command line="$(MAKE) -C ./tr.source clean" type="clean"/>
-			<command line="$(MAKE) -C ./tr.source" type="all"/>
+			<command line="$(MAKE) -C ./compiler clean" type="clean"/>
+			<command line="$(MAKE) -C ./compiler" type="all"/>
 		</commands>
 
 

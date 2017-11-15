@@ -42,12 +42,12 @@
 			<include path="j9oti"/>
 			<include path="j9dbgext"/>
 			<include path="j9jit_vm"/>
-			<include path="../tr.source/codegen" type="relativepath"/>
-			<include path="../tr.source/base" type="relativepath"/>
-			<include path="../tr.source/codegen/sched" type="relativepath"/>
-			<include path="../tr.source/optimizer" type="relativepath"/>
+			<include path="../compiler/codegen" type="relativepath"/>
+			<include path="../compiler/base" type="relativepath"/>
+			<include path="../compiler/codegen/sched" type="relativepath"/>
+			<include path="../compiler/optimizer" type="relativepath"/>
 			<include path="j9codert_vm"/>
-			<include path="../tr.source/runtime" type="relativepath"/>
+			<include path="../compiler/runtime" type="relativepath"/>
 		</includes>
 		<makefilestubs>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>

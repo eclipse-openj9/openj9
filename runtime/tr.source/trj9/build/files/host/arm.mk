@@ -24,12 +24,12 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/arm/runtime/VirtualGuardRuntime.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    tr.source/trj9/arm/runtime/MathHelp.c \
-    tr.source/trj9/arm/runtime/PicBuilder.armasm \
-    tr.source/trj9/arm/runtime/ThunkHelpersARM.c \
-    tr.source/trj9/arm/runtime/Math.armasm \
-    tr.source/trj9/arm/runtime/ArrayCopy.armasm \
-    tr.source/trj9/arm/runtime/Recomp.cpp \
-    tr.source/trj9/arm/runtime/Recompilation.armasm \
-    tr.source/trj9/arm/runtime/MTHelpersARM.cpp \
-    tr.source/trj9/arm/runtime/ARMRelocationTarget.cpp
+    compiler/trj9/arm/runtime/MathHelp.c \
+    compiler/trj9/arm/runtime/PicBuilder.armasm \
+    compiler/trj9/arm/runtime/ThunkHelpersARM.c \
+    compiler/trj9/arm/runtime/Math.armasm \
+    compiler/trj9/arm/runtime/ArrayCopy.armasm \
+    compiler/trj9/arm/runtime/Recomp.cpp \
+    compiler/trj9/arm/runtime/Recompilation.armasm \
+    compiler/trj9/arm/runtime/MTHelpersARM.cpp \
+    compiler/trj9/arm/runtime/ARMRelocationTarget.cpp

@@ -81,28 +81,28 @@
 			<include path="../jcl" type="relativepath"/>
 			<include path="harmony_include"/>
 			<include path="bcverify"/>
-			<include path="../tr.source/trj9/runtime" type="relativepath">
+			<include path="../compiler/trj9/runtime" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/trj9" type="relativepath">
+			<include path="../compiler/trj9" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 			<include path="$(OMR_DIR)/compiler" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/base" type="relativepath">
+			<include path="../compiler/base" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/ibm/base" type="relativepath">
+			<include path="../compiler/ibm/base" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 			<include path="$(OMR_DIR)/compiler/base" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/env" type="relativepath">
+			<include path="../compiler/env" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/ibm/env" type="relativepath">
+			<include path="../compiler/ibm/env" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 			<include path="$(OMR_DIR)/compiler/env" type="relativepath">

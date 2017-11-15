@@ -152,7 +152,7 @@ J9VM_SHA     := $(if $(J9VM_GIT_DIR),$(shell git -C $(dir $(J9VM_GIT_DIR)) rev-p
 SPEC_DIR     := buildspecs
 UMA_TOOL     := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)$(FREEMARKER_JAR)$(PATHSEP)sourcetools/lib/uma.jar" com.ibm.j9.uma.Main
 UMA_OPTIONS  := -rootDir . -configDir $(SPEC_DIR) -buildSpecId $(SPEC)
-UMA_OPTIONS  += -buildId $(BUILD_ID) -buildTag $(J9VM_SHA) -jvf tr.source/jit.version
+UMA_OPTIONS  += -buildId $(BUILD_ID) -buildTag $(J9VM_SHA) -jvf compiler/jit.version
 UMA_OPTIONS  += $(UMA_OPTIONS_EXTRA)
 # JAZZ 90097 Don't build executables in OMR because, on Windows, UMA generates .rc files for these executables
 # that require j9version.h, a JVM header file. j9version.h is not available in the include path for OMR modules.

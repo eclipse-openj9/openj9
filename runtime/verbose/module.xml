@@ -81,19 +81,19 @@
 			<include path="j9gcinclude"/>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
 			<include path="j9gcgluejava"/>
-			<include path="../tr.source/runtime" type="relativepath">
+			<include path="../compiler/runtime" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/ibm/runtime" type="relativepath">
+			<include path="../compiler/ibm/runtime" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 			<include path="j9codert_vm">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/codegen" type="relativepath">
+			<include path="../compiler/codegen" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/ibm/codegen" type="relativepath">
+			<include path="../compiler/ibm/codegen" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 			<include path="$(OMR_DIR)/compiler/codegen" type="relativepath">
@@ -102,22 +102,22 @@
 			<include path="$(OMR_DIR)/compiler" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/base" type="relativepath">
+			<include path="../compiler/base" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/ibm/base" type="relativepath">
+			<include path="../compiler/ibm/base" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source" type="relativepath">
+			<include path="../compiler" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/ibm" type="relativepath">
+			<include path="../compiler/ibm" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/trj9/runtime" type="relativepath">
+			<include path="../compiler/trj9/runtime" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../tr.source/trj9" type="relativepath">
+			<include path="../compiler/trj9" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 		</includes>
@@ -135,7 +135,7 @@
 			<vpath pattern="jswalk.c" path="j9codert_vm" augmentObjects="true">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</vpath>
-			<vpath pattern="MethodMetaData.c" path="../tr.source/trj9/runtime" augmentObjects="true" type="relativepath">
+			<vpath pattern="MethodMetaData.c" path="../compiler/trj9/runtime" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</vpath>
 			<vpath pattern="ctsupport.c" path="j9jit_vm" augmentObjects="true"/>

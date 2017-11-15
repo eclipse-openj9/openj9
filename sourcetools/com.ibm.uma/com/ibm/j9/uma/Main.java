@@ -224,9 +224,9 @@ public class Main {
 		dumpSplash();
 		
 		if ( jitVersionFile.equals("") ) {
-			File tempJitVersionFile = new File(rootDir + "/tr.source/codegen/version.h");
+			File tempJitVersionFile = new File(rootDir + "/compiler/codegen/version.h");
 			if(tempJitVersionFile.exists() && !tempJitVersionFile.isDirectory()) {
-				jitVersionFile = rootDir + "/tr.source/codegen/version.h";
+				jitVersionFile = rootDir + "/compiler/codegen/version.h";
 				System.out.print("Using version.h as the jitVersionFile\n");
 			} else {
 				tempJitVersionFile = new File(rootDir + "/jit.version");

@@ -108,14 +108,14 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/DominatorsChk.cpp \
     omr/compiler/optimizer/Earliestness.cpp \
     omr/compiler/optimizer/ExpressionsSimplification.cpp \
-    tr.source/trj9/optimizer/FearPointAnalysis.cpp \
+    compiler/trj9/optimizer/FearPointAnalysis.cpp \
     omr/compiler/optimizer/GeneralLoopUnroller.cpp \
     omr/compiler/optimizer/GlobalAnticipatability.cpp \
-    tr.source/trj9/optimizer/HCRGuardAnalysis.cpp \
-    tr.source/trj9/optimizer/OSRGuardInsertion.cpp \
-    tr.source/trj9/optimizer/OSRGuardRemoval.cpp \
-    tr.source/trj9/optimizer/OSRGuardAnalysis.cpp \
-    tr.source/trj9/optimizer/JProfiling.cpp \
+    compiler/trj9/optimizer/HCRGuardAnalysis.cpp \
+    compiler/trj9/optimizer/OSRGuardInsertion.cpp \
+    compiler/trj9/optimizer/OSRGuardRemoval.cpp \
+    compiler/trj9/optimizer/OSRGuardAnalysis.cpp \
+    compiler/trj9/optimizer/JProfiling.cpp \
     omr/compiler/optimizer/Inliner.cpp \
     omr/compiler/optimizer/RematTools.cpp \
     omr/compiler/optimizer/IntersectionBitVectorAnalysis.cpp \
@@ -149,16 +149,16 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/Reachability.cpp \
     omr/compiler/optimizer/ReachingDefinitions.cpp \
     omr/compiler/optimizer/RedundantAsyncCheckRemoval.cpp \
-    tr.source/trj9/optimizer/RedundantBCDSignElimination.cpp \
+    compiler/trj9/optimizer/RedundantBCDSignElimination.cpp \
     omr/compiler/optimizer/RegisterAnticipatability.cpp \
     omr/compiler/optimizer/RegisterAvailability.cpp \
     omr/compiler/optimizer/RegisterCandidate.cpp \
-    tr.source/trj9/optimizer/SequentialStoreSimplifier.cpp \
+    compiler/trj9/optimizer/SequentialStoreSimplifier.cpp \
     omr/compiler/optimizer/ShrinkWrapping.cpp \
     omr/compiler/optimizer/OMRSimplifier.cpp \
     omr/compiler/optimizer/OMRSimplifierHelpers.cpp \
     omr/compiler/optimizer/OMRSimplifierHandlers.cpp \
-    tr.source/trj9/optimizer/J9Simplifier.cpp \
+    compiler/trj9/optimizer/J9Simplifier.cpp \
     omr/compiler/optimizer/StructuralAnalysis.cpp \
     omr/compiler/optimizer/Structure.cpp \
     omr/compiler/optimizer/TranslateTable.cpp \
@@ -197,144 +197,143 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/codegen/OMRInstruction.cpp \
     omr/compiler/codegen/ELFObjectFileGenerator.cpp \
     omr/compiler/codegen/OMRELFRelocationResolver.cpp \
-    tr.source/trj9/control/J9Recompilation.cpp \
+    compiler/trj9/control/J9Recompilation.cpp \
     omr/compiler/codegen/OMRMemoryReference.cpp \
     omr/compiler/codegen/OMRMachine.cpp \
-    tr.source/trj9/env/CHTable.cpp \
-    tr.source/trj9/env/PersistentCHTable.cpp \
-    tr.source/trj9/optimizer/AllocationSinking.cpp \
-    tr.source/trj9/optimizer/DynamicLiteralPool.cpp \
-    tr.source/trj9/optimizer/EscapeAnalysis.cpp \
-    tr.source/trj9/optimizer/DataAccessAccelerator.cpp \
-    tr.source/trj9/optimizer/J9LocalCSE.cpp \
-    tr.source/trj9/optimizer/J9OptimizationManager.cpp \
-    tr.source/trj9/optimizer/J9Optimizer.cpp \
-    tr.source/trj9/optimizer/J9SimplifierHelpers.cpp \
-    tr.source/trj9/optimizer/J9SimplifierHandlers.cpp \
-    tr.source/trj9/optimizer/J9TransformUtil.cpp \
-    tr.source/trj9/optimizer/JitProfiler.cpp \
-    tr.source/trj9/optimizer/LiveVariablesForGC.cpp \
-    tr.source/trj9/optimizer/LoopAliasRefiner.cpp \
-    tr.source/trj9/optimizer/MonitorElimination.cpp \
-    tr.source/trj9/optimizer/NewInitialization.cpp \
+    compiler/trj9/env/CHTable.cpp \
+    compiler/trj9/env/PersistentCHTable.cpp \
+    compiler/trj9/optimizer/AllocationSinking.cpp \
+    compiler/trj9/optimizer/DynamicLiteralPool.cpp \
+    compiler/trj9/optimizer/EscapeAnalysis.cpp \
+    compiler/trj9/optimizer/DataAccessAccelerator.cpp \
+    compiler/trj9/optimizer/J9LocalCSE.cpp \
+    compiler/trj9/optimizer/J9OptimizationManager.cpp \
+    compiler/trj9/optimizer/J9Optimizer.cpp \
+    compiler/trj9/optimizer/J9SimplifierHelpers.cpp \
+    compiler/trj9/optimizer/J9SimplifierHandlers.cpp \
+    compiler/trj9/optimizer/J9TransformUtil.cpp \
+    compiler/trj9/optimizer/JitProfiler.cpp \
+    compiler/trj9/optimizer/LiveVariablesForGC.cpp \
+    compiler/trj9/optimizer/LoopAliasRefiner.cpp \
+    compiler/trj9/optimizer/MonitorElimination.cpp \
+    compiler/trj9/optimizer/NewInitialization.cpp \
     omr/compiler/optimizer/OSRDefAnalysis.cpp \
-    tr.source/trj9/optimizer/SignExtendLoads.cpp \
-    tr.source/trj9/optimizer/SPMDParallelizer.cpp \
-    tr.source/trj9/optimizer/SPMDPreCheck.cpp \
-    tr.source/trj9/optimizer/StringBuilderTransformer.cpp \
-    tr.source/trj9/optimizer/StringPeepholes.cpp \
-    tr.source/trj9/optimizer/UnsafeFastPath.cpp \
+    compiler/trj9/optimizer/SignExtendLoads.cpp \
+    compiler/trj9/optimizer/SPMDParallelizer.cpp \
+    compiler/trj9/optimizer/SPMDPreCheck.cpp \
+    compiler/trj9/optimizer/StringBuilderTransformer.cpp \
+    compiler/trj9/optimizer/StringPeepholes.cpp \
+    compiler/trj9/optimizer/UnsafeFastPath.cpp \
     omr/compiler/optimizer/FieldPrivatizer.cpp \
     omr/compiler/optimizer/GlobalRegisterAllocator.cpp \
-    tr.source/trj9/optimizer/IdiomRecognition.cpp \
-    tr.source/trj9/optimizer/IdiomRecognitionUtils.cpp \
-    tr.source/trj9/optimizer/IdiomTransformations.cpp \
+    compiler/trj9/optimizer/IdiomRecognition.cpp \
+    compiler/trj9/optimizer/IdiomRecognitionUtils.cpp \
+    compiler/trj9/optimizer/IdiomTransformations.cpp \
     omr/compiler/optimizer/InductionVariable.cpp \
     omr/compiler/optimizer/PrefetchInsertion.cpp \
-    tr.source/trj9/optimizer/ProfileGenerator.cpp \
+    compiler/trj9/optimizer/ProfileGenerator.cpp \
     omr/compiler/optimizer/ReorderIndexExpr.cpp \
     omr/compiler/optimizer/SinkStores.cpp \
     omr/compiler/optimizer/StripMiner.cpp \
-    tr.source/trj9/optimizer/SwitchAnalyzer.cpp \
-    tr.source/trj9/optimizer/VPBCDConstraint.cpp \
+    compiler/trj9/optimizer/SwitchAnalyzer.cpp \
+    compiler/trj9/optimizer/VPBCDConstraint.cpp \
     omr/compiler/optimizer/VPConstraint.cpp \
     omr/compiler/optimizer/VPHandlers.cpp \
     omr/compiler/optimizer/VPHandlersCommon.cpp \
     omr/compiler/optimizer/OMRValuePropagation.cpp \
     omr/compiler/optimizer/ValuePropagationCommon.cpp \
-    tr.source/trj9/optimizer/J9ValuePropagation.cpp \
-    tr.source/trj9/optimizer/VarHandleTransformer.cpp \
+    compiler/trj9/optimizer/J9ValuePropagation.cpp \
+    compiler/trj9/optimizer/VarHandleTransformer.cpp \
     omr/compiler/optimizer/RegDepCopyRemoval.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    tr.source/trj9/env/annotations/AnnotationBase.cpp \
-    tr.source/trj9/env/annotations/Annotations.cpp \
-    tr.source/trj9/control/CompilationController.cpp \
-    tr.source/trj9/control/MethodToBeCompiled.cpp \
-    tr.source/trj9/control/CompilationThread.cpp \
-    tr.source/trj9/env/CpuUtilization.cpp \
-    tr.source/trj9/ras/DebugExt.cpp \
-    tr.source/trj9/ras/DebugExtSegmentProvider.cpp \
-    tr.source/trj9/ras/HashTable.cpp \
-    tr.source/trj9/ras/InternalFunctions.cpp \
-    tr.source/trj9/codegen/J9Snippet.cpp \
-    tr.source/trj9/codegen/CodeGenGPU.cpp \
-    tr.source/trj9/control/HookedByTheJit.cpp \
-    tr.source/trj9/runtime/IProfiler.cpp \
-    tr.source/trj9/runtime/HWProfiler.cpp \
-    tr.source/trj9/runtime/LMGuardedStorage.cpp \
-    tr.source/trj9/runtime/J9Profiler.cpp \
-    tr.source/trj9/ilgen/J9IlGeneratorMethodDetails.cpp \
-    tr.source/trj9/ilgen/J9ByteCodeIterator.cpp \
-    tr.source/trj9/ilgen/IlGenerator.cpp \
-    tr.source/trj9/ilgen/Walker.cpp \
-    tr.source/trj9/infra/J9MonitorTable.cpp \
-    tr.source/trj9/infra/RWMonitor.cpp \
-    tr.source/trj9/infra/J9Monitor.cpp \
-    tr.source/trj9/infra/J9Cfg.cpp \
-    tr.source/trj9/codegen/J9GCStackAtlas.cpp \
-    tr.source/trj9/env/J9ObjectModel.cpp \
-    tr.source/trj9/env/J2IThunk.cpp \
-    tr.source/trj9/env/ClassLoaderTable.cpp \
-    tr.source/trj9/env/J9ArithEnv.cpp \
-    tr.source/trj9/env/J9DebugEnv.cpp \
-    tr.source/trj9/env/J9ClassEnv.cpp \
-    tr.source/trj9/env/J9VMEnv.cpp \
-    tr.source/trj9/env/J9VMMethodEnv.cpp \
-    tr.source/trj9/env/J9KnownObjectTable.cpp \
-    tr.source/trj9/codegen/J9Instruction.cpp \
-    tr.source/trj9/codegen/J9CodeGenerator.cpp \
-    tr.source/trj9/codegen/J9CodeGenPhase.cpp \
-    tr.source/trj9/codegen/CodeGenRA.cpp \
-    tr.source/trj9/codegen/CodeGenGC.cpp \
-    tr.source/trj9/codegen/MonitorState.cpp \
-    tr.source/trj9/optimizer/EstimateCodeSize.cpp \
-    tr.source/trj9/optimizer/J9EstimateCodeSize.cpp \
-    tr.source/trj9/optimizer/J9Inliner.cpp \
-    tr.source/trj9/optimizer/InlinerTempForJ9.cpp \
-    tr.source/trj9/optimizer/InterProceduralAnalyzer.cpp \
-    tr.source/trj9/env/j9fieldsInfo.cpp \
-    tr.source/trj9/env/J9JitMemory.cpp \
-    tr.source/trj9/env/J9SegmentAllocator.cpp \
-    tr.source/trj9/env/J9SegmentProvider.cpp \
-    tr.source/trj9/env/J9SegmentCache.cpp \
-    tr.source/trj9/env/SystemSegmentProvider.cpp \
-    tr.source/trj9/env/j9method.cpp \
-    tr.source/trj9/env/J9SharedCache.cpp \
-    tr.source/trj9/env/J9CompilerEnv.cpp \
-    tr.source/trj9/env/PersistentAllocator.cpp \
-    tr.source/trj9/env/Startup.cpp \
-    tr.source/trj9/codegen/J9AheadOfTimeCompile.cpp \
-    tr.source/trj9/codegen/J9TreeEvaluator.cpp \
-    tr.source/trj9/env/jitsupport.cpp \
-    tr.source/trj9/env/FilePointer.cpp \
-    tr.source/trj9/runtime/MetaData.cpp \
-    tr.source/trj9/runtime/MetaDataDebug.cpp \
-    tr.source/trj9/ras/kca_offsets_generator.cpp \
-    tr.source/trj9/control/DLLMain.cpp \
-    tr.source/trj9/control/rossa.cpp \
-    tr.source/trj9/env/annotations/TestAnnotation.cpp \
-    tr.source/trj9/env/annotations/TRNoSideFXAnnotation.cpp \
-    tr.source/trj9/env/annotations/TROptAnnotation.cpp \
-    tr.source/trj9/env/annotations/GPUAnnotation.cpp \
-    tr.source/trj9/env/ut_j9jit.c \
-    tr.source/trj9/control/J9Options.cpp \
-    tr.source/trj9/env/VMJ9.cpp \
-    tr.source/trj9/env/ProcessorDetection.cpp \
-    tr.source/trj9/env/annotations/VMJ9Annotations.cpp \
-    tr.source/trj9/compile/J9AliasBuilder.cpp \
-    tr.source/trj9/compile/J9SymbolReferenceTable.cpp \
-    tr.source/trj9/compile/J9Compilation.cpp \
-    tr.source/trj9/ilgen/ClassLookahead.cpp \
-    tr.source/trj9/env/J9CPU.cpp \
-    tr.source/trj9/env/J9IO.cpp \
-    tr.source/trj9/il/J9DataTypes.cpp \
-    tr.source/trj9/il/J9IL.cpp \
-    tr.source/trj9/il/J9Node.cpp \
-    tr.source/trj9/il/J9SymbolReference.cpp \
-    tr.source/trj9/il/symbol/J9MethodSymbol.cpp \
-    tr.source/trj9/il/symbol/J9StaticSymbol.cpp \
-    tr.source/trj9/il/symbol/J9Symbol.cpp \
+    compiler/trj9/env/annotations/AnnotationBase.cpp \
+    compiler/trj9/env/annotations/Annotations.cpp \
+    compiler/trj9/control/CompilationController.cpp \
+    compiler/trj9/control/MethodToBeCompiled.cpp \
+    compiler/trj9/control/CompilationThread.cpp \
+    compiler/trj9/env/CpuUtilization.cpp \
+    compiler/trj9/ras/DebugExt.cpp \
+    compiler/trj9/ras/DebugExtSegmentProvider.cpp \
+    compiler/trj9/ras/HashTable.cpp \
+    compiler/trj9/ras/InternalFunctions.cpp \
+    compiler/trj9/codegen/J9Snippet.cpp \
+    compiler/trj9/codegen/CodeGenGPU.cpp \
+    compiler/trj9/control/HookedByTheJit.cpp \
+    compiler/trj9/runtime/IProfiler.cpp \
+    compiler/trj9/runtime/HWProfiler.cpp \
+    compiler/trj9/runtime/LMGuardedStorage.cpp \
+    compiler/trj9/runtime/J9Profiler.cpp \
+    compiler/trj9/ilgen/J9IlGeneratorMethodDetails.cpp \
+    compiler/trj9/ilgen/J9ByteCodeIterator.cpp \
+    compiler/trj9/ilgen/IlGenerator.cpp \
+    compiler/trj9/ilgen/Walker.cpp \
+    compiler/trj9/infra/J9MonitorTable.cpp \
+    compiler/trj9/infra/RWMonitor.cpp \
+    compiler/trj9/infra/J9Monitor.cpp \
+    compiler/trj9/infra/J9Cfg.cpp \
+    compiler/trj9/codegen/J9GCStackAtlas.cpp \
+    compiler/trj9/env/J9ObjectModel.cpp \
+    compiler/trj9/env/J2IThunk.cpp \
+    compiler/trj9/env/ClassLoaderTable.cpp \
+    compiler/trj9/env/J9ArithEnv.cpp \
+    compiler/trj9/env/J9DebugEnv.cpp \
+    compiler/trj9/env/J9ClassEnv.cpp \
+    compiler/trj9/env/J9VMEnv.cpp \
+    compiler/trj9/env/J9VMMethodEnv.cpp \
+    compiler/trj9/env/J9KnownObjectTable.cpp \
+    compiler/trj9/codegen/J9Instruction.cpp \
+    compiler/trj9/codegen/J9CodeGenerator.cpp \
+    compiler/trj9/codegen/J9CodeGenPhase.cpp \
+    compiler/trj9/codegen/CodeGenRA.cpp \
+    compiler/trj9/codegen/CodeGenGC.cpp \
+    compiler/trj9/optimizer/EstimateCodeSize.cpp \
+    compiler/trj9/optimizer/J9EstimateCodeSize.cpp \
+    compiler/trj9/optimizer/J9Inliner.cpp \
+    compiler/trj9/optimizer/InlinerTempForJ9.cpp \
+    compiler/trj9/optimizer/InterProceduralAnalyzer.cpp \
+    compiler/trj9/env/j9fieldsInfo.cpp \
+    compiler/trj9/env/J9JitMemory.cpp \
+    compiler/trj9/env/J9SegmentAllocator.cpp \
+    compiler/trj9/env/J9SegmentProvider.cpp \
+    compiler/trj9/env/J9SegmentCache.cpp \
+    compiler/trj9/env/SystemSegmentProvider.cpp \
+    compiler/trj9/env/j9method.cpp \
+    compiler/trj9/env/J9SharedCache.cpp \
+    compiler/trj9/env/J9CompilerEnv.cpp \
+    compiler/trj9/env/PersistentAllocator.cpp \
+    compiler/trj9/env/Startup.cpp \
+    compiler/trj9/codegen/J9AheadOfTimeCompile.cpp \
+    compiler/trj9/codegen/J9TreeEvaluator.cpp \
+    compiler/trj9/env/jitsupport.cpp \
+    compiler/trj9/env/FilePointer.cpp \
+    compiler/trj9/runtime/MetaData.cpp \
+    compiler/trj9/runtime/MetaDataDebug.cpp \
+    compiler/trj9/ras/kca_offsets_generator.cpp \
+    compiler/trj9/control/DLLMain.cpp \
+    compiler/trj9/control/rossa.cpp \
+    compiler/trj9/env/annotations/TestAnnotation.cpp \
+    compiler/trj9/env/annotations/TRNoSideFXAnnotation.cpp \
+    compiler/trj9/env/annotations/TROptAnnotation.cpp \
+    compiler/trj9/env/annotations/GPUAnnotation.cpp \
+    compiler/trj9/env/ut_j9jit.c \
+    compiler/trj9/control/J9Options.cpp \
+    compiler/trj9/env/VMJ9.cpp \
+    compiler/trj9/env/ProcessorDetection.cpp \
+    compiler/trj9/env/annotations/VMJ9Annotations.cpp \
+    compiler/trj9/compile/J9AliasBuilder.cpp \
+    compiler/trj9/compile/J9SymbolReferenceTable.cpp \
+    compiler/trj9/compile/J9Compilation.cpp \
+    compiler/trj9/ilgen/ClassLookahead.cpp \
+    compiler/trj9/env/J9CPU.cpp \
+    compiler/trj9/env/J9IO.cpp \
+    compiler/trj9/il/J9DataTypes.cpp \
+    compiler/trj9/il/J9IL.cpp \
+    compiler/trj9/il/J9Node.cpp \
+    compiler/trj9/il/J9SymbolReference.cpp \
+    compiler/trj9/il/symbol/J9MethodSymbol.cpp \
+    compiler/trj9/il/symbol/J9StaticSymbol.cpp \
+    compiler/trj9/il/symbol/J9Symbol.cpp \
     omr/compiler/runtime/Alignment.cpp \
     omr/compiler/runtime/CodeCacheTypes.cpp \
     omr/compiler/runtime/OMRCodeCache.cpp \
@@ -346,29 +345,29 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/env/OMRKnownObjectTable.cpp \
     omr/compiler/env/Globals.cpp \
     omr/compiler/env/OMRCompilerEnv.cpp \
-    tr.source/trj9/runtime/ArtifactManager.cpp \
-    tr.source/trj9/runtime/ClassUnloadAssumption.cpp \
-    tr.source/trj9/runtime/codertinit.cpp \
-    tr.source/trj9/runtime/DataCache.cpp \
-    tr.source/trj9/runtime/HookHelpers.cpp \
-    tr.source/trj9/runtime/Trampoline.cpp \
-    tr.source/trj9/runtime/emfloat.c \
-    tr.source/trj9/runtime/J9CodeCache.cpp \
-    tr.source/trj9/runtime/J9CodeCacheManager.cpp \
-    tr.source/trj9/runtime/J9CodeCacheMemorySegment.cpp \
-    tr.source/trj9/runtime/J9JitPersistentMemory.cpp \
-    tr.source/trj9/runtime/MethodMetaData.c \
-    tr.source/trj9/runtime/RelocationRuntime.cpp \
-    tr.source/trj9/runtime/RelocationRuntimeLogger.cpp \
-    tr.source/trj9/runtime/RelocationRecord.cpp \
-    tr.source/trj9/runtime/RelocationTarget.cpp \
-    tr.source/trj9/runtime/Runtime.cpp \
-    tr.source/trj9/runtime/SignalHandler.c \
-    tr.source/trj9/runtime/GPUHelpers.cpp \
-    tr.source/trj9/runtime/CRuntimeImpl.cpp \
-    tr.source/trj9/runtime/JitRuntime.cpp \
-    tr.source/trj9/runtime/RuntimeAssumptions.cpp \
-    tr.source/trj9/runtime/ValueProfiler.cpp
+    compiler/trj9/runtime/ArtifactManager.cpp \
+    compiler/trj9/runtime/ClassUnloadAssumption.cpp \
+    compiler/trj9/runtime/codertinit.cpp \
+    compiler/trj9/runtime/DataCache.cpp \
+    compiler/trj9/runtime/HookHelpers.cpp \
+    compiler/trj9/runtime/Trampoline.cpp \
+    compiler/trj9/runtime/emfloat.c \
+    compiler/trj9/runtime/J9CodeCache.cpp \
+    compiler/trj9/runtime/J9CodeCacheManager.cpp \
+    compiler/trj9/runtime/J9CodeCacheMemorySegment.cpp \
+    compiler/trj9/runtime/J9JitPersistentMemory.cpp \
+    compiler/trj9/runtime/MethodMetaData.c \
+    compiler/trj9/runtime/RelocationRuntime.cpp \
+    compiler/trj9/runtime/RelocationRuntimeLogger.cpp \
+    compiler/trj9/runtime/RelocationRecord.cpp \
+    compiler/trj9/runtime/RelocationTarget.cpp \
+    compiler/trj9/runtime/Runtime.cpp \
+    compiler/trj9/runtime/SignalHandler.c \
+    compiler/trj9/runtime/GPUHelpers.cpp \
+    compiler/trj9/runtime/CRuntimeImpl.cpp \
+    compiler/trj9/runtime/JitRuntime.cpp \
+    compiler/trj9/runtime/RuntimeAssumptions.cpp \
+    compiler/trj9/runtime/ValueProfiler.cpp
 
 -include $(JIT_MAKE_DIR)/files/extra.mk
 include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk

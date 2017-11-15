@@ -19,6 +19,6 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    tr.source/trj9/x/amd64/runtime/AMD64ArrayCopy.asm \
-    tr.source/trj9/x/amd64/runtime/AMD64CompressString.asm \
-    tr.source/trj9/x/amd64/runtime/AMD64Recompilation.asm
+    compiler/trj9/x/amd64/runtime/AMD64ArrayCopy.asm \
+    compiler/trj9/x/amd64/runtime/AMD64CompressString.asm \
+    compiler/trj9/x/amd64/runtime/AMD64Recompilation.asm

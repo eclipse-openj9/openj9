@@ -19,7 +19,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    tr.source/trj9/x/i386/runtime/J9IA32ArrayCopy.asm \
-    tr.source/trj9/x/i386/runtime/J9IA32CompressString.asm \
-    tr.source/trj9/x/i386/runtime/J9IA32Math64.asm \
-    tr.source/trj9/x/i386/runtime/IA32Recompilation.asm
+    compiler/trj9/x/i386/runtime/J9IA32ArrayCopy.asm \
+    compiler/trj9/x/i386/runtime/J9IA32CompressString.asm \
+    compiler/trj9/x/i386/runtime/J9IA32Math64.asm \
+    compiler/trj9/x/i386/runtime/IA32Recompilation.asm

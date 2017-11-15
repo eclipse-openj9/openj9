@@ -64,8 +64,8 @@ BUILD_CONFIG?=prod
 #
 # Dirs used internally by the makefiles
 #
-JIT_MAKE_DIR?=$(FIXED_SRCBASE)/tr.source/trj9/build
-JIT_SCRIPT_DIR?=$(FIXED_SRCBASE)/tr.source/trj9/build/scripts
+JIT_MAKE_DIR?=$(FIXED_SRCBASE)/compiler/trj9/build
+JIT_SCRIPT_DIR?=$(FIXED_SRCBASE)/compiler/trj9/build/scripts
 
 #
 # First we set a bunch of tokens about the platform that the rest of the

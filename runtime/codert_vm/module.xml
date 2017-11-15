@@ -59,10 +59,10 @@
 			<include path="j9gcinclude"/>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
 
-			<include path="../tr.source/runtime" type="relativepath"/>
-			<include path="../tr.source/codegen" type="relativepath"/>
-			<include path="../tr.source/base" type="relativepath"/>
-			<include path="../tr.source/trj9/runtime" type="relativepath"/>
+			<include path="../compiler/runtime" type="relativepath"/>
+			<include path="../compiler/codegen" type="relativepath"/>
+			<include path="../compiler/base" type="relativepath"/>
+			<include path="../compiler/trj9/runtime" type="relativepath"/>
 		</includes>
 
 		<makefilestubs>

@@ -55,28 +55,28 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/OMRCodeGenerator.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    tr.source/trj9/z/codegen/J9UnresolvedDataSnippet.cpp \
-    tr.source/trj9/z/codegen/S390Register.cpp \
-    tr.source/trj9/z/codegen/J9CodeGenerator.cpp \
-    tr.source/trj9/z/codegen/J9CodeGenPhase.cpp \
-    tr.source/trj9/z/codegen/J9Instruction.cpp \
-    tr.source/trj9/z/codegen/J9MemoryReference.cpp \
-    tr.source/trj9/z/codegen/J9S390SystemLinkage.cpp \
-    tr.source/trj9/z/codegen/J9S390PrivateLinkage.cpp \
-    tr.source/trj9/z/codegen/J9S390CHelperLinkage.cpp \
-    tr.source/trj9/z/codegen/J9TreeEvaluator.cpp \
-    tr.source/trj9/z/codegen/J9Linkage.cpp \
-    tr.source/trj9/z/codegen/S390StackCheckFailureSnippet.cpp \
-    tr.source/trj9/z/codegen/J9S390Snippet.cpp \
-    tr.source/trj9/z/codegen/J9ZSnippet.cpp \
-    tr.source/trj9/z/codegen/S390AOTRelocation.cpp \
-    tr.source/trj9/z/codegen/DFPTreeEvaluator.cpp \
-    tr.source/trj9/z/codegen/InMemoryLoadStoreMarking.cpp \
-    tr.source/trj9/z/codegen/ReduceSynchronizedFieldLoad.cpp \
-    tr.source/trj9/z/codegen/UncommonBCDCHKAddressNode.cpp \
-    tr.source/trj9/z/codegen/ForceRecompilationSnippet.cpp \
-    tr.source/trj9/z/codegen/S390Recompilation.cpp \
-    tr.source/trj9/z/codegen/J9AheadOfTimeCompile.cpp \
-    tr.source/trj9/z/codegen/S390J9CallSnippet.cpp \
-    tr.source/trj9/z/env/J9CPU.cpp \
+    compiler/trj9/z/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/trj9/z/codegen/S390Register.cpp \
+    compiler/trj9/z/codegen/J9CodeGenerator.cpp \
+    compiler/trj9/z/codegen/J9CodeGenPhase.cpp \
+    compiler/trj9/z/codegen/J9Instruction.cpp \
+    compiler/trj9/z/codegen/J9MemoryReference.cpp \
+    compiler/trj9/z/codegen/J9S390SystemLinkage.cpp \
+    compiler/trj9/z/codegen/J9S390PrivateLinkage.cpp \
+    compiler/trj9/z/codegen/J9S390CHelperLinkage.cpp \
+    compiler/trj9/z/codegen/J9TreeEvaluator.cpp \
+    compiler/trj9/z/codegen/J9Linkage.cpp \
+    compiler/trj9/z/codegen/S390StackCheckFailureSnippet.cpp \
+    compiler/trj9/z/codegen/J9S390Snippet.cpp \
+    compiler/trj9/z/codegen/J9ZSnippet.cpp \
+    compiler/trj9/z/codegen/S390AOTRelocation.cpp \
+    compiler/trj9/z/codegen/DFPTreeEvaluator.cpp \
+    compiler/trj9/z/codegen/InMemoryLoadStoreMarking.cpp \
+    compiler/trj9/z/codegen/ReduceSynchronizedFieldLoad.cpp \
+    compiler/trj9/z/codegen/UncommonBCDCHKAddressNode.cpp \
+    compiler/trj9/z/codegen/ForceRecompilationSnippet.cpp \
+    compiler/trj9/z/codegen/S390Recompilation.cpp \
+    compiler/trj9/z/codegen/J9AheadOfTimeCompile.cpp \
+    compiler/trj9/z/codegen/S390J9CallSnippet.cpp \
+    compiler/trj9/z/env/J9CPU.cpp \
     omr/compiler/z/env/OMRDebugEnv.cpp
