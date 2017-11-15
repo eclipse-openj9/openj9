@@ -859,7 +859,7 @@ getj9bin()
 	/* misnamed - returns the directory that the jvm DLL is found in, NOT the directory that the J9 VM itself is in. */
 
 	J9StringBuffer *result = NULL;
-#if (defined(LINUX) || defined(OSX)) && !defined(J9ZTPF)
+#if (defined(LINUX) && !defined(J9ZTPF)) || defined(OSX)
 	Dl_info libraryInfo;
 	int rc = dladdr((void *)getj9bin, &libraryInfo);
 
