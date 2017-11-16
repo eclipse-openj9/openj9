@@ -39,6 +39,7 @@
 	<property name="build" location="./bin" />
 	<property name="build_resource" location="./resource" />
 	<property name="transformerListener" location="../Utils/src"/>
+	<property name="TestUtilities" location="../TestUtilities/src"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -141,6 +142,7 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<src path="${src_90}" />
+					<src path="${TestUtilities}" />
 					<src path="${transformerListener}" />
 					<compilerarg line='${addExports}' />
 					<compilerarg line='${addModules}' />
@@ -164,6 +166,7 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<src path="${src_80}" />
+					<src path="${TestUtilities}" />
 					<src path="${transformerListener}" />
 					<exclude name="**/Cmvc194280.java" />
 					<exclude name="**/resources/**"/>
