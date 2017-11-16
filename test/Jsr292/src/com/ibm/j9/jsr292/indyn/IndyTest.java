@@ -24,6 +24,7 @@ package com.ibm.j9.jsr292.indyn;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
+import org.openj9.test.util.JavaVersion;
 import static org.objectweb.asm.Opcodes.ARETURN;
 
 import java.lang.invoke.MethodHandle;
@@ -211,18 +212,20 @@ public class IndyTest {
 	//Negative test : invalid bootstrap method
 	@Test(groups = { "level.extended" })
 	public void test_indyn_invalid_bootstrap_method() {
-		
-		boolean bootstrapMethodError = false;
-		
 		try {
 			String s = com.ibm.j9.jsr292.indyn.GenIndyn.invalid_bootstrap(new Object());
-		} catch ( BootstrapMethodError e ) {
-			bootstrapMethodError = true;
+		} catch (BootstrapMethodError e) {
+			if (!JavaVersion.isJava8()) {
+				Assert.fail("[Java 9+] NoSuchMethodError not thrown when a non-existent bootstrap method is used");
+			}
+			return;
+		} catch (NoSuchMethodError e) {
+			if (JavaVersion.isJava8()) {
+				Assert.fail("[Java 8] BootstrapMethodError not thrown when invalid bootstrap method is used");
+			}
+			return;
 		}
-		
-		if ( bootstrapMethodError == false ) {
-			Assert.fail("BootstrapMethodError not thrown when invalid bootstrap method is used");
-		}
+		Assert.fail("BootstrapMethodError (in Java 8) or NoSuchMethodError (Java 9+) should have been thrown");
 	}
 	
 	//Test creating an Object#toString() method using LDC

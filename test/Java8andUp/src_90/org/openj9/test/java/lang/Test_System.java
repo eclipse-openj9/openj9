@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
+
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,12 +40,13 @@ import java.security.Permission;
 import java.util.Enumeration;
 import java.util.Properties;
 
-
 import org.openj9.test.support.Support_Exec;
+import org.openj9.test.util.JavaVersion;
 
 @Test(groups = { "level.sanity" })
 public class Test_System {
-
+	public static final String javaVersion = JavaVersion.getJavaVersion();
+	
 	// Properties orgProps = System.getProperties();
 	static boolean flag = false;
 	static boolean ranFinalize = false;
@@ -144,9 +146,8 @@ public class Test_System {
 	 */
 	@Test
 	public void test_getProperties() {
-		Properties p = System.getProperties();
- 		AssertJUnit.assertTrue("Incorrect properties returned", p.getProperty(
- 				"java.version").indexOf("9", 0) == 0);
+ 		AssertJUnit.assertTrue("Incorrect properties returned", 
+ 				javaVersion.indexOf("9", 0) == 0);
 
 		// ensure spec'ed properties are non-null. See System.getProperties()
 		// spec.
@@ -167,7 +168,7 @@ public class Test_System {
 		 * This test should only run for Java 1.8.0 and above. For Java 1.9.0
 		 * and above, we do not support java.ext.dirs property.
 		 */
-		if (p.getProperty("java.version").startsWith("1.8.0")) {
+		if (JavaVersion.isJava8()) {
 			String javaExtDirs = "java.ext.dirs";
 			AssertJUnit.assertTrue(javaExtDirs, System.getProperty(javaExtDirs) != null);
 		}
@@ -178,8 +179,8 @@ public class Test_System {
 	 */
 	@Test
 	public void test_getProperty() {
- 		AssertJUnit.assertTrue("Incorrect properties returned", System.getProperty(
- 				"java.version").indexOf("9", 0) == 0);
+ 		AssertJUnit.assertTrue("Incorrect properties returned", 
+ 				javaVersion.indexOf("9", 0) == 0);
 
 		boolean is8859_1 = true;
 		String encoding = System.getProperty("file.encoding");
@@ -217,12 +218,12 @@ public class Test_System {
 	 */
 	@Test
 	public void test_getProperty2() {
- 		AssertJUnit.assertTrue("Failed to return correct property value: "
- 				+ System.getProperty("java.version", "99999"), System
- 				.getProperty("java.version", "99999").indexOf("9", 0) >= 0);
+		String javaVersionOrDefault = System.getProperty("java.version", "99999");
+ 		AssertJUnit.assertTrue("Failed to return correct property value: " + javaVersionOrDefault, 
+ 				javaVersionOrDefault.indexOf("9", 0) >= 0);
 
-		AssertJUnit.assertTrue("Failed to return correct property value", System
-				.getProperty("bogus.prop", "bogus").equals("bogus"));
+		AssertJUnit.assertTrue("Failed to return correct property value",
+				System.getProperty("bogus.prop", "bogus").equals("bogus"));
 	}
 
 	/**
