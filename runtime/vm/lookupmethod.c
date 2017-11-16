@@ -158,23 +158,6 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 	U_32 modifiers = romMethod->modifiers;
 	J9JavaVM * vm = currentThread->javaVM;
 
-	/* Abstract methods are only allowed in abstract classes.  Interface classes are abstract by defintion.
-	 * If we are resolving an interface method ref, or we are looking up a method from JNI, allow the method
-	 * to be found in an interface class.  If not, throw AbstractMethodError.
-	 */
-	if (modifiers & J9AccAbstract) {
-		U_32 classModifiers = methodClass->romClass->modifiers;
-
-		if (((classModifiers & J9AccAbstract) == 0) ||
-				((classModifiers & J9AccInterface) &&
-						((lookupOptions & (J9_LOOK_VIRTUAL | J9_LOOK_INTERFACE | J9_LOOK_JNI)) == 0))
-		) {
-			*exception = J9VMCONSTANTPOOL_JAVALANGABSTRACTMETHODERROR;
-			*exceptionClass = methodClass;
-			return NULL;
-		}
-	}
-
 	/* Check that the found method is visible from the sender */
 
 	if ((NULL != senderClass) && (!J9ROMCLASS_IS_UNSAFE(senderClass->romClass))) {
