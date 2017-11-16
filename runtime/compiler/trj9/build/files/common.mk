@@ -287,6 +287,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/trj9/codegen/J9CodeGenPhase.cpp \
     compiler/trj9/codegen/CodeGenRA.cpp \
     compiler/trj9/codegen/CodeGenGC.cpp \
+    compiler/trj9/codegen/MonitorState.cpp \
     compiler/trj9/optimizer/EstimateCodeSize.cpp \
     compiler/trj9/optimizer/J9EstimateCodeSize.cpp \
     compiler/trj9/optimizer/J9Inliner.cpp \
