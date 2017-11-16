@@ -78,7 +78,6 @@
 					<property name="compiler.javac" value="${JAVAC}" />
 					<fileset dir="../../" includes="${build.list}" >
 						<exclude name="TEST_*/build.xml" />
-						<exclude name="Jsr292/build.xml" />
 						<exclude name="NativeTest/build.xml" />
 						<exclude name="SharedCPEntryInvokerTests/build.xml" />
 						<exclude name="Valhalla/build.xml" />
