@@ -1299,8 +1299,8 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       if (constantHeapCase)
          {
          // these return uintptrj_t but because of the if(constantHeapCase) they are guaranteed to be <= MAX(uint32_t). The uses of heapSize, heapBase, and heapSum need to be uint32_t.
-         uint32_t heapSize =  comp->getOptions()->getHeapSizeForBarrierRange0();
-         uint32_t heapBase =  comp->getOptions()->getHeapBaseForBarrierRange0();
+         uint32_t heapSize = comp->getOptions()->getHeapSizeForBarrierRange0();
+         uint32_t heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
 
          if (!doCrdMrk && !disableSrcObjCheck)
             {
@@ -1399,8 +1399,9 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
          generateRRInstruction(cg, opLoadReg, node, temp1Reg, srcReg);
          if (constantHeapCase)
             {
-            // this returns a uintptrj_t but because of the if(constantHeapCase) it's guaranteed to be <= MAX(uint32_t). The use of  heapBase needs to be uint32_t.
-            uint32_t heapBase =  comp->getOptions()->getHeapBaseForBarrierRange0();
+            // these return uintptrj_t but because of the if(constantHeapCase) they are guaranteed to be <= MAX(uint32_t). The uses of heapSize, heapBase, and heapSum need to be uint32_t.
+            uint32_t heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
+            uint32_t heapSize = comp->getOptions()->getHeapSizeForBarrierRange0();
             generateRILInstruction(cg, is64Bit ? TR::InstOpCode::SLGFI : TR::InstOpCode::SLFI, node, temp1Reg, heapBase);
             generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG : TR::InstOpCode::CL, node, temp1Reg, heapSize, TR::InstOpCode::COND_BL, doneLabel, false);
             }
