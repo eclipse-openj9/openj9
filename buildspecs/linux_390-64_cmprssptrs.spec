@@ -130,6 +130,7 @@
 		<flag id="build_java9" value="true"/>
 		<flag id="build_product" value="true"/>
 		<flag id="build_openj9" value="true"/>
+		<flag id="build_openj9JDK8" value="true"/>
 		<flag id="env_hasFPU" value="true"/>
 		<flag id="env_sharedLibsCalleeGlobalTableSetup" value="true"/>
 		<flag id="env_sharedLibsUseGlobalTable" value="true"/>

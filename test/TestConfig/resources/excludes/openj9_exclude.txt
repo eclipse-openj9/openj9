@@ -46,4 +46,4 @@ org.openj9.test.attachAPI.TestAttachAPI:test_agntld03																	238 generi
 org.openj9.test.attachAPI.TestSunAttachClasses:testAgentLoading															238 generic-all
 org.openj9.test.vmArguments.VmArgumentTests:testCrNocr																	244 generic-all
 j9vm.test.softmx.SoftmxRemoteTest																						480 generic-all
-
+com.ibm.j9.jsr292.indyn.IndyTest:test_indyn_invalid_bootstrap_method													600 generic-all

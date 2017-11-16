@@ -36,6 +36,7 @@
 	<property name="src" location="./src"/>
 	<property name="src_current" location="./src_current"/>
 	<property name="src_latest" location="./src_latest"/>
+	<property name="TestUtilities" location="../TestUtilities/src"/>
 	<property name="build" location="./bin"/>
 	<property name="transformerListener" location="../Utils/src"/>
 
@@ -61,8 +62,9 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}"/>
 					<src path="${src_current}"/>
+					<src path="${TestUtilities}" />
 					<src path="${transformerListener}" />
-					<compilerarg line="--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED" />
+					<compilerarg line="--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
 					<classpath>
 						<pathelement location="../TestConfig/lib/asm-all.jar" />
 						<pathelement location="../TestConfig/lib/testng.jar"/>
@@ -74,8 +76,9 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}"/>
 					<src path="${src_latest}"/>
+					<src path="${TestUtilities}" />
 					<src path="${transformerListener}" />
-					<compilerarg line="--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED" />
+					<compilerarg line="--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
 					<classpath>
 						<pathelement location="../TestConfig/lib/asm-all.jar" />
 						<pathelement location="../TestConfig/lib/testng.jar"/>

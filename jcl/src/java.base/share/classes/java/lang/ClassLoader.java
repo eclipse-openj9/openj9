@@ -1205,10 +1205,15 @@ protected Class<?> loadClass(final String className, boolean resolveClass) throw
  */
 final Class<?> loadClass(Module module, String className) {
 	Class<?> localClass = null;
-	try {
-		localClass = loadClassHelper(className, false, false, module);
-	} catch (ClassNotFoundException e) {
-		// returns null if the class can't be found
+	
+	if ((bootstrapClassLoader == null) || (this == bootstrapClassLoader)) {
+		localClass = VMAccess.findClassOrNull(className, bootstrapClassLoader);
+	} else {
+		try {
+			localClass = loadClassHelper(className, false, false, module);
+		} catch (ClassNotFoundException e) {
+			// returns null if the class can't be found
+		}
 	}
 	return localClass;
 }
