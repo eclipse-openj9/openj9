@@ -211,17 +211,19 @@ public class IndyTest {
 	//Negative test : invalid bootstrap method
 	@Test(groups = { "level.extended" })
 	public void test_indyn_invalid_bootstrap_method() {
-		
-		boolean bootstrapMethodError = false;
-		
 		try {
 			String s = com.ibm.j9.jsr292.indyn.GenIndyn.invalid_bootstrap(new Object());
-		} catch ( BootstrapMethodError e ) {
-			bootstrapMethodError = true;
-		}
-		
-		if ( bootstrapMethodError == false ) {
-			Assert.fail("BootstrapMethodError not thrown when invalid bootstrap method is used");
+			Assert.fail("BootstrapMethodError (in Java 8) or NoSuchMethodError (Java 9+) should have been thrown");
+		} catch (BootstrapMethodError e) {
+			//BootstrapMethodError should only apply to Java8
+			if (false == "1.8".equals(System.getProperty("java.specification.version"))) {
+				Assert.fail("[Java 9+] NoSuchMethodError not thrown when a non-existent bootstrap method is used ", e);
+			}
+		} catch (NoSuchMethodError e) {
+			//Java9 and up throws NoSuchMethodError
+			if ("1.8".equals(System.getProperty("java.specification.version"))) {
+				Assert.fail("[Java 8] BootstrapMethodError not thrown when invalid bootstrap method is used ", e);
+			}
 		}
 	}
 	
