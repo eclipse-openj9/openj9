@@ -1415,7 +1415,7 @@ void TR::IA32PrivateLinkage::buildIPIC(
    if (entryLabel)
       generateLabelInstruction(LABEL, site.getCallNode(), entryLabel, cg());
 
-   TR::Instruction *startOfPicInstruction = cg()->comp()->getAppendInstruction();
+   TR::Instruction *startOfPicInstruction = cg()->getAppendInstruction();
 
    int32_t numIPicSlots = IPicParameters.defaultNumberOfSlots;
 

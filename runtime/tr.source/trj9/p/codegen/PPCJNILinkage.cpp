@@ -480,7 +480,7 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
 
    // get the address of the function descriptor
    // use loadAddressConstantFixed - fixed instruction count 2 32-bit, or 5 64-bit
-   TR::Instruction *current = comp()->getAppendInstruction();
+   TR::Instruction *current = cg()->getAppendInstruction();
    if (isGPUHelper)
       loadConstant(cg(), callNode, (int64_t)targetAddress, gr12Reg);
    else
@@ -739,7 +739,7 @@ void TR::PPCJNILinkage::releaseVMAccessAtomicFree(TR::Node* callNode, TR::Regist
       loadConstant(cg(), callNode, J9_PUBLIC_FLAGS_HALT_THREAD_ANY, tempReg2);
       // FIXME: Apparently I'm the first one to ever use a Trg1Src2 record-form instruction...
       // ctor for Trg1Src2 + condReg only has the preced form, if you don't pass a preceding instruction the following instruction will end up as the first instruction after the prologue
-      generateTrg1Src2Instruction(cg(), TR::InstOpCode::and_r, callNode, tempReg2, tempReg1, tempReg2, cr0Reg, /* FIXME */ comp()->getAppendInstruction());
+      generateTrg1Src2Instruction(cg(), TR::InstOpCode::and_r, callNode, tempReg2, tempReg1, tempReg2, cr0Reg, /* FIXME */ cg()->getAppendInstruction());
       }
 
    TR::SymbolReference *jitReleaseVMAccessSymRef = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getJittedMethodSymbol());

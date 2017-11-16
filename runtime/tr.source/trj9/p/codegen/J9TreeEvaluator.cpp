@@ -2811,7 +2811,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
    TR_ASSERT(J9_JAVA_CLASS_ARRAY == (1 << 16) && J9_JAVA_INTERFACE == (1 << 9), "Verify code sequence is still right ...");
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, t3Reg, t3Reg, cndReg, (J9_JAVA_CLASS_ARRAY | J9_JAVA_INTERFACE) >> 1);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, fLabel, cndReg);
-   genTestIsSuper(node, t2Reg, t1Reg, cndReg, t3Reg, t4Reg, 0, fLabel, comp->getAppendInstruction(), cg, 1);
+   genTestIsSuper(node, t2Reg, t1Reg, cndReg, t3Reg, t4Reg, 0, fLabel, cg->getAppendInstruction(), cg, 1);
 
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, fLabel, cndReg);
    }
@@ -4404,7 +4404,7 @@ TR::Register * J9::Power::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *
       directCallEvaluator(node, cg);
       TR::Node::recreate(node, opCode);
 
-      iCursor = comp->getAppendInstruction();
+      iCursor = cg->getAppendInstruction();
       while (iCursor->getOpCodeValue() != TR::InstOpCode::bl)
          iCursor = iCursor->getPrev();
       conditions = ((TR::PPCDepImmSymInstruction *) iCursor)->getDependencyConditions();
@@ -4532,7 +4532,7 @@ TR::Register * J9::Power::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *
          cg->stopUsingRegister(scratch2Reg);
          }
 
-      iCursor = comp->getAppendInstruction();
+      iCursor = cg->getAppendInstruction();
 
       generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
 
@@ -6447,7 +6447,7 @@ TR::Register *outlinedHelperNewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          && (node->getSymbolReference()->getExtraInfo())->numZeroInitSlots <= maxInitSlots;
    const bool doZeroInitInline = needsZeroInit && !isVariableLen && (useInitInfo || (objectSizeBytes <= TR::Compiler->om.sizeofReferenceAddress() * maxInitSlots));
 
-   TR::Instruction *appendInstruction = comp->getAppendInstruction();
+   TR::Instruction *appendInstruction = cg->getAppendInstruction();
 
    TR_ASSERT(objectSizeBytes >= J9_GC_MINIMUM_OBJECT_SIZE || isVariableLen, "Expecting object to be at least minimum required by GC");
    TR_ASSERT((objectSizeBytes & TR::Compiler->om.sizeofReferenceAddress() - 1) == 0, "Expecting object size to be aligned");
@@ -6771,7 +6771,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
       tmp3Reg = cg->allocateRegister();
       addDependency(conditions, tmp3Reg, TR::RealRegister::gr10, TR_GPR, cg); // used by TR::PPCAllocPrefetchSnippet
 
-      TR::Instruction *firstInstruction = comp->getAppendInstruction();
+      TR::Instruction *firstInstruction = cg->getAppendInstruction();
 
       if (!isDualTLH && needZeroInit)
          {
@@ -13197,7 +13197,7 @@ TR::Instruction *loadAddressRAM32(TR::CodeGenerator *cg, TR::Node * node, int32_
 
    bool isAOT = comp->compileRelocatableCode();
 
-   TR::Instruction *cursor = comp->getAppendInstruction();
+   TR::Instruction *cursor = cg->getAppendInstruction();
 
    cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, trgReg, isAOT ? 0 : value>>16, cursor);
 
@@ -13224,7 +13224,7 @@ TR::Instruction *loadAddressRAM32(TR::CodeGenerator *cg, TR::Node * node, int32_
 
    cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, trgReg, trgReg, isAOT ? 0 : value&0x0000ffff, cursor);
 
-   comp->setAppendInstruction(cursor);
+   cg->setAppendInstruction(cursor);
    return(cursor);
    }
 
@@ -13239,7 +13239,7 @@ TR::Instruction *loadAddressRAM(TR::CodeGenerator *cg, TR::Node * node, intptrj_
       }
 
    // load a 64-bit constant into a register with a fixed 5 instruction sequence
-   TR::Instruction *cursor = comp->getAppendInstruction();
+   TR::Instruction *cursor = cg->getAppendInstruction();
 
    // lis trgReg, upper 16-bits
    cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, trgReg, isAOT? 0: (value>>48) , cursor);
@@ -13272,7 +13272,7 @@ TR::Instruction *loadAddressRAM(TR::CodeGenerator *cg, TR::Node * node, intptrj_
    // ori trgReg, trgReg, last 16-bits
    cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, trgReg, trgReg, isAOT ? 0 : (value & 0x0000ffff), cursor);
 
-   comp->setAppendInstruction(cursor);
+   cg->setAppendInstruction(cursor);
 
    return(cursor);
    }
@@ -13285,7 +13285,7 @@ TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg, TR::Node * node, int32_
 
    bool isAOT = comp->compileRelocatableCode();
 
-   TR::Instruction *cursor = comp->getAppendInstruction();
+   TR::Instruction *cursor = cg->getAppendInstruction();
 
    cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, trgReg, isAOT ? 0 : value>>16, cursor);
 
@@ -13312,7 +13312,7 @@ TR::Instruction *loadAddressJNI32(TR::CodeGenerator *cg, TR::Node * node, int32_
 
    cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, trgReg, trgReg, isAOT ? 0 : value&0x0000ffff, cursor);
 
-   comp->setAppendInstruction(cursor);
+   cg->setAppendInstruction(cursor);
    return(cursor);
    }
 
@@ -13327,7 +13327,7 @@ TR::Instruction *loadAddressJNI(TR::CodeGenerator *cg, TR::Node * node, intptrj_
       }
 
    // load a 64-bit constant into a register with a fixed 5 instruction sequence
-   TR::Instruction *cursor = comp->getAppendInstruction();
+   TR::Instruction *cursor = cg->getAppendInstruction();
 
    // lis trgReg, upper 16-bits
    cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, trgReg, isAOT? 0: (value>>48) , cursor);
@@ -13360,7 +13360,7 @@ TR::Instruction *loadAddressJNI(TR::CodeGenerator *cg, TR::Node * node, intptrj_
    // ori trgReg, trgReg, last 16-bits
    cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ori, node, trgReg, trgReg, isAOT ? 0 : (value & 0x0000ffff), cursor);
 
-   comp->setAppendInstruction(cursor);
+   cg->setAppendInstruction(cursor);
 
    return(cursor);
    }

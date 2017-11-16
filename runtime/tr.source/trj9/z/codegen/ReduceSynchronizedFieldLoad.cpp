@@ -69,7 +69,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
    conditions->addPostCondition(lockRegister, TR::RealRegister::LegalOddOfPair);
 
    // Search for the load memory reference from the previously evaluated load
-   TR::Instruction* loadInstruction = cg->comp()->getAppendInstruction();
+   TR::Instruction* loadInstruction = cg->getAppendInstruction();
 
    TR_ASSERT_SAFE_FATAL(loadInstruction->isLoad() && (loadInstruction->getKind() == OMR::Instruction::Kind::IsRX || loadInstruction->getKind() == OMR::Instruction::Kind::IsRXY), "Expecting the append instruction to be a load of kind RX or RXY\n");
 

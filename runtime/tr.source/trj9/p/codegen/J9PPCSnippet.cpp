@@ -1900,7 +1900,7 @@ uint32_t TR::getCCPreLoadedCodeSize()
 static uint8_t* initializeCCPreLoadedPrefetch(uint8_t *buffer, void **CCPreLoadedCodeTable, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR::Node *n = comp->getFirstInstruction()->getNode();
+   TR::Node *n = cg->getFirstInstruction()->getNode();
 
    // Prefetch helper; prefetches a number of lines and returns directly to JIT code
    // In:
@@ -1911,8 +1911,8 @@ static uint8_t* initializeCCPreLoadedPrefetch(uint8_t *buffer, void **CCPreLoade
    //   r10, r11
    //   cr0
 
-   comp->setFirstInstruction(NULL);
-   comp->setAppendInstruction(NULL);
+   cg->setFirstInstruction(NULL);
+   cg->setAppendInstruction(NULL);
 
    TR::Instruction *eyecatcher = generateImmInstruction(cg, TR::InstOpCode::dd, n, CCEYECATCHER('C', 'C', 'H', 5));
 
@@ -2030,7 +2030,7 @@ static uint8_t* initializeCCPreLoadedPrefetch(uint8_t *buffer, void **CCPreLoade
 static uint8_t* initializeCCPreLoadedNonZeroPrefetch(uint8_t *buffer, void **CCPreLoadedCodeTable, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR::Node *n = comp->getFirstInstruction()->getNode();
+   TR::Node *n = cg->getFirstInstruction()->getNode();
 
    // NonZero TLH Prefetch helper; prefetches a number of lines and returns directly to JIT code
    // In:
@@ -2041,8 +2041,8 @@ static uint8_t* initializeCCPreLoadedNonZeroPrefetch(uint8_t *buffer, void **CCP
    //   r10, r11
    //   cr0
 
-   comp->setFirstInstruction(NULL);
-   comp->setAppendInstruction(NULL);
+   cg->setFirstInstruction(NULL);
+   cg->setAppendInstruction(NULL);
 
    TR::Instruction *eyecatcher = generateImmInstruction(cg, TR::InstOpCode::dd, n, CCEYECATCHER('C', 'C', 'H', 6));
 
@@ -2224,7 +2224,7 @@ static uint8_t* initializeCCPreLoadedObjectAlloc(uint8_t *buffer, void **CCPreLo
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR::Node *n = comp->getFirstInstruction()->getNode();
+   TR::Node *n = cg->getFirstInstruction()->getNode();
 
    // Object allocation off TLH (zero or non-zero)
    // If it fails we branch to the regular helper (via it's trampoline)
@@ -2240,8 +2240,8 @@ static uint8_t* initializeCCPreLoadedObjectAlloc(uint8_t *buffer, void **CCPreLo
    //   r4, r8 if TLH prefetch, r10, r11
    //   cr0 if TLH prefetch, cr1, cr2
 
-   comp->setFirstInstruction(NULL);
-   comp->setAppendInstruction(NULL);
+   cg->setFirstInstruction(NULL);
+   cg->setAppendInstruction(NULL);
 
    TR::Instruction *eyecatcher = generateImmInstruction(cg, TR::InstOpCode::dd, n, CCEYECATCHER('C', 'C', 'H', 0));
 
@@ -2429,7 +2429,7 @@ static uint8_t* initializeCCPreLoadedArrayAlloc(uint8_t *buffer, void **CCPreLoa
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR::Node *n = comp->getFirstInstruction()->getNode();
+   TR::Node *n = cg->getFirstInstruction()->getNode();
 
    // Array allocation off TLH (zero or non-zero)
    // If it fails we branch to the regular helper (via it's trampoline)
@@ -2449,8 +2449,8 @@ static uint8_t* initializeCCPreLoadedArrayAlloc(uint8_t *buffer, void **CCPreLoa
    //   r5, r8, r10, r11
    //   cr0, cr1, cr2
 
-   comp->setFirstInstruction(NULL);
-   comp->setAppendInstruction(NULL);
+   cg->setFirstInstruction(NULL);
+   cg->setAppendInstruction(NULL);
 
    TR::Instruction *eyecatcher = generateImmInstruction(cg, TR::InstOpCode::dd, n, CCEYECATCHER('C', 'C', 'H', 1));
 
@@ -2729,7 +2729,7 @@ static uint8_t* initializeCCPreLoadedWriteBarrier(uint8_t *buffer, void **CCPreL
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR::Node *n = comp->getFirstInstruction()->getNode();
+   TR::Node *n = cg->getFirstInstruction()->getNode();
 
    // Write barrier
    // In:
@@ -2741,8 +2741,8 @@ static uint8_t* initializeCCPreLoadedWriteBarrier(uint8_t *buffer, void **CCPreL
    //   r3-r6, r11
    //   cr0, cr1
 
-   comp->setFirstInstruction(NULL);
-   comp->setAppendInstruction(NULL);
+   cg->setFirstInstruction(NULL);
+   cg->setAppendInstruction(NULL);
 
    TR::Instruction *eyecatcher = generateImmInstruction(cg, TR::InstOpCode::dd, n, CCEYECATCHER('C', 'C', 'H', 2));
 
@@ -2830,7 +2830,7 @@ static uint8_t* initializeCCPreLoadedWriteBarrierAndCardMark(uint8_t *buffer, vo
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR::Node *n = comp->getFirstInstruction()->getNode();
+   TR::Node *n = cg->getFirstInstruction()->getNode();
 
    // Write barrier and card mark
    // In:
@@ -2842,8 +2842,8 @@ static uint8_t* initializeCCPreLoadedWriteBarrierAndCardMark(uint8_t *buffer, vo
    //   r3-r6, r11
    //   cr0, cr1
 
-   comp->setFirstInstruction(NULL);
-   comp->setAppendInstruction(NULL);
+   cg->setFirstInstruction(NULL);
+   cg->setAppendInstruction(NULL);
 
    TR::Instruction *eyecatcher = generateImmInstruction(cg, TR::InstOpCode::dd, n, CCEYECATCHER('C', 'C', 'H', 3));
 
@@ -2957,7 +2957,7 @@ static uint8_t* initializeCCPreLoadedWriteBarrierAndCardMark(uint8_t *buffer, vo
 static uint8_t* initializeCCPreLoadedCardMark(uint8_t *buffer, void **CCPreLoadedCodeTable, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR::Node *n = comp->getFirstInstruction()->getNode();
+   TR::Node *n = cg->getFirstInstruction()->getNode();
 
    // Card mark
    // In:
@@ -2968,8 +2968,8 @@ static uint8_t* initializeCCPreLoadedCardMark(uint8_t *buffer, void **CCPreLoade
    //   r4-r5, r11
    //   cr0
 
-   comp->setFirstInstruction(NULL);
-   comp->setAppendInstruction(NULL);
+   cg->setFirstInstruction(NULL);
+   cg->setAppendInstruction(NULL);
 
    TR::Instruction *eyecatcher = generateImmInstruction(cg, TR::InstOpCode::dd, n, CCEYECATCHER('C', 'C', 'H', 4));
 
@@ -3044,7 +3044,7 @@ static uint8_t* initializeCCPreLoadedArrayStoreCHK(uint8_t *buffer, void **CCPre
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   TR::Node *n = comp->getFirstInstruction()->getNode();
+   TR::Node *n = cg->getFirstInstruction()->getNode();
 
    // Array store check
    // In:
@@ -3057,8 +3057,8 @@ static uint8_t* initializeCCPreLoadedArrayStoreCHK(uint8_t *buffer, void **CCPre
    //   r5-r7, r11
    //   cr0
 
-   comp->setFirstInstruction(NULL);
-   comp->setAppendInstruction(NULL);
+   cg->setFirstInstruction(NULL);
+   cg->setAppendInstruction(NULL);
 
    TR::Instruction *eyecatcher = generateImmInstruction(cg, TR::InstOpCode::dd, n, CCEYECATCHER('C', 'C', 'H', 7));
 
@@ -3160,8 +3160,8 @@ void TR::createCCPreLoadedCode(uint8_t *CCPreLoadedCodeBase, uint8_t *CCPreLoade
    // We temporarily clobber the first and append instructions so we can use high level codegen to generate pre-loaded code
    // So save the original values here and restore them when done
    TR::Compilation *comp = cg->comp();
-   TR::Instruction *curFirst = comp->getFirstInstruction();
-   TR::Instruction *curAppend = comp->getAppendInstruction();
+   TR::Instruction *curFirst = cg->getFirstInstruction();
+   TR::Instruction *curAppend = cg->getAppendInstruction();
    uint8_t *curBinaryBufferStart = cg->getBinaryBufferStart();
    uint8_t *curBinaryBufferCursor = cg->getBinaryBufferCursor();
 
@@ -3202,8 +3202,8 @@ void TR::createCCPreLoadedCode(uint8_t *CCPreLoadedCodeBase, uint8_t *CCPreLoade
    ppcCodeSync((uint8_t *)CCPreLoadedCodeBase, buffer - (uint8_t *)CCPreLoadedCodeBase + 1);
 #endif
 
-   comp->setFirstInstruction(curFirst);
-   comp->setAppendInstruction(curAppend);
+   cg->setFirstInstruction(curFirst);
+   cg->setAppendInstruction(curAppend);
    cg->setBinaryBufferStart(curBinaryBufferStart);
    cg->setBinaryBufferCursor(curBinaryBufferCursor);
 

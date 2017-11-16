@@ -1129,7 +1129,7 @@ static void fixupHelperCall(bool              moveFPRegSpill,
    // Find the call instruction and grab its dependencies
    //
    TR::Compilation *comp = TR::comp();
-   TR::Instruction  *instr = comp->getAppendInstruction();
+   TR::Instruction  *instr = comp->cg()->getAppendInstruction();
    while(instr->getOpCodeValue() == FENCE)
       instr = instr->getPrev();
 
@@ -2210,7 +2210,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
       if (ramMethodReg)
          postConditions->addPostCondition(ramMethodReg, TR::RealRegister::NoReg, cg);
 
-      for (TR::Instruction *cursor = comp->getAppendInstruction(); cursor != startInstruction; cursor = cursor->getPrev())
+      for (TR::Instruction *cursor = cg->getAppendInstruction(); cursor != startInstruction; cursor = cursor->getPrev())
          {
          TR::RegisterDependencyConditions  *cursorDeps = cursor->getDependencyConditions();
          if (cursorDeps && cursor->getOpCodeValue() != ASSOCREGS)
@@ -2697,7 +2697,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
       reference->incReferenceCount(); // will be decremented again later
       needLateEvaluation = false;
       cg->evaluate(reference);
-      appendTo = comp->getAppendInstruction();
+      appendTo = cg->getAppendInstruction();
       cg->evaluate(firstChild);
 
       // TODO: this shouldn't be getOffsetOfContiguousArraySizeField
@@ -2733,7 +2733,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
          TR::MemoryReference *tempMR = generateX86MemoryReference(reference, cg);
 
          if (!appendTo)
-             appendTo = comp->getAppendInstruction();
+             appendTo = cg->getAppendInstruction();
 
          TR_X86OpCodes op = CMPMemImms();
          appendTo = generateMemImmInstruction(appendTo, op, tempMR, NULLVALUE, cg);
@@ -2745,7 +2745,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
          TR::Register *targetRegister = cg->evaluate(reference);
 
          if (!appendTo)
-            appendTo = comp->getAppendInstruction();
+            appendTo = cg->getAppendInstruction();
 
          appendTo = generateRegRegInstruction(appendTo, TESTRegReg(), targetRegister, targetRegister, cg);
          }
@@ -3024,7 +3024,7 @@ TR::Register *J9::X86::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGe
 
       cg->addSnippet(new (cg->trHeapMemory()) TR::X86CheckFailureSnippet(cg, node->getSymbolReference(),
                                                          divideByZeroSnippetLabel,
-                                                         comp->getAppendInstruction()));
+                                                         cg->getAppendInstruction()));
 
       generateLabelInstruction(LABEL, node, divisionLabel, cg);
 
@@ -3234,7 +3234,7 @@ bool isConditionCodeSetForCompare(TR::Node *node, bool *jumpOnOppositeCondition)
    //
    TR::Instruction     *prevInstr;
    TR::X86RegInstruction  *prevRegInstr;
-   for (prevInstr = comp->getAppendInstruction();
+   for (prevInstr = comp->cg()->getAppendInstruction();
         prevInstr;
         prevInstr = prevInstr->getPrev())
       {
@@ -3438,7 +3438,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-   TR::Instruction *prevInstr = comp->getAppendInstruction();
+   TR::Instruction *prevInstr = cg->getAppendInstruction();
    TR::LabelSymbol *startLabel,
                   *startOfWrtbarLabel,
                   *doNullStoreLabel,
@@ -3737,7 +3737,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
 
          // This is where the dependency condition will eventually go.
          //
-         dependencyAnchorInstruction = comp->getAppendInstruction();
+         dependencyAnchorInstruction = cg->getAppendInstruction();
 
          tempMR = generateX86MemoryReference(firstChild, cg);
 
@@ -9285,7 +9285,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::acall, targetReg, failLabel, fallThru, cg);
    cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
 
-   TR::Instruction * startInstr = comp->getAppendInstruction();
+   TR::Instruction * startInstr = cg->getAppendInstruction();
 
    // --------------------------------------------------------------------------------
    //
@@ -11403,8 +11403,8 @@ inlineNanoTime(
          TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(callNode2, TR::icall, node->getRegister()->getLowOrder(), tickCountLabel, reStartLabel, cg);
          cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
          outlinedHelperCall->swapInstructionListsWithCompilation();
-         generateRegImmInstruction(comp->getFirstInstruction(), ADD4RegImm4, espReal,8, cg);
-         generateRegRegInstruction(comp->getAppendInstruction()->getPrev()->getPrev(), XOR4RegReg, node->getRegister()->getHighOrder(), node->getRegister()->getHighOrder(), cg);
+         generateRegImmInstruction(cg->getFirstInstruction(), ADD4RegImm4, espReal,8, cg);
+         generateRegRegInstruction(cg->getAppendInstruction()->getPrev()->getPrev(), XOR4RegReg, node->getRegister()->getHighOrder(), node->getRegister()->getHighOrder(), cg);
          outlinedHelperCall->swapInstructionListsWithCompilation();
          cg->generateDebugCounter(
             outlinedHelperCall->getFirstInstruction(),
