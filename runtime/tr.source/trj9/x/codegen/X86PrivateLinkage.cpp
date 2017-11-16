@@ -1479,7 +1479,7 @@ TR::X86PrivateLinkage::buildDirectDispatch(
    // Remember where internal control flow region should start,
    // and create labels
    //
-   TR::Instruction *startBookmark = comp()->getAppendInstruction();
+   TR::Instruction *startBookmark = cg()->getAppendInstruction();
    TR::LabelSymbol *startLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg());
    startLabel->setStartInternalControlFlow();
@@ -2122,7 +2122,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    // Remember where internal control flow region should start,
    // and create labels
    //
-   TR::Instruction *startBookmark = comp()->getAppendInstruction();
+   TR::Instruction *startBookmark = cg()->getAppendInstruction();
    TR::LabelSymbol *startLabel    = generateLabelSymbol(cg());
    TR::LabelSymbol *doneLabel     = generateLabelSymbol(cg());
    startLabel->setStartInternalControlFlow();

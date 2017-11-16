@@ -2538,8 +2538,6 @@ TR_DebugExt::dxPrintCompilation()
    _dbgPrintf("\tTR::CodeGenerator *_codeGenerator = 0x%p\n",localCompiler->_codeGenerator);
    _dbgPrintf("\tTR_J9ByteCodeIlGenerator *_ilGenerator = 0x%p\n",localCompiler->_ilGenerator);
    _dbgPrintf("\tTR::Optimizer *_optimizer = 0x%p\n",localCompiler->_optimizer);
-   _dbgPrintf("\tTR::Instruction *_firstInstruction = 0x%p\n",localCompiler->_firstInstruction);
-   _dbgPrintf("\tTR::Instruction *_appendInstruction = 0x%p\n",localCompiler->_appendInstruction);
    _dbgPrintf("\tTR_Debug *_debug = 0x%p\n",localCompiler->_debug);
    _dbgPrintf("\tTR::SymbolReferenceTable *_currentSymRefTab = 0x%p\n",localCompiler->_currentSymRefTab);
    _dbgPrintf("\tTR::Recompilation *_recompilationInfo = 0x%p\n",localCompiler->_recompilationInfo);

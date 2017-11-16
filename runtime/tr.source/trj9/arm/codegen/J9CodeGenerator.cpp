@@ -108,7 +108,7 @@ J9::ARM::CodeGenerator::CodeGenerator() :
 static int32_t identifyFarConditionalBranches(int32_t estimate, TR::CodeGenerator *cg)
    {
    TR_Array<TR::ARMConditionalBranchInstruction *> candidateBranches(cg->trMemory(), 256);
-   TR::Instruction *cursorInstruction = TR::comp()->getFirstInstruction();
+   TR::Instruction *cursorInstruction = cg->getFirstInstruction();
 
    while (cursorInstruction)
       {
@@ -170,11 +170,12 @@ static int32_t identifyFarConditionalBranches(int32_t estimate, TR::CodeGenerato
 
 void J9::ARM::CodeGenerator::doBinaryEncoding()
    {
-   TR::Compilation *comp = TR::comp();
+   TR::Compilation *comp = self()->comp();
+   TR::CodeGenerator *cg = self();
    int32_t estimate = 0;
    TR::Recompilation *recomp = comp->getRecompilationInfo();
    TR::Instruction *tempInstruction;
-   TR::Instruction *cursorInstruction = comp->getFirstInstruction();
+   TR::Instruction *cursorInstruction = cg->getFirstInstruction();
    TR::Instruction *i2jEntryInstruction;
    TR::Instruction *j2jEntryInstruction;
    TR::ResolvedMethodSymbol *methodSymbol  = comp->getMethodSymbol();
@@ -206,7 +207,7 @@ void J9::ARM::CodeGenerator::doBinaryEncoding()
       recomp->generatePrePrologue();
       }
 
-   cursorInstruction = comp->getFirstInstruction();
+   cursorInstruction = cg->getFirstInstruction();
 
    while (cursorInstruction && cursorInstruction->getOpCodeValue() != ARMOp_proc)
       {
@@ -249,7 +250,7 @@ void J9::ARM::CodeGenerator::doBinaryEncoding()
 
    self()->setEstimatedWarmLength(estimate);
 
-   cursorInstruction = comp->getFirstInstruction();
+   cursorInstruction = cg->getFirstInstruction();
    uint8_t *coldCode = NULL;
    uint8_t *temp = self()->allocateCodeMemory(self()->getEstimatedWarmLength(), 0, &coldCode);
 

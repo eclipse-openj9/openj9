@@ -1460,7 +1460,7 @@ J9::CodeGenerator::doInstructionSelection()
       if(traceLiveMon)
          traceMsg(self()->comp(),"\tWalking TreeTops at tt %p with node %p\n",tt,tt->getNode());
 
-      TR::Instruction *prevInstr = self()->comp()->getAppendInstruction();
+      TR::Instruction *prevInstr = self()->getAppendInstruction();
       TR::Node * node = tt->getNode();
       TR::ILOpCodes opCode = node->getOpCodeValue();
 
@@ -1816,7 +1816,7 @@ J9::CodeGenerator::doInstructionSelection()
          trfflush(self()->comp()->getOutFile());
          }
 
-      self()->setLastInstructionBeforeCurrentEvaluationTreeTop(self()->comp()->getAppendInstruction());
+      self()->setLastInstructionBeforeCurrentEvaluationTreeTop(self()->getAppendInstruction());
       self()->setCurrentEvaluationTreeTop(tt);
       self()->setImplicitExceptionPoint(NULL);
 
@@ -1925,7 +1925,7 @@ J9::CodeGenerator::doInstructionSelection()
 
       if (self()->comp()->getOption(TR_TraceCG) || debug("traceGRA"))
          {
-         TR::Instruction *lastInstr = self()->comp()->getAppendInstruction();
+         TR::Instruction *lastInstr = self()->getAppendInstruction();
          tt->setLastInstruction(lastInstr == prevInstr ? 0 : lastInstr);
          }
 

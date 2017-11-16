@@ -8493,7 +8493,7 @@ TR::CompilationInfo::bufferSizeLineNumberTable(TR::Compilation *&compiler, TR_Me
 
    // count instructions
    uint32_t numInstructions = 0;
-   for (instruction = compiler->getFirstInstruction() ; instruction; instruction = instruction->getNext())
+   for (instruction = compiler->cg()->getFirstInstruction() ; instruction; instruction = instruction->getNext())
       {
       // skip preprologue and suchnot.
       U_8 * address = instruction->getBinaryEncoding();
@@ -8586,7 +8586,7 @@ uint8_t * TR::CompilationInfo::bufferPopulateLineNumberTable(uint8_t * buffer, T
    recordHead = bufferCursor;
 
    // dump instructions
-   for (instruction = compiler->getFirstInstruction(); instruction; instruction = instruction->getNext())
+   for (instruction = compiler->cg()->getFirstInstruction(); instruction; instruction = instruction->getNext())
       {
       address = instruction->getBinaryEncoding();
 

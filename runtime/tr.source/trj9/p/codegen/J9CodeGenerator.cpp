@@ -160,7 +160,7 @@ J9::Power::CodeGenerator::generateBinaryEncodingPrologue(
    TR::Instruction *tempInstruction;
 
    data->recomp = comp->getRecompilationInfo();
-   data->cursorInstruction = comp->getFirstInstruction();
+   data->cursorInstruction = self()->getFirstInstruction();
    data->preProcInstruction = data->cursorInstruction;
    data->jitTojitStart = data->cursorInstruction->getNext();
 
@@ -201,7 +201,7 @@ J9::Power::CodeGenerator::generateBinaryEncodingPrologue(
          }
       }
 
-   data->cursorInstruction = comp->getFirstInstruction();
+   data->cursorInstruction = self()->getFirstInstruction();
 
    while (data->cursorInstruction && data->cursorInstruction->getOpCodeValue() != TR::InstOpCode::proc)
       {

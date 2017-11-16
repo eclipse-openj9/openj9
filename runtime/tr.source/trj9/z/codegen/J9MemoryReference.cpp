@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -360,7 +360,7 @@ J9::Z::MemoryReference::createPatchableDataInLitpool(TR::Node * node, TR::CodeGe
       {
       litpool->resetNeedLitPoolBasePtr();
       TR::S390RILInstruction * LRLinst;
-      LRLinst = (TR::S390RILInstruction *) generateRILInstruction(cg, TR::InstOpCode::getLoadRelativeLongOpCode(), node, tempReg, 0xBABE, 0);
+      LRLinst = (TR::S390RILInstruction *) generateRILInstruction(cg, TR::InstOpCode::getLoadRelativeLongOpCode(), node, tempReg, reinterpret_cast<uintptrj_t*>(0xBABE), 0);
       uds->setDataReferenceInstruction(LRLinst);
       LRLinst->setSymbolReference(uds->getDataSymbolReference());
       LRLinst->setTargetSnippet(litpool);

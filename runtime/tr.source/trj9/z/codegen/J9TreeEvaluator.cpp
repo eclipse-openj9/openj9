@@ -818,7 +818,7 @@ genTestIsSuper(TR::CodeGenerator * cg, TR::Node * node,
       TR_ASSERT(((J9AccInterface | J9AccClassArray) < UINT_MAX && (J9AccInterface | J9AccClassArray) > 0),
             "genTestIsSuper::(J9AccInterface | J9AccClassArray) is not a 32-bit number\n");
 
-      cursor = generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratch1Reg, (int32_t) (J9AccInterface | J9AccClassArray), cursor);
+      cursor = generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratch1Reg, static_cast<int32_t>((J9AccInterface | J9AccClassArray)), cursor);
 
       if (debugObj)
          debugObj->addInstructionComment(cursor, "Check if castClass is an interface or class array and jump to helper sequence");
@@ -1018,7 +1018,7 @@ static void genIsReferenceArrayTest(TR::Node        *node,
                             generateS390MemoryReference(objectClassReg, offsetof(J9Class,romClass), cg));
       generateRXInstruction(cg, TR::InstOpCode::L, node, scratchReg1,
                             generateS390MemoryReference(scratchReg1, offsetof(J9ROMClass, modifiers), cg));
-      generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratchReg1, J9AccClassArray);
+      generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratchReg1, static_cast<int32_t>(J9AccClassArray));
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, failLabel);
 
       generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, scratchReg1,
@@ -1027,7 +1027,7 @@ static void genIsReferenceArrayTest(TR::Node        *node,
                             generateS390MemoryReference(scratchReg1, offsetof(J9Class,romClass), cg));
       generateRXInstruction(cg, TR::InstOpCode::L, node, scratchReg1,
                             generateS390MemoryReference(scratchReg1, offsetof(J9ROMClass, modifiers), cg));
-      generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratchReg1, J9AccClassInternalPrimitiveType);
+      generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratchReg1, static_cast<int32_t>(J9AccClassInternalPrimitiveType));
 
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, failLabel);
       if (needsResult)
@@ -1170,7 +1170,7 @@ static bool generateInlineTest(TR::CodeGenerator * cg, TR::Node * node, TR::Node
       if (cg->needClassAndMethodPointerRelocations())
          unloadableConstInstr[i] = generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, scratchReg,(uintptrj_t) guessClassArray[i], TR_ClassPointer, NULL, NULL, NULL);
       else
-         unloadableConstInstr[i] = generateRILInstruction(cg, TR::InstOpCode::LARL, node, scratchReg, (uintptrj_t)guessClassArray[i]);
+         unloadableConstInstr[i] = generateRILInstruction(cg, TR::InstOpCode::LARL, node, scratchReg, guessClassArray[i]);
 
       if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(guessClassArray[i]), comp->getCurrentMethod()))
          comp->getStaticPICSites()->push_front(unloadableConstInstr[i]);
@@ -1294,15 +1294,17 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       TR::InstOpCode::Mnemonic opSubtractReg = TR::InstOpCode::getSubstractRegOpCode();
       TR::InstOpCode::Mnemonic opSubtract = TR::InstOpCode::getSubstractOpCode();
       TR::InstOpCode::Mnemonic opCmpLog = TR::InstOpCode::getCmpLogicalOpCode();
-      uintptrj_t heapSize = (uintptrj_t) comp->getOptions()->getHeapSizeForBarrierRange0();
-      uintptrj_t heapBase = (uintptrj_t) comp->getOptions()->getHeapBaseForBarrierRange0();
       bool disableSrcObjCheck = true; //cg->comp()->getOption(TR_DisableWrtBarSrcObjCheck);
       bool constantHeapCase = ((!comp->compileRelocatableCode()) && isConstantHeapBase && isConstantHeapSize && shiftAmount == 0 && (!is64Bit || TR::Compiler->om.generateCompressedObjectHeaders()));
       if (constantHeapCase)
          {
+         // these return uintptrj_t but because of the if(constantHeapCase) they are guaranteed to be <= MAX(uint32_t). The uses of heapSize, heapBase, and heapSum need to be uint32_t.
+         uint32_t heapSize =  comp->getOptions()->getHeapSizeForBarrierRange0();
+         uint32_t heapBase =  comp->getOptions()->getHeapBaseForBarrierRange0();
+
          if (!doCrdMrk && !disableSrcObjCheck)
             {
-            uintptrj_t heapSum = heapBase + heapSize;
+            uint32_t heapSum = heapBase + heapSize;
             generateRRInstruction(cg, opLoadReg, node, temp1Reg, owningObjectReg);
             generateRILInstruction(cg, TR::InstOpCode::IILF, node, temp2Reg, heapSum);
             generateRRInstruction(cg, opSubtractReg, node, temp1Reg, temp2Reg);
@@ -1314,7 +1316,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
             {
             generateRRInstruction(cg, opLoadReg, node, temp1Reg, owningObjectReg); //copy owning into temp
             generateRILInstruction(cg, is64Bit ? TR::InstOpCode::SLGFI : TR::InstOpCode::SLFI, node, temp1Reg, heapBase); //temp = temp - heapbase
-            generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG: TR::InstOpCode::CL, node, temp1Reg, heapSize, TR::InstOpCode::COND_BH, doneLabel, false);
+            generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG : TR::InstOpCode::CL, node, temp1Reg, heapSize, TR::InstOpCode::COND_BH, doneLabel, false);
             }
          }
       else
@@ -1397,8 +1399,10 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
          generateRRInstruction(cg, opLoadReg, node, temp1Reg, srcReg);
          if (constantHeapCase)
             {
+            // this returns a uintptrj_t but because of the if(constantHeapCase) it's guaranteed to be <= MAX(uint32_t). The use of  heapBase needs to be uint32_t.
+            uint32_t heapBase =  comp->getOptions()->getHeapBaseForBarrierRange0();
             generateRILInstruction(cg, is64Bit ? TR::InstOpCode::SLGFI : TR::InstOpCode::SLFI, node, temp1Reg, heapBase);
-            generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG: TR::InstOpCode::CL, node, temp1Reg, heapSize, TR::InstOpCode::COND_BL, doneLabel, false);
+            generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG : TR::InstOpCode::CL, node, temp1Reg, heapSize, TR::InstOpCode::COND_BL, doneLabel, false);
             }
          else
             {
@@ -3636,7 +3640,7 @@ VMarrayStoreCHKEvaluator(
     * However, TR_J9SharedCacheVM::getSystemClassFromClassName can return 0 when it's impossible to relocate j9class later for AOT loads
     * in that case we don't want to generate the Object arrays check
     */
-   bool doObjectArrayCheck = objectClass != NULL;
+   bool doObjectArrayCheck = objectClass != 0;
 
    if (doObjectArrayCheck && (cg->wantToPatchClassPointer((TR_OpaqueClassBlock*)objectClass, node) || cg->needClassAndMethodPointerRelocations()))
       {
@@ -3922,7 +3926,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    conditions->addPostCondition(owningObjectRegVal,  TR::RealRegister::AssignAny);
 
    doneLabel->setEndInternalControlFlow();
-   TR::Instruction *current = comp->getAppendInstruction();
+   TR::Instruction *current = cg->getAppendInstruction();
    TR_ASSERT( current != NULL, "Could not get current instruction");
 
    if (node->getNumChildren()==2)
@@ -5238,14 +5242,14 @@ void genInstanceOfOrCheckcastArrayOfJavaLangObjectTest(TR::Node *node, TR::CodeG
    TR::Register *scratchReg1 = srm->findOrCreateScratchRegister();
    generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, scratchReg1, generateS390MemoryReference(objectClassReg, offsetof(J9Class,romClass), cg));
    generateRXInstruction(cg, TR::InstOpCode::L, node, scratchReg1, generateS390MemoryReference(scratchReg1, offsetof(J9ROMClass, modifiers), cg));
-   generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratchReg1, J9AccClassArray);
+   generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratchReg1, static_cast<int32_t>(J9AccClassArray));
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, failLabel);
    if (debugObj)
       debugObj->addInstructionComment(cursor,"Fail instanceOf/checkCast if Not Array");
    generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, scratchReg1, generateS390MemoryReference(objectClassReg, offsetof(J9ArrayClass,componentType), cg));
    generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, scratchReg1, generateS390MemoryReference(scratchReg1, offsetof(J9Class,romClass), cg));
    generateRXInstruction(cg, TR::InstOpCode::L, node, scratchReg1, generateS390MemoryReference(scratchReg1, offsetof(J9ROMClass, modifiers), cg));
-   generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratchReg1, J9AccClassInternalPrimitiveType);
+   generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratchReg1, static_cast<int32_t>(J9AccClassInternalPrimitiveType));
    srm->reclaimScratchRegister(scratchReg1);
    }
 
@@ -5295,7 +5299,7 @@ bool genInstanceOfOrCheckcastSuperClassTest(TR::Node *node, TR::CodeGenerator *c
             generateS390MemoryReference(scratchRegister1, offsetof(J9ROMClass, modifiers), cg), cursor);
       TR_ASSERT(((J9AccInterface | J9AccClassArray) < UINT_MAX && (J9AccInterface | J9AccClassArray) > 0),
             "genTestIsSuper::(J9AccInterface | J9AccClassArray) is not a 32-bit number\n");
-      cursor = generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratchRegister1, (int32_t) (J9AccInterface | J9AccClassArray), cursor);
+      cursor = generateRILInstruction(cg, TR::InstOpCode::NILF, node, scratchRegister1, static_cast<int32_t>((J9AccInterface | J9AccClassArray)), cursor);
       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, callHelperLabel, cursor);
       castClassDepthReg = srm->findOrCreateScratchRegister();
       cursor = generateRXInstruction(cg, loadOp, node, castClassDepthReg,
@@ -5814,7 +5818,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator2(TR::Node * node, TR::CodeGen
                if (cg->needClassAndMethodPointerRelocations())
                   temp = generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, arbitraryClassReg1, (uintptrj_t) profiledClassesList[numPICs].profiledClass, TR_ClassPointer, NULL, NULL, NULL);
                else
-                  temp = generateRILInstruction(cg, TR::InstOpCode::LARL, node, arbitraryClassReg1, (uintptrj_t)profiledClassesList[numPICs].profiledClass);
+                  temp = generateRILInstruction(cg, TR::InstOpCode::LARL, node, arbitraryClassReg1, profiledClassesList[numPICs].profiledClass);
 
                // Adding profiled class to the static PIC slots.  
                if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(profiledClassesList[numPICs].profiledClass), comp->getCurrentMethod()))
@@ -6245,7 +6249,7 @@ J9::Z::TreeEvaluator::VMcheckcastEvaluator2(TR::Node * node, TR::CodeGenerator *
                if (cg->needClassAndMethodPointerRelocations())
                   temp = generateRegLitRefInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, arbitraryClassReg1, (uintptrj_t) profiledClassesList[numPICs].profiledClass, TR_ClassPointer, NULL, NULL, NULL);
                else
-                  temp = generateRILInstruction(cg, TR::InstOpCode::LARL, node, arbitraryClassReg1, (uintptrj_t)profiledClassesList[numPICs].profiledClass);
+                  temp = generateRILInstruction(cg, TR::InstOpCode::LARL, node, arbitraryClassReg1, profiledClassesList[numPICs].profiledClass);
 
                // Adding profiled classes to static PIC sites
                if (fej9->isUnloadAssumptionRequired((TR_OpaqueClassBlock *)(profiledClassesList[numPICs].profiledClass), comp->getCurrentMethod()))
@@ -7969,7 +7973,7 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
             }
          if (canUseIIHF)
             {
-            iCursor = generateRILInstruction(cg, TR::InstOpCode::IIHF, node, enumReg, (intptr_t) classAddress | (intptrj_t)orFlag, iCursor);
+            iCursor = generateRILInstruction(cg, TR::InstOpCode::IIHF, node, enumReg, static_cast<uint32_t>(reinterpret_cast<uintptr_t>(classAddress)) | orFlag, iCursor);
             }
          else
             {
@@ -8609,7 +8613,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR::Instruction *firstInstruction;
       srm->addScratchRegistersToDependencyList(conditions);
 
-      current = comp->getAppendInstruction();
+      current = cg->getAppendInstruction();
 
       TR_ASSERT(current != NULL, "Could not get current instruction");
 
@@ -9910,10 +9914,10 @@ J9::Z::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(TR::CodeGenera
    // emitted postRA, we have to attach it ourselves.
    if (postRA)
       {
-      TR::Instruction *appendInstruction = comp->getAppendInstruction();
+      TR::Instruction *appendInstruction = cg->getAppendInstruction();
       appendInstruction->setNext(RIOnOffOOL->getFirstInstruction());
       RIOnOffOOL->getFirstInstruction()->setPrev(appendInstruction);
-      comp->setAppendInstruction(RIOnOffOOL->getAppendInstruction());
+      cg->setAppendInstruction(RIOnOffOOL->getAppendInstruction());
       }
 #endif /* TR_HOST_S390 */
    return preced;
@@ -10289,9 +10293,9 @@ static TR::Register *inlineAtomicOps(
                   {
                   // load the immediate into one 64bit reg
                   int64_t value= deltaChild->getLongInt();
-                  generateRILInstruction(cg, TR::InstOpCode::LGFI, node, deltaReg, (int32_t)(value));
+                  generateRILInstruction(cg, TR::InstOpCode::LGFI, node, deltaReg, static_cast<int32_t>(value));
                   if (value < MIN_IMMEDIATE_VAL || value > MAX_IMMEDIATE_VAL)
-                     generateRILInstruction(cg, TR::InstOpCode::IIHF, node, deltaReg, (int32_t)(value >> 32));
+                     generateRILInstruction(cg, TR::InstOpCode::IIHF, node, deltaReg, static_cast<int32_t>(value >> 32));
                   }
                else
                   {
@@ -12691,7 +12695,7 @@ TR_J9VMBase::generateBinaryEncodingPrologue(
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
-   data->cursorInstruction = comp->getFirstInstruction();
+   data->cursorInstruction = cg->getFirstInstruction();
    data->estimate = 0;
    TR::Recompilation * recomp = comp->getRecompilationInfo();
 
@@ -12750,7 +12754,7 @@ TR_J9VMBase::generateBinaryEncodingPrologue(
       cg->generateVMCallHelperPrePrologue(NULL);
       }
 
-   data->cursorInstruction = comp->getFirstInstruction();
+   data->cursorInstruction = cg->getFirstInstruction();
 
    static char *disableAlignJITEP = feGetEnv("TR_DisableAlignJITEP");
 
@@ -13173,7 +13177,7 @@ J9::Z::TreeEvaluator::pd2udslEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       }
    else
       {
-      TR_ASSERT(comp->getAppendInstruction()->getOpCodeValue() == TR::InstOpCode::UNPKU,
+      TR_ASSERT(cg->getAppendInstruction()->getOpCodeValue() == TR::InstOpCode::UNPKU,
                 "the previous instruction should be an UNPKU\n");
 
       TR::LabelSymbol * startLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -18258,7 +18262,7 @@ J9::Z::TreeEvaluator::ddInsExpEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          else if (biasedExpValue >= GE_MIN_IMMEDIATE_VAL && biasedExpValue <= GE_MAX_IMMEDIATE_VAL)
             {
             biasedExpReg = cg->allocate64bitRegister();
-            generateRILInstruction(cg, TR::InstOpCode::LGFI, node, biasedExpReg, (int32_t)biasedExpValue);
+            generateRILInstruction(cg, TR::InstOpCode::LGFI, node, biasedExpReg, static_cast<int32_t>(biasedExpValue));
             }
          }
 
