@@ -197,20 +197,37 @@
 		</subsets>
 	</test>
 
-        <test>
-                <testCaseName>constantPoolTagTests</testCaseName>
-                <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-        -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
-        org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-        -testnames constantPoolTagTests \
-        -groups $(TEST_GROUP) \
-        -excludegroups $(DEFAULT_EXCLUDE); \
-        $(TEST_STATUS)</command>
-                <tags>
-                        <tag>extended</tag>
-                </tags>
-                <subsets>
-                        <subset>SE90</subset>
-                </subsets>
-        </test>
+	<test>
+		<testCaseName>constantPoolTagTests</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames constantPoolTagTests \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<tags>
+			<tag>extended</tag>
+		</tags>
+		<subsets>
+			<subset>SE90</subset>
+		</subsets>
+	</test>
+	
+	<test>
+		<testCaseName>Test_Class</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames Test_Class \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<tags>
+			<tag>sanity</tag>
+		</tags>
+		<subsets>
+			<subset>SE90</subset>
+		</subsets>
+	</test>	
 </playlist>
