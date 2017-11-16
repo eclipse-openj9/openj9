@@ -67,6 +67,18 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 
    bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
 
+   /*
+    * \brief Reserve space in the code cache for a specified number of trampolines.
+    *        This is useful for inline caches where the methods are not yet known at
+    *        compile-time but for which trampolines may be required for compiled
+    *        bodies in the future.
+    *
+    * \param[in] numTrampolines : number of trampolines to reserve
+    *
+    * \return : none
+    */
+   void reserveNTrampolines(int32_t numTrampolines);
+
    };
 
 }
