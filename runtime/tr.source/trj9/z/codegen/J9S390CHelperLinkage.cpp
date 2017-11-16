@@ -363,7 +363,7 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
 #endif
       }
    TR::SymbolReference * callSymRef = callNode->getSymbolReference();
-   intptrj_t destAddr = (intptrj_t) callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethodAddress();
+   void * destAddr = callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethodAddress();
    cursor = new (cg()->trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::BRASL, callNode, regRA, destAddr, callSymRef, cg());
    cursor->setDependencyConditions(preDeps);
    if (isFastPathOnly)
