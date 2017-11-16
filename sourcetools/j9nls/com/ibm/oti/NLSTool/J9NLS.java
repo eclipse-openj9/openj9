@@ -55,6 +55,7 @@ public class J9NLS implements NLSConstants {
 	private int messageNumber;
 	private int errorCount = 0;
 	private String workingDirectory = System.getProperty("user.dir");
+	private String sourceDirectory = System.getProperty("user.dir");
 	private String fileSeparator = System.getProperty("file.separator");
 	private String propertiesFileName = "java.properties"; // default
 	private String palmResourceFileName = "java.rc"; // default
@@ -106,6 +107,16 @@ public class J9NLS implements NLSConstants {
 					failure("Output file name is not in correct format: " + args[i + 1]);
 				} else
 					htmlFileName = args[++i];
+			} else if (arg.compareToIgnoreCase("-source") == 0) {
+				if ((i + 1) >= args.length || args[i + 1].startsWith("-"))
+					failure("Source directory not specified");
+				File srcDir = new File(args[++i]);
+				if (!srcDir.exists() || ! srcDir.isDirectory())
+					failure("Source directory '" + srcDir + "' does not exist");
+
+				sourceDirectory = srcDir.getAbsolutePath();
+			} else {
+				failure("Unrecognized option: " + arg);
 			}
 		}
 
@@ -117,15 +128,19 @@ public class J9NLS implements NLSConstants {
 		nlsInfos = new Vector();
 		searchNLSFiles();
 		if (localeHashtable.size() < 1)
-			failure("Cannot find any NLS files below " + workingDirectory);
+			failure("Cannot find any NLS files below " + sourceDirectory);
 
 		try {
 			generatePropertiesFiles(outFileName, palmMode);
 			if (!nohtml)
 				new NLSHtmlGenerator().generateHTML(nlsInfos, outFileName, htmlFileName);
 		} catch (FileNotFoundException fnfe) {
+			if (debugoutput)
+				fnfe.printStackTrace();
 			failure("Caught exception: " + fnfe.getMessage(),true);
 		} catch (IOException e) {
+			if (debugoutput)
+				e.printStackTrace();
 			failure("Caught exception: " + e.getMessage(),true);
 		}
 		summarize();
@@ -137,6 +152,13 @@ public class J9NLS implements NLSConstants {
 		Hashtable headerHashtable = new Hashtable();
 		Vector defaultNLSFiles = (Vector) localeHashtable.get(DEFAULT_LOCALE);
 		StringBuffer buffer = new StringBuffer();
+
+		// Create the output directory if it doesnt exist
+		File outputDir = new File(workingDirectory + fileSeparator + "nls");
+		if (!outputDir.exists()) {
+				dp("Output directory does not exist, creating it");
+				outputDir.mkdir();
+		}
 
 		for (Enumeration locales = localeHashtable.keys(); locales.hasMoreElements();) {
 			locale = (String) locales.nextElement();
@@ -176,7 +198,7 @@ public class J9NLS implements NLSConstants {
 				if (nlsInfo.getModule() == null)
 					newNLSInfo = true;
 				nlsInfo.setModule(moduleName);
-				nlsInfo.setPath(nlsPath.substring((workingDirectory + fileSeparator).length()));
+				nlsInfo.setPath(nlsPath.substring((sourceDirectory + fileSeparator).length()));
 				nlsInfo.setHeaderName(headerName);
 				nlsInfo.addLocale(locale);
 
@@ -553,12 +575,15 @@ public class J9NLS implements NLSConstants {
 		Vector dirToSearch = new Vector();
 		oldNLSFiles = new Hashtable();
 		localeHashtable = new Hashtable();
-		dirToSearch.addElement(new File(workingDirectory + fileSeparator + "nls" + fileSeparator));
+		dirToSearch.addElement(new File(sourceDirectory + fileSeparator + "nls" + fileSeparator));
 		String files[];
 
 		while (dirToSearch.size() > 0) {
 			File dir = (File) dirToSearch.elementAt(0);
 			dirToSearch.remove(0);
+			if (!dir.exists() || ! dir.isDirectory()) {
+				failure("Failed to open directory - " + dir);
+			}
 			files = dir.list();
 			for (int i = 0; i < files.length; i++) {
 				File file = new File(dir, files[i]);
@@ -672,11 +697,13 @@ public class J9NLS implements NLSConstants {
 		System.out.println("[options]");
 		System.out.println("    -help                prints this message");
 		System.out.println("    -out xxx             generates output named as xxx");
+		System.out.println("    -source              path to the source directory");
 		System.out.println("    -[no]html xxx        [do not] generates HTML file, which contains output results, named as xxx");
 		System.out.println("    -palm                generates output as Palm resources\n");
 		System.out.println("    -debug               generates informational output\n");
 		System.out.println("Defaults are:");
 		System.out.println("    -out " + propertiesFileName + "-html" + htmlFileName);
+		System.out.println("    -source . ");
 	}
 
 	private void failure(String msg) {
