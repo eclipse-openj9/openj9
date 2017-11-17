@@ -80,7 +80,7 @@
 				<exclude-if condition="spec.flags.arch_arm"/>
 			</makefilestub>
 			<makefilestub data="UMA_OBJECTS:=$(filter-out znathelp%,$(UMA_OBJECTS))\n">
-				<exclude-if condition="spec.flags.arch_s390 and not spec.linux_ztpf_390-64.*"/>
+				<exclude-if condition="spec.flags.arch_s390"/>
 			</makefilestub>
 		</makefilestubs>
 
