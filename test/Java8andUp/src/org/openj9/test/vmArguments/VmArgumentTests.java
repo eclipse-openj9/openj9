@@ -49,6 +49,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.openj9.test.util.JavaVersion;
 import org.openj9.test.util.StringPrintStream;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -144,9 +145,9 @@ public class VmArgumentTests {
 						"-Djava.class.path",
 						"-Dsun.java.command",
 						"-Dsun.java.launcher"
-		};	
-		JAVA_VERSION=System.getProperty("java.version");
-		isJava8 = JAVA_VERSION.startsWith("1.8.0");
+		};
+		JAVA_VERSION = JavaVersion.getJavaVersion();
+		isJava8 = JavaVersion.isJava8();
 		vmargsJarFilename = isJava8? "vmargs_SE80.jar": "vmargs_SE90.jar";
 	}
 
