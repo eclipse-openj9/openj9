@@ -24,7 +24,7 @@
 *.class
 omr
 
-# 8096* and com.ibm.jvmti.tests are currently in different repos and copied into the build $workspace
+# 8096* and com.ibm.jvmti.tests are currently in different repos and copied into the build $workspace 
 com.ibm.jvmti.tests
 8096_Base
 8096_Bootstrap
