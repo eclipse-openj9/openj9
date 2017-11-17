@@ -1,5 +1,3 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
-
 /*******************************************************************************
  * Copyright (c) 2014, 2017 IBM Corp. and others
  *
@@ -71,8 +69,8 @@ public class RefectionMHTests {
 		Method method = null;
 
 		try {
-			method = sun.reflect.Reflection.class.getDeclaredMethod("getCallerClass");
-			method.invoke(sun.reflect.Reflection.class);
+			method = jdk.internal.reflect.Reflection.class.getDeclaredMethod("getCallerClass");
+			method.invoke(jdk.internal.reflect.Reflection.class);
 			System.out.println(TESTCASE_NAME + ": FAILED 1");
 			return false;
 		} catch (InvocationTargetException e) {
@@ -139,7 +137,7 @@ public class RefectionMHTests {
 		MethodHandle methodHandle;
 
 		try {
-			methodHandle = lookup.findStatic(sun.reflect.Reflection.class, "getCallerClass", methodType);
+			methodHandle = lookup.findStatic(jdk.internal.reflect.Reflection.class, "getCallerClass", methodType);
 			methodHandle.invoke();
 			System.out.println(TESTCASE_NAME + ": FAILED 1");
 			return false;
