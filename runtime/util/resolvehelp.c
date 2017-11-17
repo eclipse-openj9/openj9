@@ -27,10 +27,11 @@
 #include "j9consts.h"
 #include "util_internal.h"
 #include "j9vmutilnls.h"
+#include "rommeth.h"
 #include "ut_j9util.h"
 
 J9Method *
-getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *resolvedClass, J9Method *method)
+getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *resolvedClass, J9Method *method, UDATA lookupOptions)
 {
 	/* See if this is meant to be a super send.  Super send requires:
 	 *
@@ -58,29 +59,30 @@ getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *re
 
 			if (vTableIndex != 0) {
 				J9Class *superclass = currentClass->superclasses[currentDepth - 1];
-				/* CMVC 170457: Algorithm for invokespecial lookup is wrong.
-				 * New Algorithm:
-				 * 1) Find the vtable index for J9Method in the resolved class.
-				 * 2) Using the vtable index to get the J9Method at that index in the current class.
-				 * 3) Walk the current class vtable backwards to find the most "recent" override of that method
-				 * 4) Lookup the method at vtableIndex in currentClass's super class
-				 */
-				method = *(J9Method **)(((UDATA)currentClass) + vTableIndex);
-				vTableIndex = vmFuncs->getVTableIndexForMethod(method, currentClass, vmStruct);
 
 				if (isInterfaceMethod) {
+					/* CMVC 170457: Algorithm for invokespecial lookup is wrong.
+					 * New Algorithm:
+					 * 1) Find the vtable index for J9Method in the resolved class.
+					 * 2) Using the vtable index to get the J9Method at that index in the current class.
+					 * 3) Walk the current class vtable backwards to find the most "recent" override of that method
+					 * 4) Lookup the method at vtableIndex in currentClass's super class
+					 */
+					UDATA superVTableSize = (*(UDATA*)(superclass + 1) * sizeof(UDATA)) + sizeof(J9Class);
+					method = *(J9Method **)(((UDATA)currentClass) + vTableIndex);
+					vTableIndex = vmFuncs->getVTableIndexForMethod(method, currentClass, vmStruct);
 					/* We may have looked up a J9Method from an interface due to either defender methods
 					 * or the method not being implemented in the class.  If that's the case, we need
 					 * to ensure we don't read a non-existent vtable slot.  The found method is the correct one
 					 */
-					UDATA superVTableSize = (*(UDATA*)(superclass + 1) * sizeof(UDATA)) + sizeof(J9Class);
 					if ((vTableIndex > 0) && (vTableIndex <= superVTableSize)) {
 						method = *(J9Method **)(((UDATA)superclass) + vTableIndex);
 					}
 				} else {
-					/* 'methodClass' is a superclass of the current class so vTableIndex can't be 0 here */
-					Assert_Util_true(0 != vTableIndex);
-					method = *(J9Method **)(((UDATA)superclass) + vTableIndex);
+					/* In order to support non-vTable methods in a super invoke, perform the lookup rather than
+					 * looking in the vTable.
+					 */
+					method = (J9Method *)vmFuncs->javaLookupMethod(vmStruct, superclass, J9ROMMETHOD_NAMEANDSIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method)), currentClass, lookupOptions);
 				}
 			}
 		}
