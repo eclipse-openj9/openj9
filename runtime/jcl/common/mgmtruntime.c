@@ -80,3 +80,14 @@ Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getProcessIDImpl
 	pid =  (jlong) j9sysinfo_get_pid();
 	return pid;
 }
+
+/**
+ * @return vm idle state of the JVM
+ */
+jint JNICALL
+Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getVMIdleStateImpl(JNIEnv *env, jclass clazz)
+{
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
+
+	return (jint)(javaVM->vmRuntimeStateListener.vmRuntimeState); 
+}

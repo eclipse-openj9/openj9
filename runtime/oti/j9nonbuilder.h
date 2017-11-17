@@ -5006,7 +5006,9 @@ typedef struct J9VMRuntimeStateListener {
 	UDATA idleTuningFlags;
 } J9VMRuntimeStateListener;
 
-/* Values for J9VMRuntimeStateListener.vmRuntimeState */
+/* Values for J9VMRuntimeStateListener.vmRuntimeState
+ * These values are reflected in the Java class library code(RuntimeMXBean)
+ */
 #define J9VM_RUNTIME_STATE_ACTIVE 1
 #define J9VM_RUNTIME_STATE_IDLE 2
 
