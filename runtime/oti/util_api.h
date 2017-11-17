@@ -2491,11 +2491,12 @@ gpProtectAndRun(protected_fn function, JNIEnv * env, void *args);
  * @param currentClass the class that contains the invokespecial
  * @param resolvedClass the class resolved from the MethodRef in the constantpool
  * @param method the J9Method returned by javaLookupMethod() for the MethodRef.
+ * @param lookupOptions options for javaLookupMethod in the case of re-resolution for super send
  *
  * @return the J9Method for the super send or the passed in the J9Method if this is not a super send.
  */
 J9Method *
-getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *resolvedClass, J9Method *method);
+getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *resolvedClass, J9Method *method, UDATA lookupOptions);
 
 /**
  * JVMS 4.9.2: If resolvedClass is an interface, ensure that it is a DIRECT superinterface of currentClass,

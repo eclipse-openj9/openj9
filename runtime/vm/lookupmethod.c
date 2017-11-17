@@ -160,7 +160,7 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 
 	/* Check that the found method is visible from the sender */
 
-	if ((NULL != senderClass) && (!J9ROMCLASS_IS_UNSAFE(senderClass->romClass))) {
+	if (J9_ARE_NO_BITS_SET(lookupOptions, J9_LOOK_NO_VISIBILITY_CHECK) && (NULL != senderClass) && (!J9ROMCLASS_IS_UNSAFE(senderClass->romClass))) {
 		U_32 newModifiers = modifiers;
 		BOOLEAN doVisibilityCheck = TRUE;
 
@@ -550,19 +550,28 @@ doneItableSearch:
 
 /* Options explained:
  * 
- * 		lookupOptionsVirtualMethod			- Search for a virtual (instance) method
- * 		lookupOptionsStaticMethod			- Search for a static method
- * 		lookupOptionsInterfaceMethod		- Search for an interface method - assumes given class is interface class and searches only it and its superinterfaces (i.e. does not search Object)
- * 		lookupOptionsJNI							- Use JNI behaviour (allow virtual lookup to succeed when it finds a method in an interface class, throw only NoSuchMethodError on failure, VERIFIED C strings for name and sig)
- * 		lookupOptionsNoClimb					- Search only the given class, no superclasses or superinterfaces
- * 		lookupOptionsNoInterfaces				- Do not search superinterfaces
- * 		lookupOptionsNoThrow					- Do not set the exception if lookup fails
- * 		lookupOptionsNewInstance			- Use newInstance behaviour (translate IllegalAccessError -> IllegalAccessException, all other errors -> InstantiationException)
- * 		lookupOptionsDirectNameAndSig	- NAS contains direct pointers to UTF8, not SRPs (this option is mutually exclusive with lookupOptionsJNI)
- * 		lookupOptionsCheckClassLoadingConstraints - check that the found method doesn't violate any class loading constraints between the found class and the sender class.
- * 		lookupOptionsPartialMatch - Allow the search to match a partial signature
- *  	If lookupOptionsJNI is not specified, virtual and static lookup will fail with AbstractMethodError if the method is found
+ * 		J9_LOOK_VIRTUAL							Search for a virtual (instance) method
+ * 		J9_LOOK_STATIC							Search for a static method
+ * 		J9_LOOK_INTERFACE						Search for an interface method - assumes given class is interface class and searches only it and its superinterfaces (i.e. does not search Object)
+ * 		J9_LOOK_JNI								Use JNI behaviour (allow virtual lookup to succeed when it finds a method in an interface class, throw only NoSuchMethodError on failure, VERIFIED C strings for name and sig)
+ * 		J9_LOOK_NO_CLIMB						Search only the given class, no superclasses or superinterfaces
+ * 		J9_LOOK_NO_INTERFACE					Do not search superinterfaces
+ * 		J9_LOOK_NO_THROW						Do not set the exception if lookup fails
+ * 		J9_LOOK_NEW_INSTANCE					Use newInstance behaviour (translate IllegalAccessError -> IllegalAccessException, all other errors -> InstantiationException)
+ * 		J9_LOOK_DIRECT_NAS						NAS contains direct pointers to UTF8, not SRPs (this option is mutually exclusive with lookupOptionsJNI)
+ * 		J9_LOOK_CLCONSTRAINTS					Check that the found method doesn't violate any class loading constraints between the found class and the sender class.
+ * 		J9_LOOK_PARTIAL_SIGNATURE				Allow the search to match a partial signature
+ *		J9_LOOK_ALLOW_FWD						Allow lookup to follow the forwarding chain
+ *		J9_LOOK_NO_VISIBILITY_CHECK				Do not perform any visilbity checking
+ *		J9_LOOK_NO_JLOBJECT						When doing an interface lookup, do not consider method in java.lang.Object
+ *		J9_LOOK_REFLECT_CALL					Use reflection behaviour when dealing with module visilibity
+ *		J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS	Handle default method conflicts
+ *
+ *  	If J9_LOOK_JNI is not specified, virtual and static lookup will fail with AbstractMethodError if the method is found
  * 		in an interface class.
+ *
+ *		If J9_LOOK_NO_VISIBILITY_CHECK is not specified and senderClass is not NULL, a visibility check will be
+ *		performed.
  */
 
 /* Change nameAndSig to void * */

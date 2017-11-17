@@ -1155,11 +1155,14 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 			goto done;
 		}
 	}
-	
-	method = getMethodForSpecialSend(vmStruct, currentClass, resolvedClass, method);
 
-	if (NULL != ramCPEntry)
-	{
+	/* Select the correct method for invocation - ignore visilbility in the super send case */
+	method = getMethodForSpecialSend(vmStruct, currentClass, resolvedClass, method, lookupOptions | J9_LOOK_NO_VISIBILITY_CHECK);
+	if (NULL == method) {
+		goto done;
+	}
+
+	if (NULL != ramCPEntry) {
 		ramCPEntry->method = method;
 	}
 
