@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,6 +76,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	getStaticObjectAllocateFlags,
 	j9gc_scavenger_enabled,
 	j9gc_concurrent_scavenger_enabled,
+	j9gc_software_read_barrier_enabled,
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
 	j9gc_concurrent_getCardSize,
 	j9gc_concurrent_getHeapBase,

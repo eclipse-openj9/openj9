@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -348,6 +348,14 @@ initializeROMClasses(J9JavaVM *vm);
  * The trap handler that gets invoked when a H/W Read Barrier is triggered
  */
 J9_EXTERN_BUILDER_SYMBOL(handleGuardedStorageEvent);
+
+/**
+ * Software Read Barrier Handler
+ *
+ * The handler that gets invoked by JIT before loads when running concurrent scavenger on hardware
+ * that doesn't support guarded storage facility for object that are being evacuated
+ */
+J9_EXTERN_BUILDER_SYMBOL(handleReadBarrier);
 
 /**
  * Handle a Guarded Storage Event

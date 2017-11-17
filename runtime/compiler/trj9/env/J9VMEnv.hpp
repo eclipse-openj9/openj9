@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -110,6 +110,13 @@ public:
    uintptrj_t OSRFrameSizeInBytes(TR::Compilation *comp, TR_OpaqueMethodBlock* method);
    bool ensureOSRBufferSize(TR::Compilation *comp, uintptrj_t osrFrameSizeInBytes, uintptrj_t osrScratchBufferSizeInBytes, uintptrj_t osrStackFrameSizeInBytes);
    uintptrj_t thisThreadGetOSRReturnAddressOffset(TR::Compilation *comp);
+
+   uintptrj_t thisThreadGetGSIntermediateResultOffset(TR::Compilation *comp);
+   uintptrj_t thisThreadGetConcurrentScavengeActiveByteAddressOffset(TR::Compilation *comp);
+   uintptrj_t thisThreadGetEvacuateBaseAddressOffset(TR::Compilation *comp);
+   uintptrj_t thisThreadGetEvacuateTopAddressOffset(TR::Compilation *comp);
+   uintptrj_t thisThreadGetGSOperandAddressOffset(TR::Compilation *comp);
+   uintptrj_t thisThreadGetGSHandlerAddressOffset(TR::Compilation *comp);
 
    };
 

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -678,7 +678,8 @@ MM_CollectorLanguageInterfaceImpl::scavenger_switchConcurrentForThread(MM_Enviro
 			j9tty_printf(PORTLIB, "%p: Nursery [%p,%p] Evacuate [%p,%p] GS [%p,%p] Section size 0x%zx, sections %lu bit offset %lu bit mask 0x%zx\n",
 					vmThread, nurseryBase, nurseryTop, gsBase, gsTop, pageBase, pageTop, _extensions->getConcurrentScavengerPageSectionSize() , sectionCount, startOffsetInBits, bitMask);
 		}
-
+		vmThread->evacuateBase = gsBase;
+		vmThread->evacuateTop = gsTop;
 		vmThread->privateFlags |= J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE;
 		j9gs_enable(&vmThread->gsParameters, _extensions->getConcurrentScavengerPageStartAddress(), _extensions->getConcurrentScavengerPageSectionSize(), bitMask);
     } else {

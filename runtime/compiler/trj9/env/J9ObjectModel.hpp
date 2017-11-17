@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,12 +118,21 @@ public:
    */
    bool shouldGenerateReadBarriersForFieldLoads();
 
+   /**
+    * \brief Determine whether to replace guarded loads with software read barrier sequence
+    *
+    * \return
+    *     true if debug gc option -XXgc:softwareEvacuateReadBarrier is used
+    */
+   bool shouldReplaceGuardedLoadWithSoftwareReadBarrier();
+
 private:
 
    bool _usesDiscontiguousArraylets;
    int32_t _arrayLetLeafSize;
    int32_t _arrayLetLeafLogSize;
    bool _shouldGenerateReadBarriersForFieldLoads;
+   bool _shouldReplaceGuardedLoadWithSoftwareReadBarrier;
    };
 
 }
