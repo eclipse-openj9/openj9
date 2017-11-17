@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -183,32 +183,30 @@ OMR::RuntimeAssumption::dumpInfo(char *subclassName)
 
 bool OMR::RuntimeAssumption::isAssumingRange(uintptrj_t rangeStartPC, uintptrj_t rangeEndPC, uintptrj_t rangeColdStartPC, uintptrj_t rangeColdEndPC, uintptrj_t rangeStartMD, uintptrj_t rangeEndMD)
    {
-   uintptrj_t pc = (uintptrj_t) getAssumingPC();
-   return (pc >= rangeStartPC && pc <= rangeEndPC ||
-           (rangeColdStartPC && pc >= rangeColdStartPC && pc <= rangeColdEndPC) ||
-           (rangeStartMD && pc >= rangeStartMD && pc <= rangeEndMD));
+   return (assumptionInRange(rangeStartPC, rangeEndPC) ||
+           (rangeColdStartPC && assumptionInRange(rangeColdStartPC, rangeColdEndPC)) ||
+           (rangeStartMD && assumptionInRange(rangeStartMD, rangeEndMD)));
    }
 
 bool OMR::RuntimeAssumption::isAssumingMethod(void *md, bool reclaimPrePrologueAssumptions)
    {
    J9JITExceptionTable *metaData = (J9JITExceptionTable*) md;
-   uintptrj_t pc = (uintptrj_t) getAssumingPC();
 
    // MetaData->startPC refers to the interpreter entry point, and does not include pre-prologue.
    // If we need to reclaim pre-prologue assumptions (i.e. on class unloading), we need to scan
    // from the beginning of the code cache allocation of the method (metaData->codeCacheAlloc).
-   uintptrj_t startPC = (reclaimPrePrologueAssumptions)?metaData->codeCacheAlloc:metaData->startPC;
-   if (pc >= startPC && pc <= metaData->endWarmPC ||
-           (metaData->startColdPC && pc >= metaData->startColdPC && pc <= metaData->endPC))
+   uintptrj_t metaStartPC = (reclaimPrePrologueAssumptions)?metaData->codeCacheAlloc:metaData->startPC;
+   if (assumptionInRange(metaStartPC, metaData->endWarmPC) ||
+           (metaData->startColdPC && assumptionInRange(metaData->startColdPC, metaData->endPC)))
       return true;
 
-   if ((pc >= (uintptrj_t) metaData) && (pc <= (((uintptrj_t) metaData) + ((uintptrj_t) metaData->size))))
+   if (assumptionInRange((uintptrj_t)metaData, ((uintptrj_t)metaData) + ((uintptrj_t)metaData->size)))
       {
       TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)metaData->bodyInfo;
       if (bodyInfo && bodyInfo->getMethodInfo() && bodyInfo->getMethodInfo()->isInDataCache())
          {
          // Don't reclaim if address is in the persistent body/method info in the data cache
-         if (!((pc >= (uintptrj_t) metaData->bodyInfo) && (pc <= (((uintptrj_t) metaData->bodyInfo) + (uintptrj_t)sizeof(TR_PersistentJittedBodyInfo) + (uintptrj_t)sizeof(TR_PersistentMethodInfo)))))
+         if (!assumptionInRange((uintptrj_t)metaData->bodyInfo, ((uintptrj_t) metaData->bodyInfo) + (uintptrj_t)sizeof(TR_PersistentJittedBodyInfo) + (uintptrj_t)sizeof(TR_PersistentMethodInfo)))
             return true;
          }
       else
@@ -405,7 +403,7 @@ void TR_RuntimeAssumptionTable::reclaimAssumptions(OMR::RuntimeAssumption **sent
                    kind != RuntimeAssumptionOnClassRedefinitionNOP)
                   {
                   fprintf(stderr, "%d assumptions were left after metadata %p assumption reclaiming\n", numAssumptionsNotReclaimed, metaData);
-                  fprintf(stderr, "RA=%p kind=%d key=%p assumingPC=%p\n", cursor, cursor->getAssumptionKind(), cursor->getKey(), cursor->getAssumingPC());
+                  fprintf(stderr, "RA=%p kind=%d key=%p assumingPC=%p\n", cursor, cursor->getAssumptionKind(), cursor->getKey(), cursor->getFirstAssumingPC());
                   TR_ASSERT(false, "non redefinition assumptions left after metadata reclamation\n");
                   }
                cursor = cursor->getNextAssumptionForSameJittedBody();
@@ -652,8 +650,8 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
       pic_cursor = pic_next;
       }
    oldHeadPtr = getBucketPtr(RuntimeAssumptionOnClassRedefinitionNOP, hashCode((uintptrj_t)oldKey));
-   TR_PatchNOPedGuardSiteOnClassRedefinition* nop_cursor = (TR_PatchNOPedGuardSiteOnClassRedefinition*)(*oldHeadPtr);
-   TR_PatchNOPedGuardSiteOnClassRedefinition* nop_prev = NULL;
+   OMR::RuntimeAssumption* nop_cursor = *oldHeadPtr;
+   OMR::RuntimeAssumption* nop_prev = NULL;
 
    raArray = findAssumptionHashTable(RuntimeAssumptionOnClassRedefinitionNOP)->_htSpineArray;
    if (reportDetails)
@@ -667,9 +665,9 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
 
    while (nop_cursor)
       {
-      TR_PatchNOPedGuardSiteOnClassRedefinition *nop_next = (TR_PatchNOPedGuardSiteOnClassRedefinition *) nop_cursor->getNext();
+      OMR::RuntimeAssumption* nop_next = nop_cursor->getNext();
       if (reportDetails)
-         TR_VerboseLog::writeLine(TR_Vlog_RA, "old=%p @ %p", nop_cursor->getKey(), nop_cursor->getLocation());
+         TR_VerboseLog::writeLine(TR_Vlog_RA, "old=%p @ %p", nop_cursor->getKey(), nop_cursor->getFirstAssumingPC());
       if (nop_cursor->matches((uintptrj_t)oldKey))
          {
          if (reportDetails)
@@ -681,6 +679,7 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
          nop_cursor->compensate(vm, 0, 0);
          nop_cursor->dequeueFromListOfAssumptionsForJittedBody();
          incReclaimedAssumptionCount(nop_cursor->getAssumptionKind());
+         nop_cursor->reclaim();
          nop_cursor->paint(); // RAS
 
          // HCR remove the assumption
