@@ -39,7 +39,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/x/codegen/OutlinedInstructions.cpp \
     omr/compiler/x/codegen/RegisterRematerialization.cpp \
     omr/compiler/x/codegen/SubtractAnalyser.cpp \
-    omr/compiler/x/codegen/Trampoline.cpp \
     omr/compiler/x/codegen/OMRTreeEvaluator.cpp \
     omr/compiler/x/codegen/UnaryEvaluator.cpp \
     omr/compiler/x/codegen/X86BinaryEncoding.cpp \

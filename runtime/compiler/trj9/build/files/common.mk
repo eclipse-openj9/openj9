@@ -179,7 +179,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/codegen/OMRLinkage.cpp \
     omr/compiler/codegen/LiveRegister.cpp \
     omr/compiler/codegen/OutOfLineCodeSection.cpp \
-    omr/compiler/codegen/OMRRegisterDependency.cpp \
     omr/compiler/codegen/Relocation.cpp \
     omr/compiler/codegen/ScratchRegisterManager.cpp \
     omr/compiler/codegen/StorageInfo.cpp \
