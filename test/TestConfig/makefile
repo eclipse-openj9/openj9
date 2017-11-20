@@ -254,11 +254,7 @@ $(info set JAVA_VERSION to $(JAVA_VERSION))
 # Define the EXCLUDE_FILE to be used for temporarily excluding failed tests.
 # This macro is used in /test/Utils/src/org/openj9/test/util/IncludeExcludeTestAnnotationTransformer
 ifndef EXCLUDE_FILE
-	ifeq ($(JCL_VERSION),latest)
-		export EXCLUDE_FILE:=$(JVM_TEST_ROOT)$(D)TestConfig$(D)resources$(D)excludes$(D)openj9_exclude.txt
-	else
-		export EXCLUDE_FILE:=$(JVM_TEST_ROOT)$(D)TestConfig$(D)resources$(D)excludes$(D)default_exclude.txt
-	endif
+	export EXCLUDE_FILE:=$(JVM_TEST_ROOT)$(D)TestConfig$(D)resources$(D)excludes$(D)$(JCL_VERSION)_exclude_$(JAVA_VERSION).txt
 endif
 
 # compile all tests under $(SRC_ROOT)

@@ -22,23 +22,10 @@
 
 # Exclude tests temporarily
 
-#Temporarily keep them as comment to facilitate testing
-#org.openj9.test.jsr335.interfacePrivateMethod.Test_ITestRunner															123456 generic-all
-#org.openj9.test.jsr335.interfacePrivateMethod.Test_ReflectionAndMethodHandles:testFindMethodsUsingGetMethods 			456789 linux_x86-64
-org.openj9.test.vm.Test_MsgHelp:test_loadMessages_EN																	124199 generic-all
-org.openj9.test.runlast.Test_JavaNetWithSideEffectsShouldRunLast:test_getResource										124199 generic-all
-#org.openj9.test.java.lang.Test_Class:testDefaultMethodInheritance														DaveW-58  generic-all
-#org.openj9.test.java.lang.Test_Class:testInterfaceMethodInheritance														DaveW-58 generic-all
+org.openj9.test.vm.Test_MsgHelp:test_loadMessages_EN																	                 AN-https://github.ibm.com/runtimes/test/issues/46 generic-all
 org.openj9.test.java.lang.Test_Class:test_getModifiers_classTypes														JTC-JAT-133182 generic-all
-org.openj9.test.java.lang.Test_Class:test_hideUnsafe																	124199 generic-all
-#org.openj9.test.java.lang.Test_Class:test_reflectConstructor															124199 generic-all
-#org.openj9.test.java.lang.Test_Class:test_reflectField																	124199 generic-all
-#org.openj9.test.java.lang.Test_Class:test_reflectMethod																124199 generic-all
-org.openj9.test.java.lang.Test_J9VMInternals:test_checkPackageAccess													124199 generic-all
-#org.openj9.test.java.lang.Test_String:test_toLowerCase																	124199 generic-all
-#org.openj9.test.java.lang.Test_Thread:test_stop3																		124199 generic-all
-#org.openj9.test.java.lang.Test_Thread:test_stop4																		124199 generic-all
-#org.openj9.test.java.lang.Test_Thread:test_stop5																		124199 generic-all
+org.openj9.test.java.lang.Test_Class:test_hideUnsafe																	BPW-https://github.ibm.com/runtimes/test/issues/109 generic-all
+org.openj9.test.java.lang.Test_J9VMInternals:test_checkPackageAccess													BPW-https://github.ibm.com/runtimes/test/issues/59 generic-all
 org.openj9.test.java.security.Test_AccessController:test_doPrivilegedFrameStackWalking									124199 generic-all
 org.openj9.test.java.security.Test_AccessController:test_doPrivilegedWithCombiner4										124199 generic-all
 org.openj9.test.java.security.Test_AccessController:test_doPrivileged_createAccessControlContext						124199 generic-all
@@ -49,7 +36,14 @@ org.openj9.test.com.ibm.jit.Test_FunctionalCrypt:test_ECC1																124199
 org.openj9.test.com.ibm.jit.Test_FunctionalCrypt:test_ECC2																124199 generic-all
 org.openj9.test.com.ibm.jit.Test_FunctionalCrypt:test_NIST_AES															124199 generic-all
 org.openj9.test.com.ibm.jit.Test_FunctionalCrypt:test_NIST_SHA															124199 generic-all
-jit.test.vich.CurrentTimeMillis:testCurrentTimeMillis																	158622 generic-all
+vich.bench.CurrentTimeMillis:testCurrentTimeMillis																		158622 generic-all
 org.openj9.test.java.lang.Test_Thread:test_getContextClassLoader														125908 generic-all
-j9vm.test.softmx.SoftmxRASTest1:testSoftmx_RAS_Test_1																	133088 linux_ppc-64_le
+org.openj9.test.java.lang.management.TestMonitorInfo:testFrom_WithCDContainingNullStackFrame							000000 generic-all
 org.openj9.test.java.lang.Test_ClassLoader																				134754 generic-all
+org.openj9.test.attachAPI.TestAttachAPI:test_agntld01																	238 generic-all
+org.openj9.test.attachAPI.TestAttachAPI:test_agntld02																	238 generic-all
+org.openj9.test.attachAPI.TestAttachAPI:test_agntld03																	238 generic-all
+org.openj9.test.attachAPI.TestSunAttachClasses:testAgentLoading															238 generic-all
+org.openj9.test.vmArguments.VmArgumentTests:testCrNocr																	244 generic-all
+j9vm.test.softmx.SoftmxRemoteTest																						480 generic-all
+com.ibm.j9.jsr292.indyn.IndyTest:test_indyn_invalid_bootstrap_method													600 generic-all
