@@ -78,7 +78,7 @@ class ReduceSynchronizedFieldLoad
     *
     *     call <synchronizedFieldLoad>
     *       object
-    *       aloadi / iloadi / lloadi / l2a
+    *       aloadi / iloadi / lloadi
     *       iconst
     *       call jitMonitorEntry
     *          ==>object
@@ -92,8 +92,6 @@ class ReduceSynchronizedFieldLoad
     *     3. The offset (in bytes) from the synchronized object to its lock word
     *     4. The symbol reference of the original monent in the synchronized region
     *     5. The symbol reference of the original monexit in the synchronized region
-    *
-    *     If the child is an l2a it signifies a compressedRefs reference field load.
     *
     *  \param cg
     *     The code generator used to generate the instructions.
@@ -125,26 +123,35 @@ class ReduceSynchronizedFieldLoad
 
    private:
 
-   /** \brief
-    *     Advances \p iter one tree top forward, ignoring extended basic block boundaries by skipping over
-    *     <c>TR::BBStart</c> and <c>TR::BBEnd</c> nodes, and while taking into account the \p endTreeTop.
-    *
-    *  \param iter
-    *     The iterator used to look for opportunities to advance forward.
-    *
-    *  \param endTreeTop
-    *     The tree top on which to end looking for opportunities to perform this optimization.
-    *
-    *  \return
-    *     true if the iterator was successfully advanced and the search for optimization opportunity should continue;
-    *     false otherwise.
-    */
-   bool advanceIterator(TR::TreeTopIterator& iter, TR::TreeTop* endTreeTop);
+  /** \brief
+   *     Looks for a load within the monitored region that is a candidate for the reduced synchronized field load 
+   *     optimization taking into account other operations within the monitored region.
+   *
+   *  \param startTreeTop
+   *     The start of the extended basic block the monitored region is contained in.
+   *
+   *  \param endTreeTop
+   *     The end of the extended basic block the monitored region is contained in.
+   *
+   *  \param monentTreeTop
+   *     The start of the monitored region.
+   *
+   *  \param monexitTreeTop
+   *     The end of the monitored region.
+   *
+   *  \param synchronizedObjectNode
+   *     The object on which the monitored region is synchornized on.
+
+   *  \return
+   *     The candidate load within the monitored region to perform the optimization on; <c>NULL</c> if no candidate 
+   *     was found.
+   */
+   TR::Node* findLoadInSynchornizedRegion(TR::TreeTop* startTreeTop, TR::TreeTop* endTreeTop, TR::TreeTop* monentTreeTop, TR::TreeTop* monexitTreeTop, TR::Node* synchronizedObjectNode);
 
    /** \brief
     *     The cached code generator used to generate the instructions.
     */
-   TR::CodeGenerator * cg;
+   TR::CodeGenerator* cg;
    };
 
 #endif
