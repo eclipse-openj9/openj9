@@ -36,11 +36,23 @@ public class MethodHandleAPI_countedLoop {
 	static MethodHandle COUNTEDLOOP_IDENTITY_BYTE_TYPE;
 	static MethodHandle COUNTEDLOOP_LOOP_INIT_5;
 	static MethodHandle COUNTEDLOOP_LOOP_COUNT_20;
+	static MethodHandle COUNTEDLOOP_BODY_NOPARAM;
+	static MethodHandle COUNTEDLOOP_BODY_NOEXTERNALPARAM;
+	static MethodHandle COUNTEDLOOP_BODY_ONEEXTERNALPARAM;
+	static MethodHandle COUNTEDLOOP_HANDLE_TWOPARAM;
 	static {
 		COUNTEDLOOP_IDENTITY_INT_TYPE = MethodHandles.identity(int.class);
 		COUNTEDLOOP_IDENTITY_BYTE_TYPE = MethodHandles.identity(byte.class);
 		COUNTEDLOOP_LOOP_INIT_5 = MethodHandles.constant(int.class, 5);
 		COUNTEDLOOP_LOOP_COUNT_20 = MethodHandles.constant(int.class, 20);
+		try {
+			COUNTEDLOOP_BODY_NOPARAM = lookup.findStatic(SamePackageExample.class, "countedLoop_Body_NoParam", MethodType.methodType(int.class));
+			COUNTEDLOOP_BODY_NOEXTERNALPARAM = lookup.findStatic(SamePackageExample.class, "countedLoop_Body_NoExternalParam", MethodType.methodType(int.class, int.class, int.class));
+			COUNTEDLOOP_BODY_ONEEXTERNALPARAM = lookup.findStatic(SamePackageExample.class, "countedLoop_Body_OneExternalParam", MethodType.methodType(int.class, int.class, int.class, int.class));
+			COUNTEDLOOP_HANDLE_TWOPARAM = lookup.findStatic(SamePackageExample.class, "countedLoop_Handle_TwoParam", MethodType.methodType(int.class, int.class, int.class));
+		} catch (IllegalAccessException | NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	/* The test cases include countedLoop with the following different signatures:
@@ -192,6 +204,65 @@ public class MethodHandleAPI_countedLoop {
 		MethodHandle mhBody = lookup.findStatic(SamePackageExample.class, "countedLoop_Body_IntReturnType", MethodType.methodType(int.class, int.class, byte.class));
 		MethodHandle mhCountedLoop = MethodHandles.countedLoop(mhStart, mhEnd, mhInit, mhBody);
 		Assert.fail("The test case failed to detect the second parameter type of the body handle (non-void return type) is not int");
+	}
+	
+	/**
+	 * countedLoop test for an invalid loop body without parameters.
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_countedLoop_NoParam_Body() {
+		MethodHandle mhStart = COUNTEDLOOP_IDENTITY_INT_TYPE;
+		MethodHandle mhEnd = COUNTEDLOOP_IDENTITY_INT_TYPE;
+		MethodHandle mhInit = COUNTEDLOOP_IDENTITY_INT_TYPE;
+		MethodHandle mhBody = COUNTEDLOOP_BODY_NOPARAM;
+		MethodHandle mhCountedLoop = MethodHandles.countedLoop(mhStart, mhEnd, mhInit, mhBody);
+		Assert.fail("The test case failed to detect an invalid loop body without parameters");
+	}
+	
+	/**
+	 * countedLoop test for an loop body without external parameter and an end handle 
+	 * with a parameter list shorter than other argument handles.
+	 * Note: In such case, the external parameter types are only determined by the end handle,
+	 * which means the parameter list of the end handle must be longer than other argument handles (excluding the body).
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_countedLoop_NoExternalParam_Body_ShorterParam_End() {
+		MethodHandle mhStart = COUNTEDLOOP_IDENTITY_INT_TYPE;
+		MethodHandle mhEnd = COUNTEDLOOP_IDENTITY_INT_TYPE;
+		MethodHandle mhInit = COUNTEDLOOP_HANDLE_TWOPARAM;
+		MethodHandle mhBody = COUNTEDLOOP_BODY_NOEXTERNALPARAM;
+		MethodHandle mhCountedLoop = MethodHandles.countedLoop(mhStart, mhEnd, mhInit, mhBody);
+		Assert.fail("The test case failed to detect that the parameter list of the end handle is shorter than other argument handles");
+	}
+	
+	/**
+	 * countedLoop test for an loop body without external parameter and an end handle 
+	 * with a parameter list longer than other argument handles.
+	 * Note: In such case, the external parameter types are only determined by the end handle,
+	 * which means the parameter list of the end handle must be longer than other argument handles (excluding the body).
+	 */
+	@Test(groups = { "level.extended" }, invocationCount = 2)
+	public static void test_countedLoop_NoExternalParam_Body_LongerParam_End() {
+		MethodHandle mhStart = COUNTEDLOOP_IDENTITY_INT_TYPE;
+		MethodHandle mhEnd = COUNTEDLOOP_HANDLE_TWOPARAM;
+		MethodHandle mhInit = COUNTEDLOOP_IDENTITY_INT_TYPE;
+		MethodHandle mhBody = COUNTEDLOOP_BODY_NOEXTERNALPARAM;
+		MethodHandle mhCountedLoop = MethodHandles.countedLoop(mhStart, mhEnd, mhInit, mhBody);
+	}
+	
+	/**
+	 * countedLoop test for an loop body with an shorter external parameter list
+	 * Note: The external parameter types are only determined by the body if its external parameters exist.
+	 * In such case, the external parameter list of the body must be longer than other argument handles.
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_countedLoop_ShorterExternalParam_Body() {
+		MethodHandle mhStart = COUNTEDLOOP_HANDLE_TWOPARAM;
+		MethodHandle mhEnd = COUNTEDLOOP_HANDLE_TWOPARAM;
+		MethodHandle mhInit = COUNTEDLOOP_HANDLE_TWOPARAM;
+		MethodHandle mhBody = COUNTEDLOOP_BODY_ONEEXTERNALPARAM;
+		MethodHandle mhCountedLoop = MethodHandles.countedLoop(mhStart, mhEnd, mhInit, mhBody);
+		Assert.fail("The test case failed to detect that the external parameter list of the body is shorter than other argument handles");
 	}
 	
 	/**
@@ -493,6 +564,61 @@ public class MethodHandleAPI_countedLoop {
 		MethodHandle mhBody = lookup.findStatic(SamePackageExample.class, "countedLoop_Body_IntReturnType", MethodType.methodType(int.class, int.class, byte.class));
 		MethodHandle mhCountedLoop = MethodHandles.countedLoop(mhLoopCount, mhInit, mhBody);
 		Assert.fail("The test case failed to detect the second parameter type of the body handle (non-void return type) is not int");
+	}
+	
+	/**
+	 * countedLoop test (LoopCount) for an invalid loop body without parameters.
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_countedLoop_LoopCount_NoParam_Body() {
+		MethodHandle mhLoopCount = COUNTEDLOOP_IDENTITY_INT_TYPE;
+		MethodHandle mhInit = COUNTEDLOOP_IDENTITY_INT_TYPE;
+		MethodHandle mhBody = COUNTEDLOOP_BODY_NOPARAM;
+		MethodHandle mhCountedLoop = MethodHandles.countedLoop(mhLoopCount, mhInit, mhBody);
+		Assert.fail("The test case failed to detect an invalid loop body without parameters");
+	}
+	
+	/**
+	 * countedLoop test (LoopCount) for an loop body without external parameter and an LoopCount handle 
+	 * with a parameter list shorter than other argument handles.
+	 * Note: In such case, the external parameter types are only determined by the LoopCount handle,
+	 * which means the parameter list of the LoopCount handle must be longer than other argument handles (excluding the body).
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_countedLoop_LoopCount_NoExternalParam_Body_ShorterParam_LoopCount() {
+		MethodHandle mhLoopCount = COUNTEDLOOP_IDENTITY_INT_TYPE;
+		MethodHandle mhInit = COUNTEDLOOP_HANDLE_TWOPARAM;
+		MethodHandle mhBody = COUNTEDLOOP_BODY_NOEXTERNALPARAM;
+		MethodHandle mhCountedLoop = MethodHandles.countedLoop(mhLoopCount, mhInit, mhBody);
+		Assert.fail("The test case failed to detect that the parameter list of the LoopCount handle is shorter than other argument handles");
+	}
+	
+	/**
+	 * countedLoop test (LoopCount) for an loop body without external parameter and an LoopCount handle 
+	 * with a parameter list longer than other argument handles.
+	 * Note: In such case, the external parameter types are only determined by the LoopCount handle,
+	 * which means the parameter list of the LoopCount handle must be longer than other argument handles (excluding the body).
+	 */
+	@Test(groups = { "level.extended" }, invocationCount = 2)
+	public static void test_countedLoop_LoopCount_NoExternalParam_Body_LongerParam_LoopCount() {
+		MethodHandle mhLoopCount = COUNTEDLOOP_HANDLE_TWOPARAM;
+		MethodHandle mhInit = COUNTEDLOOP_IDENTITY_INT_TYPE;
+		MethodHandle mhBody = COUNTEDLOOP_BODY_NOEXTERNALPARAM;
+		MethodHandle mhCountedLoop = MethodHandles.countedLoop(mhLoopCount, mhInit, mhBody);
+	}
+	
+	/**
+	 * countedLoop test (LoopCount) for an loop body with an shorter external parameter list
+	 * Note: The external parameter types are only determined by the body if its external parameters exist.
+	 * In such case, the external parameter list of the body must be longer than other argument handles.
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_countedLoop_LoopCount_ShorterExternalParam_Body() {
+		MethodHandle mhLoopCount = COUNTEDLOOP_HANDLE_TWOPARAM;
+		MethodHandle mhInit = COUNTEDLOOP_HANDLE_TWOPARAM;
+		MethodHandle mhBody = COUNTEDLOOP_BODY_ONEEXTERNALPARAM;
+		MethodHandle mhCountedLoop = MethodHandles.countedLoop(mhLoopCount, mhInit, mhBody);
+		Assert.fail("The test case failed to detect that the external parameter list of the body is shorter than other argument handles");
 	}
 	
 	/**

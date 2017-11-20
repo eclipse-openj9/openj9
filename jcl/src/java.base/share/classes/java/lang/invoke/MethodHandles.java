@@ -3417,7 +3417,7 @@ public class MethodHandles {
 		 * Note: The constraints of initializer and predicate at other aspects will be checked
 		 * later in the generic loop when adding clauses.
 		 */
-		MethodHandle finiHandle = validateArgumentsOfWhileLoop(predHandle, bodyHandle);
+		MethodHandle finiHandle = validateArgumentsOfWhileLoop(initHandle, predHandle, bodyHandle);
 		
 		/* Create the clause array with all these handles to be used by the generic loop */
 		MethodHandle[] exitConditionClause = {null, null, predHandle, finiHandle};
@@ -3443,7 +3443,7 @@ public class MethodHandles {
 		 * Note: The constraints of initializer and predicate at other aspects will be checked
 		 * later in the generic loop when adding clauses.
 		 */
-		MethodHandle finiHandle = validateArgumentsOfWhileLoop(predHandle, bodyHandle);
+		MethodHandle finiHandle = validateArgumentsOfWhileLoop(initHandle, predHandle, bodyHandle);
 		
 		/* Create the clause array with all these handles to be used by the generic loop */
 		MethodHandle[] handleClause = {initHandle, bodyHandle, predHandle, finiHandle};
@@ -3451,7 +3451,7 @@ public class MethodHandles {
 	}
 	
 	/* Validate the body handle against the constraints of a while/do-while loop and generate the 'fini' handle from it */
-	private static MethodHandle validateArgumentsOfWhileLoop(MethodHandle predHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
+	private static MethodHandle validateArgumentsOfWhileLoop(MethodHandle initHandle, MethodHandle predHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
 		if ((null == predHandle) || (null == bodyHandle)) {
 			/*[MSG "K065C", "Both The predicate and the loop body must be non-null"]*/
 			throw new NullPointerException(com.ibm.oti.util.Msg.getString("K065C")); //$NON-NLS-1$
@@ -3459,11 +3459,40 @@ public class MethodHandles {
 		
 		MethodType bodyType = bodyHandle.type;
 		Class<?> bodyReturnType = bodyType.returnType;
+		int bodyParamTypesLength = bodyType.arguments.length;
+		int predParamTypesLength = predHandle.type.arguments.length;
+
+		if (void.class != bodyReturnType) {
+			/* There must be at least one parameter V for the parameter list(V, A...)V if V is non-void */
+			if (bodyParamTypesLength <= 0) {
+				/*[MSG "K065D1", "The parameter type list of loop body must not be empty: {0}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D1", Arrays.toString(bodyType.arguments))); //$NON-NLS-1$
+			} else {
+				/* The signature of the body handle must be either (V, A...)V or (A...)void */
+				if (bodyReturnType != bodyType.arguments[0]) {
+					/*[MSG "K065D2", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
+					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D2", bodyReturnType.getName(), bodyType.arguments[0].getName())); //$NON-NLS-1$
+				}
+				/* Remove the type V to obtain the external parameter types of the body */
+				bodyParamTypesLength -= 1;
+			}
+			
+			/* Remove the type V to obtain the external parameter types of the predicate handle */
+			if (predParamTypesLength > 0) {
+				predParamTypesLength -= 1;
+			}
+		}
 		
-		/* The signature of the body handle must be either (V, A...)V or (A...)void */
-		if ((void.class != bodyReturnType) && (bodyReturnType != bodyType.arguments[0])) {
-			/*[MSG "K065D", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
-			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D", bodyReturnType.getName(), bodyType.arguments[0].getName())); //$NON-NLS-1$
+		/* The parameter list (V, A...) of the body constrains the parameter lists of the other handles.
+		 * In such case, the external parameter list (A...) of the body must be the longest one as 
+		 * compared to init (A...) and pred (V, A...).
+		 * Note: the one-by-one comparison of parameter types is handled in the generic loop.
+		 */
+		if (((null != initHandle) && (bodyParamTypesLength < initHandle.type.arguments.length))
+		|| (bodyParamTypesLength < predParamTypesLength)
+		) {
+			/*[MSG "K065D3", "The external parameter list of the body: {0} must be longer than other argument handles"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D3", Arrays.toString(bodyType.arguments))); //$NON-NLS-1$
 		}
 		
 		/* The Java 9 doc says the loop result type is the result type V of the body handle,
@@ -3493,7 +3522,7 @@ public class MethodHandles {
 	 * @throws IllegalArgumentException - if passed-in arguments are invalid
 	 */
 	public static MethodHandle countedLoop(MethodHandle startHandle, MethodHandle endHandle, MethodHandle initHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
-		validateArgumentsOfCountedLoop(startHandle, endHandle, bodyHandle);
+		validateArgumentsOfCountedLoop(startHandle, endHandle, initHandle, bodyHandle);
 		
 		/* From the generic loop perspective, the passed-in 'end' handle needs one more
 		 * argument slot to be added to the internal parameter list [V, I, A...]
@@ -3572,7 +3601,7 @@ public class MethodHandles {
 	}
 	
 	/* Validate all argument handles against the constraints of countedLoop */
-	private static final void validateArgumentsOfCountedLoop(MethodHandle startHandle, MethodHandle endHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
+	private static final void validateArgumentsOfCountedLoop(MethodHandle startHandle, MethodHandle endHandle, MethodHandle initHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
 		if ((null == startHandle) || (null == endHandle) || (null == bodyHandle)) {
 			/*[MSG "K065E", "The start/end/body handles must be non-null"]*/
 			throw new NullPointerException(com.ibm.oti.util.Msg.getString("K065E")); //$NON-NLS-1$
@@ -3591,21 +3620,29 @@ public class MethodHandles {
 		MethodType bodyType = bodyHandle.type;
 		Class<?> bodyReturnType = bodyType.returnType;
 		Class<?>[] bodyParamTypes = bodyType.arguments;
-		Class<?> bodyParamType1 = bodyParamTypes[0];
+		int bodyParamTypesLength = bodyParamTypes.length;
+		
+		if (bodyParamTypesLength <= 0) {
+			/*[MSG "K065D1", "The parameter type list of loop body must not be empty: {0}"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D1", Arrays.toString(bodyParamTypes))); //$NON-NLS-1$
+		}
 		
 		/* The signature of the body handle must be either (V,I,A...)V or (I,A...)void */
+		Class<?> bodyParamType1 = bodyParamTypes[0];
 		if (void.class == bodyReturnType) {
 			if (int.class != bodyParamType1) {
 				/*[MSG "K065G", "The 1st parameter type of the body handle with a void return type must be int: {0}"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065G", bodyType.toMethodDescriptorString())); //$NON-NLS-1$
 			}
+			/* Remove type I to obtain the external parameter types of the body */
+			bodyParamTypesLength -= 1;
 		} else {
 			if (bodyReturnType != bodyParamType1) {
-				/*[MSG "K065D", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D", bodyReturnType.getName(), bodyParamType1.getName())); //$NON-NLS-1$
+				/*[MSG "K065D2", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D2", bodyReturnType.getName(), bodyParamType1.getName())); //$NON-NLS-1$
 			}
 			
-			if (bodyParamTypes.length < 2) {
+			if (bodyParamTypesLength < 2) {
 				/*[MSG "K065H", "The parameters types of the body handle with the non-void return type include at least 2 loop variables: {0}"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065H", bodyType.toMethodDescriptorString())); //$NON-NLS-1$
 			}
@@ -3613,6 +3650,35 @@ public class MethodHandles {
 			if (int.class != bodyParamTypes[1]) {
 				/*[MSG "K065I", "The 2nd parameter type of the body handle with a non-void return type must be int rather than {0}"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065I", bodyType.toMethodDescriptorString())); //$NON-NLS-1$
+			}
+			/* Remove type V and I to obtain the external parameter types of the body */
+			bodyParamTypesLength -= 2;
+		}
+		
+		/* The parameter list (V, I, A...) of the body constrains the parameter lists of the other handles.
+		 * In such case, the external parameter list (A...) of the body must be the longest one as compared
+		 * to startHandle(A...), endHandle(A...) and initHandle(A...). If there is no external parameter in
+		 * the body, then the external parameter types must be determined by endHandle.
+		 * Note: the one-by-one comparison of parameter types is handled in the generic loop.
+		 */
+		int initParamTypesLength = (null != initHandle) ? initHandle.type.arguments.length : 0;
+		int startParamTypesLength = startHandle.type.arguments.length;
+		int endParamTypesLength = endHandle.type.arguments.length;
+		
+		if (0 == bodyParamTypesLength) {
+			if ((endParamTypesLength < initParamTypesLength)
+			|| (endParamTypesLength < startParamTypesLength)
+			) {
+				/*[MSG "K065D4", "If there is no external parameter in the body, the parameter list of end: {0} must be longer than other argument handles"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D4", Arrays.toString(endHandle.type.arguments))); //$NON-NLS-1$
+			}
+		} else {
+			if ((bodyParamTypesLength < initParamTypesLength)
+			|| (bodyParamTypesLength < startParamTypesLength)
+			|| (bodyParamTypesLength < endParamTypesLength)
+			) {
+				/*[MSG "K065D3", "The external parameter list of the body: {0} must be longer than other argument handles"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D3", Arrays.toString(bodyType.arguments))); //$NON-NLS-1$
 			}
 		}
 	}
@@ -3640,21 +3706,7 @@ public class MethodHandles {
 	public static MethodHandle iteratedLoop(MethodHandle iteratorHandle, MethodHandle initHandle, MethodHandle bodyHandle) throws NullPointerException, IllegalArgumentException {
 		validateArgumentsOfIteratedLoop(iteratorHandle, initHandle, bodyHandle);
 		
-		/* Method handles to Iterator.hasNext(), Iterator.next() and Iterable.iterator() are required
-		 * to construct a clause array in the the generic loop.
-		 */
-		MethodHandle iteratorNextElement = null;
-		MethodHandle iteratorHasNextElement = null;
-		try {
-			iteratorNextElement = Lookup.internalPrivilegedLookup.findVirtual(Iterator.class, "next", MethodType.methodType(Object.class)); //$NON-NLS-1$
-			iteratorHasNextElement = Lookup.internalPrivilegedLookup.findVirtual(Iterator.class, "hasNext", MethodType.methodType(boolean.class)); //$NON-NLS-1$
-		} catch (IllegalAccessException | NoSuchMethodException e) {
-			throw new InternalError("The next/hasNext method doesn't exist or it fails in the access checking", e); //$NON-NLS-1$
-		}
-		
-		/* The init handle for iterator is set to the method handle to Iterable.iterator()
-		 * by default if it is null.
-		 */
+		/* The iterator handle is set to the method handle to Iterable.iterator() by default if it is null */
 		MethodHandle initIterator = iteratorHandle;
 		if (null == initIterator) {
 			try {
@@ -3662,10 +3714,35 @@ public class MethodHandles {
 			} catch (IllegalAccessException | NoSuchMethodException e) {
 				throw new InternalError("The iterator method doesn't exist or it fails in the access checking", e); //$NON-NLS-1$
 			}
+			
+			/* The default iterator handle's parameters should be adjusted to accept the leading external
+			 * parameter type A1 from init(A1,A2,...) or body (V,T,A1,A2,...) if either of them has 
+			 * external parameter types.
+			 * Note: A1 must be Iterable or a subtype, which is already validated in the previous
+			 * checking for argument handles.
+			 */
+			Class<?>  externalParamType = getLeadingExternalParamType(initHandle, bodyHandle);
+			if (null != externalParamType) {
+				MethodType initIteratorType = initIterator.type.changeParameterType(0, externalParamType);
+				initIterator = initIterator.asType(initIteratorType);
+			}
 		}
 		
-		MethodType bodyType = bodyHandle.type;
-		Class<?> bodyReturnType = bodyType.returnType;
+		/* Method handles to Iterator.hasNext(), Iterator.next() and Iterable.iterator() are required
+		 * to construct a clause array in the the generic loop.
+		 * Note: the return type of the iterator handle (if originally non-null) could be Iterator or a subtype.
+		 */
+		Class<?> iteratorClazz = initIterator.type.returnType;
+		MethodHandle iteratorNextElement = null;
+		MethodHandle iteratorHasNextElement = null;
+		try {
+			iteratorNextElement = Lookup.internalPrivilegedLookup.findVirtual(iteratorClazz, "next", MethodType.methodType(Object.class)); //$NON-NLS-1$
+			iteratorHasNextElement = Lookup.internalPrivilegedLookup.findVirtual(iteratorClazz, "hasNext", MethodType.methodType(boolean.class)); //$NON-NLS-1$
+		} catch (IllegalAccessException | NoSuchMethodException e) {
+			throw new InternalError("The next/hasNext method doesn't exist or it fails in the access checking", e); //$NON-NLS-1$
+		}
+		
+		Class<?> bodyReturnType = bodyHandle.type.returnType;
 		MethodHandle returnValueFromBody = null;
 		
 		/* To accommodate the order of the following clauses in the generic loop:
@@ -3687,7 +3764,7 @@ public class MethodHandles {
 		 * Note: the missing parameters after V are handled in the generic loop.
 		 */
 		if (void.class != bodyReturnType) {
-			returnValueFromBody = dropArguments(identity(bodyReturnType), 0, Iterator.class);
+			returnValueFromBody = dropArguments(identity(bodyReturnType), 0, iteratorClazz);
 		}
 		
 		/* Create the first clause for Iterator */
@@ -3704,10 +3781,9 @@ public class MethodHandles {
 		 * 2) For the non-void return type of the loop body, the parameter list should be (T, V, A...)
 		 * So the first parameter type is T returned from Iterator in both cases above.
 		 */
-		Class<?> typeTforIterator = loopBody.type.parameterType(0);
 		
 		/* Change the return type of Iterator.next() to the specific type T (the first parameter type of the loop body) */
-		MethodType newTypeOfNextElementFromIterator = iteratorNextElement.type.changeReturnType(typeTforIterator);
+		MethodType newTypeOfNextElementFromIterator = iteratorNextElement.type.changeReturnType(loopBody.type.arguments[0]);
 		MethodHandle nextValueFromIterator = iteratorNextElement.asType(newTypeOfNextElementFromIterator);
 		
 		/* In creating the second clause for the loop body, filterArguments() is invoked
@@ -3719,6 +3795,37 @@ public class MethodHandles {
 		MethodHandle[] loopBodyClause = {initHandle, loopStepHandle};
 		
 		return loop(iteratorClause, loopBodyClause);
+	}
+	
+	/* Obtain the first external parameter type from the init and body handle if exist */
+	private static final Class<?> getLeadingExternalParamType(MethodHandle initHandle, MethodHandle bodyHandle) {		
+		Class<?>  externalParamType = null;
+		
+		MethodType bodyType = bodyHandle.type;
+		Class<?> bodyReturnType = bodyType.returnType;
+		Class<?>[] bodyParamTypes = bodyType.arguments;
+		int paramTypesLength = bodyParamTypes.length;
+		
+		/* If the loop body's return type is void, its arguments could be [T, A1,A2,...];
+		 * otherwise, its arguments could be [V, T, A1,A2,...]. It means, the first
+		 * external parameter type should be argument[1] or argument[2].
+		 */
+		if ((void.class == bodyReturnType) && (paramTypesLength > 1)) {
+			externalParamType = bodyParamTypes[1];
+		} else if ((void.class != bodyReturnType) && (paramTypesLength > 2)) {
+			externalParamType = bodyParamTypes[2];
+		}
+		
+		if (null == externalParamType) {
+			if (null != initHandle) {
+				Class<?>[]  initParamTypes = initHandle.type.arguments;
+				if (initParamTypes.length > 0) {
+					externalParamType = initParamTypes[0];
+				}
+			}
+		}
+		
+		return externalParamType;
 	}
 	
 	/* Validate all argument handles against the constraints specific to iteratedLoop */
@@ -3740,41 +3847,43 @@ public class MethodHandles {
 			
 			/* The signature of the passed-in loop body must be either (V, T, A...)V or (T, A...)void */
 			if (bodyReturnType != bodyParamTypes[0]) {
-				/*[MSG "K065D", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D", bodyReturnType.getName(), bodyParamTypes[0].getName())); //$NON-NLS-1$
+				/*[MSG "K065D2", "The return type of loop body: {0} does not match the type of the first argument: {1}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065D2", bodyReturnType.getName(), bodyParamTypes[0].getName())); //$NON-NLS-1$
 			}
+		}
+		
+		/* The main constraints for the external parameter types (A...) are as follows:
+		 * 1) if the external parameter types of body exist, it constrains the parameter types of other handles.
+		 * 2) if not, the parameter types of iterator uniquely determines the external parameter types.
+		 * 3) if iterator is null, the first external parameter type A1 must be Iterable or a subtype.
+		 */
+		
+		Class<?>  bodyExternalParamType = null;
+		if ((void.class == bodyReturnType) && (bodyParamTypesLength > 1)) {
+			bodyExternalParamType = bodyParamTypes[1];
+		} else if ((void.class != bodyReturnType) && (bodyParamTypesLength > 2)) {
+			bodyExternalParamType = bodyParamTypes[2];
+		}
+		
+		if (null != bodyExternalParamType) {
+			if ((null == iteratorHandle) && !Iterable.class.isAssignableFrom(bodyExternalParamType)) {
+				/*[MSG "K065L", "If the iterator handle is null, the leading external parameter type of loop body must be Iterable or a subtype rather than {0}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065L", bodyExternalParamType.getName())); //$NON-NLS-1$
+			}
+			
+			/* If the external parameter types of body exist, it must be the longest one
+			 * that constrains the parameter types of other handles
+			 */
+			compareExternalParamTypesOfIteratedBodyHandles(bodyHandle, iteratorHandle);
+			compareExternalParamTypesOfIteratedBodyHandles(bodyHandle, initHandle);
 		}
 		
 		if (null != iteratorHandle) {
 			MethodType iteratorType = iteratorHandle.type;
 			Class<?> iteratorReturnType = iteratorType.returnType;
 			if (!Iterator.class.isAssignableFrom(iteratorReturnType)) {
-				/*[MSG "K065J", "The return type of the iterator handle must be Iterator or its subtype rather than {0}"]*/
+				/*[MSG "K065J", "The return type of the iterator handle must be Iterator or a subtype rather than {0}"]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065J", iteratorReturnType.getName())); //$NON-NLS-1$
-			}
-			
-			/* The test case on RI indicates the first parameter of iterator must be an array 
-			 * or inherited from Iterable in that it will be used to generate the return type Iterator.
-			 */
-			Class<?>[] iteratorParamTypes = iteratorType.arguments;
-			if (iteratorParamTypes.length > 0) {
-				Class<?> iteratorParamType1 = iteratorParamTypes[0];
-				if ((!iteratorParamType1.isArray()) && (!Iterable.class.isAssignableFrom(iteratorParamType1))) {
-					/*[MSG "K065K", "The first parameter of the iterator handle: {0} is not an array type or inherited from Iterable"]*/
-					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065K", iteratorParamType1)); //$NON-NLS-1$
-				}
-			}
-			
-			/* Given that the external parameter list is determined by iterator(non-null) against the Java9 doc,
-			 * we need to check the external parameter list of loop body as it won't be directly handled by
-			 * the generic loop.
-			 */
-			compareExternalParamTypesOfIteratedBodyHandles(bodyHandle, iteratorHandle);
-		} else if (bodyParamTypesLength > 2) {
-			Class<?> bodyParamType3 = bodyParamTypes[2];
-			if (!Iterable.class.isAssignableFrom(bodyParamType3)) {
-				/*[MSG "K065L", "If the iterator handle is null, the leading parameter type of loop body must be Iterable or its subtype rather than {0}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065L", bodyParamType3.getName())); //$NON-NLS-1$
 			}
 		}
 		
@@ -3792,33 +3901,32 @@ public class MethodHandles {
 				if (null == iteratorHandle) {
 					Class<?> initParamType1 = initParamTypes[0];
 					if (!Iterable.class.isAssignableFrom(initParamType1)) {
-						/*[MSG "K065N", "If the iterator handle is null, the leading parameter type of init must be Iterable or its subtype rather than {0}"]*/
+						/*[MSG "K065N", "If the iterator handle is null, the leading parameter type of init must be Iterable or a subtype rather than {0}"]*/
 						throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065N", initParamType1.getName())); //$NON-NLS-1$
 					}
-					
-					/* The comparison here is to cover the following situation:
-					 * 1) the external parameters of loop body exist.
-					 * 2) the parameters of init exist.
-					 */
-					compareExternalParamTypesOfIteratedBodyHandles(bodyHandle, initHandle);
 				} else {
-					/* Given that the external parameter list is determined by iterator(non-null) against the Java9 doc,
-					 * we need to check the init handle to see whether it has more parameter types than iterator.
-					 * Note: other cases will be addressed later in the generic loop.
-					 */
 					Class<?>[] iteratorParamTypes =  iteratorHandle.type.arguments;
-					if (initParamTypesLength > iteratorParamTypes.length) {
-						/*[MSG "K065O", "The parameter types of init doesn't match that of iterator: {0} != {1}"]*/
+					/* The parameters of iterator is the longest external parameters if there is no external parameter in the body */
+					if ((null == bodyExternalParamType) && (initParamTypesLength > iteratorParamTypes.length)) {
+						/*[MSG "K065O", "The parameter types of iterator: {0} must be longer than the parameter types of init: {1}"]*/
 						throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065O",  //$NON-NLS-1$
-															Arrays.toString(initParamTypes), Arrays.toString(iteratorParamTypes)));
+															Arrays.toString(iteratorParamTypes), Arrays.toString(initParamTypes)));
 					}
+					
+					/* There is no need to compare the the parameter types of iterator and init here
+					 * as they are handled in the generic loop.
+					 */
 				}
 			}
 		}
 	}
 	
 	/* Compare with the external parameter types (except (V,T)) of the loop body to see whether they are identical to each other */
-	private static final void compareExternalParamTypesOfIteratedBodyHandles(MethodHandle bodyHandle, MethodHandle targetHandle) {
+	private static final void compareExternalParamTypesOfIteratedBodyHandles(MethodHandle bodyHandle, MethodHandle targetHandle) throws IllegalArgumentException {
+		if (null == targetHandle) {
+			return;
+		}
+		
 		MethodType bobyType = bodyHandle.type;
 		Class<?>[] bodyParamTypes = bobyType.arguments;
 		
@@ -3832,30 +3940,34 @@ public class MethodHandles {
 		
 		/* No need to compare if there is no external parameters for the loop body */
 		int bodyExternalParamTypesLength = bodyParamTypes.length - fixedParamType;
-		if (0 == bodyExternalParamTypesLength) {
+		MethodType targetType = targetHandle.type;
+		Class<?>[] targetParamTypes = targetType.arguments;
+		int targetParamTypeLength = targetParamTypes.length;
+		
+		if ((0 == bodyExternalParamTypesLength) || (0 == targetParamTypeLength)) {
 			return;
 		}
 		
 		Class<?>[] bodyExternalParamTypes = new Class<?>[bodyExternalParamTypesLength];
 		System.arraycopy(bodyParamTypes, fixedParamType, bodyExternalParamTypes, 0, bodyExternalParamTypesLength);
 		
-		MethodType targetType = targetHandle.type;
-		Class<?>[] targetParamTypes = targetType.arguments;
-		int targetParamTypeLength = targetParamTypes.length;
-		
-		/* Given that the parameter list of loop body can't be handled by the generic loop, the count
-		 * of parameters of init/iterator must be exactly identical to the external parameters of loop body.
+		/* Given that the parameter list of loop body can't be handled by the generic loop, the checking of
+		 * parameter types should be addressed here.
 		 */
-		if (targetParamTypeLength != bodyExternalParamTypesLength) {
-			/*[MSG "K065P", "The external parameter types of body: {0} doesn't match the parameter types of iterator/init: {1}"]*/
-			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065P",  //$NON-NLS-1$
+		
+		/* If the external parameters (A...) of loop body exist, it should be the longest one as compared
+		 * to the parameters of iterator/init.
+		 */
+		if (bodyExternalParamTypesLength < targetParamTypeLength) {
+			/*[MSG "K065P1", "The external parameter types of body: {0} must be longer than parameter types of iterator/init: {1}"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065P1",  //$NON-NLS-1$
 												Arrays.toString(bodyExternalParamTypes), Arrays.toString(targetParamTypes)));
 		}
 		
 		for (int paramIndex = 0; paramIndex < targetParamTypeLength; paramIndex++) {
 			if (bodyExternalParamTypes[paramIndex] != targetParamTypes[paramIndex]) {
-				/*[MSG "K065P", "The external parameter types of body: {0} doesn't match the parameter types of iterator/init: {1}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065P",  //$NON-NLS-1$
+				/*[MSG "K065P2", "The external parameter types of body: {0} doesn't match the parameter types of iterator/init: {1}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065P2",  //$NON-NLS-1$
 													Arrays.toString(bodyExternalParamTypes), Arrays.toString(targetParamTypes)));
 			}
 		}
@@ -3868,16 +3980,25 @@ public class MethodHandles {
 		Class<?> bodyReturnType = bodyType.returnType;
 		
 		if (void.class != bodyReturnType) {
-			Class<?>[] bodyParamTypes = bodyType.parameterArray();
-			Class<?> paramType1 = bodyParamTypes[0];
-			Class<?> paramType2 = bodyParamTypes[1];
-			bodyParamTypes[0] = paramType2;
-			bodyParamTypes[1] = paramType1;
-			MethodType newBodyType = MethodType.methodType(bodyReturnType, bodyParamTypes);
-			loopBody = MethodHandles.permuteArguments(loopBody, newBodyType, 1, 0);
+			Class<?>[] oldBodyParamTypes = bodyType.arguments;
+			int bodyParamTypesLength = oldBodyParamTypes.length;
+			Class<?>[] newBodyParamTypes = oldBodyParamTypes.clone();
+			int[] bodyParamTypesIndexes = new int[bodyParamTypesLength];
+			for (int paramTypeIndex = 0; paramTypeIndex < bodyParamTypesLength; paramTypeIndex++) {
+				bodyParamTypesIndexes[paramTypeIndex] = paramTypeIndex;
+			}
+			
+			/* Swap the specified types and indexes of parameter types used in permutation */
+			newBodyParamTypes[0] = oldBodyParamTypes[1];
+			newBodyParamTypes[1] = oldBodyParamTypes[0];
+			bodyParamTypesIndexes[0] = 1;
+			bodyParamTypesIndexes[1] = 0;
+			
+			MethodType newBodyType = MethodType.methodType(bodyReturnType, newBodyParamTypes);
+			loopBody = MethodHandles.permuteArguments(loopBody, newBodyType, bodyParamTypesIndexes);
 			
 			/* Insert the external parameter types if the loop body only has V and T */
-			if (2 == bodyParamTypes.length) {
+			if (2 == bodyParamTypesLength) {
 				/* Insert the class Iterable to the external parameter part of the loop body if iterator is null */
 				if (null == iteratorHandle) {
 					loopBody = MethodHandles.dropArguments(loopBody, 2, Iterable.class);
@@ -3902,6 +4023,7 @@ public class MethodHandles {
 		private ArrayList<MethodHandle[]> clausesList = null;
 		private int countOfClauses = 0;
 		private ArrayList<Class<?>> iterationVarTypes = null;
+		private Class<?>[] iterationVarTypesArray = null;
 		private int iterationVarTypesLength = 0;
 		private boolean atLeastOnePredicateFound = false;
 		private Class<?> loopReturnType = null;
@@ -3942,6 +4064,7 @@ public class MethodHandles {
 			
 			countOfClauses = clausesList.size();
 			iterationVarTypesLength = iterationVarTypes.size();
+			iterationVarTypesArray = iterationVarTypes.toArray(new Class<?>[iterationVarTypesLength]);
 		}
 		
 		/* Add a clause to an internal clause list if valid against the constraints of loop */
@@ -3952,9 +4075,11 @@ public class MethodHandles {
 			}
 			
 			int handleCount = currentClause.length;
+			/* Clauses with all nulls are disregarded, in which case
+			 * an empty clause should be ignored.
+			 */
 			if (0 == handleCount) {
-				/*[MSG "K0654", "No method handle exists in the clause: {0}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0654", Arrays.toString(currentClause))); //$NON-NLS-1$
+				return;
 			}
 			
 			if (handleCount > COUNT_OF_HANDLES) {
@@ -4142,13 +4267,6 @@ public class MethodHandles {
 			 * later in setMissingParamTypesOfHandle().
 			 */
 			if (suffixLength > 0) {
-				for (int loopVarIndex = 0; loopVarIndex < iterationVarTypesLength; loopVarIndex++) {
-					if (handleParamTypes[loopVarIndex] != iterationVarTypes.get(loopVarIndex)) {
-						/*[MSG "K065A", "The prefixes of parameter types of a non-init handle: {0} is not effectively identical to the iteration variable types: {1}"]*/
-						throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065A",  //$NON-NLS-1$
-								new Object[] {Arrays.toString(handleParamTypes), iterationVarTypes.toArray()}));
-					}
-				}
 				suffixOfParamTypes = new Class<?>[suffixLength];
 				System.arraycopy(handleParamTypes, iterationVarTypesLength, suffixOfParamTypes, 0, suffixLength);
 			}
@@ -4176,9 +4294,9 @@ public class MethodHandles {
 			
 			for (int paramTypeIndex = 0; paramTypeIndex < minParamTypeLength; paramTypeIndex++) {
 				if (longestLoopParamTypes[paramTypeIndex] != paramTypes[paramTypeIndex]) {
-					/*[MSG "K065B", "Both of the parameter types are not effectively identical to each other: {0} != {1}"]*/
-					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065B",  //$NON-NLS-1$
-							new Object[] {Arrays.toString(longestLoopParamTypes), Arrays.toString(paramTypes)}));	
+					/*[MSG "K065B1", "Both of the parameter types are not effectively identical to each other: {0} != {1}"]*/
+					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065B1",  //$NON-NLS-1$
+							new Object[] {Arrays.toString(longestLoopParamTypes), Arrays.toString(paramTypes)}));
 				}
 			}
 			
@@ -4189,8 +4307,6 @@ public class MethodHandles {
 		
 		/* Set a full-length of parameter types for non-init handles including iteration variables (V...) and loop parameters (A...) */
 		private void createFullLengthParameterTypesForNonInitHandle() {
-			Class<?>[] iterationVarTypesArray = iterationVarTypes.toArray(new Class<?>[iterationVarTypesLength]);
-			
 			int loopHandleParamLenth = 0;
 			/* The resulting loop handle has no parameters if null */
 			if (null != longestLoopParamTypes) {
@@ -4280,7 +4396,6 @@ public class MethodHandles {
 		/* Set all missing parameter types to the full length for all handles in the clause array */
 		private MethodHandle setMissingParamTypesOfHandle(MethodHandle[] currentClause, int handleIndex) {
 			MethodHandle currentHandle = currentClause[handleIndex];
-			Class<?>[] parameterTypes = null;
 			
 			/* Fill in the missing parameter types to the full length for each handle in each clause as follows:
 			* 1) For the init handle, fill in all missing parameter types against the parameter 
@@ -4299,19 +4414,18 @@ public class MethodHandles {
 			*    then the final parameter types of the predicate handle should be 
 			*    {int, long, int, long, int}, which is the same as (V..., A...)
 			*    in terms of count and parameter types.
-			 */
+			*/
 			switch (handleIndex) {
 			case 0:
 				/* (A...) used for init handles with missing parameter types */
-				parameterTypes = longestLoopParamTypes;
+				currentHandle = getHandleWithFullLengthParamTypes(currentHandle, longestLoopParamTypes);
 				break;
 			default:
 				/* (V...,A...) used for non-init handles with missing parameter types */
-				parameterTypes = fullLengthParamTypes;
+				currentHandle = getHandleWithFullLengthParamTypes(currentHandle, fullLengthParamTypes);
+				validateIterationVarTypesOfNonInitHandle(currentHandle.type.arguments);
 				break;
-			
 			}
-			currentHandle = getHandleWithFullLengthParamTypes(currentHandle, parameterTypes);
 			
 			/* Note: According to the description of Java 9 Doc, the implementation of loop is only
 			 * responsible for populating the missing suffixes of parameter types for all handles
@@ -4326,6 +4440,21 @@ public class MethodHandles {
 			 */
 			
 			return currentHandle;
+		}
+		
+		/* Validate the corresponding parameter types of non-init handles against the iteration variable types */
+		private void validateIterationVarTypesOfNonInitHandle(Class<?>[] argumentTypes) {
+			/* The iteration variable type(Vi) for each clause(i) is determined by the common return 
+			 * type of init and step in this clause. Thus, the V list should be used to validate
+			 * the corresponding parameter types of non-init handles after filling them up. 
+			 */
+			for (int iterationVarTypeIndex = 0; iterationVarTypeIndex < iterationVarTypesLength; iterationVarTypeIndex++) {
+				if (iterationVarTypesArray[iterationVarTypeIndex] != argumentTypes[iterationVarTypeIndex]) {
+					/*[MSG "K065A", "The prefixes of parameter types of a non-init handle: {0} is not effectively identical to the iteration variable types: {1}"]*/
+					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065A",  //$NON-NLS-1$
+							new Object[] {Arrays.toString(argumentTypes), Arrays.toString(iterationVarTypesArray)}));
+				}
+			}
 		}
 		
 		/* Generate a clause handle with a full-length array of parameter types */
