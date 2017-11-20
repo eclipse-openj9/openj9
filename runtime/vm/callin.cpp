@@ -874,14 +874,9 @@ sendFromMethodDescriptorString(J9VMThread *currentThread, J9UTF8 *descriptor, J9
 			/* Run the method */
 			*--currentThread->sp = (UDATA)descriptorString;
 			*--currentThread->sp = (UDATA)classLoader->classLoaderObject;
+			*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(appendArgType);
 			currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-			if (NULL == appendArgType) {
-				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODTYPE_FROMMETHODDESCRIPTORSTRING_METHOD(vm);
-			} else {
-				/* If an appendArgType has been provided, push it on the stack and call a different MethodType factory method. */
-				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(appendArgType);
-				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODTYPE_FROMMETHODDESCRIPTORSTRINGAPPENDARG_METHOD(vm);
-			}
+			currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODTYPE_VMRESOLVEFROMMETHODDESCRIPTORSTRING_METHOD(vm);
 			c_cInterpreter(currentThread);
 		}
 		restoreCallInFrame(currentThread);

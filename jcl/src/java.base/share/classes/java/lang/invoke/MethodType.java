@@ -376,6 +376,53 @@ public final class MethodType implements Serializable {
 		return methodType(returnType, types);
 	}
 	
+	/**
+	 * This helper calls MethodType.fromMethodDescriptorString(...) or 
+	 * MethodType.fromMethodDescriptorStringAppendArg(...) but throws 
+	 * NoClassDefFoundError instead of TypeNotPresentException during 
+	 * the VM resolve stage.
+	 *
+	 * @param methodDescriptor - the method descriptor string
+	 * @param loader - the ClassLoader to be used
+	 * @param appendArgumentType - an extra argument type
+	 *
+	 * @return a MethodType object representing the method descriptor string
+	 *
+	 * @throws IllegalArgumentException - if the string is not well-formed
+	 * @throws NoClassDefFoundError - if a named type cannot be found
+	 */
+	static final MethodType vmResolveFromMethodDescriptorString(String methodDescriptor, ClassLoader loader, Class<?> appendArgumentType) throws Throwable {
+		try {
+			if (null == appendArgumentType) {
+				return MethodType.fromMethodDescriptorString(methodDescriptor, loader);
+			}
+			return MethodType.fromMethodDescriptorStringAppendArg(methodDescriptor, loader, appendArgumentType);
+		} catch (TypeNotPresentException e) {
+			throw throwNoClassDefFoundError(e);
+		}
+	}
+
+	/**
+	 * Helper method to throw NoClassDefFoundError if the cause of TypeNotPresentException 
+	 * is ClassNotFoundException. Otherwise, re-throw TypeNotPresentException.
+	 * 
+	 * @param e - an instance of TypeNotPresentException
+	 * 
+	 * @return a Throwable object to prevent any fall through case
+	 * 
+	 * @throws NoClassDefFoundError - if the cause of e is ClassNotFoundException
+	 * @throws TypeNotPresentException - if the cause of e is not ClassNotFoundException
+	 */
+	private static final Throwable throwNoClassDefFoundError(TypeNotPresentException e) {
+		Throwable cause = e.getCause();
+		if (cause instanceof ClassNotFoundException) {
+			NoClassDefFoundError noClassDefFoundError = new NoClassDefFoundError(cause.getMessage());
+			noClassDefFoundError.initCause(cause);
+			throw noClassDefFoundError;
+		}
+		throw e;
+	}
+	
 	/*
 	 * Convert the string from bytecode format to the format needed for ClassLoader#loadClass().
 	 * Change all '/' to '.'.
