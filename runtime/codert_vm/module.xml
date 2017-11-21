@@ -59,9 +59,6 @@
 			<include path="j9gcinclude"/>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
 
-			<include path="../compiler/runtime" type="relativepath"/>
-			<include path="../compiler/codegen" type="relativepath"/>
-			<include path="../compiler/base" type="relativepath"/>
 			<include path="../compiler/trj9/runtime" type="relativepath"/>
 		</includes>
 

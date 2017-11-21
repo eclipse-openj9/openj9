@@ -58,15 +58,8 @@
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
-			<include path="../compiler/codegen" type="relativepath"/>
-			<include path="../compiler/ibm/codegen" type="relativepath"/>
-			<include path="../compiler/base" type="relativepath"/>
-			<include path="../compiler/ibm/base" type="relativepath"/>
 			<include path="j9jit_vm"/>
 			<include path="j9util"/>
-			<include path="../compiler/frontend/j9" type="relativepath"/>
-			<include path="../compiler/runtime" type="relativepath"/>
-			<include path="../compiler/ibm/runtime" type="relativepath"/>
 			<include path="j9codert_vm"/>
 			<include path="j9gcinclude"/>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
