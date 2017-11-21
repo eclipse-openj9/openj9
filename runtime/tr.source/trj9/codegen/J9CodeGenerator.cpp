@@ -31,6 +31,7 @@
 #include "codegen/PicHelpers.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/Instruction.hpp"              // for Instruction
+#include "codegen/MonitorState.hpp"
 #include "compile/AOTClassInfo.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/OSRData.hpp"
@@ -49,6 +50,7 @@
 #include "il/symbol/AutomaticSymbol.hpp"  // for AutomaticSymbol
 #include "il/symbol/StaticSymbol.hpp"     // for StaticSymbol
 #include "il/symbol/LabelSymbol.hpp"      // for LabelSymbol
+#include "infra/BitVector.hpp"                      // for TR_BitVector, etc
 #include "infra/List.hpp"
 #include "optimizer/Structure.hpp"
 #include "optimizer/TransformUtil.hpp"
@@ -64,7 +66,8 @@
 J9::CodeGenerator::CodeGenerator() :
       OMR::CodeGeneratorConnector(),
    _gpuSymbolMap(self()->comp()->allocator()),
-   _stackLimitOffsetInMetaData(self()->comp()->fej9()->thisThreadGetStackLimitOffset())
+   _stackLimitOffsetInMetaData(self()->comp()->fej9()->thisThreadGetStackLimitOffset()),
+   _liveMonitors(NULL)
    {
    }
 
@@ -1313,9 +1316,9 @@ J9::CodeGenerator::doInstructionSelection()
    {
    self()->setNextAvailableBlockIndex(self()->comp()->getFlowGraph()->getNextNodeNumber() + 1);
 
-   TR_SetMonitorStateOnBlockEntry::LiveMonitorStacks liveMonitorStacks(
-      (TR_SetMonitorStateOnBlockEntry::LiveMonitorStacksComparator()),
-      TR_SetMonitorStateOnBlockEntry::LiveMonitorStacksAllocator(self()->comp()->trMemory()->heapMemoryRegion()));
+   J9::SetMonitorStateOnBlockEntry::LiveMonitorStacks liveMonitorStacks(
+      (J9::SetMonitorStateOnBlockEntry::LiveMonitorStacksComparator()),
+      J9::SetMonitorStateOnBlockEntry::LiveMonitorStacksAllocator(self()->comp()->trMemory()->heapMemoryRegion()));
 
 
 
@@ -1386,7 +1389,7 @@ J9::CodeGenerator::doInstructionSelection()
 
       if (numMonitorLocals)
          {
-         TR_SetMonitorStateOnBlockEntry monitorState(self()->comp(), &liveMonitorStacks);
+         J9::SetMonitorStateOnBlockEntry monitorState(self()->comp(), &liveMonitorStacks);
 
          if(traceLiveMon)
             traceMsg(self()->comp(),"\tCreated monitorState %p\n",&monitorState);
