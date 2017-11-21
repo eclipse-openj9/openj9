@@ -37,6 +37,7 @@ import java.util.StringJoiner;
 import java.util.Iterator;
 /*[IF Sidecar19-SE]*/
 import jdk.internal.misc.Unsafe;
+import java.util.stream.IntStream;
 /*[ELSE]*/
 import sun.misc.Unsafe;
 /*[ENDIF]*/
@@ -5281,6 +5282,18 @@ written authorization of the copyright holder.
 			return;
 		}
 		throw newStringIndexOutOfBoundsException(begin, end, length);
+	}
+	
+	@Override
+	public IntStream chars() {
+		/* Following generic CharSequence method invoking need to be updated with optimized implementation specifically for this class */
+		return CharSequence.super.chars();
+	}
+	
+	@Override
+	public IntStream codePoints() {
+		/* Following generic CharSequence method invoking need to be updated with optimized implementation specifically for this class */
+		return CharSequence.super.codePoints();
 	}
 /*[ENDIF]*/	
 }

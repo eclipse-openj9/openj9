@@ -27,48 +27,6 @@ abstract class ViewVarHandle extends VarHandle {
 		super(fieldType, coordinateTypes, handleTable, modifiers);
 	}
 	
-	@Override
-	public boolean isAccessModeSupported(AccessMode accessMode) {
-		switch (accessMode) {
-		case GET:
-		case GET_VOLATILE:
-		case GET_OPAQUE:
-		case GET_ACQUIRE:
-		case SET:
-		case SET_VOLATILE:
-		case SET_OPAQUE:
-		case SET_RELEASE:
-			return true;
-		case COMPARE_AND_SET:
-		case COMPARE_AND_EXCHANGE_ACQUIRE:
-		case COMPARE_AND_EXCHANGE_RELEASE:
-		case COMPARE_AND_EXCHANGE:
-		case WEAK_COMPARE_AND_SET:
-		case WEAK_COMPARE_AND_SET_ACQUIRE:
-		case WEAK_COMPARE_AND_SET_RELEASE:
-		case WEAK_COMPARE_AND_SET_PLAIN:
-		case GET_AND_SET:
-		case GET_AND_SET_ACQUIRE:
-		case GET_AND_SET_RELEASE:
-			return ((char.class != fieldType) && (short.class != fieldType));
-		case GET_AND_ADD:
-		case GET_AND_ADD_ACQUIRE:
-		case GET_AND_ADD_RELEASE:
-		case GET_AND_BITWISE_AND:
-		case GET_AND_BITWISE_AND_ACQUIRE:
-		case GET_AND_BITWISE_AND_RELEASE:
-		case GET_AND_BITWISE_OR:
-		case GET_AND_BITWISE_OR_ACQUIRE:
-		case GET_AND_BITWISE_OR_RELEASE:
-		case GET_AND_BITWISE_XOR:
-		case GET_AND_BITWISE_XOR_ACQUIRE:
-		case GET_AND_BITWISE_XOR_RELEASE:
-			return ((int.class == fieldType) || (long.class == fieldType));
-		default:
-			throw new InternalError("Invalid AccessMode"); //$NON-NLS-1$
-		}
-	}
-	
 	static class ViewVarHandleOperations extends VarHandleOperations {
 		static final char convertEndian(char value) {
 			return Character.reverseBytes(value);

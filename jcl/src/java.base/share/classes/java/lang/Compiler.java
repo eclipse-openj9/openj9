@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2010 IBM Corp. and others
+ * Copyright (c) 1998, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,9 @@ package java.lang;
  *
  * @see			Cloneable
  */
+/*[IF Sidecar19-SE]*/
+@Deprecated(forRemoval=true, since="9")
+/*[ENDIF]*/
 public final class Compiler {
 
 private Compiler() {}
