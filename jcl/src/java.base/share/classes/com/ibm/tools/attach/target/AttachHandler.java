@@ -2,7 +2,7 @@
 package com.ibm.tools.attach.target;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2015 IBM Corp. and others
+ * Copyright (c) 2009, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,8 @@ import java.io.PrintStream;
 import java.util.Properties;
 import java.util.Vector;
 
+import com.ibm.oti.vm.VM;
+
 /**
  * This class handles incoming attachment requests from other VMs. Must be
  * public because it is used by java.lang.System
@@ -50,7 +52,7 @@ public class AttachHandler extends Thread {
 	/**
 	 * Time delay before we give up trying to terminate the wait loop.
 	 */
-	static final long shutdownTimeoutMs = Integer.getInteger("com.ibm.tools.attach.shutdown_timeout", 10000); //$NON-NLS-1$
+	static final long shutdownTimeoutMs = Integer.getInteger("com.ibm.tools.attach.shutdown_timeout", 10000).longValue(); //$NON-NLS-1$
 	private enum AttachStateValues {
 		ATTACH_UNINITIALIZED, ATTACH_TERMINATED, ATTACH_STARTING, ATTACH_INITIALIZED
 	}
@@ -60,7 +62,7 @@ public class AttachHandler extends Thread {
 	 */
 	static AttachHandler mainHandler = new AttachHandler();
 	static volatile Thread currentAttachThread = mainHandler; /* Join on this when shutting down */
-	private Vector<Attachment> attachments = new Vector<Attachment>();
+	private Vector<Attachment> attachments = new Vector<>();
 	private static String vmId = ""; /* ID of the currently running VM *///$NON-NLS-1$
 	/**
 	 * Human-friendly name for VM
@@ -70,13 +72,19 @@ public class AttachHandler extends Thread {
 	private static boolean waitingForSemaphore = false;
 
 	private static final class AttachStateSync {
-	};
+		/**
+		 * Empty class for synchronization objects.
+		 */
+	}
 
 	private static AttachStateSync stateSync = new AttachStateSync();
 
 	private static int notificationCount;
 
 	private static final class syncObject {
+		/**
+		 * Empty class for synchronization objects.
+		 */
 	}
 
 	private static boolean doCancelNotify;
@@ -102,10 +110,24 @@ public class AttachHandler extends Thread {
 	private static String nameProperty;
 	private static String pidProperty;
 	private static int numberOfTargets;
+	/**
+	 * As of Java 9, a VM cannot attach to itself unless explicitly enabled.
+	 * Grab the setting before the application has a chance to change it, 
+	 * but parse it lazily because we rarely need the value.
+	 */
+	public final static String allowAttachSelf = 
+			VM.getVMLangAccess().internalGetProperties().getProperty("jdk.attach.allowAttachSelf", //$NON-NLS-1$
+/*[IF Sidecar19-SE]*/
+					"false" //$NON-NLS-1$
+/*[ELSE]
+					"true" //$NON-NLS-1$
+/*[ENDIF]*/
+					);  
 	
 	/* only the attach handler thread uses syncFileLock */
 	/* [PR Jazz 30075] Make syncFileLock an instance variable since it is accessed only by the attachHandler singleton. */
-	private FileLock syncFileLock; 
+	private FileLock syncFileLock;
+	private PrintStream logStream; 
 
 	/**
 	 * Keep the constructor private
@@ -127,20 +149,19 @@ public class AttachHandler extends Thread {
 			setAttachState(AttachStateValues.ATTACH_TERMINATED);
 			return;
 		}
-
 		/*
 		 *  set default behaviour:
 		 *  Java 6 R24 and later: disabled by default on z/OS, enabled on all other platforms
 		 *  Java 5: disabled by default on all platforms 
 		 */
 		/*[PR Jazz 59196 LIR: Disable attach API by default on z/OS (31972)]*/
-				boolean enableAttach = true;
-				String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
-				if ((null != osName) && (osName.equalsIgnoreCase("z/OS"))) { //$NON-NLS-1$
-					enableAttach = false;
-				}
-		String enableAttachProp = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("com.ibm.tools.attach.enable");  //$NON-NLS-1$
+		boolean enableAttach = true;
+		String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
+		if ((null != osName) && (osName.equalsIgnoreCase("z/OS"))) { //$NON-NLS-1$
+			enableAttach = false;
+		}
 		/* the system property overrides the default */
+		String enableAttachProp = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("com.ibm.tools.attach.enable");  //$NON-NLS-1$
 		if (null != enableAttachProp) {
 			if (enableAttachProp.equalsIgnoreCase("no")) { //$NON-NLS-1$
 				enableAttach = false;
@@ -281,7 +302,8 @@ public class AttachHandler extends Thread {
 		if ((null == IPC.logStream) && (null != loggingProperty)
 				&& loggingProperty.equalsIgnoreCase("yes")) { //$NON-NLS-1$
 			File logFile = new File(logName + pidProperty + ".log"); //$NON-NLS-1$
-			IPC.setLogStream(new PrintStream(logFile));
+			logStream = new PrintStream(logFile);
+			IPC.setLogStream(logStream);
 			IPC.loggingEnabled = true;
 			IPC.setDefaultVmId(pidProperty);
 			IPC.logMessage("AttachHandler initialize"); //$NON-NLS-1$
@@ -438,7 +460,7 @@ public class AttachHandler extends Thread {
 			return at;
 		}
 
-		private Attachment checkReplyAndCreateAttachment() throws IOException {
+		private static Attachment checkReplyAndCreateAttachment() throws IOException {
 			Attachment at = mainHandler.connectToAttacher();
 			/*[PR Jazz 41720 - Recreate notification directory if it is deleted. ]*/
 			if (!TargetDirectory.ensureMyAdvertisementExists(getVmId())) {
@@ -512,6 +534,9 @@ public class AttachHandler extends Thread {
 			case ATTACH_STARTING: break; /*/* may be anywhere in the initialization code.  Do the full shutdown */
 			case ATTACH_INITIALIZED: break; /* go through the full shutdown */
 			case ATTACH_TERMINATED: return false; /* already started terminating */
+			default:
+				IPC.logMessage("Unrecognized synchronization state "+stateSync.toString()); //$NON-NLS-1$
+				break;
 			}
 		}
 		currentAttachThread.interrupt(); /* do this after we change the attachState */
@@ -752,7 +777,7 @@ public class AttachHandler extends Thread {
 					--waitCycles;
 					try {
 						/* assignments to stateSync cause a notifyAll on stateSync */
-						stateSync.wait((long) 100000); /* timeout value */
+						stateSync.wait(100000); /* timeout value */
 						currentState = getAttachState();
 						switch (currentState) {
 						case ATTACH_STARTING:
@@ -967,6 +992,9 @@ public class AttachHandler extends Thread {
 			AttachHandler.factoryException = factoryException;
 	}
 
+	/**
+	 * @return ignoreNotification sync object
+	 */
 	public Object getIgnoreNotification() {
 		return ignoreNotification;
 	}

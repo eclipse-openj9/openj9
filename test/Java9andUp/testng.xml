@@ -95,6 +95,11 @@
 	<test name="Test_Class">
 		<classes>
 			<class name="org.openj9.test.java.lang.Test_Class" />
+ 		</classes>
+	</test>
+	<test name="TestJava9AttachAPI">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestJava9AttachAPI" />
 		</classes>
 	</test>
 </suite> <!-- Suite -->

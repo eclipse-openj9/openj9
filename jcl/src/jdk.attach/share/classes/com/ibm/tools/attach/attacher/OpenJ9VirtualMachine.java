@@ -50,6 +50,8 @@ import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 
+import static com.ibm.oti.util.Msg.getString;
+
 /**
  * Handles the initiator end of an attachment to a target VM
  * 
@@ -96,7 +98,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 		super(provider, id);
 		if ((null == id) || (null == provider)) {
 			/*[MSG "K0554", "Virtual machine ID or display name is null"]*/
-			throw new NullPointerException(com.ibm.oti.util.Msg.getString("K0554")); //$NON-NLS-1$
+			throw new NullPointerException(getString("K0554")); //$NON-NLS-1$
 		}
 		new IPC();
 		this.targetId = id;
@@ -113,7 +115,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 	void attachTarget() throws IOException, AttachNotSupportedException {
 		if (null == descriptor) {
 			/*[MSG "K0531", "target not found"]*/
-			throw new AttachNotSupportedException(com.ibm.oti.util.Msg.getString("K0531")); //$NON-NLS-1$
+			throw new AttachNotSupportedException(getString("K0531")); //$NON-NLS-1$
 		}
 		AttachNotSupportedException lastException = null;
 		/*[PR CMVC 182802 ]*/
@@ -187,7 +189,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 	public Properties getAgentProperties() throws IOException {
 		if (!targetAttached) {
 			/*[MSG "K0544", "Target not attached"]*/
-			throw new IOException(com.ibm.oti.util.Msg.getString("K0544")); //$NON-NLS-1$
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
 		}
 		Properties props = getTargetProperties(false);
 
@@ -198,7 +200,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 	public Properties getSystemProperties() throws IOException {
 		if (!targetAttached) {
 			/*[MSG "K0544", "Target not attached"]*/
-			throw new IOException(com.ibm.oti.util.Msg.getString("K0544")); //$NON-NLS-1$
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
 		}
 		Properties props = getTargetProperties(true);
 		return props;
@@ -225,7 +227,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 
 		if (!targetAttached) {
 			/*[MSG "K0544", "Target not attached"]*/
-			throw new IOException(com.ibm.oti.util.Msg.getString("K0544")); //$NON-NLS-1$
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
 		}
 		AttachmentConnection.streamSend(commandStream, (createLoadAgent(agent, options)));
 		String response = AttachmentConnection.streamReceiveString(responseStream);
@@ -239,7 +241,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 
 		if (!targetAttached) {
 			/*[MSG "K0544", "Target not attached"]*/
-			throw new IOException(com.ibm.oti.util.Msg.getString("K0544")); //$NON-NLS-1$
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
 		}
 		AttachmentConnection.streamSend(commandStream, createLoadAgentLibrary(
 				agentLibrary, options, false));
@@ -253,11 +255,11 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 			IOException {
 		if (null == agentPath) {
 			/*[MSG "K0577", "loadAgentPath: null agent path"]*/
-			throw new AgentLoadException(com.ibm.oti.util.Msg.getString("K0577")); //$NON-NLS-1$
+			throw new AgentLoadException(getString("K0577")); //$NON-NLS-1$
 		}
 		if (!targetAttached) {
 			/*[MSG "K0544", "Target not attached"]*/
-			throw new IOException(com.ibm.oti.util.Msg.getString("K0544")); //$NON-NLS-1$
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
 		}
 		AttachmentConnection.streamSend(commandStream, createLoadAgentLibrary(agentPath,
 				options, true));
@@ -318,7 +320,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 			}
 			if (response.contains(EXCEPTION_IOEXCEPTION)) {
 				/*[MSG "K0576","IOException from target: {0}"]*/
-				throw new IOException(com.ibm.oti.util.Msg.getString("K0576", trimmedResponse)); //$NON-NLS-1$
+				throw new IOException(getString("K0576", trimmedResponse)); //$NON-NLS-1$
 			} else if (response.contains(EXCEPTION_AGENT_INITIALIZATION_EXCEPTION)) {
 				Integer status = getStatusValue(trimmedResponse);
 				if (null == status) {
@@ -330,13 +332,13 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 				throw new AgentLoadException(trimmedResponse);
 			} else 	if (response.contains(EXCEPTION_IOEXCEPTION)) {
 				/*[MSG "K0576","IOException from target: {0}"]*/
-				throw new IOException(com.ibm.oti.util.Msg.getString("K0576", trimmedResponse)); //$NON-NLS-1$
+				throw new IOException(getString("K0576", trimmedResponse)); //$NON-NLS-1$
 			} else if (response.contains(EXCEPTION_ILLEGAL_ARGUMENT_EXCEPTION)) {
 				/*[MSG "K05de","IllegalArgumentException from target: {0}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K05de", trimmedResponse)); //$NON-NLS-1$
+				throw new IllegalArgumentException(getString("K05de", trimmedResponse)); //$NON-NLS-1$
 			} else if (response.contains(EXCEPTION_ATTACH_OPERATION_FAILED_EXCEPTION)) {
 				/*[MSG "k05dc","AttachOperationFailedException from target: {0}"]*/
-				throw new AttachOperationFailedException(com.ibm.oti.util.Msg.getString("k05dc", trimmedResponse)); //$NON-NLS-1$
+				throw new AttachOperationFailedException(getString("k05dc", trimmedResponse)); //$NON-NLS-1$
 			}
 			return false;
 		} else	if (response.startsWith(ACK) || response.startsWith(ATTACH_RESULT)) {
@@ -397,18 +399,24 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 										 * to attach
 										 */
 					/*[MSG "K0457", "Target no longer available"]*/
-					AttachNotSupportedException exc = new AttachNotSupportedException(com.ibm.oti.util.Msg.getString("K0457")); //$NON-NLS-1$
+					AttachNotSupportedException exc = new AttachNotSupportedException(getString("K0457")); //$NON-NLS-1$
 					exc.initCause(e);
 					throw exc;
 				}
 
 				if (descriptor.id().equals(AttachHandler.getVmId())) {
+					String allowAttachSelf_Value = AttachHandler.allowAttachSelf;
+					boolean selfAttachAllowed = "".equals(allowAttachSelf_Value) || Boolean.parseBoolean(allowAttachSelf_Value); //$NON-NLS-1$
+					if (!selfAttachAllowed) {
+						/*[MSG "K0646", "Late attach connection to self disabled. Set jdk.attach.allowAttachSelf=true"]*/
+						throw new IOException(getString("K0646")); //$NON-NLS-1$
+					}
 					/* I am connecting to myself: bypass the notification and launch the attachment thread directly */
 					if (AttachHandler.isAttachApiInitialized()) {
 						AttachHandler.getMainHandler().connectToAttacher();
 					} else {
 						/*[MSG "K0558", "Attach API initialization failed"]*/
-						throw new AttachNotSupportedException(com.ibm.oti.util.Msg.getString("K0558")); //$NON-NLS-1$
+						throw new AttachNotSupportedException(getString("K0558")); //$NON-NLS-1$
 					}
 				} else {
 					lockAllAttachNotificationSyncFiles(vmds);
@@ -417,7 +425,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 					/*[MSG "K0532", "status={0}"]*/
 					if ((IPC.JNI_OK != status)
 							&& (CommonDirectory.J9PORT_INFO_SHSEM_OPENED_STALE != status)) {
-						throw new AttachNotSupportedException(com.ibm.oti.util.Msg.getString("K0532", status)); //$NON-NLS-1$
+						throw new AttachNotSupportedException(getString("K0532", status)); //$NON-NLS-1$
 					}
 				}
 
@@ -429,7 +437,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 					targetServer.close();
 					IPC.logMessage("attachTarget SocketTimeoutException on " + portNumber + " to " + targetId); //$NON-NLS-1$ //$NON-NLS-2$
 					/*[MSG "K0539","acknowledgement timeout from {0} on port {1}"]*/
-					AttachNotSupportedException exc = new AttachNotSupportedException(com.ibm.oti.util.Msg.getString("K0539", targetId, portNumber)); //$NON-NLS-1$
+					AttachNotSupportedException exc = new AttachNotSupportedException(getString("K0539", targetId, portNumber)); //$NON-NLS-1$
 					exc.initCause(e);
 					throw exc;
 				}
@@ -443,7 +451,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 				String response = AttachmentConnection.streamReceiveString(responseStream, ATTACH_CONNECTED_MESSAGE_LENGTH_LIMIT);
 				/*[MSG "K0533", "key error: {0}"]*/
 				if (!response.contains(' ' + key + ' ')) {
-					throw new AttachNotSupportedException(com.ibm.oti.util.Msg.getString("K0533", response)); //$NON-NLS-1$
+					throw new AttachNotSupportedException(getString("K0533", response)); //$NON-NLS-1$
 				}
 				IPC.logMessage("attachTarget connected on ", portNumber.toString()); //$NON-NLS-1$
 				targetAttached = true;
@@ -493,7 +501,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 			throws IOException, IllegalArgumentException, AttachOperationFailedException {
 		if (!targetAttached) {
 			/*[MSG "K0544", "Target not attached"]*/
-			throw new IOException(com.ibm.oti.util.Msg.getString("K0544")); //$NON-NLS-1$
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
 		} else if (null == agentProperties) {
 			throw new NullPointerException();
 		}
@@ -516,7 +524,7 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 	public String startLocalManagementAgent() throws IOException {
 		if (!targetAttached) {
 			/*[MSG "K0544", "Target not attached"]*/
-			throw new IOException(com.ibm.oti.util.Msg.getString("K0544")); //$NON-NLS-1$
+			throw new IOException(getString("K0544")); //$NON-NLS-1$
 		}
 		AttachmentConnection.streamSend(commandStream, Command.START_LOCAL_MANAGEMENT_AGENT);
 		String response = AttachmentConnection.streamReceiveString(responseStream);
@@ -525,14 +533,14 @@ final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 		try {
 			if (!parseResponse(response)) {
 				/*[MSG "k05dd", "unrecognized response: {0}"]*/
-				throw new IOException(com.ibm.oti.util.Msg.getString("k05dd", response)); //$NON-NLS-1$
+				throw new IOException(getString("k05dd", response)); //$NON-NLS-1$
 			} else if (response.startsWith(ACK)) { /* this came from a legacy VM with dummy start*Agent()s */
 				result = response.substring(ACK.length());
 			} else if (response.startsWith(ATTACH_RESULT)) {
 				result = response.substring(ATTACH_RESULT.length());
 			} else {
 				/*[MSG "k05dd", "unrecognized response: {0}"]*/
-				throw new IOException(com.ibm.oti.util.Msg.getString("k05dd", response)); //$NON-NLS-1$
+				throw new IOException(getString("k05dd", response)); //$NON-NLS-1$
 			}
 		} catch (AgentLoadException | IllegalArgumentException | AgentInitializationException e) {
 			IPC.logMessage("Unexpected exception " + e + " in startLocalManagementAgent");  //$NON-NLS-1$//$NON-NLS-2$
