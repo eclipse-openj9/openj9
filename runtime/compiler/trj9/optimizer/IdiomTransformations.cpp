@@ -10201,12 +10201,11 @@ CISCTransform2BitOpMem(TR_CISCTransformer *trans)
       TR::Node *destStore = TR::Node::createStore(destAddrSymRef, outputNode->duplicateTree());
       TR::Node *src1Store = TR::Node::createStore(src1AddrSymRef, inputNode1->duplicateTree());
       TR::Node *src2Store = TR::Node::createStore(src2AddrSymRef, inputNode2->duplicateTree());
-      if (comp->isPinningNeeded())
-         {
-         setPinningArray(comp, destStore, destBaseRepNode, checkSrc1);
-         setPinningArray(comp, src1Store, src1BaseRepNode, checkSrc1);
-         setPinningArray(comp, src2Store, src2BaseRepNode, checkSrc1);
-         }
+
+      setPinningArray(comp, destStore, destBaseRepNode, checkSrc1);
+      setPinningArray(comp, src1Store, src1BaseRepNode, checkSrc1);
+      setPinningArray(comp, src2Store, src2BaseRepNode, checkSrc1);
+
       checkSrc1->append(TR::TreeTop::create(comp, destStore));
       checkSrc1->append(TR::TreeTop::create(comp, src1Store));
       checkSrc1->append(TR::TreeTop::create(comp, src2Store));
