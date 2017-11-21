@@ -198,13 +198,6 @@ J9::Compilation::fej9vm()
    return (TR_J9VM *)self()->fe();
    }
 
-
-bool
-J9::Compilation::nodeNeeds2Regs(TR::Node*node)
-   {
-   return node->getType().isLongDouble() || OMR::Compilation::nodeNeeds2Regs(node);
-   }
-
 void
 J9::Compilation::updateCompYieldStatistics(TR_CallingContext callingContext)
    {
@@ -525,7 +518,7 @@ J9::Compilation::isRecompilationEnabled()
    return self()->allowRecompilation();
    }
 
-bool 
+bool
 J9::Compilation::isJProfilingCompilation()
    {
    return self()->getRecompilationInfo() ? self()->getRecompilationInfo()->getJittedBodyInfo()->getUsesJProfiling() : false;
@@ -939,23 +932,23 @@ J9::Compilation::verifyCompressedRefsAnchors(bool anchorize)
                   TR::TreeTop *prev = tt->getPrevTreeTop();
                   prev->join(newTT);
                   // Previously, the below path only applied to store nodes (hence
-                  // the isTreeTop() check). However, it's now been made to apply to 
-                  // void-type nodes as well. This is to account for nodes such as 
-                  // TR::arrayset. Specifically, in the case where the child to be set 
-                  // in an arrayset node is an indirect reference (e.g static String), 
-                  // we need to treat the arrayset node as an indirect store (and compress 
+                  // the isTreeTop() check). However, it's now been made to apply to
+                  // void-type nodes as well. This is to account for nodes such as
+                  // TR::arrayset. Specifically, in the case where the child to be set
+                  // in an arrayset node is an indirect reference (e.g static String),
+                  // we need to treat the arrayset node as an indirect store (and compress
                   // the reference accordingly)
                   if (n->getOpCode().isTreeTop() || n->getOpCode().isVoid())
                      {
                      newTT->join(next);
 
-                     // In the case where the void node's (e.g TR::arrayset) parent is 
+                     // In the case where the void node's (e.g TR::arrayset) parent is
                      // not itself (e.g it's a TR::treetop), we anchor the arrayset node and it's children
                      // under a compressedRefs node and remove the original arrayset tree
                      // found under TR::treetop. The reference count of the arrayset node is
                      // incremented when we create the compressedRefs anchor, but not when
                      // we 'remove' the TR::treetop node. Hence we must recursively decrement
-                     // here.   
+                     // here.
                      if (n != tt->getNode())
                         {
                         for (int i = 0; i < tt->getNode()->getNumChildren(); i++)
@@ -1002,7 +995,7 @@ J9::Compilation::verifyCompressedRefsAnchors(TR::Node *parent, TR::Node *node,
    // process loads/stores that are references
    //
    if ((node->getOpCode().isLoadIndirect() || node->getOpCode().isStoreIndirect()) &&
-         node->getSymbolReference()->getSymbol()->getDataType() == TR::Address || 
+         node->getSymbolReference()->getSymbol()->getDataType() == TR::Address ||
             (node->getOpCodeValue() == TR::arrayset && node->getSecondChild()->getDataType() == TR::Address))
       {
       TR_Pair<TR::Node, TR::TreeTop> *info = findCPtrsInfo(nodesList, node);
@@ -1129,7 +1122,7 @@ J9::Compilation::restoreCompilationPhase(TR::Compilation::CompilationPhase phase
    self()->fej9()->restoreCompilationPhase(phase);
    }
 
-void 
+void
 J9::Compilation::addMonitorAuto(TR::RegisterMappedSymbol * a, int32_t callerIndex)
    {
    TR_Array<List<TR::RegisterMappedSymbol> *> & monitorAutos = self()->getMonitorAutos();
@@ -1140,7 +1133,7 @@ J9::Compilation::addMonitorAuto(TR::RegisterMappedSymbol * a, int32_t callerInde
    autos->add(a);
    }
 
-void 
+void
 J9::Compilation::addAsMonitorAuto(TR::SymbolReference* symRef, bool dontAddIfDLT)
    {
    symRef->getSymbol()->setHoldsMonitoredObject();
@@ -1175,13 +1168,13 @@ J9::Compilation::getClassClassPointer()
  * on a redefinition.
  * Cheaper implementation would be a set, not an array.
  */
-void 
+void
 J9::Compilation::addClassForOSRRedefinition(TR_OpaqueClassBlock *clazz)
    {
    for (uint32_t i = 0; i < _classForOSRRedefinition.size(); ++i)
       if (_classForOSRRedefinition[i] == clazz)
          return;
-   
+
    _classForOSRRedefinition.add(clazz);
    }
 
@@ -1200,7 +1193,7 @@ bool
 J9::Compilation::supportsQuadOptimization()
    {
    if (self()->isDLT() || self()->getOption(TR_FullSpeedDebug))
-      return false; 
+      return false;
    return true;
    }
 
