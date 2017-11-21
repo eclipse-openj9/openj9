@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -597,11 +597,21 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 #if defined(OMR_THR_THREE_TIER_LOCKING)
 	omrthread_lib_clear_flags(J9THREAD_LIB_FLAG_SECONDARY_SPIN_OBJECT_MONITORS_ENABLED | J9THREAD_LIB_FLAG_FAST_NOTIFY);
 #if defined(OMR_THR_SPIN_WAKE_CONTROL)
- 	if (cpus < OMRTHREAD_MINIMUM_SPIN_THREADS) {
- 		**(UDATA**)omrthread_global("maxSpinThreads") = OMRTHREAD_MINIMUM_SPIN_THREADS;
- 	} else {
-		**(UDATA**)omrthread_global("maxSpinThreads") = cpus;
- 	}
+	{
+		UDATA maxSpinThreadsLocal = 0;
+		if (cpus < OMRTHREAD_MINIMUM_SPIN_THREADS) {
+			maxSpinThreadsLocal = OMRTHREAD_MINIMUM_SPIN_THREADS;
+		} else if (cpus <= 4) {
+			maxSpinThreadsLocal = cpus;
+		} else if (cpus <= 16) {
+			maxSpinThreadsLocal = cpus/2;
+		} else if (cpus <= 64) {
+			maxSpinThreadsLocal = cpus/3;
+		} else {
+			maxSpinThreadsLocal = cpus/4;
+		}
+		**(UDATA**)omrthread_global("maxSpinThreads") = maxSpinThreadsLocal;
+	}
  	**(UDATA**)omrthread_global("maxWakeThreads") = OMRTHREAD_MINIMUM_WAKE_THREADS;
 #endif /* defined(OMR_THR_SPIN_WAKE_CONTROL) */
 #endif /* defined(OMR_THR_THREE_TIER_LOCKING) */
