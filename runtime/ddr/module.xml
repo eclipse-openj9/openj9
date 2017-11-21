@@ -90,19 +90,7 @@
 			<include path="$(OMR_DIR)/compiler" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../compiler/base" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
-			<include path="../compiler/ibm/base" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
 			<include path="$(OMR_DIR)/compiler/base" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
-			<include path="../compiler/env" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
-			<include path="../compiler/ibm/env" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 			<include path="$(OMR_DIR)/compiler/env" type="relativepath">

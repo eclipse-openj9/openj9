@@ -74,22 +74,7 @@
 			<include path="../compiler/runtime" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../compiler/ibm/runtime" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
 			<include path="j9codert_vm">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
-			<include path="../compiler/codegen" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
-			<include path="../compiler/ibm/codegen" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>			
-			<include path="../compiler/base" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
-			<include path="../compiler/ibm/base" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 		</includes>

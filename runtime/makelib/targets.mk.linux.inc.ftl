@@ -418,7 +418,7 @@ endif
 
 <#if uma.spec.processor.arm>
 $(patsubst %.s,%.o,$(filter %.s,$(UMA_FILES_TO_PREPROCESS))): %$(UMA_DOT_O): %.s
-	sed -f $(UMA_PATH_TO_ROOT)compiler/codegen/makefiles/armasm2gas.sed $*.s > $*.S
+	sed -f $(UMA_PATH_TO_ROOT)compiler/trj9/build/scripts/armasm2gas.sed $*.s > $*.S
 	$(CPP) $(CPPFLAGS) $(UMA_C_INCLUDES) $*.S > $*.spp
 	-rm $*.S
 	$(AS) $(ASFLAGS) $(VMASMDEBUG) -o $*.o $*.spp
