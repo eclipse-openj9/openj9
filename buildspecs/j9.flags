@@ -979,10 +979,6 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<description>Debug mode for tracing uses of updateVMStruct</description>
 		<ifRemoved>No tracing of updateVMStruct helpers</ifRemoved>
 	</flag>
-	<flag id="interp_useSplitSideTables">
-		<description>Use split side tables for handling constant pool entry shared between multiple invoke bytecodes</description>
-		<ifRemoved></ifRemoved>
-	</flag>
 	<flag id="interp_useUnsafeHelper">
 		<description>If set, use helper functions in UnsafeAPI to access native memory</description>
 		<ifRemoved></ifRemoved>

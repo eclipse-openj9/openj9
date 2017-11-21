@@ -2855,7 +2855,6 @@ C|interp_sigQuitThreadUsesSemaphores
 C|interp_smallMonitorSlot
 C|interp_tracing
 C|interp_updateVMCTracing
-C|interp_useSplitSideTables
 C|interp_useUnsafeHelper
 C|interp_verbose
 C|ive_jxeFileRelocator

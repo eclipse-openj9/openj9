@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,7 +149,6 @@ public class VMConstantPoolCommand extends Command {
 							|| (shapeDesc == J9CPTYPE_STATIC_METHOD) 
 							|| (shapeDesc == J9CPTYPE_INTERFACE_METHOD)
 							|| (shapeDesc == J9CPTYPE_HANDLE_METHOD)
-							|| ((!J9BuildFlags.interp_useSplitSideTables) && (shapeDesc == J9CPTYPE_SHARED_METHOD))
 							|| (shapeDesc == J9CPTYPE_FIELD)) {
 					long classRefCPIndex;
 					
