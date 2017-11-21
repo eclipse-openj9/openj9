@@ -67,7 +67,6 @@
 		<flag id="interp_romableAotSupport" value="false"/>
 		<flag id="interp_tracing" value="false"/>
 		<flag id="interp_updateVMCTracing" value="false"/>
-		<flag id="interp_useSplitSideTables" value="true"/>
 		<flag id="jit_ia32FixedFrame" value="false"/>
 		<flag id="jit_cHelpers" value="true"/>
 		<flag id="jit_nathelpUsesClassObjects" value="false"/>

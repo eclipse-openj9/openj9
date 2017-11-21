@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -166,10 +166,8 @@ public class RamClassWalker extends ClassWalker {
 		allSlotsInRAMSuperClassesDo();
 		allSlotsInInstanceDescriptionBitsDo();
 		allSlotsIniTableDo();
-		if (J9BuildFlags.interp_useSplitSideTables) {
-			allSlotsInStaticSplitTableDo();
-			allSlotsInSpecialSplitTableDo();
-		}
+		allSlotsInStaticSplitTableDo();
+		allSlotsInSpecialSplitTableDo();
 	}
 
 	private void allSlotsInRAMSuperClassesDo() throws CorruptDataException {
@@ -400,17 +398,11 @@ public class RamClassWalker extends ClassWalker {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, cpEntry, "unused");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, cpEntry.add(1), "unused");
 				classWalkerCallback.addSection(clazz, cpEntry, 2 * UDATA.SIZEOF, "J9CPTYPE_UNUSED", false);
-			} else if ((slotType == J9CPTYPE_INSTANCE_METHOD)
-						|| ((!J9BuildFlags.interp_useSplitSideTables) 
-							&& (slotType == J9CPTYPE_SHARED_METHOD))) {
+			} else if (slotType == J9CPTYPE_INSTANCE_METHOD) {
 				J9RAMMethodRefPointer ref = J9RAMMethodRefPointer.cast(cpEntry);
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.methodIndexAndArgCountEA(), "methodIndexAndArgCount");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.methodEA(), "method", "!j9method");
-				if (slotType == J9CPTYPE_INSTANCE_METHOD) {
-					classWalkerCallback.addSection(clazz, ref, J9RAMMethodRef.SIZEOF, "J9CPTYPE_INSTANCE_METHOD", false);
-				} else {
-					classWalkerCallback.addSection(clazz, ref, J9RAMMethodRef.SIZEOF, "J9CPTYPE_SHARED_METHOD", false);
-				}
+				classWalkerCallback.addSection(clazz, ref, J9RAMMethodRef.SIZEOF, "J9CPTYPE_INSTANCE_METHOD", false);
 			} else if (slotType == J9CPTYPE_HANDLE_METHOD) {
 				J9RAMMethodRefPointer ref = J9RAMMethodRefPointer.cast(cpEntry);
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.methodIndexAndArgCountEA(), "methodTypeIndexAndArgCount");
