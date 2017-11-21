@@ -566,6 +566,7 @@ doneItableSearch:
  *		J9_LOOK_NO_JLOBJECT						When doing an interface lookup, do not consider method in java.lang.Object
  *		J9_LOOK_REFLECT_CALL					Use reflection behaviour when dealing with module visilibity
  *		J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS	Handle default method conflicts
+ *		J9_LOOK_IGNORE_INCOMPATIBLE_METHODS		If a static/virtual conflict occurs, ignore and move on to the next class
  *
  *  	If J9_LOOK_JNI is not specified, virtual and static lookup will fail with AbstractMethodError if the method is found
  * 		in an interface class.
@@ -689,6 +690,15 @@ retry:
 				resultMethod = processMethod(currentThread, lookupOptions, foundMethod, lookupClass, &exception, &exceptionClass, &errorType, nameAndSig, senderClass, targetClass);
 
 				if (resultMethod == NULL) {
+					if (J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR == exception) {
+						/* Incompatible method found - caller may request to ignore this case */
+						if (J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_IGNORE_INCOMPATIBLE_METHODS)) {
+							/* Reset exception state to initial values and move up the hierarchy */
+							exception = J9VMCONSTANTPOOL_JAVALANGNOSUCHMETHODERROR;
+							exceptionClass = targetClass;
+							goto nextClass;
+						}
+					}
 					badMethod = foundMethod; /* for clear illegal access message printing purpose */
 					if (!isInterfaceLookup) {
 						goto done;
@@ -706,7 +716,9 @@ retry:
 			}
 			if (isInterfaceLookup && J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_NO_JLOBJECT)) {
 				 break; /* don't look in superclass, i.e. j.l.Object */
-			} else if (J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_NO_CLIMB)) {
+			}
+nextClass:
+			if (J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_NO_CLIMB)) {
 				goto done;
 			}
 			lookupClass = SUPERCLASS(lookupClass);
