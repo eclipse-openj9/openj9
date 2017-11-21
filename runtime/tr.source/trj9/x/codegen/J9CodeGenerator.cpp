@@ -31,15 +31,19 @@
 #include "env/CompilerEnv.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
+#include "exceptions/TrampolineError.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
+#include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheManager.hpp"
+#include "runtime/CodeCacheTypes.hpp"
+#include "runtime/Runtime.hpp"
 #include "trj9/x/codegen/CallSnippet.hpp"
 #include "trj9/x/codegen/X86Recompilation.hpp"
 #include "x/codegen/FPTreeEvaluator.hpp"
 #include "x/codegen/X86Instruction.hpp"
-
 
 extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg);
 
@@ -398,3 +402,71 @@ J9::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod 
       }
    }
 
+void
+J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
+   TR::Compilation *comp = self()->comp();
+
+   // Don't do anything if method trampolines are not needed
+   if (!fej9->needsMethodTrampolines())
+      return;
+
+   bool hadClassUnloadMonitor;
+   bool hadVMAccess = fej9->releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
+
+   TR::CodeCache *curCache = comp->getCurrentCodeCache();
+   TR::CodeCache *newCache = curCache;
+   OMR::CodeCacheErrorCode::ErrorCode status = OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS;
+
+   TR_ASSERT(curCache->isReserved(), "Current CodeCache is not reserved");
+
+   if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
+      {
+      status = curCache->reserveNTrampolines(numTrampolines);
+      if (status != OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS)
+         {
+         // Current code cache is no good. Must unreserve
+         curCache->unreserve();
+         newCache = 0;
+         if (self()->getCodeGeneratorPhase() != TR::CodeGenPhase::BinaryEncodingPhase)
+            {
+            newCache = TR::CodeCacheManager::instance()->getNewCodeCache(comp->getCompThreadID());
+            if (newCache)
+               {
+               status = newCache->reserveNTrampolines(numTrampolines);
+               TR_ASSERT(status == OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS, "Failed to reserve trampolines in fresh code cache.");
+               }
+            }
+         }
+      }
+
+   fej9->acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
+
+   if (!newCache)
+      {
+      throw J9::TrampolineError();
+      }
+
+   if (newCache != curCache)
+      {
+      // We keep track of number of IPIC trampolines that are present in the current code cache
+      // If the code caches have been switched we have to reset this number, the setCodeCacheSwitched helper called
+      // in switchCodeCache resets the count
+      // If we are in binaryEncoding we will kill this compilation anyway
+
+      comp->switchCodeCache(newCache);
+
+      // If the old CC had pre-loaded code, the current compilation may have initialized it and will therefore depend on it
+      // so we should initialize it in the new CC as well
+      // XXX: We could avoid this if we knew for sure that this compile wasn't the one who initialized it
+      if (newCache && curCache->isCCPreLoadedCodeInitialized())
+         newCache->getCCPreLoadedCodeAddress(TR_numCCPreLoadedCode, self());
+      }
+   else
+      {
+      comp->setNumReservedIPICTrampolines(comp->getNumReservedIPICTrampolines() + numTrampolines);
+      }
+
+   TR_ASSERT(newCache->isReserved(), "New CodeCache is not reserved");
+   }

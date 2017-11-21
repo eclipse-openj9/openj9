@@ -1117,22 +1117,15 @@ bool TR_DataAccessAccelerator::genComparisionIntrinsic(TR::TreeTop* treeTop, TR:
    pdload2->setSymbolReference(symRef2);
    pdload2->setDecimalPrecision(precision2);
 
-   TR::Symbol * symbol = callNode->getSymbolReference()->getSymbol();
-   TR_Method * method = symbol->castToMethodSymbol()->getMethod();
-   TR::SymbolReference * newMethodSymRef = getSymRefTab()->methodSymRefFromName(callNode->getSymbolReference()->getOwningMethodSymbol(comp()),
-                                                                                method->classNameChars(),
-                                                                                method->nameChars(),
-                                                                                method->signatureChars(),
-                                                                                symbol->castToMethodSymbol()->getMethodKind(),
-                                                                                callNode->getSymbolReference()->getCPIndex());
    //create the BCDCHK:
    TR::Node * pdOpNode = callNode;
+   TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
    TR::Node * bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 7, 7,
                                                       pdOpNode,
                                                       callNode->getChild(0), callNode->getChild(1),
                                                       callNode->getChild(2), callNode->getChild(3),
                                                       callNode->getChild(4), callNode->getChild(5),
-                                                      newMethodSymRef);
+                                                      bcdChkSymRef);
 
    pdOpNode->setNumChildren(2);
    pdOpNode->setAndIncChild(0, pdload1);
@@ -1250,10 +1243,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
           * to BCDCHK would be safe. We would whip up the call with these attached children during codegen
           * for the fallback of the fastpath.
           */
-
-         TR::Symbol * symbol = callNode->getSymbolReference()->getSymbol();
-         TR_Method * method = symbol->castToMethodSymbol()->getMethod();
-         TR::SymbolReference * newMethodSymRef = getSymRefTab()->methodSymRefFromName(callNode->getSymbolReference()->getOwningMethodSymbol(comp()), method->classNameChars(), method->nameChars(), method->signatureChars(), symbol->castToMethodSymbol()->getMethodKind(), callNode->getSymbolReference()->getCPIndex());
+         TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
 
          if (isByteBuffer)
             {
@@ -1263,7 +1253,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
                                                     callNode->getChild(2), callNode->getChild(3),
                                                     callNode->getChild(4), callNode->getChild(5),
                                                     callNode->getChild(6), callNode->getChild(7),
-                                                    newMethodSymRef);
+                                                    bcdChkSymRef);
             }
          else
             {
@@ -1272,7 +1262,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
                                                     callNode->getChild(0), callNode->getChild(1),
                                                     callNode->getChild(2), callNode->getChild(3),
                                                     callNode->getChild(4),
-                                                    newMethodSymRef);
+                                                    bcdChkSymRef);
             }
 
          if (errorCheckingNode->getInt())
@@ -1561,12 +1551,7 @@ TR_DataAccessAccelerator::generatePD2IConstantParameter(TR::TreeTop* treeTop, TR
       TR::TreeTop * prevTT = treeTop->getPrevTreeTop();
       TR::TreeTop * nextTT = treeTop->getNextTreeTop();
       TR::Node *bcdchk = NULL;
-
-      TR::Symbol * symbol = callNode->getSymbolReference()->getSymbol();
-      TR_Method * method = symbol->castToMethodSymbol()->getMethod();
-      TR::SymbolReference * newMethodSymRef = getSymRefTab()->methodSymRefFromName(
-            callNode->getSymbolReference()->getOwningMethodSymbol(comp()), method->classNameChars(), method->nameChars(), method->signatureChars(),
-            symbol->castToMethodSymbol()->getMethodKind(), callNode->getSymbolReference()->getCPIndex());
+      TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
 
       /* Attaching all the original callNode's children as the children to BCDCHK.
        * We don't want to attach the callNode as a child to BCDCHK since it would be an aberration to the
@@ -1587,7 +1572,7 @@ TR_DataAccessAccelerator::generatePD2IConstantParameter(TR::TreeTop* treeTop, TR
                                              callNode->getChild(2), callNode->getChild(3),
                                              callNode->getChild(4), callNode->getChild(5),
                                              callNode->getChild(6),
-                                             newMethodSymRef);
+                                             bcdChkSymRef);
 
          /*
           * BCDCHK would look something like this for ByteBuffer:
@@ -1617,7 +1602,7 @@ TR_DataAccessAccelerator::generatePD2IConstantParameter(TR::TreeTop* treeTop, TR
                                              callNode,
                                              callNode->getChild(0), callNode->getChild(1),
                                              callNode->getChild(2), callNode->getChild(3),
-                                             newMethodSymRef);
+                                             bcdChkSymRef);
          /*
           * BCDCHK would look something like this for byte[]:
           *
@@ -1836,19 +1821,11 @@ TR_DataAccessAccelerator::generatePD2IVariableParameter(TR::TreeTop* treeTop, TR
       callNode->setSymbolReference(temp);
       }
 
-   TR::Symbol * symbol = fastNode->getSymbolReference()->getSymbol();
-   TR_Method * method = symbol->castToMethodSymbol()->getMethod();
-   TR::SymbolReference * newMethodSymRef = getSymRefTab()->methodSymRefFromName(fastNode->getSymbolReference()->getOwningMethodSymbol(comp()),
-                                                                                method->classNameChars(),
-                                                                                method->nameChars(),
-                                                                                method->signatureChars(),
-                                                                                symbol->castToMethodSymbol()->getMethodKind(),
-                                                                                fastNode->getSymbolReference()->getCPIndex());
-
    // Create BCDCHK node
-   fastTT->setNode(TR::Node::createWithSymRef(TR::BCDCHK, 1, 1,
-                                              fastNode,
-                                              newMethodSymRef));
+   TR::SymbolReference*  bcdChkSymRef = fastNode->getSymbolReference();
+   TR::Node* bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 1, 1, fastNode, bcdChkSymRef);
+   fastTT->setNode(bcdchkNode);
+
    // TreeTop replaced by BCDCHK, so we lose 1 reference
    fastNode->decReferenceCount();
 
@@ -1976,15 +1953,7 @@ bool TR_DataAccessAccelerator::genArithmeticIntrinsic(TR::TreeTop* treeTop, TR::
       pdshlNode->setDecimalPrecision(resPrecNode->getInt());
       TR::Node * pdstore = TR::Node::create(op, 2, arrayAddressNodeResult, pdshlNode);
 
-      TR::Symbol * symbol = callNode->getSymbolReference()->getSymbol();
-      TR_Method * method = symbol->castToMethodSymbol()->getMethod();
-      TR::SymbolReference * newMethodSymRef = getSymRefTab()->methodSymRefFromName(callNode->getSymbolReference()->getOwningMethodSymbol(comp()),
-                                                                                   method->classNameChars(),
-                                                                                   method->nameChars(),
-                                                                                   method->signatureChars(),
-                                                                                   symbol->castToMethodSymbol()->getMethodKind(),
-                                                                                   callNode->getSymbolReference()->getCPIndex());
-
+      TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
       TR::Node * bcdchk = TR::Node::createWithSymRef(TR::BCDCHK, 12, 12,
                                                      pdshlNode, arrayAddressNodeResult,
                                                      callNode->getChild(0), callNode->getChild(1),
@@ -1992,7 +1961,7 @@ bool TR_DataAccessAccelerator::genArithmeticIntrinsic(TR::TreeTop* treeTop, TR::
                                                      callNode->getChild(4), callNode->getChild(5),
                                                      callNode->getChild(6), callNode->getChild(7),
                                                      callNode->getChild(8), callNode->getChild(9),
-                                                     newMethodSymRef);
+                                                     bcdChkSymRef);
 
       pdstore->setSymbolReference(symRefPdstore);
       pdstore->setDecimalPrecision(resPrecNode->getInt());
@@ -2087,7 +2056,6 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
    pdload->setSymbolReference(symRef);
    pdload->setDecimalPrecision(srcPrec);
 
-   TR::Symbol * symbol = callNode->getSymbolReference()->getSymbol();
    TR::Node * pdshrNode = TR::Node::create(TR::pdshr, 3, pdload, shiftNode, roundValueNode);
    pdshrNode->setDecimalPrecision(dstPrec);
    TR::Node* pdshlOverflowNode = TR::Node::create(TR::pdshlOverflow, 2,
@@ -2096,14 +2064,7 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
 
    pdshlOverflowNode->setDecimalPrecision(dstPrec);
 
-   TR_Method * method = symbol->castToMethodSymbol()->getMethod();
-   TR::SymbolReference * newMethodSymRef = getSymRefTab()->methodSymRefFromName(callNode->getSymbolReference()->getOwningMethodSymbol(comp()),
-                                                                                method->classNameChars(),
-                                                                                method->nameChars(),
-                                                                                method->signatureChars(),
-                                                                                symbol->castToMethodSymbol()->getMethodKind(),
-                                                                                callNode->getSymbolReference()->getCPIndex());
-
+   TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
    TR::Node* bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 11, 11,
                                            pdshlOverflowNode, arrayAddressNodeRes,
                                            callNode->getChild(0), callNode->getChild(1),
@@ -2111,7 +2072,7 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
                                            callNode->getChild(4), callNode->getChild(5),
                                            callNode->getChild(6), callNode->getChild(7),
                                            callNode->getChild(8),
-                                           newMethodSymRef);
+                                           bcdChkSymRef);
 
    if (isCheckOverflow)
       bcdchkNode->setBCDNodeOverflow();
@@ -2212,22 +2173,14 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop* treeTop, TR::N
    TR::Node * pdshlNode = TR::Node::create(TR::pdshlOverflow, 2, pdload, shiftNode);
    pdshlNode->setDecimalPrecision(dstPrec);
 
-   TR::Symbol * symbol = callNode->getSymbolReference()->getSymbol();
-   TR_Method * method = symbol->castToMethodSymbol()->getMethod();
-   TR::SymbolReference * newMethodSymRef = getSymRefTab()->methodSymRefFromName(callNode->getSymbolReference()->getOwningMethodSymbol(comp()),
-                                                                               method->classNameChars(),
-                                                                               method->nameChars(),
-                                                                               method->signatureChars(),
-                                                                               symbol->castToMethodSymbol()->getMethodKind(),
-                                                                               callNode->getSymbolReference()->getCPIndex());
-
+   TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
    TR::Node* bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 10, 10,
                                        pdshlNode, dstAddrNode,
                                        callNode->getChild(0), callNode->getChild(1),
                                        callNode->getChild(2), callNode->getChild(3),
                                        callNode->getChild(4), callNode->getChild(5),
                                        callNode->getChild(6), callNode->getChild(7),
-                                       newMethodSymRef);
+                                       bcdChkSymRef);
 
    bcdchkNode->setBCDNodeOverflow();
 
