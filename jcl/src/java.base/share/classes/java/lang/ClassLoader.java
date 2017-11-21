@@ -939,7 +939,7 @@ public InputStream getResourceAsStream (String resName) {
  *
  * @throws IOException
  */
-protected InputStream getResourceAsStream(String moduleName, String name) throws IOException
+InputStream getResourceAsStream(String moduleName, String name) throws IOException
 {
 	return null;
 }

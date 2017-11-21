@@ -2032,7 +2032,7 @@ public native boolean isPrimitive();
  */
 @CallerSensitive
 /*[IF Sidecar19-SE]*/
-@Deprecated(forRemoval=false, since="1.1")
+@Deprecated(forRemoval=false, since="9")
 /*[ENDIF]*/
 public T newInstance() throws IllegalAccessException, InstantiationException {
 	SecurityManager security = System.getSecurityManager();

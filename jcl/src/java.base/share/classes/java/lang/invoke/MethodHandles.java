@@ -2938,7 +2938,7 @@ public class MethodHandles {
 	 * @param location the (zero-indexed) location of the first argument to be removed
 	 * @return a MethodHandle representing a transformed handle as described above
 	 */
-	public static final  MethodHandle dropArgumentsToMatch(MethodHandle originalHandle, int skippedArgumentCount, List<Class<?>> valueTypes, int location) {
+	public static MethodHandle dropArgumentsToMatch(MethodHandle originalHandle, int skippedArgumentCount, List<Class<?>> valueTypes, int location) {
 		/* implicit null checks */
 		MethodType originalType = originalHandle.type;
 		Class<?>[] valueTypesCopy = valueTypes.toArray(new Class<?>[valueTypes.size()]);

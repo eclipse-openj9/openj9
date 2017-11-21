@@ -690,7 +690,7 @@ public static void runFinalization() {
  * @deprecated 	This method is unsafe.
  */
 /*[IF Sidecar19-SE]*/
-@Deprecated(forRemoval=false, since="1.2")
+@Deprecated(forRemoval=true, since="1.2")
 /*[ELSE]
 @Deprecated
 /*[ENDIF]*/
