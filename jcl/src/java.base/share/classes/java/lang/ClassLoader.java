@@ -2106,7 +2106,11 @@ boolean getDefaultAssertionStatus() {
  */
 private void initializeClassLoaderAssertStatus() {
 	/*[PR CMVC 130382] Optimize checking ClassLoader assertion status */
+	/*[IF Sidecar19-SE]*/
+	boolean bootLoader = bootstrapClassLoader == this;
+	/*[ELSE]
 	boolean bootLoader = bootstrapClassLoader == null;
+	/*[ENDIF]*/
 
 	if (!bootLoader && !checkAssertionOptions) {
 		// if the bootLoader didn't find any assertion options, other
