@@ -2037,6 +2037,38 @@ TR::CompilationInfoPerThread::addInvokeExactThunkToBeRelocated(TR_J2IThunk *thun
    _invokeExactThunksToBeRelocated.emplace_back(thunk);
    }
 
+void *
+j9ThunkInvokeExactHelperFromTerseSignature(void * jitConfig, UDATA signatureLength, char *signatureChars)
+{
+   TR_RuntimeHelper helper;
+
+   switch (signatureChars[signatureLength - 1]) {
+      case 'V':
+         helper = TR_icallVMprJavaSendInvokeExact0;
+         break;
+      case 'F':
+         helper = TR_icallVMprJavaSendInvokeExactF;
+         break;
+      case 'D':
+         helper = TR_icallVMprJavaSendInvokeExactD;
+         break;
+      case 'J':
+         helper = TR_icallVMprJavaSendInvokeExactJ;
+         break;
+      case '[':
+         /* intentional fall-through */
+      case 'L':
+         helper = TR_icallVMprJavaSendInvokeExactL;
+         break;
+      default:
+         helper = TR_icallVMprJavaSendInvokeExact1;
+         break;
+   }
+   TR::SymbolReference *symRef = TR::comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
+
+   return symRef->getMethodAddress();
+}
+
 void
 TR::CompilationInfoPerThread::relocateThunks()
    {
@@ -2052,7 +2084,10 @@ TR::CompilationInfoPerThread::relocateThunks()
    _thunksToBeRelocated.clear();
    for (TR_J2IThunk *thunk : _invokeExactThunksToBeRelocated)
       {
-      void *realThunk = (U_8 *)thunk - (U_8 *)TR::compInfoPT->reloRuntime()->aotMethodHeaderEntry()->compileMethodCodeStartPC + (U_8 *)TR::compInfoPT->reloRuntime()->newMethodCodeStart();
+      TR_J2IThunk *realThunk = (TR_J2IThunk *)((U_8 *)thunk - (U_8 *)TR::compInfoPT->reloRuntime()->aotMethodHeaderEntry()->compileMethodCodeStartPC + (U_8 *)TR::compInfoPT->reloRuntime()->newMethodCodeStart());
+      char *signature = realThunk->terseSignature();
+      void *vmHelper = j9ThunkInvokeExactHelperFromTerseSignature(fe->_jitConfig, strlen(signature), signature);
+      *(UDATA *)(realThunk->entryPoint() + 2) = (UDATA) vmHelper; // JAAS TODO: This is amd64 specific
       fe->setInvokeExactJ2IThunk(realThunk, TR::comp());
       }
    _invokeExactThunksToBeRelocated.clear();
