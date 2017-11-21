@@ -33,6 +33,7 @@ namespace J9 { typedef J9::PersistentInfo PersistentInfoConnector; }
 #include "env/RuntimeAssumptionTable.hpp"
 
 #include <stdint.h>
+#include <string>
 #include "env/jittypes.h"
 
 
@@ -124,6 +125,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _runtimeInstrumentationEnabled(false),
          _runtimeInstrumentationRecompilationEnabled(false),
          _jaasMode(NONJAAS_MODE),
+         _jaasServerAddress("localhost"),
+         _jaasServerPort(38400),
       OMR::PersistentInfoConnector(pm)
       {}
 
@@ -285,7 +288,11 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
    JaasModes getJaasMode() const { return _jaasMode;}
    void setJaasMode(JaasModes m) { _jaasMode = m; }
-
+   std::string getJaasServerAddress() const { return _jaasServerAddress; }
+   void setJaasServerAddress(char *addr) { _jaasServerAddress = addr; }
+   uintptr_t getJaasServerPort() const { return _jaasServerPort; }
+   void setJaasServerPort(uintptr_t port) { _jaasServerPort = port; }
+   std::string getJaasServerConnectionInfo() const { return _jaasServerAddress + ":" + std::to_string(_jaasServerPort); }
 
    private:
    TR_AddressSet *_unloadedClassAddresses;
@@ -370,6 +377,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
    int32_t _numLoadedClasses; ///< always increasing
    JaasModes _jaasMode; // NONJAAS_MODE, CLIENT_MODE, SERVER_MODE
+   std::string _jaasServerAddress;
+   uintptr_t _jaasServerPort;
    };
 
 }

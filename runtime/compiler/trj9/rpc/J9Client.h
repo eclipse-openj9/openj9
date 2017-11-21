@@ -14,8 +14,8 @@ namespace JAAS
 class J9ClientStream
    {
 public:
-   J9ClientStream()
-      : _stub(J9CompileService::NewStub(grpc::CreateChannel("localhost:38400", grpc::InsecureChannelCredentials())))
+   J9ClientStream(std::string address)
+      : _stub(J9CompileService::NewStub(grpc::CreateChannel(address, grpc::InsecureChannelCredentials())))
       {}
 
 

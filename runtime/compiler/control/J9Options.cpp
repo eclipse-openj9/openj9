@@ -31,6 +31,7 @@
 #include "j9cfg.h"
 #include "j9modron.h"
 #include "jvminit.h"
+#include "j9vmnls.h"
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Recompilation.hpp"
@@ -1952,7 +1953,7 @@ J9::Options::fePreProcess(void * base)
       jaasAlreadyParsed = true;
       char *xxJaasClientOption = "-XX:jaasClient";
       char *xxJaasServerOption = "-XX:jaasServer";
-      int32_t xxJaasClientArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJaasClientOption, 0);
+      int32_t xxJaasClientArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJaasClientOption, 0);
       int32_t xxJaasServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJaasServerOption, 0);
       // Check if option is at all specified
       if (xxJaasClientArgIndex >= 0 || xxJaasServerArgIndex >= 0)
@@ -1962,6 +1963,65 @@ J9::Options::fePreProcess(void * base)
             compInfo->getPersistentInfo()->setJaasMode(CLIENT_MODE);
             if (TR::Options::getVerboseOption(TR_VerboseJaas))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Jaas Client Mode.\n");
+
+            // parse -XX:jaasClient:server=<address/hostname>,port=<number> option if provided
+            char *xxJaasClientOptionWithArgs = "-XX:jaasClient:"; // tail colon indicates server and port are provided
+            xxJaasClientArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJaasClientOptionWithArgs, 0);
+            if (xxJaasClientArgIndex >= 0)
+               {
+               // retrieve whole option part, i.e., server=<address/hostname>,port=<number>
+               char *options = NULL;
+               GET_OPTION_OPTION(xxJaasClientArgIndex, ':', ':', &options);
+
+               char *scanLimit = options + strlen(options);
+               char delimiter = ',';
+               char *unRecognizedOptions = NULL;
+               while (options < scanLimit)
+                  {
+                  if (try_scan(&options, "server=")) // parse server=<address/hostname> option
+                     {
+                     char *address = scan_to_delim(PORTLIB, &options, delimiter);
+                     compInfo->getPersistentInfo()->setJaasServerAddress(address);
+                     }
+                  else if (try_scan(&options, "port=")) // parse port=<number> option
+                     {
+                     char *portChar = scan_to_delim(PORTLIB, &options, delimiter);
+                     uintptr_t port = 0;
+                     UDATA scanResult = scan_udata(&portChar, &port);
+                     if (scanResult != 0)
+                        {
+                        if (scanResult == 1)
+                           j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_MUST_BE_NUMBER, "port=");
+                        else
+                           j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED, "port=");
+                        }
+                     else
+                        compInfo->getPersistentInfo()->setJaasServerPort(port);
+                     }
+                  else                                  // option not known
+                     {
+                     if (unRecognizedOptions != options)
+                        {
+                        unRecognizedOptions = options;
+                        // try to find delimiter to isolate unrecognized option
+                        char *delimLocation = strchr(options, delimiter);
+                        if (delimLocation) // delimiter found, print the unrecognized option
+                           {
+                           char unRecognized[delimLocation - options];
+                           strncpy(unRecognized, options, delimLocation - options);
+                           j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, unRecognized);
+                           }
+                        else // delimiter not found, unrecognized option remains until end of the string
+                           j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, options);
+                        // skip this unknown option to search for any known options left
+                        scan_to_delim(PORTLIB, &options, delimiter);
+                        }
+                     else // no more known options, break the loop
+                        break;
+                     }
+                  }
+
+               }
             }
          else                                               // server mode
             {

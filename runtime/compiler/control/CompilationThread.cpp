@@ -9785,7 +9785,7 @@ TR::CompilationInfoPerThreadBase::compile(
          std::string romClassStr = packROMClass(romClass, compiler->trMemory());
          std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
 
-         JAAS::J9ClientStream client;
+         JAAS::J9ClientStream client(comp()->getPersistentInfo()->getJaasServerConnectionInfo());
          client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), allocPtr, availableSpace, detailsStr, details.getType());
          uint32_t statusCode = compilationFailure;
          std::string codeCacheStr;
