@@ -113,7 +113,7 @@
 	</features>
 	<source>
 		<project id="com.ibm.jvmti.tests"/>
-		<project id="tr.source"/>
+		<project id="compiler"/>
 		<project id="VM_LINUX39031"/>
 	</source>
 	<flags>

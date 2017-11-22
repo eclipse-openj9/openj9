@@ -97,7 +97,7 @@
 		<project id="omr.jit"/>
 		<project id="oti"/>
 		<project id="port"/>
-		<project id="tr.source"/>
+		<project id="compiler"/>
 		<project id="util_core"/>
 		<project id="VM_AIX32"/>
 		<project id="VM_Binaries"/>
