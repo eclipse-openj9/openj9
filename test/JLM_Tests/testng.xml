@@ -143,6 +143,11 @@
 			<class name="org.openj9.test.management.JvmCpuMonitorMXBeanTest" />
 		</classes>
 	</test>
+	<test name="testOpenJ9DiagnosticsMXBean">
+		<classes>
+			<class name="org.openj9.test.java.lang.management.TestOpenJ9DiagnosticsMXBean" />
+		</classes>
+	</test>
 	<test name="testCpuUtilization_testSingleCpuLoadObject">
 		<classes>
 			<class name="org.openj9.test.management.TestGetSystemCpuLoad">
