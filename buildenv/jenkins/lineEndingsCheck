@@ -33,7 +33,7 @@ stage('Line Endings Check') {
             sh "git checkout --detach ${sha1}"
             sh 'git fetch origin'
             FILES = sh (
-                script: "git diff --diff-filter=ACM --name-only origin/${ghprbTargetBranch} HEAD",
+                script: "git diff -C --diff-filter=ACM --name-only origin/${ghprbTargetBranch} HEAD",
                 returnStdout: true
             ).trim()
             echo FILES
