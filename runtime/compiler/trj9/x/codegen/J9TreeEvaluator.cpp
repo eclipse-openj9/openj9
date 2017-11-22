@@ -15736,6 +15736,7 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
    switch (symbol->getRecognizedMethod())
       {
       case TR::java_nio_Bits_keepAlive:
+      case TR::java_lang_ref_Reference_reachabilityFence:
          {
          TR_ASSERT(node->getNumChildren() == 1, "keepAlive is assumed to have just one argument");
 

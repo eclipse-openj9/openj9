@@ -3460,6 +3460,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    static X ReferenceMethods [] =
       {
       {x(TR::java_lang_ref_Reference_getImpl, "getImpl", "()Ljava/lang/Object;")},
+      {x(TR::java_lang_ref_Reference_reachabilityFence, "reachabilityFence", "(Ljava/lang/Object;)V")},
       {TR::unknownMethod}
       };
 
