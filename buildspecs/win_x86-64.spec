@@ -128,7 +128,7 @@
 	</features>
 	<source>
 		<project id="com.ibm.jvmti.tests"/>
-		<project id="tr.source"/>
+		<project id="compiler"/>
 	</source>
 	<flags>
 		<flag id="arch_x86" value="true"/>

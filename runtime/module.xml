@@ -43,7 +43,7 @@
 	
 	<artifact type="target" name="clean_depends" all="false">
 		<commands>
-			<command line="find ./tr.source -name '*.depend.mk' | xargs rm -f">
+			<command line="find ./compiler -name '*.depend.mk' | xargs rm -f">
 				<exclude-if condition="spec.win_x86.*"/>
 			</command>
 		</commands>
