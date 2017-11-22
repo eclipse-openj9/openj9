@@ -60,7 +60,7 @@ JAVA_VERSION=[SE80|SE90] (SE90 default value)
 	* jcommander-1.48.jar
 	* asmtools-6.0.jar
 
-	The above jars will be downloaded automatically when you begin to compile test source codes.
+	To get the above dependent jars, please run `make getdependency` . getdependency target will get called when running make compile or test target.
 
 2. Compile tests:
   * compile and run all tests
