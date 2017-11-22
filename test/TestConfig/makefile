@@ -176,7 +176,10 @@ CMDLINETESTER_RESJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(D)cm
 # testng report dir
 #######################################
 TIMESTAMP := $(shell perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)testKitGen$(D)resultsSummary$(D)getTimeStamp.pl -v)
-TESTOUTPUT = $(shell $(PWD))$(D)test_output_$(TIMESTAMP)
+TESTOUTPUT := $(shell $(PWD))$(D)test_output_$(TIMESTAMP)
+ifeq ($(CYGWIN),1)
+	TESTOUTPUT := $(subst \,/,$(shell cygpath -w $(TESTOUTPUT)))
+endif
 REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@$(Q)
 
 #######################################
