@@ -161,6 +161,7 @@ public class VmArgumentTests {
 	}
 
 	/* sanity test */
+	@Test
 	public void testNoOptions() {
 		ArrayList<String> actualArguments = null;
 		try {
@@ -173,7 +174,7 @@ public class VmArgumentTests {
 		}
 	}
 
-	
+	@Test
 	public void testWindowsPath() {
 		if (isWindows()) {
 			ArrayList<String> actualArguments = null;
@@ -196,7 +197,7 @@ public class VmArgumentTests {
 	}
 
 	/* PMR 83349,500,624: Command line property "-Djava.util.prefs.PreferencesFactory" value not set or overwritten with default property value */
-
+	@Test
 	public void testPreferencesFactory() {
 		final String PREFS_FACTORY="java.util.prefs.PreferencesFactory";
 		final String D_PREFS_FACTORY = "-D"+PREFS_FACTORY + '=';
@@ -218,7 +219,7 @@ public class VmArgumentTests {
 		}
 	}
 
-	
+	@Test
 	public void testSystemProperties() {
 		ArrayList<String> cmdlineArguments = new ArrayList<String>(1);
 		HashMap<String, String> expectedProperties = new HashMap<String, String>();
@@ -256,7 +257,7 @@ public class VmArgumentTests {
 	}
 
 	/* -Xint test */
-	
+	@Test
 	public void testXint() {
 		ArrayList<String> actualArguments = new ArrayList<String>(1);
 		try {
@@ -272,7 +273,7 @@ public class VmArgumentTests {
 	}
 
 	/* -Xcheck:memory test */
-	
+	@Test
 	public void testXcheckMemory() {
 		ArrayList<String> actualArguments = new ArrayList<String>(1);
 		try {
@@ -290,7 +291,7 @@ public class VmArgumentTests {
 	}
 
 	/* test IBM_JAVA_OPTIONS environment variable */
-	
+	@Test
 	public void testIbmJavaOptions() {
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 		Map<String, String> env = pb.environment();
@@ -304,7 +305,7 @@ public class VmArgumentTests {
 	}
 
 	/* test IBM_JAVA_OPTIONS environment variable */
-	
+	@Test
 	public void testArgEncodingInIbmJavaOptions() {
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 		Map<String, String> env = pb.environment();
@@ -318,9 +319,9 @@ public class VmArgumentTests {
 	}
 
 
-	
+	/* this test does not apply to OpenJ9 as OpenJ9 is default compressedrefs and nocompressedrefs is not available */
+	@Test
 	public void testCrNocr() {
-		/* 76036: OTT:PPCLE Command-line option unrecognised: -Xcompressedrefs */
 		String noCrArg = XNOCOMPRESSEDREFS;
 		ProcessBuilder pb = makeProcessBuilder(new String[] {noCrArg}, CLASSPATH);
 		Map<String, String> env = pb.environment();
@@ -334,7 +335,7 @@ public class VmArgumentTests {
 	}
 
 	/* test options in runnable jar files */
-	
+	@Test
 	public void testJarArguments() throws URISyntaxException {
 		URL jarUrl = ClassLoader.getSystemClassLoader().getResource(vmargsJarFilename);
 		assertNotNull(vmargsJarFilename+" not found", jarUrl);
@@ -346,6 +347,7 @@ public class VmArgumentTests {
 	/**
 	 * Test getting VM arguments from a JAR file prefixed by a shell script.
 	 */
+	@Test
 	public void testExecutableJarArguments() {
 		final String HWVMARGS = "hwvmargs.jar";
 		URL jarUrl = ClassLoader.getSystemClassLoader().getResource(vmargsJarFilename);
@@ -373,7 +375,7 @@ public class VmArgumentTests {
 	}
 
 	/* test JAVA_TOOL_OPTIONS environment variable */
-	
+	@Test
 	public void testJavaToolOptions() {
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 		Map<String, String> env = pb.environment();
@@ -387,7 +389,7 @@ public class VmArgumentTests {
 	}
 
 	/* test JAVA_TOOL_OPTIONS environment variable */
-	
+	@Test
 	public void testOptionsWithLeadingSpacesInEnvVars() {
 		ArrayList<String> actualArguments = null;
 		try {
@@ -406,7 +408,7 @@ public class VmArgumentTests {
 	}
 
 	/* test arguments containing newlines in the environment variables */
-	
+	@Test
 	public void testMultipleArgumentsInEnvVars() {
 		ArrayList<String> actualArguments = null;
 		try {
@@ -431,7 +433,7 @@ public class VmArgumentTests {
 	}
 
 	/* test environment variables which map to JVM options */
-	
+	@Test
 	public void testMappedOptions() {
 		ArrayList<String> actualArguments = null;
 		try {
@@ -457,7 +459,7 @@ public class VmArgumentTests {
 	}
 
 	/* test environment variables which map to JVM options. Jazz 75469 */
-	
+	@Test
 	public void testNullMappedOptions() {
 		ArrayList<String> actualArguments = null;
 		try {
@@ -481,7 +483,7 @@ public class VmArgumentTests {
 	}
 
 	/* concatenate several VM options into a single environment variable */
-	
+	@Test
 	public void testMultipleOptionsInEnvironmentVariable() {
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 		Map<String, String> env = pb.environment();
@@ -494,7 +496,7 @@ public class VmArgumentTests {
 	}
 
 	/* sanity test for plain old command line tests */
-	
+	@Test
 	public void testCommandlineArguments() {
 		ProcessBuilder pb = makeProcessBuilder(TEST_ARG_LIST, CLASSPATH);
 		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
@@ -502,7 +504,7 @@ public class VmArgumentTests {
 		checkArgumentSequence(TEST_ARG_LIST, argumentPositions, true);
 	}
 
-	
+	@Test
 	public void testExtremelyLongArgument() {
 		StringBuilder longArgBuilder = new StringBuilder(20000);
 		String longArg = "Ax";
@@ -520,7 +522,7 @@ public class VmArgumentTests {
 	}
 
 	/* verify that -Xprod is removed from the command line */
-	
+	@Test
 	public void testXprod() {
 
 		ArrayList<String> cmdlineArgsBuffer = new ArrayList<String>(1);
@@ -542,7 +544,7 @@ public class VmArgumentTests {
 		}
 	}
 
-	
+	@Test
 	public void testDisableXcheckMemory() {
 
 		ArrayList<String> actualArguments = null;
@@ -571,7 +573,7 @@ public class VmArgumentTests {
 		}
 	}
 
-	
+	@Test
 	public void testVerboseInitOptions() {
 		ArrayList<String> actualArguments = new ArrayList<String>(1);
 		try {
@@ -588,7 +590,7 @@ public class VmArgumentTests {
 		}
 	}
 
-	
+	@Test
 	public void testCheckMemoryViaEnvironmentVariable() {
 
 		ArrayList<String> cmdlineArguments = new ArrayList<String>(1);
@@ -617,7 +619,7 @@ public class VmArgumentTests {
 	}
 
 	/* test whitespace before and after  */
-	
+	@Test
 	public void testCommandlineArgumentsWithLeadingAndTrailingSpaces() {
 		ArrayList<String> actualArguments=null;
 		try {
@@ -635,7 +637,7 @@ public class VmArgumentTests {
 	}
 
 	/* IBM_JAVA_OPTIONS should take priority over JAVA_TOOL_OPTIONS */
-	
+	@Test
 	public void testEnvironmentVariableOrdering() {
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 		Map<String, String> env = pb.environment();
@@ -656,7 +658,7 @@ public class VmArgumentTests {
 	 * AIX
 	 * z/OS
 	 */
-	
+	@Test
 	public void testLD_LIBRARY_PATH () {
 		if (!OS_NAME_PROPERTY.startsWith("Linux")) {
 			logger.debug("Skipping "+testName+" on non-Linux systems");
@@ -676,7 +678,7 @@ public class VmArgumentTests {
 				javaPathDir.contains(ldLibraryPath));
 	}
 
-	
+	@Test
 	public void testLD_LIBRARY_PATH_And_LIBPATH () {
 		if (!OS_NAME_PROPERTY.startsWith("AIX")) {
 			logger.debug("Skipping "+testName+" on non-AIX systems");
@@ -702,7 +704,7 @@ public class VmArgumentTests {
 				javaPathDir.contains(expectedSubstring));
 	}
 
-	
+	@Test
 	public void testLIBPATH () {
 		if (!OS_NAME_PROPERTY.startsWith("z/OS")) {
 			logger.debug("Skipping "+testName+" on non-z/OS systems");
@@ -723,7 +725,7 @@ public class VmArgumentTests {
 	}
 
 	/* -Xservice=<arg> puts <arg> at the end of the processed argument list */
-	
+	@Test
 	public void testServiceOptions() {
 		String svcArg = "-Dtest.name=testServiceOptions";
 		String xServiceArgString = "-Xservice=" + svcArg;
@@ -738,7 +740,7 @@ public class VmArgumentTests {
 	}
 
 	/* test multiple instances of -Xservice=<arg>.  The last one takes priority. */
-	
+	@Test
 	public void testMultipleServiceArgs() {
 		ArrayList<String> actualArguments=null;
 		try {
@@ -760,7 +762,7 @@ public class VmArgumentTests {
 	}
 
 	/* -Xservice argument is not parsed if it is in an environment variable */
-	
+	@Test
 	public void testServiceArgsInEnvironmentVariable() {
 		ArrayList<String> actualArguments=null;
 		try {
@@ -781,7 +783,7 @@ public class VmArgumentTests {
 	}
 
 	/* test multiple arguments in the same -Xservice argument */
-	
+	@Test
 	public void testServiceMultipleArgs() {
 		String serviceFoo = "-Dtest.xservice.opt1=foo";
 		String serviceBar = "-Dtest.xservice.opt1=bar";
@@ -799,7 +801,7 @@ public class VmArgumentTests {
 	}
 
 	/* -Xservice arguments should come after cmdline arguments */
-	
+	@Test
 	public void testCmdlineServiceArgsOrdering() {
 		ArrayList<String> actualArguments=null;
 		try {
@@ -827,7 +829,7 @@ public class VmArgumentTests {
 	}
 
 	/* environment variable arguments should come before cmdline arguments */
-	
+	@Test
 	public void testEnvironmentCmdlineOrdering() {
 		String cmdlineArg = "-Dtest.cmdline.arg1";
 		ProcessBuilder pb = makeProcessBuilder(new String[] {cmdlineArg}, CLASSPATH);
@@ -840,7 +842,7 @@ public class VmArgumentTests {
 		assertTrue(cmdlineArg+ " should come after "+DJAVA_HOME, argumentPositions.get(ibmJavaOptionsArg).intValue() < argumentPositions.get(cmdlineArg).intValue());
 	}
 
-	
+	@Test
 	public void testOptionsFile() {
 		String optionFilePath = makeOptionsFile("test1", TEST_ARG_LIST);
 		String optionFileArg=XOPTIONSFILE+optionFilePath;
@@ -854,7 +856,7 @@ public class VmArgumentTests {
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
-	
+	@Test
 	public void testBadOptionsFile() {
 		String badOptionFileArg=XOPTIONSFILE+"bogus";
 		String missingOptionFileArg=XOPTIONSFILE;
@@ -869,7 +871,7 @@ public class VmArgumentTests {
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
-	
+	@Test
 	public void testXargencodingInOptionsFile() {
 		String optionFilePath = makeOptionsFile("test1", XARGENCODING);
 		String optionFileArg=XOPTIONSFILE+optionFilePath;
@@ -884,7 +886,7 @@ public class VmArgumentTests {
 	}
 
 	/* -Xservice in an options file should not be used */
-	
+	@Test
 	public void testXserviceInOptionsFile() {
 		String xServiceArg = "-Xservice="+XINT;
 		String optionFilePath = makeOptionsFile("testXserviceInOptionsFile", new String[] {xServiceArg});
@@ -900,7 +902,7 @@ public class VmArgumentTests {
 		assertNull("-Xservice options in options files should not take effect", argumentPositions.get(XINT));
 	}
 
-	
+	@Test
 	public void testOptionsFileAndNormalArguments() {
 		ArrayList<String> expectedArgsBuffer = new ArrayList<String>();
 		final String PROLOGUE_ARG="-Dtest.prologue";
@@ -924,7 +926,7 @@ public class VmArgumentTests {
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
-	
+	@Test
 	public void testOptionsFileWithLeadingAndTrailingBlanks() {
 		String testArgs[] = new String[TEST_ARG_LIST.length]; 
 		System.arraycopy(TEST_ARG_LIST, 0, testArgs, 0, TEST_ARG_LIST.length);
@@ -942,7 +944,7 @@ public class VmArgumentTests {
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
-	
+	@Test
 	public void testMultipleOptionsFiles() {
 		String optionFile1Path = makeOptionsFile("test1", TEST_ARG_LIST);
 		String optionFile1Arg=XOPTIONSFILE+optionFile1Path;
@@ -967,7 +969,7 @@ public class VmArgumentTests {
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
-	
+	@Test
 	public void testXintAndOtherVmArguments() {
 		String[] argList = isJava8 ? (new String[] {"-Dtest.preamble", XINT, "-verbose:gc", "-showversion", "-Xmx10M", "-Dtest.postamble"})
 		:  (new String[] {"-Dtest.preamble", XINT, "-verbose:gc","-Xmx10M", "-Dtest.postamble"});
@@ -977,7 +979,7 @@ public class VmArgumentTests {
 		checkArgumentSequence(argList, argumentPositions, true);
 	}
 
-	
+	@Test
 	public void testXXArguments() {
 		String[] argList = new String[] {"-Dtest.preamble", "-XXallowvmshutdown:true", "-XX:-StackTraceInThrowable", "-XX:undefinedOption", "-Dtest.postamble"};
 		ProcessBuilder pb = makeProcessBuilder(argList, CLASSPATH);
@@ -987,7 +989,7 @@ public class VmArgumentTests {
 	}
 
 	/* specifying -Xoptionsfile=foo inside an options file does not cause foo to be treated as an options file */
-	
+	@Test
 	public void testOptionsFileInOptionsFile() {
 		String optFile2Content = "-Dtest.postamble";
 		String optionFile2Path = makeOptionsFile("test2", new String[] {optFile2Content});
@@ -1012,7 +1014,7 @@ public class VmArgumentTests {
 	 * specifying -Xoptionsfile=foo inside an environment variable results in the contents of the options file 
 	 * appearing in the argument list, but the -Xoptionsfile= argument itself does not appear in the argument list. 
 	 */
-	
+	@Test
 	public void testOptionsFileInEnvironmentVariable() {
 		ArrayList<String> actualArguments = null;
 		try {
@@ -1041,7 +1043,7 @@ public class VmArgumentTests {
 		}
 	}
 
-	
+	@Test
 	public void testEmptyArgument() {
 		String cmdlineArg = " ";
 		String[] vmArgs = new String[] {cmdlineArg};
@@ -1051,7 +1053,7 @@ public class VmArgumentTests {
 	}
 
 	/* options specified in IBM_JAVA_OPTIONS or JAVA_TOOL_OPTIONS should take precedence over inferred arguments created by the VM */
-	
+	@Test
 	public void testOverrideExtDirs() {
 		ArrayList<String> actualArguments = null;
 		try {
@@ -1082,7 +1084,7 @@ public class VmArgumentTests {
 	 * -XX options
 	 * -Xservice options
 	 */
-	
+	@Test
 	public void testEverything() {
 		ArrayList<String> actualArguments = null;
 		try {
@@ -1136,7 +1138,7 @@ public class VmArgumentTests {
 	/* 
 	 * Test multiple options with -Xcheck:memory
 	 */
-	
+	@Test
 	public void testMemoryLeaks() {
 		ArrayList<String> actualArguments = null;
 		try {
@@ -1209,7 +1211,7 @@ public class VmArgumentTests {
 		}
 	}
 
-	
+	@Test
 	public void testWAS80Cmdline() {
 		if (!OS_NAME_PROPERTY.startsWith("Windows") && (Integer.getInteger("com.ibm.vm.bitmode").intValue() == 64)) {
 			ArrayList<String> actualArguments = null;
