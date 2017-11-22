@@ -8479,8 +8479,8 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
    if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
       TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-         "Compilation thread executing compile(): j9method=%p isAotLoad=%d canDoRelocatableCompile=%d eligibleForRelocatableCompile=%d eligibleForRemoteCompile=%d _doNotUseAotCodeFromSharedCache=%d AOTfe=%d",
-          method, entry->isAotLoad(), canDoRelocatableCompile, eligibleForRelocatableCompile, eligibleForRemoteCompile, entry->_doNotUseAotCodeFromSharedCache, _vm->isAOT_DEPRECATED_DO_NOT_USE());
+         "Compilation thread executing compile(): j9method=%p isAotLoad=%d canDoRelocatableCompile=%d eligibleForRelocatableCompile=%d eligibleForRemoteCompile=%d _doNotUseAotCodeFromSharedCache=%d AOTfe=%d isDLT=%d",
+          method, entry->isAotLoad(), canDoRelocatableCompile, eligibleForRelocatableCompile, eligibleForRemoteCompile, entry->_doNotUseAotCodeFromSharedCache, _vm->isAOT_DEPRECATED_DO_NOT_USE(), entry->isDLTCompile());
 
       if (
           (TR::Options::canJITCompile()
@@ -9858,38 +9858,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
                TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
 
-                  {
-                  TR_TranslationArtifactManager *artifactManager = TR_TranslationArtifactManager::getGlobalArtifactManager();
-                  TR_TranslationArtifactManager::CriticalSection updateMetaData;
-                  int insertResult = artifactManager->insertArtifact(metaData);
-                  TR_ASSERT(insertResult, "insertArtifact failed");
-
-                  if (vm.isAnonymousClass(romClass))
-                     {
-                     J9Class *j9clazz = clazz;
-                     J9CLASS_EXTENDED_FLAGS_SET(j9clazz, J9ClassContainsJittedMethods);
-                     metaData->prevMethod = NULL;
-                     metaData->nextMethod = j9clazz->jitMetaDataList;
-                     if (j9clazz->jitMetaDataList)
-                        j9clazz->jitMetaDataList->prevMethod = metaData;
-                     j9clazz->jitMetaDataList = metaData;
-                     }
-                  else
-                     {
-                     J9ClassLoader * classLoader = clazz->classLoader;
-                     classLoader->flags |= J9CLASSLOADER_CONTAINS_JITTED_METHODS;
-                     metaData->prevMethod = NULL;
-                     metaData->nextMethod = classLoader->jitMetaDataList;
-                     if (classLoader->jitMetaDataList)
-                        classLoader->jitMetaDataList->prevMethod = metaData;
-                     classLoader->jitMetaDataList = metaData;
-                     }
-                  }
-
                setMetadata(metaData);
-
-               if (_methodBeingCompiled->isDLTCompile())
-                  jitMarkMethodReadyForDLT(vmThread, method);
 
                if (TR::Options::getVerboseOption(TR_VerboseJaas))
                   {
@@ -10840,6 +10809,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             remoteCompilationEnd(details, jitConfig, fe, entry, comp);
          else
             {
+
             J9::MethodInProgressDetails & dltDetails = static_cast<J9::MethodInProgressDetails &>(details);
             TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
             compInfo->insertDLTRecord(dltDetails.getMethod(), dltDetails.getByteCodeIndex(), startPC);

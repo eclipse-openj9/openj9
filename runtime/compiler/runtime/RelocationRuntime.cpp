@@ -760,12 +760,6 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
 
          jit_artifact_insert(javaVM()->portLibrary, jitConfig()->translationArtifacts, _exceptionTable);
 
-         // Fix up RAM method
-         TR::CompilationInfo::setJ9MethodExtra(_method, startPC);
-
-         // Return the send target
-         _method->methodRunAddress = jitConfig()->i2jTransition;
-
          // Test for anonymous classes
          J9Class *j9clazz = ramCP()->ramClass;
          if (fej9()->isAnonymousClass((TR_OpaqueClassBlock*)j9clazz))
