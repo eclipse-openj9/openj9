@@ -604,8 +604,8 @@ public:
 
    virtual int32_t            getArraySpineShift(int32_t);
    virtual int32_t            getArrayletMask(int32_t);
-   virtual int32_t            getArrayletLeafIndex(int32_t, int32_t);
-   virtual int32_t            getLeafElementIndex(int32_t , int32_t);
+   virtual int32_t            getArrayletLeafIndex(int64_t, int32_t);
+   virtual int32_t            getLeafElementIndex(int64_t , int32_t);
    virtual bool               CEEHDLREnabled();
 
    virtual int32_t            getCAASaveOffset();
