@@ -1155,6 +1155,16 @@ public final class MethodType implements Serializable {
 	MethodType asCollectorType(Class<?> clz, int num1, int num2) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
+	/*[IF Java18.3]*/
+	/**
+	 * Returns the number of stack slots used by the described args in the MethodType.
+	 * @return The number of stack slots
+	 */
+	int parameterSlotCount() {
+		return argSlots;
+	}
+	/*[ENDIF]*/	
 /*[ELSE]*/
 	MethodType asCollectorType(Class<?> clz, int num1) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
