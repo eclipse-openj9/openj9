@@ -155,6 +155,18 @@ class TR_PatchNOPedGuardSiteOnClassRedefinition: public TR::PatchNOPedGuardSite
    void setKey(uintptrj_t newKey) {_key = newKey;}
    };
 
+class TR_PatchMultipleNOPedGuardSitesOnClassRedefinition : public TR::PatchMultipleNOPedGuardSites
+   {
+   protected:
+   TR_PatchMultipleNOPedGuardSitesOnClassRedefinition(TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, TR::PatchSites *sites)
+      : TR::PatchMultipleNOPedGuardSites(pm, (uintptrj_t)clazz, RuntimeAssumptionOnClassRedefinitionNOP, sites) {}
+   public:
+   static TR_PatchMultipleNOPedGuardSitesOnClassRedefinition *make(
+      TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, TR::PatchSites *sites, OMR::RuntimeAssumption **sentinel);
+   virtual TR_RuntimeAssumptionKind getAssumptionKind() { return RuntimeAssumptionOnClassRedefinitionNOP; }
+   void setKey(uintptrj_t newKey) {_key = newKey;}
+   };
+
 class TR_PatchNOPedGuardSiteOnMutableCallSiteChange : public TR::PatchNOPedGuardSite
    {
    protected:
@@ -201,7 +213,8 @@ class TR_PatchJNICallSite : public OMR::ValueModifyRuntimeAssumption
          TR_PatchJNICallSite *site = other.asPJNICSite();
          return site != 0 && getPc() == site->getPc();
          }
-   virtual uint8_t *getAssumingPC() { return getPc(); }
+   virtual uint8_t *getFirstAssumingPC() { return getPc(); }
+   virtual uint8_t *getLastAssumingPC() { return getPc(); }
 
    virtual TR_PatchJNICallSite *asPJNICSite() { return this; }
    uint8_t *getPc() { return _pc; }
@@ -231,7 +244,8 @@ class TR_PreXRecompile : public OMR::LocationRedirectRuntimeAssumption
          }
 
    virtual TR_PreXRecompile *asPXRecompile() { return this; }
-   virtual uint8_t *getAssumingPC() { return getStartPC(); }
+   virtual uint8_t *getFirstAssumingPC() { return getStartPC(); }
+   virtual uint8_t *getLastAssumingPC() { return getStartPC(); }
    uint8_t *getStartPC()          { return _startPC; }
 
 
@@ -373,6 +387,7 @@ class TR_CHTable
 
    void commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> &sites,
                            TR_PersistentCHTable *table, TR::Compilation *comp);
+   void commitOSRVirtualGuards(TR::Compilation *comp, TR::list<TR_VirtualGuard*> &vguards);
 
    TR_Array<TR_OpaqueClassBlock *> *getClasses() { return _classes;}
    TR_Array<TR_OpaqueClassBlock *> *getClassesThatShouldNotBeNewlyExtended() { return _classesThatShouldNotBeNewlyExtended;}

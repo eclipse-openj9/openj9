@@ -266,7 +266,8 @@ class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
       TR_UnloadedClassPicSite *o = other.asUCPSite();
       return (o != 0) && o->_picLocation == _picLocation;
       }
-   virtual uint8_t *getAssumingPC() { return getPicLocation(); }
+   virtual uint8_t *getFirstAssumingPC() { return getPicLocation(); }
+   virtual uint8_t *getLastAssumingPC() { return getPicLocation(); }
    virtual TR_UnloadedClassPicSite *asUCPSite() { return this; }
    uint8_t * getPicLocation()    { return _picLocation; }
    void      setPicLocation   (uint8_t *p) { _picLocation = p; }

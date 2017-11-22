@@ -64,6 +64,14 @@ TR::PatchNOPedGuardSite::dumpInfo()
    }
 
 void
+TR::PatchMultipleNOPedGuardSites::dumpInfo()
+   {
+   OMR::RuntimeAssumption::dumpInfo("TR::PatchMultipleNOPedGuardSites");
+   for (int i = 0; i < _patchSites->getSize(); ++i)
+      TR_VerboseLog::write(" %d location=%p destination=%p", i, _patchSites->getLocation(i), _patchSites->getDestination(i));
+   }
+
+void
 TR_PatchJNICallSite::dumpInfo()
    {
    OMR::RuntimeAssumption::dumpInfo("TR_PatchJNICallSite");
@@ -90,6 +98,15 @@ TR_PatchNOPedGuardSiteOnClassRedefinition *TR_PatchNOPedGuardSiteOnClassRedefini
    TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, uint8_t *loc, uint8_t *dest, OMR::RuntimeAssumption **sentinel)
    {
    TR_PatchNOPedGuardSiteOnClassRedefinition *result = new (pm) TR_PatchNOPedGuardSiteOnClassRedefinition(pm, clazz, loc, dest);
+   result->addToRAT(pm, RuntimeAssumptionOnClassRedefinitionNOP, fe, sentinel);
+   return result;
+   }
+
+TR_PatchMultipleNOPedGuardSitesOnClassRedefinition *TR_PatchMultipleNOPedGuardSitesOnClassRedefinition::make(
+   TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, TR::PatchSites *sites, OMR::RuntimeAssumption **sentinel)
+   {
+   TR_PatchMultipleNOPedGuardSitesOnClassRedefinition *result = new (pm) TR_PatchMultipleNOPedGuardSitesOnClassRedefinition(pm, clazz, sites);
+   sites->addReference();
    result->addToRAT(pm, RuntimeAssumptionOnClassRedefinitionNOP, fe, sentinel);
    return result;
    }
@@ -323,6 +340,10 @@ bool TR_CHTable::commit(TR::Compilation *comp)
 
    if (!vguards.empty())
       {
+      static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
+      if (!dontGroupOSRAssumptions)
+         commitOSRVirtualGuards(comp, vguards);
+
       for (auto info = vguards.begin(); info != vguards.end(); ++info)
          {
          List<TR_VirtualGuardSite> &sites = (*info)->getNOPSites();
@@ -348,13 +369,65 @@ bool TR_CHTable::commit(TR::Compilation *comp)
    }
 
 void
+TR_CHTable::commitOSRVirtualGuards(TR::Compilation *comp, TR::list<TR_VirtualGuard*> &vguards)
+   {
+   // Count patch sites with OSR assumptions
+   int osrSites = 0;
+   TR_VirtualGuardSite *onlySite = NULL;
+   for (auto info = vguards.begin(); info != vguards.end(); ++info)
+      {
+      if ((*info)->getKind() == TR_OSRGuard || (*info)->mergedWithOSRGuard())
+         {
+         List<TR_VirtualGuardSite> &sites = (*info)->getNOPSites();
+         if (sites.getSize() > 0)
+            onlySite = sites.getListHead()->getData();
+         osrSites += sites.getSize();
+         }
+      }
+
+   TR_Array<TR_OpaqueClassBlock*> *clazzes = comp->getClassesForOSRRedefinition();
+   if (osrSites == 0 || clazzes->size() == 0)
+      return;
+   else if (osrSites == 1)
+      {
+      // Only one patch point, create an assumption for each class
+      for (int i = 0; i < clazzes->size(); ++i)
+         TR_PatchNOPedGuardSiteOnClassRedefinition
+            ::make(comp->fe(), comp->trPersistentMemory(), (*clazzes)[i], onlySite->getLocation(), onlySite->getDestination(), comp->getMetadataAssumptionList());
+      }
+   else if (osrSites > 1)
+      {
+      // Several points to patch, create collection
+      TR::PatchSites *points = new (comp->trPersistentMemory()) TR::PatchSites(comp->trPersistentMemory(), osrSites);
+      for (auto info = vguards.begin(); info != vguards.end(); ++info)
+         {
+         if ((*info)->getKind() == TR_OSRGuard || (*info)->mergedWithOSRGuard())
+            { 
+            List<TR_VirtualGuardSite> &sites = (*info)->getNOPSites();
+            ListIterator<TR_VirtualGuardSite> it(&sites);
+            for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
+               points->add(site->getLocation(), site->getDestination());
+            }
+         }
+ 
+      for (int i = 0; i < clazzes->size(); ++i)
+         TR_PatchMultipleNOPedGuardSitesOnClassRedefinition
+            ::make(comp->fe(), comp->trPersistentMemory(), (*clazzes)[i], points, comp->getMetadataAssumptionList());
+      }
+
+   comp->setHasClassRedefinitionAssumptions();
+   return;
+   }
+
+void
 TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> &sites,
                                TR_PersistentCHTable *table, TR::Compilation *comp)
    {
    // If this is an OSR guard or another kind that has been marked as necessary to patch
    // in OSR, add a runtime assumption for every class that generated fear
    //
-   if (info->getKind() == TR_OSRGuard || info->mergedWithOSRGuard())
+   static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
+   if (dontGroupOSRAssumptions && (info->getKind() == TR_OSRGuard || info->mergedWithOSRGuard()))
       {
       TR_Array<TR_OpaqueClassBlock*> *clazzes = comp->getClassesForOSRRedefinition();
       if (clazzes)
@@ -376,6 +449,9 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
          return;
       }
 
+   // OSR guards are specially handled
+   if (!dontGroupOSRAssumptions && info->getKind() == TR_OSRGuard)
+      return;
 
    TR::SymbolReference      *symRef               = info->getSymbolReference();
    TR::MethodSymbol         *methodSymbol         = symRef->getSymbol()->castToMethodSymbol();
