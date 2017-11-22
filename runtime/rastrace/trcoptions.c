@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2015 IBM Corp. and others
+ * Copyright (c) 1998, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -651,7 +651,8 @@ setOutput(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 				} else {
 					if ((UT_GLOBAL(generationChar) =
 						strchr(UT_GLOBAL(traceFilename), '#')) == NULL) {
-						reportCommandLineError(atRuntime, "Invalid filename for generation mode");
+						reportCommandLineError(atRuntime, "Invalid filename for generation mode," 
+								" the filename must contain a \"#\"");
 						rc = OMR_ERROR_ILLEGAL_ARGUMENT;
 					}
 				}
