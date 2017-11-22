@@ -325,14 +325,13 @@ public abstract class VarHandle extends VarHandleInternal {
 	}
 	
 	/**
-	 * Not all AccessMode are supported for all {@link VarHandle} instances, e.g. 
-	 * because of the field type and/or field modifiers. This method indicates whether 
-	 * a specific {@link AccessMode} is supported by by this {@link VarHandle} instance.
+	 * This is a helper method to allow sub-class ViewVarHandle provide its own implementation
+	 * while making isAccessModeSupported(accessMode) final to satisfy signature tests.
 	 * 
 	 * @param accessMode The {@link AccessMode} to check support for.
 	 * @return A boolean value indicating whether the {@link AccessMode} is supported.
 	 */
-	public final boolean isAccessModeSupported(AccessMode accessMode) {
+	boolean isAccessModeSupportedHelper(AccessMode accessMode) {
 		switch (accessMode) {
 		case GET:
 		case GET_VOLATILE:
@@ -372,6 +371,18 @@ public abstract class VarHandle extends VarHandleInternal {
 		default:
 			throw new InternalError("Invalid AccessMode"); //$NON-NLS-1$
 		}
+	}
+	
+	/**
+	 * Not all AccessMode are supported for all {@link VarHandle} instances, e.g. 
+	 * because of the field type and/or field modifiers. This method indicates whether 
+	 * a specific {@link AccessMode} is supported by by this {@link VarHandle} instance.
+	 * 
+	 * @param accessMode The {@link AccessMode} to check support for.
+	 * @return A boolean value indicating whether the {@link AccessMode} is supported.
+	 */
+	public final boolean isAccessModeSupported(AccessMode accessMode) {
+		return isAccessModeSupportedHelper(accessMode);
 	}
 	
 	/**
