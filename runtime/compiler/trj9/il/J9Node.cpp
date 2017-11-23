@@ -2678,3 +2678,8 @@ J9::Node::isArrayCopyCall()
    }
 
 
+bool
+J9::Node::requiresRegisterPair(TR::Compilation *comp)
+   {
+   return self()->getType().isLongDouble() || OMR::NodeConnector::requiresRegisterPair(comp);
+   }
