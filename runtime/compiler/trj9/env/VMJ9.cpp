@@ -5715,66 +5715,6 @@ TR_J9VMBase::indexedTrampolineLookup(int32_t helperIndex, void * callSite)
    return (intptrj_t)tramp;
    }
 
-void
-TR_J9VMBase::reserveNTrampolines(TR::Compilation * comp, int32_t n, bool inBinaryEncoding)
-   {
-#if defined(TR_TARGET_X86) && defined(TR_TARGET_64BIT)
-   // Don't do anything if method trampolines are not needed
-   if (!needsMethodTrampolines())
-      return;
-   bool hadClassUnloadMonitor;
-   bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
-
-   TR::CodeCache *curCache = comp->getCurrentCodeCache();
-   TR::CodeCache *newCache = curCache;
-   OMR::CodeCacheErrorCode::ErrorCode status = OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS;
-
-   TR_ASSERT(curCache->isReserved(), "assertion failure"); // MCT
-
-   if (!isAOT_DEPRECATED_DO_NOT_USE())
-      {
-      status = curCache->reserveNTrampolines(n);
-      if (status != OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS)
-         {
-         // Current code cache is no good. Must unreserve
-         curCache->unreserve();
-         newCache = 0;
-         if (!inBinaryEncoding)
-            {
-            newCache = TR::CodeCacheManager::instance()->getNewCodeCache(comp->getCompThreadID());
-            if (newCache)
-               {
-               status = newCache->reserveNTrampolines(n);
-               TR_ASSERT(status == OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS, "Failed to reserve trampolines in fresh code cache.");
-               }
-            }
-         }
-      }
-
-   acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
-
-   if (!newCache)
-      {
-      throw J9::TrampolineError();
-      }
-
-   if (newCache != curCache)
-      {
-      // We keep track of number of IPIC trampolines that are present in the current code cache
-      // If the code caches have been switched we have to reset this number, the setCodeCacheSwitched helper called
-      // in switchCodeCache resets the count
-      // If we are in binaryEncoding we will kill this compilation anyway
-      switchCodeCache(comp, curCache, newCache);
-      }
-   else
-      {
-      comp->setNumReservedIPICTrampolines(comp->getNumReservedIPICTrampolines()+n);
-      }
-
-   TR_ASSERT(newCache->isReserved(), "assertion failure");
-#endif
-   }
-
 bool TR_J9VMBase::needsMethodTrampolines()
    {
    TR::CodeCacheConfig &codeCacheConfig = TR::CodeCacheManager::instance()->codeCacheConfig();
@@ -7499,7 +7439,7 @@ TR_J9VM::transformJavaLangClassIsArray(TR::Compilation * comp, TR::Node * callNo
    //   PassThrough
    //     aload <parm 1>         <= jlClass
    // treetop
-   //   iushr 
+   //   iushr
    //    iand
    //     iloadi <classAndDepthFlags>
    //       aloadi <classFromJavaLangClass>
@@ -9435,7 +9375,7 @@ portLibCall_sysinfo_has_resumable_trap_handler()
       #endif
       #if defined(J9ZTPF)
          return false;
-      #else      
+      #else
          return true;
       #endif
    #endif

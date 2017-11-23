@@ -645,7 +645,7 @@ public:
    virtual int checkInlineableWithoutInitialCalleeSymbol (TR_CallSite* callsite, TR::Compilation* comp);
    virtual int checkInlineableTarget (TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp, bool inJSR292InliningPasses);
 
-#ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION 
+#ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    virtual bool inlineRecognizedCryptoMethod(TR_CallTarget* target, TR::Compilation* comp);
    virtual bool inlineNativeCryptoMethod(TR::Node *callNode, TR::Compilation *comp);
 #endif
@@ -786,7 +786,6 @@ public:
 
    virtual void reserveTrampolineIfNecessary( TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding);
    virtual intptrj_t indexedTrampolineLookup(int32_t helperIndex, void *callSite);
-   virtual void reserveNTrampolines( TR::Compilation *, int32_t n, bool inBinaryEncoding);
    virtual TR::CodeCache* getResolvedTrampoline( TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) = 0;
    virtual bool needsMethodTrampolines();
 
