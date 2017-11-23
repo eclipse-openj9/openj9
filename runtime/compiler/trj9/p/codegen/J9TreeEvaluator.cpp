@@ -12940,6 +12940,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          break;
 
       case TR::java_nio_Bits_keepAlive:
+      case TR::java_lang_ref_Reference_reachabilityFence:
          {
          TR::Node *paramNode = node->getFirstChild();
          TR::Register *paramReg = cg->evaluate(paramNode);
