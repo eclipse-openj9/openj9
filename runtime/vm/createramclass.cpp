@@ -1254,8 +1254,8 @@ processVTableMethod(J9VMThread *vmThread, J9ClassLoader *classLoader, UDATA *vTa
 			}
 		}
 
-		/* Package private (i.e. default) methods always requires a new slot */
-		if (J9_ARE_NO_BITS_SET(newModifiers, J9_JAVA_PROTECTED | J9_JAVA_PUBLIC)) {
+		/* Package private (i.e. default) methods always requires a new slot unless the new method is final */
+		if (J9_ARE_NO_BITS_SET(newModifiers, J9_JAVA_PROTECTED | J9_JAVA_PUBLIC | J9_JAVA_PRIVATE | J9_JAVA_FINAL)) {
 			newSlotRequired = TRUE;
 		}
 
