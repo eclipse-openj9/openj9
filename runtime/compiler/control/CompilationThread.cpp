@@ -1574,6 +1574,35 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(std::string(methodDescriptor, methodDescriptorLength));
          }
          break;
+      case J9ServerMessageType::runFEMacro_invokeCollectHandleNumArgsToCollect:
+         {
+         auto recv = client->getRecvData<uintptrj_t*, bool>();
+         uintptrj_t methodHandle = *std::get<0>(recv);
+         bool getPos = std::get<1>(recv);
+         TR::VMAccessCriticalSection invokeCollectHandleNumArgsToCollect(fe);
+         int32_t collectArraySize = fe->getInt32Field(methodHandle, "collectArraySize");
+         uintptrj_t arguments = fe->getReferenceField(
+                  fe->getReferenceField(methodHandle, "type", "Ljava/lang/invoke/MethodType;"),
+                  "arguments", "[Ljava/lang/Class;");
+         int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
+         int32_t collectionStart = 0;
+         if (getPos)
+            collectionStart = fe->getInt32Field(methodHandle, "collectPosition");
+         client->write(collectArraySize, numArguments, collectionStart);
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_invokeGuardWithTestHandleNumGuardArgs:
+         {
+         auto recv = client->getRecvData<uintptrj_t*>();
+         TR::VMAccessCriticalSection invokeGuardWithTestHandleNumGuardArgs(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
+         uintptrj_t guardArgs = fe->getReferenceField(fe->methodHandle_type(fe->getReferenceField(methodHandle,
+            "guard", "Ljava/lang/invoke/MethodHandle;")),
+            "arguments", "[Ljava/lang/Class;");
+         int32_t numGuardArgs = (int32_t)fe->getArrayLengthInElements(guardArgs);
+         client->write(numGuardArgs);
+         }
+         break;
       case J9ServerMessageType::runFEMacro_invokeExplicitCastHandleConvertArgs:
          {
          auto recv = client->getRecvData<uintptrj_t*>();

@@ -7146,7 +7146,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
       case TR::java_lang_invoke_CollectHandle_collectionStart:
       case TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure");
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -7159,15 +7158,27 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          uintptrj_t arguments;
          int32_t numArguments;
 
+         bool getCollectPosition = (symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() ==
+                                    TR::java_lang_invoke_CollectHandle_collectionStart)
+                                   || (symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() ==
+                                    TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray);
+
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeCollectHandleNumArgsToCollect,
+                          thunkDetails->getHandleRef(), getCollectPosition);
+            auto recv = stream->read<int32_t, int32_t, int32_t>();
+            collectArraySize = std::get<0>(recv);
+            numArguments = std::get<1>(recv);
+            collectionStart = std::get<2>(recv);
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeCollectHandleNumArgsToCollect(fej9);
             methodHandle = *thunkDetails->getHandleRef();
             collectArraySize = fej9->getInt32Field(methodHandle, "collectArraySize");
-            if ((symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_CollectHandle_collectionStart)
-             || (symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray))
-               {
+            if (getCollectPosition)
                collectionStart = fej9->getInt32Field(methodHandle, "collectPosition");
-               }
             arguments = fej9->getReferenceField(fej9->getReferenceField(methodHandle, "type", "Ljava/lang/invoke/MethodType;"), "arguments", "[Ljava/lang/Class;");
             numArguments = (int32_t)fej9->getArrayLengthInElements(arguments);
             }
@@ -7602,7 +7613,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          return true;
       case TR::java_lang_invoke_GuardWithTestHandle_numGuardArgs:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure");
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -7613,6 +7623,12 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          uintptrj_t guardArgs;
          int32_t numGuardArgs;
 
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeGuardWithTestHandleNumGuardArgs, thunkDetails->getHandleRef());
+            numGuardArgs = std::get<0>(stream->read<int32_t>());
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeGuardWithTestHandleNumGuardArgs(fej9);
             methodHandle = *thunkDetails->getHandleRef();
