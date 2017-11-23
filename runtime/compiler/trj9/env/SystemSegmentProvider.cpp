@@ -26,7 +26,6 @@
 
 J9::SystemSegmentProvider::SystemSegmentProvider(size_t defaultSegmentSize, size_t systemSegmentSize, size_t allocationLimit, J9::J9SegmentProvider &segmentAllocator, TR::RawAllocator rawAllocator) :
    SegmentAllocator(defaultSegmentSize),
-   _systemSegmentSize(systemSegmentSize),
    _allocationLimit(allocationLimit),
    _systemBytesAllocated(0),
    _regionBytesAllocated(0),
@@ -34,8 +33,19 @@ J9::SystemSegmentProvider::SystemSegmentProvider(size_t defaultSegmentSize, size
    _systemSegments( SystemSegmentDequeAllocator(rawAllocator) ),
    _segments(std::less< TR::MemorySegment >(), SegmentSetAllocator(rawAllocator)),
    _freeSegments( FreeSegmentDequeAllocator(rawAllocator) ),
-   _currentSystemSegment( TR::ref(_systemSegmentAllocator.request(_systemSegmentSize) ) )
+   _currentSystemSegment( TR::ref(_systemSegmentAllocator.request(systemSegmentSize) ) )
    {
+   TR_ASSERT(defaultSegmentSize <= systemSegmentSize, "defaultSegmentSize should be smaller than or equal to systemSegmentSize");
+
+   // We cannot simply assign systemSegmentSize to _systemSegmentSize because:
+   // We want to make sure that _currentSystemSegment is always a small system segment, i.e. its size <= _systemSegmentSize. When
+   // size alignment happens in _systemSegmentAllocator.request, this will be violated, make it _currentSystemSegment a large
+   // system segment capable of allocating large segments and small segments. A large segment and its containing system segment
+   // is allocated/released differently, we don't want to have a system segment whose memory is used by a mix of small segments
+   // and large segments.
+   //
+   _systemSegmentSize = _currentSystemSegment.get().size;
+
    try
       {
       _systemSegments.push_back(TR::ref(_currentSystemSegment));
@@ -58,6 +68,12 @@ J9::SystemSegmentProvider::~SystemSegmentProvider() throw()
       }
    }
 
+bool
+J9::SystemSegmentProvider::isLargeSegment(size_t segmentSize)
+   {
+   return segmentSize > _systemSegmentSize;
+   }
+
 TR::MemorySegment &
 J9::SystemSegmentProvider::request(size_t requiredSize)
    {
@@ -75,18 +91,15 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
 
    if (remaining(_currentSystemSegment) >= roundedSize)
       {
-      return allocateNewSegment(roundedSize);
+      // Only allocate small segments from _currentSystemSegment
+      TR_ASSERT(!isLargeSegment(remaining(_currentSystemSegment)), "_currentSystemSegment must be a small segment");
+      return allocateNewSegment(roundedSize, _currentSystemSegment);
       }
 
    size_t systemSegmentSize = std::max(roundedSize, _systemSegmentSize);
    if (_systemBytesAllocated + systemSegmentSize > _allocationLimit )
       {
       throw std::bad_alloc();
-      }
-
-   while (remaining(_currentSystemSegment) >= defaultSegmentSize())
-      {
-      _freeSegments.push_back( TR::ref( allocateNewSegment(defaultSegmentSize()) ) );
       }
 
    J9MemorySegment &newSegment = _systemSegmentAllocator.request(systemSegmentSize);
@@ -98,9 +111,12 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
       newSegment.heapAlloc,
       newSegment.heapTop
       );
+
+   TR::reference_wrapper<J9MemorySegment> newSegmentRef = TR::ref(newSegment);
+
    try
       {
-      _systemSegments.push_back(TR::ref(newSegment));
+      _systemSegments.push_back(newSegmentRef);
       }
    catch (...)
       {
@@ -108,8 +124,29 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
       throw;
       }
    _systemBytesAllocated += systemSegmentSize;
-   _currentSystemSegment = TR::ref(newSegment);
-   return allocateNewSegment(roundedSize);
+
+   // Rounded size determines when the segment is released, see J9::SystemSegmentProvider::release
+   if (!isLargeSegment(roundedSize))
+      {
+      // We want to use the remaining space of _currentSystemSegment after updating it.
+      // Carve its remaining space into small segments and add them to the free segment list so that we can use it later
+      //
+      while (remaining(_currentSystemSegment) >= defaultSegmentSize())
+         {
+         _freeSegments.push_back( TR::ref(allocateNewSegment(defaultSegmentSize(), _currentSystemSegment) ) );
+         }
+
+      _currentSystemSegment = newSegmentRef;
+      }
+   else
+      {
+      // _currentSystemSegment should not point to any segment with space larger than _systemSegmentSize because
+      // such segment cannot be reused for other requests and is to be released when the release method is invoked,
+      // e.g. when a TR::Region goes out of scope
+      //
+      }
+
+   return allocateNewSegment(roundedSize, newSegmentRef);
    }
 
 void
@@ -126,12 +163,19 @@ J9::SystemSegmentProvider::release(TR::MemorySegment & segment) throw()
          /* not much we can do here except leak */
          }
       }
-   else if (segment.size() > _systemSegmentSize)
+   else if (isLargeSegment(segment.size()))
       {
+      // System segments larger than _systemSegmentSize is used to create only one segment,
+      // release the corresponding system segment when releasing `segment`
       for (auto i = _systemSegments.begin(); i != _systemSegments.end(); ++i)
          {
          if (i->get().heapBase == segment.base())
             {
+            // Removing segment from _segments
+            //
+            auto it = _segments.find(segment);
+            _segments.erase(it);
+
             _regionBytesAllocated -= segment.size();
             _systemBytesAllocated -= segment.size();
             J9MemorySegment &customSystemSegment = i->get();
@@ -183,10 +227,10 @@ J9::SystemSegmentProvider::bytesAllocated() const throw()
    }
 
 TR::MemorySegment &
-J9::SystemSegmentProvider::allocateNewSegment(size_t size)
+J9::SystemSegmentProvider::allocateNewSegment(size_t size, TR::reference_wrapper<J9MemorySegment> systemSegment)
    {
    TR_ASSERT( (size % defaultSegmentSize()) == 0, "Misaligned segment");
-   void *newSegmentArea = operator new(size, _currentSystemSegment);
+   void *newSegmentArea = operator new(size, systemSegment);
    if (!newSegmentArea) throw std::bad_alloc();
    try
       {
@@ -196,7 +240,7 @@ J9::SystemSegmentProvider::allocateNewSegment(size_t size)
       }
    catch (...)
       {
-      ::operator delete(newSegmentArea, _currentSystemSegment);
+      ::operator delete(newSegmentArea, systemSegment);
       throw;
       }
    }

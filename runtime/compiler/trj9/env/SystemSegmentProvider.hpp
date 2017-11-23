@@ -47,14 +47,16 @@ public:
    size_t bytesAllocated() const throw();
    size_t allocationLimit() const throw();
    void setAllocationLimit(size_t allocationLimit);
+   bool isLargeSegment(size_t segmentSize);
 
 private:
    size_t round(size_t requestedSize);
    ptrdiff_t remaining(const J9MemorySegment &memorySegment);
-   TR::MemorySegment &allocateNewSegment(size_t size);
+   TR::MemorySegment &allocateNewSegment(size_t size, TR::reference_wrapper<J9MemorySegment> systemSegment);
    TR::MemorySegment &createSegmentFromArea(size_t size, void * segmentArea);
 
-   size_t const _systemSegmentSize;
+   // _systemSegmentSize is only to be written once in the constructor
+   size_t _systemSegmentSize;
    size_t _allocationLimit;
    size_t _systemBytesAllocated;
    size_t _regionBytesAllocated;
@@ -91,6 +93,10 @@ private:
       FreeSegmentDequeAllocator
       > _freeSegments;
 
+   // Current active System segment from where memory might be allocated.
+   // A segment with space larger than _systemSegmentSize is used for only one request,
+   // and is to be released when the release method is invoked, e.g. when a TR::Region
+   // goes out of scope. Thus _currentSystemSegment is not allowed to hold such segment.
    TR::reference_wrapper<J9MemorySegment> _currentSystemSegment;
 
    };
