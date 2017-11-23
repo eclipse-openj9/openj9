@@ -97,8 +97,6 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    TR_J9VMBase *fej9();
    TR_J9VM *fej9vm();
 
-   bool nodeNeeds2Regs(TR::Node * node);
-
    static void allocateCompYieldStatsMatrix();
 
    static TR_Stats **_compYieldStatsMatrix;

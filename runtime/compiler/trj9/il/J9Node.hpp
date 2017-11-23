@@ -38,6 +38,7 @@ namespace J9 { typedef J9::Node NodeConnector; }
 class TR_OpaquePseudoRegister;
 class TR_StorageReference;
 class TR_PseudoRegister;
+namespace TR { class Compilation; }
 namespace TR { class Node; }
 namespace TR { class ResolvedMethodSymbol; }
 namespace TR { class TreeTop; }
@@ -86,6 +87,15 @@ public:
    TR_PseudoRegister       *getPseudoRegister();
    TR_OpaquePseudoRegister *getOpaquePseudoRegister();
 #endif
+
+   /**
+    * @brief Answers whether the act of evaluating this node will
+    *        require a register pair (two registers) to hold the
+    *        result.
+    * @param comp, the TR::Compilation object
+    * @return true if two registers are required; false otherwise
+    */
+   bool requiresRegisterPair(TR::Compilation *comp);
 
    TR::Node *getSetSignValueNode();
    void setKnownSignCodeFromRawSign(int32_t rawSignCode);
@@ -367,14 +377,14 @@ public:
 
 protected:
 
-   /// \note update the following routines when adding field to DecimalInfo 
+   /// \note update the following routines when adding field to DecimalInfo
    ///       isDecimalSizeAndShapeEquivalent()
    ///       isSignStateEquivalent()
    ///       resetDecimalSignFlags()
    ///       transferSignState()
    /// Also be sure to initialize any new field in the Node.cpp constructor
    struct DecimalInfo
-      {                                                  
+      {
       uint32_t  _decimalPrecision                  : 6;  ///< range 0->63
       int32_t   _decimalAdjustOrFractionOrDivisor  : 7;  ///< range as Adjust -63->63 (on all except conversion nodes)
                                                          ///< range as Fraction -63->63 (only on isConversionWithFraction nodes)
