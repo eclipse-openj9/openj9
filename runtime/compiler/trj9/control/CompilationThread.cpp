@@ -10325,7 +10325,7 @@ TR::CompilationInfo::computeFreePhysicalLimitAndAbortCompilationIfLow(TR::Compil
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Aborting Compilation: Low On Physical Memory %lld B", freePhysicalMemorySizeB);
             }
 
-         throw J9::LowPhysicalMemory();
+         comp->failCompilation<J9::LowPhysicalMemory>("Low Physical Memory");
          }
       }
 

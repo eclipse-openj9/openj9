@@ -349,9 +349,8 @@ bool acquireVMaccessIfNeeded(J9VMThread *vmThread, TR_YesNoMaybe isCompThread)
                   {
                   if (hadClassUnloadMonitor)
                      TR::MonitorTable::get()->readReleaseClassUnloadMonitor(compInfoPT->getCompThreadId()); // Main code should do it.
+                  throw TR::CompilationInterrupted();
                   }
-
-               throw TR::CompilationInterrupted();
                }
             else // GC did not do any unloading
                {
@@ -5660,7 +5659,7 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
                      {
                      newCache->unreserve(); // delete the reservation
                      newCache = NULL;
-                     throw TR::CompilationInterrupted();
+                     comp->failCompilation<TR::CompilationInterrupted>("Compilation Interrupted when reserving trampoline if necessary");
                      }
                   else
                      {
@@ -5669,13 +5668,13 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
                         {
                         newCache->unreserve(); // delete the reservation
                         newCache = NULL;
-                        throw J9::TrampolineError();
+                        comp->failCompilation<J9::TrampolineError>("Failed to reserve unresolved trampoline");
                         }
                      }
                   }
                else // cannot allocate a new code cache
                   {
-                  throw J9::TrampolineError();
+                  comp->failCompilation<J9::TrampolineError>("Failed to allocate new code cache");
                   }
                }
             else
@@ -5683,11 +5682,11 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
                newCache = 0;
                if (inBinaryEncoding)
                   {
-                  throw J9::RecoverableTrampolineError(); // RAS only
+                  comp->failCompilation<J9::RecoverableTrampolineError>("Failed to delete the old reservation"); // RAS only
                   }
                else
                   {
-                  throw J9::TrampolineError(); // RAS only
+                  comp->failCompilation<J9::TrampolineError>("Failed to delete the old reservation"); // RAS only
                   }
                }
             }
@@ -7136,7 +7135,8 @@ TR_J9VM::getResolvedTrampoline(TR::Compilation *comp, TR::CodeCache* curCache, J
                   {
                   newCache->unreserve(); // delete the reservation
                   newCache = NULL;
-                  throw TR::CompilationInterrupted(); // this will allow retrial of the compilation
+                  // this will allow retrial of the compilation
+                  comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in getResolvedTrampoline");
                   }
                else
                   {
@@ -7145,18 +7145,18 @@ TR_J9VM::getResolvedTrampoline(TR::Compilation *comp, TR::CodeCache* curCache, J
                      {
                      newCache->unreserve(); // delete the reservation
                      newCache = NULL;
-                     throw J9::TrampolineError();
+                     comp->failCompilation<J9::TrampolineError>("Failed to reserve resolved trampoline");
                      }
                   }
                }
             else
                {
-               throw J9::TrampolineError();
+               comp->failCompilation<J9::TrampolineError>("Failed to allocate new code cache");
                }
             }
          else
             {
-            throw J9::TrampolineError();
+            comp->failCompilation<J9::TrampolineError>("AOT Compile failed to delete the old reservation");
             }
          }
       else
@@ -7164,11 +7164,11 @@ TR_J9VM::getResolvedTrampoline(TR::Compilation *comp, TR::CodeCache* curCache, J
          newCache = NULL;
          if (inBinaryEncoding)
             {
-            throw J9::RecoverableTrampolineError();
+            comp->failCompilation<J9::RecoverableTrampolineError>("Failed to delete the old reservation");
             }
          else
             {
-            throw J9::TrampolineError();
+            comp->failCompilation<J9::TrampolineError>("Failed to delete the old reservation");
             }
          }
       }
@@ -9101,7 +9101,13 @@ TR_J9SharedCacheVM::persistThunk(char *signatureChars, uint32_t signatureLength,
 
    const void* store= _jitConfig->javaVM->sharedClassConfig->storeSharedData(curThread, signatureChars, signatureLength, &dataDescriptor);
    if (!store) /* Store failed */
-      throw TR::CompilationException();
+      {
+      TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+      if (comp)
+         comp->failCompilation<TR::CompilationException>("Failed to persist thunk");
+      else
+         throw TR::CompilationException();
+      }
 
 #endif
    return thunkStart;

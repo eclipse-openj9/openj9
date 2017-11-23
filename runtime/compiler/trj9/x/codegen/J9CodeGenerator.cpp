@@ -445,7 +445,7 @@ J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
 
    if (!newCache)
       {
-      throw J9::TrampolineError();
+      comp->failCompilation<J9::TrampolineError>("Failed to allocate code cache in reserveNTrampolines");
       }
 
    if (newCache != curCache)
