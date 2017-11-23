@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1482,7 +1482,7 @@ void TR::AMD64PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelSymbol *
    cg()->incPicSlotCountBy(IPicParameters.defaultNumberOfSlots);
    numIPICs = IPicParameters.defaultNumberOfSlots;
 
-   fej9->reserveNTrampolines(comp(), numIPICs, false);
+   cg()->reserveNTrampolines(numIPICs);
    }
 
 void TR::AMD64PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk)

@@ -2880,7 +2880,7 @@ void TR::X86PrivateLinkage::buildVPIC(TR::X86CallSite &site, TR::LabelSymbol *en
    cg()->addSnippet(snippet);
 
    cg()->incPicSlotCountBy(VPicParameters.defaultNumberOfSlots);
-   fej9->reserveNTrampolines(comp(), VPicParameters.defaultNumberOfSlots, false);
+   cg()->reserveNTrampolines(VPicParameters.defaultNumberOfSlots);
    }
 
 void TR::X86PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86CallSite &site, int32_t numIPicSlots, TR::X86PICSlot &lastPicSlot, TR::Instruction *&slotPatchInstruction, TR::LabelSymbol *doneLabel, TR::LabelSymbol *lookupDispatchSnippetLabel, TR_OpaqueClassBlock *declaringClass, uintptrj_t itableIndex )
