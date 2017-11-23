@@ -29,21 +29,42 @@
 
 namespace J9 {
 
+/**
+ * Runtime Failure exception type.
+ *
+ * General Runtime Failure exception type.
+ */
 struct RuntimeFailure : public virtual TR::CompilationException
    {
    virtual const char* what() const throw() { return "Runtime failure"; }
    };
 
+/**
+ * Metadata Creation Failure exception type.
+ *
+ * Thrown when the compiler fails to create the metadata describing a
+ * compiled body.
+ */
 struct MetaDataCreationFailure : public virtual RuntimeFailure
    {
    virtual const char* what() const throw() { return "MetaData Creation failure"; }
    };
 
+/**
+ * CH Table Commit Failure exception type.
+ *
+ * Thrown when the compiler fails a CH Table Commit.
+ */
 struct CHTableCommitFailure : public virtual RuntimeFailure
    {
    virtual const char* what() const throw() { return "CH Table Commit failure"; }
    };
 
+/**
+ * Lambda Enforce Scorching exception type.
+ *
+ * Used for GPU optimizations to enforce a recompilation at scorching
+ */
 class LambdaEnforceScorching : public virtual TR::InsufficientlyAggressiveCompilation
    {
    virtual const char* what() const throw() { return "Lambda Enforce Scorching"; }
