@@ -299,9 +299,9 @@
 	</configuration>
 
 	<configuration
-		  label="JAVA18.3"
-		  outputpath="JAVA18.3/src"
-		  flags="Java18.3"
+		  label="JAVA10"
+		  outputpath="JAVA10/src"
+		  flags="Java10"
 		  dependencies="SIDECAR19-SE-B175"
 		  jdkcompliance="1.8">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
