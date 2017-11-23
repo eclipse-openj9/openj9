@@ -53,6 +53,7 @@
 				<removeexportsoropens action="exports" package="com.ibm.oti.shared" />
 				<removeexportsoropens action="exports" package="com.ibm.sharedclasses.spi" />
 				<replaceexportsoropens action="exports" module.old="com.ibm.dtfj" module.new="" />
+				<replaceexportsoropens action="exports" module.old="com.ibm.dtfjview" module.new="" />
 
 				<delete verbose="true">
 					<fileset dir="${module.dir}/classes">
@@ -83,6 +84,9 @@
 						<echo message="Can't find b148 patch file: ${patch-b148.zip} or skipped for ${module.platform}" level="info" />
 					</else>
 				</if>
+			</case>
+			<case value="com.ibm.dtfj">
+				<replaceexportsoropens action="exports" module.old="com.ibm.dtfjview" module.new="" />
 			</case>
 			<case value="com.ibm.dtfjview">
 				<replaceexportsoropens action="exports" module.old="com.ibm.dtfj" module.new="" />

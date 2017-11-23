@@ -20,7 +20,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-module com.ibm.dtfjview {
+module openj9.dtfjview {
 	requires openj9.dtfj;
 	requires java.logging;
 

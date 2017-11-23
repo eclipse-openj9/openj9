@@ -36,11 +36,11 @@ module openj9.dtfj {
 	requires com.ibm.jzos;
 	/*[ENDIF]*/
 	exports com.ibm.dtfj.image;
-	exports com.ibm.dtfj.image.j9 to com.ibm.dtfjview;
+	exports com.ibm.dtfj.image.j9 to openj9.dtfjview;
 	exports com.ibm.dtfj.java;
 	exports com.ibm.dtfj.runtime;
-	exports com.ibm.dtfj.utils.file to com.ibm.dtfjview;
-	exports com.ibm.java.diagnostics.utils to com.ibm.dtfjview;
-	exports com.ibm.java.diagnostics.utils.commands to com.ibm.dtfjview;
-	exports com.ibm.java.diagnostics.utils.plugins to com.ibm.dtfjview;
+	exports com.ibm.dtfj.utils.file to openj9.dtfjview;
+	exports com.ibm.java.diagnostics.utils to openj9.dtfjview;
+	exports com.ibm.java.diagnostics.utils.commands to openj9.dtfjview;
+	exports com.ibm.java.diagnostics.utils.plugins to openj9.dtfjview;
 }

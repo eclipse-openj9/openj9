@@ -33,7 +33,7 @@
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.cuda/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.dataaccess/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.dtfj/share/classes"/>
-	<classpathentry excluding="**/module-info.java" kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.dtfjview/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.gpu/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/com.ibm.management/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.sharedclasses/share/classes"/>
