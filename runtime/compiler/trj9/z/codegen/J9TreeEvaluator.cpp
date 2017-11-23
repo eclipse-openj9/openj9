@@ -15665,9 +15665,59 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
                                           bool isUseVector)
    {
    TR_Debug* debugObj = cg->getDebug();
-   TR::Node * secondChild = node->getChild(1);
+   TR::Node* secondChild = node->getChild(1);
+   TR::Compilation* comp = cg->comp();
+   TR::Register* bcdOpResultReg = NULL;
+
    bool isVariableParam = pdopNode->getOpCodeValue() == TR::lcall ||
                           pdopNode->getOpCodeValue() == TR::icall;
+
+   // Skip the evaluation of pdshlOverflow if its child i2pd (or l2pd) is already evaluated.
+   //
+   // If vector instructions are used, the pdshlOverflow+i2pd structure only requires one VCVD(G) instruction to achieve
+   // the desired functionality. Effectively, the pdshlOverflow does not need any evaluation. The value (register) associated with
+   // i2pd can be copied over to the pdshlOverflow node. This also implies that the
+   // pdshlOverflow node is not an exceptioning node. Thus, generating an OOL sequence for a non-exceptioning node no only
+   // violates the definition of BCDCHK node, but also can make RA generate bad GC map and eventually cause GC error during runtime
+   //
+   if (isUseVector)
+      {
+      bool hasEvaluatedI2PD = pdopNode->getOpCodeValue() == TR::pdshlOverflow
+              && (pdopNode->getFirstChild()->getOpCodeValue() == TR::i2pd ||
+                  pdopNode->getFirstChild()->getOpCodeValue() == TR::l2pd)
+              && pdopNode->getFirstChild()->getRegister() != NULL;
+
+      if (hasEvaluatedI2PD && pdopNode->getRegister() == NULL)
+         {
+         cg->evaluate(pdopNode);
+         bcdOpResultReg = pdopNode->getRegister();
+         cg->decReferenceCount(pdopNode);
+         }
+
+      if (bcdOpResultReg != NULL || hasEvaluatedI2PD)
+         {
+         // Skip the second child. In case the result is a packed decimal, the second child is an re-materialized
+         // address node.
+         if (isResultPD)
+            cg->recursivelyDecReferenceCount(secondChild);
+         else
+            cg->decReferenceCount(secondChild);
+
+         // The third child and beyond
+         for (uint32_t i = 0; i < numCallChildren; ++i)
+            {
+            TR::Node* callParamNode = node->getChild(i + 2);
+            if (callParamNode->getReferenceCount() > 1 && callParamNode->getRegister() == NULL)
+               cg->evaluate(callParamNode);
+
+            cg->decReferenceCount(callParamNode);
+            }
+
+         cg->setCurrentBCDCHKHandlerLabel(NULL);
+         traceMsg(comp, "Skipping BCDCHK, node n%dn is already evaluated to a VRF.\n", pdopNode->getGlobalIndex());
+         return bcdOpResultReg;
+         }
+      }
 
    bool isResultLong = pdopNode->getOpCodeValue() == TR::pd2l ||
                        pdopNode->getOpCodeValue() == TR::pd2lOverflow ||
@@ -15715,22 +15765,15 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
       }
 
    // Evaluate intrinsics node
-   TR::Register* bcdOpResultReg = NULL;
    if(isVariableParam)
-      {
       bcdOpResultReg = pd2lVariableEvaluator(node, cg, isUseVector);
-      }
    else if(isResultPD && !isUseVector)
-      {
       bcdOpResultReg = cg->evaluateBCDNode(pdopNode);
-      }
    else
-      {
       bcdOpResultReg = cg->evaluate(pdopNode);
-      }
 
    // start of OOL section
-   traceMsg(cg->comp(), "starting OOL section generation.\n");
+   traceMsg(comp, "starting OOL section generation.\n");
    TR_S390OutOfLineCodeSection* outlinedHelperCall = new (INSN_HEAP) TR_S390OutOfLineCodeSection(handlerLabel, passThroughLabel, cg);
    cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
    outlinedHelperCall->swapInstructionListsWithCompilation();
@@ -15738,12 +15781,10 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
    TR::Instruction* cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, handlerLabel);
 
    if(debugObj)
-      {
       debugObj->addInstructionComment(cursor, "Start of BCDCHK OOL sequence");
-      }
 
    // Debug counter for tracking how often we fall back to the OOL path of the DAA intrinsic
-   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "DAA/OOL/(%s)/%p", cg->comp()->signature(), node), 1, TR::DebugCounter::Undetermined);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "DAA/OOL/(%s)/%p", comp->signature(), node), 1, TR::DebugCounter::Undetermined);
 
    // Evaluate the callNode, duplicate and evaluate the address node, and then copy the
    // correct results back to the mainline storage ref or register
@@ -15800,21 +15841,15 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
    // Decrement reference counts
    cg->recursivelyDecReferenceCount(callNode);
    if(isVariableParam)
-      {
       // variable parameter l2pd is a call node
       cg->recursivelyDecReferenceCount(pdopNode);
-      }
    else
-      {
       cg->decReferenceCount(pdopNode);
-      }
 
    if(debugObj)
-      {
       debugObj->addInstructionComment(cursor, "End of BCDCHK OOL sequence: return to mainline");
-      }
 
-   traceMsg(cg->comp(), "Finished OOL section generation.\n");
+   traceMsg(comp, "Finished OOL section generation.\n");
 
    // ***Done using OOL with manual code generation *** //
    outlinedHelperCall->swapInstructionListsWithCompilation();
