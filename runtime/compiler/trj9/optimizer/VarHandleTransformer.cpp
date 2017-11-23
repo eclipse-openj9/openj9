@@ -351,6 +351,9 @@ int32_t TR_VarHandleTransformer::perform()
                invokeCall->setAndIncChild(child_i, nodeCursor);
                child_i++;
                }
+
+            // Set the flag on the caller symbol to trigger targeted inlining
+            methodSymbol->setHasMethodHandleInvokes(true);
             }
          }
       }

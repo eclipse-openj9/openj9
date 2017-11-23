@@ -135,6 +135,7 @@ class TR_J9InlinerUtil: public OMR_InlinerUtil
                    TR::TreeTop *&virtualGuard, TR::Block *block4);
       virtual void refineInliningThresholds(TR::Compilation *comp, int32_t &callerWeightLimit, int32_t &maxRecursiveCallByteCodeSizeEstimate, int32_t &methodByteCodeSizeThreshold, int32_t &methodInWarmBlockByteCodeSizeThreshold, int32_t &methodInColdBlockByteCodeSizeThreshold, int32_t &nodeCountThreshold, int32_t size);
       static void checkForConstClass(TR_CallTarget *target, TR_InlinerTracer *tracer);
+      virtual bool needTargetedInlining(TR::ResolvedMethodSymbol *callee);
    protected:
       virtual bool validateInterfaceImplementation(TR_ResolvedMethod *interfaceMethod);
       virtual void refineColdness (TR::Node* node, bool& isCold);
