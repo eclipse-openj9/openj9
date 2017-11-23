@@ -5715,13 +5715,6 @@ TR_J9VMBase::indexedTrampolineLookup(int32_t helperIndex, void * callSite)
    return (intptrj_t)tramp;
    }
 
-bool TR_J9VMBase::needsMethodTrampolines()
-   {
-   TR::CodeCacheConfig &codeCacheConfig = TR::CodeCacheManager::instance()->codeCacheConfig();
-   return codeCacheConfig.needsMethodTrampolines();
-   }
-
-
 // interpreter profiling support
 TR_IProfiler *
 TR_J9VMBase::getIProfiler()

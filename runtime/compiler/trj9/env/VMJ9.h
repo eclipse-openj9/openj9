@@ -787,7 +787,6 @@ public:
    virtual void reserveTrampolineIfNecessary( TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding);
    virtual intptrj_t indexedTrampolineLookup(int32_t helperIndex, void *callSite);
    virtual TR::CodeCache* getResolvedTrampoline( TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) = 0;
-   virtual bool needsMethodTrampolines();
 
    // Interpreter profiling support
    virtual TR_IProfiler  *getIProfiler();
