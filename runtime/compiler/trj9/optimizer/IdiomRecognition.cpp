@@ -3209,7 +3209,7 @@ int32_t TR_CISCTransformer::perform()
             traceMsg(comp(), "\n");
             }
 
-         // Iterate through the loop body blocks to remove Bits.keepAlive() call.
+         // Iterate through the loop body blocks to remove Bits.keepAlive() or Reference.reachabilityFence() calls.
          // This is a NOP function inserted into NIO libraries to keep the NIO object and its native
          // ptr alive until after the native pointer accesses.
          removeBitsKeepAliveCalls(&bblistBody);
@@ -7753,9 +7753,13 @@ TR_CISCTransformer::embeddingHasConflictingBranches()
    return false;
 }
 
-// Iterate through the loop body blocks to remove Bits.keepAlive() call.
-// The keepAlive() call is a NOP function inserted into NIO libraries to keep
+// Iterate through the loop body blocks to remove Bits.keepAlive() and Reference.reachabilityFence() calls.
+// The keepAlive() and Reference.reachabilityFence() calls are NOP functions inserted into NIO libraries to keep
 // the NIO object and its native ptr alive until after the native pointer accesses.
+// Reference.reachabilityFence is a newly introduced Java 9 public API, we will remove this call only if the caller comes
+// from the java.nio package, i.e. only for Reference.reachabilityFence calls replacing existing Bits.keepAlive calls
+// in the java.nio package. For all other non-nio callers, we will conservatively not remove the call to not break existing
+// Idiom Recognition code.
 
 bool
 TR_CISCTransformer::removeBitsKeepAliveCalls(List<TR::Block> *body)
@@ -7785,7 +7789,12 @@ TR_CISCTransformer::removeBitsKeepAliveCalls(List<TR::Block> *body)
             if (node->getOpCode().isCall())
                {
                TR::MethodSymbol *methodSym = node->getSymbol()->getMethodSymbol();
-               if (methodSym->getRecognizedMethod() == TR::java_nio_Bits_keepAlive)
+               // If the call is Bits.keepAlive() which is package private hence can only be called from the nio package,
+               // or the call is Reference.reachabilityFence() which is public _and_ provided the caller is from the nio package,
+               // only then we will remove the call node.
+               if (methodSym->getRecognizedMethod() == TR::java_nio_Bits_keepAlive
+                  || ((methodSym->getRecognizedMethod() == TR::java_lang_ref_Reference_reachabilityFence)
+                     && (!strncmp(comp()->fe()->sampleSignature(node->getOwningMethod(), 0, 0, comp()->trMemory()), "java/nio/", 9))))
                   {
                   if (trace())
                      traceMsg(comp(), "\t\tRemoving KeepAlive call found in block %d [%p] @ Node: %p\n",block->getNumber(), block, node);

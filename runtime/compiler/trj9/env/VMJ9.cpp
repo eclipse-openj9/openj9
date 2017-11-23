@@ -3147,6 +3147,7 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
       switch (callNode->getSymbol()->getResolvedMethodSymbol()->getMandatoryRecognizedMethod())
          {
          case TR::java_nio_Bits_keepAlive: // This is an empty method whose only purpose is to serve as an anchored use of a given object, so it doesn't get collected
+         case TR::java_lang_ref_Reference_reachabilityFence: // This is an empty method whose only purpose is to serve as an anchored use of a given object, so it doesn't get collected
          case TR::java_lang_Object_newInstancePrototype:
          //case TR::java_lang_String_init_String:
             dontInlineRecognizedMethod = true;

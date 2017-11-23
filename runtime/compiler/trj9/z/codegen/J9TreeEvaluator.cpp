@@ -12376,6 +12376,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
          break;
 
       case TR::java_nio_Bits_keepAlive:
+      case TR::java_lang_ref_Reference_reachabilityFence:
          resultReg = inlineKeepAlive(node, cg);
          return true;
 
