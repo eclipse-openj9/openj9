@@ -131,7 +131,7 @@ JAVA_VERSION=[SE80|SE90] (SE90 default value)
 5. Exclude tests:
   * temporarily on all platforms
 
-    Add a line in the test/TestConfig/default_exclude.txt file. It is the same format that the OpenJDK tests use, name of test, defect number, platforms to exclude.
+    Depends on the JAVA_VERSION, add a line in the test/TestConfig/resources/excludes/latest_exclude_$(JAVA_VERSION).txt file. It is the same format that the OpenJDK tests use, name of test, defect number, platforms to exclude.
 
     To exclude on all platforms, use generic-all.  For example:
 
@@ -142,7 +142,7 @@ org.openj9.test.java.lang.management.TestOperatingSystemMXBean:testGetProcessCPU
 Note that we additionally added support to exclude individual methods of a test class, by using :methodName behind the class name (OpenJDK does not support this currently). In the example, only the testGetProcessCPULoad method from that class will be excluded (on all platforms/specs).
   * temporarily on specific platforms or architectures
 
-    Same as excluding on all platforms, you add a line to the default_exclude.txt file, but with specific specs to exclude, for example:
+    Same as excluding on all platforms, you add a line to latest_exclude_$(JAVA_VERSION).txt file, but with specific specs to exclude, for example:
 ```
 org.openj9.test.java.lang.management.TestOperatingSystemMXBean 121187 linux_x86-64
 ```
