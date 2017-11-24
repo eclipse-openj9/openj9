@@ -37,6 +37,7 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheConfig.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheTypes.hpp"
 #include "runtime/Runtime.hpp"
@@ -408,8 +409,7 @@ J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
    TR::Compilation *comp = self()->comp();
 
-   // Don't do anything if method trampolines are not needed
-   if (!fej9->needsMethodTrampolines())
+   if (!TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines())
       return;
 
    bool hadClassUnloadMonitor;

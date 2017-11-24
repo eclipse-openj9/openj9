@@ -45,6 +45,7 @@
 #include "runtime/MethodMetaData.h"
 #include "runtime/Runtime.hpp"
 #include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheConfig.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/ArtifactManager.hpp"
 #include "runtime/DataCache.hpp"
@@ -1261,7 +1262,7 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
    if (TR::Options::getCmdLineOptions()->getOption(TR_TLHPrefetch))
       featureFlags |= TR_FeatureFlag_TLHPrefetch;
 
-   if (fe->needsMethodTrampolines())
+   if (TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines())
       featureFlags |= TR_FeatureFlag_MethodTrampolines;
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR))
