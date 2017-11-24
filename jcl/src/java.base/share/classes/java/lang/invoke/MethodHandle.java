@@ -837,11 +837,7 @@ public abstract class MethodHandle {
 			
 			Objects.requireNonNull(classObject);
 			
-			try { 
-				type = MethodType.fromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject));
-			} catch (TypeNotPresentException e) {
-				throw throwNoClassDefFoundError(e);
-			}
+			type = MethodType.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
 			int bsmIndex = UNSAFE.getShort(bsmData);
 			int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
 			long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
@@ -916,11 +912,7 @@ public abstract class MethodHandle {
 					cpEntry = cp.getDoubleAt(index);
 					break;
 				case 13:
-					try {
-						cpEntry = getCPMethodTypeAt(internalRamClass, index);
-					} catch (TypeNotPresentException e) {
-						throw throwNoClassDefFoundError(e);
-					}
+					cpEntry = getCPMethodTypeAt(internalRamClass, index);
 					break;
 				case 14:
 					cpEntry = getCPMethodHandleAt(internalRamClass, index);
@@ -990,27 +982,6 @@ public abstract class MethodHandle {
 		
 		return result;
 	}
-	
-	/**
-	 * Helper method to throw NoClassDefFoundError if the cause of TypeNotPresentException 
-	 * is ClassNotFoundException. Otherwise, re-throw TypeNotPresentException.
-	 * 
-	 * @param   an instance of TypeNotPresentException
-	 * 
-	 * @return  Throwable to prevent any fall through case
-	 * 
-	 * @throws  NoClassDefFoundError if the cause of TypeNotPresentException is 
-	 *          ClassNotFoundException. Otherwise, re-throw TypeNotPresentException.
-	 */
-	private static Throwable throwNoClassDefFoundError(TypeNotPresentException e) {
-		Throwable cause = e.getCause();
-		if (cause instanceof ClassNotFoundException) {
-			NoClassDefFoundError noClassDefFoundError = new NoClassDefFoundError(cause.getMessage());
-			noClassDefFoundError.initCause(cause);
-			throw noClassDefFoundError;
-		}
-		throw e;
-	}
 
 	/**
 	 * Retrieve the class name of the constant pool class element located at the specified
@@ -1025,7 +996,7 @@ public abstract class MethodHandle {
 	 * 
 	 * @throws  NoClassDefFoundError with the cause set as ClassNotFoundException
 	 */
-	private static Throwable throwNoClassDefFoundError(Class<?> clazz, int index) {
+	private static final Throwable throwNoClassDefFoundError(Class<?> clazz, int index) {
 		String className = getCPClassNameAt(clazz, index);
 		NoClassDefFoundError noClassDefFoundError = new NoClassDefFoundError(className);
 		noClassDefFoundError.initCause(new ClassNotFoundException(className));
@@ -1105,7 +1076,7 @@ public abstract class MethodHandle {
 			Class<?> referenceClazz,
 			String name,
 			String typeDescriptor,
-			ClassLoader loader) throws ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NoSuchMethodException {
+			ClassLoader loader) throws Throwable {
 		MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass, false);
 		MethodType type = null;
 		
@@ -1119,19 +1090,19 @@ public abstract class MethodHandle {
 		case 4: /* putStatic */
 			return lookup.findStaticSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
 		case 5: /* invokeVirtual */
-			type = MethodType.fromMethodDescriptorString(typeDescriptor, loader);
+			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 			return lookup.findVirtual(referenceClazz, name, type);
 		case 6: /* invokeStatic */
-			type = MethodType.fromMethodDescriptorString(typeDescriptor, loader);
+			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 			return lookup.findStatic(referenceClazz, name, type);
 		case 7: /* invokeSpecial */ 
-			type = MethodType.fromMethodDescriptorString(typeDescriptor, loader);
+			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 			return lookup.findSpecial(referenceClazz, name, type, currentClass);
 		case 8: /* newInvokeSpecial */
-			type = MethodType.fromMethodDescriptorString(typeDescriptor, loader);
+			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 			return lookup.findConstructor(referenceClazz, type);
 		case 9: /* invokeInterface */
-			type = MethodType.fromMethodDescriptorString(typeDescriptor, loader);
+			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 			return lookup.findVirtual(referenceClazz, name, type);
 		}
 		/* Can never happen */
@@ -1142,8 +1113,8 @@ public abstract class MethodHandle {
 	 * #fromMethodDescritorString().  The verifier checks to ensure that the typeDescriptor is
 	 * a valid field descriptor so adding the "()V" around it is valid.
 	 */
-	private static final Class<?> resolveFieldHandleHelper(String typeDescriptor, ClassLoader loader) {
-		MethodType mt = MethodType.fromMethodDescriptorString("(" + typeDescriptor + ")V", loader); //$NON-NLS-1$ //$NON-NLS-2$
+	private static final Class<?> resolveFieldHandleHelper(String typeDescriptor, ClassLoader loader) throws Throwable {
+		MethodType mt = MethodType.vmResolveFromMethodDescriptorString("(" + typeDescriptor + ")V", loader, null); //$NON-NLS-1$ //$NON-NLS-2$
 		return mt.parameterType(0);
 	}
 	

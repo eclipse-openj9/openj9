@@ -333,27 +333,14 @@ public class IndyTest {
 		}
 	}
 	
-	//Negative test : Creating an invalid MethodType using LDC
+	//Negative test : Creating a MethodType with a non-existent class using LDC
 	@Test(groups = { "level.extended" })
-	public void test_indyn_ldc_invalid_type() {
-		
-		boolean typeNotPresentExceptionThrown = false;
-		
+	public void test_indyn_ldc_non_existent_class_methodtype() {
 		try {
 			MethodType mtToString = com.ibm.j9.jsr292.indyn.GenIndyn.ldc_invalid_type();
-		} catch ( java.lang.TypeNotPresentException e ) {
-			typeNotPresentExceptionThrown = true;
-		}
-		
-		//Call it again
-		try {
-			MethodType mtToString = com.ibm.j9.jsr292.indyn.GenIndyn.ldc_invalid_type();
-		} catch ( java.lang.TypeNotPresentException e ) {
-			typeNotPresentExceptionThrown = true;
-		}
-		
-		if ( typeNotPresentExceptionThrown == false ) {
-			Assert.fail("TypeNotPresentException not thrown when invalid type descriptor is used to create MethodType via LDC");
+			Assert.fail("NoClassDefFoundError not thrown when non-existent class is used to create MethodType via LDC");
+		} catch (NoClassDefFoundError e) {
+			/* Expected behavior */
 		}
 	}
 	

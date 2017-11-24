@@ -333,8 +333,7 @@
 	<staticmethodref class="java/lang/J9VMInternals" name="threadCleanup" signature="(Ljava/lang/Thread;)V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="newInstanceImpl" signature="(Ljava/lang/Class;)Ljava/lang/Object;" flags="jit_newInstancePrototype"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="formatNoSuchMethod" signature="(Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;"/>
-	<staticmethodref class="java/lang/invoke/MethodType" name="fromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
-	<staticmethodref class="java/lang/invoke/MethodType" name="fromMethodDescriptorStringAppendArg" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
+	<staticmethodref class="java/lang/invoke/MethodType" name="vmResolveFromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/> 
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/> 
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="invokeWithArgumentsHelper" signature="(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/> 
