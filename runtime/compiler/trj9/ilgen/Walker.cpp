@@ -6912,8 +6912,11 @@ TR_J9ByteCodeIlGenerator::genNewArray(int32_t typeIndex)
    if (_methodSymbol->skipZeroInitializationOnNewarrays())
      node->setCanSkipZeroInitialization(true);
 
+   bool generateArraylets = comp()->generateArraylets();
+
    // special case for handling Arrays.copyOf in the StringEncoder fast paths for Java 9+
    if (!comp()->isOutermostMethod() && !comp()->isPeekingMethod()
+       && !generateArraylets
        && _methodSymbol->getRecognizedMethod() == TR::java_util_Arrays_copyOf_byte)
      {
      int32_t callerIndex = comp()->getCurrentInlinedCallSite()->_byteCodeInfo.getCallerIndex();
@@ -6955,8 +6958,6 @@ TR_J9ByteCodeIlGenerator::genNewArray(int32_t typeIndex)
       }
 
    TR::Node *initNode = NULL;
-
-   bool generateArraylets = comp()->generateArraylets();
 
    if (!comp()->getOption(TR_DisableSeparateInitFromAlloc) &&
        !node->canSkipZeroInitialization() &&
