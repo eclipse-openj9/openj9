@@ -180,7 +180,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		private static final long serialVersionUID = 1346155847239551492L;
 	}
 
-	// Singleton used by all String instances to share the compression flag
+	// Singleton used by all String instances to indicate a non-compressed string has been 
+	// allocated. JIT attempts to fold away the null check involving this static if the
+	// StringCompressionFlag class has not been initialized and patches the code to bring back
+	// the null check if a non-compressed String is constructed.
 	private static StringCompressionFlag compressionFlag;
 
 	// Represents the bit in count field to test for whether this String backing array is not compressed
@@ -2426,7 +2429,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		/*[IF Sidecar19-SE]*/
 		byte[] buffer = value;
 		// Check if the String is compressed
-		if (enableCompression && count >= 0) {
+		if (enableCompression && (compressionFlag == null || count >= 0)) {
 			if (buffer.length != currentLength) {
 				buffer = new byte[currentLength];
 				compressedArrayCopy(value, 0, buffer, 0, currentLength);
@@ -2530,7 +2533,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		/*[IF Sidecar19-SE]*/
 		byte[] buffer = value;
 		// Check if the String is compressed
-		if (enableCompression && count >= 0) {
+		if (enableCompression && (compressionFlag == null || count >= 0)) {
 			if (buffer.length != currentLength) {
 				buffer = new byte[currentLength];
 				compressedArrayCopy(value, 0, buffer, 0, currentLength);
@@ -2622,7 +2625,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public int hashCode() {
 		if (hashCode == 0) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression && (compressionFlag == null || count >= 0)) {
 				hashCode = hashCodeImplCompressed(value, 0, lengthInternal());
 			} else {
 				hashCode = hashCodeImplDecompressed(value, 0, lengthInternal());
@@ -3113,7 +3116,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	int lengthInternal() {
 		if (enableCompression) {
 			// Check if the String is compressed
-			if (count >= 0) {
+			if (compressionFlag == null || count >= 0) {
 				return count;
 			}
 			
@@ -3177,7 +3180,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		s1Value.getClass(); // Implicit null check
 		s2Value.getClass(); // Implicit null check
 
-		if (enableCompression && (s1.count | s2.count) >= 0) {
+		if (enableCompression && ((compressionFlag == null) || ((s1.count | s2.count) >= 0))) {
 			if (helpers.getByteFromArrayByIndex(s1Value, o1 + end) != helpers.getByteFromArrayByIndex(s2Value, o2 + end)) {
 				return false;
 			} else {
@@ -5167,7 +5170,7 @@ written authorization of the copyright holder.
 		/*[IF Sidecar19-SE]*/
 		byte[] buffer = value;
 		// Check if the String is compressed
-		if (enableCompression && count >= 0) {
+		if (enableCompression && (compressionFlag == null || count >= 0)) {
 			if (buffer.length != currentLength) {
 				buffer = new byte[currentLength];
 				compressedArrayCopy(value, 0, buffer, 0, currentLength);
