@@ -3712,6 +3712,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {  TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ,   24, "invokeExactTargetAddress",   (int16_t)-1, "*"},
       {x(TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper,   "invokeWithArgumentsHelper",  "(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_MethodHandle_asType, "asType", "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
+      {x(TR::java_lang_invoke_MethodHandle_asType_instance, "asType", "(Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
       {  TR::unknownMethod}
       };
 
@@ -4503,7 +4504,19 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
          else if ((classNameLen == 29) && !strncmp(className, "java/lang/invoke/MethodHandle", 29))
             {
             if (!strncmp(name, "asType", 6))
-               setRecognizedMethodInfo(TR::java_lang_invoke_MethodHandle_asType);
+               {
+               int32_t instanceAsTypeSigLen = strlen("(Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;");
+               if (sigLen == instanceAsTypeSigLen &&
+                   !strncmp(sig, "(Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;", instanceAsTypeSigLen))
+                  {
+                  setRecognizedMethodInfo(TR::java_lang_invoke_MethodHandle_asType_instance);
+                  }
+               else
+                  {
+                  setRecognizedMethodInfo(TR::java_lang_invoke_MethodHandle_asType);
+                  }
+               }
+
             if (!strncmp(name, "invokeExactTargetAddress",24))
                setRecognizedMethodInfo(TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress);
             }

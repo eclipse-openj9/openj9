@@ -58,4 +58,14 @@ final class MemberName {
 	public boolean isNative() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+	
+	/*[IF Java18.3]*/
+	public MethodType getMethodType() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	
+	String getMethodDescriptor() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	/*[ENDIF]*/
 }
