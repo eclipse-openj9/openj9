@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,8 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/SymbolReference.hpp"
+#include "runtime/CodeCacheConfig.hpp"
+#include "runtime/CodeCacheManager.hpp"
 
 #define NON_HELPER   0x00
 
@@ -44,7 +46,9 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
    // calculate the amount of memory needed to hold the relocation data
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
 
-   if (TR::Compiler->target.is64Bit() && fej9->needsMethodTrampolines() && _cg->getPicSlotCount())
+   if (TR::Compiler->target.is64Bit()
+       && TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines()
+       && _cg->getPicSlotCount())
       {
       _cg->addAOTRelocation(new (_cg->trHeapMemory()) TR::ExternalRelocation(NULL,
                                                                                  (uint8_t *)_cg->getPicSlotCount(),
