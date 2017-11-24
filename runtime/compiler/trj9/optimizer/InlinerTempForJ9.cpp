@@ -4923,6 +4923,24 @@ TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target)
    return argInfo;
    }
 
+bool TR_J9InlinerUtil::needTargetedInlining(TR::ResolvedMethodSymbol *callee)
+   {
+   // Trees from archetype specimens may not match the archetype method's bytecodes,
+   // so there may be some calls things that inliner missed.
+   //
+   // We also inline again if MethodHandle.asType has been inlined because VP might be able to
+   // prove invokeHandleGeneric is invoke exact
+   //
+   // Tactically, we also inline again based on hasMethodHandleInvokes because EstimateCodeSize
+   // doesn't yet cope with invokeHandle, invokeHandleGeneric, and invokeDynamic (but it should).
+   //
+   if (callee->getMethod()->isArchetypeSpecimen() ||
+       callee->hasMethodHandleInvokes() ||
+       callee->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_asType)
+      return true;
+   return false;
+   }
+
 /** Find arguments which refer to constant classes
  If a parameter refers to a constant class, set the known object index in _ecsPrexArgInfo
  of the target.

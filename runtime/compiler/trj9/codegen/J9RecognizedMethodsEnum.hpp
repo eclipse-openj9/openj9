@@ -993,6 +993,7 @@
    java_lang_invoke_InterfaceHandle_invokeExact,
    java_lang_invoke_MethodHandle_doCustomizationLogic,
    java_lang_invoke_MethodHandle_asType,
+   java_lang_invoke_MethodHandle_asType_instance,
    java_lang_invoke_MethodHandle_invoke,
    java_lang_invoke_MethodHandle_invokeExact,
    java_lang_invoke_MethodHandle_invokeExactTargetAddress,
