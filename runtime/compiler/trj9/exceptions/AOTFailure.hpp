@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 #pragma once
 
 #include "compile/CompilationException.hpp"
+#include "exceptions/RuntimeFailure.hpp"
 
 namespace J9 {
 
@@ -44,7 +45,7 @@ class AOTHasInvokeSpecialInInterface : public virtual TR::RecoverableILGenExcept
    virtual const char* what() const throw() { return "AOT Has Invoke Special in Interface"; }
    };
 
-class AOTRelocationFailed : public virtual TR::CompilationException
+class AOTRelocationFailed : public virtual RuntimeFailure
    {
    virtual const char* what() const throw() { return "AOT Relocation Failed"; }
    };

@@ -32,7 +32,7 @@
 #include "env/VMAccessCriticalSection.hpp"
 #include "exceptions/AOTFailure.hpp"
 #include "exceptions/FSDFailure.hpp"
-#include "exceptions/CompilationAbortion.hpp"
+#include "exceptions/RuntimeFailure.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"

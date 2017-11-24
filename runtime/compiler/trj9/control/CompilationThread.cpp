@@ -68,7 +68,6 @@
 #include "exceptions/AOTFailure.hpp"
 #include "exceptions/FSDFailure.hpp"
 #include "exceptions/TrampolineError.hpp"
-#include "exceptions/CompilationAbortion.hpp"
 #include "exceptions/DataCacheError.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -9737,6 +9736,9 @@ TR::CompilationInfoPerThreadBase::processException(
       throw;
       }
 
+   // The catch blocks below are ordered such that in each group of
+   // blocks, the least derived type is at the end of the group.
+
    /* Allocation Exceptions Start */
    catch (const TR::RecoverableCodeCacheError &e)
       {
@@ -9780,14 +9782,7 @@ TR::CompilationInfoPerThreadBase::processException(
       }
    /* Allocation Exceptions End */
 
-   catch (const J9::CHTableCommitFailure &e)
-      {
-      _methodBeingCompiled->_compErrCode = compilationCHTableCommitFailure;
-      }
-   catch (const J9::MetaDataCreationFailure &e)
-      {
-      _methodBeingCompiled->_compErrCode = compilationMetaDataFailure;
-      }
+   /* IL Gen Exceptions Start */
    catch (const J9::AOTHasInvokeHandle &e)
       {
       _methodBeingCompiled->_compErrCode = compilationAotHasInvokehandle;
@@ -9796,15 +9791,44 @@ TR::CompilationInfoPerThreadBase::processException(
       {
       _methodBeingCompiled->_compErrCode = compilationAotHasInvokeVarHandle;
       }
+   catch (const J9::FSDHasInvokeHandle &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
+      }
+   catch (const TR::ILGenFailure &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationILGenFailure;
+      }
+   /* IL Gen Exceptions End */
+
+   /* Runtime Failure Exceptions Start */
+   catch (const J9::CHTableCommitFailure &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationCHTableCommitFailure;
+      }
+   catch (const J9::MetaDataCreationFailure &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationMetaDataFailure;
+      }
    catch (const J9::AOTRelocationFailed &e)
       {
       // no need to set error code here because error code is set
       // in installAotCachedMethod when the relocation failed
-      } 
+      }
+   /* Runtime Failure Exceptions End */
+
+   /* Insufficiently Aggressive Compilation Exceptions Start */
    catch (const J9::LambdaEnforceScorching &e)
       {
       _methodBeingCompiled->_compErrCode = compilationLambdaEnforceScorching;
       }
+   catch (const TR::InsufficientlyAggressiveCompilation &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationNeededAtHigherLevel;
+      }
+   /* Insufficiently Aggressive Compilation Exceptions End */
+
+   /* Excessive Complexity Exceptions Start */
    catch (const TR::ExcessiveComplexity &e)
       {
       _methodBeingCompiled->_compErrCode = compilationExcessiveComplexity;
@@ -9813,10 +9837,8 @@ TR::CompilationInfoPerThreadBase::processException(
       {
       _methodBeingCompiled->_compErrCode = compilationMaxCallerIndexExceeded;
       }
-   catch (const TR::ILGenFailure &e)
-      {
-      _methodBeingCompiled->_compErrCode = compilationILGenFailure;
-      }
+   /* Excessive Complexity Exceptions End */
+
    catch (const TR::CompilationInterrupted &e)
       {
       _methodBeingCompiled->_compErrCode = compilationInterrupted;
@@ -9824,10 +9846,6 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const TR::UnimplementedOpCode &e)
       {
       _methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
-      }
-   catch (const TR::InsufficientlyAggressiveCompilation &e)
-      {
-      _methodBeingCompiled->_compErrCode = compilationNeededAtHigherLevel;
       }
    catch (const TR::GCRPatchFailure &e)
       {
@@ -9865,10 +9883,6 @@ TR::CompilationInfoPerThreadBase::processException(
             );
          }
          Trc_JIT_compilationFailed(vmThread, compiler->signature(), -1);
-      }
-   catch (const J9::FSDHasInvokeHandle &e)
-      {
-      _methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
       }
    catch (...)
       {

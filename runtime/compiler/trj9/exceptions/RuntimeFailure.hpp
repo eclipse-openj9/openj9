@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,11 @@ struct MetaDataCreationFailure : public virtual RuntimeFailure
 struct CHTableCommitFailure : public virtual RuntimeFailure
    {
    virtual const char* what() const throw() { return "CH Table Commit failure"; }
+   };
+
+class LambdaEnforceScorching : public virtual TR::InsufficientlyAggressiveCompilation
+   {
+   virtual const char* what() const throw() { return "Lambda Enforce Scorching"; }
    };
 }
 
