@@ -2641,48 +2641,33 @@ void TR_SPMDKernelParallelizer::insertGPUTemporariesLivenessCode(List<TR::TreeTo
 
    for (TR::TreeTop *insertionPoint = lit.getFirst(); insertionPoint; insertionPoint = lit.getNext())
       {
-      int i = 0;
-      TR::Node* currentNode;
-      TR::Node* prevNode;
+      TR::Node* currentNode = NULL;
 
-      if (!firstKernel)
+      if (firstKernel)
+         {
+         currentNode = TR::Node::lconst(insertionPoint->getNode(), 0);
+         }
+      else
          {
          currentNode = TR::Node::create(TR::a2l, 1, TR::Node::createWithSymRef(insertionPoint->getNode(), TR::loadaddr, 0, liveSymRef));
-         prevNode = currentNode;
-         i++;
          }
 
       for (nc.SetToFirst(); nc.Valid(); nc.SetToNext())
          {
-         TR::Node *node = gpuSymbolMap[nc]._node;
          TR::SymbolReference *hostSymRef = gpuSymbolMap[nc]._hostSymRef;
          TR::SymbolReference *devSymRef = gpuSymbolMap[nc]._devSymRef;
          int32_t parmSlot = gpuSymbolMap[nc]._parmSlot;
-         int32_t elementSize = gpuSymbolMap[nc]._elementSize;
-         bool hoistAccess = gpuSymbolMap[nc]._hoistAccess;
 
          if (!hostSymRef) continue;
          if (parmSlot == -1) continue;
 
          hostSymRef = gpuSymbolMap[nc]._hostSymRefTemp;
 
-         if (i == 0)
-           {
-           currentNode = TR::Node::create(TR::a2l, 1, TR::Node::createWithSymRef(insertionPoint->getNode(), TR::loadaddr, 0, hostSymRef));
-           }
-         else
-           {
-           currentNode = TR::Node::create(TR::ladd, 2, TR::Node::create(TR::a2l, 1, TR::Node::createWithSymRef(insertionPoint->getNode(), TR::loadaddr, 0, hostSymRef)), prevNode);
-           }
-
-         prevNode = currentNode;
-         i++;
+         currentNode = TR::Node::create(TR::ladd, 2, TR::Node::create(TR::a2l, 1, TR::Node::createWithSymRef(insertionPoint->getNode(), TR::loadaddr, 0, hostSymRef)), currentNode);
 
          if (!hostSymRef->getSymbol()->getType().isAddress()) continue;
 
-         currentNode = TR::Node::create(TR::ladd, 2, TR::Node::create(TR::a2l, 1, TR::Node::createWithSymRef(insertionPoint->getNode(), TR::loadaddr, 0, devSymRef)), prevNode);
-         prevNode = currentNode;
-         i++;
+         currentNode = TR::Node::create(TR::ladd, 2, TR::Node::create(TR::a2l, 1, TR::Node::createWithSymRef(insertionPoint->getNode(), TR::loadaddr, 0, devSymRef)), currentNode);
          }
 
       TR::Node *treetopNode = TR::Node::create(TR::treetop, 1, currentNode);
