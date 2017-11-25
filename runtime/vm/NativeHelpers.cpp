@@ -216,6 +216,22 @@ freeJ9NativeCalloutDataRef(J9VMThread *currentThread, void *nativeCalloutData)
 	j9mem_free_memory(calloutData->cif);
 	calloutData->cif = NULL;
 }
+
+void
+freeJ9NativeStructData(J9VMThread *currentThread, void *nativeStructData)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9NativeStructData *structData = NULL;
+
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	Assert_VM_notNull(nativeStructData);
+
+	structData = (J9NativeStructData *)nativeStructData;
+
+	j9mem_free_memory(structData->layoutString);
+	structData->layoutString = NULL;
+}
 #endif /* J9VM_OPT_PANAMA */
 
 }

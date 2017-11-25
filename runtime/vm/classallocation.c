@@ -417,7 +417,21 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 		hashTableFree(classLoader->nativeCalloutDataHashTable);
 		classLoader->nativeCalloutDataHashTable = NULL;
 	}
-	#endif /* J9VM_OPT_PANAMA */
+
+	if (NULL != classLoader->nativeStructDataHashTable) {
+		J9HashTableState nativeStructDataWalkState;
+
+		J9NativeStructData* nativeStructData = (J9NativeStructData*)hashTableStartDo(classLoader->nativeStructDataHashTable, &nativeStructDataWalkState);
+		while (NULL != nativeStructData) {
+			freeJ9NativeStructData(vmThread, (void *)nativeStructData);
+			nativeStructData = (J9NativeStructData*)hashTableNextDo(&nativeStructDataWalkState);
+		}
+
+		hashTableFree(classLoader->nativeStructDataHashTable);
+		classLoader->nativeCalloutDataHashTable = NULL;
+	}
+#endif /* J9VM_OPT_PANAMA */
+
 	/* Free the ROM class orphans class table */
 	if (NULL != classLoader->romClassOrphansHashTable) {
 		hashTableFree(classLoader->romClassOrphansHashTable);

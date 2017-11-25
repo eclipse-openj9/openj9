@@ -168,7 +168,6 @@ public:
 			}
 		}
 doneGetCustomFFIType:
-		/* TODO: Need to cleanup cached structData */
 		if ((NULL != cachedTypeFFI) && (buf != bufOnStackLocal)) {
 			j9mem_free_memory(buf);
 		}

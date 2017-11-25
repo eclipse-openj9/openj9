@@ -337,6 +337,14 @@ convertCStringToByteArray(J9VMThread *currentThread, const char *byteArray);
  */
 void
 freeJ9NativeCalloutDataRef(J9VMThread *currentThread, void *nativeCalloutData);
+
+/**
+ * @brief Free J9NativeStructData from J9ClassLoader->nativeStructDataHashTable
+ * @param currentThread[in] the current J9VMThread
+ * @param nativeStructData[in] Void pointer that will be casted to J9NativeStructData within the function
+ */
+void
+freeJ9NativeStructData(J9VMThread *currentThread, void *nativeStructData);
 #endif /* J9VM_OPT_PANAMA */
 
 /* ------------------- romclasses.c ----------------- */
