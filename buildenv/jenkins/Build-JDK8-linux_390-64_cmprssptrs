@@ -1,9 +1,9 @@
 node('390') {
 
-    SDK_VERSION = "9"
+    SDK_VERSION = "8"
     DEFAULT_OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
     DEFAULT_OPENJDK_BRANCH = "openj9"
-    BOOT_JDK = "$HOME/openj9/ibm-java-s390x-80"
+    BOOT_JDK = "$HOME/openj9/ibm-java-s390x-71"
     FREEMARKER = "$HOME/openj9/freemarker.jar"
     SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-Linux_390-64_cmprssptrs-"
     SDK_SUFFIX = ".tar.gz"

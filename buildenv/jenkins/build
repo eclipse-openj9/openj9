@@ -1,0 +1,79 @@
+def build() {
+    stage('Get Source') {
+        timestamps {
+            script {
+                if (fileExists('.git')) {
+                    sh "git clean -ffxd"
+                }
+            }
+            
+            // Setup REPO variables
+            script {
+                if ( OPENJDK_REPO == "" ) {
+                    OPENJDK_REPO = DEFAULT_OPENJDK_REPO
+                }
+                if ( OPENJDK_BRANCH == "" ) {
+                    OPENJDK_BRANCH = DEFAULT_OPENJDK_BRANCH
+                }
+                if ( OPENJ9_REPO != "" ) {
+                    OPENJ9_REPO_OPTION = "-openj9-repo=${OPENJ9_REPO}"
+                } else {
+                    OPENJ9_REPO_OPTION = ''
+                }
+                if ( OPENJ9_BRANCH != "" ) {
+                    OPENJ9_BRANCH_OPTION = "-openj9-branch=${OPENJ9_BRANCH}"
+                } else {
+                    OPENJ9_BRANCH_OPTION = ''
+                }
+                if ( OPENJ9_SHA != "" ) {
+                    OPENJ9_SHA_OPTION = "-openj9-sha=${OPENJ9_SHA}"
+                } else {
+                    OPENJ9_SHA_OPTION = ''
+                }
+                if ( OMR_REPO != "" ) {
+                    OMR_REPO_OPTION = "-omr-repo=${OMR_REPO}"
+                } else {
+                    OMR_REPO_OPTION = ''
+                }
+                if ( OMR_BRANCH != "" ) {
+                    OMR_BRANCH_OPTION = "-omr-branch=${OMR_BRANCH}"
+                } else {
+                    OMR_BRANCH_OPTION = ''
+                }
+                if ( OMR_SHA != "" ) {
+                    OMR_SHA_OPTION = "-omr-sha=${OMR_SHA}"
+                } else {
+                    OMR_SHA_OPTION = ''
+                }
+            }
+            
+            git branch: "${OPENJDK_BRANCH}", url: "${OPENJDK_REPO}"
+            sh "git checkout ${OPENJDK_SHA}"
+            sh "bash ./get_source.sh ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
+        }
+    }
+           
+    stage('Compile') {
+        timestamps {
+            sh "bash ./configure --with-freemarker-jar=$FREEMARKER --with-boot-jdk=$BOOT_JDK"
+            sh "make all"
+        }
+    }
+    stage('Java Version') {
+        timestamps {
+            sh "build/$RELEASE/images/jdk/bin/java -version"
+        }
+    }
+    stage('Archive') {
+        timestamps {
+            dir ("build/$RELEASE/images") {
+                sh "tar -zcvf ${WORKSPACE}/${SDK_PREFIX}`date +%Y%d%m%H%M`${SDK_SUFFIX} jdk"
+            }
+            dir ('openj9') {
+                sh "tar -zcvf ${WORKSPACE}/${TEST_PREFIX}`git rev-parse --short HEAD`${TEST_SUFFIX} test"
+            }
+            archiveArtifacts artifacts: "**/${SDK_PREFIX}*${SDK_SUFFIX}, **/${TEST_PREFIX}*${TEST_SUFFIX}", fingerprint: true, onlyIfSuccessful: true
+        }
+    }
+}
+return this
