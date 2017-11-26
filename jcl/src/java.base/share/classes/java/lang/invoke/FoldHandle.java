@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2016 IBM Corp. and others
+ * Copyright (c) 2011, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,12 +48,10 @@ abstract class FoldHandle extends MethodHandle {
 
 	public static FoldHandle get(MethodHandle next, MethodHandle combiner, MethodType type, int foldPosition, int... argumentIndices) {
 		if (combiner.type().returnType() == void.class) {
-			/* The foldPosition doesn't matter to FoldVoidHandle, 2 FoldVoidHandles 
-			 * with same next, combiner and argumentIndices should share the same thunk 
-			 * even if their foldPositions given by the user are different.
-			 * So set foldPosition to 0 for FoldVoidHandle.
+			/* The foldPosition is used to determine the starting position of combiner,
+			 * so it must be kept unchanged even though the combiner returns void.
 			 */
-			return new FoldVoidHandle(next, combiner, type, 0, argumentIndices);
+			return new FoldVoidHandle(next, combiner, type, foldPosition, argumentIndices);
 		} else {
 			return new FoldNonvoidHandle(next, combiner, type, foldPosition, argumentIndices);
 		}
