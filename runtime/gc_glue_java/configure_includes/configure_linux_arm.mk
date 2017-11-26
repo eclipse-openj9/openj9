@@ -27,9 +27,11 @@ CONFIGURE_ARGS += \
 	--enable-OMR_THR_YIELD_ALG \
 	--enable-OMR_THR_SPIN_WAKE_CONTROL
 
-ifeq (linux_arm, $(SPEC))
+OPENJ9_CC_PREFIX ?= arm-bcm2708hardfp-linux-gnueabi
+
+ifneq (,$(findstring linux_arm, $(SPEC)))
 	CONFIGURE_ARGS += \
-		--host=arm-bcm2708hardfp-linux-gnueabi \
+		--host=$(OPENJ9_CC_PREFIX) \
 		--build=x86_64-pc-linux-gnu \
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_ARM \
@@ -38,21 +40,20 @@ ifeq (linux_arm, $(SPEC))
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
 endif
 
+CONFIGURE_ARGS += 'AS=$(OPENJ9_CC_PREFIX)-as'
+CONFIGURE_ARGS += 'CC=$(OPENJ9_CC_PREFIX)-gcc'
+CONFIGURE_ARGS += 'CXX=$(OPENJ9_CC_PREFIX)-g++'
+CONFIGURE_ARGS += 'AR=$(OPENJ9_CC_PREFIX)-ar'
+CONFIGURE_ARGS += 'OBJCOPY=$(OPENJ9_CC_PREFIX)-objcopy'
 # Override the GLOBAL_INCLUDES value provided by configure_common.mk
-CONFIGURE_ARGS += 'GLOBAL_INCLUDES=/bluebird/tools/arm/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include' 
+CONFIGURE_ARGS += 'GLOBAL_INCLUDES=/bluebird/tools/arm/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include'
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
-CONFIGURE_ARGS += 'AS=bcm2708hardfp-as'
-CONFIGURE_ARGS += 'CC=bcm2708hardfp-cc'
-CONFIGURE_ARGS += 'CXX=bcm2708hardfp-c++'
-#CONFIGURE_ARGS += 'CPP=bcm2708hardfp-cpp -E -P'
 CONFIGURE_ARGS += 'CCLINKEXE=$$(CC)'
 CONFIGURE_ARGS += 'CCLINKSHARED=$$(CC)'
 CONFIGURE_ARGS += 'CXXLINKEXE=$$(CXX)'
 CONFIGURE_ARGS += 'CXXLINKSHARED=$$(CXX)'
-CONFIGURE_ARGS += 'AR=bcm2708hardfp-ar'
-CONFIGURE_ARGS += 'OBJCOPY=bcm2708hardfp-objcopy'
 
 CONFIGURE_ARGS += 'OMR_HOST_OS=linux'
 CONFIGURE_ARGS += 'OMR_HOST_ARCH=arm'

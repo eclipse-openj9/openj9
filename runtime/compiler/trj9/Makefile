@@ -53,10 +53,11 @@ ifeq ($(PLATFORM),s390-zos64-vacpp)
 endif
 
 ifeq ($(PLATFORM),arm-linux-gcc-cross)
-    export CC_PATH?=arm-bcm2708hardfp-linux-gnueabi-gcc
-    export CXX_PATH?=arm-bcm2708hardfp-linux-gnueabi-g++
-    export AS_PATH?=arm-bcm2708hardfp-linux-gnueabi-as
-    SUBMAKE_EXTRAARGS=PLATFORM=arm-linux-gcc
+   OPENJ9_CC_PREFIX ?= arm-bcm2708hardfp-linux-gnueabi
+   export CC_PATH?=$(OPENJ9_CC_PREFIX)-gcc
+   export CXX_PATH?=$(OPENJ9_CC_PREFIX)-g++
+   export AS_PATH?=$(OPENJ9_CC_PREFIX)-as
+   SUBMAKE_EXTRAARGS=PLATFORM=arm-linux-gcc
 endif
 
 ifneq ($(findstring DPROD_WITH_ASSUMES, $(USERCFLAGS)),)

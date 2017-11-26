@@ -18,10 +18,6 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-# To use this docker file:
-#   docker build -t=openj9arm .
-#   docker run -v </path/openj9-openjdk-jdk9>:/root/openj9-openjdk-jdk9 -it openj9arm
-
 FROM ubuntu:16.04
 
 # Install required OS tools
@@ -124,16 +120,13 @@ RUN cd /root/debs \
 # Env vars set here will be visibile in the running container, so can be
 # used to convey configuration information to the build scripts.
 
-# flag to indicate a docker hosted cross compilation targetting arm
-ENV OPENJ9_DOCKER_CC_ARM 1
-
 # Directory containing the cross compilation tool chain
 ENV OPENJ9_CC_DIR /root/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf
 
 # Prefix for the cross compilation tools (without the trailing '-')
 ENV OPENJ9_CC_PREFIX arm-linux-gnueabihf
 
-# Include directory for target
-ENV OPENJ9_CC_INCLUDE_DIR ${OJ_CC_DIR}/arm-linux-gnueabihf/libc/usr/include
+# Add the toolchain bin dir to the PATH for convenience
+ENV PATH="${PATH}:${OPENJ9_CC_DIR}/bin"
 
 WORKDIR /root
