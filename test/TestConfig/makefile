@@ -100,7 +100,7 @@ endif
 $(info set SRC_ROOT to $(SRC_ROOT))
 
 ifndef BUILD_ROOT
-BUILD_ROOT := $(SRC_ROOT)$(D)..$(D)jvmtest
+BUILD_ROOT := $(SRC_ROOT)$(D)..$(D)test
 BUILD_ROOT := $(subst \,/,$(BUILD_ROOT))
 endif
 $(info set BUILD_ROOT to $(BUILD_ROOT))
