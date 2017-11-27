@@ -42,7 +42,8 @@ import org.testng.log4testng.Logger;
 public class TestJava9AttachAPI  {
 	protected static Logger logger = Logger.getLogger(TestJava9AttachAPI.class);
 	private static boolean verbose = Boolean.getBoolean("org.openj9.test.java9AttachAPI.verbose");
-	static final String ATTACH_ENABLE_PROPERTY = "-Dcom.ibm.tools.attach.enable=";
+	/* attach API is disabled by default on z/OS. This enables it in child processes. */
+	static final String ATTACH_ENABLE_PROPERTY = "-Dcom.ibm.tools.attach.enable=yes";
 	static final String ATTACH_SELF_ENABLE_PROPERTY = "-Djdk.attach.allowAttachSelf";
 
 	private String testName;
