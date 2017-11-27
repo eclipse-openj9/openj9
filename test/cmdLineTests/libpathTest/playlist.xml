@@ -30,6 +30,7 @@
 	-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)libpathTest.jar$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)libpathRtf.xml$(Q) \
+	-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude_rtf.xml$(Q) \
 	-nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>bits.64,vm.cmprssptrs</platformRequirements>
@@ -47,6 +48,7 @@
 	-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)libpathTest.jar$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)libpathRtfChild.xml$(Q) \
+	-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude_rtfchild.xml$(Q) \
 	-nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<tags>
