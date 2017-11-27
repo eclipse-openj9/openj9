@@ -85,7 +85,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	/*[IF Sidecar19-SE]*/
 	// returns UTF16 when COMPACT_STRINGS is false 
 	byte coder() {
-		if (enableCompression && count >= 0) {
+		if (enableCompression && (null == compressionFlag || count >= 0)) {
 			return LATIN1;
 		} else {
 			return UTF16;
@@ -98,7 +98,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int currentLength = lengthInternal();
 		
 		// Check if the String is compressed
-		if (enableCompression && count >= 0) {
+		if (enableCompression && (null == compressionFlag || count >= 0)) {
 			if (String.LATIN1 == coder) {
 				compressedArrayCopy(value, 0, bytes, offset, currentLength);
 			} else {
@@ -396,7 +396,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	
 	boolean isCompressed() {
 		// Check if the String is compressed
-		if (enableCompression && count >= 0) {
+		if (enableCompression && (null == compressionFlag || count >= 0)) {
 			return true;
 		} else {
 			return false;
@@ -789,7 +789,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		if (enableCompression) {
 			// Check if the String is compressed
-			if (s.count >= 0 && c <= 255) {
+			if ((null == compressionFlag || s.count >= 0) && c <= 255) {
 				/*[IF Sidecar19-SE]*/
 				value = new byte[concatlen];
 				/*[ELSE]*/
@@ -1303,7 +1303,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int concatlen = s1len + s2len;
 
 		if (enableCompression) {
-			if ((s1.count | s2.count) >= 0) {
+			if (null == compressionFlag || (s1.count | s2.count) >= 0) {
 				/*[IF Sidecar19-SE]*/
 				value = new byte[concatlen];
 				/*[ELSE]*/
@@ -1388,7 +1388,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int concatlen = s1len + s2len + s3len;
 		
 		if (enableCompression) {
-			if ((s1.count | s2.count | s3.count) >= 0) {
+			if (null == compressionFlag || (s1.count | s2.count | s3.count) >= 0) {
 				/*[IF Sidecar19-SE]*/
 				value = new byte[concatlen];
 				/*[ELSE]*/
@@ -1494,7 +1494,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		
 		if (enableCompression) {
 			// Check if the String is compressed
-			if (s1.count >= 0) {
+			if (null == compressionFlag || s1.count >= 0) {
 				/*[IF Sidecar19-SE]*/
 				value = new byte[len];
 				/*[ELSE]*/
@@ -1660,7 +1660,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int len = s1len + v1len + v2len + s2len + s3len;
 
 		if (enableCompression) {
-			if ((s1.count | s2.count | s3.count) >= 0) {
+			if (null == compressionFlag || (s1.count | s2.count | s3.count) >= 0) {
 				/*[IF Sidecar19-SE]*/
 				value = new byte[len];
 				/*[ELSE]*/
@@ -1940,7 +1940,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public char charAt(int index) {
 		if (0 <= index && index < lengthInternal()) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
 			} 
 
@@ -1957,7 +1957,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	// Internal version of charAt used for extracting a char from a String in compression related code.
 	char charAtInternal(int index) {
 		// Check if the String is compressed
-		if (enableCompression && count >= 0) {
+		if (enableCompression && (null == compressionFlag || count >= 0)) {
 			return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
 		}
 
@@ -1980,7 +1980,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	char charAtInternal(int index, char[] value) {
 	/*[ENDIF]*/
 		// Check if the String is compressed
-		if (enableCompression && count >= 0) {
+		if (enableCompression && (null == compressionFlag || count >= 0)) {
 			return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
 		}
 
@@ -2032,7 +2032,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		s1Value.getClass(); // Implicit null check
 		s2Value.getClass(); // Implicit null check
 
-		if (enableCompression && (s1.count | s2.count) >= 0) {
+		if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 			while (o1 < end) {
             if ((result = 
                   helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s1Value, o1++)) - 
@@ -2104,7 +2104,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		s1Value.getClass(); // Implicit null check
 		s2Value.getClass(); // Implicit null check
 
-		if (enableCompression && (s1.count | s2.count) >= 0) {
+		if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 			while (o1 < end) {
 				byte byteAtO1;
 				byte byteAtO2;
@@ -2158,7 +2158,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		int concatlen = s1len + s2len;
 
-		if (enableCompression && (s1.count | s2.count) >= 0) {
+		if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 			/*[IF Sidecar19-SE]*/
 			byte[] buffer = new byte[concatlen];
 			/*[ELSE]*/
@@ -2383,7 +2383,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		char[] s2Value = s2.value;
 		/*[ENDIF]*/
 
-		if (enableCompression && (s1.count | s2.count) >= 0) {
+		if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 			while (o1 < end) {
 				byte byteAtO1 = helpers.getByteFromArrayByIndex(s1Value, o1++);
 				byte byteAtO2 = helpers.getByteFromArrayByIndex(s2Value, o2++);
@@ -2485,7 +2485,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public void getBytes(int start, int end, byte[] data, int index) {
 		if (0 <= start && start <= end && end <= lengthInternal()) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				compressedArrayCopy(value, start, data, index, end - start);
 			} else {
 				compress(value, start, data, index, end - start);
@@ -2498,7 +2498,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	void getBytes(int start, int end, char[] data, int index) {
 		if (0 <= start && start <= end && end <= lengthInternal()) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				compressedArrayCopy(value, start, data, index, end - start);
 			} else {
 				compress(value, start, data, index, end - start);
@@ -2583,7 +2583,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public void getChars(int start, int end, char[] data, int index) {
 		if (0 <= start && start <= end && end <= lengthInternal()) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				decompress(value, start, data, index, end - start);
 			} else {
 				/*[IF Sidecar19-SE]*/
@@ -2601,7 +2601,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	void getChars(int start, int end, byte[] data, int index) {
 		if (0 <= start && start <= end && end <= lengthInternal()) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				decompress(value, start, data, index, end - start);
 			} else {
 				decompressedArrayCopy(value, start, data, index, end - start);
@@ -2718,7 +2718,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				array.getClass(); // Implicit null check
 
 				// Check if the String is compressed
-				if (enableCompression && count >= 0) {
+				if (enableCompression && (null == compressionFlag || count >= 0)) {
 					if (c <= 255) {
 						byte b = (byte) c;
 
@@ -2823,7 +2823,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			s1Value.getClass(); // Implicit null check
 			s2Value.getClass(); // Implicit null check
 
-			if (enableCompression && (s1.count | s2.count) >= 0) {
+			if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 				char firstChar = helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s2Value, 0));
 
 				while (true) {
@@ -2936,7 +2936,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				array.getClass(); // Implicit null check
 				
 				// Check if the String is compressed
-				if (enableCompression && count >= 0) {
+				if (enableCompression && (null == compressionFlag || count >= 0)) {
 					if (c <= 255) {
 						byte b = (byte) c;
 
@@ -3038,7 +3038,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				s1Value.getClass(); // Implicit null check
 				s2Value.getClass(); // Implicit null check
 
-				if (enableCompression && (s1.count | s2.count) >= 0) {
+				if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 					char firstChar = helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s2Value, 0));
 
 					while (true) {
@@ -3263,7 +3263,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		s1Value.getClass(); // Implicit null check
 		s2Value.getClass(); // Implicit null check
 
-		if (enableCompression && (s1.count | s2.count) >= 0) {
+		if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 			while (o1 < end) {
 				byte byteAtO1 = helpers.getByteFromArrayByIndex(s1Value, o1++);
 				byte byteAtO2 = helpers.getByteFromArrayByIndex(s2Value, o2++);
@@ -3313,7 +3313,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int len = lengthInternal();
 
 		// Check if the String is compressed
-		if (enableCompression && count >= 0) {
+		if (enableCompression && (null == compressionFlag || count >= 0)) {
 			if (newChar <= 255) {
 				/*[IF Sidecar19-SE]*/
 				byte[] buffer = new byte[len];
@@ -3420,7 +3420,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		if (0 <= start && start <= len) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				return new String(value, start, len - start, true, enableSharingInSubstringWhenOffsetIsZero);
 			} else {
 				return new String(value, start, len - start, false, enableSharingInSubstringWhenOffsetIsZero);
@@ -3451,7 +3451,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		if (0 <= start && start <= end && end <= len) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				return new String(value, start, end - start, true, enableSharingInSubstringWhenOffsetIsZero);
 			} else {
 				return new String(value, start, end - start, false, enableSharingInSubstringWhenOffsetIsZero);
@@ -3472,7 +3472,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		char[] buffer = new char[len];
 
 		// Check if the String is compressed
-		if (enableCompression && count >= 0) {
+		if (enableCompression && (null == compressionFlag || count >= 0)) {
 			decompress(value, 0, buffer, 0, len);
 		} else {
 			/*[IF Sidecar19-SE]*/
@@ -3664,7 +3664,7 @@ written authorization of the copyright holder.
 					builder = new StringBuilder(len);
 					
 					// Check if the String is compressed
-					if (enableCompression && count >= 0) {
+					if (enableCompression && (null == compressionFlag || count >= 0)) {
 						builder.append(value, 0, i, true);
 					} else {
 						builder.append(value, 0, i, false);
@@ -3995,7 +3995,7 @@ written authorization of the copyright holder.
 						builder = new StringBuilder(len);
 						
 						// Check if the String is compressed
-						if (enableCompression && count >= 0) {
+						if (enableCompression && (null == compressionFlag || count >= 0)) {
 							builder.append(value, 0, i, true);
 						} else {
 							builder.append(value, 0, i, false);
@@ -4057,7 +4057,7 @@ written authorization of the copyright holder.
 		value.getClass(); // Implicit null check
 
 		// Check if the String is compressed
-		if (enableCompression && count >= 0) {
+		if (enableCompression &&  (null == compressionFlag || count >= 0)) {
 			while ((start <= end) && (helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, start)) <= ' ')) {
 				start++;
 			}
@@ -4434,7 +4434,7 @@ written authorization of the copyright holder.
 			/*[ENDIF]*/
 			chars = this.value;
 
-			final boolean compressed = enableCompression && count >= 0;
+			final boolean compressed = enableCompression &&  (null == compressionFlag || count >= 0);
 
 			chars.getClass();
 			int start = 0, current = 0, end = lengthInternal();
@@ -4691,7 +4691,7 @@ written authorization of the copyright holder.
 
 		if (index >= 0 && index < len) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression &&  (null == compressionFlag || count >= 0)) {
 				return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
 			} else {
 				int high = charAtInternal(index);
@@ -4725,7 +4725,7 @@ written authorization of the copyright holder.
 
 		if (index > 0 && index <= len) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression &&  (null == compressionFlag || count >= 0)) {
 				return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index - 1));
 			} else {
 				int low = charAtInternal(index - 1);
@@ -4761,7 +4761,7 @@ written authorization of the copyright holder.
 
 		if (start >= 0 && start <= end && end <= len) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression &&  (null == compressionFlag || count >= 0)) {
 				return end - start;
 			} else {
 				int count = 0;
@@ -4803,7 +4803,7 @@ written authorization of the copyright holder.
 
 		if (start >= 0 && start <= len) {
 			// Check if the String is compressed
-			if (enableCompression && count >= 0) {
+			if (enableCompression &&  (null == compressionFlag || count >= 0)) {
 				int index = start + codePointCount;
 
 				if (index >= len) {
