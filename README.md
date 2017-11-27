@@ -33,7 +33,7 @@ Welcome to the Eclipse OpenJ9 repository
 We're not sure which route you might have taken on your way here, but we're really pleased to see you! If you came directly from our website, you've probably already learned a lot about Eclipse OpenJ9 and how it fits in to the OpenJDK ecosystem. If you came via some other route, here are a few key links to get you started:
 
 - [Eclipse OpenJ9 website](http://www.eclipse.org/openj9) - Learn about this high performance, enterprise-grade Java Virtual Machine (JVM) and why we think you want to get involved in its development.
-- [AdoptopenJDK website](https://adoptopenjdk.net/releases.html?variant=openjdk9-openj9) - Grab pre-built OpenJDK binaries that embed OpenJ9 and try it out.
+- [AdoptOpenJDK website](https://adoptopenjdk.net/releases.html?variant=openjdk9-openj9) - Grab pre-built OpenJDK binaries that embed OpenJ9 and try it out.
 - [Build instructions](https://www.eclipse.org/openj9/oj9_build.html) - Here's how you can build an OpenJDK with OpenJ9 yourself.
 - [FAQ](https://www.eclipse.org/openj9/oj9_faq.html)
 
