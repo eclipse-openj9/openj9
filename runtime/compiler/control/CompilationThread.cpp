@@ -9828,9 +9828,8 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       // If we want to compile without VM access, now it's the time to release it
-      // For the JaaS client we must not enter this path. _aotCodeToBeRelocated is normally set for AOT but
-      // with the client it is null, causing VM access to be released early.
-      if (!compiler->getOption(TR_DisableNoVMAccess) && !_methodBeingCompiled->isAotLoad())
+      // For the JaaS client we must not enter this path. The class unload monitor will be acquired and released at a later point instead.
+      if (!compiler->getOption(TR_DisableNoVMAccess) && !_methodBeingCompiled->isAotLoad() && compiler->getPersistentInfo()->getJaasMode() != CLIENT_MODE)
          {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
          bool doAcquireClassUnloadMonitor = true;
