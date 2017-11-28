@@ -7360,6 +7360,8 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          TR_RuntimeHelper vmCallHelper = TR::MethodSymbol::getVMCallHelperFor(method->returnType(), sym->isSynchronised(), false, comp);
          TR::SymbolReference *helperSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(vmCallHelper, true, true, false);
          sym->setMethodAddress(helperSymRef->getMethodAddress());
+         // JAAS: store the helper reference number in the node for use in creating TR_HelperAddress relocation
+         callNode->getSymbolReference()->setReferenceNumber(helperSymRef->getReferenceNumber());
          return callNode;
          }
       case TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper:

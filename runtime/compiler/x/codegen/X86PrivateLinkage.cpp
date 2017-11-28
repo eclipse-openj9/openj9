@@ -1988,6 +1988,12 @@ void TR::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
    if (TR::Compiler->target.is64Bit() && methodSymRef->getReferenceNumber()>=TR_AMD64numRuntimeHelpers)
       fej9->reserveTrampolineIfNecessary(comp(), methodSymRef, false);
 
+   // JAAS Workaround: Further transmute dispatchJ9Method symbols to appear as a runtime helper, this will cause OMR to
+   // generate a TR_HelperAddress relocation instead of a TR_RelativeMethodAddress Relocation.
+   if (!comp()->getOption(TR_DisableInliningOfNatives) &&
+       methodSymbol->getMandatoryRecognizedMethod() == TR::java_lang_invoke_ComputedCalls_dispatchJ9Method)
+      methodSymbol->setHelper();
+
    if (cg()->supportVMInternalNatives() && methodSymbol->isVMInternalNative())
       {
       // Find the virtual register for edi
@@ -2023,8 +2029,8 @@ void TR::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
       callInstr = generateRegInstruction(CALLReg, callNode, nativeMethodReg, cg());
       cg()->stopUsingRegister(nativeMethodReg);
       }
-   else if (methodSymRef->isUnresolved() || methodSymbol->isInterpreted()
-            || ((cg()->comp()->compileRelocatableCode() || cg()->comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE) && !methodSymbol->isHelper()) )
+   else if ((methodSymRef->isUnresolved() || methodSymbol->isInterpreted()
+            || ((cg()->comp()->compileRelocatableCode() || cg()->comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE) && !methodSymbol->isHelper())) )
       {
       TR::LabelSymbol *label   = generateLabelSymbol(cg());
 
