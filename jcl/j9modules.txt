@@ -37,8 +37,8 @@ openj9.jvm
 openj9.gpu
 
 # requires java.logging
-com.ibm.dtfj
-com.ibm.dtfjview
+openj9.dtfj
+openj9.dtfjview
 java.management
 
 # requires java.management

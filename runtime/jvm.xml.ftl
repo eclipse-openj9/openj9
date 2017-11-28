@@ -1306,7 +1306,7 @@
 		</copy>
 
 		<switch value="${r"${module.name}"}">
-			<case value="com.ibm.dtfj">
+			<case value="openj9.dtfj">
 				<mkdir dir="${r"${output}/module_patches"}" />
 				<copy file="sourcetools/lib/ibmjzos.jar" tofile="${r"${output}/module_patches/com.ibm.jzos.jar"}" />
 
@@ -1383,13 +1383,13 @@
 		<delete file="${r"${j9jcl.dir}/${module.name}/source.files.list"}" />
 
 		<switch value="${r"${module.name}"}">
-			<case value="com.ibm.dtfj">
+			<case value="openj9.dtfj">
 				<!--
 				Until we have a real module for com.ibm.jzos, we don't want to include it
 				in the jlink step, so we must remove the requires clause and recompile
-				com.ibm.dtfj/module-info.java.
+				openj9.dtfj/module-info.java.
 				-->
-				<echo message="Removing com.ibm.dtfj requires com.ibm.jzos" />
+				<echo message="Removing openj9.dtfj requires com.ibm.jzos" />
 				<replaceregexp file="${r"${j9jcl.dir}/${module.name}/share/classes/module-info.java"}" replace="" flags="g">
 					<regexp pattern="\brequires\b.*\bcom\.ibm\.jzos\s*;" />
 				</replaceregexp>
@@ -1520,6 +1520,8 @@
 						<delete file="${r"${output}"}/jmods/com.ibm.sharedclasses.jmod" quiet="true" />
 						<delete file="${r"${output}"}/jmods/com.ibm.dataaccess.jmod" quiet="true" />
 						<delete file="${r"${output}"}/jmods/com.ibm.traceformat.jmod" quiet="true" />
+						<delete file="${r"${output}"}/jmods/com.ibm.dtfj.jmod" quiet="true" />
+						<delete file="${r"${output}"}/jmods/com.ibm.dtfjview.jmod" quiet="true" />
 
 						<!-- List all modules; because we're only concerned with those not updated for J9 JCL, order isn't significant. -->
 						<pathconvert property="prop.jmods.list" pathsep=";">

@@ -122,8 +122,8 @@
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
@@ -149,8 +149,8 @@
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
@@ -176,8 +176,8 @@
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
@@ -203,8 +203,8 @@
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
@@ -230,8 +230,8 @@
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
@@ -257,8 +257,8 @@
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
@@ -284,8 +284,8 @@
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
@@ -299,9 +299,9 @@
 	</configuration>
 
 	<configuration
-		  label="JAVA18.3"
-		  outputpath="JAVA18.3/src"
-		  flags="Java18.3"
+		  label="JAVA10"
+		  outputpath="JAVA10/src"
+		  flags="Java10"
 		  dependencies="SIDECAR19-SE-B175"
 		  jdkcompliance="1.8">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
@@ -311,8 +311,8 @@
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
@@ -338,8 +338,8 @@
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
@@ -365,8 +365,8 @@
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/com.ibm.management/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
@@ -425,7 +425,7 @@
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<source path="src/java.base/share/classes"/>
-		<source path="src/com.ibm.dtfj/share/classes"/>
+		<source path="src/openj9.dtfj/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
@@ -440,8 +440,8 @@
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<source path="src/java.base/share/classes"/>
-		<source path="src/com.ibm.dtfj/share/classes"/>
-		<source path="src/com.ibm.dtfjview/share/classes"/>
+		<source path="src/openj9.dtfj/share/classes"/>
+		<source path="src/openj9.dtfjview/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>

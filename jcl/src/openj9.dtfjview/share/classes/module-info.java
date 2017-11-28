@@ -20,13 +20,13 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-module com.ibm.dtfjview {
-	requires com.ibm.dtfj;
+module openj9.dtfjview {
+	requires openj9.dtfj;
 	requires java.logging;
 
-	exports com.ibm.jvm.dtfjview.commands to com.ibm.dtfj;
-	exports com.ibm.jvm.dtfjview.commands.infocommands to com.ibm.dtfj;
-	exports com.ibm.jvm.dtfjview.commands.setcommands to com.ibm.dtfj;
-	exports com.ibm.jvm.dtfjview.commands.showcommands to com.ibm.dtfj;
-	exports com.ibm.jvm.dtfjview.commands.xcommands to com.ibm.dtfj;
+	exports com.ibm.jvm.dtfjview.commands to openj9.dtfj;
+	exports com.ibm.jvm.dtfjview.commands.infocommands to openj9.dtfj;
+	exports com.ibm.jvm.dtfjview.commands.setcommands to openj9.dtfj;
+	exports com.ibm.jvm.dtfjview.commands.showcommands to openj9.dtfj;
+	exports com.ibm.jvm.dtfjview.commands.xcommands to openj9.dtfj;
 }

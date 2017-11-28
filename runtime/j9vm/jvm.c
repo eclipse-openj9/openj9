@@ -1322,7 +1322,7 @@ VersionSetting SHAPE_SETTINGS[] = {
 		{"b135", J2SE_SHAPE_B136},
 		{"b148", J2SE_SHAPE_B148},
 		{"b165", J2SE_SHAPE_B165},
-		{"b1803", J2SE_SHAPE_B1803},
+		{"b1000", J2SE_SHAPE_V10},
 };
 #define NUM_SHAPE_SETTINGS (sizeof(SHAPE_SETTINGS) / sizeof(VersionSetting))
 
@@ -1462,13 +1462,13 @@ bail:
  * If the file is found, 'JAVA_VERSION' value is retrieved and decoded as following:
  * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_SUN';
  * "9"         --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
- * "10"        --- Java 18.3, 'J2SE_2018_3 | J2SE_SHAPE_B1803';
+ * "10"        --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
  * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
- * Note: 'release' file contains JAVA_VERSION="10" for Java 18.3 at this moment.
+ * Note: 'release' file contains JAVA_VERSION="10" for Java 10 at this moment.
  * Otherwise, 0 is returned.
  *
  * @return 'J2SE_18 | J2SE_SHAPE_SUN', 'J2SE_19 | J2SE_SHAPE_B165',
- *         'J2SE_2018_3 | J2SE_SHAPE_B1803', 'J2SE_LATEST | J2SE_SHAPE_LATEST'
+ *         'J2SE_V10 | J2SE_SHAPE_V10', 'J2SE_LATEST | J2SE_SHAPE_LATEST'
  *         according to the 'JAVA_VERSION' value found in 'release';
  *         or 0 if otherwise.
  */
@@ -1495,7 +1495,7 @@ getVersionFromReleaseFile(void)
 			} else if (!strcmp(version, "\"9\"")) {
 				finalVersion = J2SE_19 | J2SE_SHAPE_B165;
 			} else if (!strcmp(version, "\"10\"")) {
-				finalVersion = J2SE_2018_3 | J2SE_SHAPE_B1803;
+				finalVersion = J2SE_V10 | J2SE_SHAPE_V10;
 			} else {
 				/* Assume latest Java version and shape */
 				finalVersion = J2SE_LATEST | J2SE_SHAPE_LATEST;

@@ -1203,7 +1203,7 @@ public final class MethodType implements Serializable {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 
-	/*[IF Java18.3]*/
+	/*[IF Java10]*/
 	/**
 	 * Returns the number of stack slots used by the described args in the MethodType.
 	 * @return The number of stack slots
