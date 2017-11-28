@@ -59,7 +59,7 @@ final class MemberName {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
-	/*[IF Java18.3]*/
+	/*[IF Java10]*/
 	public MethodType getMethodType() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}

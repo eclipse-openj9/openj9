@@ -257,11 +257,11 @@ public abstract class ClassLoader {
 		
 		/*[IF Sidecar19-SE]*/
 		jdk.internal.misc.VM.initLevel(1);
-		/*[IF Java18.3]*/
+		/*[IF Java10]*/
 		try {
 		/*[ENDIF]*/
 			System.bootLayer = jdk.internal.module.ModuleBootstrap.boot();
-		/*[IF Java18.3]*/
+		/*[IF Java10]*/
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			System.exit(1);

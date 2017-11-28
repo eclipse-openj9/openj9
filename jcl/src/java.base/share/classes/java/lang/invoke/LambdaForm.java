@@ -41,7 +41,7 @@ class LambdaForm {
 	LambdaForm(String str, int num, Name[] names, boolean flag) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[IF Java18.3]*/
+	/*[IF Java10]*/
 	LambdaForm(int a, Name[] b, int c) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -87,7 +87,7 @@ class LambdaForm {
 		NamedFunction(Method m) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
-		/*[IF Java18.3]*/
+		/*[IF Java10]*/
 		NamedFunction(MethodHandle a, MethodHandleImpl.Intrinsic b){
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
@@ -114,7 +114,7 @@ class LambdaForm {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 	}
-	/*[IF Java18.3]*/
+	/*[IF Java10]*/
 	enum Kind {
 		CONVERT,
 		SPREAD,

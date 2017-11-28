@@ -714,7 +714,7 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 	return offset;
 }
 
-/* register jdk.internal.misc.Unsafe natives common to Java 9, 18.3 and beyond */
+/* register jdk.internal.misc.Unsafe natives common to Java 9, 10 and beyond */
 static void
 registerJdkInternalMiscUnsafeNativesCommon(JNIEnv *env, jclass clazz) {
 	/* clazz can't be null */
@@ -818,9 +818,9 @@ registerJdkInternalMiscUnsafeNativesCommon(JNIEnv *env, jclass clazz) {
 	env->RegisterNatives(clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
 }
 
-/* register jdk.internal.misc.Unsafe natives for Java 18.3 */
+/* register jdk.internal.misc.Unsafe natives for Java 10 */
 static void
-registerJdkInternalMiscUnsafeNativesJava18_3(JNIEnv *env, jclass clazz) {
+registerJdkInternalMiscUnsafeNativesJava10(JNIEnv *env, jclass clazz) {
 	/* clazz can't be null */
 	JNINativeMethod natives[] = {
 		{
@@ -840,8 +840,8 @@ Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 
 	Java_sun_misc_Unsafe_registerNatives(env, clazz);
 	registerJdkInternalMiscUnsafeNativesCommon(env, clazz);
-	if (J2SE_SHAPE(currentThread->javaVM) >= J2SE_SHAPE_B1803) {
-		registerJdkInternalMiscUnsafeNativesJava18_3(env, clazz);
+	if (J2SE_SHAPE(currentThread->javaVM) >= J2SE_SHAPE_V10) {
+		registerJdkInternalMiscUnsafeNativesJava10(env, clazz);
 	}
 }
 

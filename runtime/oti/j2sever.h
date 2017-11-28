@@ -31,18 +31,18 @@
  *       This allows JVM operates with latest version when neither classlib.properties
  *       nor release file presents.
  */
-#define J2SE_15  0x1500
-#define J2SE_16  0x1600
-#define J2SE_17  0x1700
-#define J2SE_18  0x1800
-#define J2SE_19  0x1900
-#define J2SE_2018_3  0xB700            /* 0xB7 is 183 which refers to Java 18.3 */
+#define J2SE_15   0x1500
+#define J2SE_16   0x1600
+#define J2SE_17   0x1700
+#define J2SE_18   0x1800
+#define J2SE_19   0x1900
+#define J2SE_V10  0x1A00            /* This refers Java 10 */
 #if JAVA_SPEC_VERSION == 8
 	#define J2SE_LATEST  J2SE_18
 #elif JAVA_SPEC_VERSION == 9
 	#define J2SE_LATEST  J2SE_19
 #else
-	#define J2SE_LATEST  J2SE_2018_3
+	#define J2SE_LATEST  J2SE_V10
 #endif
 
 /**
@@ -67,13 +67,13 @@
 #elif JAVA_SPEC_VERSION == 9
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_B165
 #else
-	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_B1803
+	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V10
 #endif
 #define J2SE_SHAPE_SUN     		0x10000
 #define J2SE_SHAPE_B136    		0x40000
 #define J2SE_SHAPE_B148    		0x50000
 #define J2SE_SHAPE_B165    		0x60000
-#define J2SE_SHAPE_B1803		0x70000
+#define J2SE_SHAPE_V10			0x70000
 #define J2SE_SHAPE_RAWPLUSJ9	0x80000
 #define J2SE_SHAPE_RAW	 		0x90000
 #define J2SE_SHAPE_MASK 		0xF0000
