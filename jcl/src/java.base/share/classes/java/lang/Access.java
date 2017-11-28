@@ -277,8 +277,9 @@ final class Access implements JavaLangAccess {
 		return;
 	}
 
-	public Class<?> defineClass(ClassLoader cl, String className, byte[] classRep, ProtectionDomain protectionDomain, String str) {
-		throw new Error("defineClass unimplemented"); //$NON-NLS-1$
+	public Class<?> defineClass(ClassLoader classLoader, String className, byte[] classRep, ProtectionDomain protectionDomain, String str) {
+		ClassLoader targetClassLoader = (null == classLoader) ? ClassLoader.bootstrapClassLoader : classLoader;
+		return targetClassLoader.defineClass(className, classRep, 0, classRep.length, protectionDomain);
 	}
 
 /*[IF Sidecar19-SE-B165]*/	

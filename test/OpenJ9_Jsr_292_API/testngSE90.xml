@@ -31,6 +31,7 @@
 		<classes>
 			<class name="com.ibm.j9.jsr292.LookupInTests"/>
 			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_privateLookupIn"/>
+			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_defineClass"/>
 		</classes>
 	</test>
 </suite>

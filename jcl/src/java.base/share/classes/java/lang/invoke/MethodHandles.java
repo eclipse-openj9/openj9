@@ -55,11 +55,14 @@ import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
 /*[IF Sidecar19-SE-B175]
 import java.lang.Module;
+import jdk.internal.misc.SharedSecrets;
+import jdk.internal.misc.JavaLangAccess;
+import java.security.ProtectionDomain;
+import jdk.internal.org.objectweb.asm.ClassReader;
 /*[ENDIF] Sidecar19-SE-B175*/
 /*[ELSE]*/
 import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
-
 
 /**
  * Factory class for creating and adapting MethodHandles.
@@ -1636,21 +1639,68 @@ public class MethodHandles {
 			return targetClass;
 		}
 		
+		/*[IF Sidecar19-SE-B175]*/
 		/**
-		 * Return a class object with the same class loader, the same package
-		 * the same protection domain as the lookup class.
+		 * Return a class object with the same class loader, the same package and
+		 * the same protection domain as the lookup's lookup class.
 		 * 
 		 * @param classBytes the requested class bytes from a valid class file
 		 * @return a class object for the requested class bytes
 		 * @throws NullPointerException if the requested class bytes is null
-		 * @throws SecurityException if the SecurityManager prevents access
-		 * @throws LinkageError if the requested class is malformed, or fails in bytecode verification or linking
-		 * @throws IllegalAccessException if the access mode of the lookup doesn't include PACKAGE
 		 * @throws IllegalArgumentException if the requested class belongs to another package different from the lookup class
+		 * @throws IllegalAccessException if the access mode of the lookup doesn't include PACKAGE
+		 * @throws SecurityException if the SecurityManager prevents access
+		 * @throws LinkageError if the requested class is malformed, or is already defined, or fails in bytecode verification or linking
 		 */
-		public Class<?> defineClass(byte[] classBytes) throws NullPointerException, SecurityException, LinkageError, IllegalAccessException, IllegalArgumentException {
-			throw new UnsupportedOperationException("The method has not yet been implemented for now"); //$NON-NLS-1$
+		public Class<?> defineClass(byte[] classBytes) throws NullPointerException, IllegalAccessException, IllegalArgumentException, SecurityException, LinkageError {
+			if (Objects.isNull(classBytes)) {
+				/*[MSG "K065X", "The class byte array must not be null"]*/
+				throw new NullPointerException(com.ibm.oti.util.Msg.getString("K065X")); //$NON-NLS-1$
+			}
+			
+			if (PACKAGE != (PACKAGE & accessMode)) {
+				/*[MSG "K065Y1", "The access mode: 0x{0} of the lookup class doesn't have the PACKAGE mode: 0x{1}"]*/
+				throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065Y1", Integer.toHexString(accessMode), Integer.toHexString(Lookup.PACKAGE))); //$NON-NLS-1$
+			}
+			
+			SecurityManager secmgr = System.getSecurityManager();
+			if (null != secmgr) {
+				secmgr.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionDefineClass);
+			}
+			
+			/* Extract the package name from the class bytes so as to check whether
+			 * the requested class shares the same package as the lookup class.
+			 * Note: the class bytes should be considered as corrupted if any exception
+			 *       is captured in ASM class reader.
+			 */
+			ClassReader cr = null;
+			try {
+				cr = new ClassReader(classBytes);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				/*[MSG "K065Y2", "The class byte array is corrupted"]*/
+				throw new ClassFormatError(com.ibm.oti.util.Msg.getString("K065Y2")); //$NON-NLS-1$
+			}
+			
+			String targetClassName = cr.getClassName().replace('/', '.');
+			int separatorIndex = targetClassName.lastIndexOf('.');
+			String targetClassPackageName = ""; //$NON-NLS-1$
+			
+			if (separatorIndex > 0) {
+				targetClassPackageName = targetClassName.substring(0, separatorIndex);
+			}
+			
+			String lookupClassPackageName = accessClass.getPackageName();
+			if (!Objects.equals(lookupClassPackageName, targetClassPackageName)) {
+				/*[MSG "K065Y3", "The package of the requested class: {0} is different from the package of the lookup class: {1}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065Y3", targetClassPackageName, lookupClassPackageName)); //$NON-NLS-1$
+			}
+			
+			JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
+			Class<?> targetClass = jlAccess.defineClass(accessClass.getClassLoader(), targetClassName, classBytes, accessClass.getProtectionDomain(), null);
+			
+			return targetClass;
 		}
+		/*[ENDIF] Sidecar19-SE-B175*/
 		
 		/**
 		 * Return a MethodHandles.Lookup object without the requested lookup mode.
