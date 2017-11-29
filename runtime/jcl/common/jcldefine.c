@@ -162,16 +162,16 @@ retry:
 			 */
 			if ((NULL == vm->sharedClassConfig) || (0 == vm->sharedClassConfig->isBCIEnabled(vm))) {
 				clazz = vmFuncs->internalCreateRAMClassFromROMClass(currentThread,
-																			classLoader,
-																			loadedClass,
-																			0,
-																			NULL,
-																			protectionDomain ? *(j9object_t*)protectionDomain : NULL,
-																			NULL,
-																			J9_CP_INDEX_NONE,
-																			localBuffer.loadLocationType,
-																			NULL,
-																			hostClass);
+						classLoader,
+						loadedClass,
+						0,
+						NULL,
+						protectionDomain ? *(j9object_t*)protectionDomain : NULL,
+						NULL,
+						J9_CP_INDEX_NONE,
+						localBuffer.loadLocationType,
+						NULL,
+						hostClass);
 				/* Done if a class was found or and exception is pending, otherwise try to define the bytes */
 				if ((clazz != NULL) || (currentThread->currentException != NULL)) {
 					goto done;
@@ -189,14 +189,14 @@ retry:
 	/* The defineClass helper requires you hold the class table mutex and releases it for you */
 	
 	clazz = dynFuncs->internalDefineClassFunction(currentThread, 
-                                              utf8Name, utf8Length,
-                                              tempClassBytes, (UDATA) tempLength, NULL, 
-                                              classLoader, 
-                                              protectionDomain ? *(j9object_t*)protectionDomain : NULL,
-                                              options | J9_FINDCLASS_FLAG_THROW_ON_FAIL | J9_FINDCLASS_FLAG_NO_CHECK_FOR_EXISTING_CLASS,
-                                              loadedClass,
-											  hostClass,
-											  &localBuffer);
+				utf8Name, utf8Length,
+				tempClassBytes, (UDATA) tempLength, NULL,
+				classLoader,
+				protectionDomain ? *(j9object_t*)protectionDomain : NULL,
+				options | J9_FINDCLASS_FLAG_THROW_ON_FAIL | J9_FINDCLASS_FLAG_NO_CHECK_FOR_EXISTING_CLASS,
+				loadedClass,
+				hostClass,
+				&localBuffer);
 
 	/* If OutOfMemory, try a GC to free up some memory */
 	
