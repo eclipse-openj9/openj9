@@ -11,6 +11,6 @@ LoadClasses2=A,E,I,O
 Classpath=./AlphabetJar/Alphabet.jar;./Pets;./Vowels;
 NumberOfClassesToFind=8
 FindClasses=A,E,F,Cat,Dog,Hamster,I,O
-Results=true,true,true,true,true,true,true,true
+Results=false,false,false,true,true,true,true,true
 FoundAt=Vowels,AlphabetJar,AlphabetJar,Pets,Pets,Pets,Vowels,Vowels
 BatchFileToRun=/bin/sh ./batchfiles/StaleClassPathTest5.sh
