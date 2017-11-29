@@ -57,6 +57,9 @@
 		</includes>
 		<makefilestubs>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+			<makefilestub data="ifeq ($(OPENJ9_BUILD),true)"/>
+			<makefilestub data="jvm$(UMA_DOT_O) : CFLAGS += -DOPENJ9_BUILD"/>
+			<makefilestub data="endif"/>
 		</makefilestubs>
 		<vpaths>
 			<vpath path="harmony_jvm" pattern="%.c" augmentIncludes="true">

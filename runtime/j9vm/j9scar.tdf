@@ -323,6 +323,7 @@ TraceAssert=Assert_SC_false noEnv Overhead=1 Level=1 Assert="!(P1)"
 TraceAssert=Assert_SC_notNull noEnv Overhead=1 Level=1 Assert="(P1) != NULL"
 TraceAssert=Assert_SC_mustHaveVMAccess noEnv overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
 TraceAssert=Assert_SC_mustNotHaveVMAccess noEnv overhead=1 Level=1 Assert="0 == ((P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)"
+TraceAssert=Assert_SC_unreachable noEnv Overhead=1 Level=1 Assert="(0 /* unreachable */)"
 
 // if (defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390))
 TraceExit-Exception=Trc_SC_Available_poll_failed NoEnv Overhead=1 Level=1 Template="poll failed for descriptor: %d. errno %i, Returning: 0"
