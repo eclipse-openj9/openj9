@@ -72,7 +72,13 @@ public:
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass) override;
    virtual J9Class * matchRAMclassFromROMclass(J9ROMClass *clazz, TR::Compilation *comp) override;
    virtual int32_t * getCurrentLocalsMapForDLT(TR::Compilation *comp) override;
+
+   virtual uintptrj_t getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset) override
+      {
+      return getReferenceFieldAtAddress(objectPointer + sizeof(J9Object) + fieldOffset);
+      }
    virtual uintptrj_t getReferenceFieldAtAddress(uintptrj_t fieldAddress) override;
+
    virtual uintptrj_t getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset) override;
    virtual int32_t getInt32FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset) override;
    virtual int64_t getInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset) override;

@@ -1665,6 +1665,41 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(j9method, vmSlot);
          }
          break;
+      case J9ServerMessageType::runFEMacro_invokeSpreadHandleArrayArg:
+         {
+         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         TR::VMAccessCriticalSection invokeSpreadHandleArrayArg(fe);
+         uintptrj_t arrayClass   = fe->getReferenceField(methodHandle, "arrayClass", "Ljava/lang/Class;");
+         J9ArrayClass *arrayJ9Class = (J9ArrayClass*)(intptrj_t)fe->getInt64Field(arrayClass,
+                                                                      "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
+         J9Class *leafClass = arrayJ9Class->leafComponentType;
+         UDATA arity = arrayJ9Class->arity;
+         uint32_t spreadPositionOffset = fe->getInstanceFieldOffset(fe->getObjectClass(methodHandle), "spreadPosition", "I");
+         int32_t spreadPosition = -1;
+         if (spreadPositionOffset != ~0)
+            spreadPosition = fe->getInt32FieldAt(methodHandle, spreadPositionOffset);
+         client->write(spreadPosition, arity, leafClass);
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_invokeSpreadHandle:
+         {
+         auto recv = client->getRecvData<uintptrj_t*, bool>();
+         uintptrj_t methodHandle = *std::get<0>(recv);
+         bool getSpreadPosition = std::get<1>(recv);
+
+         TR::VMAccessCriticalSection invokeSpreadHandle(fe);
+         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
+         uintptrj_t next = fe->getReferenceField(methodHandle, "next", "Ljava/lang/invoke/MethodHandle;");
+         uintptrj_t nextArguments = fe->getReferenceField(fe->methodHandle_type(next), "arguments", "[Ljava/lang/Class;");
+         int32_t numNextArguments = (int32_t)fe->getArrayLengthInElements(nextArguments);
+         int32_t spreadStart = 0;
+         // Guard to protect old code
+         if (getSpreadPosition)
+            spreadStart = fe->getInt32Field(methodHandle, "spreadPosition");
+         client->write(numArguments, numNextArguments, spreadStart);
+         }
+         break;
       default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();

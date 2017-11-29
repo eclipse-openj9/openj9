@@ -7838,7 +7838,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          return true;
       case TR::java_lang_invoke_SpreadHandle_arrayArg:
          {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
@@ -7848,13 +7847,28 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          uintptrj_t methodHandle;
          uintptrj_t arrayClass;
          J9ArrayClass *arrayJ9Class;
+         J9Class *leafClass;
+         UDATA arity;
          int32_t spreadPosition = -1;
+
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            // JAAS TODO: Get more data from the client to avoid getClassNameChars and isPrimitiveClass calls
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeSpreadHandleArrayArg, thunkDetails->getHandleRef());
+            auto recv = stream->read<int32_t, UDATA, J9Class *>();
+            spreadPosition = std::get<0>(recv);
+            arity = std::get<1>(recv);
+            leafClass = std::get<2>(recv);
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeSpreadHandleArrayArg(fej9);
             methodHandle = *thunkDetails->getHandleRef();
             arrayClass   = fej9->getReferenceField(methodHandle, "arrayClass", "Ljava/lang/Class;");
             arrayJ9Class = (J9ArrayClass*)(intptrj_t)fej9->getInt64Field(arrayClass,
                                                                          "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
+            leafClass = arrayJ9Class->leafComponentType;
+            arity = arrayJ9Class->arity;
             uint32_t spreadPositionOffset = fej9->getInstanceFieldOffset(fej9->getObjectClass(methodHandle), "spreadPosition", "I");
             if (spreadPositionOffset != ~0)
                spreadPosition = fej9->getInt32FieldAt(methodHandle, spreadPositionOffset);
@@ -7880,8 +7894,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          // Construct the signature string for the array class
          //
-         UDATA arity = arrayJ9Class->arity;
-         J9Class *leafClass = arrayJ9Class->leafComponentType;
          int32_t leafClassNameLength;
          char *leafClassNameChars = fej9->getClassNameChars((TR_OpaqueClassBlock*)leafClass, leafClassNameLength); // eww, TR_FrontEnd downcast
 
@@ -7919,7 +7931,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
       case TR::java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray:
       case TR::java_lang_invoke_SpreadHandle_spreadStart:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure");
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -7934,6 +7945,17 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          int32_t numNextArguments;
          int32_t spreadStart;
 
+         bool getSpreadPos = symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_SpreadHandle_spreadStart ||
+               symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray;
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeSpreadHandle, thunkDetails->getHandleRef(), getSpreadPos);
+            auto recv = stream->read<int32_t, int32_t, int32_t>();
+            numArguments = std::get<0>(recv);
+            numNextArguments = std::get<1>(recv);
+            spreadStart = std::get<2>(recv);
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeSpreadHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
