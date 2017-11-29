@@ -136,6 +136,7 @@
 		<flag id="build_java8" value="true"/>
 		<flag id="build_java9" value="true"/>
 		<flag id="build_newCompiler" value="true"/>
+		<flag id="build_openj9" value="true"/>
 		<flag id="build_ouncemake" value="true"/>
 		<flag id="build_product" value="true"/>
 		<flag id="env_littleEndian" value="true"/>

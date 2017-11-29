@@ -176,7 +176,10 @@ CMDLINETESTER_RESJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(D)cm
 # testng report dir
 #######################################
 TIMESTAMP := $(shell perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)testKitGen$(D)resultsSummary$(D)getTimeStamp.pl -v)
-TESTOUTPUT = $(shell $(PWD))$(D)test_output_$(TIMESTAMP)
+TESTOUTPUT := $(shell $(PWD))$(D)test_output_$(TIMESTAMP)
+ifeq ($(CYGWIN),1)
+	TESTOUTPUT := $(subst \,/,$(shell cygpath -w $(TESTOUTPUT)))
+endif
 REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@$(Q)
 
 #######################################
@@ -294,10 +297,13 @@ external: JVM_TEST_ROOT := $(BUILD_ROOT)
 external: setup_external rmResultFile external_$(JAVA_VERSION) resultsSummary
 
 perf: JVM_TEST_ROOT := $(BUILD_ROOT)
-perf: setup_sanity rmResultFile perf_$(JAVA_VERSION) resultsSummary
+perf: setup_perf rmResultFile perf_$(JAVA_VERSION) resultsSummary
 
-runtest: setup_perf rmResultFile sanity_$(JAVA_VERSION) extended_$(JAVA_VERSION) openjdk_$(JAVA_VERSION) external_$(JAVA_VERSION) perf_$(JAVA_VERSION) resultsSummary
-.NOTPARALLEL: extended sanity openjdk external perf runtest rmResultFile resultsSummary
+jck: JVM_TEST_ROOT := $(BUILD_ROOT)
+jck: setup_jck rmResultFile jck_$(JAVA_VERSION) resultsSummary
+
+runtest: setup_runtest rmResultFile sanity_$(JAVA_VERSION) extended_$(JAVA_VERSION) openjdk_$(JAVA_VERSION) external_$(JAVA_VERSION) perf_$(JAVA_VERSION) jck_$(JAVA_VERSION) resultsSummary
+.NOTPARALLEL: extended sanity openjdk external perf jck runtest rmResultFile resultsSummary
 
 # cleanup
 clean:
