@@ -51,8 +51,11 @@ bool SPMDPreCheck::isSPMDCandidate(TR::Compilation *comp, TR_RegionStructure *lo
             case TR::BBStart:
             case TR::BBEnd:
             case TR::asynccheck:
-            case TR::compressedRefs:
                continue;
+               //SIMD Compressed Refs support only for loads
+            case TR::compressedRefs:
+               if (node->getFirstChild()->getOpCode().isLoad())
+                   continue;
             }
 
           // explicitly allowed families of opcodes
