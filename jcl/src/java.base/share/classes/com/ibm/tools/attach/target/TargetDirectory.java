@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corp. and others
+ * Copyright (c) 2009, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,9 @@ package com.ibm.tools.attach.target;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * This class represents the advertisement directory representing a potentisal attach API target VM.
+ */
 public final class TargetDirectory {
 
 	private static final int VARIANT_LIMIT = 100;
@@ -34,8 +37,10 @@ public final class TargetDirectory {
 	 */
 	static final int ADVERTISEMENT_FILE_PERMISSIONS = 0600;
 	static final String ATTACH_NOTIFICATION_SYNC_FILENAME = "attachNotificationSync"; //$NON-NLS-1$
-	/*[PR Jazz 30075] there were two conflicting declarations of SYNC_FILE_PERMISSIONS. The other one had the correct permissions */
-	public static final int SYNC_FILE_PERMISSIONS = 0666; /* All users must have write access in order to get an exclusive (i.e write) lock on the file */
+	/**
+	 * All users must have write access in order to get an exclusive (i.e write) lock on the file.
+	 */
+	public static final int SYNC_FILE_PERMISSIONS = 0666; 
 	static final int TARGET_DIRECTORY_PERMISSIONS = 01711;
 	
 	private volatile static  File targetDirectoryFileObject; 
@@ -72,10 +77,8 @@ public final class TargetDirectory {
 		if (!tgtDir.exists() && (count < VARIANT_LIMIT)) {
 			IPC.mkdirWithPermissions(tgtDir.getAbsolutePath(), TARGET_DIRECTORY_PERMISSIONS);
 		} else if (!reuseDirectory){ /* directory exists but is unusable */
-			/*[MSG "K0547", "Attach API target directory already exists for VMID {0}"]*/
-			IOException e = new IOException(com.ibm.oti.util.Msg.getString("K0547", myVmId));  //$NON-NLS-1$
-			AttachHandler.setFactoryException(e);
-			throw e;
+			/*[MSG "K0547", "Attach API target directory already exists for VMID {0}"]*/			  
+			throw new IOException(com.ibm.oti.util.Msg.getString("K0547", myVmId));//$NON-NLS-1$
 		}
 		targetDirectoryFileObject = tgtDir;
 		syncFileObject = createSyncFileObject(newId);
