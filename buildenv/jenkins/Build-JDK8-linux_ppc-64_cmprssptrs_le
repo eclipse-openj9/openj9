@@ -10,6 +10,7 @@ node('ppcle') {
     TEST_PREFIX = "test-"
     TEST_SUFFIX = ".tar.gz"
     RELEASE = "linux-ppc64-normal-server-release"
+    JDK_FOLDER = "j2sdk-image"
 
     checkout scm
     def buildfile = load "${WORKSPACE}/buildenv/jenkins/build"

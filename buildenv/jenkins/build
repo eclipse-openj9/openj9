@@ -61,13 +61,13 @@ def build() {
     }
     stage('Java Version') {
         timestamps {
-            sh "build/$RELEASE/images/jdk/bin/java -version"
+            sh "build/$RELEASE/images/${JDK_FOLDER}/bin/java -version"
         }
     }
     stage('Archive') {
         timestamps {
             dir ("build/$RELEASE/images") {
-                sh "tar -zcvf ${WORKSPACE}/${SDK_PREFIX}`date +%Y%d%m%H%M`${SDK_SUFFIX} jdk"
+                sh "tar -zcvf ${WORKSPACE}/${SDK_PREFIX}`date +%Y%d%m%H%M`${SDK_SUFFIX} ${JDK_FOLDER}"
             }
             dir ('openj9') {
                 sh "tar -zcvf ${WORKSPACE}/${TEST_PREFIX}`git rev-parse --short HEAD`${TEST_SUFFIX} test"
