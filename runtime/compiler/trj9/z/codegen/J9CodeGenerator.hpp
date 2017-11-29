@@ -289,6 +289,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
     *     The last generated instruction.
     */
    TR::Instruction* generateVMCallHelperPrePrologue(TR::Instruction* cursor);
+
+   int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 45; }
    };
 
 }

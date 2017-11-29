@@ -370,6 +370,8 @@ public:
    bool getSupportsMaxPrecisionMilliTime() {return _j9Flags.testAny(SupportsMaxPrecisionMilliTime);}
    void setSupportsMaxPrecisionMilliTime() {_j9Flags.set(SupportsMaxPrecisionMilliTime);}
 
+   int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 15; }
+
 private:
 
    enum // Flags
