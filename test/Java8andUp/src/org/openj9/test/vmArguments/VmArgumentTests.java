@@ -1369,8 +1369,11 @@ public class VmArgumentTests {
 			stdoutReader.start();
 			stderrReader.start();
 			int rc = p.waitFor();
+			/* Ensure the ProcessStreamReaders finish reading their respective streams. */
+			stdoutReader.join(10000);
+			stderrReader.join(10000);
+			ArrayList<String> outputLines = stdoutReader.getOutputLines();
 			if (0 != rc) {
-				ArrayList<String> outputLines = stdoutReader.getOutputLines();
 				logger.debug("---------------------------------\nstdout");
 				dumpStrings(outputLines);
 				ArrayList<String> errLines = stderrReader.getOutputLines();
@@ -1379,7 +1382,6 @@ public class VmArgumentTests {
 				fail("Target process failed");
 
 			}
-			ArrayList<String> outputLines = stdoutReader.getOutputLines();
 			Iterator<String> olIterator = outputLines.iterator();
 			String l = "";
 			while (olIterator.hasNext() && isNotTag(l)) {
