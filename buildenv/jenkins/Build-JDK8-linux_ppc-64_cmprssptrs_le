@@ -3,7 +3,7 @@ node('ppcle') {
     SDK_VERSION = "8"
     DEFAULT_OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
     DEFAULT_OPENJDK_BRANCH = "openj9"
-    BOOT_JDK = "$HOME/openj9/ibm-java-ppc64le-71"
+    BOOT_JDK = "/usr/lib/jvm/java-7-openjdk-ppc64el"
     FREEMARKER = "$HOME/openj9/freemarker.jar"
     SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-Linux_ppc-64_cmprssptrs_le-"
     SDK_SUFFIX = ".tar.gz"
