@@ -1,0 +1,12 @@
+node('390') {
+
+    JDK_FOLDER = "j2sdk-image"
+    JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/jre/bin"
+    SPEC = 'linux_390-64_cmprssptrs'
+    JAVA_VERSION = 'SE80'
+    TEST_TARGET = 'sanity'
+
+    checkout scm
+    def buildfile = load "${WORKSPACE}/buildenv/jenkins/test"
+    buildfile.test()
+}

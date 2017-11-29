@@ -1,0 +1,53 @@
+def test() {
+    stage('Fetch Artifacts') {
+        timestamps {
+            deleteDir()
+            step([$class: 'CopyArtifact',
+                fingerprintArtifacts: true,
+                projectName: "$UPSTREAM_JOB_NAME",
+                selector: [$class: 'SpecificBuildSelector',
+                            buildNumber: "${params.UPSTREAM_JOB_NUMBER}"]])
+            sh 'for filename in *.tar.gz; do tar zxf $filename; done'
+        }
+    }
+    stage('Configure') {
+        timestamps {
+            dir ('test/TestConfig') {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
+                    sh 'make -f run_configure.mk'
+                }
+            }
+        }
+    }
+    stage('Get Dependencies') {
+        timestamps {
+            copyArtifacts fingerprintArtifacts: true, projectName: 'test.getDependency', selector: lastSuccessful(), target: 'openj9/test/TestConfig/lib'
+        }
+    }
+    stage('Compile') {
+        timestamps {
+            dir ('test/TestConfig') {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
+                    sh 'make compile'  
+                }
+            }
+        }
+    }
+    stage('Test') {
+        timestamps {
+            dir ('test/TestConfig') {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
+                    sh "make ${TEST_TARGET}"
+                }
+            }
+        }
+    }
+    stage('Arcive') {
+        timestamps {
+            junit allowEmptyResults: true, keepLongStdio: true, testResults: '**/junitreports/**/*.xml'
+            step([$class: 'Publisher', reportFilenamePattern: '**/testng-results.xml'])
+            step([$class: "TapPublisher", testResults: "**/*.tap"])
+        }
+    }
+}
+return this
