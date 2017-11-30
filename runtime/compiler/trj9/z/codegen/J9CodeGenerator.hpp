@@ -290,6 +290,17 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
     */
    TR::Instruction* generateVMCallHelperPrePrologue(TR::Instruction* cursor);
 
+   /**
+    * \brief
+    *    The number of nodes between a monexit and the next monent before transforming
+    *    a monitored region with transactional lock elision.  On Z, 25-30 cycles are
+    *    required between transactions or else the latter transaction will be aborted
+    *    (with significant penalty).
+    *
+    * \return
+    *    45.  This is an estimate based on CPI of 1.5-2 and an average of 1 instruction
+    *    per node.
+    */
    int32_t getMinimumNumberOfNodesBetweenMonitorsForTLE() { return 45; }
    };
 
