@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,11 +30,22 @@
 
 namespace J9 {
 
+/**
+ * Data Cache Allocation Failure exception type.
+ *
+ * Thrown when the compiler fails to allocate memory in the data cache.
+ */
 class DataCacheError : public virtual std::bad_alloc
    {
    virtual const char* what() const throw() { return "Data Cache Error"; }
    };
 
+/**
+ * Recoverable Data Cache Allocation Failure exception type.
+ *
+ * Thrown on an Data Cache Allocation Failure condition which the
+ * compiler can recover from by allowing a recompilation to occur.
+ */
 class RecoverableDataCacheError : public virtual std::bad_alloc
    {
    virtual const char* what() const throw() { return "Recoverable Data Cache Error"; }

@@ -802,7 +802,7 @@ TR_J9ByteCodeIlGenerator::genExceptionHandlers(TR::Block * lastBlock)
             // todo: figure out how to handle this.
             //
             // TR_ASSERT(dupHandler, "can't figure out why the handler is already generated");
-            //throw TR::CompilationException();
+            // comp()->failCompilation<TR::CompilationException>("can't figure out why the handler is already generated");
             }
 
          if (!generateNewBlock)

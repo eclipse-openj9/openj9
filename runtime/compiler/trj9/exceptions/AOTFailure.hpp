@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,25 +26,46 @@
 #pragma once
 
 #include "compile/CompilationException.hpp"
+#include "exceptions/RuntimeFailure.hpp"
 
 namespace J9 {
 
+/**
+ * AOT Has Invoke Handle exception type.
+ *
+ * Thrown when a method that has an invoke handle is AOT Compiled.
+ */
 class AOTHasInvokeHandle : public virtual TR::RecoverableILGenException
    {
    virtual const char* what() const throw() { return "AOT Has Invoke Handle"; }
    };
 
+/**
+ * AOT Has Invoke VarHandle exception type.
+ *
+ * Thrown when a method that has an invoke varhandle is AOT Compiled.
+ */
 class AOTHasInvokeVarHandle : public virtual TR::RecoverableILGenException
    {
    virtual const char* what() const throw() { return "AOT Has Invoke VarHandle"; }
    };
 
+/**
+ * AOT Has Invoke Special in Interface exception type.
+ *
+ * Thrown when a method that has an invoke special in an interface is AOT Compiled.
+ */
 class AOTHasInvokeSpecialInInterface : public virtual TR::RecoverableILGenException
    {
    virtual const char* what() const throw() { return "AOT Has Invoke Special in Interface"; }
    };
 
-class AOTRelocationFailed : public virtual TR::CompilationException
+/**
+ * AOT Relocation Failure exception type.
+ *
+ * Thrown when an AOT compilation fails in the relocation phase.
+ */
+class AOTRelocationFailed : public virtual RuntimeFailure
    {
    virtual const char* what() const throw() { return "AOT Relocation Failed"; }
    };

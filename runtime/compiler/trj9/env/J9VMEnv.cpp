@@ -207,9 +207,8 @@ acquireVMaccessIfNeededInner(J9VMThread *vmThread, TR_YesNoMaybe isCompThread)
                {
                if (hadClassUnloadMonitor)
                   TR::MonitorTable::get()->readReleaseClassUnloadMonitor(compInfoPT->getCompThreadId()); // Main code should do it.
+               throw TR::CompilationInterrupted();
                }
-
-            throw TR::CompilationInterrupted();
             }
          else // GC did not do any unloading
             {

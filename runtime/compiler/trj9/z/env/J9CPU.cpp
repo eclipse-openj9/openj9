@@ -222,8 +222,7 @@ CPU::TO_PORTLIB_get390zLinuxMachineType()
          {
          PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
          j9nls_printf(jitConfig->javaVM->portLibrary, J9NLS_ERROR, J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE, machine);
-         TR_ASSERT(0,"Hardware is not supported.");
-         throw TR::CompilationException();
+         TR_ASSERT_FATAL(0,"Hardware is not supported.");
          }
       }
 
@@ -260,8 +259,7 @@ CPU::TO_PORTLIB_get390zLinuxMachineType()
                      {
                      PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
                      j9nls_printf(jitConfig->javaVM->portLibrary, J9NLS_ERROR, J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE, machine);
-                     TR_ASSERT(0,"Hardware is not supported.");
-                     throw TR::CompilationException();
+                     TR_ASSERT_FATAL(0,"Hardware is not supported.");
                      }
                   }
 
@@ -695,8 +693,7 @@ CPU::initializeS390zOSProcessorFeatures()
    if (!TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_N3Support() || !TR::Compiler->target.cpu.TO_PORTLIB_get390zOS_ZArchSupport())
       {
       j9nls_printf(privatePortLibrary, J9NLS_ERROR, J9NLS_J9JIT_390_UNSUPPORTED_HARDWARE, TR_G5);
-      TR_ASSERT(0,"Hardware is not supported.");
-      throw TR::CompilationException();
+      TR_ASSERT_FATAL(0,"Hardware is not supported.");
       }
 
     // JIT pre-req's zArchitecture (and N3).
