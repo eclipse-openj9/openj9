@@ -300,7 +300,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static bool useCompressedPointers();
    static char *limitOption(char *option, void *, TR::OptionTable *entry);
-   static char *inlinefileOption(char *option, void *, TR::OptionTable *entry);
+   static char *inlinefileOption(char *option, TR::OptionTable *entry);
    static char *limitfileOption(char *option, void *, TR::OptionTable *entry);
    static char *versionOption(char *option, void *, TR::OptionTable *entry);
    bool  fePreProcess(void *base);

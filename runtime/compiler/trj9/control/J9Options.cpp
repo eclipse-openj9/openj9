@@ -369,7 +369,7 @@ J9::Options::limitfileOption(char * option, void * base, TR::OptionTable *entry)
    }
 
 char *
-J9::Options::inlinefileOption(char * option, void * base, TR::OptionTable *entry)
+J9::Options::inlinefileOption(char * option, TR::OptionTable *entry)
    {
    if (!J9::Options::getDebug() && !J9::Options::createDebug())
       return 0;
@@ -377,12 +377,12 @@ J9::Options::inlinefileOption(char * option, void * base, TR::OptionTable *entry
    if (J9::Options::getJITCmdLineOptions() == NULL)
       {
       // if JIT options are NULL, means we're processing AOT options now
-      return J9::Options::getDebug()->inlinefileOption(option, base, entry, TR::Options::getAOTCmdLineOptions());
+      return J9::Options::getDebug()->inlinefileOption(option, entry);
       }
    else
       {
       // otherwise, we're processing JIT options
-      return J9::Options::getDebug()->inlinefileOption(option, base, entry, TR::Options::getJITCmdLineOptions());
+      return J9::Options::getDebug()->inlinefileOption(option, entry);
       }
    }
 
@@ -590,7 +590,7 @@ Options::loadLimitfileOption(char * option, void * base, TR::OptionTable *entry)
    if (TR::Options::getJITCmdLineOptions() == NULL)
       {
       // if JIT options are NULL, means we're processing AOT options now
-      return TR::Options::getDebug()->limitfileOption(option, base, entry, TR::Options::getAOTCmdLineOptions(), true /* new param */, pseudoRandomNumbersListPtr);
+      return TR::Options::getDebug()->limitfileOption(option, base, entry, TR::Options::getAOTCmdLineOptions(), true, pseudoRandomNumbersListPtr);
       }
    else
       {
