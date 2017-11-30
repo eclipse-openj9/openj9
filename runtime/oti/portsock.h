@@ -26,7 +26,7 @@
 #ifndef portsock_h
 #define portsock_h
 
-#if defined(LINUX) || defined(AIXPPC)
+#if defined(LINUX) || defined(AIXPPC) || defined(OSX)
 /* needed to pull in "struct timeval" */
 #include <sys/select.h>
 #elif defined(J9ZOS390)

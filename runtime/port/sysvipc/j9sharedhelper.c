@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -189,7 +189,7 @@ createDirectory(struct J9PortLibrary *portLibrary, char *pathname, uintptr_t per
 void
 cleanSharedMemorySegments(struct J9PortLibrary* portLibrary)
 {
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 #define IPCS_NO_FIELDS 7
 #define IPCS_USERID_FIELD_NO 2
 #define IPCS_SHMID_FIELD_NO 1
