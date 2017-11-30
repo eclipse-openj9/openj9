@@ -41,9 +41,6 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 	static {
 		String line = null;
 		String excludeFile = System.getenv("EXCLUDE_FILE");
-		if (null == excludeFile) {
-			excludeFile = IncludeExcludeTestAnnotationTransformer.class.getClassLoader().getResource("excludes/default_exclude.txt").getFile();
-		}
 		logger.info("exclude file is " + excludeFile);
 		try {
 			FileReader fileReader = new FileReader(excludeFile);
