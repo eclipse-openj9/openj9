@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1573,95 +1573,6 @@ static TR::Node *reduceShiftLeftOverShiftRight(TR::Node * node, TR::Block * bloc
    return node;
    }
 
-static TR::Node *replaceSetSignUnderBinaryWithAbs(TR::Node *node, TR::Block * block, TR::Simplifier * s)
-   {
-   // use abs instead of setsign to avoid in-memory read after write
-
-   TR::ILOpCodes op = node->getOpCodeValue();
-   TR_ASSERT(op == TR::pd2l || op == TR::pd2lu || op == TR::pd2i || op == TR::pd2iu,
-             "Replacing a setsign with an abs only implemented for pd2i/l");
-
-   // COBOL 4 and earlier always overwrites the sign code with 0xF so even uninitialized sign codes are corrected
-   // This optimization will remove the setsign on the input to the pd2i/pd2l so a data exception may be hit
-   // on the pd2i/pd2l if the setsign is removed
-   //
-   // Would have generated:
-   // PKA   // 00 -> 0c (always sets 0xc sign code)
-   // CVB   // 0c -> 0 (in binary)
-   // or
-   // PACK  // 00 -> 00
-   // OI    // 00 -> 0F (fixes up uninitialized sign code)
-   // CVB   // 0c -> 0 (in binary)
-   //
-   // with this optimization would generate
-   // PACK  // 00 -> 00
-   // CVB   // data exception due to 0x0 sign code
-   // LPR
-
-   TR::Node *firstChild = node->getFirstChild();
-   if (firstChild->getReferenceCount() > 1 || !firstChild->getOpCode().isSetSign() ||
-       !(firstChild->getSetSignValueNode()->get64bitIntegralValue() == TR::DataType::getPreferredPlusCode() ||
-        firstChild->getSetSignValueNode()->get64bitIntegralValue() == TR::DataType::getUnsignedCode()))
-      return node;
-
-   if (node->getOpCode().isUnsigned())
-      {
-      if (firstChild->getOpCodeValue() == TR::pdSetSign &&
-          !firstChild->isTruncating() &&
-          firstChild->getFirstChild()->getOpCodeValue() != TR::zd2pd &&
-          performTransformation(s->comp(), "%sRemove redundant %s [" POINTER_PRINTF_FORMAT "] under %s [" POINTER_PRINTF_FORMAT "]\n",
-                                s->optDetailString(), firstChild->getOpCode().getName(), firstChild, node->getOpCode().getName(), node))
-         {
-         // pd2i
-         //    pdSetSign
-         //       [input]
-         // to
-         //
-         // pd2i
-         //    [input]
-         TR::Node *binaryNode = node;
-         node->setChild(0, s->replaceNodeWithChild(firstChild, firstChild->getFirstChild(), s->_curTree, block, false));
-         }
-      }
-   else
-      {
-      if (firstChild->getOpCodeValue() == TR::pdSetSign &&
-          !firstChild->isTruncating() &&
-          firstChild->getFirstChild()->getOpCodeValue() != TR::zd2pd &&
-          (!firstChild->getFirstChild()->getOpCode().isSetSign() ||
-           firstChild->getFirstChild()->getSetSignValueNode()->get64bitIntegralValue() != TR::DataType::getIgnoredSignCode() ||
-           firstChild->getFirstChild()->getReferenceCount() == 1) &&
-          performTransformation(s->comp(), "%sMove %s [" POINTER_PRINTF_FORMAT "] under abs and remove child %s [" POINTER_PRINTF_FORMAT "]\n",
-                                s->optDetailString(), node->getOpCode().getName(), node, firstChild->getOpCode().getName(), firstChild))
-         {
-         // pd2i
-         //    pdSetSign
-         //       [input]
-         // to
-         //
-         // iabs
-         //    pd2i
-         //       [input]
-
-
-         //If we have a pdsetsign above a pdsetsign, force child to parent's value
-         //A setsign above a setsign means the input might have an invalid sign code
-         if (firstChild->getFirstChild()->getOpCode().isSetSign() && firstChild->getFirstChild()->getReferenceCount() == 1)
-            firstChild->getFirstChild()->setChild(TR::ILOpCode::getSetSignValueIndex(firstChild->getFirstChild()->getOpCodeValue()),
-               s->replaceNode(firstChild->getFirstChild()->getSetSignValueNode(), firstChild->getSetSignValueNode(), s->_curTree, false));
-
-         TR::Node *binaryNode = node;
-         node->setChild(0, s->replaceNodeWithChild(firstChild, firstChild->getFirstChild(), s->_curTree, block, false));
-
-         if (node->getType().isInt64())
-            node = s->replaceNode(node, TR::Node::recreateWithoutProperties(firstChild, TR::labs, 1, binaryNode), s->_curTree, false);
-         else
-            node = s->replaceNode(node, TR::Node::recreateWithoutProperties(firstChild, TR::iabs, 1, binaryNode), s->_curTree, false);
-         }
-      }
-   return node;
-   }
-
 // TypeReduction can convert packed math to DFP math. If the packed math is used in cases where integer math might overflow,
 // we could end up with something like pd2l -> dd2pd -> ddadd. Converting DFP to packed is expensive, so we should go
 // directly from DFP to binary. Sometimes, due to commoning, we may also end up with a tree like
@@ -2310,10 +2221,6 @@ TR::Node *pd2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
 
    firstChild = node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
-   newNode = replaceSetSignUnderBinaryWithAbs(node, block, s);
-   if (newNode != node)
-      return newNode;
-
    if (!node->isNonNegative() &&
        node->getFirstChild()->isNonNegative() &&
        performTransformation(s->comp(), "%sSet x >= 0 flag on %s [" POINTER_PRINTF_FORMAT "] with x >= 0 child\n",
@@ -2357,10 +2264,6 @@ TR::Node *pd2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    firstChild = node->getFirstChild();
 
    node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
-
-   newNode = replaceSetSignUnderBinaryWithAbs(node, block, s);
-   if (newNode != node)
-      return newNode;
 
    return node;
    }
