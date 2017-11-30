@@ -23,6 +23,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "j9port.h"
 #include "jcl.h"
 #include "j9consts.h"
 #include "omrgcconsts.h"
@@ -42,7 +43,7 @@
 #include "j9modron.h"
 #include "omr.h"
 #include "vendor_version.h"
-
+#include "omrport.h"
 /* The vm version which must match the JCL.
  * It has the format 0xAABBCCCC
  *	AA - vm version, BB - jcl version, CCCC - master version
@@ -66,12 +67,15 @@ jint computeFullVersionString(J9JavaVM* vm)
 {
 	VMI_ACCESS_FROM_JAVAVM((JavaVM*)vm);
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
 	const char *osarch;
 	const char *osname;
 	const char *vmVersion = NULL;
 	const char *gcVersion = NULL;
-	char fullversion[512];
 	char vminfo[512];
+        char fullversion[512];
+        int buflen = 0;
+        int vmlen = 0;  
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	J9JITConfig *jitConfig;
 #endif
@@ -79,74 +83,69 @@ jint computeFullVersionString(J9JavaVM* vm)
 	UDATA jitEnabled = 0;
 	UDATA aotEnabled = 0;
 #endif
-
-	strcpy(fullversion, "JRE ");
-	strcpy(vminfo, "JRE ");
+        buflen = omrstr_printf(fullversion, sizeof(fullversion), "JRE ");
+        vmlen = omrstr_printf(vminfo, sizeof(vminfo), "JRE ");
 	switch(J2SE_VERSION(vm) & J2SE_VERSION_MASK) {
 	case J2SE_17:
 		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_17) {
-			strcat(fullversion, "1.7.0 ");
-			strcat(vminfo, "1.7.0 ");
+		        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "1.7.0 ");	
+        		vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "1.7.0 ");
 		} else {
-			strcat(fullversion, "1.7.? ");
-			strcat(vminfo, "1.7.? ");
+		        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "1.7.? ");	
+        		vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "1.7.? ");
 		}
 		break;
 	case J2SE_18:
 		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
-			strcat(fullversion, "1.8.0 ");
-			strcat(vminfo, "1.8.0 ");
+		        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "1.8.0 ");	
+        		vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "1.8.0 ");
 		} else {
-			strcat(fullversion, "1.8.? ");
-			strcat(vminfo, "1.8.? ");
+		        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "1.8.? ");	
+        		vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "1.8.? ");
 		}
 		break;
 	case J2SE_19:
 		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_19) {
-			strcat(fullversion, "9 ");
-			strcat(vminfo, "9 ");
+		        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "9 ");	
+        		vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "9 ");
 		} else {
-			strcat(fullversion, "9.? ");
-			strcat(vminfo, "9.? ");
+		        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "9.? ");	
+        		vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "9.? ");
 		}
 		break;
 	default:
-		strcat(fullversion, "?.?.? ");
-		strcat(vminfo, "?.?.? ");
+		buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "?.?.? ");	
+        	vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "?.?.? ");
 	}
-
-	strcat(fullversion, "IBM J9 ");
-	strcat(fullversion, EsVersionString " ");
+        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion)," IBM J9 %s ", EsVersionString);
 	osname = j9sysinfo_get_OS_type();
 	if (NULL != osname) {
-		strcat(fullversion, osname);
-		strcat(fullversion, " ");
-		strcat(vminfo, osname);
-		strcat(vminfo, " ");
+                buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "%s ", osname);	
+        	vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "%s ", osname);
 	}
 	osarch = j9sysinfo_get_CPU_architecture();
-	strcat(fullversion, osarch);
-	strcat(vminfo, osarch);
+        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "%s", osarch);	
+        vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "%s", osarch);
 
 #ifdef J9VM_ENV_DATA64
-	strcat(fullversion, "-64 ");
-	strcat(vminfo, "-64 ");
+        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "-64 ");	
+        vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "-64 ");
 #ifdef J9VM_GC_COMPRESSED_POINTERS
-	strcat(fullversion, "Compressed References ");
-	strcat(vminfo, "Compressed References ");
+        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "Compressed References ");	
+        vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "Compressed References ");
 #endif
 #else
 #if defined(J9ZOS390) || defined(S390)
-	strcat(fullversion, "-31 ");
-	strcat(vminfo, "-31 ");
+        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "-31 ");	
+        vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "-31 ");
 #else
-	strcat(fullversion, "-32 ");
-	strcat(vminfo, "-32 ");
+        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "-32 ");	
+        vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "-32 ");
 #endif
 #endif
 
-	strcat(fullversion, EsBuildVersionString);
-	strcat(vminfo, EsBuildVersionString);
+        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "%s", EsBuildVersionString);	
+        vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "%s", EsBuildVersionString);
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
 	jitConfig = vm->jitConfig;
@@ -158,35 +157,24 @@ jint computeFullVersionString(J9JavaVM* vm)
 			aotEnabled = 1;
 		}
 	}
-	strcat(fullversion, " (JIT ");
-	strcat(fullversion, jitEnabled ? "en" : "dis");
-	strcat(vminfo, " (JIT ");
-	strcat(vminfo, jitEnabled ? "en" : "dis");
-	strcat(fullversion, "abled, AOT ");
-	strcat(fullversion, aotEnabled ? "en" : "dis");
-	strcat(vminfo, "abled, AOT ");
-	strcat(vminfo, aotEnabled ? "en" : "dis");
-	strcat(fullversion, "abled)\nOpenJ9   - ");
-	strcat(vminfo, "abled)\nOpenJ9   - ");
+        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), " (JIT %sabled, AOT %sabled)\nOpenJ9   - ", jitEnabled ? "en" : "dis", aotEnabled ? "en" : "dis");	
+        vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), " (JIT %sabled, AOT %sabled)\nOpenJ9   - ", jitEnabled ? "en" : "dis", aotEnabled ? "en" : "dis");
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
 	vmVersion = J9VM_VERSION_STRING;
-	strcat(fullversion, vmVersion);
-	strcat(vminfo, vmVersion);
+        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "%s", vmVersion);	
+        vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "%s", vmVersion);
 
 #if defined(J9VM_GC_MODRON_GC)
 	gcVersion = OMR_VERSION_STRING;
-	strcat(fullversion, "\nOMR      - ");
-	strcat(fullversion, gcVersion);
-	strcat(vminfo, "\nOMR      - ");
-	strcat(vminfo, gcVersion);
+        buflen += omrstr_printf(fullversion+buflen, sizeof(fullversion), "\nOMR     - %s", gcVersion);	
+        vmlen += omrstr_printf(vminfo+vmlen, sizeof(vminfo), "\nOMR      - %s", gcVersion);
 #endif /* J9VM_GC_MODRON_GC */
 
 #if defined(VENDOR_SHORT_NAME) && defined(VENDOR_SHA)
-	strcat(fullversion, "\n" VENDOR_SHORT_NAME "      - " VENDOR_SHA);
-	strcat(vminfo, "\n" VENDOR_SHORT_NAME "      - " VENDOR_SHA);
+        buflen = omrstr_printf(fullversion+buflen, sizeof(fullversion), "\n" VENDOR_SHORT_NAME "      - " VENDOR_SHA);	
+        vmlen = omrstr_printf(vminfo+vmlen, sizeof(vminfo), "\n" VENDOR_SHORT_NAME "      - " VENDOR_SHA);
 #endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
-
 	(*VMI)->SetSystemProperty(VMI, "java.vm.info", vminfo);
 	/*[PR 114306] System property java.fullversion is not initialized properly */
 	(*VMI)->SetSystemProperty(VMI, "java.fullversion", fullversion);
