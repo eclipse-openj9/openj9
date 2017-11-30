@@ -70,6 +70,7 @@
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V10
 #endif
 #define J2SE_SHAPE_SUN     		0x10000
+#define J2SE_SHAPE_SUN_OPENJDK	0x20000
 #define J2SE_SHAPE_B136    		0x40000
 #define J2SE_SHAPE_B148    		0x50000
 #define J2SE_SHAPE_B165    		0x60000
