@@ -69,7 +69,6 @@ class MM_EnvironmentDelegate
 private:
 	MM_EnvironmentBase *_env;
 	GC_Environment _gcEnv;
-	bool _reacquireJNICriticalAccess;
 protected:
 public:
 
@@ -179,7 +178,6 @@ public:
 
 	MM_EnvironmentDelegate()
 		: _env(NULL)
-		, _reacquireJNICriticalAccess(false)
 	{ }
 };
 
