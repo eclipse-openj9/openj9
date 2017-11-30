@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,11 +29,21 @@
 
 namespace J9 {
 
+/**
+ * Persistence Failure exception type.
+ *
+ * General Persistence Failure exception type.
+ */
 struct PersistenceFailure : public virtual TR::CompilationException
    {
    virtual const char* what() const throw() { return "Persistence failure"; }
    };
 
+/**
+ * Class Chain persistence Failure exception type.
+ *
+ * Thrown when an error related to Class Chains occurs.
+ */
 struct ClassChainPersistenceFailure : public virtual PersistenceFailure
    {
    virtual const char* what() const throw() { return "Class chain persistence failure"; }
