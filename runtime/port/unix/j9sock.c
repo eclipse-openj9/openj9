@@ -43,7 +43,7 @@
 #include <netinet/in.h> /* for struct in_addr */
 #include <sys/ioctl.h>
 #include <net/if.h> /* for struct ifconf */
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 #include <arpa/inet.h>
 #endif
 
@@ -543,7 +543,7 @@ platformSocketOption(int32_t portableSocketOption)
 int32_t
 j9sock_accept(struct J9PortLibrary *portLibrary, j9socket_t serverSock, j9sockaddr_t addrHandle, j9socket_t *sockHandle)
 {
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 #define ACCEPTCAST (socklen_t *)
 #else
 #define ACCEPTCAST
@@ -790,7 +790,7 @@ j9sock_fdset_init(struct J9PortLibrary *portLibrary, j9socket_t socketP)
 	fdset = ptBuffers->fdset;
 	memset(fdset, 0, sizeof(struct j9fdset_struct));
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 	portLibrary->sock_fdset_zero(portLibrary, ptBuffers->fdset);
 	portLibrary->sock_fdset_set(portLibrary, socketP, ptBuffers->fdset);
 #else
@@ -2417,9 +2417,9 @@ j9sock_select(struct J9PortLibrary *portLibrary, int32_t nfds, j9fdset_t readfd,
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	int32_t rc = 0;
-#if !defined(LINUX)	
+#if !defined(LINUX) && !defined(OSX)	
 	int32_t result = 0;
-#endif /* !defined(LINUX) */
+#endif /* !defined(LINUX) && !defined(OSX) */
 
 	Trc_PRT_sock_j9sock_select_Entry(nfds, readfd, writefd, exceptfd_notSupported, timeout == NULL ? 0 : timeout->time.tv_sec, timeout == NULL ? 0 : timeout->time.tv_usec);
 
@@ -2431,7 +2431,7 @@ j9sock_select(struct J9PortLibrary *portLibrary, int32_t nfds, j9fdset_t readfd,
 	 * The checking code should be kept active on other platforms (zOS/AIX) since they still use select(..)
 	 * and the default value of FD_SETSIZE varies with platforms.
 	 */
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 	if (NULL == timeout) {
 #else
 	if ((nfds >= FD_SETSIZE) || (NULL == timeout)) {
@@ -2440,7 +2440,7 @@ j9sock_select(struct J9PortLibrary *portLibrary, int32_t nfds, j9fdset_t readfd,
 	} else {
 
 		if (NULL != exceptfd_notSupported) {
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 			if (-1 != exceptfd_notSupported->fd) {
 #else
 			if (NULL != &exceptfd_notSupported->handle) {
@@ -2451,7 +2451,7 @@ j9sock_select(struct J9PortLibrary *portLibrary, int32_t nfds, j9fdset_t readfd,
 			}
 		}
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 		int timeoutms;
 		int pollrc = 0;
 		struct pollfd pfds[2];
@@ -2819,7 +2819,7 @@ j9sock_setopt_int(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t
 		then this indicates that we should also be setting the flowinfo field so we need to 
 		set this option.  Howerver it can only be set on IPv6 sockets */
 #if defined(IPv6_FUNCTION_SUPPORT)
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 	if(( OS_IPPROTO_IP == platformLevel)&&(OS_IP_TOS==platformOption)&&(socketP->family == J9ADDR_FAMILY_AFINET6 )){
 		uint32_t on = 1;
 		uint32_t result = 0;
@@ -3823,7 +3823,7 @@ j9sock_connect_with_timeout(struct J9PortLibrary *portLibrary, j9socket_t sock, 
 void
 j9sock_fdset_zero(struct J9PortLibrary *portLibrary, j9fdset_t j9fdset) 
 {
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 	j9fdset->fd = -1;
 #else
 	FD_ZERO(&j9fdset->handle);
@@ -3836,7 +3836,7 @@ void
 j9sock_fdset_set(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdset_t j9fdset) 
 {
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 	/* check that the j9fdset is empty */
 	Assert_PRT_true((-1 == j9fdset->fd) || (j9fdset->fd == SOCKET_CAST(aSocket)));
 
@@ -3856,7 +3856,7 @@ j9sock_fdset_set(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdset_
 void
 j9sock_fdset_clr(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdset_t j9fdset) 
 {
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 	j9fdset->fd = -1;
 #else
 	if (SOCKET_CAST(aSocket) > FD_SETSIZE) {
@@ -3874,7 +3874,7 @@ j9sock_fdset_isset(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdse
 {
 	BOOLEAN rc = FALSE;
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 	rc = (j9fdset->fd == SOCKET_CAST(aSocket));
 #else
 	int fdIsSetRC;
@@ -3901,7 +3901,7 @@ j9sock_fdset_isset(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdse
  *
  * @return	0 if success, a socket error if a failure occurred
  */
-#ifdef LINUX
+#if defined(LINUX) || defined(OSX)
 static int32_t
 disconnectSocket(struct J9PortLibrary *portLibrary, j9socket_t sock, socklen_t fromlen)
 {
