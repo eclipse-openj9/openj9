@@ -77,7 +77,7 @@ public:
       _notificationQueue->Shutdown();
       }
 
-   void buildAndServe(J9BaseCompileDispatcher *compiler);
+   void buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t port);
 
 private:
    void serve(J9BaseCompileDispatcher *compiler);

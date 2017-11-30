@@ -69,10 +69,10 @@ JAAS::J9ServerStream::acceptNewRPC()
    }
 
 void
-JAAS::J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler)
+JAAS::J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t port)
    {
    grpc::ServerBuilder builder;
-   builder.AddListeningPort("0.0.0.0:38400", grpc::InsecureServerCredentials());
+   builder.AddListeningPort("0.0.0.0:" + std::to_string(port), grpc::InsecureServerCredentials());
    builder.RegisterService(&_service);
    _notificationQueue = builder.AddCompletionQueue();
 

@@ -1036,6 +1036,44 @@ bool J9::Options::showPID()
    return false;
    }
 
+static void getJaasServerPortFromCommandLineOptions(char **options, char delimiter)
+   {
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
+   char *portChar = scan_to_delim(PORTLIB, options, delimiter);
+   uint32_t port = 0;
+   UDATA scanResult = scan_u32(&portChar, &port);
+   if (scanResult != 0)
+      {
+      if (scanResult == 1)
+         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_MUST_BE_NUMBER, "port=");
+      else
+         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED, "port=");
+      }
+   else
+      getCompilationInfo(jitConfig)->getPersistentInfo()->setJaasServerPort(port);
+   }
+
+static void handleUnrecognizedCommandLineOptions(char **options, char delimiter)
+   {
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
+   // try to find delimiter to isolate unrecognized option
+   char *delimLocation = strchr(*options, delimiter);
+   if (delimLocation) // delimiter found, print the unrecognized option
+      {
+      char unRecognized[delimLocation - *options + 1];
+      strncpy(unRecognized, *options, delimLocation - *options);
+      unRecognized[delimLocation - *options] = '\0';
+      j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, unRecognized);
+      }
+   else // delimiter not found, unrecognized option remains until end of the string
+      j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, *options);
+
+   // skip this unknown option to search for any known options left
+   scan_to_delim(PORTLIB, options, delimiter);
+   }
+
 bool
 J9::Options::fePreProcess(void * base)
    {
@@ -1954,15 +1992,13 @@ J9::Options::fePreProcess(void * base)
       char *xxJaasClientOption = "-XX:jaasClient";
       char *xxJaasServerOption = "-XX:jaasServer";
       int32_t xxJaasClientArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJaasClientOption, 0);
-      int32_t xxJaasServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJaasServerOption, 0);
+      int32_t xxJaasServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJaasServerOption, 0);
       // Check if option is at all specified
       if (xxJaasClientArgIndex >= 0 || xxJaasServerArgIndex >= 0)
          {
          if (xxJaasClientArgIndex > xxJaasServerArgIndex)   // client mode
             {
             compInfo->getPersistentInfo()->setJaasMode(CLIENT_MODE);
-            if (TR::Options::getVerboseOption(TR_VerboseJaas))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Jaas Client Mode.\n");
 
             // parse -XX:jaasClient:server=<address/hostname>,port=<number> option if provided
             char *xxJaasClientOptionWithArgs = "-XX:jaasClient:"; // tail colon indicates server and port are provided
@@ -1984,54 +2020,55 @@ J9::Options::fePreProcess(void * base)
                      compInfo->getPersistentInfo()->setJaasServerAddress(address);
                      }
                   else if (try_scan(&options, "port=")) // parse port=<number> option
-                     {
-                     char *portChar = scan_to_delim(PORTLIB, &options, delimiter);
-                     uintptr_t port = 0;
-                     UDATA scanResult = scan_udata(&portChar, &port);
-                     if (scanResult != 0)
-                        {
-                        if (scanResult == 1)
-                           j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_MUST_BE_NUMBER, "port=");
-                        else
-                           j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED, "port=");
-                        }
-                     else
-                        compInfo->getPersistentInfo()->setJaasServerPort(port);
-                     }
+                     getJaasServerPortFromCommandLineOptions(&options, delimiter);
                   else                                  // option not known
                      {
-                     if (unRecognizedOptions != options)
+                     if (unRecognizedOptions != options) // try to loop through all known options
                         {
                         unRecognizedOptions = options;
-                        // try to find delimiter to isolate unrecognized option
-                        char *delimLocation = strchr(options, delimiter);
-                        if (delimLocation) // delimiter found, print the unrecognized option
-                           {
-                           char unRecognized[delimLocation - options];
-                           strncpy(unRecognized, options, delimLocation - options);
-                           j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, unRecognized);
-                           }
-                        else // delimiter not found, unrecognized option remains until end of the string
-                           j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, options);
-                        // skip this unknown option to search for any known options left
-                        scan_to_delim(PORTLIB, &options, delimiter);
+                        handleUnrecognizedCommandLineOptions(&options, delimiter);
                         }
                      else // no more known options, break the loop
                         break;
                      }
                   }
-
                }
             }
          else                                               // server mode
             {
             compInfo->getPersistentInfo()->setJaasMode(SERVER_MODE);
-            if (TR::Options::getVerboseOption(TR_VerboseJaas))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Jaas Server Mode.\n");
+
+            // parse -XX:jaasServer:port=<number> option if provided
+            char *xxJaasServerOptionWithArgs = "-XX:jaasServer:"; // tail colon indicates options are provided
+            xxJaasServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJaasServerOptionWithArgs, 0);
+            if (xxJaasServerArgIndex >= 0)
+               {
+               // retrieve whole option part, i.e., port=<number>
+               char *options = NULL;
+               GET_OPTION_OPTION(xxJaasServerArgIndex, ':', ':', &options);
+
+               char *scanLimit = options + strlen(options);
+               char delimiter = ',';
+               char *unRecognizedOptions = NULL;
+               while (options < scanLimit)
+                  {
+                  if (try_scan(&options, "port=")) // parse port=<number> option
+                     getJaasServerPortFromCommandLineOptions(&options, delimiter);
+                  else                                  // option not known
+                     {
+                     if (unRecognizedOptions != options) // try to loop through all known options
+                        {
+                        unRecognizedOptions = options;
+                        handleUnrecognizedCommandLineOptions(&options, delimiter);
+                        }
+                     else // no more known options, break the loop
+                        break;
+                     }
+                  }
+               }
             }
          }
       }
-
 
    return true;
    }
@@ -2168,6 +2205,18 @@ J9::Options::fePostProcessJIT(void * base)
          _samplingFrequency = 0; // disable sampling (including samplingThread)
          }
       }
+
+   if (TR::Options::getVerboseOption(TR_VerboseJaas))
+      {
+      if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Jaas Server Mode. Port: %d",
+               compInfo->getPersistentInfo()->getJaasServerPort());
+      else if (compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Jaas Client Mode. Server address: %s port: %d",
+               compInfo->getPersistentInfo()->getJaasServerAddress().c_str(),
+               compInfo->getPersistentInfo()->getJaasServerPort());
+      }
+
    return true;
    }
 
