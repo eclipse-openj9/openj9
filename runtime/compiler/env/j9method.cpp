@@ -7495,7 +7495,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          return true;
       case TR::java_lang_invoke_ArgumentMoverHandle_permuteArgs:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
@@ -7504,6 +7503,12 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          uintptrj_t methodDescriptorRef;
          intptrj_t methodDescriptorLength;
 
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            // JAAS TODO
+            TR::comp()->failCompilation<JAAS::StreamFailure>("permuteArgs not yet handled by JAAS");
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeArgumentMoverHandlePermuteArgs(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -7535,6 +7540,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          char * oldSignature;
          char * newSignature;
 
+         // JAAS TODO
             {
             TR::VMAccessCriticalSection invokePermuteHandlePermuteArgs(fej9);
             uintptrj_t methodHandle = *thunkDetails->getHandleRef();
@@ -7645,7 +7651,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
       case TR::java_lang_invoke_InsertHandle_numSuffixArgs:
       case TR::java_lang_invoke_InsertHandle_numValuesToInsert:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
@@ -7657,6 +7662,15 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          uintptrj_t values;
          int32_t numValues;
 
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeInsertHandle, thunkDetails->getHandleRef());
+            auto recv = stream->read<int32_t, int32_t, int32_t>();
+            insertionIndex = std::get<0>(recv);
+            numArguments = std::get<1>(recv);
+            numValues = std::get<2>(recv);
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeInsertHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8034,7 +8048,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_FoldHandle_foldPosition:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for foldPosition()
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -8043,6 +8056,13 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          uintptrj_t methodHandle;
          int32_t foldPosition;
+
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeFoldHandle, thunkDetails->getHandleRef());
+            foldPosition = std::get<0>(stream->read<int32_t>());
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeFoldHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8088,7 +8108,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_FinallyHandle_numFinallyTargetArgsToPassThrough:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for numFinallyTargetArgsToPassThrough()
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -8097,6 +8116,19 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          int32_t numArgsPassToFinallyTarget;
          char *methodDescriptor;
+
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeFinallyHandle, thunkDetails->getHandleRef());
+            auto recv = stream->read<int32_t, std::string>();
+            numArgsPassToFinallyTarget = std::get<0>(recv);
+            std::string methodDescriptorString = std::get<1>(recv);
+            int methodDescriptorLength = methodDescriptorString.size();
+            methodDescriptor = (char*)alloca(methodDescriptorLength+1);
+            memcpy(methodDescriptor, &methodDescriptorString[0], methodDescriptorLength);
+            methodDescriptor[methodDescriptorLength] = 0;
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeFinallyHandle(fej9);
             uintptrj_t methodHandle = *thunkDetails->getHandleRef();
@@ -8125,7 +8157,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
       case TR::java_lang_invoke_FilterArgumentsHandle_numSuffixArgs:
       case TR::java_lang_invoke_FilterArgumentsHandle_numArgsToFilter:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure");
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -8139,6 +8170,15 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          uintptrj_t filters;
          int32_t numFilters;
 
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeFilderArgumentsHandle, thunkDetails->getHandleRef());
+            auto recv = stream->read<int32_t, int32_t, int32_t>();
+            numArguments = std::get<0>(recv);
+            startPos = std::get<1>(recv);
+            numFilters = std::get<2>(recv);
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeFilderArgumentsHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8291,13 +8331,18 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_CatchHandle_numCatchTargetArgsToPassThrough:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
 
          int32_t numCatchArguments;
 
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeCatchHandle, thunkDetails->getHandleRef());
+            numCatchArguments = std::get<0>(stream->read<int32_t>());
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeCatchHandle(fej9);
             uintptrj_t methodHandle   = *thunkDetails->getHandleRef();

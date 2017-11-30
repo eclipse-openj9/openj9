@@ -1700,6 +1700,67 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(numArguments, numNextArguments, spreadStart);
          }
          break;
+      case J9ServerMessageType::runFEMacro_invokeInsertHandle:
+         {
+         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         TR::VMAccessCriticalSection invokeInsertHandle(fe);
+         int32_t insertionIndex = fe->getInt32Field(methodHandle, "insertionIndex");
+         uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(methodHandle, "type", "Ljava/lang/invoke/MethodType;"), "arguments", "[Ljava/lang/Class;");
+         int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
+         uintptrj_t values = fe->getReferenceField(methodHandle, "values", "[Ljava/lang/Object;");
+         int32_t numValues = (int32_t)fe->getArrayLengthInElements(values);
+         client->write(insertionIndex, numArguments, numValues);
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_invokeFoldHandle:
+         {
+         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         TR::VMAccessCriticalSection invokeFoldHandle(fe);
+         int32_t foldPosition = fe->getInt32Field(methodHandle, "foldPosition");
+         client->write(foldPosition);
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_invokeFinallyHandle:
+         {
+         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         TR::VMAccessCriticalSection invokeFinallyHandle(fe);
+         uintptrj_t finallyTarget = fe->getReferenceField(methodHandle, "finallyTarget", "Ljava/lang/invoke/MethodHandle;");
+         uintptrj_t finallyType = fe->getReferenceField(finallyTarget, "type", "Ljava/lang/invoke/MethodType;");
+         uintptrj_t arguments        = fe->getReferenceField(finallyType, "arguments", "[Ljava/lang/Class;");
+         int32_t numArgsPassToFinallyTarget = (int32_t)fe->getArrayLengthInElements(arguments);
+
+         uintptrj_t methodDescriptorRef = fe->getReferenceField(finallyType, "methodDescriptor", "Ljava/lang/String;");
+         int methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
+         char *methodDescriptor = (char*)alloca(methodDescriptorLength+1);
+         fe->getStringUTF8(methodDescriptorRef, methodDescriptor, methodDescriptorLength+1);
+         client->write(numArgsPassToFinallyTarget, std::string(methodDescriptor, methodDescriptorLength));
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_invokeFilderArgumentsHandle:
+         {
+         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         TR::VMAccessCriticalSection invokeFilderArgumentsHandle(fe);
+         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
+         int32_t startPos     = (int32_t)fe->getInt32Field(methodHandle, "startPos");
+         uintptrj_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
+         int32_t numFilters = fe->getArrayLengthInElements(filters);
+         client->write(numArguments, startPos, numFilters);
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_invokeCatchHandle:
+         {
+         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         TR::VMAccessCriticalSection invokeCatchHandle(fe);
+         uintptrj_t catchTarget    = fe->getReferenceField(methodHandle, "catchTarget", "Ljava/lang/invoke/MethodHandle;");
+         uintptrj_t catchArguments = fe->getReferenceField(fe->getReferenceField(
+            catchTarget,
+            "type", "Ljava/lang/invoke/MethodType;"),
+            "arguments", "[Ljava/lang/Class;");
+         int32_t numCatchArguments = (int32_t)fe->getArrayLengthInElements(catchArguments);
+         client->write(numCatchArguments);
+         }
+         break;
       default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();
