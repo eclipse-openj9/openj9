@@ -71,12 +71,11 @@ jint computeFullVersionString(J9JavaVM* vm)
 	const char *j2se_version_info = NULL;
 	const char *jitEnabled = "";
 	const char *aotEnabled = "";
-	const uintptr_t bufferSize = 512;
+#define BUFFER_SIZE 512
 
-	/* The actual allowed bufferSize is 512, the extra 1 char is added to check for overflow */
-	char fullversion[bufferSize + 1];
-	char vminfo[bufferSize + 1];
-
+	/* The actual allowed BUFFER_SIZE is 512, the extra 1 char is added to check for overflow */
+	char fullversion[BUFFER_SIZE + 1];
+	char vminfo[BUFFER_SIZE + 1];
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
 	J9JITConfig *jitConfig = vm->jitConfig;
@@ -153,7 +152,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 	#define VENDOR_INFO ""
 #endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
 
-	if (bufferSize <= j9str_printf(PORTLIB, fullversion, bufferSize + 1,
+	if (BUFFER_SIZE <= j9str_printf(PORTLIB, fullversion, BUFFER_SIZE + 1,
 			"JRE %s IBM J9 %s %s %s " MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO,
 			j2se_version_info,
 			EsVersionString,
@@ -166,7 +165,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 		return JNI_ERR;
 	}
 
-	if (bufferSize <= j9str_printf(PORTLIB, vminfo, bufferSize + 1,
+	if (BUFFER_SIZE <= j9str_printf(PORTLIB, vminfo, BUFFER_SIZE + 1,
 			"JRE %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO,
 			j2se_version_info,
 			(NULL != osname ? osname : " "),
@@ -178,8 +177,9 @@ jint computeFullVersionString(J9JavaVM* vm)
 		return JNI_ERR;
 	}
 
-#undef MEM_INFO
+#undef BUFFER_SIZE
 #undef JIT_INFO
+#undef MEM_INFO
 #undef OMR_INFO
 #undef VENDOR_INFO
 
