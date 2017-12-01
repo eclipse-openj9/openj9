@@ -649,8 +649,8 @@
 	</test>
 	
 	<test id="Test 42: LIR 1445.1 : Debug Area PrintStats Test : Create a test cache with -Xscdmx3m & java core with -Xnolinenumbers" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xdump:java:events=vmstop,file=javacore.txt -Xscdmx3m $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="no">version</output>
+		<command>$JAVA_EXE$ -Xdump:java:events=vmstop,file=javacore.txt -Xscdmx3m $currentMode$ $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
