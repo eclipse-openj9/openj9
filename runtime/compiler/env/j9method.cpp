@@ -7505,8 +7505,12 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            // JAAS TODO
-            TR::comp()->failCompilation<JAAS::StreamFailure>("permuteArgs not yet handled by JAAS");
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeArgumentMoverHandlePermuteArgs, thunkDetails->getHandleRef());
+            std::string methodDescString = std::get<0>(stream->read<std::string>());
+            methodDescriptorLength = methodDescString.size();
+            nextHandleSignature = (char*)alloca(methodDescriptorLength+1);
+            memcpy(nextHandleSignature, &methodDescString[0], methodDescriptorLength);
+            nextHandleSignature[methodDescriptorLength] = 0;
             }
          else
             {
@@ -7540,7 +7544,65 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          char * oldSignature;
          char * newSignature;
 
-         // JAAS TODO
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokePermuteHandlePermuteArgs, thunkDetails->getHandleRef());
+
+            // Do the client-side operations
+            auto recv = stream->read<int32_t, std::vector<int32_t>>();
+            permuteLength = std::get<0>(recv);
+            std::vector<int32_t> argIndices = std::get<1>(recv);
+
+            // Do the server-side operations
+            originalArgs = genNodeAndPopChildren(TR::icall, 1, placeholderWithDummySignature());
+            oldSignature = originalArgs->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->signatureChars();
+            newSignature = "()I";
+            if (comp()->getOption(TR_TraceILGen))
+               traceMsg(comp(), "  permuteArgs: oldSignature is %s\n", oldSignature);
+            for (i=0; i < permuteLength; i++)
+               {
+               auto argIndex = argIndices[i];
+               if (argIndex >= 0)
+                  {
+                  newSignature = artificialSignature(stackAlloc, "(.*.@)I",
+                     newSignature, 0,
+                     oldSignature, argIndex);
+                  push(originalArgs->getChild(argIndex));
+                  if (comp()->getOption(TR_TraceILGen))
+                     traceMsg(comp(), "  permuteArgs:   %d: incoming argument\n", argIndex);
+                  }
+               else
+                  {
+                  newSignature = artificialSignature(stackAlloc, "(.*.@)I",
+                     newSignature, 0,
+                     nextHandleSignature, i);
+                  char *argType = nthSignatureArgument(i, nextHandleSignature+1);
+                  char  extraName[10];
+                  char *extraSignature;
+                  switch (argType[0])
+                     {
+                     case 'L':
+                     case '[':
+                        sprintf(extraName, "extra_L");
+                        extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I)Ljava/lang/Object;");
+                        break;
+                     default:
+                        sprintf(extraName, "extra_%c", argType[0]);
+                        extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I).@", nextHandleSignature, i);
+                        break;
+                     }
+                  if (comp()->getOption(TR_TraceILGen))
+                     traceMsg(comp(), "  permuteArgs:   %d: call to %s.%s%s\n", argIndex, JSR292_ArgumentMoverHandle, extraName, extraSignature);
+                  TR::SymbolReference *extra = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_ArgumentMoverHandle, extraName, extraSignature, TR::MethodSymbol::Static);
+                  loadAuto(TR::Address, 0);
+                  loadConstant(TR::iconst, argIndex);
+                  genInvokeDirect(extra);
+                  }
+               }
+            if (comp()->getOption(TR_TraceILGen))
+               traceMsg(comp(), "  permuteArgs: permuted placeholder signature is %s\n", newSignature);
+            }
+         else
             {
             TR::VMAccessCriticalSection invokePermuteHandlePermuteArgs(fej9);
             uintptrj_t methodHandle = *thunkDetails->getHandleRef();

@@ -1761,6 +1761,35 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(numCatchArguments);
          }
          break;
+      case J9ServerMessageType::runFEMacro_invokeArgumentMoverHandlePermuteArgs:
+         {
+         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         TR::VMAccessCriticalSection invokeArgumentMoverHandlePermuteArgs(fe);
+         uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+            methodHandle,
+            "next",             "Ljava/lang/invoke/MethodHandle;"),
+            "type",             "Ljava/lang/invoke/MethodType;"),
+            "methodDescriptor", "Ljava/lang/String;");
+         intptrj_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
+         char *nextHandleSignature = (char*)alloca(methodDescriptorLength+1);
+         fe->getStringUTF8(methodDescriptorRef, nextHandleSignature, methodDescriptorLength+1);
+         client->write(std::string(nextHandleSignature, methodDescriptorLength));
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_invokePermuteHandlePermuteArgs:
+         {
+         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         TR::VMAccessCriticalSection invokePermuteHandlePermuteArgs(fe);
+         uintptrj_t permuteArray = fe->getReferenceField(methodHandle, "permute", "[I");
+         int32_t permuteLength = fe->getArrayLengthInElements(permuteArray);
+         std::vector<int32_t> argIndices(permuteLength);
+         for (int32_t i=0; i < permuteLength; i++)
+            {
+            argIndices[i] = fe->getInt32Element(permuteArray, i);
+            }
+         client->write(permuteLength, argIndices);
+         }
+         break;
       default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();
