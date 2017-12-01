@@ -8067,7 +8067,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_FoldHandle_argIndices:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 0, "assertion failure"); // The number of arguments for argIndices()
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
@@ -8075,6 +8074,40 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          uintptrj_t methodHandle;
          uintptrj_t argIndices;
+
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeFoldHandle, thunkDetails->getHandleRef());
+            auto recv = stream->read<std::vector<int32_t>, int32_t, int32_t>();
+
+            std::vector<int32_t> indices = std::get<0>(recv);
+            int32_t foldPosition = std::get<1>(recv);
+            int32_t numArgs = std::get<2>(recv);
+            int32_t arrayLength = indices.size();
+
+            if (arrayLength != 0)
+               {
+               // Push the indices in reverse order
+               for (int i = arrayLength-1; i>=0; i--)
+                  {
+                  int32_t index = indices[i];
+                  // Argument index from user is relative to arguments for target handle
+                  // Convert it to be relative to arguments of the resulting FoldHandle (i.e. argPlaceholder)
+                  if (index > foldPosition)
+                     index = index - 1;
+                  loadConstant(TR::iconst, index);
+                  }
+               loadConstant(TR::iconst, arrayLength); // number of arguments
+               }
+            else
+               {
+               // Push the indices in reverse order
+               for (int i=foldPosition+numArgs-1; i>=foldPosition; i--)
+                   loadConstant(TR::iconst, i);
+               loadConstant(TR::iconst, numArgs); // number of arguments
+               }
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeFoldHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8121,7 +8154,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeFoldHandle, thunkDetails->getHandleRef());
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeFoldHandle2, thunkDetails->getHandleRef());
             foldPosition = std::get<0>(stream->read<int32_t>());
             }
          else
@@ -8136,7 +8169,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_FoldHandle_argumentsForCombiner:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR::Node *placeholder = genNodeAndPopChildren(TR::icall, 1, placeholderWithDummySignature());
 
          char *placeholderSignature = placeholder->getSymbol()->castToMethodSymbol()->getMethod()->signatureChars();

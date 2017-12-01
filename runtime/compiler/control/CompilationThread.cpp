@@ -1716,6 +1716,31 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokeFoldHandle(fe);
+         uintptrj_t argIndices = fe->getReferenceField(methodHandle, "argumentIndices", "[I");
+         int32_t arrayLength = (int32_t)fe->getArrayLengthInElements(argIndices);
+         int32_t foldPosition = fe->getInt32Field(methodHandle, "foldPosition");
+         std::vector<int32_t> indices(arrayLength);
+         int32_t numArgs = 0;
+         if (arrayLength != 0)
+            {
+            for (int i = arrayLength-1; i>=0; i--)
+               {
+               indices[i] = fe->getInt32Element(argIndices, i);
+               }
+            }
+         else
+            {
+            uintptrj_t combiner         = fe->getReferenceField(methodHandle, "combiner", "Ljava/lang/invoke/MethodHandle;");
+            uintptrj_t combinerArguments = fe->getReferenceField(fe->methodHandle_type(combiner), "arguments", "[Ljava/lang/Class;");
+            numArgs = (int32_t)fe->getArrayLengthInElements(combinerArguments);
+            }
+         client->write(indices, foldPosition, numArgs);
+         }
+         break;
+      case J9ServerMessageType::runFEMacro_invokeFoldHandle2:
+         {
+         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         TR::VMAccessCriticalSection invokeFoldHandle(fe);
          int32_t foldPosition = fe->getInt32Field(methodHandle, "foldPosition");
          client->write(foldPosition);
          }
