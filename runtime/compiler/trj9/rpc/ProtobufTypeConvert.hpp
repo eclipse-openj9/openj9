@@ -120,6 +120,33 @@ namespace JAAS
    // Specialize conversion for pointer types
    template <typename T> struct ProtobufTypeConvert<T*> : PrimitiveTypeConvert<T*, uint64_t> { };
 
+   // Specialize conversion for std::vector
+   template <typename T> struct ProtobufTypeConvert<std::vector<T>>
+      {
+      static TypeID type;
+      using ProtoType = std::string;
+
+      static_assert(std::is_arithmetic<T>::value, "ProtobufTypeConvert for vector of non-fundemental type");
+      static_assert(!std::is_same<T, bool>::value, "ProtobufTypeConvert for vector of bools (non-contiguous in standard)");
+
+      static std::vector<T> onRecv(Any *in)
+         {
+         if (type.id != in->extendedtypetag())
+            throw StreamTypeMismatch("Vector type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in->extendedtypetag()));
+         std::string str = readPrimitiveFromAny<std::string>(in);
+         size_t size = str.size() / sizeof(T);
+         T* start = (T*) &str[0];
+         std::vector<T> vec(start, start+size);
+         return vec;
+         }
+      static void onSend(Any *out, std::vector<T> in)
+         {
+         out->set_extendedtypetag(type.id);
+         writePrimitiveToAny(out, std::string((char *) &in[0], in.size() * sizeof(T)));
+         }
+      };
+   template <typename T> TypeID ProtobufTypeConvert<std::vector<T>>::type;
+
    // setArgs fills out a protobuf AnyData message with values from a variadic argument list.
    // It calls ProtobufTypeConvert::onSend for each argument.
    template <typename Arg1, typename... Args>
