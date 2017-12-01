@@ -20,15 +20,23 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
- node('ppcle') {
+def OPENJDK_REPO = 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
+def OPENJDK_BRANCH = 'openj9'
+def OPENJ9_REPO = 'https://github.com/eclipse/openj9.git'
+def OPENJ9_BRANCH = 'master'
+def OMR_REPO = 'https://github.com/eclipse/openj9-omr.git'
+def OMR_BRANCH = 'openj9'
 
-    JDK_FOLDER = "jdk"
-	JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/bin"
-    SPEC = 'linux_ppc-64_cmprssptrs_le'
-    JAVA_VERSION = 'SE90'
-    TEST_TARGET = 'sanity'
+def BUILD_JOB_NAME = 'Build-JDK9-linux_390-64_cmprssptrs'
+def SANITY_JOB_NAME = 'Test-Sanity-JDK9-linux_390-64_cmprssptrs'
+def EXTENDED_JOB_NAME = 'Test-Extended-JDK9-linux_390-64_cmprssptrs'
 
-    checkout scm
-    def buildfile = load "${WORKSPACE}/buildenv/jenkins/test"
-    buildfile.test()
+node('master') {
+	checkout scm
+	buildfile = load "${WORKSPACE}/buildenv/jenkins/pipeline-functions"
+	SHAS = buildfile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 }
+
+BUILD_JOB = buildfile.build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'])
+SANITY_JOB = buildfile.build_with_one_upstream(SANITY_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber())
+EXTENDED_JOB = buildfile.build_with_one_upstream(EXTENDED_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber())

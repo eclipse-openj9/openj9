@@ -1,0 +1,68 @@
+/*******************************************************************************
+ * Copyright (c) 2017, 2017 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+
+ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH) {
+    def SHAS = [:]
+    stage ('Sniff Repos') {
+        dir('openjdk') {
+            git branch: OPENJDK_BRANCH, url: OPENJDK_REPO, poll: true, changelog: true
+            SHAS['OPENJDK'] = sh (
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+        }
+        dir('openj9') {
+            git branch: OPENJ9_BRANCH, url: OPENJ9_REPO, poll: true, changelog: true
+            SHAS['OPENJ9'] = sh (
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+        }
+        dir('omr') {
+            git branch: OMR_BRANCH, url: OMR_REPO, poll: true, changelog: true
+            SHAS['OMR'] = sh (
+                        script: 'git rev-parse --short HEAD',
+                        returnStdout: true
+                    ).trim()
+        }
+        echo "OPENJDK_SHA:${SHAS['OPENJDK']}"
+        echo "OPENJ9_SHA:${SHAS['OPENJ9']}"
+        echo "OMR_SHA:${SHAS['OMR']}"
+        currentBuild.description = "OpenJ9: ${SHAS['OPENJ9']}<br/>OMR: ${SHAS['OMR']}<br/>OpenJDK: ${SHAS['OPENJDK']}"
+        return SHAS
+    }
+}
+
+def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA) {
+    stage ('Build') {
+        JOB = build job: BUILD_JOB_NAME, parameters: [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO), string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH), string(name: 'OPENJDK_SHA', value: OPENJDK_SHA), string(name: 'OPENJ9_REPO', value: OPENJ9_REPO), string(name: 'OPENJ9_BRANCH', value: OPENJ9_BRANCH), string(name: 'OPENJ9_SHA', value: OPENJ9_SHA), string(name: 'OMR_REPO', value: OMR_REPO), string(name: 'OMR_BRANCH', value: OMR_BRANCH), string(name: 'OMR_SHA', value: OMR_SHA)]
+        return JOB
+    }
+}
+
+def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER) {
+    stage ("${JOB_NAME}") {
+        JOB = build job: JOB_NAME, parameters: [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME), string(name: 'UPSTREAM_JOB_NUMBER', value: "${UPSTREAM_JOB_NUMBER}")]
+        return JOB
+    }
+}
+return this
