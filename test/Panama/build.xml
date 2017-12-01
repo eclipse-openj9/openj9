@@ -80,7 +80,7 @@
 
 	<target name="build" >
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<equals arg1="${JAVA_VERSION}" arg2="Panama"/>
 			<then>
 				<antcall target="clean" inheritall="true" />
 			</then>

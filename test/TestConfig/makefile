@@ -239,7 +239,7 @@ endif
 
 .PHONY: test_$(DIRTARGET)
 $(DIRTARGET): JVM_TEST_ROOT := $(BUILD_ROOT)
-test_$(DIRTARGET): setup_$(DIRTARGET) rmResultFile $(DIRTARGET)_$(JAVA_VERSION) resultsSummary
+test_$(DIRTARGET): setup_$(DIRTARGET) rmResultFile $(DIRTARGET) resultsSummary
 
 test: compile runtest
 	@$(ECHO) "All Tests Completed"
@@ -249,7 +249,7 @@ export JCL_VERSION:=latest
 else
 export JCL_VERSION:=$(JCL_VERSION)
 endif
-$(info set JAVA_VERSION to $(JAVA_VERSION))
+$(info set JCL_VERSION to $(JCL_VERSION))
 
 # Define the EXCLUDE_FILE to be used for temporarily excluding failed tests.
 # This macro is used in /test/Utils/src/org/openj9/test/util/IncludeExcludeTestAnnotationTransformer
@@ -280,25 +280,7 @@ rmResultFile:
 resultsSummary:
 	@perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)testKitGen$(D)resultsSummary$(D)resultsSum.pl --failuremk=$(Q)$(FAILEDTAGETS)$(Q) --resultFile=$(Q)$(TEMPRESULTFILE)$(Q) --tapFile=$(Q)$(TAPRESULTFILE)$(Q) --diagnostic=failure
 
-sanity: JVM_TEST_ROOT := $(BUILD_ROOT)
-sanity: setup_sanity rmResultFile sanity_$(JAVA_VERSION) resultsSummary
-
-extended: JVM_TEST_ROOT := $(BUILD_ROOT)
-extended: setup_extended rmResultFile extended_$(JAVA_VERSION) resultsSummary
-
-openjdk: JVM_TEST_ROOT := $(BUILD_ROOT)
-openjdk: setup_openjdk rmResultFile openjdk_$(JAVA_VERSION) resultsSummary
-
-external: JVM_TEST_ROOT := $(BUILD_ROOT)
-external: setup_external rmResultFile external_$(JAVA_VERSION) resultsSummary
-
-perf: JVM_TEST_ROOT := $(BUILD_ROOT)
-perf: setup_perf rmResultFile perf_$(JAVA_VERSION) resultsSummary
-
-jck: JVM_TEST_ROOT := $(BUILD_ROOT)
-jck: setup_jck rmResultFile jck_$(JAVA_VERSION) resultsSummary
-
-runtest: setup_runtest rmResultFile sanity_$(JAVA_VERSION) extended_$(JAVA_VERSION) openjdk_$(JAVA_VERSION) external_$(JAVA_VERSION) perf_$(JAVA_VERSION) jck_$(JAVA_VERSION) resultsSummary
+runtest: setup_runtest rmResultFile sanity extended openjdk external perf jck resultsSummary
 .NOTPARALLEL: extended sanity openjdk external perf jck runtest rmResultFile resultsSummary
 
 # cleanup
