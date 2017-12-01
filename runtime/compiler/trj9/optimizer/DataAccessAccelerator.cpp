@@ -2058,15 +2058,10 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
 
    TR::Node * pdshrNode = TR::Node::create(TR::pdshr, 3, pdload, shiftNode, roundValueNode);
    pdshrNode->setDecimalPrecision(dstPrec);
-   TR::Node* pdshlOverflowNode = TR::Node::create(TR::pdshlOverflow, 2,
-                                                  pdshrNode,
-                                                  TR::Node::create(callNode, TR::iconst, 0, 0));
-
-   pdshlOverflowNode->setDecimalPrecision(dstPrec);
 
    TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
    TR::Node* bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 11, 11,
-                                           pdshlOverflowNode, arrayAddressNodeRes,
+                                           pdshrNode, arrayAddressNodeRes,
                                            callNode->getChild(0), callNode->getChild(1),
                                            callNode->getChild(2), callNode->getChild(3),
                                            callNode->getChild(4), callNode->getChild(5),
@@ -2090,7 +2085,7 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
    symStore->setArrayShadowSymbol();
    symRefPdstore->setSymbol(symStore);
 
-   TR::Node * pdstore = TR::Node::create(op, 2, arrayAddressNodeRes, pdshlOverflowNode);
+   TR::Node * pdstore = TR::Node::create(op, 2, arrayAddressNodeRes, pdshrNode);
 
    pdstore->setSymbolReference(symRefPdstore);
    pdstore->setDecimalPrecision(dstPrec);
