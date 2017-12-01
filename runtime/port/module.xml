@@ -153,6 +153,7 @@
 			<include-if condition="spec.win_x86.*"/>
 			<include-if condition="spec.linux_390.*"/>
 			<include-if condition="spec.zos_390.*"/>
+			<include-if condition="spec.osx_x86.*"/>
 		</object>
 		<object name="j9mem_basic" />
 		<object name="j9portcontrol" />
@@ -219,7 +220,7 @@
 				<include-if condition="spec.linux_x86-64.*"/>
 			</include>
 			<include path="$(OMRPORT_SRCDIR)osx" type="relativepath">
-				<include-if condition="spec.osx_x86-64.*"/>
+				<include-if condition="spec.osx_x86.*"/>
 			</include>
 			<include path="$(OMRPORT_SRCDIR)linux386" type="relativepath">
 				<include-if condition="spec.linux_x86.*"/>
@@ -311,7 +312,7 @@
 				<include-if condition="spec.linux_x86-64.*"/>
 			</vpath>
 			<vpath pattern="%" path="osx" augmentIncludes="true" type="relativepath">
-				<include-if condition="spec.osx_x86-64.*"/>
+				<include-if condition="spec.osx_x86.*"/>
 			</vpath>
 			<vpath pattern="%" path="linux386" augmentIncludes="true" type="relativepath">
 				<include-if condition="spec.linux_x86.*"/>
@@ -376,7 +377,7 @@
 			<library name="omrglue" type="external"/>
 			<library name="iconv" type="system">
 				<include-if condition="spec.aix_.*"/>
-				<include-if condition="spec.osx_.*"/>
+				<include-if condition="spec.osx_x86.*"/>
 			</library>
 			<library name="perfstat" type="system">
 				<include-if condition="spec.aix_.*"/>
