@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2016 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,41 +20,19 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-package com.ibm.lang.management.internal;
+package java.lang.management;
 
-import java.lang.management.ThreadInfo;
-import java.lang.reflect.Field;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import com.ibm.java.lang.management.internal.ThreadInfoAccess;
 
-import com.ibm.lang.management.ExtendedThreadInfo;
+/**
+ * Implementation class to allow privileged access to ThreadInfo
+ * class from outside the java.lang.management package.
+ */
+class ThreadInfoAccessImpl implements ThreadInfoAccess {
 
-final class ExtendedThreadInfoImpl implements ExtendedThreadInfo {
-
-	private final long nativeTID; /* Native thread ID for the thread. */
-
-	private final ThreadInfo threadInfo; /* The ThreadInfo object whose native ID we store. */
-
-	ExtendedThreadInfoImpl(ThreadInfo threadInfo) {
-		super();
-		this.nativeTID = com.ibm.java.lang.management.internal.ManagementAccessControl.getThreadInfoAccess().getNativeTId(threadInfo);
-		this.threadInfo = threadInfo;
-	}
-
-	/**
-	 * @return The native thread ID.
-	 */
 	@Override
-	public long getNativeThreadId() {
-		return nativeTID;
-	}
-
-	/**
-	 * @return The {@link ThreadInfo} instance that {@link ExtendedThreadInfo} harbors.
-	 */
-	@Override
-	public ThreadInfo getThreadInfo() {
-		return threadInfo;
+	public long getNativeTId(ThreadInfo threadinfo) {
+		return threadinfo.getNativeThreadId();
 	}
 
 }

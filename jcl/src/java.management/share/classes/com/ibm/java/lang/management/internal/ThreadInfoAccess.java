@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2016 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,41 +20,25 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-package com.ibm.lang.management.internal;
+package com.ibm.java.lang.management.internal;
 
 import java.lang.management.ThreadInfo;
-import java.lang.reflect.Field;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
-import com.ibm.lang.management.ExtendedThreadInfo;
-
-final class ExtendedThreadInfoImpl implements ExtendedThreadInfo {
-
-	private final long nativeTID; /* Native thread ID for the thread. */
-
-	private final ThreadInfo threadInfo; /* The ThreadInfo object whose native ID we store. */
-
-	ExtendedThreadInfoImpl(ThreadInfo threadInfo) {
-		super();
-		this.nativeTID = com.ibm.java.lang.management.internal.ManagementAccessControl.getThreadInfoAccess().getNativeTId(threadInfo);
-		this.threadInfo = threadInfo;
-	}
-
+/**
+ * Interface to allow privileged access to ThreadInfo class
+ * from outside the java.lang.management package.
+ */
+public interface ThreadInfoAccess {
+	
 	/**
-	 * @return The native thread ID.
+	 * Returns the native thread ID for a given ThreadInfo object. Currently
+	 * used to give access to ExtendedThreadInfoImpl without opening
+	 * java.management for reflection.
+	 * 
+	 * @param threadinfo Object containing information about a snapshot of 
+	 * the state of a thread.
+	 * 
+	 * @return @{long} representing the native thread ID
 	 */
-	@Override
-	public long getNativeThreadId() {
-		return nativeTID;
-	}
-
-	/**
-	 * @return The {@link ThreadInfo} instance that {@link ExtendedThreadInfo} harbors.
-	 */
-	@Override
-	public ThreadInfo getThreadInfo() {
-		return threadInfo;
-	}
-
+	public long getNativeTId(ThreadInfo threadinfo);
 }
