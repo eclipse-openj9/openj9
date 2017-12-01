@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2017 IBM Corp. and others
+#  Copyright (c) 2016, 2018 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,8 @@ my $ottawacsv      = "../../resources/ottawa.csv";
 my $graphSpecs     = '';
 my $javaVersion    = '';
 my $output         = '';
+my @allLevels = ( "sanity", "extended" );
+my @allGroups = ( "functional", "openjdk", "external", "perf", "jck", "system" );
 my @allSubsets = ( "SE80", "SE90", "SE100", "Panama", "Valhalla" );
 
 foreach my $argv (@ARGV) {
@@ -96,6 +98,6 @@ if ( !$javaVersion ) {
 	die "Please provide javaVersion!"
 }
 # run make file generator
-my $tests = runmkgen( $projectRootDir, \@allSubsets, $output, $graphSpecs, $javaVersion, $modesxml, $ottawacsv );
+runmkgen( $projectRootDir, \@allLevels, \@allGroups, \@allSubsets, $output, $graphSpecs, $javaVersion, $modesxml, $ottawacsv );
 
 print "\nTEST AUTO GEN SUCCESSFUL\n";
