@@ -259,7 +259,7 @@ endif
 
 # compile all tests under $(SRC_ROOT)
 compile: getdependency
-	ant -f $(SRC_ROOT)$(D)TestConfig$(D)scripts$(D)build_test.xml -DSRC_ROOT=$(SRC_ROOT) -DBUILD_ROOT=$(BUILD_ROOT) -DJAVA_BIN=$(JAVA_BIN) -DJAVA_VERSION=$(JAVA_VERSION) -DJCL_VERSION=$(JCL_VERSION) -DBUILD_LIST=${BUILD_LIST} -DRESOURCES_DIR=${RESOURCES_DIR}
+	ant -f $(SRC_ROOT)$(D)TestConfig$(D)scripts$(D)build_test.xml -DSRC_ROOT=$(SRC_ROOT) -DBUILD_ROOT=$(BUILD_ROOT) -DJAVA_BIN=$(JAVA_BIN) -DJAVA_VERSION=$(JAVA_VERSION) -DJCL_VERSION=$(JCL_VERSION) -DBUILD_LIST=${BUILD_LIST} -DRESOURCES_DIR=${RESOURCES_DIR} -DJCK_ROOT=$(JCK_ROOT) 
 
 #######################################
 # failed target
