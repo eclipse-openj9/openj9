@@ -26,11 +26,11 @@
 	<!-- LIBPATH tests intended for PMR56610 (CMVC 201272) -->
 	<test>
 		<testCaseName>cmdLineTester_libpathTestRtf</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(JAVA_COMMAND) -DJAVA_HOME=$(JAVA_HOME) -DJAVATEST_ROOT=$(JAVATEST_ROOT) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(JAVA_COMMAND) -DJAVA_HOME=$(Q)$(JAVA_HOME)$(Q) -DJAVATEST_ROOT=$(JAVATEST_ROOT) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) \
 	-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)libpathTest.jar$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)libpathRtf.xml$(Q) \
-	-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude_rtf.xml$(Q) \
+	-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>bits.64,vm.cmprssptrs</platformRequirements>
