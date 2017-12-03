@@ -2391,6 +2391,13 @@ J9::CodeGenerator::populateOSRBuffer()
             }
          }
 
+      /*
+       * dead slots are bookkept together with shared slots under involuntary OSR
+       * increase this number to indicate the existence of entries for dead slots
+       */
+      if (osrMethodData->hasSlotSharingOrDeadSlotsInfo() && numOfSymsThatShareSlot == 0) 
+         numOfSymsThatShareSlot++;
+
       osrMethodData->setNumOfSymsThatShareSlot(numOfSymsThatShareSlot);
       maxScratchBufferSize = (maxScratchBufferSize > scratchBufferOffset) ? maxScratchBufferSize : scratchBufferOffset;
 
@@ -2405,6 +2412,7 @@ J9::CodeGenerator::populateOSRBuffer()
       //The OSR helper call will print the contents of the OSR buffer (if trace option is on)
       //and populate the OSR buffer with the correct values of the shared slots (if there is any)
       bool emitCall = false;
+
       if ((numOfSymsThatShareSlot > 0) ||
           self()->comp()->getOption(TR_EnablePrepareForOSREvenIfThatDoesNothing))
          emitCall = true;
@@ -2445,6 +2453,7 @@ J9::CodeGenerator::populateOSRBuffer()
          );
       insertionPoint->insertTreeTopsAfterMe(osrFrameIndexAdvanceTreeTop);
       }
+
 
    for (int32_t i = 0; i < methodDataArray.size(); i++)
       {

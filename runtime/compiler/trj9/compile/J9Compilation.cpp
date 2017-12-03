@@ -1186,7 +1186,9 @@ bool
 J9::Compilation::pendingPushLivenessDuringIlgen()
    {
    static bool enabled = (feGetEnv("TR_DisablePendingPushLivenessDuringIlGen") == NULL);
-   return enabled;
+   if (self()->getOSRMode() == TR::involuntaryOSR)
+      return false;
+   else return enabled;
    }
 
 bool
