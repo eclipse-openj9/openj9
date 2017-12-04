@@ -20,22 +20,27 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
- node('390') {
+node('390') {
 
     SDK_VERSION = "9"
-    DEFAULT_OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
-    DEFAULT_OPENJDK_BRANCH = "openj9"
+    
+    OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
+    OPENJDK_BRANCH = "openj9"
+    
     BOOT_JDK = "$HOME/openj9/ibm-java-s390x-80"
     FREEMARKER = "$HOME/openj9/freemarker.jar"
-    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-Linux_390-64_cmprssptrs-"
+    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-PR${ghprbPullId}-Linux_390-64_cmprssptrs-"
     SDK_SUFFIX = ".tar.gz"
     TEST_PREFIX = "test-"
     TEST_SUFFIX = ".tar.gz"
     RELEASE = "linux-s390x-normal-server-release"
     JDK_FOLDER = "jdk"
 
-    checkout scm
-    def buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
-    buildfile.get_source()
-    buildfile.build()
-}
+	checkout scm
+	buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
+	testfile = load "${WORKSPACE}/buildenv/jenkins/test"
+
+	get_source()
+	checkout_pullrequest()
+	build()
+	test()
