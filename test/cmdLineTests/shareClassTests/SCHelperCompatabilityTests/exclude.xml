@@ -25,16 +25,16 @@
 <!DOCTYPE suite SYSTEM "excludes.dtd">
 <?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
 <suite id="HelperCompatabilityTest Excluded Test Case List">
-	<exclude id="HelperCompatabilityTest 9" platform="SE90" shouldFix="true">
-			<reason>133325: Revisit HelperCompatabilityTest</reason>
+	<exclude id="HelperCompatabilityTest 9" platform="current" shouldFix="true">
+			<reason>The result on IBM SDK is incorrect due to JCL patch of zip Hook, we should not find classes from SCC after jar are updated. See StaleClassPathTest5.sh</reason>
 	</exclude>
-	<exclude id="destroy cache 9" platform="SE90" shouldFix="true">
-			<reason>133325: Revisit HelperCompatabilityTest</reason>
+	<exclude id="destroy cache 9" platform="current" shouldFix="true">
+			<reason>The result on IBM SDK is incorrect due to JCL patch of zip Hook, we should not find classes from SCC after jar are updated</reason>
 	</exclude>
-	<exclude id="HelperCompatabilityTest 11" platform="SE90" shouldFix="true">
-			<reason>133325: Revisit HelperCompatabilityTest</reason>
+	<exclude id="HelperCompatabilityTest 11" platform="current" shouldFix="true">
+			<reason>The result on IBM SDK is incorrect due to JCL patch of zip Hook, we should not find classes from SCC after jar are updated. See StaleClassPathTest5.sh</reason>
 	</exclude>
-	<exclude id="destroy cache 11" platform="SE90" shouldFix="true">
-			<reason>133325: Revisit HelperCompatabilityTest</reason>
+	<exclude id="destroy cache 11" platform="current" shouldFix="true">
+			<reason>The result on IBM SDK is incorrect due to JCL patch of zip Hook, we should not find classes from SCC after jar are updated</reason>
 	</exclude>
 </suite>

@@ -198,7 +198,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
 	
-	<test id="destroy cache" timeout="600" runPath=".">
+	<test id="destroy cache 9" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
@@ -232,7 +232,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
 	
-	<test id="destroy cache" timeout="600" runPath=".">
+	<test id="destroy cache 11" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
