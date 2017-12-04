@@ -1668,6 +1668,9 @@ MM_IncrementalGenerationalGC::setRegionAgesToMax(MM_EnvironmentVLHGC *env)
 				region->_allocateData._owningContext = commonContext;
 				owner->migrateRegionToAllocationContext(region, commonContext);
 			}
+		} else if (region->isArrayletLeaf()) {
+			/* adjust age for arraylet leaves */
+			region->setAge(_extensions->tarokMaximumAgeInBytes, _extensions->tarokRegionMaxAge);
 		}
 	}
 }

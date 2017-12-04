@@ -5,5 +5,5 @@ NumberOfUrls=1
 Url0=./AlphabetJar/Alphabet.jar;
 NumberOfClassesToFind0=3
 FindClasses0=D,E,F
-Results0=true,true,true
+Results0=false,false,false
 BatchFileToRun=/bin/sh ./batchfiles/StaleClassPathTest5.sh
