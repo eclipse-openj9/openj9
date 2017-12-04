@@ -11511,7 +11511,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       // again and return the oldStartPC as the new startPC so the old (fixed up)
       // method body is run
       //
-      TR::Recompilation::methodCannotBeRecompiled(oldStartPC, trvm);
+      if (entry && !entry->_stream)
+         TR::Recompilation::methodCannotBeRecompiled(oldStartPC, trvm);
       startPC = oldStartPC;
 
       if (entry && entry->_stream)
