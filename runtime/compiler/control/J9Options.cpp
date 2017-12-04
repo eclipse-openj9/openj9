@@ -2198,11 +2198,11 @@ J9::Options::fePostProcessJIT(void * base)
       self()->setOption(TR_DisableInterpreterProfiling);
       self()->setOption(TR_DisableCHOpts);
       self()->setOption(TR_DisableSharedCacheHints);
-      self()->setOption(TR_DisableKnownObjectTable);
       self()->setIsVariableHeapBaseForBarrierRange0(true);
       if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
          {
          _samplingFrequency = 0; // disable sampling (including samplingThread)
+         self()->setOption(TR_DisableKnownObjectTable);
          }
       }
 

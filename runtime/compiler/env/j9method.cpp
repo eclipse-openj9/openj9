@@ -8301,7 +8301,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_FilterArgumentsHandle_filterArguments:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          TR_ASSERT(archetypeParmCount == 2, "assertion failure");
 
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
@@ -8319,6 +8318,29 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          TR::KnownObjectTable::Index *filterIndexList;
          char *nextSignature;
 
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeFilterArgumentsHandle, thunkDetails->getHandleRef());
+            auto recv = stream->read<int32_t, std::vector<TR::KnownObjectTable::Index>, std::string>();
+            startPos = std::get<0>(recv);
+            std::vector<TR::KnownObjectTable::Index> filterIndices = std::get<1>(recv);
+            std::string nextSigStr = std::get<2>(recv);
+
+            // copy the next signature
+            intptrj_t methodDescriptorLength = nextSigStr.size();
+            nextSignature = (char*)alloca(methodDescriptorLength+1);
+            memcpy(nextSignature, &nextSigStr[0], methodDescriptorLength);
+            nextSignature[methodDescriptorLength] = 0;
+
+            // copy the filter indices
+            int32_t numFilters = filterIndices.size();
+            filterIndexList = (TR::KnownObjectTable::Index *) comp()->trMemory()->allocateMemory(sizeof(TR::KnownObjectTable::Index) * numFilters, stackAlloc);
+            for (int i = 0; i <numFilters; i++)
+               {
+               filterIndexList[i] = filterIndices[i];
+               }
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeFilterArgumentsHandle(fej9);
             uintptrj_t methodHandle = *thunkDetails->getHandleRef();

@@ -1761,6 +1761,34 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(numArgsPassToFinallyTarget, std::string(methodDescriptor, methodDescriptorLength));
          }
          break;
+      case J9ServerMessageType::runFEMacro_invokeFilterArgumentsHandle:
+         {
+         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         TR::VMAccessCriticalSection invokeFilterArgumentsHandle(fe);
+
+         int32_t startPos = (int32_t)fe->getInt32Field(methodHandle, "startPos");
+
+         uintptrj_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
+         int32_t numFilters = fe->getArrayLengthInElements(filters);
+         std::vector<TR::KnownObjectTable::Index> filterIndexList(numFilters);
+         TR::KnownObjectTable *knot = TR::comp()->getOrCreateKnownObjectTable();
+         for (int i = 0; i <numFilters; i++)
+            {
+            filterIndexList[i] = knot->getIndex(fe->getReferenceElement(filters, i));
+            }
+
+         uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+            methodHandle,
+            "next",             "Ljava/lang/invoke/MethodHandle;"),
+            "type",             "Ljava/lang/invoke/MethodType;"),
+            "methodDescriptor", "Ljava/lang/String;");
+         intptrj_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
+         char *nextSignature = (char*)alloca(methodDescriptorLength+1);
+         fe->getStringUTF8(methodDescriptorRef, nextSignature, methodDescriptorLength+1);
+         std::string nextSignatureString(nextSignature, methodDescriptorLength);
+         client->write(startPos, filterIndexList, nextSignatureString);
+         }
+         break;
       case J9ServerMessageType::runFEMacro_invokeFilderArgumentsHandle:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
