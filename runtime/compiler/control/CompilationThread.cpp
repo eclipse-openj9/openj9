@@ -3333,7 +3333,7 @@ void TR::CompilationInfo::invalidateRequestsForNativeMethods(J9Class * clazz, J9
       TR_MethodToBeCompiled *next = cur->_next;
       J9Method *method = cur->getMethodDetails().getMethod();
       if (method &&
-          J9_CLASS_FROM_METHOD(method) == clazz &&
+          cur->getMethodDetails().getClass() == clazz &&
           TR::CompilationInfo::isJNINative(method))
          {
          if (verbose)
@@ -3433,7 +3433,7 @@ void TR::CompilationInfo::invalidateRequestsForUnloadedMethods(TR_OpaqueClassBlo
       // ^^^ bad assume: shutdown and class unload CAN happen at the same time.
       if (method)
          {
-         J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+         J9Class *methodClass = details.getClass();
          if (verboseDetails)
             TR_VerboseLog::writeLineLocked(TR_Vlog_HD,"Looking at compile request for method %p class %p", method, methodClass);
          if ((!unloadedClass && hotCodeReplacement) || // replacement in FSD mode
