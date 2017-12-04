@@ -5765,7 +5765,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       {
       numEntries++;
       queueWeight += cur->_weight;
-      if (cur->getMethodDetails().sameAs(details, fe))
+      if (!rpc && cur->getMethodDetails().sameAs(details, fe))
          break;
       }
 
