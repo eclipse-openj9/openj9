@@ -8266,7 +8266,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (auto stream = TR::CompilationInfo::getStream())
             {
-            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeFilderArgumentsHandle, thunkDetails->getHandleRef());
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeFilterArgumentsHandle2, thunkDetails->getHandleRef());
             auto recv = stream->read<int32_t, int32_t, int32_t>();
             numArguments = std::get<0>(recv);
             startPos = std::get<1>(recv);
@@ -8274,7 +8274,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             }
          else
             {
-            TR::VMAccessCriticalSection invokeFilderArgumentsHandle(fej9);
+            TR::VMAccessCriticalSection invokeFilterArgumentsHandle2(fej9);
             methodHandle = *thunkDetails->getHandleRef();
             arguments = fej9->getReferenceField(fej9->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
             numArguments = (int32_t)fej9->getArrayLengthInElements(arguments);

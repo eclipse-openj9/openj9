@@ -1789,7 +1789,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(startPos, filterIndexList, nextSignatureString);
          }
          break;
-      case J9ServerMessageType::runFEMacro_invokeFilderArgumentsHandle:
+      case J9ServerMessageType::runFEMacro_invokeFilterArgumentsHandle2:
          {
          uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
          TR::VMAccessCriticalSection invokeFilderArgumentsHandle(fe);

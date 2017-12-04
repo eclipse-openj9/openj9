@@ -201,8 +201,8 @@ enum J9ServerMessageType
    runFEMacro_invokeFoldHandle = 611;
    runFEMacro_invokeFoldHandle2 = 612;
    runFEMacro_invokeFinallyHandle = 613;
-   runFEMacro_invokeFilderArgumentsHandle = 614;
-   runFEMacro_invokeFilterArgumentsHandle = 615;
+   runFEMacro_invokeFilterArgumentsHandle = 614;
+   runFEMacro_invokeFilterArgumentsHandle2 = 615;
    runFEMacro_invokeCatchHandle = 616;
    runFEMacro_invokeILGenMacros = 617;
    runFEMacro_invokeILGenMacros2 = 618;
