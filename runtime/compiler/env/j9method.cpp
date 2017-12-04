@@ -8475,13 +8475,24 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_ILGenMacros_parameterCount:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
 
          int32_t parameterCount;
 
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
+            uintptrj_t receiverHandle = std::get<0>(stream->read<uintptrj_t>());
+            uintptrj_t methodHandle     = walkReferenceChain(pop(), receiverHandle);
+            uintptrj_t arguments        = fej9->getReferenceField(fej9->getReferenceField(
+               methodHandle,
+               "type", "Ljava/lang/invoke/MethodType;"),
+               "arguments", "[Ljava/lang/Class;");
+            parameterCount = (int32_t)fej9->getArrayLengthInElements(arguments);
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeILGenMacros(fej9);
             uintptrj_t receiverHandle   = *thunkDetails->getHandleRef();
@@ -8498,13 +8509,20 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_ILGenMacros_arrayLength:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
 
          int32_t arrayLength;
 
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
+            uintptrj_t receiverHandle = std::get<0>(stream->read<uintptrj_t>());
+            uintptrj_t array            = walkReferenceChain(pop(), receiverHandle);
+            arrayLength = (int32_t)fej9->getArrayLengthInElements(array);
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeILGenMacros(fej9);
             uintptrj_t receiverHandle   = *thunkDetails->getHandleRef();
@@ -8517,7 +8535,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
       case TR::java_lang_invoke_ILGenMacros_getField:
          {
-         TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
             return false;
@@ -8532,6 +8549,15 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          int32_t result;
 
+         if (auto stream = TR::CompilationInfo::getStream())
+            {
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
+            uintptrj_t receiverHandle = std::get<0>(stream->read<uintptrj_t>());
+            uintptrj_t baseObject       = walkReferenceChain(baseObjectNode, receiverHandle);
+            TR_ASSERT(fieldSym->getDataType() == TR::Int32, "ILGenMacros.getField expecting int field; found load of %s", comp()->getDebug()->getName(symRef));
+            result = fej9->getInt32FieldAt(baseObject, fieldOffset); // TODO: Handle types other than int32
+            }
+         else
             {
             TR::VMAccessCriticalSection invokeILGenMacros(fej9);
             uintptrj_t receiverHandle   = *thunkDetails->getHandleRef();
