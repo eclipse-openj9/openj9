@@ -8,5 +8,6 @@ node('ppcle') {
 
     checkout scm
     def buildfile = load "${WORKSPACE}/buildenv/jenkins/test"
+    buildfile.fetch_artifacts_for_test()
     buildfile.test()
 }

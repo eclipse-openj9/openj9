@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
- def test() {
+def fetch_artifacts_for_test(){
     stage('Fetch Artifacts') {
         timestamps {
             deleteDir()
@@ -32,6 +32,9 @@
             sh 'for filename in *.tar.gz; do tar zxf $filename; done'
         }
     }
+}
+
+def test() {
     stage('Configure') {
         timestamps {
             dir ('test/TestConfig') {

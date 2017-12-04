@@ -20,16 +20,28 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
- node('ppcle') {
+node('390') {
 
-    JDK_FOLDER = "j2sdk-image"
-    JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/jre/bin"
-    SPEC = 'linux_ppc-64_cmprssptrs_le'
-    JAVA_VERSION = 'SE80'
-    TEST_TARGET = 'extended'
+    SDK_VERSION = "9"
+    
+    OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
+    OPENJDK_BRANCH = "openj9"
+    
+    BOOT_JDK = "$HOME/openj9/ibm-java-ppc64le-80"
+    FREEMARKER = "$HOME/openj9/freemarker.jar"
+    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-PR${ghprbPullId}-linux_ppc-64_cmprssptrs_le-"
+    SDK_SUFFIX = ".tar.gz"
+    TEST_PREFIX = "test-"
+    TEST_SUFFIX = ".tar.gz"
+    RELEASE = "linux-ppc64le-normal-server-release"
+    JDK_FOLDER = "jdk"
 
-    checkout scm
-    def buildfile = load "${WORKSPACE}/buildenv/jenkins/test"
-    buildfile.fetch_artifacts_for_test()
-    buildfile.test()
+	checkout scm
+	buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
+	testfile = load "${WORKSPACE}/buildenv/jenkins/test"
+
+	get_source()
+	checkout_pullrequest()
+	build()
+	test()
 }

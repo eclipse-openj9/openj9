@@ -29,7 +29,7 @@ node('390') {
     
     BOOT_JDK = "$HOME/openj9/ibm-java-s390x-80"
     FREEMARKER = "$HOME/openj9/freemarker.jar"
-    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-PR${ghprbPullId}-Linux_390-64_cmprssptrs-"
+    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-PR${ghprbPullId}-linux_390-64_cmprssptrs-"
     SDK_SUFFIX = ".tar.gz"
     TEST_PREFIX = "test-"
     TEST_SUFFIX = ".tar.gz"
@@ -44,3 +44,4 @@ node('390') {
 	checkout_pullrequest()
 	build()
 	test()
+}
