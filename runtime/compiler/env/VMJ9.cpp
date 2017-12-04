@@ -1068,6 +1068,7 @@ TR_J9VMBase::getReferenceFieldAtAddress(uintptrj_t fieldAddress)
 uintptrj_t
 TR_J9VMBase::getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
    {
+   //TR_ASSERT(haveAccess(), "Must haveAccess in getReferenceFieldAt");
    TR_ASSERT(haveAccess(), "Must haveAccess in getReferenceFieldAt");
    return (uintptrj_t)J9OBJECT_OBJECT_LOAD(vmThread(), objectPointer, J9_OBJECT_HEADER_SIZE + fieldOffset);
    }
