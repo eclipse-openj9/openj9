@@ -2970,6 +2970,8 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::java_lang_String_StrHWAvailable,      "StrHWAvailable", "()Z")},
       {x(TR::java_lang_String_unsafeCharAt,        "unsafeCharAt",        "(I)C")},
       {x(TR::java_lang_String_split_str_int,       "split",               "(Ljava/lang/String;I)[Ljava/lang/String;")},
+      {x(TR::java_lang_String_getChars_charArray,  "getChars",            "(II[CI)V")},
+      {x(TR::java_lang_String_getChars_byteArray,  "getChars",            "(II[BI)V")},
       {  TR::unknownMethod}
       };
 

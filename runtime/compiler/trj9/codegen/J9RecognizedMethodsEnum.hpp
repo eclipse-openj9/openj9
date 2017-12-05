@@ -196,6 +196,8 @@
    java_lang_String_compressNoCheck,
    java_lang_String_unsafeCharAt,
    java_lang_String_split_str_int,
+   java_lang_String_getChars_charArray,
+   java_lang_String_getChars_byteArray,
 
    java_lang_StringUTF16_getChar,
 
