@@ -27,7 +27,7 @@
     DEFAULT_OPENJDK_BRANCH = "openj9"
     BOOT_JDK = "/usr/lib/jvm/java-7-openjdk-ppc64el"
     FREEMARKER = "$HOME/openj9/freemarker.jar"
-    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-Linux_ppc-64_cmprssptrs_le-"
+    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-linux_ppc-64_cmprssptrs_le-"
     SDK_SUFFIX = ".tar.gz"
     TEST_PREFIX = "test-"
     TEST_SUFFIX = ".tar.gz"
