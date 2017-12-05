@@ -5416,9 +5416,12 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    if (!entry.isRemoteCompReq())
       compThread->javaVM->internalVMFunctions->j9jni_deleteLocalRef((JNIEnv*)compThread, classObject);
 
-   // free the cached classes map
+   // free the cached classes
    if (entry.isRemoteCompReq())
+      {
       _cachedROMClasses.clear();
+      getServerVM()->jitPersistentFree(const_cast<J9ROMClass*>(entry.getMethodDetails().getRomClass()));
+      }
 
    // Update how many compilation threads are working on hot/scorching methods
    if (entry._hasIncrementedNumCompThreadsCompilingHotterMethods)
@@ -11006,7 +11009,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       else
          jitNewInstanceMethodTranslateFailed(vmThread, clazz);
 
-      if ((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && comp && (dataCache = (TR_DataCache*)comp->getReservedDataCache()))
+      if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
+           (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)) &&
+          comp && (dataCache = (TR_DataCache*)comp->getReservedDataCache()))
          {
          dataCache->resetAllocationToMark();
          // TODO: make sure we didn't allocate a new dataCache (the mark was set in the old cache)
@@ -11035,7 +11040,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
          }
 #endif // ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
-      if ((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && comp && (dataCache = (TR_DataCache *)comp->getReservedDataCache()))
+      if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
+           (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)) &&
+          comp && (dataCache = (TR_DataCache *)comp->getReservedDataCache()))
          {
          dataCache->resetAllocationToMark();
          // TODO: make sure we didn't allocate a new dataCache (the mark was set in the old cache)
@@ -11548,12 +11555,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       jitConfig->codeCache->heapAlloc = jitConfig->codeCache->heapBase;
       TR_DataCacheManager::getManager()->makeDataCacheAvailable(dataCache);
       comp->setReservedDataCache(NULL);
-      }
-
-   if (entry && entry->_stream)
-      {
-      // this is allocated in CompileService.cpp
-      trvm->jitPersistentFree(const_cast<J9ROMClass*>(entry->getMethodDetails().getRomClass()));
       }
 
    return startPC;

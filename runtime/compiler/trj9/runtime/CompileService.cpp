@@ -56,9 +56,9 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          "Server received request to compile %s.%s @ %s", className, methodName, TR::Compilation::getHotnessName(optLevel));
 
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
    if (ramMethod)
       {
-      TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
       bool queued = false;
       TR_CompilationErrorCode compErrCode = compilationFailure;
       TR_MethodEvent event;
@@ -101,10 +101,11 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
                }
             else
                {
-               rpc->finishCompilation(compErrCode);
                if (TR::Options::getVerboseOption(TR_VerboseJaas))
                   TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                      "Server failed to queue compilation for %s.%s", className, methodName);
+               fe->jitPersistentFree(romClass);
+               rpc->finishCompilation(compErrCode);
                }
             }
          else
@@ -112,6 +113,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
             if (TR::Options::getVerboseOption(TR_VerboseJaas))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                   "Server failed to compile %s.%s because a new plan could not be created.", className, methodName);
+            fe->jitPersistentFree(romClass);
             rpc->finishCompilation(compilationFailure);
             }
          }
@@ -120,7 +122,8 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
                "Server failed to compile %s.%s because no memory was available to create an optimization plan.", className, methodName);
-            rpc->finishCompilation(compilationFailure);
+         fe->jitPersistentFree(romClass);
+         rpc->finishCompilation(compilationFailure);
          }
       }
    else // !method
@@ -128,7 +131,8 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       if (TR::Options::getVerboseOption(TR_VerboseJaas))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
             "Server couldn't find ramMethod for romMethod %s.%s .", className, methodName);
-         rpc->finishCompilation(compilationFailure);
+      fe->jitPersistentFree(romClass);
+      rpc->finishCompilation(compilationFailure);
       }
    }
 
