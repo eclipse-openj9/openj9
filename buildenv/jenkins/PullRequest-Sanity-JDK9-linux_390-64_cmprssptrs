@@ -40,8 +40,8 @@ node('390') {
 	buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
 	testfile = load "${WORKSPACE}/buildenv/jenkins/test"
 
-	get_source()
-	checkout_pullrequest()
-	build()
-	test()
+	buildfile.get_source()
+    buildfile.checkout_pullrequest()
+    buildfile.build()
+    testfile.test()
 }
