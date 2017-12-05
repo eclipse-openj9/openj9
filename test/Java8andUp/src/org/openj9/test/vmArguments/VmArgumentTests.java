@@ -857,6 +857,23 @@ public class VmArgumentTests {
 	}
 
 	@Test
+	public void testShowOptionsInOptionsFile() {
+		final String[] testArgList = new String[] {"-Dtest.option1=testJavaToolOptions1", 
+				"-showversion",
+				"-Dtest.option2=testJavaToolOptions2"};
+		String optionFilePath = makeOptionsFile("test1", testArgList);
+		String optionFileArg=XOPTIONSFILE+optionFilePath;
+		ProcessBuilder pb = makeProcessBuilder(new String[] {optionFileArg}, CLASSPATH);
+		String[] expectedArgs = new String[testArgList.length+1];
+		expectedArgs[0]=optionFileArg;
+		System.arraycopy(testArgList, 0, expectedArgs, 1, testArgList.length);
+
+		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+		checkArgumentSequence(expectedArgs, argumentPositions, true);
+	}
+
+	@Test
 	public void testBadOptionsFile() {
 		String badOptionFileArg=XOPTIONSFILE+"bogus";
 		String missingOptionFileArg=XOPTIONSFILE;
@@ -969,10 +986,10 @@ public class VmArgumentTests {
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
+	/* Note: -showversion on the command line is not tested, as it is applicable only to IBM Java 8. */
 	@Test
 	public void testXintAndOtherVmArguments() {
-		String[] argList = isJava8 ? (new String[] {"-Dtest.preamble", XINT, "-verbose:gc", "-showversion", "-Xmx10M", "-Dtest.postamble"})
-		:  (new String[] {"-Dtest.preamble", XINT, "-verbose:gc","-Xmx10M", "-Dtest.postamble"});
+		String[] argList = new String[] {"-Dtest.preamble", XINT, "-verbose:gc", "-Xmx10M", "-Dtest.postamble"};
 		ProcessBuilder pb = makeProcessBuilder(argList, CLASSPATH);
 		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
 		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, argList);
