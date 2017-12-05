@@ -10998,6 +10998,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
    TR_DataCache *dataCache = NULL;
    const J9JITDataCacheHeader *storedCompiledMethod = nullptr;
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
 
    if (details.isNewInstanceThunk())
       {
@@ -11545,7 +11546,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          }
       }
 
-   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
    if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
        (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)) &&
        comp && (dataCache = (TR_DataCache *)comp->getReservedDataCache()))
