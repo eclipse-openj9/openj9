@@ -1978,3 +1978,27 @@ J9::SymbolReferenceTable::findOrCreateArrayComponentTypeSymbolRef()
       }
    return element(componentClassSymbol);
    }
+
+
+TR::ParameterSymbol *
+J9::SymbolReferenceTable::createParameterSymbol(
+      TR::ResolvedMethodSymbol *owningMethodSymbol,
+      int32_t slot,
+      TR::DataType type,
+      bool isUnsigned)
+   {
+   TR::ParameterSymbol * sym = TR::ParameterSymbol::create(trHeapMemory(),type,isUnsigned,slot);
+
+   if (comp()->getOption(TR_MimicInterpreterFrameShape))
+      {
+      int32_t parameterSlots = owningMethodSymbol->getNumParameterSlots();
+      sym->setGCMapIndex(-slot + parameterSlots - sym->getNumberOfSlots());
+      }
+
+   TR::SymbolReference *symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), slot);
+   owningMethodSymbol->setParmSymRef(slot, symRef);
+   if (!parmSlotCameFromExpandingAnArchetypeArgPlaceholder(slot, owningMethodSymbol, trMemory()))
+      owningMethodSymbol->getAutoSymRefs(slot).add(symRef);
+
+   return sym;
+   }
