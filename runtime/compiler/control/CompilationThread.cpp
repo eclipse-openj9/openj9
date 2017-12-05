@@ -5376,6 +5376,9 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    if (entry.isRemoteCompReq())
       cacheRemoteROMClass(details.getClass(), const_cast<J9ROMClass*>(details.getRomClass()));
 
+   _thunksToBeRelocated.clear();
+   _invokeExactThunksToBeRelocated.clear();
+
    // Pin the class of the method being compiled to prevent it from being unloaded
    //
    // This conversion is safe. The macro J9VM_J9CLASS_TO_HEAPCLASS will not make a conversion if Classes on Heap is not enabled.
