@@ -8486,11 +8486,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             stream->write(JAAS::J9ServerMessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
             uintptrj_t receiverHandle = std::get<0>(stream->read<uintptrj_t>());
             uintptrj_t methodHandle     = walkReferenceChain(pop(), receiverHandle);
-            uintptrj_t arguments        = fej9->getReferenceField(fej9->getReferenceField(
-               methodHandle,
-               "type", "Ljava/lang/invoke/MethodType;"),
-               "arguments", "[Ljava/lang/Class;");
-            parameterCount = (int32_t)fej9->getArrayLengthInElements(arguments);
+
+            stream->write(JAAS::J9ServerMessageType::runFEMacro_invokeILGenMacros, methodHandle);
+            parameterCount = std::get<0>(stream->read<int32_t>());
             }
          else
             {

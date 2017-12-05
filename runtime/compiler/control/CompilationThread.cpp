@@ -1843,6 +1843,18 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(permuteLength, argIndices);
          }
          break;
+      case J9ServerMessageType::runFEMacro_invokeILGenMacros:
+         {
+         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         TR::VMAccessCriticalSection invokeILGenMacros(fe);
+         uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(
+            methodHandle,
+            "type", "Ljava/lang/invoke/MethodType;"),
+            "arguments", "[Ljava/lang/Class;");
+         int32_t parameterCount = (int32_t)fe->getArrayLengthInElements(arguments);
+         client->write(parameterCount);
+         }
+         break;
       default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure();
