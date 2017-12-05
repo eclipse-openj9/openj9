@@ -203,6 +203,17 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    CompilationPhase saveCompilationPhase();
    void restoreCompilationPhase(CompilationPhase phase);
 
+   /**
+    * \brief
+    *    Answers whether the fact that a method has not been executed yet implies
+    *    that the method is cold.
+    *
+    * \return
+    *    true if the fact that a method has not been executed implies it is cold;
+    *    false otherwise
+    */
+   bool notYetRunMeansCold();
+
    // --------------------------------------------------------------------------
    // Hardware profiling
    //

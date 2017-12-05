@@ -1197,3 +1197,61 @@ J9::Compilation::supportsQuadOptimization()
    return true;
    }
 
+
+bool
+J9::Compilation::notYetRunMeansCold()
+   {
+   if (self()->getOptimizer() && !(self()->getOptimizer()->isIlGenOpt()))
+      return false;
+
+   TR_ResolvedMethod *currentMethod = self()->getJittedMethodSymbol()->getResolvedMethod();
+
+   intptrj_t initialCount = currentMethod->hasBackwardBranches() ?
+                             self()->getOptions()->getInitialBCount() :
+                             self()->getOptions()->getInitialCount();
+
+   if (currentMethod->convertToMethod()->isBigDecimalMethod() ||
+       currentMethod->convertToMethod()->isBigDecimalConvertersMethod())
+       initialCount = 0;
+
+    switch (currentMethod->getRecognizedMethod())
+       {
+       case TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble:
+       case TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat:
+          initialCount = 0;
+          break;
+       default:
+          break;
+       }
+
+    if (currentMethod->containingClass() == self()->getStringClassPointer())
+       {
+       if (currentMethod->isConstructor())
+          {
+          char *sig = currentMethod->signatureChars();
+          if (!strncmp(sig, "([CIIII)", 8) ||
+              !strncmp(sig, "([CIICII)", 9) ||
+              !strncmp(sig, "(II[C)", 6))
+             initialCount = 0;
+          }
+       else
+          {
+          char *sig = "isRepeatedCharCacheHit";
+          if (strncmp(currentMethod->nameChars(), sig, strlen(sig)) == 0)
+             initialCount = 0;
+          }
+       }
+
+   if (
+      self()->isDLT()
+      || (initialCount < TR_UNRESOLVED_IMPLIES_COLD_COUNT)
+      || ((self()->getOption(TR_UnresolvedAreNotColdAtCold) && self()->getMethodHotness() == cold) || self()->getMethodHotness() < cold)
+      || currentMethod->convertToMethod()->isArchetypeSpecimen()
+      || (  self()->getCurrentMethod()
+         && self()->getCurrentMethod()->convertToMethod()->isArchetypeSpecimen())
+      )
+      return false;
+   else
+      return true;
+   }
+
