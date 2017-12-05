@@ -215,6 +215,28 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::SymbolReference * findOrCreateCheckCastForArrayStoreSymbolRef(TR::ResolvedMethodSymbol *owningMethodSymbol);
 
+   /**
+    * \brief
+    *    Creates a new symbol for a parameter within the supplied owning method of the
+    *    specified type and slot index.
+    *
+    * \param owningMethodSymbol
+    *    Resolved method symbol for which this parameter is created.
+    *
+    * \param slot
+    *    Slot index for this parameter.
+    *
+    * \param type
+    *    TR::DataType of the parameter.
+    *
+    * \param isUnsigned
+    *    Unused and deprecated.
+    *
+    * \return
+    *    The created TR::ParameterSymbol
+    */
+   TR::ParameterSymbol * createParameterSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType type, bool isUnsigned);
+
    void initShadowSymbol(TR_ResolvedMethod *, TR::SymbolReference *, bool, TR::DataType, uint32_t, bool);
 
    List<TR::SymbolReference> *dynamicMethodSymrefsByCallSiteIndex(int32_t index);
