@@ -470,4 +470,19 @@
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
 
+	<configuration
+		  label="SIDECAR18-TOOLS-OPENJ9"
+		  outputpath="SIDECAR18-TOOLS/src"
+		  dependencies="SIDECAR18-SE-OPENJ9"
+		  jdkcompliance="1.8">
+		<classpathentry kind="src" path="/pConfig SIDECAR18-SE-OPENJ9"/>
+		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
+		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
+		<source path="src/openj9.dtfj/share/classes"/>
+		<source path="src/openj9.dtfjview/share/classes"/>
+		<source path="src/openj9.traceformat/share/classes"/>
+		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
+		<parameter name="msg:outputdir" value=""/>
+	</configuration>
+
 </configurationreg>
