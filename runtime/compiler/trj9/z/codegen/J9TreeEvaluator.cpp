@@ -1965,11 +1965,11 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
                updateReferenceNode(firstChild, src1Reg);
                firstChild->setRegister(src1Reg);
 
-               generateRIInstruction(cg, TR::InstOpCode::getCmpHalfWordImmOpCodeFromNode(firstChild), node, src1Reg, value);
+               generateRIInstruction(cg, TR::InstOpCode::getCmpHalfWordImmOpCode(), node, src1Reg, value);
                }
             else
                {
-               generateSILInstruction(cg, TR::InstOpCode::getCmpHalfWordImmToMemOpCodeFromNode(firstChild), node, tempMR, value);
+               generateSILInstruction(cg, TR::InstOpCode::getCmpHalfWordImmToMemOpCode(), node, tempMR, value);
                }
             tempMR->stopUsingMemRefRegister(cg);
             }
@@ -1977,14 +1977,14 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
             {
             TR::Register * src1Reg = cg->evaluate(firstChild);
 
-            generateRIInstruction(cg, TR::InstOpCode::getCmpHalfWordImmOpCodeFromNode(firstChild), node, src1Reg, value);
+            generateRIInstruction(cg, TR::InstOpCode::getCmpHalfWordImmOpCode(), node, src1Reg, value);
             }
          }
       else
          {
          TR::Register * src1Reg = cg->evaluate(firstChild);
          TR::Register * tempReg = cg->evaluate(secondChild);
-         generateRRInstruction(cg, TR::InstOpCode::getCmpRegOpCodeFromNode(firstChild), node, src1Reg, tempReg);
+         generateRRInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, src1Reg, tempReg);
          }
       gcPoint = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, snippetLabel);
       if (comp->getOption(TR_DisableOOL))
@@ -3943,7 +3943,9 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       {
       // If we have an actionable wrtbar and a NULL ptr, branch around the wrt bar
       // as it needs not be exec'd
-      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCodeFromNode(sourceChild), node, srcReg, 0, TR::InstOpCode::COND_BE, (doWrtBar || doCrdMrk)?simpleStoreLabel:wbLabel, false, true);
+      TR::InstOpCode::Mnemonic compareAndBranchMnemonic = usingCompressedPointers ? TR::InstOpCode::C : TR::InstOpCode::getCmpOpCode();
+
+      generateS390CompareAndBranchInstruction(cg, compareAndBranchMnemonic, node, srcReg, 0, TR::InstOpCode::COND_BE, (doWrtBar || doCrdMrk)?simpleStoreLabel:wbLabel, false, true);
       }
    TR::S390CHelperLinkage *helperLink = static_cast<TR::S390CHelperLinkage*>(cg->getLinkage(TR_CHelper));
    if (nopASC)
