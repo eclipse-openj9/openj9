@@ -636,6 +636,7 @@ public:
    virtual bool isUnresolvedCallSiteTableEntry(int32_t callSiteIndex) override;
    virtual void * callSiteTableEntryAddress(int32_t callSiteIndex) override;
    virtual TR_ResolvedMethod * getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP) override;
+   virtual bool isSameMethod(TR_ResolvedMethod *);
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override

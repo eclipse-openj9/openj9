@@ -5014,7 +5014,6 @@ TR_ResolvedJ9Method::isSameMethod(TR_ResolvedMethod * m2)
          return false;
 
       bool sameMethodHandle;
-      TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
 
          {
          TR::VMAccessCriticalSection isSameMethod(fej9());
@@ -9356,5 +9355,13 @@ bool
 TR_ResolvedJ9JAASServerMethod::shouldFailSetRecognizedMethodInfoBecauseOfHCR()
    {
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_shouldFailSetRecognizedMethodInfoBecauseOfHCR, _remoteMirror);
+   return std::get<0>(_stream->read<bool>());
+   }
+
+bool
+TR_ResolvedJ9JAASServerMethod::isSameMethod(TR_ResolvedMethod * m2)
+   {
+   auto m2Jaas = static_cast<TR_ResolvedJ9JAASServerMethod*>(m2);
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isSameMethod, _remoteMirror, m2Jaas->getRemoteMirror());
    return std::get<0>(_stream->read<bool>());
    }

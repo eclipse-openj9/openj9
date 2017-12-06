@@ -1443,6 +1443,14 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(mirror->shouldFailSetRecognizedMethodInfoBecauseOfHCR());
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_isSameMethod:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method*, TR_ResolvedJ9Method*>();
+         auto mirror = std::get<0>(recv);
+         auto other = std::get<1>(recv);
+         client->write(mirror->isSameMethod(other));
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
