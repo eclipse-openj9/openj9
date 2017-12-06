@@ -1077,18 +1077,19 @@ openSemaphore(struct J9PortLibrary *portLibrary, intptr_t fd, char *baseFile, j9
 				goto failDontUnlink;
 			}
 		} else {
-#if defined (__GNUC__) || defined (AIXPPC) || defined(J9ZTPF)
-#if defined (__GNUC__) && !defined(J9ZTPF)
-			/*Use .__key for __GNUC__*/
-			if (buf.sem_perm.__key != controlinfo->ftok_key)
-#endif
-#if defined (AIXPPC)
+#if defined(__GNUC__) || defined(AIXPPC) || defined(J9ZTPF)
+#if defined(OSX)
+			/*Use _key for OSX*/
+			if (buf.sem_perm._key != controlinfo->ftok_key)
+#elif defined(AIXPPC)
 			/*Use .key for AIXPPC*/
 			if (buf.sem_perm.key != controlinfo->ftok_key)
-#endif
-#if defined(J9ZTPF)
-            /*Use .key for z/TPF */
+#elif defined(J9ZTPF)
+			/*Use .key for z/TPF */
 			if (buf.key != controlinfo->ftok_key)
+#elif defined(__GNUC__)
+			/*Use .__key for __GNUC__*/
+			if (buf.sem_perm.__key != controlinfo->ftok_key)
 #endif
 			{
 				Trc_PRT_shsem_j9shsem_opensemaphore_Msg("The <key,id> pair in our control file is no longer valid.");
