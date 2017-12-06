@@ -374,7 +374,7 @@ void J9FASTCALL _jitProfileParseBuffer(uintptrj_t vmThread)
 
 extern "C" {
 
-void J9FASTCALL _jitProfileWarmCompilePICAddress(uintptrj_t address, TR_WarmCompilePICAddressInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileWarmCompilePICAddress(uintptr_t address, TR_ArrayProfilerInfo<uintptr_t> *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
    if (recompilationCounter)
       {
@@ -389,27 +389,10 @@ void J9FASTCALL _jitProfileWarmCompilePICAddress(uintptrj_t address, TR_WarmComp
    else
       return;
 
-   for (int32_t i=0; i<MAX_UNLOCKED_PROFILING_VALUES; i++)
-      {
-      if (address == info->_address[i])
-         {
-         info->_frequency[i]++;
-         info->_totalFrequency++;
-         return;
-         }
-      else if (info->_frequency[i]==0)
-         {
-         info->_address[i] = address;
-         info->_frequency[i]++;
-         info->_totalFrequency++;
-         return;
-         }
-      }
+   info->incrementOrCreate(address);
+   }
 
-   return;
-}
-
-void J9FASTCALL _jitProfileAddress(uintptrj_t value, TR_AddressInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileAddress(uintptr_t value, TR_LinkedListProfilerInfo<uintptr_t> *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
    if (recompilationCounter)
       {
@@ -424,16 +407,17 @@ void J9FASTCALL _jitProfileAddress(uintptrj_t value, TR_AddressInfo *info, int32
 
    OMR::CriticalSection profilingAddress(vpMonitor);
 
-   uintptrj_t *addrOfTotalFrequency;
-   uintptrj_t totalFrequency = info->getTotalFrequency(&addrOfTotalFrequency);
+   uintptr_t *addrOfTotalFrequency;
+   uint32_t totalFrequency = info->getTotalFrequency(&addrOfTotalFrequency);
+   TR_LinkedListProfilerInfo<uintptr_t>::Element *first = info->getFirst();
 
    if (totalFrequency == 0)
-      info->_value1 = value;
-   if (info->_value1 == value)
+      first->_value = value;
+   if (first->_value == value)
       {
       if (totalFrequency < 0x7fffffff)
          {
-         info->_frequency1++;
+         first->_frequency++;
          totalFrequency++;
          }
       else
@@ -452,7 +436,7 @@ void J9FASTCALL _jitProfileAddress(uintptrj_t value, TR_AddressInfo *info, int32
          }
 
       if (maxNumValuesProfiled)
-         info->incrementOrCreateExtraAddressInfo(value, &addrOfTotalFrequency, maxNumValuesProfiled);
+         info->incrementOrCreate(value, &addrOfTotalFrequency, maxNumValuesProfiled);
       else
          {
          totalFrequency++;
@@ -465,7 +449,7 @@ void J9FASTCALL _jitProfileAddress(uintptrj_t value, TR_AddressInfo *info, int32
 
 
 extern "C" {
-void J9FASTCALL _jitProfileLongValue(uint64_t value, TR_LongValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileLongValue(uint64_t value, TR_LinkedListProfilerInfo<uint64_t> *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
    if (recompilationCounter)
       {
@@ -480,16 +464,17 @@ void J9FASTCALL _jitProfileLongValue(uint64_t value, TR_LongValueInfo *info, int
 
    OMR::CriticalSection profilingLongValue(vpMonitor);
 
-   uintptrj_t *addrOfTotalFrequency;
-   uintptrj_t totalFrequency = info->getTotalFrequency(&addrOfTotalFrequency);
+   uintptr_t *addrOfTotalFrequency;
+   uintptr_t totalFrequency = info->getTotalFrequency(&addrOfTotalFrequency);
+   TR_LinkedListProfilerInfo<uint64_t>::Element *first = info->getFirst();
 
    if (totalFrequency == 0)
-      info->_value1 = value;
-   if (info->_value1 == value)
+      first->_value = value;
+   if (first->_value == value)
       {
       if (totalFrequency < 0x7fffffff)
          {
-         info->_frequency1++;
+         first->_frequency++;
          totalFrequency++;
          }
       else
@@ -508,7 +493,7 @@ void J9FASTCALL _jitProfileLongValue(uint64_t value, TR_LongValueInfo *info, int
          }
 
       if (maxNumValuesProfiled)
-         info->incrementOrCreateExtraLongValueInfo(value, &addrOfTotalFrequency, maxNumValuesProfiled);
+         info->incrementOrCreate(value, &addrOfTotalFrequency, maxNumValuesProfiled);
       else
          {
          totalFrequency++;
@@ -526,11 +511,11 @@ extern "C" {
 #if defined(LINUX) && defined(TR_TARGET_S390)
      #if __GNUC__ > 4 || \
          (__GNUC__ == 4 && __GNUC_MINOR__ >= 4)
-void _jitProfileBigDecimalValue(uintptrj_t value, uintptrj_t bigdecimalj9class, int32_t scaleOffset, int32_t flagOffset, TR_BigDecimalValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)  __attribute__((optimize(0)));
+void _jitProfileBigDecimalValue(uintptr_t value, uintptr_t bigdecimalj9class, int32_t scaleOffset, int32_t flagOffset, TR_LinkedListProfilerInfo<uint64_t> *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)  __attribute__((optimize(0)));
     #endif
 #endif
 
-void J9FASTCALL _jitProfileBigDecimalValue(uintptrj_t value, uintptrj_t bigdecimalj9class, int32_t scaleOffset, int32_t flagOffset, TR_BigDecimalValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileBigDecimalValue(uintptr_t value, uintptr_t bigdecimalj9class, int32_t scaleOffset, int32_t flagOffset, TR_LinkedListProfilerInfo<uint64_t> *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
    if (recompilationCounter)
       {
@@ -545,8 +530,8 @@ void J9FASTCALL _jitProfileBigDecimalValue(uintptrj_t value, uintptrj_t bigdecim
 
    OMR::CriticalSection profilingBigDecimalValue(vpMonitor);
 
-   uintptrj_t *addrOfTotalFrequency;
-   uintptrj_t totalFrequency = info->getTotalFrequency(&addrOfTotalFrequency);
+   uintptr_t *addrOfTotalFrequency;
+   uintptr_t totalFrequency = info->getTotalFrequency(&addrOfTotalFrequency);
 
    int32_t scale;
    int32_t flag;
@@ -572,18 +557,19 @@ void J9FASTCALL _jitProfileBigDecimalValue(uintptrj_t value, uintptrj_t bigdecim
       return;
       }
 
-   if (totalFrequency == 0)
-      {
-      info->_scale1 = scale;
-      info->_flag1 = flag;
-      }
+   TR_LinkedListProfilerInfo<uint64_t>::Element *first = info->getFirst();
+   TR_BigDecimalInfo bdi;
+   bdi.scale = scale;
+   bdi.flag = flag;
 
-   if ((info->_flag1 == flag) &&
-       (info->_scale1 == scale))
+   if (totalFrequency == 0)
+      first->_value = bdi.value;
+
+   if (first->_value == bdi.value)
       {
       if (totalFrequency < 0x7fffffff)
          {
-         info->_frequency1++;
+         first->_frequency++;
          totalFrequency++;
          }
       else
@@ -602,7 +588,7 @@ void J9FASTCALL _jitProfileBigDecimalValue(uintptrj_t value, uintptrj_t bigdecim
          }
 
       if (maxNumValuesProfiled)
-         info->incrementOrCreateExtraBigDecimalValueInfo(scale, value, &addrOfTotalFrequency, maxNumValuesProfiled);
+         info->incrementOrCreate(bdi.value, &addrOfTotalFrequency, maxNumValuesProfiled);
       else
          {
          totalFrequency++;
@@ -614,7 +600,7 @@ void J9FASTCALL _jitProfileBigDecimalValue(uintptrj_t value, uintptrj_t bigdecim
 
 
 extern "C" {
-void J9FASTCALL _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, int32_t lengthOffset, TR_StringValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, int32_t lengthOffset, TR_LinkedListProfilerInfo<TR_ByteInfo> *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
 
    // charsOffset is the offset to the 'value' field in a String object relative to the start of the object.
@@ -633,8 +619,8 @@ void J9FASTCALL _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, in
 
    OMR::CriticalSection profilingStringValue(vpMonitor);
 
-   uintptrj_t *addrOfTotalFrequency;
-   uintptrj_t totalFrequency = info->getTotalFrequency(&addrOfTotalFrequency);
+   uintptr_t *addrOfTotalFrequency;
+   uintptr_t totalFrequency = info->getTotalFrequency(&addrOfTotalFrequency);
 
    char *chars;
    int32_t length;
@@ -673,21 +659,18 @@ void J9FASTCALL _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, in
       return;
       }
 
+   TR_ByteInfo bi(chars, 2 * length);
+
+   TR_LinkedListProfilerInfo<TR_ByteInfo>::Element *first = info->getFirst();
+
    if (totalFrequency == 0)
-      {
-      char *newChars = TR_StringValueInfo::createChars(length);
-      memcpy(newChars, chars, 2*length);
+      first->_value = TR_ByteInfo(bi);
 
-      info->_chars1 = newChars;
-      info->_length1 = length;
-      }
-
-   if ((info->_length1 == length) &&
-       TR_StringValueInfo::matchStrings(info->_chars1, info->_length1, chars, length))
+   if (bi == first->_value)
       {
       if (totalFrequency < 0x7fffffff)
          {
-         info->_frequency1++;
+         first->_frequency++;
          totalFrequency++;
          }
       else
@@ -707,7 +690,7 @@ void J9FASTCALL _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, in
          }
 
       if (maxNumValuesProfiled)
-         info->incrementOrCreateExtraStringValueInfo(chars, length, &addrOfTotalFrequency, maxNumValuesProfiled);
+         info->incrementOrCreate(bi, &addrOfTotalFrequency, maxNumValuesProfiled);
       else
          {
          totalFrequency++;
@@ -718,12 +701,8 @@ void J9FASTCALL _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, in
 }
 
 extern "C" {
-void J9FASTCALL _jitProfileValue(uint32_t value, TR_ValueInfo *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
+void J9FASTCALL _jitProfileValue(uint32_t value, TR_LinkedListProfilerInfo<uint32_t> *info, int32_t maxNumValuesProfiled, int32_t *recompilationCounter)
    {
-
-   if (info->getMaxValue() > value)
-      info->setMaxValue(value);
-
    if (recompilationCounter)
       {
       if (*recompilationCounter > 0)
@@ -737,16 +716,17 @@ void J9FASTCALL _jitProfileValue(uint32_t value, TR_ValueInfo *info, int32_t max
 
    OMR::CriticalSection profilingValue(vpMonitor);
 
-   uintptrj_t *addrOfTotalFrequency;
-   uintptrj_t totalFrequency = info->getTotalFrequency(&addrOfTotalFrequency);
+   uintptr_t *addrOfTotalFrequency;
+   uintptr_t totalFrequency = info->getTotalFrequency(&addrOfTotalFrequency);
+   TR_LinkedListProfilerInfo<uint32_t>::Element *first = info->getFirst();
 
    if (totalFrequency == 0)
-      info->_value1 = value;
-   if (info->_value1 == value)
+      first->_value = value;
+   if (first->_value == value)
       {
       if (totalFrequency < 0x7fffffff)
          {
-         info->_frequency1++;
+         first->_frequency++;
          totalFrequency++;
          }
       else
@@ -765,7 +745,7 @@ void J9FASTCALL _jitProfileValue(uint32_t value, TR_ValueInfo *info, int32_t max
          }
 
       if (maxNumValuesProfiled)
-         info->incrementOrCreateExtraValueInfo(value, &addrOfTotalFrequency, maxNumValuesProfiled);
+         info->incrementOrCreate(value, &addrOfTotalFrequency, maxNumValuesProfiled);
       else
          {
          totalFrequency++;

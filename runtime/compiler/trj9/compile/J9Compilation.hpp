@@ -51,7 +51,7 @@ class TR_J9VMBase;
 class TR_ValueProfileInfoManager;
 class TR_BranchProfileInfoManager;
 class TR_MethodBranchProfileInfo;
-class TR_MethodValueProfileInfo;
+class TR_ExternalValueProfileInfo;
 class TR_J9VM;
 namespace TR { class IlGenRequest; }
 
@@ -164,8 +164,7 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool pendingPushLivenessDuringIlgen();
 
-   TR::list<TR_MethodValueProfileInfo*> &getMethodVPInfos() { return _methodVPInfoList; }
-   TR::list<TR_MethodValueProfileInfo*> &getMethodHWVPInfos() { return _methodHWVPInfoList; }
+   TR::list<TR_ExternalValueProfileInfo*> &getExternalVPInfos() { return _externalVPInfoList; }
 
    TR_ValueProfileInfoManager *getValueProfileInfoManager()             { return _vpInfoManager;}
    void setValueProfileInfoManager(TR_ValueProfileInfoManager * mgr)    { _vpInfoManager = mgr; }
@@ -324,8 +323,7 @@ private:
    TR_BranchProfileInfoManager *_bpInfoManager;
 
    TR::list<TR_MethodBranchProfileInfo*> _methodBranchInfoList;
-   TR::list<TR_MethodValueProfileInfo*> _methodVPInfoList;
-   TR::list<TR_MethodValueProfileInfo*> _methodHWVPInfoList;
+   TR::list<TR_ExternalValueProfileInfo*> _externalVPInfoList;
    TR::list<TR_AOTGuardSite*>*         _aotGuardPatchSites;
    TR::list<TR_VirtualGuardSite*>     _sideEffectGuardPatchSites;
 

@@ -1018,7 +1018,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                TR::Node          *numElementsNode = candidate->_node->getFirstChild();
 
                TR_ByteCodeInfo originalBcInfo = TR_ProfiledNodeVersioning::temporarilySetProfilingBcInfoOnNewArrayLengthChild(candidate->_node, comp());
-               valueProfiler->addProfilingTrees(numElementsNode, candidate->_treeTop, NULL, true, 5);
+               valueProfiler->addProfilingTrees(numElementsNode, candidate->_treeTop, 5);
                numElementsNode->setByteCodeInfo(originalBcInfo);
                }
             else if (trace())

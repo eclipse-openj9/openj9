@@ -756,42 +756,19 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
 
 /**
  * Initialize the persistent data structurs used to store and exploit the method profiling data
- * \param addValueProfilingTrees Add trees to store method call target and other value profiling information
- *        (high overhead)
+ *
  * \return The block frequency information data structure holding the profiling counters
  */
-TR_BlockFrequencyInfo *TR_JProfilingBlock::initRecompDataStructures(bool addValueProfilingTrees)
+TR_BlockFrequencyInfo *TR_JProfilingBlock::initRecompDataStructures()
    {
-   TR_PersistentProfileInfo *profileInfo = comp()->getRecompilationInfo()->findOrCreateProfileInfo();
-   if (addValueProfilingTrees)
-      {
-      comp()->getRecompilationInfo()->createProfilers();
-      comp()->getRecompilationInfo()->getValueProfiler()->modifyTrees();
-      }
-   if (!comp()->haveCommittedCallSiteInfo() && profileInfo->getCallSiteInfo() == NULL)
-      {
-      TR_CallSiteInfo * const initialCallSiteInfo = new (PERSISTENT_NEW) TR_CallSiteInfo(comp(), persistentAlloc);
-      TR_ASSERT(profileInfo->getCallSiteInfo() == NULL, "Profile already conatins a CallSiteInfo");
-      profileInfo->setCallSiteInfo(initialCallSiteInfo);
-      profileInfo->clearInfo();
-      comp()->setCommittedCallSiteInfo(true);
-      }
-   else if (profileInfo->getCallSiteInfo()->getNumCallSites() != comp()->getNumInlinedCallSites())
-      {
-      TR_CallSiteInfo * const originalCallSiteInfo = profileInfo->getCallSiteInfo();
-      TR_ASSERT(originalCallSiteInfo != NULL, "Existing CallSiteInfo should not be NULL.");
-      TR_CallSiteInfo * const updatedCallSiteInfo = new (PERSISTENT_NEW) TR_CallSiteInfo(comp(), persistentAlloc);
-      profileInfo->setCallSiteInfo(updatedCallSiteInfo);
-      // FIXME: originalCallSiteInfo and its _blocks array allocation appear to leak.
-      }
-
+   // If this is a profiling compilation, there may be an existing block
+   // frequency profiler. Remove it to avoid excess overhead.
    TR_BlockFrequencyProfiler *bfp = comp()->getRecompilationInfo()->getBlockFrequencyProfiler();
    if (bfp)
       comp()->getRecompilationInfo()->removeProfiler(bfp);
-
-   TR_BlockFrequencyInfo *blockFrequencyInfo = new (PERSISTENT_NEW) TR_BlockFrequencyInfo(comp(), persistentAlloc);
-   profileInfo->setBlockFrequencyInfo(blockFrequencyInfo);
-   return blockFrequencyInfo;
+ 
+   TR_PersistentProfileInfo *profileInfo = comp()->getRecompilationInfo()->findOrCreateProfileInfo();
+   return profileInfo->findOrCreateBlockFrequencyInfo(comp());
    }
 
 /**
@@ -1006,7 +983,7 @@ int32_t TR_JProfilingBlock::perform()
    if (trace())
       comp()->dumpMethodTrees("Trees after JProfiling counter insertion");
 
-   TR_BlockFrequencyInfo *blockFrequencyInfo = initRecompDataStructures(false);
+   TR_BlockFrequencyInfo *blockFrequencyInfo = initRecompDataStructures();
 
    TR_BitVector** componentCounters = (TR_BitVector**)new (comp()->trMemory(), persistentAlloc, TR_Memory::BlockFrequencyInfo) void**[comp()->getFlowGraph()->getNextNodeNumber()*2]();
    blockFrequencyInfo->setCounterDerivationInfo(componentCounters);

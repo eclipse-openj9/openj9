@@ -1548,7 +1548,7 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
       if (!preferHashtableData)
          {
          // If I don't have data in IProfiler HT, choose the persistent source
-         if(!currentEntry || (currentEntry->getData() == NULL))
+         if(!currentEntry || (currentEntry->getData() == (uintptr_t)NULL))
             {
             if (persistentEntry && (persistentEntry->getData()))
                {
@@ -1561,7 +1561,7 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
                }
             }
          // If I don't have relevant data in the SCC, choose the data from IProfiler HT
-         else if(!persistentEntry || (persistentEntry->getData() == NULL))
+         else if(!persistentEntry || (persistentEntry->getData() == (uintptr_t)NULL))
             {
             // Remember that we already looked into the SCC for this PC
             currentEntry->setPersistentEntryRead();
@@ -2357,7 +2357,7 @@ TR_IProfiler::createIProfilingValueInfo (TR_ByteCodeInfo &bcInfo, TR::Compilatio
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
 
    TR_OpaqueMethodBlock *method = getMethodFromBCInfo(bcInfo, comp);
-   TR_ValueProfileInfo *valueProfileInfo = TR_MethodValueProfileInfo::getValueProfileInfo(method, comp);
+   TR_ExternalValueProfileInfo *valueProfileInfo = TR_ExternalValueProfileInfo::getInfo(method, comp);
 
    if (!valueProfileInfo)
       {
@@ -2466,9 +2466,11 @@ TR_IProfiler::createIProfilingValueInfo (TR_ByteCodeInfo &bcInfo, TR::Compilatio
                return NULL;
                }
             weight = cgData->getEdgeWeight((TR_OpaqueClassBlock *)data, comp);
-            valueInfo = valueProfileInfo->createAndInitializeValueInfo(bcInfo, TR::Address, false, comp, heapAlloc, data, weight, true);
+            // Create the value info and grab the linked list underneath
+            TR_LinkedListProfilerInfo<ProfileAddressType> *list;
+            valueInfo = valueProfileInfo->createAddressInfo(bcInfo, comp, data, weight, &list);
             uintptrj_t *addrOfTotalFrequency;
-            uintptrj_t totalFrequency = ((TR_AddressInfo *)valueInfo)->getTotalFrequency(&addrOfTotalFrequency);
+            uintptrj_t totalFrequency = list->getTotalFrequency(&addrOfTotalFrequency);
 
             for (int32_t i = 1; i < NUM_CS_SLOTS; i++)
                {
@@ -2476,7 +2478,8 @@ TR_IProfiler::createIProfilingValueInfo (TR_ByteCodeInfo &bcInfo, TR::Compilatio
                if (data)
                   {
                   weight = cgData->getEdgeWeight((TR_OpaqueClassBlock *)data, comp);
-                  ((TR_AddressInfo *)valueInfo)->incrementOrCreateExtraAddressInfo(data, &addrOfTotalFrequency, i, weight, true);
+                  ProfileAddressType address = static_cast<ProfileAddressType>(data);
+                  list->incrementOrCreate(address, &addrOfTotalFrequency, i, weight, &comp->trMemory()->heapMemoryRegion());
                   }
                }
             // add resudial to last total frequency
@@ -2502,7 +2505,7 @@ TR_IProfiler::createIProfilingValueInfo (TR_ByteCodeInfo &bcInfo, TR::Compilatio
                }
             return NULL;
             }
-         valueInfo = valueProfileInfo->createAndInitializeValueInfo(bcInfo, TR::Address, false, comp, heapAlloc, data, weight, true);
+         valueInfo = valueProfileInfo->createAddressInfo(bcInfo, comp, data, weight);
          }
 
       if (valueInfo && traceIProfiling)
@@ -2547,7 +2550,7 @@ TR_IProfiler::createIProfilingValueInfo (TR::Node *node, TR::Compilation *comp)
    return NULL;
    }
 
-TR_ValueProfileInfo *
+TR_ExternalValueProfileInfo *
 TR_IProfiler::getValueProfileInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
    {
    if (!isIProfilingEnabled())
@@ -2567,15 +2570,11 @@ TR_IProfiler::getValueProfileInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp
       {
       traceMsg(comp, "\nCurrent compiling method %p\n", originatorMethod);
       }
-   TR_ValueProfileInfo  *valueProfileInfo =
-      TR_MethodValueProfileInfo::getValueProfileInfo( originatorMethod, comp);
+   TR_ExternalValueProfileInfo *valueProfileInfo = TR_ExternalValueProfileInfo::getInfo(originatorMethod, comp);
 
    if (!valueProfileInfo)
       {
-      valueProfileInfo = new (comp->trHeapMemory()) TR_ValueProfileInfo;
-      //_valueProfileMethod = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getPersistentIdentifier());
-      valueProfileInfo->setExternalProfiler(this);
-      TR_MethodValueProfileInfo::addValueProfileInfo(originatorMethod, valueProfileInfo, comp);
+      valueProfileInfo = TR_ExternalValueProfileInfo::addInfo(originatorMethod, this, comp);
 
       for (TR::TreeTop * tt = comp->getStartTree(); tt; tt = tt->getNextTreeTop())
          {

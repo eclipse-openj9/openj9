@@ -60,7 +60,7 @@ class TR_JProfilingBlock : public TR::Optimization
    protected:
    void computeMinimumSpanningTree(BlockParents &parents, BlockPriorityQueue &Q, TR::StackMemoryRegion &stackMemoryRegion);
    int32_t processCFGForCounting(BlockParents &parent, TR::BlockChecklist &countedBlocks, TR::CFGEdge &loopBack);
-   TR_BlockFrequencyInfo *initRecompDataStructures(bool addValueProfilingTree);
+   TR_BlockFrequencyInfo *initRecompDataStructures();
    void dumpCounterDependencies(TR_BitVector **componentCounters);
    void addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyInfo, TR_BitVector **componentCounters);
    };

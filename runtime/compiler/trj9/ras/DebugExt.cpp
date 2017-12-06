@@ -2583,7 +2583,7 @@ TR_DebugExt::dxPrintCompilation()
    _dbgPrintf("\tTR::PhaseMemSummary _phaseMemProfiler = 0x%p\n", (char*)_remoteCompiler + offsetof(TR::Compilation, _phaseMemProfiler));
    _dbgPrintf("\tTR_ValueProfileInfoManager *_vpInfoManager = 0x%p\n",localCompiler->_vpInfoManager);
 
-   _dbgPrintf("\tList<TR_MethodValueProfileInfo> _methodVPInfoList = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_methodVPInfoList) - (char*)localCompiler) );
+   _dbgPrintf("\tList<TR_ExternalValueProfileInfo> _methodVPInfoList = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_externalVPInfoList) - (char*)localCompiler) );
    _dbgPrintf("\tList<TR_Pair<TR_ByteCodeInfo, TR::Node> > _checkcastNullChkInfo = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_checkcastNullChkInfo) - (char*)localCompiler) );
 
    _dbgPrintf("\tTR_CHTable * _transientCHTable = !trprint chtable 0x%p\n",localCompiler->_transientCHTable);

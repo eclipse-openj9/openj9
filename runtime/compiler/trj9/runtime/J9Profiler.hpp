@@ -37,12 +37,12 @@
 #include "optimizer/OptimizationManager.hpp"  // for OptimizationManager
 #include "env/VMJ9.h"
 #include "infra/TRlist.hpp"
+#include "runtime/J9ValueProfiler.hpp"
 
 #define PROFILING_INVOCATION_COUNT (2)
 
 class TR_ValueProfiler;
 class TR_BlockFrequencyProfiler;
-class TR_AbstractInfo;
 class TR_BitVector;
 class TR_BlockFrequencyInfo;
 class TR_CallSiteInfo;
@@ -64,36 +64,34 @@ struct TR_InlinedCallSite;
 template <typename ListKind> class List;
 
 
-/**
- * Types of value profiling information.
- *
- * \TODO: All types of value info should likely end up in here.
- */
-enum TR_ValueInfoType
-   {
-   Any,
-   BigDecimal,
-   String,
-   NotBigDecimalOrString,
-   };
-
-
 //////////////////////////
 // PersistentProfileInfos
 //////////////////////////
 
+/**
+ * Persistent storage for profiling information.
+ *
+ * Contains logic to control profiling accuracy and overhead.
+ *
+ * Holds profiling results in three classes. It will allocate and free these as necessary.
+ *   TR_CatchBlockProfileInfo
+ *   TR_BlockFrequencyInfo
+ *   TR_ValueProfileInfo
+ *
+ * Also contains call site information, to assist with matching profiling information to
+ * future compiles.
+ */
 class TR_PersistentProfileInfo
    {
    public:
    TR_ALLOC(TR_Memory::PersistentProfileInfo)
 
    TR_PersistentProfileInfo(int32_t frequency, int32_t count)
-      : _maxCount(count)
-       ,_catchBlockProfileInfo(NULL),
+      : _maxCount(count),
+        _catchBlockProfileInfo(NULL),
         _blockFrequencyInfo(NULL),
         _valueProfileInfo(NULL),
         _callSiteInfo(NULL)
-
       {
       for (int i=0; i < PROFILING_INVOCATION_COUNT; i++)
          {
@@ -122,32 +120,24 @@ class TR_PersistentProfileInfo
    void    setProfilingCount(int32_t *c) {for (int i=0; i<PROFILING_INVOCATION_COUNT; i++) _profilingCount[i] = c[i];}
    int32_t getMaxCount() { return _maxCount;}
 
+   TR_CatchBlockProfileInfo *getCatchBlockProfileInfo() {return _catchBlockProfileInfo;}
+   TR_CatchBlockProfileInfo *findOrCreateCatchBlockProfileInfo(TR::Compilation *comp);
 
-   TR_CatchBlockProfileInfo * getCatchBlockProfileInfo()                               {return _catchBlockProfileInfo;}
-   void                       setCatchBlockProfileInfo(TR_CatchBlockProfileInfo *info) {_catchBlockProfileInfo = info;}
+   TR_BlockFrequencyInfo    *getBlockFrequencyInfo() {return _blockFrequencyInfo;}
+   TR_BlockFrequencyInfo    *findOrCreateBlockFrequencyInfo(TR::Compilation *comp);
 
-   TR_BlockFrequencyInfo * getBlockFrequencyInfo()                            {return _blockFrequencyInfo;}
-   void                    setBlockFrequencyInfo(TR_BlockFrequencyInfo *info) {_blockFrequencyInfo = info;}
+   TR_ValueProfileInfo      *getValueProfileInfo() {return _valueProfileInfo;}
+   TR_ValueProfileInfo      *findOrCreateValueProfileInfo(TR::Compilation *comp);
 
-   TR_ValueProfileInfo   * getValueProfileInfo()                            {return _valueProfileInfo;}
-   void                    setValueProfileInfo(TR_ValueProfileInfo *info) {_valueProfileInfo = info;}
+   TR_CallSiteInfo          *getCallSiteInfo() {return _callSiteInfo;}
 
-   TR_CallSiteInfo       * getCallSiteInfo()                      {return _callSiteInfo;}
-   void                    setCallSiteInfo(TR_CallSiteInfo *info) {_callSiteInfo = info;}
+   void clearProfilingInfo();
 
-   // This function will set CatchBlockProfileInfo, BlockFrequencyInfo, and ValueProfileInfo
-   // to NULL
-   void                    clearInfo() {setCatchBlockProfileInfo(NULL);
-                                        setBlockFrequencyInfo(NULL);
-                                        setValueProfileInfo(NULL);}
-
-   #if defined(DEBUG)
-      void dumpInfo(TR_FrontEnd *, TR::FILE *, const char *);
-   #else
-      void dumpInfo(TR_FrontEnd *, TR::FILE *, const char *) { }
-   #endif
+   void dumpInfo(TR::FILE *);
 
    private:
+
+   void prepareForProfiling(TR::Compilation *comp);
 
    TR_CallSiteInfo          *_callSiteInfo;
    TR_CatchBlockProfileInfo *_catchBlockProfileInfo;
@@ -203,7 +193,7 @@ class TR_RecompilationProfiler : public TR_Link<TR_RecompilationProfiler>
    void setHasModifiedTrees(bool b) { _flags.set(treesModified, b); }
 
    bool getInitialCompilation()        { return _flags.testAny(initialCompilation); }
-   void setInitialiCompilation(bool b) { _flags.set(initialCompilation, b); }
+   void setInitialCompilation(bool b)  { _flags.set(initialCompilation, b); }
 
    virtual TR_ValueProfiler * asValueProfiler() { return NULL; }
    virtual TR_BlockFrequencyProfiler * asBlockFrequencyProfiler() { return NULL; }
@@ -266,8 +256,6 @@ class TR_CatchBlockProfiler : public TR_RecompilationProfiler
 
    private:
 
-   TR_CatchBlockProfileInfo * findOrCreateProfileInfo();
-
    TR_CatchBlockProfileInfo * _profileInfo;
    TR::SymbolReference * _catchCounterSymRef;
    TR::SymbolReference * _throwCounterSymRef;
@@ -283,38 +271,134 @@ class TR_BlockFrequencyProfiler : public TR_RecompilationProfiler
    virtual void modifyTrees();
    };
 
+/**
+ * TR_ValueProfiler manages the creation of value profiling instrumentation.
+ * It consists of an optimization pass, capable of identifying common profiling
+ * candidates, and helper functions so that other optimizations can request
+ * profiling instrumentation.
+ */
 class TR_ValueProfiler : public TR_RecompilationProfiler
    {
-   private:
+   public:
+   TR_ValueProfiler(TR::Compilation  * c, TR::Recompilation * r, bool initialCompilation = false)
+       : TR_RecompilationProfiler(c, r, initialCompilation), _defaultProfiler(LinkedListProfiler)
+      {
+      }
 
-   TR_ValueProfileInfo * findOrCreateValueProfileInfo();
-   TR_ValueProfileInfo * _valueProfileInfo;
+   TR_ValueProfiler * asValueProfiler() { return this; }
+
+   void modifyTrees();
+
+   void addProfilingTrees(TR::Node *node, TR::TreeTop *treetop, size_t numExpandedValues = 0,
+      TR_ValueInfoKind kind = LastValueInfo, TR_ValueInfoSource source = LastProfiler,
+      bool commonNode = true, bool decrementRecompilationCounter = false);
+
+   void addProfilingTrees(TR::Node *node, TR::TreeTop *treetop, TR_ByteCodeInfo &bci, size_t numExpandedValues = 0,
+      TR_ValueInfoKind kind = LastValueInfo, TR_ValueInfoSource source = LastProfiler,
+      bool commonNode = true, bool decrementRecompilationCounter = false);
+
+   private:
+   void visitNode(TR::Node *, TR::TreeTop *, vcount_t);
+   bool validConfiguration(TR::DataType dataType, TR_ValueInfoKind kind);
+
+   // Cache profiled classes
    TR_OpaqueClassBlock * _bdClass;
    TR_OpaqueClassBlock * _stringClass;
 
-   public:
-
-   TR_ValueProfiler(TR::Compilation  * c, TR::Recompilation * r, bool initialCompilation = false)
-       : TR_RecompilationProfiler(c, r, initialCompilation),
-         _valueProfileInfo(NULL), _bdClass(NULL), _stringClass(NULL)
-      {
-      findOrCreateValueProfileInfo();
-      }
-
-   void setValueProfileInfo(TR_ValueProfileInfo *valueProfileInfo)
-      {
-      _valueProfileInfo = valueProfileInfo;
-      }
-
-   virtual TR_ValueProfiler * asValueProfiler() { return this; }
-   virtual void modifyTrees();
-   void visitNode(TR::Node *, TR::TreeTop *, vcount_t);
-   void addProfilingTrees(TR::Node *, TR::TreeTop *, TR_AbstractInfo *valueInfo = NULL, bool commonNode = false, int32_t numExpandedValues = 0, bool decrmentRecompilationCounter = false, bool doBigDecimalProfiling = false, bool doStringProfiling = false);
-   static TR_AbstractInfo *getProfiledValueInfo(TR::Node *, TR::Compilation*, TR_ValueInfoType type = NotBigDecimalOrString);
+   // Default instrumentation to use
+   TR_ValueInfoSource    _defaultProfiler;
    };
 
+/**
+ * External profiler information.
+ * Heap allocated list of profiling information, registered against a method.
+ */
+class TR_ExternalValueProfileInfo
+   {
+   public:
+   TR_ALLOC(TR_Memory::ExternalValueProfileInfo)
 
+   TR_ExternalValueProfileInfo(TR_OpaqueMethodBlock *vmMethod, TR_ExternalProfiler *profiler)
+      : _method(vmMethod), _profiler(profiler), _info(NULL)
+      {}
 
+   TR_OpaqueMethodBlock *getPersistentIdentifier() { return _method; }
+
+   /**
+    * Static methods to manage the collection of external value profile info.
+    * Currently, this hangs of the compilation object.
+    */
+   static TR_ExternalValueProfileInfo *addInfo(TR_OpaqueMethodBlock *method, TR_ExternalProfiler *profiler, TR::Compilation *comp);
+   static TR_ExternalValueProfileInfo *getInfo(TR_OpaqueMethodBlock *method, TR::Compilation *comp);
+
+   /**
+    * Get and create value information
+    */
+   TR_AbstractInfo *getValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp);
+   TR_AbstractInfo *createAddressInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp,
+      uintptr_t initialValue, uint32_t initialFreq, TR_LinkedListProfilerInfo<ProfileAddressType> **list=NULL);
+
+   private:
+   TR_OpaqueMethodBlock *_method;
+   TR_ExternalProfiler  *_profiler;
+   TR_AbstractInfo      *_info;
+   };
+
+/**
+ * This class creates and stores the persistent information for any JIT value profiling instrumentation.
+ * One exists per body info. Due to this, a compilation may have access to two TR_ValueProfileInfos at
+ * once: the results from a prior compile and the current.
+ *
+ * The TR_ValueProfiler will always access the TR_ValueProfileInfo generated for the current compile, whilst
+ * TR_ValueProfileInfoManager will always access the prior compile's TR_ValueProfileInfo.
+ * Once the corresponding body shall no longer execute, this class is deallocated.
+ */
+class TR_ValueProfileInfo
+   {
+   public:
+   TR_PERSISTENT_ALLOC(TR_Memory::PersistentProfileInfo)
+
+   TR_ValueProfileInfo(TR_CallSiteInfo *info);
+   ~TR_ValueProfileInfo();
+
+   static inline TR_ValueProfileInfo * get(TR_PersistentProfileInfo * profileInfo);
+   static inline TR_ValueProfileInfo * get(TR_ResolvedMethod * vmMethod);
+   static inline TR_ValueProfileInfo * get(TR::Compilation *comp);
+
+   TR_AbstractInfo *getValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp, TR_ValueInfoKind kind,
+      TR_ValueInfoSource source, bool fuzz = false, TR::Region *optRegion = NULL);
+
+   TR_AbstractProfilerInfo *getProfilerInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp, TR_ValueInfoKind kind,
+      TR_ValueInfoSource source, bool fuzz = false);
+   TR_AbstractProfilerInfo *createAndInitializeProfilerInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp, TR_ValueInfoKind kind,
+      TR_ValueInfoSource source, uint64_t initialValue = CONSTANT64(0xdeadf00ddeadf00d));
+   TR_AbstractProfilerInfo *getOrCreateProfilerInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp, TR_ValueInfoKind kind,
+      TR_ValueInfoSource source, uint64_t initialValue = CONSTANT64(0xdeadf00ddeadf00d));
+
+   void dumpInfo(TR::FILE *);
+
+   private:
+   TR_AbstractProfilerInfo *_values[LastProfiler];
+   TR_CallSiteInfo         *_callSiteInfo;
+   };
+
+TR_ValueProfileInfo * TR_ValueProfileInfo::get(TR_PersistentProfileInfo * profileInfo)
+   {
+   if (profileInfo && profileInfo->getValueProfileInfo())
+      return profileInfo->getValueProfileInfo();
+
+   return NULL;
+   }
+
+TR_ValueProfileInfo * TR_ValueProfileInfo::get(TR_ResolvedMethod * vmMethod)
+   {
+   return get(TR_PersistentProfileInfo::get(vmMethod));
+   }
+
+TR_ValueProfileInfo * TR_ValueProfileInfo::get(TR::Compilation *comp)
+   {
+   return get(TR_PersistentProfileInfo::get(comp));
+   }
 
 /**
  * The ValueProfileInfoManager serves as a facade for multiple sources of value
@@ -326,44 +410,50 @@ class TR_ValueProfileInfoManager
    public:
    TR_ALLOC(TR_Memory::ValueProfileInfoManager)
 
-   /**
-    * Source selection types.
-    */
+   TR_ValueProfileInfoManager(TR::Compilation *comp);
+
    enum
       {
-      allProfileInfoKinds              = 0x00000001, ///< Search all profile info types
+      allProfileInfo                   = 0x00000001, ///< Search all profile info types
       justJITProfileInfo               = 0x00000002, ///< Only return JIT Profile info
       justInterpreterProfileInfo       = 0x00000003  ///< Only return IProfiler info
       };
-
-   TR_ValueProfileInfoManager(TR::Compilation *comp);
 
    /**
     * Return TR_AbstractInfo that can be downcast to a particular kind of value profiling info.
     *
     * @param node               The node for which value info is desired.
     * @param comp               Compilation
-    * @param profileInfoKind    Source selection.
     * @param type               Acceptable return record types.
+    * @param source             Source selection.
     */
    TR_AbstractInfo *getValueInfo(TR::Node *node,
-                                 TR::Compilation *comp ,
-                                 uint32_t profileInfoKind = allProfileInfoKinds,
-                                 TR_ValueInfoType type = NotBigDecimalOrString);
+                                 TR::Compilation *comp,
+                                 TR_ValueInfoKind type,
+                                 uint32_t source = allProfileInfo);
+
+   static TR_AbstractInfo *getProfiledValueInfo(TR::Node *node,
+                                 TR::Compilation *comp,
+                                 TR_ValueInfoKind type,
+                                 uint32_t source = allProfileInfo);
+
    /**
     * Return TR_AbstractInfo that can be downcast to a particular kind of value profiling info.
     *
     * @param bcInfo             The ByteCodeInfo for which info is desired.
     * @param comp               Compilation
-    * @param profileInfoKind    Source selection.
     * @param type               Acceptable return record types.
-    * @param useHWProfile       Use HW profiling info.
-    *
+    * @param source             Source selection.
     */
    TR_AbstractInfo *getValueInfo(TR_ByteCodeInfo & bcInfo,
                                  TR::Compilation *comp,
-                                 uint32_t profileInfoKind = allProfileInfoKinds,
-                                 TR_ValueInfoType type = NotBigDecimalOrString);
+                                 TR_ValueInfoKind type,
+                                 uint32_t source = allProfileInfo);
+
+   static TR_AbstractInfo *getProfiledValueInfo(TR_ByteCodeInfo & bcInfo,
+                                 TR::Compilation *comp,
+                                 TR_ValueInfoKind type,
+                                 uint32_t source = allProfileInfo);
 
    void             updateCallGraphProfilingCount(TR::Block *block, TR_OpaqueMethodBlock *method, int32_t byteCodeIndex, TR::Compilation *comp);
    bool             isColdCall(TR_OpaqueMethodBlock *method, int32_t byteCodeIndex, TR::Compilation *comp);
@@ -381,15 +471,13 @@ class TR_ValueProfileInfoManager
 
    static inline TR_ValueProfileInfoManager * get(TR::Compilation *comp);
 
-   void setJitValueProfileInfo(TR_ValueProfileInfo *v) { _jitValueProfileInfo = v; }
 
-private:
+   private:
    TR_ValueProfileInfo   *_jitValueProfileInfo;
    TR_BlockFrequencyInfo *_jitBlockFrequencyInfo;
    TR_OpaqueMethodBlock  *_cachedJ9Method;
    bool                   _isCountZero;
    };
-
 
 TR_ValueProfileInfoManager *TR_ValueProfileInfoManager::get(TR::Compilation *comp)
    {
@@ -459,112 +547,6 @@ private:
    uint32_t _initialBlockFrequency;
    };
 
-
-class TR_MethodValueProfileInfo
-   {
-   public:
-   TR_ALLOC(TR_Memory::MethodValueProfileInfo)
-
-   TR_MethodValueProfileInfo (TR_OpaqueMethodBlock *vmMethod, TR_ValueProfileInfo *vpInfo, TR::Compilation *comp)
-      : _method(vmMethod), _vpInfo(vpInfo)
-      {
-      }
-
-   static void addValueProfileInfo (TR_OpaqueMethodBlock *method, TR_ValueProfileInfo *vpInfo, TR::Compilation *comp);
-   static TR_ValueProfileInfo *getValueProfileInfo(TR_OpaqueMethodBlock *method, TR::Compilation *comp);
-
-   static void addHWValueProfileInfo (TR_OpaqueMethodBlock *method, TR_ValueProfileInfo *vpInfo, TR::Compilation *comp);
-   static TR_ValueProfileInfo *getHWValueProfileInfo(TR_OpaqueMethodBlock *method, TR::Compilation *comp);
-
-   TR_ValueProfileInfo *getValueProfileInfo() { return _vpInfo; }
-   TR_OpaqueMethodBlock *getPersistentIdentifier() { return _method; }
-
-   private:
-   static TR_ValueProfileInfo *getValueProfileInfo(TR_OpaqueMethodBlock *method, TR::list<TR_MethodValueProfileInfo*> &infos, TR::Compilation *comp);
-   TR_OpaqueMethodBlock *_method;
-   TR_ValueProfileInfo *_vpInfo;
-   };
-
-
-class TR_ValueProfileInfo
-   {
-public:
-
-   TR_ALLOC(TR_Memory::ValueProfileInfo)
-
-   TR_ValueProfileInfo();
-
-   TR_ValueProfileInfo(
-         TR_AbstractInfo *values,
-         TR_AbstractInfo *iProfilerValues,
-         int32_t numValues,
-         int32_t numiProfilerValues,
-         TR_CallSiteInfo *callSites
-        ,TR_ExternalProfiler *profiler
-         ) :
-      _values(values),
-      _iProfilerValues(iProfilerValues),
-      _numValues(numValues),
-      _numiProfilerValues(numiProfilerValues),
-      _callSites(callSites)
-     ,_profiler(profiler)
-      { }
-
-   ~TR_ValueProfileInfo();
-
-   static inline TR_ValueProfileInfo * get(TR_PersistentProfileInfo * profileInfo);
-   static inline TR_ValueProfileInfo * get(TR_ResolvedMethod * vmMethod);
-   static inline TR_ValueProfileInfo * get(TR::Compilation *comp);
-
-   #ifdef DEBUG
-      void dumpInfo(TR_FrontEnd *, TR::FILE *);
-   #endif
-
-   TR_AbstractInfo *getValueInfo(TR::Node *node, TR::Compilation *, TR_ValueInfoType type = NotBigDecimalOrString);
-   TR_AbstractInfo *getValueInfo(TR_ByteCodeInfo & bcInfo, TR::Compilation *, TR_ValueInfoType type = NotBigDecimalOrString);
-   TR_AbstractInfo *getValueInfoFromExternalProfiler(TR_ByteCodeInfo & bcInfo, TR::Compilation *);
-   TR_AbstractInfo *createAndInitializeValueInfo(TR::Node *node, bool, TR::Compilation *, TR_AllocationKind allocKind, uintptrj_t initialValue, TR_ValueInfoType type = NotBigDecimalOrString);
-   TR_AbstractInfo *createAndInitializeValueInfo(TR_ByteCodeInfo &bcInfo, TR::DataType dataType, bool, TR::Compilation *, TR_AllocationKind allocKind, uintptrj_t initialValue, uint32_t frequency = 0, bool externalProfilerValue = false, TR_ValueInfoType type = NotBigDecimalOrString, bool hwProfilerValue = false);
-   TR_AbstractInfo *getOrCreateValueInfo(TR::Node *node, bool, TR::Compilation *, TR_ValueInfoType type = NotBigDecimalOrString);
-   TR_AbstractInfo *getOrCreateValueInfo(TR::Node *node, bool warmCompilePICCallSite, TR_AllocationKind allocKind = persistentAlloc, uintptrj_t initialValue = 0xdeadf00d, TR::Compilation *comp = NULL, TR_ValueInfoType type = NotBigDecimalOrString);
-   TR_AbstractInfo *getOrCreateValueInfo(TR_ByteCodeInfo &bcInfo, TR::DataType dataType, bool warmCompilePICCallSite, TR_AllocationKind allocKind = persistentAlloc, uintptrj_t initialValue = 0xdeadf00d, TR::Compilation *comp = NULL, TR_ValueInfoType type = NotBigDecimalOrString);
-
-   void    setCallSiteInfo (TR_CallSiteInfo *callSiteInfo) {_callSites = callSiteInfo;}
-   void    setExternalProfiler (TR_ExternalProfiler *externalProfiler) {_profiler = externalProfiler;}
-
-   TR_AbstractInfo *getValues() { return _values;};  // for WCode
-   void setValues(TR_AbstractInfo *v) {_values = v;} // for replay
-private:
-
-   TR_AbstractInfo *_values;
-   TR_AbstractInfo *_iProfilerValues;
-   TR_AbstractInfo *_hwProfilerValues;
-   int32_t          _numValues;
-   int32_t          _numiProfilerValues;
-   TR_CallSiteInfo *_callSites;
-   TR_ExternalProfiler *_profiler;
-   };
-
-
-TR_ValueProfileInfo * TR_ValueProfileInfo::get(TR_PersistentProfileInfo * profileInfo)
-   {
-   if (profileInfo && profileInfo->getValueProfileInfo())
-      return profileInfo->getValueProfileInfo();
-
-   return NULL;
-   }
-
-TR_ValueProfileInfo * TR_ValueProfileInfo::get(TR_ResolvedMethod * vmMethod)
-   {
-   return get(TR_PersistentProfileInfo::get(vmMethod));
-   }
-
-TR_ValueProfileInfo * TR_ValueProfileInfo::get(TR::Compilation *comp)
-   {
-   return get(TR_PersistentProfileInfo::get(comp));
-   }
-
-
 class TR_BlockFrequencyInfo
    {
    public:
@@ -590,9 +572,7 @@ class TR_BlockFrequencyInfo
    static int32_t *getEnableJProfilingRecompilation() { return &_enableJProfilingRecompilation; }
    static void    enableJProfilingRecompilation() { _enableJProfilingRecompilation = -1; }
 
-   #ifdef DEBUG
-      void dumpInfo(TR_FrontEnd *, TR::FILE *);
-   #endif
+   void dumpInfo(TR::FILE *);
 
    int32_t getCallCount();
    int32_t getMaxRawCount(int32_t callerIndex);
@@ -648,9 +628,7 @@ class TR_CatchBlockProfileInfo
    uint32_t & getCatchCounter() { return _catchCounter; }
    uint32_t & getThrowCounter() { return _throwCounter; }
 
-   #ifdef DEBUG
-      void dumpInfo(TR_FrontEnd *, TR::FILE *, const char *);
-   #endif
+   void dumpInfo(TR::FILE *);
 
    private:
 
@@ -678,6 +656,9 @@ class TR_CallSiteInfo
    {
    public:
 
+   // Placement new support, used when updating call site info
+   void * operator new (size_t s, void * loc) {return loc;}
+
    TR_ALLOC(TR_Memory::CallSiteInfo)
 
    TR_CallSiteInfo(TR::Compilation * comp, TR_AllocationKind allocKind);
@@ -693,10 +674,7 @@ class TR_CallSiteInfo
    size_t getNumCallSites() { return _numCallSites;}
    TR_OpaqueMethodBlock *inlinedMethod(TR_ByteCodeInfo & persistentByteCodeInfo, TR::Compilation *comp);
 
-   #ifdef DEBUG
-      void dumpInfo(TR_FrontEnd *, TR::FILE *);
-   #endif
-   TR_InlinedCallSite *getCallSites() { return _callSites; } // for WCode
+   void dumpInfo(TR::FILE *);
 
    private:
 

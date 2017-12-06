@@ -37,7 +37,7 @@ class TR_ExternalProfiler
 public:
 
    virtual void setBlockAndEdgeFrequencies( TR::CFG *cfg, TR::Compilation *comp) = 0;
-   virtual TR_ValueProfileInfo * getValueProfileInfo(TR_ByteCodeInfo & bcInfo, TR::Compilation *comp) = 0; 
+   virtual TR_ExternalValueProfileInfo * getValueProfileInfo(TR_ByteCodeInfo & bcInfo, TR::Compilation *comp) = 0;
    virtual bool hasSameBytecodeInfo(TR_ByteCodeInfo & persistentByteCodeInfo, TR_ByteCodeInfo & currentByteCodeInfo, TR::Compilation *comp) = 0;
    virtual void getBranchCounters (TR::Node *node, TR::TreeTop *fallThroughtTree, int32_t *taken, int32_t *notTaken, TR::Compilation *comp) = 0;
    virtual int32_t getSwitchCountForValue(TR::Node *node, int32_t index, TR::Compilation *comp) = 0;
