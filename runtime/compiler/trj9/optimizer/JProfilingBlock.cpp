@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-#include "JProfiling.hpp"
+#include "JProfilingBlock.hpp"
 
 #include "il/Block.hpp"
 #include "infra/Cfg.hpp"
@@ -37,9 +37,9 @@
 
 // Global thresholds for the number of method enters required to trip
 // method recompilation - these are adjusted in the JIT hook control logic
-int32_t TR_JProfiling::nestedLoopRecompileThreshold = 10;
-int32_t TR_JProfiling::loopRecompileThreshold = 250;
-int32_t TR_JProfiling::recompileThreshold = 500;
+int32_t TR_JProfilingBlock::nestedLoopRecompileThreshold = 10;
+int32_t TR_JProfilingBlock::loopRecompileThreshold = 250;
+int32_t TR_JProfilingBlock::recompileThreshold = 500;
 
 /**
  * Prim's algorithm to compute a Minimum Spanning Tree traverses the edges of the tree
@@ -588,7 +588,7 @@ class EdgeFrequencyInfo
  * \param Q The priority queue to be used to run the algorithm
  * \param stackMemoryRegion The stack memory from which to allocate temporary data structures
  */
-void TR_JProfiling::computeMinimumSpanningTree(BlockParents &parent, BlockPriorityQueue &Q, TR::StackMemoryRegion &stackMemoryRegion)
+void TR_JProfilingBlock::computeMinimumSpanningTree(BlockParents &parent, BlockPriorityQueue &Q, TR::StackMemoryRegion &stackMemoryRegion)
    {
    TR::CFG *cfg = comp()->getFlowGraph();
    BlockWeights weights(cfg->getNextNodeNumber(), stackMemoryRegion);
@@ -636,7 +636,7 @@ void TR_JProfiling::computeMinimumSpanningTree(BlockParents &parent, BlockPriori
  * \param loopBack The special loopBack edge which connects the method exit
  *               and enter blocks
  */
-int32_t TR_JProfiling::processCFGForCounting(BlockParents &parent, TR::BlockChecklist &countedBlocks, TR::CFGEdge &loopBack)
+int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::BlockChecklist &countedBlocks, TR::CFGEdge &loopBack)
    {
    TR::CFG *cfg = comp()->getFlowGraph();
    int32_t firstNewBlockNumber = comp()->getFlowGraph()->getNextNodeNumber();
@@ -760,7 +760,7 @@ int32_t TR_JProfiling::processCFGForCounting(BlockParents &parent, TR::BlockChec
  *        (high overhead)
  * \return The block frequency information data structure holding the profiling counters
  */
-TR_BlockFrequencyInfo *TR_JProfiling::initRecompDataStructures(bool addValueProfilingTrees)
+TR_BlockFrequencyInfo *TR_JProfilingBlock::initRecompDataStructures(bool addValueProfilingTrees)
    {
    TR_PersistentProfileInfo *profileInfo = comp()->getRecompilationInfo()->findOrCreateProfileInfo();
    if (addValueProfilingTrees)
@@ -794,7 +794,7 @@ TR_BlockFrequencyInfo *TR_JProfiling::initRecompDataStructures(bool addValueProf
  * the counters which have been inserted into the compiled method body
  * \param componentCounters The counter data structure to print
  */
-void TR_JProfiling::dumpCounterDependencies(TR_BitVector **componentCounters)
+void TR_JProfilingBlock::dumpCounterDependencies(TR_BitVector **componentCounters)
    {
    TR::CFG *cfg = comp()->getFlowGraph();
    for (CFGNodeIterator iter(cfg, this); iter.currentBlock() != NULL; ++iter)
@@ -847,7 +847,7 @@ void TR_JProfiling::dumpCounterDependencies(TR_BitVector **componentCounters)
  * appropriate number of method entries has occurred as determined by the raw block
  * count of the first block of the method.
  */   
-void TR_JProfiling::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyInfo, TR_BitVector **componentCounters)
+void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyInfo, TR_BitVector **componentCounters)
    {
    // add invocation check to the top of the method
    int32_t *thresholdLocation = NULL;
@@ -971,7 +971,7 @@ void TR_JProfiling::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyI
       }
    }
 
-int32_t TR_JProfiling::perform() 
+int32_t TR_JProfilingBlock::perform() 
    {
    TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "jprofiling.instrument/success/(%s)", comp()->signature()));
 
@@ -1147,7 +1147,7 @@ int32_t TR_JProfiling::perform()
    }
 
 const char *
-TR_JProfiling::optDetailString() const throw()
+TR_JProfilingBlock::optDetailString() const throw()
    {
-   return "O^O JPROFILING: ";
+   return "O^O JPROFILING BLOCK: ";
    }

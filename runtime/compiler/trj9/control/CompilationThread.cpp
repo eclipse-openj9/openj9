@@ -7095,7 +7095,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                }
             if (!doJProfile)
                {
-               options->setDisabled(OMR::jProfiling, true);
+               options->setDisabled(OMR::jProfilingBlock, true);
                options->setOption(TR_EnableJProfiling, false);
                }
             else // JProfiling bodies should not use GCR trees

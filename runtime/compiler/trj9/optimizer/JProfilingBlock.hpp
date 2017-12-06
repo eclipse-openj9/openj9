@@ -19,8 +19,8 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-#ifndef JPROFILING_INCL
-#define JPROFILING_INCL
+#ifndef JPROFILINGBLOCK_INCL
+#define JPROFILINGBLOCK_INCL
 
 #include <stdint.h>                           // for int32_t
 #include <queue>
@@ -34,7 +34,7 @@ class TR_BlockFrequencyInfo;
 
 class BlockParents;
 
-class TR_JProfiling : public TR::Optimization
+class TR_JProfilingBlock : public TR::Optimization
    {
    protected:
    typedef TR::typed_allocator<std::pair<int32_t, TR::Block *>, TR::Region & > BlockContainerAllocator;
@@ -46,12 +46,12 @@ class TR_JProfiling : public TR::Optimization
    static int32_t nestedLoopRecompileThreshold;
    static int32_t loopRecompileThreshold;
    static int32_t recompileThreshold;
-   TR_JProfiling(TR::OptimizationManager *manager)
+   TR_JProfilingBlock(TR::OptimizationManager *manager)
       : TR::Optimization(manager)
       {}
    static TR::Optimization *create(TR::OptimizationManager *manager)
       {
-      return new (manager->allocator()) TR_JProfiling(manager);
+      return new (manager->allocator()) TR_JProfilingBlock(manager);
       }
 
    virtual int32_t perform();
@@ -60,7 +60,7 @@ class TR_JProfiling : public TR::Optimization
    protected:
    void computeMinimumSpanningTree(BlockParents &parents, BlockPriorityQueue &Q, TR::StackMemoryRegion &stackMemoryRegion);
    int32_t processCFGForCounting(BlockParents &parent, TR::BlockChecklist &countedBlocks, TR::CFGEdge &loopBack);
-   TR_BlockFrequencyInfo *initRecompDataStructures(bool addValueProfilingTrees);
+   TR_BlockFrequencyInfo *initRecompDataStructures(bool addValueProfilingTree);
    void dumpCounterDependencies(TR_BitVector **componentCounters);
    void addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyInfo, TR_BitVector **componentCounters);
    };
