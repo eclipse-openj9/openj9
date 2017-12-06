@@ -1541,11 +1541,7 @@ j9sock_runTests(struct J9PortLibrary *portLibrary)
 		rc |= j9sock_test5_basic_options(portLibrary);
 		rc |= j9sock_test6_nonblocking_connect(portLibrary);
 		rc |= j9sock_test7_nonblocking_read(portLibrary);
-#if 0
-		/* CMVC 169177, this testcase only applies to functionality required by
-		 * the Harmony Class Library, remove it for now as it causes failures on windows C builds */
-		rc |= j9sock_test8_select_read_closed_socket(portLibrary);
-#endif
+		/* j9sock_test8_select_read_closed_socket doesn't work on Windows and applies only to Harmony port library. */
 		rc |= j9sock_test10_get_addrinfo(portLibrary);
 		rc |= j9sock_test11_getnameinfo(portLibrary);
 	}

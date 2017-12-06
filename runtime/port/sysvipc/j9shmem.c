@@ -1613,14 +1613,16 @@ openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile,
 				goto failDontUnlink;
 			}
 		} else {
-#if defined (__GNUC__) || defined (AIXPPC)
-#if defined (__GNUC__)
-			/*Use .__key for __GNUC__*/
-			if (buf.shm_perm.__key != controlinfo->common.ftok_key)
-#endif
-#if defined (AIXPPC)
+#if defined(__GNUC__) || defined(AIXPPC)
+#if defined(OSX)
+			/*Use ._key for OSX*/
+			if (buf.shm_perm._key != controlinfo->common.ftok_key)
+#elif defined(AIXPPC)
 			/*Use .key for AIXPPC*/
 			if (buf.shm_perm.key != controlinfo->common.ftok_key)
+#elif defined(__GNUC__)
+			/*Use .__key for __GNUC__*/
+			if (buf.shm_perm.__key != controlinfo->common.ftok_key)
 #endif
 			{
 				Trc_PRT_shmem_j9shmem_openSharedMemory_Msg("The <key,id> pair in our control file is no longer valid.");

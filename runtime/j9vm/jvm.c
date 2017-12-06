@@ -76,7 +76,7 @@
 
 #ifdef J9VM_OPT_HARMONY
 #include "harmony_vm.h"
-#endif
+#endif /* J9VM_OPT_HARMONY */
 
 #if defined(DEBUG)
 #define DBG_MSG(x) printf x
@@ -1645,6 +1645,7 @@ printVmArgumentsList(J9VMInitArgs *argList)
 	}
 }
 
+#ifdef J9VM_OPT_HARMONY
 static IDATA
 addHarmonyPortLibrary(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags)
 {
@@ -1657,6 +1658,7 @@ addHarmonyPortLibrary(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsL
 	addHarmonyPortLibToVMArgs(portLib, &(optArg->vmOpt), &dummyArgs, &harmonyPortLibrary);
 	return 0;
 }
+#endif /* J9VM_OPT_HARMONY */
 
 static void
 setNLSCatalog(struct J9PortLibrary* portLib, UDATA j2seVersion)
@@ -2143,7 +2145,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 #ifdef J9VM_OPT_HARMONY
 				/* pass in the Harmony library */
 				|| (0 != addHarmonyPortLibrary(&j9portLibrary, &vmArgumentsList, localVerboseLevel))
-#endif
+#endif /* J9VM_OPT_HARMONY */
 				|| (0 != addXserviceArgs(&j9portLibrary, &vmArgumentsList, xServiceBuffer, localVerboseLevel))
 		) {
 			result = JNI_ERR;
