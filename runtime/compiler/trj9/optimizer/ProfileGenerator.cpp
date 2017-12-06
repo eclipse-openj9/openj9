@@ -76,6 +76,16 @@ TR_ProfileGenerator::TR_ProfileGenerator(TR::OptimizationManager *manager)
 
 int32_t TR_ProfileGenerator::perform()
    {
+   /**
+    * Duplication is not necessary under JProfiling
+    */
+   if (comp()->getProfilingMode() != JitProfiling)
+      {
+      if (trace())
+         traceMsg(comp(), "Profile Generator is only required by JitProfiling instrumentation\n");
+      return 0;
+      }
+
    _asyncTree = NULL;
    int32_t nodeCount = comp()->getNodeCount();
 

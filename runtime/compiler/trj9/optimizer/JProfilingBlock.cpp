@@ -40,6 +40,7 @@
 int32_t TR_JProfilingBlock::nestedLoopRecompileThreshold = 10;
 int32_t TR_JProfilingBlock::loopRecompileThreshold = 250;
 int32_t TR_JProfilingBlock::recompileThreshold = 500;
+int32_t TR_JProfilingBlock::profilingCompileThreshold = 2;
 
 /**
  * Prim's algorithm to compute a Minimum Spanning Tree traverses the edges of the tree
@@ -840,6 +841,11 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
    else
       thresholdLocation = &recompileThreshold;
 
+   // Profiling compilations have a lower threshold, so that less time is
+   // spent running the high overhead implementation
+   if (comp()->isProfilingCompilation())
+      thresholdLocation = &profilingCompileThreshold;
+
    int32_t startBlockNumber = comp()->getStartBlock()->getNumber();
    blockFrequencyInfo->setEntryBlockNumber(startBlockNumber);
 
@@ -953,8 +959,39 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
       }
    }
 
+/**
+ * JProfiling consists of two components: JProfilingValue & JProfilingBlock
+ * JProfilingBlock will run early in the compilation, such that the CFG closely resembles the original program structure,
+ * whilst the JProfilingValue pass runs later, as values may be introduced, eliminated or simplified.
+ *
+ * For non-profiling compilations, this can be enabled with the option TR_EnableJProfiling. Other control infrastructure
+ * may limit which compilations this is actually applied to. See the env option TR_DisableFilterOnJProfiling for more details.
+ *
+ * For profiling compilations, JProfiling can replace the existing JitProfiling instrumentation when either TR_EnableJProfiling
+ * or TR_EnableJProfilingInProfilingCompilations are set. However, this introduces some complexity as a compilation may
+ * switch to profiling part way though, potentially after JProfilingBlock should have run. In such a scenario, profiling compilations
+ * will ignore JProfiling and fallback on the prior implementation.
+ */
 int32_t TR_JProfilingBlock::perform() 
    {
+   if (comp()->getOption(TR_EnableJProfiling))
+      {
+      if (trace())
+         traceMsg(comp(), "JProfiling has been enabled, run JProfiling\n");
+      }
+   else if (comp()->getProfilingMode() == JProfiling)
+      {
+      if (trace())
+         traceMsg(comp(), "JProfiling has been enabled for profiling compilations, run JProfilingBlock\n");
+      }
+   else
+      {
+      if (trace())
+         traceMsg(comp(), "JProfiling has not been enabled, skip JProfilingBlock and disable JProfilingValue\n");
+      comp()->getOptions()->setOption(TR_EnableJProfilingInProfilingCompilations, false);
+      return 0;
+      }
+
    TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "jprofiling.instrument/success/(%s)", comp()->signature()));
 
    TR::CFG *cfg = comp()->getFlowGraph();

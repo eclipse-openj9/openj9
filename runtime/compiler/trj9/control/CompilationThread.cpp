@@ -7093,9 +7093,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                      }
                   }
                }
+
+            // JProfiling may be enabled if TR_EnableJProfilingInProfilingCompilations is set and its a profiling compilation.
+            // See optimizer/JProfilingBlock.cpp
             if (!doJProfile)
                {
-               options->setDisabled(OMR::jProfilingBlock, true);
                options->setOption(TR_EnableJProfiling, false);
                }
             else // JProfiling bodies should not use GCR trees

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -278,7 +278,7 @@ J9::Recompilation::endOfCompilation()
       // do not sample this method.  If this is a counting based compilation
       // disable sampling as well
       //
-      if (!self()->shouldBeCompiledAgain() || !_useSampling)
+      if (!self()->shouldBeCompiledAgain() || !_useSampling || _compilation->getProfilingMode() == JProfiling)
          {
          _bodyInfo->setDisableSampling(true);
          }
@@ -378,9 +378,10 @@ void
 J9::Recompilation::createProfilers()
    {
    if (!self()->getValueProfiler())
-      _profilers.add(new (_compilation->trHeapMemory()) TR_ValueProfiler(_compilation, self()));
+      _profilers.add(new (_compilation->trHeapMemory()) TR_ValueProfiler(_compilation, self(),
+         _compilation->getProfilingMode() == JProfiling ? HashTableProfiler : LinkedListProfiler ));
 
-   if (!self()->getBlockFrequencyProfiler())
+   if (!self()->getBlockFrequencyProfiler() && _compilation->getProfilingMode() != JProfiling)
       _profilers.add(new (_compilation->trHeapMemory()) TR_BlockFrequencyProfiler(_compilation, self()));
    }
 

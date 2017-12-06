@@ -280,8 +280,8 @@ class TR_BlockFrequencyProfiler : public TR_RecompilationProfiler
 class TR_ValueProfiler : public TR_RecompilationProfiler
    {
    public:
-   TR_ValueProfiler(TR::Compilation  * c, TR::Recompilation * r, bool initialCompilation = false)
-       : TR_RecompilationProfiler(c, r, initialCompilation), _defaultProfiler(LinkedListProfiler)
+   TR_ValueProfiler(TR::Compilation  * c, TR::Recompilation * r, TR_ValueInfoSource profiler = LinkedListProfiler)
+       : TR_RecompilationProfiler(c, r, initialCompilation), _defaultProfiler(profiler), _postLowering(false)
       {
       }
 
@@ -297,9 +297,19 @@ class TR_ValueProfiler : public TR_RecompilationProfiler
       TR_ValueInfoKind kind = LastValueInfo, TR_ValueInfoSource source = LastProfiler,
       bool commonNode = true, bool decrementRecompilationCounter = false);
 
+   void setPostLowering(bool post = true) { _postLowering = post; }
+
    private:
    void visitNode(TR::Node *, TR::TreeTop *, vcount_t);
    bool validConfiguration(TR::DataType dataType, TR_ValueInfoKind kind);
+
+   void addListOrArrayProfilingTrees(TR::Node *node, TR::TreeTop *treetop, TR_ByteCodeInfo &bci, size_t numExpandedValues = 0,
+      TR_ValueInfoKind kind = LastValueInfo, TR_ValueInfoSource source = LastProfiler,
+      bool commonNode = true, bool decrementRecompilationCounter = false);
+
+   void addHashTableProfilingTrees(TR::Node *node, TR::TreeTop *treetop, TR_ByteCodeInfo &bci,
+      TR_ValueInfoKind kind = LastValueInfo, TR_ValueInfoSource source = LastProfiler,
+      bool commonNode = true);
 
    // Cache profiled classes
    TR_OpaqueClassBlock * _bdClass;
@@ -307,6 +317,7 @@ class TR_ValueProfiler : public TR_RecompilationProfiler
 
    // Default instrumentation to use
    TR_ValueInfoSource    _defaultProfiler;
+   bool _postLowering;
    };
 
 /**

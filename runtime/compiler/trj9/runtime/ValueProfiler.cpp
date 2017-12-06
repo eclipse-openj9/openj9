@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 #include "runtime/Runtime.hpp"
 #include "runtime/asmprotos.h"
 #include "runtime/J9ValueProfiler.hpp"
+#include "AtomicSupport.hpp"
 
 /**
  * Construct a ByteInfo. Used to profile UTF16 strings.
@@ -188,6 +189,62 @@ TR_LinkedListProfilerInfo<TR_ByteInfo>::dumpInfo(TR::FILE *logFile)
    trfprintf(logFile, "   Num: %d Total Frequency: %d\n", count, getTotalFrequency());
    }
 
+/**
+ * Lock access to the map, blocking if necessary.
+ */
+void
+TR_AbstractHashTableProfilerInfo::lock()
+   {
+   while (!tryLock())
+      {
+      VM_AtomicSupport::nop();
+      }
+   }
+
+/**
+ * Try to lock access to the map.
+ *
+ * \param disableJITAccess This will trigger the short circuit test in jitted code.
+ */
+bool
+TR_AbstractHashTableProfilerInfo::tryLock(bool disableJITAccess)
+   {
+   // Set lock and, if desired, clear high bit in other index
+   MetaData locked = _metaData;
+   if (disableJITAccess && locked.otherIndex < 0)
+      locked.otherIndex = ~locked.otherIndex;
+   locked.lock = 1;
+
+   // Current state must be unlocked
+   MetaData unlocked = _metaData;
+   unlocked.lock = 0;
+
+   return unlocked.rawData == VM_AtomicSupport::lockCompareExchangeU32((uint32_t*) &_metaData, unlocked.rawData, locked.rawData);
+   }
+
+/**
+ * Unlock the map.
+ *
+ * \param enableJITAccess This will disable the short circuit test in jitted code.
+ */
+void
+TR_AbstractHashTableProfilerInfo::unlock(bool enableJITAccess)
+   {
+   MetaData locked = _metaData;
+   MetaData unlocked = _metaData;
+
+   do {
+      locked.rawData = _metaData.rawData;
+
+      // Clear lock and, if desired, set high bit in other index
+      unlocked.rawData = _metaData.rawData;
+      if (enableJITAccess && unlocked.otherIndex > -1)
+         unlocked.otherIndex = ~unlocked.otherIndex;
+      unlocked.lock = 0;
+      }
+   while (locked.rawData != VM_AtomicSupport::lockCompareExchangeU32((uint32_t*) &_metaData, locked.rawData, unlocked.rawData));
+   }
+
 #if defined(TR_HOST_POWER)
 JIT_HELPER(_jitProfileValue);
 JIT_HELPER(_jitProfileLongValue);
@@ -195,6 +252,8 @@ JIT_HELPER(_jitProfileBigDecimalValue);
 JIT_HELPER(_jitProfileStringValue);
 JIT_HELPER(_jitProfileAddress);
 JIT_HELPER(_jitProfileWarmCompilePICAddress);
+JIT_HELPER(_jProfile32BitValue);
+JIT_HELPER(_jProfile64BitValue);
 
 void PPCinitializeValueProfiler()
    {
@@ -205,5 +264,7 @@ void PPCinitializeValueProfiler()
    SET(TR_jitProfileLongValue,             (void *) _jitProfileLongValue,             TR_Helper);
    SET(TR_jitProfileBigDecimalValue,       (void *) _jitProfileBigDecimalValue,       TR_Helper);
    SET(TR_jitProfileStringValue,           (void *) _jitProfileStringValue,           TR_Helper);
+   SET(TR_jProfile32BitValue,              (void *) _jProfile32BitValue,              TR_Helper);
+   SET(TR_jProfile64BitValue,              (void *) _jProfile64BitValue,              TR_Helper);
    }
 #endif

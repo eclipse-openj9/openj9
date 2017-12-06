@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,8 +40,14 @@ extern TR::Monitor *vpMonitor;
 #define HIGH_ORDER_BIT (0x80000000)
 #endif
 
+/**
+ * These enums specify the maximum size for each implementation.
+ * For array and linked list, these are the number of entires they can hold.
+ * For the hash table, size is based on the number of bits in the index.
+ */
 #define ARRAY_MAX_NUM_VALUES (5)
 #define LINKEDLIST_MAX_NUM_VALUES (20)
+#define HASHTABLE_MAX_BITS  (8)
 
 class TR_ResolvedMethod;
 template <class T> class List;
@@ -71,6 +77,9 @@ typedef uintptr_t ProfileAddressType;
  * TR_AbstractProfilerInfo
  *    TR_LinkedListProfilerInfo<T>
  *    TR_ArrayProfilerInfo<T>
+ *    TR_AbstractHashTableProfilerInfo
+ *       TR_HashTableProfilerInfo<T>
+ *          TR_EmbeddedHashTable<T>
  *
  * TR_AbstractInfo provides a common API for more complex data types, such as addresses and
  * BigDecimals, consistent across the various sources of profiling information.
@@ -107,6 +116,20 @@ enum TR_ValueInfoSource
    LastProfiler,
    };
 
+/*
+ * Types of hash functions
+ *
+ * BitShiftHash: The hash function consists of a series of shifts on the original value, which are then ORed together
+ * BitMaskHash:  The nominated bits in a mask are extracted and then gathered into the low bits to form an index
+ * BitIndexHash: The hash function nominates 8 bit indices, these bits are then extracted to form a byte
+ */
+enum TR_HashFunctionType
+   {
+   BitShiftHash = 0x00,
+   BitMaskHash  = 0x01,
+   BitIndexHash = 0x02,
+   };
+
 /**
  * Profiling for a byte array.
  * Will perform a deep copy and compare.
@@ -136,16 +159,13 @@ struct TR_ByteInfo
  * Consists of two 32 bit integers, so it will be compressed into a single 64 bit
  * integer to reuse existing profilers.
  */
-struct TR_BigDecimalInfo
+union TR_BigDecimalInfo
    {
-   union
+   uint64_t value;
+   struct 
       {
-      uint64_t value;
-      struct 
-         {
-         int32_t flag;
-         int32_t scale;
-         };
+      int32_t flag;
+      int32_t scale;
       };
    };
 
@@ -187,6 +207,7 @@ class TR_AbstractProfilerInfo : public TR_Link0<TR_AbstractProfilerInfo>
    virtual uint32_t getTotalFrequency() = 0;
    virtual uint32_t getNumProfiledValues() = 0;
    virtual void     dumpInfo(TR::FILE *logFile) = 0;
+   virtual void     reset() = 0;
 
    /**
     * Basic methods for each type of value.
@@ -207,6 +228,776 @@ class TR_AbstractProfilerInfo : public TR_Link0<TR_AbstractProfilerInfo>
    protected:
    TR_ByteCodeInfo _byteCodeInfo;
    };
+
+/**
+ * Hash table abstract profiler
+ * 
+ * Provides common methods for generating the instrumentation
+ */
+class TR_AbstractHashTableProfilerInfo : public TR_AbstractProfilerInfo
+   {
+   public:
+   TR_AbstractHashTableProfilerInfo(TR_ByteCodeInfo &bci, size_t bits, TR_HashFunctionType hash, TR_ValueInfoKind kind) :
+       TR_AbstractProfilerInfo(bci)
+      {
+      _metaData.lock = 0;
+      _metaData.bits = bits;
+      _metaData.hash = hash;
+      _metaData.kind = kind;
+      }
+
+   /**
+    * Table properties
+    */
+   size_t getBits() { return _metaData.bits; }
+   size_t getSize() { return 1 << _metaData.bits; }
+   size_t getCapacity() { return 1 + _metaData.bits; }
+   size_t getOtherIndex() { return _metaData.otherIndex < 0 ? ~_metaData.otherIndex : _metaData.otherIndex; }
+   TR_HashFunctionType getHashType() { return static_cast<TR_HashFunctionType>(_metaData.hash); }
+   TR_ValueInfoKind   getKind()   { return static_cast<TR_ValueInfoKind>(_metaData.kind); }
+   TR_ValueInfoSource getSource() { return HashTableProfiler; }
+
+   /**
+    * Table layout
+    */
+   uintptr_t getBaseAddress() { return (uintptr_t) this; }
+   virtual size_t getLockOffset() = 0; 
+   virtual size_t getHashOffset() = 0;
+   virtual size_t getKeysOffset()  = 0;
+   virtual size_t getFreqOffset() = 0;
+   virtual TR::DataType getDataType() = 0;
+
+   protected:
+   /**
+    * There are three contexts from which these maps will be accessed:
+    * 1) The JITed code, which will increment freqs and call the runtime helper.
+    * 2) The runtime helper, which will add keys to the map or reset it.
+    * 3) A recompilation, which will read information, but should not modify it.
+    *
+    * To reduce overhead, there are two different forms of synchronization used in the map updates.
+    *
+    * First, JITed code will perform no synchronization for its freq increments, as this would incur
+    * a high overhead. However, it may decide to call the runtime helper to add a value to the
+    * map, with a quick test before hand to avoid the call overhead if possible. This test will
+    * check if another thread is updating the map or if the map is full, avoiding the call if so.
+    * This is implemented as a load of otherIndex and a test of its highest bit. If set,
+    * the map can be modified. Otherwise, the loaded value is used to increment freqs[otherIndex].
+    *
+    * Second, synchronization is needed between the runtime helper and accesses in a recompilation.
+    * The otherIndex cannot be used, as it cannot distinguish between a full or locked map.
+    * Instead an additional lock value is used.
+    *
+    * These synchronization functions will manage lock, with a flag to manipulate otherIndex.
+    * lock and otherIndex should not be modified otherwise.
+    */
+   void lock();
+   bool tryLock(bool disableJITAccess = false);
+   void unlock(bool enableJITAccess = false);
+
+   /**
+    * Metadata for the map
+    * Should be 32 bits, as it is used for atomic compare and swaps on the otherIndex byte.
+    */
+   union MetaData
+      {
+      struct
+         {
+         int16_t otherIndex;
+         uint8_t lock : 4;
+         uint8_t bits : 4;
+         uint8_t hash : 4;
+         uint8_t kind : 4;
+         };
+      uint32_t rawData;
+      };
+
+   MetaData _metaData;
+#if defined(TR_TARGET_X86)
+   static_assert(sizeof(MetaData) == sizeof(uint32_t),  "Synchronization on lock requires _metaData to be 32 bit");
+#endif
+   };
+
+/**
+ * Hash table implementation of value profiling
+ * 
+ * Instrumentation will generate a hash and check for a match in jitted code.
+ * Collisions are managed by the runtime helper.
+ */
+template <typename T>
+class TR_HashTableProfilerInfo : public TR_AbstractHashTableProfilerInfo
+   {
+   public:
+   TR_HashTableProfilerInfo(TR_ByteCodeInfo &bci, size_t bits, TR_HashFunctionType hash, TR_ValueInfoKind kind) :
+       TR_AbstractHashTableProfilerInfo(bci, bits, hash, kind)
+      {}
+
+   size_t getLockOffset() { return offsetof(TR_HashTableProfilerInfo<T>, _metaData.otherIndex); }
+   size_t getHashOffset() { return offsetof(TR_HashTableProfilerInfo<T>, _hashConfig); }
+   TR::DataType getDataType() { return sizeof(T) <= 4 ? TR::Int32 : TR::Int64; }
+
+   /**
+    * Common methods
+    */
+   uint32_t getTotalFrequency();
+   uint32_t getNumProfiledValues();
+   void     dumpInfo(TR::FILE *logFile);
+   uint32_t getTopValue(T&);
+   uint32_t getMaxValue(T&);
+   void     getList(TR::vector<TR_ProfiledValue<T>, TR::Region&>&);
+
+   /**
+    * Runtime helper, add a value to the table.
+    *
+    * This is a virtual method, which will impact performance at runtime, but
+    * its the only one made by the helper.
+    */
+   virtual void addKey(T value) = 0;
+
+   protected:
+   virtual uint32_t* getFrequencies() = 0;
+   virtual T* getKeys() = 0;
+
+   /**
+    * Dynamically updated hash configuration, modified by addKey()
+    */
+   union HashFunction
+      {
+      T mask;
+      uint8_t shifts[HASHTABLE_MAX_BITS];
+      uint8_t indices[HASHTABLE_MAX_BITS];
+      };
+
+   size_t  initialHashConfig(HashFunction &hash, T value);
+   void    updateHashConfig(HashFunction &hash, T mask);
+   size_t  applyHash(HashFunction &hash, T value);
+
+   HashFunction _hashConfig;
+#if defined(TR_TARGET_X86)
+   static_assert(sizeof(T) <= 8, "Not expected to support values larger than 8 bytes");
+#endif
+   };
+
+/**
+ * Hash map with embedded arrays for keys and frequencies, based
+ * on the desired table size.
+ */
+template <typename T, size_t bits>
+class TR_EmbeddedHashTable : public TR_HashTableProfilerInfo<T>
+   {
+   public:
+   TR_PERSISTENT_ALLOC(TR_Memory::PersistentProfileInfo)
+
+   TR_EmbeddedHashTable<T, bits>(TR_ByteCodeInfo &bci, TR_HashFunctionType hash, TR_ValueInfoKind kind) :
+       TR_HashTableProfilerInfo<T>(bci, bits, hash, kind)
+      {
+      reset();
+      }
+
+   void reset();
+   size_t getKeysOffset()  { return offsetof(this_t, _keys); }
+   size_t getFreqOffset() { return offsetof(this_t, _freqs); }
+
+   protected:
+   typedef TR_EmbeddedHashTable<T, bits> this_t;
+   typedef typename TR_HashTableProfilerInfo<T>::HashFunction HashFunction;
+
+   /**
+    * Runtime helpers
+    */
+   void addKey(T value);
+   T    recursivelySplit(T mask, T choices);
+   void rearrange(HashFunction &hash);
+
+   T        *getKeys() { return _keys; }
+   uint32_t *getFrequencies() { return _freqs; }
+
+   /**
+    * Embedded key and frequency arrays.
+    * Real size includes the 'other' counter, which will reuse a slot or extend the table.
+    */
+   const static size_t _realSize = bits < 2 ? (bits + 2) : (1 << bits);
+   T        _keys[_realSize];
+   uint32_t _freqs[_realSize];
+
+   /**
+    * Due to memory overhead, bits are not expected to exceed 3. The implementation
+    * supports up to HASHTABLE_MAX_BITS, constrained by the size of _metaData.otherIndex.
+    *
+    * Expected size should be:
+    * 8 (vtable) + 4 (BCI) + 4 (MetaData) + 8 (HashFunction) + sizeof(T) * readSize (keys) + 4 * realSize (freqs)
+    */
+#if defined(TR_TARGET_X86)
+   static_assert(bits <= HASHTABLE_MAX_BITS,  "Hash table exceeded max bits");
+#endif
+   };
+
+/**
+ * Get the total frequency.
+ */
+template <typename T> uint32_t
+TR_HashTableProfilerInfo<T>::getTotalFrequency()
+   {
+   uint32_t *freqs = getFrequencies();
+
+   lock();
+
+   uint32_t totalFrequency = freqs[getOtherIndex()];
+   for (size_t i = 0; i < getSize(); ++i)
+      {
+      if (freqs[i] > 0 && i != getOtherIndex())
+         totalFrequency += freqs[i];
+      }
+   
+   unlock();
+
+   return totalFrequency; 
+   }
+
+/**
+ * Get the number of profiled values with non-zero frequencies.
+ */
+template <typename T> uint32_t
+TR_HashTableProfilerInfo<T>::getNumProfiledValues()
+   {
+   uint32_t *freqs = getFrequencies();
+   uint32_t numProfiled = 0;
+
+   lock();
+
+   for (size_t i = 0; i < getSize(); ++i)
+      {
+      if (freqs[i] > 0 && i != getOtherIndex())
+         numProfiled++;
+      }
+
+   unlock();
+
+   return numProfiled;
+   }
+
+/**
+ * Get the value with the highest frequency.
+ *
+ * \param value Reference to return value. Will not be modified if table is empty.
+ * \return The frequency for the value.
+ */
+template <typename T> uint32_t
+TR_HashTableProfilerInfo<T>::getTopValue(T &value)
+   {
+   uint32_t topFrequency = 0;
+   uint32_t *freqs = getFrequencies();
+   T *values = getKeys();
+
+   lock();
+
+   for (size_t i = 0; i < getSize(); ++i)
+      {
+      if (freqs[i] > topFrequency && i != getOtherIndex())
+         {
+         topFrequency = freqs[i];
+         value = values[i];
+         }
+      }
+
+   unlock();
+
+   return topFrequency;
+   }
+
+/**
+ * Get the largest value.
+ *
+ * \param value Reference to return value. Will not be modified if table is empty.
+ * \return The frequency for the value.
+ */
+template <typename T> uint32_t
+TR_HashTableProfilerInfo<T>::getMaxValue(T &value)
+   {
+   uint32_t topFrequency = 0;
+   uint32_t *freqs = getFrequencies();
+   T *values = getKeys();
+
+   lock();
+
+   for (size_t i = 0; i < getSize(); ++i)
+      {
+      if (freqs[i] > 0 && i != getOtherIndex())
+         {
+         if (topFrequency == 0 || values[i] > value)
+            {
+            topFrequency = freqs[i];
+            value = values[i];
+            }
+         }
+      }
+
+   unlock();
+
+   return topFrequency;
+   }
+
+/**
+ * Stash the values and frequencies into a vector.
+ * 
+ * \param vec Vector to fill. Will be cleared.
+ * \return Reference to vector.
+ */
+template <typename T> void
+TR_HashTableProfilerInfo<T>::getList(TR::vector<TR_ProfiledValue<T>, TR::Region&> &vec)
+   {
+   uint32_t numProfiled = 0;
+   uint32_t *freqs = getFrequencies();
+   T *values = getKeys();
+
+   lock();
+
+   for (size_t i = 0; i < getSize(); ++i)
+      {
+      if (freqs[i] > 0 && i != getOtherIndex())
+         numProfiled++;
+      }
+
+   vec.clear();
+   vec.resize(numProfiled);
+   size_t j = 0;
+   for (size_t i = 0; i < getSize(); ++i)
+      {
+      if (freqs[i] > 0 && i != getOtherIndex())
+         {
+         vec[j]._value = values[i];
+         vec[j++]._frequency = freqs[i];
+         }
+      }
+
+   unlock();
+   }
+
+/**
+ * Trace properties and content.
+ */
+template <typename T> void
+TR_HashTableProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
+   {
+   uint32_t *freqs = getFrequencies();
+   T *values = getKeys();
+   uint32_t totalFreq = getTotalFrequency();
+
+   lock();
+
+   trfprintf(logFile, "\n   Hash Map Profiling Info %p\n", this);
+   trfprintf(logFile, "   Bits: %d OtherIndex: %d\n", getBits(), getOtherIndex());
+   trfprintf(logFile, "   Kind: %d BCI: %d:%d\n   Values:\n", getKind(),
+      TR_AbstractProfilerInfo::getByteCodeInfo().getCallerIndex(),
+      TR_AbstractProfilerInfo::getByteCodeInfo().getByteCodeIndex());
+
+   size_t count = 0;
+   size_t padding = 2 * sizeof(T) + 2;
+   for (size_t i = 0; i < getSize(); ++i)
+      trfprintf(logFile, "    %d: %d %0*x\n", count++, freqs[i], padding, values[i]);
+
+   trfprintf(logFile, "   Num: %d Total Frequency: %d\n", count, totalFreq);
+
+   trfprintf(logFile, "   HashFunction: ");
+   if (_metaData.hash == BitShiftHash || _metaData.hash == BitIndexHash)
+      {
+      trfprintf(logFile, "%s\n", _metaData.hash == BitShiftHash ? "Shift" : "Index");
+      for (uint8_t i = 0; i < getBits(); ++i)
+         trfprintf(logFile, "    %01d : %03d - %0*X\n", i, _hashConfig.shifts[i], padding, 1 << (_hashConfig.shifts[i] + (_metaData.hash == BitShiftHash ? i : 0)));
+      }
+   else
+      trfprintf(logFile, "Mask\n    %0*X\n", padding, _hashConfig.mask);
+
+   trfprintf(logFile, "\n");
+   unlock();
+   }
+
+/**
+ * Reset the map to initial values.
+ *
+ * This will zero all keys and frequencies.
+ * It will also reset otherIndex to the last entry and unlock the table.
+ */
+template <typename T, size_t bits> void
+TR_EmbeddedHashTable<T, bits>::reset()
+   {
+   this->_metaData.otherIndex = ~(((int16_t)_realSize) - 1);
+   this->_metaData.lock = 0;
+   memset(&(this->_hashConfig), 0, sizeof(HashFunction));
+   memset(&_keys, 0, sizeof(T) * _realSize);
+   memset(&_freqs, 0, sizeof(uint32_t) * _realSize);
+   }
+
+/**
+ * Add a new value to the hash map.
+ * Might need to move around existing values.
+ */
+template <typename T, size_t bits> void
+TR_EmbeddedHashTable<T, bits>::addKey(T value)
+   {
+   size_t otherIndex = this->getOtherIndex();
+
+   // Lock the table, disabling JIT access
+   if (!this->tryLock(true))
+      {
+      _freqs[otherIndex]++;
+      return;
+      }
+
+   TR_ASSERT_FATAL(this->_metaData.lock == 1, "HashTable not successfully locked");
+   TR_ASSERT_FATAL(this->_metaData.otherIndex > -1, "JIT access not disabled");
+
+   // Detect whether the value is already present, count populated slots and find the first empty one
+   size_t lastIndex = (1 << bits) - 1;
+   int32_t available = -1;
+   size_t populated = 0;
+   size_t i = 0;
+   for (; i <= lastIndex; ++i)
+      {
+      if (i == otherIndex)
+         continue;
+      if (_freqs[i] == 0)
+         {
+         available = available > 0  ? available : i;
+         continue;
+         } 
+
+      if (value == _keys[i])
+         break;
+      ++populated;
+      }
+
+   // If found, increment the value
+   if (i <= lastIndex)
+      _freqs[i]++;
+   else
+      {
+      // Temporary hash config
+      HashFunction hashConfig;
+
+      // Add the value, with a short cut if its the first
+      if (populated == 0)
+         {
+         size_t newIndex = this->initialHashConfig(hashConfig, value);
+         if (otherIndex == newIndex)
+            {
+            // Have to move otherIndex, pick either the last or second last
+            size_t newOther = lastIndex == newIndex ? lastIndex - 1 : lastIndex;
+            _freqs[newOther] = _freqs[otherIndex];
+            this->_metaData.otherIndex = newOther;
+            }
+
+         // Store the first value
+         _keys[newIndex] = value;
+         _freqs[newIndex] = 1; 
+         }
+      else
+         {
+         // Add the new value to an available slot
+         TR_ASSERT_FATAL(available <= lastIndex, "Could not find an empty slot");
+         _keys[available] = value;
+         _freqs[available] = 1;
+
+         // Calculate a new hash config and rearrange
+         T mask = recursivelySplit(0, 0);
+         this->updateHashConfig(hashConfig, mask);
+         rearrange(hashConfig);
+         }
+
+      // Commit new config and increment element count
+      this->_hashConfig = hashConfig;
+      populated++;
+      }
+
+   // Unlock the table, leaving JIT access disabled if at capacity
+   this->unlock(populated < this->getCapacity()); 
+
+   static bool dumpInfo = feGetEnv("TR_JProfilingValueDumpInfo") != NULL;
+   if (dumpInfo)
+      this->dumpInfo(TR::IO::Stdout);
+   }
+
+/**
+ * Calculate an initial hash function config. Returns the index for the first value.
+ * It is biased towards placing the first value in the first slot.
+ *
+ * \param hash Hash function to use.
+ * \param bits Number of bits to support.
+ * \param value Initial value to add to the table.
+ */
+template <typename T> size_t
+TR_HashTableProfilerInfo<T>::initialHashConfig(HashFunction &hash, T value)
+   {
+   // This is simple for a mask implementation: nominate no bits
+   if (getHashType() == BitMaskHash)
+      {
+      hash.mask = 0;
+      return 0;
+      }
+
+   // A bit index hash should try to nominate one bit that is zero for all
+   // A bit shift hash should try to nominate one bit that is zero for all and to the left of all
+   if (getHashType() == BitIndexHash && ~value != 0 ||
+       getHashType() == BitShiftHash && (~value >> 8) != 0)
+      {
+      size_t firstZero = 0;
+      if (getHashType() == BitShiftHash)
+         {
+         firstZero = 8;
+         value >>= 8;
+         }
+
+      while (value & 1)
+         {
+         value >>= 1;
+         firstZero++;
+         }
+
+      for (size_t i = 0; i < getBits(); ++i)
+         {
+         if (getHashType() == BitIndexHash)
+            hash.indices[i] = firstZero;
+         else
+            hash.shifts[i] = firstZero - i;
+         }
+      return 0;
+      }
+
+   // Otherwise, place in final slot
+   size_t firstOne = getHashType() == BitIndexHash ? 0 : 8;  
+   for (size_t i = 0; i < getBits(); ++i)
+      {
+      if (getHashType() == BitIndexHash)
+         hash.indices[i] = firstOne;
+      else
+         hash.shifts[i] = firstOne - i;
+      }
+   
+   return (1 << getBits()) - 1;
+   }
+
+/**
+ * Inspect the hash table keys and calculate a new hash function config without collisions.
+ *
+ * \param hash Hash function to use.
+ * \param bits Number of bits that to support.
+ * \param iter Hash map iterator, to inspect the keys.
+ */
+template <typename T> void
+TR_HashTableProfilerInfo<T>::updateHashConfig(HashFunction &hash, T mask)
+   {
+   // Done if this is a mask extract
+   if (getHashType() == BitMaskHash)
+      {
+      hash.mask = mask;
+      return;
+      }
+
+   // Translate this mask into a form the other configs can use
+   size_t bit = 0, index = 0;
+   for (; mask && bit < getBits(); ++bit)
+      {
+      // Shift mask until a set bit is found
+      while (!(mask & 1))      
+         {
+         ++index;
+         mask >>= 1;
+         }
+
+      if (getHashType() == BitIndexHash)
+         hash.indices[bit] = index;
+      else
+         hash.shifts[bit] = index - bit;
+
+      ++index;
+      mask >>= 1;
+      }
+
+   // Default the higher bits, still won't collide
+   for (; bit < getBits(); ++bit)
+      {
+      if (getHashType() == BitIndexHash)
+         hash.indices[bit] = 0;
+      else
+         hash.shifts[bit] = 0;
+      }
+   }
+
+/**
+ * Recursively split keys in a hash map into sets of size 1 or smaller, based on the identification
+ * of differing bits. Once split, the selected bits form a mask which can be used in BitMaskHash.
+ *
+ * \param iter Hash map iterator to use. Will ensure all of its keys can be distinguished.
+ * \param mask The mask of selected bits so far.
+ * \param choices The values of for the selected bits, in mask, for the current set.
+ */
+template <typename T, size_t bits> T
+TR_EmbeddedHashTable<T, bits>::recursivelySplit(T mask, T choices)
+   {
+   T key0, key1;
+
+   // Count the elements currently selected
+   size_t matched = 0;
+   for (size_t i = 0; i < this->getSize(); ++i)
+      {
+      if (_freqs[i] == 0 || i == this->getOtherIndex())
+         continue;
+      if ((_keys[i] & mask) == choices)
+         {
+         if (matched == 0)
+            key0 = _keys[i];
+         else if (matched == 1)
+            key1 = _keys[i];
+         matched++;
+         }
+      }
+
+   if (matched < 2)
+      return mask;
+
+   // Try to preserve the existing order by selecting a bit that is zero in key0, one in key1 and more
+   // significant than any bit in mask
+   T diff = 0;
+   while (diff < mask)
+      diff = diff << 1 | 1;
+   diff = ~diff & ~key0 & key1; 
+
+   // Couldn't find a suitable choice, grab any difference
+   if (!diff)
+      diff = key0 ^ key1;
+
+   // Grab the lowest bit and add it to the mask
+   diff &= ~(diff - 1);
+   mask |= diff;
+   if (matched == 2)
+      return mask;
+   else
+      return recursivelySplit(mask, choices) | recursivelySplit(mask, choices | diff);
+   }
+
+/**
+ * Calculate the hash for a value.
+ *
+ * \param hash Type of hash function to use.
+ * \param bits Number of bits to support.
+ * \param value Value to process.
+ */
+template <typename T> size_t
+TR_HashTableProfilerInfo<T>::applyHash(HashFunction &hash, T value)
+   {
+   size_t result = 0;
+   if (getHashType() == BitMaskHash)
+      { 
+      size_t i = 1;
+      T work = hash.mask;
+      while (work)
+         {
+         T bit = work & ~(work - 1);
+         if (value & bit)
+            result |= i;
+         work &= ~bit;
+         i = i << 1;
+         }
+      }
+   else if (getHashType() == BitIndexHash)
+      {
+      for (size_t bit = 0; bit < getBits(); ++bit)
+         result |= ((value >> (hash.indices[bit])) & 1) << bit;
+      }
+   else
+      {
+      for (size_t bit = 0; bit < getBits(); ++bit)
+         result |= ((value >> (hash.shifts[bit] + bit)) & 1) << bit;
+      }
+
+   return result;
+   }
+
+/**
+ * Rearrange a hash maps contents based on a HashFunction.
+ *
+ * The map's keys are copied onto the stack, then the current hash function and keys
+ * are manipulated to avoid any increments other than to freqs[otherIndex].
+ * Keys are rearranged on the stack and then written back to the map.
+ *
+ * \param hash Hash function to use for new indices.
+ */
+template <typename T, size_t bits> void
+TR_EmbeddedHashTable<T, bits>::rearrange(HashFunction &hash)
+   {
+   size_t lastIndex = (1 << bits) - 1;
+   T cacheKeys[1 << bits];
+
+   // Back up the keys
+   memcpy(cacheKeys, _keys, sizeof(T) * (1 << bits));
+
+   // Lock the table by setting keys that cannot be matched
+   memset(_keys, 0xFF, sizeof(T));
+   memset(_keys + 1, 0, sizeof(T) * lastIndex);
+
+   // Walk the table, swapping to match new mask behaviour
+   // Don't move otherIndex, just save its swap
+   bool swapWithOther = false;
+   uint8_t i = 0, newOtherIndex = 0;
+   while (i <= lastIndex)
+      {
+      if (_freqs[i] == 0 || i == this->getOtherIndex())
+         {
+         ++i;
+         continue;
+         }
+
+      size_t newIndex = this->applyHash(hash, cacheKeys[i]);
+      if (newIndex == this->getOtherIndex())
+         {
+         // A delayed swap with other will be necessary
+         swapWithOther = true;
+         newOtherIndex = i;
+         ++i;
+         }
+      else if (i != newIndex)
+         {
+         // Swap the two keys
+         T tmpKey = cacheKeys[i];
+         cacheKeys[i] = cacheKeys[newIndex];
+         cacheKeys[newIndex] = tmpKey;
+
+         // Swap the two frequencies
+         uint32_t tmpCount = _freqs[i];
+         _freqs[i] = _freqs[newIndex];
+         _freqs[newIndex] = tmpCount;
+
+         // This swap might have been with the key which would have swapped with otherIndex
+         // Update the delayed otherIndex to match the new location for the key
+         if (swapWithOther && newIndex == newOtherIndex)
+            newOtherIndex = i;
+         }
+      else
+         ++i;
+      }
+
+   // Perform the delayed other swap
+   if (swapWithOther)
+      {
+      size_t oldOtherIndex = this->getOtherIndex();
+
+      // Swap the two keys
+      T tmpKey = cacheKeys[oldOtherIndex];
+      cacheKeys[oldOtherIndex] = cacheKeys[newOtherIndex];
+      cacheKeys[newOtherIndex] = tmpKey;
+
+      // freqs[oldOtherIndex] can be accessed by other threads, so redirect it first
+      uint32_t realFreq = _freqs[newOtherIndex];
+      _freqs[newOtherIndex] = _freqs[oldOtherIndex];
+      this->_metaData.otherIndex = newOtherIndex; // Assume JITed code currently locked out
+
+      // Save the real freq
+      _freqs[oldOtherIndex] = realFreq;
+      }
+
+   // Frequencies are now all valid and only freqs[newOtherIndex] is being incremented
+   // Write keys back, safe to do in a non-atomic way
+   memcpy(_keys, cacheKeys, sizeof(T) * (1 << bits));
+   }
 
 /**
  * Linked list implementation of value profiling.
@@ -259,6 +1050,7 @@ class TR_LinkedListProfilerInfo : public TR_AbstractProfilerInfo
    uint32_t getTotalFrequency()   { return getTotalFrequency(NULL); }
    uint32_t getNumProfiledValues();
    void     dumpInfo(TR::FILE*);
+   void     reset();
 
    uint32_t getTopValue(T&);
    uint32_t getMaxValue(T&);
@@ -412,6 +1204,24 @@ TR_LinkedListProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
    }
 
 /**
+ * Clear the list.
+ */
+template <typename T> void
+TR_LinkedListProfilerInfo<T>::reset()
+   {
+   auto cursor = getFirst();
+   auto prior = cursor;
+   while (cursor)
+      {
+      cursor->_frequency = 0;
+      prior = cursor;
+      cursor = cursor->getNext();
+      }
+
+   prior->_totalFrequency = 0;
+   }
+
+/**
  * Get the total frequency.
  *
  * \param addrOfTotalFrequency Optional pointer to the address of the total frequency.
@@ -511,7 +1321,7 @@ class TR_ArrayProfilerInfo : public TR_AbstractProfilerInfo
        TR_AbstractProfilerInfo(bci),
        _kind(kind)
       {
-      memset(_frequencies, 0, sizeof(uint32_t) * ARRAY_MAX_NUM_VALUES);
+      reset();
       }
 
    /**
@@ -522,6 +1332,7 @@ class TR_ArrayProfilerInfo : public TR_AbstractProfilerInfo
    uint32_t getTotalFrequency()   { return _totalFrequency; }
    uint32_t getNumProfiledValues();
    void     dumpInfo(TR::FILE*);
+   void     reset();
 
    uint32_t getTopValue(T&);
    uint32_t getMaxValue(T&);
@@ -649,6 +1460,14 @@ TR_ArrayProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
       trfprintf(logFile, "    %d: %d %0*x", count++, _frequencies[i], padding, _values[i]);
 
    trfprintf(logFile, "   Num: %d Total Frequency: %d\n", count, getTotalFrequency());
+   }
+
+template <typename T> void
+TR_ArrayProfilerInfo<T>::reset()
+   {
+   OMR::CriticalSection lock(vpMonitor);
+   _totalFrequency = 0;
+   memset(_frequencies, 0, sizeof(uint32_t) * getSize());
    }
 
 /**

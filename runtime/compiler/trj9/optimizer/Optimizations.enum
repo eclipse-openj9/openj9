@@ -32,3 +32,4 @@
    OPTIMIZATION(osrGuardInsertion)
    OPTIMIZATION(osrGuardRemoval)
    OPTIMIZATION(jProfilingBlock)
+   OPTIMIZATION(jProfilingValue)

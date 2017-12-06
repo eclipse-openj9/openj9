@@ -60,6 +60,7 @@
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Structure.hpp"                // for TR_RegionStructure, etc
 #include "optimizer/TransformUtil.hpp"            // for TransformUtil
+#include "optimizer/JProfilingValue.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/ExternalProfiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
@@ -710,8 +711,63 @@ TR_ValueProfiler::addProfilingTrees(
       }
 
    if (source == LastProfiler)
+      {
       source = _defaultProfiler;
+      // Fallback on LinkedListProfiler if HashTableProfiler does not support the type
+      if (kind == StringInfo || kind == BigDecimalInfo)
+         source = LinkedListProfiler;
+      }
 
+   if (source == LinkedListProfiler || source == ArrayProfiler)
+      addListOrArrayProfilingTrees(node, cursorTree, bci, numExpandedValues, kind, source, commonNode, decrementRecompilationCounter);
+   else if (source == HashTableProfiler)
+      addHashTableProfilingTrees(node, cursorTree, bci, kind, source, commonNode);
+   }
+
+void
+TR_ValueProfiler::addHashTableProfilingTrees(
+      TR::Node *node,
+      TR::TreeTop *cursorTree,
+      TR_ByteCodeInfo &bci,
+      TR_ValueInfoKind kind,
+      TR_ValueInfoSource source,
+      bool commonNode)
+   {
+   if (comp()->getOption(TR_DisableValueProfiling) ||
+       !performTransformation(comp(), "%s VALUE PROFILER: Add JProfiling trees to track the value of node %p near tree %p, commonNode %d\n", OPT_DETAILS, node, cursorTree->getNode(), commonNode))
+      return;
+
+   TR_ValueProfileInfo *valueProfileInfo = _recompilation->findOrCreateProfileInfo()->findOrCreateValueProfileInfo(comp());
+   TR_AbstractProfilerInfo *valueInfo = valueProfileInfo->getOrCreateProfilerInfo(bci, comp(), kind, source);
+
+   if (_postLowering)
+      {
+      TR_JProfilingValue::addProfilingTrees(comp(), cursorTree, node, (TR_AbstractHashTableProfilerInfo *) valueInfo);
+      }
+   else
+      {
+      // Create a placeholder, which cannot be left in the jitted body
+      TR::SymbolReference *profiler = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_jProfile32BitValue, false, false, true);
+      TR::Node *call = TR::Node::createWithSymRef(node, TR::call, 3, profiler);
+      call->setAndIncChild(0, (commonNode ? node : node->duplicateTree()));
+      call->setAndIncChild(1, TR::Node::aconst(node, (uintptr_t) valueInfo));
+      call->setAndIncChild(2, TR::Node::iconst(node, 1));
+      TR::TreeTop *callTree = TR::TreeTop::create(comp(), cursorTree, TR::Node::create(TR::treetop, 1, call));
+      callTree->getNode()->setIsProfilingCode();
+      }
+   }
+
+void
+TR_ValueProfiler::addListOrArrayProfilingTrees(
+      TR::Node *node,
+      TR::TreeTop *cursorTree,
+      TR_ByteCodeInfo &bci,
+      size_t numExpandedValues,
+      TR_ValueInfoKind kind,
+      TR_ValueInfoSource source,
+      bool commonNode,
+      bool decrementRecompilationCounter)
+   {
    bool validBigDecimalFieldOffset = true;
    int32_t scaleOffset = 0, flagOffset = 0;
    if (kind == BigDecimalInfo)
@@ -1389,7 +1445,6 @@ TR_ValueProfileInfo::~TR_ValueProfileInfo()
 TR_AbstractInfo *
 TR_ValueProfileInfo::getValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp, TR_ValueInfoKind kind, TR_ValueInfoSource source, bool fuzz, TR::Region *optRegion)
    {
-   // This return value is one level too high, if it were templated on TR_GenericValueInfo<T>, casting wouldn't be necessary
    TR_AbstractProfilerInfo *info = getProfilerInfo(bcInfo, comp, kind, source, fuzz);
 
    if (!info)
@@ -1478,12 +1533,16 @@ TR_ValueProfileInfo::createAndInitializeProfilerInfo(
    switch (kind)
       {
       case ValueInfo:
-         if (source == LinkedListProfiler)
+         if (source == HashTableProfiler)
+            valueInfo = new (comp->trPersistentMemory()) TR_EmbeddedHashTable<uint32_t, 2>(bcInfo, BitShiftHash, kind);
+         else if (source == LinkedListProfiler)
             valueInfo = new (comp->trPersistentMemory()) TR_LinkedListProfilerInfo<uint32_t>(bcInfo, kind, initialValue, initialFreq);
          break;
 
       case AddressInfo:
-         if (source == LinkedListProfiler)
+         if (source == HashTableProfiler)
+            valueInfo = new (comp->trPersistentMemory()) TR_EmbeddedHashTable<ProfileAddressType, 2>(bcInfo, BitShiftHash, kind);
+         else if (source == LinkedListProfiler)
             valueInfo = new (comp->trPersistentMemory()) TR_LinkedListProfilerInfo<ProfileAddressType>(bcInfo, kind, initialValue, initialFreq);
          else if (source == ArrayProfiler)
             valueInfo = new (comp->trPersistentMemory()) TR_ArrayProfilerInfo<ProfileAddressType>(bcInfo, kind);
@@ -1491,7 +1550,9 @@ TR_ValueProfileInfo::createAndInitializeProfilerInfo(
 
       case LongValueInfo:
       case BigDecimalInfo:
-         if (source == LinkedListProfiler)
+         if (source == HashTableProfiler)
+            valueInfo = new (comp->trPersistentMemory()) TR_EmbeddedHashTable<uint64_t, 2>(bcInfo, BitShiftHash, kind);
+         else if (source == LinkedListProfiler)
             valueInfo = new (comp->trPersistentMemory()) TR_LinkedListProfilerInfo<uint64_t>(bcInfo, kind, initialValue, initialFreq);
          break;
 
