@@ -1862,7 +1862,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::runFEMacro_invokeILGenMacros:
          {
-         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         uintptrj_t methodHandle = std::get<0>(client->getRecvData<uintptrj_t>());
          TR::VMAccessCriticalSection invokeILGenMacros(fe);
          uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
