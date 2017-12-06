@@ -145,7 +145,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/OrderBlocks.cpp \
     omr/compiler/optimizer/PartialRedundancy.cpp \
     omr/compiler/optimizer/PreExistence.cpp \
-    omr/compiler/optimizer/ReachingBlocks.cpp \
     omr/compiler/optimizer/Reachability.cpp \
     omr/compiler/optimizer/ReachingDefinitions.cpp \
     omr/compiler/optimizer/RedundantAsyncCheckRemoval.cpp \
