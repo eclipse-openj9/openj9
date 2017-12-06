@@ -156,33 +156,37 @@ public StringBuffer() {
  * @param		capacity	the initial capacity
  */
 public StringBuffer(int capacity) {
-	if (String.enableCompression) {
-		/*[IF Sidecar19-SE]*/
-		if (capacity <= MAX_CAPACITY) {
-			value = new byte[capacity];
-		} else {
-			/*[MSG "K05df", "Unable to allocate an array of the specified capacity. The maximum supported capacity is Integer.MAX_VALUE / 2."]*/
-			throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K05df")); //$NON-NLS-1$
-		}
-		/*[ELSE]*/
-		if (capacity == Integer.MAX_VALUE) {
-			value = new char[(capacity / 2) + 1];
-		} else {
-			value = new char[(capacity + 1) / 2];
-		}
-		/*[ENDIF]*/
-	} else {
-		/*[IF Sidecar19-SE]*/
-		if (capacity <= MAX_CAPACITY) {
-			value = new byte[capacity * 2];
-		} else {
-			/*[MSG "K05df", "Unable to allocate an array of the specified capacity. The maximum supported capacity is Integer.MAX_VALUE / 2."]*/
-			throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K05df")); //$NON-NLS-1$
-		}
-		/*[ELSE]*/
-		value = new char[capacity];
-		/*[ENDIF]*/
+	/* capacity argument is used to determine the byte/char array size. If
+	 * capacity argument is Integer.MIN_VALUE (-2147483648), then capacity *= 2
+	 * will yield a non-negative number due to overflow. We will fail to throw
+	 * NegativeArraySizeException. The check below will assure that
+	 * NegativeArraySizeException is thrown if capacity argument is less than 0.
+	 */
+	if (capacity < 0) {
+		throw new NegativeArraySizeException();
 	}
+	int arraySize = capacity;
+	
+	/*[IF Sidecar19-SE]*/
+	if (capacity <= MAX_CAPACITY) {
+		if (!String.enableCompression) {
+			arraySize = capacity * 2;
+		}
+		value = new byte[arraySize];
+	} else {
+		/*[MSG "K05df", "Unable to allocate an array of the specified capacity. The maximum supported capacity is Integer.MAX_VALUE / 2."]*/
+		throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K05df")); //$NON-NLS-1$
+	}
+	/*[ELSE]*/
+	if (String.enableCompression) {
+		if (capacity == Integer.MAX_VALUE) {
+			arraySize = (capacity / 2) + 1;
+		} else {
+			arraySize = (capacity + 1) / 2;
+		}
+	}
+	value = new char[arraySize];
+	/*[ENDIF]*/
 	
 	/*[IF !Sidecar19-SE]*/
 	this.capacity = capacity;
