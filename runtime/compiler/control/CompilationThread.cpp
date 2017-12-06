@@ -9855,7 +9855,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
       // If we want to compile without VM access, now it's the time to release it
       // For the JaaS client we must not enter this path. The class unload monitor will be acquired and released at a later point instead.
-      if (!compiler->getOption(TR_DisableNoVMAccess) && !_methodBeingCompiled->isAotLoad() && compiler->getPersistentInfo()->getJaasMode() != CLIENT_MODE)
+      if (!compiler->getOption(TR_DisableNoVMAccess))
          {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
          bool doAcquireClassUnloadMonitor = true;
@@ -9868,7 +9868,8 @@ TR::CompilationInfoPerThreadBase::compile(
             TR::MonitorTable::get()->readAcquireClassUnloadMonitor(getCompThreadId());
             haveLockedClassUnloadMonitor = true;
             }
-         releaseVMAccess(vmThread);
+         if (compiler->getPersistentInfo()->getJaasMode() != CLIENT_MODE)
+            releaseVMAccess(vmThread);
          // GC can go ahead now.
          }
 
@@ -10003,6 +10004,7 @@ TR::CompilationInfoPerThreadBase::compile(
          }
       else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE) // Jaas Client Mode
          {
+
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             {
             TR_VerboseLog::writeLineLocked(
@@ -10012,24 +10014,7 @@ TR::CompilationInfoPerThreadBase::compile(
                compiler->getHotnessName()
                );
             }
-         // JAAS temporary HACK
-         // Reserve a code cache and send the server the virtual address where
-         // the compiled body will be loaded as well as the size of the space available
 
-         // Artificially acquire classUnloadMonitor because reserveCodeCache expects that
-         //
-         bool haveLockedClassUnloadMonitor = false;
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-         bool doAcquireClassUnloadMonitor = true;
-#else
-         bool doAcquireClassUnloadMonitor = compiler->getOption(TR_EnableHCR) || compiler->getOption(TR_FullSpeedDebug);
-#endif
-         if (doAcquireClassUnloadMonitor)
-            {
-            _compInfo.debugPrint(NULL, "\tcompilation thread acquiring class unload monitor\n");
-            TR::MonitorTable::get()->readAcquireClassUnloadMonitor(getCompThreadId());
-            haveLockedClassUnloadMonitor = true;
-            }
          compiler->cg()->reserveCodeCache(); // this will throw if we cannot reserve
 
          size_t availableSpace = compiler->getCurrentCodeCache()->getFreeContiguousSpace();
@@ -10081,10 +10066,6 @@ TR::CompilationInfoPerThreadBase::compile(
 
                metaData = reloRuntime()->prepareRelocateJITCodeAndData(vmThread, compiler->fej9vm(), compiler->getCurrentCodeCache(), (uint8_t *)&codeCacheStr[0], (J9JITDataCacheHeader *)&dataCacheStr[0], method, false, comp()->getOptions(), comp(), compilee);
 
-               // TODO: we might want to unlock this above near where it is locked, then lock it again just before allocating so
-               // that it isn't held for a potentially long period while waiting on the network
-               if (haveLockedClassUnloadMonitor)
-                  TR::MonitorTable::get()->readReleaseClassUnloadMonitor(getCompThreadId());
 
                TR::compInfoPT->relocateThunks();
 
@@ -10141,7 +10122,7 @@ TR::CompilationInfoPerThreadBase::compile(
                }                                     // and on the exception path we check haveLockedClassUnloadMonitor
             // Here the GC/HCR might happen
             }
-         if (!(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
+         if (compiler->getPersistentInfo()->getJaasMode() != CLIENT_MODE && !(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS))
             acquireVMAccessNoSuspend(vmThread);
 
          // The GC could have unloaded some classes when we released the classUnloadMonitor, or HCR could have kicked in
