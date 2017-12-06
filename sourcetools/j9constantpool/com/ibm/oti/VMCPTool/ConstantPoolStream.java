@@ -68,9 +68,9 @@ public class ConstantPoolStream {
 	private static final int J9CPTYPE_STATIC_METHOD = 10;
 	private static final int J9CPTYPE_SPECIAL_METHOD = 11;
 	private static final int J9CPTYPE_INTERFACE_METHOD = 12;
-	private static final int J9_CP_BITS_PER_DESCRIPTION = 4;
-	private static final int J9_CP_DESCRIPTION_MASK = 0xf;
-	private static final int J9_CP_DESCRIPTIONS_PER_U32 = 8;
+	private static final int J9_CP_BITS_PER_DESCRIPTION = 8;
+	private static final int J9_CP_DESCRIPTION_MASK = 0xff;
+	private static final int J9_CP_DESCRIPTIONS_PER_U32 = 4;
 
 	public static final int ITEM_SIZE = 8; // Bytes per Constant Pool Item
 
