@@ -78,7 +78,7 @@ wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/jdk
 
 3. Next, run the following command to build a Docker image, called **openj9**:
 ```
-docker build -t openj9 Dockerfile .
+docker build -t openj9 -f Dockerfile .
 ```
 
 4. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
