@@ -851,7 +851,7 @@ TR_DebugExt::Compilation2ProfileInfo()
       TR_PersistentMethodInfo *localMInfo = (TR_PersistentMethodInfo*) dxMallocAndRead(sizeof(TR_PersistentMethodInfo), (void*)minfo);
       if (localMInfo)
          {
-         profileInfo = localMInfo->getProfileInfo();
+         profileInfo = localMInfo->getBestProfileInfo();
          dxFree(localMInfo);
          }
       }
@@ -2986,7 +2986,7 @@ TR_DebugExt::dxPrintPersistentMethodInfo(TR_PersistentMethodInfo *minfo)
    _dbgPrintf("  ->_methodInfo = (TR_OpaqueMethodBlock*)0x%p\n", localMInfo->getMethodInfo());
    _dbgPrintf("  ->_flags = 0x%x\n", localMInfo->_flags.getValue());
    _dbgPrintf("  ->_nextHotness = (TR_Hotness)0x%p\n", localMInfo->getNextCompileLevel());
-   _dbgPrintf("  ->_profileInfo = (TR_PersistentProfileInfo*)0x%p\n", localMInfo->getProfileInfo());
+   _dbgPrintf("  ->_profileInfo = (TR_PersistentProfileInfo*)0x%p\n", localMInfo->getBestProfileInfo());
    _dbgPrintf("  ->_cpoSampleCounter = (int32_t)%d\n", localMInfo->cpoGetCounter());
 
    dxFree(localMInfo);

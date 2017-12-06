@@ -236,7 +236,7 @@ void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *
       ppcCodeSync((uint8_t *)patchAddr, 4);
 
       // Make sure that we do not profile any longer in there
-      TR_PersistentProfileInfo *profileInfo = methodInfo->getProfileInfo();
+      TR_PersistentProfileInfo *profileInfo = bodyInfo->getProfileInfo();
       if (profileInfo)
 	 {
 	 profileInfo->setProfilingFrequency(INT_MAX);

@@ -7438,7 +7438,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
          {
          bool isEDOCompilation = false;
-         TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler->getCurrentMethod());
+         TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
          if (profileInfo && profileInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
             {
             isEDOCompilation = true;

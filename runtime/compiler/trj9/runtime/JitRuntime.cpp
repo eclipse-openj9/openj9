@@ -1347,7 +1347,7 @@ void fixPersistentMethodInfo(void *table)
    bodyInfo->setOldStartCountDelta(TR::Options::_sampleThreshold);
    bodyInfo->setHotStartCountDelta(0);
    bodyInfo->setSampleIntervalCount(0);
-   methodInfo->setProfileInfo(NULL);
+   bodyInfo->setProfileInfo(NULL);
    bodyInfo->setIsAotedBody(true);
    }
 #endif

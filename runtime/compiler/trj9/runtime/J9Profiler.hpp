@@ -23,6 +23,7 @@
 #ifndef J9_PROFILER_INCL
 #define J9_PROFILER_INCL
 
+#include <map>
 #include <stddef.h>                           // for NULL
 #include <stdint.h>                           // for int32_t, uint32_t, etc
 #include "codegen/FrontEnd.hpp"               // for TR_FrontEnd
@@ -80,6 +81,30 @@ template <typename ListKind> class List;
  *
  * Also contains call site information, to assist with matching profiling information to
  * future compiles.
+ *
+ * These objects have compliated lifetimes due to how they are used throughout
+ * recompiles and the desired to reduce memory overhead. They contain a reference count,
+ * which should be incremented and decremented accordingly. Upon reaching zero, the
+ * object will be destroyed.
+ *
+ * One reference is held on the corresponding body info, ensuring its available as long
+ * as the body hasn't been reclaimed. This reference is implicitly added as the initial
+ * ref count of 1. Accesses through the body info will not manipulate the ref count by
+ * default, as they should only access it as long as the body has not be reclaimed,
+ * eg. during its compilation. This reduces overhead for common, safe accesses.
+ *
+ * Two references are held on the corresponding method info, tracking the best and
+ * most recent information. These can extend the lifetime of profile information beyond that
+ * of its body and must manage ref counts accordingly. Example accesses to these fields
+ * would be in control logic. See the methods `getBestProfileInfo` and `setBestProfileInfo`
+ * for more details on the proper behaviour here.
+ *
+ * During a compilation, TR_AccessedProfileInfo will manage any accesses to profile info
+ * and ensure it remains available until at least the end of the compilation. This
+ * is the approach almost all accesses to profiling information should use. It will
+ * increment and decrement ref counts as needed, so that optimizations aren't required
+ * to manage them. References to memory accesses through this object mustn't be placed
+ * in persistent memory, as they could result in an invalid access later on.
  */
 class TR_PersistentProfileInfo
    {
@@ -91,7 +116,8 @@ class TR_PersistentProfileInfo
         _catchBlockProfileInfo(NULL),
         _blockFrequencyInfo(NULL),
         _valueProfileInfo(NULL),
-        _callSiteInfo(NULL)
+        _callSiteInfo(NULL),
+        _refCount(1)
       {
       for (int i=0; i < PROFILING_INVOCATION_COUNT; i++)
          {
@@ -103,7 +129,15 @@ class TR_PersistentProfileInfo
    ~TR_PersistentProfileInfo();
 
    static TR_PersistentProfileInfo * get(TR::Compilation *comp);
-   static TR_PersistentProfileInfo * get(TR_ResolvedMethod * vmMethod);
+   static TR_PersistentProfileInfo * getCurrent(TR::Compilation *comp);
+   static TR_PersistentProfileInfo * get(TR::Compilation *comp, TR_ResolvedMethod * vmMethod);
+
+   /**
+    * Methods for managing reference count to this info from persistent data stuctures, such
+    * as MethodInfo and from jitted code.
+    */
+   static void decRefCount(TR_PersistentProfileInfo* info);
+   static void incRefCount(TR_PersistentProfileInfo* info);
 
    int32_t &getProfilingFrequency() { return _profilingFrequency[0]; }
    int32_t *getProfilingFrequencyArray() { return _profilingFrequency; }
@@ -151,6 +185,8 @@ class TR_PersistentProfileInfo
    int32_t _profilingCount[PROFILING_INVOCATION_COUNT];
 
    int32_t _maxCount;
+
+   intptr_t _refCount;
    };
 
 
@@ -373,8 +409,9 @@ class TR_ValueProfileInfo
    ~TR_ValueProfileInfo();
 
    static inline TR_ValueProfileInfo * get(TR_PersistentProfileInfo * profileInfo);
-   static inline TR_ValueProfileInfo * get(TR_ResolvedMethod * vmMethod);
+   static inline TR_ValueProfileInfo * get(TR::Compilation *comp, TR_ResolvedMethod * vmMethod);
    static inline TR_ValueProfileInfo * get(TR::Compilation *comp);
+   static inline TR_ValueProfileInfo * getCurrent(TR::Compilation *comp);
 
    TR_AbstractInfo *getValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp, TR_ValueInfoKind kind,
       TR_ValueInfoSource source, bool fuzz = false, TR::Region *optRegion = NULL);
@@ -395,20 +432,19 @@ class TR_ValueProfileInfo
 
 TR_ValueProfileInfo * TR_ValueProfileInfo::get(TR_PersistentProfileInfo * profileInfo)
    {
-   if (profileInfo && profileInfo->getValueProfileInfo())
-      return profileInfo->getValueProfileInfo();
-
-   return NULL;
+   return profileInfo ? profileInfo->getValueProfileInfo() : NULL;
    }
-
-TR_ValueProfileInfo * TR_ValueProfileInfo::get(TR_ResolvedMethod * vmMethod)
+TR_ValueProfileInfo * TR_ValueProfileInfo::get(TR::Compilation *comp, TR_ResolvedMethod * vmMethod)
    {
-   return get(TR_PersistentProfileInfo::get(vmMethod));
+   return get(TR_PersistentProfileInfo::get(comp, vmMethod));
    }
-
 TR_ValueProfileInfo * TR_ValueProfileInfo::get(TR::Compilation *comp)
    {
    return get(TR_PersistentProfileInfo::get(comp));
+   }
+TR_ValueProfileInfo * TR_ValueProfileInfo::getCurrent(TR::Compilation *comp)
+   {
+   return get(TR_PersistentProfileInfo::getCurrent(comp));
    }
 
 /**
@@ -571,8 +607,9 @@ class TR_BlockFrequencyInfo
    ~TR_BlockFrequencyInfo();
 
    static inline TR_BlockFrequencyInfo * get(TR_PersistentProfileInfo * profileInfo);
-   static inline TR_BlockFrequencyInfo * get(TR_ResolvedMethod * vmMethod);
+   static inline TR_BlockFrequencyInfo * get(TR::Compilation *comp, TR_ResolvedMethod * vmMethod);
    static inline TR_BlockFrequencyInfo * get(TR::Compilation *comp);
+   static inline TR_BlockFrequencyInfo * getCurrent(TR::Compilation *comp);
 
    void   *getFrequencyForBlock(int32_t blockNum) {return &_frequencies[blockNum];}
    int32_t getFrequencyInfo(TR::Block *block, TR::Compilation *comp);
@@ -607,20 +644,22 @@ class TR_BlockFrequencyInfo
    static int32_t  _enableJProfilingRecompilation;
    };
 
-
 TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::get(TR_PersistentProfileInfo * profileInfo)
    {
    return profileInfo ? profileInfo->getBlockFrequencyInfo() : 0;
    }
-TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::get(TR_ResolvedMethod * vmMethod)
+TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::get(TR::Compilation *comp, TR_ResolvedMethod * vmMethod)
    {
-   return get(TR_PersistentProfileInfo::get(vmMethod));
+   return get(TR_PersistentProfileInfo::get(comp, vmMethod));
    }
 TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::get(TR::Compilation *comp)
    {
    return get(TR_PersistentProfileInfo::get(comp));
    }
-
+TR_BlockFrequencyInfo * TR_BlockFrequencyInfo::getCurrent(TR::Compilation *comp)
+   {
+   return get(TR_PersistentProfileInfo::getCurrent(comp));
+   }
 
 class TR_CatchBlockProfileInfo
    {
@@ -631,8 +670,9 @@ class TR_CatchBlockProfileInfo
    TR_CatchBlockProfileInfo() : _catchCounter(0), _throwCounter(0) { }
 
    static inline TR_CatchBlockProfileInfo * get(TR_PersistentProfileInfo * profileInfo);
-   static inline TR_CatchBlockProfileInfo * get(TR_ResolvedMethod * vmMethod);
+   static inline TR_CatchBlockProfileInfo * get(TR::Compilation *comp, TR_ResolvedMethod * vmMethod);
    static inline TR_CatchBlockProfileInfo * get(TR::Compilation *comp);
+   static inline TR_CatchBlockProfileInfo * getCurrent(TR::Compilation *comp);
 
    static const uint32_t EDOThreshold;
 
@@ -647,21 +687,22 @@ class TR_CatchBlockProfileInfo
    uint32_t _throwCounter;
    };
 
-
 TR_CatchBlockProfileInfo * TR_CatchBlockProfileInfo::get(TR_PersistentProfileInfo * profileInfo)
    {
    return profileInfo ? profileInfo->getCatchBlockProfileInfo() : 0;
    }
-TR_CatchBlockProfileInfo * TR_CatchBlockProfileInfo::get(TR_ResolvedMethod * vmMethod)
+TR_CatchBlockProfileInfo * TR_CatchBlockProfileInfo::get(TR::Compilation *comp, TR_ResolvedMethod * vmMethod)
    {
-   return get(TR_PersistentProfileInfo::get(vmMethod));
+   return get(TR_PersistentProfileInfo::get(comp, vmMethod));
    }
 TR_CatchBlockProfileInfo * TR_CatchBlockProfileInfo::get(TR::Compilation *comp)
    {
    return get(TR_PersistentProfileInfo::get(comp));
    }
-
-
+TR_CatchBlockProfileInfo * TR_CatchBlockProfileInfo::getCurrent(TR::Compilation *comp)
+   {
+   return get(TR_PersistentProfileInfo::getCurrent(comp));
+   }
 
 class TR_CallSiteInfo
    {
@@ -676,8 +717,9 @@ class TR_CallSiteInfo
    ~TR_CallSiteInfo();
 
    static inline TR_CallSiteInfo * get(TR_PersistentProfileInfo * profileInfo);
-   static inline TR_CallSiteInfo * get(TR_ResolvedMethod * vmMethod);
+   static inline TR_CallSiteInfo * get(TR::Compilation *comp, TR_ResolvedMethod * vmMethod);
    static inline TR_CallSiteInfo * get(TR::Compilation *comp);
+   static inline TR_CallSiteInfo * getCurrent(TR::Compilation *comp);
 
    bool computeEffectiveCallerIndex(TR::Compilation *comp, TR::list<std::pair<TR_OpaqueMethodBlock *, TR_ByteCodeInfo> > &callStack, int32_t &effectiveCallerIndex);
    bool hasSameBytecodeInfo(TR_ByteCodeInfo & persistentByteCodeInfo, TR_ByteCodeInfo & currentByteCodeInfo, TR::Compilation *comp);
@@ -694,20 +736,49 @@ class TR_CallSiteInfo
    TR_AllocationKind const _allocKind;
    };
 
-
 TR_CallSiteInfo * TR_CallSiteInfo::get(TR_PersistentProfileInfo * profileInfo)
    {
    return profileInfo ? profileInfo->getCallSiteInfo() : 0;
    }
-
-TR_CallSiteInfo * TR_CallSiteInfo::get(TR_ResolvedMethod * vmMethod)
+TR_CallSiteInfo * TR_CallSiteInfo::get(TR::Compilation *comp, TR_ResolvedMethod * vmMethod)
    {
-   return get(TR_PersistentProfileInfo::get(vmMethod));
+   return get(TR_PersistentProfileInfo::get(comp, vmMethod));
    }
-
 TR_CallSiteInfo * TR_CallSiteInfo::get(TR::Compilation *comp)
    {
    return get(TR_PersistentProfileInfo::get(comp));
    }
+TR_CallSiteInfo * TR_CallSiteInfo::getCurrent(TR::Compilation *comp)
+   {
+   return get(TR_PersistentProfileInfo::getCurrent(comp));
+   }
+
+/**
+ * PersistentProfileInfo have strange lifetimes.
+ * They are always at least as long as the body info they are attributed to.
+ * They may be extended if they are referenced as the best profiling information.
+ * They may be extended if they are actively being used by a compilation.
+ *
+ * This class is used to track profiling information being used by a compilation.
+ */
+class TR_AccessedProfileInfo
+   {
+   public:
+   typedef TR::typed_allocator<std::pair<TR_ResolvedMethod*, TR_PersistentProfileInfo*>, TR::Region&> InfoMapAllocator;
+   typedef std::less<TR_ResolvedMethod*> InfoMapComparator;
+   typedef std::map<TR_ResolvedMethod*, TR_PersistentProfileInfo*, InfoMapComparator, InfoMapAllocator> InfoMap;
+
+   TR_AccessedProfileInfo(TR::Region &region);
+   ~TR_AccessedProfileInfo();
+
+   TR_PersistentProfileInfo *compare(TR_PersistentMethodInfo *methodInfo);
+   TR_PersistentProfileInfo *get(TR::Compilation *comp);
+   TR_PersistentProfileInfo *get(TR_ResolvedMethod *vmMethod);
+
+   protected:
+   InfoMap                   _usedInfo;
+   TR_PersistentProfileInfo *_current;
+   bool _searched;
+   };
 
 #endif

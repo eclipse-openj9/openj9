@@ -267,6 +267,16 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
       artifactManager->removeArtifact(metaData);
       dispatchUnloadHooks(jitConfig, vmThread, metaData);
 
+      // Remove the reference to profiling information in the body info.
+      // Depending on whether other persistent data structures hold references to it as well, the profiling
+      // information may or may not be cleaned up.
+      TR_PersistentJittedBodyInfo *bodyInfo = metaData->bodyInfo ? (TR_PersistentJittedBodyInfo *) metaData->bodyInfo : NULL;
+      if (bodyInfo && bodyInfo->getProfileInfo())
+         {
+         TR_PersistentProfileInfo::decRefCount(bodyInfo->getProfileInfo());
+         bodyInfo->setProfileInfo(NULL);
+         }
+
       vlogReclamation("Reclaiming", metaData, faintCacheBlock ? faintCacheBlock->_bytesToSaveAtStart : 0);
 
       if (faintCacheBlock)

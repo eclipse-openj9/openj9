@@ -22,6 +22,7 @@
 
 #include "runtime/J9Profiler.hpp"
 #include <string.h>                               // for memset, strncmp, etc
+#include "AtomicSupport.hpp"
 #include "codegen/CodeGenerator.hpp"              // for CodeGenerator
 #include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/RecognizedMethods.hpp"
@@ -925,6 +926,7 @@ TR_ValueProfileInfoManager::TR_ValueProfileInfoManager(TR::Compilation *comp)
    _cachedJ9Method = NULL;
    _isCountZero = false;
 
+   // Load persistent profiling information from a prior compilation
    TR_PersistentProfileInfo *profileInfo = TR_PersistentProfileInfo::get(comp);
 
    if (profileInfo &&
@@ -1617,7 +1619,7 @@ TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(TR_CallSiteInfo *callSiteInfo, int3
 TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(
    TR::Compilation *comp,
    TR_AllocationKind allocKind) :
-   _callSiteInfo(TR_CallSiteInfo::get(comp)),
+   _callSiteInfo(TR_CallSiteInfo::getCurrent(comp)),
    _numBlocks(comp->getFlowGraph()->getNextNodeNumber()),
    _blocks(
       _numBlocks ?
@@ -1652,7 +1654,8 @@ TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(
          {
          TR_ByteCodeInfo &byteCodeInfo = startTree->getNode()->getByteCodeInfo();
          int32_t callSite = byteCodeInfo.getCallerIndex();
-         TR_ASSERT(callSite < static_cast<int32_t>(TR_CallSiteInfo::get(comp)->getNumCallSites() & 0x7FFFFFFF), "Block call site number is unexpected");
+         TR_ASSERT(callSite < static_cast<int32_t>(TR_CallSiteInfo::getCurrent(comp)->getNumCallSites() & 0x7FFFFFFF), "Block call site number is unexpected");
+
          _blocks[node->getNumber()] = byteCodeInfo;
          }
       else
@@ -1776,73 +1779,68 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
                 && !resolvedMethod->isNative()
                 && !resolvedMethod->isJNINative())
                {
-               void *startPC = resolvedMethod->startAddressForInterpreterOfJittedMethod();
-               if (startPC)
+               TR_PersistentProfileInfo *info = TR_PersistentProfileInfo::get(comp, resolvedMethod);
+               // do we have JProfiling data for this frame
+               if (info
+                   && info->getBlockFrequencyInfo()
+                   && info->getBlockFrequencyInfo()->_counterDerivationInfo)
                   {
-                  TR_PersistentMethodInfo *methodInfo = comp->getRecompilationInfo()->getMethodInfoFromPC(startPC);
-                  // do we have JProfiling data for this frame
-                  if (methodInfo
-                      && methodInfo->getProfileInfo()
-                      && methodInfo->getProfileInfo()->getBlockFrequencyInfo()
-                      && methodInfo->getProfileInfo()->getBlockFrequencyInfo()->_counterDerivationInfo)
+                  traceMsg(comp, "  method has profiling\n");
+                  int32_t effectiveCallerIndex = -1;
+                  TR_BlockFrequencyInfo *bfi = info->getBlockFrequencyInfo();
+                  if (callStack.empty() || info->getCallSiteInfo()->computeEffectiveCallerIndex(comp, callStack, effectiveCallerIndex))
                      {
-                     traceMsg(comp, "  method has profiling\n");
-                     int32_t effectiveCallerIndex = -1;
-                     TR_BlockFrequencyInfo *bfi = methodInfo->getProfileInfo()->getBlockFrequencyInfo();
-                     if (callStack.empty() || methodInfo->getProfileInfo()->getCallSiteInfo()->computeEffectiveCallerIndex(comp, callStack, effectiveCallerIndex))
+                     TR_ByteCodeInfo callee(bci);
+                     callee.setCallerIndex(effectiveCallerIndex);
+                     if (trace && effectiveCallerIndex > -1)
+                        traceMsg(comp, "  checking bci %d:%d\n", callee.getCallerIndex(), callee.getByteCodeIndex());
+                     int32_t computedFrequency = bfi->getRawCount(resolvedMethodSymbol, callee, info->getCallSiteInfo(), normalizeForCallers ? bfi->getMaxRawCount() : bfi->getMaxRawCount(callee.getCallerIndex()), comp);
+                     if (normalizeForCallers)
                         {
-                        TR_ByteCodeInfo callee(bci);
-                        callee.setCallerIndex(effectiveCallerIndex);
-                        if (trace && effectiveCallerIndex > -1)
-                           traceMsg(comp, "  checking bci %d:%d\n", callee.getCallerIndex(), callee.getByteCodeIndex());
-                        int32_t computedFrequency = bfi->getRawCount(resolvedMethodSymbol, callee, methodInfo->getProfileInfo()->getCallSiteInfo(), normalizeForCallers ? bfi->getMaxRawCount() : bfi->getMaxRawCount(callee.getCallerIndex()), comp);
-                        if (normalizeForCallers)
-                           {
-                           callee.setCallerIndex(-1);
-                           callee.setByteCodeIndex(0);
-                           int32_t entry = bfi->getRawCount(resolvedMethodSymbol, callee, methodInfo->getProfileInfo()->getCallSiteInfo(), bfi->getMaxRawCount(), comp);
-                           if (entry == 0)
-                              {
-                              frequency = 0;
-                              break;
-                              }
-                           else if (entry > -1)
-                              {
-                              innerFrequencyScale *= entry;
-                              }
-
-                           if (computedFrequency > -1)
-                              {
-                              traceMsg(comp, " effective caller %s gave frequency %d\n", resolvedMethodSymbol->signature(comp->trMemory()), computedFrequency);
-                              frequency = (int32_t)((outterProfiledFrequency * computedFrequency) / innerFrequencyScale);
-                              break;
-                              }
-                           }
-                        else
-                           {
-                           frequency = computedFrequency;
-                           break;
-                           }
-                        }
-                     else if (normalizeForCallers)
-                        {
-                        TR_ByteCodeInfo entry;
-                        entry.setCallerIndex(-1);
-                        entry.setByteCodeIndex(0);
-                        int32_t entryCount = bfi->getRawCount(resolvedMethodSymbol, entry, methodInfo->getProfileInfo()->getCallSiteInfo(), bfi->getMaxRawCount(), comp);
-                        TR_ByteCodeInfo call = callStack.back().second;
-                        call.setCallerIndex(-1);
-                        int32_t rawCount = bfi->getRawCount(resolvedMethodSymbol, call, methodInfo->getProfileInfo()->getCallSiteInfo(), bfi->getMaxRawCount(), comp);
-                        if (rawCount == 0)
+                        callee.setCallerIndex(-1);
+                        callee.setByteCodeIndex(0);
+                        int32_t entry = bfi->getRawCount(resolvedMethodSymbol, callee, info->getCallSiteInfo(), bfi->getMaxRawCount(), comp);
+                        if (entry == 0)
                            {
                            frequency = 0;
                            break;
                            }
-                        else if (rawCount > -1)
+                        else if (entry > -1)
                            {
-                           innerFrequencyScale = (innerFrequencyScale * rawCount) / entryCount;
-                           continue;
+                           innerFrequencyScale *= entry;
                            }
+
+                        if (computedFrequency > -1)
+                           {
+                           traceMsg(comp, " effective caller %s gave frequency %d\n", resolvedMethodSymbol->signature(comp->trMemory()), computedFrequency);
+                           frequency = (int32_t)((outterProfiledFrequency * computedFrequency) / innerFrequencyScale);
+                           break;
+                           }
+                        }
+                     else
+                        {
+                        frequency = computedFrequency;
+                        break;
+                        }
+                     }
+                  else if (normalizeForCallers)
+                     {
+                     TR_ByteCodeInfo entry;
+                     entry.setCallerIndex(-1);
+                     entry.setByteCodeIndex(0);
+                     int32_t entryCount = bfi->getRawCount(resolvedMethodSymbol, entry, info->getCallSiteInfo(), bfi->getMaxRawCount(), comp);
+                     TR_ByteCodeInfo call = callStack.back().second;
+                     call.setCallerIndex(-1);
+                     int32_t rawCount = bfi->getRawCount(resolvedMethodSymbol, call, info->getCallSiteInfo(), bfi->getMaxRawCount(), comp);
+                     if (rawCount == 0)
+                        {
+                        frequency = 0;
+                        break;
+                        }
+                     else if (rawCount > -1)
+                        {
+                        innerFrequencyScale = (innerFrequencyScale * rawCount) / entryCount;
+                        continue;
                         }
                      }
                   }
@@ -1909,7 +1907,7 @@ TR_BlockFrequencyInfo::getRawCount(TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSi
    //
    int64_t frequency = 0;
    int32_t blocksMatched = 0;
-   bool currentCallSiteInfo = TR_CallSiteInfo::get(comp) == callSiteInfo;
+   bool currentCallSiteInfo = TR_CallSiteInfo::getCurrent(comp) == callSiteInfo;
 
    for (uint32_t i = 0; i < _numBlocks; ++i)
       {
@@ -2305,22 +2303,18 @@ TR_PersistentProfileInfo::prepareForProfiling(TR::Compilation *comp)
    if (!comp->haveCommittedCallSiteInfo())
       {
       TR_CallSiteInfo * const originalCallSiteInfo = getCallSiteInfo();
-      if (originalCallSiteInfo != NULL)
-         {
-         clearProfilingInfo();        
-         originalCallSiteInfo->~TR_CallSiteInfo();
-         jitPersistentFree(originalCallSiteInfo);
-         }
+      TR_ASSERT_FATAL(originalCallSiteInfo == NULL, "Reusing persistent profile info %p", this);
 
+      // Create a new persistent call site info
       _callSiteInfo = new (PERSISTENT_NEW) TR_CallSiteInfo(comp, persistentAlloc);
       comp->setCommittedCallSiteInfo(true);
       }
    else if (getCallSiteInfo()->getNumCallSites() != comp->getNumInlinedCallSites())
       {
       TR_CallSiteInfo * const originalCallSiteInfo = getCallSiteInfo();
-      TR_ASSERT(originalCallSiteInfo != NULL, "Existing CallSiteInfo should not be NULL.");
+      TR_ASSERT_FATAL(originalCallSiteInfo != NULL, "Existing CallSiteInfo should not be NULL for persistent profile info %p.", this);
 
-      // Destroy the prior call site and placement new the updated version
+      // Destroy the prior call site info and placement new the updated version
       originalCallSiteInfo->~TR_CallSiteInfo();
       TR_CallSiteInfo * const updatedCallSiteInfo = new ((void*)originalCallSiteInfo) TR_CallSiteInfo(comp, persistentAlloc);
       }
@@ -2351,18 +2345,83 @@ TR_PersistentProfileInfo::clearProfilingInfo()
       }
    } 
 
+/**
+ * Returns the best available profiling information for the current
+ * method. Should be used to inform optimizations.
+ *
+ * \param comp The current compilation.
+ */
 TR_PersistentProfileInfo *
 TR_PersistentProfileInfo::get(TR::Compilation *comp)
    {
-   TR_PersistentMethodInfo * methodInfo = TR_PersistentMethodInfo::get(comp);
-   return methodInfo ? methodInfo->getProfileInfo() : 0;
+   return comp->getProfileInfo()->get(comp);
    }
 
+/**
+ * Returns the best available profiling information for the requested method.
+ * Should be used to inform optimizations.
+ *
+ * \param comp The current compilation.
+ * \param feMethod Method to collect profiling information from.
+ */
 TR_PersistentProfileInfo *
-TR_PersistentProfileInfo::get(TR_ResolvedMethod * feMethod)
+TR_PersistentProfileInfo::get(TR::Compilation *comp, TR_ResolvedMethod * feMethod)
    {
-   TR_PersistentMethodInfo * methodInfo = TR_PersistentMethodInfo::get(feMethod);
-   return methodInfo ? methodInfo->getProfileInfo() : 0;
+   return comp->getProfileInfo()->get(feMethod);
+   }
+
+/**
+ * Returns the profiling information for the current compilation.
+ * Used for adding instrumentation.
+ *
+ * \param comp The current compilation.
+ */
+TR_PersistentProfileInfo *
+TR_PersistentProfileInfo::getCurrent(TR::Compilation *comp)
+   {
+   TR::Recompilation *recompilation = comp->getRecompilationInfo();
+   if (recompilation)
+      {
+      TR_PersistentJittedBodyInfo *body = recompilation->getJittedBodyInfo();
+      if (body)
+         return body->getProfileInfo();
+      }
+   return NULL;
+   }
+
+/**
+ * Increment reference count for the persistent profile info.
+ * Will perform an atomic increment.
+ *
+ * \param info Persistent profile info to manipulate and potentially free.
+ */
+void
+TR_PersistentProfileInfo::incRefCount(TR_PersistentProfileInfo *info)
+   {
+   VM_AtomicSupport::add((uintptr_t*) &(info->_refCount), 1);
+   TR_ASSERT_FATAL(info->_refCount, "Increment resulted in reference count of 0");
+   }
+
+/**
+ * Decrement reference count for persistent profile info.
+ * Will perform an atomic decrement.
+ * If the reference count reaches 0, the persistent profile
+ * info will be freed.
+ *
+ * \param info Persistent profile info to manipulate and potentially free.
+ */
+void
+TR_PersistentProfileInfo::decRefCount(TR_PersistentProfileInfo *info)
+   {
+   VM_AtomicSupport::subtract((uintptr_t*) &(info->_refCount), 1);
+   TR_ASSERT_FATAL(info->_refCount >= 0, "Decrement resulted in negative reference count");
+   if (info->_refCount == 0 && !TR::Options::getCmdLineOptions()->getOption(TR_DisableProfilingDataReclamation))
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseReclamation))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_RECLAMATION, "Reclaiming PersistentProfileInfo 0x%p.", info);
+      info->~TR_PersistentProfileInfo();
+      TR_Memory::jitPersistentFree(info);
+      }
    }
 
 /**
@@ -2447,4 +2506,99 @@ void TR_PersistentProfileInfo::dumpInfo(TR::FILE *logFile)
 
    if (_valueProfileInfo)
       _valueProfileInfo->dumpInfo(logFile);
+   }
+
+TR_AccessedProfileInfo::TR_AccessedProfileInfo(TR::Region &region) :
+    _usedInfo((InfoMapComparator()), (InfoMapAllocator(region))),
+    _current(NULL),
+    _searched(false)
+   {
+   }
+
+TR_AccessedProfileInfo::~TR_AccessedProfileInfo()
+   {
+   // Decrement reference counts for all accessed information
+   for (auto it = _usedInfo.begin(); it != _usedInfo.end(); ++it)
+      {
+      if (it->second)
+        TR_PersistentProfileInfo::decRefCount(it->second);
+      }
+   if (_current)
+      TR_PersistentProfileInfo::decRefCount(_current);
+   }
+
+/**
+ * Compare two sources of profiling information, returning the preferable
+ * one and updating the vmMethod->best if necessary.
+ */
+TR_PersistentProfileInfo *TR_AccessedProfileInfo::compare(TR_PersistentMethodInfo *methodInfo)
+   {
+   if (!methodInfo)
+      return NULL;
+
+   TR_PersistentProfileInfo *recent = methodInfo->getRecentProfileInfo();
+   TR_PersistentProfileInfo *best = methodInfo->getBestProfileInfo();
+
+   // Currently heuristic will replace if recent is non-null
+   // Future implementation should use the method entry block counter to determine
+   // whether enough data has been collected
+   bool replace = recent != NULL && recent != best;
+
+   if (replace)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "For MethodInfo 0x%p, updating best from 0x%p to 0x%p", methodInfo, best, recent);
+      methodInfo->setBestProfileInfo(recent);
+      if (best)
+         TR_PersistentProfileInfo::decRefCount(best);
+      return recent;
+      }
+   else
+      {
+      if (recent)
+         TR_PersistentProfileInfo::decRefCount(recent);
+      return best;
+      }
+   }
+
+/**
+ * For the current method.
+ * More frequenct request, so avoid the overhead of the map.
+ */
+TR_PersistentProfileInfo *TR_AccessedProfileInfo::get(TR::Compilation *comp)
+   {
+   if (_searched)
+      return _current;
+
+   TR::Recompilation *recompilation = comp->getRecompilationInfo();
+   if (recompilation)
+      {
+      TR_PersistentMethodInfo *methodInfo = recompilation->getMethodInfo();
+      _current = compare(methodInfo);
+
+      // Don't return profile info if its for the current compilation, as
+      // it may mislead and confuse
+      if (_current && _current == TR_PersistentProfileInfo::getCurrent(comp))
+         {
+         TR_PersistentProfileInfo::decRefCount(_current); 
+         _current = NULL;
+         }
+      }
+   _searched = true;
+   return _current;
+   }
+
+/**
+ * For another method.
+ */
+TR_PersistentProfileInfo *TR_AccessedProfileInfo::get(TR_ResolvedMethod *vmMethod)
+   {
+   auto lookup = _usedInfo.find(vmMethod);
+   if (lookup != _usedInfo.end())
+      return lookup->second;
+
+   // Lookup the info and stash it
+   TR_PersistentMethodInfo *methodInfo = TR_PersistentMethodInfo::get(vmMethod);
+   _usedInfo[vmMethod] = compare(methodInfo);
+   return _usedInfo[vmMethod];
    }

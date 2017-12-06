@@ -53,6 +53,7 @@ class TR_BranchProfileInfoManager;
 class TR_MethodBranchProfileInfo;
 class TR_ExternalValueProfileInfo;
 class TR_J9VM;
+class TR_AccessedProfileInfo;
 namespace TR { class IlGenRequest; }
 
 #define COMPILATION_AOT_HAS_INVOKEHANDLE -9
@@ -273,6 +274,9 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    J9VMThread *j9VMThread() { return _j9VMThread; }
 
+   // cache profile information
+   TR_AccessedProfileInfo *getProfileInfo() { return _profileInfo; }
+
    //
    bool supportsQuadOptimization();
 
@@ -339,6 +343,9 @@ private:
    TR::list<TR::SymbolReference*>             _monitorAutoSymRefsInCompiledMethod;
 
    TR_Array<TR_OpaqueClassBlock*>       _classForOSRRedefinition;
+
+   // cache profile information
+   TR_AccessedProfileInfo *_profileInfo;
    };
 
 }

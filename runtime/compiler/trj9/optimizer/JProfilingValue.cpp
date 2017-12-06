@@ -248,7 +248,7 @@ TR_JProfilingValue::addVFTProfiling(TR::Node *address, TR::TreeTop *tt, bool add
       fallback = TR::Node::aconst(address, 0);
       }
 
-   TR_ValueProfileInfo *valueProfileInfo = TR_PersistentProfileInfo::get(comp())->findOrCreateValueProfileInfo(comp());
+   TR_ValueProfileInfo *valueProfileInfo = TR_PersistentProfileInfo::getCurrent(comp())->findOrCreateValueProfileInfo(comp());
    TR_AbstractHashTableProfilerInfo *info = static_cast<TR_AbstractHashTableProfilerInfo*>(valueProfileInfo->getOrCreateProfilerInfo(address->getByteCodeInfo(), comp(), AddressInfo, HashTableProfiler));
    addProfilingTrees(comp(), tt, vftNode, info, check, fallback, true, trace());
    }

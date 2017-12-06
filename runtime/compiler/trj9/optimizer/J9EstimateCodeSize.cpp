@@ -603,8 +603,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
    if (_aggressivelyInlineThrows)
       {
-      TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(
-            calltarget->_calleeMethod);
+      TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(comp(), calltarget->_calleeMethod);
       if (catchInfo)
          _throwCount += catchInfo->getThrowCounter();
       }

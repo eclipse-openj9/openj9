@@ -97,8 +97,6 @@ class TR_PersistentMethodInfo
 
    void                             setMethodInfo(void *mi) { _methodInfo = (TR_OpaqueMethodBlock *)mi; }
 
-   void setProfileInfo(TR_PersistentProfileInfo * ppi) { _profileInfo = ppi; }
-   TR_PersistentProfileInfo *getProfileInfo() { return _profileInfo;}
 
    void setDisableProfiling() { _flags.set(ProfilingDisabled); }
    bool profilingDisabled()    { return _flags.testAny(ProfilingDisabled); }
@@ -257,6 +255,21 @@ class TR_PersistentMethodInfo
    TR_Hotness getNextCompileLevel() { return _nextHotness; }
    bool       getNextCompileProfiling() { return _flags.testAny(UseProfiling); }
 
+   /**
+    * Methods to update and access profile information. These will modify reference counts.
+    * Most accesses to profiling data should go TR_AccessesProfileInfo on TR::Compilation,
+    * as it will manage reference counts for a compilation.
+    *
+    * Several threads may attempt to manipulate reference counts on these at once, potentially
+    * resulting in a deallocation before it was intended. The low bit of the relevant pointer
+    * is reused to avoid these sitatuions. All accesses to _bestProfileInfo and _recentProfileInfo
+    * should consider this.
+    */
+   TR_PersistentProfileInfo *getBestProfileInfo() { return getForSharedInfo(&_bestProfileInfo); }
+   TR_PersistentProfileInfo *getRecentProfileInfo() { return getForSharedInfo(&_recentProfileInfo); }
+   void setBestProfileInfo(TR_PersistentProfileInfo * ppi) { setForSharedInfo(&_bestProfileInfo, ppi); }
+   void setRecentProfileInfo(TR_PersistentProfileInfo * ppi) { setForSharedInfo(&_recentProfileInfo, ppi); }
+
    // ### IMPORTANT ###
    // Method info must alway be the first field in this structure
    // Flags must always be second
@@ -272,7 +285,6 @@ class TR_PersistentMethodInfo
    //
    TR_Hotness                      _nextHotness;
 
-   TR_PersistentProfileInfo       *_profileInfo;
 
    TR_OptimizationPlan            *_optimizationPlan;
 
@@ -280,6 +292,12 @@ class TR_PersistentMethodInfo
    uint16_t                        _timeStamp;
    uint8_t                         _numberOfInvalidations; // how many times this method has been invalidated
    int16_t                         _numPrexAssumptions;
+
+   TR_PersistentProfileInfo       *_bestProfileInfo;
+   TR_PersistentProfileInfo       *_recentProfileInfo;
+
+   TR_PersistentProfileInfo * getForSharedInfo(TR_PersistentProfileInfo** ptr);
+   void setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_PersistentProfileInfo *newInfo);
    };
 
 
@@ -372,6 +390,16 @@ class TR_PersistentJittedBodyInfo
 
    bool       isLongRunningInterpreted() const { return _longRunningInterpreted; }
 
+   /**
+    * Access and modify the persistent profile info for this body.
+    *
+    * Uses of these methods should only occur while the body info is guaranteed
+    * to not be cleaned up, such as during its compilation. This is because
+    * these calls do not manage reference counts or synchronization, in
+    * an attempt to reduce the overhead on accesses that are known to be safe.
+    */
+   void setProfileInfo(TR_PersistentProfileInfo * ppi) { _profileInfo = ppi; }
+   TR_PersistentProfileInfo *getProfileInfo() { return _profileInfo; }
 
    enum
       {
@@ -438,6 +466,7 @@ class TR_PersistentJittedBodyInfo
    uint8_t                  _numScorchingIntervals; // How many times we reached scorching recompilation decision points
    bool                     _isInvalidated;
    bool                     _longRunningInterpreted; // This cannot be moved into _flags due to synchronization issues
+   TR_PersistentProfileInfo * _profileInfo;
    public:
    // Used for HWP-based recompilation
    bool                     _hwpInducedRecompilation;

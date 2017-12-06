@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
+#include "AtomicSupport.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -154,20 +155,25 @@ J9::Recompilation::getProfilingCount()
    return self()->findOrCreateProfileInfo()->getProfilingCount();
    }
 
-
+/**
+ * Find or create profiling information for the current jitted
+ * body. If creating information, this will update the recent
+ * profile information on the current method info.
+ */
 TR_PersistentProfileInfo *
 J9::Recompilation::findOrCreateProfileInfo()
    {
-   TR_PersistentProfileInfo * profileInfo = _methodInfo->getProfileInfo();
+   // Determine whether this bodyInfo already has profiling information
+   TR_PersistentProfileInfo *profileInfo = _bodyInfo->getProfileInfo();
    if (!profileInfo)
       {
-      profileInfo = new (PERSISTENT_NEW) TR_PersistentProfileInfo
-         (DEFAULT_PROFILING_FREQUENCY, DEFAULT_PROFILING_COUNT);
-      _methodInfo->setProfileInfo(profileInfo);
+      // Create a new profiling info
+      profileInfo = new (PERSISTENT_NEW) TR_PersistentProfileInfo(DEFAULT_PROFILING_FREQUENCY, DEFAULT_PROFILING_COUNT);
+      _methodInfo->setRecentProfileInfo(profileInfo);
+      _bodyInfo->setProfileInfo(profileInfo);
       }
    return profileInfo;
    }
-
 
 void
 J9::Recompilation::startOfCompilation()
@@ -517,7 +523,8 @@ TR_PersistentMethodInfo::TR_PersistentMethodInfo(TR::Compilation *comp) :
    _methodInfo((TR_OpaqueMethodBlock *)comp->getCurrentMethod()->resolvedMethodAddress()),
    _flags(0),
    _nextHotness(unknownHotness),
-   _profileInfo(0),
+   _recentProfileInfo(0),
+   _bestProfileInfo(0),
    _optimizationPlan(0),
    _numberOfInvalidations(0),
    _numPrexAssumptions(0)
@@ -553,7 +560,8 @@ TR_PersistentMethodInfo::TR_PersistentMethodInfo(TR_OpaqueMethodBlock *methodInf
    _methodInfo(methodInfo),
    _flags(0),
    _nextHotness(unknownHotness),
-   _profileInfo(0),
+   _recentProfileInfo(0),
+   _bestProfileInfo(0),
    _optimizationPlan(0),
    _numberOfInvalidations(0),
    _numPrexAssumptions(0)
@@ -594,7 +602,8 @@ TR_PersistentJittedBodyInfo::TR_PersistentJittedBodyInfo(
    _aggressiveRecompilationChances((uint8_t)TR::Options::_aggressiveRecompilationChances),
    _startPCAfterPreviousCompile(0),
    _longRunningInterpreted(false),
-   _numScorchingIntervals(0)
+   _numScorchingIntervals(0),
+   _profileInfo(0)
    ,_hwpInstructionStartCount(0),
     _hwpInstructionCount(0),
     _hwpInducedRecompilation(false),
@@ -612,4 +621,73 @@ TR_PersistentJittedBodyInfo::allocate(
       TR::Compilation *comp)
    {
    return new (PERSISTENT_NEW) TR_PersistentJittedBodyInfo(methodInfo, hotness, profile, comp);
+   }
+
+/**
+ * Increment reference count for shared profile info.
+ *
+ * This function and setForSharedInfo use the pointer's low bit as a lock,
+ * preventing other accesses to the persistent information through this pointer.
+ * This is necessary as the process of incrementing the reference count isn't
+ * atomic with the pointer updates.
+ *
+ * When locked, its able to safely dereference the pointer and increment
+ * its reference count. Without the lock, the information could have been
+ * deallocated in the interim.
+ *
+ * \param ptr Pointer shared across several threads.
+ */
+TR_PersistentProfileInfo *
+TR_PersistentMethodInfo::getForSharedInfo(TR_PersistentProfileInfo** ptr)
+   {
+   uintptr_t locked;
+   uintptr_t unlocked;
+
+   // Lock the ptr
+   do {
+      locked = ((uintptr_t) *ptr) | (1ULL);
+      unlocked = ((uintptr_t) *ptr) & ~(1ULL);
+      if (unlocked == 0)
+         return NULL;
+      }
+   while (unlocked != VM_AtomicSupport::lockCompareExchange((uintptr_t*)ptr, unlocked, locked));
+
+   // Inc ref count
+   TR_PersistentProfileInfo::incRefCount((TR_PersistentProfileInfo*)unlocked);
+
+   // Unlock the ptr
+   // Assumes no updates to the ptr whilst locked
+   VM_AtomicSupport::set((uintptr_t*)ptr, unlocked);
+
+   return *ptr;
+   }
+
+/**
+ * Update a shared pointer to reference a new persistent profile info.
+ *
+ * This should be used with getForSharedInfo, to ensure a shared persistent profile info is
+ * updated correctly.
+ *
+ * \param ptr Pointer shared across several threads.
+ * \param newInfo New persistent profile info to use. Should have a non-zero reference count in caller.
+ */
+void
+TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_PersistentProfileInfo *newInfo)
+   {
+   uintptr_t oldPtr;
+
+   // Before it can be accessed, inc ref count on new info
+   if (newInfo)
+      TR_PersistentProfileInfo::incRefCount(newInfo);
+   
+   // Update ptr as if it was unlocked
+   // Doesn't matter what the old info was, as long as it was unlocked
+   do {
+      oldPtr = ((uintptr_t) *ptr) & ~(1ULL);
+      }
+   while (oldPtr != VM_AtomicSupport::lockCompareExchange((uintptr_t*)ptr, oldPtr, (uintptr_t)newInfo));
+
+   // Now that it can no longer be accessed, dec ref count on old info
+   if (oldPtr)
+      TR_PersistentProfileInfo::decRefCount((TR_PersistentProfileInfo*)oldPtr);
    }

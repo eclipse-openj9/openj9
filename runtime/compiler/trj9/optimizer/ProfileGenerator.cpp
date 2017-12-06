@@ -170,7 +170,7 @@ int32_t TR_ProfileGenerator::perform()
    bool inColdBlock = false;
 
    TR::Recompilation *recompilationInfo   = comp()->getRecompilationInfo();
-   TR_PersistentProfileInfo *profileInfo = recompilationInfo->getMethodInfo()->getProfileInfo();
+   TR_PersistentProfileInfo *profileInfo = TR_PersistentProfileInfo::getCurrent(comp());
    if (profileInfo &&
        profileInfo->getProfilingFrequency() == DEFAULT_PROFILING_FREQUENCY &&
        profileInfo->getMaxCount()           == DEFAULT_PROFILING_COUNT)
@@ -515,7 +515,7 @@ void TR_ProfileGenerator::createProfiledMethod()
    TR::Block   *processedBlock = NULL;
 
    TR::Recompilation *recompilationInfo   = comp()->getRecompilationInfo();
-   TR_PersistentProfileInfo *profileInfo = recompilationInfo->getMethodInfo()->getProfileInfo();
+   TR_PersistentProfileInfo *profileInfo = TR_PersistentProfileInfo::getCurrent(comp());
 
    TR::SymbolReference *recompilationCounterSymRef;
    recompilationCounterSymRef = recompilationInfo->getCounterSymRef();
