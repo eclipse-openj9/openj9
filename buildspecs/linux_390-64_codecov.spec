@@ -103,7 +103,6 @@
 		<feature id="combogc"/>
 		<feature id="core"/>
 		<feature id="dbgext"/>
-		<feature id="harmony"/>
 		<feature id="se"/>
 		<feature id="se7"/>
 		<feature id="se70_27"/>
