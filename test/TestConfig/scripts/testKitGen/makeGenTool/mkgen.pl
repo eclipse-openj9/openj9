@@ -277,8 +277,9 @@ sub genMK {
 
 			$invalidSpecs =~ s/^\s+|\s+$//g;
 
+			my $platformRequirements = $test->{'platformRequirements'};
 			my @allInvalidSpecs = getAllInvalidSpecs( $invalidSpecs,
-				$test->{'platformRequirements'}, $graphSpecs );
+				$platformRequirements, $graphSpecs );
 
 			my $capabilityReqs = $test->{'capabilities'};
 			my @capabilityReqs_Arr = ();
@@ -352,13 +353,17 @@ sub genMK {
 			if (defined($capabilityReqs)) {
 				foreach my $key (keys %capabilityReqs_Hash) {
 					print $fhOut "else\n";
-					print $fhOut "$indent\$(TEST_SKIP_STATUS) | tee -a TestTargetResult\n";
+					print $fhOut "$indent\@echo \"Skipped due to capabilities ($capabilityReqs) => \$(TEST_SKIP_STATUS)\" | tee -a TestTargetResult\n";
 					print $fhOut "endif\n";
 				}
 			}
 			if ($condition_platform) {
 				print $fhOut "else\n";
-				print $fhOut "$indent\$(TEST_SKIP_STATUS) | tee -a TestTargetResult\n";
+				if (defined($platformRequirements)) {
+					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) and/or platform requirements ($platformRequirements) => \$(TEST_SKIP_STATUS)\"\n";
+				} else{
+					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) => \$(TEST_SKIP_STATUS)\"\n";
+				}
 				print $fhOut "endif\n";
 			}
 			print $fhOut "\n";
