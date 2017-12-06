@@ -41,6 +41,7 @@
 #define PROFILING_INVOCATION_COUNT (2)
 
 class TR_ValueProfiler;
+class TR_BlockFrequencyProfiler;
 class TR_AbstractInfo;
 class TR_BitVector;
 class TR_BlockFrequencyInfo;
@@ -204,7 +205,8 @@ class TR_RecompilationProfiler : public TR_Link<TR_RecompilationProfiler>
    bool getInitialCompilation()        { return _flags.testAny(initialCompilation); }
    void setInitialiCompilation(bool b) { _flags.set(initialCompilation, b); }
 
-   virtual TR_ValueProfiler * asValueProfiler() {return NULL;}
+   virtual TR_ValueProfiler * asValueProfiler() { return NULL; }
+   virtual TR_BlockFrequencyProfiler * asBlockFrequencyProfiler() { return NULL; }
 
    protected:
 
@@ -277,6 +279,7 @@ class TR_BlockFrequencyProfiler : public TR_RecompilationProfiler
 
    TR_BlockFrequencyProfiler(TR::Compilation  * c, TR::Recompilation * r);
 
+   virtual TR_BlockFrequencyProfiler *asBlockFrequencyProfiler() { return this; }
    virtual void modifyTrees();
    };
 
@@ -303,7 +306,7 @@ class TR_ValueProfiler : public TR_RecompilationProfiler
       _valueProfileInfo = valueProfileInfo;
       }
 
-   virtual TR_ValueProfiler * asValueProfiler() {return this;}
+   virtual TR_ValueProfiler * asValueProfiler() { return this; }
    virtual void modifyTrees();
    void visitNode(TR::Node *, TR::TreeTop *, vcount_t);
    void addProfilingTrees(TR::Node *, TR::TreeTop *, TR_AbstractInfo *valueInfo = NULL, bool commonNode = false, int32_t numExpandedValues = 0, bool decrmentRecompilationCounter = false, bool doBigDecimalProfiling = false, bool doStringProfiling = false);

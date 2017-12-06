@@ -61,7 +61,9 @@ public:
    void setJittedBodyInfo(TR_PersistentJittedBodyInfo *bodyInfo) { _bodyInfo = bodyInfo; }
 
    TR_ValueProfiler * getValueProfiler();
+   TR_BlockFrequencyProfiler * getBlockFrequencyProfiler();
    TR_RecompilationProfiler * getFirstProfiler() { return _profilers.getFirst(); }
+   void removeProfiler(TR_RecompilationProfiler *rp);
 
    bool isProfilingCompilation() { return _bodyInfo->getIsProfilingBody(); }
 

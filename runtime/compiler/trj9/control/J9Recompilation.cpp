@@ -377,8 +377,11 @@ J9::Recompilation::switchAwayFromProfiling()
 void
 J9::Recompilation::createProfilers()
    {
-   _profilers.add(new (_compilation->trHeapMemory()) TR_BlockFrequencyProfiler(_compilation, self()));
-   _profilers.add(new (_compilation->trHeapMemory()) TR_ValueProfiler(_compilation, self()));
+   if (!self()->getValueProfiler())
+      _profilers.add(new (_compilation->trHeapMemory()) TR_ValueProfiler(_compilation, self()));
+
+   if (!self()->getBlockFrequencyProfiler())
+      _profilers.add(new (_compilation->trHeapMemory()) TR_BlockFrequencyProfiler(_compilation, self()));
    }
 
 
@@ -425,7 +428,12 @@ J9::Recompilation::getExistingMethodInfo(TR_ResolvedMethod *method)
    return 0;
    }
 
-
+/**
+ * This method can extract a value profiler from the current list of
+ * recompilation profilers.
+ * 
+ * \return The first TR_ValueProfiler in the current list of profilers, NULL if there are none.
+ */
 TR_ValueProfiler *
 J9::Recompilation::getValueProfiler()
    {
@@ -436,9 +444,39 @@ J9::Recompilation::getValueProfiler()
          return vp;
       }
 
-   return 0;
+   return NULL;
    }
 
+/**
+ * This method can extract a block profiler from the current list of
+ * recompilation profilers.
+ *
+ * \return The first TR_BlockFrequencyProfiler in the current list of profilers, NULL if there are none.
+ */
+TR_BlockFrequencyProfiler *
+J9::Recompilation::getBlockFrequencyProfiler()
+   {
+   for (TR_RecompilationProfiler * rp = getFirstProfiler(); rp; rp = rp->getNext())
+      {
+      TR_BlockFrequencyProfiler *vp = rp->asBlockFrequencyProfiler();
+      if (vp)
+         return vp;
+      }
+
+   return NULL;
+   }
+
+/**
+ * This method can remove a specified recompilation profiler from the
+ * current list. Useful when modifying the profiling strategy.
+ *
+ * \param rp The recompilation profiler to remove.
+ */
+void
+J9::Recompilation::removeProfiler(TR_RecompilationProfiler *rp)
+   {
+   _profilers.remove(rp);
+   }
 
 TR_Hotness
 J9::Recompilation::getNextCompileLevel(void *oldStartPC)

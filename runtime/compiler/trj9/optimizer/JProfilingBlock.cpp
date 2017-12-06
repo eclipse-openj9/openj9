@@ -784,6 +784,11 @@ TR_BlockFrequencyInfo *TR_JProfilingBlock::initRecompDataStructures(bool addValu
       profileInfo->setCallSiteInfo(updatedCallSiteInfo);
       // FIXME: originalCallSiteInfo and its _blocks array allocation appear to leak.
       }
+
+   TR_BlockFrequencyProfiler *bfp = comp()->getRecompilationInfo()->getBlockFrequencyProfiler();
+   if (bfp)
+      comp()->getRecompilationInfo()->removeProfiler(bfp);
+
    TR_BlockFrequencyInfo *blockFrequencyInfo = new (PERSISTENT_NEW) TR_BlockFrequencyInfo(comp(), persistentAlloc);
    profileInfo->setBlockFrequencyInfo(blockFrequencyInfo);
    return blockFrequencyInfo;
