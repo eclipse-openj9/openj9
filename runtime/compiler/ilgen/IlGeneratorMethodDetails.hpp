@@ -184,7 +184,7 @@ public:
    NewInstanceThunkDetails(const NewInstanceThunkDetails & other) :
       TR::IlGeneratorMethodDetails(other)
       {
-      _class = other.getClass();
+      _class = other._class;
       }
 
    virtual const char * name()         const { return "NewInstanceThunk"; }

@@ -51,6 +51,12 @@ TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_Opaque
    TR_ResolvedJ9Method *result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JAASServerMethod(aMethod, this, trMemory, owningMethod);
    if (signature)
       result->setSignature(signature, signatureLength, trMemory);
+   if (classForNewInstance)
+      {
+      // TODO: also set on mirror?
+      result->setClassForNewInstance((J9Class*)classForNewInstance);
+      TR_ASSERT(result->isNewInstanceImplThunk(), "createResolvedMethodWithSignature: if classForNewInstance is given this must be a thunk");
+      }
    return result;
    }
 

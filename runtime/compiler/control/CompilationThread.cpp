@@ -1477,6 +1477,15 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(TR::CompilationInfo::setInvocationCount(method, count));
          }
          break;
+      case J9ServerMessageType::CompInfo_setInvocationCountAtomic:
+         {
+         auto recv = client->getRecvData<J9Method *, uint32_t, uint32_t>();
+         J9Method *method = std::get<0>(recv);
+         uint32_t oldCount = std::get<1>(recv);
+         uint32_t newCount = std::get<2>(recv);
+         client->write(TR::CompilationInfo::setInvocationCount(method, oldCount, newCount));
+         }
+         break;
       case J9ServerMessageType::CompInfo_isJNINative:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
@@ -10994,13 +11003,21 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
    if (details.isNewInstanceThunk())
       {
-      TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
-      J9::NewInstanceThunkDetails &mhDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
-      J9Class *clazz = mhDetails.getClass();
-      if (startPC)
-         jitNewInstanceMethodTranslated     (vmThread, clazz, startPC);
+      if (comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+         {
+         remoteCompilationEnd(details, jitConfig, fe, entry, comp);
+         }
       else
-         jitNewInstanceMethodTranslateFailed(vmThread, clazz);
+         {
+         J9::NewInstanceThunkDetails &mhDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
+         J9Class *clazz = mhDetails.getClass();
+
+         TR_VerboseLog::writeLineLocked( TR_Vlog_JAAS, "newInstanceTHunk clazz=%p startPc=%p", clazz, startPC);
+         if (startPC)
+            jitNewInstanceMethodTranslated     (vmThread, clazz, startPC);
+         else
+            jitNewInstanceMethodTranslateFailed(vmThread, clazz);
+         }
 
       if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
            (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)) &&
@@ -11061,7 +11078,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
          else
             {
-            //TODO: Verify this gets executed on the client
             J9::MethodHandleThunkDetails &mhDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
             uintptrj_t thunks = trvm->getReferenceField(*mhDetails.getHandleRef(), "thunks", "Ljava/lang/invoke/ThunkTuple;");
             int64_t jitEntryPoint = (int64_t)(intptrj_t)startPC + TR_LinkageInfo::get(startPC)->getJitEntryOffset();

@@ -506,13 +506,16 @@ public:
       return (intptrj_t)method->extra;
       }
    static int32_t getJ9MethodVMExtra(J9Method *method) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
       return (int32_t)((intptrj_t)method->extra);
       }
    static uint32_t getJ9MethodJITExtra(J9Method *method) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
       TR_ASSERT((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED, "MethodExtra Already Jitted!");
       return (uint32_t)((uintptrj_t)method->extra >> 32);
       }
    static void * getJ9MethodStartPC(J9Method *method) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
       TR_ASSERT(!((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED), "Method NOT Jitted!");
       return (void *)method->extra;
       }
@@ -528,13 +531,16 @@ public:
          }
       }
    static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t oldValue, intptrj_t newValue) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
       return oldValue == VM_AtomicSupport::lockCompareExchange((UDATA*)&method->extra, oldValue, newValue);
       }
    static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t newValue) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
       intptrj_t oldValue = (intptrj_t)method->extra;
       return setJ9MethodExtraAtomic(method, oldValue, newValue);
       }
    static bool setJ9MethodVMExtra(J9Method *method, int32_t value) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
       intptrj_t oldValue = (intptrj_t)method->extra;
       //intptrj_t newValue = oldValue & (intptrj_t)~J9_INVOCATION_COUNT_MASK;
       //newValue |= (intptrj_t)value;
@@ -554,6 +560,11 @@ public:
       return setJ9MethodVMExtra(method, newCount);
       }
    static bool setInvocationCount(J9Method *method, int32_t oldCount, int32_t newCount){
+      if (auto stream = getStream())
+         {
+         stream->write(JAAS::J9ServerMessageType::CompInfo_setInvocationCountAtomic, method, oldCount, newCount);
+         return std::get<0>(stream->read<bool>());
+         }
       newCount = (newCount << 1) | 1;
       oldCount = (oldCount << 1) | 1;
       if (newCount < 0)
@@ -571,6 +582,7 @@ public:
       return success;
       }
    static void setInitialInvocationCountUnsynchronized(J9Method *method, int32_t value) {
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
       value = (value << 1) | 1;
       if (value < 0)
           value = INT_MAX;
