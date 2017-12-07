@@ -16,6 +16,12 @@ namespace JAAS
       virtual const char* what() const throw() { return "stream failed, closed or disconnected"; }
       };
 
+   class StreamCancel: public virtual std::exception
+      {
+   public:
+      virtual const char* what() const throw() { return "compilation canceled by client"; }
+      };
+
    class StreamTypeMismatch: public virtual StreamFailure
       {
    public:

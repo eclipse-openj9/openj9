@@ -35,7 +35,16 @@ public:
    template <typename ...T>
    void write(T... args)
       {
+      _clientMsg.set_status(true);
       setArgs<T...>(_clientMsg.mutable_data(), args...);
+      if (!_stream->Write(_clientMsg))
+         throw StreamFailure();
+      }
+
+   void writeError()
+      {
+      _clientMsg.set_status(false);
+      _clientMsg.mutable_data()->clear_data();
       if (!_stream->Write(_clientMsg))
          throw StreamFailure();
       }

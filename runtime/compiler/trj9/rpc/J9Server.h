@@ -35,6 +35,8 @@ public:
    std::tuple<T...> read()
       {
       readBlocking();
+      if (!_cMsg.status())
+         throw StreamCancel();
       return getArgs<T...>(_cMsg.mutable_data());
       }
 

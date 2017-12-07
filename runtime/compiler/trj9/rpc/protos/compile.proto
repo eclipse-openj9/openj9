@@ -218,6 +218,7 @@ message J9ServerMessage
 
 message J9ClientMessage
    {
+   bool status = 1;
    AnyData data = 2;
    }
 
