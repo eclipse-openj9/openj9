@@ -609,7 +609,7 @@ static void allSlotsInCPShapeDescriptionDo(J9ROMClass* romClass, J9ROMClassWalkC
 	U_32 *cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
 	BOOLEAN rangeValid;
 
-	count = (romClass->romConstantPoolCount + (sizeof(U_32) * 2) - 1) / (sizeof(U_32) * 2);
+	count = (romClass->romConstantPoolCount + J9_CP_DESCRIPTIONS_PER_U32 - 1) / J9_CP_DESCRIPTIONS_PER_U32;
 
 	rangeValid = callbacks->validateRangeCallback(romClass, cpShapeDescription, count * sizeof(U_32), userData);
 	if (rangeValid) {
