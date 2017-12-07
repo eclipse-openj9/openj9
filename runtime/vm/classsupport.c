@@ -1478,8 +1478,8 @@ contendedLoadTableRemoveThread(J9VMThread* vmThread, J9ContendedLoadTableEntry *
 void
 fixCPShapeDescription(J9Class * clazz, UDATA cpIndex)
 {
-	UDATA wordIndex = (UDATA) (cpIndex / (sizeof(U_32)*2));
-	UDATA shiftAmount = (UDATA) ((cpIndex % (sizeof(U_32)*2)) * 4);
+	UDATA wordIndex = (UDATA) (cpIndex / J9_CP_DESCRIPTIONS_PER_U32);
+	UDATA shiftAmount = (UDATA) ((cpIndex % J9_CP_DESCRIPTIONS_PER_U32) * J9_CP_BITS_PER_DESCRIPTION);
 	U_32 * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(clazz->romClass);
 
 	cpShapeDescription[wordIndex] = (cpShapeDescription[wordIndex] & ~(J9_CP_DESCRIPTION_MASK << shiftAmount)) | (J9CPTYPE_INSTANCE_METHOD << shiftAmount);
