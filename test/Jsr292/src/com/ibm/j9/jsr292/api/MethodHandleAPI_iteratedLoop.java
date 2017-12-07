@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,20 +99,6 @@ public class MethodHandleAPI_iteratedLoop {
 		MethodHandle mhBody = ITERATEDLOOP_BODY;
 		MethodHandle mhIteratedLoop = MethodHandles.iteratedLoop(mhIterator, mhInit, mhBody);
 		Assert.fail("The test case failed to detect the return type of the iterator handle is neither Iterator nor its subtype");
-	}
-	
-	/**
-	 * iteratedLoop test for iterator with an invalid leading parameter (neither an array type
-	 * nor inherited from Iterable).
-	 */
-	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
-	public static void test_iteratedLoop_InvalidParamType_Iterator() {
-		MethodHandle mhIterator = MethodHandles.dropArguments(ITERATEDLOOP_ITERATOR, 0, char.class);
-		MethodHandle mhInit = MethodHandles.dropArguments(ITERATEDLOOP_INIT, 0, char.class);
-		MethodHandle mhBody = ITERATEDLOOP_BODY;
-		MethodHandle mhIteratedLoop = MethodHandles.iteratedLoop(mhIterator, mhInit, mhBody);
-		Assert.fail("The test case failed to detect that the leading parameter type of "
-				+ "iterator is neither an array type nor inherited from Iterable");
 	}
 	
 	/**
