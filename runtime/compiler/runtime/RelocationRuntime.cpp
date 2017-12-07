@@ -558,7 +558,8 @@ TR_RelocationRuntime::prepareRelocateJITCodeAndData(J9VMThread* vmThread,
          _exceptionTable=NULL;
          }
       }
-
+   // If we reserved a code cache we must unreserve it now because it it not
+   // attached to the comp object, so we can`t discover it later on to unreserve
    if (haveReservedCodeCache())
       codeCache()->unreserve();
    return _exceptionTable;
@@ -1503,7 +1504,6 @@ TR_JAASRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
    TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
    TR::CodeCacheManager *manager = TR::CodeCacheManager::instance();
 
-#if 0
    int32_t compThreadID = fej9->getCompThreadIDForVMThread(_currentThread);
    if (!codeCache())
       {
@@ -1527,10 +1527,10 @@ TR_JAASRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
          }
       _haveReservedCodeCache = true;
       }
-#endif
 
    uint8_t *coldCode;
-   U_8 *codeStart = fej9->allocateCodeMemory(comp(), codeSize, 0, &coldCode, true);
+   U_8 *codeStart = manager->allocateCodeMemory(codeSize, 0, &_codeCache, &coldCode, false);
+   // JAAS FIXME: I think this code is needed too
 #if 0
    // FIXME: the GC may unload classes if code caches have been switched
    if (compThreadID >= 0 && fej9->getCompilationShouldBeInterruptedFlag())

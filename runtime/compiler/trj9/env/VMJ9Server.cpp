@@ -633,100 +633,27 @@ TR_J9ServerVM::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 
    return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
    }
 
-// JAAS temporary HACK
-//=======================
 TR::CodeCache *
 TR_J9ServerVM::getDesignatedCodeCache(TR::Compilation *comp, size_t reqSize)
    {
-   if (comp->getOptimizationPlan()->_mandatoryCodeAddress)
+   TR::CodeCache * codeCache = TR_J9VMBase::getDesignatedCodeCache(comp);
+   
+   if (codeCache)
       {
-      // find the code cache that contains this address and reserve it
-      // No need to  releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded because new code caches cannor be added
-      TR::CodeCache *codeCache = TR::CodeCacheManager::instance()->findCodeCacheFromPC((void *)comp->getOptimizationPlan()->_mandatoryCodeAddress);
-      if (codeCache)
-         {
-         if (!codeCache->isReserved())
-            {
-            int32_t compThreadID = comp ? comp->getCompThreadID() : -1;
-            codeCache->reserve(compThreadID);
-            codeCache->setWarmCodeAlloc(comp->getOptimizationPlan()->_mandatoryCodeAddress);
-            comp->setAotMethodCodeStart((uint32_t*)comp->getOptimizationPlan()->_mandatoryCodeAddress);
-            if (TR::Options::getVerboseOption(TR_VerboseCodeCache))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE, "Reserved code cache %p that includes mandatory address %p. WarmCodeAlloc=%p", 
-                  codeCache, comp->getOptimizationPlan()->_mandatoryCodeAddress, codeCache->getWarmCodeAlloc());
-               }
-            }
-         else // Desired cache is already reserved; throw an error
-            {
-            comp->failCompilation<TR::CodeCacheError>("Desired code cache is already reserved");
-            }
-         }
-      else // Cannot find any cache that holds the desired address
-         {
-         // Throw an exception
-         comp->failCompilation<TR::CodeCacheError>("Cannot find the code cache that contains desired address");
-         // Note that given the current hack, the server must preallocate all the code caches inside the repository
-         // Use -Xjit:numCodeCachesOnStartup=128 for default values of total code cache and code cache sizes
-         }
-      return codeCache;
+      // memorize the allocation pointers
+      comp->setAotMethodCodeStart((uint32_t *)codeCache->getWarmCodeAlloc());
       }
-   else
-      {
-      return TR_J9VM::getDesignatedCodeCache(comp, reqSize);
-      }
-   }
-
-static void switchCodeCache(TR::Compilation *comp, TR::CodeCache *oldCache, TR::CodeCache *newCache)
-   {
-   comp->switchCodeCache(newCache);
-   // If the old CC had pre-loaded code, the current compilation may have initialized it and will therefore depend on it
-   // so we should initialize it in the new CC as well
-   // XXX: We could avoid this if we knew for sure that this compile wasn't the one who initialized it
-   if (newCache && oldCache->isCCPreLoadedCodeInitialized())
-      newCache->getCCPreLoadedCodeAddress(TR_numCCPreLoadedCode, comp->cg());
+   return codeCache;
    }
 
 uint8_t *
 TR_J9ServerVM::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t ** coldCode, bool isMethodHeaderNeeded)
    {
-   if (comp->getOptimizationPlan()->_mandatoryCodeAddress)
-      {
-      uint8_t *warmCode = nullptr;
-      // We must have reserved a code cache that contains _mandatoryCodeAddress
-      TR::CodeCache * codeCache = comp->getCurrentCodeCache(); // This is the reserved code cache
-      TR_ASSERT(codeCache && codeCache->isReserved(), "Code cache should have been reserved.");
-
-      bool hadClassUnloadMonitor;
-      bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
-
-      // No cold code is allocated since needsContiguousAllocation returns true. The total code size is allocated as warm code.
-      warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(warmCodeSize, coldCodeSize, &codeCache, coldCode, needsContiguousAllocation(), isMethodHeaderNeeded);
-
-      acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
-
-      if (codeCache != comp->getCurrentCodeCache())
-         {
-         TR_ASSERT(!codeCache || codeCache->isReserved(), "Substitute code cache isn't marked as reserved");  // Either we didn't get a code cache, or the one we should get is
-         comp->setAotMethodCodeStart(warmCode);
-         switchCodeCache(comp, comp->getCurrentCodeCache(), codeCache);
-         }
-
-      if (NULL == warmCode)
-         {
-         if (jitConfig->runtimeFlags & J9JIT_CODE_CACHE_FULL)
-            comp->failCompilation<TR::CodeCacheError>("Failed to allocate code memory");
-         comp->failCompilation<TR::RecoverableCodeCacheError>("Failed to allocate code memory");
-         }
-      return warmCode;
-      }
-   else
-      {
-      uint8_t *warmCode = TR_J9VM::allocateCodeMemory(comp, warmCodeSize, coldCodeSize, coldCode, isMethodHeaderNeeded);
-      if (!comp->getAotMethodCodeStart())
-         comp->setAotMethodCodeStart(warmCode - sizeof(OMR::CodeCacheMethodHeader));
-      return warmCode;
-      }
+   uint8_t *warmCode = TR_J9VM::allocateCodeMemory(comp, warmCodeSize, coldCodeSize, coldCode, isMethodHeaderNeeded);
+   // JAAS FIXME: why is this code needed? Shouldn't this be done when reserving?
+   if (!comp->getAotMethodCodeStart())
+      comp->setAotMethodCodeStart(warmCode - sizeof(OMR::CodeCacheMethodHeader));
+   return warmCode;
    }
 
 

@@ -7761,14 +7761,6 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
 
    // We need to perform the relocation for the method in the shared classes cache
    TR::CodeCache *aotMCCRuntimeCodeCache = NULL;
-   // JAAS temporary HACK
-   // If we want a specific address for the code, then we must have already reserved the code cache
-   // Indicate this to prepareRelocateAotCodeAndData to avoid another reservation
-   if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE)
-      {
-      TR_ASSERT(compiler->getCurrentCodeCache(), "Must have reserved a code cache");
-      aotMCCRuntimeCodeCache = compiler->getCurrentCodeCache();
-      }
 
    const J9JITDataCacheHeader *cacheEntry = static_cast<const J9JITDataCacheHeader *>(aotCachedMethod);
    if (entry)
@@ -8591,6 +8583,10 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       // Unreserve the code cache used for this compilation
       if (_compiler->getCurrentCodeCache())
          {
+         // For JAAS SERVER we should wipe this method from the code cache
+         if (_compInfo.getPersistentInfo()->getJaasMode() == SERVER_MODE)
+            _compiler->getCurrentCodeCache()->resetCodeCache();
+            
          _compiler->getCurrentCodeCache()->unreserve();
          _compiler->setCurrentCodeCache(0);
          }
@@ -9890,7 +9886,7 @@ TR::CompilationInfoPerThreadBase::compile(
       // to reset when throwing the data away
       //
       if ((_jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
-            || compiler->getPersistentInfo()->getJaasMode() != NONJAAS_MODE
+            || compiler->getPersistentInfo()->getJaasMode() != NONJAAS_MODE // JAAS FIXME: we need to reserve only for server mode
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
             || vm.isAOT_DEPRECATED_DO_NOT_USE()
 #endif //endif J9VM_INTERP_AOT_COMPILE_SUPPORT
@@ -9919,8 +9915,8 @@ TR::CompilationInfoPerThreadBase::compile(
                }
             }
 
-            TR_DataCache *dataCache = (TR_DataCache*)compiler->getReservedDataCache();
-            dataCache->setAllocationMark();
+         TR_DataCache *dataCache = (TR_DataCache*)compiler->getReservedDataCache();
+         dataCache->setAllocationMark();
          }
       else // non AOT, non TOSS_CODE
          {
@@ -10013,7 +10009,6 @@ TR::CompilationInfoPerThreadBase::compile(
          }
       else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE) // Jaas Client Mode
          {
-
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             {
             TR_VerboseLog::writeLineLocked(
@@ -10024,13 +10019,6 @@ TR::CompilationInfoPerThreadBase::compile(
                );
             }
 
-         compiler->cg()->reserveCodeCache(); // this will throw if we cannot reserve
-
-         size_t availableSpace = compiler->getCurrentCodeCache()->getFreeContiguousSpace();
-         uint8_t *allocPtr = NULL; compiler->getCurrentCodeCache()->getWarmCodeAlloc();
-         if (TR::Options::getVerboseOption(TR_VerboseJaas))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Client requesting to compile method at address %p freeSpace=%u", allocPtr, (uint32_t)availableSpace);
-
          J9Class *clazz = J9_CLASS_FROM_METHOD(method);
          J9ROMClass *romClass = clazz->romClass;
          J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
@@ -10039,7 +10027,7 @@ TR::CompilationInfoPerThreadBase::compile(
          std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
 
          JAAS::J9ClientStream client(comp()->getPersistentInfo()->getJaasServerConnectionInfo());
-         client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), allocPtr, availableSpace, detailsStr, details.getType());
+         client.buildCompileRequest(romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), 0, 0, detailsStr, details.getType());
          uint32_t statusCode = compilationFailure;
          std::string codeCacheStr;
          std::string dataCacheStr;
@@ -11021,13 +11009,18 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
       if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
            (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)) &&
-          comp && (dataCache = (TR_DataCache*)comp->getReservedDataCache()))
+          comp)
          {
-         dataCache->resetAllocationToMark();
-         // TODO: make sure we didn't allocate a new dataCache (the mark was set in the old cache)
-         jitConfig->codeCache->heapAlloc = jitConfig->codeCache->heapBase;
-         TR_DataCacheManager::getManager()->makeDataCacheAvailable(dataCache);
-         comp->setReservedDataCache(NULL);
+         if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
+            jitConfig->codeCache->heapAlloc = jitConfig->codeCache->heapBase;
+         dataCache = (TR_DataCache*)comp->getReservedDataCache();
+         if (dataCache)
+            {
+            dataCache->resetAllocationToMark();
+            // TODO: make sure we didn't allocate a new dataCache (the mark was set in the old cache)
+            TR_DataCacheManager::getManager()->makeDataCacheAvailable(dataCache);
+            comp->setReservedDataCache(NULL);
+            }
          }
 
       return startPC;
@@ -11042,7 +11035,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             remoteCompilationEnd(details, jitConfig, fe, entry, comp);
          else
             {
-
             J9::MethodInProgressDetails & dltDetails = static_cast<J9::MethodInProgressDetails &>(details);
             TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
             compInfo->insertDLTRecord(dltDetails.getMethod(), dltDetails.getByteCodeIndex(), startPC);
@@ -11052,13 +11044,18 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 #endif // ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
       if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
            (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)) &&
-          comp && (dataCache = (TR_DataCache *)comp->getReservedDataCache()))
+          comp)
          {
-         dataCache->resetAllocationToMark();
-         // TODO: make sure we didn't allocate a new dataCache (the mark was set in the old cache)
-         jitConfig->codeCache->heapAlloc = jitConfig->codeCache->heapBase;
-         TR_DataCacheManager::getManager()->makeDataCacheAvailable(dataCache);
-         comp->setReservedDataCache(NULL);
+         if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
+            jitConfig->codeCache->heapAlloc = jitConfig->codeCache->heapBase;
+         dataCache = (TR_DataCache *)comp->getReservedDataCache();
+         if (dataCache)
+            {
+            dataCache->resetAllocationToMark();
+            // TODO: make sure we didn't allocate a new dataCache (the mark was set in the old cache)
+            TR_DataCacheManager::getManager()->makeDataCacheAvailable(dataCache);
+            comp->setReservedDataCache(NULL);
+            }
          }
       return startPC;
       }
@@ -11556,13 +11553,18 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
    if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
        (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)) &&
-       comp && (dataCache = (TR_DataCache *)comp->getReservedDataCache()))
+       comp)
       {
-      dataCache->resetAllocationToMark();
-      // TODO: make sure we didn't allocate a new dataCache (the mark was set in the old cache)
-      jitConfig->codeCache->heapAlloc = jitConfig->codeCache->heapBase;
-      TR_DataCacheManager::getManager()->makeDataCacheAvailable(dataCache);
-      comp->setReservedDataCache(NULL);
+      if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
+         jitConfig->codeCache->heapAlloc = jitConfig->codeCache->heapBase;
+      dataCache = (TR_DataCache *)comp->getReservedDataCache();
+      if (dataCache)
+         {
+         dataCache->resetAllocationToMark();
+         // TODO: make sure we didn't allocate a new dataCache (the mark was set in the old cache)
+         TR_DataCacheManager::getManager()->makeDataCacheAvailable(dataCache);
+         comp->setReservedDataCache(NULL);
+         }
       }
 
    return startPC;

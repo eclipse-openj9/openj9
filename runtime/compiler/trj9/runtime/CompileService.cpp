@@ -36,8 +36,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
    J9ROMClass* romClass, const J9ROMMethod* romMethod,
    J9Method* ramMethod, J9Class *clazz, JAAS::J9ServerStream *rpc, TR_Hotness optLevel,
    TR::IlGeneratorMethodDetails *clientDetails,
-   J9::IlGeneratorMethodDetailsType methodDetailsType,
-   uint8_t *mandatoryCodeAddress = nullptr, size_t availableCodeSpace = 0)  // JAAS temporary HACK
+   J9::IlGeneratorMethodDetailsType methodDetailsType)
    {
    J9UTF8 *methodNameUTF = J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature);
    std::string methodNameStr((const char*)methodNameUTF->data, (size_t)methodNameUTF->length);
@@ -75,12 +74,6 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
       // if the controller decides to compile this method, trigger the compilation
       if (plan)
          {
-         // JAAS temporary HACK
-         if (mandatoryCodeAddress)
-            {
-            plan->_mandatoryCodeAddress = mandatoryCodeAddress;
-            plan->_availableCodeSpace = availableCodeSpace;
-            }
          TR::IlGeneratorMethodDetails details;
          *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
          TR::IlGeneratorMethodDetails &remoteDetails = details.createRemoteMethodDetails(*clientDetails, methodDetailsType, ramMethod, romClass, romMethod, clazz);
@@ -158,7 +151,7 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       std::string detailsStr = std::get<7>(req);
       TR::IlGeneratorMethodDetails *details = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
       auto detailsType = std::get<8>(req);
-      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType, allocPtr, allocSize);
+      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType);
       }
    catch (const JAAS::StreamFailure &e)
       {
