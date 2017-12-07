@@ -794,6 +794,11 @@ TR_J9MethodBase::isBigDecimalConvertersMethod(TR::Compilation * comp)
 uintptr_t
 TR_J9MethodBase::osrFrameSize(J9Method* j9Method)
    {
+   if (auto stream = TR::compInfoPT->getStream())
+      {
+      stream->write(JAAS::J9ServerMessageType::ResolvedMethod_osrFrameSize, j9Method);
+      return std::get<0>(stream->read<uintptr_t>());
+      }
    return ::osrFrameSize(j9Method);
    }
 
