@@ -655,7 +655,7 @@ public StringBuilder append (String string) {
 				ensureCapacityImpl(newLength);
 			}
 			
-			string.getChars(0, stringLength, value, currentLength);
+			string.getCharsNoBoundChecks(0, stringLength, value, currentLength);
 			
 			count = newLength | uncompressedBit;
 		}
@@ -664,7 +664,7 @@ public StringBuilder append (String string) {
 			ensureCapacityImpl(newLength);
 		}
 		
-		string.getChars(0, stringLength, value, currentLength);
+		string.getCharsNoBoundChecks(0, stringLength, value, currentLength);
 		
 		count = newLength;
 	}
@@ -914,14 +914,11 @@ private void ensureCapacityImpl(int min) {
 	} else {
 		/*[IF Sidecar19-SE]*/
 		byte[] newData = new byte[newLength * 2];
-		
-		String.decompressedArrayCopy(value, 0, newData, 0, currentLength);
 		/*[ELSE]*/
 		char[] newData = new char[newLength];
-		
-		System.arraycopy(value, 0, newData, 0, currentLength);
 		/*[ENDIF]*/
 		
+		String.decompressedArrayCopy(value, 0, newData, 0, currentLength);
 		value = newData;
 	}
 	

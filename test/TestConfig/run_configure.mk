@@ -39,17 +39,19 @@ endif
 
 ifndef SPEC
 $(error Please provide SPEC that matches the current platform (e.g. SPEC=linux_x86-64))
-else
-export SPEC:=$(SPEC)
-$(info set SPEC to $(SPEC))
 endif
+
+ifndef JAVA_VERSION
+export JAVA_VERSION:=SE90
+endif
+
 
 autoconfig:
 	perl configure.pl
 
 autogen: autoconfig
 	cd $(CURRENT_DIR)$(D)scripts$(D)testKitGen; \
-	perl testKitGen.pl --graphSpecs=$(SPEC) $(OPTS); \
+	perl testKitGen.pl --graphSpecs=$(SPEC) --javaVersion=$(JAVA_VERSION) $(OPTS); \
 	cd $(CURRENT_DIR);
 
 AUTOGEN_FILES = $(wildcard $(CURRENT_DIR)$(D)jvmTest.mk)

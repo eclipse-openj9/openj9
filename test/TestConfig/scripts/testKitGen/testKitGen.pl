@@ -35,12 +35,16 @@ my $projectRootDir = '';
 my $modesxml       = "../../resources/modes.xml";
 my $ottawacsv      = "../../resources/ottawa.csv";
 my $graphSpecs     = '';
+my $javaVersion    = '';
 my $output         = '';
 my @allSubsets = ( "SE80", "SE90", "Panama", "Valhalla" );
 
 foreach my $argv (@ARGV) {
 	if ( $argv =~ /^\-\-graphSpecs=/ ) {
 		($graphSpecs) = $argv =~ /^\-\-graphSpecs=(.*)/;
+	}
+	elsif ( $argv =~ /^\-\-javaVersion=/ ) {
+		($javaVersion) = $argv =~ /^\-\-javaVersion=(.*)/;
 	}
 	elsif ( $argv =~ /^\-\-projectRootDir=/ ) {
 		($projectRootDir) = $argv =~ /^\-\-projectRootDir=(.*)/;
@@ -61,12 +65,13 @@ foreach my $argv (@ARGV) {
 		  . "jvmTest.mk and specToPlat.mk - under TestConfig\n";
 		print "Options:\n"
 		  . "--graphSpecs=<specs>    Comma separated specs that the build will run on.\n"
+		  . "--javaVersion=<version> Java version that the build will run on.\n"
 		  . "--output=<path>         Path to output makefiles.\n"
 		  . "--projectRootDir=<path> Root path for searching playlist.xml.\n"
 		  . "--modesXml=<path>       Path to modes.xml file.\n"
 		  . "                        If the modesXml is not provided, the program will try to find modes.xml under projectRootDir/TestConfig/resources.\n"
 		  . "--ottawaCsv=<path>      Path to ottawa.csv file.\n"
-  		  . "                        If the ottawaCsv is not provided, the program will try to find ottawa.csv under projectRootDir/TestConfig/resources.\n";
+		  . "                        If the ottawaCsv is not provided, the program will try to find ottawa.csv under projectRootDir/TestConfig/resources.\n";
 		die "Please specify valid options!";
 	}
 }
@@ -87,7 +92,10 @@ if ( !$graphSpecs ) {
 	die "Please provide graphSpecs!"
 }
 
+if ( !$javaVersion ) {
+	die "Please provide javaVersion!"
+}
 # run make file generator
-my $tests = runmkgen( $projectRootDir, \@allSubsets, $output, $graphSpecs, $modesxml, $ottawacsv );
+my $tests = runmkgen( $projectRootDir, \@allSubsets, $output, $graphSpecs, $javaVersion, $modesxml, $ottawacsv );
 
 print "\nTEST AUTO GEN SUCCESSFUL\n";
