@@ -1451,6 +1451,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(mirror->isSameMethod(other));
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_isBigDecimalMethod:
+         {
+         J9Method *j9method = std::get<0>(client->getRecvData<J9Method*>());
+         client->write(TR_J9MethodBase::isBigDecimalMethod(j9method));
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());

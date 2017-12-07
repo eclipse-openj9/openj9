@@ -710,7 +710,11 @@ TR_J9MethodBase::isBigDecimalMethod(J9Method * j9Method)
    getClassNameSignatureFromMethod(j9Method, className, name, signature);
    return isBigDecimalMethod(className, name, signature);
    */
-
+   if (auto stream = TR::compInfoPT->getStream())
+      {
+      stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isBigDecimalMethod, j9Method);
+      return std::get<0>(stream->read<bool>());
+      }
    return isBigDecimalMethod(J9_ROM_METHOD_FROM_RAM_METHOD(j9Method), J9_CLASS_FROM_METHOD(j9Method)->romClass);
    }
 
