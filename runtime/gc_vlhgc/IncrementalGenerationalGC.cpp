@@ -1228,6 +1228,11 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 
 		double optimalEmptinessRegionThreshold = _reclaimDelegate.calculateOptimalEmptinessRegionThreshold(env, regionConsumptionRate, avgSurvivorRegions, avgCopyForwardRate, scanTimeCostPerGMP);
 		_schedulingDelegate.setAutomaticDefragmentEmptinessThreshold(optimalEmptinessRegionThreshold);
+
+		/* recalculate ratios due to sweep */
+		_schedulingDelegate.calculatePGCCompactionRate(env, _schedulingDelegate.getCurrentEdenSizeInRegions(env) * _regionManager->getRegionSize());
+		_schedulingDelegate.calculateHeapOccupancyTrend(env);
+		_schedulingDelegate.calculateScannableBytesRatio(env);
 	}
 
 	if (env->_cycleState->_shouldRunCopyForward) {

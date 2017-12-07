@@ -26,12 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -39,7 +34,14 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+/*[IF Sidecar19-SE]*/
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.stream.Stream;
+/*[ENDIF] Sidecar19-SE */
 
 import jdk.internal.org.objectweb.asm.ClassReader;
 
@@ -146,18 +148,16 @@ public class PluginManagerImpl implements PluginManager {
 				}
 			}
 			
-			try {
-				logger.fine("Scanning path jrt:/modules/com.ibm.dtfjview in search of plugins");
-				FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
-				Path modules = fs.getPath("modules/com.ibm.dtfjview");
-				listClassFiles(modules);
-			} catch (Exception e) {
-				//log and ignore exception or Java 8
-				logger.log(Level.FINE, "Error occurred scanning jrt:/modules/com.ibm.dtfjview.", e);
-			}
+			/*[IF Sidecar19-SE]*/
+			logger.fine("Scanning path jrt:/modules/openj9.dtfjview in search of plugins");
+			FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+			Path modules = fs.getPath("modules/openj9.dtfjview");
+			listClassFiles(modules);
+			/*[ENDIF] Sidecar19-SE */
 		}
 	}
 
+	/*[IF Sidecar19-SE]*/
 	void listClassFiles(Path path) {
 		try(Stream<Path> paths = Files.list(path)) {
 			paths.forEach(filePath -> {
@@ -187,6 +187,7 @@ public class PluginManagerImpl implements PluginManager {
 			logger.log(Level.FINE, "Error occurred scanning " + path, e);
 		} 
 	}
+	/*[ENDIF] Sidecar19-SE */
 	
 	/**
 	 * Get an entry from the cache, using generics to describe the type expected.
@@ -286,6 +287,7 @@ public class PluginManagerImpl implements PluginManager {
 		return entry;
 	}
 
+	/*[IF Sidecar19-SE]*/
 	private Entry examineClassFile(InputStream is, URL url) {
 		Entry entry = null;
 		try {
@@ -306,6 +308,7 @@ public class PluginManagerImpl implements PluginManager {
 		}
 		return entry;
 	}
+	/*[ENDIF] Sidecar19-SE */
 	
 	private ClassInfo scanClassFile(InputStream file, URL url) throws IOException {
 		ClassScanner scanner = new ClassScanner(url, listeners);
