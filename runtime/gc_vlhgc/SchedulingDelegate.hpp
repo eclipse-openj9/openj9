@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -337,15 +337,6 @@ public:
 	 * @return desired bytes to be compacted
 	 */
 	UDATA getDesiredCompactWork();
-
-	/**
-	 * @return true if it is first PGC after GMP completed (so we can calculate compact-bytes/free-bytes ratio, etc.)
-	 */
-	bool isFirstPGCAfterGMP();
-	/**
-	 * clear the flag that indicate this was the first PGC after GMP completed
-	 */
-	void firstPGCAfterGMPCompleted();
 
 	/**
 	 * return whether the following PGC is required to do global sweep (typically, first PGC after GMP completed)
