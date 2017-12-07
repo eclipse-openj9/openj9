@@ -65,6 +65,7 @@ enum J9ServerMessageType
    ResolvedMethod_shouldFailSetRecognizedMethodInfoBecauseOfHCR = 134;
    ResolvedMethod_isSameMethod = 135;
    ResolvedMethod_isBigDecimalMethod = 136;
+   ResolvedMethod_isBigDecimalConvertersMethod = 137;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;

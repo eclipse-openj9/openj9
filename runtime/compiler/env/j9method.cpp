@@ -770,6 +770,11 @@ TR_J9MethodBase::isBigDecimalConvertersMethod(J9ROMMethod * romMethod, J9ROMClas
 bool
 TR_J9MethodBase::isBigDecimalConvertersMethod(J9Method * j9Method)
    {
+   if (auto stream = TR::compInfoPT->getStream())
+      {
+      stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isBigDecimalConvertersMethod, j9Method);
+      return std::get<0>(stream->read<bool>());
+      }
    return isBigDecimalConvertersMethod(J9_ROM_METHOD_FROM_RAM_METHOD(j9Method), J9_CLASS_FROM_METHOD(j9Method)->romClass);
    }
 
