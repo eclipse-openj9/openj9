@@ -277,6 +277,10 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    // cache profile information
    TR_AccessedProfileInfo *getProfileInfo() { return _profileInfo; }
 
+   // Flag to test whether early stages of JProfiling ran
+   void setSkippedJProfilingBlock(bool b = true) { _skippedJProfilingBlock = b; }
+   bool getSkippedJProfilingBlock() { return _skippedJProfilingBlock; }
+
    //
    bool supportsQuadOptimization();
 
@@ -346,6 +350,8 @@ private:
 
    // cache profile information
    TR_AccessedProfileInfo *_profileInfo;
+
+   bool _skippedJProfilingBlock;
    };
 
 }

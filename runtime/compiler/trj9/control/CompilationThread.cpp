@@ -1954,6 +1954,12 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                      }
                   }
                break;
+            case compilationEnforceProfiling:
+               entry->_optimizationPlan->setInsertInstrumentation(true); // enable profiling
+               entry->_optimizationPlan->setDoNotSwitchToProfiling(true); // don't allow another switch
+               entry->_optimizationPlan->setDisableGCR(); // GCR isn't needed
+               tryCompilingAgain = true;
+               break;
             case compilationNullSubstituteCodeCache:
             case compilationCodeMemoryExhausted:
             case compilationCodeCacheError:
@@ -9822,6 +9828,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const J9::LambdaEnforceScorching &e)
       {
       _methodBeingCompiled->_compErrCode = compilationLambdaEnforceScorching;
+      }
+   catch (const J9::EnforceProfiling &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationEnforceProfiling;
       }
    catch (const TR::InsufficientlyAggressiveCompilation &e)
       {

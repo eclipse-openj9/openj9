@@ -29,6 +29,8 @@
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
+#include "exceptions/RuntimeFailure.hpp"    // for J9::EnforceProfiling
+
 
 bool J9::Recompilation::_countingSupported = false;
 
@@ -357,6 +359,17 @@ J9::Recompilation::switchToProfiling(uint32_t f, uint32_t c)
       }
 
    _bodyInfo->setIsProfilingBody(true);
+
+   // If profiling will use JProfiling instrumentation and this is post JProfilingBlock opt pass, trigger restart
+   if (_compilation->getProfilingMode() == JProfiling && _compilation->getSkippedJProfilingBlock())
+      {
+      TR::DebugCounter::incStaticDebugCounter(_compilation, TR::DebugCounter::debugCounterName(_compilation,
+         "jprofiling.restartCompile/(%s)", _compilation->signature()));
+      if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "Restarting compilation due to late switch to profiling");
+      comp()->failCompilation<J9::EnforceProfiling>("Enforcing profiling compilation");
+      }
+
    _useSampling = false;
    self()->findOrCreateProfileInfo()->setProfilingFrequency(f);
    self()->findOrCreateProfileInfo()->setProfilingCount(c);

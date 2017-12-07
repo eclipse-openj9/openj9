@@ -165,7 +165,8 @@ J9::Compilation::Compilation(
    _monitorAutos(m),
    _monitorAutoSymRefsInCompiledMethod(getTypedAllocator<TR::SymbolReference*>(self()->allocator())),
    _classForOSRRedefinition(m),
-   _profileInfo(NULL)
+   _profileInfo(NULL),
+   _skippedJProfilingBlock(false)
    {
    _ObjectClassPointer   = fe->getClassFromSignature("Ljava/lang/Object;", 18, compilee);
    _RunnableClassPointer = fe->getClassFromSignature("Ljava/lang/Runnable;", 20, compilee);

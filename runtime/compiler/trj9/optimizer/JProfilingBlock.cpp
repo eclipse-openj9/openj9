@@ -969,8 +969,8 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
  *
  * For profiling compilations, JProfiling can replace the existing JitProfiling instrumentation when either TR_EnableJProfiling
  * or TR_EnableJProfilingInProfilingCompilations are set. However, this introduces some complexity as a compilation may
- * switch to profiling part way though, potentially after JProfilingBlock should have run. In such a scenario, profiling compilations
- * will ignore JProfiling and fallback on the prior implementation.
+ * switch to profiling part way though, potentially after JProfilingBlock should have run. In such a scenario, the compilation
+ * will be restarted. See switchToProfiling() for the restart logic.
  */
 int32_t TR_JProfilingBlock::perform() 
    {
@@ -987,8 +987,8 @@ int32_t TR_JProfilingBlock::perform()
    else
       {
       if (trace())
-         traceMsg(comp(), "JProfiling has not been enabled, skip JProfilingBlock and disable JProfilingValue\n");
-      comp()->getOptions()->setOption(TR_EnableJProfilingInProfilingCompilations, false);
+         traceMsg(comp(), "JProfiling has not been enabled, skip JProfilingBlock\n");
+      comp()->setSkippedJProfilingBlock();
       return 0;
       }
 

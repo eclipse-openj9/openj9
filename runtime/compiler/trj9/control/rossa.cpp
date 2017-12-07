@@ -194,6 +194,7 @@ char *compilationErrorNames[]={
    "compilationAotValidateStringCompressionFailure", // 46
    "compilationFSDHasInvokeHandle", //47
    "compilationVirtualAddressExhaustion", //48
+   "compilationEnforceProfiling", //49
    "compilationMaxError"
 };
 
