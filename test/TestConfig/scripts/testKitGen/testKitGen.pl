@@ -37,7 +37,7 @@ my $ottawacsv      = "../../resources/ottawa.csv";
 my $graphSpecs     = '';
 my $javaVersion    = '';
 my $output         = '';
-my @allSubsets = ( "SE80", "SE90", "Panama", "Valhalla" );
+my @allSubsets = ( "SE80", "SE90", "SE100", "Panama", "Valhalla" );
 
 foreach my $argv (@ARGV) {
 	if ( $argv =~ /^\-\-graphSpecs=/ ) {
