@@ -31,13 +31,13 @@
 #include "env/CompilerEnv.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
-#include "exceptions/TrampolineError.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheConfig.hpp"
+#include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheTypes.hpp"
 #include "runtime/Runtime.hpp"
@@ -445,7 +445,7 @@ J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
 
    if (!newCache)
       {
-      comp->failCompilation<J9::TrampolineError>("Failed to allocate code cache in reserveNTrampolines");
+      comp->failCompilation<TR::TrampolineError>("Failed to allocate code cache in reserveNTrampolines");
       }
 
    if (newCache != curCache)
