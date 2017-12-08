@@ -65,7 +65,6 @@
 #include "compile/CompilationException.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
 #include "exceptions/JITShutDown.hpp"
-#include "exceptions/TrampolineError.hpp"
 #include "exceptions/DataCacheError.hpp"
 #include "trj9/env/exports.h"
 #include "env/CompilerEnv.hpp"
@@ -5671,13 +5670,13 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
                         {
                         newCache->unreserve(); // delete the reservation
                         newCache = NULL;
-                        comp->failCompilation<J9::TrampolineError>("Failed to reserve unresolved trampoline");
+                        comp->failCompilation<TR::TrampolineError>("Failed to reserve unresolved trampoline");
                         }
                      }
                   }
                else // cannot allocate a new code cache
                   {
-                  comp->failCompilation<J9::TrampolineError>("Failed to allocate new code cache");
+                  comp->failCompilation<TR::TrampolineError>("Failed to allocate new code cache");
                   }
                }
             else
@@ -5685,11 +5684,11 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
                newCache = 0;
                if (inBinaryEncoding)
                   {
-                  comp->failCompilation<J9::RecoverableTrampolineError>("Failed to delete the old reservation"); // RAS only
+                  comp->failCompilation<TR::RecoverableTrampolineError>("Failed to delete the old reservation"); // RAS only
                   }
                else
                   {
-                  comp->failCompilation<J9::TrampolineError>("Failed to delete the old reservation"); // RAS only
+                  comp->failCompilation<TR::TrampolineError>("Failed to delete the old reservation"); // RAS only
                   }
                }
             }
@@ -7141,18 +7140,18 @@ TR_J9VM::getResolvedTrampoline(TR::Compilation *comp, TR::CodeCache* curCache, J
                      {
                      newCache->unreserve(); // delete the reservation
                      newCache = NULL;
-                     comp->failCompilation<J9::TrampolineError>("Failed to reserve resolved trampoline");
+                     comp->failCompilation<TR::TrampolineError>("Failed to reserve resolved trampoline");
                      }
                   }
                }
             else
                {
-               comp->failCompilation<J9::TrampolineError>("Failed to allocate new code cache");
+               comp->failCompilation<TR::TrampolineError>("Failed to allocate new code cache");
                }
             }
          else
             {
-            comp->failCompilation<J9::TrampolineError>("AOT Compile failed to delete the old reservation");
+            comp->failCompilation<TR::TrampolineError>("AOT Compile failed to delete the old reservation");
             }
          }
       else
@@ -7160,11 +7159,11 @@ TR_J9VM::getResolvedTrampoline(TR::Compilation *comp, TR::CodeCache* curCache, J
          newCache = NULL;
          if (inBinaryEncoding)
             {
-            comp->failCompilation<J9::RecoverableTrampolineError>("Failed to delete the old reservation");
+            comp->failCompilation<TR::RecoverableTrampolineError>("Failed to delete the old reservation");
             }
          else
             {
-            comp->failCompilation<J9::TrampolineError>("Failed to delete the old reservation");
+            comp->failCompilation<TR::TrampolineError>("Failed to delete the old reservation");
             }
          }
       }

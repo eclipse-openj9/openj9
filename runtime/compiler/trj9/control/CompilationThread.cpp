@@ -67,7 +67,6 @@
 #include "exceptions/RuntimeFailure.hpp"
 #include "exceptions/AOTFailure.hpp"
 #include "exceptions/FSDFailure.hpp"
-#include "exceptions/TrampolineError.hpp"
 #include "exceptions/DataCacheError.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -449,7 +448,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
       if (_J9ROMMETHOD_J9MODIFIER_IS_SET(romMethod, J9AccMethodHasMethodHandleInvokes))
          {
          doDowngrade = false;
-         }  
+         }
       // similarly don't downgrade a thunk archetype - inlining in these is also vital
       else if (fe->isThunkArchetype(method))
          {
@@ -2012,7 +2011,7 @@ void TR::CompilationInfo::purgeMethodQueue(TR_CompilationErrorCode errorCode)
 
       // fail the compilation
       void *startPC = 0;
-     
+
       startPC = compilationEnd(vmThread, cur->getMethodDetails(), _jitConfig, NULL, cur->_oldStartPC);
       cur->_newStartPC = startPC;
       cur->_compErrCode = errorCode;
@@ -3364,7 +3363,7 @@ TR::CompilationInfoPerThread::processEntries()
                   {
                   TR_ASSERT(monitorStatus == J9THREAD_TIMED_OUT, "Unexpected monitor state");
                   // It's possible that a notification was sent just after the
-                  // timeout expired. Hence, if something was added to the compilation 
+                  // timeout expired. Hence, if something was added to the compilation
                   // queue we must attempt to process it
                   if (_compInfo.getMethodQueueSize() > 0)
                      {
@@ -3779,12 +3778,12 @@ TR::CompilationInfoPerThread::shouldPerformCompilation(TR_MethodToBeCompiled &en
    // Do not compile unloaded methods
    if (entry._unloadedMethod)
       return false;
-  
+
    // Do not compile replaced methods
    if ((TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR) || TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug))
         && details.getClass() && J9_IS_CLASS_OBSOLETE(details.getClass()))
       return false;
-    
+
 
    if (entry._reqFromSecondaryQueue)
       {
@@ -6279,7 +6278,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
          !entry->isDLTCompile() &&
          !entry->_doNotUseAotCodeFromSharedCache &&
          reloRuntime->isRomClassForMethodInSharedCache(method, javaVM) &&
-         (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) || 
+         (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
            TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
 
       bool sharedClassTest = eligibleForRelocatableCompile &&
@@ -9400,7 +9399,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          // because this is a recompilation, the persistentJittedBodyInfo must exist
          if (oldBodyInfo->getIsAotedBody())
             _compInfo._statNumAotedMethodsRecompiled++;
-         
+
          // Statistics about Recompilations for bodies with Jprofiling
          if (oldBodyInfo->getUsesJProfiling())
             {
@@ -9422,7 +9421,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
       if (compiler->getRecompilationInfo() &&
           compiler->getRecompilationInfo()->getJittedBodyInfo()->getUsesJProfiling())
          _compInfo._statNumJProfilingBodies++;
-      
+
       // Statistics about number of methods taken from the queue with JProfiling requests
       if (_methodBeingCompiled->_reqFromJProfilingQueue)
          _compInfo._statNumMethodsFromJProfilingQueue++;
@@ -9764,11 +9763,11 @@ TR::CompilationInfoPerThreadBase::processException(
       {
       _methodBeingCompiled->_compErrCode = compilationDataCacheError;
       }
-   catch (const J9::RecoverableTrampolineError &e)
+   catch (const TR::RecoverableTrampolineError &e)
       {
       _methodBeingCompiled->_compErrCode = compilationRecoverableTrampolineFailure;
       }
-   catch (const J9::TrampolineError &e)
+   catch (const TR::TrampolineError &e)
       {
       _methodBeingCompiled->_compErrCode = compilationTrampolineFailure;
       }
@@ -10462,8 +10461,8 @@ void TR_LowPriorityCompQueue::tryToScheduleCompilation(J9VMThread *vmThread, J9M
                            TR_YesNoMaybe activate = _compInfo->shouldActivateNewCompThread();
                            // If the answer is TR_maybe we may have to look at how many
                            // threads are allowed to work on LPQ requests
-                           if (activate == TR_yes || 
-                                (activate == TR_maybe && 
+                           if (activate == TR_yes ||
+                                (activate == TR_maybe &&
                                  TR::Options::getCmdLineOptions()->getOption(TR_ConcurrentLPQ) &&
                                  jitConfig->javaVM->phase == J9VM_PHASE_NOT_STARTUP && // ConcurrentLPQ is too damaging to startup
                                  _compInfo->getNumCompThreadsActive() + 2 < _compInfo->getNumTargetCPUs()
@@ -11041,7 +11040,7 @@ bool DLTTracking::shouldIssueDLTCompilation(J9Method *j9method, int32_t numHitsI
       // entry, the thread could be stuck in this body. If we encounter
       // this situation several times in succession, we must issue a DLT request
       int32_t entryCount = entry->_count;
-     
+
       if (entryCount == methodCount)
          {
          entry->_seqID += 1;
@@ -11085,7 +11084,7 @@ bool DLTTracking::shouldIssueDLTCompilation(J9Method *j9method, int32_t numHitsI
          TR_VerboseLog::writeLineLocked(TR_Vlog_SAMPLING, "t=%6u DLTTracking: j9m=%p issueDLT=%d entry=%p",
             (unsigned)getPersistentInfo()->getElapsedTime(), j9method, shouldIssueDLT, entry);
       }
- 
+
    return shouldIssueDLT;
    }
 
@@ -11125,7 +11124,7 @@ void TR_JProfilingQueue::enqueueCompReq(TR_MethodToBeCompiled *compReq)
       _firstQentry = compReq;
 
    _lastQentry = compReq;
-   _size++; 
+   _size++;
    increaseQWeightBy(compReq->_weight);
    }
 
@@ -11168,9 +11167,9 @@ bool TR_JProfilingQueue::createCompReqAndQueueIt(TR::IlGeneratorMethodDetails &d
    // add at the end of queue
    enqueueCompReq(compReq);
    if (TR::Options::getJITCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_CR, "t=%u j9m=%p enqueued in JPQ. JPQ_SZ=%d", 
+      TR_VerboseLog::writeLineLocked(TR_Vlog_CR, "t=%u j9m=%p enqueued in JPQ. JPQ_SZ=%d",
       (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(), j9method, getQSize());
- 
+
    //incStatsReqQueuedToLPQ(reason);
    return true;
    }
@@ -11178,7 +11177,7 @@ bool TR_JProfilingQueue::createCompReqAndQueueIt(TR::IlGeneratorMethodDetails &d
 bool TR_JProfilingQueue::isJProfilingCandidate(TR_MethodToBeCompiled *entry, TR::Options *options, TR_J9VMBase* fej9)
    {
    if (!options->getOption(TR_EnableJProfiling) ||
-      entry->isJNINative() ||  
+      entry->isJNINative() ||
       entry->_oldStartPC != 0 || // reject non first time compilations
       !entry->getMethodDetails().isOrdinaryMethod() ||
       entry->_optimizationPlan->insertInstrumentation() ||
@@ -11186,12 +11185,12 @@ bool TR_JProfilingQueue::isJProfilingCandidate(TR_MethodToBeCompiled *entry, TR:
       options->getOption(TR_NoRecompile) ||
       !options->allowRecompilation())
       return false;
-   
+
    static char *disableFilterOnJProfiling = feGetEnv("TR_DisableFilterOnJProfiling");
    if (!disableFilterOnJProfiling &&
       !fej9->isClassLibraryMethod((TR_OpaqueMethodBlock *)entry->getMethodDetails().getMethod(), true))
       return false;
-   
+
    return true;
    }
 
@@ -11271,16 +11270,16 @@ bool TR::CompilationInfo::canProcessJProfilingRequest()
          getPersistentInfo()->getJitState() == STARTUP_STATE ||
          getPersistentInfo()->getJitState() == RAMPUP_STATE)
          return false;
-      // A sufficiently large number of samples in jitted code must have been seen. 
+      // A sufficiently large number of samples in jitted code must have been seen.
       // This means that the jitted code has run for a while
-      if (TR::Recompilation::globalSampleCount < TR::Options::_jProfilingEnablementSampleThreshold) 
+      if (TR::Recompilation::globalSampleCount < TR::Options::_jProfilingEnablementSampleThreshold)
          {
          return false;
          }
       getJProfilingCompQueue().setAllowProcessing();
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Allowing generation of JProfiling bodies", 
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Allowing generation of JProfiling bodies",
             (uint32_t)getPersistentInfo()->getElapsedTime());
          }
       return true;
