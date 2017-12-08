@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -118,15 +119,21 @@ public class TestLoadingClassesFromJarfile {
 		if (!jarEntryName.endsWith(".class")) {
 			return false;
 		}
+		
+		/*
+		 * the AWT native libraries have known issues if loaded manually.
+		 * See CMVC 188841 and 188910
+		 */
 		if (jarEntryName.startsWith("sun/awt")
 				|| jarEntryName.startsWith("sun/java2d")
-				|| jarEntryName.startsWith("sun/reflect/misc/Trampoline"))
+				
+				/* sun.reflect.misc.Trampoline need to be excluded as per CMVC 197245 */
+				|| jarEntryName.startsWith("sun/reflect/misc/Trampoline")
+				
+				/* Classes that compile stubs will throw errors if loaded: OpenJ9 Issue #732 */
+				|| jarEntryName.equals("java/util/PropertyPermission.class")
+				|| jarEntryName.startsWith("java/lang/invoke"))
 		{
-			/*
-			 * the AWT native libraries have known issues if loaded manually.
-			 * See CMVC 188841 and 188910
-			 * sun.reflect.misc.Trampoline need to be excluded as per CMVC 197245
-			 */
 			return false;
 		}
 		return true;
@@ -162,7 +169,7 @@ public class TestLoadingClassesFromJarfile {
 		String cmdLine[] = new String[argBuffer.size()];
 		argBuffer.toArray(cmdLine);
 		if (verbose) {
-			logger.debug(cmdLine);
+			logger.debug(Arrays.toString(cmdLine));
 		}
 		Process child = Runtime.getRuntime().exec(cmdLine);
 		AssertJUnit.assertNotNull("failed to launch child process", child);
@@ -191,7 +198,7 @@ public class TestLoadingClassesFromJarfile {
 	private void dumpCommandlineAndOutput(String[] cmdLine,
 			StreamDumper inStreamDumper, StreamDumper errorStreamDumper) {
 		logger.debug("Command line is:");
-		logger.debug(cmdLine);
+		logger.debug(Arrays.toString(cmdLine));
 		logger.debug("standard output:");
 		logger.debug(inStreamDumper.getProcessOutput());
 		logger.debug("standard error:");
