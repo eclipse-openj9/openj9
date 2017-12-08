@@ -34,16 +34,12 @@
 	<property name="JAVA_BIN" value="${JAVA_BIN}" />
 	<echo> JAVA_BIN is ${JAVA_BIN} </echo>
 	<if>
-		<or>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
-			<equals arg1="${JAVA_VERSION}" arg2="Panama"/>
-			<equals arg1="${JAVA_VERSION}" arg2="Valhalla"/>
-		</or>
+		<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 		<then>
-			<property name="JAVAC" value="${JAVA_BIN}/javac" />
+			<property name="JAVAC" value="${JAVA_BIN}/../../bin/javac" />
 		</then>
 		<else>
-			<property name="JAVAC" value="${JAVA_BIN}/../../bin/javac" />
+			<property name="JAVAC" value="${JAVA_BIN}/javac" />
 		</else>
 	</if>
 
@@ -114,8 +110,6 @@
 									<exclude name="TEST_*/build.xml" />
 									<exclude name="NativeTest/build.xml" />
 									<exclude name="SharedCPEntryInvokerTests/build.xml" />
-									<exclude name="Valhalla/build.xml" />
-									<exclude name="Panama/build.xml" />
 								</fileset>
 							</subant>
 						</then>
@@ -127,8 +121,6 @@
 								<property name="compiler.javac" value="${JAVAC}" />
 								<fileset dir="../../" includes="${build.list}" >
 									<exclude name="TEST_*/build.xml" />
-									<exclude name="Panama/build.xml" />
-									<exclude name="Valhalla/build.xml" />
 									<exclude name="OpenJ9_Jsr_292_API/build.xml" />
 								</fileset>
 							</subant>
@@ -150,8 +142,6 @@
 								<fileset dir="../../" includes="${build.list}" >
 									<exclude name="TEST_*/build.xml" />
 									<exclude name="NativeTest/build.xml" />
-									<exclude name="Valhalla/build.xml" />
-									<exclude name="Panama/build.xml" />
 								</fileset>
 							</subant>
 						</then>
@@ -163,14 +153,23 @@
 								<property name="compiler.javac" value="${JAVAC}" />
 								<fileset dir="../../" includes="${build.list}" >
 									<exclude name="TEST_*/build.xml" />
-									<exclude name="Panama/build.xml" />
-									<exclude name="Valhalla/build.xml" />
 								</fileset>
 							</subant>
 						</else>
 					</if>
 				</then>
 			</elseif>
+			<else>
+				<subant target="">
+					<property name="build.dir" value="subant1.build" />
+					<property name="not.overloaded" value="not.overloaded" />
+					<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
+					<property name="compiler.javac" value="${JAVAC}" />
+					<fileset dir="../../" includes="${build.list}">
+						<exclude name="TEST_*/build.xml" />
+					</fileset>
+				</subant>
+			</else>
 		</if>
 	</target>
 
