@@ -327,11 +327,33 @@ static std::string packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
 static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
    {
    using JAAS::J9ServerMessageType;
+   TR::CompilationInfoPerThread *compInfoPT = fe->_compInfoPT;
+   J9VMThread *vmThread = compInfoPT->getCompilationThread();
+   TR_Memory  *trMemory = compInfoPT->getCompilation()->trMemory();
 
-   TR_Memory *trMemory = fe->_compInfoPT->getCompilation()->trMemory();
+   // release VM access before doing a potentially long wait
+   TR_ASSERT(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS, "Must have VM access");
+   releaseVMAccess(vmThread);
+
+   auto response = client->read();
+
+   // re-acquire VM access and check for possible class unloading
+   acquireVMAccessNoSuspend(vmThread);
+
+   // If JVM has unloaded classes inform the server to abort this compilation
+   if (compInfoPT->compilationShouldBeInterrupted())
+      {
+      client->writeError(); // inform the server
+      auto comp = compInfoPT->getCompilation();
+      if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
+            "Interrupting remote compilation of %s @ %s", comp->signature(), comp->getHotnessName());
+
+      comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
+      }
 
    bool done = false;
-   switch (client->read())
+   switch (response)
       {
       case J9ServerMessageType::compilationCode:
          done = true;
@@ -2088,7 +2110,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
    {
    bool doDowngrade = false;
    J9Method *method = entry->getMethodDetails().getMethod();
-   if (!isCompiled(method) && /*entry->_priority <= CP_ASYNC_MAX &&*/
+   if (entry->_oldStartPC == 0 && /*entry->_priority <= CP_ASYNC_MAX &&*/
        entry->_optimizationPlan->getOptLevel() == warm && // only warm compilations are subject to downgrades
        !entry->isDLTCompile() &&
        !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold))
@@ -9877,8 +9899,11 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       // If we want to compile without VM access, now it's the time to release it
-      // For the JaaS client we must not enter this path. The class unload monitor will be acquired and released at a later point instead.
-      if (!compiler->getOption(TR_DisableNoVMAccess))
+      // For the JaaS client we must not enter this path. The class unload monitor 
+      // will not be acquired/releases and we'll only release VMaccess when 
+      // waiting for a reply from the server
+      if (!compiler->getOption(TR_DisableNoVMAccess) &&
+         compiler->getPersistentInfo()->getJaasMode() != CLIENT_MODE)
          {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
          bool doAcquireClassUnloadMonitor = true;
@@ -9891,8 +9916,7 @@ TR::CompilationInfoPerThreadBase::compile(
             TR::MonitorTable::get()->readAcquireClassUnloadMonitor(getCompThreadId());
             haveLockedClassUnloadMonitor = true;
             }
-         if (compiler->getPersistentInfo()->getJaasMode() != CLIENT_MODE)
-            releaseVMAccess(vmThread);
+         releaseVMAccess(vmThread);
          // GC can go ahead now.
          }
 
@@ -10027,6 +10051,7 @@ TR::CompilationInfoPerThreadBase::compile(
          }
       else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE) // Jaas Client Mode
          {
+         TR_ASSERT(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS, "Client must work with VM access");
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             {
             TR_VerboseLog::writeLineLocked(
@@ -10129,7 +10154,6 @@ TR::CompilationInfoPerThreadBase::compile(
          if (compiler->getOption(TR_EnableHCR) || compiler->getOption(TR_FullSpeedDebug))
 #endif
             {
-
             if (haveLockedClassUnloadMonitor)
                {
                TR::MonitorTable::get()->readReleaseClassUnloadMonitor(getCompThreadId());
