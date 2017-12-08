@@ -946,7 +946,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          int32_t *start = fe->getReferenceSlotsInClass(TR::comp(), clazz);
          if (!start)
-            client->write("");
+            client->write(std::string(""));
          else
             {
             int32_t numSlots = 0;
