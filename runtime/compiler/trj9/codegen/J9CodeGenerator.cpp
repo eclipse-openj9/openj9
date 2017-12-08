@@ -353,8 +353,8 @@ J9::CodeGenerator::lowerCompressedRefs(
       address = loadOrStoreNode->getFirstChild();
       loadOrStoreOp = self()->comp()->il.opCodeForIndirectLoad(TR::Int32);
       }
-   else if ((loadOrStoreNode->getOpCode().isStoreIndirect() || 
-              loadOrStoreNode->getOpCodeValue() == TR::arrayset) && 
+   else if ((loadOrStoreNode->getOpCode().isStoreIndirect() ||
+              loadOrStoreNode->getOpCodeValue() == TR::arrayset) &&
                  shouldBeCompressed)
       {
       // store value
@@ -494,7 +494,7 @@ J9::CodeGenerator::lowerCompressedRefs(
          if (address->isNull())
             l2iNode->setIsNull(true);
          }
-      
+
       // recreating an arrayset node will replace the TR::arrayset with an istorei, which is undesired
       // as arrayset nodes can set indirect references
       if (!loadOrStoreNode->getOpCode().isWrtBar() && loadOrStoreNode->getOpCodeValue() != TR::arrayset)
@@ -1550,13 +1550,6 @@ J9::CodeGenerator::doInstructionSelection()
       else if (opCode == TR::BBEnd)
          {
          TR::Block *b = self()->getCurrentEvaluationBlock();
-         if (b->isLastWarmBlock())
-            {
-            // Mark the split point between warm and cold instructions, so they
-            // can be allocated in different code sections.
-            //
-            prevInstr->setLastWarmInstruction(true);
-            }
 
          // checks for consistent monitorStack
          //
@@ -2199,8 +2192,6 @@ J9::CodeGenerator::splitWarmAndColdBlocks()
       //
       lastWarmBlock = block;
       }
-
-   lastWarmBlock->setIsLastWarmBlock();
 
    // If the last tree in the last warm block is not a TR::Goto, insert a goto tree
    // at the end of the block.
