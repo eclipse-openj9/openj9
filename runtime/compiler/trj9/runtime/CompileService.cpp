@@ -133,7 +133,7 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
    {
    try
       {
-      auto req = stream->read<std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, uint8_t*, size_t, std::string, J9::IlGeneratorMethodDetailsType>();
+      auto req = stream->read<std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, J9::IlGeneratorMethodDetailsType>();
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
@@ -146,11 +146,9 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       J9Method *ramMethod = std::get<2>(req);
       J9Class *clazz = std::get<3>(req);
       TR_Hotness opt = std::get<4>(req);
-      uint8_t *allocPtr = std::get<5>(req);
-      size_t allocSize = std::get<6>(req);
-      std::string detailsStr = std::get<7>(req);
+      std::string detailsStr = std::get<5>(req);
       TR::IlGeneratorMethodDetails *details = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
-      auto detailsType = std::get<8>(req);
+      auto detailsType = std::get<6>(req);
       doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType);
       }
    catch (const JAAS::StreamFailure &e)
