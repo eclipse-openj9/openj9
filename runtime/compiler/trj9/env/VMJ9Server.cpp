@@ -543,6 +543,7 @@ TR_J9ServerVM::setInt64FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset,
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_setInt64FieldAt, objectPointer, fieldOffset, newValue);
+   stream->read<JAAS::Void>();
    }
 
 bool
@@ -679,6 +680,7 @@ TR_J9ServerVM::scanClassForReservation (TR_OpaqueClassBlock *clazz, TR::Compilat
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_scanClassForReservation, clazz);
+   stream->read<JAAS::Void>();
    }
 
 uint32_t
@@ -748,7 +750,7 @@ TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void 
    std::string signature(signatureChars, signatureLength);
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_setJ2IThunk, thunkptr, signature);
-//   stream->read<JAAS::Void>();
+   stream->read<JAAS::Void>();
    return thunkptr;
    }
 
@@ -757,6 +759,7 @@ TR_J9ServerVM::markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClas
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_markClassForTenuredAlignment, clazz, alignFromStart);
+   stream->read<JAAS::Void>();
    }
 
 int32_t *
@@ -811,6 +814,7 @@ TR_J9ServerVM::revertToInterpreted(TR_OpaqueMethodBlock *method)
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_revertToInterpreted, method);
+   stream->read<JAAS::Void>();
    }
 
 void *
@@ -912,7 +916,7 @@ TR_J9ServerVM::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
    TR_J9VMBase::setInvokeExactJ2IThunk(thunkptr, comp);
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_setInvokeExactJ2IThunk, thunkptr);
-//   stream->read<JAAS::Void>();
+   stream->read<JAAS::Void>();
    }
 
 TR_ResolvedMethod *

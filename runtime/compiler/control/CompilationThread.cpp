@@ -733,6 +733,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          uintptrj_t fieldOffset = std::get<1>(recv);
          int64_t newValue = std::get<2>(recv);
          fe->setInt64FieldAt(objectPointer, fieldOffset, newValue);
+         client->write(JAAS::Void());
          }
          break;
       case J9ServerMessageType::VM_compareAndSwapInt64FieldAt:
@@ -816,6 +817,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          void *thunk = std::get<0>(recv);
          std::string signature = std::get<1>(recv);
          TR::compInfoPT->addThunkToBeRelocated(thunk, signature);
+         client->write(JAAS::Void());
          }
          break;
       case J9ServerMessageType::VM_setInvokeExactJ2IThunk:
@@ -823,6 +825,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<void*>();
          void *thunk = std::get<0>(recv);
          TR::compInfoPT->addInvokeExactThunkToBeRelocated((TR_J2IThunk*) thunk);
+         client->write(JAAS::Void());
          }
          break;
       case J9ServerMessageType::VM_sameClassLoaders:
@@ -845,6 +848,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          fe->scanClassForReservation(clazz, TR::comp());
+         client->write(JAAS::Void());
          }
          break;
       case J9ServerMessageType::VM_getInstanceFieldOffset:
@@ -934,6 +938,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
          uint32_t alignFromStart = std::get<1>(recv);
          fe->markClassForTenuredAlignment(TR::comp(), clazz, alignFromStart);
+         client->write(JAAS::Void());
          }
          break;
       case J9ServerMessageType::VM_getReferenceSlotsInClass:
@@ -986,6 +991,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
          fe->revertToInterpreted(method);
+         client->write(JAAS::Void());
          }
          break;
       case J9ServerMessageType::VM_getLocationOfClassLoaderObjectPointer:
