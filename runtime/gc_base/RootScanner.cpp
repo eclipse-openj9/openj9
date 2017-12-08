@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -887,6 +887,11 @@ MM_RootScanner::scanRoots(MM_EnvironmentBase *env)
 #endif /* J9VM_GC_FINALIZATION */
 	scanJNIGlobalReferences(env);
 
+	if (_jniWeakGlobalReferencesTableAsRoot) {
+		/* JNI Weak Global References table should be scanned as a hard root */
+		scanJNIWeakGlobalReferences(env);
+	}
+
 /* In the RT configuration, We can skip scanning the string table because
    all interned strings are in immortal memory and will not move. */
 	if(_stringTableAsRoot && (!_nurseryReferencesOnly && !_nurseryReferencesPossibly)){
@@ -925,7 +930,10 @@ MM_RootScanner::scanClearable(MM_EnvironmentBase *env)
 	}
 #endif /* J9VM_GC_FINALIZATION */
 
-	scanJNIWeakGlobalReferences(env);
+	if (!_jniWeakGlobalReferencesTableAsRoot) {
+		/* Skip Clearable phase if it was treated as a hard root already */
+		scanJNIWeakGlobalReferences(env);
+	}
 
 	scanPhantomReferenceObjects(env);
 	if(complete_phase_ABORT == scanPhantomReferencesComplete(env)) {
