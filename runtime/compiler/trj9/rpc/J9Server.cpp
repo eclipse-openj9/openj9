@@ -9,7 +9,7 @@ JAAS::J9ServerStream::readBlocking()
    bool ok;
    _stream->Read(&_cMsg, tag);
    if (!_cq.Next(&tag, &ok) || !ok)
-      throw JAAS::StreamFailure();
+      throw JAAS::StreamFailure("Server stream failure while doing readBlocking()");
    }
 
 void
@@ -19,7 +19,7 @@ JAAS::J9ServerStream::writeBlocking()
    bool ok;
    _stream->Write(_sMsg, tag);
    if (!_cq.Next(&tag, &ok) || !ok)
-      throw JAAS::StreamFailure();
+      throw JAAS::StreamFailure("Server stream failure while doing writeBlocking()");
    }
 
 void

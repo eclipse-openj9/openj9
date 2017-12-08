@@ -1920,7 +1920,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       default:
          // JAAS TODO more specific exception here
-         throw JAAS::StreamFailure();
+         throw JAAS::StreamFailure("JAAS: handleServerMessage received an unknown message type");
       }
    return done;
    }

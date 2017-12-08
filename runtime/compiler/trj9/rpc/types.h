@@ -13,7 +13,11 @@ namespace JAAS
    class StreamFailure: public virtual std::exception
       {
    public:
-      virtual const char* what() const throw() { return "stream failed, closed or disconnected"; }
+      StreamFailure() : _message("Generic stream failure") { }
+      StreamFailure(std::string message) : _message(message) { }
+      virtual const char* what() const throw() { return _message.c_str(); }
+   private:
+      std::string _message;
       };
 
    class StreamCancel: public virtual std::exception
@@ -25,19 +29,13 @@ namespace JAAS
    class StreamTypeMismatch: public virtual StreamFailure
       {
    public:
-      StreamTypeMismatch(std::string message) : _message(message) { }
-      virtual const char* what() const throw() { return _message.c_str(); }
-   private:
-      std::string _message;
+      StreamTypeMismatch(std::string message) : StreamFailure(message) { }
       };
 
    class StreamArityMismatch: public virtual StreamFailure
       {
    public:
-      StreamArityMismatch(std::string message) : _message(message) { }
-      virtual const char* what() const throw() { return _message.c_str(); }
-   private:
-      std::string _message;
+      StreamArityMismatch(std::string message) : StreamFailure(message) { }
       };
 }
 
