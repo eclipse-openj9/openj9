@@ -343,7 +343,9 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
    // If JVM has unloaded classes inform the server to abort this compilation
    if (compInfoPT->compilationShouldBeInterrupted())
       {
-      client->writeError(); // inform the server
+      if (response != J9ServerMessageType::compilationCode)
+         client->writeError(); // inform the server
+
       auto comp = compInfoPT->getCompilation();
       if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
          TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
