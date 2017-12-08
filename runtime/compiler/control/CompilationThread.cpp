@@ -1070,6 +1070,12 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->isClassLoadedBySystemClassLoader(clazz));
          }
          break;
+      case J9ServerMessageType::VM_getVFTEntry:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, int32_t>();
+         client->write(fe->getVFTEntry(std::get<0>(recv), std::get<1>(recv)));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only

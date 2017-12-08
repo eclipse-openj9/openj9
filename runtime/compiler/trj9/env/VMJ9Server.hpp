@@ -121,6 +121,7 @@ public:
    virtual bool isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz) override;
    virtual void setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp) override;
    virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
+   virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
    };
 
 #endif // VMJ9SERVER_H

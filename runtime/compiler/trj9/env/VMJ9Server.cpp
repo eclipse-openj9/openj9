@@ -935,3 +935,11 @@ TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj
    result->setMethodHandleLocation(methodHandleLocation);
    return result;
    }
+
+intptrj_t
+TR_J9ServerVM::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getVFTEntry, clazz, offset);
+   return std::get<0>(stream->read<intptrj_t>());
+   }

@@ -132,7 +132,7 @@ enum J9ServerMessageType
    VM_getProcessID = 260;
    VM_getIdentityHashSaltPolicy = 261;
    VM_getOffsetOfJLThreadJ9Thread = 262;
-//   VM_markHotField = 263;
+   VM_getVFTEntry = 263;
    VM_scanReferenceSlotsInClassForOffset = 264;
    VM_findFirstHotFieldTenuredClassOffset = 265;
    VM_getResolvedVirtualMethod = 266;
