@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,6 +78,7 @@ protected:
 	OMR_VM *_omrVM;
 
 	bool _stringTableAsRoot;  /**< Treat the string table as a hard root */
+	bool _jniWeakGlobalReferencesTableAsRoot;	/**< Treat JNI Weak References Table as a hard root */
 	bool _singleThread;  /**< Should the iterator operate in single threaded mode */
 
 	bool _nurseryReferencesOnly;  /**< Should the iterator only scan structures that currently contain nursery references */
@@ -238,6 +239,7 @@ public:
 		, _clij((MM_CollectorLanguageInterfaceImpl *)_extensions->collectorLanguageInterface)
 		, _omrVM(env->getOmrVM())
 		, _stringTableAsRoot(true)
+		, _jniWeakGlobalReferencesTableAsRoot(false)
 		, _singleThread(singleThread)
 		, _nurseryReferencesOnly(false)
 		, _nurseryReferencesPossibly(false)
@@ -361,7 +363,7 @@ public:
 	virtual void scanOwnableSynchronizerObjects(MM_EnvironmentBase *env);
 	virtual void scanStringTable(MM_EnvironmentBase *env);
 	void scanJNIGlobalReferences(MM_EnvironmentBase *env);
-	void scanJNIWeakGlobalReferences(MM_EnvironmentBase *env);
+	virtual void scanJNIWeakGlobalReferences(MM_EnvironmentBase *env);
 
     virtual void scanMonitorReferences(MM_EnvironmentBase *env);
     virtual CompletePhaseCode scanMonitorReferencesComplete(MM_EnvironmentBase *env);

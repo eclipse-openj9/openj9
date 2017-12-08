@@ -80,6 +80,14 @@ public:
 	{
 		_typeId = __FUNCTION__;
 		setNurseryReferencesOnly(true);
+
+		/*
+		 * In the case of Concurrent Scavenger JNI Weak Global References required to be scanned as a hard root.
+		 * The reason for this VM uses elements of table without calling a Read Barrier,
+		 * so JNI Weak Global References table should be treated as a hard root until VM code is fixed
+		 * and Read Barrier is called for each single object.
+		 */
+		_jniWeakGlobalReferencesTableAsRoot = _extensions->isConcurrentScavengerEnabled();
 	};
 
 	/*
@@ -165,6 +173,23 @@ public:
 		Assert_GC_true_with_message(env, env->getGCEnvironment()->_referenceObjectBuffer->isEmpty(), "Non-empty reference buffer in MM_EnvironmentBase* env=%p\n", env);
 		_rootClearer.scanClearable(env);
 		Assert_GC_true_with_message(env, env->getGCEnvironment()->_referenceObjectBuffer->isEmpty(), "Non-empty reference buffer in MM_EnvironmentBase* env=%p\n", env);
+	}
+
+	virtual void
+	scanJNIWeakGlobalReferences(MM_EnvironmentBase *env)
+	{
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		/*
+		 * Currently Concurrent Scavenger replaces STW Scavenger, so this check is not necessary
+		 * (Concurrent Scavenger is always in progress)
+		 * However Concurrent Scavenger runs might be interlaced with STW Scavenger time to time
+		 * (for example for reducing amount of floating garbage)
+		 */
+		if (_scavenger->isConcurrentInProgress())
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+		{
+			MM_RootScanner::scanJNIWeakGlobalReferences(env);
+		}
 	}
 
 	void
