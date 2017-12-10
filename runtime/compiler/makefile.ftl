@@ -42,6 +42,7 @@ export OMR_DIR=$(J9SRC)/omr
 export BUILD_CONFIG?=prod
 
 # Define the JIT PLATFORM
+
 <#if uma.spec.id?starts_with("win_x86-64")>
   export PLATFORM=amd64-win64-mvs
 <#elseif uma.spec.id?starts_with("win_x86")>
@@ -83,6 +84,8 @@ export BUILD_CONFIG?=prod
   export PLATFORM=s390-linux64-gcc
 <#elseif uma.spec.id?starts_with("linux_390")>
   export PLATFORM=s390-linux-gcc
+<#elseif uma.spec.id?starts_with("linux_arm_linaro")>
+  export PLATFORM=arm-linux-gcc-cross
 </#if>
 
 <#if uma.spec.flags.uma_codeCoverage.enabled>
