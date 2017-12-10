@@ -160,7 +160,7 @@ endif
 
 ifeq ($(HOST_ARCH),arm)
     CX_DEFINES+=ARMGNU ARMGNUEABI FIXUP_UNALIGNED HARDHAT
-    CX_FLAGS+=-fPIC -mfloat-abi=hard -mfpu=vfp
+    CX_FLAGS+=-fPIC -mfloat-abi=hard -mfpu=vfp -march=armv6 -marm
 endif
 
 ifeq ($(C_COMPILER),clang)
