@@ -3,6 +3,7 @@
 
 #include <grpc++/grpc++.h>
 #include "rpc/gen/compile.grpc.pb.h"
+#include "infra/Assert.hpp"
 
 namespace JAAS
 {
