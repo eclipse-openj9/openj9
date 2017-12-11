@@ -106,6 +106,8 @@
 #include "j9jitnls.h"
 #endif
 
+uint32_t serverMsgTypeCount[JAAS::J9ServerMessageType_ARRAYSIZE] = {};
+
 OMR::CodeCacheMethodHeader *getCodeCacheMethodHeader(char *p, int searchLimit, J9JITExceptionTable* metaData);
 extern "C" {
    int32_t getCount(J9ROMMethod *romMethod, TR::Options *optionsJIT, TR::Options *optionsAOT);
@@ -353,6 +355,9 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
 
       comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
       }
+
+   // update statistics for server message type
+   serverMsgTypeCount[response] += 1;
 
    bool done = false;
    switch (response)
