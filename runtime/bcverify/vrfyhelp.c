@@ -1122,7 +1122,7 @@ parseObjectOrArrayName(J9BytecodeVerificationData *verifyData, U_8 *signature)
 		U_16 length = 0;
 		UDATA classIndex = 0;
 
-		*signature++;
+		signature++;
 		string = signature;	/* remember the start of the string */
 		while (*signature++ != ';') {
 			length++;

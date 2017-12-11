@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2013 IBM Corp. and others
+ * Copyright (c) 2013, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,7 +192,7 @@ getX86CPUID(uint32_t leaf, uint32_t *cpuInfo)
 	/* Specific CPUID instruction available in Windows */
 	__cpuid(cpuInfo, cpuInfo[0]);
 
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(OSX)
 #if defined(J9X86)
 	__asm volatile
 	("mov %%ebx, %%edi;"
