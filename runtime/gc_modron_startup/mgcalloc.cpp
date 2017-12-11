@@ -498,9 +498,8 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 		Trc_MM_ArrayObjectAllocationFailedDueToExcessiveGC(vmThread);
 	}
 
+	sizeInBytesRequired = indexableOAM.getAllocateDescription()->getBytesRequested();
 	if (NULL != objectPtr) {
-		sizeInBytesRequired = indexableOAM.getAllocateDescription()->getBytesRequested();
-		
 		/* The hook could release access and so the object address could change (the value is preserved).  Since this
 		 * means the hook could write back a different value to the variable, it must be a valid lvalue (ie: not cast).
 		 */
