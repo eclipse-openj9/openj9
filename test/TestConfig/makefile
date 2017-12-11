@@ -189,7 +189,7 @@ TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); else $(EC
 ifneq ($(DEBUG),)
 $(info TEST_STATUS is $(TEST_STATUS))
 endif
-TEST_SKIP_STATUS=@$(ECHO) $@_SKIPPED
+TEST_SKIP_STATUS=$@_SKIPPED
 
 #######################################
 # include configure makefile

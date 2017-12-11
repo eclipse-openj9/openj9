@@ -95,12 +95,12 @@ sub resultReporter {
 							$tapString .= $output;
 						}
 						last;
-					} elsif ($result eq ($testName . "_SKIPPED\n")) {
-						$result =~ s/_SKIPPED\n$//;
-						push (@skipped, $result);
+					} elsif ($result =~ /(capabilities \(.*?\))\s*=>\s*${testName}_SKIPPED\n/) {
+						my $capabilities = $1;
+						push (@skipped, "$testName - $capabilities");
 						$numOfSkipped++;
 						$numOfTotal++;
-						$tapString .= "ok " . $numOfTotal . " - " . $result . " # skip\n";
+						$tapString .= "ok " . $numOfTotal . " - " . $testName . " # skip\n";
 						last;
 					}
 					$output .= '        ' . $result;
@@ -124,17 +124,17 @@ sub resultReporter {
 	print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 
 	if ($numOfPassed != 0) {
-		printTests(\@passed, "PASSED");
-		print "\n";
-	}
-
-	if ($numOfFailed != 0) {
-		printTests(\@failed, "FAILED");
+		printTests(\@passed, "PASSED test targets");
 		print "\n";
 	}
 
 	if ($numOfSkipped != 0) {
-		printTests(\@skipped, "SKIPPED");
+		printTests(\@skipped, "SKIPPED test targets due to capabilities");
+		print "\n";
+	}
+
+	if ($numOfFailed != 0) {
+		printTests(\@failed, "FAILED test targets");
 		print "\n";
 	}
 
@@ -152,8 +152,8 @@ sub resultReporter {
 }
 
 sub printTests() {
-	my ($tests, $tag) = @_;
-	print "$tag test targets:\n\t";
+	my ($tests, $msg) = @_;
+	print "$msg:\n\t";
 	print join("\n\t", @{$tests});
 	print "\n";
 }
