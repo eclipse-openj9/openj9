@@ -376,7 +376,7 @@ FUNCTION_START(ebbHandler)
 .LreturnEBBHanlder:
    ! If the main event handler returns non-zero, something went wrong and we`ll leave
    ! the PMU frozen and disable EBBs
-   cmpli        cr0, r3, 0
+   cmplwi        cr0, r3, 0
 
    ! Grab our TR_PPCHWProfilerEBBContext
    laddr        r3, TCB_EBB_CONTEXT(TCB)
