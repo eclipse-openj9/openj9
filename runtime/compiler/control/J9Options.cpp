@@ -2203,6 +2203,9 @@ J9::Options::fePostProcessJIT(void * base)
          {
          _samplingFrequency = 0; // disable sampling (including samplingThread)
          self()->setOption(TR_DisableKnownObjectTable);
+         // The server can compile with VM access in hand because GC is not a factor here
+         // For the same reason we don't have to use TR_EnableYieldVMAccess
+         self()->setOption(TR_DisableNoVMAccess); 
          }
       }
 
