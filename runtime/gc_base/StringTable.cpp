@@ -646,7 +646,11 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32) unicodeLength);
 			} else {
 				if (J9VMJAVALANGSTRING_COMPRESSIONFLAG(vmThread, stringClass) == 0) {
-			 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, 0);
+					/*
+					 * jitHookClassPreinitialize will process initialization events for String compression sideEffectGuards
+					 * so we must initialize the class if this is the first time we are loading it
+					 */
+			 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
 
 					if (flagClass == NULL) {
 						goto nomem;
@@ -923,7 +927,11 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 			J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32) unicodeLength);
 		} else {
 		 	if (J9VMJAVALANGSTRING_COMPRESSIONFLAG(vmThread, stringClass) == 0) {
-		 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, 0);
+				/*
+				 * jitHookClassPreinitialize will process initialization events for String compression sideEffectGuards
+				 * so we must initialize the class if this is the first time we are loading it
+				 */
+		 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
 
 				if (flagClass == NULL) {
 					goto nomem;
