@@ -29,13 +29,13 @@ namespace JAAS
    class StreamTypeMismatch: public virtual StreamFailure
       {
    public:
-      StreamTypeMismatch(std::string message) : StreamFailure(message) { }
+      StreamTypeMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "type mismatch"); }
       };
 
    class StreamArityMismatch: public virtual StreamFailure
       {
    public:
-      StreamArityMismatch(std::string message) : StreamFailure(message) { }
+      StreamArityMismatch(std::string message) : StreamFailure(message) { TR_ASSERT(false, "arity mismatch"); }
       };
 }
 

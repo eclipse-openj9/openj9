@@ -344,7 +344,7 @@ static bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
    if (compInfoPT->compilationShouldBeInterrupted())
       {
       if (response != J9ServerMessageType::compilationCode)
-         client->writeError(); // inform the server
+         client->writeError(); // inform the server if compilation is not yet complete
 
       auto comp = compInfoPT->getCompilation();
       if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
@@ -3652,7 +3652,10 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationRecoverableTrampolineFailure:
             case compilationIllegalCodeCacheSwitch:
             case compilationRecoverableCodeCacheError:
-               tryCompilingAgain = true;
+               if (entry->isRemoteCompReq())
+                  tryCompilingAgain = false;
+               else
+                  tryCompilingAgain = true;
                break;
             case compilationExcessiveComplexity:
             case compilationHeapLimitExceeded:
@@ -12248,6 +12251,12 @@ TR::CompilationInfoPerThreadBase::processException(
 
    catch (const TR::CompilationInterrupted &e)
       {
+      _methodBeingCompiled->_compErrCode = compilationInterrupted;
+      }
+   catch (const JAAS::StreamCancel &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJaas))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "JAAS StreamCancel: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationInterrupted;
       }
    catch (const TR::UnimplementedOpCode &e)
