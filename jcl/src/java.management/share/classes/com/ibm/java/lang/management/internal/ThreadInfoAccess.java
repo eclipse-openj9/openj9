@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,8 +20,25 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-module jdk.management {
-	exports com.ibm.lang.management;
-	exports com.ibm.virtualization.management;
-	provides sun.management.spi.PlatformMBeanProvider with com.ibm.lang.management.internal.PlatformMBeanProvider;
+package com.ibm.java.lang.management.internal;
+
+import java.lang.management.ThreadInfo;
+
+/**
+ * Interface to allow privileged access to ThreadInfo class
+ * from outside the java.lang.management package.
+ */
+public interface ThreadInfoAccess {
+	
+	/**
+	 * Returns the native thread ID for a given ThreadInfo object. Currently
+	 * used to give access to ExtendedThreadInfoImpl without opening
+	 * java.management for reflection.
+	 * 
+	 * @param threadinfo Object containing information about a snapshot of 
+	 * the state of a thread.
+	 * 
+	 * @return @{long} representing the native thread ID
+	 */
+	public long getNativeTId(ThreadInfo threadinfo);
 }

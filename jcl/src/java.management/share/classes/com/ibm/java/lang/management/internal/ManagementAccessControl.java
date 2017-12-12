@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,8 +20,34 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-module jdk.management {
-	exports com.ibm.lang.management;
-	exports com.ibm.virtualization.management;
-	provides sun.management.spi.PlatformMBeanProvider with com.ibm.lang.management.internal.PlatformMBeanProvider;
+package com.ibm.java.lang.management.internal;
+
+import com.ibm.oti.util.Msg;
+
+/**
+ * This class is used to give access to APIs which give access to
+ * package private methods in the java.management module.
+ */
+public class ManagementAccessControl {
+	
+	
+	private static ThreadInfoAccess threadInfoAccess;
+	
+	/**
+	 * Sets the access object for ThreadInfo. This should only be called once.
+	 */
+	public static void setThreadInfoAccess(ThreadInfoAccess access) {
+		if (threadInfoAccess != null) {
+			/*[MSG "K05ba", "Cannot set access twice"]*/
+			throw new SecurityException(Msg.getString("K05ba")); //$NON-NLS-1$
+		}
+		threadInfoAccess = access;
+	}
+
+	/**
+	 * Gets the access object for ThreadInfo. 
+	 */
+	public static ThreadInfoAccess getThreadInfoAccess() {
+		return threadInfoAccess;
+	}
 }

@@ -38,6 +38,9 @@
 			<case value="java.management">
 				<removeexportsoropens action="exports" package="com.ibm.lang.management" />
 				<removeexportsoropens action="exports" package="com.ibm.virtualization.management" />
+				<removeexportsoropens action="exports" package="com.ibm.java.lang.management.internal" />
+				<removeexportsoropens action="opens" package="java.lang.management" />
+				<replaceexportsoropens module.old="com.ibm.management" module.new="" action="exports" />
 
 				<delete verbose="true">
 					<fileset dir="${module.dir}/classes">
@@ -51,6 +54,8 @@
 				<removeexportsoropens action="exports" package="com.ibm.dataaccess" />
 				<removeexportsoropens action="exports" package="com.ibm.jvm" />
 				<removeexportsoropens action="exports" package="com.ibm.oti.shared" />
+				<removeexportsoropens action="exports" package="com.ibm.oti.util" />
+				<removeexportsoropens action="exports" package="com.ibm.oti.vm" />
 				<removeexportsoropens action="exports" package="com.ibm.sharedclasses.spi" />
 				<replaceexportsoropens action="exports" module.old="com.ibm.dtfj" module.new="" />
 				<replaceexportsoropens action="exports" module.old="com.ibm.dtfjview" module.new="" />
@@ -91,6 +96,15 @@
 			<case value="com.ibm.dtfjview">
 				<replaceexportsoropens action="exports" module.old="com.ibm.dtfj" module.new="" />
 				<replacerequires module.old="com.ibm.dtfj" module.new="openj9.dtfj" />
+			</case>
+			<case value="jdk.jconsole">
+				<replacerequires module.old="com.ibm.management" module.new="jdk.management" />
+			</case>
+			<case value="jdk.management">
+				<removeexportsoropens action="exports" package="com.sun.management.internal" />
+			</case>
+			<case value="openj9.sfj">
+				<replacerequires module.old="com.ibm.management" module.new="jdk.management" />
 			</case>
 			<default>
 				<echo message="No preparation required for module ${module.name}" />
