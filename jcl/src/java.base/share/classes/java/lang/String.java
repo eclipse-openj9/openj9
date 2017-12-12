@@ -2585,7 +2585,15 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public void getChars(int start, int end, char[] data, int index) {
 		if (0 <= start && start <= end && end <= lengthInternal()) {
-			getCharsNoBoundChecks(start, end, data, index);
+			if (enableCompression && (null == compressionFlag || count >= 0)) {
+				decompress(value, start, data, index, end - start);
+			} else {
+				/*[IF Sidecar19-SE]*/
+				decompressedArrayCopy(value, start, data, index, end - start);
+				/*[ELSE]*/
+				System.arraycopy(value, start, data, index, end - start);
+				/*[ENDIF]*/
+			}
 		} else {
 			throw new StringIndexOutOfBoundsException();
 		}
