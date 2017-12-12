@@ -59,7 +59,7 @@
 			<variation>-XX:+HeapManagementMXBeanCompatibility</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	--add-exports=com.ibm.management/com.ibm.lang.management.internal=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED \
+	--add-exports=jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED \
 	-XX:SharedCacheHardLimit=16m -Xscmx1m -Xshareclasses:name=testJLM,reset \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -110,7 +110,7 @@
 			<variation>-XX:+HeapManagementMXBeanCompatibility</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	--add-exports=com.ibm.management/com.ibm.lang.management.internal=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED \
+	--add-exports=jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED \
 	-XX:SharedCacheHardLimit=16m -Xscmx1m -Xshareclasses:name=testJLM,reset \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -161,7 +161,7 @@
 			<variation>-XX:+HeapManagementMXBeanCompatibility</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	--add-exports=com.ibm.management/com.ibm.lang.management.internal=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED \
+	--add-exports=jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED --add-exports=java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED \
 	-XX:SharedCacheHardLimit=16m -Xscmx1m -Xshareclasses:name=testJLM,reset \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \

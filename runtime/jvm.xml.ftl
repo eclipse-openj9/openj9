@@ -1283,6 +1283,15 @@
 							</then>
 						</if>
 
+						<if>
+							<not>
+								<available file="${r"${j9jcl.module.info}/module-info.java"}" type="file" />
+							</not>
+							<then>
+								<copy file="${r"${output}/${module.name}_extracted/classes/module-info.java"}" tofile="${r"${j9jcl.module.info}/module-info.java"}" /> 
+							</then>
+						</if>
+						<!-- Always call merge target to fix duplicates and formatting issues after we process module-info.java in j9modules.xml ant target -->
 						<antcall target="-merge-module-info">
 							<param name="module.info.first"  value="${r"${j9jcl.module.info}/module-info.java"}" />
 							<param name="module.info.second" value="${r"${output}/${module.name}_extracted/classes/module-info.java"}" />
@@ -1519,6 +1528,7 @@
 
 						<delete file="${r"${output}"}/jmods/com.ibm.sharedclasses.jmod" quiet="true" />
 						<delete file="${r"${output}"}/jmods/com.ibm.dataaccess.jmod" quiet="true" />
+						<delete file="${r"${output}"}/jmods/com.ibm.management.jmod" quiet="true" />
 						<delete file="${r"${output}"}/jmods/com.ibm.traceformat.jmod" quiet="true" />
 						<delete file="${r"${output}"}/jmods/com.ibm.dtfj.jmod" quiet="true" />
 						<delete file="${r"${output}"}/jmods/com.ibm.dtfjview.jmod" quiet="true" />
@@ -1541,6 +1551,8 @@
 									<or>
 										<available file="${r"${j9jcl.dir}"}/@{module.name}/share/classes/module-info.java" type="file" />
 										<available file="${r"${j9jcl.dir}"}/@{module.name}/share/classes/module-info.java.extra" type="file" />
+										<equals arg1="@{module.name}" arg2="jdk.jconsole" />
+										<equals arg1="@{module.name}" arg2="openj9.sfj" />
 									</or>
 									<then>
 										<property name="j9jcl-module.@{module.name}" value="true" />

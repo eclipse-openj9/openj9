@@ -45,7 +45,8 @@ java.management
 jdk.management
 
 # requires jdk.management
-com.ibm.management
+jdk.jconsole
+openj9.sfj
 
 # temporary: to be provided by Z crypto team
 com.ibm.crypto.hdwrcca

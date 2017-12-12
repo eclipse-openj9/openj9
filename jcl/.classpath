@@ -35,7 +35,6 @@
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.dtfj/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.dtfjview/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.gpu/share/classes"/>
-	<classpathentry excluding="**/module-info.java" kind="src" path="src/com.ibm.management/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.sharedclasses/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.traceformat/share/classes"/>
 	<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190.jar"/>

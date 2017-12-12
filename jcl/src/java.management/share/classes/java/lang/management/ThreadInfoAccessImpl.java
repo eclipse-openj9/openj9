@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,15 +20,19 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
+package java.lang.management;
+
+import com.ibm.java.lang.management.internal.ThreadInfoAccess;
 
 /**
- * OpenJ9 management extensions.
+ * Implementation class to allow privileged access to ThreadInfo
+ * class from outside the java.lang.management package.
  */
-module com.ibm.management {
-	requires transitive java.management;
-	requires transitive jdk.management;
-	requires java.logging;
-	exports com.ibm.lang.management;
-	exports com.ibm.virtualization.management;
-	provides sun.management.spi.PlatformMBeanProvider with com.ibm.lang.management.internal.PlatformMBeanProvider;
+class ThreadInfoAccessImpl implements ThreadInfoAccess {
+
+	@Override
+	public long getNativeTId(ThreadInfo threadinfo) {
+		return threadinfo.getNativeThreadId();
+	}
+
 }
