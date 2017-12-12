@@ -23,9 +23,13 @@
 #include "optimizer/J9ValuePropagation.hpp"
 #include "optimizer/VPBCDConstraint.hpp"
 #include "compile/Compilation.hpp"              // for Compilation, comp
+#include "il/symbol/ParameterSymbol.hpp"
 #include "il/Node.hpp"                          // for Node, etc
 #include "il/Node_inlines.hpp"                  // for Node::getFirstChild, etc
 #include "il/Symbol.hpp"                        // for Symbol, etc
+#include "env/CHTable.hpp"
+#include "env/ClassTableCriticalSection.hpp"
+#include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
 #include "optimizer/Optimization_inlines.hpp"   // for trace()
 #include "env/j9method.h"
@@ -37,6 +41,7 @@
 #include "optimizer/J9TransformUtil.hpp"       // for calculateElementAddress
 #include "il/symbol/StaticSymbol.hpp"           // for StaticSymbol
 #include "env/VMAccessCriticalSection.hpp"      // for VMAccessCriticalSection
+#include "runtime/RuntimeAssumptions.hpp"
 
 #define OPT_DETAILS "O^O VALUE PROPAGATION: "
 
@@ -768,4 +773,251 @@ J9::ValuePropagation::doDelayedTransformations()
    _callsToBeFoldedToIconst.deleteAll();
 
    OMR::ValuePropagation::doDelayedTransformations();
+   }
+
+
+
+void
+J9::ValuePropagation::getParmValues()
+   {
+   // Determine how many parms there are
+   //
+   TR::ResolvedMethodSymbol *methodSym = comp()->getMethodSymbol();
+   int32_t numParms = methodSym->getParameterList().getSize();
+   if (numParms == 0)
+      return;
+
+   // Allocate the constraints array for the parameters
+   //
+   _parmValues = (TR::VPConstraint**)trMemory()->allocateStackMemory(numParms*sizeof(TR::VPConstraint*));
+
+   // Create a constraint for each parameter that we can find info for.
+   // First look for a "this" parameter then look through the method's signature
+   //
+   TR_ResolvedMethod *method = comp()->getCurrentMethod();
+   TR_OpaqueClassBlock *classObject;
+
+   if (!chTableValidityChecked() && usePreexistence())
+      {
+      TR::ClassTableCriticalSection setCHTableWasValid(comp()->fe());
+      if (comp()->getFailCHTableCommit())
+         setChTableWasValid(false);
+      else
+         setChTableWasValid(true);
+      setChTableValidityChecked(true);
+      }
+
+   int32_t parmIndex = 0;
+   TR::VPConstraint *constraint = NULL;
+   ListIterator<TR::ParameterSymbol> parms(&methodSym->getParameterList());
+   TR::ParameterSymbol *p = parms.getFirst();
+   if (!comp()->getCurrentMethod()->isStatic())
+      {
+      if (p && p->getOffset() == 0)
+         {
+         classObject = method->containingClass();
+
+         TR_OpaqueClassBlock *prexClass = NULL;
+         if (usePreexistence())
+            {
+            TR::ClassTableCriticalSection usesPreexistence(comp()->fe());
+
+            prexClass = classObject;
+            if (TR::Compiler->cls.isAbstractClass(comp(), classObject))
+               classObject = comp()->getPersistentInfo()->getPersistentCHTable()->findSingleConcreteSubClass(classObject, comp());
+
+            if (!classObject)
+               {
+               classObject = prexClass;
+               prexClass = NULL;
+               }
+            else
+               {
+               TR_PersistentClassInfo * cl = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classObject, comp());
+               if (!cl)
+                  prexClass = NULL;
+               else
+                  {
+                  if (!cl->shouldNotBeNewlyExtended())
+                     _resetClassesThatShouldNotBeNewlyExtended.add(cl);
+                  cl->setShouldNotBeNewlyExtended(comp()->getCompThreadID());
+
+                  TR_ScratchList<TR_PersistentClassInfo> subClasses(trMemory());
+                  TR_ClassQueries::collectAllSubClasses(cl, &subClasses, comp());
+
+                  ListIterator<TR_PersistentClassInfo> it(&subClasses);
+                  TR_PersistentClassInfo *info = NULL;
+                  for (info = it.getFirst(); info; info = it.getNext())
+                     {
+                     if (!info->shouldNotBeNewlyExtended())
+                        _resetClassesThatShouldNotBeNewlyExtended.add(info);
+                     info->setShouldNotBeNewlyExtended(comp()->getCompThreadID());
+                     }
+                  }
+               }
+
+            }
+
+         if (prexClass && !fe()->classHasBeenExtended(classObject))
+            {
+            TR_OpaqueClassBlock *jlKlass = fe()->getClassClassPointer(classObject);
+            if (jlKlass)
+               {
+               if (classObject != jlKlass)
+                  {
+                  if (!fe()->classHasBeenExtended(classObject))
+                     constraint = TR::VPFixedClass::create(this, classObject);
+                  else
+                     constraint = TR::VPResolvedClass::create(this, classObject);
+                  }
+               else
+                  constraint = TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject);
+               constraint = constraint->intersect(TR::VPPreexistentObject::create(this, prexClass), this);
+               TR_ASSERT(constraint, "Cannot intersect constraints");
+               }
+            }
+         else
+            {
+            // Constraining the receiver's type here should be fine, even if
+            // its declared type is an interface (i.e. for a default method
+            // implementation). The receiver must always be an instance of (a
+            // subtype of) the type that declares the method.
+            TR_OpaqueClassBlock *jlKlass = fe()->getClassClassPointer(classObject);
+            if (jlKlass)
+               {
+               if (classObject != jlKlass)
+                  constraint = TR::VPResolvedClass::create(this, classObject);
+               else
+                  constraint = TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject);
+               }
+            }
+
+         if (0 && constraint) // cannot do this if 'this' is changed in the method...allow the non null property on the TR::Node set by IL gen to dictate the creation of non null constraint
+            {
+            constraint = constraint->intersect(TR::VPNonNullObject::create(this), this);
+            TR_ASSERT(constraint, "Cannot intersect constraints");
+            }
+
+         _parmValues[parmIndex++] = constraint;
+         p = parms.getNext();
+         }
+      }
+
+   TR_MethodParameterIterator * parmIterator = method->getParameterIterator(*comp());
+   for ( ; p; p = parms.getNext())
+      {
+      TR_ASSERT(!parmIterator->atEnd(), "Ran out of parameters unexpectedly.");
+      TR::DataType dataType = parmIterator->getDataType();
+      if ((dataType == TR::Int8 || dataType == TR::Int16)
+          && comp()->getOption(TR_AllowVPRangeNarrowingBasedOnDeclaredType))
+         {
+         _parmValues[parmIndex++] = TR::VPIntRange::create(this, dataType, TR_maybe);
+         }
+      else if (dataType == TR::Aggregate)
+         {
+         constraint = NULL;
+
+         TR_OpaqueClassBlock *opaqueClass = parmIterator->getOpaqueClass();
+         if (opaqueClass)
+            {
+            TR_OpaqueClassBlock *prexClass = NULL;
+            if (usePreexistence())
+               {
+               TR::ClassTableCriticalSection usesPreexistence(comp()->fe());
+
+               prexClass = opaqueClass;
+               if (TR::Compiler->cls.isInterfaceClass(comp(), opaqueClass) || TR::Compiler->cls.isAbstractClass(comp(), opaqueClass))
+                  opaqueClass = comp()->getPersistentInfo()->getPersistentCHTable()->findSingleConcreteSubClass(opaqueClass, comp());
+
+               if (!opaqueClass)
+                  {
+                  opaqueClass = prexClass;
+                  prexClass = NULL;
+                  }
+               else
+                  {
+                  TR_PersistentClassInfo * cl = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(opaqueClass, comp());
+                  if (!cl)
+                     prexClass = NULL;
+                  else
+                     {
+                     if (!cl->shouldNotBeNewlyExtended())
+                        _resetClassesThatShouldNotBeNewlyExtended.add(cl);
+                     cl->setShouldNotBeNewlyExtended(comp()->getCompThreadID());
+
+                     TR_ScratchList<TR_PersistentClassInfo> subClasses(trMemory());
+                     TR_ClassQueries::collectAllSubClasses(cl, &subClasses, comp());
+
+                     ListIterator<TR_PersistentClassInfo> it(&subClasses);
+                     TR_PersistentClassInfo *info = NULL;
+                     for (info = it.getFirst(); info; info = it.getNext())
+                        {
+                        if (!info->shouldNotBeNewlyExtended())
+                           _resetClassesThatShouldNotBeNewlyExtended.add(info);
+                        info->setShouldNotBeNewlyExtended(comp()->getCompThreadID());
+                        }
+                     }
+                  }
+
+               }
+
+            if (prexClass && !fe()->classHasBeenExtended(opaqueClass))
+               {
+               TR_OpaqueClassBlock *jlKlass = fe()->getClassClassPointer(opaqueClass);
+               if (jlKlass)
+                  {
+                  if (opaqueClass != jlKlass)
+                     {
+                     if (!fe()->classHasBeenExtended(opaqueClass))
+                        constraint = TR::VPFixedClass::create(this, opaqueClass);
+                     else
+                        constraint = TR::VPResolvedClass::create(this, opaqueClass);
+                     }
+                  else
+                     constraint = TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject);
+                  constraint = constraint->intersect(TR::VPPreexistentObject::create(this, prexClass), this);
+                  TR_ASSERT(constraint, "Cannot intersect constraints");
+                  }
+               }
+            else if (!TR::Compiler->cls.isInterfaceClass(comp(), opaqueClass)
+                     || comp()->getOption(TR_TrustAllInterfaceTypeInfo))
+               {
+               // Interface-typed parameters are not handled here because they
+               // will accept arbitrary objects.
+               TR_OpaqueClassBlock *jlKlass = fe()->getClassClassPointer(opaqueClass);
+               if (jlKlass)
+                  {
+                  if (opaqueClass != jlKlass)
+                     constraint = TR::VPResolvedClass::create(this, opaqueClass);
+                  else
+                     constraint = TR::VPObjectLocation::create(this, TR::VPObjectLocation::JavaLangClassObject);
+                  }
+               }
+            }
+         else if (0) //added here since an unresolved parm could be an interface in which case nothing is known
+            {
+            char *sig;
+            uint32_t len;
+            sig = parmIterator->getUnresolvedJavaClassSignature(len);
+            constraint = TR::VPUnresolvedClass::create(this, sig, len, method);
+            if (usePreexistence() && parmIterator->isClass())
+               {
+               classObject = constraint->getClass();
+               if (classObject && !fe()->classHasBeenExtended(classObject))
+                  constraint = TR::VPFixedClass::create(this, classObject);
+               constraint = constraint->intersect(TR::VPPreexistentObject::create(this, classObject), this);
+               TR_ASSERT(constraint, "Cannot intersect constraints");
+               }
+            }
+
+         _parmValues[parmIndex++] = constraint;
+         }
+      else
+         {
+         _parmValues[parmIndex++] = NULL;
+         }
+      parmIterator->advanceCursor();
+      }
+
+   TR_ASSERT(parmIterator->atEnd() && parmIndex == numParms, "Bad signature for owning method");
    }

@@ -56,6 +56,8 @@ class ValuePropagation : public OMR::ValuePropagation
    bool isKnownStringObject(TR::VPConstraint *constraint);
    TR_YesNoMaybe isStringObject(TR::VPConstraint *constraint);
 
+   virtual void getParmValues();
+
    private:
 
    struct TreeIntResultPair {
