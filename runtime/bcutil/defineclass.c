@@ -488,10 +488,10 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 	}
 
 	/* Determine allowed class file version */
-
 #ifdef J9VM_OPT_SIDECAR
-	/* Jazz 107424: update the max class version number on 2.9 to v53.0 class files */
-	if (J2SE_VERSION(vm) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V10) {
+		translationFlags |= BCT_Java10MajorVersionShifted;
+	} else if (J2SE_VERSION(vm) >= J2SE_19) {
 		translationFlags |= BCT_Java9MajorVersionShifted;
 	} else if (J2SE_VERSION(vm) >= J2SE_18) {
 		translationFlags |= BCT_Java8MajorVersionShifted;
