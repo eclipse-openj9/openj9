@@ -433,17 +433,10 @@ J9::CodeCache::addFreeBlock(void  *voidMetaData)
                // Prevent deallocating twice by freeing only for the last body
                if (TR::Compiler->mtd.startPC((TR_OpaqueMethodBlock*)metaData->ramMethod) == (uintptr_t)metaData->startPC)
                   {
-                  TR_PersistentProfileInfo *pi = pmi->getProfileInfo();
-                  if (pi && !TR::Options::getCmdLineOptions()->getOption(TR_DisableProfilingDataReclamation))
-                     {
-                     if (TR::Options::getVerboseOption(TR_VerboseReclamation))
-                        {
-                           TR_VerboseLog::writeLineLocked(TR_Vlog_RECLAMATION, "Reclaiming PersistentProfileInfo 0x%p.", pi);
-                        }
-                     pi->~TR_PersistentProfileInfo();
-                     TR_Memory::jitPersistentFree(pi);
-                     pmi->setProfileInfo(NULL);
-                     }
+                  // Clear profile info
+                  pmi->setBestProfileInfo(NULL);
+                  pmi->setRecentProfileInfo(NULL);
+
                   if (TR::Options::getVerboseOption(TR_VerboseReclamation))
                      {
                         TR_VerboseLog::writeLineLocked(TR_Vlog_RECLAMATION, "Reclaiming PersistentMethodInfo 0x%p.", pmi);

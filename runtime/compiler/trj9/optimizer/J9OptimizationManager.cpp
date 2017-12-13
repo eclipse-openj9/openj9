@@ -112,7 +112,7 @@ J9::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFacto
       case OMR::osrExceptionEdgeRemoval:
          _flags.set(doesNotRequireAliasSets);
          break;
-      case OMR::jProfiling:
+      case OMR::jProfilingBlock:
          _flags.set(doesNotRequireAliasSets);
          break;
       default:

@@ -115,7 +115,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/trj9/optimizer/OSRGuardInsertion.cpp \
     compiler/trj9/optimizer/OSRGuardRemoval.cpp \
     compiler/trj9/optimizer/OSRGuardAnalysis.cpp \
-    compiler/trj9/optimizer/JProfiling.cpp \
+    compiler/trj9/optimizer/JProfilingBlock.cpp \
+    compiler/trj9/optimizer/JProfilingValue.cpp \
     omr/compiler/optimizer/Inliner.cpp \
     omr/compiler/optimizer/RematTools.cpp \
     omr/compiler/optimizer/IntersectionBitVectorAnalysis.cpp \

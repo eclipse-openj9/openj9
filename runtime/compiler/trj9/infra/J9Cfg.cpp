@@ -68,20 +68,19 @@
 
 static TR_PersistentProfileInfo *getProfilingInfoForCFG(TR::Compilation *comp, TR::CFG *cfg)
    {
+   TR_PersistentProfileInfo *info = TR_PersistentProfileInfo::get(comp);
    if (cfg == comp->getFlowGraph()
        && comp->getRecompilationInfo())
-      return comp->getRecompilationInfo()->getMethodInfo()->getProfileInfo();
+      return info;
 
    if ((*(TR_BlockFrequencyInfo::getEnableJProfilingRecompilation())) == -1 
        && cfg->getMethodSymbol()
        && cfg->getMethodSymbol()->getResolvedMethod()
-       && comp->getRecompilationInfo()
-       && comp->getRecompilationInfo()->getMethodInfo()
-       && comp->getRecompilationInfo()->getMethodInfo()->getProfileInfo()
-       && comp->getRecompilationInfo()->getMethodInfo()->getProfileInfo()->getBlockFrequencyInfo()
-       && comp->getRecompilationInfo()->getMethodInfo()->getProfileInfo()->getBlockFrequencyInfo()->isJProfilingData())
+       && info
+       && info->getBlockFrequencyInfo()
+       && info->getBlockFrequencyInfo()->isJProfilingData())
       {
-      return comp->getRecompilationInfo()->getMethodInfo()->getProfileInfo();
+      return info;
       }
    return NULL;
    }

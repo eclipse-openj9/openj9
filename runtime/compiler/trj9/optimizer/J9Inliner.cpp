@@ -886,15 +886,10 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
          else
             guard = new (comp()->trHeapMemory()) TR_VirtualGuardSelection(TR_ProfiledGuard, TR_VftTest, tempreceiverClass);
 
-
-         TR_ValueProfileInfo * jitValueProfileInfo = TR_ValueProfileInfo::get(comp());
-
          // if the previous value was from the interpreter profiler
          // don't apply the optimization
          TR_ByteCodeInfo &bcInfo = _bcInfo;  //callNode->getByteCodeInfo();
-         if (jitValueProfileInfo && (valueInfo->getTopProbability() == 1.0f)
-             && (valueInfo == jitValueProfileInfo->getValueInfo(bcInfo, comp()))
-             && !comp()->isProfilingCompilation())
+         if (valueInfo->getTopProbability() == 1.0f && valueInfo->getProfiler()->getSource() < LastProfiler && !comp()->isProfilingCompilation())
             guard->setIsHighProbablityProfiledGuard();
 
          heuristicTrace(inliner->tracer(),"Creating a profiled call. callee Symbol %p frequencyadjustment %f",_initialCalleeSymbol, val);
@@ -963,9 +958,9 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
    if (comp()->trace(OMR::inlining))
       traceMsg(comp(), "OK, all classes check out, we'll try to get their method implementations.\n");
 
-   TR_ScratchList<TR_ExtraAddressInfo> methodsList(comp()->trMemory());
+   TR_ScratchList<TR_AddressInfo::ProfiledMethod> methodsList(comp()->trMemory());
    // this API doesn't do a sort
-   valueInfo->getMethodsList(comp(), _callerResolvedMethod, calleeClass(), _vftSlot, (List<TR_ExtraAbstractInfo> *)&methodsList);
+   valueInfo->getMethodsList(comp(), _callerResolvedMethod, calleeClass(), _vftSlot, &methodsList);
 
    int numMethods = methodsList.getSize();
 
@@ -973,11 +968,11 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
       traceMsg(comp(), "OK, all classes check out, we'll try to get their method implementations (%d).\n", numMethods);
 
 
-   ListIterator<TR_ExtraAddressInfo> methodValuesIt(&methodsList);
-   TR_ExtraAddressInfo *profiledMethodInfo;
-   TR_ExtraAddressInfo *bestMethodInfo = methodValuesIt.getFirst();
+   ListIterator<TR_AddressInfo::ProfiledMethod> methodValuesIt(&methodsList);
+   TR_AddressInfo::ProfiledMethod *profiledMethodInfo;
+   TR_AddressInfo::ProfiledMethod *bestMethodInfo = methodValuesIt.getFirst();
 
-   TR_ExtraAddressInfo* firstBestMethodInfo = NULL;
+   TR_AddressInfo::ProfiledMethod* firstBestMethodInfo = NULL;
    float methodProbability = .0f;
 
    if (bestMethodInfo)
@@ -1089,12 +1084,9 @@ bool TR_ProfileableCallSite::findProfiledCallTargets (TR_CallStack *callStack, T
       return false;
       }
 
-   TR_AddressInfo *  valueInfo = (TR_AddressInfo *) profileManager->getValueInfo(_bcInfo,
-                                                               comp(),
-                                                               TR_ValueProfileInfoManager::allProfileInfoKinds,
-                                                               NotBigDecimalOrString);
+   TR_AddressInfo *valueInfo = static_cast<TR_AddressInfo*>(profileManager->getValueInfo(_bcInfo, comp(), AddressInfo));
 
-   if(!valueInfo || !valueInfo->asAddressInfo() || comp()->getOption(TR_DisableProfiledInlining))
+   if(!valueInfo || comp()->getOption(TR_DisableProfiledInlining))
       {
       heuristicTrace(inliner->tracer()," no valueInfo or valueInfo is not of AddressInfo type or TR_DisableProfiledInlining specified for %p\n", this);
       return false;
@@ -1103,7 +1095,7 @@ bool TR_ProfileableCallSite::findProfiledCallTargets (TR_CallStack *callStack, T
 
 
    TR_ScratchList<TR_ExtraAddressInfo> valuesSortedByFrequency(comp()->trMemory());
-   valueInfo->getSortedList(comp(), (List<TR_ExtraAbstractInfo> *)&valuesSortedByFrequency);
+   valueInfo->getSortedList(comp(), &valuesSortedByFrequency);
    ListIterator<TR_ExtraAddressInfo> sortedValuesIt(&valuesSortedByFrequency);
 
    uint32_t totalFrequency = valueInfo->getTotalFrequency();
@@ -1112,13 +1104,9 @@ bool TR_ProfileableCallSite::findProfiledCallTargets (TR_CallStack *callStack, T
    //@TODO: put in a separate function
    if (inliner->isEDODisableInlinedProfilingInfo() && _callerResolvedMethod != comp()->getCurrentMethod())
       {
-      // get value profile info without the manager, which will result
-      // only in JIT profile info
-      TR_ValueProfileInfo * jitValueProfileInfo = TR_ValueProfileInfo::get(comp());
-
       // if the previous value was from the interpreter profiler
       // don't devirtualize
-      if (!jitValueProfileInfo || (valueInfo != jitValueProfileInfo->getValueInfo(_bcInfo, comp())))
+      if (valueInfo->getProfiler()->getSource() == LastProfiler)
          {
          inliner->tracer()->insertCounter(EDO_Callee,_callNodeTreeTop);
          heuristicTrace(inliner->tracer()," EDO callsite %p, so not inlineable\n", this);

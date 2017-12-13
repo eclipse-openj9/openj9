@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
+#include "AtomicSupport.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -28,6 +29,8 @@
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
+#include "exceptions/RuntimeFailure.hpp"    // for J9::EnforceProfiling
+
 
 bool J9::Recompilation::_countingSupported = false;
 
@@ -154,20 +157,25 @@ J9::Recompilation::getProfilingCount()
    return self()->findOrCreateProfileInfo()->getProfilingCount();
    }
 
-
+/**
+ * Find or create profiling information for the current jitted
+ * body. If creating information, this will update the recent
+ * profile information on the current method info.
+ */
 TR_PersistentProfileInfo *
 J9::Recompilation::findOrCreateProfileInfo()
    {
-   TR_PersistentProfileInfo * profileInfo = _methodInfo->getProfileInfo();
+   // Determine whether this bodyInfo already has profiling information
+   TR_PersistentProfileInfo *profileInfo = _bodyInfo->getProfileInfo();
    if (!profileInfo)
       {
-      profileInfo = new (PERSISTENT_NEW) TR_PersistentProfileInfo
-         (DEFAULT_PROFILING_FREQUENCY, DEFAULT_PROFILING_COUNT);
-      _methodInfo->setProfileInfo(profileInfo);
+      // Create a new profiling info
+      profileInfo = new (PERSISTENT_NEW) TR_PersistentProfileInfo(DEFAULT_PROFILING_FREQUENCY, DEFAULT_PROFILING_COUNT);
+      _methodInfo->setRecentProfileInfo(profileInfo);
+      _bodyInfo->setProfileInfo(profileInfo);
       }
    return profileInfo;
    }
-
 
 void
 J9::Recompilation::startOfCompilation()
@@ -278,7 +286,7 @@ J9::Recompilation::endOfCompilation()
       // do not sample this method.  If this is a counting based compilation
       // disable sampling as well
       //
-      if (!self()->shouldBeCompiledAgain() || !_useSampling)
+      if (!self()->shouldBeCompiledAgain() || !_useSampling || _compilation->getProfilingMode() == JProfiling)
          {
          _bodyInfo->setDisableSampling(true);
          }
@@ -351,6 +359,17 @@ J9::Recompilation::switchToProfiling(uint32_t f, uint32_t c)
       }
 
    _bodyInfo->setIsProfilingBody(true);
+
+   // If profiling will use JProfiling instrumentation and this is post JProfilingBlock opt pass, trigger restart
+   if (_compilation->getProfilingMode() == JProfiling && _compilation->getSkippedJProfilingBlock())
+      {
+      TR::DebugCounter::incStaticDebugCounter(_compilation, TR::DebugCounter::debugCounterName(_compilation,
+         "jprofiling.restartCompile/(%s)", _compilation->signature()));
+      if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "Restarting compilation due to late switch to profiling");
+      comp()->failCompilation<J9::EnforceProfiling>("Enforcing profiling compilation");
+      }
+
    _useSampling = false;
    self()->findOrCreateProfileInfo()->setProfilingFrequency(f);
    self()->findOrCreateProfileInfo()->setProfilingCount(c);
@@ -377,8 +396,12 @@ J9::Recompilation::switchAwayFromProfiling()
 void
 J9::Recompilation::createProfilers()
    {
-   _profilers.add(new (_compilation->trHeapMemory()) TR_BlockFrequencyProfiler(_compilation, self()));
-   _profilers.add(new (_compilation->trHeapMemory()) TR_ValueProfiler(_compilation, self()));
+   if (!self()->getValueProfiler())
+      _profilers.add(new (_compilation->trHeapMemory()) TR_ValueProfiler(_compilation, self(),
+         _compilation->getProfilingMode() == JProfiling ? HashTableProfiler : LinkedListProfiler ));
+
+   if (!self()->getBlockFrequencyProfiler() && _compilation->getProfilingMode() != JProfiling)
+      _profilers.add(new (_compilation->trHeapMemory()) TR_BlockFrequencyProfiler(_compilation, self()));
    }
 
 
@@ -425,7 +448,12 @@ J9::Recompilation::getExistingMethodInfo(TR_ResolvedMethod *method)
    return 0;
    }
 
-
+/**
+ * This method can extract a value profiler from the current list of
+ * recompilation profilers.
+ * 
+ * \return The first TR_ValueProfiler in the current list of profilers, NULL if there are none.
+ */
 TR_ValueProfiler *
 J9::Recompilation::getValueProfiler()
    {
@@ -436,9 +464,39 @@ J9::Recompilation::getValueProfiler()
          return vp;
       }
 
-   return 0;
+   return NULL;
    }
 
+/**
+ * This method can extract a block profiler from the current list of
+ * recompilation profilers.
+ *
+ * \return The first TR_BlockFrequencyProfiler in the current list of profilers, NULL if there are none.
+ */
+TR_BlockFrequencyProfiler *
+J9::Recompilation::getBlockFrequencyProfiler()
+   {
+   for (TR_RecompilationProfiler * rp = getFirstProfiler(); rp; rp = rp->getNext())
+      {
+      TR_BlockFrequencyProfiler *vp = rp->asBlockFrequencyProfiler();
+      if (vp)
+         return vp;
+      }
+
+   return NULL;
+   }
+
+/**
+ * This method can remove a specified recompilation profiler from the
+ * current list. Useful when modifying the profiling strategy.
+ *
+ * \param rp The recompilation profiler to remove.
+ */
+void
+J9::Recompilation::removeProfiler(TR_RecompilationProfiler *rp)
+   {
+   _profilers.remove(rp);
+   }
 
 TR_Hotness
 J9::Recompilation::getNextCompileLevel(void *oldStartPC)
@@ -478,7 +536,8 @@ TR_PersistentMethodInfo::TR_PersistentMethodInfo(TR::Compilation *comp) :
    _methodInfo((TR_OpaqueMethodBlock *)comp->getCurrentMethod()->resolvedMethodAddress()),
    _flags(0),
    _nextHotness(unknownHotness),
-   _profileInfo(0),
+   _recentProfileInfo(0),
+   _bestProfileInfo(0),
    _optimizationPlan(0),
    _numberOfInvalidations(0),
    _numPrexAssumptions(0)
@@ -514,7 +573,8 @@ TR_PersistentMethodInfo::TR_PersistentMethodInfo(TR_OpaqueMethodBlock *methodInf
    _methodInfo(methodInfo),
    _flags(0),
    _nextHotness(unknownHotness),
-   _profileInfo(0),
+   _recentProfileInfo(0),
+   _bestProfileInfo(0),
    _optimizationPlan(0),
    _numberOfInvalidations(0),
    _numPrexAssumptions(0)
@@ -555,7 +615,8 @@ TR_PersistentJittedBodyInfo::TR_PersistentJittedBodyInfo(
    _aggressiveRecompilationChances((uint8_t)TR::Options::_aggressiveRecompilationChances),
    _startPCAfterPreviousCompile(0),
    _longRunningInterpreted(false),
-   _numScorchingIntervals(0)
+   _numScorchingIntervals(0),
+   _profileInfo(0)
    ,_hwpInstructionStartCount(0),
     _hwpInstructionCount(0),
     _hwpInducedRecompilation(false),
@@ -573,4 +634,73 @@ TR_PersistentJittedBodyInfo::allocate(
       TR::Compilation *comp)
    {
    return new (PERSISTENT_NEW) TR_PersistentJittedBodyInfo(methodInfo, hotness, profile, comp);
+   }
+
+/**
+ * Increment reference count for shared profile info.
+ *
+ * This function and setForSharedInfo use the pointer's low bit as a lock,
+ * preventing other accesses to the persistent information through this pointer.
+ * This is necessary as the process of incrementing the reference count isn't
+ * atomic with the pointer updates.
+ *
+ * When locked, its able to safely dereference the pointer and increment
+ * its reference count. Without the lock, the information could have been
+ * deallocated in the interim.
+ *
+ * \param ptr Pointer shared across several threads.
+ */
+TR_PersistentProfileInfo *
+TR_PersistentMethodInfo::getForSharedInfo(TR_PersistentProfileInfo** ptr)
+   {
+   uintptr_t locked;
+   uintptr_t unlocked;
+
+   // Lock the ptr
+   do {
+      locked = ((uintptr_t) *ptr) | (1ULL);
+      unlocked = ((uintptr_t) *ptr) & ~(1ULL);
+      if (unlocked == 0)
+         return NULL;
+      }
+   while (unlocked != VM_AtomicSupport::lockCompareExchange((uintptr_t*)ptr, unlocked, locked));
+
+   // Inc ref count
+   TR_PersistentProfileInfo::incRefCount((TR_PersistentProfileInfo*)unlocked);
+
+   // Unlock the ptr
+   // Assumes no updates to the ptr whilst locked
+   VM_AtomicSupport::set((uintptr_t*)ptr, unlocked);
+
+   return *ptr;
+   }
+
+/**
+ * Update a shared pointer to reference a new persistent profile info.
+ *
+ * This should be used with getForSharedInfo, to ensure a shared persistent profile info is
+ * updated correctly.
+ *
+ * \param ptr Pointer shared across several threads.
+ * \param newInfo New persistent profile info to use. Should have a non-zero reference count in caller.
+ */
+void
+TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_PersistentProfileInfo *newInfo)
+   {
+   uintptr_t oldPtr;
+
+   // Before it can be accessed, inc ref count on new info
+   if (newInfo)
+      TR_PersistentProfileInfo::incRefCount(newInfo);
+   
+   // Update ptr as if it was unlocked
+   // Doesn't matter what the old info was, as long as it was unlocked
+   do {
+      oldPtr = ((uintptr_t) *ptr) & ~(1ULL);
+      }
+   while (oldPtr != VM_AtomicSupport::lockCompareExchange((uintptr_t*)ptr, oldPtr, (uintptr_t)newInfo));
+
+   // Now that it can no longer be accessed, dec ref count on old info
+   if (oldPtr)
+      TR_PersistentProfileInfo::decRefCount((TR_PersistentProfileInfo*)oldPtr);
    }

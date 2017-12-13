@@ -2167,14 +2167,11 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
              TR_ValueProfileInfoManager::get(comp()) && resolvedMethod
              )
             {
-            TR_ValueProfileInfoManager * valueProfileInfo = TR_ValueProfileInfoManager::get(comp());
-            bool isAOT = comp()->compileRelocatableCode();
-            TR_AddressInfo * valueInfo = (TR_AddressInfo*) ((!isAOT && valueProfileInfo) ? valueProfileInfo->getValueInfo(callNode->getByteCodeInfo(), comp()) : 0);
+            TR_AddressInfo *valueInfo = NULL;
+            if (!comp()->compileRelocatableCode())
+               valueInfo = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp(), AddressInfo));
 
-            // PMR 05447,379,000 getTopValue may return array length profile data instead of a class pointer
-            // (when the virtual call feeds an arraycopy method length parameter). We need to defend this case to
-            // avoid attempting to use the length as a pointer, so use asAdressInfo() to gate assignment of topValue.
-            uintptrj_t topValue = (valueInfo && valueInfo->asAddressInfo())?valueInfo->getTopValue():0;
+            uintptrj_t topValue = valueInfo ? valueInfo->getTopValue() : 0;
 
             // Is the topValue valid?
             if( topValue )
@@ -2360,27 +2357,23 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
          }
 
       TR_ValueProfileInfoManager *valueProfileInfo = TR_ValueProfileInfoManager::get(comp());
-      TR_AbstractInfo *info = NULL;
+      TR_AddressInfo *info = NULL;
       uint32_t numStaticPICs = 0;
       if (valueProfileInfo)
-         info = (TR_AbstractInfo*)valueProfileInfo->getValueInfo(callNode->getByteCodeInfo(), comp());
+         info = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(callNode->getByteCodeInfo(), comp(), AddressInfo));
 
       TR::list<TR_OpaqueClassBlock*> * profiledClassesList = NULL;
 
-      bool isAddressInfo = info && info->asAddressInfo() != NULL;
+      bool isAddressInfo = info != NULL;
         uint32_t totalFreq = info ? info->getTotalFrequency() : 0;
         bool isAOT = cg()->needClassAndMethodPointerRelocations();
         bool callIsSafe = methodSymRef != comp()->getSymRefTab()->findObjectNewInstanceImplSymbol();
-        if (!isAOT && callIsSafe && (isAddressInfo || (info && info->asWarmCompilePICAddressInfo())) &&
+        if (!isAOT && callIsSafe && isAddressInfo &&
               (totalFreq!=0 && info->getTopProbability() > MIN_PROFILED_CALL_FREQUENCY))
            {
 
            TR_ScratchList<TR_ExtraAddressInfo> allValues(comp()->trMemory());
-
-           if (isAddressInfo)
-              ((TR_AddressInfo *)info)->getSortedList(comp(), (List<TR_ExtraAbstractInfo> *)&allValues);
-           else
-              ((TR_WarmCompilePICAddressInfo *)info)->getSortedList(comp(), (List<TR_ExtraAbstractInfo> *)&allValues);
+           info->getSortedList(comp(), &allValues);
 
            TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
            TR_ResolvedMethod *owningMethod = methodSymRef->getOwningMethod(comp());

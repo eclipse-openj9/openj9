@@ -48,7 +48,7 @@ void traceInstanceOfOrCheckCastProfilingInfo(TR::CodeGenerator *cg, TR::Node *no
       return;
       }
 
-   TR_AddressInfo * valueInfo = (TR_AddressInfo *)valueProfileInfo->getValueInfo(bcInfo, comp, TR_ValueProfileInfoManager::justInterpreterProfileInfo);
+   TR_AddressInfo * valueInfo = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(bcInfo, comp, AddressInfo, TR_ValueProfileInfoManager::justInterpreterProfileInfo));
    if (!valueInfo || valueInfo->getNumProfiledValues() == 0)
       {
       return;
@@ -58,7 +58,7 @@ void traceInstanceOfOrCheckCastProfilingInfo(TR::CodeGenerator *cg, TR::Node *no
 
    TR_ScratchList<TR_ExtraAddressInfo> valuesSortedByFrequency(comp->trMemory());
 
-   valueInfo->getSortedList(comp, (List<TR_ExtraAbstractInfo> *)&valuesSortedByFrequency);
+   valueInfo->getSortedList(comp, &valuesSortedByFrequency);
 
    ListIterator<TR_ExtraAddressInfo> sortedValuesIt(&valuesSortedByFrequency);
    for (TR_ExtraAddressInfo *profiledInfo = sortedValuesIt.getFirst(); profiledInfo != NULL; profiledInfo = sortedValuesIt.getNext())
@@ -112,7 +112,7 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
       return NULL;
       }
 
-   TR_AddressInfo * valueInfo = (TR_AddressInfo *)valueProfileInfo->getValueInfo(bcInfo, comp, TR_ValueProfileInfoManager::justInterpreterProfileInfo);
+   TR_AddressInfo * valueInfo = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(bcInfo, comp, AddressInfo, TR_ValueProfileInfoManager::justInterpreterProfileInfo));
    if (!valueInfo || valueInfo->getNumProfiledValues() == 0)
       {
       return NULL;
@@ -123,7 +123,7 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
 
    TR_ScratchList<TR_ExtraAddressInfo> valuesSortedByFrequency(comp->trMemory());
 
-   valueInfo->getSortedList(comp, (List<TR_ExtraAbstractInfo> *)&valuesSortedByFrequency);
+   valueInfo->getSortedList(comp, &valuesSortedByFrequency);
 
    float totalFrequency = valueInfo->getTotalFrequency();
 
@@ -575,8 +575,7 @@ J9::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(
    if (!valueProfileInfo)
       return 0;
 
-   TR_AddressInfo * valueInfo = (TR_AddressInfo *)valueProfileInfo->getValueInfo(bcInfo, comp,
-                                                  TR_ValueProfileInfoManager::justInterpreterProfileInfo);
+   TR_AddressInfo * valueInfo = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(bcInfo, comp, AddressInfo, TR_ValueProfileInfoManager::justInterpreterProfileInfo));
    if (!valueInfo || valueInfo->getNumProfiledValues()==0)
       {
       if (p1) traceMsg(comp, "==TPIC==No IProfiler info on node %p in %s\n", node, comp->signature());
@@ -604,7 +603,7 @@ J9::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(
 
    uintptrj_t totalFrequency = valueInfo->getTotalFrequency();
    TR_ScratchList<TR_ExtraAddressInfo> valuesSortedByFrequency(comp->trMemory());
-   valueInfo->getSortedList(comp, (List<TR_ExtraAbstractInfo> *)&valuesSortedByFrequency);
+   valueInfo->getSortedList(comp, &valuesSortedByFrequency);
 
    ListIterator<TR_ExtraAddressInfo> sortedValuesIt(&valuesSortedByFrequency);
    TR_ExtraAddressInfo *profiledInfo;
@@ -654,8 +653,7 @@ J9::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(TR::CodeGenerat
    if (!valueProfileInfo)
       return NULL;
 
-   TR_AddressInfo * valueInfo = (TR_AddressInfo *)valueProfileInfo->getValueInfo(bcInfo, comp,
-                                                  TR_ValueProfileInfoManager::justInterpreterProfileInfo);
+   TR_AddressInfo * valueInfo = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(bcInfo, comp, AddressInfo, TR_ValueProfileInfoManager::justInterpreterProfileInfo));
    if (!valueInfo || valueInfo->getNumProfiledValues()==0)
       {
       return NULL;
@@ -708,8 +706,7 @@ J9::TreeEvaluator::checkcastShouldOutlineSuperClassTest(TR::Node *node, TR::Code
    if (!valueProfileInfo)
       return false;
 
-   TR_AddressInfo * valueInfo = (TR_AddressInfo *)valueProfileInfo->getValueInfo(bcInfo, comp,
-                                                        TR_ValueProfileInfoManager::justInterpreterProfileInfo);
+   TR_AddressInfo * valueInfo = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(bcInfo, comp, AddressInfo, TR_ValueProfileInfoManager::justInterpreterProfileInfo));
 
    if (!valueInfo || valueInfo->getNumProfiledValues()==0)
       {

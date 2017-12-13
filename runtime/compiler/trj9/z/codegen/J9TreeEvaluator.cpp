@@ -15078,8 +15078,7 @@ J9::Z::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastTopProb(TR::CodeG
    if (!valueProfileInfo)
       return 0;
 
-   TR_AddressInfo * valueInfo = (TR_AddressInfo *)valueProfileInfo->getValueInfo(bcInfo, comp,
-                                                                                 TR_ValueProfileInfoManager::justInterpreterProfileInfo);
+   TR_AddressInfo *valueInfo = static_cast<TR_AddressInfo*>(valueProfileInfo->getValueInfo(bcInfo, comp, AddressInfo, TR_ValueProfileInfoManager::justInterpreterProfileInfo));
    if (!valueInfo || valueInfo->getNumProfiledValues()==0)
       {
       return 0;

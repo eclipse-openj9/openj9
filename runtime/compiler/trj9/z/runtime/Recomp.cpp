@@ -421,7 +421,7 @@ J9::Recompilation::methodCannotBeRecompiled(void * oldStartPC, TR_FrontEnd * fe)
       *patchAddr = FOUR_BYTE_JUMP_INSTRUCTION | ((offset / 2) & 0x0000ffff);
 
 
-      TR_PersistentProfileInfo * profileInfo = methodInfo->getProfileInfo();
+      TR_PersistentProfileInfo * profileInfo = bodyInfo->getProfileInfo();
       if (profileInfo)
          {
          profileInfo->setProfilingFrequency(INT_MAX);

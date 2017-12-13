@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,9 +80,8 @@ class TR_IPBCDataEightWords;
 class TR_IPBCDataAllocation;
 class TR_IPByteVector;
 class TR_J9ByteCodeIterator;
-class TR_MethodValueProfileInfo;
+class TR_ExternalValueProfileInfo;
 class TR_OpaqueMethodBlock;
-class TR_ValueProfileInfo;
 namespace TR { class PersistentInfo; }
 namespace TR { class Monitor; }
 struct J9Class;
@@ -523,7 +522,7 @@ public:
    bool    isCallGraphProfilingEnabled();
 
    virtual TR_AbstractInfo *createIProfilingValueInfo( TR_ByteCodeInfo &bcInfo, TR::Compilation *comp);
-   virtual TR_ValueProfileInfo * getValueProfileInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp);
+   virtual TR_ExternalValueProfileInfo * getValueProfileInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp);
    uint32_t *getAllocationProfilingDataPointer(TR_ByteCodeInfo &bcInfo, TR_OpaqueClassBlock *clazz, TR_OpaqueMethodBlock *method, TR::Compilation *comp);
    uint32_t *getGlobalAllocationDataPointer(bool isAOT);
    TR_ExternalProfiler * canProduceBlockFrequencyInfo(TR::Compilation& comp);

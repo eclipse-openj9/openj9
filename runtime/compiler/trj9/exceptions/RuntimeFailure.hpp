@@ -69,6 +69,16 @@ class LambdaEnforceScorching : public virtual TR::InsufficientlyAggressiveCompil
    {
    virtual const char* what() const throw() { return "Lambda Enforce Scorching"; }
    };
+
+/**
+ * Enforce Profiling exception type.
+ *
+ * Used for JProfiling to switch to a profiled compilation.
+ */
+class EnforceProfiling : public virtual TR::InsufficientlyAggressiveCompilation
+   {
+   virtual const char* what() const throw() { return "Enforce Profiling"; }
+   };
 }
 
 #endif // RUNTIME_FAILURE

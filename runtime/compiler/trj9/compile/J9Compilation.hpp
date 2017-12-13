@@ -51,8 +51,9 @@ class TR_J9VMBase;
 class TR_ValueProfileInfoManager;
 class TR_BranchProfileInfoManager;
 class TR_MethodBranchProfileInfo;
-class TR_MethodValueProfileInfo;
+class TR_ExternalValueProfileInfo;
 class TR_J9VM;
+class TR_AccessedProfileInfo;
 namespace TR { class IlGenRequest; }
 
 #define COMPILATION_AOT_HAS_INVOKEHANDLE -9
@@ -164,8 +165,7 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool pendingPushLivenessDuringIlgen();
 
-   TR::list<TR_MethodValueProfileInfo*> &getMethodVPInfos() { return _methodVPInfoList; }
-   TR::list<TR_MethodValueProfileInfo*> &getMethodHWVPInfos() { return _methodHWVPInfoList; }
+   TR::list<TR_ExternalValueProfileInfo*> &getExternalVPInfos() { return _externalVPInfoList; }
 
    TR_ValueProfileInfoManager *getValueProfileInfoManager()             { return _vpInfoManager;}
    void setValueProfileInfoManager(TR_ValueProfileInfoManager * mgr)    { _vpInfoManager = mgr; }
@@ -274,6 +274,13 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    J9VMThread *j9VMThread() { return _j9VMThread; }
 
+   // cache profile information
+   TR_AccessedProfileInfo *getProfileInfo() { return _profileInfo; }
+
+   // Flag to test whether early stages of JProfiling ran
+   void setSkippedJProfilingBlock(bool b = true) { _skippedJProfilingBlock = b; }
+   bool getSkippedJProfilingBlock() { return _skippedJProfilingBlock; }
+
    //
    bool supportsQuadOptimization();
 
@@ -324,8 +331,7 @@ private:
    TR_BranchProfileInfoManager *_bpInfoManager;
 
    TR::list<TR_MethodBranchProfileInfo*> _methodBranchInfoList;
-   TR::list<TR_MethodValueProfileInfo*> _methodVPInfoList;
-   TR::list<TR_MethodValueProfileInfo*> _methodHWVPInfoList;
+   TR::list<TR_ExternalValueProfileInfo*> _externalVPInfoList;
    TR::list<TR_AOTGuardSite*>*         _aotGuardPatchSites;
    TR::list<TR_VirtualGuardSite*>     _sideEffectGuardPatchSites;
 
@@ -341,6 +347,11 @@ private:
    TR::list<TR::SymbolReference*>             _monitorAutoSymRefsInCompiledMethod;
 
    TR_Array<TR_OpaqueClassBlock*>       _classForOSRRedefinition;
+
+   // cache profile information
+   TR_AccessedProfileInfo *_profileInfo;
+
+   bool _skippedJProfilingBlock;
    };
 
 }

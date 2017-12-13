@@ -617,11 +617,11 @@ static TR_BDChain *matchBDPattern(TR_BDChain *chain, TR::RecognizedMethod *patte
                TR::Node *callNode = cursorChain->_node;
                TR_ByteCodeInfo callNodeInfo = callNode->getByteCodeInfo();
                callNodeInfo.setByteCodeIndex(callNodeInfo.getByteCodeIndex()+1);
-               TR_BigDecimalValueInfo * valueInfo1 = (TR_BigDecimalValueInfo *) (profileManager ? profileManager->getValueInfo(callNodeInfo, comp, TR_ValueProfileInfoManager::allProfileInfoKinds, BigDecimal) : 0);
+               TR_BigDecimalValueInfo * valueInfo1 = static_cast<TR_BigDecimalValueInfo*>(profileManager ? profileManager->getValueInfo(callNodeInfo, comp, BigDecimalInfo) : 0);
                callNodeInfo.setByteCodeIndex(callNodeInfo.getByteCodeIndex()+1);
-               TR_BigDecimalValueInfo * valueInfo2 = (TR_BigDecimalValueInfo *) (profileManager ? profileManager->getValueInfo(callNodeInfo, comp, TR_ValueProfileInfoManager::allProfileInfoKinds, BigDecimal) : 0);
+               TR_BigDecimalValueInfo * valueInfo2 = static_cast<TR_BigDecimalValueInfo*>(profileManager ? profileManager->getValueInfo(callNodeInfo, comp, BigDecimalInfo) : 0);
 
-               TR_BigDecimalValueInfo * resultValueInfo = (TR_BigDecimalValueInfo *) (profileManager ? profileManager->getValueInfo(callNode, comp, TR_ValueProfileInfoManager::allProfileInfoKinds, BigDecimal) : 0);
+               TR_BigDecimalValueInfo * resultValueInfo = static_cast<TR_BigDecimalValueInfo*>(profileManager ? profileManager->getValueInfo(callNode, comp, BigDecimalInfo) : 0);
 
                //traceMsg(comp, "Matched a BigDecimal (binary op) method in a chain in method %s with valueInfo %p\n", comp->signature(), valueInfo);
                if (valueInfo1 && (valueInfo1->getTopProbability() == 1.0f) &&
@@ -1012,14 +1012,14 @@ TR::TreeTop *TR_StringPeepholes::detectSubMulSetScalePattern(TR::TreeTop *tt, TR
          // get mulscale
          TR_ByteCodeInfo nodeInfo = mulNode->getByteCodeInfo();
          nodeInfo.setByteCodeIndex(nodeInfo.getByteCodeIndex() + 1);
-         TR_BigDecimalValueInfo *valueInfo1 = (TR_BigDecimalValueInfo *) (profileManager ? profileManager->getValueInfo(nodeInfo, comp(), TR_ValueProfileInfoManager::allProfileInfoKinds, BigDecimal) : 0);
+         TR_BigDecimalValueInfo *valueInfo1 = static_cast<TR_BigDecimalValueInfo*>(profileManager ? profileManager->getValueInfo(nodeInfo, comp(), BigDecimalInfo) : 0);
          // restore the index
          nodeInfo.setByteCodeIndex(nodeInfo.getByteCodeIndex() - 1);
 
          // get subscale
          nodeInfo = subNode->getByteCodeInfo();
          nodeInfo.setByteCodeIndex(nodeInfo.getByteCodeIndex() + 2);
-         TR_BigDecimalValueInfo *valueInfo2 = (TR_BigDecimalValueInfo *) (profileManager ? profileManager->getValueInfo(nodeInfo, comp(), TR_ValueProfileInfoManager::allProfileInfoKinds, BigDecimal) : 0);
+         TR_BigDecimalValueInfo *valueInfo2 = static_cast<TR_BigDecimalValueInfo*>(profileManager ? profileManager->getValueInfo(nodeInfo, comp(), BigDecimalInfo) : 0);
          // restore the index
          nodeInfo.setByteCodeIndex(nodeInfo.getByteCodeIndex() - 2);
 

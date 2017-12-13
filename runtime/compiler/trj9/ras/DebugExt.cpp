@@ -851,7 +851,7 @@ TR_DebugExt::Compilation2ProfileInfo()
       TR_PersistentMethodInfo *localMInfo = (TR_PersistentMethodInfo*) dxMallocAndRead(sizeof(TR_PersistentMethodInfo), (void*)minfo);
       if (localMInfo)
          {
-         profileInfo = localMInfo->getProfileInfo();
+         profileInfo = localMInfo->getBestProfileInfo();
          dxFree(localMInfo);
          }
       }
@@ -2583,7 +2583,7 @@ TR_DebugExt::dxPrintCompilation()
    _dbgPrintf("\tTR::PhaseMemSummary _phaseMemProfiler = 0x%p\n", (char*)_remoteCompiler + offsetof(TR::Compilation, _phaseMemProfiler));
    _dbgPrintf("\tTR_ValueProfileInfoManager *_vpInfoManager = 0x%p\n",localCompiler->_vpInfoManager);
 
-   _dbgPrintf("\tList<TR_MethodValueProfileInfo> _methodVPInfoList = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_methodVPInfoList) - (char*)localCompiler) );
+   _dbgPrintf("\tList<TR_ExternalValueProfileInfo> _methodVPInfoList = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_externalVPInfoList) - (char*)localCompiler) );
    _dbgPrintf("\tList<TR_Pair<TR_ByteCodeInfo, TR::Node> > _checkcastNullChkInfo = 0x%p\n",(char*)_remoteCompiler +((char*)&(localCompiler->_checkcastNullChkInfo) - (char*)localCompiler) );
 
    _dbgPrintf("\tTR_CHTable * _transientCHTable = !trprint chtable 0x%p\n",localCompiler->_transientCHTable);
@@ -2986,7 +2986,7 @@ TR_DebugExt::dxPrintPersistentMethodInfo(TR_PersistentMethodInfo *minfo)
    _dbgPrintf("  ->_methodInfo = (TR_OpaqueMethodBlock*)0x%p\n", localMInfo->getMethodInfo());
    _dbgPrintf("  ->_flags = 0x%x\n", localMInfo->_flags.getValue());
    _dbgPrintf("  ->_nextHotness = (TR_Hotness)0x%p\n", localMInfo->getNextCompileLevel());
-   _dbgPrintf("  ->_profileInfo = (TR_PersistentProfileInfo*)0x%p\n", localMInfo->getProfileInfo());
+   _dbgPrintf("  ->_profileInfo = (TR_PersistentProfileInfo*)0x%p\n", localMInfo->getBestProfileInfo());
    _dbgPrintf("  ->_cpoSampleCounter = (int32_t)%d\n", localMInfo->cpoGetCounter());
 
    dxFree(localMInfo);

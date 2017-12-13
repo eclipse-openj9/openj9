@@ -6134,11 +6134,7 @@ TR_J9InlinerPolicy::suitableForRemat(TR::Compilation *comp, TR::Node *callNode, 
       }
 
    bool suitableForRemat = true;
-   TR_ValueProfileInfoManager *profileManager = TR_ValueProfileInfoManager::get(comp);
-   TR_AddressInfo *  valueInfo = (TR_AddressInfo *)profileManager->getValueInfo(callNode->getByteCodeInfo(),
-                                                      comp,
-                                                      TR_ValueProfileInfoManager::allProfileInfoKinds,
-                                                      NotBigDecimalOrString);
+   TR_AddressInfo *valueInfo = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp, AddressInfo));
    if (guard->isHighProbablityProfiledGuard())
       {
       if (comp->getMethodHotness() <= warm && comp->getPersistentInfo()->getJitState() == STARTUP_STATE)

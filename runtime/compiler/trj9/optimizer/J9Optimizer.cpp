@@ -70,7 +70,8 @@
 #include "optimizer/TrivialDeadBlockRemover.hpp"
 #include "optimizer/OSRGuardInsertion.hpp"
 #include "optimizer/OSRGuardRemoval.hpp"
-#include "optimizer/JProfiling.hpp"
+#include "optimizer/JProfilingBlock.hpp"
+#include "optimizer/JProfilingValue.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "optimizer/UnsafeFastPath.hpp"
 #include "optimizer/VarHandleTransformer.hpp"
@@ -84,7 +85,7 @@ static const OptimizationStrategy J9EarlyGlobalOpts[] =
    { OMR::inlining                             },
    { OMR::osrGuardInsertion,                OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
-   { OMR::jProfiling                           },
+   { OMR::jProfilingBlock                      },
    { OMR::stringBuilderTransformer             },
    { OMR::stringPeepholes,                     },
    //{ basicBlockOrdering,          IfLoops }, // early ordering with no extension
@@ -251,7 +252,7 @@ static const OptimizationStrategy coldStrategyOpts[] =
    { OMR::stringBuilderTransformer,                  OMR::IfNotQuickStart            },
    { OMR::stringPeepholes,                           OMR::IfNotQuickStart            }, // need stringpeepholes to catch bigdecimal patterns
    { OMR::trivialInlining                                                       },
-   { OMR::jProfiling                                                            },
+   { OMR::jProfilingBlock                                                       },
    { OMR::virtualGuardTailSplitter                                              },
    { OMR::recompilationModifier,                     OMR::IfEnabled                  },
    { OMR::samplingJProfiling                                                    },
@@ -278,6 +279,7 @@ static const OptimizationStrategy coldStrategyOpts[] =
    { OMR::rematerialization                                                     },
    { OMR::compactNullChecks,                         OMR::IfEnabled                  },
    { OMR::signExtendLoadsGroup,                      OMR::IfEnabled                  },
+   { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::trivialDeadTreeRemoval,                                               },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfAOTAndEnabled            },
    { OMR::globalLiveVariablesForGC,                  OMR::IfAggressiveLiveness  },
@@ -304,7 +306,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::inlining                                                              },
    { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
-   { OMR::jProfiling                           },
+   { OMR::jProfilingBlock                                                       },
    { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
    { OMR::treeSimplification                                                    },
    { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled                  }, // disabled by default, enabled by -Xjit:enableSequentialLoadStoreWarm
@@ -362,6 +364,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::globalDeadStoreElimination,                OMR::IfVoluntaryOSR            },
    { OMR::arraysetStoreElimination                                              },
    { OMR::checkcastAndProfiledGuardCoalescer                                    },
+   { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::globalDeadStoreGroup,                                                 },
    { OMR::rematerialization                                                     },
@@ -385,7 +388,7 @@ static const OptimizationStrategy reducedWarmStrategyOpts[] =
    { OMR::inlining                                                              },
    { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
-   { OMR::jProfiling                           },
+   { OMR::jProfilingBlock                                                       },
    { OMR::dataAccessAccelerator                                                 }, // immediate does unconditional dataAccessAccelerator after inlining
    { OMR::treeSimplification                                                    },
    { OMR::deadTreesElimination                                                  },
@@ -395,6 +398,7 @@ static const OptimizationStrategy reducedWarmStrategyOpts[] =
    { OMR::localCSE                                                              },
    { OMR::treeSimplification,                        OMR::MarkLastRun                 },
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
+   { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::endOpts                                                               }
    };
@@ -455,6 +459,7 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::localValuePropagation,                 OMR::MarkLastRun              },
    { OMR::arraycopyTransformation      },
    { OMR::checkcastAndProfiledGuardCoalescer                              },
+   { OMR::jProfilingValue,                           OMR::MustBeDone           },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled                },
    { OMR::globalDeadStoreElimination,            OMR::IfMoreThanOneBlock       }, // global dead store removal
    { OMR::deadTreesElimination                                            }, // cleanup after dead store removal
@@ -535,6 +540,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::localValuePropagation,                 OMR::MarkLastRun              },
    { OMR::arraycopyTransformation      },
    { OMR::checkcastAndProfiledGuardCoalescer      },
+   { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled   },
    { OMR::globalDeadStoreElimination,            OMR::IfMoreThanOneBlock }, // global dead store removal
    { OMR::deadTreesElimination                               }, // cleanup after dead store removal
@@ -642,7 +648,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::inlining                                                              },
    { OMR::osrGuardInsertion,                         OMR::IfVoluntaryOSR       },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
-   { OMR::jProfiling                           },
+   { OMR::jProfilingBlock                                                       },
    { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
    { OMR::treeSimplification                                                    },
 #ifdef TR_HOST_S390
@@ -700,6 +706,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
    { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // Simplify non-normalized address computations introduced by prefetch insertion
    { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                  }, // final cleanup before opcode expansion
+   { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::globalDeadStoreGroup,                                                 },
    { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
@@ -799,8 +806,10 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_OSRGuardInsertion::create, OMR::osrGuardInsertion);
    _opts[OMR::osrGuardRemoval] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_OSRGuardRemoval::create, OMR::osrGuardRemoval);
-   _opts[OMR::jProfiling] =
-      new (comp->allocator()) TR::OptimizationManager(self(), TR_JProfiling::create, OMR::jProfiling);
+   _opts[OMR::jProfilingBlock] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_JProfilingBlock::create, OMR::jProfilingBlock);
+   _opts[OMR::jProfilingValue] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_JProfilingValue::create, OMR::jProfilingValue);
    // NOTE: Please add new J9 optimizations here!
 
    // initialize additional J9 optimization groups

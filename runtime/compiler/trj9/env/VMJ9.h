@@ -42,7 +42,6 @@
 #include "infra/Annotations.hpp"
 #include "optimizer/OptimizationStrategies.hpp"
 #include "trj9/env/J9SharedCache.hpp"
-#include "runtime/J9ValueProfiler.hpp"
 #include "infra/Array.hpp"
 #include "env/CompilerEnv.hpp"
 
@@ -54,7 +53,7 @@ class TR_HWProfiler;
 class TR_LMGuardedStorage;
 class TR_Debug;
 class TR_OptimizationPlan;
-class TR_ValueProfileInfo;
+class TR_ExternalValueProfileInfo;
 class TR_AbstractInfo;
 class TR_ExternalProfiler;
 class TR_JitPrivateConfig;
@@ -68,6 +67,15 @@ namespace TR { class CodeCacheManager; }
 namespace TR { class Compilation; }
 namespace TR { class StaticSymbol; }
 namespace TR { class ParameterSymbol; }
+
+// XLC cannot determine uintptr_t is equivalent to uint32_t
+// or uint64_t, so make it clear with this test
+template <typename T> struct TR_ProfiledValue;
+#if TR_HOST_64BIT
+typedef TR_ProfiledValue<uint64_t> TR_ExtraAddressInfo;
+#else
+typedef TR_ProfiledValue<uint32_t> TR_ExtraAddressInfo;
+#endif
 
 char * feGetEnv2(const char *, const void *);   /* second param should be a J9JavaVM* */
 
@@ -791,7 +799,7 @@ public:
    // Interpreter profiling support
    virtual TR_IProfiler  *getIProfiler();
    virtual TR_AbstractInfo *createIProfilingValueInfo( TR_ByteCodeInfo &bcInfo,  TR::Compilation *comp);
-   virtual TR_ValueProfileInfo   *getValueProfileInfoFromIProfiler(TR_ByteCodeInfo &bcInfo,  TR::Compilation *comp);
+   virtual TR_ExternalValueProfileInfo *getValueProfileInfoFromIProfiler(TR_ByteCodeInfo &bcInfo,  TR::Compilation *comp);
    uint32_t *getAllocationProfilingDataPointer(TR_ByteCodeInfo &bcInfo, TR_OpaqueClassBlock *clazz, TR_OpaqueMethodBlock *method,  TR::Compilation *comp);
    uint32_t *getGlobalAllocationDataPointer();
    virtual TR_ExternalProfiler   *hasIProfilerBlockFrequencyInfo(TR::Compilation& comp);
