@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,8 @@
  *******************************************************************************/
 package java.lang.management;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.List;
 import java.util.Map;
 
@@ -129,6 +131,24 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 * @return the name of this running virtual machine.
 	 */
 	public String getName();
+
+	/*[IF Java10]*/
+	/**
+	 * Returns the process ID (PID) of the current running Java virtual machine.
+	 * 
+	 * @return the process ID of the current running JVM
+	 * 
+	 * @since 10
+	 */
+	@SuppressWarnings("boxing")
+	default long getPid() {
+		return AccessController.doPrivileged(new PrivilegedAction<Long>() {
+			public Long run() {
+				return ProcessHandle.current().pid();
+			}
+		});
+	}
+	/*[ENDIF]*/
 
 	/**
 	 * Returns the name of the Java virtual machine specification followed by
