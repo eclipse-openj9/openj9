@@ -20,6 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
+#ifdef J9ZTPF
+#define __TPF_DO_NOT_MAP_ATOE_REMOVE
+#endif
+
 #include <algorithm>
 #include <stdlib.h>
 #include <string.h>
