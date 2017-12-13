@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,7 +186,8 @@ testClass(J9PortLibrary *portLib, RCCorrectnessConfig *testData )
 
 
 	/* TODO: setup and test flags */
-	U_32 flags = 0;
+	/* flags must contain VM version */
+	U_32 flags = BCT_JavaMaxMajorVersionShifted;
 
 	/* scratch space for ROMClass creation */
 	UDATA romClassBufferSize = 64 * 1024;
