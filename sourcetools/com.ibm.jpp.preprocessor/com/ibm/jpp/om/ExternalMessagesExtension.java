@@ -251,9 +251,6 @@ public class ExternalMessagesExtension extends BuilderExtension {
 	}
 
 	private static void dumpString(StringBuffer buffer, String string, boolean key) {
-		/**
-		 * This method is copied from java.util.Properties class
-		 */
 		int i = 0;
 		int length = string.length();
 		if (!key) {

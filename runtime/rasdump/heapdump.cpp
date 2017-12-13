@@ -643,7 +643,6 @@ public:
 /**************************************************************************************************/
 /*                                                                                                */
 /* Class for walking the superclass references from a class. See CMVC 177688.                     */
-/*  Note: adapted from GC_ClassSuperclassesIterator in Modron/gc_structs                          */
 /*                                                                                                */
 /**************************************************************************************************/
 class SuperclassesIterator

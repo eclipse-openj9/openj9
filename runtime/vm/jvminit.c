@@ -3833,7 +3833,7 @@ static void testFindArgs(J9JavaVM* vm) {
 	intResult = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xfoo2sdf", NULL);
 	TEST_INT(intResult, -1);
 
-	SET_TO(1, "-Xfoo3:arse");
+	SET_TO(1, "-Xfoo3:parse");
 	intResult = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xfoo3", NULL);
 	TEST_INT(intResult, -1);
 
@@ -3853,7 +3853,7 @@ static void testFindArgs(J9JavaVM* vm) {
 	intResult = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, "-Xfoo2", NULL);
 	TEST_INT(intResult, 1);
 
-	SET_TO(1, "-Xfoo3:arse");
+	SET_TO(1, "-Xfoo3:parse");
 	intResult = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, "-Xfoo3", NULL);
 	TEST_INT(intResult, 1);
 
@@ -3983,7 +3983,7 @@ static void testFindArgs(J9JavaVM* vm) {
 	intResult = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, "-Xfoo2", NULL);
 	TEST_INT(intResult, -1);
 
-	SET_TO(1, "-Xfoo3:arse");
+	SET_TO(1, "-Xfoo3:parse");
 	intResult = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, "-Xfoo3", NULL);
 	TEST_INT(intResult, 1);
 
@@ -4420,12 +4420,12 @@ static void testOptionValueOps(J9JavaVM* vm) {
 	IS_0(*optionsBufferPtr);
 
 	optionsBufferPtr = optionsBuffer;
-	SET_TO(1, "-Xfoo4:bar3,bar4=arse");
+	SET_TO(1, "-Xfoo4:bar3,bar4=parse");
 	returnVal = GET_OPTION_VALUES(1, ':', ',', &optionsBufferPtr, SMALL_STRING_BUF_SIZE);
 	TEST_INT(returnVal, OPTION_OK);
 	COMPARE(optionsBufferPtr, "bar3");
 	NEXT_ELEMENT(optionsBufferPtr);
-	COMPARE(optionsBufferPtr, "bar4=arse");
+	COMPARE(optionsBufferPtr, "bar4=parse");
 	NEXT_ELEMENT(optionsBufferPtr);
 	IS_0(*optionsBufferPtr);
 
@@ -4636,7 +4636,7 @@ static void testOptionValueOps(J9JavaVM* vm) {
 	REMOVE_MAPPING(1);
 
 	SET_TO(1, "-Xfoosov2:bar3");
-	SET_MAP_TO(1, "-Xfooj92:arse:", "-Xfoosov2:", MAP_ONE_COLON_TO_TWO);
+	SET_MAP_TO(1, "-Xfooj92:parse:", "-Xfoosov2:", MAP_ONE_COLON_TO_TWO);
 	returnVal = GET_OPTION_VALUE(1, ':', &result);
 	TEST_INT(returnVal, OPTION_OK);
 	COMPARE(result, "bar3");

@@ -147,7 +147,6 @@ MM_StandardAccessBarrier::preBatchObjectStore(J9VMThread *vmThread, J9Class *des
  * 
  * @note The write barrier can be called with minimal, all, or no validation checking.
  * @note Any object that contains a new reference MUST have its REMEMBERED bit set.
- * @note This code was moved verbatim from ScavengerWriteBarrier.cpp and made an instance method
  */
 void
 MM_StandardAccessBarrier::postObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject)
@@ -190,7 +189,6 @@ MM_StandardAccessBarrier::postObjectStoreImpl(J9VMThread *vmThread, J9Object *ds
  * @note Any object that contains a new reference MUST have its REMEMBERED bit set.
  * @note This call is typically used by array copies, when it may be more efficient
  * to optimistically add an object to the remembered set without checking too hard.
- * @note This code was moved verbatim from ScavengerWriteBarrier.cpp and made an instance method
  */
 void 
 MM_StandardAccessBarrier::preBatchObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject)

@@ -55,7 +55,7 @@ public class Testbase implements GlobalConstants {
 	public void touchFiles(String listForTouching) {
 		if (listForTouching.length()==0) return;
 		StringTokenizer st = new StringTokenizer(listForTouching,",");
-		try { Thread.sleep(1000); } catch (Exception e) {} // allow for filesystem with crap resolution timer
+		try { Thread.sleep(1000); } catch (Exception e) {} // allow for filesystem with bad resolution timer
 		while (st.hasMoreTokens()) {
 			String touch = st.nextToken();
 			File f = new File(touch);
