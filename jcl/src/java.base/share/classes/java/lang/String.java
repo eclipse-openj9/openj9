@@ -386,15 +386,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	/*[ENDIF]*/	
 
 	static void decompressedArrayCopy(char[] array1, int start1, char[] array2, int start2, int length) {
-		if (array1 == array2 && start1 < start2) {
-			for (int i = length - 1; i >= 0; --i) {
-				helpers.putCharInArrayByIndex(array2, start2 + i, helpers.getCharFromArrayByIndex(array1, start1 + i));
-			}
-		} else {
-			for (int i = 0; i < length; ++i) {
-				helpers.putCharInArrayByIndex(array2, start2 + i, helpers.getCharFromArrayByIndex(array1, start1 + i));
-			}
-		}
+		System.arraycopy(array1, start1, array2, start2, length);
 	}
 	
 	boolean isCompressed() {
