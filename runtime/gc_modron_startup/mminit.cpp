@@ -760,12 +760,6 @@ gcInitializeCalculatedValues(J9JavaVM *javaVM, IDATA* memoryParameters)
 		extensions->tarokRememberedSetCardListMaxSize = 8 * extensions->tarokRememberedSetCardListSize;
 	}
 
-	if (0 == extensions->tarokKickoffHeadroomRegionCount) {
-		/* If kickoff headroom is not set, the default is (arbitrarily chosen to be) 1% of heap */
-		UDATA regionCount = extensions->memoryMax / extensions->regionSize;
-		extensions->tarokKickoffHeadroomRegionCount = regionCount / 100;
-	}
-
 #endif /* defined (J9VM_GC_VLHGC) */
 
 	/* Number of GC threads must be initialized at this point */
