@@ -24,6 +24,7 @@
 #define INLINERTEMPFORJ9_INCL
 
 #include "j9cfg.h"
+#include "runtime/J9ValueProfiler.hpp"
 
 class OMR_InlinerPolicy;
 class OMR_InlinerUtil;

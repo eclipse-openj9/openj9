@@ -57,7 +57,7 @@
 #include "infra/MonitorTable.hpp"
 #include "infra/CriticalSection.hpp"
 #include "optimizer/DebuggingCounters.hpp"
-#include "optimizer/JProfiling.hpp"
+#include "optimizer/JProfilingBlock.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/HookHelpers.hpp"
 #include "runtime/MethodMetaData.h"

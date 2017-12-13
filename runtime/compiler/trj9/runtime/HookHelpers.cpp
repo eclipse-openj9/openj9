@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -266,6 +266,16 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
       reclaimAssumptions(jitConfig, metaData, (NULL == faintCacheBlock));
       artifactManager->removeArtifact(metaData);
       dispatchUnloadHooks(jitConfig, vmThread, metaData);
+
+      // Remove the reference to profiling information in the body info.
+      // Depending on whether other persistent data structures hold references to it as well, the profiling
+      // information may or may not be cleaned up.
+      TR_PersistentJittedBodyInfo *bodyInfo = metaData->bodyInfo ? (TR_PersistentJittedBodyInfo *) metaData->bodyInfo : NULL;
+      if (bodyInfo && bodyInfo->getProfileInfo())
+         {
+         TR_PersistentProfileInfo::decRefCount(bodyInfo->getProfileInfo());
+         bodyInfo->setProfileInfo(NULL);
+         }
 
       vlogReclamation("Reclaiming", metaData, faintCacheBlock ? faintCacheBlock->_bytesToSaveAtStart : 0);
 

@@ -323,7 +323,7 @@ void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *
       *((int16_t*)startByte) = TWO_BYTE_JUMP_INSTRUCTION | ((COUNTING_PROLOGUE_SIZE-2) << 8);
 
       // Make sure we do not profile any longer in there
-      TR_PersistentProfileInfo *profileInfo = methodInfo->getProfileInfo();
+      TR_PersistentProfileInfo *profileInfo = bodyInfo->getProfileInfo();
       if (profileInfo)
          {
          profileInfo->setProfilingFrequency(INT_MAX);

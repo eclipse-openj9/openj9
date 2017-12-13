@@ -76,6 +76,16 @@ TR_ProfileGenerator::TR_ProfileGenerator(TR::OptimizationManager *manager)
 
 int32_t TR_ProfileGenerator::perform()
    {
+   /**
+    * Duplication is not necessary under JProfiling
+    */
+   if (comp()->getProfilingMode() != JitProfiling)
+      {
+      if (trace())
+         traceMsg(comp(), "Profile Generator is only required by JitProfiling instrumentation\n");
+      return 0;
+      }
+
    _asyncTree = NULL;
    int32_t nodeCount = comp()->getNodeCount();
 
@@ -160,7 +170,7 @@ int32_t TR_ProfileGenerator::perform()
    bool inColdBlock = false;
 
    TR::Recompilation *recompilationInfo   = comp()->getRecompilationInfo();
-   TR_PersistentProfileInfo *profileInfo = recompilationInfo->getMethodInfo()->getProfileInfo();
+   TR_PersistentProfileInfo *profileInfo = TR_PersistentProfileInfo::getCurrent(comp());
    if (profileInfo &&
        profileInfo->getProfilingFrequency() == DEFAULT_PROFILING_FREQUENCY &&
        profileInfo->getMaxCount()           == DEFAULT_PROFILING_COUNT)
@@ -505,7 +515,7 @@ void TR_ProfileGenerator::createProfiledMethod()
    TR::Block   *processedBlock = NULL;
 
    TR::Recompilation *recompilationInfo   = comp()->getRecompilationInfo();
-   TR_PersistentProfileInfo *profileInfo = recompilationInfo->getMethodInfo()->getProfileInfo();
+   TR_PersistentProfileInfo *profileInfo = TR_PersistentProfileInfo::getCurrent(comp());
 
    TR::SymbolReference *recompilationCounterSymRef;
    recompilationCounterSymRef = recompilationInfo->getCounterSymRef();

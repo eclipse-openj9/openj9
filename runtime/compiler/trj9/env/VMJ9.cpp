@@ -5893,7 +5893,7 @@ TR_J9VMBase::createIProfilingValueInfo( TR_ByteCodeInfo &bcInfo, TR::Compilation
    return iProfiler->createIProfilingValueInfo (bcInfo, comp);
    }
 
-TR_ValueProfileInfo *
+TR_ExternalValueProfileInfo *
 TR_J9VMBase::getValueProfileInfoFromIProfiler(TR_ByteCodeInfo & bcInfo, TR::Compilation *comp)
    {
    TR_IProfiler *iProfiler = getIProfiler();

@@ -1954,6 +1954,12 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                      }
                   }
                break;
+            case compilationEnforceProfiling:
+               entry->_optimizationPlan->setInsertInstrumentation(true); // enable profiling
+               entry->_optimizationPlan->setDoNotSwitchToProfiling(true); // don't allow another switch
+               entry->_optimizationPlan->setDisableGCR(); // GCR isn't needed
+               tryCompilingAgain = true;
+               break;
             case compilationNullSubstituteCodeCache:
             case compilationCodeMemoryExhausted:
             case compilationCodeCacheError:
@@ -7093,9 +7099,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                      }
                   }
                }
+
+            // JProfiling may be enabled if TR_EnableJProfilingInProfilingCompilations is set and its a profiling compilation.
+            // See optimizer/JProfilingBlock.cpp
             if (!doJProfile)
                {
-               options->setDisabled(OMR::jProfiling, true);
                options->setOption(TR_EnableJProfiling, false);
                }
             else // JProfiling bodies should not use GCR trees
@@ -7436,7 +7444,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
          {
          bool isEDOCompilation = false;
-         TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler->getCurrentMethod());
+         TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
          if (profileInfo && profileInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
             {
             isEDOCompilation = true;
@@ -9820,6 +9828,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const J9::LambdaEnforceScorching &e)
       {
       _methodBeingCompiled->_compErrCode = compilationLambdaEnforceScorching;
+      }
+   catch (const J9::EnforceProfiling &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationEnforceProfiling;
       }
    catch (const TR::InsufficientlyAggressiveCompilation &e)
       {

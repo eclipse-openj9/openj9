@@ -1702,14 +1702,13 @@ void TR::X86CallSite::computeProfiledTargets()
       if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling) &&
           TR_ValueProfileInfoManager::get(comp()))
          {
-         TR_ValueProfileInfoManager * valueProfileInfo = TR_ValueProfileInfoManager::get(comp());
          TR::Node *callNode = getCallNode();
-         TR_AddressInfo * valueInfo = (TR_AddressInfo*) (valueProfileInfo ? valueProfileInfo->getValueInfo(callNode->getByteCodeInfo(), comp()) : 0);
+         TR_AddressInfo *valueInfo = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp(), AddressInfo));
 
          // PMR 05447,379,000 getTopValue may return array length profile data instead of a class pointer
          // (when the virtual call feeds an arraycopy method length parameter). We need to defend this case to
          // avoid attempting to use the length as a pointer, so use asAdressInfo() to gate assignment of topValue.
-         uintptrj_t topValue = (valueInfo && valueInfo->asAddressInfo())?valueInfo->getTopValue():0;
+         uintptrj_t topValue = (valueInfo) ? valueInfo->getTopValue() : 0;
 
          // if the call to hashcode is a virtual call node, the top value was already inlined.
          if (callNode->isTheVirtualCallNodeForAGuardedInlinedCall())
@@ -1772,33 +1771,23 @@ void TR::X86CallSite::computeProfiledTargets()
       bool staticPICsExist = false;
       int32_t numStaticPICSlots = 0;
 
-      // Don't use the manager, just get info if there's JIT profiling info, ignore interpreter data
-      //
-      TR_ValueProfileInfoManager * valueProfileInfo = TR_ValueProfileInfoManager::get(comp());
-      TR_AbstractInfo * valueInfo = (TR_AbstractInfo*) (valueProfileInfo ? valueProfileInfo->getValueInfo(callNode->getByteCodeInfo(), comp()) : 0);
-      bool isWarmCompilePIC = (valueInfo && valueInfo->asWarmCompilePICAddressInfo());
 
+      TR_AddressInfo *addressInfo = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp(), AddressInfo));
+      uintptr_t topValue;
       float missRatio = 0.0;
-      if ((valueInfo && valueInfo->getTotalFrequency() > 0 &&
-          (isWarmCompilePIC ? (((TR_WarmCompilePICAddressInfo*)valueInfo)->getTopValue() &&
-                                             !comp()->getPersistentInfo()->isObsoleteClass((void*)((TR_WarmCompilePICAddressInfo*)valueInfo)->getTopValue(), fej9))
-                                          : ((TR_AddressInfo*)valueInfo)->getTopValue() && valueInfo->asAddressInfo() &&
-                                             !comp()->getPersistentInfo()->isObsoleteClass((void*)((TR_AddressInfo*)valueInfo)->getTopValue(), fej9))) &&
-          (valueInfo->getTopProbability() >= getMinProfiledCallFrequency()))
+      if (addressInfo && addressInfo->getTopValue(topValue) > 0 && topValue && !comp()->getPersistentInfo()->isObsoleteClass((void*)topValue, fej9) &&
+          addressInfo->getTopProbability() >= getMinProfiledCallFrequency())
          {
-         uintptrj_t totalFrequency = valueInfo->getTotalFrequency();
+         uint32_t totalFrequency = addressInfo->getTotalFrequency();
          TR_ScratchList<TR_ExtraAddressInfo> valuesSortedByFrequency(comp()->trMemory());
-         if (isWarmCompilePIC)
-            ((TR_WarmCompilePICAddressInfo *)valueInfo)->getSortedList(comp(), (List<TR_ExtraAbstractInfo> *)&valuesSortedByFrequency);
-         else
-            ((TR_AddressInfo *)valueInfo)->getSortedList(comp(), (List<TR_ExtraAbstractInfo> *)&valuesSortedByFrequency);
+         addressInfo->getSortedList(comp(), &valuesSortedByFrequency);
 
          static const char *p = feGetEnv("TR_TracePIC");
          if (p)
             {
-            printf("Value profile info for callNode %p in %s\n", callNode, comp()->signature());
-            (isWarmCompilePIC) ? ((TR_WarmCompilePICAddressInfo *)valueInfo)->print() : ((TR_AddressInfo *)valueInfo)->print();
-            printf("\n");
+            traceMsg(comp(), "Value profile info for callNode %p in %s\n", callNode, comp()->signature());
+            addressInfo->getProfiler()->dumpInfo(comp()->getOutFile());
+            traceMsg(comp(), "\n");
             }
 
          uintptrj_t totalPICHitFrequency = 0;

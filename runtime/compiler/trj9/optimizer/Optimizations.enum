@@ -31,4 +31,5 @@
    OPTIMIZATION(sequentialStoreSimplification)
    OPTIMIZATION(osrGuardInsertion)
    OPTIMIZATION(osrGuardRemoval)
-   OPTIMIZATION(jProfiling)
+   OPTIMIZATION(jProfilingBlock)
+   OPTIMIZATION(jProfilingValue)

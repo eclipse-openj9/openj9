@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
-#include "JProfiling.hpp"
+#include "JProfilingBlock.hpp"
 
 #include "il/Block.hpp"
 #include "infra/Cfg.hpp"
@@ -37,9 +37,10 @@
 
 // Global thresholds for the number of method enters required to trip
 // method recompilation - these are adjusted in the JIT hook control logic
-int32_t TR_JProfiling::nestedLoopRecompileThreshold = 10;
-int32_t TR_JProfiling::loopRecompileThreshold = 250;
-int32_t TR_JProfiling::recompileThreshold = 500;
+int32_t TR_JProfilingBlock::nestedLoopRecompileThreshold = 10;
+int32_t TR_JProfilingBlock::loopRecompileThreshold = 250;
+int32_t TR_JProfilingBlock::recompileThreshold = 500;
+int32_t TR_JProfilingBlock::profilingCompileThreshold = 2;
 
 /**
  * Prim's algorithm to compute a Minimum Spanning Tree traverses the edges of the tree
@@ -588,7 +589,7 @@ class EdgeFrequencyInfo
  * \param Q The priority queue to be used to run the algorithm
  * \param stackMemoryRegion The stack memory from which to allocate temporary data structures
  */
-void TR_JProfiling::computeMinimumSpanningTree(BlockParents &parent, BlockPriorityQueue &Q, TR::StackMemoryRegion &stackMemoryRegion)
+void TR_JProfilingBlock::computeMinimumSpanningTree(BlockParents &parent, BlockPriorityQueue &Q, TR::StackMemoryRegion &stackMemoryRegion)
    {
    TR::CFG *cfg = comp()->getFlowGraph();
    BlockWeights weights(cfg->getNextNodeNumber(), stackMemoryRegion);
@@ -636,7 +637,7 @@ void TR_JProfiling::computeMinimumSpanningTree(BlockParents &parent, BlockPriori
  * \param loopBack The special loopBack edge which connects the method exit
  *               and enter blocks
  */
-int32_t TR_JProfiling::processCFGForCounting(BlockParents &parent, TR::BlockChecklist &countedBlocks, TR::CFGEdge &loopBack)
+int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::BlockChecklist &countedBlocks, TR::CFGEdge &loopBack)
    {
    TR::CFG *cfg = comp()->getFlowGraph();
    int32_t firstNewBlockNumber = comp()->getFlowGraph()->getNextNodeNumber();
@@ -756,37 +757,19 @@ int32_t TR_JProfiling::processCFGForCounting(BlockParents &parent, TR::BlockChec
 
 /**
  * Initialize the persistent data structurs used to store and exploit the method profiling data
- * \param addValueProfilingTrees Add trees to store method call target and other value profiling information
- *        (high overhead)
+ *
  * \return The block frequency information data structure holding the profiling counters
  */
-TR_BlockFrequencyInfo *TR_JProfiling::initRecompDataStructures(bool addValueProfilingTrees)
+TR_BlockFrequencyInfo *TR_JProfilingBlock::initRecompDataStructures()
    {
+   // If this is a profiling compilation, there may be an existing block
+   // frequency profiler. Remove it to avoid excess overhead.
+   TR_BlockFrequencyProfiler *bfp = comp()->getRecompilationInfo()->getBlockFrequencyProfiler();
+   if (bfp)
+      comp()->getRecompilationInfo()->removeProfiler(bfp);
+ 
    TR_PersistentProfileInfo *profileInfo = comp()->getRecompilationInfo()->findOrCreateProfileInfo();
-   if (addValueProfilingTrees)
-      {
-      comp()->getRecompilationInfo()->createProfilers();
-      comp()->getRecompilationInfo()->getValueProfiler()->modifyTrees();
-      }
-   if (!comp()->haveCommittedCallSiteInfo() && profileInfo->getCallSiteInfo() == NULL)
-      {
-      TR_CallSiteInfo * const initialCallSiteInfo = new (PERSISTENT_NEW) TR_CallSiteInfo(comp(), persistentAlloc);
-      TR_ASSERT(profileInfo->getCallSiteInfo() == NULL, "Profile already conatins a CallSiteInfo");
-      profileInfo->setCallSiteInfo(initialCallSiteInfo);
-      profileInfo->clearInfo();
-      comp()->setCommittedCallSiteInfo(true);
-      }
-   else if (profileInfo->getCallSiteInfo()->getNumCallSites() != comp()->getNumInlinedCallSites())
-      {
-      TR_CallSiteInfo * const originalCallSiteInfo = profileInfo->getCallSiteInfo();
-      TR_ASSERT(originalCallSiteInfo != NULL, "Existing CallSiteInfo should not be NULL.");
-      TR_CallSiteInfo * const updatedCallSiteInfo = new (PERSISTENT_NEW) TR_CallSiteInfo(comp(), persistentAlloc);
-      profileInfo->setCallSiteInfo(updatedCallSiteInfo);
-      // FIXME: originalCallSiteInfo and its _blocks array allocation appear to leak.
-      }
-   TR_BlockFrequencyInfo *blockFrequencyInfo = new (PERSISTENT_NEW) TR_BlockFrequencyInfo(comp(), persistentAlloc);
-   profileInfo->setBlockFrequencyInfo(blockFrequencyInfo);
-   return blockFrequencyInfo;
+   return profileInfo->findOrCreateBlockFrequencyInfo(comp());
    }
 
 /**
@@ -794,7 +777,7 @@ TR_BlockFrequencyInfo *TR_JProfiling::initRecompDataStructures(bool addValueProf
  * the counters which have been inserted into the compiled method body
  * \param componentCounters The counter data structure to print
  */
-void TR_JProfiling::dumpCounterDependencies(TR_BitVector **componentCounters)
+void TR_JProfilingBlock::dumpCounterDependencies(TR_BitVector **componentCounters)
    {
    TR::CFG *cfg = comp()->getFlowGraph();
    for (CFGNodeIterator iter(cfg, this); iter.currentBlock() != NULL; ++iter)
@@ -847,7 +830,7 @@ void TR_JProfiling::dumpCounterDependencies(TR_BitVector **componentCounters)
  * appropriate number of method entries has occurred as determined by the raw block
  * count of the first block of the method.
  */   
-void TR_JProfiling::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyInfo, TR_BitVector **componentCounters)
+void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyInfo, TR_BitVector **componentCounters)
    {
    // add invocation check to the top of the method
    int32_t *thresholdLocation = NULL;
@@ -857,6 +840,11 @@ void TR_JProfiling::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyI
       thresholdLocation = &loopRecompileThreshold;
    else
       thresholdLocation = &recompileThreshold;
+
+   // Profiling compilations have a lower threshold, so that less time is
+   // spent running the high overhead implementation
+   if (comp()->isProfilingCompilation())
+      thresholdLocation = &profilingCompileThreshold;
 
    int32_t startBlockNumber = comp()->getStartBlock()->getNumber();
    blockFrequencyInfo->setEntryBlockNumber(startBlockNumber);
@@ -971,8 +959,39 @@ void TR_JProfiling::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequencyI
       }
    }
 
-int32_t TR_JProfiling::perform() 
+/**
+ * JProfiling consists of two components: JProfilingValue & JProfilingBlock
+ * JProfilingBlock will run early in the compilation, such that the CFG closely resembles the original program structure,
+ * whilst the JProfilingValue pass runs later, as values may be introduced, eliminated or simplified.
+ *
+ * For non-profiling compilations, this can be enabled with the option TR_EnableJProfiling. Other control infrastructure
+ * may limit which compilations this is actually applied to. See the env option TR_DisableFilterOnJProfiling for more details.
+ *
+ * For profiling compilations, JProfiling can replace the existing JitProfiling instrumentation when either TR_EnableJProfiling
+ * or TR_EnableJProfilingInProfilingCompilations are set. However, this introduces some complexity as a compilation may
+ * switch to profiling part way though, potentially after JProfilingBlock should have run. In such a scenario, the compilation
+ * will be restarted. See switchToProfiling() for the restart logic.
+ */
+int32_t TR_JProfilingBlock::perform() 
    {
+   if (comp()->getOption(TR_EnableJProfiling))
+      {
+      if (trace())
+         traceMsg(comp(), "JProfiling has been enabled, run JProfiling\n");
+      }
+   else if (comp()->getProfilingMode() == JProfiling)
+      {
+      if (trace())
+         traceMsg(comp(), "JProfiling has been enabled for profiling compilations, run JProfilingBlock\n");
+      }
+   else
+      {
+      if (trace())
+         traceMsg(comp(), "JProfiling has not been enabled, skip JProfilingBlock\n");
+      comp()->setSkippedJProfilingBlock();
+      return 0;
+      }
+
    TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "jprofiling.instrument/success/(%s)", comp()->signature()));
 
    TR::CFG *cfg = comp()->getFlowGraph();
@@ -1001,7 +1020,7 @@ int32_t TR_JProfiling::perform()
    if (trace())
       comp()->dumpMethodTrees("Trees after JProfiling counter insertion");
 
-   TR_BlockFrequencyInfo *blockFrequencyInfo = initRecompDataStructures(false);
+   TR_BlockFrequencyInfo *blockFrequencyInfo = initRecompDataStructures();
 
    TR_BitVector** componentCounters = (TR_BitVector**)new (comp()->trMemory(), persistentAlloc, TR_Memory::BlockFrequencyInfo) void**[comp()->getFlowGraph()->getNextNodeNumber()*2]();
    blockFrequencyInfo->setCounterDerivationInfo(componentCounters);
@@ -1147,7 +1166,7 @@ int32_t TR_JProfiling::perform()
    }
 
 const char *
-TR_JProfiling::optDetailString() const throw()
+TR_JProfilingBlock::optDetailString() const throw()
    {
-   return "O^O JPROFILING: ";
+   return "O^O JPROFILING BLOCK: ";
    }

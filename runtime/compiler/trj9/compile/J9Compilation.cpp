@@ -156,8 +156,7 @@ J9::Compilation::Compilation(
    _vpInfoManager(NULL),
    _bpInfoManager(NULL),
    _methodBranchInfoList(getTypedAllocator<TR_MethodBranchProfileInfo*>(self()->allocator())),
-   _methodVPInfoList(getTypedAllocator<TR_MethodValueProfileInfo*>(self()->allocator())),
-   _methodHWVPInfoList(getTypedAllocator<TR_MethodValueProfileInfo*>(self()->allocator())),
+   _externalVPInfoList(getTypedAllocator<TR_ExternalValueProfileInfo*>(self()->allocator())),
    _doneHWProfile(false),
    _hwpInstructions(m),
    _hwpBCMap(m),
@@ -165,7 +164,9 @@ J9::Compilation::Compilation(
    _j9VMThread(j9vmThread),
    _monitorAutos(m),
    _monitorAutoSymRefsInCompiledMethod(getTypedAllocator<TR::SymbolReference*>(self()->allocator())),
-   _classForOSRRedefinition(m)
+   _classForOSRRedefinition(m),
+   _profileInfo(NULL),
+   _skippedJProfilingBlock(false)
    {
    _ObjectClassPointer   = fe->getClassFromSignature("Ljava/lang/Object;", 18, compilee);
    _RunnableClassPointer = fe->getClassFromSignature("Ljava/lang/Runnable;", 20, compilee);
@@ -180,10 +181,13 @@ J9::Compilation::Compilation(
 
    if (_updateCompYieldStats)
       _hiresTimeForPreviousCallingContext = TR::Compiler->vm.getHighResClock(self());
+
+   _profileInfo = new (m->trHeapMemory()) TR_AccessedProfileInfo(heapMemoryRegion);
    }
 
 J9::Compilation::~Compilation()
    {
+   _profileInfo->~TR_AccessedProfileInfo();
    }
 
 TR_J9VMBase *
@@ -448,25 +452,7 @@ J9::Compilation::useAnchors()
 bool
 J9::Compilation::hasBlockFrequencyInfo()
    {
-   TR::Recompilation *recompilationInfo = self()->getRecompilationInfo();
-   if (!recompilationInfo)
-      return false;
-
-   if (!recompilationInfo->isRecompilation())
-      return false;
-
-   TR_PersistentMethodInfo *methodInfo = recompilationInfo->getMethodInfo();
-   if (!methodInfo)
-      return false;
-
-   TR_PersistentProfileInfo *profileInfo = methodInfo->getProfileInfo();
-   if (!profileInfo)
-      return false;
-
-   TR_BlockFrequencyInfo *blockFrequencyInfo = profileInfo->getBlockFrequencyInfo();
-   if (!blockFrequencyInfo)
-      return false;
-   return true;
+   return TR_BlockFrequencyInfo::get(self()) != NULL;
    }
 
 bool

@@ -2105,16 +2105,8 @@ static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, u
    if (!methodSymbol->isVirtual() && !methodSymbol->isInterface())
       return false;
 
-   TR_ValueProfileInfoManager *valueProfileInfo = TR_ValueProfileInfoManager::get(comp);
-   if (!valueProfileInfo)
-      return false;
-
-   TR_AbstractInfo *info = (TR_AbstractInfo*)valueProfileInfo->getValueInfo(callNode->getByteCodeInfo(), comp);
+   TR_AddressInfo *info = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp, AddressInfo));
    if (!info)
-      return false;
-
-   bool isAddressInfo = info->asAddressInfo() != NULL;
-   if (!isAddressInfo && !info->asWarmCompilePICAddressInfo())
       return false;
 
    uint32_t totalFreq = info->getTotalFrequency();
@@ -2122,11 +2114,7 @@ static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, u
       return false;
 
    TR_ScratchList<TR_ExtraAddressInfo> allValues(comp->trMemory());
-
-   if (isAddressInfo)
-      ((TR_AddressInfo *)info)->getSortedList(comp, (List<TR_ExtraAbstractInfo> *)&allValues);
-   else
-      ((TR_WarmCompilePICAddressInfo *)info)->getSortedList(comp, (List<TR_ExtraAbstractInfo> *)&allValues);
+   info->getSortedList(comp, &allValues);
 
    TR_ResolvedMethod   *owningMethod = methodSymRef->getOwningMethod(comp);
    TR_OpaqueClassBlock *callSiteMethod;
