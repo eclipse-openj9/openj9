@@ -376,6 +376,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/runtime/OMRRuntimeAssumptions.cpp \
     compiler/trj9/runtime/Listener.cpp \
     compiler/trj9/env/VMJ9Server.cpp \
+    compiler/trj9/env/j9methodServer.cpp \
     compiler/trj9/rpc/J9Server.cpp \
     compiler/trj9/rpc/ProtobufTypeConvert.cpp
 

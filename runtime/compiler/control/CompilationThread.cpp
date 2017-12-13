@@ -101,6 +101,7 @@
 #include "shcdatatypes.h" // for CompiledMethodWrapper
 #include "runtime/ArtifactManager.hpp"
 #include "runtime/CodeCacheMemorySegment.hpp"
+#include "trj9/env/j9methodServer.hpp"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
