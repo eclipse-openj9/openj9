@@ -184,6 +184,7 @@ final class Access implements JavaLangAccess {
 		return result;
 	}
 
+	/*[IF !Java10]*/
 	/**
 	 * Return a newly created String that uses the passed in char[]
 	 * without copying.  The array must not be modified after creating
@@ -197,6 +198,7 @@ final class Access implements JavaLangAccess {
 	public java.lang.String newStringUnsafe(char[] data) {
 		return new String(data, true /*ignored*/);
 	}
+	/*[ENDIF]*/
 
 	@Override
 	public void invokeFinalize(java.lang.Object arg0)
