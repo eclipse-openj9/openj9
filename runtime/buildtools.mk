@@ -165,7 +165,7 @@ uma : buildtools copya2e
 
 # process constant pool definition file to generate jcl constant pool definitions and header file
 CONSTANTPOOL_TOOL    := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)sourcetools/lib/j9vmcp.jar" com.ibm.oti.VMCPTool.Main
-CONSTANTPOOL_OPTIONS := -rootDir . -buildSpecId $(SPEC) -configDir $(SPEC_DIR) -jcls se7_basic,se9_before_b165,se9
+CONSTANTPOOL_OPTIONS := -rootDir . -buildSpecId $(SPEC) -configDir $(SPEC_DIR) -jcls se7_basic,se9_before_b165,se9,se10
 constantpool : buildtools
 	$(CONSTANTPOOL_TOOL) $(CONSTANTPOOL_OPTIONS)
 
