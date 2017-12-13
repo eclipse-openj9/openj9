@@ -55,11 +55,11 @@
 #include "atoe.h"
 #endif
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 #include <poll.h>
 #define IPV6_FLOWINFO_SEND      33
 #define HAS_RTNETLINK 1
-#endif
+#endif /* defined(LINUX) || defined(OSX) */
 
 #if defined(HAS_RTNETLINK)
 #include <asm/types.h>
@@ -796,7 +796,7 @@ j9sock_fdset_init(struct J9PortLibrary *portLibrary, j9socket_t socketP)
 #else
 	FD_ZERO(&fdset->handle);
 	FD_SET(SOCKET_CAST(socketP), &fdset->handle);
-#endif
+#endif /* defined(LINUX) || defined(OSX) */
 
 	return 0;
 }
