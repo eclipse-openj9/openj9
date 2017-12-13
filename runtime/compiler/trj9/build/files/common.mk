@@ -33,6 +33,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/infra/IGBase.cpp \
     omr/compiler/infra/IGNode.cpp \
     omr/compiler/infra/ILWalk.cpp \
+    omr/compiler/ras/ILValidationRules.cpp \
+    omr/compiler/ras/ILValidationUtils.cpp \
     omr/compiler/ras/ILValidator.cpp \
     omr/compiler/infra/InterferenceGraph.cpp \
     omr/compiler/infra/OMRMonitorTable.cpp \
