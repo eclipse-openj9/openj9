@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -548,7 +548,7 @@ public Class<?>[] getClasses() {
 /**
  * Answers the classloader which was used to load the
  * class represented by the receiver. Answer null if the
- * class was loaded by the system class loader
+ * class was loaded by the system class loader.
  *
  * @return		the receiver's class loader or nil
  *
@@ -569,6 +569,17 @@ public ClassLoader getClassLoader() {
 		}
 	}
 	return classLoader;
+}
+
+/**
+ * Returns the classloader used to load the receiver's class.
+ * Returns null if the class was loaded by the bootstrap (system) class loader.
+ * This skips security checks.
+ * @return the receiver's class loader or null
+ * @see java.lang.ClassLoader
+ */
+ClassLoader internalGetClassLoader() {
+	return (classLoader == ClassLoader.bootstrapClassLoader)? null: classLoader;
 }
 
 /**
