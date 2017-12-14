@@ -706,29 +706,22 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 	size_t dllNameLength = -1;
 	size_t argumentLength = -1;
 	char *argString = NULL;
+	UDATA j2seReleaseValue = j2seVersion & J2SE_RELEASE_MASK;
 	J9JavaVMArgInfo *optArg = NULL;
+	
 	PORT_ACCESS_FROM_PORT(portLib);
-
-	if (J2SE_19 <= (j2seVersion & J2SE_RELEASE_MASK)) {
-		switch (j2seVersion & J2SE_SHAPE_MASK) {
-		case J2SE_SHAPE_RAW:
-			Assert_Util_unreachable();
-			break;
-		default:
-			dllName = J9_JAVA_SE_9_DLL_NAME;
-			dllNameLength = sizeof(J9_JAVA_SE_9_DLL_NAME);
-			break;
-		}
-	} else if (J2SE_17 <= (j2seVersion & J2SE_RELEASE_MASK)) {
-		switch (j2seVersion & J2SE_SHAPE_MASK) {
-		case J2SE_SHAPE_RAW:
-			Assert_Util_unreachable();
-			break;
-		default:
-			dllName = J9_JAVA_SE_7_BASIC_DLL_NAME;
-			dllNameLength = sizeof(J9_JAVA_SE_7_BASIC_DLL_NAME);
-			break;
-		}
+	if (J2SE_SHAPE_RAW == (j2seVersion & J2SE_SHAPE_MASK)) {
+		Assert_Util_unreachable();
+	} 
+	if (J2SE_V10 <= j2seReleaseValue) {
+		dllName = J9_JAVA_SE_10_DLL_NAME;
+		dllNameLength = sizeof(J9_JAVA_SE_10_DLL_NAME);
+	} else if (J2SE_19 <= j2seReleaseValue) {
+		dllName = J9_JAVA_SE_9_DLL_NAME;
+		dllNameLength = sizeof(J9_JAVA_SE_9_DLL_NAME);
+	} else if (J2SE_17 <= j2seReleaseValue) {
+		dllName = J9_JAVA_SE_7_BASIC_DLL_NAME;
+		dllNameLength = sizeof(J9_JAVA_SE_7_BASIC_DLL_NAME);
 	} else { /* Java 6 */
 		Assert_Util_unreachable();
 	}
