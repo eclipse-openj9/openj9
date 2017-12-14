@@ -14,6 +14,7 @@ public:
    virtual bool needsContiguousAllocation() override                     { return true; }
    virtual bool supportsEmbeddedHeapBounds() override                    { return false; }
    virtual bool supportsFastNanoTime() override                          { return false; }
+   virtual bool helpersNeedRelocation() override                         { return true; }
 
    virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool) override
       { return; }
