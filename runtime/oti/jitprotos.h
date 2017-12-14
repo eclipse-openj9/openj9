@@ -37,14 +37,8 @@ extern "C" {
 #endif
 
 /* prototypes from dlt.c */
-
 void * setUpForDLT(J9VMThread * currentThread, J9StackWalkState * walkState);
 
-/* prototypes from J9JITRTStub */
-
-/* prototypes from JITSourceRuntimeInit */
-
-/* prototypes from J9SourceJITRuntimeDecompile */
 extern J9_CFUNC void   induceOSROnCurrentThread(J9VMThread * currentThread);
 extern J9_CFUNC UDATA osrFrameSize(J9Method *method);
 extern J9_CFUNC UDATA ensureOSRBufferSize(J9JavaVM *vm, UDATA osrFramesByteSize, UDATA osrScratchBufferByteSize, UDATA osrStackFrameByteSize);
@@ -87,16 +81,11 @@ extern J9_CFUNC void   c_jitDecompileBeforeReportMethodEnter(J9VMThread * curren
 extern J9_CFUNC void   c_jitReportExceptionCatch(J9VMThread * currentThread);
 extern J9_CFUNC void   c_jitDecompileOnReturn(J9VMThread * currentThread);
 
-/* prototypes from JITSourceCodertThunk */
 extern J9_CFUNC void * j9ThunkLookupNameAndSig (void * jitConfig, void *parm);
 
-/* prototypes from JITSourceHashTableSupport */
-
-/* prototypes from JITSourceRuntimeCacheSupport */
 extern J9_CFUNC J9JITHashTable *avl_jit_artifact_insert_existing_table (J9AVLTree * tree, J9JITHashTable * hashTable);
 extern J9_CFUNC J9AVLTree * jit_allocate_artifacts (J9PortLibrary * portLibrary);
 
-/* prototypes from JITStackWalker */
 extern J9_CFUNC UDATA  jitWalkStackFrames (J9StackWalkState *walkState);
 extern J9_CFUNC J9JITExceptionTable * jitGetExceptionTableFromPC (J9VMThread * vmThread, UDATA jitPC);
 extern J9_CFUNC UDATA  jitGetOwnedObjectMonitors(J9StackWalkState *state);
@@ -105,7 +94,6 @@ extern J9_CFUNC void jitPrintRegisterMapArray (J9StackWalkState * walkState, cha
 #endif /* J9VM_INTERP_STACKWALK_TRACING (autogen) */
 
 
-/* prototypes from JITSourceArtifactSupport */
 extern J9_CFUNC J9JITHashTable *jit_artifact_add_code_cache (J9PortLibrary * portLibrary, J9AVLTree * tree, J9MemorySegment * cacheToInsert, J9JITHashTable *optionalHashTable);
 extern J9_CFUNC UDATA jit_artifact_insert (J9PortLibrary * portLibrary, J9AVLTree * tree, J9JITExceptionTable * dataToInsert);
 extern J9_CFUNC J9JITHashTable *
@@ -130,7 +118,6 @@ void flushICache(J9VMThread *currentThread, void *memoryPointer, UDATA byteAmoun
 void i2jFSDAssert();
 
 /* prototype from cnathelp.cpp */
-
 void initPureCFunctionTable(J9JavaVM *vm);
 
 /**

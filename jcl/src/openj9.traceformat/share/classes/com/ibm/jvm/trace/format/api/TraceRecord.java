@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2016 IBM Corp. and others
+ * Copyright (c) 2009, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -529,7 +529,6 @@ public class TraceRecord implements Comparable<TraceRecord> {
 							debugOffsets.add(Integer.valueOf(indexTarget));
 						}
 					} else {
-						/* oh crap */
 						context.error(this, "Special tracepoint (length is 8) and neither sequence wrap or lost record");
 					}
 				}

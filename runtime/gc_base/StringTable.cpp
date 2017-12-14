@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "hashtable_api.h"
+#include "j2sever.h"
 #include "j9consts.h"
 #include "j9protos.h"
 #include "objhelp.h"
@@ -669,6 +670,13 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			}
 		} else {
 			J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32) unicodeLength);
+			if (J2SE_VERSION(vm) >= J2SE_V10) {
+				/* Setting java/lang/String.coder to 1 (UTF16)
+				 * which can be removed if this field can be removed by
+				 * https://github.com/ibmruntimes/openj9-openjdk-jdk9/issues/91
+				 */
+				J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 1);
+			}
 		}
 
 		MM_AtomicOperations::writeBarrier();

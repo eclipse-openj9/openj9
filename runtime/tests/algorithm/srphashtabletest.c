@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,9 +35,6 @@
  * 		srpHashTableRemove()
  */
 
-/**
- * Copied from gc_base/gcutils.h
- */
 #define ROUND_TO_SIZEOF_UDATA(number) (((number) + (sizeof(UDATA) - 1)) & (~(sizeof(UDATA) - 1)))
 
 static UDATA hashFn (void *key, void *userData);

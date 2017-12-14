@@ -48,9 +48,6 @@
 #define SRPHASHTABLE_CREATED_BY_SRPHASHTABLENEWINREGION 2
 #define SRPHASHTABLE_CREATED_BY_SRPHASHTABLERECREATE 3
 
-/**
- * Copied from gc_base/gcutils.h
- */
 #define ROUND_TO_SIZEOF_UDATA(number) (((number) + (sizeof(UDATA) - 1)) & (~(sizeof(UDATA) - 1)))
 
 static J9SRP * srpHashTableFindNode (J9SRPHashTable *srptable, void *entry);
