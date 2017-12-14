@@ -667,6 +667,7 @@
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules java.se.ee,openj9.sharedclasses \
 	--add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \
@@ -718,6 +719,7 @@
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
 	JCL_TEST_Test-TypeAnnotation,\
