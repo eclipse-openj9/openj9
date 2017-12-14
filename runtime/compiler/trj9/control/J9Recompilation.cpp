@@ -201,7 +201,7 @@ J9::Recompilation::beforeOptimization()
    //
    if (self()->isProfilingCompilation()) // this asks the bodyInfo
       {
-      _useSampling = false;
+      _useSampling = _compilation->getProfilingMode() != JitProfiling;
       self()->findOrCreateProfileInfo()->setProfilingCount     (DEFAULT_PROFILING_COUNT);
       self()->findOrCreateProfileInfo()->setProfilingFrequency (DEFAULT_PROFILING_FREQUENCY);
       }
@@ -210,7 +210,9 @@ J9::Recompilation::beforeOptimization()
    //
    if (self()->couldBeCompiledAgain())
       {
-      if (!self()->useSampling())
+      if (_compilation->getProfilingMode() == JProfiling)
+         self()->createProfilers();
+      else if (!self()->useSampling())
          {
          if (_compilation->getMethodHotness() == cold)
             {
@@ -370,7 +372,7 @@ J9::Recompilation::switchToProfiling(uint32_t f, uint32_t c)
       comp()->failCompilation<J9::EnforceProfiling>("Enforcing profiling compilation");
       }
 
-   _useSampling = false;
+   _useSampling = _compilation->getProfilingMode() != JitProfiling;
    self()->findOrCreateProfileInfo()->setProfilingFrequency(f);
    self()->findOrCreateProfileInfo()->setProfilingCount(c);
    self()->createProfilers();

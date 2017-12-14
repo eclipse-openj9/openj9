@@ -333,7 +333,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::localValuePropagationGroup                                            },
    { OMR::arraycopyTransformation                                               },
    { OMR::treeSimplification,                        OMR::IfEnabled                  },
-   { OMR::redundantAsyncCheckRemoval,                OMR::IfNotProfiling             },
+   { OMR::redundantAsyncCheckRemoval,                OMR::IfNotJitProfiling          },
    { OMR::localDeadStoreElimination                                             }, // after latest copy propagation
    { OMR::deadTreesElimination                                                  }, // remove dead anchors created by check/store removal
    { OMR::treeSimplification,                        OMR::IfEnabled                  },
@@ -371,7 +371,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead anchors created by check/store removal
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead RegStores produced by previous deadTrees pass
-   { OMR::compactLocals,                             OMR::IfNotProfiling             }, // analysis results are invalidated by profilingGroup
+   { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by profilingGroup
    { OMR::globalLiveVariablesForGC                                              },
    { OMR::profilingGroup,                            OMR::IfProfiling                },
    { OMR::regDepCopyRemoval                                                     },
@@ -421,7 +421,7 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::blockSplitter,                         OMR::IfNews                   }, // treeSimplification + blockSplitter + VP => opportunity for EA
    { OMR::expensiveGlobalValuePropagationGroup                            },
    { OMR::dataAccessAccelerator                                           },
-   { OMR::osrGuardRemoval,                       OMR::IfEnabledAndNotProfiling }, // run after calls/monents/asyncchecks have been removed
+   { OMR::osrGuardRemoval,                       OMR::IfEnabled           }, // run after calls/monents/asyncchecks have been removed
    { OMR::globalDeadStoreGroup,                                           },
    { OMR::idiomRecognition,                      OMR::IfLoopsAndNotProfiling   }, // Early pass of idiomRecognition - Loop Canonicalizer transformations break certain idioms (i.e. arrayTranslateAndTest)
    { OMR::globalCopyPropagation,                 OMR::IfNoLoops       },
@@ -440,7 +440,7 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::generalLoopUnroller,                   OMR::IfLoopsAndNotProfiling   }, // unroll Loops
    { OMR::blockManipulationGroup                                          },
    { OMR::lateLocalGroup                                                  },
-   { OMR::redundantAsyncCheckRemoval,            OMR::IfNotProfiling           }, // optimize async check placement
+   { OMR::redundantAsyncCheckRemoval,            OMR::IfNotJitProfiling        }, // optimize async check placement
    { OMR::recompilationModifier,                 OMR::IfProfiling              }, // do before GRA to avoid commoning of longs afterwards
    { OMR::globalCopyPropagation,                 OMR::IfMoreThanOneBlock       }, // Can produce opportunities for store sinking
    { OMR::generalStoreSinking                                             },
@@ -503,7 +503,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::arrayPrivatizationGroup,               OMR::IfNews      }, // must preceed escape analysis
    { OMR::veryExpensiveGlobalValuePropagationGroup           },
    { OMR::dataAccessAccelerator                              }, //always run after GVP
-   { OMR::osrGuardRemoval,                       OMR::IfEnabledAndNotProfiling }, // run after calls/monents/asyncchecks have been removed
+   { OMR::osrGuardRemoval,                       OMR::IfEnabled }, // run after calls/monents/asyncchecks have been removed
    { OMR::globalDeadStoreGroup,                              },
    { OMR::idiomRecognition,                      OMR::IfLoopsAndNotProfiling   }, // Early pass of idiomRecognition - Loop Canonicalizer transformations break certain idioms (i.e. arrayTranslateAndTest)
    { OMR::globalCopyPropagation,                 OMR::IfNoLoops       },
@@ -525,7 +525,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::blockSplitter,                         OMR::MarkLastRun },
    { OMR::blockManipulationGroup                             },
    { OMR::lateLocalGroup                                     },
-   { OMR::redundantAsyncCheckRemoval                                      }, // optimize async check placement
+   { OMR::redundantAsyncCheckRemoval,            OMR::IfNotJitProfiling        }, // optimize async check placement
    { OMR::recompilationModifier,                 OMR::IfProfiling              }, // do before GRA to avoid commoning of longs afterwards
    { OMR::globalCopyPropagation,                 OMR::IfMoreThanOneBlock       }, // Can produce opportunities for store sinking
    { OMR::generalStoreSinking                                             },
@@ -601,7 +601,7 @@ static const OptimizationStrategy AOTStrategyOpts[] =
    { OMR::generalLoopUnroller,                   OMR::IfLoops   }, // unroll Loops
    { OMR::blockManipulationGroup                           },
    { OMR::lateLocalGroup                                   },
-   { OMR::redundantAsyncCheckRemoval                       }, // optimize async check placement
+   { OMR::redundantAsyncCheckRemoval,                OMR::IfNotJitProfiling          }, // optimize async check placement
    { OMR::dynamicLiteralPool,                        OMR::IfNotProfiling             },
    { OMR::localDeadStoreElimination,                 OMR::IfEnabled                  }, //remove the astore if no literal pool is required
    { OMR::localCSE,                              OMR::IfEnabled  },  //common up lit pool refs in the same block
@@ -678,7 +678,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::localValuePropagationGroup                                            },
    { OMR::arraycopyTransformation                                               },
    { OMR::treeSimplification,                        OMR::IfEnabled                  },
-   { OMR::asyncCheckInsertion,                       OMR::IfNotProfiling             },
+   { OMR::asyncCheckInsertion,                       OMR::IfNotJitProfiling          },
    { OMR::localCSE                                                              },
    { OMR::treeSimplification,                        OMR::MarkLastRun                },
 #ifdef TR_HOST_S390
@@ -712,7 +712,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead anchors created by check/store removal
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead RegStores produced by previous deadTrees pass
-   { OMR::compactLocals,                             OMR::IfNotProfiling             }, // analysis results are invalidated by profilingGroup
+   { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by profilingGroup
    { OMR::globalLiveVariablesForGC                                              },
    { OMR::profilingGroup,                            OMR::IfProfiling                },
    { OMR::regDepCopyRemoval                                                     },
@@ -729,7 +729,7 @@ static const OptimizationStrategy profilingOpts[] =
 
 static const OptimizationStrategy cheapTacticalGlobalRegisterAllocatorOpts[] =
    {
-   { OMR::redundantGotoElimination,      OMR::IfNotProfiling }, // need to be run before global register allocator
+   { OMR::redundantGotoElimination,        OMR::IfNotJitProfiling }, // need to be run before global register allocator
    { OMR::tacticalGlobalRegisterAllocator, OMR::IfEnabled },
    { OMR::endGroup                        }
    };
