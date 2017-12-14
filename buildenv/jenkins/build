@@ -31,38 +31,41 @@
             
             // Setup REPO variables
             script {
-                if ( OPENJDK_REPO == "" ) {
+                if ( binding.variables.containsKey("OPENJDK_REPO") && OPENJDK_REPO == "" ) {
                     OPENJDK_REPO = DEFAULT_OPENJDK_REPO
                 }
-                if ( OPENJDK_BRANCH == "" ) {
+                if ( binding.variables.containsKey("OPENJDK_BRANCH") && OPENJDK_BRANCH == "" ) {
                     OPENJDK_BRANCH = DEFAULT_OPENJDK_BRANCH
                 }
-                if ( OPENJ9_REPO != "" ) {
+                if ( ! binding.variables.containsKey("OPENJDK_SHA") || OPENJDK_SHA == "" ) {
+                    OPENJDK_SHA = ''
+                }
+                if ( binding.variables.containsKey("OPENJ9_REPO") && OPENJ9_REPO != "" ) {
                     OPENJ9_REPO_OPTION = "-openj9-repo=${OPENJ9_REPO}"
                 } else {
                     OPENJ9_REPO_OPTION = ''
                 }
-                if ( OPENJ9_BRANCH != "" ) {
+                if ( binding.variables.containsKey("OPENJ9_BRANCH") && OPENJ9_BRANCH != "" ) {
                     OPENJ9_BRANCH_OPTION = "-openj9-branch=${OPENJ9_BRANCH}"
                 } else {
                     OPENJ9_BRANCH_OPTION = ''
                 }
-                if ( OPENJ9_SHA != "" ) {
+                if ( binding.variables.containsKey("OPENJ9_SHA") && OPENJ9_SHA != "" ) {
                     OPENJ9_SHA_OPTION = "-openj9-sha=${OPENJ9_SHA}"
                 } else {
                     OPENJ9_SHA_OPTION = ''
                 }
-                if ( OMR_REPO != "" ) {
+                if ( binding.variables.containsKey("OMR_REPO") && OMR_REPO != "" ) {
                     OMR_REPO_OPTION = "-omr-repo=${OMR_REPO}"
                 } else {
                     OMR_REPO_OPTION = ''
                 }
-                if ( OMR_BRANCH != "" ) {
+                if ( binding.variables.containsKey("OMR_BRANCH") && OMR_BRANCH != "" ) {
                     OMR_BRANCH_OPTION = "-omr-branch=${OMR_BRANCH}"
                 } else {
                     OMR_BRANCH_OPTION = ''
                 }
-                if ( OMR_SHA != "" ) {
+                if ( binding.variables.containsKey("OMR_SHA") && OMR_SHA != "" ) {
                     OMR_SHA_OPTION = "-omr-sha=${OMR_SHA}"
                 } else {
                     OMR_SHA_OPTION = ''

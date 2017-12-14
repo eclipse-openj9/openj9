@@ -23,8 +23,8 @@
  node('390') {
 
     SDK_VERSION = "9"
-    DEFAULT_OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
-    DEFAULT_OPENJDK_BRANCH = "openj9"
+    OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
+    OPENJDK_BRANCH = "openj9"
     BOOT_JDK = "$HOME/openj9/ibm-java-s390x-80"
     FREEMARKER = "$HOME/openj9/freemarker.jar"
     SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-linux_390-64_cmprssptrs-"
