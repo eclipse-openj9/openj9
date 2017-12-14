@@ -273,6 +273,7 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
       TR_PersistentJittedBodyInfo *bodyInfo = metaData->bodyInfo ? (TR_PersistentJittedBodyInfo *) metaData->bodyInfo : NULL;
       if (bodyInfo && bodyInfo->getProfileInfo())
          {
+         bodyInfo->getProfileInfo()->setActive(false);
          TR_PersistentProfileInfo::decRefCount(bodyInfo->getProfileInfo());
          bodyInfo->setProfileInfo(NULL);
          }

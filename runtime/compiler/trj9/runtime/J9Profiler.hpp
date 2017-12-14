@@ -82,10 +82,10 @@ template <typename ListKind> class List;
  * Also contains call site information, to assist with matching profiling information to
  * future compiles.
  *
- * These objects have compliated lifetimes due to how they are used throughout
+ * These objects have complicated lifetimes due to how they are used throughout
  * recompiles and the desired to reduce memory overhead. They contain a reference count,
  * which should be incremented and decremented accordingly. Upon reaching zero, the
- * object will be destroyed.
+ * object will be destroyed by the JProfilerThread.
  *
  * One reference is held on the corresponding body info, ensuring its available as long
  * as the body hasn't been reclaimed. This reference is implicitly added as the initial
@@ -109,7 +109,9 @@ template <typename ListKind> class List;
 class TR_PersistentProfileInfo
    {
    public:
-   TR_ALLOC(TR_Memory::PersistentProfileInfo)
+   TR_PERSISTENT_ALLOC(TR_Memory::PersistentProfileInfo)
+
+   friend class TR_JProfilerThread;
 
    TR_PersistentProfileInfo(int32_t frequency, int32_t count)
       : _maxCount(count),
@@ -117,6 +119,8 @@ class TR_PersistentProfileInfo
         _blockFrequencyInfo(NULL),
         _valueProfileInfo(NULL),
         _callSiteInfo(NULL),
+        _next(NULL),
+        _active(false),
         _refCount(1)
       {
       for (int i=0; i < PROFILING_INVOCATION_COUNT; i++)
@@ -154,6 +158,9 @@ class TR_PersistentProfileInfo
    void    setProfilingCount(int32_t *c) {for (int i=0; i<PROFILING_INVOCATION_COUNT; i++) _profilingCount[i] = c[i];}
    int32_t getMaxCount() { return _maxCount;}
 
+   void setActive(bool active = true) { _active = active; }
+   bool isActive() { return _active; }
+
    TR_CatchBlockProfileInfo *getCatchBlockProfileInfo() {return _catchBlockProfileInfo;}
    TR_CatchBlockProfileInfo *findOrCreateCatchBlockProfileInfo(TR::Compilation *comp);
 
@@ -165,28 +172,33 @@ class TR_PersistentProfileInfo
 
    TR_CallSiteInfo          *getCallSiteInfo() {return _callSiteInfo;}
 
-   void clearProfilingInfo();
-
    void dumpInfo(TR::FILE *);
 
    private:
 
    void prepareForProfiling(TR::Compilation *comp);
 
+   // Forms a linked list, managed by TR_JProfilerThread
+   TR_PersistentProfileInfo *_next;
+
    TR_CallSiteInfo          *_callSiteInfo;
    TR_CatchBlockProfileInfo *_catchBlockProfileInfo;
    TR_BlockFrequencyInfo    *_blockFrequencyInfo;
    TR_ValueProfileInfo      *_valueProfileInfo;
+
 
    // NOTE: if the element size of the following two arrays changes
    // one have to adjust the code in createProfiledMethod() in ProfilerGenerator.cpp
    // Currently the code assumes that the element size is 4 bytes (sizeof(int32_t))
    int32_t _profilingFrequency[PROFILING_INVOCATION_COUNT];
    int32_t _profilingCount[PROFILING_INVOCATION_COUNT];
-
    int32_t _maxCount;
 
+   // Manage several uses of this info
    intptr_t _refCount;
+
+   // Flag to determine whether the information is being actively updated
+   bool _active;
    };
 
 
@@ -407,7 +419,7 @@ class TR_ExternalValueProfileInfo
 class TR_ValueProfileInfo
    {
    public:
-   TR_PERSISTENT_ALLOC(TR_Memory::PersistentProfileInfo)
+   TR_PERSISTENT_ALLOC(TR_Memory::ValueProfileInfo)
 
    TR_ValueProfileInfo(TR_CallSiteInfo *info);
    ~TR_ValueProfileInfo();
@@ -426,6 +438,8 @@ class TR_ValueProfileInfo
       TR_ValueInfoSource source, uint64_t initialValue = CONSTANT64(0xdeadf00ddeadf00d));
    TR_AbstractProfilerInfo *getOrCreateProfilerInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp, TR_ValueInfoKind kind,
       TR_ValueInfoSource source, uint64_t initialValue = CONSTANT64(0xdeadf00ddeadf00d));
+
+   void resetLowFreqValues(TR::FILE *);
 
    void dumpInfo(TR::FILE *);
 
@@ -783,6 +797,72 @@ class TR_AccessedProfileInfo
    InfoMap                   _usedInfo;
    TR_PersistentProfileInfo *_current;
    bool _searched;
+   };
+
+/**
+ * JProfile Info Thread
+ *
+ * This thread manages persistent profile info. It has a couple of jobs that it will
+ * carry out at runtime. To achieve these, it maintains a list of all persistent profile
+ * info. It will:
+ *
+ * 1) Deallocate persitent profile info. Once persistent profile info has a reference count
+ *    of 0, its no longer needed. The profile info thread will detect this, removing the
+ *    info from the list and deallocating its persistent memory.
+ *
+ * 2) Clear bad value profiling information. Value profiling information is built up with
+ *    the first values seen. These may not reflect the most frequent. Instead detect this
+ *    case and clear the bad information accordingly.
+ */
+class TR_JProfilerThread
+   {
+   public:
+   TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
+
+   TR_JProfilerThread() :
+       _listHead(NULL),
+       _footprint(0),
+       _jProfilerMonitor(NULL),
+       _jProfilerOSThread(NULL),
+       _jProfilerThread(NULL),
+       _state(Initial)
+      {}
+   ~TR_JProfilerThread();
+
+   static TR_JProfilerThread* allocate();
+
+   void addProfileInfo(TR_PersistentProfileInfo *newHead);
+
+   void start(J9JavaVM *javaVM);
+   void stop(J9JavaVM *javaVM);
+   void processWorkingQueue();
+
+   enum State
+      {
+      Initial,
+      Run,
+      Stop,
+      };
+
+   J9VMThread* getJProfilerThread() { return _jProfilerThread; }
+   void setJProfilerThread(J9VMThread* thread) { _jProfilerThread = thread; }
+   j9thread_t getJProfilerOSThread() { return _jProfilerOSThread; }
+   TR::Monitor* getJProfilerMonitor() { return _jProfilerMonitor; }
+
+   void setAttachAttempted() { _state = Run; }
+
+   size_t getProfileInfoFootprint() { return _footprint * sizeof(TR_PersistentProfileInfo); }
+
+   protected:
+   TR_PersistentProfileInfo *deleteProfileInfo(TR_PersistentProfileInfo **prevNext, TR_PersistentProfileInfo *info);
+
+   TR_PersistentProfileInfo *_listHead;
+   uintptr_t                 _footprint;
+   TR::Monitor              *_jProfilerMonitor;
+   j9thread_t                _jProfilerOSThread;
+   J9VMThread               *_jProfilerThread;
+   volatile State            _state;
+   static const uint32_t     _waitMillis = 500;
    };
 
 #endif

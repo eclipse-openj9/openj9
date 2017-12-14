@@ -1473,6 +1473,19 @@ onLoadInternal(
       ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = NULL;
       }
 
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableJProfilerThread))
+      {
+      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->jProfiler = TR_JProfilerThread::allocate();
+      if (!(((TR_JitPrivateConfig*)(jitConfig->privateConfig))->jProfiler))
+         {
+         TR::Options::getCmdLineOptions()->setOption(TR_DisableJProfilerThread); 
+         }
+      }
+   else
+      {
+      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->jProfiler = NULL;
+      }
+
    vpMonitor = TR::Monitor::create("ValueProfilingMutex");
 
    // initialize the HWProfiler

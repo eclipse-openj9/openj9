@@ -2709,6 +2709,8 @@ void TR::CompilationInfo::stopCompilationThreads()
          TR_DataCacheManager::getManager()->getTotalSegmentMemoryAllocated()/1024,
           _jitConfig->dataCacheTotalKB);
 
+      if (getJProfilerThread())
+         fprintf(stderr, "Allocated memory for profile info = %d KB\n", getJProfilerThread()->getProfileInfoFootprint()/1024);
       }
 
    TR_DataCacheManager::getManager()->printStatistics();
@@ -8085,6 +8087,16 @@ TR::CompilationInfoPerThreadBase::compile(
             }
          }
 
+      // As the body is finished, mark its profile info as active so that the JProfiler thread will inspect it
+      if (compiler->getRecompilationInfo())
+         {
+         TR_PersistentJittedBodyInfo *bodyInfo = compiler->getRecompilationInfo()->getJittedBodyInfo();
+         if (bodyInfo && bodyInfo->getProfileInfo())
+            {
+            bodyInfo->getProfileInfo()->setActive();
+            }
+         }
+
       logCompilationSuccess(vmThread, vm, method, scratchSegmentProvider, compilee, compiler, metaData, optimizationPlan);
       TRIGGER_J9HOOK_JIT_COMPILING_END(_jitConfig->hookInterface, vmThread, method);
       }
@@ -10229,6 +10241,12 @@ TR_LMGuardedStorage *
 TR::CompilationInfo::getLMGuardedStorage() const
    {
    return ((TR_JitPrivateConfig*)_jitConfig->privateConfig)->lmGuardedStorage;
+   }
+
+TR_JProfilerThread *
+TR::CompilationInfo::getJProfilerThread() const
+   {
+   return ((TR_JitPrivateConfig*)_jitConfig->privateConfig)->jProfiler;
    }
 
 int32_t

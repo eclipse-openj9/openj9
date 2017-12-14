@@ -830,6 +830,8 @@ public:
 
    TR_LMGuardedStorage *getLMGuardedStorage() const;
 
+   TR_JProfilerThread *getJProfilerThread() const;
+
    int32_t calculateCodeSize(TR_MethodMetaData *metaData);
    void increaseUnstoredBytes(U_32 aotBytes, U_32 jitBytes);
 

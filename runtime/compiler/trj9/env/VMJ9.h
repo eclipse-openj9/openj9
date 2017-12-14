@@ -50,6 +50,7 @@ namespace TR { class CompilationInfo; }
 namespace TR { class CompilationInfoPerThread; }
 class TR_IProfiler;
 class TR_HWProfiler;
+class TR_JProfilerThread;
 class TR_LMGuardedStorage;
 class TR_Debug;
 class TR_OptimizationPlan;
@@ -135,6 +136,7 @@ typedef struct TR_JitPrivateConfig
    char          *itraceFileNamePrefix;
    TR_IProfiler  *iProfiler;
    TR_HWProfiler *hwProfiler;
+   TR_JProfilerThread  *jProfiler;
    TR_LMGuardedStorage *lmGuardedStorage;
    TR::CodeCacheManager *codeCacheManager; // reachable from JitPrivateConfig for kca's benefit
    TR_DataCacheManager *dcManager;  // reachable from JitPrivateConfig for kca's benefit
