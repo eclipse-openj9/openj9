@@ -316,8 +316,12 @@ class TR_BlockFrequencyProfiler : public TR_RecompilationProfiler
 class TR_ValueProfiler : public TR_RecompilationProfiler
    {
    public:
-   TR_ValueProfiler(TR::Compilation  * c, TR::Recompilation * r, TR_ValueInfoSource profiler = LinkedListProfiler)
-       : TR_RecompilationProfiler(c, r, initialCompilation), _defaultProfiler(profiler), _postLowering(false)
+   TR_ValueProfiler(TR::Compilation  * c, TR::Recompilation * r, TR_ValueInfoSource profiler = LinkedListProfiler) :
+      TR_RecompilationProfiler(c, r, initialCompilation),
+      _bdClass(NULL),
+      _stringClass(NULL),
+      _defaultProfiler(profiler),
+      _postLowering(false)
       {
       }
 
