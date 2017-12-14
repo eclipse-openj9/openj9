@@ -80,7 +80,6 @@ typedef struct J9ClassLoaderWalkState {
 #include "j9generated.h"
 #include "j9cfg_builder.h"
 
-/* --------- Hoisted from iverelo.h ------------------------------------ */
 /*------------------------------------------------------------------
  * AOT version defines
  *------------------------------------------------------------------*/

@@ -43,7 +43,6 @@
 #define OFFSET_IPIC_TO_CALL   32
 #endif
 
-/*copied here from PPCMachine.hpp*/
 #define BRANCH_FORWARD_LIMIT      (0x01fffffc)
 #define BRANCH_BACKWARD_LIMIT     ((int32_t)0xfe000000)
 
@@ -730,7 +729,6 @@ void ia32CodeCacheParameters(int32_t *trampolineSize, OMR::CodeCacheCodeGenCallb
 
 #define TRAMPOLINE_SIZE         8
 
-/*copied here from ARMMachine.hpp*/
 #define BRANCH_FORWARD_LIMIT    0x01fffffc
 #define BRANCH_BACKWARD_LIMIT   0xfe000000
 
