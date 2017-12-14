@@ -3768,12 +3768,6 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	if (registerCmdLineMapping(vm, MAPOPT_XSHARE_AUTO, MAPOPT_XSHARECLASSES_NONFATAL, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
-	/* Map the old-style -Xdbg: to -agentlib:jdwp= in releases before Java 7 */
-	if ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) < J2SE_17) {
-		if (RC_FAILED == registerCmdLineMapping(vm, VMOPT_XDBG_COLON, MAPOPT_AGENTLIB_JDWP_EQUALS, MAP_WITH_INCLUSIVE_OPTIONS)) {
-			return RC_FAILED;
-		}
-	}
 
 	return 0;
 }

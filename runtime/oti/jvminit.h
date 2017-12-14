@@ -399,7 +399,6 @@ enum INIT_STAGE {
 #define VMOPT_XLP_CODECACHE "-Xlp:codecache:"
 #define VMOPT_XTLHPREFETCH "-XtlhPrefetch"
 
-#define VMOPT_XDBG_COLON "-Xdbg:"
 #define VMOPT_XDIAGNOSTICSCOLLECTOR "-Xdiagnosticscollector"
 
 #define VMOPT_XXALLOWNONVIRTUALCALLS "-XX:+AllowNonVirtualCalls"

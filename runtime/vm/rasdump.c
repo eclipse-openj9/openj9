@@ -384,16 +384,12 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 	char *serviceLevel = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_16) {
-		javaVersion = "JRE 1.6.0";
-	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_17) {
-		javaVersion = "JRE 1.7.0";
-	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
+	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
 		javaVersion = "JRE 1.8.0";
 	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_19) {
 		javaVersion = "JRE 9";
 	} else {
-		javaVersion = "J2ME";
+		javaVersion = "UNKNOWN";
 	}
 
 	if ((NULL == runtimeVersion) || ('\0' == *runtimeVersion)) {

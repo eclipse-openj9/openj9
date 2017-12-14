@@ -235,7 +235,7 @@ jint standardInit( J9JavaVM *vm, char* dllName)
 		vm->jlrMethodInvoke = ((J9JNIMethodID *) invokeMethod)->method;
 		(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
 		
-		if (J2SE_VERSION(vm) >= J2SE_17 && (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW)) {
+		if (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW) {
 			/* JSR 292-related class */
 			clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "com/ibm/oti/lang/ArgumentHelper");
 			if (!clazz) goto _fail;
