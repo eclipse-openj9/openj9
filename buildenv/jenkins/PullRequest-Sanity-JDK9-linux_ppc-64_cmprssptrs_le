@@ -45,7 +45,7 @@ node('ppcle') {
     buildfile.build()
 
     // Test
-    JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/jre/bin"
+    JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/bin"
     SPEC = 'linux_ppc-64_cmprssptrs_le'
     JAVA_VERSION = "SE${SDK_VERSION}0"
     TEST_TARGET = 'sanity'

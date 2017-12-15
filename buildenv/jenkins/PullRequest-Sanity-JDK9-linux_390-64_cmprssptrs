@@ -45,7 +45,7 @@ node('390') {
     buildfile.build()
 
     // Test
-    JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/jre/bin"
+    JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/bin"
     SPEC = 'linux_390-64_cmprssptrs'
     JAVA_VERSION = "SE${SDK_VERSION}0"
     TEST_TARGET = 'sanity'
