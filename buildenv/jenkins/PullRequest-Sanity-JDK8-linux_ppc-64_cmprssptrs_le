@@ -36,12 +36,19 @@ node('ppcle') {
     RELEASE = "linux-ppc64le-normal-server-release"
     JDK_FOLDER = "j2sdk-image"
 
-	checkout scm
-	buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
-	testfile = load "${WORKSPACE}/buildenv/jenkins/test"
+    checkout scm
+    buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
+    testfile = load "${WORKSPACE}/buildenv/jenkins/test"
 
-	buildfile.get_source()
-	buildfile.checkout_pullrequest()
-	buildfile.build()
-	testfile.test()
+    buildfile.get_source()
+    buildfile.checkout_pullrequest()
+    buildfile.build()
+
+    // Test
+    JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/jre/bin"
+    SPEC = 'linux_ppc-64_cmprssptrs_le'
+    JAVA_VERSION = "SE${SDK_VERSION}0"
+    TEST_TARGET = 'sanity'
+
+    testfile.test()
 }

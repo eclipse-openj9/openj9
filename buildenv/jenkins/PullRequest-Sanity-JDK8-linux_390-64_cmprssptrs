@@ -24,9 +24,11 @@ node('390') {
 
     SDK_VERSION = "8"
     
+    // Clone
     OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
     OPENJDK_BRANCH = "openj9"
     
+    // Build
     BOOT_JDK = "/usr/lib/jvm/java-7-openjdk-s390x"
     FREEMARKER = "$HOME/openj9/freemarker.jar"
     SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-PR${ghprbPullId}-linux_390-64_cmprssptrs-"
@@ -36,12 +38,19 @@ node('390') {
     RELEASE = "linux-s390x-normal-server-release"
     JDK_FOLDER = "j2sdk-image"
 
-	checkout scm
-	buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
-	testfile = load "${WORKSPACE}/buildenv/jenkins/test"
+    checkout scm
+    buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
+    testfile = load "${WORKSPACE}/buildenv/jenkins/test"
 
-	buildfile.get_source()
+    buildfile.get_source()
     buildfile.checkout_pullrequest()
     buildfile.build()
+
+    // Test
+    JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/jre/bin"
+    SPEC = 'linux_390-64_cmprssptrs'
+    JAVA_VERSION = "SE${SDK_VERSION}0"
+    TEST_TARGET = 'sanity'
+
     testfile.test()
 }

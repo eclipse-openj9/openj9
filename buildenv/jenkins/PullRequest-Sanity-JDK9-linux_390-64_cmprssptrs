@@ -36,12 +36,19 @@ node('390') {
     RELEASE = "linux-s390x-normal-server-release"
     JDK_FOLDER = "jdk"
 
-	checkout scm
-	buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
-	testfile = load "${WORKSPACE}/buildenv/jenkins/test"
+    checkout scm
+    buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
+    testfile = load "${WORKSPACE}/buildenv/jenkins/test"
 
-	buildfile.get_source()
+    buildfile.get_source()
     buildfile.checkout_pullrequest()
     buildfile.build()
+
+    // Test
+    JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/jre/bin"
+    SPEC = 'linux_390-64_cmprssptrs'
+    JAVA_VERSION = "SE${SDK_VERSION}0"
+    TEST_TARGET = 'sanity'
+
     testfile.test()
 }
