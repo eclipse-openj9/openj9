@@ -2383,8 +2383,7 @@ TR_J9VMBase::getCodeCacheTop(TR::CodeCache * codeCache)
 void
 TR_J9VMBase::releaseCodeMemory(void *startPC, uint8_t bytesToSaveAtStart)
    {
-   static char *disableCCR = feGetEnv("TR_DisableCCR");
-   if (!disableCCR)
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCodeCacheReclamation))
       {
       TR::VMAccessCriticalSection releaseCodeMemory(this);
       J9JavaVM            *vm        = jitConfig->javaVM;
