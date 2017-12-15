@@ -47,7 +47,8 @@
                 }
                 try {
                     if ( OPENJDK_SHA == "" ) {
-                    OPENJDK_SHA = ''
+                        OPENJDK_SHA = ''
+                    }
                 } catch(ex) {
                     OPENJDK_SHA = ''
                 }
@@ -70,10 +71,11 @@
                     OPENJ9_BRANCH_OPTION = ''
                 }
                 try {
-                    if ( binding.variables.containsKey("OPENJ9_SHA") && OPENJ9_SHA != "" ) {
+                    if ( OPENJ9_SHA != "" ) {
                         OPENJ9_SHA_OPTION = "-openj9-sha=${OPENJ9_SHA}"
                     } else {
                         OPENJ9_SHA_OPTION = ''
+                    }
                 } catch (ex) {
                     OPENJ9_SHA_OPTION = ''
                 }
@@ -96,7 +98,7 @@
                     OMR_BRANCH_OPTION = ''
                 }
                 try {
-                    if ( binding.variables.containsKey("OMR_SHA") && OMR_SHA != "" ) {
+                    if ( OMR_SHA != "" ) {
                         OMR_SHA_OPTION = "-omr-sha=${OMR_SHA}"
                     } else {
                         OMR_SHA_OPTION = ''
