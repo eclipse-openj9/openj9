@@ -37,7 +37,7 @@ def fetch_artifacts_for_test(){
 def test() {
     stage('Configure') {
         timestamps {
-            dir ('test/TestConfig') {
+            dir ('openj9/test/TestConfig') {
                 withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
                     sh 'make -f run_configure.mk'
                 }
@@ -51,7 +51,7 @@ def test() {
     }
     stage('Compile') {
         timestamps {
-            dir ('test/TestConfig') {
+            dir ('openj9/test/TestConfig') {
                 withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
                     sh 'make compile'  
                 }
@@ -60,14 +60,14 @@ def test() {
     }
     stage('Test') {
         timestamps {
-            dir ('test/TestConfig') {
+            dir ('openj9/test/TestConfig') {
                 withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
                     sh "make ${TEST_TARGET}"
                 }
             }
         }
     }
-    stage('Arcive') {
+    stage('Archive') {
         timestamps {
             junit allowEmptyResults: true, keepLongStdio: true, testResults: '**/junitreports/**/*.xml'
             step([$class: 'Publisher', reportFilenamePattern: '**/testng-results.xml'])

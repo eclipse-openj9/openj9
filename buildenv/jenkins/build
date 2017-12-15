@@ -216,9 +216,7 @@ def build() {
             dir ("build/$RELEASE/images") {
                 sh "tar -zcvf ${WORKSPACE}/${SDK_PREFIX}`date +%Y%d%m%H%M`${SDK_SUFFIX} ${JDK_FOLDER}"
             }
-            dir ('openj9') {
-                sh "tar -zcvf ${WORKSPACE}/${TEST_PREFIX}`git rev-parse --short HEAD`${TEST_SUFFIX} test"
-            }
+            sh "tar -zcvf ${WORKSPACE}/${TEST_PREFIX}`git rev-parse --short HEAD`${TEST_SUFFIX} openj9/test/"
             archiveArtifacts artifacts: "**/${SDK_PREFIX}*${SDK_SUFFIX}, **/${TEST_PREFIX}*${TEST_SUFFIX}", fingerprint: true, onlyIfSuccessful: true
         }
     }
