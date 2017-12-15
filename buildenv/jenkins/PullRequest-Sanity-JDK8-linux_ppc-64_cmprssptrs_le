@@ -33,7 +33,7 @@ node('ppcle') {
     SDK_SUFFIX = ".tar.gz"
     TEST_PREFIX = "test-"
     TEST_SUFFIX = ".tar.gz"
-    RELEASE = "linux-ppc64le-normal-server-release"
+    RELEASE = "linux-ppc64-normal-server-release"
     JDK_FOLDER = "j2sdk-image"
 
     checkout scm
