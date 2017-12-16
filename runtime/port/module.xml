@@ -366,7 +366,7 @@
 		</objects>
 
 		<libraries>
-			<library name="j9omrport"/>
+			<library name="j9prtstatic" type="external"/>
 			<library name="j9thr"/>
 			<library name="j9utilcore"/>
 			<library name="j9avl" type="external"/>
