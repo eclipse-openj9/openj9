@@ -4967,7 +4967,11 @@ JVM_Accept(jint descriptor, struct sockaddr* address, int* length)
 
 			returnVal = select(descriptor+1, &fdset, 0, 0, &tval);
 		} while(returnVal == 0);
-		retVal = accept(descriptor, address, &socklen);
+
+		do {
+			retVal = accept(descriptor, address, &socklen);
+		} while ((-1 == retVal) && (EINTR == errno));
+
 		*length = (int)socklen;
 	}
 #elif defined (WIN32)
@@ -4979,7 +4983,9 @@ JVM_Accept(jint descriptor, struct sockaddr* address, int* length)
 #else
 	{
 		socklen_t socklen = (socklen_t)*length;
-		retVal = accept(descriptor, address, &socklen);
+		do {
+			retVal = accept(descriptor, address, &socklen);
+		} while ((-1 == retVal) && (EINTR == errno));
 		*length = (int)socklen;
 	}
 #endif
@@ -5000,7 +5006,13 @@ JVM_Connect(jint descriptor, const struct sockaddr*address, int length)
 
 	Trc_SC_Connect_Entry(descriptor, address, length);
 
+#if defined (WIN32)
 	retVal = connect(descriptor, address, length);
+#else /* defined (WIN32) */
+	do {
+		retVal = connect(descriptor, address, length);
+	} while ((-1 == retVal) && (EINTR == errno));
+#endif /* defined (WIN32) */
 
 	Trc_SC_Connect_Exit(retVal);
 
@@ -5093,7 +5105,9 @@ JVM_Recv(jint descriptor, char* buffer, jint length, jint flags)
 #ifdef WIN32
 	retVal = recv(descriptor, buffer, (int)length, flags);
 #else
-	retVal = recv(descriptor, buffer, (size_t)length, flags);
+	do {
+		retVal = recv(descriptor, buffer, (size_t)length, flags);
+	} while ((-1 == retVal) && (EINTR == errno));
 #endif
 
 	Trc_SC_Recv_Exit(retVal);
@@ -5117,7 +5131,9 @@ JVM_RecvFrom(jint descriptor, char* buffer, jint length, jint flags, struct sock
 #else
 	{
 		socklen_t address_len = (socklen_t)*fromLength;
-		retVal = recvfrom(descriptor, buffer, (size_t)length, flags, fromAddr, &address_len);
+		do {
+			retVal = recvfrom(descriptor, buffer, (size_t)length, flags, fromAddr, &address_len);
+		} while ((-1 == retVal) && (EINTR == errno));
 		*fromLength = (int)address_len;
 	}
 #endif
@@ -5138,7 +5154,13 @@ JVM_Send(jint descriptor, const char* buffer, jint numBytes, jint flags)
 
 	Trc_SC_Send_Entry(descriptor, buffer, numBytes, flags);
 
+#if defined (WIN32)
 	retVal = send(descriptor, buffer, numBytes, flags);
+#else /* defined (WIN32) */
+	do {
+		retVal = send(descriptor, buffer, numBytes, flags);
+	} while ((-1 == retVal) && (EINTR == errno));
+#endif /* defined (WIN32) */
 
 	Trc_SC_Send_Exit(retVal);
 
@@ -5149,13 +5171,18 @@ JVM_Send(jint descriptor, const char* buffer, jint numBytes, jint flags)
 /**
  * JVM_SendTo
  */
-
 jint JNICALL JVM_SendTo(jint descriptor, const char* buffer, jint length, jint flags, const struct sockaddr* toAddr, int toLength) {
 	jint retVal;
 
 	Trc_SC_SendTo_Entry(descriptor, buffer, length, flags, toAddr, toLength);
 
+#if defined (WIN32)
 	retVal = sendto(descriptor, buffer, length, flags, toAddr, toLength);
+#else /* defined (WIN32) */
+	do {
+		retVal = sendto(descriptor, buffer, length, flags, toAddr, toLength);
+	} while ((-1 == retVal) && (EINTR == errno));
+#endif /* defined (WIN32) */
 
 	Trc_SC_SendTo_Exit(retVal);
 
@@ -5217,7 +5244,10 @@ JVM_SocketAvailable(jint descriptor, jint* result)
 #endif
 #if defined(J9UNIX) || defined(J9ZOS390)
 	if (0 <= descriptor) {
-		retVal = ioctl(descriptor, FIONREAD, result);
+		do {
+			retVal = ioctl(descriptor, FIONREAD, result);
+		} while ((-1 == retVal) && (EINTR == errno));
+
 #if defined(OPENJ9_BUILD)
 		if (0 <= retVal) {
 			/* ioctl succeeded, return 1 to indicate that this JVM method succeeds */
@@ -5280,7 +5310,9 @@ JVM_SocketClose(jint descriptor)
 	retVal = 1; /* Always return TRUE */
 #endif
 #if defined(J9UNIX) || defined(J9ZOS390)
-	retVal = close(descriptor);
+	do {
+		retVal = close(descriptor);
+	} while ((-1 == retVal) && (EINTR == errno));
 #endif
 
 	Trc_SC_SocketClose_Exit(retVal);
