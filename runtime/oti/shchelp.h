@@ -31,11 +31,12 @@
 extern "C" {
 #endif
 
-#define J9SH_MODLEVEL_JAVA5 1
-#define J9SH_MODLEVEL_JAVA6 2
-#define J9SH_MODLEVEL_JAVA7 3
-#define J9SH_MODLEVEL_JAVA8 4
-#define J9SH_MODLEVEL_JAVA9 5
+#define J9SH_MODLEVEL_JAVA5  1
+#define J9SH_MODLEVEL_JAVA6  2
+#define J9SH_MODLEVEL_JAVA7  3
+#define J9SH_MODLEVEL_JAVA8  4
+#define J9SH_MODLEVEL_JAVA9  5
+#define J9SH_MODLEVEL_JAVA10 6
 
 /*	JVM feature bit flag(s)	*/
 /*

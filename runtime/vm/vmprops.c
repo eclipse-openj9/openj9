@@ -705,9 +705,16 @@ initializeSystemProperties(J9JavaVM * vm)
 			break;
 
 		case J2SE_19:
-		default:
-			classVersion = "52.0";
+			classVersion = "53.0";
 			specificationVersion = "9";
+			specificationVendor = "Oracle Corporation";
+			break;
+			
+		case J2SE_V10:
+			/* FALLTHROUGH */
+		default:
+			classVersion = "54.0";
+			specificationVersion = "10";
 			specificationVendor = "Oracle Corporation";
 			break;
 	}
