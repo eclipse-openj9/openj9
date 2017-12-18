@@ -211,6 +211,9 @@ def build() {
             sh "build/$RELEASE/images/${JDK_FOLDER}/bin/java -version"
         }
     }
+}
+
+def archive() {
     stage('Archive') {
         timestamps {
             sh "tar -zcvf ${WORKSPACE}/${SDK_PREFIX}`date +%Y%d%m%H%M`${SDK_SUFFIX} build/$RELEASE/images/${JDK_FOLDER}"

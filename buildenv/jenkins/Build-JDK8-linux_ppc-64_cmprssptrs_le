@@ -38,4 +38,5 @@
     def buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
     buildfile.get_source()
     buildfile.build()
+    buildfile.archive()
 }

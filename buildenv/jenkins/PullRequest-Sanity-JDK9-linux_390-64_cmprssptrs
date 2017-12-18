@@ -50,5 +50,9 @@ node('390') {
     JAVA_VERSION = "SE${SDK_VERSION}0"
     TEST_TARGET = 'sanity'
 
-    testfile.test()
+    archive_test = [:]
+    archive_test['Archive'] = { buildfile.archive() }
+    archive_test['Test'] = { testfile.test() }
+
+    parallel archive_test
 }
