@@ -2231,11 +2231,7 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
             // part of decompilation
             //
             saveStack(-1);
-
-            // Currently, livenss will not run under involuntary OSR, so stashing
-            // the pending push liveness is only necessary in the voluntary case
-            if (comp()->getOSRMode() == TR::voluntaryOSR)
-               stashPendingPushLivenessForOSR();
+            stashPendingPushLivenessForOSR();
             }
          }
       }

@@ -141,6 +141,15 @@ void _prepareForOSR(uintptrj_t vmThreadArg, int32_t currentInlinedSiteIndex, int
                  jitPCOffset, metaData->startPC);
 
          osrMetaData = previousMapping;
+         //In debugging mode, meta data keeps both slots sharing and dead slots info. There are cases where dead slots
+         //don't exist in certain bci but do exist in another bci. This is not possible under other OSR modes where only
+         //slots sharing info are kept.
+         if (!osrMetaData)
+            {
+            TR_ASSERT(TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug), "it's only possible to not to find");
+            return;
+            }
+
          int32_t numSymbols = *osrMetaData; osrMetaData++;
          int32_t numSymbolsForThisCallerIndex = 0;
 
@@ -156,9 +165,9 @@ void _prepareForOSR(uintptrj_t vmThreadArg, int32_t currentInlinedSiteIndex, int
             if (inlinedSiteIndex != currentInlinedSiteIndex) continue;
 
 
-            numSymbolsForThisCallerIndex++;
             if (scratchBufferOffset != -1)
                {
+               numSymbolsForThisCallerIndex++;
                uint8_t* dataAtScrBuffer = (uint8_t*)vmThread->osrScratchBuffer + scratchBufferOffset;
                if (details)
                   {
@@ -197,7 +206,7 @@ void _prepareForOSR(uintptrj_t vmThreadArg, int32_t currentInlinedSiteIndex, int
                }
             }
          TR_ASSERT(numSymbolsForThisCallerIndex <= numSymsThatShareSlot,
-                 "the number of symbols we are going to write (%d) is more than the number of symbols that share slots (%d)\n",
+                 "the number of live symbols we are going to write (%d) is more than the number of symbols that share slots (%d)\n",
                  numSymbolsForThisCallerIndex, numSymsThatShareSlot);
          }
       }
