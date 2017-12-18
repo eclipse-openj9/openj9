@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,7 +99,8 @@ J9::CodeGenPhase::performInsertEpilogueYieldPointsPhase(TR::CodeGenerator * cg, 
    //
    if ((comp->getCurrentMethod()->maxBytecodeIndex() >= BYTECODESIZE_THRESHOLD_FOR_ASYNCCHECKS) &&
        !comp->mayHaveLoops() &&
-       comp->getCurrentMethod()->convertToMethod()->methodType() == TR_Method::J9) // FIXME: enable for ruby and python
+       comp->getCurrentMethod()->convertToMethod()->methodType() == TR_Method::J9 &&  // FIXME: enable for ruby and python
+       comp->getOSRMode() != TR::involuntaryOSR) 
       {
       cg->insertEpilogueYieldPoints();
       }
