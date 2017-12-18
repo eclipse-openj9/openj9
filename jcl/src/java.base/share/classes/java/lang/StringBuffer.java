@@ -529,8 +529,74 @@ public StringBuffer append (float value) {
  * @param		value	the integer
  * @return		this StringBuffer
  */
-public StringBuffer append (int value) {
+public synchronized StringBuffer append(int value) {
+	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar19-SE-B174]*/
+	int currentLength = lengthInternalUnsynchronized();
+	int currentCapacity = capacityInternal();
+
+	int valueLength = Integer.stringSize(value);
+
+	int newLength = currentLength + valueLength;
+
+	if (newLength > currentCapacity) {
+		ensureCapacityImpl(newLength);
+	}
+
+	if (String.enableCompression) {
+		if (count >= 0) {
+			Integer.getChars(value, newLength, this.value);
+			count = newLength;
+		} else {
+			StringUTF16.getChars(value, newLength, this.value);
+			count = newLength | uncompressedBit;
+		}
+	} else {
+		StringUTF16.getChars(value, newLength, this.value);
+		count = newLength;
+	}
+
+	return this;
+	/*[ELSE]*/
 	return append(Integer.toString(value));
+	/*[ENDIF]*/
+	/*[ELSE]*/
+	if (value != Integer.MIN_VALUE) {
+		if (String.enableCompression && count >= 0) {
+			return append(Integer.toString(value));
+		} else {
+			int currentLength = lengthInternalUnsynchronized();
+			int currentCapacity = capacityInternal();
+
+			int valueLength;
+			if (value < 0) {
+				/* stringSize can't handle negative numbers in Java 8 */
+				valueLength = Integer.stringSize(-value) + 1;
+			} else {
+				valueLength = Integer.stringSize(value);
+			}
+
+			int newLength = currentLength + valueLength;
+
+			if (newLength > currentCapacity) {
+				ensureCapacityImpl(newLength);
+			}
+
+			Integer.getChars(value, newLength, this.value);
+
+			if (String.enableCompression) {
+				count = newLength | uncompressedBit;
+			} else {
+				count = newLength;
+			}
+
+			return this;
+		}
+	} else {
+		// Append Integer.MIN_VALUE as a String
+		return append("-2147483648"); //$NON-NLS-1$
+	}
+	/*[ENDIF]*/
 }
 
 /**
@@ -540,8 +606,74 @@ public StringBuffer append (int value) {
  * @param		value	the long
  * @return		this StringBuffer
  */
-public StringBuffer append (long value) {
+public synchronized StringBuffer append(long value) {
+	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar19-SE-B174]*/
+	int currentLength = lengthInternalUnsynchronized();
+	int currentCapacity = capacityInternal();
+
+	int valueLength = Long.stringSize(value);
+
+	int newLength = currentLength + valueLength;
+
+	if (newLength > currentCapacity) {
+		ensureCapacityImpl(newLength);
+	}
+
+	if (String.enableCompression) {
+		if (count >= 0) {
+			Long.getChars(value, newLength, this.value);
+			count = newLength;
+		} else {
+			StringUTF16.getChars(value, newLength, this.value);
+			count = newLength | uncompressedBit;
+		}
+	} else {
+		StringUTF16.getChars(value, newLength, this.value);
+		count = newLength;
+	}
+
+	return this;
+	/*[ELSE]*/
 	return append(Long.toString(value));
+	/*[ENDIF]*/
+	/*[ELSE]*/
+	if (value != Long.MIN_VALUE) {
+		if (String.enableCompression && count >= 0) {
+			return append(Long.toString(value));
+		} else {
+			int currentLength = lengthInternalUnsynchronized();
+			int currentCapacity = capacityInternal();
+
+			int valueLength;
+			if (value < 0) {
+				/* stringSize can't handle negative numbers in Java 8 */
+				valueLength = Long.stringSize(-value) + 1;
+			} else {
+				valueLength = Long.stringSize(value);
+			}
+
+			int newLength = currentLength + valueLength;
+
+			if (newLength > currentCapacity) {
+				ensureCapacityImpl(newLength);
+			}
+
+			Long.getChars(value, newLength, this.value);
+
+			if (String.enableCompression) {
+				count = newLength | uncompressedBit;
+			} else {
+				count = newLength;
+			}
+
+			return this;
+		}
+	} else {
+		// Append Long.MIN_VALUE as a String
+		return append("-9223372036854775808"); //$NON-NLS-1$
+	}
+	/*[ENDIF]*/
 }
 
 /**

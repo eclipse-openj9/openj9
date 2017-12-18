@@ -529,39 +529,75 @@ public StringBuilder append (float value) {
  * @param		value	the integer
  * @return		this StringBuilder
  */
-public StringBuilder append (int value) {
+public StringBuilder append(int value) {
 	/*[PR JAZZ103 69835] This implementation is optimized for the JIT */
+	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar19-SE-B174]*/
+	int currentLength = lengthInternal();
+	int currentCapacity = capacityInternal();
+
+	int valueLength = Integer.stringSize(value);
+
+	int newLength = currentLength + valueLength;
+
+	if (newLength > currentCapacity) {
+		ensureCapacityImpl(newLength);
+	}
+
 	if (String.enableCompression) {
-		// TODO: Rewrite this once Integer and Long have implementations for getChars supporting String compression
-		return append(String.valueOf(value));
+		if (count >= 0) {
+			Integer.getChars(value, newLength, this.value);
+			count = newLength;
+		} else {
+			StringUTF16.getChars(value, newLength, this.value);
+			count = newLength | uncompressedBit;
+		}
 	} else {
-		/*[IF Sidecar19-SE]*/
-		// TODO: Rewrite this once Integer and Long have implementations for getChars supporting String compression
-		return append(String.valueOf(value));
-		/*[ELSE]*/
-		if (value != Integer.MIN_VALUE) {
+		StringUTF16.getChars(value, newLength, this.value);
+		count = newLength;
+	}
+
+	return this;
+	/*[ELSE]*/
+	return append(Integer.toString(value));
+	/*[ENDIF]*/
+	/*[ELSE]*/
+	if (value != Integer.MIN_VALUE) {
+		if (String.enableCompression && count >= 0) {
+			return append(Integer.toString(value));
+		} else {
 			int currentLength = lengthInternal();
 			int currentCapacity = capacityInternal();
-			
-			int valueLength = value < 0 ? Integer.stringSize(-value) + 1 : Integer.stringSize(value);
-			
+
+			int valueLength;
+			if (value < 0) {
+				/* stringSize can't handle negative numbers in Java 8 */
+				valueLength = Integer.stringSize(-value) + 1;
+			} else {
+				valueLength = Integer.stringSize(value);
+			}
+
 			int newLength = currentLength + valueLength;
-			
+
 			if (newLength > currentCapacity) {
 				ensureCapacityImpl(newLength);
 			}
-			
+
 			Integer.getChars(value, newLength, this.value);
-			
-			count = newLength;
-			
+
+			if (String.enableCompression) {
+				count = newLength | uncompressedBit;
+			} else {
+				count = newLength;
+			}
+
 			return this;
-		} else {
-			// Append Integer.MIN_VALUE as a String
-			return append("-2147483648"); //$NON-NLS-1$
 		}
-		/*[ENDIF]*/
+	} else {
+		// Append Integer.MIN_VALUE as a String
+		return append("-2147483648"); //$NON-NLS-1$
 	}
+	/*[ENDIF]*/
 }
 
 /**
@@ -571,39 +607,75 @@ public StringBuilder append (int value) {
  * @param		value	the long
  * @return		this StringBuilder
  */
-public StringBuilder append (long value) {
+public StringBuilder append(long value) {
 	/*[PR JAZZ103 69835] This implementation is optimized for the JIT */
+	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar19-SE-B174]*/
+	int currentLength = lengthInternal();
+	int currentCapacity = capacityInternal();
+
+	int valueLength = Long.stringSize(value);
+
+	int newLength = currentLength + valueLength;
+
+	if (newLength > currentCapacity) {
+		ensureCapacityImpl(newLength);
+	}
+
 	if (String.enableCompression) {
-		// TODO: Rewrite this once Integer and Long have implementations for getChars supporting String compression
-		return append(String.valueOf(value));
+		if (count >= 0) {
+			Long.getChars(value, newLength, this.value);
+			count = newLength;
+		} else {
+			StringUTF16.getChars(value, newLength, this.value);
+			count = newLength | uncompressedBit;
+		}
 	} else {
-		/*[IF Sidecar19-SE]*/
-		// TODO: Rewrite this once Integer and Long have implementations for getChars supporting String compression
-		return append(String.valueOf(value));
-		/*[ELSE]*/
-		if (value != Long.MIN_VALUE) {
+		StringUTF16.getChars(value, newLength, this.value);
+		count = newLength;
+	}
+
+	return this;
+	/*[ELSE]*/
+	return append(Long.toString(value));
+	/*[ENDIF]*/
+	/*[ELSE]*/
+	if (value != Long.MIN_VALUE) {
+		if (String.enableCompression && count >= 0) {
+			return append(Long.toString(value));
+		} else {
 			int currentLength = lengthInternal();
 			int currentCapacity = capacityInternal();
-			
-			int valueLength = value < 0L ? Long.stringSize(-value) + 1 : Long.stringSize(value);
-			
+
+			int valueLength;
+			if (value < 0) {
+				/* stringSize can't handle negative numbers in Java 8 */
+				valueLength = Long.stringSize(-value) + 1;
+			} else {
+				valueLength = Long.stringSize(value);
+			}
+
 			int newLength = currentLength + valueLength;
-			
+
 			if (newLength > currentCapacity) {
 				ensureCapacityImpl(newLength);
 			}
-			
+
 			Long.getChars(value, newLength, this.value);
-			
-			count = newLength;
-			
+
+			if (String.enableCompression) {
+				count = newLength | uncompressedBit;
+			} else {
+				count = newLength;
+			}
+
 			return this;
-		} else {
-			// Append Long.MIN_VALUE as a String
-			return append("-9223372036854775808"); //$NON-NLS-1$
 		}
-		/*[ENDIF]*/
+	} else {
+		// Append Long.MIN_VALUE as a String
+		return append("-9223372036854775808"); //$NON-NLS-1$
 	}
+	/*[ENDIF]*/
 }
 
 /**
