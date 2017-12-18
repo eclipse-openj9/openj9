@@ -158,9 +158,10 @@ CPPFLAGS+=$(UMA_C_INCLUDES)
 PATH:=${uma.spec.properties.crossCompilerPath.value}:<#noparse>${PATH}</#noparse>
 </#if>
 
-<#if uma.spec.type.ztpf && uma.spec.properties.tpfRoot.defined>
+<#if uma.spec.type.ztpf && uma.spec.properties.tpfRoot.defined  && uma.spec.properties.tpfProj.defined>
 # Put the proper directories based on cur||commit||svt value in the includes path.
 UMA_ZTPF_ROOT:=${uma.spec.properties.tpfRoot.value}
+UMA_PROJ_ROOT:=${uma.spec.properties.tpfProj.value}
 
 CPATH+=/ztpf/$(UMA_ZTPF_ROOT)/local_mod/base/include:/ztpf/$(UMA_ZTPF_ROOT)/base/include:/ztpf/$(UMA_ZTPF_ROOT)/local_mod/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward:/ztpf/$(UMA_ZTPF_ROOT)/local_mod:/ztpf/$(UMA_ZTPF_ROOT)/base/include
 export $(CPATH)
@@ -168,14 +169,16 @@ export $(CPATH)
 C_INCLUDE_PATH+=/ztpf/$(UMA_ZTPF_ROOT)/local_mod/base/include:/ztpf/$(UMA_ZTPF_ROOT)/base/include:/ztpf/$(UMA_ZTPF_ROOT)/local_mod/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward:/ztpf/$(UMA_ZTPF_ROOT)/local_mod:/ztpf/$(UMA_ZTPF_ROOT)/base/include
 export $(C_INCLUDE_PATH)
 
-UMA_ZTPF_INCLUDES:=-D_TPF_SOURCE -DJ9ZTPF -DLINUX -DS390 -DS39064 -DFULL_ANSI -DMAXMOVE -DZTPF_POSIX_SOCKET -fPIC -fno-strict-aliasing -D_GNU_SOURCE -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -Wno-format-extra-args  -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -fno-builtin-isdigit -ffloat-store -DIBM_ATOE -fno-strict-aliasing -Wno-unknown-pragmas -Wreturn-type -Wno-unused -Wno-uninitialized -Wno-parentheses -gdwarf-2 -D_PORTABLE_TPF_SIGINFO -I/ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -I/ztpf/$(UMA_ZTPF_ROOT) -I/ztpf/$(UMA_ZTPF_ROOT)/base/include -isystem/ztpf/$(UMA_ZTPF_ROOT)/opensource/include -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++ -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward -I/ztpf/$(UMA_ZTPF_ROOT)/local_mod/base/include -isystem /ztpf/cur/noship/include -iquote ../include
+UMA_ZTPF_INCLUDES:= -D_TPF_SOURCE -DJ9ZTPF -DLINUX -DS390 -DS39064 -DFULL_ANSI -DMAXMOVE -DZTPF_POSIX_SOCKET -fPIC -fno-strict-aliasing -D_GNU_SOURCE -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -Wno-format-extra-args  -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -fno-builtin-isdigit -ffloat-store -DIBM_ATOE -fno-strict-aliasing -Wno-unknown-pragmas -Wreturn-type -Wno-unused -Wno-uninitialized -Wno-parentheses -gdwarf-2 -D_PORTABLE_TPF_SIGINFO -I$(UMA_PROJ_ROOT)/base/a2e/headers -I/ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -I$(UMA_PROJ_ROOT)/base/include -I/ztpf/$(UMA_ZTPF_ROOT)/base/include -I$(UMA_PROJ_ROOT)/opensource/include -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include -isystem $(UMA_PROJ_ROOT)/base/a2e/headers -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -isystem $(UMA_PROJ_ROOT)/base/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/include -isystem $(UMA_PROJ_ROOT)/opensource/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include -isystem $(UMA_PROJ_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT) -iquote ../include
 #Lotsa opensource include files need to be defined as system headers to gcc, well, tpf-g++ at least in order to avoid
 #compile errors.
-UMA_ZTPF_CXX_INCLUDES:=-isystem /ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -isystem /ztpf/$(UMA_ZTPF_ROOT) -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++ -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward -isystem /ztpf/$(UMA_ZTPF_ROOT)/local_mod/base/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/noship/include
+UMA_ZTPF_CXX_INCLUDES:= -D_TPF_SOURCE -DJ9ZTPF -DLINUX -DS390 -DS39064 -DFULL_ANSI -DMAXMOVE -DZTPF_POSIX_SOCKET -fPIC -fno-strict-aliasing -D_GNU_SOURCE -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -Wno-format-extra-args  -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -fno-builtin-isdigit -ffloat-store -DIBM_ATOE -fno-strict-aliasing -Wno-unknown-pragmas -Wreturn-type -Wno-unused -Wno-uninitialized -Wno-parentheses -gdwarf-2 -D_PORTABLE_TPF_SIGINFO -I$(UMA_PROJ_ROOT)/base/a2e/headers -I/ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -I$(UMA_PROJ_ROOT)/base/include -I/ztpf/$(UMA_ZTPF_ROOT)/base/include -I$(UMA_PROJ_ROOT)/opensource/include -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include -I$(UMA_PROJ_ROOT)/opensource/include46/g++ -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++ -I$(UMA_PROJ_ROOT)/opensource/include46/g++/backward -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward -isystem $(UMA_PROJ_ROOT)/base/a2e/headers -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -isystem $(UMA_PROJ_ROOT)/base/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/include -isystem $(UMA_PROJ_ROOT)/opensource/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include -isystem $(UMA_PROJ_ROOT)/opensource/include46/g++ -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++ -isystem $(UMA_PROJ_ROOT)/opensource/include46/g++/backward -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward -isystem $(UMA_PROJ_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT)
 
-CXXFLAGS+=$(UMA_ZTPF_INCLUDES) $(UMA_ZTPF_CXX_INCLUDES)
-CPPFLAGS+= -I$(UMA_PATH_TO_ROOT)oti
 CFLAGS+=$(UMA_ZTPF_INCLUDES)
+CPPFLAGS+= -I$(UMA_PATH_TO_ROOT)oti
+CXXFLAGS+=$(UMA_ZTPF_CXX_INCLUDES)
+
+
 # Add these flags now since we're using a z/tpf spec file.
 UMA_C_INCLUDES:=$(addprefix $(UMA_C_INCLUDE_PREFIX),$(UMA_INCLUDES)) $(UMA_C_INCLUDES)
 CFLAGS+=$(UMA_C_INCLUDES)
