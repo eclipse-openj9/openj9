@@ -24,6 +24,11 @@
  * will be inserted into the java.fullversion and java.vm.info system properties
  * and in a generated javacore file.
  *
+ * Note: The default Java full version string buffer size is 512, if the combined
+ * length of VENDOR_SHORT_NAME and VENDOR_SHA (including white space and control
+ * characters) is longer than 350 characters, please increase the buffer size at
+ *     openj9/runtime/jcl/common/jclcinit.c - Line 74
+ *
  * #define VENDOR_SHORT_NAME "ABC"
  * #define VENDOR_SHA "1a2b3c4"
  */
