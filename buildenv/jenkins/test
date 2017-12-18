@@ -35,7 +35,7 @@ def fetch_artifacts_for_test(){
 }
 
 def test() {
-    stage('Configure') {
+    stage('Configure Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
                 withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
@@ -44,12 +44,12 @@ def test() {
             }
         }
     }
-    stage('Get Dependencies') {
+    stage('Get Test Dependencies') {
         timestamps {
             copyArtifacts fingerprintArtifacts: true, projectName: 'test.getDependency', selector: lastSuccessful(), target: 'openj9/test/TestConfig/lib'
         }
     }
-    stage('Compile') {
+    stage('Compile Test') {
         timestamps {
             dir ('openj9/test/TestConfig') {
                 withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
@@ -67,7 +67,7 @@ def test() {
             }
         }
     }
-    stage('Archive') {
+    stage('Publish Test Results') {
         timestamps {
             junit allowEmptyResults: true, keepLongStdio: true, testResults: '**/junitreports/**/*.xml'
             step([$class: 'Publisher', reportFilenamePattern: '**/testng-results.xml'])
