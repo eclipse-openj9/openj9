@@ -89,6 +89,7 @@
 		<property name="svn_stream" value=""/>
 		<property name="threadLibraryDefine" value="J9THREAD_LIB_UNIX"/>
 		<property name="tpfRoot" value="commit"/>
+		<property name="tpfProj" value="/projects/jvmport/userfiles" />
 		<property name="uma_make_cmd_ar" value="tpf-ar"/>
 		<property name="uma_make_cmd_as" value="tpf-as"/>
 		<property name="uma_make_cmd_cc" value="tpf-gcc"/>
