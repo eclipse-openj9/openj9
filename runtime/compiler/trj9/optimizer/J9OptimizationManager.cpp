@@ -94,6 +94,9 @@ J9::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFacto
       case OMR::unsafeFastPath:
          _flags.set(doesNotRequireAliasSets | supportsIlGenOptLevel);
          break;
+      case OMR::recognizedCallTransformer:
+         _flags.set(doesNotRequireAliasSets | supportsIlGenOptLevel);
+         break;
       case OMR::samplingJProfiling:
          _flags.set(requiresStructure | checkStructure | dumpStructure);
          break;
