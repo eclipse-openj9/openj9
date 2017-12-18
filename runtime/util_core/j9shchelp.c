@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -139,24 +139,28 @@ getGenerationFromName(const char* cacheNameWithVGen)
 uint32_t
 getShcModlevelForJCL(uintptr_t j2seVersion)
 {
+	uint32_t modLevel = 0;
 	switch (j2seVersion) {
 	case J2SE_15 :
-		return J9SH_MODLEVEL_JAVA5;
+		modLevel = J9SH_MODLEVEL_JAVA5;
 		break;
 	case J2SE_16 :
-		return J9SH_MODLEVEL_JAVA6;
+		modLevel = J9SH_MODLEVEL_JAVA6;
 		break;
 	case J2SE_17 :
-		return J9SH_MODLEVEL_JAVA7;
+		modLevel = J9SH_MODLEVEL_JAVA7;
 		break;
 	case J2SE_18 :
-		return J9SH_MODLEVEL_JAVA8;
+		modLevel = J9SH_MODLEVEL_JAVA8;
 		break;
 	case J2SE_19 :
-		return J9SH_MODLEVEL_JAVA9;
+		modLevel = J9SH_MODLEVEL_JAVA9;
+		break;
+	case J2SE_V10 :
+		modLevel = J9SH_MODLEVEL_JAVA10;
 		break;
 	}
-	return 0;
+	return modLevel;
 }
 
 /**
@@ -169,24 +173,28 @@ getShcModlevelForJCL(uintptr_t j2seVersion)
 uint32_t
 getJCLForShcModlevel(uintptr_t modlevel)
 {
+	uint32_t j2seVersion = 0;
 	switch (modlevel) {
 	case J9SH_MODLEVEL_JAVA5 :
-		return J2SE_15;
+		j2seVersion = J2SE_15;
 		break;
 	case J9SH_MODLEVEL_JAVA6 :
-		return J2SE_16;
+		j2seVersion = J2SE_16;
 		break;
 	case J9SH_MODLEVEL_JAVA7 :
-		return J2SE_17;
+		j2seVersion = J2SE_17;
 		break;
 	case J9SH_MODLEVEL_JAVA8 :
-		return J2SE_18;
+		j2seVersion = J2SE_18;
 		break;
 	case J9SH_MODLEVEL_JAVA9 :
-		return J2SE_19;
+		j2seVersion = J2SE_19;
+		break;
+	case J9SH_MODLEVEL_JAVA10 :
+		j2seVersion = J2SE_V10;
 		break;
 	}
-	return 0;
+	return j2seVersion;
 }
 
 /**
@@ -243,6 +251,9 @@ getStringForShcModlevel(J9PortLibrary* portlib, uint32_t modlevel, char* buffer)
 		break;
 	case J9SH_MODLEVEL_JAVA9 :
 		strcpy(buffer, "Java9");
+		break;
+	case J9SH_MODLEVEL_JAVA10 :
+		strcpy(buffer, "Java10");
 		break;
 	default :
 		strcpy(buffer, "Unknown");
