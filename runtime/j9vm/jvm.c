@@ -226,7 +226,9 @@ static UDATA monitor = 0;
 static J9InternalVMFunctions globalInvokeInterface;
 
 static struct J9PortLibrary j9portLibrary;
+#ifdef J9VM_OPT_HARMONY
 static struct HyPortLibrary * harmonyPortLibrary = NULL;
+#endif /* J9VM_OPT_HARMONY */
 static char * newPath = NULL;
 
 /* cannot be static because it's declared extern in vmi.c */
@@ -561,10 +563,12 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 	rc = globalDestroyVM(javaVM);
 
 	if (JNI_OK == rc) {
+#ifdef J9VM_OPT_HARMONY
 		if ((NULL != harmonyPortLibrary) && (NULL != j9portLibrary.omrPortLibrary.mem_free_memory)) {
 			j9portLibrary.omrPortLibrary.mem_free_memory(&j9portLibrary.omrPortLibrary, harmonyPortLibrary);
 			harmonyPortLibrary = NULL;
 		}
+#endif /* J9VM_OPT_HARMONY */
 		if (NULL != j9portLibrary.port_shutdown_library) {
 			j9portLibrary.port_shutdown_library(&j9portLibrary);
 		}
@@ -768,8 +772,9 @@ preloadLibraries(void)
 #endif /* !CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 	/* CMVC 152702: with other JVM on the path this library can get loaded from the wrong
 	 * location if not preloaded. */
+#ifdef J9VM_OPT_HARMONY
 	preloadLibrary(J9_HARMONY_PORT_LIBRARY_SHIM_DLL_NAME, TRUE);
-
+#endif /* J9VM_OPT_HARMONY */
 	return TRUE;
 }
 
@@ -1195,10 +1200,11 @@ preloadLibraries(void)
 	preloadLibrary(J9_CLEAR_VM_INTERFACE_DLL_NAME, TRUE);
 #endif /* J9_CLEAR_VM_INTERFACE_DLL_NAME */
 
+#ifdef J9VM_OPT_HARMONY
 	/* CMVC 152702: with other JVM on the path this library can get loaded from the wrong
 	 * location if not preloaded. */
 	preloadLibrary(J9_HARMONY_PORT_LIBRARY_SHIM_DLL_NAME, TRUE);
-
+#endif /* J9VM_OPT_HARMONY */
 	return TRUE;
 }
 #endif  /* defined(J9UNIX) || defined(J9ZOS390) */
