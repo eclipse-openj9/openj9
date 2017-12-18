@@ -4178,28 +4178,6 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
    static bool disableARMFMaxMin = true; // (feGetEnv("TR_DisableARMFMaxMin") != NULL);
 
    TR::ILOpCodes opcode = TR::BadILOp;
-
-   if (!comp()->getOption(TR_DisableMaxMinOptimization) &&
-       TR::Compiler->target.cpu.isX86()) // TODO : Implement other max/min routines on X86
-      {
-      switch (symbol->getRecognizedMethod())
-         {
-         case TR::java_lang_Math_max_I:
-            opcode = TR::imax;
-            break;
-         case TR::java_lang_Math_min_I:
-            opcode = TR::imin;
-            break;
-         case TR::java_lang_Math_max_L:
-            opcode = TR::lmax;
-            break;
-         case TR::java_lang_Math_min_L:
-            opcode = TR::lmin;
-            break;
-         default:
-         	break;
-         }
-      }
    switch (symbol->getRecognizedMethod())
       {
       case TR::java_lang_Integer_valueOf:

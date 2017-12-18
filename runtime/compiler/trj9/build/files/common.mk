@@ -150,6 +150,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/PreExistence.cpp \
     omr/compiler/optimizer/Reachability.cpp \
     omr/compiler/optimizer/ReachingDefinitions.cpp \
+    omr/compiler/optimizer/OMRRecognizedCallTransformer.cpp \
+    compiler/trj9/optimizer/J9RecognizedCallTransformer.cpp \
     omr/compiler/optimizer/RedundantAsyncCheckRemoval.cpp \
     compiler/trj9/optimizer/RedundantBCDSignElimination.cpp \
     omr/compiler/optimizer/RegisterAnticipatability.cpp \
