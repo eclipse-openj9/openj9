@@ -23,7 +23,8 @@
  node('ppcle') {
 
     JDK_FOLDER = "jdk"
-	JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/bin"
+	RELEASE = "linux-ppc64le-normal-server-release"
+	JAVA_BIN = "${WORKSPACE}/build/${RELEASE}/images/${JDK_FOLDER}/bin"
     SPEC = 'linux_ppc-64_cmprssptrs_le'
     JAVA_VERSION = 'SE90'
     TEST_TARGET = 'sanity'

@@ -23,7 +23,8 @@
  node('390') {
 
     JDK_FOLDER = "j2sdk-image"
-    JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/jre/bin"
+    RELEASE = "linux-s390x-normal-server-release"
+    JAVA_BIN = "${WORKSPACE}/build/${RELEASE}/images/${JDK_FOLDER}/jre/bin"
     SPEC = 'linux_390-64_cmprssptrs'
     JAVA_VERSION = 'SE80'
     TEST_TARGET = 'extended'

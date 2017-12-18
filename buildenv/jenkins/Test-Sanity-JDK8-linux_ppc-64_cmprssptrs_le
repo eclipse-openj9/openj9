@@ -23,7 +23,8 @@
 node('ppcle') {
 
     JDK_FOLDER = "j2sdk-image"
-    JAVA_BIN = "${WORKSPACE}/${JDK_FOLDER}/jre/bin"
+    RELEASE = "linux-ppc64-normal-server-release"
+    JAVA_BIN = "${WORKSPACE}/build/${RELEASE}/images/${JDK_FOLDER}/jre/bin"
     SPEC = 'linux_ppc-64_cmprssptrs_le'
     JAVA_VERSION = 'SE80'
     TEST_TARGET = 'sanity'
