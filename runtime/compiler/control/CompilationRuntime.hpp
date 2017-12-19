@@ -455,8 +455,6 @@ public:
    static int computeCompilationThreadPriority(J9JavaVM *vm);
    static void *compilationEnd(J9VMThread *context, TR::IlGeneratorMethodDetails & details, J9JITConfig *jitConfig, void * startPC,
                                void *oldStartPC, TR_FrontEnd *vm=0, TR_MethodToBeCompiled *entry=NULL, TR::Compilation *comp=NULL);
-   static void remoteCompilationEnd(TR::IlGeneratorMethodDetails &details, J9JITConfig *jitConfig, TR_FrontEnd *fe,
-                                    TR_MethodToBeCompiled *entry, TR::Compilation *comp);
    static void endMethodHandleThunkCompilation(J9VMThread *vmThread, TR_J9VMBase *trvm, uintptrj_t *handleRef, uintptrj_t *argRef, void *startPC);
 
    static JAAS::J9ServerStream *getStream();

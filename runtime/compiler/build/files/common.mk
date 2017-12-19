@@ -378,7 +378,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/trj9/env/VMJ9Server.cpp \
     compiler/trj9/env/j9methodServer.cpp \
     compiler/trj9/rpc/J9Server.cpp \
-    compiler/trj9/rpc/ProtobufTypeConvert.cpp
+    compiler/trj9/rpc/ProtobufTypeConvert.cpp \
+    compiler/trj9/control/JaasCompilationThread.cpp
 
 -include $(JIT_MAKE_DIR)/files/extra.mk
 include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk
