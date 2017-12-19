@@ -67,5 +67,8 @@ final class MemberName {
 	String getMethodDescriptor() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+	public Class<?> getDeclaringClass() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
 	/*[ENDIF]*/
 }
