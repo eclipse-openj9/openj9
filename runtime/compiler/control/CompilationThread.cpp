@@ -11924,131 +11924,127 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseGc, TR_VerboseRecompile, TR_VerbosePerformance, TR_VerboseOptimizer)
          || (compiler->getOption(TR_CountOptTransformations) && compiler->getVerboseOptTransformationCount() >= 1))
             {
+            const uint32_t bytecodeSize = TR::CompilationInfo::getMethodBytecodeSize(method);
+            const bool isJniNative = _methodBeingCompiled->isJNINative();
             TR_VerboseLog::vlogAcquire();
-            try
+            TR_VerboseLog::writeLine(TR_Vlog_COMP,"(%s%s) %s @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
+               compilationTypeString,
+               hotnessString,
+               compiler->signature(),
+               metaData->startPC,
+               metaData->startColdPC ? metaData->endWarmPC : metaData->endPC
+               );
+            if (metaData->startColdPC)
                {
-               TR_VerboseLog::writeLine(TR_Vlog_COMP,"(%s%s) %s @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
-                  compilationTypeString,
-                  hotnessString,
-                  compiler->signature(),
-                  metaData->startPC,
-                  metaData->startColdPC ? metaData->endWarmPC : metaData->endPC
+               TR_VerboseLog::write("/" POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT, metaData->startColdPC, metaData->endPC);
+               }
+
+            j9jit_printf(_jitConfig, " %s", _methodBeingCompiled->getMethodDetails().name());
+
+            // Print recompilation reason
+            // For methods compiled through sample thresholds, print also the CPU utilization
+            if (recompReason == 'T')
+               TR_VerboseLog::write(" %.2f%%", optimizationPlan->getPerceivedCPUUtil() / 10.0);
+
+            TR_VerboseLog::write(" %c", recompReason);
+
+            TR_VerboseLog::write(" Q_SZ=%d Q_SZI=%d QW=%d", _compInfo.getMethodQueueSize(),
+                                 _compInfo.getNumQueuedFirstTimeCompilations(), _compInfo.getQueueWeight());
+
+            TR_VerboseLog::write(" j9m=%p bcsz=%u", method, bytecodeSize);
+
+            if (_compInfo.useSeparateCompilationThread() && !_methodBeingCompiled->_async)
+               TR_VerboseLog::write(" sync"); // flag the synchronous compilations
+
+            if (isJniNative)
+               TR_VerboseLog::write(" JNI"); // flag JNI compilations
+
+            if (compiler->getOption(TR_EnableOSR))
+               TR_VerboseLog::write(" OSR");
+
+            if (compiler->getRecompilationInfo() && compiler->getRecompilationInfo()->getJittedBodyInfo()->getUsesGCR())
+               TR_VerboseLog::write(" GCR");
+
+            if (compiler->getRecompilationInfo() && (compiler->getRecompilationInfo()->getJittedBodyInfo()->getUsesSamplingJProfiling() || compiler->getRecompilationInfo()->getJittedBodyInfo()->getUsesJProfiling()))
+               TR_VerboseLog::write(" JPROF");
+
+            if (compiler->isDLT())
+               TR_VerboseLog::write(" DLT@%d", compiler->getDltBcIndex());
+
+            if (_methodBeingCompiled->_reqFromSecondaryQueue)
+               TR_VerboseLog::write(" LPQ");
+
+            if (_methodBeingCompiled->_reqFromJProfilingQueue)
+               TR_VerboseLog::write(" JPQ");
+
+            if (TR::Options::getVerboseOption(TR_VerboseGc))
+               {
+               TR_VerboseLog::write(" gc=%d atlas=%d", gcDataBytes, atlasBytes);
+               }
+
+            if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+               TR_VerboseLog::write(" time=%dus", translationTime);
+
+            if(TR::Options::getVerboseOption(TR_VerbosePerformance))
+               {
+               TR_VerboseLog::write(
+                  " mem=[region=%llu system=%llu]KB",
+                  static_cast<unsigned long long>(scratchSegmentProvider.regionBytesAllocated())/1024,
+                  static_cast<unsigned long long>(scratchSegmentProvider.systemBytesAllocated())/1024
                   );
-               if (metaData->startColdPC)
-                  {
-                  TR_VerboseLog::write("/" POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT, metaData->startColdPC, metaData->endPC);
-                  }
-
-               j9jit_printf(_jitConfig, " %s", _methodBeingCompiled->getMethodDetails().name());
-
-               // Print recompilation reason
-               // For methods compiled through sample thresholds, print also the CPU utilization
-               if (recompReason == 'T')
-                  TR_VerboseLog::write(" %.2f%%", optimizationPlan->getPerceivedCPUUtil() / 10.0);
-
-               TR_VerboseLog::write(" %c", recompReason);
-
-               TR_VerboseLog::write(" Q_SZ=%d Q_SZI=%d QW=%d", _compInfo.getMethodQueueSize(),
-                                    _compInfo.getNumQueuedFirstTimeCompilations(), _compInfo.getQueueWeight());
-
-               TR_VerboseLog::write(" j9m=%p bcsz=%u", method, TR::CompilationInfo::getMethodBytecodeSize(method));
-
-               if (_compInfo.useSeparateCompilationThread() && !_methodBeingCompiled->_async)
-                  TR_VerboseLog::write(" sync"); // flag the synchronous compilations
-
-               if (_methodBeingCompiled->isJNINative())
-                  TR_VerboseLog::write(" JNI"); // flag JNI compilations
-
-               if (compiler->getOption(TR_EnableOSR))
-                  TR_VerboseLog::write(" OSR");
-
-               if (compiler->getRecompilationInfo() && compiler->getRecompilationInfo()->getJittedBodyInfo()->getUsesGCR())
-                  TR_VerboseLog::write(" GCR");
-
-               if (compiler->getRecompilationInfo() && (compiler->getRecompilationInfo()->getJittedBodyInfo()->getUsesSamplingJProfiling() || compiler->getRecompilationInfo()->getJittedBodyInfo()->getUsesJProfiling()))
-                  TR_VerboseLog::write(" JPROF");
-
-               if (compiler->isDLT())
-                  TR_VerboseLog::write(" DLT@%d", compiler->getDltBcIndex());
-
-               if (_methodBeingCompiled->_reqFromSecondaryQueue)
-                  TR_VerboseLog::write(" LPQ");
-
-               if (_methodBeingCompiled->_reqFromJProfilingQueue)
-                  TR_VerboseLog::write(" JPQ");
-
-               if (TR::Options::getVerboseOption(TR_VerboseGc))
-                  {
-                  TR_VerboseLog::write(" gc=%d atlas=%d", gcDataBytes, atlasBytes);
-                  }
-
-               if (TR::Options::getVerboseOption(TR_VerbosePerformance))
-                  TR_VerboseLog::write(" time=%dus", translationTime);
-
-               if(TR::Options::getVerboseOption(TR_VerbosePerformance))
-                  {
-                  TR_VerboseLog::write(
-                     " mem=[region=%llu system=%llu]KB",
-                     static_cast<unsigned long long>(scratchSegmentProvider.regionBytesAllocated())/1024,
-                     static_cast<unsigned long long>(scratchSegmentProvider.systemBytesAllocated())/1024
-                     );
-                  }
+               }
 
 #if defined(WINDOWS) && defined(TR_TARGET_32BIT)
-               if (TR::Options::getVerboseOption(TR_VerboseVMemAvailable))
-                  {
-                  J9MemoryInfo memInfo;
-                  PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
-                  if (j9sysinfo_get_memory_info(&memInfo) == 0 &&
-                  memInfo.availVirtual != J9PORT_MEMINFO_NOT_AVAILABLE)
-                     TR_VerboseLog::write( " VMemAv=%u MB", (uint32_t)(memInfo.availVirtual >> 20));
-                  }
-#endif
-               if (TR::Options::getVerboseOption(TR_VerboseRecompile))
-                  {
-                  TR_VerboseLog::write("%s [profiling c(%d), f(%d), ivc(%d)]", prexString, profilingCount, profilingFrequencey, counter);
-                  }
-
-               if (compiler->getOption(TR_CountOptTransformations) && compiler->getOption(TR_VerboseOptTransformations))
-                  {
-                  TR_VerboseLog::write(" transformations=%d", compiler->getVerboseOptTransformationCount());
-                  }
-
-               if (TR::Options::getVerboseOption(TR_VerboseOptimizer))
-                  {
-                  TR_VerboseLog::write(" opts=%d.%d", compiler->getLastPerformedOptIndex(), compiler->getLastPerformedOptSubIndex());
-                  }
-
-               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance))
-                  {
-                  TR_VerboseLog::write(" compThread=%d",  compiler->getCompThreadID());
-                  }
-
-               // print cached cpu usage (sampled elsewhere [samplerThreadProc])
-
-               CpuUtilization *cpuUtil = _compInfo.getCpuUtil();
-               if (cpuUtil->isFunctional())
-                  {
-                  TR_VerboseLog::write(" CpuLoad=%d%%(%d%%avg) JvmCpu=%d%%",
-                  cpuUtil->getCpuUsage(),
-                  cpuUtil->getAvgCpuUsage(),
-                  cpuUtil->getVmCpuUsage());
-                  }
-
-               if (TR::Options::getVerboseOption(TR_VerboseCompilationThreads) && _onSeparateThread)
-                  {
-                  // CPU spent in comp thread is quite coarse (updated every 0.5 sec)
-                  // We could use getCpuTimeNow() if we wanted to be more accurate
-                  TR::CompilationInfoPerThread *cipt = (TR::CompilationInfoPerThread*)this;
-                  int32_t cpuUtil = cipt->getCompThreadCPU().getThreadLastCpuUtil();
-                  if (cpuUtil >= 0)
-                     TR_VerboseLog::write(" compCPU=%d%%", cpuUtil);
-                  }
-               }
-            catch (std::exception& e)
+            if (TR::Options::getVerboseOption(TR_VerboseVMemAvailable))
                {
-               TR_VerboseLog::write("\nCaught exception while printing info: %s", e.what());
+               J9MemoryInfo memInfo;
+               PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
+               if (j9sysinfo_get_memory_info(&memInfo) == 0 &&
+               memInfo.availVirtual != J9PORT_MEMINFO_NOT_AVAILABLE)
+                  TR_VerboseLog::write( " VMemAv=%u MB", (uint32_t)(memInfo.availVirtual >> 20));
                }
+#endif
+            if (TR::Options::getVerboseOption(TR_VerboseRecompile))
+               {
+               TR_VerboseLog::write("%s [profiling c(%d), f(%d), ivc(%d)]", prexString, profilingCount, profilingFrequencey, counter);
+               }
+
+            if (compiler->getOption(TR_CountOptTransformations) && compiler->getOption(TR_VerboseOptTransformations))
+               {
+               TR_VerboseLog::write(" transformations=%d", compiler->getVerboseOptTransformationCount());
+               }
+
+            if (TR::Options::getVerboseOption(TR_VerboseOptimizer))
+               {
+               TR_VerboseLog::write(" opts=%d.%d", compiler->getLastPerformedOptIndex(), compiler->getLastPerformedOptSubIndex());
+               }
+
+            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance))
+               {
+               TR_VerboseLog::write(" compThread=%d",  compiler->getCompThreadID());
+               }
+
+            // print cached cpu usage (sampled elsewhere [samplerThreadProc])
+
+            CpuUtilization *cpuUtil = _compInfo.getCpuUtil();
+            if (cpuUtil->isFunctional())
+               {
+               TR_VerboseLog::write(" CpuLoad=%d%%(%d%%avg) JvmCpu=%d%%",
+               cpuUtil->getCpuUsage(),
+               cpuUtil->getAvgCpuUsage(),
+               cpuUtil->getVmCpuUsage());
+               }
+
+            if (TR::Options::getVerboseOption(TR_VerboseCompilationThreads) && _onSeparateThread)
+               {
+               // CPU spent in comp thread is quite coarse (updated every 0.5 sec)
+               // We could use getCpuTimeNow() if we wanted to be more accurate
+               TR::CompilationInfoPerThread *cipt = (TR::CompilationInfoPerThread*)this;
+               int32_t cpuUtil = cipt->getCompThreadCPU().getThreadLastCpuUtil();
+               if (cpuUtil >= 0)
+                  TR_VerboseLog::write(" compCPU=%d%%", cpuUtil);
+               }
+            }
             TR_VerboseLog::vlogRelease();
             }
 
