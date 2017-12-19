@@ -1790,3 +1790,16 @@ remoteCompilationEnd(
                                      "Server has successfully compiled %s", entry->_compInfoPT->getCompilation()->signature());
       }
    }
+
+void printJaasMsgStats(J9JITConfig *jitConfig)
+   {
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+   j9tty_printf(PORTLIB, "JAAS Server Message Type Statistics:\n");
+   j9tty_printf(PORTLIB, "Type# #called TypeName\n");
+   const ::google::protobuf::EnumDescriptor *descriptor = JAAS::J9ServerMessageType_descriptor();
+   for (int i = 0; i < JAAS::J9ServerMessageType_ARRAYSIZE; ++i)
+      {
+      if (serverMsgTypeCount[i] > 0)
+         j9tty_printf(PORTLIB, "#%04d %7u %s\n", i, serverMsgTypeCount[i], descriptor->FindValueByNumber(i)->name().c_str());
+      }
+   }

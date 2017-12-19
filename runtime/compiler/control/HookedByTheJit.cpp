@@ -76,6 +76,7 @@
 #include "runtime/HWProfiler.hpp"
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
+#include "control/JaasCompilationThread.hpp"
 
 extern "C" {
 struct J9JavaVM;
@@ -164,8 +165,6 @@ extern void rtHookClassLoaderUnload(J9HookInterface * *, UDATA , void *, void *)
 #else
 #define BC_OP_U16(bcPtr)  (*((uint16_t*)(bcPtr)))
 #endif
-
-extern uint32_t serverMsgTypeCount[];
 
 TR::OptionSet *findOptionSet(J9Method *method, bool isAOT)
    {
@@ -4775,18 +4774,9 @@ void JitShutdown(J9JITConfig * jitConfig)
       j9tty_printf(PORTLIB, "\tNo prof. info because timestamp expired: %10d\n", TR_IProfiler::_STATS_timestampHasExpired);
       }
 
-   static char * printJaasMsgStats = feGetEnv("TR_PrintJaasMsgStats");
-   if (printJaasMsgStats && compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
-      {
-      j9tty_printf(PORTLIB, "JAAS Server Message Type Statistics:\n");
-      j9tty_printf(PORTLIB, "Type# #called TypeName\n");
-      const ::google::protobuf::EnumDescriptor *descriptor = JAAS::J9ServerMessageType_descriptor();
-      for (int i = 0; i < JAAS::J9ServerMessageType_ARRAYSIZE; ++i)
-         {
-         if (serverMsgTypeCount[i] > 0)
-            j9tty_printf(PORTLIB, "#%04d %7u %s\n", i, serverMsgTypeCount[i], descriptor->FindValueByNumber(i)->name().c_str());
-         }
-      }
+   static char * isPrintJaasMsgStats = feGetEnv("TR_PrintJaasMsgStats");
+   if (isPrintJaasMsgStats && compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+      printJaasMsgStats(jitConfig);
 
    TRC_JIT_ShutDownEnd(vmThread, "end of JitShutdown function");
    }

@@ -11,5 +11,6 @@ TR_MethodMetaData *remoteCompile(J9VMThread *, TR::Compilation *, TR_ResolvedMet
       J9Method *, TR::IlGeneratorMethodDetails &, TR::CompilationInfoPerThreadBase *);
 void remoteCompilationEnd(TR::IlGeneratorMethodDetails &details, J9JITConfig *jitConfig,
       TR_FrontEnd *fe, TR_MethodToBeCompiled *entry, TR::Compilation *comp);
+void printJaasMsgStats(J9JITConfig *);
 
 #endif
