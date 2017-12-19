@@ -140,10 +140,8 @@ retry:
 		}
 	}
 
-	if ((J2SE_VERSION(javaVM) & J2SE_VERSION_MASK) >= J2SE_17) {
-		if (J9VMJAVALANGCLASSLOADER_ISPARALLELCAPABLE(vmThread, classLoaderObject)) {
-			classLoader->flags |= J9CLASSLOADER_PARALLEL_CAPABLE;
-		}
+	if (J9VMJAVALANGCLASSLOADER_ISPARALLELCAPABLE(vmThread, classLoaderObject)) {
+		classLoader->flags |= J9CLASSLOADER_PARALLEL_CAPABLE;
 	}
 	J9CLASSLOADER_SET_CLASSLOADEROBJECT(vmThread, classLoader, classLoaderObject);
 

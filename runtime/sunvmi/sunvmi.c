@@ -398,7 +398,7 @@ initializeReflectionGlobals(JNIEnv * env,BOOLEAN includeAccessors) {
 	}
 
 #if defined(J9VM_OPT_METHOD_HANDLE)
-	if ((J2SE_VERSION(vm) >= J2SE_17) && (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW)) {
+	if (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW) {
 		clazz = (*env)->FindClass(env, "java/lang/invoke/MethodHandles$Lookup");
 		if (NULL == clazz) {
 			return JNI_ERR;
@@ -573,7 +573,7 @@ getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState
 			if (walkState->userData2 != NULL) {
 				j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(currentClass);
 #if defined(J9VM_OPT_METHOD_HANDLE)
-				if ((J2SE_VERSION(vm) >= J2SE_17) && (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW)) {
+				if (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW) {
 					/* check for non-static MethodHandles$Lookup methods */
 					if (walkState->method == ((J9JNIMethodID*)VM.jliMethodHandles_Lookup_checkSecurity)->method) {
 						walkState->userData3 = (void*)(n + 2);

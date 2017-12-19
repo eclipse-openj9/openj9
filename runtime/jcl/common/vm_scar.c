@@ -302,9 +302,6 @@ scarInit(J9JavaVM * vm)
 
 #if defined(WIN32) && !defined(OPENJ9_BUILD)
 	switch (jclVersion) {
-	case J2SE_17:
-		dbgwrapperStr = "dbgwrapper70";
-		break;
 	case J2SE_18:
 	case J2SE_19:	/* This will need to be modified when the JCL team provides a dbgwrapper90 */
 		dbgwrapperStr = "dbgwrapper80";

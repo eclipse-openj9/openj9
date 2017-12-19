@@ -98,13 +98,6 @@ jint computeFullVersionString(J9JavaVM* vm)
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
 	switch(J2SE_VERSION(vm) & J2SE_VERSION_MASK) {
-	case J2SE_17:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_17) {
-			j2se_version_info = "1.7.0";
-		} else {
-			j2se_version_info = "1.7.?";
-		}
-		break;
 	case J2SE_18:
 		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
 			j2se_version_info = "1.8.0";
