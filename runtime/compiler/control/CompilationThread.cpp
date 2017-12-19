@@ -12044,7 +12044,6 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                if (cpuUtil >= 0)
                   TR_VerboseLog::write(" compCPU=%d%%", cpuUtil);
                }
-            }
             TR_VerboseLog::vlogRelease();
             }
 
