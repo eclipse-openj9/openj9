@@ -686,18 +686,6 @@ initializeSystemProperties(J9JavaVM * vm)
 
 	/* Properties that always exist */
 	switch (j2seVersion) {
-		case J2SE_16:
-			classVersion = "50.0";
-			specificationVersion = "1.0";
-			specificationVendor = "Sun Microsystems Inc.";
-			break;
-
-		case J2SE_17:
-			classVersion = "51.0";
-			specificationVersion = "1.7";
-			specificationVendor = "Oracle Corporation";
-			break;
-
 		case J2SE_18:
 			classVersion = "52.0";
 			specificationVersion = "1.8";

@@ -1057,8 +1057,7 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_DisableTraps);
    #endif
 
-   if (self()->getOption(TR_AggressiveOpts) &&
-       (J2SE_VERSION(jitConfig->javaVM) & J2SE_RELEASE_MASK) >= J2SE_17)
+   if (self()->getOption(TR_AggressiveOpts))
       self()->setOption(TR_DontDowngradeToCold, true);
 
    if (forceSuffixLogs)
@@ -1736,15 +1735,11 @@ J9::Options::fePreProcess(void * base)
                UDATA hugePreferredPageSize = 0;
    #if defined(TR_TARGET_POWER)
                preferredPageSize = 65536;
-   #else
-               if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) >= J2SE_17) {
-   #if (defined(LINUX) && defined(TR_TARGET_X86))
-                  preferredPageSize = 2097152;
-                  hugePreferredPageSize = 0x40000000;
+   #elif (defined(LINUX) && defined(TR_TARGET_X86))
+               preferredPageSize = 2097152;
+               hugePreferredPageSize = 0x40000000;
    #elif (defined(TR_TARGET_S390))
-                  preferredPageSize = 1048576;
-   #endif
-               }
+               preferredPageSize = 1048576;
    #endif
                if (0 != preferredPageSize)
                   {

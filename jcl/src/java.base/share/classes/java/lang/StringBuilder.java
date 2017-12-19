@@ -146,43 +146,37 @@ public StringBuilder() {
  * @param		capacity	the initial capacity
  */
 public StringBuilder(int capacity) {
-
-	/* 
-	 * Throw NegativeArraySizeException to match the reference implementation
-	 * and existing J9 behaviour. 
-	 * An explicit check is necessary because the string compression
-	 * algorithm may convert a negative capacity into a positive array size.
+	/* capacity argument is used to determine the byte/char array size. If
+	 * capacity argument is Integer.MIN_VALUE (-2147483648), then capacity *= 2
+	 * will yield a non-negative number due to overflow. We will fail to throw
+	 * NegativeArraySizeException. The check below will assure that
+	 * NegativeArraySizeException is thrown if capacity argument is less than 0.
 	 */
 	if (capacity < 0) {
 		throw new NegativeArraySizeException();
 	}
-	if (String.enableCompression) {
-		/*[IF Sidecar19-SE]*/
-		if (capacity <= MAX_CAPACITY) {
-			value = new byte[capacity];
-		} else {
-			/*[MSG "K05df", "Unable to allocate an array of the specified capacity. The maximum supported capacity is Integer.MAX_VALUE / 2."]*/
-			throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K05df")); //$NON-NLS-1$
+	int arraySize = capacity;
+	
+	/*[IF Sidecar19-SE]*/
+	if (capacity <= MAX_CAPACITY) {
+		if (!String.enableCompression) {
+			arraySize = capacity * 2;
 		}
-		/*[ELSE]*/
-		if (capacity == Integer.MAX_VALUE) {
-			value = new char[(capacity / 2) + 1];
-		} else {
-			value = new char[(capacity + 1) / 2];
-		}
-		/*[ENDIF]*/
+		value = new byte[arraySize];
 	} else {
-		/*[IF Sidecar19-SE]*/
-		if (capacity <= MAX_CAPACITY) {
-			value = new byte[capacity * 2];
-		} else {
-			/*[MSG "K05df", "Unable to allocate an array of the specified capacity. The maximum supported capacity is Integer.MAX_VALUE / 2."]*/
-			throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K05df")); //$NON-NLS-1$
-		}
-		/*[ELSE]*/
-		value = new char[capacity];
-		/*[ENDIF]*/
+		/*[MSG "K05df", "Unable to allocate an array of the specified capacity. The maximum supported capacity is Integer.MAX_VALUE / 2."]*/
+		throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K05df")); //$NON-NLS-1$
 	}
+	/*[ELSE]*/
+	if (String.enableCompression) {
+		if (capacity == Integer.MAX_VALUE) {
+			arraySize = (capacity / 2) + 1;
+		} else {
+			arraySize = (capacity + 1) / 2;
+		}
+	}
+	value = new char[arraySize];
+	/*[ENDIF]*/
 	
 	/*[IF !Sidecar19-SE]*/
 	this.capacity = capacity;
