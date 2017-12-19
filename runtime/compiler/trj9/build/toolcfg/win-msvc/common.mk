@@ -117,6 +117,10 @@ CX_FLAGS_DEBUG+=-Zi
 
 CX_FLAGS_PROD+=-Ox -Zi
 
+ifeq ($(HOST_BITS),32)
+    CX_FLAGS+=-arch:SSE2
+endif
+
 ifeq ($(HOST_BITS),64)
     CX_DEFINES+=\
         _WIN32_WINNT=0x0400 \
