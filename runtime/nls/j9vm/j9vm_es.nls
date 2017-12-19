@@ -93,7 +93,7 @@ J9NLS_VM_CANNOT_LOAD_LIBRARY=No se puede cargar la biblioteca que requiere: %s
 J9NLS_VM_CANNOT_LOAD_LIBRARY.sample_input_1=-XaCommandLineOption
 J9NLS_VM_CANNOT_LOAD_LIBRARY.explanation=The JVM was unable to open a shared library required when the command line option quoted is specified.
 J9NLS_VM_CANNOT_LOAD_LIBRARY.system_action=The JVM will fail to start.
-J9NLS_VM_CANNOT_LOAD_LIBRARY.user_response=Correct the problem with opening the shared library, or contact IBM service.
+J9NLS_VM_CANNOT_LOAD_LIBRARY.user_response=Correct the problem with opening the shared library, or contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_INVALID_ENV_VAR=Valor no v\u00e1lido para variable de entorno: %s
@@ -125,7 +125,7 @@ J9NLS_VM_J9VMDLLMAIN_NOT_FOUND=J9VMDllMain no encontrado
 # START NON-TRANSLATABLE
 J9NLS_VM_J9VMDLLMAIN_NOT_FOUND.explanation=The required exported function J9VMDllMain was not found.
 J9NLS_VM_J9VMDLLMAIN_NOT_FOUND.system_action=This message will be wrapped in another message, that other message will dictate the JVM's action.
-J9NLS_VM_J9VMDLLMAIN_NOT_FOUND.user_response=Contact IBM Service.
+J9NLS_VM_J9VMDLLMAIN_NOT_FOUND.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: do not translate J9VMDllMain
@@ -133,7 +133,7 @@ J9NLS_VM_J9VMDLLMAIN_FAILED=Error de J9VMDllMain
 # START NON-TRANSLATABLE
 J9NLS_VM_J9VMDLLMAIN_FAILED.explanation=The J9VMDllMain function returned a failure.
 J9NLS_VM_J9VMDLLMAIN_FAILED.system_action=This message will be wrapped in another message, that other message will dictate the JVM's action.
-J9NLS_VM_J9VMDLLMAIN_FAILED.user_response=Contact IBM Service.
+J9NLS_VM_J9VMDLLMAIN_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: argument is the name of the DLL
@@ -142,7 +142,7 @@ J9NLS_VM_FAILED_TO_INITIALIZE_DLL=No se ha podido inicializar %s
 J9NLS_VM_FAILED_TO_INITIALIZE_DLL.sample_input_1=userLib.dll
 J9NLS_VM_FAILED_TO_INITIALIZE_DLL.explanation=The function JVM_OnLoad() of the specified library returned failure.
 J9NLS_VM_FAILED_TO_INITIALIZE_DLL.system_action=The JNI GetEnv() function will JNI_ERR.
-J9NLS_VM_FAILED_TO_INITIALIZE_DLL.user_response=Contact IBM Service.
+J9NLS_VM_FAILED_TO_INITIALIZE_DLL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the name of the DLL
@@ -153,7 +153,7 @@ J9NLS_VM_UNABLE_TO_LOAD_DLL.sample_input_1=userLib.dll
 J9NLS_VM_UNABLE_TO_LOAD_DLL.sample_input_2=The specified module could not be found.
 J9NLS_VM_UNABLE_TO_LOAD_DLL.explanation=The JVM was unable to load the specified library for the specified reason.
 J9NLS_VM_UNABLE_TO_LOAD_DLL.system_action=The JVM will fail to start.
-J9NLS_VM_UNABLE_TO_LOAD_DLL.user_response=Contact IBM Service.
+J9NLS_VM_UNABLE_TO_LOAD_DLL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the name of the DLL
@@ -164,7 +164,7 @@ J9NLS_VM_UNABLE_TO_UNLOAD_DLL.sample_input_1=userLib.dll
 J9NLS_VM_UNABLE_TO_UNLOAD_DLL.sample_input_2=The specified module could not be found.
 J9NLS_VM_UNABLE_TO_UNLOAD_DLL.explanation=The JVM was unable to unload the specified library for the specified reason.
 J9NLS_VM_UNABLE_TO_UNLOAD_DLL.system_action=The JVM may exit or continue operation.
-J9NLS_VM_UNABLE_TO_UNLOAD_DLL.user_response=Contact IBM Service.
+J9NLS_VM_UNABLE_TO_UNLOAD_DLL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the function name which caused the problem
@@ -177,7 +177,7 @@ J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.sample_input_2=-3
 J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.sample_input_3=JVMJ9VM009E J9VMDllMain failed
 J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.explanation=There was an error returned by the specified function during JVM initialization.
 J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.system_action=The JVM may exit or continue operation.
-J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.user_response=Contact IBM Service.
+J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the function name which caused the problem
@@ -190,7 +190,7 @@ J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.sample_input_2=-3
 J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.sample_input_3=JVMJ9VM009E J9VMDllMain failed
 J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.explanation=There was an error return by the specified function during JVM shutdown.
 J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.system_action=The JVM may exit early or may continue with normal shutdown.
-J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.user_response=Contact IBM Service.
+J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the library which caused the problem
@@ -203,7 +203,7 @@ J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.sample_input_2=-3
 J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.sample_input_3=JVMJ9VM009E J9VMDllMain failed
 J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.explanation=There was an error trying to initialize the specified library during JVM initialization.
 J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.system_action=The JVM may exit or continue operation.
-J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.user_response=Contact IBM Service.
+J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the library which caused the problem
@@ -216,7 +216,7 @@ J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.sample_input_2=-3
 J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.sample_input_3=JVMJ9VM009E J9VMDllMain failed
 J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.explanation=There was error returned by the specified library during JVM shutdown.
 J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.system_action=The JVM may exit early or may continue with normal shutdown.
-J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.user_response=Contact IBM Service.
+J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_OUT_OF_MEM_FOR_CMD_LINE_OPTS=No se ha podido asignar memoria para la matriz de opciones de l\u00ednea de mandatos
@@ -240,7 +240,7 @@ J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.sample_input_1=9
 J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.sample_input_2=userClass
 J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.explanation=A required class could not be found and/or initialized.
 J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.system_action=The JVM will terminate.
-J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.user_response=Contact IBM Service.
+J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: %.*s is a class path entry (usually a directory name or JAR file name)
@@ -250,14 +250,14 @@ J9NLS_VM_SEARCHED_IN_DIR.sample_input_1=14
 J9NLS_VM_SEARCHED_IN_DIR.sample_input_2=/opt/IBM/Java/
 J9NLS_VM_SEARCHED_IN_DIR.explanation=Lists a class path entry that was searched while trying to find a required class.
 J9NLS_VM_SEARCHED_IN_DIR.system_action=The JVM will terminate.
-J9NLS_VM_SEARCHED_IN_DIR.user_response=Contact IBM Service.
+J9NLS_VM_SEARCHED_IN_DIR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_OUT_OF_STACK_MAP_MEMORY=Memoria agotada para la correlaci\u00f3n de pila del int\u00e9rprete - terminando anormalmente la m\u00e1quina virtual
 # START NON-TRANSLATABLE
 J9NLS_VM_OUT_OF_STACK_MAP_MEMORY.explanation=There was a failure to allocate native memory required by the JVM.
 J9NLS_VM_OUT_OF_STACK_MAP_MEMORY.system_action=The JVM will terminate.
-J9NLS_VM_OUT_OF_STACK_MAP_MEMORY.user_response=Contact IBM Service.
+J9NLS_VM_OUT_OF_STACK_MAP_MEMORY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_STACK_MAP_FAILED=Error de correlaci\u00f3n de pila, resultado = %p - terminando anormalmente m\u00e1quina virtual
@@ -265,7 +265,7 @@ J9NLS_VM_STACK_MAP_FAILED=Error de correlaci\u00f3n de pila, resultado = %p - te
 J9NLS_VM_STACK_MAP_FAILED.sample_input_1=0x84723649
 J9NLS_VM_STACK_MAP_FAILED.explanation=An internal error occurred.
 J9NLS_VM_STACK_MAP_FAILED.system_action=The JVM will terminate with exit code 600 or 601.
-J9NLS_VM_STACK_MAP_FAILED.user_response=Contact IBM Service.
+J9NLS_VM_STACK_MAP_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_CHECK_JAVA_HOME=Esto puede indicar que JAVA_HOME es incorrecto o que no est\u00e1n instaladas las bibliotecas de clases
@@ -361,7 +361,7 @@ J9NLS_VM_JNI_INVALID_UTF8=Se ha utilizado un UTF8 no v\u00e1lido en la funci\u00
 # START NON-TRANSLATABLE
 J9NLS_VM_JNI_INVALID_UTF8.explanation=An invalid UTF8 string was passed as an argument to a JNI function.
 J9NLS_VM_JNI_INVALID_UTF8.system_action=The JVM will exit with exit code 1000 or the JNI function will fail, depending on the function
-J9NLS_VM_JNI_INVALID_UTF8.user_response=Contact IBM service.
+J9NLS_VM_JNI_INVALID_UTF8.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_REQUIRED_CLASS_ON_WRONG_PATH=La clase %2$.*1$s necesaria debe estar en la classpath de arranque, pero se ha encontrado en la classpath de la aplicaci\u00f3n en %4$.*3$s
@@ -383,7 +383,7 @@ J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.sample_input_1=userLib.dll
 J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.sample_input_2=The specified module could not be found.
 J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.explanation=The JVM was unable to load the specified library for the specified reason.
 J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.system_action=The JVM will fail to start.
-J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.user_response=Contact IBM Service.
+J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: argument is the name of the DLL
@@ -392,7 +392,7 @@ J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL=Error irrecuperable: no se ha podido ini
 J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.sample_input_1=userLib.dll
 J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.explanation=The function JVM_OnLoad() of the specified library returned failure.
 J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.system_action=The JNI GetEnv() function will JNI_ERR.
-J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.user_response=Contact IBM Service.
+J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # JVMRI and -Xtrace are not translatable.
@@ -836,7 +836,7 @@ J9NLS_VM_IFA_SWITCHERROR=Error al conmutar al procesador IFA; c\u00f3digo de ret
 # START NON-TRANSLATABLE
 J9NLS_VM_IFA_SWITCHERROR.explanation=The JVM failed to switch to the IFA processor.
 J9NLS_VM_IFA_SWITCHERROR.system_action=The JVM will continue to execute using the regular processor.
-J9NLS_VM_IFA_SWITCHERROR.user_response=Contact IBM service.
+J9NLS_VM_IFA_SWITCHERROR.user_response=Contact your service representative.
 J9NLS_VM_IFA_SWITCHERROR.sample_input_1=5623DA10
 # END NON-TRANSLATABLE
 
@@ -844,7 +844,7 @@ J9NLS_VM_IFA_ERROR=Error de IFA: c\u00f3digo de retorno inesperado %08x desde el
 # START NON-TRANSLATABLE
 J9NLS_VM_IFA_ERROR.explanation=The JVM failed to switch to the IFA processor due to an unexpected error.
 J9NLS_VM_IFA_ERROR.system_action=The JVM will continue to execute using the regular processor.
-J9NLS_VM_IFA_ERROR.user_response=Contact IBM service.
+J9NLS_VM_IFA_ERROR.user_response=Contact your service representative.
 J9NLS_VM_IFA_ERROR.sample_input_1=5623DA10
 # END NON-TRANSLATABLE
 
@@ -1242,7 +1242,7 @@ J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2=Se ha finalizado el proceso utilizando
 # START NON-TRANSLATABLE
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.explanation=The JVM detected an unrecoverable condition and is terminating the process using the z/OS specific system call CEE3AB2, which throws an abend.
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.system_action=The JVM prints the error message and terminates the process
-J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.user_response=Inspect console and operator console messages. Contact IBM Service if assistance is required
+J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.user_response=Inspect console and operator console messages. Contact your service representative if assistance is required
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.sample_input_1=0xded
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.sample_input_2=1
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.sample_input_3=2
