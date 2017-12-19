@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
+import org.openj9.test.util.StringPrintStream;
 import org.testng.log4testng.Logger;
 
 import com.ibm.tools.attach.target.AttachHandler;
@@ -65,7 +66,6 @@ class TargetManager {
 	private String targetVmid;
 	public static final String TARGETVM_START = "targetvm_start";
 	public static final String TARGETVM_STOP = "targetvm_stop";
-	static boolean verbose = false;
 	private static boolean doLogging = false;
 	private static final String DEFAULT_IPC_DIR = ".com_ibm_tools_attach";
 	public TargetStatus targetVmStatus;
@@ -77,10 +77,6 @@ class TargetManager {
 
 	public enum TargetStatus {
 		INIT_SUCCESS, INIT_FAILURE, INIT_DUPLICATE_VMID
-	}
-
-	public static void setVerbose(boolean v) {
-		verbose = v;
 	}
 
 	public synchronized String getTargetPid() {
@@ -132,9 +128,7 @@ class TargetManager {
 					tgtStatus = TargetStatus.INIT_FAILURE;
 					break;
 				}
-				if (verbose) {
-					logger.debug("TargetVM output: " + tgtOutput);
-				}
+				logger.debug("TargetVM output: " + tgtOutput);
 				if (tgtOutput.startsWith(PID_PREAMBLE)) {
 					targetPid = tgtOutput.substring(PID_PREAMBLE.length());
 				}
@@ -161,7 +155,7 @@ class TargetManager {
 				tgtStatus = TargetStatus.INIT_FAILURE;
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			StringPrintStream.logStackTrace(e, logger);
 		}
 		if (TargetStatus.INIT_SUCCESS != tgtStatus) {
 			logger.debug("TargetVM initialization failed with status "+tgtStatus.toString()+"\nTarget output:\n"+targetLog.toString());			
@@ -239,17 +233,19 @@ class TargetManager {
 		Process target = null;
 		args = new String[argBuffer.size()];
 		argBuffer.toArray(args);
-		if (verbose) {
-			System.out.print("\n");
-			for (int i = 0; i < args.length; ++i) {
-				System.out.print(args[i] + " ");
-			}
-			System.out.print("\n");
+		
+		StringBuilder debugBuffer = new StringBuilder();
+		debugBuffer.append("Arguments:\n");
+		for (int i = 0; i < args.length; ++i) {
+			debugBuffer.append(args[i]);
+			debugBuffer.append(" ");
 		}
+		debugBuffer.append("\n");
+		logger.debug(debugBuffer.toString());
 		try {
 			target = me.exec(args);
 		} catch (IOException e) {
-			e.printStackTrace();
+			StringPrintStream.logStackTrace(e, logger);
 			return null;
 		}
 		this.targetIn = target.getOutputStream();
@@ -262,7 +258,7 @@ class TargetManager {
 			targetInWriter.write(TargetManager.TARGETVM_START + '\n');
 			targetInWriter.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			StringPrintStream.logStackTrace(e, logger);
 			return null;
 		}
 		return target;
@@ -360,7 +356,7 @@ class TargetManager {
 		} catch (IOException e) { 
 			/* target closed the streams */
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			StringPrintStream.logStackTrace(e, logger);
 			rc = -1;
 		} finally {
 			try {
@@ -449,10 +445,8 @@ class TargetManager {
 					try {
 						logger.debug("Log file " + f.getName()+":\n" 
 								+ (new String(Files.readAllBytes(Paths.get(f.toURI())))));
-					} catch (FileNotFoundException e) {
-						e.printStackTrace();
 					} catch (IOException e) {
-						e.printStackTrace();
+						StringPrintStream.logStackTrace(e, logger);
 					}
 				}
 				if (!logName.equalsIgnoreCase(myLog)) {

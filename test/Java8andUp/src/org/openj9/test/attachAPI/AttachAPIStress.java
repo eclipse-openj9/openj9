@@ -72,7 +72,6 @@ public class AttachAPIStress extends AttachApiTest {
 			return;
 		}
 		logger.debug("starting " + testName);
-		TargetManager.setVerbose(false);
 		for (int i = 0; i < SEQ_ITERATIONS; ++i) {
 			launchAndTestTargets(1);
 			logger.debug("waiting");
@@ -87,7 +86,6 @@ public class AttachAPIStress extends AttachApiTest {
 			return;
 		}
 		logger.debug("starting " + testName);
-		TargetManager.setVerbose(false);
 		for (int i = 0; i < MULT_ITERATIONS; ++i) {
 			launchAndTestTargets(i, MULT_ATTACHES);
 			logger.debug("waiting");
@@ -103,7 +101,6 @@ public class AttachAPIStress extends AttachApiTest {
 		}
 
 		logger.debug("starting " + testName);
-		TargetManager.setVerbose(false);
 		setVmOptions("-Xmx16M");
 		setVmOptions("-Xms16M");
 		int instances = PAR_INSTANCES;
