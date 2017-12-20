@@ -67,12 +67,10 @@ enum J9ServerMessageType
    ResolvedMethod_isBigDecimalMethod = 136;
    ResolvedMethod_isBigDecimalConvertersMethod = 137;
    ResolvedMethod_osrFrameSize = 138;
-<<<<<<< HEAD:runtime/compiler/trj9/rpc/protos/compile.proto
-=======
    ResolvedMethod_isInlineable = 139;
    ResolvedMethod_isWarmCallGraphTooBig = 140;
    ResolvedMethod_setWarmCallGraphTooBig = 141;
->>>>>>> a6da82e212... Override ResolvedMethod is/setWarmCallGraphTooBig:runtime/tr.source/trj9/rpc/protos/compile.proto
+   ResolvedMethod_setVirtualMethodIsOverridden = 142;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;

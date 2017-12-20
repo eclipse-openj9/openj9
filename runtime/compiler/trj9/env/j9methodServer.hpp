@@ -62,6 +62,7 @@ public:
    virtual bool isInlineable(TR::Compilation *) override;
    virtual bool isWarmCallGraphTooBig(uint32_t, TR::Compilation *) override;
    virtual void setWarmCallGraphTooBig(uint32_t, TR::Compilation *) override;
+   virtual void setVirtualMethodIsOverridden() override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override

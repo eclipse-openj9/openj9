@@ -789,3 +789,10 @@ TR_ResolvedJ9JAASServerMethod::setWarmCallGraphTooBig(uint32_t bcIndex, TR::Comp
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_setWarmCallGraphTooBig, _remoteMirror, bcIndex);
    _stream->read<JAAS::Void>();
    }
+
+void
+TR_ResolvedJ9JAASServerMethod::setVirtualMethodIsOverridden()
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_setVirtualMethodIsOverridden, _remoteMirror);
+   _stream->read<JAAS::Void>();
+   }
