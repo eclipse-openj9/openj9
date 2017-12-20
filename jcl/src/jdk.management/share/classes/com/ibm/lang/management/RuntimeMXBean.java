@@ -83,7 +83,15 @@ public interface RuntimeMXBean extends java.lang.management.RuntimeMXBean {
 	 * 
 	 * @return A long representing the process ID (pid) on the underlying 
 	 * operating system.
+	/*[IF Java10]
+	 * 
+	 * @deprecated As of Java 10. Use 
+	 * {@link java.lang.management.RuntimeMXBean#getPid() getPid()} instead.
 	 */
+	@Deprecated(forRemoval=true, since="10")
+	/*[ELSE]
+	 */
+	/*[ENDIF]*/
 	public long getProcessID();
 
 	/**
