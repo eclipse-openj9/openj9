@@ -889,7 +889,7 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
          // if the previous value was from the interpreter profiler
          // don't apply the optimization
          TR_ByteCodeInfo &bcInfo = _bcInfo;  //callNode->getByteCodeInfo();
-         if (valueInfo->getTopProbability() == 1.0f && valueInfo->getProfiler()->getSource() < LastProfiler && !comp()->isProfilingCompilation())
+         if (valueInfo->getTopProbability() == 1.0f && valueInfo->getProfiler()->getSource() < LastProfiler)
             guard->setIsHighProbablityProfiledGuard();
 
          heuristicTrace(inliner->tracer(),"Creating a profiled call. callee Symbol %p frequencyadjustment %f",_initialCalleeSymbol, val);

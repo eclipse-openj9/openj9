@@ -2818,7 +2818,7 @@ TR_MultipleCallTargetInliner::eliminateTailRecursion(
       TR_ASSERT(block->getLastRealTreeTop() == callNodeTreeTop, "eliminateTailRecursion call isn't last or second last tree in block");
       }
 
-   if (comp()->isProfilingCompilation())
+   if (comp()->getProfilingMode() == JitProfiling)
       {
       TR::Node *asyncNode = TR::Node::createWithSymRef(callNode, TR::asynccheck, 0, comp()->getSymRefTab()->findOrCreateAsyncCheckSymbolRef(comp()->getMethodSymbol()));
       block->prepend(TR::TreeTop::create(comp(), asyncNode));

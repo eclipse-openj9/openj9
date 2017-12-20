@@ -4771,6 +4771,10 @@ void JitShutdown(J9JITConfig * jitConfig)
       shutdownJITRuntimeInstrumentation(javaVM);
 #endif
 
+   TR_JProfilerThread *jProfiler = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->jProfiler;
+   if (jProfiler != NULL)
+      jProfiler->stop(javaVM);
+
    {
    TR::RawAllocator rawAllocator(jitConfig->javaVM);
    J9::SegmentAllocator segmentAllocator(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *jitConfig->javaVM);
@@ -7079,6 +7083,12 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
             TR_HWProfiler *hwProfiler = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->hwProfiler;
             hwProfiler->startHWProfilerThread(javaVM);
             }
+         }
+
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableJProfilerThread))
+         {
+         TR_JProfilerThread *jProfiler = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->jProfiler;
+         jProfiler->start(javaVM);
          }
       }
 

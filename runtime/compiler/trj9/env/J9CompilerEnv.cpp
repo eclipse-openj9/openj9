@@ -37,37 +37,7 @@ J9::CompilerEnv::CompilerEnv(J9JavaVM *vm, TR::RawAllocator raw, const TR::Persi
 void
 J9::CompilerEnv::initializeTargetEnvironment()
    {
-
-   TR::CPU *cpu = NULL;
-
-   // Host processor bitness
-   //
-#ifdef TR_TARGET_64BIT
-   target.setBitness(TR::bits_64);
-#elif TR_TARGET_32BIT
-   target.setBitness(TR::bits_32);
-#else
-   target.setBitness(TR::bits_unknown);
-#endif
-
-   // Initialize the target CPU by querying the host processor
-   //
-   target.cpu.initializeByHostQuery();
-
-   // Host major operating system
-   //
-#if HOST_OS == OMR_LINUX
-   target.setMajorOS(TR::os_linux);
-#elif HOST_OS == OMR_AIX
-   target.setMajorOS(TR::os_aix);
-#elif HOST_OS == OMR_WINDOWS
-   target.setMajorOS(TR::os_windows);
-#elif HOST_OS == OMR_ZOS
-   target.setMajorOS(TR::os_zos);
-#else
-   target.setMajorOS(TR::os_unknown);
-#endif
-
+   OMR::CompilerEnvConnector::initializeTargetEnvironment();
    }
 
 /**

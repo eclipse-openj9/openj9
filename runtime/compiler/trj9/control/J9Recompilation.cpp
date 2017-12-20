@@ -22,6 +22,7 @@
 
 #include "AtomicSupport.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "control/CompilationRuntime.hpp"   // for TR::CompilationInfo
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "compile/Compilation.hpp"
@@ -30,7 +31,6 @@
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 #include "exceptions/RuntimeFailure.hpp"    // for J9::EnforceProfiling
-
 
 bool J9::Recompilation::_countingSupported = false;
 
@@ -173,6 +173,12 @@ J9::Recompilation::findOrCreateProfileInfo()
       profileInfo = new (PERSISTENT_NEW) TR_PersistentProfileInfo(DEFAULT_PROFILING_FREQUENCY, DEFAULT_PROFILING_COUNT);
       _methodInfo->setRecentProfileInfo(profileInfo);
       _bodyInfo->setProfileInfo(profileInfo);
+
+      // If running with the profiling thread, add to its list
+      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableJProfilerThread))
+         {
+         TR::CompilationInfo::get(NULL)->getJProfilerThread()->addProfileInfo(profileInfo);
+         }
       }
    return profileInfo;
    }
@@ -201,7 +207,7 @@ J9::Recompilation::beforeOptimization()
    //
    if (self()->isProfilingCompilation()) // this asks the bodyInfo
       {
-      _useSampling = false;
+      _useSampling = _compilation->getProfilingMode() != JitProfiling;
       self()->findOrCreateProfileInfo()->setProfilingCount     (DEFAULT_PROFILING_COUNT);
       self()->findOrCreateProfileInfo()->setProfilingFrequency (DEFAULT_PROFILING_FREQUENCY);
       }
@@ -210,7 +216,9 @@ J9::Recompilation::beforeOptimization()
    //
    if (self()->couldBeCompiledAgain())
       {
-      if (!self()->useSampling())
+      if (_compilation->getProfilingMode() == JProfiling)
+         self()->createProfilers();
+      else if (!self()->useSampling())
          {
          if (_compilation->getMethodHotness() == cold)
             {
@@ -370,7 +378,7 @@ J9::Recompilation::switchToProfiling(uint32_t f, uint32_t c)
       comp()->failCompilation<J9::EnforceProfiling>("Enforcing profiling compilation");
       }
 
-   _useSampling = false;
+   _useSampling = _compilation->getProfilingMode() != JitProfiling;
    self()->findOrCreateProfileInfo()->setProfilingFrequency(f);
    self()->findOrCreateProfileInfo()->setProfilingCount(c);
    self()->createProfilers();

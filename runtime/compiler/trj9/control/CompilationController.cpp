@@ -203,7 +203,7 @@ TR_OptimizationPlan *TR::DefaultCompilationStrategy::processEvent(TR_MethodEvent
          // For sync re-compilation we have attached a plan to the persistentBodyInfo
          bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(event->_oldStartPC);
          methodInfo = bodyInfo->getMethodInfo();
-         if (bodyInfo->getUsesJProfiling())
+         if (bodyInfo->getUsesJProfiling() && !bodyInfo->getIsProfilingBody())
             {
             hotnessLevel = bodyInfo->getHotness();
             plan = TR_OptimizationPlan::alloc(hotnessLevel);
@@ -1180,7 +1180,7 @@ TR::DefaultCompilationStrategy::processHWPSample(TR_MethodEvent *event)
 
    methodInfo = bodyInfo->getMethodInfo();
    hotnessLevel = bodyInfo->getHotness();
-   if (bodyInfo->getIsProfilingBody())
+   if (bodyInfo->getIsProfilingBody() && !bodyInfo->getUsesJProfiling())
       {
       // We rely on a count-based recompilation for profiled methods.
       return NULL;
