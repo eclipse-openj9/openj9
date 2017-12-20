@@ -209,7 +209,7 @@ final class Access implements JavaLangAccess {
 		throw new Error("invokeFinalize unimplemented"); //$NON-NLS-1$
 	}
 	
-	/*[IF Sidecar19-SE]*/
+/*[IF Sidecar19-SE]*/
 	public Class<?> findBootstrapClassOrNull(ClassLoader classLoader, String name) {
 		return VMAccess.findClassOrNull(name, ClassLoader.bootstrapClassLoader);
 	 }
@@ -347,7 +347,17 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF]*/	
 	 
-/*[ENDIF]*/
+/*[ENDIF] Sidecar19-SE-B165 */
+
+/*[IF Java10]*/
+	public String newStringUTF8NoRepl(byte[] bytes, int para1, int para2) {
+		throw new Error("newStringUTF8NoRepl unimplemented"); //$NON-NLS-1$
+	}
+	public byte[] getBytesUTF8NoRepl(String para) {
+		throw new Error("getBytesUTF8NoRepl unimplemented"); //$NON-NLS-1$
+	}
+/*[ENDIF] Java10 */
+
 	
-	/*[ENDIF]*/
+/*[ENDIF] Sidecar19-SE */
 }
