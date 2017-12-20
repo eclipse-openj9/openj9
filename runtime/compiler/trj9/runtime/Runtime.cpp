@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -315,20 +315,6 @@ JIT_HELPER(icallVMprJavaSendVirtualL);
 JIT_HELPER(icallVMprJavaSendVirtualF);
 JIT_HELPER(icallVMprJavaSendVirtualD);
 
-JIT_HELPER(_arrayCopy);
-JIT_HELPER(_halfWordArrayCopy);
-JIT_HELPER(_wordArrayCopy);
-JIT_HELPER(_longArrayCopy);
-JIT_HELPER(_forwardArrayCopy);
-JIT_HELPER(_forwardArrayCopyAMDOpteron);
-JIT_HELPER(_forwardHalfWordArrayCopy);
-JIT_HELPER(_forwardWordArrayCopy);
-JIT_HELPER(_forwardLongArrayCopy);
-JIT_HELPER(_arrayCopyAggressive);
-JIT_HELPER(_wordArrayCopyAggressive);
-JIT_HELPER(_halfWordArrayCopyAggressive);
-JIT_HELPER(_SSEforwardArrayCopyAggressive);
-
 JIT_HELPER(_compressString);
 JIT_HELPER(_compressStringNoCheck);
 JIT_HELPER(_compressStringJ);
@@ -381,20 +367,6 @@ JIT_HELPER(_SSEfloatRemainderIA32Thunk);
 JIT_HELPER(_SSEdoubleRemainderIA32Thunk);
 JIT_HELPER(_SSEdouble2LongIA32);
 
-JIT_HELPER(_arrayCopy);
-JIT_HELPER(_wordArrayCopy);
-JIT_HELPER(_halfWordArrayCopy);
-JIT_HELPER(_forwardArrayCopy);
-JIT_HELPER(_forwardWordArrayCopy);
-JIT_HELPER(_forwardHalfWordArrayCopy);
-JIT_HELPER(_shortArrayCopy);
-JIT_HELPER(_forwardSSEArrayCopy);              // experimental
-JIT_HELPER(_forwardSSEArrayCopyNoAlignCheck);  // experimental
-JIT_HELPER(_forwardArrayCopy2);
-JIT_HELPER(_arrayCopyAggressive);
-JIT_HELPER(_wordArrayCopyAggressive);
-JIT_HELPER(_halfWordArrayCopyAggressive);
-
 JIT_HELPER(_compressString);
 JIT_HELPER(_compressStringNoCheck);
 JIT_HELPER(_compressStringJ);
@@ -402,11 +374,6 @@ JIT_HELPER(_compressStringNoCheckJ);
 JIT_HELPER(_andORString);
 JIT_HELPER(_encodeUTF16Big);
 JIT_HELPER(_encodeUTF16Little);
-
-JIT_HELPER(_SSEforwardArrayCopy);
-JIT_HELPER(_SSEforwardHalfWordArrayCopy);
-JIT_HELPER(_SSEforwardArrayCopyAMDOpteron);
-JIT_HELPER(_SSEforwardArrayCopyAggressive);
 
 JIT_HELPER(resolveAndPopulateVTableDispatch);
 
@@ -1196,19 +1163,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
    SET(TR_AMD64jitThrowCurrentException,              (void *)jitThrowCurrentException,       TR_Helper);
    SET(TR_AMD64jitCollapseJNIReferenceFrame,          (void *)jitCollapseJNIReferenceFrame,   TR_Helper);
-   SET(TR_AMD64arrayCopy,                             (void *)_arrayCopy,                     TR_Helper);
-   SET(TR_AMD64halfWordArrayCopy,                     (void *)_halfWordArrayCopy,             TR_Helper);
-   SET(TR_AMD64wordArrayCopy,                         (void *)_wordArrayCopy,                 TR_Helper);
-   SET(TR_AMD64longArrayCopy,                         (void *)_longArrayCopy,                 TR_Helper);
-   SET(TR_AMD64forwardArrayCopy,                      (void *)_forwardArrayCopy,              TR_Helper);
-   SET(TR_AMD64forwardArrayCopyAMDOpteron,            (void *)_forwardArrayCopyAMDOpteron,    TR_Helper);
-   SET(TR_AMD64forwardHalfWordArrayCopy,              (void *)_forwardHalfWordArrayCopy,      TR_Helper);
-   SET(TR_AMD64forwardWordArrayCopy,                  (void *)_forwardWordArrayCopy,          TR_Helper);
-   SET(TR_AMD64forwardLongArrayCopy,                  (void *)_forwardLongArrayCopy,          TR_Helper);
-   SET(TR_AMD64arrayCopyAggressive,                   (void *)_arrayCopyAggressive,           TR_Helper);
-   SET(TR_AMD64wordArrayCopyAggressive,               (void *)_wordArrayCopyAggressive,       TR_Helper);
-   SET(TR_AMD64halfWordArrayCopyAggressive,           (void *)_halfWordArrayCopyAggressive,   TR_Helper);
-   SET(TR_AMD64SSEforwardArrayCopyAggressive,         (void *)_SSEforwardArrayCopyAggressive, TR_Helper);
 
    SET(TR_AMD64compressString,                        (void *)_compressString,            TR_Helper);
    SET(TR_AMD64compressStringNoCheck,                 (void *)_compressStringNoCheck,     TR_Helper);
@@ -1296,19 +1250,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_IA32floatToLong,                            (void *)_floatToLong,  TR_Helper);
    SET(TR_IA32floatToInt,                             (void *)_floatToInt,   TR_Helper);
 
-
-   SET(TR_IA32arrayCopy,                              (void *)_arrayCopy,                   TR_Helper);
-   SET(TR_IA32wordArrayCopy,                          (void *)_wordArrayCopy,               TR_Helper);
-   SET(TR_IA32halfWordArrayCopy,                      (void *)_halfWordArrayCopy,           TR_Helper);
-   SET(TR_IA32forwardArrayCopy,                       (void *)_forwardArrayCopy,            TR_Helper);
-   SET(TR_IA32forwardWordArrayCopy,                   (void *)_forwardWordArrayCopy,        TR_Helper);
-   SET(TR_IA32forwardHalfWordArrayCopy,               (void *)_forwardHalfWordArrayCopy,    TR_Helper);
-   SET(TR_IA32shortArrayCopy,                         (void *)_shortArrayCopy,              TR_Helper);
-   SET(TR_IA32arrayCopyAggressive,                    (void *)_arrayCopyAggressive,         TR_Helper);
-   SET(TR_IA32wordArrayCopyAggressive,                (void *)_wordArrayCopyAggressive,     TR_Helper);
-   SET(TR_IA32halfWordArrayCopyAggressive,            (void *)_halfWordArrayCopyAggressive, TR_Helper);
-
-
    SET(TR_IA32compressString,                         (void *)_compressString,            TR_Helper);
    SET(TR_IA32compressStringNoCheck,                  (void *)_compressStringNoCheck,     TR_Helper);
    SET(TR_IA32compressStringJ,                        (void *)_compressStringJ,           TR_Helper);
@@ -1319,18 +1260,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_IA32arrayTranslateTROT,                     (void *)_arrayTranslateTROT,        TR_Helper);
    SET(TR_IA32encodeUTF16Big,                         (void *)_encodeUTF16Big,            TR_Helper);
    SET(TR_IA32encodeUTF16Little,                      (void *)_encodeUTF16Little,         TR_Helper);
-
-   // <EXPERIMENTAL>
-   SET(TR_IA32forwardSSEArrayCopy,                    (void *)_forwardSSEArrayCopy,             TR_Helper);
-   SET(TR_IA32forwardSSEArrayCopyNoAlignCheck,        (void *)_forwardSSEArrayCopyNoAlignCheck, TR_Helper);
-   // </EXPERIMENTAL>
-
-   SET(TR_IA32forwardArrayCopy2,                      (void *)_forwardArrayCopy2,             TR_Helper);
-
-   SET(TR_IA32SSEforwardArrayCopy,                    (void *)_SSEforwardArrayCopy,           TR_Helper);
-   SET(TR_IA32SSEforwardHalfWordArrayCopy,            (void *)_SSEforwardHalfWordArrayCopy,   TR_Helper);
-   SET(TR_IA32SSEforwardArrayCopyAMDOpteron,          (void *)_SSEforwardArrayCopyAMDOpteron, TR_Helper);
-   SET(TR_IA32SSEforwardArrayCopyAggressive,          (void *)_SSEforwardArrayCopyAggressive, TR_Helper);
 
    SET(TR_jitAddPicToPatchOnClassUnload,              (void *) jitAddPicToPatchOnClassUnload, TR_Helper);
 #if defined(WINDOWS)
