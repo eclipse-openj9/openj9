@@ -428,6 +428,17 @@ class TR_EmbeddedHashTable : public TR_HashTableProfilerInfo<T>
    T        _keys[_realSize];
    uint32_t _freqs[_realSize];
 
+   /**
+    * To avoid accidental matches in the middle of rearrangement, which could
+    * increment the number of values beyond the capacity, slots have default values
+    * that should be unmatchable. For slot 0, this is -1. For all other slots, this is 0.
+    * Due to how the hash function works, 0 should only be placed in the first slot and
+    * -1 should be placed in any but the first, preventing all matches.
+    *
+    * These are helper methods to assist in maintaining this constraint.
+    */
+   T getDefault(size_t i) { return i == 0 ? -1 :  0; }
+
 #if defined(TR_TARGET_X86)
    static_assert(bits <= HASHTABLE_MAX_BITS,  "Hash table exceeded max bits");
 #endif
@@ -593,9 +604,18 @@ TR_HashTableProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
       TR_AbstractProfilerInfo::getByteCodeInfo().getByteCodeIndex());
 
    size_t count = 0;
-   size_t padding = 2 * sizeof(T) + 2;
+   size_t padding = 2 * sizeof(T);
    for (size_t i = 0; i < getSize(); ++i)
-      trfprintf(logFile, "    %d: %d %0*x\n", count++, freqs[i], padding, values[i]);
+      {
+      if (freqs[i] == 0)
+         {
+         trfprintf(logFile, "    %d: -\n", count++);
+         }
+      else
+         {
+         trfprintf(logFile, "    %d: %d 0x%0*llX\n", count++, freqs[i], padding, values[i]);
+         }
+      }
 
    trfprintf(logFile, "   Num: %d Total Frequency: %d\n", count, totalFreq);
 
@@ -604,10 +624,10 @@ TR_HashTableProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
       {
       trfprintf(logFile, "%s\n", _metaData.hash == BitShiftHash ? "Shift" : "Index");
       for (uint8_t i = 0; i < getBits(); ++i)
-         trfprintf(logFile, "    %01d : %03d - %0*X\n", i, _hashConfig.shifts[i], padding, 1 << (_hashConfig.shifts[i] + (_metaData.hash == BitShiftHash ? i : 0)));
+         trfprintf(logFile, "    %01d : %03d - 0x%0*llX\n", i, _hashConfig.shifts[i], padding, 1 << (_hashConfig.shifts[i] + (_metaData.hash == BitShiftHash ? i : 0)));
       }
    else
-      trfprintf(logFile, "Mask\n    %0*X\n", padding, _hashConfig.mask);
+      trfprintf(logFile, "Mask\n    0x%0*llX\n", padding, _hashConfig.mask);
 
    trfprintf(logFile, "\n");
    unlock();
@@ -650,8 +670,9 @@ TR_EmbeddedHashTable<T, bits>::resetLowFreqKeys()
 template <typename T, size_t bits> void
 TR_EmbeddedHashTable<T, bits>::reset()
    {
-   // Clear keys first, checks will only match on zero
-   memset(&_keys, 0, sizeof(T) * _realSize);
+   // Clear keys first, set first entry to -1
+   _keys[0] = getDefault(0);
+   memset(&_keys[1], 0, sizeof(T) * (_realSize - 1));
    // Clear counts
    memset(&_freqs, 0, sizeof(uint32_t) * _realSize);
    // Clear metadata, skip constants and locks
@@ -668,17 +689,18 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    {
    size_t otherIndex = this->getOtherIndex();
 
+   static bool dumpInfo = feGetEnv("TR_JProfilingValueDumpInfo") != NULL;
+   if (dumpInfo)
+      {
+      printf("Pre %X", value);
+      fflush(stdout);
+      this->dumpInfo(TR::IO::Stdout);
+      }
+
    // Lock the table, disabling jitted code access
    if (!this->tryLock(true))
       {
       _freqs[otherIndex]++;
-      return;
-      }
-   // Early exit if at capacity
-   if (this->isFull())
-      {
-      _freqs[otherIndex]++;
-      this->unlock(); 
       return;
       }
 
@@ -708,7 +730,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    // If found, increment the value
    if (i <= lastIndex)
       _freqs[i]++;
-   else
+   else if (available > -1 && populated < this->getCapacity())
       {
       // Temporary hash config
       HashFunction hashConfig;
@@ -750,9 +772,12 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    this->_metaData.full = populated >= this->getCapacity();
    this->unlock(populated < this->getCapacity()); 
 
-   static bool dumpInfo = feGetEnv("TR_JProfilingValueDumpInfo") != NULL;
    if (dumpInfo)
+      {
+      printf("Post %X", value);
+      fflush(stdout);
       this->dumpInfo(TR::IO::Stdout);
+      }
    }
 
 /**
@@ -963,29 +988,38 @@ TR_HashTableProfilerInfo<T>::applyHash(HashFunction &hash, T value)
 template <typename T, size_t bits> void
 TR_EmbeddedHashTable<T, bits>::rearrange(HashFunction &hash)
    {
+   static bool dumpInfo = feGetEnv("TR_JProfilingValueDumpInfo") != NULL;
+
    size_t lastIndex = (1 << bits) - 1;
    T cacheKeys[1 << bits];
+   bool real[1 << bits];
 
    // Back up the keys
    memcpy(cacheKeys, _keys, sizeof(T) * (1 << bits));
 
    // Lock the table by setting keys that cannot be matched
-   memset(_keys, 0xFF, sizeof(T));
-   memset(_keys + 1, 0, sizeof(T) * lastIndex);
+   _keys[0] = getDefault(0);
+   memset(&_keys[1], 0, sizeof(T) * lastIndex);
+
+   bool swapWithOther = false;
+   uint8_t i, newOtherIndex = 0;
+   for (i = 0; i <= lastIndex; ++i)
+      real[i] = _freqs[i] != 0 && i != this->getOtherIndex();
 
    // Walk the table, swapping to match new mask behaviour
    // Don't move otherIndex, just save its swap
-   bool swapWithOther = false;
-   uint8_t i = 0, newOtherIndex = 0;
+   i = 0;
    while (i <= lastIndex)
       {
-      if (_freqs[i] == 0 || i == this->getOtherIndex())
+      if (!real[i])
          {
          ++i;
          continue;
          }
 
       size_t newIndex = this->applyHash(hash, cacheKeys[i]);
+      if (dumpInfo)
+         printf("%d -> %d\n", i, newIndex);
       if (newIndex == this->getOtherIndex())
          {
          // A delayed swap with other will be necessary
@@ -997,13 +1031,16 @@ TR_EmbeddedHashTable<T, bits>::rearrange(HashFunction &hash)
          {
          // Swap the two keys
          T tmpKey = cacheKeys[i];
-         cacheKeys[i] = cacheKeys[newIndex];
+         cacheKeys[i] = real[newIndex] ? cacheKeys[newIndex] : getDefault(i);
          cacheKeys[newIndex] = tmpKey;
 
          // Swap the two frequencies
          uint32_t tmpCount = _freqs[i];
-         _freqs[i] = _freqs[newIndex];
+         _freqs[i] = real[newIndex] ? _freqs[newIndex] : 0;
          _freqs[newIndex] = tmpCount;
+
+         real[i] = real[newIndex];
+         real[newIndex] = true;
 
          // This swap might have been with the key which would have swapped with otherIndex
          // Update the delayed otherIndex to match the new location for the key
@@ -1018,11 +1055,13 @@ TR_EmbeddedHashTable<T, bits>::rearrange(HashFunction &hash)
    if (swapWithOther)
       {
       size_t oldOtherIndex = this->getOtherIndex();
+      if (dumpInfo)
+         printf("Other: %d -> %d\n", oldOtherIndex, newOtherIndex);
 
       // Swap the two keys
-      T tmpKey = cacheKeys[oldOtherIndex];
-      cacheKeys[oldOtherIndex] = cacheKeys[newOtherIndex];
-      cacheKeys[newOtherIndex] = tmpKey;
+      T tmpKey = cacheKeys[newOtherIndex];
+      cacheKeys[newOtherIndex] = getDefault(newOtherIndex);
+      cacheKeys[oldOtherIndex] = tmpKey;
 
       // freqs[oldOtherIndex] can be accessed by other threads, so redirect it first
       uint32_t realFreq = _freqs[newOtherIndex];
