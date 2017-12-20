@@ -480,14 +480,14 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY=Notranja napaka VM: Zmanjkalo je pomn
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY.explanation=There are not enough virtual memory to satisfy memory allocation request.
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS=Notranja napaka VM: Iskanje razreda java/lang/String ni uspelo
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS.explanation=java/lang/String class is not found in class path.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA=Notranja napaka VM: Izdelava polja bajtov za ime razreda %s ni uspela
@@ -495,7 +495,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA=Notranja napaka VM: Izdelava polja
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.sample_input_1=Main
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.explanation=Byte Array creation failed.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME=Notranja napaka VM: Izdelava java/lang/String za ime razreda %s ni uspela
@@ -503,7 +503,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME=Notranja napaka VM:
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.sample_input_1=Main
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.explanation=Creation of java/lang/String failed.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # VM and UTF are not translatable
@@ -512,7 +512,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING=Notranja napaka VM: pri pr
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.sample_input_1=Main
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.explanation=Amount of available memory is too low.
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_CLASS_DOES_NOT_IMPL_MAIN=Razred %s ne implementira main()
@@ -534,7 +534,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY=Notranja napaka VM: Izdelav
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY.explanation=Internal JVM error encountered.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY=Notranja napaka VM: Izdelava polja bajtov za argument %s ni uspela
@@ -542,7 +542,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY=Notranja napaka VM: Izdela
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.sample_input_1=test
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.explanation=Internal JVM error encountered.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG=Notranja napaka VM: Izdelava java/lang/String za argument %s ni uspela
@@ -550,7 +550,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG=Notranja napaka VM: Izdel
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.sample_input_1=test
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.explanation=Internal JVM error encountered.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM=Notranja napaka VM: Nastavitev elementa polja za %s ni uspela
@@ -558,7 +558,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM=Notranja napaka VM: Nastavite
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.sample_input_1=test
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.explanation=Internal JVM error encountered.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # J9SourceStandaloneExe - gpProtectedMain
