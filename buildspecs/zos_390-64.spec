@@ -104,7 +104,6 @@
 		<feature id="core"/>
 		<feature id="crypto"/>
 		<feature id="dbgext"/>
-		<feature id="harmony"/>
 		<feature id="se"/>
 		<feature id="se60_26"/>
 		<feature id="se7"/>
