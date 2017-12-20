@@ -768,3 +768,24 @@ TR_ResolvedJ9JAASServerMethod::isSameMethod(TR_ResolvedMethod * m2)
 
    return true;
    }
+
+bool
+TR_ResolvedJ9JAASServerMethod::isInlineable(TR::Compilation *comp)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isInlineable, _remoteMirror);
+   return std::get<0>(_stream->read<bool>());
+   }
+
+bool
+TR_ResolvedJ9JAASServerMethod::isWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *comp)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isWarmCallGraphTooBig, _remoteMirror, bcIndex);
+   return std::get<0>(_stream->read<bool>());
+   }
+
+void
+TR_ResolvedJ9JAASServerMethod::setWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilation *comp)
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_setWarmCallGraphTooBig, _remoteMirror, bcIndex);
+   _stream->read<JAAS::Void>();
+   }

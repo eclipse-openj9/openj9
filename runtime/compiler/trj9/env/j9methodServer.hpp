@@ -58,7 +58,10 @@ public:
    virtual bool isUnresolvedCallSiteTableEntry(int32_t callSiteIndex) override;
    virtual void * callSiteTableEntryAddress(int32_t callSiteIndex) override;
    virtual TR_ResolvedMethod * getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP) override;
-   virtual bool isSameMethod(TR_ResolvedMethod *);
+   virtual bool isSameMethod(TR_ResolvedMethod *) override;
+   virtual bool isInlineable(TR::Compilation *) override;
+   virtual bool isWarmCallGraphTooBig(uint32_t, TR::Compilation *) override;
+   virtual void setWarmCallGraphTooBig(uint32_t, TR::Compilation *) override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override

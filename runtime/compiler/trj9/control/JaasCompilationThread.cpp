@@ -1226,6 +1226,29 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(TR_J9MethodBase::osrFrameSize(j9method));
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_isInlineable:
+         {
+         TR_ResolvedJ9Method *mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
+         client->write(mirror->isInlineable(TR::comp()));
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_isWarmCallGraphTooBig:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
+         TR_ResolvedJ9Method *mirror = std::get<0>(recv);
+         uint32_t bcIndex = std::get<1>(recv);
+         client->write(mirror->isWarmCallGraphTooBig(bcIndex, TR::comp()));
+         }
+         break;
+      case J9ServerMessageType::ResolvedMethod_setWarmCallGraphTooBig:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
+         TR_ResolvedJ9Method *mirror = std::get<0>(recv);
+         uint32_t bcIndex = std::get<1>(recv);
+         mirror->setWarmCallGraphTooBig(bcIndex, TR::comp());
+         client->write(JAAS::Void());
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
