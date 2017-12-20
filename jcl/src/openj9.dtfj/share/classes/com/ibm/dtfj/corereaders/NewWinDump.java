@@ -41,25 +41,10 @@ import javax.imageio.stream.ImageInputStream;
 
 import com.ibm.dtfj.addressspace.IAbstractAddressSpace;
 
-//NOTE:  Solid PE File reference: http://www.madchat.org/vxdevl/papers/winsys/pefile/pefile.htm
-
 public abstract class NewWinDump extends CoreReaderSupport {
 	public String _processorSubtypeDescription;
 	protected boolean _is64Bit;
 	
-	/*
-	 * From dbghelp.h:
-	 *
-	 * typedef struct _MINIDUMP_DIRECTORY {
-	 *		ULONG32 StreamType;
-	 *		MINIDUMP_LOCATION_DESCRIPTOR Location;
-	 * } MINIDUMP_DIRECTORY, *PMINIDUMP_DIRECTORY;
-	 *
-	 * typedef struct _MINIDUMP_LOCATION_DESCRIPTOR {
-	 *		ULONG32 DataSize;
-	 *		RVA Rva;
-	 * } MINIDUMP_LOCATION_DESCRIPTOR;
-	 */
 	private static class MiniDump extends NewWinDump {
 		private static abstract class Stream {
 			protected final static int PROCESSOR_ARCHITECTURE_INTEL = 0;
@@ -135,19 +120,6 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			public abstract void readFrom(MiniDump dump, Builder builder, Object addressSpace, IAbstractAddressSpace memory, boolean is64Bit) throws IOException;
 		}
 
-		/*
-		 *	#define MINIDUMP_MISC1_PROCESS_ID    0x00000001
-		 *	#define MINIDUMP_MISC1_PROCESS_TIMES 0x00000002
-		 *
-		 *	typedef struct _MINIDUMP_MISC_INFO {
-		 *		ULONG32 SizeOfInfo;
-		 *		ULONG32 Flags1;
-		 *		ULONG32 ProcessId;
-		 *		ULONG32 ProcessCreateTime;
-		 *		ULONG32 ProcessUserTime;
-		 *		ULONG32 ProcessKernelTime;
-		 *	} MINIDUMP_MISC_INFO, *PMINIDUMP_MISC_INFO;
-		 */
 		private static class MiscInfoStream extends Stream {
 			private final static int MISC1_PROCESS_ID = 1;
 
@@ -179,31 +151,6 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			}
 		}
 
-		/*
-		 *	typedef struct _MINIDUMP_MEMORY64_LIST {
-		 *		ULONG64 NumberOfMemoryRanges;
-		 *		RVA64 BaseRva;
-		 *		MINIDUMP_MEMORY_DESCRIPTOR64 MemoryRanges [0];
-		 *	} MINIDUMP_MEMORY64_LIST, *PMINIDUMP_MEMORY64_LIST;
-		 *
-		 *	typedef struct _MINIDUMP_LOCATION_DESCRIPTOR64 {
-		 *		ULONG64 DataSize;
-		 *		RVA64 Rva;
-		 *	} MINIDUMP_LOCATION_DESCRIPTOR64;
-		 *
-		 * DESCRIPTOR64 is used for full-memory minidumps where
-		 * all of the raw memory is laid out sequentially at the
-		 * end of the dump. There is no need for individual RVAs
-		 * as the RVA is the base RVA plus the sum of the proceeding
-		 * data blocks.
-		 *
-		 *	typedef struct _MINIDUMP_MEMORY_DESCRIPTOR64 {
-		 *		ULONG64 StartOfMemoryRange;
-		 *		ULONG64 DataSize;
-		 *	} MINIDUMP_MEMORY_DESCRIPTOR64, *PMINIDUMP_MEMORY_DESCRIPTOR64;		 		 		 
-		 *
-		 *	typedef ULONG64 RVA64;
-		 */
 		private static class Memory64Stream extends Stream {
 			public Memory64Stream(int dataSize, int location) {
 				super(dataSize, location);
@@ -247,27 +194,6 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			}
 		}
 		
-		/*
-		 *	typedef struct _MINIDUMP_MODULE {
-		 *		ULONG64 BaseOfImage;
-		 *		ULONG32 SizeOfImage;
-		 *		ULONG32 CheckSum;
-		 *		ULONG32 TimeDateStamp;
-		 *		RVA ModuleNameRva;
-		 *		VS_FIXEDFILEINFO VersionInfo;
-		 *		MINIDUMP_LOCATION_DESCRIPTOR CvRecord;
-		 *		MINIDUMP_LOCATION_DESCRIPTOR MiscRecord;
-		 *		ULONG64 Reserved0;						// Reserved for future use.
-		 *		ULONG64 Reserved1;						// Reserved for future use.
-		 *	} MINIDUMP_MODULE, *PMINIDUMP_MODULE;
-		 *
-		 * The minidump module list is a container for modules.
-		 *
-		 *	typedef struct _MINIDUMP_MODULE_LIST {
-		 *		ULONG32 NumberOfModules;
-		 *		MINIDUMP_MODULE Modules [ 0 ];
-		 *	} MINIDUMP_MODULE_LIST, *PMINIDUMP_MODULE_LIST;
-		 */
 		private static class ModuleStream extends Stream {
 
 			public ModuleStream(int dataSize, int location) {
@@ -296,18 +222,18 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					int timeDateStamp = dump.coreReadInt();
 					modules[i].nameAddress = dump.coreReadInt();
 					int versionInfoDwSignature = dump.coreReadInt();
-					int versionInfoDwStrucVersion = dump.coreReadInt(); //  versionInfoDwStrucVersion
-					int versionInfoDwFileVersionMS = dump.coreReadInt(); //  versionInfoDwFileVersionMS
-					int versionInfoDwFileVersionLS = dump.coreReadInt(); //  versionInfoDwFileVersionLS
-					int versionInfoDwProductVersionMS = dump.coreReadInt(); //  versionInfoDwProductVersionMS
-					int versionInfoDwProductVersionLS = dump.coreReadInt(); //  versionInfoDwProductVersionLS
-					int versionInfoDwFileFlagsMask = dump.coreReadInt(); //  versionInfoDwFileFlagsMask
-					int versionInfoDwFileFlags = dump.coreReadInt(); //  versionInfoDwFileFlags
-					int versionInfoDwFileOS = dump.coreReadInt(); //  versionInfoDwFileOS
-					int versionInfoDwFileType = dump.coreReadInt(); //  versionInfoDwFileType
-					int versionInfoDwFileSubtype = dump.coreReadInt(); //  versionInfoDwFileSubtype
-					int versionInfoDwFileDateMS = dump.coreReadInt(); //  versionInfoDwFileDateMS
-					int versionInfoDwFileDateLS = dump.coreReadInt(); //  versionInfoDwFileDateLS
+					int versionInfoDwStrucVersion = dump.coreReadInt();
+					int versionInfoDwFileVersionMS = dump.coreReadInt();
+					int versionInfoDwFileVersionLS = dump.coreReadInt();
+					int versionInfoDwProductVersionMS = dump.coreReadInt();
+					int versionInfoDwProductVersionLS = dump.coreReadInt();
+					int versionInfoDwFileFlagsMask = dump.coreReadInt();
+					int versionInfoDwFileFlags = dump.coreReadInt();
+					int versionInfoDwFileOS = dump.coreReadInt();
+					int versionInfoDwFileType = dump.coreReadInt();
+					int versionInfoDwFileSubtype = dump.coreReadInt();
+					int versionInfoDwFileDateMS = dump.coreReadInt();
+					int versionInfoDwFileDateLS = dump.coreReadInt();
 
 					dump.coreReadInt(); // Ignore cvRecordDataSize
 					dump.coreReadInt(); // Ignore cvRecordDataRva
@@ -363,31 +289,29 @@ public abstract class NewWinDump extends CoreReaderSupport {
 							if (0x4550 != pemagic) {
 								System.err.println("PE Magic is: \"" + Integer.toHexString(pemagic));
 							}
-							//	typedef struct _IMAGE_FILE_HEADER {
-							readingAddress += 2;//	dump.coreReadShort();	//machine
+							readingAddress += 2;	//machine
 							short numberOfSections = memory.getShortAt(0, readingAddress); readingAddress +=2;
-							readingAddress += 4;//	dump.coreReadInt();	//date/time stamp
-							readingAddress += 4;//	dump.coreReadInt();	//pointerToSymbolTable
-							readingAddress += 4;//	dump.coreReadInt();	//numberOfSymbols
+							readingAddress += 4;	//date/time stamp
+							readingAddress += 4;	//pointerToSymbolTable
+							readingAddress += 4;	//numberOfSymbols
 							short sizeOfOptionalHeader = memory.getShortAt(0, readingAddress);	readingAddress += 2;
-							readingAddress += 2;//	dump.coreReadShort();	//characteristics
+							readingAddress += 2;	//characteristics
 							
 							//now skip ahead to after the optional header since that is where section headers can be found
 							readingAddress = modules[i].imageBaseAddress + e_lfanew + 24 /* sizeof PE header */ + (0xFFFFL & sizeOfOptionalHeader);
 							for (int j = 0; j < numberOfSections; j++) {
 
-								//	typedef struct _IMAGE_SECTION_HEADER
 								byte rawName[] = new byte[8];
 								memory.getBytesAt(0, readingAddress, rawName);	readingAddress += 8;
 								long virtualSize = memory.getIntAt(0, readingAddress);	readingAddress += 4;
 								long virtualAddress = memory.getIntAt(0, readingAddress);	readingAddress += 4;
-								readingAddress+=4;	//	dump.coreReadInt();	//sizeOfRawData
-								readingAddress+=4;	//	dump.coreReadInt();	//pointerToRawData
-								readingAddress+=4;	//	dump.coreReadInt();	//pointerToRelocations
-								readingAddress+=4;	//	dump.coreReadInt();	//pointerToLineNumbers
-								readingAddress+=2;	//	dump.coreReadShort();	//numberOfRelocations
-								readingAddress+=2;	//	dump.coreReadShort();	//numberOfLineNumbers
-								readingAddress+=4;	//	dump.coreReadInt();	//section_characteristics
+								readingAddress+=4;	//sizeOfRawData
+								readingAddress+=4;	//pointerToRawData
+								readingAddress+=4;	//pointerToRelocations
+								readingAddress+=4;	//pointerToLineNumbers
+								readingAddress+=2;	//numberOfRelocations
+								readingAddress+=2;	//numberOfLineNumbers
+								readingAddress+=4;	//section_characteristics
 								
 								long relocatedAddress = virtualAddress + modules[i].imageBaseAddress;
 								Object oneSection = builder.buildModuleSection(addressSpace, new String(rawName).trim(), relocatedAddress, relocatedAddress + virtualSize);
@@ -431,138 +355,126 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					//look up the PE offset:  it is base+3c
 					int peInt = memory.getIntAt(0, imageBase + 0x3cL);
 					long peBase = (peInt & 0xFFFFFFFFL) + imageBase;
-//					 * typedef struct _IMAGE_NT_HEADERS {          
     
-					memory.getBytesAt(0, peBase, magic);	// DWORD Signature;
+					memory.getBytesAt(0, peBase, magic);
 					stuff = new String(magic);
 					if (!stuff.equals("PE")) {
 						return Collections.singleton(builder.buildCorruptData(addressSpace, "Invalid PE magic number: \"" + stuff + "\"", peBase)).iterator();
 					}
 					long nextRead = peBase + 4;
-//				    IMAGE_FILE_HEADER FileHeader;
-//				    IMAGE_OPTIONAL_HEADER32 OptionalHeader;
 					
 
 					//cue us up to the optional header
-//					typedef struct _IMAGE_FILE_HEADER {
-					nextRead += 2;	//short machine = dump.readShort();	// WORD    Machine;
-					nextRead += 2;	//dump.readShort();	// WORD    NumberOfSections;
-					nextRead += 4;	//dump.readInt();	// DWORD   TimeDateStamp;
-					nextRead += 4;	//dump.readInt();	// DWORD   PointerToSymbolTable;
-					nextRead += 4;	//dump.readInt();	// DWORD   NumberOfSymbols;
+					nextRead += 2;	// Machine;
+					nextRead += 2;	// NumberOfSections;
+					nextRead += 4;	// TimeDateStamp;
+					nextRead += 4;	// PointerToSymbolTable;
+					nextRead += 4;	// NumberOfSymbols;
 					long imageOptionalHeaderSizeAddress = nextRead;
-					short optionalHeaderSize = memory.getShortAt(0, imageOptionalHeaderSizeAddress);	// WORD    SizeOfOptionalHeader;
+					short optionalHeaderSize = memory.getShortAt(0, imageOptionalHeaderSizeAddress);
 					nextRead+= 2;
 					
-					nextRead += 2;	//dump.readShort();	// WORD    Characteristics;
+					nextRead += 2;	// Characteristics;
 					//cue us up to the first data directory
 					if (224 == optionalHeaderSize) {
 						//32-bit optional header
-						// typedef struct _IMAGE_OPTIONAL_HEADER {
 						short magicShort = memory.getShortAt(0, nextRead);
 						if (0x10b != magicShort) {
 							return Collections.singleton(builder.buildCorruptData(addressSpace, "Invalid IMAGE_OPTIONAL_HEADER magic number: \"0x" + Integer.toHexString(0xFFFF & magicShort) + "\"", nextRead)).iterator();
 						}
-						nextRead += 2;	//dump.readBytes(2);	// WORD    Magic;
-						nextRead += 1;	//dump.readByte();	// BYTE    MajorLinkerVersion;
-						nextRead += 1;	//dump.readByte();	// BYTE    MinorLinkerVersion;
-						nextRead += 4;	//dump.readInt();	// DWORD   SizeOfCode;
-						nextRead += 4;	//dump.readInt();	// DWORD   SizeOfInitializedData;
-						nextRead += 4;	//dump.readInt();	// DWORD   SizeOfUninitializedData;
-						nextRead += 4;	//dump.readInt();	// DWORD   AddressOfEntryPoint;
-						nextRead += 4;	//dump.readInt();	// DWORD   BaseOfCode;
-						nextRead += 4;	//dump.readInt();	// DWORD   BaseOfData;
-						nextRead += 4;	//dump.readInt();	// DWORD   ImageBase;
-						nextRead += 4;	//dump.readInt();	// DWORD   SectionAlignment;
-						nextRead += 4;	//dump.readInt();	// DWORD   FileAlignment;
-						nextRead += 2;	//dump.readShort();	// WORD    MajorOperatingSystemVersion;
-						nextRead += 2;	//dump.readShort();	// WORD    MinorOperatingSystemVersion;
-						nextRead += 2;	//dump.readShort();	// WORD    MajorImageVersion;
-						nextRead += 2;	//dump.readShort();	// WORD    MinorImageVersion;
-						nextRead += 2;	//dump.readShort();	// WORD    MajorSubsystemVersion;
-						nextRead += 2;	//dump.readShort();	// WORD    MinorSubsystemVersion;
-						nextRead += 4;	//dump.readInt();	// DWORD   Win32VersionValue;
-						nextRead += 4;	//dump.readInt();	// DWORD   SizeOfImage;
-						nextRead += 4;	//dump.readInt();	// DWORD   SizeOfHeaders;
-						nextRead += 4;	//dump.readInt();	// DWORD   CheckSum;
-						nextRead += 2;	//dump.readShort();	// WORD    Subsystem;
-						nextRead += 2;	//dump.readShort();	// WORD    DllCharacteristics;
-						nextRead += 4;	//dump.readInt();	// DWORD   SizeOfStackReserve;
-						nextRead += 4;	//dump.readInt();	// DWORD   SizeOfStackCommit;
-						nextRead += 4;	//dump.readInt();	// DWORD   SizeOfHeapReserve;
-						nextRead += 4;	//dump.readInt();	// DWORD   SizeOfHeapCommit;
-						nextRead += 4;	//dump.readInt();	// DWORD   LoaderFlags;
-						nextRead += 4;	//dump.readInt();	// DWORD   NumberOfRvaAndSizes;
-					    // IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
-						// } IMAGE_OPTIONAL_HEADER32, *PIMAGE_OPTIONAL_HEADER32; 
+						nextRead += 2;	// Magic;
+						nextRead += 1;	// MajorLinkerVersion;
+						nextRead += 1;	// MinorLinkerVersion;
+						nextRead += 4;	// SizeOfCode;
+						nextRead += 4;	// SizeOfInitializedData;
+						nextRead += 4;	// SizeOfUninitializedData;
+						nextRead += 4;	// AddressOfEntryPoint;
+						nextRead += 4;	// BaseOfCode;
+						nextRead += 4;	// BaseOfData;
+						nextRead += 4;	// ImageBase;
+						nextRead += 4;	// SectionAlignment;
+						nextRead += 4;	// FileAlignment;
+						nextRead += 2;	// MajorOperatingSystemVersion;
+						nextRead += 2;	// MinorOperatingSystemVersion;
+						nextRead += 2;	// MajorImageVersion;
+						nextRead += 2;	// MinorImageVersion;
+						nextRead += 2;	// MajorSubsystemVersion;
+						nextRead += 2;	// MinorSubsystemVersion;
+						nextRead += 4;	// Win32VersionValue;
+						nextRead += 4;	// SizeOfImage;
+						nextRead += 4;	// SizeOfHeaders;
+						nextRead += 4;	// CheckSum;
+						nextRead += 2;	// Subsystem;
+						nextRead += 2;	// DllCharacteristics;
+						nextRead += 4;	// SizeOfStackReserve;
+						nextRead += 4;	// SizeOfStackCommit;
+						nextRead += 4;	// SizeOfHeapReserve;
+						nextRead += 4;	// SizeOfHeapCommit;
+						nextRead += 4;	// LoaderFlags;
+						nextRead += 4;	// NumberOfRvaAndSizes;
 					} else if (240 == optionalHeaderSize) {
 						//64-bit optional header
-						// typedef struct _IMAGE_OPTIONAL_HEADER64 {
 						short magicShort = memory.getShortAt(0, nextRead);
 						if (0x20b != magicShort) {
 							return Collections.singleton(builder.buildCorruptData(addressSpace, "Invalid IMAGE_OPTIONAL_HEADER64 magic number: \"0x" + Integer.toHexString(0xFFFF & magicShort) + "\"", nextRead)).iterator();
 						}
-						nextRead += 2;//  WORD Magic;
-						nextRead += 1;//    BYTE MajorLinkerVersion;
-						nextRead += 1;//    BYTE MinorLinkerVersion;
-						nextRead += 4;//    DWORD SizeOfCode;
-						nextRead += 4;//    DWORD SizeOfInitializedData;
-						nextRead += 4;//    DWORD SizeOfUninitializedData;
-						nextRead += 4;//    DWORD AddressOfEntryPoint;
-						nextRead += 4;//    DWORD BaseOfCode;
-						nextRead += 8;//    ULONGLONG ImageBase;
-						nextRead += 4;//    DWORD SectionAlignment;
-						nextRead += 4;//    DWORD FileAlignment;
-						nextRead += 2;//    WORD MajorOperatingSystemVersion;
-						nextRead += 2;//    WORD MinorOperatingSystemVersion;
-						nextRead += 2;//    WORD MajorImageVersion;
-						nextRead += 2;//    WORD MinorImageVersion;
-						nextRead += 2;//    WORD MajorSubsystemVersion;
-						nextRead += 2;//    WORD MinorSubsystemVersion;
-						nextRead += 4;//    DWORD Win32VersionValue;
-						nextRead += 4;//    DWORD SizeOfImage;
-						nextRead += 4;//    DWORD SizeOfHeaders;
-						nextRead += 4;//    DWORD CheckSum;
-						nextRead += 2;//    WORD Subsystem;
-						nextRead += 2;//    WORD DllCharacteristics;
-						nextRead += 8;//    ULONGLONG SizeOfStackReserve;
-						nextRead += 8;//    ULONGLONG SizeOfStackCommit;
-						nextRead += 8;//    ULONGLONG SizeOfHeapReserve;
-						nextRead += 8;//    ULONGLONG SizeOfHeapCommit;
-						nextRead += 4;//    DWORD LoaderFlags;
-						nextRead += 4;//    DWORD NumberOfRvaAndSizes;
-						//    IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
-						//} IMAGE_OPTIONAL_HEADER64, *PIMAGE_OPTIONAL_HEADER64;
+						nextRead += 2;// Magic;
+						nextRead += 1;// MajorLinkerVersion;
+						nextRead += 1;// MinorLinkerVersion;
+						nextRead += 4;// SizeOfCode;
+						nextRead += 4;// SizeOfInitializedData;
+						nextRead += 4;// SizeOfUninitializedData;
+						nextRead += 4;// AddressOfEntryPoint;
+						nextRead += 4;// BaseOfCode;
+						nextRead += 8;// ImageBase;
+						nextRead += 4;// SectionAlignment;
+						nextRead += 4;// FileAlignment;
+						nextRead += 2;// MajorOperatingSystemVersion;
+						nextRead += 2;// MinorOperatingSystemVersion;
+						nextRead += 2;// MajorImageVersion;
+						nextRead += 2;// MinorImageVersion;
+						nextRead += 2;// MajorSubsystemVersion;
+						nextRead += 2;// MinorSubsystemVersion;
+						nextRead += 4;// Win32VersionValue;
+						nextRead += 4;// SizeOfImage;
+						nextRead += 4;// SizeOfHeaders;
+						nextRead += 4;// CheckSum;
+						nextRead += 2;// Subsystem;
+						nextRead += 2;// DllCharacteristics;
+						nextRead += 8;// SizeOfStackReserve;
+						nextRead += 8;// SizeOfStackCommit;
+						nextRead += 8;// SizeOfHeapReserve;
+						nextRead += 8;// SizeOfHeapCommit;
+						nextRead += 4;// LoaderFlags;
+						nextRead += 4;// NumberOfRvaAndSizes;
 					} else {
 						//invalid size
 						return Collections.singleton(builder.buildCorruptData(addressSpace, "Invalid IMAGE_OPTIONAL_HEADER size: \"" + optionalHeaderSize + "\" bytes", imageOptionalHeaderSizeAddress)).iterator();
 					}
 					
 					//we should now be at the data directory
-//					typedef struct _IMAGE_DATA_DIRECTORY 
 					
 					//note that it is this first directory which we are interested in since it is the export dir
 					//read that pointer and size and calculate where to seek to to begin work again
-					int exportRVA = memory.getIntAt(0, nextRead);	// DWORD   VirtualAddress;
+					int exportRVA = memory.getIntAt(0, nextRead);
 					nextRead+=4;
 					if (0 == exportRVA) {
 						//this module has no exports so return empty
 						return Collections.EMPTY_LIST.iterator();
 					}
-					nextRead += 4;	//int exportSize = dump.readInt();	// DWORD   Size;
+					nextRead += 4;	// Size;
 					nextRead = moduleLoadAddress + (exportRVA & 0xFFFFFFFFL);//dump.seekToAddress(moduleLoadAddress + (exportRVA & 0xFFFFFFFFL));
 					
-//					typedef struct _IMAGE_EXPORT_DIRECTORY 
-					nextRead += 4;	//dump.readInt();	// ULONG   Characteristics;
-					nextRead += 4;	//dump.readInt();	// ULONG   TimeDateStamp;
-					nextRead += 2;	//dump.readShort();	// USHORT  MajorVersion;
-					nextRead += 2;	//dump.readShort();	// USHORT  MinorVersion;
-					nextRead += 4;	//dump.readInt();	// ULONG   Name;
-					nextRead += 4;	//dump.readInt();	// ULONG   Base;
+					nextRead += 4;	// Characteristics;
+					nextRead += 4;	// TimeDateStamp;
+					nextRead += 2;	// MajorVersion;
+					nextRead += 2;	// MinorVersion;
+					nextRead += 4;	// Name;
+					nextRead += 4;	// Base;
 					long numberOfFunctionsAddress = nextRead;
-					int numberOfFunctions = memory.getIntAt(0, numberOfFunctionsAddress);	// ULONG   NumberOfFunctions;
+					int numberOfFunctions = memory.getIntAt(0, numberOfFunctionsAddress);
 					nextRead+=4;
-					int numberOfNames = memory.getIntAt(0, nextRead);	// ULONG   NumberOfNames;
+					int numberOfNames = memory.getIntAt(0, nextRead);
 					nextRead+=4;
 					
 					//although it is theoretically possible for numberOfFunctions != numberOfNames, we have no notion of how to interpret that (all documentation seems to assume that they must be equal) so it is a kind of corruption
@@ -570,11 +482,11 @@ public abstract class NewWinDump extends CoreReaderSupport {
 						return Collections.singleton(builder.buildCorruptData(addressSpace, "IMAGE_EXPORT_DIRECTORY NumberOfFunctions (" + numberOfFunctions + ") < NumberOfNames (" + numberOfNames + ")", numberOfFunctionsAddress)).iterator();						
 					}
 					//Note:  despite the fact that these are pointers, they appear to be 4 bytes in both 32-bit and 64-bit binaries
-					long funcAddress = (memory.getIntAt(0, nextRead) & 0xFFFFFFFFL);	// PULONG  *AddressOfFunctions;
+					long funcAddress = (memory.getIntAt(0, nextRead) & 0xFFFFFFFFL);
 					nextRead+=4;
-					long nameAddress = (memory.getIntAt(0, nextRead) & 0xFFFFFFFFL);	// PULONG  *AddressOfNames;
+					long nameAddress = (memory.getIntAt(0, nextRead) & 0xFFFFFFFFL);
 					nextRead+=4;
-					long ordinalAddress = (memory.getIntAt(0, nextRead) & 0xFFFFFFFFL);	// PUSHORT *AddressOfNameOrdinals;
+					long ordinalAddress = (memory.getIntAt(0, nextRead) & 0xFFFFFFFFL);
 					nextRead+=4;
 					
 					int nameAddresses[] = new int[numberOfNames];
@@ -644,23 +556,6 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			}
 		}
 		
-		/*
-		 *	typedef struct _MINIDUMP_SYSTEM_INFO {
-		 *		USHORT ProcessorArchitecture;
-		 *		USHORT ProcessorLevel;
-		 *		USHORT ProcessorRevision;
-		 *		UCHAR NumberOfProcessors;
-         *   	UCHAR ProductType;
-         *   	ULONG32 MajorVersion;
-		 *		ULONG32 MinorVersion;
-		 *		ULONG32 BuildNumber;
-		 *		ULONG32 PlatformId;
-		 *		RVA CSDVersionRva;
-		 *		USHORT SuiteMask;
-		 *		USHORT Reserved2;
-         *		CPU_INFORMATION Cpu;
-    	 *	} MINIDUMP_SYSTEM_INFO, *PMINIDUMP_SYSTEM_INFO;
-		 */
 		private static class SystemInfoStream extends Stream {
 			public SystemInfoStream(int dataSize, int location) {
 				super(dataSize, location);
@@ -709,34 +604,6 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			}
 		}
 
-		/*
-		 * From dbghelp.h:
-		 *
-		 *	typedef struct _MINIDUMP_THREAD_LIST {
-		 *		ULONG32 NumberOfThreads;
-		 *		MINIDUMP_THREAD Threads [0];
-		 *	} MINIDUMP_THREAD_LIST, *PMINIDUMP_THREAD_LIST;
-		 *
-		 *  typedef struct _MINIDUMP_THREAD {
-		 *		ULONG32 ThreadId;
-		 *		ULONG32 SuspendCount;
-		 *		ULONG32 PriorityClass;
-		 *		ULONG32 Priority;
-		 *		ULONG64 Teb;
-		 *		MINIDUMP_MEMORY_DESCRIPTOR Stack;
-		 *		MINIDUMP_LOCATION_DESCRIPTOR ThreadContext;
-		 *	} MINIDUMP_THREAD, *PMINIDUMP_THREAD;
-		 *
-		 *	typedef struct _MINIDUMP_MEMORY_DESCRIPTOR {
-		 *		ULONG64 StartOfMemoryRange;
-		 *		MINIDUMP_LOCATION_DESCRIPTOR Memory;
-		 *	} MINIDUMP_MEMORY_DESCRIPTOR, *PMINIDUMP_MEMORY_DESCRIPTOR;
-		 *
-		 *	typedef struct _MINIDUMP_LOCATION_DESCRIPTOR {
-		 *		ULONG32 DataSize;
-		 *		RVA Rva;
-		 *	} MINIDUMP_LOCATION_DESCRIPTOR;
-		 */
 		private static class ThreadStream extends Stream {
 			public ThreadStream(int dataSize, int location) {
 				super(dataSize, location);
@@ -863,49 +730,6 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				}
 			}
 
-			/*
-			 *	#define SIZE_OF_80387_REGISTERS 80
-			 *
-			 *	typedef struct _FLOATING_SAVE_AREA {
-			 *	    DWORD   ControlWord;
-			 *	    DWORD   StatusWord;
-			 *	    DWORD   TagWord;
-			 *	    DWORD   ErrorOffset;
-			 *	    DWORD   ErrorSelector;
-			 *	    DWORD   DataOffset;
-			 *	    DWORD   DataSelector;
-			 *	    BYTE    RegisterArea[SIZE_OF_80387_REGISTERS];
-			 *	    DWORD   Cr0NpxState;
-			 *	} FLOATING_SAVE_AREA;
-			 *
-			 *	typedef struct _CONTEXT {
-			 *	    DWORD ContextFlags;
-			 *	    DWORD   Dr0;
-			 *	    DWORD   Dr1;
-			 *	    DWORD   Dr2;
-			 *	    DWORD   Dr3;
-			 *	    DWORD   Dr6;
-			 *	    DWORD   Dr7;
-			 *	    FLOATING_SAVE_AREA FloatSave; // 112 bytes
-			 *	    DWORD   SegGs;
-			 *	    DWORD   SegFs;
-			 *	    DWORD   SegEs;
-			 *	    DWORD   SegDs;
-			 *	    DWORD   Edi;
-			 *	    DWORD   Esi;
-			 *	    DWORD   Ebx;
-			 *	    DWORD   Edx;
-			 *	    DWORD   Ecx;
-			 *	    DWORD   Eax;
-			 *	    DWORD   Ebp;
-			 *	    DWORD   Eip;
-			 *	    DWORD   SegCs;
-			 *	    DWORD   EFlags;
-			 *	    DWORD   Esp;
-			 *	    DWORD   SegSs;
-			 *	    BYTE    ExtendedRegisters[MAXIMUM_SUPPORTED_EXTENSION];
-			 *	} CONTEXT;
-			 */
 			private List readIntelRegisters(MiniDump dump, Builder builder, long contextRva, long contextDataSize) throws IOException {
 				// We capture segment registers, flags, integer registers and instruction pointer
 				dump.coreSeek(contextRva + 140);
@@ -929,72 +753,6 @@ public abstract class NewWinDump extends CoreReaderSupport {
 				return registers;
 			}
 
-			/*
-			 *	typedef struct DECLSPEC_ALIGN(16) _CONTEXT {
-			 *	    DWORD64 P1Home;
-			 *	    DWORD64 P2Home;
-			 *	    DWORD64 P3Home;
-			 *	    DWORD64 P4Home;
-			 *	    DWORD64 P5Home;
-			 *	    DWORD64 P6Home;
-			 *	    DWORD ContextFlags;
-			 *	    DWORD MxCsr;
-			 *	    WORD   SegCs;
-			 *	    WORD   SegDs;
-			 *	    WORD   SegEs;
-			 *	    WORD   SegFs;
-			 *	    WORD   SegGs;
-			 *	    WORD   SegSs;
-			 *	    DWORD EFlags;
-			 *	    DWORD64 Dr0;
-			 *	    DWORD64 Dr1;
-			 *	    DWORD64 Dr2;
-			 *	    DWORD64 Dr3;
-			 *	    DWORD64 Dr6;
-			 *	    DWORD64 Dr7;
-			 *	    DWORD64 Rax;
-			 *	    DWORD64 Rcx;
-			 *	    DWORD64 Rdx;
-			 *	    DWORD64 Rbx;
-			 *	    DWORD64 Rsp;
-			 *	    DWORD64 Rbp;
-			 *	    DWORD64 Rsi;
-			 *	    DWORD64 Rdi;
-			 *	    DWORD64 R8;
-			 *	    DWORD64 R9;
-			 *	    DWORD64 R10;
-			 *	    DWORD64 R11;
-			 *	    DWORD64 R12;
-			 *	    DWORD64 R13;
-			 *	    DWORD64 R14;
-			 *	    DWORD64 R15;
-			 *	    DWORD64 Rip;
-			 *	    M128 Xmm0;
-			 *	    M128 Xmm1;
-			 *	    M128 Xmm2;
-			 *	    M128 Xmm3;
-			 *	    M128 Xmm4;
-			 *	    M128 Xmm5;
-			 *	    M128 Xmm6;
-			 *	    M128 Xmm7;
-			 *	    M128 Xmm8;
-			 *	    M128 Xmm9;
-			 *	    M128 Xmm10;
-			 *	    M128 Xmm11;
-			 *	    M128 Xmm12;
-			 *	    M128 Xmm13;
-			 *	    M128 Xmm14;
-			 *	    M128 Xmm15;
-			 *	    LEGACY_SAVE_AREA FltSave;
-			 *	    DWORD Fill;
-			 *	    DWORD64 DebugControl;
-			 *	    DWORD64 LastBranchToRip;
-			 *	    DWORD64 LastBranchFromRip;
-			 *	    DWORD64 LastExceptionToRip;
-			 *	    DWORD64 LastExceptionFromRip;
-			 *	    DWORD64 Fill1;
-			 *	} CONTEXT, *PCONTEXT;
-			 */
 			private List readAmd64Registers(MiniDump dump, Builder builder, long contextRva, long contextDataSize) throws IOException {
 				// We capture segment registers, flags, integer registers and instruction pointer
 				dump.coreSeek(contextRva + 56);
@@ -1298,17 +1056,6 @@ public abstract class NewWinDump extends CoreReaderSupport {
 			coreReadInt(); // Ignore versionInfoOffset
 		}
 
-		/*
-		 *	typedef struct _MEMORY_BASIC_INFORMATION {
-		 *		PVOID BaseAddress;
-		 *		PVOID AllocationBase;
-		 *		DWORD AllocationProtect;
-		 *		SIZE_T RegionSize;
-		 *		DWORD State;
-		 *		DWORD Protect;
-		 *		DWORD Type;
-		 *	} MEMORY_BASIC_INFORMATION, *PMEMORY_BASIC_INFORMATION;
-		 */
 		private void parseMemory() throws IOException {
 			coreSeek(_regionOffset);
 			_memoryRanges = new ArrayList();
