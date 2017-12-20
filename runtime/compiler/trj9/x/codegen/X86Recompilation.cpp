@@ -180,7 +180,11 @@ TR::Instruction *TR_X86Recompilation::generatePrologue(TR::Instruction *cursor)
          if (!isProfilingCompilation())
             cursor = new (trHeapMemory()) TR::X86MemImmInstruction(cursor, SUB4MemImms, mRef, 1, cg());
          else
+            {
+            // This only applies to JitProfiling, as JProfiling uses sampling
+            TR_ASSERT(_compilation->getProfilingMode() == JitProfiling, "JProfiling should use sampling to trigger recompilation");
             cursor = new (trHeapMemory()) TR::X86MemImmInstruction(cursor, CMP4MemImms, mRef, 0, cg());
+            }
 
          TR::Instruction *counterInstruction = cursor;
          TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());

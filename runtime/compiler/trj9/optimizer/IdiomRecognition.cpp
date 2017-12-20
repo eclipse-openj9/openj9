@@ -2988,7 +2988,7 @@ int32_t TR_CISCTransformer::perform()
    TR::Recompilation *recompInfo = comp()->getRecompilationInfo();
    if (!comp()->mayHaveLoops() ||
        methodHotness < minimumHotnessPrepared ||
-       (recompInfo && !recompInfo->useSampling()) ||    // if this method is now profiled
+       comp()->getProfilingMode() == JitProfiling ||    // if this method is now profiled
        !enable)
       return 0;
 
