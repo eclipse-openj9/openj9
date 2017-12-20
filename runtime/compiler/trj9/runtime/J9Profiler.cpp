@@ -1531,19 +1531,24 @@ TR_ValueProfileInfo::createAndInitializeProfilerInfo(
    // Does not support an initial value
    TR_ByteInfo bytes;
 
+   // If index is supported, prefer it
+   TR_HashFunctionType hash = BitShiftHash;
+   if (comp->cg()->getSupportsBitPermute())
+      hash = BitIndexHash;
+
    TR_AbstractProfilerInfo *valueInfo = NULL;
    switch (kind)
       {
       case ValueInfo:
          if (source == HashTableProfiler)
-            valueInfo = new (comp->trPersistentMemory()) TR_EmbeddedHashTable<uint32_t, 2>(bcInfo, BitShiftHash, kind);
+            valueInfo = new (comp->trPersistentMemory()) TR_EmbeddedHashTable<uint32_t, 2>(bcInfo, hash, kind);
          else if (source == LinkedListProfiler)
             valueInfo = new (comp->trPersistentMemory()) TR_LinkedListProfilerInfo<uint32_t>(bcInfo, kind, initialValue, initialFreq);
          break;
 
       case AddressInfo:
          if (source == HashTableProfiler)
-            valueInfo = new (comp->trPersistentMemory()) TR_EmbeddedHashTable<ProfileAddressType, 2>(bcInfo, BitShiftHash, kind);
+            valueInfo = new (comp->trPersistentMemory()) TR_EmbeddedHashTable<ProfileAddressType, 2>(bcInfo, hash, kind);
          else if (source == LinkedListProfiler)
             valueInfo = new (comp->trPersistentMemory()) TR_LinkedListProfilerInfo<ProfileAddressType>(bcInfo, kind, initialValue, initialFreq);
          else if (source == ArrayProfiler)
@@ -1553,7 +1558,7 @@ TR_ValueProfileInfo::createAndInitializeProfilerInfo(
       case LongValueInfo:
       case BigDecimalInfo:
          if (source == HashTableProfiler)
-            valueInfo = new (comp->trPersistentMemory()) TR_EmbeddedHashTable<uint64_t, 2>(bcInfo, BitShiftHash, kind);
+            valueInfo = new (comp->trPersistentMemory()) TR_EmbeddedHashTable<uint64_t, 2>(bcInfo, hash, kind);
          else if (source == LinkedListProfiler)
             valueInfo = new (comp->trPersistentMemory()) TR_LinkedListProfilerInfo<uint64_t>(bcInfo, kind, initialValue, initialFreq);
          break;

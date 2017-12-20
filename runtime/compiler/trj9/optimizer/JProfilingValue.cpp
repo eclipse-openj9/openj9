@@ -164,7 +164,6 @@ loadConst(TR::DataType dt)
 int32_t
 TR_JProfilingValue::perform() 
    {
-
    if (comp()->getProfilingMode() == JProfiling)
       {
       if (trace())
@@ -211,9 +210,13 @@ TR_JProfilingValue::performOnNode(TR::Node *node, TR::TreeTop *tt, TR::NodeCheck
       return;
    checklist->add(node);
 
-   if (node->getOpCode().isCall() && node->getOpCode().isIndirect())
+   if (node->getOpCode().isCall() && !node->getByteCodeInfo().doNotProfile() &&
+       (node->getSymbol()->getMethodSymbol()->isVirtual() ||
+        node->getSymbol()->getMethodSymbol()->isInterface()))
       addProfiling(node->getFirstChild(), tt);
-   else if (node->getOpCodeValue() == TR::instanceof || node->getOpCodeValue() == TR::checkcast)
+   else if (!node->getByteCodeInfo().doNotProfile() && 
+       (node->getOpCodeValue() == TR::instanceof ||
+        node->getOpCodeValue() == TR::checkcast))
       addVFTProfiling(node->getFirstChild(), tt->getPrevTreeTop(), true);
 
    for (int i = 0; i < node->getNumChildren(); ++i)
@@ -847,6 +850,7 @@ TR_JProfilingValue::convertType(TR::Node *index, TR::DataType dataType, bool zer
 
 /**
  * Generate the hash calculation in nodes.
+ * Supports generating calculations based on a series of shifts or a series of bit indices.
  *
  * \param comp The current compilation.
  * \param table The table to use for instrumentation.
@@ -856,42 +860,60 @@ TR_JProfilingValue::convertType(TR::Node *index, TR::DataType dataType, bool zer
 TR::Node *
 TR_JProfilingValue::computeHash(TR::Compilation *comp, TR_AbstractHashTableProfilerInfo *table, TR::Node *value, TR::Node *baseAddr)
    {
-   TR_ASSERT(table->getHashType() == BitShiftHash, "Only bit shift hash calculation implemented");
    TR_ASSERT(table->getDataType() == TR::Int32 || table->getDataType() == TR::Int64, "HashTable only expected to hold 32bit and 64bit values");
 
    if (!baseAddr)
       baseAddr = TR::Node::aconst(value, (uintptr_t) table);
 
-   TR::ILOpCodes shiftOp = TR::lushr;
-   TR::ILOpCodes andOp   = TR::land;
-   TR::ILOpCodes orOp    = TR::lor;
-   TR::ILOpCodes constOp = TR::lconst;
-   if (table->getDataType() == TR::Int32)
-      {
-      shiftOp = TR::iushr;
-      andOp   = TR::iand;
-      orOp    = TR::ior;
-      constOp = TR::iconst;
-      }
-
    TR::ILOpCodes addSys   = TR::Compiler->target.is64Bit() ? TR::aladd : TR::aiadd;
    TR::ILOpCodes constSys = TR::Compiler->target.is64Bit() ? TR::lconst : TR::iconst;
 
-   TR::SymbolReference *symRef = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Int8, NULL);
-
    TR::Node *hash = NULL;
-   for (uint32_t bit = 0; bit < table->getBits(); ++bit)
+   if (table->getHashType() == BitIndexHash)
       {
-      uint32_t shiftOffset = table->getHashOffset() + bit * sizeof(uint8_t);
-      TR::Node *shiftAddress = TR::Node::create(value, addSys, 2, baseAddr, TR::Node::create(value, constSys, 0, shiftOffset));
-      TR::Node *shift = TR::Node::createWithSymRef(value, TR::bloadi, 1, shiftAddress, symRef);
-      TR::Node *bitShift = TR::Node::create(value, shiftOp, 2, value, convertType(shift, TR::Int32));
-      TR::Node *bitExtract = TR::Node::create(value, andOp, 2, bitShift, TR::Node::create(value, constOp, 0, 1 << bit));
-      if (hash)
-         hash = TR::Node::create(value, orOp, 2, hash, bitExtract);
-      else
-         hash = bitExtract;
+      // Build the bit permute tree
+      TR::Node *hashAddr = TR::Node::create(value, addSys, 2, baseAddr, TR::Node::create(value, constSys, 0, table->getHashOffset()));
+      hash = TR::Node::create(value, value->getDataType() == TR::Int32 ? TR::ibitpermute : TR::lbitpermute, 3);
+      hash->setAndIncChild(0, value);
+      hash->setAndIncChild(1, hashAddr);
+      hash->setAndIncChild(2, TR::Node::iconst(value, table->getBits()));
+
+      // Convert to the platform address width
+      hash = convertType(hash, TR::Compiler->target.is64Bit() ? TR::Int64 : TR::Int32);
       }
+   else if (table->getHashType() == BitShiftHash)
+      {
+      // Common operations, based on the value's width
+      TR::ILOpCodes shiftOp = TR::lushr;
+      TR::ILOpCodes andOp   = TR::land;
+      TR::ILOpCodes orOp    = TR::lor;
+      TR::ILOpCodes constOp = TR::lconst;
+      if (table->getDataType() == TR::Int32)
+         {
+         shiftOp = TR::iushr;
+         andOp   = TR::iand;
+         orOp    = TR::ior;
+         constOp = TR::iconst;
+         }
+   
+      TR::SymbolReference *symRef = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Int8, NULL);
+
+      // Extract each bit and merge into final result
+      for (uint32_t bit = 0; bit < table->getBits(); ++bit)
+         {
+         uint32_t shiftOffset = table->getHashOffset() + bit * sizeof(uint8_t);
+         TR::Node *shiftAddress = TR::Node::create(value, addSys, 2, baseAddr, TR::Node::create(value, constSys, 0, shiftOffset));
+         TR::Node *shift = TR::Node::createWithSymRef(value, TR::bloadi, 1, shiftAddress, symRef);
+         TR::Node *bitShift = TR::Node::create(value, shiftOp, 2, value, convertType(shift, TR::Int32));
+         TR::Node *bitExtract = TR::Node::create(value, andOp, 2, bitShift, TR::Node::create(value, constOp, 0, 1 << bit));
+         if (hash)
+            hash = TR::Node::create(value, orOp, 2, hash, bitExtract);
+         else
+            hash = bitExtract;
+         }
+      }
+   else
+      TR_ASSERT(0, "Unsupported hash type");
 
    return hash;
    }
