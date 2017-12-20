@@ -63,6 +63,7 @@ public:
    virtual bool isWarmCallGraphTooBig(uint32_t, TR::Compilation *) override;
    virtual void setWarmCallGraphTooBig(uint32_t, TR::Compilation *) override;
    virtual void setVirtualMethodIsOverridden() override;
+   virtual void * addressContainingIsOverriddenBit() override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    virtual TR_OpaqueClassBlock * classOfMethod() override

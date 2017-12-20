@@ -71,6 +71,7 @@ enum J9ServerMessageType
    ResolvedMethod_isWarmCallGraphTooBig = 140;
    ResolvedMethod_setWarmCallGraphTooBig = 141;
    ResolvedMethod_setVirtualMethodIsOverridden = 142;
+   ResolvedMethod_addressContainingIsOverriddenBit = 143;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;

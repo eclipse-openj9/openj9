@@ -796,3 +796,10 @@ TR_ResolvedJ9JAASServerMethod::setVirtualMethodIsOverridden()
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_setVirtualMethodIsOverridden, _remoteMirror);
    _stream->read<JAAS::Void>();
    }
+
+void *
+TR_ResolvedJ9JAASServerMethod::addressContainingIsOverriddenBit()
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_addressContainingIsOverriddenBit, _remoteMirror);
+   return std::get<0>(_stream->read<void *>());
+   }

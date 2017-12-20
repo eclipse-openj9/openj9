@@ -1256,6 +1256,12 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(JAAS::Void());
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_addressContainingIsOverriddenBit:
+         {
+         TR_ResolvedJ9Method *mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
+         client->write(mirror->addressContainingIsOverriddenBit());
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
