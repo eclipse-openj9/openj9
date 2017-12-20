@@ -2069,7 +2069,8 @@ _illegalPrimitiveReturn:
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			break;
@@ -2123,7 +2124,8 @@ _illegalPrimitiveReturn:
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			PUSH(type);
@@ -2138,7 +2140,8 @@ _illegalPrimitiveReturn:
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			PUSH(temp2);
@@ -2153,7 +2156,8 @@ _illegalPrimitiveReturn:
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			POP_TOS_SINGLE(temp2);
@@ -2177,7 +2181,8 @@ _illegalPrimitiveReturn:
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			POP_TOS_PAIR(temp2, temp3);
@@ -2185,7 +2190,8 @@ _illegalPrimitiveReturn:
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			/* should probably do more checking to avoid bogus dup's of long/double pairs */
