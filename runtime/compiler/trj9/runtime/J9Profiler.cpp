@@ -1609,6 +1609,32 @@ TR_ValueProfileInfo::getOrCreateProfilerInfo(
    return profilerInfo;
    }
 
+/**
+ * Run through all hash tables and determine if their contents should be cleared out.
+ * Only supports resetting on hash tables.
+ *
+ * \param profileLog Dump all the tables that have been inspected, as well as a log of any that were cleared. NULL will disable tracing.
+ */
+void
+TR_ValueProfileInfo::resetLowFreqValues(TR::FILE *profileLog)
+   {
+   for (TR_AbstractProfilerInfo *valueInfo = _values[HashTableProfiler]; valueInfo; valueInfo = valueInfo->getNext())
+      {
+      TR_AbstractHashTableProfilerInfo *hashTable = static_cast<TR_AbstractHashTableProfilerInfo*>(valueInfo);
+      if (profileLog)
+         hashTable->dumpInfo(profileLog);
+      if (!hashTable->isFull())
+         continue;
+      if (hashTable->resetLowFreqKeys())
+         {
+         if (profileLog)
+            J9::IO::fprintf(profileLog, "Resetting info 0x%p\n", hashTable);
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseProfiling))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "Resetting info 0x%p.", hashTable);
+         }
+      }
+   }
+
 int32_t TR_BlockFrequencyInfo::_enableJProfilingRecompilation = -1;
 
 TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(TR_CallSiteInfo *callSiteInfo, int32_t numBlocks, TR_ByteCodeInfo *blocks, int32_t *frequencies) :
@@ -2285,7 +2311,23 @@ TR_CallSiteInfo::hasSamePartialBytecodeInfo(
 
 TR_PersistentProfileInfo::~TR_PersistentProfileInfo()
    {
-   clearProfilingInfo();
+   if (_catchBlockProfileInfo)
+      {
+      jitPersistentFree(_catchBlockProfileInfo);
+      _catchBlockProfileInfo = NULL;
+      }
+   if (_valueProfileInfo)
+      {
+      _valueProfileInfo->~TR_ValueProfileInfo();
+      jitPersistentFree(_valueProfileInfo);
+      _valueProfileInfo = NULL;
+      }
+   if (_blockFrequencyInfo)
+      {
+      _blockFrequencyInfo->~TR_BlockFrequencyInfo();
+      jitPersistentFree(_blockFrequencyInfo);
+      _blockFrequencyInfo = NULL;
+      }
    if (_callSiteInfo)
       {
       _callSiteInfo->~TR_CallSiteInfo();
@@ -2324,31 +2366,6 @@ TR_PersistentProfileInfo::prepareForProfiling(TR::Compilation *comp)
       TR_CallSiteInfo * const updatedCallSiteInfo = new ((void*)originalCallSiteInfo) TR_CallSiteInfo(comp, persistentAlloc);
       }
    }
-
-/**
- * Remove all existing profiling information.
- */
-void
-TR_PersistentProfileInfo::clearProfilingInfo()
-   {
-   if (_catchBlockProfileInfo)
-      {
-      jitPersistentFree(_catchBlockProfileInfo);
-      _catchBlockProfileInfo = NULL;
-      }
-   if (_valueProfileInfo)
-      {
-      _valueProfileInfo->~TR_ValueProfileInfo();
-      jitPersistentFree(_valueProfileInfo);
-      _valueProfileInfo = NULL;
-      }
-   if (_blockFrequencyInfo)
-      {
-      _blockFrequencyInfo->~TR_BlockFrequencyInfo();
-      jitPersistentFree(_blockFrequencyInfo);
-      _blockFrequencyInfo = NULL;
-      }
-   } 
 
 /**
  * Returns the best available profiling information for the current
@@ -2403,15 +2420,14 @@ TR_PersistentProfileInfo::getCurrent(TR::Compilation *comp)
 void
 TR_PersistentProfileInfo::incRefCount(TR_PersistentProfileInfo *info)
    {
+   TR_ASSERT_FATAL(info->_refCount > 0, "Increment called on profile info with no references");
    VM_AtomicSupport::add((uintptr_t*) &(info->_refCount), 1);
-   TR_ASSERT_FATAL(info->_refCount, "Increment resulted in reference count of 0");
+   TR_ASSERT_FATAL(info->_refCount >= 0, "Increment resulted in negative reference count");
    }
 
 /**
  * Decrement reference count for persistent profile info.
  * Will perform an atomic decrement.
- * If the reference count reaches 0, the persistent profile
- * info will be freed.
  *
  * \param info Persistent profile info to manipulate and potentially free.
  */
@@ -2420,10 +2436,15 @@ TR_PersistentProfileInfo::decRefCount(TR_PersistentProfileInfo *info)
    {
    VM_AtomicSupport::subtract((uintptr_t*) &(info->_refCount), 1);
    TR_ASSERT_FATAL(info->_refCount >= 0, "Decrement resulted in negative reference count");
-   if (info->_refCount == 0 && !TR::Options::getCmdLineOptions()->getOption(TR_DisableProfilingDataReclamation))
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableJProfilerThread))
+      {
+      if (info->_refCount == 0 && TR::Options::isAnyVerboseOptionSet(TR_VerboseProfiling, TR_VerboseReclamation))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_RECLAMATION, "PersistentProfileInfo 0x%p queued for reclamation.", info);
+      }
+   else if (info->_refCount == 0 && !TR::Options::getCmdLineOptions()->getOption(TR_DisableProfilingDataReclamation))
       {
       if (TR::Options::getVerboseOption(TR_VerboseReclamation))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_RECLAMATION, "Reclaiming PersistentProfileInfo 0x%p.", info);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_RECLAMATION, "Reclaiming PersistentProfileInfo immediately 0x%p.", info);
       info->~TR_PersistentProfileInfo();
       TR_Memory::jitPersistentFree(info);
       }
@@ -2606,4 +2627,238 @@ TR_PersistentProfileInfo *TR_AccessedProfileInfo::get(TR_ResolvedMethod *vmMetho
    TR_PersistentMethodInfo *methodInfo = TR_PersistentMethodInfo::get(vmMethod);
    _usedInfo[vmMethod] = compare(methodInfo);
    return _usedInfo[vmMethod];
+   }
+
+/**
+ * JProfiler thread function.
+ * Real work is carried out by processWorkingQueue
+ */
+static int32_t
+J9THREAD_PROC jProfilerThreadProc(void * entryarg)
+   {
+   J9JITConfig *jitConfig  = (J9JITConfig *) entryarg;
+   J9JavaVM *vm            = jitConfig->javaVM;
+   TR_JProfilerThread *jProfiler = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->jProfiler;
+   J9VMThread *jProfilerThread = NULL;
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
+   // Starting
+   int rc = vm->internalVMFunctions->internalAttachCurrentThread(vm, &jProfilerThread, NULL,
+                                  J9_PRIVATE_FLAGS_DAEMON_THREAD | J9_PRIVATE_FLAGS_NO_OBJECT |
+                                  J9_PRIVATE_FLAGS_SYSTEM_THREAD | J9_PRIVATE_FLAGS_ATTACHED_THREAD,
+                                  jProfiler->getJProfilerOSThread());
+
+   jProfiler->getJProfilerMonitor()->enter();
+   jProfiler->setAttachAttempted();
+   if (rc == JNI_OK)
+      jProfiler->setJProfilerThread(jProfilerThread);
+   jProfiler->getJProfilerMonitor()->notifyAll();
+   jProfiler->getJProfilerMonitor()->exit();
+   if (rc != JNI_OK)
+      return JNI_ERR;
+
+   j9thread_set_name(j9thread_self(), "JIT JProfiler");
+
+   // Process JProfiling data
+   jProfiler->processWorkingQueue();
+
+   // Stopping
+   vm->internalVMFunctions->DetachCurrentThread((JavaVM *) vm);
+   jProfiler->getJProfilerMonitor()->enter();
+   jProfiler->setJProfilerThread(NULL);
+   jProfiler->getJProfilerMonitor()->notifyAll();
+   j9thread_exit((J9ThreadMonitor*)jProfiler->getJProfilerMonitor()->getVMMonitor());
+   return 0;
+   }
+
+TR_JProfilerThread *
+TR_JProfilerThread::allocate()
+   {
+   TR_JProfilerThread * profiler = new (PERSISTENT_NEW) TR_JProfilerThread();
+   return profiler;
+   }
+
+/**
+ * Start the profiler thread.
+ */
+void
+TR_JProfilerThread::start(J9JavaVM *javaVM)
+   {
+   PORT_ACCESS_FROM_JAVAVM(javaVM);
+   UDATA priority;
+
+   priority = J9THREAD_PRIORITY_NORMAL;
+
+   if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "Starting jProfiler thread");
+
+   _jProfilerMonitor = TR::Monitor::create("JIT-jProfilerMonitor");
+   _state = Initial;
+   if (_jProfilerMonitor)
+      {
+      // Try to create thread
+      if (javaVM->internalVMFunctions->createThreadWithCategory(&_jProfilerOSThread,
+                                                                TR::Options::_profilerStackSize << 10,
+                                                                priority, 0,
+                                                                &jProfilerThreadProc,
+                                                                javaVM->jitConfig,
+                                                                J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "Failed to start jProfiler thread");
+
+         // Thread creation failed, don't try again
+         TR::Options::getCmdLineOptions()->setOption(TR_DisableJProfilerThread);
+         _jProfilerMonitor = NULL;
+         }
+      else
+         {
+         // Wait until creation completes
+         _jProfilerMonitor->enter();
+         while (_state == Initial)
+            _jProfilerMonitor->wait();
+         _jProfilerMonitor->exit();
+
+         if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "Started jProfiler thread");
+         }
+      }
+   else
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "Failed to create JIT-jProfilerMonitor");
+      }
+   }
+
+/**
+ * Stop the profiler thread.
+ * This will set the state to Stop and wait.
+ */
+void
+TR_JProfilerThread::stop(J9JavaVM *javaVM)
+   {
+   PORT_ACCESS_FROM_JAVAVM(javaVM);
+   if (!_jProfilerMonitor)
+      return;
+
+   // Check the thread actually started
+   _jProfilerMonitor->enter();
+   if (!getJProfilerThread())
+      {
+      _jProfilerMonitor->exit();
+      return;
+      }
+
+   if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "Stopping jProfiler thread");
+
+   // Set state and wait for it to stop
+   _state = Stop;
+   while (getJProfilerThread())
+      {
+      _jProfilerMonitor->notifyAll();
+      _jProfilerMonitor->wait();
+      }
+
+   if (TR::Options::getVerboseOption(TR_VerboseProfiling))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PROFILING, "Stopped jProfiler thread");
+
+   _jProfilerMonitor->exit();
+   }
+
+/**
+ * Process the persistent profile info.
+ * Should only be called in the profiler thread.
+ */
+void
+TR_JProfilerThread::processWorkingQueue()
+   {
+   while (_state == Run)
+      {
+      _jProfilerMonitor->enter();
+
+      _jProfilerMonitor->wait_timed(_waitMillis, 0);
+      if (_state == Stop)
+         {
+         _jProfilerMonitor->exit();
+         break;
+         }
+
+      _jProfilerMonitor->exit();
+
+      TR_PersistentProfileInfo **prevPtr = &_listHead;
+      TR_PersistentProfileInfo *cur = _listHead;
+
+      size_t index = 0;
+      while (cur && _state == Run)
+         {
+         if (cur->_refCount == 0)
+            {
+            // Clear out entries that are no longer referenced
+            cur = deleteProfileInfo(prevPtr, cur);
+            continue;
+            }
+         else if (cur->isActive() && cur->getValueProfileInfo())
+            {
+            // Inspect value profile info
+            cur->getValueProfileInfo()->resetLowFreqValues(NULL);
+            }
+
+         prevPtr = &cur->_next;
+         cur = *prevPtr;
+         }
+      }
+   }
+
+/**
+ * Add a new entry at the start of the linked list.
+ * Can be called by compilation threads concurrently.
+ *
+ * \param newHead Info to add to the list.
+ */
+void
+TR_JProfilerThread::addProfileInfo(TR_PersistentProfileInfo *newHead)
+   {
+   TR_PersistentProfileInfo *oldHead;
+   uintptr_t oldPtr;
+
+   // Atomic update for list head
+   do {
+      oldHead = _listHead;
+      oldPtr = (uintptr_t)oldHead;
+      newHead->_next = oldHead;
+      }
+   while (oldPtr != VM_AtomicSupport::lockCompareExchange((uintptr_t*)&_listHead, oldPtr, (uintptr_t)newHead));
+
+   VM_AtomicSupport::add(&_footprint, 1);
+   }
+
+/**
+ * Remove an arbitrary entry from the linked list.
+ * Should only be called by the thread, as it does not support concurrent removals.
+ *
+ * \param prevNext Pointer to previous info's next pointer.
+ * \param info Info to remove.
+ * \return The next TR_PersistentProfileInfo after the removed info.
+ */
+TR_PersistentProfileInfo *
+TR_JProfilerThread::deleteProfileInfo(TR_PersistentProfileInfo **prevNext, TR_PersistentProfileInfo *info)
+   {
+   TR_PersistentProfileInfo *next = info->_next;
+   uintptr_t oldPtr = (uintptr_t)info;
+
+   if (oldPtr != VM_AtomicSupport::lockCompareExchange((uintptr_t*)prevNext, oldPtr, (uintptr_t)next))
+      return next;
+
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableProfilingDataReclamation))
+      {
+      VM_AtomicSupport::subtract(&_footprint, 1);
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseProfiling, TR_VerboseReclamation))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_RECLAMATION, "Reclaiming PersistentProfileInfo 0x%p.", info);
+      // Deallocate info
+      info->~TR_PersistentProfileInfo();
+      TR_Memory::jitPersistentFree(info);
+      }
+
+   return next;
    }

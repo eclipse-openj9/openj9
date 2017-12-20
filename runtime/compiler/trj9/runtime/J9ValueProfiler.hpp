@@ -32,6 +32,7 @@
 #include "compile/Compilation.hpp"
 #include "infra/vector.hpp"         // for TR::vector
 
+// Global lock used by Array & List profilers
 extern TR::Monitor *vpMonitor;
 
 #ifdef TR_HOST_64BIT
@@ -207,7 +208,6 @@ class TR_AbstractProfilerInfo : public TR_Link0<TR_AbstractProfilerInfo>
    virtual uint32_t getTotalFrequency() = 0;
    virtual uint32_t getNumProfiledValues() = 0;
    virtual void     dumpInfo(TR::FILE *logFile) = 0;
-   virtual void     reset() = 0;
 
    /**
     * Basic methods for each type of value.
@@ -241,6 +241,7 @@ class TR_AbstractHashTableProfilerInfo : public TR_AbstractProfilerInfo
        TR_AbstractProfilerInfo(bci)
       {
       _metaData.lock = 0;
+      _metaData.full = 0;
       _metaData.bits = bits;
       _metaData.hash = hash;
       _metaData.kind = kind;
@@ -251,11 +252,15 @@ class TR_AbstractHashTableProfilerInfo : public TR_AbstractProfilerInfo
     */
    size_t getBits() { return _metaData.bits; }
    size_t getSize() { return 1 << _metaData.bits; }
+   bool   isFull()  { return _metaData.full == 1; }
    size_t getCapacity() { return 1 + _metaData.bits; }
    size_t getOtherIndex() { return _metaData.otherIndex < 0 ? ~_metaData.otherIndex : _metaData.otherIndex; }
    TR_HashFunctionType getHashType() { return static_cast<TR_HashFunctionType>(_metaData.hash); }
    TR_ValueInfoKind   getKind()   { return static_cast<TR_ValueInfoKind>(_metaData.kind); }
    TR_ValueInfoSource getSource() { return HashTableProfiler; }
+
+   // JProfile thread helper
+   virtual bool resetLowFreqKeys() = 0;
 
    /**
     * Table layout
@@ -270,24 +275,24 @@ class TR_AbstractHashTableProfilerInfo : public TR_AbstractProfilerInfo
    protected:
    /**
     * There are three contexts from which these maps will be accessed:
-    * 1) The JITed code, which will increment freqs and call the runtime helper.
+    * 1) The jitted code, which will increment freqs and call the runtime helper.
     * 2) The runtime helper, which will add keys to the map or reset it.
-    * 3) A recompilation, which will read information, but should not modify it.
+    * 3) A compilation, which will read information, but should not modify it.
     *
     * To reduce overhead, there are two different forms of synchronization used in the map updates.
     *
-    * First, JITed code will perform no synchronization for its freq increments, as this would incur
+    * First, jitted code will perform no synchronization for its freq increments, as this would incur
     * a high overhead. However, it may decide to call the runtime helper to add a value to the
-    * map, with a quick test before hand to avoid the call overhead if possible. This test will
-    * check if another thread is updating the map or if the map is full, avoiding the call if so.
-    * This is implemented as a load of otherIndex and a test of its highest bit. If set,
-    * the map can be modified. Otherwise, the loaded value is used to increment freqs[otherIndex].
+    * table, with a quick test before hand to avoid the call overhead if possible. This test will
+    * check if another thread is updating the table or if the table is full, avoiding the call if so.
+    * This is implemented as a load of otherIndex and a comparison with 0. If less than 0,
+    * the table can be modified. Otherwise, the loaded value is used to increment freqs[otherIndex].
     *
     * Second, synchronization is needed between the runtime helper and accesses in a recompilation.
-    * The otherIndex cannot be used, as it cannot distinguish between a full or locked map.
-    * Instead an additional lock value is used.
+    * The otherIndex cannot be used, as it cannot distinguish between a full or locked table.
+    * Instead an additional lock word is used.
     *
-    * These synchronization functions will manage lock, with a flag to manipulate otherIndex.
+    * These synchronization functions will manage the lock, with a flag to manipulate otherIndex.
     * lock and otherIndex should not be modified otherwise.
     */
    void lock();
@@ -303,7 +308,8 @@ class TR_AbstractHashTableProfilerInfo : public TR_AbstractProfilerInfo
       struct
          {
          int16_t otherIndex;
-         uint8_t lock : 4;
+         uint8_t lock : 3;
+         uint8_t full : 1;
          uint8_t bits : 4;
          uint8_t hash : 4;
          uint8_t kind : 4;
@@ -391,10 +397,12 @@ class TR_EmbeddedHashTable : public TR_HashTableProfilerInfo<T>
        TR_HashTableProfilerInfo<T>(bci, bits, hash, kind)
       {
       reset();
+      // Set the first other index to be the last slot, based on the real size
+      this->_metaData.otherIndex = ~(((int16_t)_realSize) - 1);
       }
 
-   void reset();
-   size_t getKeysOffset()  { return offsetof(this_t, _keys); }
+   bool resetLowFreqKeys();
+   size_t getKeysOffset() { return offsetof(this_t, _keys); }
    size_t getFreqOffset() { return offsetof(this_t, _freqs); }
 
    protected:
@@ -407,6 +415,7 @@ class TR_EmbeddedHashTable : public TR_HashTableProfilerInfo<T>
    void addKey(T value);
    T    recursivelySplit(T mask, T choices);
    void rearrange(HashFunction &hash);
+   void reset();
 
    T        *getKeys() { return _keys; }
    uint32_t *getFrequencies() { return _freqs; }
@@ -419,13 +428,6 @@ class TR_EmbeddedHashTable : public TR_HashTableProfilerInfo<T>
    T        _keys[_realSize];
    uint32_t _freqs[_realSize];
 
-   /**
-    * Due to memory overhead, bits are not expected to exceed 3. The implementation
-    * supports up to HASHTABLE_MAX_BITS, constrained by the size of _metaData.otherIndex.
-    *
-    * Expected size should be:
-    * 8 (vtable) + 4 (BCI) + 4 (MetaData) + 8 (HashFunction) + sizeof(T) * readSize (keys) + 4 * realSize (freqs)
-    */
 #if defined(TR_TARGET_X86)
    static_assert(bits <= HASHTABLE_MAX_BITS,  "Hash table exceeded max bits");
 #endif
@@ -612,19 +614,49 @@ TR_HashTableProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
    }
 
 /**
- * Reset the map to initial values.
+ * Determine whether the table should be reset or not, due to a selection
+ * of bad values. Will reset the table if necesssary.
  *
- * This will zero all keys and frequencies.
- * It will also reset otherIndex to the last entry and unlock the table.
+ * \return True if the table was reset.
+ */
+template <typename T, size_t bits> bool
+TR_EmbeddedHashTable<T, bits>::resetLowFreqKeys()
+   {
+   uint32_t matched = 0;
+   uint32_t other = _freqs[this->getOtherIndex()];
+   for (size_t i = 0; i < _realSize; ++i)
+      {
+      if (i != this->getOtherIndex())
+         matched += _freqs[i];
+      }
+
+   // Reset if matched accounts for less than 1/3 of total
+   if (2 * matched < other)
+      {
+      this->lock();
+      reset();
+      this->unlock(true);
+      return true;
+      }
+
+   return false;
+   }
+
+/**
+ * Reset the table, clearing its keys and frequencies.
+ * Hash config and full flag will be cleared.
+ * Other metadata will not be modified.
  */
 template <typename T, size_t bits> void
 TR_EmbeddedHashTable<T, bits>::reset()
    {
-   this->_metaData.otherIndex = ~(((int16_t)_realSize) - 1);
-   this->_metaData.lock = 0;
-   memset(&(this->_hashConfig), 0, sizeof(HashFunction));
+   // Clear keys first, checks will only match on zero
    memset(&_keys, 0, sizeof(T) * _realSize);
+   // Clear counts
    memset(&_freqs, 0, sizeof(uint32_t) * _realSize);
+   // Clear metadata, skip constants and locks
+   memset(&(this->_hashConfig), 0, sizeof(HashFunction));
+   this->_metaData.full = 0;
    }
 
 /**
@@ -636,10 +668,17 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    {
    size_t otherIndex = this->getOtherIndex();
 
-   // Lock the table, disabling JIT access
+   // Lock the table, disabling jitted code access
    if (!this->tryLock(true))
       {
       _freqs[otherIndex]++;
+      return;
+      }
+   // Early exit if at capacity
+   if (this->isFull())
+      {
+      _freqs[otherIndex]++;
+      this->unlock(); 
       return;
       }
 
@@ -693,7 +732,6 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
       else
          {
          // Add the new value to an available slot
-         TR_ASSERT_FATAL(available <= lastIndex, "Could not find an empty slot");
          _keys[available] = value;
          _freqs[available] = 1;
 
@@ -709,6 +747,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
       }
 
    // Unlock the table, leaving JIT access disabled if at capacity
+   this->_metaData.full = populated >= this->getCapacity();
    this->unlock(populated < this->getCapacity()); 
 
    static bool dumpInfo = feGetEnv("TR_JProfilingValueDumpInfo") != NULL;
@@ -1050,7 +1089,6 @@ class TR_LinkedListProfilerInfo : public TR_AbstractProfilerInfo
    uint32_t getTotalFrequency()   { return getTotalFrequency(NULL); }
    uint32_t getNumProfiledValues();
    void     dumpInfo(TR::FILE*);
-   void     reset();
 
    uint32_t getTopValue(T&);
    uint32_t getMaxValue(T&);
@@ -1204,24 +1242,6 @@ TR_LinkedListProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
    }
 
 /**
- * Clear the list.
- */
-template <typename T> void
-TR_LinkedListProfilerInfo<T>::reset()
-   {
-   auto cursor = getFirst();
-   auto prior = cursor;
-   while (cursor)
-      {
-      cursor->_frequency = 0;
-      prior = cursor;
-      cursor = cursor->getNext();
-      }
-
-   prior->_totalFrequency = 0;
-   }
-
-/**
  * Get the total frequency.
  *
  * \param addrOfTotalFrequency Optional pointer to the address of the total frequency.
@@ -1321,7 +1341,8 @@ class TR_ArrayProfilerInfo : public TR_AbstractProfilerInfo
        TR_AbstractProfilerInfo(bci),
        _kind(kind)
       {
-      reset();
+      _totalFrequency = 0;
+      memset(_frequencies, 0, sizeof(uint32_t) * getSize());
       }
 
    /**
@@ -1332,7 +1353,6 @@ class TR_ArrayProfilerInfo : public TR_AbstractProfilerInfo
    uint32_t getTotalFrequency()   { return _totalFrequency; }
    uint32_t getNumProfiledValues();
    void     dumpInfo(TR::FILE*);
-   void     reset();
 
    uint32_t getTopValue(T&);
    uint32_t getMaxValue(T&);
@@ -1460,14 +1480,6 @@ TR_ArrayProfilerInfo<T>::dumpInfo(TR::FILE *logFile)
       trfprintf(logFile, "    %d: %d %0*x", count++, _frequencies[i], padding, _values[i]);
 
    trfprintf(logFile, "   Num: %d Total Frequency: %d\n", count, getTotalFrequency());
-   }
-
-template <typename T> void
-TR_ArrayProfilerInfo<T>::reset()
-   {
-   OMR::CriticalSection lock(vpMonitor);
-   _totalFrequency = 0;
-   memset(_frequencies, 0, sizeof(uint32_t) * getSize());
    }
 
 /**
