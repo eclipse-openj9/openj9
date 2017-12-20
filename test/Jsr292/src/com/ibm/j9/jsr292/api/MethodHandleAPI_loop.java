@@ -63,13 +63,27 @@ public class MethodHandleAPI_loop {
 	}
 	
 	/**
-	 * loop test for a clause array with one clause (no handle at all).
+	 * loop test for a clause array with only one clause (no handle at all).
+	 * Note: a clause array must contain at least one predicate.
 	 */
 	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
 	public static void test_loop_EmptyClause_Clauses() {
 		MethodHandle[][] clauses = new MethodHandle[][]{{}};
 		MethodHandle mhLoop = MethodHandles.loop(clauses);
-		Assert.fail("The test case failed to detect a clause array without method handle in each clause");
+		Assert.fail("The test case failed to detect a clause array without a predicate");
+	}
+	
+	/**
+	 * loop test for a clause array with one clause (no handle at all) and one clause with all nulls.
+	 * Note: an empty clause or a clause with all nulls are ignored.
+	 */
+	@Test(groups = { "level.extended" })
+	public static void test_loop_EmptyClause_NullHandleClause_Clauses() {
+		MethodHandle mhPred = MethodHandles.identity(boolean.class);
+		MethodHandle[] clause1 = {};
+		MethodHandle[] clause2 = {null, null, mhPred, null};
+		MethodHandle[] clause3 = {null, null, null, null};
+		MethodHandle mhLoop = MethodHandles.loop(clause1, clause2, clause3);
 	}
 	
 	/**

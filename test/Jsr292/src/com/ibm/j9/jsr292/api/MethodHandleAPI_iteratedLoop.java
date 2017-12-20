@@ -102,20 +102,6 @@ public class MethodHandleAPI_iteratedLoop {
 	}
 	
 	/**
-	 * iteratedLoop test for iterator with an invalid leading parameter (neither an array type
-	 * nor inherited from Iterable).
-	 */
-	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
-	public static void test_iteratedLoop_InvalidParamType_Iterator() {
-		MethodHandle mhIterator = MethodHandles.dropArguments(ITERATEDLOOP_ITERATOR, 0, char.class);
-		MethodHandle mhInit = MethodHandles.dropArguments(ITERATEDLOOP_INIT, 0, char.class);
-		MethodHandle mhBody = ITERATEDLOOP_BODY;
-		MethodHandle mhIteratedLoop = MethodHandles.iteratedLoop(mhIterator, mhInit, mhBody);
-		Assert.fail("The test case failed to detect that the leading parameter type of "
-				+ "iterator is neither an array type nor inherited from Iterable");
-	}
-	
-	/**
 	 * iteratedLoop test for loop body with the external parameter types inconsistent with
 	 * init/iterator when both init and iterator are exists.
 	 */
@@ -152,6 +138,31 @@ public class MethodHandleAPI_iteratedLoop {
 		MethodHandle mhBody = MethodHandles.dropArguments(ITERATEDLOOP_BODY, 2, List.class);
 		MethodHandle mhIteratedLoop = MethodHandles.iteratedLoop(mhIterator, mhInit, mhBody);
 		Assert.fail("The test case failed to detect that the external parameter types of loop body are inconsistent with init");
+	}
+	
+	/**
+	 * iteratedLoop test for loop body with an external parameter list shorter than those of iterator
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_iteratedLoop_ShorterExternalParamType_Body() {
+		MethodHandle mhIterator = ITERATEDLOOP_ITERATOR;
+		MethodHandle mhInit = ITERATEDLOOP_INIT;
+		MethodHandle mhBody = MethodHandles.dropArguments(ITERATEDLOOP_BODY, 2, List.class);
+		MethodHandle mhIteratedLoop = MethodHandles.iteratedLoop(mhIterator, mhInit, mhBody);
+		Assert.fail("The test case failed to detect that the external parameter list of loop body is shorter than those of iterator");
+	}
+	
+	/**
+	 * iteratedLoop test for an invalid loop body in which the external parameter types
+	 * are inconsistent with those of iteraotr/init.
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_iteratedLoop_InconsistentExternalParamType_Body() {
+		MethodHandle mhIterator = ITERATEDLOOP_ITERATOR;
+		MethodHandle mhInit = ITERATEDLOOP_INIT;
+		MethodHandle mhBody = MethodHandles.dropArguments(ITERATEDLOOP_BODY, 2, List.class, char.class);
+		MethodHandle mhIteratedLoop = MethodHandles.iteratedLoop(mhIterator, mhInit, mhBody);
+		Assert.fail("The test case failed to detect that the external parameters type of loop body are inconsistent with those of iterator/init");
 	}
 	
 	/**

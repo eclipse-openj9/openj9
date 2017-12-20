@@ -37,10 +37,14 @@ public class MethodHandleAPI_whileLoop {
 	static MethodHandle WHILELOOP_INIT_INVALID;
 	static MethodHandle WHILELOOP_PRED;
 	static MethodHandle WHILELOOP_BODY;
+	static MethodHandle WHILELOOP_BODY_NOPARAM;
+	static MethodHandle WHILELOOP_BODY_NOEXTERNALPARAM;
 	static {
 		try {
 			WHILELOOP_INIT_INVALID = lookup.findStatic(SamePackageExample.class, "whileLoop_Init_InvalidParamType", MethodType.methodType(int.class, byte.class, int.class));
 			WHILELOOP_BODY = lookup.findStatic(SamePackageExample.class, "whileLoop_Body", MethodType.methodType(int.class, int.class, int.class));
+			WHILELOOP_BODY_NOPARAM = lookup.findStatic(SamePackageExample.class, "whileLoop_Body_NoParam", MethodType.methodType(int.class));
+			WHILELOOP_BODY_NOEXTERNALPARAM = lookup.findStatic(SamePackageExample.class, "whileLoop_Body_NoExternalParam", MethodType.methodType(int.class, int.class));
 			WHILELOOP_PRED = lookup.findStatic(SamePackageExample.class, "whileLoop_Pred", MethodType.methodType(boolean.class, int.class, int.class));
 			} catch (IllegalAccessException | NoSuchMethodException e) {
 				throw new RuntimeException(e);
@@ -75,6 +79,30 @@ public class MethodHandleAPI_whileLoop {
 		MethodHandle mhBody = MethodHandles.dropArguments(WHILELOOP_BODY, 0, byte.class);
 		MethodHandle mhWhileLoop = MethodHandles.whileLoop(mhInit, mhPred, mhBody);
 		Assert.fail("The test case failed to detect that the first parameter type of body is inconsistent with the return type");
+	}
+	
+	/**
+	 * whileLoop test for an invalid loop body without parameters.
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_whileLoop_NoParam_Body() {
+		MethodHandle mhInit = MethodHandles.zero(char.class);
+		MethodHandle mhPred = WHILELOOP_PRED;
+		MethodHandle mhBody = WHILELOOP_BODY_NOPARAM;
+		MethodHandle mhWhileLoop = MethodHandles.whileLoop(mhInit, mhPred, mhBody);
+		Assert.fail("The test case failed to detect an invalid loop body without parameters");
+	}
+	
+	/**
+	 * whileLoop test for an invalid loop body without external parameters.
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_whileLoop_NoExternalParam_Body() {
+		MethodHandle mhInit = MethodHandles.zero(char.class);
+		MethodHandle mhPred = WHILELOOP_PRED;
+		MethodHandle mhBody = WHILELOOP_BODY_NOEXTERNALPARAM;
+		MethodHandle mhWhileLoop = MethodHandles.whileLoop(mhInit, mhPred, mhBody);
+		Assert.fail("The test case failed to detect an invalid loop body without external parameters");
 	}
 	
 	/**
@@ -320,6 +348,30 @@ public class MethodHandleAPI_whileLoop {
 		MethodHandle mhBody = MethodHandles.dropArguments(WHILELOOP_BODY, 0, byte.class);
 		MethodHandle mhWhileLoop = MethodHandles.doWhileLoop(mhInit, mhBody, mhPred);
 		Assert.fail("The test case failed to detect that the first parameter type of loop body is inconsistent with the return type");
+	}
+	
+	/**
+	 * doWhileLoop test for an invalid loop body without parameters.
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_doWhileLoop_NoParam_Body() {
+		MethodHandle mhInit = MethodHandles.zero(char.class);
+		MethodHandle mhPred = WHILELOOP_PRED;
+		MethodHandle mhBody = WHILELOOP_BODY_NOPARAM;
+		MethodHandle mhWhileLoop = MethodHandles.doWhileLoop(mhInit, mhBody, mhPred);
+		Assert.fail("The test case failed to detect an invalid loop body without parameters");
+	}
+	
+	/**
+	 * doWhileLoop test for an invalid loop body without external parameters.
+	 */
+	@Test(expectedExceptions = IllegalArgumentException.class, groups = { "level.extended" })
+	public static void test_doWhileLoop_NoExternalParam_Body() {
+		MethodHandle mhInit = MethodHandles.zero(char.class);
+		MethodHandle mhPred = WHILELOOP_PRED;
+		MethodHandle mhBody = WHILELOOP_BODY_NOEXTERNALPARAM;
+		MethodHandle mhWhileLoop = MethodHandles.doWhileLoop(mhInit, mhBody, mhPred);
+		Assert.fail("The test case failed to detect an invalid loop body without external parameters");
 	}
 	
 	/**

@@ -694,6 +694,14 @@ public class SamePackageExample {
 		return (v + 1);
 	}
 	
+	public static int whileLoop_Body_NoParam() {
+		return 1;
+	}
+	
+	public static int whileLoop_Body_NoExternalParam(int v) {
+		return v;
+	}
+	
 	public static byte while_Init_ByteType(byte a) {
 		return 1;
 	}
@@ -795,6 +803,22 @@ public class SamePackageExample {
 	
 	public static void while_Body_VoidReturnType(int a) throws IOException {
 		throw new IOException("while_Body_VoidReturnType");
+	}
+	
+	public static int countedLoop_Handle_TwoParam(int param1, int param2) {
+		return 1;
+	}
+	
+	public static int countedLoop_Body_NoParam() {
+		return 1;
+	}
+	
+	public static int countedLoop_Body_NoExternalParam(int v, int counter) {
+		return (v + 1);
+	}
+	
+	public static int countedLoop_Body_OneExternalParam(int v, int counter, int param) {
+		return (v + 1);
 	}
 	
 	public static void countedLoop_Body_InvalidParamType_VoidReturnType(char v) {
