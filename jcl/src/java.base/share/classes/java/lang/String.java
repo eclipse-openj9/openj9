@@ -2273,7 +2273,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				return false;
 			}
 
-			if (s1.value == s2.value) {
+			/*[IF Sidecar19-SE]*/
+			byte[] s1Value = s1.value;
+			byte[] s2Value = s2.value;
+			/*[ELSE]*/
+			char[] s1Value = s1.value;
+			char[] s2Value = s2.value;
+			/*[ENDIF]*/
+			if (s1Value == s2Value) {
 				return true;
 			}
 
@@ -2285,10 +2292,8 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			if (s1hash != 0 && s2hash != 0 && s1hash != s2hash) {
 				return false;
 			}
-			
-			boolean matches = regionMatches(0, s2, 0, s1len);
-			
-			if (!matches) {
+
+			if (!regionMatchesInternal(s1, s2, s1Value, s2Value, 0, 0, s1len)) {
 				return false;
 			}
 
@@ -3199,49 +3204,41 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return false;
 		}
 
+		return regionMatchesInternal(s1, s2, s1.value, s2.value, thisStart, start, length);
+	}
+
+	/*[IF Sidecar19-SE]*/
+	private static boolean regionMatchesInternal(String s1, String s2, byte[] s1Value, byte[] s2Value, int s1Start, int s2Start, int length)
+	/*[ELSE]*/
+	private static boolean regionMatchesInternal(String s1, String s2, char[] s1Value, char[] s2Value, int s1Start, int s2Start, int length)
+	/*[ENDIF]*/
+	{
 		if (length <= 0) {
 			return true;
 		}
-
-		int o1 = thisStart;
-		int o2 = start;
-
 		// Index of the last char to compare
 		int end = length - 1;
-
-		/*[IF Sidecar19-SE]*/
-		byte[] s1Value = s1.value;
-		byte[] s2Value = s2.value;
-		/*[ELSE]*/
-		char[] s1Value = s1.value;
-		char[] s2Value = s2.value;
-		/*[ENDIF]*/
-
-		s1Value.getClass(); // Implicit null check
-		s2Value.getClass(); // Implicit null check
-
 		if (enableCompression && ((compressionFlag == null) || ((s1.count | s2.count) >= 0))) {
-			if (helpers.getByteFromArrayByIndex(s1Value, o1 + end) != helpers.getByteFromArrayByIndex(s2Value, o2 + end)) {
+			if (helpers.getByteFromArrayByIndex(s1Value, s1Start + end) != helpers.getByteFromArrayByIndex(s2Value, s2Start + end)) {
 				return false;
 			} else {
 				for (int i = 0; i < end; ++i) {
-					if (helpers.getByteFromArrayByIndex(s1Value, o1 + i) != helpers.getByteFromArrayByIndex(s2Value, o2 + i)) {
+					if (helpers.getByteFromArrayByIndex(s1Value, s1Start + i) != helpers.getByteFromArrayByIndex(s2Value, s2Start + i)) {
 						return false;
 					}
 				}
 			}
 		} else {
-			if (s1.charAtInternal(o1 + end, s1Value) != s2.charAtInternal(o2 + end, s2Value)) {
+			if (s1.charAtInternal(s1Start + end, s1Value) != s2.charAtInternal(s2Start + end, s2Value)) {
 				return false;
 			} else {
 				for (int i = 0; i < end; ++i) {
-					if (s1.charAtInternal(o1 + i, s1Value) != s2.charAtInternal(o2 + i, s2Value)) {
+					if (s1.charAtInternal(s1Start + i, s1Value) != s2.charAtInternal(s2Start + i, s2Value)) {
 						return false;
 					}
 				}
 			}
 		}
-
 		return true;
 	}
 
