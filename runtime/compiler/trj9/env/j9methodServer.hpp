@@ -71,6 +71,10 @@ public:
       {
       return _fe->convertClassPtrToClassOffset(_ramClass);
       }
+   virtual void * & addressOfClassOfMethod() override
+      {
+      return (void*&)(_ramClass);
+      }
 
    bool inROMClass(void *address);
 
