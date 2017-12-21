@@ -803,3 +803,10 @@ TR_ResolvedJ9JAASServerMethod::addressContainingIsOverriddenBit()
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_addressContainingIsOverriddenBit, _remoteMirror);
    return std::get<0>(_stream->read<void *>());
    }
+
+bool
+TR_ResolvedJ9JAASServerMethod::methodIsNotzAAPEligible()
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_methodIsNotzAAPEligible, _remoteMirror);
+   return std::get<0>(_stream->read<bool>());
+   }
