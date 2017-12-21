@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2017 IBM Corp. and others
+Copyright (c) 2017, 2018 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,16 +27,29 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 ### Triggering Pull Request Builds from Github
 
 - Current supported PR builds are "Compile", "Compile & Sanity", or "Compile & Extended"
-- Current available platforms are Linux s390x and Linux PPCLE
+- Current available platforms are Linux s390x (zLinux) and Linux PPCLE (pLinux)
+- Current supported Java verisons are Java8 and Java9
 - OpenJ9 committers can request builds by commenting in a pull request
-- Request a build in a PR by commenting
+    - Format: `Jenkins <build level> <platform(s)> <java version(s)>`
+    - Platforms: zlinux,plinux
+    - Java Versions: jdk8,jdk9
+
+###### Examples
+- Request a Compile-only build on all platforms and all java versions by commenting in a PR
     - `Jenkins compile`
-    - `Jenkins test sanity`
-    - `Jenkins test extended`
-- Request a single platform instead of "all"
+    - `Jenkins compile all all`
+- Request a Sanity build on zLinux all java versions
     - `Jenkins test sanity zlinux`
-    - `Jenkins test sanity plinux`
-- You can also request a "Compile & Sanity" build from an [openj9-openjdk-jdk9](https://github.com/ibmruntimes/openj9-openjdk-jdk9) PR or an [openj9-omr](https://github.com/eclipse/openj9-omr) PR.
+    - `Jenkins test sanity zlinux all`
+- Request a Extended build on pLinux java8 only
+    - `Jenkins test extended plinux jdk8`
+- Request a Sanity build on z,p Linux on java 8,9
+    - `Jenkins test sanity zlinux,plinux jdk8,jdk9`
+
+You can also request a "Compile & Sanity" build from the extensions repos or openj9-omr
+- [openj9-openjdk-jdk8](https://github.com/ibmruntimes/openj9-openjdk-jdk8)
+- [openj9-openjdk-jdk9](https://github.com/ibmruntimes/openj9-openjdk-jdk9)
+- [openj9-omr](https://github.com/eclipse/openj9-omr)
 
 ##### Dependent Changes
 
@@ -67,18 +80,34 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 
 #### Build
 
-- Build-linux_390-64_cmprssptrs
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Build-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Build-linux_390-64_cmprssptrs)
+- Build-JDK8-linux_390-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Build-JDK8-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Build-JDK8-linux_390-64_cmprssptrs)
     - Description:
-        - Compiles on linux_390-64_cmprssptrs
+        - Compiles java8 on linux_390-64_cmprssptrs
         - Archives the SDK and test material for use in downstream jobs
     - Trigger:
         - This job is used in other pipelines but can be launched manually
 
-- Build-linux_ppc-64_cmprssptrs_le
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Build-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Build-linux_ppc-64_cmprssptrs_le)
+- Build-JDK9-linux_390-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Build-JDK9-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Build-JDK9-linux_390-64_cmprssptrs)
+    - Description:
+        - Compiles java9 on linux_390-64_cmprssptrs
+        - Archives the SDK and test material for use in downstream jobs
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
+
+- Build-JDK8-linux_ppc-64_cmprssptrs_le
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Build-JDK8-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Build-JDK8-linux_ppc-64_cmprssptrs_le)
     - Description
-        - Compiles on linux_ppc-64_cmprssptrs_le
+        - Compiles java8 on linux_ppc-64_cmprssptrs_le
+        - Archives the SDK and test material for use in downstream jobs
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
+
+- Build-JDK9-linux_ppc-64_cmprssptrs_le
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Build-JDK9-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Build-JDK9-linux_ppc-64_cmprssptrs_le)
+    - Description
+        - Compiles java9 on linux_ppc-64_cmprssptrs_le
         - Archives the SDK and test material for use in downstream jobs
     - Trigger:
         - This job is used in other pipelines but can be launched manually
@@ -110,29 +139,52 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
  
 #### Pipelines
 
-- Pipeline-Build-Test-linux_390-64_cmprssptrs
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Pipeline-Build-Test-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Pipeline-Build-Test-linux_390-64_cmprssptrs)
+- Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs)
     - Description:
-        - Compile and Test Sanity & Extended
+        - Compile and Test java8 Sanity & Extended
         - Triggers
-            - `Build-linux_390-64_cmprssptrs`
-            - `Test-Sanity-linux_390-64_cmprssptrs`
-            - `Test-Extended-linux_390-64_cmprssptrs`
+            - `Build-JDK8-linux_390-64_cmprssptrs`
+            - `Test-Sanity-JDK8-linux_390-64_cmprssptrs`
+            - `Test-Extended-JDK8-linux_390-64_cmprssptrs`
 
     - Trigger:
         - build periodically, @midnight
 
-- Pipeline-Build-Test-linux_ppc-64_cmprssptrs_le
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Pipeline-Build-Test-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Pipeline-Build-Test-linux_ppc-64_cmprssptrs_le)
+- Pipeline-Build-Test-JDK9-linux_390-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Pipeline-Build-Test-JDK9-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Pipeline-Build-Test-JDK9-linux_390-64_cmprssptrs)
     - Description:
-        - Compile and Test Sanity & Extended
+        - Compile and Test java9 Sanity & Extended
         - Triggers
-            - `Build-linux_ppc-64_cmprssptrs_le`
-            - `Test-Sanity-linux_ppc-64_cmprssptrs_le`
-            - `Test-Extended-linux_ppc-64_cmprssptrs_le`
+            - `Build-JDK9-linux_390-64_cmprssptrs`
+            - `Test-Sanity-JDK9-linux_390-64_cmprssptrs`
+            - `Test-Extended-JDK9-linux_390-64_cmprssptrs`
+
     - Trigger:
         - build periodically, @midnight
-        
+
+- Pipeline-Build-Test-JDK8-linux_ppc-64_cmprssptrs_le
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Pipeline-Build-Test-JDK8-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Pipeline-Build-Test-JDK8-linux_ppc-64_cmprssptrs_le)
+    - Description:
+        - Compile and Test java8 Sanity & Extended
+        - Triggers
+            - `Build-JDK8-linux_ppc-64_cmprssptrs_le`
+            - `Test-Sanity-JDK8-linux_ppc-64_cmprssptrs_le`
+            - `Test-Extended-JDK8-linux_ppc-64_cmprssptrs_le`
+    - Trigger:
+        - build periodically, @midnight
+
+- Pipeline-Build-Test-JDK9-linux_ppc-64_cmprssptrs_le
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Pipeline-Build-Test-JDK9-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Pipeline-Build-Test-JDK9-linux_ppc-64_cmprssptrs_le)
+    - Description:
+        - Compile and Test java9 Sanity & Extended
+        - Triggers
+            - `Build-JDK9-linux_ppc-64_cmprssptrs_le`
+            - `Test-Sanity-JDK9-linux_ppc-64_cmprssptrs_le`
+            - `Test-Extended-JDK9-linux_ppc-64_cmprssptrs_le`
+    - Trigger:
+        - build periodically, @midnight
+
 - Pipeline-OMR-Acceptance
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Pipeline-OMR-Acceptance)](https://ci.eclipse.org/openj9/job/Pipeline-OMR-Acceptance)
     - Description:
@@ -147,47 +199,89 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 
 #### Pull Requests
 
-- PullRequest-Compile-linux_390-64_cmprssptrs
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-linux_390-64_cmprssptrs)
+- PullRequest-Compile-JDK8-linux_390-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK8-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK8-linux_390-64_cmprssptrs-OpenJ9)
     - Description:
-        - Compile on linux_390-64_cmprssptrs
+        - Compile on java8 linux_390-64_cmprssptrs
     - Trigger:
-        - Github PR comment `Jenkins compile`    
+        - Github PR comment `Jenkins compile zlinux jdk8`
 
-- PullRequest-Compile-linux_ppc-64_cmprssptrs_le
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-linux_ppc-64_cmprssptrs_le)
+- PullRequest-Compile-JDK9-linux_390-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK9-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK9-linux_390-64_cmprssptrs-OpenJ9)
     - Description:
-        - Compile on linux_ppc-64_cmprssptrs_le
+        - Compile on java9 linux_390-64_cmprssptrs
     - Trigger:
-        - Github PR comment `Jenkins compile`
+        - Github PR comment `Jenkins compile zlinux jdk9`
 
-- PullRequest-Extended-linux_390-64_cmprssptrs
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-linux_390-64_cmprssptrs)
+- PullRequest-Compile-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)
     - Description:
-        - Compile and Extended tests on linux_390-64_cmprssptrs
+        - Compile on java8 linux_ppc-64_cmprssptrs_le
     - Trigger:
-        - Github PR comment `Jenkins test extended`    
+        - Github PR comment `Jenkins compile plinux jdk8`
 
-- PullRequest-Extended-linux_ppc-64_cmprssptrs_le
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-linux_ppc-64_cmprssptrs_le)
+- PullRequest-Compile-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)
     - Description:
-        - Compile and Extended tests on linux_ppc-64_cmprssptrs_le
+        - Compile on java9 linux_ppc-64_cmprssptrs_le
     - Trigger:
-        - Github PR comment `Jenkins test extended`
+        - Github PR comment `Jenkins compile plinux jdk9`
 
-- PullRequest-Sanity-linux_390-64_cmprssptrs
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-linux_390-64_cmprssptrs)
+- PullRequest-JDK8-Extended-linux_390-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK8-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK8-linux_390-64_cmprssptrs-OpenJ9)
     - Description:
-        - Compile and Sanity tests on linux_390-64_cmprssptrs
+        - Compile and Extended tests on java8 linux_390-64_cmprssptrs
     - Trigger:
-        - Github PR comment `Jenkins test sanity`    
+        - Github PR comment `Jenkins test extended zlinux jdk8`
 
-- PullRequest-Sanity-linux_ppc-64_cmprssptrs_le
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-linux_ppc-64_cmprssptrs_le)
+- PullRequest-JDK9-Extended-linux_390-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK9-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK9-linux_390-64_cmprssptrs-OpenJ9)
     - Description:
-        - Compile and Sanity tests on linux_ppc-64_cmprssptrs_le
+        - Compile and Extended tests on java9 linux_390-64_cmprssptrs
     - Trigger:
-        - Github PR comment `Jenkins test sanity`
+        - Github PR comment `Jenkins test extended zlinux jdk9`
+
+- PullRequest-Extended-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)
+    - Description:
+        - Compile and Extended tests on java8 linux_ppc-64_cmprssptrs_le
+    - Trigger:
+        - Github PR comment `Jenkins test extended plinux jdk8`
+
+- PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)
+    - Description:
+        - Compile and Extended tests on java9 linux_ppc-64_cmprssptrs_le
+    - Trigger:
+        - Github PR comment `Jenkins test extended plinux jdk9`
+
+- PullRequest-Sanity-JDK8-linux_390-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK8-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK8-linux_390-64_cmprssptrs-OpenJ9)
+    - Description:
+        - Compile and Sanity tests on java8 linux_390-64_cmprssptrs
+    - Trigger:
+        - Github PR comment `Jenkins test sanity zlinux jdk8`
+
+- PullRequest-Sanity-JDK9-linux_390-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK9-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK9-linux_390-64_cmprssptrs-OpenJ9)
+    - Description:
+        - Compile and Sanity tests on java9 linux_390-64_cmprssptrs
+    - Trigger:
+        - Github PR comment `Jenkins test sanity zlinux jdk9`
+
+- PullRequest-Sanity-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)
+    - Description:
+        - Compile and Sanity tests on java8 linux_ppc-64_cmprssptrs_le
+    - Trigger:
+        - Github PR comment `Jenkins test sanity plinux jdk8`
+
+- PullRequest-Sanity-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)
+    - Description:
+        - Compile and Sanity tests on java9 linux_ppc-64_cmprssptrs_le
+    - Trigger:
+        - Github PR comment `Jenkins test sanity plinux jdk9`
 
 - PullRequest-LineEndingsCheck
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-LineEndingsCheck)](https://ci.eclipse.org/openj9/job/PullRequest-LineEndingsCheck)
@@ -197,7 +291,7 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
         - Automatically builds on every PR
         - Retrigger with `Jenkins line endings check`
 
-- PullRequest-CopyrightCheck/badge
+- PullRequest-CopyrightCheck
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-CopyrightCheck)](https://ci.eclipse.org/openj9/job/PullRequest-CopyrightCheck)
     - Description:
         - Checks the files modified in a pull request have copyright with current year
@@ -207,29 +301,57 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 
 #### Test
 
-- Test-Extended-linux_390-64_cmprssptrs
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Extended-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Test-Extended-linux_390-64_cmprssptrs)
+- Test-Extended-JDK8-linux_390-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Extended-JDK8-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Test-Extended-JDK8-linux_390-64_cmprssptrs)
     - Description:
         - Runs extended test suite against the SDK and test material that is passed as parameters
     - Trigger:
         - This job is used in other pipelines but can be launched manually
-        
-- Test-Extended-linux_ppc-64_cmprssptrs_le
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Extended-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Test-Extended-linux_ppc-64_cmprssptrs_le)
+
+- Test-Extended-JDK9-linux_390-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Extended-JDK9-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Test-Extended-JDK9-linux_390-64_cmprssptrs)
     - Description:
         - Runs extended test suite against the SDK and test material that is passed as parameters
     - Trigger:
         - This job is used in other pipelines but can be launched manually
-        
-- Test-Sanity-linux_390-64_cmprssptrs
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Sanity-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Test-Sanity-linux_390-64_cmprssptrs)
+
+- Test-Extended-JDK8-linux_ppc-64_cmprssptrs_le
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Extended-JDK8-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Test-Extended-JDK8-linux_ppc-64_cmprssptrs_le)
+    - Description:
+        - Runs extended test suite against the SDK and test material that is passed as parameters
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
+
+- Test-Extended-JDK9-linux_ppc-64_cmprssptrs_le
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Extended-JDK9-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Test-Extended-JDK9-linux_ppc-64_cmprssptrs_le)
+    - Description:
+        - Runs extended test suite against the SDK and test material that is passed as parameters
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
+
+- Test-Sanity-JDK8-linux_390-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Sanity-JDK8-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Test-Sanity-JDK8-linux_390-64_cmprssptrs)
     - Description:
         - Runs sanity test suite against the SDK and test material that is passed as parameters
     - Trigger:
         - This job is used in other pipelines but can be launched manually
 
-- Test-Sanity-linux_ppc-64_cmprssptrs_le
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Sanity-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Test-Sanity-linux_ppc-64_cmprssptrs_le)
+- Test-Sanity-JDK9-linux_390-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Sanity-JDK9-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Test-Sanity-JDK9-linux_390-64_cmprssptrs)
+    - Description:
+        - Runs sanity test suite against the SDK and test material that is passed as parameters
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
+
+- Test-Sanity-JDK8-linux_ppc-64_cmprssptrs_le
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Sanity-JDK8-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Test-Sanity-JDK8-linux_ppc-64_cmprssptrs_le)
+    - Description:
+        - Runs sanity test suite against the SDK and test material that is passed as parameters
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
+
+- Test-Sanity-JDK9-linux_ppc-64_cmprssptrs_le
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Sanity-JDK9-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Test-Sanity-JDK9-linux_ppc-64_cmprssptrs_le)
     - Description:
         - Runs sanity test suite against the SDK and test material that is passed as parameters
     - Trigger:
