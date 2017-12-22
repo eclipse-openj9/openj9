@@ -477,7 +477,7 @@ getLinuxPPCDescription(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	char* platform = NULL;
 	char* base_platform = NULL;
 
-	/* initialize libauxv to query the auxv */
+	/* initialize auxv prior to querying the auxv */
 	if (prefetch_auxv()) {
 		desc->processor = PROCESSOR_PPC_UNKNOWN;
 		desc->physicalProcessor = PROCESSOR_PPC_UNKNOWN;
