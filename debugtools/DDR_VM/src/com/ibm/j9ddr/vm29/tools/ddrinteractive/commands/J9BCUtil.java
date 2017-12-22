@@ -44,10 +44,11 @@ import static com.ibm.j9ddr.vm29.structure.J9ROMMethodHandleRef.MH_REF_PUTFIELD;
 import static com.ibm.j9ddr.vm29.structure.J9ROMMethodHandleRef.MH_REF_PUTSTATIC;
 
 import java.io.PrintStream;
-
+import java.util.Properties;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
+import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.J9ROMFieldShapeIterator;
 import com.ibm.j9ddr.vm29.j9.OptInfo;
 import com.ibm.j9ddr.vm29.j9.ROMHelp;
@@ -64,6 +65,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9EnclosingObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ExceptionHandlerPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ExceptionInfoPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodDebugInfoPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodParameterPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodParametersDataPointer;
@@ -81,7 +83,9 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMSingleSlotConstantRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMStringRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SourceDebugExtensionPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodDebugInfoHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
@@ -114,6 +118,18 @@ public class J9BCUtil {
 	 */
 	/* note that methodIndex was not used and was removed */
 	public static void j9bcutil_dumpRomMethod(PrintStream out, J9ROMMethodPointer romMethod, J9ROMClassPointer romClass, long flags, int options) throws CorruptDataException {
+		int vmVersion = getVmVersion();
+		dumpRomMethod(out, romMethod, romClass, flags, options, vmVersion);
+	}
+	
+	private static int getVmVersion() throws CorruptDataException {
+		J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
+		Properties properties = J9JavaVMHelper.getSystemProperties(vm);
+		String version = properties.getProperty("java.version");
+		return Integer.parseInt(version);
+	}
+	
+	private static void dumpRomMethod(PrintStream out, J9ROMMethodPointer romMethod, J9ROMClassPointer romClass, long flags, int options, int vmVersion) throws CorruptDataException {
 		J9ROMNameAndSignaturePointer nameAndSignature = romMethod.nameAndSignature();
 		J9UTF8Pointer name = nameAndSignature.name();
 		J9UTF8Pointer signature = nameAndSignature.signature();
@@ -122,7 +138,7 @@ public class J9BCUtil {
 		out.append("  Name: " + J9UTF8Helper.stringValue(name) + nl);
 		out.append("  Signature: " + J9UTF8Helper.stringValue(signature) + nl);
 		out.append(String.format("  Access Flags (%s): ", Long.toHexString(romMethod.modifiers().longValue())));
-		dumpModifiers(out, romMethod.modifiers().longValue(), MODIFIERSOURCE_METHOD, INCLUDE_INTERNAL_MODIFIERS);
+		dumpModifiers(out, romMethod.modifiers().longValue(), MODIFIERSOURCE_METHOD, INCLUDE_INTERNAL_MODIFIERS, vmVersion);
 		out.append(nl);
 		out.append("  Max Stack: " + romMethod.maxStack().longValue() + nl);
 
@@ -172,7 +188,7 @@ public class J9BCUtil {
 		}
 		dumpMethodDebugInfo(out, romClass, romMethod, flags);
 		dumpStackMapTable(out, romClass, romMethod, flags);
-		dumpMethodParameters(out, romClass, romMethod,flags);
+		dumpMethodParameters(out, romClass, romMethod, flags, vmVersion);
 
 		if (0 != (BCUtil_DumpAnnotations & options)) {
 			dumpMethodAnnotations(out, romMethod);
@@ -193,6 +209,7 @@ public class J9BCUtil {
 	 *			-ACC_SYNTHETIC
 	 *			-ACC_ANNOTATION
 	 *			-ACC_ENUM
+	 *			-ACC_MODULE (for Java9)
 	 *
 	 *		:: NESTED CLASS ::
 	 *			-ACC_PUBLIC
@@ -238,12 +255,12 @@ public class J9BCUtil {
 	 *
 	 *
 	 */
-	private static void dumpModifiers(PrintStream out, long modifiers, int modifierSrc, int modScope) 
+	private static void dumpModifiers(PrintStream out, long modifiers, int modifierSrc, int modScope, int vmVersion) 
 	{
 		switch (modifierSrc)
 		{
 			case MODIFIERSOURCE_CLASS :
-				modifiers &= J9CfrClassFile.CFR_CLASS_ACCESS_MASK;
+				modifiers &= (vmVersion >= 9) ? J9CfrClassFile.CFR_CLASS_ACCESS_MASK_9 : J9CfrClassFile.CFR_CLASS_ACCESS_MASK;
 				break;
 				
 			case MODIFIERSOURCE_METHOD : 
@@ -533,6 +550,8 @@ public class J9BCUtil {
 	}
 
 	public static void j9bcutil_dumpRomClass(PrintStream out, J9ROMClassPointer romClass, long flags) throws CorruptDataException {
+		int vmVersion = getVmVersion();
+		
 		out.append((String.format("ROM Size: 0x%s (%d)", Long.toHexString(romClass.romSize().longValue()), romClass.romSize().longValue())));
 		out.append(nl);
 		out.append(String.format("Class Name: %s", J9UTF8Helper.stringValue(romClass.className())));
@@ -557,7 +576,7 @@ public class J9BCUtil {
 		dumpEnclosingMethod(out, romClass, flags);
 
 		out.append(String.format("Sun Access Flags (0x%s): ", Long.toHexString(romClass.modifiers().longValue())));
-		dumpModifiers(out, romClass.modifiers().longValue(), MODIFIERSOURCE_CLASS, ONLY_SPEC_MODIFIERS);
+		dumpModifiers(out, romClass.modifiers().longValue(), MODIFIERSOURCE_CLASS, ONLY_SPEC_MODIFIERS, vmVersion);
 		
 		out.append(String.format("J9  Access Flags (0x%s): ", Long.toHexString(romClass.extraModifiers().longValue())));
 		dumpClassJ9ExtraModifiers(out, romClass.extraModifiers().longValue());
@@ -592,7 +611,7 @@ public class J9BCUtil {
 			out.append("Declaring Class: " + J9UTF8Helper.stringValue(romClass.outerClassName()));
 			out.append(nl);
 			out.append(String.format("Member Access Flags (0x%s): ", Long.toHexString(romClass.memberAccessFlags().longValue())));
-			dumpModifiers(out, romClass.memberAccessFlags().longValue(), MODIFIERSOURCE_CLASS, ONLY_SPEC_MODIFIERS);
+			dumpModifiers(out, romClass.memberAccessFlags().longValue(), MODIFIERSOURCE_CLASS, ONLY_SPEC_MODIFIERS, vmVersion);
 			out.append(nl);
 
 			outerClassName = outerClassName.add(1);
@@ -617,9 +636,9 @@ public class J9BCUtil {
 		while (iterator.hasNext()) {
 			J9ROMFieldShapePointer currentField = (J9ROMFieldShapePointer) iterator.next();
 			if (!currentField.modifiers().bitAnd(J9JavaAccessFlags.J9AccStatic).eq(0)) {
-				dumpRomStaticField(out, currentField, flags);
+				dumpRomStaticField(out, currentField, flags, vmVersion);
 			} else {
-				dumpRomField(out, currentField, flags);
+				dumpRomField(out, currentField, flags, vmVersion);
 			}
 			out.append(nl);
 		}
@@ -631,7 +650,7 @@ public class J9BCUtil {
 
 		J9ROMMethodPointer romMethod = romClass.romMethods();
 		for (int i = 0; i < romClass.romMethodCount().intValue(); i++) {
-			J9BCUtil.j9bcutil_dumpRomMethod(out, romMethod, romClass, flags, 0);
+			dumpRomMethod(out, romMethod, romClass, flags, 0, vmVersion);
 			romMethod = ROMHelp.nextROMMethod(romMethod);
 		}
 
@@ -676,19 +695,19 @@ public class J9BCUtil {
 
 	}
 
-	private static void dumpRomField(PrintStream out, J9ROMFieldShapePointer romField, long flags) throws CorruptDataException {
+	private static void dumpRomField(PrintStream out, J9ROMFieldShapePointer romField, long flags, int vmVersion) throws CorruptDataException {
 		out.append("  Name: " + J9UTF8Helper.stringValue(romField.nameAndSignature().name()) + nl);
 		out.append("  Signature: " + J9UTF8Helper.stringValue(romField.nameAndSignature().signature()) + nl);
 		out.append(String.format("  Access Flags (%s): ", Long.toHexString(romField.modifiers().longValue())));
-		dumpModifiers(out, romField.modifiers().longValue(), MODIFIERSOURCE_FIELD, ONLY_SPEC_MODIFIERS);
+		dumpModifiers(out, romField.modifiers().longValue(), MODIFIERSOURCE_FIELD, ONLY_SPEC_MODIFIERS, vmVersion);
 		out.append(nl);
 	}
 
-	private static void dumpRomStaticField(PrintStream out, J9ROMFieldShapePointer romStatic, long flags) throws CorruptDataException {
+	private static void dumpRomStaticField(PrintStream out, J9ROMFieldShapePointer romStatic, long flags, int vmVersion) throws CorruptDataException {
 		out.append("  Name: " + J9UTF8Helper.stringValue(romStatic.nameAndSignature().name()) + nl);
 		out.append("  Signature: " + J9UTF8Helper.stringValue(romStatic.nameAndSignature().signature()) + nl);
 		out.append(String.format("  Access Flags (%s): ", Long.toHexString(romStatic.modifiers().longValue())));
-		dumpModifiers(out, romStatic.modifiers().longValue(), MODIFIERSOURCE_FIELD, ONLY_SPEC_MODIFIERS);
+		dumpModifiers(out, romStatic.modifiers().longValue(), MODIFIERSOURCE_FIELD, ONLY_SPEC_MODIFIERS, vmVersion);
 		out.append(nl);
 	}
 
@@ -1145,7 +1164,7 @@ public class J9BCUtil {
 		 }
 	}
 	
-	private static void dumpMethodParameters(PrintStream out, J9ROMClassPointer romclass, J9ROMMethodPointer romMethod, long flags) throws CorruptDataException 
+	private static void dumpMethodParameters(PrintStream out, J9ROMClassPointer romclass, J9ROMMethodPointer romMethod, long flags, int vmVersion) throws CorruptDataException 
 	{
 		J9MethodParametersDataPointer methodParameters = ROMHelp.getMethodParametersFromROMMethod(romMethod);
 		if (methodParameters != J9MethodParametersDataPointer.NULL) {
@@ -1161,7 +1180,7 @@ public class J9BCUtil {
 				}
 				
 				out.print(String.format("    0x%x ( ", parameterFlags));
-				dumpModifiers(out, parameterFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHODPARAMETER);
+				dumpModifiers(out, parameterFlags, ONLY_SPEC_MODIFIERS, MODIFIERSOURCE_METHODPARAMETER, vmVersion);
 				out.println(" )\n");
 			}
 			out.println("\n");

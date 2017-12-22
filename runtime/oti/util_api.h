@@ -1543,9 +1543,10 @@ variableInfoStartDo(J9MethodDebugInfo * methodInfo, J9VariableInfoWalkState* sta
 * @param *portLib
 * @param *translationBuffers
 * @param flags
+* @param vmFlags
 * @return IDATA
 */
-IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9TranslationBufferSet *translationBuffers, U_32 flags);
+IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9TranslationBufferSet *translationBuffers, U_32 flags, U_32 vmFlags);
 
 
 /**
@@ -1557,7 +1558,7 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 * @param methodIndex
 * @return I_32
 */
-I_32 j9bcutil_dumpRomMethod( J9ROMMethod *romMethod, J9ROMClass *romClass, J9PortLibrary *portLib, U_32 flags, U_32 methodIndex);
+I_32 j9bcutil_dumpRomMethod( J9ROMMethod *romMethod, J9ROMClass *romClass, J9PortLibrary *portLib, U_32 flags, U_32 methodIndex, U_32 vmFlags);
 
 
 /* ---------------- romclasswalk.c ---------------- */
@@ -2523,7 +2524,7 @@ setIncompatibleClassChangeErrorInvalidDefenderSupersend(J9VMThread *vmStruct, J9
 
 
 void
-printModifiers(J9PortLibrary *portLib, U_32 modifiers, modifierScope modScope, modifierSource modifierSrc);
+printModifiers(J9PortLibrary *portLib, U_32 modifiers, modifierScope modScope, modifierSource modifierSrc, U_32 vmFlags);
 
 void
 j9_printClassExtraModifiers(J9PortLibrary *portLib, U_32 modifiers);
