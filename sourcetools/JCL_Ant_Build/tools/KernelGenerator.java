@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 import java.io.PrintStream;
 import java.util.Calendar;
@@ -252,7 +252,7 @@ public final class KernelGenerator {
 		write(" * [1] https://www.gnu.org/software/classpath/license.html");
 		write(" * [2] http://openjdk.java.net/legal/assembly-exception.html");
 		write(" *");
-		write(" * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0");
+		write(" * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception");
 		write(" *******************************************************************************/");
 	}
 
