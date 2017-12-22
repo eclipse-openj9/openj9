@@ -2017,9 +2017,15 @@ typedef struct J9BCTranslationData {
 #define BCT_InitInstanceFields  19
 #define BCT_ErrConstantPoolMapTooSmall  14
 #define BCT_InitCopyDoubles  5
-#define BCT_Java10MajorVersionShifted 0x36000000
-#define BCT_Java9MajorVersionShifted  0x35000000
+
+/* When adding a new major version update BCT_JavaMaxMajorVersionShifted to
+ * the maximum allowed value.
+ */
 #define BCT_Java8MajorVersionShifted  0x34000000
+#define BCT_Java9MajorVersionShifted  0x35000000
+#define BCT_Java10MajorVersionShifted 0x36000000
+#define BCT_JavaMaxMajorVersionShifted BCT_Java10MajorVersionShifted
+
 #define BCT_ActionUnused  6
 #define BCT_ErrFallOffLastInstruction  8
 #define BCT_ActionNone  0
