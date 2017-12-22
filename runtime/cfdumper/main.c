@@ -2302,6 +2302,12 @@ static U_32 buildFlags(void)
 	U_32 flags;
 
 	flags = BCT_RetainRuntimeInvisibleAttributes;
+
+	/* Set vm flags to the latest version to pass version validation
+	 * check in j9bcutil_readClassFileBytes.
+	 */
+	flags |= BCT_JavaMaxMajorVersionShifted;
+
 	if(options.options & OPTION_stripDebugAttributes) flags |= CFR_StripDebugAttributes;
 	if(options.options & OPTION_stripDebugLines) flags |= BCT_StripDebugLines;
 	if(options.options & OPTION_stripDebugSource) flags |= BCT_StripDebugSource;
