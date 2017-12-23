@@ -102,4 +102,14 @@
 			<class name="org.openj9.test.attachAPI.TestJava9AttachAPI" />
 		</classes>
 	</test>
+	<test name="AccessUnRestrictedClass">
+		<classes>
+			<class name="org.openj9.test.access.staticAccessChecks.PermitAccess" />
+		</classes>
+	</test>
+	<test name="AccessRestrictedClass">
+		<classes>
+			<class name="org.openj9.test.access.staticAccessChecks.DenyAccess" />
+		</classes>
+    </test>
 </suite> <!-- Suite -->
