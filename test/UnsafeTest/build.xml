@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src_90}" />
 					<src path="${transformerListener}" />
-					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
+					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED' />
 					<classpath>
 						<pathelement location="../TestConfig/lib/testng.jar" />
 					</classpath>

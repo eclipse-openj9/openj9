@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -406,4 +406,19 @@ J9NLS_JCL_OOM_NEW_GLOBAL_REF=Unable to allocate memory for new JNI global refere
 J9NLS_JCL_OOM_NEW_GLOBAL_REF.explanation=The JVM was not able to allocate the native memory required to create a new JNI global reference.
 J9NLS_JCL_OOM_NEW_GLOBAL_REF.system_action=The JVM will exit unless the OutOfMemoryError is caught and recovered from.
 J9NLS_JCL_OOM_NEW_GLOBAL_REF.user_response=Ensure the process has enough native memory to run.
+# END NON-TRANSLATABLE
+
+# Message for IllegalArgumentException if host class and anonymous class are in different packages
+# argument 1 is the host class
+# argument 2 is the anonymous class
+
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES=Host class %2$.*1$s and anonymous class %4$.*3$s are in different packages
+# START NON-TRANSLATABLE
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_1=Foo
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_2=3
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_3=Bar
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_4=3
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.explanation=NOTAG
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.system_action=
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.user_response=
 # END NON-TRANSLATABLE
