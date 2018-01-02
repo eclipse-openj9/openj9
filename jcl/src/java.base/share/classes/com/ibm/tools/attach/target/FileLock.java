@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 2010, 2010 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,9 +118,10 @@ public final class FileLock {
 
 		return locked;
 	}
-
-	/*[PR Jazz 30075] inlined createFileLockWatchdogTimer which is called once and has obligations on its caller */
 	
+	/**
+	 * Release the lock on a file.
+	 */
 	public void unlockFile() {
 		if (IPC.loggingEnabled ) {
 			IPC.logMessage("unlocking file ", lockFilepath);  //$NON-NLS-1$
@@ -132,9 +133,8 @@ public final class FileLock {
 				lockObjectCopy.release();
 				lockFileRAF.close();
 			} catch (IOException e) {
-				IPC.logMessage("IOException unlocking file"); //$NON-NLS-1$
+				IPC.logMessage("IOException unlocking file "+lockFilepath, e); //$NON-NLS-1$
 			}
-			lockObjectCopy = null;
 		}
 		if (locked && (fileDescriptor >= 0)) {
 			unlockFileImpl(fileDescriptor);

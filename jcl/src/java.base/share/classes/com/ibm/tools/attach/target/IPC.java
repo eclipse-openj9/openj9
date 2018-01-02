@@ -2,7 +2,7 @@
 package com.ibm.tools.attach.target;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2015 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -285,10 +285,33 @@ public class IPC {
 		}
 	}
 
+	/**
+	 * Print the information about a throwable, including the exact class,
+	 * message, and stack strace.
+	 * @param msg User supplied message
+	 * @param thrown throwable
+	 */
+	public synchronized static void logMessage(String msg, Throwable thrown) {
+		tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
+		@SuppressWarnings("resource")
+		PrintStream log = getLogStream();
+		printLogMessageHeader(log);
+		log.println(msg);
+		thrown.printStackTrace(log);
+		log.flush();
+	}
+
 	private synchronized static void printLogMessage(final String msg) {
 		tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
-		long currentTime = System.currentTimeMillis();
+		@SuppressWarnings("resource")
 		PrintStream log = getLogStream();
+		printLogMessageHeader(log);
+		log.println(msg);
+		log.flush();
+	}
+
+	private static void printLogMessageHeader(PrintStream log) {
+		long currentTime = System.currentTimeMillis();
 		log.print(currentTime);
 		log.print(" "); //$NON-NLS-1$
 		String id = AttachHandler.getVmId();
@@ -301,8 +324,6 @@ public class IPC {
 		log.print(" ["); //$NON-NLS-1$
 		log.print(Thread.currentThread().getName());
 		log.print("]: "); //$NON-NLS-1$
-		log.println(msg);
-		log.flush();
 	}
 	
 	static final class syncObject {
