@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -216,17 +216,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR_PseudoRegister *evaluateBCDValueModifyingOperand(TR::Node * node, bool initTarget, TR::MemoryReference *sourceMR, TR::CodeGenerator * cg, bool trackSignState=false, int32_t srcSize=0, bool alwaysLegalToCleanSign=false);
    static TR_OpaquePseudoRegister *evaluateSignModifyingOperand(TR::Node *node, bool isEffectiveNop, bool isNondestructiveNop, bool initTarget, TR::MemoryReference *sourceMR, TR::CodeGenerator *cg);
    static TR_PseudoRegister *evaluateBCDSignModifyingOperand(TR::Node *node, bool isEffectiveNop, bool isNondestructiveNop, bool initTarget, TR::MemoryReference *sourceMR, TR::CodeGenerator *cg);
-   static TR_PseudoRegister *evaluateToNewStorageReference(TR::Node * node, TR::MemoryReference *sourceMR, TR::CodeGenerator * cg);
-
-   static bool isAddressAliasedToStorageRef(TR::Node *address, size_t sizePointedToByAddress, TR_StorageReference *storageRef, TR::CodeGenerator *cg);
-   static TR::Register *inlineIfpdaddsubOverflowDetectEvaluator(TR::Node * node, TR::InstOpCode::Mnemonic op, TR::InstOpCode::S390BranchCondition brCond, TR::CodeGenerator * cg);
-   static TR::Register *pdaddsubOverflowDetectEvaluator(TR::Node * node,
-                                                       TR::InstOpCode::Mnemonic op,
-                                                       bool isFoldedIf,
-                                                       TR::InstOpCode::S390BranchCondition brCond,
-                                                       TR::LabelSymbol *targetLabel,
-                                                       TR::RegisterDependencyConditions *deps,
-                                                       TR::CodeGenerator *cg);
 
    static TR::Register *pdclearEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pdSetSignHelper(TR::Node *node, int32_t sign, TR::CodeGenerator *cg);
