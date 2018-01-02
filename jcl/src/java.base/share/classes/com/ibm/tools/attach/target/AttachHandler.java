@@ -2,7 +2,7 @@
 package com.ibm.tools.attach.target;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -299,6 +299,7 @@ public class AttachHandler extends Thread {
 		
 		synchronized (stateSync) {
 			if (isAttachApiTerminated()) {
+				IPC.logMessage("cancel initialize before prepareCommonDirectory"); //$NON-NLS-1$
 				return false;
 			} else {
 				/*[PR Jazz 30075] method renamed */
@@ -318,6 +319,7 @@ public class AttachHandler extends Thread {
 		
 		File syncFileObjectTemp = TargetDirectory.getSyncFileObject();
 		if (isAttachApiTerminated() || (null == syncFileObjectTemp)) {
+			IPC.logMessage("cancel initialize before creating syncFileLock"); //$NON-NLS-1$
 			return false;
 		}		
 		/* the syncFileObject was created by createFiles() (above) */
@@ -431,15 +433,12 @@ public class AttachHandler extends Thread {
 				}
 			}
 		} catch (InterruptedException e) {
-			IPC.logMessage("InterruptedException while waiting to shut down"); //$NON-NLS-1$
-		} catch (IOException e) {
-			IPC.logMessage("IOException in tryObtainMasterLock"); //$NON-NLS-1$
-
+			IPC.logMessage("InterruptedException while waiting to shut down", e); //$NON-NLS-1$
 		}
 		if (!isWaitingForSemaphore()) {
 			wakeHandler = false; /* The wait loop is already shutting down */
 			if (IPC.loggingEnabled ) {
-				IPC.logMessage("VM already notified for temination, abandoning master lock"); //$NON-NLS-1$
+				IPC.logMessage("VM already notified for termination, abandoning master lock"); //$NON-NLS-1$
 			}
 			if (gotLock) {
 				/* 
@@ -551,21 +550,17 @@ public class AttachHandler extends Thread {
 				TargetDirectory.deleteMyDirectory(true); /*[PR Jazz 58094] terminate() cleared out the directory */
 				/*[PR CMVC 161992] wait until the attach handler thread has finished before closing the semaphore*/
 				if (destroySemaphore) {
-					try {
-						if (CommonDirectory.tryObtainMasterLock()) {
-							/* if this fails, then another process became active after the VMs were counted */
-							CommonDirectory.destroySemaphore();
-							if (IPC.loggingEnabled ) {
-								IPC.logMessage("AttachHandler destroyed semaphore"); //$NON-NLS-1$
-							}
-						} else {
-							if (IPC.loggingEnabled ) {
-								IPC.logMessage("could not obtain lock, semaphore not destroyed"); //$NON-NLS-1$
-							}
-							CommonDirectory.closeSemaphore();
+					if (CommonDirectory.tryObtainMasterLock()) {
+						/* if this fails, then another process became active after the VMs were counted */
+						CommonDirectory.destroySemaphore();
+						if (IPC.loggingEnabled ) {
+							IPC.logMessage("AttachHandler destroyed semaphore"); //$NON-NLS-1$
 						}
-					} catch (IOException e) {
-						IPC.logMessage("exception when locking master lock"); //$NON-NLS-1$
+					} else {
+						if (IPC.loggingEnabled ) {
+							IPC.logMessage("could not obtain lock, semaphore not destroyed"); //$NON-NLS-1$
+						}
+						CommonDirectory.closeSemaphore();
 					}
 				} else {
 					CommonDirectory.closeSemaphore();
