@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang.ref;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,9 @@ import java.lang.ref.SoftReference;
 public class Test_ReferenceQueue {
 	static Boolean b;
 	static Integer integer;
+	final boolean isJava8 = System.getProperty("java.specification.version").equals("1.8");
+	final boolean disableClearBeforeEnqueue =
+            Boolean.getBoolean("jdk.lang.ref.disableClearBeforeEnqueue");
 
 	protected void doneSuite() {
 		b = null;
@@ -76,7 +79,11 @@ public class Test_ReferenceQueue {
 		SoftReference sr = new SoftReference(b, rq);
 		sr.enqueue();
 		try {
-			AssertJUnit.assertTrue("Remove failed.", ((Boolean)rq.poll().get()).booleanValue());
+			if (isJava8 || disableClearBeforeEnqueue) {
+				AssertJUnit.assertTrue("Poll failed.", ((Boolean)rq.poll().get()).booleanValue());
+			} else {
+				AssertJUnit.assertTrue("Poll failed.", (rq.poll().get() == null));
+			}
 		} catch (Exception e) {
 			AssertJUnit.assertTrue("Exception during the test.", false);
 		}
@@ -94,7 +101,11 @@ public class Test_ReferenceQueue {
 		SoftReference sr = new SoftReference(b, rq);
 		sr.enqueue();
 		try {
-			AssertJUnit.assertTrue("Remove failed.", ((Boolean)rq.remove().get()).booleanValue());
+			if (isJava8 || disableClearBeforeEnqueue) {
+				AssertJUnit.assertTrue("Remove failed.", ((Boolean)rq.remove().get()).booleanValue());
+			} else {
+				AssertJUnit.assertTrue("Remove failed.", (rq.remove().get() == null));
+			}
 		} catch (Exception e) {
 			AssertJUnit.assertTrue("Exception during the test.", false);
 		}
