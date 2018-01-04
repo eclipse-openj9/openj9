@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@ package org.openj9.test.unsafe;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
+import org.testng.Assert;
 
 @Test(groups = { "level.sanity" })
 public class TestUnsafeAccess extends UnsafeTestBase {
@@ -298,5 +299,35 @@ public class TestUnsafeAccess extends UnsafeTestBase {
 	
 	public void testStaticGetBoolean() throws Exception {
 		testGetBoolean(BooleanData.class, DEFAULT);
+	}
+	
+	/* Test behavior of jdk.internal.misc.Unsafe.defineAnonymousClass */
+	public void testDefineAnonymousClass() throws Exception {
+		/* Anonymous Class = DummyClass; Host Class = java/lang/Object 
+		 * No exception should be thrown since anonymous class has no
+		 * package name. Anonymous classes with no package name are
+		 * considered part of host class's package.
+		 */
+		byte[] bytes = createDummyClass(null);
+		Class<?> anon = myUnsafe.defineAnonymousClass(Object.class, bytes, null);
+		
+		/* Anonymous Class = java/lang/DummyClass; Host Class = java/lang/Object 
+		 * No execption should be thrown since anonymous class and host class
+		 * are in the same package.
+		 */
+		bytes = createDummyClass("java/lang");
+		anon = myUnsafe.defineAnonymousClass(Object.class, bytes, null);
+		
+		/* Anonymous Class = test/DummyClass; Host Class = java/lang/Object 
+		 * IllegalArgumentException should be thrown since anonymous class
+		 * and host class are in different packages.
+		 */
+		try {
+			bytes = createDummyClass("test");
+			anon = myUnsafe.defineAnonymousClass(Object.class, bytes, null);
+			Assert.fail("IllegalArgumentException expected since host class and anonymous class are in different packages.");
+		} catch (IllegalArgumentException e) {
+			/* Correct Behavior. */
+		}
 	}
 }

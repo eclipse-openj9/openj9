@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,13 @@ import org.testng.ITest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.log4testng.Logger;
+
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.MethodVisitor;
+
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
+
 import jdk.internal.misc.Unsafe;
 
 public class UnsafeTestBase implements ITest {
@@ -1008,5 +1015,33 @@ public class UnsafeTestBase implements ITest {
 			mem = mem + mod;
 			getLogger().debug("Change pointer to: " + mem);
 		}
+	}
+	
+	/* Create a class with the specified package name.
+	 * This method is used to verify the correctness of 
+	 * jdk.internal.misc.Unsafe.defineAnonymousClass.
+	 */
+	protected static byte[] createDummyClass(String packageName) {
+		ClassWriter cw = new ClassWriter(0);
+		MethodVisitor mv = null;
+		String className = "DummyClass";
+		
+		if (packageName != null) {
+			className = packageName + "/" + className;
+		}
+		
+		cw.visit(52, ACC_PUBLIC, className, null, "java/lang/Object", null);
+		
+		{
+			mv = cw.visitMethod(ACC_PUBLIC, "bar", "()V", null, null);
+			mv.visitCode();
+			mv.visitInsn(RETURN);
+			mv.visitMaxs(2, 1);
+			mv.visitEnd();
+		}
+
+		cw.visitEnd();
+		
+		return cw.toByteArray();
 	}
 }
