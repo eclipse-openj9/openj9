@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,7 +86,11 @@ final public class TraceFormat
 
 	// constants
 	protected static final String usageMessage = "Usage:\n"
+/*[IF Sidecar18-SE-OpenJ9]*/
+			+ "traceformat input_filespec [output_filespec] \n"
+/*[ELSE]*/
 			+ "java com.ibm.jvm.format.TraceFormat input_filespec [output_filespec] \n"
+/*[ENDIF] Sidecar18-SE-OpenJ9 */
 			+ "\t[-summary] [-datdir datfiledirectory] [-uservmid vmid] [-thread:id] [-indent] \n"
 			+ "\t[-overridetimezone noOfHours] [-help]\n"
 			+ "\n"
@@ -106,7 +110,11 @@ final public class TraceFormat
 			+ "\tuservmid = users can specify a string to be inserted into each\n"
 			+ "\t      tracepoint's formatted output, to help track and compare\n"
 			+ "\t      tracefiles from multiple jvm runs.\n"
+/*[IF Sidecar18-SE-OpenJ9]*/
+			+ "\t      e.g. traceformat 142trcfile /\n"
+/*[ELSE]*/
 			+ "\t      e.g. java com.ibm.jvm.format.TraceFormat 142trcfile /\n"
+/*[ENDIF] Sidecar18-SE-OpenJ9 */
 			+ "\t           -datdir /142sdk/jre/lib\n"
 			+ "\tthread = only trace information for the specified thread will \n"
 			+ "\t      be formatted. Any number of thread IDs can be specified, \n"
@@ -115,7 +123,11 @@ final public class TraceFormat
 			+ "\t      added to the formatted tracepoints (can be negative).\n"
 			+ "\t      This option allows the user to override the default time\n"
 			+ "\t      zone used in the formatter (GMT)\n"
+/*[IF Sidecar18-SE-OpenJ9]*/
+			+ "\t      e.g. traceformat 142trcfile /\n"
+/*[ELSE]*/
 			+ "\t      e.g. java com.ibm.jvm.format.TraceFormat trcfile /\n"
+/*[ENDIF] Sidecar18-SE-OpenJ9 */
 			+ "\t           -overridetimezone -4\n"
 			+ "\tindent = specify indentation at Entry/Exit trace points.\n"
 			+ "\t      Default is not to indent.\n"
