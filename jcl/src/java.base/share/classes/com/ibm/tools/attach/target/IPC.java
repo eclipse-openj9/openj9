@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
 
@@ -287,29 +288,45 @@ public class IPC {
 
 	/**
 	 * Print the information about a throwable, including the exact class,
-	 * message, and stack strace.
+	 * message, and stack trace.
 	 * @param msg User supplied message
 	 * @param thrown throwable
+	 * @note nothing is printed if logging is disabled
 	 */
 	public synchronized static void logMessage(String msg, Throwable thrown) {
-		tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
 		@SuppressWarnings("resource")
 		PrintStream log = getLogStream();
-		printLogMessageHeader(log);
-		log.println(msg);
-		thrown.printStackTrace(log);
-		log.flush();
+		if (!Objects.isNull(log)) {
+			tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
+			printLogMessageHeader(log);
+			log.println(msg);
+			thrown.printStackTrace(log);
+			log.flush();
+		}
 	}
 
+	/**
+	 * Print a message to the log file with time and thread information.
+	 * Also send the raw message to a tracepoint.
+	 * @param msg message to print
+	 * @note no message is printed if logging is disabled
+	 */
 	private synchronized static void printLogMessage(final String msg) {
-		tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
 		@SuppressWarnings("resource")
 		PrintStream log = getLogStream();
-		printLogMessageHeader(log);
-		log.println(msg);
-		log.flush();
+		if (!Objects.isNull(log)) {
+			tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
+			printLogMessageHeader(log);
+			log.println(msg);
+			log.flush();
+		}
 	}
 
+	/**
+	 * Print the time, virtual machine ID, and thread ID to the log stream.
+	 * @param log output stream
+	 * @note log must be non-null
+	 */
 	private static void printLogMessageHeader(PrintStream log) {
 		long currentTime = System.currentTimeMillis();
 		log.print(currentTime);

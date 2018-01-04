@@ -97,11 +97,15 @@ public:
    void reportCodeLoadEvents();
 
    static const uint32_t SAFE_DISTANCE_REPOSITORY_JITLIBRARY = 24 * 1024 * 1024;  // 24MB to account for some safe JIT library size
+   static const uintptr_t UPPER_BOUND_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE = 0x80000000 - 24 * 1024 * 1024; // 2GB - 24MB
 
    void setCodeCacheFull();
 
    void onFSDDecompile();
    void onClassRedefinition(TR_OpaqueMethodBlock *oldMethod, TR_OpaqueMethodBlock *newMethod);
+
+   uintptr_t getSomeJitLibraryAddress();
+   bool isInRangeToAvoidTrampoline(uintptr_t codeCacheBaseAddress);
 
 private :
    TR_FrontEnd *_fe;

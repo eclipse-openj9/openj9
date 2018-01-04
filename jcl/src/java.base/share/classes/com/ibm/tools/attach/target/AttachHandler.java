@@ -262,8 +262,7 @@ public class AttachHandler extends Thread {
 		} catch (IOException e) {
 			setAttachState(AttachStateValues.ATTACH_TERMINATED);
 			return;
-		}
-		
+		}	
 	}
 
 	private boolean initialize() throws IOException {
@@ -556,6 +555,7 @@ public class AttachHandler extends Thread {
 						if (IPC.loggingEnabled ) {
 							IPC.logMessage("AttachHandler destroyed semaphore"); //$NON-NLS-1$
 						}
+						CommonDirectory.releaseMasterLock();
 					} else {
 						if (IPC.loggingEnabled ) {
 							IPC.logMessage("could not obtain lock, semaphore not destroyed"); //$NON-NLS-1$
