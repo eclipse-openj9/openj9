@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,7 +153,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 #endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
 
 	if (BUFFER_SIZE <= j9str_printf(PORTLIB, fullversion, BUFFER_SIZE + 1,
-			"JRE %s IBM J9 %s %s %s " MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO,
+			"JRE %s IBM J9 %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO,
 			j2se_version_info,
 			EsVersionString,
 			(NULL != osname ? osname : " "),
