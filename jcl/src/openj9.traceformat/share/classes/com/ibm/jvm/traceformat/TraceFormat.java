@@ -6,7 +6,7 @@ package com.ibm.jvm;
 /*[ENDIF]*/
 
 /*******************************************************************************
- * Copyright (c) 2010, 2016 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1066,7 +1066,11 @@ abstract class ProgramOption {
 
 	public static String help() {
 		StringBuffer help = new StringBuffer("Usage: \n");
+/*[IF Sidecar18-SE-OpenJ9]
+		StringBuffer synopsis = new StringBuffer("traceformat");
+/*[ELSE]*/
 		StringBuffer synopsis = new StringBuffer("com.ibm.jvm.TraceFormat");
+/*[ENDIF] Sidecar18-SE-OpenJ9 */
 		StringBuffer sb = new StringBuffer("Option details:"+System.getProperty("line.separator")+System.getProperty("line.separator"));
 
 		Iterator itr = options.values().iterator();
