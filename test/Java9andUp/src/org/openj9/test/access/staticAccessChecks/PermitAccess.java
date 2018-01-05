@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,12 +48,12 @@ public class PermitAccess {
 			Field f = Unsafe.class.getDeclaredField("theUnsafe");
 			f.setAccessible(true);
 			Unsafe unsafe = (Unsafe) f.get(null);
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException e) {
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 			e.printStackTrace();
-		} catch (IllegalAccessException e) {
+		} catch (IllegalAccessError e) {
 			threwIAE = true;
 		}
 		
-		Assert.assertTrue(threwIAE, "Expected IllegalAccessException not thrown");
+		Assert.assertTrue(threwIAE, "Expected IllegalAccessError not thrown");
 	}
 }
