@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5771,7 +5771,7 @@ void TR_EscapeAnalysis::avoidStringCopyAllocation(Candidate *candidate)
  */
 bool TR_EscapeAnalysis::tryToZeroInitializeUsingArrayset(Candidate* candidate, TR::TreeTop* precedingTreeTop)
    {
-   if (cg()->getSupportsArraySetToZero())
+   if (cg()->getSupportsArraySet())
       {
       int32_t candidateHeaderSizeInBytes = candidate->_origKind == TR::New ? comp()->fej9()->getObjectHeaderSizeInBytes() : TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
