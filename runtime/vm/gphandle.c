@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -725,7 +725,7 @@ vmSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, vo
 		
 	memset(&recursiveCrashData, 0, sizeof(J9RecursiveCrashData));
 
-#ifdef J9VM_INTERP_NATIVE_SUPPORT
+#if defined(J9VM_INTERP_NATIVE_SUPPORT) && !defined(J9ZTPF)
 	/* give the JIT a chance to recover from the exception */
 	if (NULL != vmThread) {
 		J9JITConfig *jitConfig = vm->jitConfig;
@@ -738,7 +738,7 @@ vmSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, vo
 			}
 		}
 	}
-#endif /* J9VM_INTERP_NATIVE_SUPPORT */
+#endif /* defined(J9VM_INTERP_NATIVE_SUPPORT) && !defined(J9ZTPF) */
 
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
 	if (J9_SIG_ZOS_CEEHDLR == (vm->sigFlags & J9_SIG_ZOS_CEEHDLR)) {
