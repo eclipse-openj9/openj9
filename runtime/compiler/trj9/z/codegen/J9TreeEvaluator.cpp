@@ -15555,120 +15555,71 @@ J9::Z::TreeEvaluator::tabortEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    return NULL;
    }
 
-TR::Register *
-J9::Z::TreeEvaluator::BCDCHKEvalHelper(TR::Node *node, TR::Node * pdopNode, TR::CodeGenerator *cg)
-   {
-   static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   bool isEnableVectorBCD = TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility() &&
-           !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD) ||
-           isVectorBCDEnv;
-
-   switch (pdopNode->getOpCodeValue())
-      {
-      case TR::pdcmpgt:
-      case TR::pdcmplt:
-      case TR::pdcmpge:
-      case TR::pdcmple:
-      case TR::pdcmpeq:
-      case TR::pdcmpne:
-      case TR::pd2l:
-      case TR::pd2i:
-      case TR::pd2iOverflow:
-      case TR::pd2lOverflow:
-         {
-         return BCDCHKEvaluatorImpl(node, pdopNode, cg, node->getNumChildren() - 1, 1, false, isEnableVectorBCD);
-         }
-      case TR::i2pd:
-      case TR::l2pd:
-      case TR::pdshlOverflow:
-      case TR::pdshr:
-         {
-         return BCDCHKEvaluatorImpl(node, pdopNode, cg, node->getNumChildren() - 2, 2, true, isEnableVectorBCD);
-         }
-      // Handle variable precision
-      case TR::lcall:
-      case TR::icall:
-         {
-         switch (pdopNode->getSymbol()->getMethodSymbol()->getMethod()->getRecognizedMethod())
-            {
-            case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_:
-            case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_ByteBuffer_:
-            case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_:
-            case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_ByteBuffer_:
-               {
-               return BCDCHKEvaluatorImpl(node, pdopNode, cg, pdopNode->getNumChildren(), 0, false, isEnableVectorBCD);
-               }
-
-            default: TR_ASSERT(0, "BCDCHKEvaluator: Could not find recognized method for variable precision DAA operation.\n");
-            }
-         }
-
-      default: TR_ASSERT(0, "Operation Code not supported in BCDCHKEvaluator.\n");
-      }
-
-   return NULL;
-   }
-
 /**
- * \brief This evaluator helper function handles pdOp node evaluation under pdshloverflow and BCDCHK nodes.
+ * \brief This evaluator helper function evalutes BCDCHK nodes by emitting mainline and out-of-line instructions for
+ * the underlying packed decimal operations. The mainline instructions perform the actual operations, and the OOL
+ * instructions are for hardware exception handling.
  *
- * The following PD opts are currently handled by this function:
- * -- i2pd, l2pd
- * -- pdadd, pdsub, pdmul, pddiv, pdrem
+ * The canonical BCDCHK IL structure is the following:
  *
- * With the new DAA BCDCHK node tree structure, the first child of a BCDCHK node is always the PD opNode that
- * could throw PD related exceptions (decimal exception, and etc); and the second child of a BCDCHK node
- * should always be an address node.
+ * BCDCHK
+ *      pdOpNode        // the operation node
+ *      aladd           // optional address node. Exists only if the result of the operation is packed decimal
+ *      callParam1      // call parameter nodes of the original DAA API call
+ *      callParam2
+ *      .
+ *      .
+ *      callParamN
+ *
+ * With the new DAA BCDCHK node tree structure, the first child of a BCDCHK node is
+ * always the PD opNode. The first child and its sub-tree could throw packed decimal related hardware exceptions, which is
+ * to be handled by the designated OOL instruction sequence.
+ *
+ * As for the second child of BCDCHK, it will be an address node if the result of the PD operation is a packed decimal. This address
+ * node is to be used by the OOL for result copy back.
  *
  * The steps to evaluate the new BCDCHK node is the following:
  *
- * 1. Create a callNode and attached BCDCHK's call parameter children to it. This callNode is to be evaluated
+ * -# Create a callNode and attached BCDCHK's call parameter children to it. This callNode is to be evaluated
  *    later in the OOL section
  *
- * 2. Evaluate callNode's children that are needed by the mainline code (with refCount > 2).
- *    OOL-only children evaluation is defered to the OOL path, after the call to
- *    swapInstructionListsWithCompilation()
+ * -# If applicable, evaluate address node's children (e.g. this is applicable to i2pd but not to PD comparisons)
  *
- * 3. If applicable, evaluate address node's children (e.g. this is applicable to i2pd but not to PD comparisons)
+ * -# Create a handlerLabel that points to the start of the OOL section
  *
- * 4. Create a handlerLabel that points to the start of the OOL section and replace the second child
- *    with this handlerLabel
+ * -# Evaluate the pdopNode (first child) and decrement its refCount.
  *
- * 5. Evaluate the pdopNode (first child) and decrement its refCount.
+ * -# Emit a NOP BRC bearing the handlerLabel right after evaluating the pdopNode. This is for SignalHandler.c
  *
- * 6. Emit a NOP BRC bearing the handlerLabel right after evaluating the pdopNode. This is for SignalHandler.c
+ * -# Switch to OOL code generation and evaluate the callNode
  *
- * 7. Undo step 4 by restoring the second child
+ * -# Evaluate the addressNode (second child of BCDCHK node) to yield a correct address into the byte[]
  *
- * 8. Switch to OOL code generation and evaluate the callNode
+ * -# Copy the results produced by the call from byte[] back to mainline storage reference
  *
- * 9. Evaluate the addressNode (second child of BCDCHK node) to yield a correct address into the byte[]
+ * -# Finish up by decRefCount on callNode and addressNode
  *
- * 10. Copy the results produced by the call from byte[] back to mainline storage reference
- *
- * 11. Finish up by decRefCount on callNode and addressNode
- *
- * \param node the BCDCHK node
- * \param pdopNode pdshlOverflow, i2pd or l2pd node
- * \param cg codegen object
- * \param numCallChildre  number of callNode children
- * \param callChildStartIndex  the index of the first callChild under the BCDCHK node
- * \param isResultPD   True if the result of the pdOpNode a PD; false if the result is a binary integer/long
- *                     This also implies that the second node of the BCDCHK node is an address node.
+ * \param node                  the BCDCHK node
+ * \param cg                    codegen object
+ * \param numCallChildre        number of callNode children
+ * \param callChildStartIndex   the index of the first callChild under the BCDCHK node
+ * \param isResultPD            True if the result of the pdOpNode a PD; false if the result is a binary integer/long
+ *                              This also implies that the second node of the BCDCHK node is an address node.
+ * \param isUseVector           If true, emit vector packed decimal instructions
+ * \param isVariableParam       true if the PD operation's precision is not a constant.
 */
 TR::Register *
 J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
-                                          TR::Node * pdopNode,
                                           TR::CodeGenerator * cg,
-                                          uint32_t numCallChildren,
+                                          uint32_t numCallParam,
                                           uint32_t callChildStartIndex,
                                           bool isResultPD,
-                                          bool isUseVector)
+                                          bool isUseVector,
+                                          bool isVariableParam)
    {
    TR_Debug* debugObj = cg->getDebug();
-   TR::Node * secondChild = node->getChild(1);
-   bool isVariableParam = pdopNode->getOpCodeValue() == TR::lcall ||
-                          pdopNode->getOpCodeValue() == TR::icall;
+   TR::Node* pdopNode = node->getFirstChild();
+   TR::Node* secondChild = node->getSecondChild();
 
    bool isResultLong = pdopNode->getOpCodeValue() == TR::pd2l ||
                        pdopNode->getOpCodeValue() == TR::pd2lOverflow ||
@@ -15684,29 +15635,14 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
    // Create a call
    TR::ILOpCodes callType = isResultPD ? TR::call : (isResultLong ? TR::lcall : TR::icall);
 
-   TR::Node * callNode = TR::Node::createWithSymRef(node, callType, numCallChildren,
+   TR::Node * callNode = TR::Node::createWithSymRef(node, callType, numCallParam,
                                                     childRootNode->getSymbolReference());
    cg->incReferenceCount(callNode);
-   callNode->setNumChildren(numCallChildren);
+   callNode->setNumChildren(numCallParam);
 
    // Setup callNode children
-   for (int i = 0; i < numCallChildren; ++i)
-      {
-      if(isResultPD)
-         callNode->setAndIncChild(i, childRootNode->getChild(i + callChildStartIndex));
-      else
-         callNode->setChild(i, childRootNode->getChild(i + callChildStartIndex));
-      }
-
-   // Evaluate callNode children, if needed by the mainline code
-   for (uint32_t i = 0; i < numCallChildren; ++i)
-      {
-      TR::Node* child = callNode->getChild(i);
-      if(child->getReferenceCount() > 2)
-         {
-         cg->evaluate(child);
-         }
-      }
+   for (uint32_t i = 0; i < numCallParam; ++i)
+      callNode->setAndIncChild(i, childRootNode->getChild(i + callChildStartIndex));
 
    // Evaluate secondChild's children, if the secondChild is an address node into a byte[]
    if(isResultPD && secondChild->getNumChildren() == 2)
@@ -15832,31 +15768,115 @@ TR::Register *
 J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    PRINT_ME("BCDCHK", node, cg);
-   TR::Register* rv = node->getFirstChild()->getRegister();
+   TR::Node* pdopNode = node->getFirstChild();
+   TR::Register* resultReg = pdopNode->getRegister();
+   bool isResultPD = pdopNode->getDataType() == TR::PackedDecimal;
+   bool isVariableParam = false;
+   uint32_t firstCallParamIndex = 0;
 
-   // Avoid evaluating an evaluated pdOpNode (first child of BCDCHK) under a BCDCHK node.
-   // This is to avoid generating unnecessary labels that points to non-existant OOL paths
-   // that can eventually cause RA to produce incorrect register use counts.
-   if(rv != NULL)
+   static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
+   bool isEnableVectorBCD = TR::Compiler->target.cpu.getS390SupportsVectorPackedDecimalFacility()
+                               && !TR::Options::getCmdLineOptions()->getOption(TR_DisableVectorBCD)
+                               || isVectorBCDEnv;
+
+   // Validate PD operations under BCDCHK node
+   switch (pdopNode->getOpCodeValue())
       {
-      for(int i = 0; i < node->getNumChildren(); ++i)
+      case TR::pdcmpgt:
+      case TR::pdcmplt:
+      case TR::pdcmpge:
+      case TR::pdcmple:
+      case TR::pdcmpeq:
+      case TR::pdcmpne:
+      case TR::pd2l:
+      case TR::pd2i:
+      case TR::pd2iOverflow:
+      case TR::pd2lOverflow:
+      case TR::i2pd:
+      case TR::l2pd:
+      case TR::pdshlOverflow:
+      case TR::pdshr:
+         break;
+      case TR::lcall:
+      case TR::icall:
          {
-         cg->recursivelyDecReferenceCount(node->getChild(i));
+         switch (pdopNode->getSymbol()->getMethodSymbol()->getMethod()->getRecognizedMethod())
+            {
+            case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_:
+            case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_ByteBuffer_:
+            case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_:
+            case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_ByteBuffer_:
+               {
+               isVariableParam = true;
+               break;
+               }
+
+            default: TR_ASSERT_FATAL(0, "BCDCHKEvaluator: Could not find recognized method for variable precision DAA operation.\n");
+            }
+         break;
          }
-      return rv;
+
+      default: TR_ASSERT_FATAL(0, "Operation Code not supported by BCDCHKEvaluator.\n");
       }
 
-   TR::RegisterDependencyConditions * daaDeps =  new (INSN_HEAP) TR::RegisterDependencyConditions(0, 13, cg);
+   if (!isVariableParam)
+      {
+      firstCallParamIndex = isResultPD ? 2 : 1;
+      }
 
-   cg->setCurrentCheckNodeRegDeps(daaDeps);
-   cg->setCurrentCheckNodeBeingEvaluated(node);
+   // Evaluate call parameters
+   TR::Node* callParamRoot = isVariableParam ? pdopNode : node;
+   for (uint32_t i = firstCallParamIndex; i < callParamRoot->getNumChildren(); ++i)
+      {
+      if (!callParamRoot->getChild(i)->isSingleRefUnevaluated())
+         cg->evaluate(callParamRoot->getChild(i));
+      }
 
-   rv = BCDCHKEvalHelper(node, node->getFirstChild(), cg);
+   /*
+    * Avoid evaluating an evaluated pdOpNode (first child of BCDCHK) under a BCDCHK node if
+    * it is already evaluated.
+    *
+    * This is to avoid generating OOL paths without mainline sequences. OOL without mainline can
+    * cause RA to produce incorrect register use counts, and eventually produce incorrect GC maps that
+    * make GC fail during runtime.
+    */
+   if (resultReg != NULL)
+      {
+      if (isVariableParam)
+         cg->recursivelyDecReferenceCount(pdopNode);          // variable parameter l2pd is a call node
+      else
+         {
+         // first child
+         cg->decReferenceCount(pdopNode);
 
-   cg->setCurrentCheckNodeRegDeps(NULL);
-   cg->setCurrentCheckNodeBeingEvaluated(NULL);
+         // second child
+         if (isResultPD)
+            cg->recursivelyDecReferenceCount(node->getSecondChild());
 
-   return rv;
+         // call parameters: 2nd/3rd and above
+         for (uint32_t i = firstCallParamIndex; i < node->getNumChildren(); ++i)
+            cg->decReferenceCount(node->getChild(i));
+         }
+
+      traceMsg(cg->comp(), "Skipped BCDCHK node n%dn\n", node->getGlobalIndex());
+      }
+   else
+      {
+      uint32_t numCallChildren = isVariableParam ? pdopNode->getNumChildren() : (node->getNumChildren() - firstCallParamIndex);
+
+      TR::RegisterDependencyConditions * daaDeps = new (INSN_HEAP) TR::RegisterDependencyConditions(0, 13, cg);
+
+      cg->setCurrentCheckNodeRegDeps(daaDeps);
+      cg->setCurrentCheckNodeBeingEvaluated(node);
+
+      resultReg = BCDCHKEvaluatorImpl(node, cg, numCallChildren, firstCallParamIndex,
+                                      isResultPD, isEnableVectorBCD, isVariableParam);
+
+      cg->setCurrentCheckNodeRegDeps(NULL);
+      cg->setCurrentCheckNodeBeingEvaluated(NULL);
+      }
+
+   return resultReg;
    }
 
 TR::Register*

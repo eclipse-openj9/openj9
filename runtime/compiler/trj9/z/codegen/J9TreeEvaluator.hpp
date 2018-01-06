@@ -117,14 +117,13 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    
    static TR::Register *BCDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *BCDCHKEvalHelper(TR::Node *node, TR::Node *pdopNode, TR::CodeGenerator *cg);
    static TR::Register *BCDCHKEvaluatorImpl(TR::Node * node,
-                                            TR::Node * pdopNode,
                                             TR::CodeGenerator * cg,
-                                            uint32_t numCallChildren,
+                                            uint32_t numCallParam,
                                             uint32_t callChildStartIndex,
                                             bool isResultPD,
-                                            bool isUseVector);
+                                            bool isUseVector,
+                                            bool isVariableParam);
 
    static TR::Register *df2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pd2ddEvaluator(TR::Node *node, TR::CodeGenerator *cg);
