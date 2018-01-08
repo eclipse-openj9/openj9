@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2017 IBM Corp. and others
+// Copyright (c) 2006, 2018 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -755,10 +755,10 @@ TraceAssert=Assert_VM_Null noEnv Overhead=1 Level=1 Assert="(P1) == NULL"
 TraceEntry=Trc_VM_resolveStaticFieldRef_Entry Overhead=1 Level=3 Template="resolveStaticFieldRef(method=%p, ramCP=%p, cpIndex=%zu, flags=%zx, returnAddress=%p)"
 TraceEntry=Trc_VM_resolveInstanceFieldRef_Entry Overhead=1 Level=3 Template="resolveInstanceFieldRef(method=%p, ramCP=%p, cpIndex=%zu, flags=%zx, returnAddress=%p)"
 
-TraceEvent=Trc_VM_CreateRAMClassFromROMClass_nestTopLoaded Overhead=1 Level=3 Template="Loaded the nest top %.*s (RAM class=%p)"
-TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotSamePackage Overhead=1 Level=1 Template="The nest top class (RAM class=%p, class loader=%p, this class loader=%p) is not in the same package."
-TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotSameClassLoader Overhead=1 Level=1 Template="The nest top class (RAM class=%p, class loader=%p, this class loader=%p) has not been loaded by the same class loader."
-TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotVerified Overhead=1 Level=1 Template="The nest top (nest top class=%p, class loader=%p, this class loader=%p) does not claim the nest member (nest member=%p)."
+TraceEvent=Trc_VM_CreateRAMClassFromROMClass_nestHostLoaded Overhead=1 Level=3 Template="Loaded the nest host %.*s (RAM class=%p)"
+TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotSamePackage Overhead=1 Level=1 Template="The nest host class (RAM class=%p, class loader=%p, this class loader=%p) is not in the same package."
+TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotSameClassLoader Overhead=1 Level=1 Template="The nest host class (RAM class=%p, class loader=%p, this class loader=%p) has not been loaded by the same class loader."
+TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotVerified Overhead=1 Level=1 Template="The nest host (nest host class=%p, class loader=%p, this class loader=%p) does not claim the nest member (nest member=%p)."
 
 TraceEntry=Trc_VM_sendResolveMethodTypeRefInto_Entry Overhead=1 Level=5 Template="sendResolveMethodTypeRefInto ramCP=%p cpIndex=%zu resolveFlags=%zu"
 TraceException=Trc_VM_sendResolveMethodTypeRefInto_Exception Overhead=1 Level=1 Template="Sender class=%p cannot access receiver class=%p, errorCode=%zi."

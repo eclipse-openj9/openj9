@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -143,7 +143,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 	J9CfrAttributeStackMap *stackMap;
 	J9CfrAttributeBootstrapMethods *bootstrapMethods;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	J9CfrAttributeMemberOfNest *memberOfNest;
+	J9CfrAttributeNestHost *nestHost;
 	J9CfrAttributeNestMembers *nestMembers;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	U_32 name, length;
@@ -753,21 +753,21 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			
 			break;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-		case CFR_ATTRIBUTE_MemberOfNest:
+		case CFR_ATTRIBUTE_NestHost:
 			if (nestAttributeRead) {
 				errorCode = J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES__ID;
 				offset = address;
 				goto _errorFound;
 			}
 
-			if (!ALLOC(memberOfNest, J9CfrAttributeMemberOfNest)) {
+			if (!ALLOC(nestHost, J9CfrAttributeNestHost)) {
 				return -2;
 			}
 			nestAttributeRead = TRUE;
-			attrib = (J9CfrAttribute*)memberOfNest;
+			attrib = (J9CfrAttribute*)nestHost;
 
 			CHECK_EOF(2);
-			NEXT_U16(memberOfNest->hostClassIndex, index);
+			NEXT_U16(nestHost->hostClassIndex, index);
 			break;
 
 		case CFR_ATTRIBUTE_NestMembers: {
@@ -2050,14 +2050,14 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			break;
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-		case CFR_ATTRIBUTE_MemberOfNest:
-			value = ((J9CfrAttributeMemberOfNest*)attrib)->hostClassIndex;
+		case CFR_ATTRIBUTE_NestHost:
+			value = ((J9CfrAttributeNestHost*)attrib)->hostClassIndex;
 			if ((!value) || (value > cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
 			if (CFR_CONSTANT_Class != cpBase[value].tag) {
-				errorCode = J9NLS_CFR_ERR_BAD_NEST_TOP_INDEX__ID;
+				errorCode = J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX__ID;
 				goto _errorFound;
 			}
 			break;

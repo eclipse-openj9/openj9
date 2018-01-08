@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -853,7 +853,7 @@ class NameAndTypeIterator
 	U_16 getInnerClassCount() const { return _innerClassCount; }
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	U_16 getNestMembersCount() const { return _nestMembersCount; }
-	U_16 getNestTopNameIndex() const { return _memberOfNest; }
+	U_16 getNestHostNameIndex() const { return _nestHost; }
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	U_16 getMajorVersion() const { return _classFile->majorVersion; }
 	U_16 getMinorVersion() const { return _classFile->minorVersion; }
@@ -961,7 +961,7 @@ private:
 	U_16 _innerClassCount;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	U_16 _nestMembersCount;
-	U_16 _memberOfNest;
+	U_16 _nestHost;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	U_32 _maxBranchCount;
 	U_16 _outerClassNameIndex;

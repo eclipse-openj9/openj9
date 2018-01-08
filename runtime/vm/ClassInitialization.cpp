@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ static char const *statusNames[] = {
 static j9object_t setInitStatus(J9VMThread *currentThread, J9Class *clazz, UDATA status, j9object_t initializationLock);
 static void classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitState desiredState);
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-static bool verifyNestTop(J9Class *clazz, J9VMThread *vmThread);
+static bool verifyNestHost(J9Class *clazz, J9VMThread *vmThread);
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
 void
@@ -176,7 +176,7 @@ performVerification(J9VMThread *currentThread, J9Class *clazz)
 					goto done;
 				}
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-				if (false == verifyNestTop(clazz, currentThread)) {
+				if (false == verifyNestHost(clazz, currentThread)) {
 					goto done;
 				}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
@@ -622,13 +622,13 @@ done:
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 static bool
-verifyNestTop(J9Class *clazz, J9VMThread *vmThread)
+verifyNestHost(J9Class *clazz, J9VMThread *vmThread)
 {
-	J9Class *nestTop = clazz->memberOfNest;
+	J9Class *nestHost = clazz->nestHost;
 	bool verified = false;
 
-	/* Verification only needed if class's nest top is not itself */
-	if (clazz == nestTop) {
+	/* Verification only needed if class's nest host is not itself */
+	if (clazz == nestHost) {
 		verified = true;
 	} else {
 		J9ROMClass *romClass = clazz->romClass;
@@ -636,19 +636,19 @@ verifyNestTop(J9Class *clazz, J9VMThread *vmThread)
 		U_32 moduleName = 0;
 		U_32 nlsNumber = 0;
 
-		/* Nest top must have same classloader & package */
-		if (clazz->classLoader != nestTop->classLoader) {
-			Trc_VM_CreateRAMClassFromROMClass_nestTopNotSameClassLoader(vmThread, nestTop, nestTop->classLoader, clazz->classLoader);
-			moduleName = J9NLS_VM_NEST_TOP_HAS_DIFFERENT_CLASSLOADER__MODULE;
-			nlsNumber = J9NLS_VM_NEST_TOP_HAS_DIFFERENT_CLASSLOADER__ID;
-		} else if (clazz->packageID != nestTop->packageID) {
-			Trc_VM_CreateRAMClassFromROMClass_nestTopNotSamePackage(vmThread, nestTop, nestTop->classLoader, clazz->classLoader);
-			moduleName = J9NLS_VM_NEST_TOP_HAS_DIFFERENT_PACKAGE__MODULE;
-			nlsNumber = J9NLS_VM_NEST_TOP_HAS_DIFFERENT_PACKAGE__ID;
+		/* Nest host must have same classloader & package */
+		if (clazz->classLoader != nestHost->classLoader) {
+			Trc_VM_CreateRAMClassFromROMClass_nestHostNotSameClassLoader(vmThread, nestHost, nestHost->classLoader, clazz->classLoader);
+			moduleName = J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER__MODULE;
+			nlsNumber = J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER__ID;
+		} else if (clazz->packageID != nestHost->packageID) {
+			Trc_VM_CreateRAMClassFromROMClass_nestHostNotSamePackage(vmThread, nestHost, nestHost->classLoader, clazz->classLoader);
+			moduleName = J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE__MODULE;
+			nlsNumber = J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE__ID;
 		} else {
-			/* The nest top must have a nestmembers attribute that includes this class. */
-			J9SRP *nestMembers = J9ROMCLASS_NESTMEMBERS(nestTop->romClass);
-			U_16 nestMemberCount = nestTop->romClass->nestMemberCount;
+			/* The nest host must have a nestmembers attribute that includes this class. */
+			J9SRP *nestMembers = J9ROMCLASS_NESTMEMBERS(nestHost->romClass);
+			U_16 nestMemberCount = nestHost->romClass->nestMemberCount;
 			for (U_16 i = 0; i < nestMemberCount; i++) {
 				J9UTF8 *nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8*);
 				if (J9UTF8_EQUALS(className, nestMemberName)) {
@@ -657,19 +657,19 @@ verifyNestTop(J9Class *clazz, J9VMThread *vmThread)
 				}
 			}
 			if (!verified) {
-				Trc_VM_CreateRAMClassFromROMClass_nestTopNotVerified(vmThread, nestTop, nestTop->classLoader, clazz->classLoader, className);
-				moduleName = J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_TOP__MODULE;
-				nlsNumber = J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_TOP__ID;
+				Trc_VM_CreateRAMClassFromROMClass_nestHostNotVerified(vmThread, nestHost, nestHost->classLoader, clazz->classLoader, className);
+				moduleName = J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST__MODULE;
+				nlsNumber = J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST__ID;
 			}
 		}
 
 		if (!verified) {
-			J9UTF8 *nestTopName = J9ROMCLASS_NESTTOPNAME(romClass);
+			J9UTF8 *nestHostName = J9ROMCLASS_NESTHOSTNAME(romClass);
 			setCurrentExceptionNLSWithArgs(vmThread,
 					moduleName, nlsNumber,
 					J9VMCONSTANTPOOL_JAVALANGVERIFYERROR,
 					J9UTF8_LENGTH(className),J9UTF8_DATA(className),
-					J9UTF8_LENGTH(nestTopName), J9UTF8_DATA(className));
+					J9UTF8_LENGTH(nestHostName), J9UTF8_DATA(className));
 		}
 	}
 	return verified;
