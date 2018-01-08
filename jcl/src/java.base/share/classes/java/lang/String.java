@@ -3,7 +3,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4309,10 +4309,10 @@ written authorization of the copyright holder.
 					/*[ELSE]*/
 					char[] newChars = new char[(length + 1) >> 1];
 					/*[ENDIF]*/
-					byte toReplace = helpers.getByteFromArrayByIndex(regex, 0);
+					byte toReplace = helpers.getByteFromArrayByIndex(regex.value, 0);
 					byte replacement = (byte)-1;  // assign dummy value that will never be used
 					if (substituteLength == 1) {
-						replacement = helpers.getByteFromArrayByIndex(substitute, 0);
+						replacement = helpers.getByteFromArrayByIndex(substitute.value, 0);
 					}
 					int newCharIndex = 0;
 					for (int i = 0; i < length; ++i) {
