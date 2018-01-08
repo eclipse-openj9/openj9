@@ -1078,6 +1078,8 @@ public synchronized StringBuffer insert(int index, char[] chars) {
 				
 				return this;
 			} else {
+				count = currentLength + chars.length;
+
 				// Check if the StringBuffer is compressed
 				if (count >= 0) {
 					decompress(value.length);
@@ -1089,7 +1091,7 @@ public synchronized StringBuffer insert(int index, char[] chars) {
 				System.arraycopy(chars, 0, value, index, chars.length);
 				/*[ENDIF]*/
 				
-				count = (currentLength + chars.length) | uncompressedBit;
+				count = count | uncompressedBit;
 				
 				return this;
 			}
@@ -1141,6 +1143,8 @@ public synchronized StringBuffer insert(int index, char[] chars, int start, int 
 					
 					return this;
 				} else {
+					count = currentLength + length;
+
 					// Check if the StringBuffer is compressed
 					if (count >= 0) {
 						decompress(value.length);
@@ -1152,7 +1156,7 @@ public synchronized StringBuffer insert(int index, char[] chars, int start, int 
 					System.arraycopy(chars, start, value, index, length);
 					/*[ENDIF]*/
 					
-					count = (currentLength + length) | uncompressedBit;
+					count = count | uncompressedBit;
 					
 					return this;
 				}
@@ -1193,6 +1197,8 @@ synchronized StringBuffer insert(int index, char[] chars, int start, int length,
 			
 			return this;
 		} else {
+			count = currentLength + length;
+
 			if (count >= 0) {
 				decompress(value.length);
 			}
@@ -1203,7 +1209,7 @@ synchronized StringBuffer insert(int index, char[] chars, int start, int length,
 			System.arraycopy(chars, start, value, index, length);
 			/*[ENDIF]*/
 			
-			count = (currentLength + length) | uncompressedBit;
+			count = count | uncompressedBit;
 			
 			return this;
 		}
@@ -1245,6 +1251,8 @@ public synchronized StringBuffer insert(int index, char ch) {
 				
 				return this;
 			} else {
+				count = currentLength + 1;
+
 				// Check if the StringBuffer is compressed
 				if (count >= 0) {
 					decompress(value.length);
@@ -1256,7 +1264,7 @@ public synchronized StringBuffer insert(int index, char ch) {
 				value[index] = ch;
 				/*[ENDIF]*/
 				
-				count = (currentLength + 1) | uncompressedBit;
+				count = count | uncompressedBit;
 				
 				return this;
 			}
@@ -1382,6 +1390,8 @@ public synchronized StringBuffer insert(int index, String string) {
 				
 				return this;
 			} else {
+				count = currentLength + stringLength;
+
 				// Check if the StringBuffer is compressed
 				if (count >= 0) {
 					decompress(value.length);
@@ -1389,7 +1399,7 @@ public synchronized StringBuffer insert(int index, String string) {
 				
 				string.getChars(0, stringLength, value, index);
 				
-				count = (currentLength + stringLength) | uncompressedBit;
+				count = count | uncompressedBit;
 				
 				return this;
 			}
@@ -3057,6 +3067,8 @@ public synchronized StringBuffer insert(int index, CharSequence sequence) {
 						
 						return this;
 					} else {
+						count = newLength;
+
 						// Check if the StringBuffer is compressed
 						if (count >= 0) {
 							decompress(value.length);
@@ -3070,7 +3082,7 @@ public synchronized StringBuffer insert(int index, CharSequence sequence) {
 							/*[ENDIF]*/
 						}
 						
-						count = newLength | uncompressedBit;
+						count = count | uncompressedBit;
 					}
 				} else {
 					for (int i = 0; i < sequneceLength; ++i) {
@@ -3170,6 +3182,8 @@ public synchronized StringBuffer insert(int index, CharSequence sequence, int st
 							
 							return this;
 						} else {
+							count = newLength;
+
 							// Check if the StringBuffer is compressed
 							if (count >= 0) {
 								decompress(value.length);
@@ -3183,7 +3197,7 @@ public synchronized StringBuffer insert(int index, CharSequence sequence, int st
 								/*[ENDIF]*/
 							}
 							
-							count = newLength | uncompressedBit;
+							count = count | uncompressedBit;
 						}
 					} else {
 						for (int i = 0; i < sequenceLength; ++i) {
