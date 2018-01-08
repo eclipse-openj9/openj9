@@ -3806,7 +3806,10 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    bool shouldAddToUpgradeQueue = false;
 
    TR_ASSERT(entry._optimizationPlan, "Must have an optimization plan");
-   TR::CompilationController::getCompilationStrategy()->adjustOptimizationPlan(&entry, 0);
+
+   // The server should not adjust the opt plan requested by the client.
+   if (!entry.isRemoteCompReq())
+      TR::CompilationController::getCompilationStrategy()->adjustOptimizationPlan(&entry, 0);
 
    shouldAddToUpgradeQueue = entry._optimizationPlan->shouldAddToUpgradeQueue();
 
