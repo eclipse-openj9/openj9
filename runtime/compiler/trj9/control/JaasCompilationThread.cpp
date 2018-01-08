@@ -1230,18 +1230,18 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::CompInfo_setInvocationCount:
          {
-         auto recv = client->getRecvData<J9Method *, uint32_t>();
+         auto recv = client->getRecvData<J9Method *, int32_t>();
          J9Method *method = std::get<0>(recv);
-         uint32_t count = std::get<1>(recv);
+         int32_t count = std::get<1>(recv);
          client->write(TR::CompilationInfo::setInvocationCount(method, count));
          }
          break;
       case J9ServerMessageType::CompInfo_setInvocationCountAtomic:
          {
-         auto recv = client->getRecvData<J9Method *, uint32_t, uint32_t>();
+         auto recv = client->getRecvData<J9Method *, int32_t, int32_t>();
          J9Method *method = std::get<0>(recv);
-         uint32_t oldCount = std::get<1>(recv);
-         uint32_t newCount = std::get<2>(recv);
+         int32_t oldCount = std::get<1>(recv);
+         int32_t newCount = std::get<2>(recv);
          client->write(TR::CompilationInfo::setInvocationCount(method, oldCount, newCount));
          }
          break;
