@@ -4817,7 +4817,7 @@ written authorization of the copyright holder.
 			if (enableCompression &&  (null == compressionFlag || count >= 0)) {
 				int index = start + codePointCount;
 
-				if (index >= len) {
+				if (index > len) {
 					throw new IndexOutOfBoundsException();
 				} else {
 					return index;
