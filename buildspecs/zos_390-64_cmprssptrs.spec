@@ -201,7 +201,6 @@
 		<flag id="module_ddr" value="true"/>
 		<flag id="module_gc_modron_eprof" value="true"/>
 		<flag id="module_gptest" value="true"/>
-		<flag id="module_ifa" value="true"/>
 		<flag id="module_j9vm" value="true"/>
 		<flag id="module_j9vmtest" value="true"/>
 		<flag id="module_jcl.profile_scar" value="true"/>
@@ -243,7 +242,6 @@
 		<flag id="opt_icbuilderSupport" value="true"/>
 		<flag id="opt_infoServer" value="true"/>
 		<flag id="opt_invariantInterning" value="true"/>
-		<flag id="opt_javaOffloadSupport" value="true"/>
 		<flag id="opt_jvmti" value="true"/>
 		<flag id="opt_jxeLoadSupport" value="true"/>
 		<flag id="opt_memoryCheckSupport" value="true"/>

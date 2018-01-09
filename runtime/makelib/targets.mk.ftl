@@ -118,6 +118,7 @@ all: $(TARGETS)
 <#elseif uma.spec.type.osx>
 <#include "targets.mk.osx.inc.ftl">
 </#if>
+<#include "targets.mk.vendor.inc.ftl">
 
 # Add OMR include paths
 #  Note assumptions about the directory layout of the OMR project.
@@ -310,7 +311,7 @@ LIBCDEFS := $(wildcard /ztpf/$(UMA_ZTPF_ROOT)/base/lib/libCDEFSFORASM.so)
 # compilation rule for metal-C files.
 %$(UMA_DOT_O): %.mc
 	cp $< $*.c
-	xlc $(MCFLAGS) -qmetal -qlongname -S -o $*.s $*.c > $*.asmlist
+	xlc $(MCFLAGS) -qnosearch  -I /usr/include/metal/ -qmetal -qlongname -S -o $*.s $*.c > $*.asmlist
 	rm -f $*.c
 	as -mgoff $(UMA_MCASM_INCLUDES) $*.s
 	rm -f $*.s
