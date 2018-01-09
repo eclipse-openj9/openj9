@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2017 IBM Corp. and others
+dnl Copyright (c) 2017, 2018 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,10 +153,12 @@ END_CURRENT
 })
 
 ifdef({OMR_GC_CONCURRENT_SCAVENGER},{
-dnl Handler for guarded storage events. 
+dnl Helper to handle guarded storage events and
+dnl software read barriers. 
 dnl When event occurs, hardware populates return address in
 dnl vmThread->gsParameters.returnAddr
-define({HANDLE_GS_EVENT},{
+dnl For software read barriers gsParameters.returnAddr is set by JIT
+define({HANDLE_GS_EVENT_HELPER},{
 BEGIN_HELPER($1)
     SAVE_ALL_REGS($1)
     ST_GPR J9SP,J9TR_VMThread_sp(J9VMTHREAD)
@@ -194,6 +196,10 @@ ifdef({ASM_J9VM_ENV_DATA64},{
        .short 0x0000
     })
 })
+})
+
+define({HANDLE_GS_EVENT},{
+    HANDLE_GS_EVENT_HELPER($1)
 
 dnl Branch back to the instruction that triggered guarded storage event.
 BRANCH_INDIRECT_ON_CONDITION(15,J9TR_VMThread_gsParameters_returnAddr,0,J9VMTHREAD)
@@ -201,7 +207,15 @@ BRANCH_INDIRECT_ON_CONDITION(15,J9TR_VMThread_gsParameters_returnAddr,0,J9VMTHRE
 END_CURRENT
 })
 
+define({HANDLE_SW_READ_BARRIER},{
+    HANDLE_GS_EVENT_HELPER($1)
+dnl Branch back to the instruction that called software read barrier hanlder.
+    BR r14
+END_CURRENT
+})
+
 HANDLE_GS_EVENT(handleGuardedStorageEvent)
+HANDLE_SW_READ_BARRIER(handleReadBarrier)
 
 })
 

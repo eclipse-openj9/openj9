@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -446,11 +446,46 @@ J9::VMEnv::ensureOSRBufferSize(TR::Compilation *comp, uintptrj_t osrFrameSizeInB
    return comp->fej9()->ensureOSRBufferSize(osrFrameSizeInBytes, osrScratchBufferSizeInBytes, osrStackFrameSizeInBytes);
    }
 
-
 uintptrj_t
 J9::VMEnv::thisThreadGetOSRReturnAddressOffset(TR::Compilation *comp)
    {
    return comp->fej9()->thisThreadGetOSRReturnAddressOffset();
+   }
+
+uintptrj_t
+J9::VMEnv::thisThreadGetGSIntermediateResultOffset(TR::Compilation *comp)
+   {
+   return comp->fej9()->thisThreadGetGSIntermediateResultOffset();
+   }
+
+uintptrj_t
+J9::VMEnv::thisThreadGetConcurrentScavengeActiveByteAddressOffset(TR::Compilation *comp)
+   {
+   return comp->fej9()->thisThreadGetConcurrentScavengeActiveByteAddressOffset();
+   }
+
+uintptrj_t
+J9::VMEnv::thisThreadGetEvacuateBaseAddressOffset(TR::Compilation *comp)
+   {
+   return comp->fej9()->thisThreadGetEvacuateBaseAddressOffset();
+   }
+
+uintptrj_t
+J9::VMEnv::thisThreadGetEvacuateTopAddressOffset(TR::Compilation *comp)
+   {
+   return comp->fej9()->thisThreadGetEvacuateTopAddressOffset();
+   }
+
+uintptrj_t
+J9::VMEnv::thisThreadGetGSOperandAddressOffset(TR::Compilation *comp)
+   {
+   return comp->fej9()->thisThreadGetGSOperandAddressOffset();
+   }
+
+uintptrj_t
+J9::VMEnv::thisThreadGetGSHandlerAddressOffset(TR::Compilation *comp)
+   {
+   return comp->fej9()->thisThreadGetGSHandlerAddressOffset();
    }
 
 /*

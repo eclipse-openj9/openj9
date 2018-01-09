@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,6 +78,7 @@ J9::ObjectModel::initialize()
       }
 
    _shouldGenerateReadBarriersForFieldLoads = mmf->j9gc_concurrent_scavenger_enabled(vm);
+   _shouldReplaceGuardedLoadWithSoftwareReadBarrier = mmf->j9gc_software_read_barrier_enabled(vm);
    }
 
 
@@ -456,6 +457,12 @@ bool
 J9::ObjectModel::shouldGenerateReadBarriersForFieldLoads()
    {
    return _shouldGenerateReadBarriersForFieldLoads;
+   }
+
+bool
+J9::ObjectModel::shouldReplaceGuardedLoadWithSoftwareReadBarrier()
+   {
+   return _shouldReplaceGuardedLoadWithSoftwareReadBarrier;
    }
 
 bool

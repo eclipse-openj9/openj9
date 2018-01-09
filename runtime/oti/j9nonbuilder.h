@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4210,6 +4210,7 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *getStaticObjectAllocateFlags)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_scavenger_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_scavenger_enabled)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_software_read_barrier_enabled)(struct J9JavaVM *javaVM) ;
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
 	UDATA  ( *j9gc_concurrent_getCardSize)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_getHeapBase)(struct J9JavaVM *javaVM) ;
@@ -4933,6 +4934,8 @@ typedef struct J9VMThread {
 #endif /* J9VM_JIT_TRANSACTION_DIAGNOSTIC_THREAD_BLOCK */
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	struct J9GSParameters gsParameters;
+	void* evacuateBase;
+	void* evacuateTop;
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	UDATA safePointCount;
 } J9VMThread;
