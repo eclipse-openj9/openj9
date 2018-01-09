@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -835,7 +835,7 @@ public:
    int32_t calculateCodeSize(TR_MethodMetaData *metaData);
    void increaseUnstoredBytes(U_32 aotBytes, U_32 jitBytes);
 
-   int64_t computeFreePhysicalMemory(bool &incompleteInfo);
+   uint64_t computeFreePhysicalMemory(bool &incompleteInfo);
    int64_t computeFreePhysicalLimitAndAbortCompilationIfLow(TR::Compilation *comp, bool &incompleteInfo, size_t sizeToAllocate);
 
    TR_LowPriorityCompQueue &getLowPriorityCompQueue() { return _lowPriorityCompilationScheduler; }
@@ -1028,7 +1028,7 @@ private:
 #if defined(J9VM_OPT_SHARED_CLASSES)
    J9SharedClassJavacoreDataDescriptor _javacoreData;
 #endif
-   int64_t _cachedFreePhysicalMemoryB;
+   uint64_t _cachedFreePhysicalMemoryB;
    TR_InterpreterSamplingTracking *_interpSamplTrackingInfo;
    }; // CompilationInfo
 }
