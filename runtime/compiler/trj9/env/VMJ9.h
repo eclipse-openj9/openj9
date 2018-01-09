@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -611,6 +611,14 @@ public:
    virtual uintptrj_t         thisThreadGetOSRScratchBufferOffset();
    virtual uintptrj_t         thisThreadGetOSRFrameIndexOffset();
    virtual uintptrj_t         thisThreadGetOSRReturnAddressOffset();
+
+
+   virtual uintptrj_t         thisThreadGetGSIntermediateResultOffset();
+   virtual uintptrj_t         thisThreadGetConcurrentScavengeActiveByteAddressOffset();
+   virtual uintptrj_t         thisThreadGetEvacuateBaseAddressOffset();
+   virtual uintptrj_t         thisThreadGetEvacuateTopAddressOffset();
+   virtual uintptrj_t         thisThreadGetGSOperandAddressOffset();
+   virtual uintptrj_t         thisThreadGetGSHandlerAddressOffset();
 
    virtual int32_t            getArraySpineShift(int32_t);
    virtual int32_t            getArrayletMask(int32_t);

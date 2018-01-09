@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1953,6 +1953,83 @@ UDATA TR_J9VMBase::thisThreadGetOSRReturnAddressOffset()
    return offsetof(J9VMThread, osrReturnAddress);
    }
 
+/**
+ * @brief Returns offset from the current thread to the intermediate result field.
+ * The field contains intermediate result from the latest guarded load during concurrent scavenge.
+ */
+UDATA TR_J9VMBase::thisThreadGetGSIntermediateResultOffset()
+   {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+   return offsetof(J9VMThread, gsParameters.intermediateResult);
+#else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+   TR_ASSERT(0,"Field gsParameters.intermediateResult does not exists in J9VMThread.");
+   return 0;
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+   }
+
+/**
+ * @brief Returns offset from the current thread to the flags to check if concurrent scavenge is active
+ */
+UDATA TR_J9VMBase::thisThreadGetConcurrentScavengeActiveByteAddressOffset()
+   {
+   TR_ASSERT_FATAL(J9_PRIVATE_FLAGS_CONCURRENT_SCAVENGER_ACTIVE == 0x20000,
+              "GSCS: The check weither concurrent scavenge is active is dependant on the flag being 0x20000");
+   int32_t privateFlagsConcurrentScavengerActiveByteOffset = 5;
+   return offsetof(J9VMThread, privateFlags) + privateFlagsConcurrentScavengerActiveByteOffset;
+   }
+
+/**
+ * @brief Returns offset from the current thread to the field with the base address of the evacuate memory region
+ */
+UDATA TR_J9VMBase::thisThreadGetEvacuateBaseAddressOffset()
+   {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+   return offsetof(J9VMThread, evacuateBase);
+#else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+   TR_ASSERT(0,"Field evacuateBase does not exists in J9VMThread.");
+   return 0;
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+   }
+
+/**
+  * @brief Returns offset from the current thread to the field with the top address of the evacuate memory region
+  */
+UDATA TR_J9VMBase::thisThreadGetEvacuateTopAddressOffset()
+   {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+   return offsetof(J9VMThread, evacuateTop);
+#else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+   TR_ASSERT(0,"Field evacuateTop does not exists in J9VMThread.");
+   return 0;
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+   }
+
+/**
+ * @brief Returns offset from the current thread to the operand address field.
+ * It contains data from the most recent guarded load during concurrent scavenge
+ */
+UDATA TR_J9VMBase::thisThreadGetGSOperandAddressOffset()
+   {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+   return offsetof(J9VMThread, gsParameters.operandAddr);
+#else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+   TR_ASSERT(0,"Field gsParameters.operandAddr does not exists in J9VMThread.");
+   return 0;
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+   }
+
+/**
+ * @brief Returns offset from the current thread to the filed with the read barrier handler address
+ */
+UDATA TR_J9VMBase::thisThreadGetGSHandlerAddressOffset()
+   {
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+   return offsetof(J9VMThread, gsParameters.handlerAddr);
+#else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+   TR_ASSERT(0,"Field gsParameters.handlerAddr does not exists in J9VMThread.");
+   return 0;
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+   }
 
 // This query answers whether or not the commandline option -XCEEHDLR was passed in.
 //

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2717,7 +2717,9 @@ gcInitializeDefaults(J9JavaVM* vm)
 			/* If running jitted, it must be on supported h/w */
 			J9ProcessorDesc  processorDesc;
 			j9sysinfo_get_processor_description(&processorDesc);
-			if (j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) && j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS)) {
+			if ((j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
+					j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS))
+					|| (extensions->softwareEvacuateReadBarrier)) {
 				extensions->concurrentScavenger = true;
 			}
 		} else {

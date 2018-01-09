@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -137,6 +137,12 @@ UDATA
 j9gc_concurrent_scavenger_enabled(J9JavaVM *javaVM)
 {
 	return MM_GCExtensions::getExtensions(javaVM)->isConcurrentScavengerEnabled() ? 1 : 0;
+}
+
+UDATA
+j9gc_software_read_barrier_enabled(J9JavaVM *javaVM)
+{
+	return MM_GCExtensions::getExtensions(javaVM)->isSoftwareEvacuateReadBarrierEnabled() ? 1 : 0;
 }
 
 /**
