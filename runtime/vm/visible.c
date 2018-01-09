@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,47 +65,37 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 				&& J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)
 				&& !J9ROMCLASS_IS_PRIMITIVE_TYPE(destClass->romClass)
 			) {
-				j9object_t srcClassObject = sourceClass->classObject;
-				j9object_t destClassObject = destClass->classObject;
-				Assert_VM_true((NULL != srcClassObject) && (NULL != destClassObject));
-				{
-					j9object_t srcModuleObject = J9VMJAVALANGCLASS_MODULE(currentThread, srcClassObject);
-					j9object_t destModuleObject = J9VMJAVALANGCLASS_MODULE(currentThread, destClassObject);
-					Assert_VM_true((NULL != srcModuleObject) && (NULL != destModuleObject));
-					if (srcModuleObject != destModuleObject)	{
-						UDATA rc = ERRCODE_GENERAL_FAILURE;
-						J9Module *srcModule = J9OBJECT_ADDRESS_LOAD(currentThread, srcModuleObject, vm->modulePointerOffset);
-						J9Module *destModule = J9OBJECT_ADDRESS_LOAD(currentThread, destModuleObject, vm->modulePointerOffset);
-
-						if (srcModule != destModule) {
-							if (!J9_ARE_ALL_BITS_SET(lookupOptions, J9_LOOK_REFLECT_CALL)) {
-								if (!isAllowedReadAccessToModule(currentThread, srcModule, destModule, &rc)) {
-									Trc_VM_checkVisibility_failed_with_errortype(currentThread,
-											sourceClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(sourceClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(sourceClass->romClass)),
-											destClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destClass->romClass)), "read access not allowed");
-									result = J9_VISIBILITY_MODULE_READ_ACCESS_ERROR;
-								}
-							}
-
-							if (J9_VISIBILITY_ALLOWED == result) {
-								const U_8* packageName = NULL;
-								UDATA packageNameLength = 0;
-								J9PackageIDTableEntry entry = {0};
-
-								entry.taggedROMClass = destClass->packageID;
-								packageName = getPackageName(&entry, &packageNameLength);
-
-								omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-								if (!isPackageExportedToModuleWithName(currentThread, destModule, (U_8*) packageName, (U_16) packageNameLength, srcModule, isModuleUnnamed(currentThread, srcModuleObject), &rc)) {
-									Trc_VM_checkVisibility_failed_with_errortype(currentThread,
-											sourceClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(sourceClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(sourceClass->romClass)),
-											destClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destClass->romClass)), "package not exported");
-									result = J9_VISIBILITY_MODULE_PACKAGE_EXPORT_ERROR;
-								}
-								omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-							}
+				J9Module *srcModule = sourceClass->module;
+				J9Module *destModule = destClass->module;
+				if (srcModule != destModule) {
+					UDATA rc = ERRCODE_GENERAL_FAILURE;
+					if (!J9_ARE_ALL_BITS_SET(lookupOptions, J9_LOOK_REFLECT_CALL)) {
+						if (!isAllowedReadAccessToModule(currentThread, srcModule, destModule, &rc)) {
+							Trc_VM_checkVisibility_failed_with_errortype(currentThread,
+									sourceClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(sourceClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(sourceClass->romClass)),
+									destClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destClass->romClass)), "read access not allowed");
+							result = J9_VISIBILITY_MODULE_READ_ACCESS_ERROR;
 						}
 					}
+
+					if (J9_VISIBILITY_ALLOWED == result) {
+						const U_8* packageName = NULL;
+						UDATA packageNameLength = 0;
+						J9PackageIDTableEntry entry = {0};
+
+						entry.taggedROMClass = destClass->packageID;
+						packageName = getPackageName(&entry, &packageNameLength);
+
+						omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
+						if (!isPackageExportedToModuleWithName(currentThread, destModule, (U_8*) packageName, (U_16) packageNameLength, srcModule, J9_IS_J9MODULE_UNNAMED(vm, srcModule), &rc)) {
+							Trc_VM_checkVisibility_failed_with_errortype(currentThread,
+									sourceClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(sourceClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(sourceClass->romClass)),
+									destClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destClass->romClass)), "package not exported");
+							result = J9_VISIBILITY_MODULE_PACKAGE_EXPORT_ERROR;
+						}
+						omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
+					}
+
 				}
 			}
 		} else if (modifiers & J9AccPrivate) {
