@@ -3,7 +3,7 @@
 
 <!--
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -308,7 +308,7 @@
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
-		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190b174.jar"/>
+		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava10.jar"/>
 		<source path="src"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>

@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -350,11 +350,11 @@ final class Access implements JavaLangAccess {
 /*[ENDIF] Sidecar19-SE-B165 */
 
 /*[IF Java10]*/
-	public String newStringUTF8NoRepl(byte[] bytes, int para1, int para2) {
-		throw new Error("newStringUTF8NoRepl unimplemented"); //$NON-NLS-1$
+	public String newStringUTF8NoRepl(byte[] bytes, int offset, int length) {
+		return StringCoding.newStringUTF8NoRepl(bytes, offset, length);
 	}
-	public byte[] getBytesUTF8NoRepl(String para) {
-		throw new Error("getBytesUTF8NoRepl unimplemented"); //$NON-NLS-1$
+	public byte[] getBytesUTF8NoRepl(String str) {
+		return StringCoding.getBytesUTF8NoRepl(str);
 	}
 /*[ENDIF] Java10 */
 
