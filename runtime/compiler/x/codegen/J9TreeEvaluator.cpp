@@ -11765,14 +11765,63 @@ static bool inlineObjectHashCode(TR::Node *node, bool isIndirect)
 
 // Convert serial String.hashCode computation into vectorization copy and implement with SSE instruction
 //
+// Conversion process example:
+//
+//    str[8] = example string representing 8 characters (compressed or decompressed)
+//
+//    The serial method for creating the hash:
+//          hash = 0, offset = 0, count = 8
+//          for (int i = offset; i < offset+count; ++i) {
+//                hash = (hash << 5) - hash + str[i];
+//          }
+//
+//    Note that ((hash << 5) - hash) is equivalent to hash * 31
+//
+//    Expanding out the for loop:
+//          hash = ((((((((0*31+str[0])*31+str[1])*31+str[2])*31+str[3])*31+str[4])*31+str[5])*31+str[6])*31+str[7])
+//
+//    Simplified:
+//          hash =        (31^7)*str[0] + (31^6)*str[1] + (31^5)*str[2] + (31^4)*str[3]
+//                      + (31^3)*str[4] + (31^2)*str[5] + (31^1)*str[6] + (31^0)*str[7]
+//
+//    Rearranged:
+//          hash =        (31^7)*str[0] + (31^3)*str[4]
+//                      + (31^6)*str[1] + (31^2)*str[5]
+//                      + (31^5)*str[2] + (31^1)*str[6]
+//                      + (31^4)*str[3] + (31^0)*str[7]
+//
+//    Factor out [31^3, 31^2, 31^1, 31^0]:
+//          hash =        31^3*((31^4)*str[0] + str[4])           Vector[0]
+//                      + 31^2*((31^4)*str[1] + str[5])           Vector[1]
+//                      + 31^1*((31^4)*str[2] + str[6])           Vector[2]
+//                      + 31^0*((31^4)*str[3] + str[7])           Vector[3]
+//
+//    Keep factoring out any 31^4 if possible (this example has no such case). If the string was 12 characters long then:
+//          31^3*((31^8)*str[0] + (31^4)*str[4] + (31^0)*str[8]) would become 31^3*(31^4((31^4)*str[0] + str[4]) + (31^0)*str[8])
+//
+//    Vectorization is done by simultaneously calculating the four sums that hash is made of (each -> is a successive step):
+//          Vector[0] = str[0] -> multiply 31^4 -> add str[4] -> multiply 31^3
+//          Vector[1] = str[1] -> multiply 31^4 -> add str[5] -> multiply 31^2
+//          Vector[2] = str[2] -> multiply 31^4 -> add str[6] -> multiply 31^1
+//          Vector[3] = str[3] -> multiply 31^4 -> add str[7] -> multiply 1
+//
+//    Adding these four vectorized values together produces the required hash.
+//    If the number of characters in the string is not a multiple of 4, then the remainder of the hash is calculated serially.
+//
+// Implementation overview:
+//
 // start_label
 // if size < threshold, goto serial_label, current threshold is 4
 //    xmm0 = load 16 bytes align constant [923521, 923521, 923521, 923521]
 //    xmm1 = 0
 // SSEloop
-//    xmm2 = load 8 byte value in lower 8 bytes.
+//    xmm2 = decompressed: load 8 byte value in lower 8 bytes.
+//           compressed: load 4 byte value in lower 4 bytes
 //    xmm1 = xmm1 * xmm0
-//    movzxwd xmm2, xmm2
+//    if(isCompressed)
+//          movzxbd xmm2, xmm2
+//    else
+//          movzxwd xmm2, xmm2
 //    xmm1 = xmm1 + xmm2
 //    i = i + 4;
 //    cmp i, end -3
@@ -11806,7 +11855,8 @@ static bool
 inlineStringHashCode(
       TR::Node *node,
       bool isIndirect,
-      TR::CodeGenerator *cg)
+      TR::CodeGenerator *cg,
+      bool isCompressed)
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
@@ -11842,8 +11892,10 @@ inlineStringHashCode(
       TR::Register *xmm2 = cg->allocateRegister(TR_FPR);
 
       generateLabelInstruction(LABEL, node, startLabel, cg);
+      // endReg = countReg + indexReg
       generateRegRegInstruction(MOVRegReg(), node, endReg, countReg, cg);
       generateRegRegInstruction(ADDRegReg(), node, endReg, indexReg, cg);
+      // zero out hashReg with xor
       generateRegRegInstruction(XORRegReg(), node, hashReg, hashReg, cg);
       generateRegImmInstruction(CMPRegImm4(), node, countReg, 0x4, cg);
       cg->stopUsingRegister(countReg);
@@ -11851,7 +11903,9 @@ inlineStringHashCode(
 
       // SSE version
       // xmm2 = load 4 chars and expand into 4 int
+      // decrease endReg by 3 so that the SSE loop will always operate on 4 available characters
       generateRegImmInstruction(SUBRegImms(), node, endReg, 3, cg);
+      // 31^4 = 923521
       int vector1[4] = {923521, 923521, 923521, 923521};
       TR::IA32ConstantDataSnippet *vector1Snippet   = cg->findOrCreate16ByteConstant(node, vector1);
       TR::MemoryReference       *vector1MR = generateX86MemoryReference(vector1Snippet, cg);
@@ -11859,15 +11913,32 @@ inlineStringHashCode(
       generateRegRegInstruction(XORPSRegReg, node, xmm1, xmm1, cg);
 
       generateLabelInstruction(LABEL, node, SSELabel, cg);
-      generateRegMemInstruction(MOVSDRegMem,
-                                node,
-                                xmm2,
-                                generateX86MemoryReference(valueReg, indexReg, 1, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
-                                cg);
+
+      // move 4 bytes (4 1-byte characters) to xmm2. Stride shift = 0 (each element in valueReg is 1 byte)
+      if(isCompressed)
+            generateRegMemInstruction(MOVSSRegMem,
+                                    node,
+                                    xmm2,
+                                    generateX86MemoryReference(valueReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
+                                    cg);
+      // move 8 bytes (4 2-byte characters) to xmm2. Stride shift = 1 (each element in valueReg is 2 bytes. Used with indexReg for correct traversal)
+      else
+            generateRegMemInstruction(MOVSDRegMem,
+                                    node,
+                                    xmm2,
+                                    generateX86MemoryReference(valueReg, indexReg, 1, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
+                                    cg);
       // xmm1 = xmm1 * xmm0
       generateRegRegInstruction(PMULLDRegReg, node, xmm1, xmm0, cg);
+
       // movzxwd xmm2, xmm2
-      generateRegRegInstruction(PMOVZXWDRegReg, node, xmm2, xmm2, cg);
+      // zero extend each of the 4 bytes
+      if(isCompressed)
+            generateRegRegInstruction(PMOVZXBDRegReg, node, xmm2, xmm2, cg);
+      // zero extend each of the 4 words
+      else
+            generateRegRegInstruction(PMOVZXWDRegReg, node, xmm2, xmm2, cg);
+
       // xmm1 = xmm1 + xmm2
       generateRegRegInstruction(PADDDRegReg, node, xmm1, xmm2, cg);
 
@@ -11911,11 +11982,20 @@ inlineStringHashCode(
       generateRegRegInstruction(MOV4RegReg, node, tempReg, hashReg, cg);
       generateRegImmInstruction(SHL4RegImm1, node, hashReg, 5, cg);
       generateRegRegInstruction(SUB4RegReg, node, hashReg, tempReg, cg);
-      generateRegMemInstruction(MOVZXReg4Mem2,
-                                node,
-                                tempReg,
-                                generateX86MemoryReference(valueReg, indexReg, 1, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
-                                cg);
+
+      if(isCompressed)
+            generateRegMemInstruction(MOVZXReg4Mem1,
+                                    node,
+                                    tempReg,
+                                    generateX86MemoryReference(valueReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
+                                    cg);
+      else
+            generateRegMemInstruction(MOVZXReg4Mem2,
+                                    node,
+                                    tempReg,
+                                    generateX86MemoryReference(valueReg, indexReg, 1, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
+                                    cg);
+
       generateRegRegInstruction(ADD4RegReg, node, hashReg, tempReg, cg);
       generateRegInstruction(INCReg(TR::Compiler->target.is64Bit()), node, indexReg, cg);
       generateRegRegInstruction(CMPRegReg(), node, indexReg, endReg, cg);
@@ -13131,7 +13211,13 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
          case TR::java_lang_String_hashCodeImplDecompressed:
             {
             if (!comp->getOption(TR_DisableSIMDStringHashCode) && cg->getX86ProcessorInfo().supportsSSE4_1()&& !TR::Compiler->om.canGenerateArraylets())
-               callWasInlined = inlineStringHashCode(node, isIndirect, cg);
+               callWasInlined = inlineStringHashCode(node, isIndirect, cg, false);
+            break;
+            }
+         case TR::java_lang_String_hashCodeImplCompressed:
+            {
+            if (!comp->getOption(TR_DisableSIMDStringHashCode) && cg->getX86ProcessorInfo().supportsSSE4_1()&& !TR::Compiler->om.canGenerateArraylets())
+               callWasInlined = inlineStringHashCode(node, isIndirect, cg, true);
             break;
             }
          case TR::java_lang_Class_isAssignableFrom:
