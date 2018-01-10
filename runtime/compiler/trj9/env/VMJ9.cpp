@@ -1959,7 +1959,7 @@ UDATA TR_J9VMBase::thisThreadGetOSRReturnAddressOffset()
  */
 UDATA TR_J9VMBase::thisThreadGetGSIntermediateResultOffset()
    {
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+#if defined(OMR_GC_CONCURRENT_SCAVENGER) && (defined(S390) || defined(J9ZOS390))
    return offsetof(J9VMThread, gsParameters.intermediateResult);
 #else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
    TR_ASSERT(0,"Field gsParameters.intermediateResult does not exists in J9VMThread.");
@@ -2010,7 +2010,7 @@ UDATA TR_J9VMBase::thisThreadGetEvacuateTopAddressOffset()
  */
 UDATA TR_J9VMBase::thisThreadGetGSOperandAddressOffset()
    {
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+#if defined(OMR_GC_CONCURRENT_SCAVENGER) && (defined(S390) || defined(J9ZOS390))
    return offsetof(J9VMThread, gsParameters.operandAddr);
 #else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
    TR_ASSERT(0,"Field gsParameters.operandAddr does not exists in J9VMThread.");
@@ -2023,7 +2023,7 @@ UDATA TR_J9VMBase::thisThreadGetGSOperandAddressOffset()
  */
 UDATA TR_J9VMBase::thisThreadGetGSHandlerAddressOffset()
    {
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+#if defined(OMR_GC_CONCURRENT_SCAVENGER) && (defined(S390) || defined(J9ZOS390))
    return offsetof(J9VMThread, gsParameters.handlerAddr);
 #else /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
    TR_ASSERT(0,"Field gsParameters.handlerAddr does not exists in J9VMThread.");
