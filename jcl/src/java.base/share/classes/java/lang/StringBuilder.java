@@ -3,7 +3,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright (c) 2005, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1067,6 +1067,8 @@ public StringBuilder insert(int index, char[] chars) {
 				
 				return this;
 			} else {
+				count = currentLength + chars.length;
+
 				// Check if the StringBuilder is compressed
 				if (count >= 0) {
 					decompress(value.length);
@@ -1078,7 +1080,7 @@ public StringBuilder insert(int index, char[] chars) {
 				System.arraycopy(chars, 0, value, index, chars.length);
 				/*[ENDIF]*/
 				
-				count = (currentLength + chars.length) | uncompressedBit;
+				count = count | uncompressedBit;
 				
 				return this;
 			}
@@ -1131,6 +1133,8 @@ public StringBuilder insert(int index, char[] chars, int start, int length) {
 					
 					return this;
 				} else {
+					count = currentLength + length;
+
 					// Check if the StringBuilder is compressed
 					if (count >= 0) {
 						decompress(value.length);
@@ -1142,7 +1146,7 @@ public StringBuilder insert(int index, char[] chars, int start, int length) {
 					System.arraycopy(chars, start, value, index, length);
 					/*[ENDIF]*/
 					
-					count = (currentLength + length) | uncompressedBit;
+					count = count | uncompressedBit;
 					
 					return this;
 				}
@@ -1183,6 +1187,8 @@ StringBuilder insert(int index, char[] chars, int start, int length, boolean com
 			
 			return this;
 		} else {
+			count = currentLength + length;
+
 			if (count >= 0) {
 				decompress(value.length);
 			}
@@ -1193,7 +1199,7 @@ StringBuilder insert(int index, char[] chars, int start, int length, boolean com
 			System.arraycopy(chars, start, value, index, length);
 			/*[ENDIF]*/
 			
-			count = (currentLength + length) | uncompressedBit;
+			count = count | uncompressedBit;
 			
 			return this;
 		}
@@ -1235,6 +1241,8 @@ public StringBuilder insert(int index, char ch) {
 				
 				return this;
 			} else {
+				count = currentLength + 1;
+
 				// Check if the StringBuilder is compressed
 				if (count >= 0) {
 					decompress(value.length);
@@ -1246,7 +1254,7 @@ public StringBuilder insert(int index, char ch) {
 				value[index] = ch;
 				/*[ENDIF]*/
 				
-				count = (currentLength + 1) | uncompressedBit;
+				count = count | uncompressedBit;
 				
 				return this;
 			}
@@ -1372,6 +1380,8 @@ public StringBuilder insert(int index, String string) {
 				
 				return this;
 			} else {
+				count = currentLength + stringLength;
+
 				// Check if the StringBuilder is compressed
 				if (count >= 0) {
 					decompress(value.length);
@@ -1379,7 +1389,7 @@ public StringBuilder insert(int index, String string) {
 				
 				string.getChars(0, stringLength, value, index);
 				
-				count = (currentLength + stringLength) | uncompressedBit;
+				count = count | uncompressedBit;
 				
 				return this;
 			}
@@ -3031,6 +3041,8 @@ public StringBuilder insert(int index, CharSequence sequence) {
 						
 						return this;
 					} else {
+						count = newLength;
+
 						// Check if the StringBuilder is compressed
 						if (count >= 0) {
 							decompress(value.length);
@@ -3044,7 +3056,7 @@ public StringBuilder insert(int index, CharSequence sequence) {
 							/*[ENDIF]*/
 						}
 						
-						count = newLength | uncompressedBit;
+						count = count | uncompressedBit;
 					}
 				} else {
 					for (int i = 0; i < sequneceLength; ++i) {
@@ -3142,6 +3154,8 @@ public StringBuilder insert(int index, CharSequence sequence, int start, int end
 							
 							return this;
 						} else {
+							count = newLength;
+
 							// Check if the StringBuilder is compressed
 							if (count >= 0) {
 								decompress(value.length);
@@ -3155,7 +3169,7 @@ public StringBuilder insert(int index, CharSequence sequence, int start, int end
 								/*[ENDIF]*/
 							}
 							
-							count = newLength | uncompressedBit;
+							count = count | uncompressedBit;
 						}
 					} else {
 						for (int i = 0; i < sequenceLength; ++i) {
