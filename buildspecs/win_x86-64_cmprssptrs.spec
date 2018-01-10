@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2017 IBM Corp. and others
+  Copyright (c) 2006, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -136,6 +136,7 @@
 		<flag id="build_java9" value="true"/>
 		<flag id="build_newCompiler" value="true"/>
 		<flag id="build_openj9" value="true"/>
+		<flag id="build_openj9JDK8" value="true"/>
 		<flag id="build_ouncemake" value="true"/>
 		<flag id="build_product" value="true"/>
 		<flag id="env_littleEndian" value="true"/>
