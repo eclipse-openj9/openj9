@@ -20,3 +20,21 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package jdk.tools.jlink.internal.plugins;
+
+import jdk.tools.jlink.plugin.Plugin;
+import jdk.tools.jlink.plugin.ResourcePool;
+import jdk.tools.jlink.plugin.ResourcePoolBuilder;
+import jdk.tools.jlink.plugin.ResourcePoolEntry;
+import java.util.function.Function;
+
+public class GenerateJLIClassesPlugin implements Plugin
+{
+   public ResourcePool transform( ResourcePool a, ResourcePoolBuilder b ){
+      Function<ResourcePoolEntry, ResourcePoolEntry> functhisnoise = (c) -> {
+         return c;
+      };
+      a.transformAndCopy(functhisnoise,b);
+      return b.build();
+   }
+}
