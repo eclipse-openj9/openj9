@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1048,15 +1048,13 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 	if (method != NULL) {
 		if (ramCPEntry != NULL) {
 			J9RAMInterfaceMethodRef *ramInterfaceMethodRef = (J9RAMInterfaceMethodRef *)&ramCP[cpIndex];
-			UDATA methodIndex = getITableIndexForMethod(method) << 8;
+			UDATA methodIndex = getITableIndexForMethod(method, interfaceClass) << 8;
 			UDATA oldArgCount = ramInterfaceMethodRef->methodIndexAndArgCount & 255;
-			J9Class *methodClass;
 			methodIndex |= oldArgCount;
-			methodClass = J9_CLASS_FROM_METHOD(method);
 			ramCPEntry->methodIndexAndArgCount = methodIndex;
 			/* interfaceClass is used to indicate resolved. Make sure to write it last */
 			issueWriteBarrier();
-			ramCPEntry->interfaceClass = (UDATA)methodClass;
+			ramCPEntry->interfaceClass = (UDATA)interfaceClass;
 		}
 		/* indicate success */
 		returnValue = method;
