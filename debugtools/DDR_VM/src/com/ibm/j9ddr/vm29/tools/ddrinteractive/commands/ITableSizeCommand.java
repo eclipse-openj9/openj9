@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,10 +71,29 @@ public class ITableSizeCommand extends Command
 		return size;
 	}
 	
+	public long iTableExtendedSize(J9ITablePointer startTable, J9ITablePointer superTable) throws CorruptDataException
+	{
+		long size = 0;
+		J9ITablePointer iTable = startTable;
+		while (!iTable.eq(superTable)) {
+			size += J9ITable.SIZEOF;
+			J9ClassPointer interfaceClass = iTable.interfaceClass();
+			J9ROMClassPointer romClass = interfaceClass.romClass();
+			J9ITablePointer allInterfaces = J9ITablePointer.cast(interfaceClass.iTable());
+			do {
+				size += (UDATA.SIZEOF * allInterfaces.interfaceClass().romClass().romMethodCount().intValue());
+				allInterfaces = allInterfaces.next();
+			} while (!allInterfaces.eq(J9ITablePointer.NULL));
+			iTable = iTable.next();
+		}
+		return size;
+	}
+	
 	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
 	{
 		long currentSize = 0;
 		long duplicatedSize = 0;
+		long extendedSize = 0;
 		try {
 			J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 			ClassSegmentIterator classSegmentIterator = new ClassSegmentIterator(vm.classMemorySegments());
@@ -90,15 +109,27 @@ public class ITableSizeCommand extends Command
 				}
 				currentSize += iTableChainSize(startITable, superITable);
 				duplicatedSize += iTableChainSize(superITable, J9ITablePointer.NULL);
+				extendedSize += iTableExtendedSize(startITable, superITable);
 			}
 		} catch (CorruptDataException e) {
 			throw new DDRInteractiveCommandException(e);
 		}
+
 		long totalSize = duplicatedSize + currentSize;
 		double percent = (double)totalSize / (double)currentSize;
+		out.append("iTable duplication" + nl);
+		out.append("------------------" + nl);
 		out.append("current    iTable size : " + currentSize + nl);
 		out.append("additional iTable size : " + duplicatedSize + nl);
 		out.append("total      iTable size : " + totalSize + nl);
+		out.append("growth factor          : " + percent + nl);
+		out.append(nl);
+
+		percent = (double)extendedSize / (double)currentSize;
+		out.append("iTable contains extends" + nl);
+		out.append("-----------------------" + nl);
+		out.append("current    iTable size : " + currentSize + nl);
+		out.append("new        iTable size : " + extendedSize + nl);
 		out.append("growth factor          : " + percent + nl);
 		out.append(nl);
 	}
