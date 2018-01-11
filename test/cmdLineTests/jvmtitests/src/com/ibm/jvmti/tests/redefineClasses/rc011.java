@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,9 +124,18 @@ public class rc011 {
 	
 	public boolean testReorderingInterfaceMethods() {
 		rc011_testReorderingInterfaceMethods_O1 obj = new rc011_testReorderingInterfaceMethods_O2();
+		rc011_testReorderingInterfaceMethods_O5 obj2 = new rc011_testReorderingInterfaceMethods_O6();
 
 		if (!"foo".equals(obj.getFoo()) || !"bar".equals(obj.getBar())) {
 			System.out.println("Failed 1: " + obj.getFoo() + " " + obj.getBar());
+			return false;
+		}
+		if (!"foo".equals(obj2.getFoo()) || !"bar".equals(obj2.getBar())) {
+			System.out.println("Failed 1 (obj2): " + obj2.getFoo() + " " + obj2.getBar());
+			return false;
+		}
+		if (!"foo2".equals(obj2.getFoo2()) || !"bar2".equals(obj2.getBar2())) {
+			System.out.println("Failed 1 (obj2): " + obj2.getFoo2() + " " + obj2.getBar2());
 			return false;
 		}
 
@@ -138,6 +147,14 @@ public class rc011 {
 
 		if (!"foo".equals(obj.getFoo()) || !"bar".equals(obj.getBar())) {
 			System.out.println("Failed 2: " + obj.getFoo() + " " + obj.getBar());
+			return false;
+		}
+		if (!"foo".equals(obj2.getFoo()) || !"bar".equals(obj2.getBar())) {
+			System.out.println("Failed 2 (obj2): " + obj2.getFoo() + " " + obj2.getBar());
+			return false;
+		}
+		if (!"foo2".equals(obj2.getFoo2()) || !"bar2".equals(obj2.getBar2())) {
+			System.out.println("Failed 2 (obj2): " + obj2.getFoo2() + " " + obj2.getBar2());
 			return false;
 		}
 
