@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1212,11 +1212,6 @@ initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDAT
 		goto _error;
 /* This needs to be BEFORE the JCL library as we need to install hooks that are used
  * in the initialization of JCL library */
-
-#if defined(J9VM_OPT_RESOURCE_MANAGED)
-	if (NULL == createLoadInfo(portLibrary, returnVal, J9_RCM_DLL_NAME, 0, NULL, verboseFlags))
-		goto _error;
-#endif
 
 	if (!createLoadInfo(portLibrary, returnVal, J9_DEFAULT_JCL_DLL_NAME, (LOAD_BY_DEFAULT | FATAL_NO_DLL), NULL, verboseFlags))
 		goto _error;
@@ -2475,12 +2470,6 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	UDATA jvmti = FALSE;
 #endif
 
-#if defined(J9VM_OPT_RESOURCE_MANAGED)
-	/* RCM is the package name for JSR-284 resource management. */
-	IDATA xrcmIndex;
-	UDATA xrcm = FALSE;
-#endif
-
 	IDATA xxjitdirectoryIndex = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -2503,14 +2492,6 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	xnolinenumbers = (findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XNOLINENUMBERS, NULL, FALSE) >= 0);
 	xshareclasses = ((xshareclassesIndex = findArgInVMArgs( PORTLIB, j9vm_args, OPTIONAL_LIST_MATCH, VMOPT_XSHARECLASSES, NULL, FALSE))>=0);
 
-
-#if defined(J9VM_OPT_RESOURCE_MANAGED)
-	xrcm = ((xrcmIndex = findArgInVMArgs( PORTLIB, j9vm_args, OPTIONAL_LIST_MATCH, VMOPT_XRCM, NULL, FALSE))>=0);
-	if (0 != xrcm) {
-		/* Resource management depends on tenant support, enable it for free */
-		xtenant = 1;
-	}
-#endif
 
 	xdumpIndex = findArgInVMArgs( PORTLIB, j9vm_args, OPTIONAL_LIST_MATCH, VMOPT_XDUMP, NULL, FALSE);
 	xdumpnoneIndex = findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XDUMP_NONE, NULL, FALSE);
@@ -2823,15 +2804,6 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	entry = findDllLoadInfo(loadTable, J9_IFA_DLL_NAME);
 	entry->loadFlags |= LOAD_BY_DEFAULT;
 	JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "IFA support required... whacking table\n");
-#endif
-
-#if defined(J9VM_OPT_RESOURCE_MANAGED)
-	if ( xrcm ) {
-		ADD_FLAG_AT_INDEX( ARG_REQUIRES_LIBRARY, xrcmIndex );
-		entry = findDllLoadInfo(loadTable, J9_RCM_DLL_NAME);
-		entry->loadFlags |= LOAD_BY_DEFAULT;
-		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "Resource management (-Xrcm) requested... whacking table\n");
-	}
 #endif
 
 	rc = processXCheckOptions(vm, loadTable, j9vm_args);

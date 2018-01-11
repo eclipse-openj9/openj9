@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2017 IBM Corp. and others
+  Copyright (c) 2006, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,7 +115,6 @@
 	<source>
 		<project id="com.ibm.jvmti.tests"/>
 		<project id="compiler"/>
-		<project id="VM_LINUX39064"/>
 	</source>
 	<flags>
 		<flag id="arch_s390" value="true"/>
