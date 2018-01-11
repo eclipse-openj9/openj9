@@ -676,7 +676,7 @@ class TR_PersistentFieldInfo : public TR_Link<TR_PersistentFieldInfo>
    protected:
 
    char *   _signature;
-   const char *   _classPointer;
+   const char *   _classPointer; // class name
    int32_t  _signatureLength;
    int32_t  _numChars;
    uint8_t  _isTypeInfoValid;

@@ -6,6 +6,7 @@
 #include "compile/Compilation.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #include "runtime/CodeCache.hpp"
+#include "env/PersistentCHTable.hpp"
 
 uint32_t serverMsgTypeCount[JAAS::J9ServerMessageType_ARRAYSIZE] = {};
 
@@ -1688,6 +1689,14 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
             "arguments", "[Ljava/lang/Class;");
          int32_t parameterCount = (int32_t)fe->getArrayLengthInElements(arguments);
          client->write(parameterCount);
+         }
+         break;
+
+      case J9ServerMessageType::CHTable_findClassInfo:
+         {
+         auto classId = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
+         auto table = TR::comp()->getPersistentInfo()->getPersistentCHTable();
+         client->write(table->findClassInfoAfterLocking(classId, TR::comp(), false));
          }
          break;
       default:

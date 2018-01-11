@@ -64,6 +64,7 @@
 #include "env/ClassLoaderTable.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/PersistentCHTable.hpp"
+#include "env/JaasPersistentCHTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include "env/ClassTableCriticalSection.hpp"
@@ -1082,10 +1083,9 @@ onLoadInternal(
    if (persistentMemory == NULL)
       return -1;
 
-   TR_PersistentCHTable *chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
-   if (chtable == NULL)
-      return -1;
-   persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
+   // JAAS: persistentCHTable used to be inited here, but we have to move it after jaas commandline opts
+   // setting it to null here to catch anything that assumes it's set between here and the new init code.
+   persistentMemory->getPersistentInfo()->setPersistentCHTable(NULL);
 
    if (!TR::CompilationInfo::createCompilationInfo(jitConfig))
       return -1;
@@ -1554,6 +1554,19 @@ onLoadInternal(
             TR::Options::getCmdLineOptions()->getOption(TR_InhibitRecompilation)))
          persistentMemory->getPersistentInfo()->setRuntimeInstrumentationRecompilationEnabled(true);
       }
+
+   TR_PersistentCHTable *chtable;
+   if (persistentMemory->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      {
+      chtable = new (PERSISTENT_NEW) TR_JaasPersistentCHTable(persistentMemory);
+      }
+   else
+      {
+      chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
+      }
+   if (chtable == NULL)
+      return -1;
+   persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
    
    if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
    {

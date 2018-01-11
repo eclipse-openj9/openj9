@@ -217,6 +217,9 @@ enum J9ServerMessageType
    runFEMacro_invokeCatchHandle = 616;
    runFEMacro_invokeILGenMacros = 617;
    runFEMacro_derefUintptrjPtr = 618;
+
+   // for JaasPersistentCHTable
+   CHTable_findClassInfo = 700;
    }
 
 message J9ServerMessage
