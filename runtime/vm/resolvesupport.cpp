@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -110,7 +110,11 @@ packageAccessIsLegal(J9VMThread *currentThread, J9Class *targetClass, j9object_t
 	if (NULL == security) {
 		legal = TRUE;
 	} else if (canRunJavaCode) {
-		sendCheckPackageAccess(currentThread, targetClass, protectionDomain, 0, 0);
+		if (J9_ARE_NO_BITS_SET(currentThread->privateFlags2, J9_PRIVATE_FLAGS2_CHECK_PACKAGE_ACCESS)) {
+			currentThread->privateFlags2 |= J9_PRIVATE_FLAGS2_CHECK_PACKAGE_ACCESS;
+			sendCheckPackageAccess(currentThread, targetClass, protectionDomain, 0, 0);
+			currentThread->privateFlags2 &= ~J9_PRIVATE_FLAGS2_CHECK_PACKAGE_ACCESS;
+		}
 		if (J9_ARE_NO_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT) && (NULL == currentThread->currentException)) {
 			legal = TRUE;
 		}
