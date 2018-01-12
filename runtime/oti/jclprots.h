@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -184,7 +184,6 @@ void JNICALL Java_java_lang_System_setFieldImpl (JNIEnv * env, jclass cls, jstri
 jobject createSystemPropertyList (JNIEnv *env, const char *defaultValues[], int defaultCount);
 jstring JNICALL Java_java_lang_System_getEncoding (JNIEnv *env, jclass clazz, jint encodingType);
 jobject JNICALL Java_java_lang_System_getPropertyList (JNIEnv *env, jclass clazz);
-jint JNICALL Java_java_lang_String_getSeed (JNIEnv *env, jclass clazz);
 jstring JNICALL Java_java_lang_System_mapLibraryName (JNIEnv * env, jclass unusedClass, jstring inName);
 void JNICALL Java_java_lang_System_initLocale (JNIEnv *env, jclass clazz);
 
