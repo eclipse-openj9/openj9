@@ -40,9 +40,13 @@ void TR_JaasServerPersistentCHTable::initializeIfNeeded()
 TR_PersistentClassInfo *
 TR_JaasServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
-   return findClassInfoAfterLocking(classId, TR::comp());
+   initializeIfNeeded();
+   auto& data = getData();
+   auto it = data.classMap.find(classId);
+   if (it != data.classMap.end())
+      return it->second;
+   return nullptr;
    }
-
 
 TR_PersistentClassInfo *
 TR_JaasServerPersistentCHTable::findClassInfoAfterLocking(
@@ -56,12 +60,8 @@ TR_JaasServerPersistentCHTable::findClassInfoAfterLocking(
    if (comp->getOption(TR_DisableCHOpts))
       return nullptr;
 
-   initializeIfNeeded();
-   auto& data = getData();
-   auto it = data.classMap.find(classId);
-   if (it != data.classMap.end())
-      return it->second;
-   return nullptr;
+   TR::ClassTableCriticalSection findClassInfoAfterLocking(comp->fe());
+   return findClassInfo(classId);
    }
 
 void collectHierarchy(std::unordered_set<TR_PersistentClassInfo*> &out, TR_PersistentClassInfo *root)
