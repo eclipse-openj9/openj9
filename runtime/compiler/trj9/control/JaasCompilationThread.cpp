@@ -6,7 +6,7 @@
 #include "compile/Compilation.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #include "runtime/CodeCache.hpp"
-#include "env/PersistentCHTable.hpp"
+#include "env/JaasPersistentCHTable.hpp"
 
 uint32_t serverMsgTypeCount[JAAS::J9ServerMessageType_ARRAYSIZE] = {};
 
@@ -1696,7 +1696,19 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          auto classId = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
          auto table = TR::comp()->getPersistentInfo()->getPersistentCHTable();
-         client->write(table->findClassInfoAfterLocking(classId, TR::comp(), false));
+         TR_PersistentClassInfo* result = table->findClassInfoAfterLocking(classId, TR::comp(), false);
+         std::string encoded = FlatPersistentClassInfo::serialize(result);
+         client->write(encoded);
+         }
+         break;
+      case J9ServerMessageType::CHTable_getAllClassInfo:
+         {
+         client->getRecvData<JAAS::Void>();
+         auto table = TR::comp()->getPersistentInfo()->getPersistentCHTable();
+         TR_OpaqueClassBlock *rootClass = fe->getSystemClassFromClassName("java/lang/Object", 16);
+         TR_PersistentClassInfo* result = table->findClassInfoAfterLocking(rootClass, TR::comp(), false);
+         std::string encoded = FlatPersistentClassInfo::serialize(result);
+         client->write(encoded);
          }
          break;
       default:

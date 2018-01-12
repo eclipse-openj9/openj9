@@ -162,6 +162,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    friend class TR_ClassQueries;
    friend class J9::Options;
    friend class ::OMR::Options;
+   friend class FlatPersistentClassInfo;
 
    TR_OpaqueClassBlock               *_classId;
    TR_LinkHead0<TR_SubClass>          _subClasses;
