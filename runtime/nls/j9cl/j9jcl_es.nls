@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # Externalised messages for the VM components of the JCL module.
@@ -122,7 +122,7 @@ J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT=Sin verificaci\u00f3n previa de datos de 
 # START NON-TRANSLATABLE
 J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.explanation=The JXEed class library contains no preverification information.
 J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.system_action=The JVM will fail to start.
-J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.user_response=Contact IBM Service.
+J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -329,7 +329,7 @@ J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB=No se h
 # START NON-TRANSLATABLE
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load dbgwrapper.dll was unsuccessful, the internal error code is shown.
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.system_action=The JVM will proceed but may fail to start.
-J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact IBM Service.
+J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact your service representative.
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_1=5
 # END NON-TRANSLATABLE
 
@@ -346,7 +346,7 @@ J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB=No se ha podido re
 # START NON-TRANSLATABLE
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load a dll was unsuccessful, the dll name and internal error code are shown.
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.system_action=The JVM will proceed but may fail to start.
-J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact IBM Service.
+J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact your service representative.
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_1=dbgwrapper.dll
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_2=5
 # END NON-TRANSLATABLE
@@ -390,14 +390,14 @@ J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR=Error al recuperar la informaci\u00f3n d
 # START NON-TRANSLATABLE
 J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.explanation=Internal error occured when retrieving JVM CPU usage information.
 J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.system_action=The JVM will continue, but no JVM CPU usage related information will be provided.
-J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.user_response=Contact IBM Service.
+J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP=La indicaci\u00f3n de fecha y hora no es v\u00e1lida cuando se recupera la informaci\u00f3n de uso de la CPU de la JVM.
 # START NON-TRANSLATABLE
 J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.explanation=Timestamp is invalid when retrieving JVM CPU usage info.
 J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.system_action=The JVM will continue, but no JVM CPU usage related information will be provided.
-J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.user_response=Contact IBM Service.
+J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_JCL_OOM_NEW_GLOBAL_REF=No se puede asignar memoria para la nueva referencia global de JNI

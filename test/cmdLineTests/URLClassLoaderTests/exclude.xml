@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <!DOCTYPE suite SYSTEM "excludes.dtd">
@@ -42,6 +42,6 @@
 	<exclude id="Signed.failure2Store" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
 	<exclude id="Signed.failure2Find" platform="all"><reason>NoClassDefFoundError: sun.security.x509.AlgorithmId</reason></exclude>
 	<!-- PR 133321 -->
-	<exclude id="JarExtensionsTests.SingleJarInManifest.Verify1" platform="all"><reason>Failure condition was not found</reason></exclude>
-	<exclude id="JarExtensionsTests.MultipleJarsInManifests.Verify1" platform="all"><reason>Failure condition was not found</reason></exclude>
+	<exclude id="JarExtensionsTests.SingleJarInManifest.Verify1" platform="current"><reason>Failure condition was found: [Output match: LOCAL]</reason></exclude>
+	<exclude id="JarExtensionsTests.MultipleJarsInManifests.Verify1" platform="current"><reason>Failure condition was found: [Output match: LOCAL]</reason></exclude>
 </suite>

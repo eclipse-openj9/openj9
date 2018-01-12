@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #if !defined(BYTECODEINTERPRETER_HPP_)
@@ -1674,7 +1674,7 @@ throwStackOverflow:
 			if (J9_CHECK_ASYNC_POP_FRAMES == action) {
 				UDATA executeAsyncCheck = FALSE;
 				updateVMStruct(REGISTER_ARGS);
-				ALWAYS_TRIGGER_J9HOOK_VM_POP_FRAMES_INTERRUPT(_currentThread->javaVM->hookInterface, _currentThread, executeAsyncCheck);
+				ALWAYS_TRIGGER_J9HOOK_VM_POP_FRAMES_INTERRUPT(_vm->hookInterface, _currentThread, executeAsyncCheck);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				if (executeAsyncCheck) {
 					rc = GOTO_ASYNC_CHECK;
@@ -1839,14 +1839,6 @@ done:
 		} while (result != preCount);
 		return runMethodCompiled;
 	}
-
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-	VMINLINE VM_BytecodeAction
-	initialSharedMethod(REGISTER_ARGS_LIST)
-	{
-		return (JBinvokestatic == *_pc) ? initialStaticMethod(REGISTER_ARGS) : initialSpecialMethod(REGISTER_ARGS);
-	}
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	VMINLINE VM_BytecodeAction
 	initialStaticMethod(REGISTER_ARGS_LIST)
@@ -2041,16 +2033,23 @@ done:
 				goto done;
 			}
 		}
-
-		if (tracing || J9_EVENT_IS_HOOKED(_currentThread->javaVM->hookInterface, J9HOOK_VM_NATIVE_METHOD_ENTER)) {
-			UDATA relativeBP = _arg0EA - bp;
-			updateVMStruct(REGISTER_ARGS);
-			triggerNativeMethodEnterEvent(_currentThread, _sendMethod, _arg0EA, tracing);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			bp = _arg0EA - relativeBP;
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
-				goto done;
+		{
+			bool enterHooked = J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_NATIVE_METHOD_ENTER);
+			if (tracing || enterHooked) {
+				UDATA relativeBP = _arg0EA - bp;
+				updateVMStruct(REGISTER_ARGS);		
+				if (tracing) {
+					UTSI_TRACEMETHODENTER_FROMVM(_vm, _currentThread, _sendMethod, _arg0EA, 0);
+				}
+				if (enterHooked) {
+					ALWAYS_TRIGGER_J9HOOK_VM_NATIVE_METHOD_ENTER(_vm->hookInterface, _currentThread, _sendMethod, _arg0EA);
+				}
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				bp = _arg0EA - relativeBP;
+				if (immediateAsyncPending()) {
+					rc = GOTO_ASYNC_CHECK;
+					goto done;
+				}
 			}
 		}
 		/* If the stack grew, receiverAddress is still pointing to the correct slot
@@ -2089,15 +2088,38 @@ done:
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 			goto done;
 		}
-		if (tracing || J9_EVENT_IS_HOOKED(_currentThread->javaVM->hookInterface, J9HOOK_VM_NATIVE_METHOD_RETURN)) {
-			UDATA relativeBP = _arg0EA - bp;
-			updateVMStruct(REGISTER_ARGS);
-			triggerNativeMethodReturnEvent(_currentThread, _sendMethod, returnType, tracing);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			bp = _arg0EA - relativeBP;
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
-				goto done;
+		{
+			bool exitHooked = J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_NATIVE_METHOD_RETURN);
+			if (tracing || exitHooked) {
+				UDATA relativeBP = _arg0EA - bp;
+				updateVMStruct(REGISTER_ARGS);
+				UDATA returnValue[2];
+				void * returnValuePtr = returnValue;
+				jobject returnRef = (jobject) _currentThread->returnValue2;	/* The JNI send target put the returned ref here in the object case */
+				returnValue[0] = _currentThread->returnValue;
+				returnValue[1] = _currentThread->returnValue2;
+				if (returnType == J9NtcObject) {
+					PUSH_OBJECT_IN_SPECIAL_FRAME(_currentThread, (j9object_t) returnValue[0]);
+					returnValuePtr = _currentThread->sp;
+				}
+				/* Currently not called when an exception is pending, so always use NULL for exceptionPtr */
+				if (tracing) {
+					UTSI_TRACEMETHODEXIT_FROMVM(_vm, _currentThread, _sendMethod, NULL, returnValuePtr, 0);
+				}
+				if (exitHooked) {
+					ALWAYS_TRIGGER_J9HOOK_VM_NATIVE_METHOD_RETURN(_vm->hookInterface, _currentThread, _sendMethod, FALSE, returnValuePtr, returnRef);
+				}
+				if (returnType == J9NtcObject) {
+					returnValue[0] = (UDATA) POP_OBJECT_IN_SPECIAL_FRAME(_currentThread);
+				}
+				_currentThread->returnValue = returnValue[0];
+				_currentThread->returnValue2 = returnValue[1];
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				bp = _arg0EA - relativeBP;
+				if (immediateAsyncPending()) {
+					rc = GOTO_ASYNC_CHECK;
+					goto done;
+				}
 			}
 		}
 		{
@@ -2893,7 +2915,6 @@ done:
 		/* The cache is only filled in for public constructors, and only if the class can be instantiated and is initialized */
 		J9Method *method = j9clazz->initializerCache;
 		J9StackWalkState *walkState = NULL;
-		J9JavaVM * vm = _currentThread->javaVM;
 		if (NULL == method) {
 			/* Ensure this class is instantiable */
 			if (J9_UNEXPECTED(!VM_VMHelpers::classCanBeInstantiated(j9clazz))) {
@@ -2910,7 +2931,7 @@ done:
 			walkState->userData3 = (void *) FALSE;
 			walkState->frameWalkFunction = cInterpGetStackClassIterator;
 
-			if (J2SE_18 <= (J2SE_VERSION(vm) & J2SE_VERSION_MASK)) {
+			if ((J2SE_VERSION(_vm) & J2SE_VERSION_MASK) >= J2SE_18) {
 				walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
 			}
 
@@ -3846,7 +3867,7 @@ done:
 		if (NULL != className) {
 			J9ClassLoader *loader = J9VMJAVALANGCLASSLOADER_VMREF(_currentThread, classloaderObject);
 			if (NULL != loader) {
-				if (verifyQualifiedName(_currentThread, className)) {
+				if (CLASSNAME_INVALID != verifyQualifiedName(_currentThread, className)) {
 					buildInternalNativeStackFrame(REGISTER_ARGS);
 					updateVMStruct(REGISTER_ARGS);
 					j9Class = internalFindClassString(_currentThread, NULL, className, loader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
@@ -3872,7 +3893,6 @@ done:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		I_32 depth = *(I_32*)_sp;
 		J9ClassLoader *loader = NULL;
-		J9JavaVM * vm = _currentThread->javaVM;
 
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 
@@ -3882,7 +3902,7 @@ done:
 		walkState->userData3 = (void *) FALSE;
 		walkState->frameWalkFunction = cInterpGetStackClassIterator;
 
-		if (J2SE_18 <= (J2SE_VERSION(vm) & J2SE_VERSION_MASK)) {
+		if ((J2SE_VERSION(_vm) & J2SE_VERSION_MASK) >= J2SE_18) {
 			walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
 		}
 
@@ -3936,7 +3956,7 @@ done:
 		} else {
 			loader = _vm->systemClassLoader;
 		}
-		if (verifyQualifiedName(_currentThread, className)) {
+		if (CLASSNAME_VALID_NON_ARRARY == verifyQualifiedName(_currentThread, className)) {
 			updateVMStruct(REGISTER_ARGS);
 			j9Class = internalFindClassString(_currentThread, NULL, className, loader, J9_FINDCLASS_FLAG_USE_LOADER_CP_ENTRIES);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
@@ -3958,45 +3978,6 @@ done:
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
 		returnObjectFromINL(REGISTER_ARGS, J9VM_J9CLASS_TO_HEAPCLASS(j9Class), 2);
 done:
-		return rc;
-	}
-
-	/* com.ibm.oti.vm.VM: protected static native Class findClassInModuleOrNull(String moduleName, String className, ClassLoader classLoader); */
-	VMINLINE VM_BytecodeAction
-	inlVMFindClassInModuleOrNull(REGISTER_ARGS_LIST)
-	{
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		j9object_t classloaderObject = *(j9object_t*)_sp;
-		j9object_t className = *(j9object_t*)(_sp + 1);
-		j9object_t moduleName = *(j9object_t*)(_sp + 2);
-		J9Class *j9Class = NULL;
-		J9ClassLoader *loader = NULL;
-
-		buildInternalNativeStackFrame(REGISTER_ARGS);
-
-		if (NULL == className) {
-			goto done;
-		}
-
-		/* This native is only called for the boot loader, so vmRef is guaranteed to be initialized. */
-		loader = J9VMJAVALANGCLASSLOADER_VMREF(_currentThread, classloaderObject);
-		if (verifyQualifiedName(_currentThread, className)) {
-			UDATA options = J9_FINDCLASS_FLAG_USE_LOADER_CP_ENTRIES | J9_FINDCLASS_FLAG_FIND_MODULE_ON_FAIL;
-
-			updateVMStruct(REGISTER_ARGS);
-			j9Class = internalFindClassString(_currentThread, moduleName, className, loader, options);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			if (VM_VMHelpers::exceptionPending(_currentThread)) {
-				/* The VMStruct is already updated */
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				/* This method is not expected to throw any exception. If any exception has occurred, discard it and return NULL */
-				VM_VMHelpers::clearException(_currentThread);
-			}
-		}
-
-done:
-		restoreInternalNativeStackFrame(REGISTER_ARGS);
-		returnObjectFromINL(REGISTER_ARGS, J9VM_J9CLASS_TO_HEAPCLASS(j9Class), 3);
 		return rc;
 	}
 
@@ -4170,7 +4151,7 @@ done:
 		}
 
 		/* Make sure the name is legal */
-		if (!verifyQualifiedName(_currentThread, classNameObject)) {
+		if (CLASSNAME_INVALID == verifyQualifiedName(_currentThread, classNameObject)) {
 			goto throwCNFE;
 		}
 
@@ -4273,7 +4254,6 @@ done:
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		I_32 depth = *(I_32*)_sp;
-		J9JavaVM * vm = _currentThread->javaVM;
 
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 
@@ -4283,7 +4263,7 @@ done:
 		walkState->userData3 = (void *) FALSE;
 		walkState->frameWalkFunction = cInterpGetStackClassIterator;
 
-		if (J2SE_18 <= (J2SE_VERSION(vm) & J2SE_VERSION_MASK)) {
+		if ((J2SE_VERSION(_vm) & J2SE_VERSION_MASK) >= J2SE_18) {
 			walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
 		}
 
@@ -6416,7 +6396,7 @@ done:
 				/* Ignore <init> or <clinit> methods */
 				if ((0 != nameLength) && (name[0] != '<')) {
 					/* Resolve special method ref when _sendMethod == initialSpecialMethod */
-					if (_sendMethod == _currentThread->javaVM->initialMethods.initialSpecialMethod) {
+					if (_sendMethod == _vm->initialMethods.initialSpecialMethod) {
 						buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 						updateVMStruct(REGISTER_ARGS);
 						_sendMethod = resolveSpecialMethodRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
@@ -6452,7 +6432,6 @@ exit:
 		return rc;
 	}
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	VMINLINE VM_BytecodeAction
 	invokespecialsplit(REGISTER_ARGS_LIST)
 	{
@@ -6486,7 +6465,6 @@ exit:
 		}
 		return rc;
 	}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	VMINLINE VM_BytecodeAction
 	invokestatic(REGISTER_ARGS_LIST)
@@ -6498,7 +6476,6 @@ exit:
 		return GOTO_RUN_METHOD;
 	}
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	VMINLINE VM_BytecodeAction
 	invokestaticsplit(REGISTER_ARGS_LIST)
 	{
@@ -6529,7 +6506,6 @@ exit:
 		}
 		return rc;
 	}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 	VMINLINE VM_BytecodeAction
 	invokeinterfaceOffset(REGISTER_ARGS_LIST, UDATA offset)
@@ -7794,12 +7770,9 @@ done:
 			/* Get MethodHandle for this operation from the VarHandles handleTable */
 			j9object_t handleTable = J9VMJAVALANGINVOKEVARHANDLE_HANDLETABLE(_currentThread, varHandle);
 			j9object_t methodHandle = J9JAVAARRAYOFOBJECT_LOAD(_currentThread, handleTable, operation);
+			j9object_t handleType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
 
-			/* Get expected MethodType */
-			j9object_t typeTable = J9VMJAVALANGINVOKEVARHANDLE_TYPETABLE(_currentThread, varHandle);
-			j9object_t handleType = J9JAVAARRAYOFOBJECT_LOAD(_currentThread, typeTable, operation);
-
-			/* Get call site MethodType using binary search */
+			/* Get call site MethodType */
 			j9object_t volatile callSiteType = NULL;
 			J9Class *ramClass = J9_CLASS_FROM_CP(ramConstantPool);
 			J9ROMClass *romClass = ramClass->romClass;
@@ -7813,14 +7786,15 @@ done:
 				if (cachedHandle != NULL) {
 					cachedHandleType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, cachedHandle);
 				}
-				if (cachedHandleType != NULL && VM_VMHelpers::doMethodTypesMatchIgnoringLastArgument(_currentThread, callSiteType, cachedHandleType)) {
+				if (cachedHandleType == callSiteType) {
+					/* The cached AsTypeHandle was applicable to this call site. Use the cache. */
 					methodHandle = cachedHandle;
 				} else {
 					/* Create generic invocation handle */
 					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 					pushObjectInSpecialFrame(REGISTER_ARGS, varHandle);
 					updateVMStruct(REGISTER_ARGS);
-					sendForGenericInvokeVarHandle(_currentThread, methodHandle, callSiteType, varHandle, 0 /* reserved */);
+					sendForGenericInvoke(_currentThread, methodHandle, callSiteType, FALSE /* dropFirstArg */, 0 /* reserved */);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					varHandle = popObjectInSpecialFrame(REGISTER_ARGS);
 					restoreGenericSpecialStackFrame(REGISTER_ARGS);
@@ -8295,13 +8269,8 @@ public:
 		JUMP_TABLE_ENTRY(JBinvokeinterface2),
 		JUMP_TABLE_ENTRY(JBinvokehandle),
 		JUMP_TABLE_ENTRY(JBinvokehandlegeneric),
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		JUMP_TABLE_ENTRY(JBinvokestaticsplit),
 		JUMP_TABLE_ENTRY(JBinvokespecialsplit),
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
@@ -8327,9 +8296,6 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_STATIC),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_SPECIAL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL),
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_SHARED),
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_UNSATISFIED_OR_ABSTRACT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_COUNT_NON_SYNC),
@@ -8432,7 +8398,6 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASSLOADER_FIND_LOADED_CLASS_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_VM_FIND_CLASS_OR_NULL),
-		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_VM_FIND_CLASS_IN_MODULE_OR_NULL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_CLASS_FORNAMEIMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_THREAD_INTERRUPTED),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_VM_GET_CP_INDEX_IMPL),
@@ -8742,10 +8707,6 @@ runMethod: {
 		PERFORM_ACTION(initialSpecialMethod(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL):
 		PERFORM_ACTION(initialVirtualMethod(REGISTER_ARGS));
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_SHARED):
-		PERFORM_ACTION(initialSharedMethod(REGISTER_ARGS));
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_UNSATISFIED_OR_ABSTRACT):
 		PERFORM_ACTION(throwUnsatisfiedLinkOrAbstractMethodError(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT):
@@ -8971,8 +8932,6 @@ runMethod: {
 		PERFORM_ACTION(inlClassLoaderFindLoadedClassImpl(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_VM_FIND_CLASS_OR_NULL):
 		PERFORM_ACTION(inlVMFindClassOrNull(REGISTER_ARGS));
-	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_VM_FIND_CLASS_IN_MODULE_OR_NULL):
-		PERFORM_ACTION(inlVMFindClassInModuleOrNull(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_CLASS_FORNAMEIMPL):
 		PERFORM_ACTION(inlClassForNameImpl(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_THREAD_INTERRUPTED):
@@ -9786,14 +9745,12 @@ executeBytecodeFromLocal:
 		JUMP_TARGET(JBinvokehandlegeneric):
 			SINGLE_STEP();
 			PERFORM_ACTION(invokehandlegeneric(REGISTER_ARGS));
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		JUMP_TARGET(JBinvokestaticsplit):
 			SINGLE_STEP();
 			PERFORM_ACTION(invokestaticsplit(REGISTER_ARGS));
 		JUMP_TARGET(JBinvokespecialsplit):
 			SINGLE_STEP();
 			PERFORM_ACTION(invokespecialsplit(REGISTER_ARGS));
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		JUMP_TARGET(JBretFromNative0):
 			/* No single step for this bytecode */
 			PERFORM_ACTION(retFromNative0(REGISTER_ARGS));

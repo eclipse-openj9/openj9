@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <spec xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ibm.com/j9/builder/spec" xsi:schemaLocation="http://www.ibm.com/j9/builder/spec spec-v1.xsd" id="linux_ppc-64_cmprssptrs_le_gcc">
@@ -108,7 +108,6 @@
 		<feature id="core"/>
 		<feature id="dbgext"/>
 		<feature id="gpu"/>
-		<feature id="harmony"/>
 		<feature id="se"/>
 		<feature id="se60_26"/>
 		<feature id="se7"/>
@@ -116,7 +115,7 @@
 	</features>
 	<source>
 		<project id="com.ibm.jvmti.tests"/>
-		<project id="tr.source"/>
+		<project id="compiler"/>
 	</source>
 	<flags>
 		<flag id="arch_power" value="true"/>
@@ -130,6 +129,7 @@
 		<flag id="build_java9" value="false"/>
 		<flag id="build_product" value="false"/>
 		<flag id="build_openj9" value="true"/>
+		<flag id="build_openj9JDK8" value="true"/>
 		<flag id="build_stage_toronto_lab" value="true"/>
 		<flag id="env_gcc" value="true"/>
 		<flag id="env_hasFPU" value="true"/>
@@ -221,7 +221,6 @@
 		<flag id="module_jnichk" value="true"/>
 		<flag id="module_jniinv" value="true"/>
 		<flag id="module_jnitest" value="true"/>
-		<flag id="module_jsig" value="true"/>
 		<flag id="module_jvmti" value="true"/>
 		<flag id="module_jvmtitst" value="true"/>
 		<flag id="module_lifecycle_tests" value="true"/>

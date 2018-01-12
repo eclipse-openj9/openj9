@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # Externalised messages for the Class File Reader errors.
@@ -1294,6 +1294,65 @@ J9NLS_CFR_ERR_BAD_NEST_TOP_INDEX=Nest top must be a constant class
 J9NLS_CFR_ERR_BAD_NEST_TOP_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_NEST_TOP_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BAD_NEST_TOP_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+# <clinit> method at version 51.0 or above does not have static flag set
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC=Method <clinit> is not static
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CLINIT_NOT_STATIC.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+# <clinit> method at version 51.0 must be void and take no arguments
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=Method <clinit> has illegal signature
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+# <init> method cannot be in an Interface in Java 9
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE=Interface cannot have a method named <init>
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE=Unknown constant tag 19 in class file
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE=Unknown constant tag 20 in class file
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=Constant pool entry not valid in class files with versions < 53.0
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS=module-info is not a class because access_flag ACC_MODULE is set
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE
 

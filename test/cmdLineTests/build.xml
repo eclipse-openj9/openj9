@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <project name="cmdLineTests" default="build" basedir=".">
@@ -36,9 +36,22 @@
 	</target>
 
 	<target name="build" depends="dist">
-		<subant target="">
-			<fileset dir="." includes="*/build.xml" />
-		</subant>
+		<if>
+			<equals arg1="${JCL_VERSION}" arg2="latest" />
+			<then>
+				<subant target="">
+					<fileset dir="." includes="*/build.xml">
+						<exclude name="jvmtitests/build.xml" />
+						<exclude name="proxyFieldAccess/build.xml" />
+					</fileset>
+				</subant>
+			</then>
+			<else>
+				<subant target="">
+					<fileset dir="." includes="*/build.xml" />
+				</subant>
+			</else>
+		</if>
 	</target>
 	
 	<target name="dist" depends="init">

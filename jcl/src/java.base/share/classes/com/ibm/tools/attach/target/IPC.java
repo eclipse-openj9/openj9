@@ -2,7 +2,7 @@
 package com.ibm.tools.attach.target;
 
 /*******************************************************************************
- * Copyright (c) 2009, 2015 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@ package com.ibm.tools.attach.target;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 import java.io.ByteArrayInputStream;
@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
 
@@ -285,10 +286,49 @@ public class IPC {
 		}
 	}
 
-	private synchronized static void printLogMessage(final String msg) {
-		tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
-		long currentTime = System.currentTimeMillis();
+	/**
+	 * Print the information about a throwable, including the exact class,
+	 * message, and stack trace.
+	 * @param msg User supplied message
+	 * @param thrown throwable
+	 * @note nothing is printed if logging is disabled
+	 */
+	public synchronized static void logMessage(String msg, Throwable thrown) {
+		@SuppressWarnings("resource")
 		PrintStream log = getLogStream();
+		if (!Objects.isNull(log)) {
+			tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
+			printLogMessageHeader(log);
+			log.println(msg);
+			thrown.printStackTrace(log);
+			log.flush();
+		}
+	}
+
+	/**
+	 * Print a message to the log file with time and thread information.
+	 * Also send the raw message to a tracepoint.
+	 * @param msg message to print
+	 * @note no message is printed if logging is disabled
+	 */
+	private synchronized static void printLogMessage(final String msg) {
+		@SuppressWarnings("resource")
+		PrintStream log = getLogStream();
+		if (!Objects.isNull(log)) {
+			tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
+			printLogMessageHeader(log);
+			log.println(msg);
+			log.flush();
+		}
+	}
+
+	/**
+	 * Print the time, virtual machine ID, and thread ID to the log stream.
+	 * @param log output stream
+	 * @note log must be non-null
+	 */
+	private static void printLogMessageHeader(PrintStream log) {
+		long currentTime = System.currentTimeMillis();
 		log.print(currentTime);
 		log.print(" "); //$NON-NLS-1$
 		String id = AttachHandler.getVmId();
@@ -301,8 +341,6 @@ public class IPC {
 		log.print(" ["); //$NON-NLS-1$
 		log.print(Thread.currentThread().getName());
 		log.print("]: "); //$NON-NLS-1$
-		log.println(msg);
-		log.flush();
 	}
 	
 	static final class syncObject {

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include <string.h>
@@ -385,20 +385,21 @@ fixJNIMethodID(J9VMThread *currentThread, J9Method *oldMethod, J9Method *newMeth
 			/* walk back the class chain and fix up old equivalence */
 			while (NULL != currentClass->replacedClass) {
 				void **methodIDs = NULL;
-				UDATA methodIndex = 0;
-				UDATA methodCount = 0;
 				J9Method *equivalentMethod = NULL;
 				BOOLEAN found = FALSE;
 				
 				currentClass = currentClass->replacedClass;
 				methodIDs = currentClass->jniIDs;
-				methodCount = currentClass->romClass->romMethodCount;
 
-				for (methodIndex = 0; methodIndex < methodCount; methodIndex++) {
-					if (methodIDs[methodIndex] == oldMethodID) {
-						methodIDs[methodIndex] = oldMethodIDReplacement;
-						found = TRUE;
-						break;
+				if (NULL != methodIDs) {
+					UDATA methodIndex = 0;
+					UDATA methodCount = currentClass->romClass->romMethodCount;
+					for (methodIndex = 0; methodIndex < methodCount; methodIndex++) {
+						if (methodIDs[methodIndex] == oldMethodID) {
+							methodIDs[methodIndex] = oldMethodIDReplacement;
+							found = TRUE;
+							break;
+						}
 					}
 				}
 				if (!found) {
@@ -581,15 +582,12 @@ areMethodsEquivalent(J9ROMMethod * method1, J9ROMClass * romClass1, J9ROMMethod 
 					/* Intentional fall-through */
 				case JBinvokespecial:
 				case JBinvokestatic:
-	#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 				case JBinvokespecialsplit:
 				case JBinvokestaticsplit:
-	#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				case JBinvokevirtual: {
 					U_16 cpIndex1 = NEXT_U16(bytecodes1);
 					U_16 cpIndex2 = NEXT_U16(bytecodes2);
 
-	#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 					if (JBinvokestaticsplit == bc) {
 						/* use cpIndex1 as index into slit table */
 						cpIndex1 = *(U_16 *)(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(romClass1) + cpIndex1);
@@ -605,7 +603,6 @@ areMethodsEquivalent(J9ROMMethod * method1, J9ROMClass * romClass1, J9ROMMethod 
 						/* use cpIndex2 as index into slit table */
 						cpIndex2 = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(romClass2) + cpIndex2);
 					}
-	#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 					if (!areMethodRefsIdentical(romCP1, cpIndex1, romCP2, cpIndex2)) {
 						return FALSE;
@@ -743,7 +740,8 @@ fixSubclassHierarchy(J9VMThread * currentThread, J9HashTable * classPairs)
 		 * was replaced itself, make sure we use the new superclass 
 		 */
 		exemplar.originalRAMClass = superclass;
-		if (result = hashTableFind(classPairs, &exemplar)) {
+		result = hashTableFind(classPairs, &exemplar);
+		if (NULL != result) {
 			if (NULL != result->replacementClass.ramClass) {
 				/* we found the original superclass inside the old-new
 				 * mapping table and have determined a new RAM class
@@ -870,7 +868,8 @@ fixITables(J9VMThread * currentThread, J9HashTable * classPairs)
 
 			while (superClass) {
 				exemplar.originalRAMClass = superClass;
-				if (result = hashTableFind(classPairs, &exemplar)) {
+				result = hashTableFind(classPairs, &exemplar);
+				if (NULL != result) {
 					if (result->replacementClass.ramClass) {
 
 						/* Get the iTable of the replaced superclass */
@@ -1572,47 +1571,11 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 				case J9CPTYPE_FIELD:
 					break;
 
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-				case J9CPTYPE_SHARED_METHOD:
-					if (ramConstantPool != (J9ConstantPool *) vm->jclConstantPool) {
-						J9UTF8 *nameUTF, *className;
-						J9ROMClassRef *romClassRef;
-						UDATA methodIndex = sizeof(J9Class) + sizeof(UDATA);
-						romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
-						romClassRef = ((J9ROMClassRef *) romConstantPool) + romMethodRef->classRefCPIndex;
-						className = J9ROMCLASSREF_NAME(romClassRef);
-						nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-						nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nas);
-						if ((J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), "java/lang/invoke/MethodHandle"))
-						&& (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), "invokeExact")
-							|| J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), "invoke")))
-						{
-							methodIndex = methodTypeIndex++;
-						}
-						((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (methodIndex << 8) +
-							getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
-						((J9RAMMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialSharedMethod;
-					} else {
-						/* Try to resolve as virtual, then static, then special */
-						if (0 == vmFuncs->resolveVirtualMethodRef(currentThread, ramConstantPool, i, resolveFlagsBase | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL, &resolvedMethod)) {
-							resolvedMethod = vmFuncs->resolveStaticMethodRef(currentThread, ramConstantPool, i, resolveFlagsBase | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
-						}
-						if (NULL == resolvedMethod) {
-							resolvedMethod = vmFuncs->resolveSpecialMethodRef(currentThread, ramConstantPool, i, resolveFlagsBase | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
-						}
-					}
-					break;
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-
 				case J9CPTYPE_HANDLE_METHOD:
 					if (ramConstantPool != (J9ConstantPool *) vm->jclConstantPool) {
 						romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 						nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 						((J9RAMMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialStaticMethod;
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-						((J9RAMMethodRef *) ramConstantPool)[i].method = NULL;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 						((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (methodTypeIndex << 8) +
 							getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
 						methodTypeIndex++;
@@ -1644,15 +1607,11 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 				case J9CPTYPE_STATIC_METHOD:
 
 					if (ramConstantPool != (J9ConstantPool *) vm->jclConstantPool) {
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 						romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 						nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 						/* Set methodIndex to initial virtual method, just as we do in internalRunPreInitInstructions() */
 						((J9RAMStaticMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = ((sizeof(J9Class) + sizeof(UDATA)) << 8) +
 							getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-						((J9RAMStaticMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = 0;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 						((J9RAMStaticMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialStaticMethod;
 					} else {
 						vmFuncs->resolveStaticMethodRef(currentThread, ramConstantPool, i,
@@ -1683,7 +1642,8 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 							J9JVMTIClassPair exemplar;
 							J9JVMTIClassPair * result;
 							exemplar.originalRAMClass = ((J9RAMClassRef *) ramConstantPool)[i].value;
-							if (result = hashTableFind(classHashTable, &exemplar)) {
+							result = hashTableFind(classHashTable, &exemplar);
+							if (NULL != result) {
 								((J9RAMClassRef *) ramConstantPool)[i].value = result->replacementClass.ramClass;
 								((J9RAMClassRef *) ramConstantPool)[i].modifiers = result->replacementClass.romClass->modifiers;
 							}
@@ -1712,9 +1672,6 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 	for (cpIndex = 0; cpIndex < ramConstantPoolCount; cpIndex++) {
 		switch (J9_CP_TYPE(cpShapeDescription, cpIndex)) {
 			case J9CPTYPE_INSTANCE_METHOD: /* Fall through */
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-			case J9CPTYPE_SHARED_METHOD: /* Fall through */
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			case J9CPTYPE_HANDLE_METHOD: {
 				J9RAMMethodRef *methodRef = (J9RAMMethodRef *) &ramConstantPool[cpIndex];
 
@@ -1764,7 +1721,6 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 	}
 }
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 static void
 fixRAMSplitTablesForFastHCR(J9Class *clazz, J9HashTable *methodHashTable)
 {
@@ -1796,7 +1752,6 @@ fixRAMSplitTablesForFastHCR(J9Class *clazz, J9HashTable *methodHashTable)
 		}
 	}
 }
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 
 void
@@ -1815,9 +1770,7 @@ fixConstantPoolsForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs, J
 			fixRAMConstantPoolForFastHCR(J9_CP_FROM_CLASS(clazz), classPairs, methodPairs);
 		}
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		fixRAMSplitTablesForFastHCR(clazz, methodPairs);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 		clazz = vmFuncs->allClassesNextDo(&state);
 	}
@@ -1858,7 +1811,6 @@ unresolveAllClasses(J9VMThread * currentThread, J9HashTable * classPairs, J9Hash
 			}
 		}
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		/* zero out split table entries */
 		if (NULL != clazz->staticSplitMethodTable) {
 			memset((void *)clazz->staticSplitMethodTable, 0, clazz->romClass->staticSplitMethodRefCount * sizeof(J9Method *));
@@ -1866,7 +1818,6 @@ unresolveAllClasses(J9VMThread * currentThread, J9HashTable * classPairs, J9Hash
 		if (NULL != clazz->specialSplitMethodTable) {
 			memset((void *)clazz->specialSplitMethodTable, 0, clazz->romClass->specialSplitMethodRefCount * sizeof(J9Method *));
 		}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 		clazz = vmFuncs->allClassesNextDo(&state);
 	}
@@ -2209,10 +2160,8 @@ swapClassesForFastHCR(J9Class *originalClass, J9Class *obsoleteClass)
 	((J9ConstantPool *) originalClass->ramConstantPool)->ramClass = originalClass;
 	((J9ConstantPool *) obsoleteClass->ramConstantPool)->ramClass = obsoleteClass;
 	SWAP_MEMBER(replacedClass, J9Class *, originalClass, obsoleteClass);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	SWAP_MEMBER(staticSplitMethodTable, J9Method **, originalClass, obsoleteClass);
 	SWAP_MEMBER(specialSplitMethodTable, J9Method **, originalClass, obsoleteClass);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	/* Force invokedynamics to be re-resolved as we can't map from the old callsite index to the new one */
 	SWAP_MEMBER(callSites, j9object_t*, originalClass, obsoleteClass);
 	/* Force methodTypes to be re-resolved as indexes are assigned in CP order, no mapping from old to new. */

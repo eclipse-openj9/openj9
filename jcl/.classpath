@@ -1,19 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+/*******************************************************************************
+ * Copyright (c) 2017, 2017 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+ -->
 <classpath>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/java.base/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/java.desktop/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/java.logging/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/java.management/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/jdk.attach/share/classes"/>
+	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.jvm/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/jdk.management/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.cuda/share/classes"/>
-	<classpathentry excluding="**/module-info.java" kind="src" path="src/com.ibm.dataaccess/share/classes"/>
-	<classpathentry excluding="**/module-info.java" kind="src" path="src/com.ibm.dtfj/share/classes"/>
-	<classpathentry excluding="**/module-info.java" kind="src" path="src/com.ibm.dtfjview/share/classes"/>
+	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.dataaccess/share/classes"/>
+	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.dtfj/share/classes"/>
+	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.dtfjview/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.gpu/share/classes"/>
-	<classpathentry excluding="**/module-info.java" kind="src" path="src/com.ibm.management/share/classes"/>
 	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.sharedclasses/share/classes"/>
-	<classpathentry excluding="**/module-info.java" kind="src" path="src/com.ibm.traceformat/share/classes"/>
+	<classpathentry excluding="**/module-info.java" kind="src" path="src/openj9.traceformat/share/classes"/>
 	<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>

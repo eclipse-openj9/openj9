@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corp. and others
+ * Copyright (c) 2011, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package com.ibm.j9ddr.autoblob.xmlparser;
 
@@ -74,46 +74,6 @@ public class J9FlagsXMLParser
 			return cNameToFlagId;
 		}
 	
-//		From String.stx		
-//		
-//		cName
-//
-//		"Answer the C equivalent of this String"
-//
-//		| aStream knownNames index addUnderscore |
-//
-//		aStream := WriteStream on: String new.
-//
-//		knownNames := #('JIT' 'JNI' 'INL' 'AOT' 'Arg0EA').
-//		addUnderscore := false.
-//		index := 1.
-//		[index <= self size] whileTrue: [
-//			addUnderscore
-//				ifTrue: [
-//					aStream nextPut: $_.
-//					addUnderscore := false
-//				].
-//			knownNames
-//				detect: [:known |
-//					(known occursIn: self at: index)
-//						ifTrue: [
-//							aStream nextPutAll: known asUppercase.
-//							index := index + known size.
-//							addUnderscore := true.
-//							true
-//						]
-//						ifFalse: [false]
-//				]
-//				ifNone: [| char |
-//					char := self at: index.
-//					char isUppercase not ifTrue: [((index < self size) and: [(self at: index + 1) isUppercase]) ifTrue: [addUnderscore := true]].
-//					aStream nextPut: char asUppercase.
-//					index := index + 1
-//				]
-//		].
-//
-//		^aStream contents
-
 		private String cName(String id)
 		{
 			boolean addUnderscore = false;

@@ -18,7 +18,7 @@
    [1] https://www.gnu.org/software/classpath/license.html
    [2] http://openjdk.java.net/legal/assembly-exception.html
 
-   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module>
 	<artifact type="static" name="j9codert_vm">
@@ -59,10 +59,7 @@
 			<include path="j9gcinclude"/>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
 
-			<include path="../tr.source/runtime" type="relativepath"/>
-			<include path="../tr.source/codegen" type="relativepath"/>
-			<include path="../tr.source/base" type="relativepath"/>
-			<include path="../tr.source/trj9/runtime" type="relativepath"/>
+			<include path="../compiler/trj9/runtime" type="relativepath"/>
 		</includes>
 
 		<makefilestubs>
@@ -80,7 +77,7 @@
 				<exclude-if condition="spec.flags.arch_arm"/>
 			</makefilestub>
 			<makefilestub data="UMA_OBJECTS:=$(filter-out znathelp%,$(UMA_OBJECTS))\n">
-				<exclude-if condition="spec.flags.arch_s390 and not spec.linux_ztpf_390-64.*"/>
+				<exclude-if condition="spec.flags.arch_s390"/>
 			</makefilestub>
 		</makefilestubs>
 

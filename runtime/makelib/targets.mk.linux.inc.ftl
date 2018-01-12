@@ -17,11 +17,13 @@
 	[1] https://www.gnu.org/software/classpath/license.html
 	[2] http://openjdk.java.net/legal/assembly-exception.html
 
-	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <#if uma.spec.processor.arm>
-OBJCOPY := bcm2708hardfp-objcopy
+ARM_ARCH_FLAGS := -march=armv6 -marm -mfpu=vfp -mfloat-abi=hard
+OPENJ9_CC_PREFIX ?= bcm2708hardfp
+OBJCOPY := $(OPENJ9_CC_PREFIX)-objcopy
 <#else>
 OBJCOPY := objcopy
 </#if>
@@ -102,7 +104,7 @@ ifndef UMA_DO_NOT_OPTIMIZE_CCODE
   <#elseif uma.spec.processor.x86>
   UMA_OPTIMIZATION_CFLAGS+=-O3 -fno-strict-aliasing -march=pentium4 -mtune=prescott -mpreferred-stack-boundary=4
   <#elseif uma.spec.processor.arm>
-  UMA_OPTIMIZATION_CFLAGS+=-g -O3 -fno-strict-aliasing -march=armv6 -mfpu=vfp -mfloat-abi=hard -Wno-unused-but-set-variable
+  UMA_OPTIMIZATION_CFLAGS+=-g -O3 -fno-strict-aliasing $(ARM_ARCH_FLAGS) -Wno-unused-but-set-variable
   <#elseif uma.spec.processor.ppc>
   UMA_OPTIMIZATION_CFLAGS+=-O3
   <#if uma.spec.flags.env_littleEndian.enabled && uma.spec.type.linux>
@@ -125,7 +127,7 @@ ifndef UMA_DO_NOT_OPTIMIZE_CCODE
   <#elseif uma.spec.processor.x86>
   UMA_OPTIMIZATION_CXXFLAGS+=-O3 -fno-strict-aliasing -march=pentium4 -mtune=prescott -mpreferred-stack-boundary=4
   <#elseif uma.spec.processor.arm>
-  UMA_OPTIMIZATION_CXXFLAGS+=-g -O3 -fno-strict-aliasing -march=armv6 -mfpu=vfp -mfloat-abi=hard -Wno-unused-but-set-variable
+  UMA_OPTIMIZATION_CXXFLAGS+=-g -O3 -fno-strict-aliasing $(ARM_ARCH_FLAGS) -Wno-unused-but-set-variable
   <#elseif uma.spec.processor.ppc>
   UMA_OPTIMIZATION_CXXFLAGS+=-O3
   <#if uma.spec.flags.env_littleEndian.enabled && uma.spec.type.linux>
@@ -418,7 +420,7 @@ endif
 
 <#if uma.spec.processor.arm>
 $(patsubst %.s,%.o,$(filter %.s,$(UMA_FILES_TO_PREPROCESS))): %$(UMA_DOT_O): %.s
-	sed -f $(UMA_PATH_TO_ROOT)tr.source/codegen/makefiles/armasm2gas.sed $*.s > $*.S
+	sed -f $(UMA_PATH_TO_ROOT)compiler/trj9/build/scripts/armasm2gas.sed $*.s > $*.S
 	$(CPP) $(CPPFLAGS) $(UMA_C_INCLUDES) $*.S > $*.spp
 	-rm $*.S
 	$(AS) $(ASFLAGS) $(VMASMDEBUG) -o $*.o $*.spp

@@ -1,0 +1,441 @@
+!! Copyright (c) 2000, 2017 IBM Corp. and others
+!!
+!! This program and the accompanying materials are made available under
+!! the terms of the Eclipse Public License 2.0 which accompanies this
+!! distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+!! or the Apache License, Version 2.0 which accompanies this distribution and
+!! is available at https://www.apache.org/licenses/LICENSE-2.0.
+!!
+!! This Source Code may also be made available under the following
+!! Secondary Licenses when the conditions for such availability set
+!! forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+!! General Public License, version 2 with the GNU Classpath
+!! Exception [1] and GNU General Public License, version 2 with the
+!! OpenJDK Assembly Exception [2].
+!!
+!! [1] https://www.gnu.org/software/classpath/license.html
+!! [2] http://openjdk.java.net/legal/assembly-exception.html
+!!
+!! SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+
+#include "j9cfg.h"
+#include "jilconsts.inc"
+#include "p/runtime/ppcasmdefines.inc"
+
+#if defined(AIXPPC)
+#define FUNCTION_GLOBAL(name) .globl .##name
+#define FUNCTION_START(name)                                                            ;\
+   .##name:                                                                             ;\
+   .function .##name, startproc.##name, 16, 0, (endproc.##name - startproc.##name)      ;\
+   startproc.##name:
+#elif defined(LINUXPPC64)
+#define STARTPROC_CONC(name) startproc.name
+#define NAME_COMMA_CONC(name) name,
+#define FUNCTION_GLOBAL(name) .globl name
+#define FUNCTION_START(name)    ;\
+   FUNC_LABEL(name):            ;\
+   .type NAME_COMMA_CONC(name) "function"     ;\
+   STARTPROC_CONC(name):
+#elif defined(LINUXPPC)
+#define FUNCTION_GLOBAL(name) .globl name
+#define FUNCTION_START(name)    ;\
+   name##:                      ;\
+   .type name##, "function"     ;\
+   startproc.##name:
+#endif /* LINUXPPC */
+#define ENDPROC_CONC(name) endproc.name
+#define FUNCTION_END(name) ENDPROC_CONC(name):
+
+#if defined(AIXPPC)
+.csect ebb[PR]
+#elif defined(LINUXPPC64) && !defined(__LITTLE_ENDIAN__)
+.section ".opd", "aw"
+.align 3
+ebbHandler:
+.quad .ebbHandler, .TOC.@tocbase, 0
+
+.text
+#elif defined(LINUXPPC)
+#endif /* LINUXPPC */
+
+FUNCTION_GLOBAL(ebbHandler)
+FUNCTION_START(ebbHandler)
+.set MMCR0, 779
+.set BESCRSU, 801
+.set BESCRR, 802
+.set BESCR, 806
+.set EBBRR, 805
+#define rfebb0 .long 0x4c000124
+#define rfebb1 .long 0x4c000924
+
+#ifdef AIXPPC
+   ! By this point millicode ebb handler has saved r2, r3, ctr, cr
+   ! and placed a ptr to _pthread_EBB_registration_t in r3.
+   !
+   ! From pthread.h:
+   !
+   ! Event Based Branch Facility Support.  This structure defines a control
+   ! block that is used in the linkage to a registered problem-state
+   ! interrupt handler.
+   !
+   ! typedef struct {
+   !    eye_catch4b_t   _ptebb_eyecatcher;      /* R/W */
+   !    uint            _ptebb_cr;              /* R/O */
+   !    void *          _ptebb_handler_address; /* R/W */
+   !    void *          _ptebb_handler_data;    /* R/W */
+   !    ulong           _ptebb_r2;              /* R/O */
+   !    ulong           _ptebb_r3;              /* R/O */
+   !    ulong           _ptebb_ctr;             /* R/O */
+   !    ulong           reserved[4];
+   ! } _pthread_EBB_registration_t;
+   !
+   ! define PTHREAD_EBB_REGISTER_EYEC   0x45424231  /* EBB1 */
+.set EYEC_OFFSET, 0
+.set CR_OFFSET, 4
+.set HANDLER_ADDRESS_OFFSET, 8
+.set HANDLER_DATA_OFFSET, (8+ALen)
+.set R2_OFFSET, (8+ALen*2)
+.set R3_OFFSET, (8+ALen*3)
+.set CTR_OFFSET, (8+ALen*4)
+.set EYEC_LO, 0x4231
+.set EYEC_HI, 0x4542
+! mmcr_write(int mmcr, uint64_t *value) (kills r3, r5, cr0, lr)
+.set MMCR_WRITE, 0x85f0
+
+! STACK_RED_ZONE_SIZE: ABI requires that we preserve a certain number of bytes below the SP if we interrupt
+! STACK_SCRATCH_SPACE: Working space
+! STACK_MIN_ABI_FRAME: We need to establish the minimum required frame (backchain, LR save, etc + parameter save area)
+! Stack needs to be 16-byte aligned
+#ifdef TR_HOST_64BIT
+.set STACK_RED_ZONE_SIZE, 288
+.set STACK_MIN_ABI_FRAME, (48 + 64)
+#else /* TR_HOST_32BIT */
+.set STACK_RED_ZONE_SIZE, 220
+.set STACK_MIN_ABI_FRAME, (24 + 32)
+#endif /* TR_HOST_32BIT */
+.set STACK_SCRATCH_SPACE, 8
+.set STACK_FRAME_SIZE, ((STACK_RED_ZONE_SIZE + STACK_MIN_ABI_FRAME + STACK_SCRATCH_SPACE + 15) / 16 * 16)
+
+   ! Establish our stack frame
+   staddru      SP, -STACK_FRAME_SIZE(SP)
+
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+   ! Confirm that r3 points to an _pthread_EBB_registration_t by looking
+   ! for the eyecatcher
+   lhz          r2, EYEC_OFFSET(r3)
+   twnei        r2, EYEC_HI
+   lhz          r2, EYEC_OFFSET+2(r3)
+   twnei        r2, EYEC_LO
+#endif /* DEBUG || PROD_WITH_ASSUMES */
+
+   ! Grab our TR_PPCHWProfilerEBBContext
+   laddr        r2, HANDLER_DATA_OFFSET(r3)
+
+   ! Save volatile GPRs, so that we can restore them and so that the main event handler can examine them
+   staddr       r0, 0*ALen(r2)
+   staddr       r1, 1*ALen(r2)
+   ! Save the real r2 and r3, not the ones set up by the millicode handler
+   laddr        r0, R2_OFFSET(r3)
+   staddr       r0, 2*ALen(r2)
+   laddr        r0, R3_OFFSET(r3)
+   staddr       r0, 3*ALen(r2)
+   staddr       r4, 4*ALen(r2)
+   staddr       r5, 5*ALen(r2)
+   staddr       r6, 6*ALen(r2)
+   staddr       r7, 7*ALen(r2)
+   staddr       r8, 8*ALen(r2)
+   staddr       r9, 9*ALen(r2)
+   staddr       r10, 10*ALen(r2)
+   staddr       r11, 11*ALen(r2)
+   staddr       r12, 12*ALen(r2)
+   ! Save LR, XER, EBBRR
+   mflr         r0
+   staddr       r0, 32*ALen(r2)
+   mfxer        r0
+   staddr       r0, 33*ALen(r2)
+   mfspr        r0, EBBRR
+   staddr       r0, 34*ALen(r2)
+
+   ! Save our pthread context ptr
+   staddr       r3, STACK_MIN_ABI_FRAME(SP)
+
+   mfspr        r0, BESCR
+   ! Test the PMEO (bit 63) of BESCR
+   andi.        r0, r0, 0x1
+   bne          cr0, .LruntimeInstrumentation_0
+   ! Load the LM event handler EA and TOC, then call out to the main event handler
+   mr           r3, r2
+   laddr        r2, 36*ALen(r2)
+   laddr        r4, 0(r2)
+   mtctr        r4
+   laddr        r2, ALen(r2)
+   bctrl
+   b            .LreturnEBBHanlder_0 
+.LruntimeInstrumentation_0:
+   ! Load the RI event handler EA and TOC, then call out to the main event handler
+   mr           r3, r2
+   laddr        r2, 35*ALen(r2)
+   laddr        r4, 0(r2)
+   mtctr        r4
+   laddr        r2, ALen(r2)
+   bctrl
+.LreturnEBBHanlder_0:
+   ! If the main event handler returns non-zero, something went wrong and we`ll leave
+   ! the PMU frozen and disable EBBs
+   cmplwi       cr0, r3, 0
+
+   ! Get our pthread context ptr back
+   laddr        r3, STACK_MIN_ABI_FRAME(SP)
+
+   ! Grab our TR_PPCHWProfilerEBBContext
+   laddr        r2, HANDLER_DATA_OFFSET(r3)
+
+   ! Restore XER
+   laddr        r0, 33*ALen(r2)
+   mtxer        r0
+   ! Restore the volatile GPRs except r2 & r3 (those are saved elsewhere), r0, r4 & r5 (still need)
+   laddr        r6, 6*ALen(r2)
+   laddr        r7, 7*ALen(r2)
+   laddr        r8, 8*ALen(r2)
+   laddr        r9, 9*ALen(r2)
+   laddr        r10, 10*ALen(r2)
+   laddr        r11, 11*ALen(r2)
+   laddr        r12, 12*ALen(r2)
+
+   ! Restore ctr saved by the millicode handler
+   laddr        r5, CTR_OFFSET(r3)
+   mtctr        r5
+
+   ! Don`t restart the PMU if the main event handler failed
+   bne-         cr0, .Lfail
+
+   mr           r0, r3
+
+   ! Unfreeze the PMU
+   li           r3, MMCR0
+   lis          r5, 0x0400              ! MMCR[PMAO|FC] = 0, MMCR[PMAE] = 1
+#ifdef TR_HOST_64BIT
+   std          r5, STACK_MIN_ABI_FRAME(SP)
+#else /* TR_HOST_32BIT */
+   li           r4, 0
+   stw          r4, STACK_MIN_ABI_FRAME(SP)
+   stw          r5, 4+STACK_MIN_ABI_FRAME(SP)
+#endif /* TR_HOST_32BIT */
+   addi         r4, SP, STACK_MIN_ABI_FRAME
+   bla          MMCR_WRITE
+
+   mr           r3, r0
+
+   ! Restore the stack pointer
+   addi         SP, SP, STACK_FRAME_SIZE
+
+   ! Restore LR, r0, r4, and r5
+   laddr        r0, 32*ALen(r2)
+   mtlr         r0
+   laddr        r0, 0*ALen(r2)
+   laddr        r4, 4*ALen(r2)
+   laddr        r5, 5*ALen(r2)
+
+   ! Restore cr, r2, r3 saved by the millicode handler
+   lwz          r2, CR_OFFSET(r3)
+   mtcr         r2
+   laddr        r2, R2_OFFSET(r3)
+   laddr        r3, R3_OFFSET(r3)
+
+   rfebb1
+
+.Lfail:
+   ! Restore LR, r0, r4, and r5
+   laddr        r0, 32*ALen(r2)
+   mtlr         r0
+   laddr        r0, 0*ALen(r2)
+   laddr        r4, 4*ALen(r2)
+   laddr        r5, 5*ALen(r2)
+
+   ! Restore cr, r2, r3 saved by the millicode handler
+   lwz          r2, CR_OFFSET(r3)
+   mtcr         r2
+   laddr        r2, R2_OFFSET(r3)
+   laddr        r3, R3_OFFSET(r3)
+
+   rfebb0
+
+#elif defined(LINUXPPC)
+   ! We handle EBBs directly, we must save and restore all registers ourselves.
+   ! Context data is stored in the TCB at known offsets.
+#ifdef LINUXPPC64
+.set TCB, 13
+.set TCB_EBB_HANDLER, -28728
+.set TCB_EBB_CONTEXT, -28720
+.set TCB_RESERVED1, -28712
+.set TCB_RESERVED2, -28704
+#else /* LINUXPPC */
+.set TCB, 2
+.set TCB_EBB_HANDLER, -28700
+.set TCB_EBB_CONTEXT, -28696
+.set TCB_RESERVED1, -28692
+.set TCB_RESERVED2, -28688
+#endif /* LINUXPPC */
+
+! STACK_RED_ZONE_SIZE: ABI requires that we preserve a certain number of bytes below the SP if we interrupt
+! STACK_SCRATCH_SPACE: Working space
+! STACK_MIN_ABI_FRAME: We need to establish the minimum required frame (backchain, LR save, etc + parameter save area (not needed on ppc32 or ppc64le))
+! Stack needs to be 16-byte aligned
+#ifdef TR_HOST_64BIT
+#ifdef __LITTLE_ENDIAN__
+.set STACK_RED_ZONE_SIZE, 512
+.set STACK_MIN_ABI_FRAME, 32
+#else /* __BIG_ENDIAN__ */
+.set STACK_RED_ZONE_SIZE, 288
+.set STACK_MIN_ABI_FRAME, (48 + 64)
+#endif /* __BIG_ENDIAN__ */
+#else /* TR_HOST_32BIT */
+.set STACK_RED_ZONE_SIZE, 0
+.set STACK_MIN_ABI_FRAME, 8
+#endif /* TR_HOST_32BIT */
+.set STACK_SCRATCH_SPACE, (2*ALen+4)
+.set STACK_FRAME_SIZE, ((STACK_RED_ZONE_SIZE + STACK_MIN_ABI_FRAME + STACK_SCRATCH_SPACE + 15) / 16 * 16)
+
+   ! Establish our stack frame
+   staddru      SP, -STACK_FRAME_SIZE(SP)
+
+   ! Save some initial registers
+   staddr       r3, 0*ALen+STACK_MIN_ABI_FRAME(SP)
+   mfctr        r3
+   staddr       r3, 1*ALen+STACK_MIN_ABI_FRAME(SP)
+   mfcr         r3
+   stw          r3, 2*ALen+STACK_MIN_ABI_FRAME(SP)
+
+   ! Grab our TR_PPCHWProfilerEBBContext
+   laddr        r3, TCB_EBB_CONTEXT(TCB)
+
+   ! Save volatile GPRs, so that we can restore them and so that the main event handler can examine them
+   staddr       r0, 0*ALen(r3)
+   staddr       r1, 1*ALen(r3)
+#ifdef LINUXPPC64
+   staddr       r2, 2*ALen(r3)
+#endif /* LINUXPPC64 */
+   ! Save the real r3, not the one we`re currently using
+   laddr        r0, 0*ALen+STACK_MIN_ABI_FRAME(SP)
+   staddr       r0, 3*ALen(r3)
+   staddr       r4, 4*ALen(r3)
+   staddr       r5, 5*ALen(r3)
+   staddr       r6, 6*ALen(r3)
+   staddr       r7, 7*ALen(r3)
+   staddr       r8, 8*ALen(r3)
+   staddr       r9, 9*ALen(r3)
+   staddr       r10, 10*ALen(r3)
+   staddr       r11, 11*ALen(r3)
+   staddr       r12, 12*ALen(r3)
+   ! Save LR, XER, EBBRR
+   mflr         r0
+   staddr       r0, 32*ALen(r3)
+   mfxer        r0
+   staddr       r0, 33*ALen(r3)
+   mfspr        r0, EBBRR
+   staddr       r0, 34*ALen(r3)
+
+   mfspr        r0, BESCR
+   ! Test the PMEO (bit 63) of BESCR
+   andi.        r0, r0, 0x1
+   bne          cr0, .LruntimeInstrumentation
+   ! Load the event handler EA (and TOC for 64-bit BE), then call out to the main event handler
+#ifdef LINUXPPC64
+#ifdef __LITTLE_ENDIAN__
+   laddr        r12, 36*ALen(r3)
+   mtctr        r12
+#else /* __BIG_ENDIAN__ */
+   laddr        r2, 36*ALen(r3)
+   laddr        r4, 0(r2)
+   mtctr        r4
+   laddr        r2, ALen(r2)
+#endif /* __BIG_ENDIAN__ */
+#else /* LINUXPPC */
+   laddr        r4, 36*ALen(r3)
+   mtctr        r4
+#endif /* LINUXPPC */
+   bctrl
+   b            .LreturnEBBHanlder 
+.LruntimeInstrumentation:
+   ! Load the event handler EA (and TOC for 64-bit BE), then call out to the main event handler
+#ifdef LINUXPPC64
+#ifdef __LITTLE_ENDIAN__
+   laddr        r12, 35*ALen(r3)
+   mtctr        r12
+#else /* __BIG_ENDIAN__ */
+   laddr        r2, 35*ALen(r3)
+   laddr        r4, 0(r2)
+   mtctr        r4
+   laddr        r2, ALen(r2)
+#endif /* __BIG_ENDIAN__ */
+#else /* LINUXPPC */
+   laddr        r4, 35*ALen(r3)
+   mtctr        r4
+#endif /* LINUXPPC */
+   bctrl
+.LreturnEBBHanlder:
+   ! If the main event handler returns non-zero, something went wrong and we`ll leave
+   ! the PMU frozen and disable EBBs
+   cmplwi        cr0, r3, 0
+
+   ! Grab our TR_PPCHWProfilerEBBContext
+   laddr        r3, TCB_EBB_CONTEXT(TCB)
+
+   ! Restore LR and XER
+   laddr        r0, 32*ALen(r3)
+   mtlr         r0
+   laddr        r0, 33*ALen(r3)
+   mtxer        r0
+   ! Restore the volatile GPRs
+   laddr        r0, 0*ALen(r3)
+#ifdef LINUXPPC64
+   laddr        r2, 2*ALen(r3)
+#endif /* LINUXPPC64 */
+   laddr        r4, 4*ALen(r3)
+   laddr        r5, 5*ALen(r3)
+   laddr        r6, 6*ALen(r3)
+   laddr        r7, 7*ALen(r3)
+   laddr        r8, 8*ALen(r3)
+   laddr        r9, 9*ALen(r3)
+   laddr        r10, 10*ALen(r3)
+   laddr        r11, 11*ALen(r3)
+   ! Restore ctr
+   laddr        r12, 1*ALen+STACK_MIN_ABI_FRAME(SP)
+   mtctr        r12
+
+   ! Don`t restart the PMU if the main event handler failed
+   bne-         cr0, .Lfail
+
+   ! Restore cr
+   lwz          r12, 2*ALen+STACK_MIN_ABI_FRAME(SP)
+   mtcr         r12
+
+   ! Unfreeze the PMU
+   lis          r12, 0x0400             ! MMCR[PMAO|FC] = 0, MMCR[PMAE] = 1
+   mtspr        MMCR0, r12
+
+   ! Restore r3 and r12
+   laddr        r12, 12*ALen(r3)
+   laddr        r3, 0*ALen+STACK_MIN_ABI_FRAME(SP)
+
+   ! Restore the stack pointer
+   addi         SP, SP, STACK_FRAME_SIZE
+
+   rfebb1
+
+.Lfail:
+   ! Restore cr
+   lwz          r12, 2*ALen+STACK_MIN_ABI_FRAME(SP)
+   mtcr         r12
+
+   ! Restore r3 and r12
+   laddr        r12, 12*ALen(r3)
+   laddr        r3, 0*ALen+STACK_MIN_ABI_FRAME(SP)
+
+   ! Restore the stack pointer
+   addi         SP, SP, STACK_FRAME_SIZE
+
+   rfebb0
+#endif /* LINUXPPC */
+FUNCTION_END(ebbHandler)
+

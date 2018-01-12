@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include <string.h>
@@ -41,6 +41,7 @@
 #include "omrversionstrings.h"
 #include "j9modron.h"
 #include "omr.h"
+#include "vendor_version.h"
 
 /* The vm version which must match the JCL.
  * It has the format 0xAABBCCCC
@@ -50,9 +51,6 @@
  * BB is the required level of JCL to run the vm
  */
 #define JCL_VERSION 0x06040270
-
-
-/* this file is owned by the VM-team.  Please do not modify it without consulting the VM team */
 
 extern void *jclConfig;
 
@@ -68,132 +66,122 @@ jint computeFullVersionString(J9JavaVM* vm)
 {
 	VMI_ACCESS_FROM_JAVAVM((JavaVM*)vm);
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	const char *osarch;
-	const char *osname;
-	const char *vmVersion = NULL;
-	const char *gcVersion = NULL;
-	char fullversion[512];
-	char vminfo[512];
-#ifdef J9VM_INTERP_NATIVE_SUPPORT
-	J9JITConfig *jitConfig;
-#endif
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-	UDATA jitEnabled = 0;
-	UDATA aotEnabled = 0;
-#endif
+	const char *osarch = NULL;
+	const char *osname = NULL;
+	const char *j2se_version_info = NULL;
+	const char *jitEnabled = "";
+	const char *aotEnabled = "";
+#define BUFFER_SIZE 512
 
-	strcpy(fullversion, "JRE ");
-	strcpy(vminfo, "JRE ");
-	switch(J2SE_VERSION(vm) & J2SE_VERSION_MASK) {
-	case J2SE_17:
-		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_17) {
-			strcat(fullversion, "1.7.0 ");
-			strcat(vminfo, "1.7.0 ");
+	/* The actual allowed BUFFER_SIZE is 512, the extra 1 char is added to check for overflow */
+	char fullversion[BUFFER_SIZE + 1];
+	char vminfo[BUFFER_SIZE + 1];
+
+#if defined(J9VM_INTERP_NATIVE_SUPPORT)
+	J9JITConfig *jitConfig = vm->jitConfig;
+
+	if (NULL != jitConfig) {
+		if (J9_ARE_ALL_BITS_SET(jitConfig->runtimeFlags, J9JIT_JIT_ATTACHED)) {
+			jitEnabled = "en";
 		} else {
-			strcat(fullversion, "1.7.? ");
-			strcat(vminfo, "1.7.? ");
+			jitEnabled = "dis";
 		}
-		break;
+		if (J9_ARE_ALL_BITS_SET(jitConfig->runtimeFlags, J9JIT_AOT_ATTACHED)) {
+			aotEnabled = "en";
+		} else {
+			aotEnabled = "dis";
+		}
+	}
+	#define JIT_INFO " (JIT %sabled, AOT %sabled)\nOpenJ9   - "
+#else
+	#define JIT_INFO "%s%s"
+#endif /* J9VM_INTERP_NATIVE_SUPPORT */
+
+	switch(J2SE_VERSION(vm) & J2SE_VERSION_MASK) {
 	case J2SE_18:
 		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
-			strcat(fullversion, "1.8.0 ");
-			strcat(vminfo, "1.8.0 ");
+			j2se_version_info = "1.8.0";
 		} else {
-			strcat(fullversion, "1.8.? ");
-			strcat(vminfo, "1.8.? ");
+			j2se_version_info = "1.8.?";
 		}
 		break;
 	case J2SE_19:
 		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_19) {
-			strcat(fullversion, "9 ");
-			strcat(vminfo, "9 ");
+			j2se_version_info = "9";
 		} else {
-			strcat(fullversion, "9.? ");
-			strcat(vminfo, "9.? ");
+			j2se_version_info = "9.?";
+		}
+		break;
+	case J2SE_V10:
+		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V10) {
+			j2se_version_info = "10";
+		} else {
+			j2se_version_info = "10.?";
 		}
 		break;
 	default:
-		strcat(fullversion, "?.?.? ");
-		strcat(vminfo, "?.?.? ");
+		j2se_version_info = "?.?.?";
 	}
 
-	strcat(fullversion, "IBM J9 ");
-	strcat(fullversion, EsVersionString " ");
 	osname = j9sysinfo_get_OS_type();
-	if (NULL != osname) {
-		strcat(fullversion, osname);
-		strcat(fullversion, " ");
-		strcat(vminfo, osname);
-		strcat(vminfo, " ");
-	}
 	osarch = j9sysinfo_get_CPU_architecture();
-	strcat(fullversion, osarch);
-	strcat(vminfo, osarch);
 
 #ifdef J9VM_ENV_DATA64
-	strcat(fullversion, "-64 ");
-	strcat(vminfo, "-64 ");
-#ifdef J9VM_GC_COMPRESSED_POINTERS
-	strcat(fullversion, "Compressed References ");
-	strcat(vminfo, "Compressed References ");
-#endif
+	#ifdef J9VM_GC_COMPRESSED_POINTERS
+		#define MEM_INFO "-64 Compressed References "
+	#else
+		#define MEM_INFO "-64 "
+	#endif
 #else
-#if defined(J9ZOS390) || defined(S390)
-	strcat(fullversion, "-31 ");
-	strcat(vminfo, "-31 ");
-#else
-	strcat(fullversion, "-32 ");
-	strcat(vminfo, "-32 ");
-#endif
-#endif
-
-	strcat(fullversion, EsBuildVersionString);
-	strcat(vminfo, EsBuildVersionString);
-
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-#ifdef J9VM_INTERP_NATIVE_SUPPORT
-	jitConfig = vm->jitConfig;
-	if (NULL != jitConfig) {
-		if (jitConfig->runtimeFlags & J9JIT_JIT_ATTACHED) {
-			jitEnabled = 1;
-		}
-		if (jitConfig->runtimeFlags & J9JIT_AOT_ATTACHED) {
-			aotEnabled = 1;
-		}
-	}
-#endif
-	strcat(fullversion, " (JIT ");
-	strcat(fullversion, jitEnabled ? "en" : "dis");
-	strcat(vminfo, " (JIT ");
-	strcat(vminfo, jitEnabled ? "en" : "dis");
-	strcat(fullversion, "abled, AOT ");
-	strcat(fullversion, aotEnabled ? "en" : "dis");
-	strcat(vminfo, "abled, AOT ");
-	strcat(vminfo, aotEnabled ? "en" : "dis");
-	strcat(fullversion, "abled)\nJ9VM - ");
-	strcat(vminfo, "abled)\nJ9VM - ");
-
-#endif
-	vmVersion = J9VM_VERSION_STRING;
-	strcat(fullversion, vmVersion);
-	strcat(vminfo, vmVersion);
-
-#ifdef J9VM_INTERP_NATIVE_SUPPORT
-	if ( jitConfig && jitConfig->jitLevelName ) {
-		strcat(fullversion, "\nJIT  - ");
-		strcat(fullversion, jitConfig->jitLevelName);
-		strcat(vminfo, "\nJIT  - ");
-		strcat(vminfo, jitConfig->jitLevelName);
-	}
+	#if defined(J9ZOS390) || defined(S390)
+		#define MEM_INFO "-31 "
+	#else
+		#define MEM_INFO "-32 "
+	#endif
 #endif
 
 #if defined(J9VM_GC_MODRON_GC)
-	gcVersion = OMR_VERSION_STRING;
-	strcat(fullversion, "\nOMR  - ");
-	strcat(fullversion, gcVersion);
-	strcat(vminfo, "\nOMR  - ");
-	strcat(vminfo, gcVersion);
-#endif
+	#define OMR_INFO "\nOMR      - " OMR_VERSION_STRING
+#else
+	#define OMR_INFO ""
+#endif /* J9VM_GC_MODRON_GC */
+
+#if defined(VENDOR_SHORT_NAME) && defined(VENDOR_SHA)
+	#define VENDOR_INFO "\n" VENDOR_SHORT_NAME "      - " VENDOR_SHA
+#else
+	#define VENDOR_INFO ""
+#endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
+
+	if (BUFFER_SIZE <= j9str_printf(PORTLIB, fullversion, BUFFER_SIZE + 1,
+			"JRE %s IBM J9 %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO,
+			j2se_version_info,
+			EsVersionString,
+			(NULL != osname ? osname : " "),
+			osarch,
+			EsBuildVersionString,
+			jitEnabled,
+			aotEnabled)) {
+		j9tty_err_printf(PORTLIB, "\n%s - %d: %s: Error: Java full version string exceeds buffer size\n", __FILE__, __LINE__, __FUNCTION__);
+		return JNI_ERR;
+	}
+
+	if (BUFFER_SIZE <= j9str_printf(PORTLIB, vminfo, BUFFER_SIZE + 1,
+			"JRE %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO,
+			j2se_version_info,
+			(NULL != osname ? osname : " "),
+			osarch,
+			EsBuildVersionString,
+			jitEnabled,
+			aotEnabled)) {
+		j9tty_err_printf(PORTLIB, "\n%s - %d: %s: Error: Java VM info string exceeds buffer size\n", __FILE__, __LINE__, __FUNCTION__);
+		return JNI_ERR;
+	}
+
+#undef BUFFER_SIZE
+#undef JIT_INFO
+#undef MEM_INFO
+#undef OMR_INFO
+#undef VENDOR_INFO
 
 	(*VMI)->SetSystemProperty(VMI, "java.vm.info", vminfo);
 	/*[PR 114306] System property java.fullversion is not initialized properly */
@@ -300,10 +288,6 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 	Trc_JCL_initializeKnownClasses_Entry(vm->mainThread);
 
 	for (i = 0; i < constPoolCount; i++) {
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-		/* Shared methodrefs are not supported in the VM constant pool */
-		Assert_JCL_false(J9CPTYPE_SHARED_METHOD == J9_CP_TYPE(cpShapeDescription, i));
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		if (J9CPTYPE_FIELD == J9_CP_TYPE(cpShapeDescription, i)) {
 			J9ROMClassRef* romClassRef = &romClassConstantPool[romMethodConstantPool[i].classRefCPIndex];
 
@@ -473,11 +457,14 @@ static const J9IntConstantMapping intVMConstants[] = {
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_ADDRESS_SIZE, (I_32)sizeof(UDATA) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_FJ9OBJECT_SIZE, (I_32)sizeof(fj9object_t) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_CLASS_DEPTH_AND_FLAGS_OFFSET, offsetof(J9Class, classDepthAndFlags) },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_INIT_SUCCEEDED, J9ClassInitSucceeded  },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_SUPERCLASSES_OFFSET, offsetof(J9Class, superclasses) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_ROMCLASS_OFFSET, offsetof(J9Class, romClass) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9ROMCLASS_MODIFIERS_OFFSET, offsetof(J9ROMClass, modifiers) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_DEPTH_MASK, J9_JAVA_CLASS_DEPTH_MASK },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_JAVA_CLASS_MASK, ~(J9_REQUIRED_CLASS_ALIGNMENT - 1) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_ACC_CLASS_INTERNAL_PRIMITIVE_TYPE, J9AccClassInternalPrimitiveType },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_ACC_CLASS_ARRAY, J9AccClassArray },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS, OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS },
 
 };

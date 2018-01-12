@@ -19,13 +19,13 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <suite id="Test -verbose parsing" timeout="900">
-	<variable name="PROGRAM" value="-cp $Q$$RESOURCES_DIR$$CPDL$$TESTNG$$CPDL$$JVM_TEST_ROOT$/JIT_Test/$JAVA_VERSION$/jitt.jar$Q$ org.testng.TestNG -d $REPORTDIR$ $Q$$JVM_TEST_ROOT$/JIT_Test/$JAVA_VERSION$/testng.xml$Q$ -testnames AllocationTest -groups $TEST_GROUP$" />
+	<variable name="PROGRAM" value="-cp $Q$$RESOURCES_DIR$$CPDL$$TESTNG$$CPDL$$JVM_TEST_ROOT$/JIT_Test/jitt.jar$Q$ org.testng.TestNG -d $REPORTDIR$ $Q$$JVM_TEST_ROOT$/JIT_Test/testng.xml$Q$ -testnames AllocationTest -groups $TEST_GROUP$" />
 	<variable name="VGC" value="<verbosegc" />
 	<variable name="VCLASS" value="class load: java/lang/Object" />
 	<variable name="VJNI" value="<JNI FindClass: java/lang/Class>" />

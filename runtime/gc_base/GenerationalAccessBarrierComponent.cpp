@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 
@@ -84,7 +84,6 @@ MM_GenerationalAccessBarrierComponent::tearDown(MM_EnvironmentBase *env)
  * 
  * @note The write barrier can be called with minimal, all, or no validation checking.
  * @note Any object that contains a new reference MUST have its REMEMBERED bit set.
- * @note This code was moved verbatim from ScavengerWriteBarrier.cpp and made an instance method
  */
 void
 MM_GenerationalAccessBarrierComponent::postObjectStore(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject)
@@ -132,7 +131,6 @@ MM_GenerationalAccessBarrierComponent::postObjectStore(J9VMThread *vmThread, J9O
  * @note Any object that contains a new reference MUST have its REMEMBERED bit set.
  * @note This call is typically used by array copies, when it may be more efficient
  * to optimistically add an object to the remembered set without checking too hard.
- * @note This code was moved verbatim from ScavengerWriteBarrier.cpp and made an instance method
  */
 void 
 MM_GenerationalAccessBarrierComponent::preBatchObjectStore(J9VMThread *vmThread, J9Object *dstObject)

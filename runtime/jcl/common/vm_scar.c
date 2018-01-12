@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include <string.h>
@@ -55,6 +55,8 @@
 #define J9_DLL_NAME J9_JAVA_SE_7_BASIC_DLL_NAME
 #elif defined(J9VM_JCL_SE9)
 #define J9_DLL_NAME J9_JAVA_SE_9_DLL_NAME
+#elif defined(J9VM_JCL_SE10)
+#define J9_DLL_NAME J9_JAVA_SE_10_DLL_NAME
 #else
 #error Unknown J9VM_JCL_SE
 #endif
@@ -298,11 +300,8 @@ scarInit(J9JavaVM * vm)
 	}
 #endif
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(OPENJ9_BUILD)
 	switch (jclVersion) {
-	case J2SE_17:
-		dbgwrapperStr = "dbgwrapper70";
-		break;
 	case J2SE_18:
 	case J2SE_19:	/* This will need to be modified when the JCL team provides a dbgwrapper90 */
 		dbgwrapperStr = "dbgwrapper80";
@@ -318,7 +317,7 @@ scarInit(J9JavaVM * vm)
 		/* If library can not be found, print a warning and proceed anyway as the dependency on this library may have been removed. */
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB, dbgwrapperStr, result);
 	}
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) && !defined(OPENJ9_BUILD) */
 
 	
 #if defined(J9VM_INTERP_MINIMAL_JCL)
@@ -364,7 +363,6 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			vm->jclFlags |=
 				J9_JCL_FLAG_REFERENCE_OBJECTS | 
 				J9_JCL_FLAG_FINALIZATION | 
-				J9_JCL_FLAG_CLASSLOADERS | 
 				J9_JCL_FLAG_THREADGROUPS;
 			vm->jclSysPropBuffer = NULL;
 			

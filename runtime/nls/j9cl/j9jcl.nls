@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
  
@@ -123,7 +123,7 @@ J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT=No pre-verify data for java/lang/Object
 # START NON-TRANSLATABLE
 J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.explanation=The JXEed class library contains no preverification information.
 J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.system_action=The JVM will fail to start.
-J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.user_response=Contact IBM Service.
+J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -330,7 +330,7 @@ J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB=Could n
 # START NON-TRANSLATABLE
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load dbgwrapper.dll was unsuccessful, the internal error code is shown. 
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.system_action=The JVM will proceed but may fail to start.
-J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact IBM Service.
+J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact your service representative.
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_1=5
 # END NON-TRANSLATABLE
 
@@ -347,7 +347,7 @@ J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB=Could not register
 # START NON-TRANSLATABLE
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load a dll was unsuccessful, the dll name and internal error code are shown. 
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.system_action=The JVM will proceed but may fail to start.
-J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact IBM Service.
+J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact your service representative.
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_1=dbgwrapper.dll
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_2=5
 # END NON-TRANSLATABLE
@@ -391,14 +391,14 @@ J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR=Error retrieving JVM CPU usage informati
 # START NON-TRANSLATABLE
 J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.explanation=Internal error occured when retrieving JVM CPU usage information.
 J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.system_action=The JVM will continue, but no JVM CPU usage related information will be provided.
-J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.user_response=Contact IBM Service.
+J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP=Timestamp is invalid when retrieving JVM CPU usage info.
 # START NON-TRANSLATABLE
 J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.explanation=Timestamp is invalid when retrieving JVM CPU usage info.
 J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.system_action=The JVM will continue, but no JVM CPU usage related information will be provided.
-J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.user_response=Contact IBM Service.
+J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_JCL_OOM_NEW_GLOBAL_REF=Unable to allocate memory for new JNI global reference
@@ -406,4 +406,19 @@ J9NLS_JCL_OOM_NEW_GLOBAL_REF=Unable to allocate memory for new JNI global refere
 J9NLS_JCL_OOM_NEW_GLOBAL_REF.explanation=The JVM was not able to allocate the native memory required to create a new JNI global reference.
 J9NLS_JCL_OOM_NEW_GLOBAL_REF.system_action=The JVM will exit unless the OutOfMemoryError is caught and recovered from.
 J9NLS_JCL_OOM_NEW_GLOBAL_REF.user_response=Ensure the process has enough native memory to run.
+# END NON-TRANSLATABLE
+
+# Message for IllegalArgumentException if host class and anonymous class are in different packages
+# argument 1 is the host class
+# argument 2 is the anonymous class
+
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES=Host class %2$.*1$s and anonymous class %4$.*3$s are in different packages
+# START NON-TRANSLATABLE
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_1=Foo
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_2=3
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_3=Bar
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.sample_input_4=3
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.explanation=NOTAG
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.system_action=
+J9NLS_JCL_HOSTCLASS_ANONCLASS_DIFFERENT_PACKAGES.user_response=
 # END NON-TRANSLATABLE

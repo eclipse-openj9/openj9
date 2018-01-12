@@ -17,17 +17,19 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
  
 # remove CRs, add a comment, and add friends to each class
 s/[^[:print:][:blank:]]$//
 1i\
 /* Preprocessed to add J9DDRStructTableGC as a friend. Do not edit this version! */
+1i\
+class J9DDRStructTableGC;
 s/class .*{$/&\
-        friend class J9DDRStructTableGC;/
+        friend class ::J9DDRStructTableGC;/
 /class .*[^;{]$/{
         N
         s/^\(.*\n{.*\)$/\1\
-        friend class J9DDRStructTableGC;/
+        friend class ::J9DDRStructTableGC;/
 }

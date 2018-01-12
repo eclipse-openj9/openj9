@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # Externalised messages for the RASdump module.
@@ -172,7 +172,7 @@ J9NLS_DMP_ERROR_IN_DUMP_STR=B\u0142\u0105d w zrzucie %1$s: %2$s
 # START NON-TRANSLATABLE
 J9NLS_DMP_ERROR_IN_DUMP_STR.explanation=The JVM detected an error while attempting to produce a dump.
 J9NLS_DMP_ERROR_IN_DUMP_STR.system_action=The JVM continues, but the dump might not be usable.
-J9NLS_DMP_ERROR_IN_DUMP_STR.user_response=Refer to diagnostic information or contact your local IBM support representative.
+J9NLS_DMP_ERROR_IN_DUMP_STR.user_response=Refer to diagnostic information or contact your support representative.
 J9NLS_DMP_ERROR_IN_DUMP_STR.sample_input_1=Tool
 J9NLS_DMP_ERROR_IN_DUMP_STR.sample_input_2=missing process
 J9NLS_DMP_ERROR_IN_DUMP_STR.link=

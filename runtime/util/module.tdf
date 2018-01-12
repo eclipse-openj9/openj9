@@ -16,7 +16,7 @@
 // [1] https://www.gnu.org/software/classpath/license.html
 // [2] http://openjdk.java.net/legal/assembly-exception.html
 //
-// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
 Executable=module
 DATFileName=J9TraceFormat.dat
@@ -41,4 +41,3 @@ TraceEvent=Trc_MODULE_add_module_package Overhead=1 Level=5 Test Template="JVM_A
 TraceEvent=Trc_MODULE_setting_package Overhead=1 Level=5 Test Template="internally set package/class: %.*s, loader: %s, module: %s"
 
 TraceException=Trc_VM_checkVisibility_failed_with_errortype Overhead=1 Level=1 Template="checkVisibility from %p (%.*s) to %p (%.*s) failed, error type: %s"
-

@@ -19,7 +19,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
 # Note: This is a Windows makefile. These tools are intended to be run
@@ -40,7 +40,7 @@ OS            := $(shell uname)
 TRC_THRESHOLD ?= 1
 FREEMARKER_JAR ?= $(CURDIR)/buildtools/freemarker.jar
 
-ifneq (,$(findstring Windows,$(OS)))
+ifneq (,$(or $(findstring Windows,$(OS)),$(findstring CYGWIN,$(OS))))
 	PATHSEP := ;
 else
 	PATHSEP := :
@@ -144,15 +144,15 @@ OMRGLUE_INCLUDES = \
   ../gc_vlhgc
 
 configure : uma
-	$(MAKE) -C omr -f run_configure.mk 'SPEC=$(SPEC)' 'OMRGLUE=$(OMRGLUE)' 'CONFIG_INCL_DIR=$(CONFIG_INCL_DIR)' 'OMRGLUE_INCLUDES=$(OMRGLUE_INCLUDES)'
+	$(MAKE) -C omr -f run_configure.mk 'SPEC=$(SPEC)' 'OMRGLUE=$(OMRGLUE)' 'CONFIG_INCL_DIR=$(CONFIG_INCL_DIR)' 'OMRGLUE_INCLUDES=$(OMRGLUE_INCLUDES)' 'EXTRA_CONFIGURE_ARGS=$(EXTRA_CONFIGURE_ARGS)'
 
 # run UMA to generate makefile
 J9VM_GIT_DIR := $(firstword $(wildcard $(J9_ROOT)/.git) $(wildcard $(J9_ROOT)/workspace/.git))
 J9VM_SHA     := $(if $(J9VM_GIT_DIR),$(shell git -C $(dir $(J9VM_GIT_DIR)) rev-parse --short HEAD),developer.compile)
 SPEC_DIR     := buildspecs
-UMA_TOOL     := $(JAVA) -cp sourcetools/lib/om.jar$(PATHSEP)$(FREEMARKER_JAR)$(PATHSEP)sourcetools/lib/uma.jar com.ibm.j9.uma.Main
+UMA_TOOL     := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)$(FREEMARKER_JAR)$(PATHSEP)sourcetools/lib/uma.jar" com.ibm.j9.uma.Main
 UMA_OPTIONS  := -rootDir . -configDir $(SPEC_DIR) -buildSpecId $(SPEC)
-UMA_OPTIONS  += -buildId $(BUILD_ID) -buildTag $(J9VM_SHA) -jvf tr.source/jit.version
+UMA_OPTIONS  += -buildId $(BUILD_ID) -buildTag $(J9VM_SHA) -jvf compiler/jit.version
 UMA_OPTIONS  += $(UMA_OPTIONS_EXTRA)
 # JAZZ 90097 Don't build executables in OMR because, on Windows, UMA generates .rc files for these executables
 # that require j9version.h, a JVM header file. j9version.h is not available in the include path for OMR modules.
@@ -164,8 +164,8 @@ uma : buildtools copya2e
 	$(UMA_TOOL) $(UMA_OPTIONS)
 
 # process constant pool definition file to generate jcl constant pool definitions and header file
-CONSTANTPOOL_TOOL    := $(JAVA) -cp sourcetools/lib/om.jar$(PATHSEP)sourcetools/lib/j9vmcp.jar com.ibm.oti.VMCPTool.Main
-CONSTANTPOOL_OPTIONS := -rootDir . -buildSpecId $(SPEC) -configDir $(SPEC_DIR) -jcls se7_basic,se9_before_b165,se9
+CONSTANTPOOL_TOOL    := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)sourcetools/lib/j9vmcp.jar" com.ibm.oti.VMCPTool.Main
+CONSTANTPOOL_OPTIONS := -rootDir . -buildSpecId $(SPEC) -configDir $(SPEC_DIR) -jcls se7_basic,se9_before_b165,se9,se10
 constantpool : buildtools
 	$(CONSTANTPOOL_TOOL) $(CONSTANTPOOL_OPTIONS)
 
@@ -174,9 +174,9 @@ ESCAPED_JAVA := $(subst \,/,$(JAVA))
 PLATFORM	 := $(if $(wildcard buildtools/j9ddr-autoblob.jar),$(shell $(JAVA) -cp buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GetNativeDirectory))
 SUPERSET     := superset.$(SPEC).dat
 
-#For z/TPF change platform because of cross-build
+#Trigger cross-compilation & use linux_x86 DDR configuration
 ifeq (linux_ztpf_390-64, $(SPEC))
-	PLATFORM := linux_ztpf_390-64
+	PLATFORM := linux_x86
 	OS := ztpf
 endif
 

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include <string.h>
@@ -1281,13 +1281,15 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 					/* Executed with StackMap or StackMapTable */
 					NEXT_U16(slotCount, entries);
 					localSlots = slotCount;
-					if (errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end)) {
+					errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end);
+					if (0 != errorCode) {
 						goto _failedCheck;
 					}
 					NEXT_U16(slotCount, entries);
 				}
 
-				if (errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end)) {
+				errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end);
+				if (0 != errorCode) {
 					goto _failedCheck;
 				}
 			}
@@ -1559,7 +1561,7 @@ checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, UDATA
 
 IDATA 
 j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, U_8 * segment,
-										U_8 * segmentLength, U_8 * freePointer, U_32 flags, I_32 *hasRET)
+										U_8 * segmentLength, U_8 * freePointer, U_32 vmVersionShifted, U_32 flags, I_32 *hasRET)
 {
 	UDATA i;
 	IDATA isInit;
@@ -1765,6 +1767,24 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 		if (argCount < 0) {
 			errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
 			goto _formatError;
+		}
+
+		/* The requirement for taking no arguments was introduced in Java SE 9.
+		 * In a class file whose version number is 51.0 or above, the method
+		 * has its ACC_STATIC flag set and takes no arguments.
+		 */
+                 /* Leave this here to find usages of the following check:
+                  * if (J2SE_VERSION(vm) >= J2SE_19) {
+                  */
+		if (vmVersionShifted >= BCT_Java9MajorVersionShifted) {
+			if (classfile->majorVersion >= 51) {
+				if ((CFR_METHOD_NAME_CLINIT == isInit) 
+					&& (0 != argCount) 
+				) {
+					errorType = J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE__ID;
+					goto _formatError;
+				}
+			}
 		}
 
 		if (0 == (method->accessFlags & CFR_ACC_STATIC)) {

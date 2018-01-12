@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE-OpenJ9]*/
+/*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
  * Copyright (c) 2017, 2017 IBM Corp. and others
@@ -19,7 +19,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 package java.lang.invoke;
@@ -33,8 +33,10 @@ final class MethodTypeForm {
 	static final int LF_DELEGATE_BLOCK_INLINING = 9;
 	static final int LF_GWC = 16;
 	static final int LF_GWT = 17;
+	/*[IF Sidecar19-SE-OpenJ9]*/
 	static final int LF_TF = 18;
 	static final int LF_LOOP = 19;
+	/*[ENDIF]*/
 	
 	public LambdaForm cachedLambdaForm(int num) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();

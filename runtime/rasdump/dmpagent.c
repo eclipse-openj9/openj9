@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 
@@ -321,9 +321,9 @@ static const J9RASdumpSpec rasDumpSpecs[] =
 		  400,
 
 		  J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS
-#ifndef J9ZOS390
+#if !defined(J9ZOS390) && !defined(J9ZTPF)
 			| J9RAS_DUMP_DO_PREEMPT_THREADS
-#endif
+#endif /* !defined(J9ZOS390) && !defined(J9ZTPF) */
 		  , NULL
 		}
 	},
@@ -338,9 +338,9 @@ static const J9RASdumpSpec rasDumpSpecs[] =
 #endif
 		"Output file",
 		doHeapDump,
-		{ J9RAS_DUMP_ON_GP_FAULT | J9RAS_DUMP_ON_USER_SIGNAL,
-		  NULL,
-		  1, 0,
+		{ J9RAS_DUMP_ON_EXCEPTION_SYSTHROW,
+		  "java/lang/OutOfMemoryError",
+		  1, 4,
 		  "heapdump.%Y" "%m%d.%H" "%M" "%S.%pid.%seq.phd",
 		  "PHD",
 		  500,

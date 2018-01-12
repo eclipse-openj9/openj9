@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package java.lang.invoke;
 
@@ -250,7 +250,6 @@ public abstract class VarHandle extends VarHandleInternal {
 	static final Lookup _lookup = Lookup.internalPrivilegedLookup;
 	
 	private final MethodHandle[] handleTable;
-	private final MethodType[] typeTable;
 	final Class<?> fieldType;
 	final Class<?>[] coordinateTypes;
 	final int modifiers;
@@ -264,11 +263,10 @@ public abstract class VarHandle extends VarHandleInternal {
 	 * @param typeTable An array of MethodTypes describing the exact descriptors to be used when invoking access modes on this VarHandle.
 	 * @param modifiers The field's modifiers.
 	 */
-	VarHandle(Class<?> fieldType, Class<?>[] coordinateTypes, MethodHandle[] handleTable, MethodType[] typeTable, int modifiers) {
+	VarHandle(Class<?> fieldType, Class<?>[] coordinateTypes, MethodHandle[] handleTable, int modifiers) {
 		this.fieldType = fieldType;
 		this.coordinateTypes = coordinateTypes;
 		this.handleTable = handleTable;
-		this.typeTable = typeTable;
 		this.modifiers = modifiers;
 	}
 	
@@ -303,7 +301,7 @@ public abstract class VarHandle extends VarHandleInternal {
 	 * 
 	 * @return The parameters required to access the field.
 	 */
-	public List<Class<?>> coordinateTypes() {
+	public final List<Class<?>> coordinateTypes() {
 		return Collections.unmodifiableList(Arrays.<Class<?>>asList(coordinateTypes));
 	}
 	
@@ -317,18 +315,23 @@ public abstract class VarHandle extends VarHandleInternal {
 	 * @return The {@link MethodType} corresponding to the provided {@link AccessMode}.
 	 */
 	public final MethodType accessModeType(AccessMode accessMode) {
-		return typeTable[accessMode.ordinal()];
+		MethodType internalType = handleTable[accessMode.ordinal()].type;
+		int numOfArguments = internalType.arguments.length;
+		
+		// Drop the internal VarHandle argument
+		MethodType modifiedType = internalType.dropParameterTypes(numOfArguments - 1, numOfArguments);
+		
+		return modifiedType;
 	}
 	
 	/**
-	 * Not all AccessMode are supported for all {@link VarHandle} instances, e.g. 
-	 * because of the field type and/or field modifiers. This method indicates whether 
-	 * a specific {@link AccessMode} is supported by by this {@link VarHandle} instance.
+	 * This is a helper method to allow sub-class ViewVarHandle provide its own implementation
+	 * while making isAccessModeSupported(accessMode) final to satisfy signature tests.
 	 * 
 	 * @param accessMode The {@link AccessMode} to check support for.
 	 * @return A boolean value indicating whether the {@link AccessMode} is supported.
 	 */
-	public boolean isAccessModeSupported(AccessMode accessMode) {
+	boolean isAccessModeSupportedHelper(AccessMode accessMode) {
 		switch (accessMode) {
 		case GET:
 		case GET_VOLATILE:
@@ -371,6 +374,18 @@ public abstract class VarHandle extends VarHandleInternal {
 	}
 	
 	/**
+	 * Not all AccessMode are supported for all {@link VarHandle} instances, e.g. 
+	 * because of the field type and/or field modifiers. This method indicates whether 
+	 * a specific {@link AccessMode} is supported by by this {@link VarHandle} instance.
+	 * 
+	 * @param accessMode The {@link AccessMode} to check support for.
+	 * @return A boolean value indicating whether the {@link AccessMode} is supported.
+	 */
+	public final boolean isAccessModeSupported(AccessMode accessMode) {
+		return isAccessModeSupportedHelper(accessMode);
+	}
+	
+	/**
 	 * This method creates a {@link MethodHandle} for a specific {@link AccessMode}.
 	 * The {@link MethodHandle} is bound to this {@link VarHandle} instance.
 	 * 
@@ -381,7 +396,6 @@ public abstract class VarHandle extends VarHandleInternal {
 	public final MethodHandle toMethodHandle(AccessMode accessMode) {
 		MethodHandle mh = handleTable[accessMode.ordinal()];
 		mh = MethodHandles.insertArguments(mh, mh.type.parameterCount() - 1, this);
-		mh = mh.cloneWithNewType(accessModeType(accessMode));
 		
 		if (!isAccessModeSupported(accessMode)) {
 			MethodType mt = mh.type;

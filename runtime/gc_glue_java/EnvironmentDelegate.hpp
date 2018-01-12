@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef ENVIRONMENTDELEGATE_HPP_
@@ -69,7 +69,6 @@ class MM_EnvironmentDelegate
 private:
 	MM_EnvironmentBase *_env;
 	GC_Environment _gcEnv;
-	bool _reacquireJNICriticalAccess;
 protected:
 public:
 
@@ -179,7 +178,6 @@ public:
 
 	MM_EnvironmentDelegate()
 		: _env(NULL)
-		, _reacquireJNICriticalAccess(false)
 	{ }
 };
 

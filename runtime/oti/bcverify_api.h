@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef bcverify_api_h
@@ -164,16 +164,6 @@ bcvIsInitOrClinit (J9CfrConstantPoolInfo * info);
 
 /**
 * @brief
-* @param verifyData
-* @param ramClass
-* @return J9ROMMethod *
-*/
-J9ROMMethod *
-checkAllClassLoadingConstraints (J9BytecodeVerificationData * verifyData, J9Class * ramClass);
-
-
-/**
-* @brief
 * @param vmThread
 * @param loader1
 * @param loader2
@@ -270,7 +260,7 @@ j9rtv_verifyBytecodes (J9BytecodeVerificationData *verifyData);
 */
 IDATA 
 j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, U_8 * segment,
-										U_8 * segmentLength, U_8 * freePointer, U_32 flags, I_32 *hasRET);
+										U_8 * segmentLength, U_8 * freePointer, U_32 vmVersionShifted, U_32 flags, I_32 *hasRET);
 
 /**
  * 	Check the validity of a method signature.

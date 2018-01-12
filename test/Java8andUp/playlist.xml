@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
@@ -190,6 +190,7 @@
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
+	-Djdk.attach.allowAttachSelf=true \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	-Djava.sidecar="--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED" \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames AttachAPISanity \
@@ -276,6 +277,7 @@
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
+	-Djdk.attach.allowAttachSelf=true \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	-Djava.sidecar="--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED" \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestAttachAPIEnabling \
@@ -365,6 +367,7 @@
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
+	-Djdk.attach.allowAttachSelf=true \
 	-Djava.sidecar="--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED" \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestSunAttachClasses \
 	-groups $(TEST_GROUP) \
@@ -664,6 +667,7 @@
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules java.se.ee,openj9.sharedclasses \
 	--add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \
@@ -715,6 +719,7 @@
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
 	JCL_TEST_Test-TypeAnnotation,\
@@ -1256,7 +1261,7 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<tags>
-			<tag>extended</tag>
+			<tag>sanity</tag>
 		</tags>
 		<subsets>
 			<subset>SE80</subset>

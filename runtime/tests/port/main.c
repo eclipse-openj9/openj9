@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /*
@@ -73,8 +73,6 @@ extern int j9str_runTests(struct J9PortLibrary *portLibrary); /** @see j9ttyTest
 extern int j9time_runTests(struct J9PortLibrary *portLibrary); /** @see j9timeTest.c::j9time_runTests */
 extern int j9tty_runTests(struct J9PortLibrary *portLibrary); /** @see j9ttyTest.c::j9tty_runTests */
 extern int j9tty_runExtendedTests(struct J9PortLibrary *portLibrary); /** @see j9ttyTest.c::j9tty_runTests */
-extern int j9sig_runTests(struct J9PortLibrary *portLibrary, char* exeName, char* argument); /** @see j9signalTest.c::j9sig_runTests */
-extern int j9sig_ext_runTests(struct J9PortLibrary *portLibrary, const char* exeName); /** @see j9signalExtendedTest.c::j9sig_ext_runTests */
 extern int si_test(struct J9PortLibrary *portLibrary, const char*);
 extern int socket_test(struct J9PortLibrary *portLibrary,BOOLEAN isClient,char* serverName);
 extern int j9shmem_runTests(struct J9PortLibrary *portLibrary, char* argv0, char* shsem_child);
@@ -294,8 +292,6 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 			return j9mmap_runTests(PORTLIB, argv[0], testName);
 		} else if(startsWith(testName,"j9process")) {
 			return j9process_runTests(PORTLIB, argv[0], testName);
-		} else if(startsWith(testName,"j9sig")) {
-			return j9sig_runTests(PORTLIB, argv[0], testName);
 		}
 	}
 
@@ -339,12 +335,6 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 		}
 		if (J9PORT_TEST_J9TIME == (areasToTest & J9PORT_TEST_J9TIME)){
 			rc |= j9time_runTests(PORTLIB);
-		}
-		if (J9PORT_TEST_J9SIGNAL == (areasToTest & J9PORT_TEST_J9SIGNAL)) {
-			rc |= j9sig_runTests(PORTLIB, argv[0], NULL);
-		}
-		if (J9PORT_TEST_J9SIG_EXTENDED == (areasToTest & J9PORT_TEST_J9SIG_EXTENDED)) {
-			rc |= j9sig_ext_runTests(PORTLIB, argv[0]);
 		}
 		if (J9PORT_TEST_J9SYSINFO ==(areasToTest & J9PORT_TEST_J9SYSINFO)) {
 			rc |= j9sysinfo_runTests(PORTLIB, argv[0]);

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9accessbarrier.h"
@@ -861,7 +861,7 @@ sendRecordInitializationFailure(J9VMThread *currentThread, J9Class *clazz, j9obj
 }
 
 void JNICALL
-sendFromMethodDescriptorString(J9VMThread *currentThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, UDATA reserved3, UDATA reserved4)
+sendFromMethodDescriptorString(J9VMThread *currentThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType, UDATA reserved4)
 {
 	Trc_VM_sendFromMethodDescriptorString_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
@@ -874,8 +874,9 @@ sendFromMethodDescriptorString(J9VMThread *currentThread, J9UTF8 *descriptor, J9
 			/* Run the method */
 			*--currentThread->sp = (UDATA)descriptorString;
 			*--currentThread->sp = (UDATA)classLoader->classLoaderObject;
+			*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(appendArgType);
 			currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-			currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODTYPE_FROMMETHODDESCRIPTORSTRING_METHOD(vm);
+			currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODTYPE_VMRESOLVEFROMMETHODDESCRIPTORSTRING_METHOD(vm);
 			c_cInterpreter(currentThread);
 		}
 		restoreCallInFrame(currentThread);
@@ -938,25 +939,6 @@ sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9objec
 }
 
 void JNICALL
-sendForGenericInvokeVarHandle(J9VMThread *currentThread, j9object_t methodHandle, j9object_t methodType, j9object_t varHandle, UDATA reserved4)
-{
-	Trc_VM_sendForGenericInvokeVarHandle_Entry(currentThread);
-	J9VMEntryLocalStorage newELS;
-	
-	/* Run the method */
-	if (buildCallInStackFrame(currentThread, &newELS, true, false)) {
-		*--currentThread->sp = (UDATA)methodHandle;
-		*--currentThread->sp = (UDATA)methodType;
-		*--currentThread->sp = (UDATA)varHandle;
-		currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-		currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLE_FORGENERICINVOKEVARHANDLE_METHOD(currentThread->javaVM);
-		c_cInterpreter(currentThread);
-		restoreCallInFrame(currentThread);
-	}
-	Trc_VM_sendForGenericInvokeVarHandle_Exit(currentThread);
-}
-
-void JNICALL
 sendResolveInvokeDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature *nameAndSig, U_16 *bsmData)
 {
 	Trc_VM_sendResolveInvokeDynamic_Entry(currentThread);
@@ -974,7 +956,19 @@ sendResolveInvokeDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA
 			nameString = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 			if (NULL != sigString) {
 				/* Run the method */
-				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(ramCP->ramClass);
+				/* skip one slot because we are passing a long */
+				currentThread->sp -= 2;
+				/*
+				 * Need to pass the ramClass so that we can get the
+				 * correct ramConstantPool. If we pass the classObject
+				 * we will always get the latest ramClass, which is not always
+				 * the correct one. In cases where we can have an
+				 * old method (caused by class redefinition) on the stack,
+				 * we will need to search the old ramClass to get the correct
+				 * constanPool. It is difficult to do this if we pass the
+				 * classObject.
+				 */
+				*(U_64*)currentThread->sp = (U_64)ramCP->ramClass;
 				*--currentThread->sp = (UDATA)nameString;
 				*--currentThread->sp = (UDATA)sigString;
 				currentThread->sp -= 2;

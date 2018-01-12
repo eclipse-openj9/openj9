@@ -3,7 +3,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright (c) 2005, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +21,7 @@ package java.lang;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 import java.io.Serializable;
@@ -31,6 +31,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.InvalidObjectException;
+
+/*[IF Sidecar19-SE]*/
+import java.util.stream.IntStream;
+/*[ENDIF]*/
 
 /**
  * StringBuilder is not thread safe. For a synchronized implementation, use
@@ -142,43 +146,37 @@ public StringBuilder() {
  * @param		capacity	the initial capacity
  */
 public StringBuilder(int capacity) {
-
-	/* 
-	 * Throw NegativeArraySizeException to match the reference implementation
-	 * and existing J9 behaviour. 
-	 * An explicit check is necessary because the string compression
-	 * algorithm may convert a negative capacity into a positive array size.
+	/* capacity argument is used to determine the byte/char array size. If
+	 * capacity argument is Integer.MIN_VALUE (-2147483648), then capacity *= 2
+	 * will yield a non-negative number due to overflow. We will fail to throw
+	 * NegativeArraySizeException. The check below will assure that
+	 * NegativeArraySizeException is thrown if capacity argument is less than 0.
 	 */
 	if (capacity < 0) {
 		throw new NegativeArraySizeException();
 	}
-	if (String.enableCompression) {
-		/*[IF Sidecar19-SE]*/
-		if (capacity <= MAX_CAPACITY) {
-			value = new byte[capacity];
-		} else {
-			/*[MSG "K05df", "Unable to allocate an array of the specified capacity. The maximum supported capacity is Integer.MAX_VALUE / 2."]*/
-			throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K05df")); //$NON-NLS-1$
+	int arraySize = capacity;
+	
+	/*[IF Sidecar19-SE]*/
+	if (capacity <= MAX_CAPACITY) {
+		if (!String.enableCompression) {
+			arraySize = capacity * 2;
 		}
-		/*[ELSE]*/
-		if (capacity == Integer.MAX_VALUE) {
-			value = new char[(capacity / 2) + 1];
-		} else {
-			value = new char[(capacity + 1) / 2];
-		}
-		/*[ENDIF]*/
+		value = new byte[arraySize];
 	} else {
-		/*[IF Sidecar19-SE]*/
-		if (capacity <= MAX_CAPACITY) {
-			value = new byte[capacity * 2];
-		} else {
-			/*[MSG "K05df", "Unable to allocate an array of the specified capacity. The maximum supported capacity is Integer.MAX_VALUE / 2."]*/
-			throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K05df")); //$NON-NLS-1$
-		}
-		/*[ELSE]*/
-		value = new char[capacity];
-		/*[ENDIF]*/
+		/*[MSG "K05df", "Unable to allocate an array of the specified capacity. The maximum supported capacity is Integer.MAX_VALUE / 2."]*/
+		throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K05df")); //$NON-NLS-1$
 	}
+	/*[ELSE]*/
+	if (String.enableCompression) {
+		if (capacity == Integer.MAX_VALUE) {
+			arraySize = (capacity / 2) + 1;
+		} else {
+			arraySize = (capacity + 1) / 2;
+		}
+	}
+	value = new char[arraySize];
+	/*[ENDIF]*/
 	
 	/*[IF !Sidecar19-SE]*/
 	this.capacity = capacity;
@@ -525,39 +523,75 @@ public StringBuilder append (float value) {
  * @param		value	the integer
  * @return		this StringBuilder
  */
-public StringBuilder append (int value) {
+public StringBuilder append(int value) {
 	/*[PR JAZZ103 69835] This implementation is optimized for the JIT */
+	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar19-SE-B174]*/
+	int currentLength = lengthInternal();
+	int currentCapacity = capacityInternal();
+
+	int valueLength = Integer.stringSize(value);
+
+	int newLength = currentLength + valueLength;
+
+	if (newLength > currentCapacity) {
+		ensureCapacityImpl(newLength);
+	}
+
 	if (String.enableCompression) {
-		// TODO: Rewrite this once Integer and Long have implementations for getChars supporting String compression
-		return append(String.valueOf(value));
+		if (count >= 0) {
+			Integer.getChars(value, newLength, this.value);
+			count = newLength;
+		} else {
+			StringUTF16.getChars(value, newLength, this.value);
+			count = newLength | uncompressedBit;
+		}
 	} else {
-		/*[IF Sidecar19-SE]*/
-		// TODO: Rewrite this once Integer and Long have implementations for getChars supporting String compression
-		return append(String.valueOf(value));
-		/*[ELSE]*/
-		if (value != Integer.MIN_VALUE) {
+		StringUTF16.getChars(value, newLength, this.value);
+		count = newLength;
+	}
+
+	return this;
+	/*[ELSE]*/
+	return append(Integer.toString(value));
+	/*[ENDIF]*/
+	/*[ELSE]*/
+	if (value != Integer.MIN_VALUE) {
+		if (String.enableCompression && count >= 0) {
+			return append(Integer.toString(value));
+		} else {
 			int currentLength = lengthInternal();
 			int currentCapacity = capacityInternal();
-			
-			int valueLength = value < 0 ? Integer.stringSize(-value) + 1 : Integer.stringSize(value);
-			
+
+			int valueLength;
+			if (value < 0) {
+				/* stringSize can't handle negative numbers in Java 8 */
+				valueLength = Integer.stringSize(-value) + 1;
+			} else {
+				valueLength = Integer.stringSize(value);
+			}
+
 			int newLength = currentLength + valueLength;
-			
+
 			if (newLength > currentCapacity) {
 				ensureCapacityImpl(newLength);
 			}
-			
+
 			Integer.getChars(value, newLength, this.value);
-			
-			count = newLength;
-			
+
+			if (String.enableCompression) {
+				count = newLength | uncompressedBit;
+			} else {
+				count = newLength;
+			}
+
 			return this;
-		} else {
-			// Append Integer.MIN_VALUE as a String
-			return append("-2147483648"); //$NON-NLS-1$
 		}
-		/*[ENDIF]*/
+	} else {
+		// Append Integer.MIN_VALUE as a String
+		return append("-2147483648"); //$NON-NLS-1$
 	}
+	/*[ENDIF]*/
 }
 
 /**
@@ -567,39 +601,75 @@ public StringBuilder append (int value) {
  * @param		value	the long
  * @return		this StringBuilder
  */
-public StringBuilder append (long value) {
+public StringBuilder append(long value) {
 	/*[PR JAZZ103 69835] This implementation is optimized for the JIT */
+	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar19-SE-B174]*/
+	int currentLength = lengthInternal();
+	int currentCapacity = capacityInternal();
+
+	int valueLength = Long.stringSize(value);
+
+	int newLength = currentLength + valueLength;
+
+	if (newLength > currentCapacity) {
+		ensureCapacityImpl(newLength);
+	}
+
 	if (String.enableCompression) {
-		// TODO: Rewrite this once Integer and Long have implementations for getChars supporting String compression
-		return append(String.valueOf(value));
+		if (count >= 0) {
+			Long.getChars(value, newLength, this.value);
+			count = newLength;
+		} else {
+			StringUTF16.getChars(value, newLength, this.value);
+			count = newLength | uncompressedBit;
+		}
 	} else {
-		/*[IF Sidecar19-SE]*/
-		// TODO: Rewrite this once Integer and Long have implementations for getChars supporting String compression
-		return append(String.valueOf(value));
-		/*[ELSE]*/
-		if (value != Long.MIN_VALUE) {
+		StringUTF16.getChars(value, newLength, this.value);
+		count = newLength;
+	}
+
+	return this;
+	/*[ELSE]*/
+	return append(Long.toString(value));
+	/*[ENDIF]*/
+	/*[ELSE]*/
+	if (value != Long.MIN_VALUE) {
+		if (String.enableCompression && count >= 0) {
+			return append(Long.toString(value));
+		} else {
 			int currentLength = lengthInternal();
 			int currentCapacity = capacityInternal();
-			
-			int valueLength = value < 0L ? Long.stringSize(-value) + 1 : Long.stringSize(value);
-			
+
+			int valueLength;
+			if (value < 0) {
+				/* stringSize can't handle negative numbers in Java 8 */
+				valueLength = Long.stringSize(-value) + 1;
+			} else {
+				valueLength = Long.stringSize(value);
+			}
+
 			int newLength = currentLength + valueLength;
-			
+
 			if (newLength > currentCapacity) {
 				ensureCapacityImpl(newLength);
 			}
-			
+
 			Long.getChars(value, newLength, this.value);
-			
-			count = newLength;
-			
+
+			if (String.enableCompression) {
+				count = newLength | uncompressedBit;
+			} else {
+				count = newLength;
+			}
+
 			return this;
-		} else {
-			// Append Long.MIN_VALUE as a String
-			return append("-9223372036854775808"); //$NON-NLS-1$
 		}
-		/*[ENDIF]*/
+	} else {
+		// Append Long.MIN_VALUE as a String
+		return append("-9223372036854775808"); //$NON-NLS-1$
 	}
+	/*[ENDIF]*/
 }
 
 /**
@@ -651,7 +721,7 @@ public StringBuilder append (String string) {
 				ensureCapacityImpl(newLength);
 			}
 			
-			string.getChars(0, stringLength, value, currentLength);
+			string.getCharsNoBoundChecks(0, stringLength, value, currentLength);
 			
 			count = newLength | uncompressedBit;
 		}
@@ -660,7 +730,7 @@ public StringBuilder append (String string) {
 			ensureCapacityImpl(newLength);
 		}
 		
-		string.getChars(0, stringLength, value, currentLength);
+		string.getCharsNoBoundChecks(0, stringLength, value, currentLength);
 		
 		count = newLength;
 	}
@@ -910,14 +980,11 @@ private void ensureCapacityImpl(int min) {
 	} else {
 		/*[IF Sidecar19-SE]*/
 		byte[] newData = new byte[newLength * 2];
-		
-		String.decompressedArrayCopy(value, 0, newData, 0, currentLength);
 		/*[ELSE]*/
 		char[] newData = new char[newLength];
-		
-		System.arraycopy(value, 0, newData, 0, currentLength);
 		/*[ENDIF]*/
 		
+		String.decompressedArrayCopy(value, 0, newData, 0, currentLength);
 		value = newData;
 	}
 	
@@ -1000,6 +1067,8 @@ public StringBuilder insert(int index, char[] chars) {
 				
 				return this;
 			} else {
+				count = currentLength + chars.length;
+
 				// Check if the StringBuilder is compressed
 				if (count >= 0) {
 					decompress(value.length);
@@ -1011,7 +1080,7 @@ public StringBuilder insert(int index, char[] chars) {
 				System.arraycopy(chars, 0, value, index, chars.length);
 				/*[ENDIF]*/
 				
-				count = (currentLength + chars.length) | uncompressedBit;
+				count = count | uncompressedBit;
 				
 				return this;
 			}
@@ -1064,6 +1133,8 @@ public StringBuilder insert(int index, char[] chars, int start, int length) {
 					
 					return this;
 				} else {
+					count = currentLength + length;
+
 					// Check if the StringBuilder is compressed
 					if (count >= 0) {
 						decompress(value.length);
@@ -1075,7 +1146,7 @@ public StringBuilder insert(int index, char[] chars, int start, int length) {
 					System.arraycopy(chars, start, value, index, length);
 					/*[ENDIF]*/
 					
-					count = (currentLength + length) | uncompressedBit;
+					count = count | uncompressedBit;
 					
 					return this;
 				}
@@ -1116,6 +1187,8 @@ StringBuilder insert(int index, char[] chars, int start, int length, boolean com
 			
 			return this;
 		} else {
+			count = currentLength + length;
+
 			if (count >= 0) {
 				decompress(value.length);
 			}
@@ -1126,7 +1199,7 @@ StringBuilder insert(int index, char[] chars, int start, int length, boolean com
 			System.arraycopy(chars, start, value, index, length);
 			/*[ENDIF]*/
 			
-			count = (currentLength + length) | uncompressedBit;
+			count = count | uncompressedBit;
 			
 			return this;
 		}
@@ -1168,6 +1241,8 @@ public StringBuilder insert(int index, char ch) {
 				
 				return this;
 			} else {
+				count = currentLength + 1;
+
 				// Check if the StringBuilder is compressed
 				if (count >= 0) {
 					decompress(value.length);
@@ -1179,7 +1254,7 @@ public StringBuilder insert(int index, char ch) {
 				value[index] = ch;
 				/*[ENDIF]*/
 				
-				count = (currentLength + 1) | uncompressedBit;
+				count = count | uncompressedBit;
 				
 				return this;
 			}
@@ -1305,6 +1380,8 @@ public StringBuilder insert(int index, String string) {
 				
 				return this;
 			} else {
+				count = currentLength + stringLength;
+
 				// Check if the StringBuilder is compressed
 				if (count >= 0) {
 					decompress(value.length);
@@ -1312,7 +1389,7 @@ public StringBuilder insert(int index, String string) {
 				
 				string.getChars(0, stringLength, value, index);
 				
-				count = (currentLength + stringLength) | uncompressedBit;
+				count = count | uncompressedBit;
 				
 				return this;
 			}
@@ -2964,6 +3041,8 @@ public StringBuilder insert(int index, CharSequence sequence) {
 						
 						return this;
 					} else {
+						count = newLength;
+
 						// Check if the StringBuilder is compressed
 						if (count >= 0) {
 							decompress(value.length);
@@ -2977,7 +3056,7 @@ public StringBuilder insert(int index, CharSequence sequence) {
 							/*[ENDIF]*/
 						}
 						
-						count = newLength | uncompressedBit;
+						count = count | uncompressedBit;
 					}
 				} else {
 					for (int i = 0; i < sequneceLength; ++i) {
@@ -3075,6 +3154,8 @@ public StringBuilder insert(int index, CharSequence sequence, int start, int end
 							
 							return this;
 						} else {
+							count = newLength;
+
 							// Check if the StringBuilder is compressed
 							if (count >= 0) {
 								decompress(value.length);
@@ -3088,7 +3169,7 @@ public StringBuilder insert(int index, CharSequence sequence, int start, int end
 								/*[ENDIF]*/
 							}
 							
-							count = newLength | uncompressedBit;
+							count = count | uncompressedBit;
 						}
 					} else {
 						for (int i = 0; i < sequenceLength; ++i) {
@@ -3431,4 +3512,19 @@ char[] getValue() {
 /*[ENDIF]*/
 	return value;
 }
+
+/*[IF Sidecar19-SE]*/
+	@Override
+	public IntStream chars() {
+		/* Following generic CharSequence method invoking need to be updated with optimized implementation specifically for this class */
+		return CharSequence.super.chars();
+	}
+	
+	@Override
+	public IntStream codePoints() {
+		/* Following generic CharSequence method invoking need to be updated with optimized implementation specifically for this class */
+		return CharSequence.super.codePoints();
+	}
+/*[ENDIF]*/
+
 }

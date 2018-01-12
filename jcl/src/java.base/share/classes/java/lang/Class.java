@@ -20,7 +20,7 @@ package java.lang;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 import java.io.InputStream;
@@ -198,11 +198,11 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	}
 
 	private static final class AnnotationCache {
-		final Map<Class<? extends Annotation>, Annotation> directAnnotationMap;
-		final Map<Class<? extends Annotation>, Annotation> annotationMap;
+		final LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationMap;
+		final LinkedHashMap<Class<? extends Annotation>, Annotation> annotationMap;
 		AnnotationCache(
-				Map<Class<? extends Annotation>, Annotation> directMap,
-				Map<Class<? extends Annotation>, Annotation> annMap
+				LinkedHashMap<Class<? extends Annotation>, Annotation> directMap,
+				LinkedHashMap<Class<? extends Annotation>, Annotation> annMap
 		) {
 			directAnnotationMap = directMap;
 			annotationMap = annMap;
@@ -213,6 +213,8 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private static boolean reflectCacheEnabled;
 	private static boolean reflectCacheDebug;
 	private static boolean reflectCacheAppOnly = true;
+
+	private static Annotation[] EMPTY_ANNOTATION_ARRAY = new Annotation[0];
 	
 	static MethodHandles.Lookup implLookup;
 
@@ -1784,9 +1786,10 @@ private static String getNonArrayClassPackageName(Class<?> clz) {
 /**
  * Answers the name of the package to which the receiver belongs.
  * For example, Object.class.getPackageName() returns "java.lang".
- * Returns null if this class represents an array type, a primitive type or void
+ * Returns "java.lang" if this class represents a primitive type or void,
+ * and the element type's package name in the case of an array type.
  *
- * @return		the receiver's package name.
+ * @return String the receiver's package name
  *
  * @see			#getPackage
  */
@@ -2029,7 +2032,7 @@ public native boolean isPrimitive();
  */
 @CallerSensitive
 /*[IF Sidecar19-SE]*/
-@Deprecated(forRemoval=false, since="1.1")
+@Deprecated(forRemoval=false, since="9")
 /*[ENDIF]*/
 public T newInstance() throws IllegalAccessException, InstantiationException {
 	SecurityManager security = System.getSecurityManager();
@@ -2159,14 +2162,17 @@ public String toGenericString() {
 
 /**
  * Returns the Package of which this class is a member.
- * A class has a Package iff it was loaded from a SecureClassLoader
+ * A class has a Package iff it was loaded from a SecureClassLoader.
  *
- * @return		Package the Package of which this class is a member or null
- *
+ * @return Package the Package of which this class is a member
+ * or null in the case of primitive or array types
  */
 public Package getPackage() {
+	if (isArray() || isPrimitive()) {
+		return null;
+	}
 	String packageName = getPackageName();
-	if (packageName == null) {
+	if (null == packageName) {
 		return null;
 	} else {
 /*[IF Sidecar19-SE]*/
@@ -2370,7 +2376,11 @@ static Class<?> currentLoadedClass() {
  */
 public <A extends Annotation> A getAnnotation(Class<A> annotation) {
 	if (annotation == null) throw new NullPointerException();
-	return (A)getAnnotationCache().annotationMap.get(annotation);
+	LinkedHashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().annotationMap;
+	if (map != null) {
+		return (A)map.get(annotation);
+	}
+	return null;
 }
 
 /**
@@ -2386,8 +2396,12 @@ public <A extends Annotation> A getAnnotation(Class<A> annotation) {
  * @since 1.5
  */
 public Annotation[] getAnnotations() {
-	Collection<Annotation> annotations = getAnnotationCache().annotationMap.values();
-	return annotations.toArray(new Annotation[annotations.size()]);
+	LinkedHashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().annotationMap;
+	if (map != null) {
+		Collection<Annotation> annotations = map.values();
+		return annotations.toArray(new Annotation[annotations.size()]);
+	}
+	return EMPTY_ANNOTATION_ARRAY;
 }
 
 /**
@@ -2400,7 +2414,11 @@ public Annotation[] getAnnotations() {
  */
 public <A extends Annotation> A getDeclaredAnnotation(Class<A> annotation) {
 	if (annotation == null) throw new NullPointerException();
-	return (A)getAnnotationCache().directAnnotationMap.get(annotation);
+	LinkedHashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().directAnnotationMap;
+	if (map != null) {
+		return (A)map.get(annotation);
+	}
+	return null;
 }
 
 /**
@@ -2456,8 +2474,12 @@ public String getTypeName() {
  * @since 1.5
  */
 public Annotation[] getDeclaredAnnotations() {
-	Collection<Annotation> directAnnotations = getAnnotationCache().directAnnotationMap.values();
-	return directAnnotations.toArray(new Annotation[directAnnotations.size()]);
+	LinkedHashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().directAnnotationMap;
+	if (map != null) {
+		Collection<Annotation> annotations = map.values();
+		return annotations.toArray(new Annotation[annotations.size()]);
+	}
+	return EMPTY_ANNOTATION_ARRAY;
 }
 
 /**
@@ -2504,23 +2526,26 @@ private <A extends Annotation> ArrayList<A> internalGetDeclaredAnnotationsByType
 	AnnotationCache currentAnnotationCache = getAnnotationCache();
 	ArrayList<A> annotationsList = new ArrayList<>();
 	
-	Repeatable repeatable = annotationClass.getDeclaredAnnotation(Repeatable.class);
-	if (repeatable == null) {
-		A annotation = (A)currentAnnotationCache.directAnnotationMap.get(annotationClass);
-		if (annotation != null) {
-			annotationsList.add(annotation);
-		}
-	} else {
-		Class<? extends Annotation> containerType = repeatable.value();
-		// if the annotation and its container are both present, the order must be maintained
-		for (Map.Entry<Class<? extends Annotation>, Annotation> entry : currentAnnotationCache.directAnnotationMap.entrySet()) {
-			Class<? extends Annotation> annotationType = entry.getKey();
-			if (annotationType == annotationClass) {
-				annotationsList.add((A)entry.getValue());
-			} else if (annotationType == containerType) {
-				A[] containedAnnotations = (A[])getAnnotationsArrayFromValue(entry.getValue(), containerType, annotationClass);
-				if (containedAnnotations != null) {
-					annotationsList.addAll(Arrays.asList(containedAnnotations));
+	LinkedHashMap<Class<? extends Annotation>, Annotation> map = currentAnnotationCache.directAnnotationMap;
+	if (map != null) {
+		Repeatable repeatable = annotationClass.getDeclaredAnnotation(Repeatable.class);
+		if (repeatable == null) {
+			A annotation = (A)map.get(annotationClass);
+			if (annotation != null) {
+				annotationsList.add(annotation);
+			}
+		} else {
+			Class<? extends Annotation> containerType = repeatable.value();
+			// if the annotation and its container are both present, the order must be maintained
+			for (Map.Entry<Class<? extends Annotation>, Annotation> entry : map.entrySet()) {
+				Class<? extends Annotation> annotationType = entry.getKey();
+				if (annotationType == annotationClass) {
+					annotationsList.add((A)entry.getValue());
+				} else if (annotationType == containerType) {
+					A[] containedAnnotations = (A[])getAnnotationsArrayFromValue(entry.getValue(), containerType, annotationClass);
+					if (containedAnnotations != null) {
+						annotationsList.addAll(Arrays.asList(containedAnnotations));
+					}
 				}
 			}
 		}
@@ -2665,30 +2690,38 @@ private Annotation[] getAnnotationsArrayFromValue(Annotation container, Class<? 
 }
 
 private boolean isInheritedAnnotationType() {
-	return getAnnotationCache().directAnnotationMap.get(Inherited.class) != null;
+	LinkedHashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().directAnnotationMap;
+	if (map != null) {
+		return map.get(Inherited.class) != null;
+	}
+	return false;
 }
 
-private Map<Class<? extends Annotation>, Annotation> buildAnnotations(Map<Class<? extends Annotation>, Annotation> directAnnotationsMap) {
+private LinkedHashMap<Class<? extends Annotation>, Annotation> buildAnnotations(LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap) {
 	Class<?> superClass = getSuperclass();
 	if (superClass == null) {
 		return directAnnotationsMap;
 	}
-	Map<Class<? extends Annotation>, Annotation> superAnnotations = superClass.getAnnotationCache().annotationMap;
-	Map<Class<? extends Annotation>, Annotation> annotationsMap = null;
-	for (Map.Entry<Class<? extends Annotation>, Annotation> entry : superAnnotations.entrySet()) {
-		Class<? extends Annotation> annotationType = entry.getKey();
-		// if the annotation is Inherited store the annotation 
-		if (annotationType.isInheritedAnnotationType()) {
-			if (annotationsMap == null) {
-				annotationsMap = new LinkedHashMap<>((superAnnotations.size() + directAnnotationsMap.size()) * 4 / 3);
+	LinkedHashMap<Class<? extends Annotation>, Annotation> superAnnotations = superClass.getAnnotationCache().annotationMap;
+	LinkedHashMap<Class<? extends Annotation>, Annotation> annotationsMap = null;
+	if (superAnnotations != null) {
+		for (Map.Entry<Class<? extends Annotation>, Annotation> entry : superAnnotations.entrySet()) {
+			Class<? extends Annotation> annotationType = entry.getKey();
+			// if the annotation is Inherited store the annotation 
+			if (annotationType.isInheritedAnnotationType()) {
+				if (annotationsMap == null) {
+					annotationsMap = new LinkedHashMap<>((superAnnotations.size() + (directAnnotationsMap != null ? directAnnotationsMap.size() : 0)) * 4 / 3);
+				}
+				annotationsMap.put(annotationType, entry.getValue());
 			}
-			annotationsMap.put(annotationType, entry.getValue());
 		}
 	}
 	if (annotationsMap == null) {
 		return directAnnotationsMap;
 	}
-	annotationsMap.putAll(directAnnotationsMap);
+	if (directAnnotationsMap != null) {
+		annotationsMap.putAll(directAnnotationsMap);
+	}
 	return annotationsMap;
 }
 
@@ -2704,8 +2737,7 @@ private AnnotationCache getAnnotationCache() {
 	if (annotationCacheResult == null) {
 		byte[] annotationsData = getDeclaredAnnotationsData();
 		if (annotationsData == null) {
-			Map<Class<? extends Annotation>, Annotation> emptyMap = Collections.emptyMap();
-			annotationCacheResult = new AnnotationCache(emptyMap, buildAnnotations(emptyMap));
+			annotationCacheResult = new AnnotationCache(null, buildAnnotations(null));
 		} else {
 			Annotation[] directAnnotations = sun.reflect.annotation.AnnotationParser.toArray(
 						sun.reflect.annotation.AnnotationParser.parseAnnotations(
@@ -2713,7 +2745,7 @@ private AnnotationCache getAnnotationCache() {
 								new Access().getConstantPool(this),
 								this));
 			
-			Map<Class<? extends Annotation>, Annotation> directAnnotationsMap = new LinkedHashMap<>(directAnnotations.length * 4 / 3);
+			LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap = new LinkedHashMap<>(directAnnotations.length * 4 / 3);
 			for (Annotation annotation : directAnnotations) {
 				Class<? extends Annotation> annotationType = annotation.annotationType();
 				directAnnotationsMap.put(annotationType, annotation);
@@ -2735,7 +2767,7 @@ private AnnotationCache getAnnotationCache() {
 		}
 		// Lazy initialization of a non-volatile field. Ensure the Object is initialized
 		// and flushed to memory before assigning to the annotationCache field.
-		/*[IF Sidecar19-SE]
+		/*[IF Sidecar19-SE]*/
 		getUnsafe().putObjectRelease(this, localAnnotationCacheOffset, annotationCacheResult);
 		/*[ELSE]*/
 		getUnsafe().putOrderedObject(this, localAnnotationCacheOffset, annotationCacheResult);
@@ -3393,7 +3425,7 @@ private static Method getAccessibleMethod(Class<?> cls, String name) {
  */
 private class MethodInfo {
 	ArrayList<Method> jlrMethods;
-	private Method me;
+	Method me;
 	private final int myHash;
 	private Class<?>[] paramTypes;
 	private Class<?> returnType;
@@ -3550,12 +3582,6 @@ private class MethodInfo {
 		}
 	}
 
-	private boolean methodAOverridesMethodB(Class<?> methodAClass,	boolean methodAIsAbstract, boolean methodAClassIsInterface,
-			Class<?> methodBClass, boolean methodBIsAbstract, boolean methodBClassIsInterface) {
-		return (methodBIsAbstract && methodBClassIsInterface && !methodAIsAbstract && !methodAClassIsInterface) ||
-		(methodBClass.isAssignableFrom(methodAClass) && (!methodAClassIsInterface || !methodAIsAbstract));
-	}
-	
 	public void update(MethodInfo otherMi) {
 		if (null == otherMi.jlrMethods) {
 			update(otherMi.me);
@@ -3568,6 +3594,20 @@ private class MethodInfo {
 		return myHash;
 	}
 	
+}
+
+static boolean methodAOverridesMethodB(Class<?> methodAClass,	boolean methodAIsAbstract, boolean methodAClassIsInterface,
+		Class<?> methodBClass, boolean methodBIsAbstract, boolean methodBClassIsInterface) {
+	return (methodBIsAbstract && methodBClassIsInterface && !methodAIsAbstract && !methodAClassIsInterface) ||
+			(methodBClass.isAssignableFrom(methodAClass)
+					/*[IF !Sidecar19-SE]*/
+					/*
+					 * In Java 8, abstract methods in subinterfaces do not hide abstract methods in superinterfaces.
+					 * This is fixed in Java 9.
+					 */
+					&& (!methodAClassIsInterface || !methodAIsAbstract)
+					/*[ENDIF]*/
+					);
 }
 
 /*[PR 125873] Improve reflection cache */

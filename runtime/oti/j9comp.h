@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef j9comp_h
@@ -26,5 +26,8 @@
 #include "omrcomp.h"
 
 #define J9_GET_CALLSITE() OMR_GET_CALLSITE()
+#define J9_ARE_ANY_BITS_SET(value, bits) OMR_ARE_ANY_BITS_SET((value), (bits))
+#define J9_ARE_ALL_BITS_SET(value, bits) OMR_ARE_ALL_BITS_SET((value), (bits))
+#define J9_ARE_NO_BITS_SET(value, bits) OMR_ARE_NO_BITS_SET((value), (bits))
 
 #endif /* j9comp_h */

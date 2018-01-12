@@ -17,14 +17,16 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package com.ibm.j9.jsr292;
 import org.testng.annotations.Test;
-import org.testng.AssertJUnit;
+import org.testng.Assert;
 
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
+import static java.lang.invoke.MethodHandles.Lookup;
+import static java.lang.invoke.MethodHandles.lookup;
+import static java.lang.invoke.MethodHandles.publicLookup;
 
 import com.ibm.j9.jsr292.SamePackageExample.SamePackageInnerClass;
 import com.ibm.j9.jsr292.SamePackageExample.SamePackageInnerClass.SamePackageInnerClass_Nested_Level2;
@@ -42,14 +44,22 @@ import examples.PackageExamples;
 public class LookupInTests {
 	
 	static final int NO_ACCESS = 0;
-	
 	static final int PUBLIC_PACKAGE_MODE =  MethodHandles.Lookup.PUBLIC | MethodHandles.Lookup.PACKAGE; // 9
-	
 	static final int PUBLIC_PACKAGE_PRIVATE_MODE = MethodHandles.Lookup.PUBLIC | MethodHandles.Lookup.PRIVATE | MethodHandles.Lookup.PACKAGE; //11
-	
 	static final int PUBLIC_PACKAGE_PROTECTED_MODE =  MethodHandles.Lookup.PUBLIC |  MethodHandles.Lookup.PACKAGE | MethodHandles.Lookup.PROTECTED; //13
-	
 	static final int FULL_ACCESS_MODE = MethodHandles.Lookup.PUBLIC | MethodHandles.Lookup.PRIVATE | MethodHandles.Lookup.PROTECTED | MethodHandles.Lookup.PACKAGE; //15
+	
+	final Lookup localLookup = lookup();
+	final Lookup localPublicLookup = publicLookup();
+	final Lookup packageExamplesLookup = PackageExamples.getLookup();
+	final Lookup samePackageExampleLookup = SamePackageExample.getLookup();
+	final Lookup samePackageExample2Lookup = SamePackageExample2.getLookup();
+	final Lookup samePackageExampleSubclassLookup = SamePackageExampleSubclass.getLookup();
+	
+	SamePackageExample spe = new SamePackageExample();
+	SamePackageInnerClass innerClassD = spe.new SamePackageInnerClass();
+	final Lookup samePackageInnerClassLookup = spe.new SamePackageInnerClass().getLookup();
+	final Lookup samePackageInnerClass_Nested_Level2Lookup = innerClassD.new SamePackageInnerClass_Nested_Level2().getLookup();
 	
 	/******************************************
 	 * Basic Sanity tests for Lookup modes
@@ -61,13 +71,11 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testPublicLookup() throws Throwable {
-		Lookup publicLookup = MethodHandles.publicLookup();
-		assertClassAndMode( publicLookup, Object.class, MethodHandles.Lookup.PUBLIC );
+		assertClassAndMode(localPublicLookup, Object.class, MethodHandles.Lookup.PUBLIC);
+		Assert.assertEquals(localPublicLookup.lookupModes(), MethodHandles.Lookup.PUBLIC);
 		
-		AssertJUnit.assertEquals( publicLookup.lookupModes(), MethodHandles.Lookup.PUBLIC );
-		
-		Lookup newLookup = publicLookup.in( int[].class );
-		assertClassAndMode( newLookup, int[].class, publicLookup.lookupModes() ) ;
+		Lookup newLookup = localPublicLookup.in(int[].class);
+		assertClassAndMode(newLookup, int[].class, localPublicLookup.lookupModes());
 	}
 	
 	/**
@@ -76,9 +84,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_inObject_Self() throws Throwable {
-		Lookup lookup = MethodHandles.lookup();
-		Lookup newLookup = lookup.in( LookupInTests.class );
-		assertClassAndMode( newLookup, LookupInTests.class, FULL_ACCESS_MODE ); 
+		Lookup newLookup = localLookup.in(LookupInTests.class);
+		assertClassAndMode(newLookup, LookupInTests.class, FULL_ACCESS_MODE);
 	}
 
 	/**
@@ -88,9 +95,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_inObject() throws Throwable {
-		Lookup lookup = PackageExamples.getLookup();
-		Lookup inObject = lookup.in( Object.class ); 
-		assertClassAndMode( inObject, Object.class, MethodHandles.Lookup.PUBLIC );
+		Lookup inObject = packageExamplesLookup.in(Object.class);
+		assertClassAndMode(inObject, Object.class, MethodHandles.Lookup.PUBLIC);
 	}
 	
 	/**
@@ -102,14 +108,14 @@ public class LookupInTests {
 	@Test(groups = { "level.extended" })
 	public void testLookup_inObject_Using_publicLookup() throws Throwable {
 		Lookup lookup = PackageExamples.getPublicLookup();
-		Lookup inObject = lookup.in( int.class );
+		Lookup inObject = lookup.in(int.class);
 		
 		/*NOTE:
 		 * This is equivalent of the failing test case above, but this one works.
 		 * The only difference is here we are using MethodHandles.publicLookup() 
 		 * instead of MethodHandles.lookup() to obtain the original Lookup object.
 		 * */
-		assertClassAndMode( inObject, int.class, MethodHandles.Lookup.PUBLIC );
+		assertClassAndMode(inObject, int.class, MethodHandles.Lookup.PUBLIC);
 	}
 	
 	/**
@@ -119,9 +125,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_in_Assert() throws Throwable {
-		Lookup lookup = MethodHandles.lookup();
-		Lookup newLookup = lookup.in( junit.framework.Assert.class );
-		assertClassAndMode( newLookup, junit.framework.Assert.class, MethodHandles.Lookup.PUBLIC ); 
+		Lookup newLookup = localLookup.in(Assert.class);
+		assertClassAndMode(newLookup, Assert.class, MethodHandles.Lookup.PUBLIC);
 	}
 	
 	/*******************************************************************************
@@ -136,9 +141,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_SamePackageLookup() throws Throwable {
-		Lookup lookup = SamePackageExample.getLookup();
-		Lookup inObject = lookup.in( SamePackageSingleMethodInterfaceExample.class );
-		assertClassAndMode( inObject, SamePackageSingleMethodInterfaceExample.class, PUBLIC_PACKAGE_MODE ); 
+		Lookup inObject = samePackageExampleLookup.in(SamePackageSingleMethodInterfaceExample.class);
+		assertClassAndMode(inObject, SamePackageSingleMethodInterfaceExample.class, PUBLIC_PACKAGE_MODE);
 	}
 	
 	/**
@@ -149,9 +153,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_SamePackageLookup_Subclass() throws Throwable {
-		Lookup lookup = SamePackageExample.getLookup();
-		Lookup inObject = lookup.in( SamePackageExampleSubclass.class );
-		assertClassAndMode( inObject, SamePackageExampleSubclass.class, PUBLIC_PACKAGE_MODE );
+		Lookup inObject = samePackageExampleLookup.in(SamePackageExampleSubclass.class);
+		assertClassAndMode(inObject, SamePackageExampleSubclass.class, PUBLIC_PACKAGE_MODE);
 	}
 	
 	/**
@@ -161,9 +164,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_SamePackageLookup_Superclass() throws Throwable {
-		Lookup lookup = SamePackageExampleSubclass.getLookup();
-		Lookup inObject = lookup.in( SamePackageExample.class );
-		assertClassAndMode( inObject, SamePackageExample.class, FULL_ACCESS_MODE );  
+		Lookup inObject = samePackageExampleSubclassLookup.in(SamePackageExample.class);
+		assertClassAndMode(inObject, SamePackageExample.class, FULL_ACCESS_MODE);
 	}
 	
 	/**
@@ -173,9 +175,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_CrossPackageLookup() throws Throwable {
-		Lookup lookup = SamePackageExample.getLookup();
-		Lookup inObject = lookup.in( PackageExamples.class );
-		assertClassAndMode( inObject, PackageExamples.class, MethodHandles.Lookup.PUBLIC ); 
+		Lookup inObject = samePackageExampleLookup.in(PackageExamples.class);
+		assertClassAndMode(inObject, PackageExamples.class, MethodHandles.Lookup.PUBLIC);
 	}
 	
 	/**
@@ -186,9 +187,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_CrossPackageLookup_Subclass() throws Throwable {
-		Lookup lookup = PackageExamples.getLookup();
-		Lookup inObject = lookup.in( CrossPackageExampleSubclass.class );
-		assertClassAndMode( inObject, CrossPackageExampleSubclass.class, MethodHandles.Lookup.PUBLIC ); 
+		Lookup inObject = packageExamplesLookup.in(CrossPackageExampleSubclass.class);
+		assertClassAndMode(inObject, CrossPackageExampleSubclass.class, MethodHandles.Lookup.PUBLIC);
 	}
 	
 	/**
@@ -200,8 +200,8 @@ public class LookupInTests {
 	@Test(groups = { "level.extended" })
 	public void testLookup_CrossPackageLookup_Superclass() throws Throwable {
 		Lookup lookup = CrossPackageExampleSubclass.getLookup();
-		Lookup inObject = lookup.in( PackageExamples.class );
-		assertClassAndMode( inObject, PackageExamples.class, Lookup.PUBLIC );  
+		Lookup inObject = lookup.in(PackageExamples.class);
+		assertClassAndMode(inObject, PackageExamples.class, Lookup.PUBLIC);
 	}
 	
 	/**
@@ -211,9 +211,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_PrivateOuterClassLookup() throws Throwable {
-		Lookup lookup = MethodHandles.lookup();
-		Lookup inObj = lookup.in( PackageClass.class );
-		assertClassAndMode( inObj, PackageClass.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = localLookup.in(PackageClass.class);
+		assertClassAndMode(inObj, PackageClass.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -223,9 +222,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_SamePackageLookup_PrivateOuterClass() throws Throwable {
-		Lookup lookup = SamePackageExample.getLookup();
-		Lookup inObj = lookup.in( PackageClass.class );
-		assertClassAndMode( inObj, PackageClass.class, PUBLIC_PACKAGE_MODE );
+		Lookup inObj = samePackageExampleLookup.in(PackageClass.class);
+		assertClassAndMode(inObj, PackageClass.class, PUBLIC_PACKAGE_MODE);
 	}
 	
 	/**
@@ -235,9 +233,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_CrossPackageLookup_PrivateOuterClass() throws Throwable {
-		Lookup lookup = PackageExamples.getLookup();
-		Lookup inObj = lookup.in( PackageClass.class );
-		assertClassAndMode( inObj, PackageClass.class, NO_ACCESS );
+		Lookup inObj = packageExamplesLookup.in(PackageClass.class);
+		assertClassAndMode(inObj, PackageClass.class, NO_ACCESS);
 	}
 	
 	/***************************************************
@@ -251,9 +248,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_PublicInnerClassLookup() throws Throwable {
-		Lookup lookup = SamePackageExample.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass.class );
-		assertClassAndMode( inObj, SamePackageInnerClass.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = samePackageExampleLookup.in(SamePackageInnerClass.class);
+		assertClassAndMode(inObj, SamePackageInnerClass.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 		
 	/**
@@ -263,10 +259,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_PublicOuterClassLookup() throws Throwable {
-		SamePackageExample spe = new SamePackageExample();
-		Lookup lookup = spe.new SamePackageInnerClass().getLookup();
-		Lookup inObj = lookup.in( SamePackageExample.class );
-		assertClassAndMode( inObj, SamePackageExample.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = samePackageInnerClassLookup.in(SamePackageExample.class);
+		assertClassAndMode(inObj, SamePackageExample.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -276,9 +270,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_PublicInnerClassLookup_Subclass() throws Throwable {
-		Lookup lookup = SamePackageExampleSubclass.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass.class );
-		assertClassAndMode( inObj, SamePackageInnerClass.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = samePackageExampleSubclassLookup.in(SamePackageInnerClass.class);
+		assertClassAndMode(inObj, SamePackageInnerClass.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -289,9 +282,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_PublicInnerClassLookup_SamePackage() throws Throwable {
-		Lookup lookup = SamePackageExample2.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass.class );
-		assertClassAndMode( inObj, SamePackageInnerClass.class, PUBLIC_PACKAGE_MODE );
+		Lookup inObj = samePackageExample2Lookup.in(SamePackageInnerClass.class);
+		assertClassAndMode(inObj, SamePackageInnerClass.class, PUBLIC_PACKAGE_MODE);
 	}
 	
 	/**
@@ -302,9 +294,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_PublicInnerClassLookup_CrossPackage() throws Throwable {
-		Lookup lookup = PackageExamples.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass.class );
-		assertClassAndMode( inObj, SamePackageInnerClass.class, MethodHandles.Lookup.PUBLIC );
+		Lookup inObj = packageExamplesLookup.in(SamePackageInnerClass.class);
+		assertClassAndMode(inObj, SamePackageInnerClass.class, MethodHandles.Lookup.PUBLIC);
 	}
 	
 	/***************************************************
@@ -318,9 +309,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_ProtectedInnerClassLookup() throws Throwable {
-		Lookup lookup = SamePackageExample.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass_Protected.class );
-		assertClassAndMode( inObj, SamePackageInnerClass_Protected.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = samePackageExampleLookup.in(SamePackageInnerClass_Protected.class);
+		assertClassAndMode(inObj, SamePackageInnerClass_Protected.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 		
 	/**
@@ -332,8 +322,8 @@ public class LookupInTests {
 	public void testLookup_ProtectedOuterClassLookup() throws Throwable {
 		SamePackageExample spe = new SamePackageExample();
 		Lookup lookup = spe.new SamePackageInnerClass_Protected().getLookup();
-		Lookup inObj = lookup.in( SamePackageExample.class );
-		assertClassAndMode( inObj, SamePackageExample.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = lookup.in(SamePackageExample.class);
+		assertClassAndMode(inObj, SamePackageExample.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -343,9 +333,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_ProtectedInnerClassLookup_Subclass() throws Throwable {
-		Lookup lookup = SamePackageExampleSubclass.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass_Protected.class );
-		assertClassAndMode( inObj, SamePackageInnerClass_Protected.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = samePackageExampleSubclassLookup.in(SamePackageInnerClass_Protected.class);
+		assertClassAndMode(inObj, SamePackageInnerClass_Protected.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -356,22 +345,21 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_ProtectedInnerClassLookup_SamePackage() throws Throwable {
-		Lookup lookup = SamePackageExample2.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass_Protected.class );
-		assertClassAndMode( inObj, SamePackageInnerClass_Protected.class, PUBLIC_PACKAGE_MODE );
+		Lookup inObj = samePackageExample2Lookup.in(SamePackageInnerClass_Protected.class);
+		assertClassAndMode(inObj, SamePackageInnerClass_Protected.class, PUBLIC_PACKAGE_MODE);
 	}
 	
 	/**
 	 * Validates access restrictions stored in a new Lookup object created from an old Lookup object
 	 * where the new lookup class is a protected inner class inside a top level class belonging to a different 
 	 * package than the old lookup class.
+	 * Note: the access flag of a protected class is set to public when compiled to a class file.
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_ProtectedInnerClassLookup_CrossPackage() throws Throwable {
-		Lookup lookup = PackageExamples.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass_Protected.class );
-		assertClassAndMode( inObj, SamePackageInnerClass_Protected.class, NO_ACCESS );
+		Lookup inObj = packageExamplesLookup.in(SamePackageInnerClass_Protected.class);
+		assertClassAndMode(inObj, SamePackageInnerClass_Protected.class, MethodHandles.Lookup.PUBLIC);
 	}
 	
 	/***************************************************
@@ -385,11 +373,10 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_StaticInnerClassLookup() throws Throwable {
-		Lookup lookup = SamePackageExample.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass_Static.class );
-		assertClassAndMode( inObj, SamePackageInnerClass_Static.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = samePackageExampleLookup.in(SamePackageInnerClass_Static.class);
+		assertClassAndMode(inObj, SamePackageInnerClass_Static.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
-		
+	
 	/**
 	 * Validates access restrictions stored in a new Lookup object created from an old Lookup object
 	 * where the new lookup class is the outer class of the original lookup class.
@@ -398,8 +385,8 @@ public class LookupInTests {
 	@Test(groups = { "level.extended" })
 	public void testLookup_StaticdOuterClassLookup() throws Throwable {
 		Lookup lookup = SamePackageExample.SamePackageInnerClass_Static.getLookup();
-		Lookup inObj = lookup.in( SamePackageExample.class );
-		assertClassAndMode( inObj, SamePackageExample.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = lookup.in(SamePackageExample.class);
+		assertClassAndMode(inObj, SamePackageExample.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -409,9 +396,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_StaticInnerClassLookup_Subclass() throws Throwable {
-		Lookup lookup = SamePackageExampleSubclass.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass_Static.class );
-		assertClassAndMode( inObj, SamePackageInnerClass_Static.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = samePackageExampleSubclassLookup.in(SamePackageInnerClass_Static.class);
+		assertClassAndMode(inObj, SamePackageInnerClass_Static.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -422,9 +408,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_StaticInnerClassLookup_SamePackage() throws Throwable {
-		Lookup lookup = SamePackageExample2.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass_Static.class );
-		assertClassAndMode( inObj, SamePackageInnerClass_Static.class, PUBLIC_PACKAGE_MODE );
+		Lookup inObj = samePackageExample2Lookup.in(SamePackageInnerClass_Static.class);
+		assertClassAndMode(inObj, SamePackageInnerClass_Static.class, PUBLIC_PACKAGE_MODE);
 	}
 	
 	/**
@@ -435,9 +420,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_StaticInnerClassLookup_CrossPackage() throws Throwable {
-		Lookup lookup = PackageExamples.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass_Static.class );
-		assertClassAndMode( inObj, SamePackageInnerClass_Static.class, NO_ACCESS );
+		Lookup inObj = packageExamplesLookup.in(SamePackageInnerClass_Static.class);
+		assertClassAndMode(inObj, SamePackageInnerClass_Static.class, NO_ACCESS);
 	}
 	
 	/***************************************************
@@ -452,10 +436,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_PublicNestedInnerClassLookup_Level1() throws Throwable {
-		SamePackageExample spe = new SamePackageExample();
-		Lookup lookup = spe.new SamePackageInnerClass().getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass_Nested_Level2.class );
-		assertClassAndMode( inObj, SamePackageInnerClass_Nested_Level2.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = samePackageInnerClassLookup.in(SamePackageInnerClass_Nested_Level2.class);
+		assertClassAndMode(inObj, SamePackageInnerClass_Nested_Level2.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -466,9 +448,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_PublicNestedInnerClassLookup_Level2() throws Throwable {
-		Lookup lookup = SamePackageExample.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass_Nested_Level2.class );
-		assertClassAndMode( inObj, SamePackageInnerClass_Nested_Level2.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = samePackageExampleLookup.in(SamePackageInnerClass_Nested_Level2.class);
+		assertClassAndMode(inObj, SamePackageInnerClass_Nested_Level2.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -480,10 +461,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_PublicInnerClassLookup_ParallelInnerClasses_Level1() throws Throwable {
-		SamePackageExample spe = new SamePackageExample();
-		Lookup lookup = spe.new SamePackageInnerClass().getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass2.class );
-		assertClassAndMode( inObj, SamePackageInnerClass2.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = samePackageInnerClassLookup.in(SamePackageInnerClass2.class);
+		assertClassAndMode(inObj, SamePackageInnerClass2.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -500,8 +479,8 @@ public class LookupInTests {
 		SamePackageInnerClass_Nested_Level2 spei_level2 = spei_level1.new SamePackageInnerClass_Nested_Level2();
 		
 		Lookup lookup = spei_level2.getLookup();
-		Lookup inObj = lookup.in( SamePackageInnerClass2_Nested_Level2.class );
-		assertClassAndMode( inObj, SamePackageInnerClass2_Nested_Level2.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = lookup.in(SamePackageInnerClass2_Nested_Level2.class);
+		assertClassAndMode(inObj, SamePackageInnerClass2_Nested_Level2.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -512,14 +491,9 @@ public class LookupInTests {
 	 * @throws Throwable
 	 */
 	@Test(groups = { "level.extended" })
-	public void testLookup_PublicNestedOuterClassLookup_Level2() throws Throwable {
-		SamePackageExample spe = new SamePackageExample();
-		SamePackageInnerClass innerClassD = spe.new SamePackageInnerClass();
-		
-		Lookup lookup = innerClassD.new SamePackageInnerClass_Nested_Level2().getLookup();
-		
-		Lookup inObj = lookup.in( SamePackageInnerClass.class ) ;
-		assertClassAndMode( inObj, SamePackageInnerClass.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+	public void testLookup_PublicNestedOuterClassLookup_Level2() throws Throwable {		
+		Lookup inObj = samePackageInnerClass_Nested_Level2Lookup.in(SamePackageInnerClass.class);
+		assertClassAndMode(inObj, SamePackageInnerClass.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	/**
@@ -531,13 +505,8 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_PublicNestedOuterClassLookup_Level1() throws Throwable {
-		SamePackageExample spe = new SamePackageExample();
-		SamePackageInnerClass innerClassD = spe.new SamePackageInnerClass();
-		
-		Lookup lookup = innerClassD.new SamePackageInnerClass_Nested_Level2().getLookup();
-		
-		Lookup inObj = lookup.in( SamePackageExample.class );
-		assertClassAndMode( inObj, SamePackageExample.class, PUBLIC_PACKAGE_PRIVATE_MODE );
+		Lookup inObj = samePackageInnerClass_Nested_Level2Lookup.in(SamePackageExample.class);
+		assertClassAndMode(inObj, SamePackageExample.class, PUBLIC_PACKAGE_PRIVATE_MODE);
 	}
 	
 	
@@ -553,13 +522,11 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_UnrelatedClassLoaders() throws Throwable {
-		ParentCustomClassLoader unrelatedClassLoader = new ParentCustomClassLoader( LookupInTests.class.getClassLoader() );
-		Object customLoadedClass = unrelatedClassLoader.loadClass( "com.ibm.j9.jsr292.CustomLoadedClass1" ).newInstance();
+		ParentCustomClassLoader unrelatedClassLoader = new ParentCustomClassLoader(LookupInTests.class.getClassLoader());
+		Object customLoadedClass = unrelatedClassLoader.loadClass("com.ibm.j9.jsr292.CustomLoadedClass1" ).newInstance();
 		
-		Lookup lookup = SamePackageExample.getLookup();
-		Lookup inObject = lookup.in( customLoadedClass.getClass() );
-		
-		assertClassAndMode( inObject, customLoadedClass.getClass(), MethodHandles.Lookup.PUBLIC ) ; 
+		Lookup inObject = samePackageExampleLookup.in(customLoadedClass.getClass());
+		assertClassAndMode(inObject, customLoadedClass.getClass(), MethodHandles.Lookup.PUBLIC);
 	}
 	
 	/**
@@ -570,20 +537,20 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_RelatedClassLoaders_ChildLookupInParent() throws Throwable {
-		ParentCustomClassLoader parentCustomCL = new ParentCustomClassLoader( LookupInTests.class.getClassLoader() );
-		Object customLoadedClass1 = parentCustomCL.loadClass( "com.ibm.j9.jsr292.CustomLoadedClass1" ).newInstance();
+		ParentCustomClassLoader parentCustomCL = new ParentCustomClassLoader(LookupInTests.class.getClassLoader());
+		Object customLoadedClass1 = parentCustomCL.loadClass("com.ibm.j9.jsr292.CustomLoadedClass1" ).newInstance();
 		
-		AssertJUnit.assertTrue( customLoadedClass1.getClass().getClassLoader() instanceof ParentCustomClassLoader ) ;
+		Assert.assertTrue(customLoadedClass1.getClass().getClassLoader() instanceof ParentCustomClassLoader);
 		
-		ChildCustomClassLoader childCustomCL = new ChildCustomClassLoader( parentCustomCL );
-		ICustomLoadedClass customLoadedClass2 = (ICustomLoadedClass) childCustomCL.loadClass( "com.ibm.j9.jsr292.CustomLoadedClass2" ).newInstance();
+		ChildCustomClassLoader childCustomCL = new ChildCustomClassLoader(parentCustomCL);
+		ICustomLoadedClass customLoadedClass2 = (ICustomLoadedClass) childCustomCL.loadClass("com.ibm.j9.jsr292.CustomLoadedClass2" ).newInstance();
 		 
-		AssertJUnit.assertTrue( customLoadedClass2.getClass().getClassLoader() instanceof ChildCustomClassLoader );
+		Assert.assertTrue(customLoadedClass2.getClass().getClassLoader() instanceof ChildCustomClassLoader);
 		
 		Lookup lookup = customLoadedClass2.getLookup();
-	    Lookup inObject = lookup.in( customLoadedClass1.getClass() );
+	    Lookup inObject = lookup.in(customLoadedClass1.getClass());
 	    
-	    assertClassAndMode( inObject, customLoadedClass1.getClass(), MethodHandles.Lookup.PUBLIC ) ;
+	    assertClassAndMode(inObject, customLoadedClass1.getClass(), MethodHandles.Lookup.PUBLIC);
 	}
 	
 	/**
@@ -594,20 +561,20 @@ public class LookupInTests {
 	 */
 	@Test(groups = { "level.extended" })
 	public void testLookup_RelatedClassLoaders_ParentLookupInChild() throws Throwable {
-		ParentCustomClassLoader parentCustomCL = new ParentCustomClassLoader( LookupInTests.class.getClassLoader() );
-		ICustomLoadedClass customLoadedClass1 = (ICustomLoadedClass) parentCustomCL.loadClass( "com.ibm.j9.jsr292.CustomLoadedClass1" ).newInstance();
+		ParentCustomClassLoader parentCustomCL = new ParentCustomClassLoader(LookupInTests.class.getClassLoader());
+		ICustomLoadedClass customLoadedClass1 = (ICustomLoadedClass) parentCustomCL.loadClass("com.ibm.j9.jsr292.CustomLoadedClass1" ).newInstance();
 		
-		AssertJUnit.assertTrue( customLoadedClass1.getClass().getClassLoader() instanceof ParentCustomClassLoader ) ;
+		Assert.assertTrue(customLoadedClass1.getClass().getClassLoader() instanceof ParentCustomClassLoader);
 		
-		ChildCustomClassLoader childCustomCL = new ChildCustomClassLoader( parentCustomCL );
-		ICustomLoadedClass customLoadedClass2 = (ICustomLoadedClass) childCustomCL.loadClass( "com.ibm.j9.jsr292.CustomLoadedClass2" ).newInstance();
+		ChildCustomClassLoader childCustomCL = new ChildCustomClassLoader(parentCustomCL);
+		ICustomLoadedClass customLoadedClass2 = (ICustomLoadedClass) childCustomCL.loadClass("com.ibm.j9.jsr292.CustomLoadedClass2" ).newInstance();
 		 
-		AssertJUnit.assertTrue( customLoadedClass2.getClass().getClassLoader() instanceof ChildCustomClassLoader );
+		Assert.assertTrue(customLoadedClass2.getClass().getClassLoader() instanceof ChildCustomClassLoader);
 		
 		Lookup lookup = customLoadedClass1.getLookup();
-	    Lookup inObject = lookup.in( customLoadedClass2.getClass() );
+	    Lookup inObject = lookup.in(customLoadedClass2.getClass());
 	    
-	    assertClassAndMode( inObject, customLoadedClass2.getClass(), MethodHandles.Lookup.PUBLIC ); 
+	    assertClassAndMode(inObject, customLoadedClass2.getClass(), MethodHandles.Lookup.PUBLIC);
 	}
 	
 	/**
@@ -616,31 +583,31 @@ public class LookupInTests {
 	@Test(groups = { "level.extended" })
 	public void test_Lookup_toString() {
 		Lookup publicLookup = MethodHandles.publicLookup();
-		AssertJUnit.assertEquals( "java.lang.Object/public", publicLookup.toString() );
+		Assert.assertEquals(publicLookup.toString(), "java.lang.Object/public");
 		
 		Lookup lookup = PackageExamples.getLookup();
-		Lookup inObject = lookup.in( Object.class ); 
-		AssertJUnit.assertEquals( "java.lang.Object/public", inObject.toString() );
+		Lookup inObject = lookup.in(Object.class); 
+		Assert.assertEquals(inObject.toString(), "java.lang.Object/public");
 		
 		lookup = MethodHandles.lookup();
-		Lookup inAssertObject = lookup.in( junit.framework.Assert.class );
-		AssertJUnit.assertEquals( "junit.framework.Assert/public", inAssertObject.toString() );
+		Lookup inAssertObject = lookup.in(Assert.class);
+		Assert.assertEquals(inAssertObject.toString(), "org.testng.Assert/public");
 	
 		lookup = SamePackageExample.getLookup();
-		Lookup inCrossPackageClass = lookup.in( PackageExamples.class );
-		AssertJUnit.assertEquals( "examples.PackageExamples/public", inCrossPackageClass.toString() );
+		Lookup inCrossPackageClass = lookup.in(PackageExamples.class);
+		Assert.assertEquals(inCrossPackageClass.toString(), "examples.PackageExamples/public");
 		
 		lookup = SamePackageExample.getLookup();
-		Lookup inSamePackageClass = lookup.in( SamePackageSingleMethodInterfaceExample.class );
-		AssertJUnit.assertEquals( "com.ibm.j9.jsr292.SamePackageSingleMethodInterfaceExample/package", inSamePackageClass.toString() );
+		Lookup inSamePackageClass = lookup.in(SamePackageSingleMethodInterfaceExample.class);
+		Assert.assertEquals(inSamePackageClass.toString(), "com.ibm.j9.jsr292.SamePackageSingleMethodInterfaceExample/package");
 
-		lookup = MethodHandles.lookup(); 
+		lookup = MethodHandles.lookup();
 		Lookup inPrivateClass = lookup.in(PackageClass.class);
-		AssertJUnit.assertEquals( "com.ibm.j9.jsr292.LookupInTests$PackageClass/private", inPrivateClass.toString() );
+		Assert.assertEquals(inPrivateClass.toString(), "com.ibm.j9.jsr292.LookupInTests$PackageClass/private");
 		
-		lookup = MethodHandles.publicLookup(); 
-		Lookup inNoAccess = lookup.in( PackageClass.class );
-		AssertJUnit.assertEquals( "com.ibm.j9.jsr292.LookupInTests$PackageClass/noaccess", inNoAccess.toString() );
+		lookup = MethodHandles.publicLookup();
+		Lookup inNoAccess = lookup.in(PackageClass.class);
+		Assert.assertEquals(inNoAccess.toString(), "com.ibm.j9.jsr292.LookupInTests$PackageClass/noaccess");
 	}
 	
 	/**
@@ -654,8 +621,8 @@ public class LookupInTests {
 	 * @param c - Expected Lookup class 
 	 * @param mode - Expected Lookup Modes
 	 */
-	protected void assertClassAndMode( Lookup lookup, Class<?> c, int mode ) {
-		AssertJUnit.assertTrue( "Lookup class mismatch. Expected: " + c + ", found: " + lookup.lookupClass(), lookup.lookupClass().equals( c ) );
-		AssertJUnit.assertTrue( "Lookup mode mismatch. Expected: " + mode + ", found: " + lookup.lookupModes(), lookup.lookupModes() == mode );
+	protected void assertClassAndMode(Lookup lookup, Class<?> c, int mode) {
+		Assert.assertTrue(lookup.lookupClass().equals(c), "Lookup class mismatch. Expected: " + c + ", found: " + lookup.lookupClass());
+		Assert.assertTrue(lookup.lookupModes() == mode, "Lookup mode mismatch. Expected: " + mode + ", found: " + lookup.lookupModes());
 	}
 }

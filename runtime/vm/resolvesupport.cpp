@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9.h"
@@ -551,11 +551,7 @@ tryAgain:
 			}
 		}
 	}
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	if (NULL != ramCPEntry)
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-	if ((NULL != ramCPEntry) && ((NULL == cpClass) || (J9CPTYPE_SHARED_METHOD != J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(cpClass->romClass), cpIndex))))
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	{
 		ramCPEntry->method = method;
 	}
@@ -583,11 +579,7 @@ resolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInde
 			&& (J9_CLASS_FROM_METHOD(method)->initializeStatus == (UDATA)vmStruct)
 		) {
 			return (J9Method *) -1;
-		} else 
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-		if (J9CPTYPE_SHARED_METHOD != J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(J9_CLASS_FROM_CP(ramCP)->romClass), cpIndex))
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-		{
+		} else {
 			((J9RAMStaticMethodRef *)&ramCP[cpIndex])->method = ramStaticMethodRef->method;
 		}
 	}
@@ -596,7 +588,6 @@ resolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInde
 }
 
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 J9Method *   
 resolveStaticSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA splitTableIndex, UDATA resolveFlags)
 {
@@ -621,7 +612,6 @@ resolveStaticSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA s
 
 	return method;
 }
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 
 void *    
@@ -1165,15 +1155,14 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 			goto done;
 		}
 	}
-	
-	method = getMethodForSpecialSend(vmStruct, currentClass, resolvedClass, method);
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-	if (NULL != ramCPEntry)
-#else /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-	if ((NULL != ramCPEntry) && (J9CPTYPE_SHARED_METHOD != J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(currentClass->romClass), cpIndex)))
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
-	{
+	/* Select the correct method for invocation - ignore visilbility in the super send case */
+	method = getMethodForSpecialSend(vmStruct, currentClass, resolvedClass, method, lookupOptions | J9_LOOK_NO_VISIBILITY_CHECK | J9_LOOK_IGNORE_INCOMPATIBLE_METHODS);
+	if (NULL == method) {
+		goto done;
+	}
+
+	if (NULL != ramCPEntry) {
 		ramCPEntry->method = method;
 	}
 
@@ -1191,7 +1180,6 @@ resolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInd
 }
 
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 J9Method *   
 resolveSpecialSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA splitTableIndex, UDATA resolveFlags)
 {
@@ -1207,7 +1195,6 @@ resolveSpecialSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA 
 	}
 	return method;
 }
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 
 UDATA   
@@ -1306,7 +1293,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 				/* Call VM Entry point to create the MethodType - Result is put into the
 				 * vmThread->returnValue as entry points don't "return" in the expected way
 				 */
-				sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, 0, 0);
+				sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, NULL, 0);
 				methodType = (j9object_t) vmStruct->returnValue;
 
 				/* check if an exception is already pending */
@@ -1466,8 +1453,13 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 
 					/* Call VM Entry point to create the MethodType - Result is put into the
 					 * vmThread->returnValue as entry points don't "return" in the expected way
+					 *
+					 * NB! An extra VarHandle argument is appended to the MethodType's argument list,
+					 * so the returned MethodType doesn't represent the provided method signature.
+					 * E.g. the MethodType for "(I)I" will have the following descriptor string:
+					 *     "(Ijava/lang/invoke/VarHandle;)I"
 					 */
-					sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, 0, 0);
+					sendFromMethodDescriptorString(vmStruct, sigUTF, J9_CLASS_FROM_CP(ramCP)->classLoader, J9VMJAVALANGINVOKEVARHANDLE_OR_NULL(vm), 0);
 					methodType = (j9object_t)vmStruct->returnValue;
 
 					/* Check if an exception is already pending */
@@ -1545,6 +1537,8 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 	J9ROMMethodTypeRef *romMethodTypeRef = NULL;
 	J9UTF8 *lookupSig = NULL;
 
+	Trc_VM_sendResolveMethodTypeRefInto_Entry(vmThread, ramCP, cpIndex, resolveFlags);
+
 	/* Check if already resolved */
 	if (ramCPEntry->type != NULL) {
 		return ramCPEntry->type;
@@ -1568,7 +1562,7 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 	 */
 	romMethodTypeRef = ((J9ROMMethodTypeRef *) &(J9_ROM_CP_FROM_CP(ramCP)[cpIndex]));
 	lookupSig = J9ROMMETHODTYPEREF_SIGNATURE(romMethodTypeRef);
-	sendFromMethodDescriptorString(vmThread, lookupSig, J9_CLASS_FROM_CP(ramCP)->classLoader, 0, 0);
+	sendFromMethodDescriptorString(vmThread, lookupSig, J9_CLASS_FROM_CP(ramCP)->classLoader, NULL, 0);
 	methodType = (j9object_t) vmThread->returnValue;
 
 	/* check if an exception is already pending */
@@ -1583,13 +1577,66 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 		}
 	}
 
+	/* perform visibility checks for the returnType and all parameters */
+	if (NULL != methodType) {
+		/* check returnType */
+		J9Class *senderClass = ramCP->ramClass;
+		J9Class *returnTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(vmThread, methodType));
+		J9Class *illegalClass = NULL;
+		IDATA visibilityReturnCode = 0;
+
+		if (J9ROMCLASS_IS_ARRAY(senderClass->romClass)) {
+			senderClass = ((J9ArrayClass *)senderClass)->leafComponentType;
+		}
+		if (J9ROMCLASS_IS_ARRAY(returnTypeClass->romClass)) {
+			returnTypeClass = ((J9ArrayClass *)returnTypeClass)->leafComponentType;
+		}
+
+		visibilityReturnCode = checkVisibility(vmThread, senderClass, returnTypeClass, returnTypeClass->romClass->modifiers, resolveFlags);
+
+		if (J9_VISIBILITY_ALLOWED != visibilityReturnCode) {
+			illegalClass = returnTypeClass;
+		} else {
+			/* check paramTypes */
+			j9object_t argTypesObject = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(vmThread, methodType);
+			U_32 typeCount = J9INDEXABLEOBJECT_SIZE(vmThread, argTypesObject);
+
+			for (UDATA i = 0; i < typeCount; i++) {
+				J9Class *paramClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9JAVAARRAYOFOBJECT_LOAD(vmThread, argTypesObject, i));
+
+				if (J9ROMCLASS_IS_ARRAY(paramClass->romClass)) {
+					paramClass = ((J9ArrayClass *)paramClass)->leafComponentType;
+				}
+
+				visibilityReturnCode = checkVisibility(vmThread, senderClass, paramClass, paramClass->romClass->modifiers, resolveFlags);
+
+				if (J9_VISIBILITY_ALLOWED != visibilityReturnCode) {
+					illegalClass = paramClass;
+					break;
+				}
+			}
+		}
+		if (NULL != illegalClass) {
+			char *errorMsg = illegalAccessMessage(vmThread, illegalClass->romClass->modifiers, senderClass, illegalClass, visibilityReturnCode);
+			if (NULL == errorMsg) {
+				setNativeOutOfMemoryError(vmThread, 0, 0);
+			} else {
+				setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, errorMsg);
+			}
+			Trc_VM_sendResolveMethodTypeRefInto_Exception(vmThread, senderClass, illegalClass, visibilityReturnCode);
+			methodType = NULL;
+		}
+	}
+
 	/* Only write the value in if its not null */
-	if (methodType != NULL) {
+	if (NULL != methodType ) {
 		J9Class *clazz = J9_CLASS_FROM_CP(ramCP);
 		j9object_t *methodTypeObjectP = &ramCPEntry->type;
 		/* Overwriting NULL with an immortal pointer, so no exception can occur */
 		J9STATIC_OBJECT_STORE(vmThread, clazz, methodTypeObjectP, methodType);
 	}
+
+	Trc_VM_sendResolveMethodTypeRefInto_Exit(vmThread, methodType);
 
 	return methodType;
 }

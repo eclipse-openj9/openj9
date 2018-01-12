@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef SYSINFO_HELPERS_H_
@@ -201,10 +201,10 @@ retrieveZGuestProcessorStats(struct J9PortLibrary *portLibrary, struct J9GuestPr
 }
 #endif /* __cplusplus */
 
-#pragma linkage(j9req_lpdatlen, OS_NOSTACK)
-#pragma linkage(j9req_lpdat, OS_NOSTACK)
+#pragma linkage(omrreq_lpdatlen, OS_NOSTACK)
+#pragma linkage(omrreq_lpdat, OS_NOSTACK)
 
-extern int j9req_lpdatlen(void);
-extern int j9req_lpdat(char* bufp);
+extern int omrreq_lpdatlen(void);
+extern int omrreq_lpdat(char* bufp);
 
 #endif /* SYSINFO_HELPERS_H_ */

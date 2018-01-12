@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 /******************************************************\
 		Common data types required for using the port socket API
@@ -26,7 +26,7 @@
 #ifndef portsock_h
 #define portsock_h
 
-#if defined(LINUX) || defined(AIXPPC)
+#if defined(LINUX) || defined(AIXPPC) || defined(OSX)
 /* needed to pull in "struct timeval" */
 #include <sys/select.h>
 #elif defined(J9ZOS390)
@@ -99,9 +99,9 @@ typedef struct sockaddr_storage OSSOCKADDR_STORAGE; /* IPv6 */
 #endif /* !defined(J9ZTPF) */
 #endif /* !WIN32 */
 
-#if defined(LINUX) || defined(AIXPPC) || defined (J9ZOS390)
+#if defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX)
 #define SOCKET_CAST(x) ((struct j9socket_struct*)  x)->sock
-#else /* defined(LINUX) || defined(AIXPPC) || defined (J9ZOS390) */
+#else /* defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX) */
 /* all the non-unix ports use this variant */
 /* The sockets returned as a j9socket_t (j9socket_struct*) are not actual structs, we just pretend that the pointer is a struct and never dereference it.
 */
@@ -110,7 +110,7 @@ typedef struct sockaddr_storage OSSOCKADDR_STORAGE; /* IPv6 */
 #else /* NO_LVALUE_CASTING */
 #define SOCKET_CAST(x) ((OSSOCKET)x)
 #endif /* !NO_LVALUE_CASTING */
-#endif /* defined(LINUX) || defined(AIXPPC) || defined (J9ZOS390) */
+#endif /* defined(LINUX) || defined(AIXPPC) || defined(J9ZOS390) || defined(OSX) */
 
 
 typedef struct j9sockaddr_struct {
@@ -122,11 +122,11 @@ typedef struct j9sockaddr_struct {
 } j9sockaddr_struct;
 
 typedef struct j9fdset_struct {
-#if defined(LINUX)
+#if defined(LINUX) || defined(OSX)
 	intptr_t fd;       /* fd == -1 indicates the j9fdset is "empty" fd. */
 #else
 	fd_set handle;
-#endif
+#endif /* defined(LINUX) || defined(OSX) */
 } j9fdset_struct;
 
 typedef struct j9timeval_struct {

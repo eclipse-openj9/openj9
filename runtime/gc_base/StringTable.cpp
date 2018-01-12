@@ -17,10 +17,11 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "hashtable_api.h"
+#include "j2sever.h"
 #include "j9consts.h"
 #include "j9protos.h"
 #include "objhelp.h"
@@ -646,7 +647,11 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32) unicodeLength);
 			} else {
 				if (J9VMJAVALANGSTRING_COMPRESSIONFLAG(vmThread, stringClass) == 0) {
-			 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, 0);
+					/*
+					 * jitHookClassPreinitialize will process initialization events for String compression sideEffectGuards
+					 * so we must initialize the class if this is the first time we are loading it
+					 */
+			 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
 
 					if (flagClass == NULL) {
 						goto nomem;
@@ -665,6 +670,13 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			}
 		} else {
 			J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32) unicodeLength);
+			if (J2SE_VERSION(vm) >= J2SE_V10) {
+				/* Setting java/lang/String.coder to 1 (UTF16)
+				 * which can be removed if this field can be removed by
+				 * https://github.com/ibmruntimes/openj9-openjdk-jdk9/issues/91
+				 */
+				J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 1);
+			}
 		}
 
 		MM_AtomicOperations::writeBarrier();
@@ -923,7 +935,11 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 			J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32) unicodeLength);
 		} else {
 		 	if (J9VMJAVALANGSTRING_COMPRESSIONFLAG(vmThread, stringClass) == 0) {
-		 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, 0);
+				/*
+				 * jitHookClassPreinitialize will process initialization events for String compression sideEffectGuards
+				 * so we must initialize the class if this is the first time we are loading it
+				 */
+		 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
 
 				if (flagClass == NULL) {
 					goto nomem;

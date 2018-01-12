@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include <string.h>
@@ -235,7 +235,7 @@ jint standardInit( J9JavaVM *vm, char* dllName)
 		vm->jlrMethodInvoke = ((J9JNIMethodID *) invokeMethod)->method;
 		(*(JNIEnv*)vmThread)->DeleteLocalRef((JNIEnv*)vmThread, clazz);
 		
-		if (J2SE_VERSION(vm) >= J2SE_17 && (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW)) {
+		if (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW) {
 			/* JSR 292-related class */
 			clazz = (*(JNIEnv*)vmThread)->FindClass((JNIEnv*)vmThread, "com/ibm/oti/lang/ArgumentHelper");
 			if (!clazz) goto _fail;

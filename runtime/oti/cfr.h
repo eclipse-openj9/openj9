@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef CFR_H
@@ -532,6 +532,8 @@ typedef struct J9CfrConstantPoolInfo {
 #define CFR_CONSTANT_MethodHandle  15
 #define CFR_CONSTANT_MethodType  16
 #define CFR_CONSTANT_InvokeDynamic  18
+#define CFR_CONSTANT_Module 19
+#define CFR_CONSTANT_Package 20
 #define CFR_ReferencedBit   0x80
 #define CFR_ReferencedMask  0x7F
 #define CFR_SeenByConvertInvokevirtualToSpecial  1
@@ -841,6 +843,7 @@ typedef struct J9CfrClassFile {
 #define CFR_ACC_ANNOTATION 					0x00002000
 #define CFR_ACC_ENUM  						0x00004000
 #define CFR_ACC_MANDATED  					0x00008000
+#define CFR_ACC_MODULE						0x00008000
 #define CFR_ACC_GETTER_METHOD  				0x00000200
 #define CFR_ACC_FORWARDER_METHOD  			0x00002000
 #define CFR_ACC_EMPTY_METHOD  				0x00004000

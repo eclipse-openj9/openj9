@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /* #define J9VM_DBG */
@@ -2207,7 +2207,7 @@ findObjectDeadlockedThreads(J9VMThread *currentThread,
 	IDATA deadCount = -1;
 	J9VMThread *vmThread;
 	J9HashTable *hashTable;
-	struct ThreadChain *thrChain;
+	ThreadChain *thrChain;
 	UDATA visit = 0;
 	IDATA i, index;
 	j9object_t *deadlockedThreads = NULL;
@@ -2234,7 +2234,7 @@ findObjectDeadlockedThreads(J9VMThread *currentThread,
 	}
 
 	/* Allocate the destination array */
-	thrChain = (struct ThreadChain *)j9mem_allocate_memory(threadCount * sizeof(struct ThreadChain), OMRMEM_CATEGORY_VM);
+	thrChain = (ThreadChain *)j9mem_allocate_memory(threadCount * sizeof(ThreadChain), OMRMEM_CATEGORY_VM);
 	if (NULL == thrChain) {
 		goto findDeadlock_fail;
 	}

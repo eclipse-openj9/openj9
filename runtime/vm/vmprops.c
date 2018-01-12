@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include <string.h>
@@ -50,7 +50,8 @@ static J9JCLConfigurationInfo jclConfigs[] = {
 	{ "scar" },
 	{ "se7b" },
 	{ "se7r" },
-	{ "se9" }
+	{ "se9" },
+	{ "se10" }
 };
 
 #define NUM_JCL_CONFIGS (sizeof(jclConfigs) / sizeof(J9JCLConfigurationInfo))
@@ -685,18 +686,6 @@ initializeSystemProperties(J9JavaVM * vm)
 
 	/* Properties that always exist */
 	switch (j2seVersion) {
-		case J2SE_16:
-			classVersion = "50.0";
-			specificationVersion = "1.0";
-			specificationVendor = "Sun Microsystems Inc.";
-			break;
-
-		case J2SE_17:
-			classVersion = "51.0";
-			specificationVersion = "1.7";
-			specificationVendor = "Oracle Corporation";
-			break;
-
 		case J2SE_18:
 			classVersion = "52.0";
 			specificationVersion = "1.8";
@@ -704,9 +693,16 @@ initializeSystemProperties(J9JavaVM * vm)
 			break;
 
 		case J2SE_19:
-		default:
-			classVersion = "52.0";
+			classVersion = "53.0";
 			specificationVersion = "9";
+			specificationVendor = "Oracle Corporation";
+			break;
+			
+		case J2SE_V10:
+			/* FALLTHROUGH */
+		default:
+			classVersion = "54.0";
+			specificationVersion = "10";
 			specificationVendor = "Oracle Corporation";
 			break;
 	}
@@ -850,9 +846,12 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
-	rc = addSystemProperty(vm, "com.ibm.zero.version", "2", 0);
-	if (J9SYSPROP_ERROR_NONE != rc) {
-		goto fail;
+	/* -Xzero option is removed from Java 9 */
+	if (j2seVersion < J2SE_19) {
+		rc = addSystemProperty(vm, "com.ibm.zero.version", "2", 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			goto fail;
+		}
 	}
 
 	/* Set the system agent path, which is necessary for system agents such as JDWP to load the libraries they need. */

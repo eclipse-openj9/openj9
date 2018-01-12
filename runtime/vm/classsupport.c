@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9.h"
@@ -50,9 +50,6 @@ static J9Class* internalFindArrayClass(J9VMThread* vmThread, J9Module *j9module,
 
 extern J9Method initialStaticMethod;
 extern J9Method initialSpecialMethod;
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-extern J9Method initialSharedMethod;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 UDATA
 totalStaticSlotsForClass( J9ROMClass *romClass ) {
@@ -339,37 +336,14 @@ internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread)
 					((J9RAMFieldRef *) ramConstantPool)[i].valueOffset = -1;
 					break;
 
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-				case J9CPTYPE_SHARED_METHOD: {
-					J9UTF8 *nameUTF, *className;
-					J9ROMClassRef *romClassRef;
-					UDATA methodIndex = sizeof(J9Class) + sizeof(UDATA);
-					romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
-					romClassRef = ((J9ROMClassRef *) romConstantPool) + romMethodRef->classRefCPIndex;
-					className = J9ROMCLASSREF_NAME(romClassRef);
-					nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-					nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nas);
-					if ((J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), "java/lang/invoke/MethodHandle"))
-					&& (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), "invokeExact")
-					|| J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), "invoke"))) {
-						methodIndex = methodTypeIndex++;
-					}
-					((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (methodIndex << 8) +
-						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
-					((J9RAMMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialSharedMethod;
-					break;
-				}
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				case J9CPTYPE_HANDLE_METHOD:
 					romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 					nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 					((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = (methodTypeIndex << 8) +
 						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
 					methodTypeIndex++;
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 					/* In case MethodHandle.invoke[Exact] is called via invokestatic */
 					((J9RAMMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialStaticMethod;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 					break;
 
 				case J9CPTYPE_INSTANCE_METHOD:
@@ -381,13 +355,11 @@ internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread)
 					break;
 
 				case J9CPTYPE_STATIC_METHOD:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 					romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
 					nas = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
 					/* In case this CP entry is shared with invokevirtual */
 					((J9RAMMethodRef *) ramConstantPool)[i].methodIndexAndArgCount = ((sizeof(J9Class) + sizeof(UDATA)) << 8) +
 						getSendSlotsFromSignature(J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(nas)));
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 					((J9RAMStaticMethodRef *) ramConstantPool)[i].method = vm->initialMethods.initialStaticMethod;
 					break;
 
@@ -490,7 +462,6 @@ resolveKnownClass(J9JavaVM * vm, UDATA index)
  * @param classNameLength Length of the class name
  * @param classLoader Class loader object
  * @param options
- * @param flags contains 0 or BOOTSTRAP_ENTRIES_ONLY
  * @param [in/out] localBuffer contains values for entryIndex, loadLocationType and cpEntryUsed. This pointer can't be NULL.
  * @return pointer to class if locally defined, 0 if not defined, -1 if we cannot do dynamic load
  *
@@ -500,7 +471,7 @@ resolveKnownClass(J9JavaVM * vm, UDATA index)
  */
 
 static IDATA
-callFindLocallyDefinedClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, UDATA options, UDATA flags, J9TranslationLocalBuffer *localBuffer) {
+callFindLocallyDefinedClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, UDATA options, J9TranslationLocalBuffer *localBuffer) {
 	IDATA findResult = -1;
 	J9TranslationBufferSet *dynamicLoadBuffers = vmThread->javaVM->dynamicLoadBuffers;
 	J9ROMClass* returnVal = NULL;
@@ -530,15 +501,15 @@ callFindLocallyDefinedClass(J9VMThread* vmThread, J9Module *j9module, U_8* class
 																		 vmThread, 
 																		 (const char *)className, 
 																		 classNameLength,
-																		 classLoader, 
-																		 flags,
+																		 classLoader,
 																		 &classFound,
 																		 returnPointer);
-			if (returnVal != NULL){
+
+			if (returnVal != NULL) {
 				findResult = classFound;
 			} else {
 				findResult = dynamicLoadBuffers->findLocallyDefinedClassFunction(vmThread, j9module, className, (U_32)classNameLength, classLoader, classPathEntries,
-						classLoader->classPathEntryCount, options, flags, localBuffer);
+						classLoader->classPathEntryCount, options, localBuffer);
 				if ((-1 == findResult) && (J9_PRIVATE_FLAGS_REPORT_ERROR_LOADING_CLASS & vmThread->privateFlags)) {
 					vmThread->privateFlags |= J9_PRIVATE_FLAGS_FAILED_LOADING_REQUIRED_CLASS;
 				}
@@ -589,14 +560,8 @@ attemptDynamicClassLoad(J9VMThread* vmThread, J9Module *j9module, U_8* className
 		IDATA findResult = -1;
 		J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL};
 
-		if (J9_JCL_FLAG_CLASSLOADERS & vmThread->javaVM->jclFlags) {
-			findResult = callFindLocallyDefinedClass(vmThread, j9module, className, classNameLength, classLoader, options, 0, &localBuffer);
-		} else {
-			findResult = callFindLocallyDefinedClass(vmThread, j9module, className, classNameLength, classLoader, options, BCU_BOOTSTRAP_ENTRIES_ONLY, &localBuffer);
-			if (-1 == findResult) {
-				findResult = callFindLocallyDefinedClass(vmThread, j9module, className, classNameLength, classLoader, options, BCU_NON_BOOTSTRAP_ENTRIES_ONLY, &localBuffer);
-			}
-		}
+		findResult = callFindLocallyDefinedClass(vmThread, j9module, className, classNameLength, classLoader, options, &localBuffer);
+
 		if (-1 != findResult) {
 			J9TranslationBufferSet *dynamicLoadBuffers = vmThread->javaVM->dynamicLoadBuffers;
 
@@ -1513,8 +1478,8 @@ contendedLoadTableRemoveThread(J9VMThread* vmThread, J9ContendedLoadTableEntry *
 void
 fixCPShapeDescription(J9Class * clazz, UDATA cpIndex)
 {
-	UDATA wordIndex = (UDATA) (cpIndex / (sizeof(U_32)*2));
-	UDATA shiftAmount = (UDATA) ((cpIndex % (sizeof(U_32)*2)) * 4);
+	UDATA wordIndex = (UDATA) (cpIndex / J9_CP_DESCRIPTIONS_PER_U32);
+	UDATA shiftAmount = (UDATA) ((cpIndex % J9_CP_DESCRIPTIONS_PER_U32) * J9_CP_BITS_PER_DESCRIPTION);
 	U_32 * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(clazz->romClass);
 
 	cpShapeDescription[wordIndex] = (cpShapeDescription[wordIndex] & ~(J9_CP_DESCRIPTION_MASK << shiftAmount)) | (J9CPTYPE_INSTANCE_METHOD << shiftAmount);

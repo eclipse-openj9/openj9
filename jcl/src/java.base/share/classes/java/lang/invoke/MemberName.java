@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE-OpenJ9]*/
+/*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
  * Copyright (c) 2017, 2017 IBM Corp. and others
@@ -19,7 +19,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 package java.lang.invoke;
@@ -29,6 +29,12 @@ package java.lang.invoke;
  */
 
 final class MemberName {
+	/*[IF Sidecar18-SE-OpenJ9&!Sidecar19-SE-OpenJ9]*/
+	static final class Factory {
+		public static Factory INSTANCE = null;
+	}
+	/*[ENDIF]*/
+
 	public boolean isVarargs() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -52,4 +58,17 @@ final class MemberName {
 	public boolean isNative() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+	
+	/*[IF Java10]*/
+	public MethodType getMethodType() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	
+	String getMethodDescriptor() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	public Class<?> getDeclaringClass() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	/*[ENDIF]*/
 }

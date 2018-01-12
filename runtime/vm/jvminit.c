@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #if defined(WIN32)
@@ -159,7 +159,7 @@ typedef struct {
 #define FUNCTION_THREAD_INIT "threadInitStages"
 #define FUNCTION_ZERO_INIT	"zeroInitStages"
 
-static J9CONST_TABLE struct J9VMIgnoredOption ignoredOptionTable[] = {
+static const struct J9VMIgnoredOption ignoredOptionTable[] = {
 	{ IGNORE_ME_STRING, EXACT_MATCH },
 	{ VMOPT_XDEBUG, EXACT_MATCH },
 	{ VMOPT_XNOAGENT, EXACT_MATCH },
@@ -316,9 +316,6 @@ extern void populateRASNetData (J9JavaVM *javaVM, J9RAS *rasStruct);
 const U_8 J9CallInReturnPC[] = { 0xFF, 0x00, 0x00, 0xFF }; /* impdep2, parm, parm, impdep2 */
 const U_8 J9Impdep1PC[] = { 0xFE, 0x00, 0x00, 0xFE }; /* impdep1, parm, parm, impdep1 */
 
-/* used as the default value for the imageHeaders list -- make sure that this is in the text segment on Palm! */
-static const void* const nullPtr = NULL;
-
 static jint (JNICALL * vprintfHookFunction)(FILE *fp, const char *format, va_list args) = NULL;
 static IDATA (* portLibrary_file_write_text) (struct OMRPortLibrary *portLibrary, IDATA fd, const char *buf, IDATA nbytes) = NULL;
 
@@ -333,11 +330,7 @@ static UDATA sigxfszHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void
 /* SSE2 support on 32 bit linux_x86 and win_x86 */
 #ifdef J9VM_ENV_SSE2_SUPPORT_DETECTION
 
-/* Must be static as set by the Linux signal handler */
-static BOOLEAN osSupportsSSE = FALSE;
-
 extern U_32 J9SSE2cpuidFeatures(void);
-extern U_32 J9SSE2GetMXCSR(void);
 static BOOLEAN isSSE2SupportedOnX86();
 #endif /* J9VM_ENV_SSE2_SUPPORT_DETECTION */
 
@@ -1823,7 +1816,13 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				IDATA argIndexIgnoreUnrecognizedOptionsEnable = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXIDLETUNINGIGNOREUNRECOGNIZEDOPTIONSENABLE, NULL);
 				IDATA argIndexIgnoreUnrecognizedOptionsDisable = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXIDLETUNINGIGNOREUNRECOGNIZEDOPTIONSDISABLE, NULL);
 
-				if (argIndexGcOnIdleEnable > argIndexGcOnIdleDisable) {
+				/* 
+				 * idle heap tuning is enabled only if -XX:+IdleTuningGcOnIdle is set 
+				 * or if java version is 9 or above and -Xtune:virtualized is set as VM option
+				 */
+				if ((argIndexGcOnIdleEnable > argIndexGcOnIdleDisable) 
+				|| ((J2SE_VERSION(vm) >= J2SE_19) && (argIndexGcOnIdleDisable == -1) && J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_TUNE_VIRTUALIZED))
+				) {
 					vm->vmRuntimeStateListener.idleTuningFlags |= (UDATA)J9_IDLE_TUNING_GC_ON_IDLE;
 				} else {
 					vm->vmRuntimeStateListener.idleTuningFlags &= ~(UDATA)J9_IDLE_TUNING_GC_ON_IDLE;
@@ -1950,7 +1949,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				if (!idleGCTuningSupported) {
 					vm->vmRuntimeStateListener.idleTuningFlags &= ~(J9_IDLE_TUNING_GC_ON_IDLE | J9_IDLE_TUNING_COMPACT_ON_IDLE);
 					if (J9_IDLE_TUNING_IGNORE_UNRECOGNIZED_OPTIONS != (vm->vmRuntimeStateListener.idleTuningFlags & J9_IDLE_TUNING_IGNORE_UNRECOGNIZED_OPTIONS)) {
-						j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED);
+						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_IDLE_TUNING_PLATFORM_OR_GC_POLICY_NOT_SUPPORTED);
 						goto _error;
 					}
 				}
@@ -3384,110 +3383,115 @@ zeroInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 {
 	J9VMDllLoadInfo* loadInfo;
 	IDATA returnVal = J9VMDLLMAIN_OK;
-	IDATA argIndex1;
+	IDATA argIndex1 = -1;
 	BOOLEAN describe = FALSE;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	switch(stage) {
 		case PORT_LIBRARY_GUARANTEED :
-			vm->zeroOptions = J9VM_ZERO_SHAREBOOTZIPCACHE;
-			argIndex1 = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XZERO, NULL);
-			while(argIndex1 >= 0) {
-				char *optionString;
-				char optionsBuffer[LARGE_STRING_BUF_SIZE];
-				char* optionsBufferPtr = (char*)optionsBuffer;
-				UDATA rc;
+			/* -Xzero option is removed from Java 9 */
+			if (J2SE_VERSION(vm) >= J2SE_19) {
+				vm->zeroOptions = 0;
+			} else {
+				vm->zeroOptions = J9VM_ZERO_SHAREBOOTZIPCACHE;
+				argIndex1 = FIND_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XZERO, NULL);
+				while(argIndex1 >= 0) {
+					char *optionString;
+					char optionsBuffer[LARGE_STRING_BUF_SIZE];
+					char* optionsBufferPtr = (char*)optionsBuffer;
+					UDATA rc;
 
-				optionString = vm->vmArgsArray->actualVMArgs->options[argIndex1].optionString;
-				if (strcmp(optionString, VMOPT_XZERO) == 0) {
-					/* Found -Xzero, enable the default Zero options */
-#if defined(J9VM_OPT_ZERO)
-					vm->zeroOptions = J9VM_ZERO_DEFAULT_OPTIONS;
-#endif
-					CONSUME_ARG(vm->vmArgsArray, argIndex1);
-					argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
-					continue;
-				} else if (strncmp(optionString, VMOPT_XZERO_COLON, sizeof(VMOPT_XZERO_COLON) - 1) != 0) {
-					/* If the option does not start with -Xzero:, do not consume it so it later causes option unrecognised */
-					argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
-					continue;
-				}
-				CONSUME_ARG(vm->vmArgsArray, argIndex1);
-				rc = GET_OPTION_VALUES(argIndex1, ':', ',', &optionsBufferPtr, LARGE_STRING_BUF_SIZE);
-				if (rc == OPTION_OK) {
-					if (*optionsBufferPtr == 0) {
-						/* Enable default Zero options */
+					optionString = vm->vmArgsArray->actualVMArgs->options[argIndex1].optionString;
+					if (strcmp(optionString, VMOPT_XZERO) == 0) {
+						/* Found -Xzero, enable the default Zero options */
 #if defined(J9VM_OPT_ZERO)
 						vm->zeroOptions = J9VM_ZERO_DEFAULT_OPTIONS;
 #endif
-					} else {
-						while (*optionsBufferPtr) {
-							char *errorBuffer;
+						CONSUME_ARG(vm->vmArgsArray, argIndex1);
+						argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
+						continue;
+					} else if (strncmp(optionString, VMOPT_XZERO_COLON, sizeof(VMOPT_XZERO_COLON) - 1) != 0) {
+						/* If the option does not start with -Xzero:, do not consume it so it later causes option unrecognised */
+						argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
+						continue;
+					}
+					CONSUME_ARG(vm->vmArgsArray, argIndex1);
+					rc = GET_OPTION_VALUES(argIndex1, ':', ',', &optionsBufferPtr, LARGE_STRING_BUF_SIZE);
+					if (rc == OPTION_OK) {
+						if (*optionsBufferPtr == 0) {
+							/* Enable default Zero options */
+#if defined(J9VM_OPT_ZERO)
+							vm->zeroOptions = J9VM_ZERO_DEFAULT_OPTIONS;
+#endif
+						} else {
+							while (*optionsBufferPtr) {
+								char *errorBuffer;
 
-							if (strcmp(optionsBufferPtr, VMOPT_ZERO_NONE) == 0) {
-								vm->zeroOptions = 0;
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_J9ZIP) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_J9ZIP) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHAREZIP) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHAREZIP) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHAREBOOTZIP) == 0) {
-								vm->zeroOptions |= J9VM_ZERO_SHAREBOOTZIPCACHE;
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHAREBOOTZIP) == 0) {
-								vm->zeroOptions &= ~J9VM_ZERO_SHAREBOOTZIPCACHE;
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHARESTRING) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHARESTRING) == 0) {
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_DESCRIBE) == 0) {
-								describe = TRUE;
-								optionsBufferPtr += strlen(optionsBufferPtr) + 1;
-								continue;
-							} else {
-								errorBuffer = j9mem_allocate_memory(LARGE_STRING_BUF_SIZE, OMRMEM_CATEGORY_VM);
-								if (errorBuffer) {
-									strcpy(errorBuffer, VMOPT_XZERO_COLON);
-									safeCat(errorBuffer, optionsBufferPtr, LARGE_STRING_BUF_SIZE);
-									j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, errorBuffer);
-									j9mem_free_memory(errorBuffer);
+								if (strcmp(optionsBufferPtr, VMOPT_ZERO_NONE) == 0) {
+									vm->zeroOptions = 0;
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_J9ZIP) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_J9ZIP) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHAREZIP) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHAREZIP) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHAREBOOTZIP) == 0) {
+									vm->zeroOptions |= J9VM_ZERO_SHAREBOOTZIPCACHE;
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHAREBOOTZIP) == 0) {
+									vm->zeroOptions &= ~J9VM_ZERO_SHAREBOOTZIPCACHE;
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_SHARESTRING) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, "no"VMOPT_ZERO_SHARESTRING) == 0) {
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
+								} else if (strcmp(optionsBufferPtr, VMOPT_ZERO_DESCRIBE) == 0) {
+									describe = TRUE;
+									optionsBufferPtr += strlen(optionsBufferPtr) + 1;
+									continue;
 								} else {
-									loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_ZERO_INIT );
-									loadInfo->fatalErrorStr = "Cannot allocate memory for error message";
+									errorBuffer = j9mem_allocate_memory(LARGE_STRING_BUF_SIZE, OMRMEM_CATEGORY_VM);
+									if (errorBuffer) {
+										strcpy(errorBuffer, VMOPT_XZERO_COLON);
+										safeCat(errorBuffer, optionsBufferPtr, LARGE_STRING_BUF_SIZE);
+										j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, errorBuffer);
+										j9mem_free_memory(errorBuffer);
+									} else {
+										loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_ZERO_INIT );
+										loadInfo->fatalErrorStr = "Cannot allocate memory for error message";
+									}
+									goto _error;
 								}
-								goto _error;
 							}
 						}
+					} else {
+						loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_ZERO_INIT );
+						loadInfo->fatalErrorStr = "Error parsing " VMOPT_XZERO_COLON " options";
 					}
-				} else {
-					loadInfo = FIND_DLL_TABLE_ENTRY( FUNCTION_ZERO_INIT );
-					loadInfo->fatalErrorStr = "Error parsing " VMOPT_XZERO_COLON " options";
+					argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
 				}
-				argIndex1 = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, VMOPT_XZERO, NULL, argIndex1);
-			}
-			if (describe) {
-				BOOLEAN foundOption = FALSE;
-				j9tty_printf(PORTLIB, VMOPT_XZERO_COLON);
-				if ((vm->zeroOptions & J9VM_ZERO_SHAREBOOTZIPCACHE) != 0) {
-					j9tty_printf(PORTLIB, "%s"VMOPT_ZERO_SHAREBOOTZIP, foundOption ? "," : "");
-					foundOption = TRUE;
+				if (describe) {
+					BOOLEAN foundOption = FALSE;
+					j9tty_printf(PORTLIB, VMOPT_XZERO_COLON);
+					if ((vm->zeroOptions & J9VM_ZERO_SHAREBOOTZIPCACHE) != 0) {
+						j9tty_printf(PORTLIB, "%s"VMOPT_ZERO_SHAREBOOTZIP, foundOption ? "," : "");
+						foundOption = TRUE;
+					}
+					j9tty_printf(PORTLIB, "%s\n", foundOption ? "" : VMOPT_ZERO_NONE);
 				}
-				j9tty_printf(PORTLIB, "%s\n", foundOption ? "" : VMOPT_ZERO_NONE);
 			}
 			break;
 		case ALL_DEFAULT_LIBRARIES_LOADED :
@@ -3764,12 +3768,6 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	if (registerCmdLineMapping(vm, MAPOPT_XSHARE_AUTO, MAPOPT_XSHARECLASSES_NONFATAL, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
-	/* Map the old-style -Xdbg: to -agentlib:jdwp= in releases before Java 7 */
-	if ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) < J2SE_17) {
-		if (RC_FAILED == registerCmdLineMapping(vm, VMOPT_XDBG_COLON, MAPOPT_AGENTLIB_JDWP_EQUALS, MAP_WITH_INCLUSIVE_OPTIONS)) {
-			return RC_FAILED;
-		}
-	}
 
 	return 0;
 }
@@ -3826,7 +3824,7 @@ static void testFindArgs(J9JavaVM* vm) {
 	intResult = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xfoo2sdf", NULL);
 	TEST_INT(intResult, -1);
 
-	SET_TO(1, "-Xfoo3:arse");
+	SET_TO(1, "-Xfoo3:parse");
 	intResult = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xfoo3", NULL);
 	TEST_INT(intResult, -1);
 
@@ -3846,7 +3844,7 @@ static void testFindArgs(J9JavaVM* vm) {
 	intResult = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, "-Xfoo2", NULL);
 	TEST_INT(intResult, 1);
 
-	SET_TO(1, "-Xfoo3:arse");
+	SET_TO(1, "-Xfoo3:parse");
 	intResult = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, "-Xfoo3", NULL);
 	TEST_INT(intResult, 1);
 
@@ -3976,7 +3974,7 @@ static void testFindArgs(J9JavaVM* vm) {
 	intResult = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, "-Xfoo2", NULL);
 	TEST_INT(intResult, -1);
 
-	SET_TO(1, "-Xfoo3:arse");
+	SET_TO(1, "-Xfoo3:parse");
 	intResult = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, "-Xfoo3", NULL);
 	TEST_INT(intResult, 1);
 
@@ -4413,12 +4411,12 @@ static void testOptionValueOps(J9JavaVM* vm) {
 	IS_0(*optionsBufferPtr);
 
 	optionsBufferPtr = optionsBuffer;
-	SET_TO(1, "-Xfoo4:bar3,bar4=arse");
+	SET_TO(1, "-Xfoo4:bar3,bar4=parse");
 	returnVal = GET_OPTION_VALUES(1, ':', ',', &optionsBufferPtr, SMALL_STRING_BUF_SIZE);
 	TEST_INT(returnVal, OPTION_OK);
 	COMPARE(optionsBufferPtr, "bar3");
 	NEXT_ELEMENT(optionsBufferPtr);
-	COMPARE(optionsBufferPtr, "bar4=arse");
+	COMPARE(optionsBufferPtr, "bar4=parse");
 	NEXT_ELEMENT(optionsBufferPtr);
 	IS_0(*optionsBufferPtr);
 
@@ -4629,7 +4627,7 @@ static void testOptionValueOps(J9JavaVM* vm) {
 	REMOVE_MAPPING(1);
 
 	SET_TO(1, "-Xfoosov2:bar3");
-	SET_MAP_TO(1, "-Xfooj92:arse:", "-Xfoosov2:", MAP_ONE_COLON_TO_TWO);
+	SET_MAP_TO(1, "-Xfooj92:parse:", "-Xfoosov2:", MAP_ONE_COLON_TO_TWO);
 	returnVal = GET_OPTION_VALUE(1, ':', &result);
 	TEST_INT(returnVal, OPTION_OK);
 	COMPARE(result, "bar3");
@@ -6287,10 +6285,12 @@ done:
 #define SSE2_FLAG 0x05000000
 
 #ifdef LINUX
+/* Must be static as set by the Linux signal handler */
+static BOOLEAN osSupportsSSE = FALSE;
 static void
 handleSIGILLForSSE(int signal, struct sigcontext context)
 {
-	/* The STMXCSR instruction (in J9SSE2GetMXCSR()) is four bytes long.
+	/* The STMXCSR instruction is four bytes long.
 	* The instruction pointer must be incremented manually to avoid
 	* repeating the exception-throwing instruction.
 	*/
@@ -6305,33 +6305,30 @@ isSSE2SupportedOnX86() {
 	BOOLEAN result = FALSE;
 
 	if ((J9SSE2cpuidFeatures() & SSE2_FLAG) == SSE2_FLAG) {
-		/* CPU supports SSE2  - now determine if OS does */
-		U_32 mxcsr;
 
 #if defined(WIN32)
 		/* Use Structured Exception Handling when building on Win32. */
-
 		__try {
-			mxcsr = J9SSE2GetMXCSR();
-			osSupportsSSE = TRUE;
+			_mm_getcsr();
+			result = TRUE;
 		}
 		__except(EXCEPTION_EXECUTE_HANDLER)
 		{
-			osSupportsSSE = FALSE;
+			result = FALSE;
 		}
 #elif defined(LINUX)
 		/* Use POSIX signals when building on Linux. If an "illegal instruction"
 		 * signal is encountered, the signal handler will set osSupportsSSE to FALSE.
 		 */
+		U_32 mxcsr = 0;
 		struct sigaction oldHandler;
-
 		OMRSIG_SIGACTION(SIGILL, NULL, &oldHandler);
 		OMRSIG_SIGNAL(SIGILL, (void (*)(int)) handleSIGILLForSSE);
 		osSupportsSSE = TRUE;
-		mxcsr = J9SSE2GetMXCSR();
+		asm("stmxcsr %0"::"m"(mxcsr) : );
 		OMRSIG_SIGACTION(SIGILL, &oldHandler, NULL);
-#endif
 		result = osSupportsSSE;
+#endif
 	}
 	return result;
 }

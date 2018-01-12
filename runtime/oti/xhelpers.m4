@@ -16,13 +16,15 @@ dnl
 dnl [1] https://www.gnu.org/software/classpath/license.html
 dnl [2] http://openjdk.java.net/legal/assembly-exception.html
 dnl
-dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
 include(jilvalues.m4)
 
 define({CINTERP_STACK_SIZE},{J9CONST(J9TR_cframe_sizeof,$1,$2)})
 
 ifdef({WIN32},{
+
+define({SHORT_JMP},{short})
 
 ifdef({ASM_J9VM_ENV_DATA64},{
 
@@ -64,11 +66,26 @@ define({LABEL},$1)
 
 },{	dnl WIN32
 
+ifdef({OSX},{ 
+
+define({SHORT_JMP},{})
+
+define({FILE_START},{
+	.intel_syntax noprefix
+	.text
+})
+
+},{	dnl OSX
+
+define({SHORT_JMP},{short})
+
 define({FILE_START},{
 	.intel_syntax noprefix
 	.arch pentium4
 	.text
 })
+
+})	dnl OSX
 
 define({FILE_END})
 
@@ -80,14 +97,22 @@ define({START_PROC},{
 
 define({END_PROC},{
 END_$1:
+ifdef({OSX},{
+
+},{	dnl OSX
 	.size $1,END_$1 - $1
+})	dnl OSX
 })
 
 define({DECLARE_PUBLIC},{.global $1})
 
 define({DECLARE_EXTERN},{.extern $1})
 
+ifdef({OSX},{
+define({LABEL},$1)
+},{	dnl OSX
 define({LABEL},.$1)
+})	dnl OSX
 
 })	dnl WIN32
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package org.openj9.test.unsafe;
 
@@ -30,6 +30,13 @@ import org.testng.ITest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.log4testng.Logger;
+
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.MethodVisitor;
+
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
+
 import jdk.internal.misc.Unsafe;
 
 public class UnsafeTestBase implements ITest {
@@ -460,10 +467,11 @@ public class UnsafeTestBase implements ITest {
 					+ ", Data: " + modelInt[i] + ", Index: " + i);
 			if (method.equals(VOLATILE)) {
 				myUnsafe.putIntVolatile(base(target, i), offset, modelInt[i]);
-			} else if (method.equals(COMPAREANDSWAP)) {
-				myUnsafe.putInt(base(target, i), offset, -1);
-				myUnsafe.compareAndSwapInt(base(target, i), offset, -1,
-						modelInt[i]);
+			// API is not supported in b181 java9, need to verify if test case is needed
+//			} else if (method.equals(COMPAREANDSWAP)) {
+//				myUnsafe.putInt(base(target, i), offset, -1);
+//				myUnsafe.compareAndSwapInt(base(target, i), offset, -1,
+//						modelInt[i]);
 			} else if (method.equals(ORDERED)) {
 				myUnsafe.putIntRelease(base(target, i), offset, modelInt[i]);
 			} else {
@@ -483,10 +491,11 @@ public class UnsafeTestBase implements ITest {
 				myUnsafe.putLongVolatile(base(target, i), offset, modelLong[i]);
 			} else if (method.equals(ORDERED)) {
 				myUnsafe.putLongRelease(base(target, i), offset, modelLong[i]);
-			} else if (method.equals(COMPAREANDSWAP)) {
-				myUnsafe.putLong(base(target, i), offset, -1);
-				myUnsafe.compareAndSwapLong(base(target, i), offset, -1,
-						modelLong[i]);
+			// API is not supported in b181 java9, need to verify if test case is needed
+//			} else if (method.equals(COMPAREANDSWAP)) {
+//				myUnsafe.putLong(base(target, i), offset, -1);
+//				myUnsafe.compareAndSwapLong(base(target, i), offset, -1,
+//						modelLong[i]);
 			} else {
 				myUnsafe.putLong(base(target, i), offset, modelLong[i]);
 			}
@@ -753,9 +762,10 @@ public class UnsafeTestBase implements ITest {
 				myUnsafe.putIntVolatile(null, pointers[i], modelInt[i]);
 			} else if (method.equals(DEFAULT)) {
 				myUnsafe.putInt(null, pointers[i], modelInt[i]);
-			} else if (method.equals(COMPAREANDSWAP)) {
-				myUnsafe.putInt(null, pointers[i], -1);
-				myUnsafe.compareAndSwapInt(null, pointers[i], -1, modelInt[i]);
+			// API is not supported in b181 java9, need to verify if test case is needed
+//			} else if (method.equals(COMPAREANDSWAP)) {
+//				myUnsafe.putInt(null, pointers[i], -1);
+//				myUnsafe.compareAndSwapInt(null, pointers[i], -1, modelInt[i]);
 			} else if (method.equals(ORDERED)) {
 				myUnsafe.putIntRelease(null, pointers[i], modelInt[i]);
 			} else if (method.equals(ADDRESS)) {
@@ -780,9 +790,10 @@ public class UnsafeTestBase implements ITest {
 				myUnsafe.putLongVolatile(null, pointers[i], modelLong[i]);
 			} else if (method.equals(DEFAULT)) {
 				myUnsafe.putLong(null, pointers[i], modelLong[i]);
-			} else if (method.equals(COMPAREANDSWAP)) {
-				myUnsafe.putLong(null, pointers[i], -1);
-				myUnsafe.compareAndSwapLong(null, pointers[i], -1, modelLong[i]);
+			// API is not supported in b181 java9, need to verify if test case is needed
+//			} else if (method.equals(COMPAREANDSWAP)) {
+//				myUnsafe.putLong(null, pointers[i], -1);
+//				myUnsafe.compareAndSwapLong(null, pointers[i], -1, modelLong[i]);
 			} else if (method.equals(ORDERED)) {
 				myUnsafe.putLongRelease(null, pointers[i], modelLong[i]);
 			} else if (method.equals(ADDRESS)) {
@@ -1004,5 +1015,33 @@ public class UnsafeTestBase implements ITest {
 			mem = mem + mod;
 			getLogger().debug("Change pointer to: " + mem);
 		}
+	}
+	
+	/* Create a class with the specified package name.
+	 * This method is used to verify the correctness of 
+	 * jdk.internal.misc.Unsafe.defineAnonymousClass.
+	 */
+	protected static byte[] createDummyClass(String packageName) {
+		ClassWriter cw = new ClassWriter(0);
+		MethodVisitor mv = null;
+		String className = "DummyClass";
+		
+		if (packageName != null) {
+			className = packageName + "/" + className;
+		}
+		
+		cw.visit(52, ACC_PUBLIC, className, null, "java/lang/Object", null);
+		
+		{
+			mv = cw.visitMethod(ACC_PUBLIC, "bar", "()V", null, null);
+			mv.visitCode();
+			mv.visitInsn(RETURN);
+			mv.visitMaxs(2, 1);
+			mv.visitEnd();
+		}
+
+		cw.visitEnd();
+		
+		return cw.toByteArray();
 	}
 }

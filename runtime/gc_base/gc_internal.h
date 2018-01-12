@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /**
@@ -92,6 +92,7 @@ extern J9_CFUNC void J9WriteBarrierJ9ClassBatchStore(J9VMThread *vmThread, J9Cla
 extern J9_CFUNC UDATA mergeMemorySpaces(J9VMThread *vmThread, void *destinationMemorySpace, void *sourceMemorySpace);
 extern J9_CFUNC UDATA j9gc_scavenger_enabled(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_concurrent_scavenger_enabled(J9JavaVM *javaVM);
+extern J9_CFUNC UDATA j9gc_software_read_barrier_enabled(J9JavaVM *javaVM);
 extern J9_CFUNC void j9gc_objaccess_indexableStoreAddress(J9VMThread *vmThread, J9IndexableObject *destObject, I_32 index, void *value, UDATA isVolatile);
 extern J9_CFUNC void j9gc_objaccess_mixedObjectStoreAddress(J9VMThread *vmThread, j9object_t destObject, UDATA offset, void *value, UDATA isVolatile);
 extern J9_CFUNC void j9gc_objaccess_cloneObject(J9VMThread *vmThread, j9object_t srcObject, j9object_t destObject);
@@ -122,6 +123,7 @@ extern J9_CFUNC void J9ResetThreadLocalHeap(J9VMThread *vmContext, UDATA flush);
 extern J9_CFUNC void j9gc_objaccess_storeObjectToInternalVMSlot(J9VMThread *vmThread, j9object_t *destSlot, j9object_t value);
 extern J9_CFUNC jint  JNICALL queryGCStatus(JavaVM *vm, jint *nHeaps, GCStatus *status, jint statusSize);
 extern J9_CFUNC int j9gc_finalizer_startup(J9JavaVM * vm);
+extern J9_CFUNC UDATA j9gc_wait_for_reference_processing(J9JavaVM *vm);
 extern J9_CFUNC UDATA j9gc_get_maximum_heap_size(J9JavaVM *javaVM);
 extern J9_CFUNC I_32 j9gc_get_jit_string_dedup_policy(J9JavaVM *javaVM);
 extern J9_CFUNC void* j9gc_objaccess_staticReadAddress(J9VMThread *vmThread, J9Class *clazz, void **srcSlot, UDATA isVolatile);

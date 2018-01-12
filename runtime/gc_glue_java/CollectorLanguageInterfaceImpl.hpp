@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef COLLECTORLANGUAGEINTERFACEJAVA_HPP_
@@ -58,9 +58,6 @@ protected:
 	OMR_VM *_omrVM;
 	J9JavaVM *_javaVM;
 	MM_GCExtensions *_extensions;
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	MM_ScanClassesMode _concurrentGC_scanClassesMode; /** Support for dynamic class unloading in concurrent mark (ConcurrentGC) */
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	volatile bool _scavenger_shouldScavengeFinalizableObjects; /**< Set to true at the beginning of a collection if there are any pending finalizable objects */
 	volatile bool _scavenger_shouldScavengeUnfinalizedObjects; /**< Set to true at the beginning of a collection if there are any unfinalized objects */
 	volatile bool _scavenger_shouldScavengeSoftReferenceObjects; /**< Set to true if there are any SoftReference objects discovered */
@@ -99,49 +96,6 @@ public:
 
 	static MM_CollectorLanguageInterfaceImpl *getInterface(MM_CollectorLanguageInterface *cli) { return (MM_CollectorLanguageInterfaceImpl *)cli; }
 
-#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
-	/**
-	 * Used to pass marking scheme and thread environment to stack slot iterator.
-	 *
-	 * @see concurrentGC_scanThread()
-	 */
-	typedef struct markSchemeStackIteratorData {
-		MM_MarkingScheme *markingScheme;
-		MM_EnvironmentBase *env;
-	} markSchemeStackIteratorData;
-
-	virtual void concurrentGC_processItem(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
-	virtual MM_ConcurrentSafepointCallback* concurrentGC_createSafepointCallback(MM_EnvironmentBase *env);
-	virtual omrsig_handler_fn concurrentGC_getProtectedSignalHandler(void **signalHandlerArg);
-	virtual void concurrentGC_concurrentInitializationComplete(MM_EnvironmentStandard *env);
-	virtual bool concurrentGC_forceConcurrentKickoff(MM_EnvironmentBase *env, uintptr_t gcCode, uintptr_t *languagekickoffReason);
-	virtual uintptr_t concurrentGC_getNextTracingMode(uintptr_t executionMode);
-	virtual uintptr_t concurrentGC_collectRoots(MM_EnvironmentStandard *env, uintptr_t concurrentStatus, bool *collectedRoots, bool *paidTax);
-	virtual void concurrentGC_signalThreadsToTraceStacks(MM_EnvironmentStandard *env);
-	virtual void concurrentGC_signalThreadsToDirtyCards(MM_EnvironmentStandard *env);
-	virtual void concurrentGC_signalThreadsToStopDirtyingCards(MM_EnvironmentStandard *env);
-	virtual void concurrentGC_kickoffCardCleaning(MM_EnvironmentStandard *env);
-	virtual void concurrentGC_flushRegionReferenceLists(MM_EnvironmentBase *env);
-	virtual void concurrentGC_flushThreadReferenceBuffer(MM_EnvironmentBase *env);
-	virtual bool concurrentGC_isThreadReferenceBufferEmpty(MM_EnvironmentBase *env);
-	virtual bool concurrentGC_startConcurrentScanning(MM_EnvironmentStandard *env, uintptr_t *bytesTraced, bool *collectedRoots);
-	virtual void concurrentGC_concurrentScanningStarted(MM_EnvironmentStandard *env, bool isConcurrentScanningComplete);
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	virtual bool concurrentGC_isConcurrentScanningComplete(MM_EnvironmentBase *env) {return !_concurrentGC_scanClassesMode.isPendingOrActiveMode();}
-	virtual uintptr_t concurrentGC_reportConcurrentScanningMode(MM_EnvironmentBase *env) {return _concurrentGC_scanClassesMode.getScanClassesMode();}
-#else
-	virtual bool concurrentGC_isConcurrentScanningComplete(MM_EnvironmentBase *env) {return true;}
-	virtual uintptr_t concurrentGC_reportConcurrentScanningMode(MM_EnvironmentBase *env) {return 0;}
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-	virtual void concurrentGC_scanThread(MM_EnvironmentBase *env);
-#endif /* OMR_GC_MODRON_CONCURRENT_MARK */
-
-#if defined(OMR_GC_MODRON_COMPACTION)
-	virtual void compactScheme_languageMasterSetupForGC(MM_EnvironmentBase *env);
-	virtual void compactScheme_fixupRoots(MM_EnvironmentBase *env, MM_CompactScheme *compactScheme);
-	virtual void compactScheme_workerCleanupAfterGC(MM_EnvironmentBase *env);
-	virtual void compactScheme_verifyHeap(MM_EnvironmentBase *env, MM_MarkMap *markMap);
-#endif /* OMR_GC_MODRON_COMPACTION */
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	virtual void scavenger_masterSetupForGC(MM_EnvironmentBase *env);
@@ -182,28 +136,6 @@ public:
 
 protected:
 private:
-
-#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
-	void private_concurrentGC_collectJNIRoots(MM_EnvironmentStandard *env, bool *completedJNIRoots);
-	void private_concurrentGC_collectClassRoots(MM_EnvironmentStandard *env, bool *completedClassRoots, bool *classesMarkedAsRoots);
-	void private_concurrentGC_collectFinalizableRoots(MM_EnvironmentStandard *env, bool *completedFinalizableRoots);
-	void private_concurrentGC_collectStringRoots(MM_EnvironmentStandard *env, bool *completedStringRoots, bool *collectedStringConstants);
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	uintptr_t private_concurrentGC_concurrentClassMark(MM_EnvironmentStandard *env, bool *completedClassMark);
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-	void private_concurrentGC_doVMThreadSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, GC_VMThreadIterator *vmThreadIterator);
-#endif /* OMR_GC_MODRON_CONCURRENT_MARK */
-
-	
-	/*
-	 * Compactor, Private
-	 */
-
-	void private_compactScheme_verifyHeapMixedObject(omrobjectptr_t objectPtr, MM_MarkMap *markMap);
-	void private_compactScheme_verifyHeapObjectSlot(omrobjectptr_t object, MM_MarkMap *markMap);
-	void private_compactScheme_verifyHeapArrayObject(omrobjectptr_t objectPtr, MM_MarkMap *markMap);
-
-	void private_compactScheme_setupForOwnableSynchronizerProcessing(MM_EnvironmentBase *env);
 
 	/*
 	 * ParallelScavenger, Private

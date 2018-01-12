@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9.h"
@@ -67,49 +67,48 @@ struct VMInterfaceFunctions_ J9VMInterfaceFunctions = {
 /* Initialization function */
 vmiError J9VMI_Initialize(J9JavaVM* vm)
 {
-	J9VMInterface* j9VMI;
-	VMInterface* vmi;
-	HarmonyVMInterface* harmonyVMI;
-	JavaVMInitArgs* vmInitArgs;
-
-	j9VMI = &vm->vmInterface;
+	J9VMInterface* j9VMI = &vm->vmInterface;
 	j9VMI->functions = GLOBAL_TABLE(J9VMInterfaceFunctions);
 	j9VMI->javaVM = vm;
 	j9VMI->portLibrary = vm->portLibrary;
-
-	/* Initialize the Harmony copy of the VMI */
-	harmonyVMI = &vm->harmonyVMInterface;
-	harmonyVMI->functions = GLOBAL_TABLE(J9VMInterfaceFunctions);
-	harmonyVMI->javaVM = vm;
-	harmonyVMI->portLibrary = NULL;
 
 	/* load the zlib */
 	if (0 != initZipLibrary(vm->portLibrary, vm->j2seRootDirectory)) {
 		return VMI_ERROR_INITIALIZATION_FAILED;
 	}
 
-#if defined(J9VM_OPT_HARMONY)
 	/* Acquire the initArgs via VMI */
-	vmi = (VMInterface*)j9VMI;
-	vmInitArgs = (*vmi)->GetInitArgs(vmi);
+#if defined(J9VM_OPT_HARMONY)
+	{ /* Introduce a new scope to keep older compilers happy */
+		JavaVMInitArgs* vmInitArgs = NULL;
+		VMInterface* vmi = NULL;
+		/* Initialize the Harmony copy of the VMI */
+		HarmonyVMInterface *harmonyVMI = &vm->harmonyVMInterface;
+		harmonyVMI->functions = GLOBAL_TABLE(J9VMInterfaceFunctions);
+		harmonyVMI->javaVM = vm;
+		harmonyVMI->portLibrary = NULL;
 
-	/* Locate the Harmony portlib (if possible) */
-	if (NULL != vmInitArgs) {
+		/* Acquire the initArgs via VMI */
+		vmi = (VMInterface*)j9VMI;
+		vmInitArgs = (*vmi)->GetInitArgs(vmi);
 
-		jint count = vmInitArgs->nOptions;
-		JavaVMOption *option = vmInitArgs->options;
+		/* Locate the Harmony portlib (if possible) */
+		if (NULL != vmInitArgs) {
 
-		while (count) {
-			if (!strcmp(option->optionString,"_org.apache.harmony.vmi.portlib")) {
-				harmonyVMI->portLibrary = (struct HyPortLibrary *)option->extraInfo;
-				return VMI_ERROR_NONE;
+			jint count = vmInitArgs->nOptions;
+			JavaVMOption *option = vmInitArgs->options;
+
+			while (count > 0) {
+				if (!strcmp(option->optionString,"_org.apache.harmony.vmi.portlib")) {
+					harmonyVMI->portLibrary = (struct HyPortLibrary *)option->extraInfo;
+					return VMI_ERROR_NONE;
+				}
+				++option;
+				--count;
 			}
-			++option;
-			--count;
 		}
 	}
-
-#endif
+#endif /* J9VM_OPT_HARMONY */
 	return VMI_ERROR_NONE;
 }
 

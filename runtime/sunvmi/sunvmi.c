@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /**
@@ -90,7 +90,15 @@ latestUserDefinedLoaderIterator(J9VMThread * currentThread, J9StackWalkState * w
 	J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
 	J9ClassLoader * classLoader = currentClass->classLoader;
 
-	if (classLoader != vm->systemClassLoader) {
+	/* Ignore jdk/internal/loader/ClassLoaders$PlatformClassLoader (Java 9+).
+	 * In Java 9+, vm->extensionClassLoader is the PlatformClassLoader.
+	 */
+	BOOLEAN isPlatformClassLoader = FALSE;
+	if ((J2SE_VERSION(vm) >= J2SE_19) && (classLoader == vm->extensionClassLoader)) {
+		isPlatformClassLoader = TRUE;
+	}
+
+	if ((classLoader != vm->systemClassLoader) && !isPlatformClassLoader) {
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 		Assert_SunVMI_mustHaveVMAccess(currentThread);
@@ -398,7 +406,7 @@ initializeReflectionGlobals(JNIEnv * env,BOOLEAN includeAccessors) {
 	}
 
 #if defined(J9VM_OPT_METHOD_HANDLE)
-	if ((J2SE_VERSION(vm) >= J2SE_17) && (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW)) {
+	if (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW) {
 		clazz = (*env)->FindClass(env, "java/lang/invoke/MethodHandles$Lookup");
 		if (NULL == clazz) {
 			return JNI_ERR;
@@ -573,7 +581,7 @@ getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState
 			if (walkState->userData2 != NULL) {
 				j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(currentClass);
 #if defined(J9VM_OPT_METHOD_HANDLE)
-				if ((J2SE_VERSION(vm) >= J2SE_17) && (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW)) {
+				if (J2SE_SHAPE(vm) != J2SE_SHAPE_RAW) {
 					/* check for non-static MethodHandles$Lookup methods */
 					if (walkState->method == ((J9JNIMethodID*)VM.jliMethodHandles_Lookup_checkSecurity)->method) {
 						walkState->userData3 = (void*)(n + 2);
@@ -716,7 +724,16 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 
 						funcs->internalEnterVMFromJNI(vmThread);
 						packageName = getPackageName(packageIDList[i], &packageNameLength);
-						packageString = funcs->catUtfToString4(vmThread, packageName, packageNameLength, (U_8*)"/", 1, NULL, 0, NULL, 0);
+						/*
+						 * java.lang.Package.getSystemPackages() expects a trailing slash in Java 8
+						 * but no trailing slash in Java 9.
+						 */
+						if (J2SE_VERSION(vm) >= J2SE_19) {
+							packageString = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmThread,
+									(U_8*) packageName, packageNameLength, 0);
+						} else {
+							packageString = funcs->catUtfToString4(vmThread, packageName, packageNameLength, (U_8*)"/", 1, NULL, 0, NULL, 0);
+						}
 						if (packageString) {
 							packageStringRef = funcs->j9jni_createLocalRef(env, packageString);
 						}

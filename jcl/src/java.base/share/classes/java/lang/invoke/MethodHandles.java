@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package java.lang.invoke;
 
@@ -53,6 +53,13 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
+/*[IF Sidecar19-SE-B175]
+import java.lang.Module;
+import jdk.internal.misc.SharedSecrets;
+import jdk.internal.misc.JavaLangAccess;
+import java.security.ProtectionDomain;
+import jdk.internal.org.objectweb.asm.ClassReader;
+/*[ENDIF] Sidecar19-SE-B175*/
 /*[ELSE]*/
 import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
@@ -140,7 +147,11 @@ public class MethodHandles {
 		
 		static final int INTERNAL_PRIVILEGED = 0x40;
 
+		/*[IF Sidecar19-SE-B175]
+		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE | MODULE;
+		/*[ELSE]*/
 		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE;
+		/*[ENDIF] Sidecar19-SE-B175*/
 		
 		private static final int NO_ACCESS = 0;
 		
@@ -149,7 +160,11 @@ public class MethodHandles {
 		static final int VARARGS = 0x80;
 		
 		/* single cached value of public Lookup object */
+		/*[IF Sidecar19-SE-B175]
+		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, Lookup.PUBLIC | Lookup.UNCONDITIONAL);
+		/*[ELSE]*/
 		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, Lookup.PUBLIC);
+		/*[ENDIF] Sidecar19-SE-B175*/
 		
 		/* single cached internal privileged lookup */
 		static Lookup internalPrivilegedLookup = new Lookup(MethodHandle.class, Lookup.INTERNAL_PRIVILEGED);
@@ -466,21 +481,28 @@ public class MethodHandles {
 		 * @throws IllegalAccessException If the {@link Class} is not accessible from {@link #accessClass}. 
 		 */
 		private void checkClassAccess(Class<?> targetClass) throws IllegalAccessException {
-			int modifiers = targetClass.getModifiers();
-			
-			if (Modifier.isPublic(modifiers)) {
-				/* Already determined that we have more than "no access" (public access) */
-				return;
-			} else if (Modifier.isProtected(modifiers)) {
-				/* Already determined that we have more than "no access" (public access) */
-				if (!accessClass.isInterface()) {
+			if (NO_ACCESS != accessMode) {
+				/* target class should always be accessible to the lookup class when they are the same class */
+				if (accessClass == targetClass) {
 					return;
 				}
-			} else {
-				if (((PACKAGE == (accessMode & PACKAGE)) || Modifier.isPrivate(accessMode)) && isSamePackage(accessClass, targetClass)) {
+				
+				int modifiers = targetClass.getModifiers();
+				if (Modifier.isPublic(modifiers)) {
+					/* Already determined that we have more than "no access" (public access) */
 					return;
+				} else if (Modifier.isProtected(modifiers)) {
+					/* Already determined that we have more than "no access" (public access) for a protected nested class */
+					if (!accessClass.isInterface()) {
+						return;
+					}
+				} else {
+					if (((PACKAGE == (accessMode & PACKAGE)) || Modifier.isPrivate(accessMode)) && isSamePackage(accessClass, targetClass)) {
+						return;
+					}
 				}
 			}
+			
 			/*[MSG "K0587", "'{0}' no access to: '{1}'"]*/
 			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0587", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
 		}
@@ -906,7 +928,39 @@ public class MethodHandles {
 			/*[IF ]*/
 			/* If the new lookup class differs from the old one, protected members will not be accessible by virtue of inheritance. (Protected members may continue to be accessible because of package sharing.) */
 			/*[ENDIF]*/
+			/*[IF !Sidecar19-SE-B175]
 			int newAccessMode = accessMode & ~PROTECTED;
+			/*[ELSE]*/
+			/* The UNCONDITIONAL bit is discarded if the new lookup class differs from the old one in Java 9 */
+			int newAccessMode = accessMode & ~UNCONDITIONAL;
+			
+			/* There are 3 cases to be addressed for the new lookup class from a different module:
+			 * 1) There is no access if the package containing the new lookup class is not exported to 
+			 *    the package containing the old one.
+			 * 2) There is no access if the old lookup class is in a named module
+			 *    Note: The public access will be reserved if the old lookup class is a public lookup.
+			 * 3) The MODULE access is removed if the old lookup class is in an unnamed module.
+			 */
+			Module accessClassModule = accessClass.getModule();
+			Module lookupClassModule = lookupClass.getModule();
+			
+			if (!Objects.equals(accessClassModule, lookupClassModule)) {
+				if (!lookupClassModule.isExported(lookupClass.getPackageName(), accessClassModule)) {
+					newAccessMode = NO_ACCESS;
+				} else if (accessClassModule.isNamed()) {
+					/* If the old lookup class is in a named module different from the new lookup class,
+					 * we should keep the public access only when it is a public lookup.
+					 */
+					if (Lookup.PUBLIC_LOOKUP == this) {
+						newAccessMode = PUBLIC;
+					} else {
+						newAccessMode = NO_ACCESS;
+					}
+				} else {
+					newAccessMode &= ~MODULE;
+				}
+			}
+			/*[ENDIF] Sidecar19-SE-B175*/
 			
 			/*[IF ]*/
 			/* If the new lookup class is in a different package than the old one, protected and default (package) members will not be accessible. */
@@ -915,23 +969,32 @@ public class MethodHandles {
 				newAccessMode &= ~(PACKAGE | PROTECTED);
 			}
 			
-			if ((newAccessMode & PRIVATE) == PRIVATE){
-				/*[IF ]*/
-				/* If the new lookup class is not within the same package member as the old one, private members will not be accessible. */
-				/*[ENDIF]*/
+			if (PRIVATE == (newAccessMode & PRIVATE)){
 				Class<?> a = getUltimateEnclosingClassOrSelf(accessClass);
 				Class<?> l = getUltimateEnclosingClassOrSelf(lookupClass);
 				if (a != l) {
+				/*[IF Sidecar19-SE-B175]
+				/* If the new lookup class is not within the same package member as the old one, private and protected members will not be accessible. */
+					newAccessMode &= ~(PRIVATE | PROTECTED);
+				/*[ELSE]*/
+				/* If the new lookup class is not within the same package member as the old one, private members will not be accessible. */
 					newAccessMode &= ~PRIVATE;
+				/*[ENDIF] Sidecar19-SE-B175*/
 				}
 			}
 			
 			/*[IF ]*/
 			/* If the new lookup class is not accessible to the old lookup class, then no members, not even public members, will be accessible. (In all other cases, public members will continue to be accessible.) */
 			/*[ENDIF]*/
-			if(!Modifier.isPublic(lookupClass.getModifiers())){
+			/* Treat a protected class as public as the access flag of a protected class
+			 * is set to public when compiled to a class file.
+			 */
+			int lookupClassModifiers = lookupClass.getModifiers();
+			if(!Modifier.isPublic(lookupClassModifiers)
+			&& !Modifier.isProtected(lookupClassModifiers)
+			){
 				if(isSamePackage(accessClass, lookupClass)) {
-					if ((accessMode & PACKAGE) == 0) {
+					if (0 == (accessMode & PACKAGE)) {
 						newAccessMode = NO_ACCESS;
 					}
 				} else {
@@ -1345,12 +1408,27 @@ public class MethodHandles {
 			case PUBLIC:
 				toString += "/public"; //$NON-NLS-1$
 				break;
+			/*[IF Sidecar19-SE-B175]
+			case PUBLIC | UNCONDITIONAL:
+				toString += "/publicLookup"; //$NON-NLS-1$
+				break;
+			case PUBLIC | MODULE:
+				toString += "/module"; //$NON-NLS-1$
+				break;
+			case PUBLIC | PACKAGE | MODULE:
+				toString += "/package"; //$NON-NLS-1$
+				break;
+			case PUBLIC | PACKAGE | PRIVATE | MODULE:
+				toString += "/private"; //$NON-NLS-1$
+				break;
+			/*[ELSE]*/
 			case PUBLIC | PACKAGE:
 				toString += "/package"; //$NON-NLS-1$
 				break;
 			case PUBLIC | PACKAGE | PRIVATE:
 				toString += "/private"; //$NON-NLS-1$
 				break;
+			/*[ENDIF] Sidecar19-SE-B175*/
 			}
 			return toString;
 		}
@@ -1561,21 +1639,68 @@ public class MethodHandles {
 			return targetClass;
 		}
 		
+		/*[IF Sidecar19-SE-B175]*/
 		/**
-		 * Return a class object with the same class loader, the same package
-		 * the same protection domain as the lookup class.
+		 * Return a class object with the same class loader, the same package and
+		 * the same protection domain as the lookup's lookup class.
 		 * 
 		 * @param classBytes the requested class bytes from a valid class file
 		 * @return a class object for the requested class bytes
 		 * @throws NullPointerException if the requested class bytes is null
-		 * @throws SecurityException if the SecurityManager prevents access
-		 * @throws LinkageError if the requested class is malformed, or fails in bytecode verification or linking
-		 * @throws IllegalAccessException if the access mode of the lookup doesn't include PACKAGE
 		 * @throws IllegalArgumentException if the requested class belongs to another package different from the lookup class
+		 * @throws IllegalAccessException if the access mode of the lookup doesn't include PACKAGE
+		 * @throws SecurityException if the SecurityManager prevents access
+		 * @throws LinkageError if the requested class is malformed, or is already defined, or fails in bytecode verification or linking
 		 */
-		public Class<?> defineClass(byte[] classBytes) throws NullPointerException, SecurityException, LinkageError, IllegalAccessException, IllegalArgumentException {
-			throw new UnsupportedOperationException("The method has not yet been implemented for now"); //$NON-NLS-1$
+		public Class<?> defineClass(byte[] classBytes) throws NullPointerException, IllegalAccessException, IllegalArgumentException, SecurityException, LinkageError {
+			if (Objects.isNull(classBytes)) {
+				/*[MSG "K065X", "The class byte array must not be null"]*/
+				throw new NullPointerException(com.ibm.oti.util.Msg.getString("K065X")); //$NON-NLS-1$
+			}
+			
+			if (PACKAGE != (PACKAGE & accessMode)) {
+				/*[MSG "K065Y1", "The access mode: 0x{0} of the lookup class doesn't have the PACKAGE mode: 0x{1}"]*/
+				throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065Y1", Integer.toHexString(accessMode), Integer.toHexString(Lookup.PACKAGE))); //$NON-NLS-1$
+			}
+			
+			SecurityManager secmgr = System.getSecurityManager();
+			if (null != secmgr) {
+				secmgr.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionDefineClass);
+			}
+			
+			/* Extract the package name from the class bytes so as to check whether
+			 * the requested class shares the same package as the lookup class.
+			 * Note: the class bytes should be considered as corrupted if any exception
+			 *       is captured in ASM class reader.
+			 */
+			ClassReader cr = null;
+			try {
+				cr = new ClassReader(classBytes);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				/*[MSG "K065Y2", "The class byte array is corrupted"]*/
+				throw new ClassFormatError(com.ibm.oti.util.Msg.getString("K065Y2")); //$NON-NLS-1$
+			}
+			
+			String targetClassName = cr.getClassName().replace('/', '.');
+			int separatorIndex = targetClassName.lastIndexOf('.');
+			String targetClassPackageName = ""; //$NON-NLS-1$
+			
+			if (separatorIndex > 0) {
+				targetClassPackageName = targetClassName.substring(0, separatorIndex);
+			}
+			
+			String lookupClassPackageName = accessClass.getPackageName();
+			if (!Objects.equals(lookupClassPackageName, targetClassPackageName)) {
+				/*[MSG "K065Y3", "The package of the requested class: {0} is different from the package of the lookup class: {1}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065Y3", targetClassPackageName, lookupClassPackageName)); //$NON-NLS-1$
+			}
+			
+			JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
+			Class<?> targetClass = jlAccess.defineClass(accessClass.getClassLoader(), targetClassName, classBytes, accessClass.getProtectionDomain(), null);
+			
+			return targetClass;
 		}
+		/*[ENDIF] Sidecar19-SE-B175*/
 		
 		/**
 		 * Return a MethodHandles.Lookup object without the requested lookup mode.
@@ -1667,22 +1792,64 @@ public class MethodHandles {
 		return Lookup.PUBLIC_LOOKUP;
 	}
 	
-	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar19-SE-B175]*/
 	/**
-	 * Return a MethodHandles.Lookup object that is only able to access <code>private</code> members.
+	 * Return a MethodHandles.Lookup object with full capabilities including the access 
+	 * to the <code>private</code> members in the requested class
 	 * 
 	 * @param targetClass - the requested class containing private members
 	 * @param callerLookup - a Lookup object specific to the caller
 	 * @return a MethodHandles.Lookup object with private access to the requested class
+	 * @throws NullPointerException - if targetClass or callerLookup is null
 	 * @throws IllegalArgumentException - if the requested Class is a primitive type or an array class
-	 * @throws NullPointerException - if any of the arguments are null
 	 * @throws IllegalAccessException - if access checking fails
 	 * @throws SecurityException - if the SecurityManager prevents access
 	 */
-	public static MethodHandles.Lookup privateLookupIn(Class<?> targetClass, MethodHandles.Lookup callerLookup) throws IllegalArgumentException, NullPointerException, IllegalAccessException, SecurityException {
-		throw new UnsupportedOperationException("The method has not yet been implemented for now"); //$NON-NLS-1$
+	public static MethodHandles.Lookup privateLookupIn(Class<?> targetClass, MethodHandles.Lookup callerLookup) throws NullPointerException, IllegalArgumentException, IllegalAccessException, SecurityException {
+		if (Objects.isNull(targetClass) || Objects.isNull(callerLookup)) {
+			/*[MSG "K065S", "Both the requested class and the caller lookup must not be null"]*/
+			throw new NullPointerException(com.ibm.oti.util.Msg.getString("K065S")); //$NON-NLS-1$
+		}
+		
+		if (targetClass.isPrimitive() || targetClass.isArray()) {
+			/*[MSG "K065T", "The target class: {0} must not be a primitive type or an array class"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065T", targetClass.getCanonicalName())); //$NON-NLS-1$
+		}
+		
+		Module targetClassModule = targetClass.getModule();
+		String targetClassPackageName = targetClass.getPackageName();
+		Module accessClassModule = callerLookup.accessClass.getModule();
+		
+		/* Check whether the named module containing the old lookup can read the module containing the target class.
+		 * Note: an unnamed module can read any module.
+		 */
+		if (!accessClassModule.canRead(targetClassModule)) {
+			/*[MSG "K065U", "The module: {0} containing the old lookup can't read the module: {1}"]*/
+			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065U", accessClassModule.getName(), targetClassModule.getName())); //$NON-NLS-1$
+		}
+		
+		/* Check whether the module has the package (containing the target class) opened to
+		 * the module containing the old lookup.
+		 */
+		if (!targetClassModule.isOpen(targetClassPackageName, accessClassModule)) {
+			/*[MSG "K065V", "The package: {0} containing the target class is not opened to the module: {1}"]*/
+			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065V", targetClassPackageName, accessClassModule.getName())); //$NON-NLS-1$
+		}
+		
+		int callerLookupMode = callerLookup.lookupModes();
+		if (Lookup.MODULE != (Lookup.MODULE & callerLookupMode)) {
+			/*[MSG "K065W", "The access mode: 0x{0} of the caller lookup doesn't have the MODULE mode : 0x{1}"]*/
+			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065W", Integer.toHexString(callerLookupMode), Integer.toHexString(Lookup.MODULE))); //$NON-NLS-1$
+		}
+		
+		SecurityManager secmgr = System.getSecurityManager();
+		if (null != secmgr) {
+			secmgr.checkPermission(com.ibm.oti.util.ReflectPermissions.permissionSuppressAccessChecks);
+		}
+		
+		return new Lookup(targetClass);
 	}
-	/*[ENDIF]*/
+	/*[ENDIF] Sidecar19-SE-B175*/
 	
 	/**
 	 * Gets the underlying Member of the provided <code>target</code> MethodHandle. This is done through an unchecked crack of the MethodHandle.
@@ -1705,7 +1872,7 @@ public class MethodHandles {
 		}
 		SecurityManager secmgr = System.getSecurityManager();
 		if (null != secmgr) {
-			secmgr.checkPermission(new ReflectPermission("suppressAccessChecks")); //$NON-NLS-1$
+			secmgr.checkPermission(com.ibm.oti.util.ReflectPermissions.permissionSuppressAccessChecks);
 		}
 		MethodHandleInfo mhi = Lookup.IMPL_LOOKUP.revealDirect(target);
 		T result = mhi.reflectAs(expected, Lookup.IMPL_LOOKUP);
@@ -2818,11 +2985,64 @@ public class MethodHandles {
 	 * @param originalHandle the original method handle to be transformed
 	 * @param skippedArgumentCount the number of argument to be skipped from the original method handle
 	 * @param valueTypes a List of the argument types to be inserted
-	 * @param location the location of the first argument to be removed
+	 * @param location the (zero-indexed) location of the first argument to be removed
 	 * @return a MethodHandle representing a transformed handle as described above
 	 */
 	public static MethodHandle dropArgumentsToMatch(MethodHandle originalHandle, int skippedArgumentCount, List<Class<?>> valueTypes, int location) {
-		throw new UnsupportedOperationException("The method has not yet been implemented for now"); //$NON-NLS-1$
+		/* implicit null checks */
+		MethodType originalType = originalHandle.type;
+		Class<?>[] valueTypesCopy = valueTypes.toArray(new Class<?>[valueTypes.size()]);
+		Class<?>[] ptypes = originalType.parameterArray();
+
+		int valueTypesSize = valueTypesCopy.length;
+		int originalParameterCount = ptypes.length;
+
+		/* check if indexing is in range */
+		if ((skippedArgumentCount < 0) ||
+			(skippedArgumentCount > originalParameterCount)) {
+			/*[MSG "K0670", "Variable skippedArgumentCount out of range"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0670")); //$NON-NLS-1$
+		}
+		if ((location < 0) ||
+			(valueTypesSize < location + (originalParameterCount - skippedArgumentCount))) {
+			/*[MSG "K0671", "Index location out of range"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0671")); //$NON-NLS-1$
+		}
+
+		/* check for void.class in list during clone process */
+		for (int i = 0; i < valueTypesSize; i++) {
+			if (valueTypesCopy[i] == void.class) {
+				/*[MSG "K0672", "Invalid entry void.class found in argument list valueTypes"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0672")); //$NON-NLS-1$
+			} else if (valueTypesCopy[i] == null) {
+				/*[MSG "K0673", "Invalid entry null found in argument list valueTypes"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0673")); //$NON-NLS-1$
+			}
+		}
+
+		/* check if sublist match */
+		for (int i = skippedArgumentCount; i < ptypes.length; i++) {
+			if (ptypes[i] != valueTypesCopy[i + location - skippedArgumentCount]) {
+				/*[MSG "K0674", "Original handle types does not match given types at location"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0674")); //$NON-NLS-1$
+			}
+		}
+
+		/* replace the sublist with new valueTypes */
+		MethodType permuteType = originalType.dropParameterTypes(skippedArgumentCount, originalParameterCount).appendParameterTypes(valueTypesCopy);
+
+		/* construct permutation indexes */
+		int[] permute = new int[originalParameterCount];
+		int originalIndex = 0;
+		for (int i = 0; i < originalParameterCount; i++) {
+			if (originalIndex == skippedArgumentCount) {
+				originalIndex += location;
+			}
+			permute[i] = originalIndex++;
+		}
+
+		assert(validatePermutationArray(permuteType, originalType, permute));
+		return originalHandle.permuteArguments(permuteType, permute);
 	}
 	/*[ENDIF]*/
 	
@@ -4358,7 +4578,7 @@ public class MethodHandles {
 		}
 	}
 
-/*[IF Sidecar19-SE-OpenJ9]*/	
+/*[IF Sidecar18-SE-OpenJ9]*/	
 	static MethodHandle basicInvoker(MethodType mt) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}

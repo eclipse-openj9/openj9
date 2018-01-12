@@ -17,7 +17,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <project name="generate-ddr" default="generate-all" basedir=".">
@@ -58,12 +58,12 @@
 			Refresh now so eclipse can begin compiling the structure stubs which
 			are required by the pointer types we're about to generate.
 			-->
-			<eclipse.refreshLocal resource="/DDR_VM-closed" />
+			<eclipse.refreshLocal resource="/DDR_VM" />
 
 			<generate-pointers version="@{version}" superset="@{superset}" />
 
 			<!-- Refresh again so eclipse can see the final content. -->
-			<eclipse.refreshLocal resource="/DDR_VM-closed" />
+			<eclipse.refreshLocal resource="/DDR_VM" />
 		</sequential>
 	</macrodef>
 

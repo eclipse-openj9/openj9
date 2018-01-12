@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # Externalised messages for common elements of the port library
@@ -72,7 +72,7 @@ J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE=\u65e0\u6cd5\u5728\u5c1d\u8bd5\u5199\u51
 # START NON-TRANSLATABLE
 J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE.explanation=The system was unable to satisfy a memory allocation request
 J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE.system_action=Subsequent memory allocation attempts will likely fail as a result of which the process will terminate
-J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE.user_response=Increase the amount of memory available to the process and/or contact your IBM service representative
+J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE.user_response=Increase the amount of memory available to the process and/or contact your service representative
 
 # END NON-TRANSLATABLE
 
@@ -83,7 +83,7 @@ J9NLS_PORT_SL_UNKOWN_ERROR=\u88c5\u5165\u5171\u4eab\u5e93\u65f6\u53d1\u751f\u672
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_UNKOWN_ERROR.explanation=There was an unknown error loading a shared library
 J9NLS_PORT_SL_UNKOWN_ERROR.system_action=Process shuts down
-J9NLS_PORT_SL_UNKOWN_ERROR.user_response=This message will be accompanied by another message providing more detail. Verify that the shared library exists and contact your IBM service representative if it does.
+J9NLS_PORT_SL_UNKOWN_ERROR.user_response=This message will be accompanied by another message providing more detail. Verify that the shared library exists and contact your service representative if it does.
 
 # END NON-TRANSLATABLE
 
@@ -93,7 +93,7 @@ J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE=\u65e0\u6cd5\u88c5\u5165\u72ec\u7ac
 J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.sample_input_1=a_dependant_module
 J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.explanation=The named dependent module could not be loaded
 J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.system_action=If the module was critical to the JVM the process will terminate
-J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.user_response=Contact your IBM service representative if the JVM terminates
+J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.user_response=Contact your service representative if the JVM terminates
 
 # END NON-TRANSLATABLE
 
@@ -101,7 +101,7 @@ J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE=\u7b26\u53f7\u89e3\u6790\u5931\u8d25
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.explanation=There was a problem with symbol resolution while looking for a particular symbol
 J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.system_action=The JVM will terminate with more information if the symbol was critical
-J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.user_response=Contact your IBM service representative if the JVM terminates
+J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.user_response=Contact your service representative if the JVM terminates
 
 # END NON-TRANSLATABLE
 
@@ -200,7 +200,7 @@ J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES=\u65e0\u6cd5\u89e3\u6790\u5171\u4eab\
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES.explanation=The operating system was not able to resolve a shared library reference. A prerequisite shared library may be missing
 J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES.system_action=If the library is critical to the JVM the process will terminate
-J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES.user_response=If the process terminates, verify that the library exists and if it does, contact your IBM Service representative.
+J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES.user_response=If the process terminates, verify that the library exists and if it does, contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -209,7 +209,7 @@ J9NLS_PORT_SL_INTERNAL_ERROR=\u5185\u90e8\u9519\u8bef %i
 J9NLS_PORT_SL_INTERNAL_ERROR.sample_input_1=1
 J9NLS_PORT_SL_INTERNAL_ERROR.explanation=An internal error occurred while looking for a shared library
 J9NLS_PORT_SL_INTERNAL_ERROR.system_action=If the library is critical to the JVM the process will terminate
-J9NLS_PORT_SL_INTERNAL_ERROR.user_response=If the process terminates, verify that the library exists and if it does, contact your IBM service representative
+J9NLS_PORT_SL_INTERNAL_ERROR.user_response=If the process terminates, verify that the library exists and if it does, contact your service representative
 
 # END NON-TRANSLATABLE
 
@@ -247,7 +247,7 @@ J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR=\u65e0\u6cd5\u521b\u5efa\u76
 J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.sample_input_1=/temp/sharedresource
 J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.explanation=The user included a directory when they provided the name of the shared classes cache. This directory could not be created.
 J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
-J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.user_response=Contact your IBM service representative
+J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.user_response=Contact your service representative
 
 # END NON-TRANSLATABLE
 
@@ -303,7 +303,7 @@ J9NLS_PORT_FILE_LOCK_INVALID_FLAG=\u6587\u4ef6\u9501\u5b9a\u64cd\u4f5c\u7684\u95
 J9NLS_PORT_FILE_LOCK_INVALID_FLAG.sample_input_1=3
 J9NLS_PORT_FILE_LOCK_INVALID_FLAG.explanation=File lock operation failed due to invalid value of the flag specifying the type of lock.
 J9NLS_PORT_FILE_LOCK_INVALID_FLAG.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
-J9NLS_PORT_FILE_LOCK_INVALID_FLAG.user_response=Contact your IBM service representative.
+J9NLS_PORT_FILE_LOCK_INVALID_FLAG.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -311,7 +311,7 @@ J9NLS_PORT_FILE_OPEN_FILE_IS_DIR=\u6307\u5b9a\u7684\u6587\u4ef6\u662f\u4e00\u4e2
 # START NON-TRANSLATABLE
 J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.explanation=File open operation failed while trying to open a directory as a file.
 J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
-J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.user_response=Contact your IBM service representative.
+J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -319,7 +319,7 @@ J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION=\u7531\u4e8e\u5185\u5b58\u4fdd\u62a4\u
 # START NON-TRANSLATABLE
 J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.explanation=Invalid value for memory protection parameter.
 J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
-J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.user_response=Contact your IBM service representative.
+J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -327,7 +327,7 @@ J9NLS_PORT_MMAP_INVALID_FLAG=\u7531\u4e8e\u6620\u5c04\u9009\u9879\u65e0\u6548\uf
 # START NON-TRANSLATABLE
 J9NLS_PORT_MMAP_INVALID_FLAG.explanation=Invalid value in flag parameter specifying mapping options.
 J9NLS_PORT_MMAP_INVALID_FLAG.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
-J9NLS_PORT_MMAP_INVALID_FLAG.user_response=Contact your IBM service representative.
+J9NLS_PORT_MMAP_INVALID_FLAG.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -336,7 +336,7 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE=\u53e5\u67c4\u65e0\u6548\u3002\u6587\u4ef6\u
 J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.sample_input_1=-1
 J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.explanation=File map operation failed due to invalid file handle.
 J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
-J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your IBM service representative.
+J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -357,7 +357,7 @@ J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.sample_input_1=CEE
 J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.sample_input_2=5206
 J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.explanation=The JVM was instructed at startup to run with LE condition handlers instead of POSIX signal handlers. A LE condition corresponding to a software-raised POSIX signal was received.
 J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.system_action=The JVM will dump diagnostics and exit.
-J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.user_response=Contact your IBM service representative.
+J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -365,7 +365,7 @@ J9NLS_PORT_HYPERVISOR_OPFAILED=\u7cfb\u7edf\u7ba1\u7406\u7a0b\u5e8f\u76f8\u5173\
 # START NON-TRANSLATABLE
 J9NLS_PORT_HYPERVISOR_OPFAILED.explanation=Operation related to Hypervisor failed.
 J9NLS_PORT_HYPERVISOR_OPFAILED.system_action=The JVM will continue, but no hypervisor related information will be provided.
-J9NLS_PORT_HYPERVISOR_OPFAILED.user_response=Contact your IBM service representative.
+J9NLS_PORT_HYPERVISOR_OPFAILED.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -390,7 +390,7 @@ J9NLS_PORT_MALLOC31_FAILURE=__malloc31 \u672a\u80fd\u5728 z/OS \u4e0a\u5206\u914
 # START NON-TRANSLATABLE
 J9NLS_PORT_MALLOC31_FAILURE.explanation=__malloc31 failed to allocate buffer
 J9NLS_PORT_MALLOC31_FAILURE.system_action=The JVM will continue, but no hypervisor related information will be provided.
-J9NLS_PORT_MALLOC31_FAILURE.user_response=Contact your IBM service representative.
+J9NLS_PORT_MALLOC31_FAILURE.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -398,7 +398,7 @@ J9NLS_PORT_CSRSIC_FAILURE=\u6765\u81ea z/OS \u4e0a\u7684 CSRSI \u670d\u52a1\u768
 # START NON-TRANSLATABLE
 J9NLS_PORT_CSRSIC_FAILURE.explanation=Unexpected return code from CSRSI service on z/OS
 J9NLS_PORT_CSRSIC_FAILURE.system_action=The JVM will continue, but no hypervisor related information will be provided.
-J9NLS_PORT_CSRSIC_FAILURE.user_response=Contact your IBM service representative.
+J9NLS_PORT_CSRSIC_FAILURE.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -462,14 +462,14 @@ J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG=\u65e0\u6cd5\u5728\u68c0\u7d22\u7c
 # START NON-TRANSLATABLE
 J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG.explanation=The system was unable to satisfy a memory allocation request.
 J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG.system_action=Subsequent memory allocation attempts will likely fail as a result of which the process will terminate.
-J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG.user_response=Increase the amount of memory available to the process and/or contact your IBM service representative.
+J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG.user_response=Increase the amount of memory available to the process and/or contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG=\u65e0\u6cd5\u5728\u68c0\u7d22\u7cfb\u7edf\u4fe1\u606f\u7684\u540c\u65f6\u5206\u914d\u5185\u5b58\u3002
 # START NON-TRANSLATABLE
 J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG.explanation=The system was unable to satisfy a memory allocation request.
 J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG.system_action=Subsequent memory allocation attempts will likely fail as a result of which the process will terminate.
-J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG.user_response=Increase the amount of memory available to the process and/or contact your IBM service representative.
+J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG.user_response=Increase the amount of memory available to the process and/or contact your service representative.
 # END NON-TRANSLATABLE
 
 #***********************/

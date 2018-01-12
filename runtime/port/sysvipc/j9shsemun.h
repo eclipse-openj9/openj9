@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #ifndef j9shsemun_h
 #define j9shsemun_h
@@ -27,6 +27,7 @@
 #if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
 /* union semun is defined by including <sys/sem.h> */
 #else
+#if !defined(OSX)
 /* according to X/OPEN we have to define it ourselves */
 union semun {
 	int val;                    /* value for SETVAL */
@@ -34,6 +35,7 @@ union semun {
 	unsigned short int* array;  /* array for GETALL, SETALL */
 	struct seminfo* __buf;      /* buffer for IPC_INFO */
 };
+#endif /* OSX */
 #endif
 
 #endif     /* j9shsemun_h */

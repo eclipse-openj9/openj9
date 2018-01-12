@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
@@ -53,21 +53,21 @@
 	
 	<test id="ListAllCaches 2: Make sure Java 6 is present" timeout="600" runPath=".">
 		<command>$JAVA6_EXE$ -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
 	
 	<test id="ListAllCaches 3: Create Java 6 nonpersistent shared cache" timeout="600" runPath=".">
 		<command>$JAVA6_EXE$ $currentMode$NP,nonpersistent -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
 	
 	<test id="ListAllCaches 4: Create Java 6 persistent shared cache" timeout="600" runPath=".">
 		<command>$JAVA6_EXE$ $currentMode$P,persistent -version</command>
-		<output type="success" caseSensitive="yes" regex="no"  javaUtilRegex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no"  javaUtilRegex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
@@ -92,14 +92,14 @@
 
 	<test id="ListAllCaches 7: Create a nonpersistent shared cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$NP,nonpersistent -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
 		
 	<test id="ListAllCaches 8: Create a persistent shared cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$P,persistent -version</command>
-		<output type="success" caseSensitive="yes" regex="no">java version</output>
+		<output type="success" caseSensitive="yes" regex="no">version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>

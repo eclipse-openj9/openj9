@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /**
@@ -79,8 +79,8 @@
 /**
  * Initialization
  */
-MM_IncrementalGenerationalGC::MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *env, MM_CollectorLanguageInterface *cli, MM_HeapRegionManager *manager)
-	: MM_GlobalCollector(env, cli)
+MM_IncrementalGenerationalGC::MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager)
+	: MM_GlobalCollector()
 	, _javaVM((J9JavaVM*)env->getOmrVM()->_language_vm)
 	, _extensions(MM_GCExtensions::getExtensions(env))
 	, _portLibrary(((J9JavaVM *)(env->getLanguageVM()))->portLibrary)
@@ -111,13 +111,13 @@ MM_IncrementalGenerationalGC::MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *
 }
 
 MM_IncrementalGenerationalGC *
-MM_IncrementalGenerationalGC::newInstance(MM_EnvironmentVLHGC *env, MM_CollectorLanguageInterface *cli, MM_HeapRegionManager *manager)
+MM_IncrementalGenerationalGC::newInstance(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager)
 {
 	MM_IncrementalGenerationalGC *globalGC;
 		
 	globalGC = (MM_IncrementalGenerationalGC *)env->getForge()->allocate(sizeof(MM_IncrementalGenerationalGC), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (globalGC) {
-		new(globalGC) MM_IncrementalGenerationalGC(env, cli, manager);
+		new(globalGC) MM_IncrementalGenerationalGC(env, manager);
 		if (!globalGC->initialize(env)) { 
         	globalGC->kill(env);
         	globalGC = NULL;
@@ -1228,6 +1228,11 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 
 		double optimalEmptinessRegionThreshold = _reclaimDelegate.calculateOptimalEmptinessRegionThreshold(env, regionConsumptionRate, avgSurvivorRegions, avgCopyForwardRate, scanTimeCostPerGMP);
 		_schedulingDelegate.setAutomaticDefragmentEmptinessThreshold(optimalEmptinessRegionThreshold);
+
+		/* recalculate ratios due to sweep */
+		_schedulingDelegate.calculatePGCCompactionRate(env, _schedulingDelegate.getCurrentEdenSizeInRegions(env) * _regionManager->getRegionSize());
+		_schedulingDelegate.calculateHeapOccupancyTrend(env);
+		_schedulingDelegate.calculateScannableBytesRatio(env);
 	}
 
 	if (env->_cycleState->_shouldRunCopyForward) {
@@ -1668,6 +1673,9 @@ MM_IncrementalGenerationalGC::setRegionAgesToMax(MM_EnvironmentVLHGC *env)
 				region->_allocateData._owningContext = commonContext;
 				owner->migrateRegionToAllocationContext(region, commonContext);
 			}
+		} else if (region->isArrayletLeaf()) {
+			/* adjust age for arraylet leaves */
+			region->setAge(_extensions->tarokMaximumAgeInBytes, _extensions->tarokRegionMaxAge);
 		}
 	}
 }

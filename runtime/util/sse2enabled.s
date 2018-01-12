@@ -16,7 +16,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
        	##CODE32 SEGMENT FLAT PUBLIC 'CODE'
        	##assume cs:flat,ds:flat,ss:flat
        	##CODE32 ends
@@ -24,23 +24,8 @@
        	##assume cs:flat,ds:flat,ss:flat
         .globl J9SSE2cpuidFeatures
         .type J9SSE2cpuidFeatures,@function
-        .globl J9SSE2GetMXCSR
-        .type J9SSE2GetMXCSR,@function
 
         .text
-
-## Prototype: U_32 J9SSE2GetMXCSR(void)
-## - throws an Illegal Instruction exception if the OS does not support SSE instructions
-## - otherwise, returns the content of the MXCSR.
-	.align	16
-
-J9SSE2GetMXCSR:
-	sub	$4, %esp
-	stmxcsr (%esp)
-	pop	%eax
-	ret
-END_J9SSE2GetMXCSR:
-	.size J9SSE2GetMXCSR,END_J9SSE2GetMXCSR - J9SSE2GetMXCSR
 
 	.align 16
 

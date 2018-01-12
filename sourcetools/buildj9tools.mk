@@ -17,7 +17,7 @@
 #  [1] https://www.gnu.org/software/classpath/license.html
 #  [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 ################################################################################
 # Makefile to compile and archive the J9 Java tools.
@@ -34,7 +34,7 @@ DEST_DIR    := lib
 EMPTY       :=
 LIB_DIR     := lib
 OS          := $(shell uname)
-PATH_SEP    := $(if $(findstring Windows,$(OS)),;,:)
+PATH_SEP    := $(if $(or $(findstring Windows,$(OS)),$(findstring CYGWIN,$(OS))),;,:)
 SPACE       := $(EMPTY) $(EMPTY)
 WORK_PFX    := build-
 
@@ -57,7 +57,7 @@ endif
 JAVAC       := $(JAVA_BIN)javac
 JAR         := $(JAVA_BIN)jar
 
-SPEC_LEVEL  ?= 8
+SPEC_LEVEL  ?= 7
 JAVAC_FLAGS := -nowarn -source $(SPEC_LEVEL) -target $(SPEC_LEVEL)
 
 JAR_TARGETS :=
@@ -108,7 +108,7 @@ $(DEST_DIR)/$1.jar : $$($1_SOURCES) $$($1_OTHER_FILES)
 	@echo Building $$@
 	@rm -rf $$($1_WORK_DIR)
 	@mkdir -p $$($1_WORK_DIR)
-	@$(JAVAC) -d $$($1_WORK_DIR) $(JAVAC_FLAGS) $(if $3,-classpath $(subst $(SPACE),$(PATH_SEP),$(strip $3))) $$($1_SOURCES)
+	@$(JAVAC) -d $$($1_WORK_DIR) $(JAVAC_FLAGS) $(if $3,-classpath "$(subst $(SPACE),$(PATH_SEP),$(strip $3))") $$($1_SOURCES)
 	@$(JAR) cf $$@ -C $$($1_WORK_DIR) . \
 		$$(patsubst $2/%,-C $2 %,$$($1_OTHER_FILES)) \
 		$$(if $$(wildcard $2/schema),-C $2/schema .)

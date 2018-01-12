@@ -20,7 +20,7 @@ package java.lang;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 import java.io.*;
@@ -167,20 +167,31 @@ public final class System {
 			unsafe.putObject(unsafe.staticFieldBase(f2), unsafe.staticFieldOffset(f2), com.ibm.jit.JITHelpers.getHelpers());
 		} catch (NoSuchFieldException e) { }
 		
+		/**
+		 * When the System Property == true, then disable sharing (i.e. arraycopy the underlying value array) in 
+		 * String.substring(int) and String.substring(int, int) methods whenever offset is zero. Otherwise, enable 
+		 * sharing of the underlying value array.
+		 */
+		String enableSharingInSubstringWhenOffsetIsZeroProperty = internalGetProperties().getProperty("java.lang.string.substring.nocopy"); //$NON-NLS-1$
+		String.enableSharingInSubstringWhenOffsetIsZero = enableSharingInSubstringWhenOffsetIsZeroProperty == null || enableSharingInSubstringWhenOffsetIsZeroProperty.equalsIgnoreCase("false"); //$NON-NLS-1$
+		
 		// Set up standard in, out, and err.
 		/*[PR CMVC 193070] - OTT:Java 8 Test_JITHelpers test_getSuperclass NoSuchMet*/
 		/*[PR JAZZ 58297] - continue with the rules defined by JAZZ 57070 - Build a Java 8 J9 JCL using the SIDECAR18 preprocessor configuration */
 		// Check the default encoding
 		/*[Bug 102075] J2SE Setting -Dfile.encoding=junk fails to run*/
 		/*[IF Sidecar19-SE]*/
+		StringCoding.encode(String.LATIN1, new byte[1]);
+		/*[ELSE]*/
+		StringCoding.encode(new char[1], 0, 1);
+		/*[ENDIF]*/
+		/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
 		setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true));
 		setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true));
 		/*[IF Sidecar19-SE_RAWPLUSJ9]*/
 		setIn(new BufferedInputStream(new FileInputStream(FileDescriptor.in)));
 		/*[ENDIF]*/
-		StringCoding.encode(String.LATIN1, new byte[1]);
 		/*[ELSE]*/
-		StringCoding.encode(new char[1], 0, 1);
 		/*[PR s66168] - ConsoleInputStream initialization may write to System.err */
 		/*[PR s73550, s74314] ConsolePrintStream incorrectly initialized */
 		setErr(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true));
@@ -215,7 +226,7 @@ static void completeInitialization() {
 	} catch (Exception e) {
 		throw new InternalError(e.toString());
 	}
-	/*[IF Sidecar19-SE]*/
+	/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
 	setIn(new BufferedInputStream(new FileInputStream(FileDescriptor.in)));
 	/*[ELSE]*/
 	/*[PR 100718] Initialize System.in after the main thread*/
@@ -679,7 +690,7 @@ public static void runFinalization() {
  * @deprecated 	This method is unsafe.
  */
 /*[IF Sidecar19-SE]*/
-@Deprecated(forRemoval=false, since="1.2")
+@Deprecated(forRemoval=true, since="1.2")
 /*[ELSE]
 @Deprecated
 /*[ENDIF]*/

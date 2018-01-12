@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2017 IBM Corp. and others
+  Copyright (c) 2006, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <spec xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ibm.com/j9/builder/spec" xsi:schemaLocation="http://www.ibm.com/j9/builder/spec spec-v1.xsd" id="win_x86-64_cmprssptrs">
@@ -116,7 +116,6 @@
 		<feature id="core"/>
 		<feature id="dbgext"/>
 		<feature id="gpu"/>
-		<feature id="harmony"/>
 		<feature id="se"/>
 		<feature id="se60_26"/>
 		<feature id="se7"/>
@@ -124,7 +123,7 @@
 	</features>
 	<source>
 		<project id="com.ibm.jvmti.tests"/>
-		<project id="tr.source"/>
+		<project id="compiler"/>
 	</source>
 	<flags>
 		<flag id="arch_x86" value="true"/>
@@ -136,6 +135,8 @@
 		<flag id="build_java8" value="true"/>
 		<flag id="build_java9" value="true"/>
 		<flag id="build_newCompiler" value="true"/>
+		<flag id="build_openj9" value="true"/>
+		<flag id="build_openj9JDK8" value="true"/>
 		<flag id="build_ouncemake" value="true"/>
 		<flag id="build_product" value="true"/>
 		<flag id="env_littleEndian" value="true"/>
@@ -218,7 +219,6 @@
 		<flag id="module_jnichk" value="true"/>
 		<flag id="module_jniinv" value="true"/>
 		<flag id="module_jnitest" value="true"/>
-		<flag id="module_jsig" value="true"/>
 		<flag id="module_jvmti" value="true"/>
 		<flag id="module_jvmtitst" value="true"/>
 		<flag id="module_lifecycle_tests" value="true"/>
@@ -277,5 +277,6 @@
 		<flag id="thr_lockNursery" value="true"/>
 		<flag id="thr_lockReservation" value="true"/>
 		<flag id="thr_smartDeflation" value="true"/>
+		<flag id="uma_windowsRebase" value="true"/>
 	</flags>
 </spec>

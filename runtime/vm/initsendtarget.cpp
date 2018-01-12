@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9.h"
@@ -225,9 +225,6 @@ initializeMethodRunAddressNoHook(J9JavaVM* vm, J9Method *method)
 	method->methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_NON_SYNC);
 }
 
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-J9Method cInitialSharedMethod = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_SHARED), 0 };
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 J9Method cInitialStaticMethod = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_STATIC), 0 };
 J9Method cInitialSpecialMethod = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_SPECIAL), 0 };
 J9Method cInitialVirtualMethod = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL), 0 };
@@ -236,9 +233,6 @@ void
 initializeInitialMethods(J9JavaVM *vm)
 {
 	vm->jniSendTarget = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_RUN_JNI_NATIVE);
-#if !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
-	vm->initialMethods.initialSharedMethod = &cInitialSharedMethod;
-#endif /* !defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 	vm->initialMethods.initialStaticMethod = &cInitialStaticMethod;
 	vm->initialMethods.initialSpecialMethod = &cInitialSpecialMethod;
 	vm->initialMethods.initialVirtualMethod = &cInitialVirtualMethod;

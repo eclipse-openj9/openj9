@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "jvmtiHelpers.h"
@@ -542,10 +542,8 @@ jvmtiGetBytecodes(jvmtiEnv* env,
 				case JBnew:
 				case JBinvokehandle:
 				case JBinvokehandlegeneric:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 				case JBinvokestaticsplit:
 				case JBinvokespecialsplit:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 				case JBinvokedynamic:
 
 					/* Rewrite the CP index in order to expose an identical CP shape as
@@ -554,7 +552,6 @@ jvmtiGetBytecodes(jvmtiEnv* env,
 						U_16 cpIndex = *(U_16 *) &bytecodes[index + 1];
 
 						switch (bc) {
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 						case JBinvokestaticsplit:
 							/* treat cpIndex as index into static split table */
 							cpIndex = *(U_16 *)(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(class->romClass) + cpIndex);
@@ -567,7 +564,6 @@ jvmtiGetBytecodes(jvmtiEnv* env,
 							/* reset bytecode to non-split version */
 							bytecodes[index] = CFR_BC_invokespecial;
 							break;
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 						case JBinvokehandle:
 						case JBinvokehandlegeneric:
 							bytecodes[index] = CFR_BC_invokevirtual;

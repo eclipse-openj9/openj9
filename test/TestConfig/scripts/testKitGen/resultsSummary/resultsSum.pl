@@ -17,7 +17,7 @@
 #  [1] https://www.gnu.org/software/classpath/license.html
 #  [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ##############################################################################
 
 use strict;
@@ -51,6 +51,7 @@ my $failures = resultReporter();
 failureMkGen($failuremkarg, $failures);
 
 sub resultReporter {
+	my $numOfExecuted = 0;
 	my $numOfFailed = 0;
 	my $numOfPassed = 0;
 	my $numOfSkipped = 0;
@@ -59,93 +60,91 @@ sub resultReporter {
 	my @failed;
 	my @skipped;
 	my $tapString = '';
-
-	open(my $fhIn, '<', $resultFile) or die "Cannot open file $resultFile!";
+	my $fhIn;
 
 	print "\n\n";
 
-	while ( my $result = <$fhIn> ) {
-		if ($result =~ /===============================================\n/) {
-			my $output = "  ---\n    output:\n      |\n";
-			$output .= '        ' . $result;
-			my $testName = '';
-			while ( $result = <$fhIn> ) {
-				if ($result =~ /Running test (.*) \.\.\.\n/) {
-					$testName = $1;
-				} elsif ($result =~ /_PASSED\n$/) {
-					$result =~ s/_PASSED\n$//;
-					push (@passed, $result);
-					$numOfPassed++;
-					$numOfTotal++;
-					$tapString .= "ok " . $numOfTotal . " - " . $result . "\n";
-					if ($diagnostic eq 'all') {
-						if ($testName eq $result) {
-							$output .= "  ...\n";
-							$tapString .= $output;
-						} else {
-							print "warning: test description does not match test result, drop test diagnostic information!" if $tapFile;
-						}
-					}
-					last;
-				} elsif ($result =~ /_FAILED\n$/) {
-					$result =~ s/_FAILED\n$//;
-					push (@failed, $result);
-					$numOfFailed++;
-					$numOfTotal++;
-					$tapString .= "not ok " . $numOfTotal . " - " . $result . "\n";
-					if (($diagnostic eq 'failure') || ($diagnostic eq 'all')) {
-						if ($testName eq $result) {
-							$output .= "  ...\n";
-							$tapString .= $output;
-						} else {
-							print "warning: test description does not match test result, drop test diagnostic information!" if $tapFile;
-						}
-					}
-					last;
-				} elsif ($result =~ /_SKIPPED\n$/) {
-					$result =~ s/_SKIPPED\n$//;
-					push (@skipped, $result);
-					$numOfSkipped++;
-					$numOfTotal++;
-					$tapString .= "ok " . $numOfTotal . " - " . $result . " # skip\n";
-					last;
-				}
+	if (open($fhIn, '<', $resultFile)) {
+		while ( my $result = <$fhIn> ) {
+			if ($result =~ /===============================================\n/) {
+				my $output = "  ---\n    output:\n      |\n";
 				$output .= '        ' . $result;
+				my $testName = '';
+				while ( $result = <$fhIn> ) {
+					if ($result =~ /Running test (.*) \.\.\.\n/) {
+						$testName = $1;
+					} elsif ($result eq ($testName . "_PASSED\n")) {
+						$result =~ s/_PASSED\n$//;
+						push (@passed, $result);
+						$numOfPassed++;
+						$numOfTotal++;
+						$tapString .= "ok " . $numOfTotal . " - " . $result . "\n";
+						if ($diagnostic eq 'all') {
+							$output .= "  ...\n";
+							$tapString .= $output;
+						}
+						last;
+					} elsif ($result eq ($testName . "_FAILED\n")) {
+						$result =~ s/_FAILED\n$//;
+						push (@failed, $result);
+						$numOfFailed++;
+						$numOfTotal++;
+						$tapString .= "not ok " . $numOfTotal . " - " . $result . "\n";
+						if (($diagnostic eq 'failure') || ($diagnostic eq 'all')) {
+							$output .= "  ...\n";
+							$tapString .= $output;
+						}
+						last;
+					} elsif ($result =~ /(capabilities \(.*?\))\s*=>\s*${testName}_SKIPPED\n/) {
+						my $capabilities = $1;
+						push (@skipped, "$testName - $capabilities");
+						$numOfSkipped++;
+						$numOfTotal++;
+						$tapString .= "ok " . $numOfTotal . " - " . $testName . " # skip\n";
+						last;
+					}
+					$output .= '        ' . $result;
+				}
 			}
 		}
-	}
 
-	#generate tap output
-	if ($tapFile) {
-		open(my $fhOut, '>', $tapFile) or die "Cannot open file $tapFile!";
-		print $fhOut "1.." . $numOfTotal . "\n";
-		print $fhOut $tapString;
-		close $fhOut;
+		close $fhIn;
+
+		#generate tap output
+		if ($tapFile) {
+			open(my $fhOut, '>', $tapFile) or die "Cannot open file $tapFile!";
+			print $fhOut "1.." . $numOfTotal . "\n";
+			print $fhOut $tapString;
+			close $fhOut;
+		}
 	}
 
 	#generate console output
 	print "TEST TARGETS SUMMARY\n";
-	print "+++++++++++++++++++++++++++++++++++++++++++++++\n";
-	print "TOTAL: $numOfTotal   PASS: $numOfPassed   FAIL: $numOfFailed   SKIP: $numOfSkipped\n";
+	print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 
 	if ($numOfPassed != 0) {
-		printTests(\@passed, "PASSED");
-	}
-
-	if ($numOfFailed == 0) {
+		printTests(\@passed, "PASSED test targets");
 		print "\n";
-		print "ALL TESTS PASSED\n";
-	} else {
-		printTests(\@failed, "FAILED");
 	}
 
 	if ($numOfSkipped != 0) {
-		printTests(\@skipped, "SKIPPED");
+		printTests(\@skipped, "SKIPPED test targets due to capabilities");
+		print "\n";
 	}
 
-	print "+++++++++++++++++++++++++++++++++++++++++++++++\n";
+	if ($numOfFailed != 0) {
+		printTests(\@failed, "FAILED test targets");
+		print "\n";
+	}
 
-	close $fhIn;
+	$numOfExecuted = $numOfTotal - $numOfSkipped;
+
+	print "TOTAL: $numOfTotal   EXECUTED: $numOfExecuted   PASSED: $numOfPassed   FAILED: $numOfFailed   SKIPPED: $numOfSkipped\n";
+	if (($numOfTotal > 0) && ($numOfFailed == 0)) {
+		print "ALL TESTS PASSED\n";
+	}
+	print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 
 	unlink($resultFile);
 
@@ -153,9 +152,8 @@ sub resultReporter {
 }
 
 sub printTests() {
-	my ($tests, $tag) = @_;
-	print "\n";
-	print "$tag test targets:\n\t";
+	my ($tests, $msg) = @_;
+	print "$msg:\n\t";
 	print join("\n\t", @{$tests});
 	print "\n";
 }

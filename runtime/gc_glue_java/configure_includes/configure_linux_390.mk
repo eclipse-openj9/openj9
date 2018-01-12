@@ -17,16 +17,14 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
 include $(CONFIG_INCL_DIR)/configure_common.mk
-# Detect 64-bit vs. 31-bit
-# This overrides the value calculated in configure_common.mk
-ifneq (,$(findstring -64,$(SPEC)))
-  TEMP_TARGET_DATASIZE:=64
-else
-  TEMP_TARGET_DATASIZE:=31
+
+# Override datasize for 31-bit specs.
+ifeq (,$(findstring -64,$(SPEC)))
+  TEMP_TARGET_DATASIZE := 31
 endif
 
 CONFIGURE_ARGS += \

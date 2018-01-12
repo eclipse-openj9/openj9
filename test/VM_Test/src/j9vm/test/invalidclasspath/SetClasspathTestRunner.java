@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package j9vm.test.invalidclasspath;
 
@@ -84,9 +84,6 @@ public class SetClasspathTestRunner extends Runner {
 			/* cleanup - destroy the cache */
 			customOptions += "-Xshareclasses:name=setclasspathtest,destroy ";
 			break;
-		}
-		if (Integer.parseInt(javaVersion) >= 90) {
-			customOptions += " --add-exports=openj9.sharedclasses/com.ibm.oti.shared=ALL-UNNAMED ";
 		}
 		return customOptions;
 	}

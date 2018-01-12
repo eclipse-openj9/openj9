@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package com.ibm.j9.uma.configuration;
 
@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 
 import com.ibm.j9.uma.configuration.freemarker.Features;
 import com.ibm.j9.uma.configuration.freemarker.Source;
+import com.ibm.j9.uma.platform.PlatformOSX;
 import com.ibm.j9.uma.platform.PlatformUnix;
 import com.ibm.j9.uma.platform.PlatformWindows;
 import com.ibm.j9.uma.platform.PlatformZOS;
@@ -48,6 +49,7 @@ import com.ibm.j9tools.om.BuildSpec;
 import com.ibm.j9tools.om.ConfigDirectory;
 import com.ibm.j9tools.om.Flag;
 import com.ibm.j9tools.om.FlagDefinitions;
+import com.ibm.j9tools.om.InvalidBuildSpecException;
 import com.ibm.j9tools.om.InvalidConfigurationException;
 import com.ibm.j9tools.om.OMObjectException;
 import com.ibm.j9tools.om.ObjectFactory;
@@ -279,6 +281,8 @@ public class ConfigurationImpl implements IConfiguration, ISinglePredicateEvalua
 					|| configurationName.startsWith("ose")
 					|| configurationName.startsWith("qnx") ) {
 				platform = new PlatformUnix(this);
+			} else if ( configurationName.startsWith("osx") ) {
+				platform = new PlatformOSX(this);
 			}
 			
 		}
@@ -325,7 +329,7 @@ public class ConfigurationImpl implements IConfiguration, ISinglePredicateEvalua
 				"#     [1] https://www.gnu.org/software/classpath/license.html\n" +
 				"#     [2] http://openjdk.java.net/legal/assembly-exception.html\n" +
 				"#\n" +
-				"#     SPDX-License-Identifier: EPL-2.0 OR Apache-2.0\n" +
+				"#     SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception\n" +
 				"\n# File generated in stream: " + 
 				majorVersion + 
 				"." + 
@@ -355,7 +359,7 @@ public class ConfigurationImpl implements IConfiguration, ISinglePredicateEvalua
 			" * [1] https://www.gnu.org/software/classpath/license.html\n" +
 			" * [2] http://openjdk.java.net/legal/assembly-exception.html\n" +
 			" *\n" +
-			" * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0\n" +
+			" * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception\n" +
 			" */\n";
 		}
 		return cCopyrightNotice;
@@ -469,6 +473,14 @@ public class ConfigurationImpl implements IConfiguration, ISinglePredicateEvalua
 			return  "$(UMA_PATH_TO_ROOT)include $(UMA_PATH_TO_ROOT)oti ";
 		}
 		return "";
+	}
+
+	public void verify() throws UMAException {
+		try {
+			buildSpec.verify(flagDefs, buildInfo);
+		} catch (InvalidBuildSpecException e) {
+			throw new UMAException(e);
+		}
 	}
 
 }

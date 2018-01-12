@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
  
  /**
@@ -498,9 +498,8 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 		Trc_MM_ArrayObjectAllocationFailedDueToExcessiveGC(vmThread);
 	}
 
+	sizeInBytesRequired = indexableOAM.getAllocateDescription()->getBytesRequested();
 	if (NULL != objectPtr) {
-		sizeInBytesRequired = indexableOAM.getAllocateDescription()->getBytesRequested();
-		
 		/* The hook could release access and so the object address could change (the value is preserved).  Since this
 		 * means the hook could write back a different value to the variable, it must be a valid lvalue (ie: not cast).
 		 */

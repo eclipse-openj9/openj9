@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /**
@@ -289,14 +289,6 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 	calculateEdenSize(env);
 
 	estimateMacroDefragmentationWork(env);
-	
-	if (isFirstPGCAfterGMP()) {
-		calculatePGCCompactionRate(env, edenCountBeforeCollect * _regionManager->getRegionSize());
-		calculateHeapOccupancyTrend(env);
-		calculateScannableBytesRatio(env);
-
-		firstPGCAfterGMPCompleted();
-	}
 	
 	/* Calculate the time spent in the current Partial GC */
 	U_64 partialGcEndTime = j9time_hires_clock();
@@ -786,6 +778,7 @@ MM_SchedulingDelegate::getDesiredCompactWork()
 	return desiredCompactWork;
 }
 
+/*
 bool
 MM_SchedulingDelegate::isFirstPGCAfterGMP()
 {
@@ -797,6 +790,7 @@ MM_SchedulingDelegate::firstPGCAfterGMPCompleted()
 {
 	_didGMPCompleteSinceLastReclaim = false;
 }
+*/
 
 void
 MM_SchedulingDelegate::copyForwardCompleted(MM_EnvironmentVLHGC *env)

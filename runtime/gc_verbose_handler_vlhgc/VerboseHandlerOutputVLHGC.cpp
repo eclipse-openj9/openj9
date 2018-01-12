@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "VerboseHandlerOutputVLHGC.hpp"
@@ -458,12 +458,6 @@ MM_VerboseHandlerOutputVLHGC::handleConcurrentEndInternal(J9HookInterface** hook
 	MM_ConcurrentPhaseStatsBase *stats = (MM_ConcurrentPhaseStatsBase *)event->concurrentStats;
 	MM_VerboseWriterChain* writer = _manager->getWriterChain();
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(event->currentThread);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	const char *type = "GMP work packet processing";
-	/* Use the ID of the GMP as our context ID - TODO:  Determine if the concurrent start event is a more appropriate context */
-	UDATA contextId = stats->_cycleID;
-	char tagTemplate[200];
-	getTagTemplate(tagTemplate, sizeof(tagTemplate), _manager->getIdAndIncrement(), type, contextId, j9time_current_time_millis());
 
 	const char *reasonForTermination = NULL;
 	UDATA bytesScanned = stats->_bytesScanned;

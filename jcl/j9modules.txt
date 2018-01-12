@@ -16,7 +16,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
 # This file lists all J9 JCL module names in the order they must be processed.
 # It is consumed by:
@@ -27,24 +27,26 @@
 java.base
 
 openj9.cuda
-com.ibm.dataaccess
+openj9.dataaccess
 openj9.sharedclasses
-com.ibm.traceformat
+openj9.traceformat
 jdk.attach
+openj9.jvm
 
 # requires openj9.cuda
 openj9.gpu
 
 # requires java.logging
-com.ibm.dtfj
-com.ibm.dtfjview
+openj9.dtfj
+openj9.dtfjview
 java.management
 
 # requires java.management
 jdk.management
 
 # requires jdk.management
-com.ibm.management
+jdk.jconsole
+openj9.sfj
 
 # temporary: to be provided by Z crypto team
 com.ibm.crypto.hdwrcca

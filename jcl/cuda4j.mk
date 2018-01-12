@@ -17,7 +17,7 @@
 # * [1] https://www.gnu.org/software/classpath/license.html
 # * [2] http://openjdk.java.net/legal/assembly-exception.html
 # *
-# * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 # *******************************************************************************/
 
 ifndef JVM_VERSION
@@ -30,8 +30,8 @@ else ifeq (,$(findstring $(SPEC_LEVEL),1.8 8))
 $(error Unsupported SPEC_LEVEL: $(SPEC_LEVEL))
 endif
 
-ifndef BUILD_ROOT
-$(error BUILD_ROOT is undefined)
+ifndef WORKSPACE
+$(error WORKSPACE is undefined)
 endif
 
 define \n
@@ -46,8 +46,6 @@ JAVA       := $(JAVA_BIN)/java
 JAR        := $(JAVA_BIN)/jar
 
 # set up build path
-ROOT_DIR   := $(shell cd $(BUILD_ROOT); pwd)
-WORKSPACE  := $(ROOT_DIR)/workspace
 J9_JCL     := $(WORKSPACE)/jcl
 
 JAVAC_ARGS := -verbose -g -Xlint:unchecked -source 1.8 -target 1.8

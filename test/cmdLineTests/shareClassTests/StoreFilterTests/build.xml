@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <project name="StoreFilterTests" default="build" basedir=".">
@@ -30,7 +30,6 @@
 
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/shareClassTests/StoreFilterTests" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src" location="."/>
 	<property name="build" location="./bin"/>
@@ -38,7 +37,7 @@
 	<property name="BatchFiles_srddir" value="../batchfiles" />		
 
 	<target name="init">
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 	</target>
 
@@ -48,7 +47,7 @@
 		<echo>===fork:				yes</echo>
 		<echo>===executable:			${compiler.javac}</echo>
 		<echo>===debug:				on</echo>
-		<echo>===destdir:				${dist}</echo>	
+		<echo>===destdir:				${DEST}</echo>	
 		
 		<!--
 		1.) APITests directory ...
@@ -59,19 +58,19 @@
 		</copy>
 
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 			<then>
+				<javac srcdir="${build}/APITests" destdir="${build}" debug="true" debuglevel="lines,vars,source" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
+					<src path="${SharedClassUtils_srddir}"/>
+					<src path="${build}/APITests"/>
+				</javac>
+			</then>
+			<else>
 				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
 				<javac srcdir="${build}/APITests" destdir="${build}" classpath="${build}" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1" >
 					<src path="${build}/APITests"/>
 					<src path="${SharedClassUtils_srddir}"/>
 					<compilerarg line='${addExports}' />
-				</javac>
-			</then>
-			<else>
-				<javac srcdir="${build}/APITests" destdir="${build}" debug="true" debuglevel="lines,vars,source" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
-					<src path="${SharedClassUtils_srddir}"/>
-					<src path="${build}/APITests"/>
 				</javac>
 			</else>
 		</if>
@@ -83,19 +82,29 @@
 		<copy todir="${build}/Resources">
 			<fileset dir="./Resources/"/>
 		</copy>
-		<javac srcdir="${build}/Resources" destdir="${build}/Resources" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
-			<src path="${SharedClassUtils_srddir}"/>
-		</javac>
+		<if>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<then>
+				<javac srcdir="${build}/Resources" destdir="${build}/Resources" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+			</then>
+			<else>
+				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
+				<javac srcdir="${build}/Resources" destdir="${build}/Resources"  classpath="${build}" fork="true" debug="true" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
+					<src path="${SharedClassUtils_srddir}"/>
+					<compilerarg line='${addExports}' />
+				</javac>
+			</else>
+		</if>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
-		<jar jarfile="${dist}/StoreFilterTests.jar" filesonly="true">
+		<jar jarfile="${DEST}/StoreFilterTests.jar" filesonly="true">
 			<fileset dir="${build}" />
 		</jar>
-		<copy todir="${dist}">
-			<fileset dir="${src}" includes="*.xml" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}" includes="*.xml" />
 			<fileset dir="${src}" includes="*.mk" />
 		</copy>
 	</target>

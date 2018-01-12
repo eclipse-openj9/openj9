@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <project name="testClasses" default="build" basedir=".">
@@ -35,7 +35,6 @@
 	<property name="SharedClassUtils_srddir" value="../utils/src/" />
 	
 	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/shareClassTests/testClasses" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 
 	<target name="AddTestClassesToPackage">
 		<!-- create the folders -->
@@ -309,8 +308,8 @@
 		<copy todir="${build}">
 			<fileset dir="./" includes="*.xml,*.java,*.jar"/>
 		</copy>	
-		<mkdir dir="${dist}"/>
-	    <jar jarfile="${dist}/SharedClassesTestClasses.jar" filesonly="true">
+		<mkdir dir="${DEST}"/>
+	    <jar jarfile="${DEST}/SharedClassesTestClasses.jar" filesonly="true">
 			<fileset dir="${build}"/>
 		</jar>
   	</target>

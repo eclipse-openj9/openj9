@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #ifndef SHCHELP_H
 #define SHCHELP_H
@@ -31,11 +31,12 @@
 extern "C" {
 #endif
 
-#define J9SH_MODLEVEL_JAVA5 1
-#define J9SH_MODLEVEL_JAVA6 2
-#define J9SH_MODLEVEL_JAVA7 3
-#define J9SH_MODLEVEL_JAVA8 4
-#define J9SH_MODLEVEL_JAVA9 5
+#define J9SH_MODLEVEL_JAVA5  1
+#define J9SH_MODLEVEL_JAVA6  2
+#define J9SH_MODLEVEL_JAVA7  3
+#define J9SH_MODLEVEL_JAVA8  4
+#define J9SH_MODLEVEL_JAVA9  5
+#define J9SH_MODLEVEL_JAVA10 6
 
 /*	JVM feature bit flag(s)	*/
 /*

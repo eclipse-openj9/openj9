@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9.h"
@@ -32,17 +32,17 @@
 #include "ConcurrentSweepScheme.hpp"
 
 MM_ConcurrentSweepGC *
-MM_ConcurrentSweepGC::newInstance(MM_EnvironmentStandard *env, MM_CollectorLanguageInterface *cli)
+MM_ConcurrentSweepGC::newInstance(MM_EnvironmentBase *env)
 {
 	MM_ConcurrentSweepGC *globalGC;
 	
 	globalGC = (MM_ConcurrentSweepGC *)env->getForge()->allocate(sizeof(MM_ConcurrentSweepGC), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (globalGC) {
-		new(globalGC) MM_ConcurrentSweepGC(env, cli);
+		new(globalGC) MM_ConcurrentSweepGC(env);
 		if (!globalGC->initialize(env)) { 
-        	globalGC->kill(env);        
-        	globalGC = NULL;            
-		}                                       
+			globalGC->kill(env);
+			globalGC = NULL;
+		}
 	}
 	return globalGC;
 }

@@ -17,7 +17,7 @@ rem
 rem [1] https://www.gnu.org/software/classpath/license.html
 rem [2] http://openjdk.java.net/legal/assembly-exception.html
 rem
-rem SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+rem SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 rem
 
 set BASEDIR=C:\ben\URLClassLoaderTests
@@ -43,4 +43,3 @@ call runTest.bat %REFJREBIN% %REFBIN% %BASEDIR% %TESTEXE% %TESTEXTDIR% %NETUSEDI
 call runTest.bat %REFJREBIN% %REFBIN% %BASEDIR% %TESTEXE% %TESTEXTDIR% %NETUSEDIR% %EXCLUDEFILE% SignedSealed %EXTRAOPTS%
 call runTest.bat %REFJREBIN% %REFBIN% %BASEDIR% %TESTEXE% %TESTEXTDIR% %NETUSEDIR% %EXCLUDEFILE% NonExistJar %EXTRAOPTS%
 rem Bluebird does not support the JVMTI tests
-

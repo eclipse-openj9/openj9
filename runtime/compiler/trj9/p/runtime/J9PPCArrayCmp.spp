@@ -1,0 +1,439 @@
+!! Copyright (c) 2000, 2017 IBM Corp. and others
+!!
+!! This program and the accompanying materials are made available under
+!! the terms of the Eclipse Public License 2.0 which accompanies this
+!! distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+!! or the Apache License, Version 2.0 which accompanies this distribution and
+!! is available at https://www.apache.org/licenses/LICENSE-2.0.
+!!
+!! This Source Code may also be made available under the following
+!! Secondary Licenses when the conditions for such availability set
+!! forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+!! General Public License, version 2 with the GNU Classpath
+!! Exception [1] and GNU General Public License, version 2 with the
+!! OpenJDK Assembly Exception [2].
+!!
+!! [1] https://www.gnu.org/software/classpath/license.html
+!! [2] http://openjdk.java.net/legal/assembly-exception.html
+!!
+!! SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+
+#if 0
+#include "j9cfg.h"
+#include "jilconsts.inc"
+#include "p/runtime/ppcasmdefines.inc"
+	.file "ArrayCmp.s"
+
+#ifdef AIXPPC
+	.lglobl   __arrayCmpCommVMXConst
+	.globl    .__arrayCmpVMX
+	.globl    .__arrayCmpLenVMX
+	.globl    .__arrayCmpScalar
+	.globl    .__arrayCmpLenScalar
+
+#elif defined(LINUXPPC64)
+	.globl    FUNC_LABEL(__arrayCmpVMX)
+	.type     FUNC_LABEL(__arrayCmpVMX),@function
+	.globl    FUNC_LABEL(__arrayCmpLenVMX)
+	.type     FUNC_LABEL(__arrayCmpLenVMX),@function
+	.globl    FUNC_LABEL(__arrayCmpScalar)
+	.type     FUNC_LABEL(__arrayCmpScalar),@function
+	.globl    FUNC_LABEL(__arrayCmpLenScalar)
+	.type     FUNC_LABEL(__arrayCmpLenScalar),@function
+
+#elif defined(LINUX)
+	.globl    __arrayCmpVMX
+	.globl    __arrayCmpLenVMX
+	.globl    __arrayCmpScalar
+	.globl    __arrayCmpLenScalar
+#endif
+
+!----------------------------------------------------------------------
+! entry arrayCmpVMX
+!----------------------------------------------------------------------
+	.align	5
+#ifdef AIXPPC
+.__arrayCmpVMX:
+	.function .__arrayCmpVMX,startproc.__arrayCmpVMX,16,0,(endproc.__arrayCmpVMX-startproc.__arrayCmpVMX)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(__arrayCmpVMX):
+#else
+__arrayCmpVMX:
+#endif
+    	startproc.__arrayCmpVMX:
+
+    	!-------------------------------------------------------------------
+	!   Reg.        Input           Output          Use
+	!-------------------------------------------------------------------
+	!   r3                          index (0 or 1)
+	!   r4          src0            DESTROYED
+	!   r5          src1            DESTROYED
+	!   r6          len             len
+	!   r7                          DESTROYED const16
+	!   r8     	                DESTROYED tmp/residue
+	!
+	!   ctr                         DESTROYED
+	!   cr0                         DESTROYED
+	!   cr6                         DESTROYED
+	!
+	!   vr0                         DESTROYED vconst0x10
+	!   vr1                         DESTROYED vmask
+	!   vr3                         DESTROYED vpat0
+	!   vr4                         DESTROYED vpat1
+	!   vr5                         DESTROYED vin0a
+	!   vr6                         DESTROYED vin0b
+	!   vr7                         DESTROYED vin1a
+	!   vr8                         DESTROYED vin1b
+	!   vr9                         DESTROYED v0
+	!   vr10                        DESTROYED v1
+! Note:	len >=1 is guaranteed by the caller
+	rlwinm.	    r8, r6, 32-4, 0x0fffffff ! count = len / 16 (this can be zero)
+	mtctr	    r8
+	rlwinm	    r8, r6, 0, 0x0000000f   ! residue (1..15 bytes)
+	li	    r7, 16		    ! const16
+	bc	    BO_IF, CR0_EQ, L.arrayCmpVMXResidue
+
+	li	    r3, 0
+    	cmpwi	    cr0, r8, 0		    ! Check residue count
+	lvx	    vr5, r0, r4		    ! vin0a = vec_ld(0, src0)
+    	lvx	    vr6, r7, r4		    ! vin0b = vec_ld(16, src0)
+	lvx	    vr7, r0, r5		    ! vin1a = vec_ld(0, src1)
+	lvx	    vr8, r7, r5		    ! vin1b = vec_ld(16, src1)
+	lvsl	    vr3, r0, r4		    ! vpat0 = vec_lvsl(0, src0)
+	lvsl	    vr4, r0, r5		    ! vpat1 = vec_lvsl(0, src1)
+	addi	    r4, r4, 16
+	addi	    r5, r5, 16
+	vperm	    vr9, vr5, vr6, vr3	    ! v0 = vec_perm(vin0a, vin0b, vpat0)
+	vperm	    vr10, vr7, vr8, vr4	    ! v1 = vec_perm(vin1a, vin1b, vpat1)
+	vcmpequb.   vr9, vr9, vr10	    ! v0/CR6 = vec_cmpequb(v0, v1)
+       	lvx	    vr5, r7, r4		    ! vin0a = vec_ld(16, src0)
+	lvx	    vr7, r7, r5		    ! vin1a = vec_ld(16, src1)
+L.arrayCmpVMXLoop:
+	addi	    r4, r4, 16
+	addi	    r5, r5, 16
+	vperm	    vr9, vr6, vr5, vr3	    ! v0 = vec_perm(vin0b, vin0a, vpat0)
+	vperm	    vr10, vr8, vr7, vr4	    ! v1 = vec_perm(vin1b, vin1a, vpat1)
+	bc	    BO_IF_NOT, CR6_LT, L.arrayCmpVMXUnmatch
+
+	vcmpequb.   vr9, vr9, vr10	    ! v0/CR6 = vec_cmpequb(v0, v1)
+    	lvx	    vr6, r7, r4		    ! vin0b = vec_ld(16, src0)
+	lvx	    vr8, r7, r5		    ! vin1b = vec_ld(16, src1)
+	bdz	    L.arrayCmpVMXLoopEnd
+
+	addi	    r4, r4, 16
+	addi	    r5, r5, 16
+	vperm	    vr9, vr5, vr6, vr3	    ! v0 = vec_perm(vin0a, vin0b, vpat0)
+	vperm	    vr10, vr7, vr8, vr4	    ! v1 = vec_perm(vin1a, vin1b, vpat1)
+	bc	    BO_IF_NOT, CR6_LT, L.arrayCmpVMXUnmatch
+
+	vcmpequb.   vr9, vr9, vr10	    ! v0/CR6 = vec_cmpequb(v0, v1)
+       	lvx	    vr5, r7, r4		    ! vin0a = vec_ld(16, src0)
+	lvx	    vr7, r7, r5		    ! vin1a = vec_ld(16, src1)
+	bdnz	    L.arrayCmpVMXLoop
+L.arrayCmpVMXLoopEnd:
+    	cmpwi	    cr0, r8, 0		    ! Check residue count
+	li	    r3, 1
+    	bclr	    BO_IF, CR0_EQ	    ! All vectors are OK, and we do not have any residue.
+	addi	    r4, r4, -32
+	addi	    r5, r5, -32
+
+L.arrayCmpVMXResidue:
+	! We have 1..15 byte residue
+	addi	    r8, r8, -1		    ! residue - 1
+	lvsr	    vr2, r0, r8		    ! vmask = vec_lvsr(0, residue - 1)
+	vspltisb    vr0, 8		    ! vconst0x10 = (16)0x08
+    	vaddubm	    vr0, vr0, vr0	    ! vconst0x10 = (16)0x10
+	vcmpgtub    vr2, vr2, vr0	    ! vmask = vec_cmpgtub(vmask, vconst0x10)
+					    !      (n)0x00 + (16-n)0xff
+
+	lvx	    vr5, r0, r4		    ! vin0a = vec_ld(0, src0)
+	lvx	    vr6, r7, r4		    ! vin0b = vec_ld(16, src0)
+	lvx	    vr7, r0, r5		    ! vin1a = vec_ld(0, src1)
+	lvx	    vr8, r7, r5		    ! vin1b = vec_ld(16, src1)
+	lvsl	    vr3, r0, r4		    ! vpat0 = vec_lvsl(0, src0)
+	lvsl	    vr4, r0, r5		    ! vpat1 = vec_lvsl(0, src1)
+	vperm	    vr9, vr5, vr6, vr3	    ! v0 = vec_perm(vin0a, vin0b, vpat0)
+	vperm	    vr10, vr7, vr8, vr4	    ! v1 = vec_perm(vin1a, vin1b, vpat1)
+	vcmpequb    vr9, vr9, vr10	    ! v0 = vec_cmpequb(v0, v1)
+
+	vor	    vr9, vr9, vr2	    ! v0 = vec_or(v0, vmask) mask all garbage bytes with 0xff
+	vcmpgtub.   vr9, vr9, vr0	    ! v0/CR6 = vec_cmpgtub(v0, vconst0x10)
+
+    	mfcr	r3			    ! CR6_LT(bit24) = 1 if data match
+    	rlwinm	r3,r3,32-7,0x00000001	    ! Move CR6_LT to LSB
+	blr
+
+L.arrayCmpVMXUnmatch:
+	li	r3, 0
+	blr
+    	endproc.__arrayCmpVMX:
+
+!----------------------------------------------------------------------
+! entry arrayCmpLenVMX
+!----------------------------------------------------------------------
+	.align	5
+#ifdef AIXPPC
+.__arrayCmpLenVMX:
+	.function .__arrayCmpLenVMX,startproc.__arrayCmpLenVMX,16,0,(endproc.__arrayCmpLenVMX-startproc.__arrayCmpLenVMX)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(__arrayCmpLenVMX):
+#else
+__arrayCmpLenVMX:
+#endif
+    	startproc.__arrayCmpLenVMX:
+
+    	!-------------------------------------------------------------------
+	!   Reg.        Input           Output          Use
+	!-------------------------------------------------------------------
+	!   r3                          index (0..len)
+	!   r4          src0            DESTROYED
+	!   r5          src1            DESTROYED
+	!   r6          len             len
+	!   r7                          DESTROYED const16
+	!   r8     	                DESTROYED tmp/residue
+	!   r9                          DESTROYED work_area
+	!
+	!   ctr                         DESTROYED
+	!   cr0                         DESTROYED
+	!   cr6                         DESTROYED
+	!
+	!   vr0                         DESTROYED vconst0x10 vconst0
+	!   vr1                         DESTROYED vmask
+	!   vr2                         DESTROYED vmerge
+	!   vr3                         DESTROYED vpat0
+	!   vr4                         DESTROYED vpat1
+	!   vr5                         DESTROYED vin0a
+	!   vr6                         DESTROYED vin0b
+	!   vr7                         DESTROYED vin1a
+	!   vr8                         DESTROYED vin1b
+	!   vr9                         DESTROYED v0
+	!   vr10                        DESTROYED v1
+! Note:	len >=1 is guaranteed by the caller
+    	li	    r7, 16		    ! const16
+	vspltisb    vr0, 8		    ! vconst0x10 = (16)0x10
+	vaddubm	    vr0, vr0, vr0
+
+    	lvsl	    vr3, r0, r4		    ! vpat0 = vec_lvsl(0, src0)
+	lvsl	    vr4, r0, r5		    ! vpat1 = vec_lvsl(0, src1)
+	lvx	    vr5, r0, r4		    ! vin0a = vec_ld(0, src0)
+	lvx	    vr7, r0, r5		    ! vin1a = vec_ld(0, src1)
+
+!	cmpwi	    cr0, r6,17		    ! skip loop if len < 17
+!	bc	    BO_IF, CR0_LT, L.arrayCmpLenVMX2
+
+	addi	    r8, r6, 15		    ! tmp = len + 15
+	rlwinm	    r8, r8, 32-4, 0x0fffffff	! tmp = (len + 15) / 16
+	mtctr	    r8
+L.arrayCmpLenVMXLoop:
+    	lvx	    vr6, r7, r4		    ! vin0b = vec_ld(16, src0)
+	lvx	    vr8, r7, r5		    ! vin1b = vec_ld(16, src1)
+	vperm	    vr9, vr5, vr6, vr3	    ! v0 = vec_perm(vin0a, vin0b, vpat0)
+	vperm	    vr10, vr7, vr8, vr4	    ! v1 = vec_perm(vin1a, vin1b, vpat1)
+	vcmpequb.   vr9, vr9, vr10	    ! v0/CR6 = vec_cmpequb(v0, v1)
+	bc	    BO_IF_NOT, CR6_LT, L.arrayCmpLenVMXUnmatch
+	addi	    r4, r4, 16
+	addi	    r5, r5, 16
+	addi	    r3, r3, 16
+	bdz	    L.arrayCmpLenVMXLoopEnd
+
+      	lvx	    vr5, r7, r4		    ! vin0a = vec_ld(16, src0)
+	lvx	    vr7, r7, r5		    ! vin1a = vec_ld(16, src1)
+	vperm	    vr9, vr6, vr5, vr3	    ! v0 = vec_perm(vin0b, vin0a, vpat0)
+	vperm	    vr10, vr8, vr7, vr4	    ! v1 = vec_perm(vin1b, vin1a, vpat1)
+	vcmpequb.   vr9, vr9, vr10	    ! v0/CR6 = vec_cmpequb(v0, v1)
+	bc	    BO_IF_NOT, CR6_LT, L.arrayCmpLenVMXUnmatch
+	addi	    r4, r4, 16
+	addi	    r5, r5, 16
+	addi	    r3, r3, 16
+	bdnz	    L.arrayCmpLenVMXLoop
+L.arrayCmpLenVMXLoopEnd:
+	! All data match with trailing garbages
+    	or	    r3, r6, r6
+	blr
+
+L.arrayCmpLenVMXUnmatch:
+    	! Unmatch in data
+    	vspltisb    vr0, 0		    ! vconst0
+	! Load vmask and vmerge
+    	laddr	r8, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)	! Restore TOC/GOT
+#ifdef AIXPPC
+	laddr	r8, TOC__arrayCmpCommVMXConst(r8)
+#elif defined(LINUXPPC64)
+	laddr	r8, TOC__arrayCmpCommVMXConst@toc(r8)
+#else
+	laddr	r8, __arrayCmpCommVMXConst@got(r8)
+#endif
+	lvx	    vr1, r0, r8		! vmask = vec_ld(0, __arrayCmpCommVMXConst)
+	lvx	    vr2, r7, r8		! vmerge = vec_ld(16, __arrayCmpCommVMXConst)
+
+	vandc	    vr9, vr1, vr9	! v0 = vec_andc(vmask, v0)
+        vsum4sbs    vr9, vr9, vr0	! v0 = vec_sum4sbs(v0, vconst0)
+	vperm	    vr9, vr9, vr9, vr2	! v0 = vec_prem(v0, v0, vmerge)
+
+	stwu	    RSTACK,-40(RSTACK)	! allocate 32 byte for work_area and 8 byte for linkage
+	addi	    r9, RSTACK, (8 + 15)    ! work_area = (SP + 8 + 15) & ~15
+	rlwinm	    r9, r9, 0, 0xfffffff0
+
+	stvewx	    vr9, r0, r9		! vec_st(v0, work_area)
+	nop				! three NOPs are required to start a new dispatch group
+	nop
+	nop
+	lwz	    r8, 0(r9)
+	cntlzw	    r8, r8
+	rlwinm	    r8, r8, 32-1, 0x7fffffff
+	add	    r3, r3, r8
+
+	sub	    r3, r3, r6		! compute min(index, len)
+	srawi	    r8, r3, 31
+	and	    r3, r3, r8
+	add	    r3, r3, r6
+
+    	la	    RSTACK,40(RSTACK)	! rewind the stack
+	blr
+
+    	endproc.__arrayCmpLenVMX:
+
+!----------------------------------------------------------------------
+! entry arrayCmpScalar
+!----------------------------------------------------------------------
+	.align	5
+#ifdef AIXPPC
+.__arrayCmpScalar:
+	.function .__arrayCmpScalar,startproc.__arrayCmpScalar,16,0,(endproc.__arrayCmpScalar-startproc.__arrayCmpScalar)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(__arrayCmpScalar):
+#else
+__arrayCmpScalar:
+#endif
+    	startproc.__arrayCmpScalar:
+
+    	!-------------------------------------------------------------------
+	!   Reg.        Input           Output          Use
+	!-------------------------------------------------------------------
+	!   r3                          index
+	!   r4          src0            DESTROYED
+	!   r5          src1            DESTROYED
+	!   r6          len             len
+	!   r7                          DESTROYED ch0
+	!   r8     	                DESTROYED ch1
+	!
+	!   ctr                         DESTROYED
+	!   cr0                         DESTROYED
+
+	li	    r3, 0
+	cmpwi	    cr0, r6,0		    ! if len <= 0
+	bclr	    BO_IF_NOT_2, CR0_GT	    ! return 0 (unlikely)
+
+	addi	    r4, r4, -1
+	addi	    r5, r5, -1
+	mtctr	    r6			    ! Note CTR >= 1
+L.arrayCmpScalar1:
+    	lbzu	    r7, 1(r4)		    ! ch0 = *++src0
+	lbzu	    r8, 1(r5)		    ! ch1 = *++src1
+	cmpw	    cr0, r7, r8
+	bclr	    BO_IF_NOT, CR0_EQ	    ! return 0
+	bdnz	    L.arrayCmpScalar1
+
+	li	    r3, 1
+	blr
+
+      	endproc.__arrayCmpScalar:
+
+!----------------------------------------------------------------------
+! entry arrayCmpLenScalar
+!----------------------------------------------------------------------
+	.align	5
+#ifdef AIXPPC
+.__arrayCmpLenScalar:
+	.function .__arrayCmpLenScalar,startproc.__arrayCmpLenScalar,16,0,(endproc.__arrayCmpLenScalar-startproc.__arrayCmpLenScalar)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(__arrayCmpLenScalar):
+#else
+__arrayCmpLenScalar:
+#endif
+    	startproc.__arrayCmpLenScalar:
+
+    	!-------------------------------------------------------------------
+	!   Reg.        Input           Output          Use
+	!-------------------------------------------------------------------
+	!   r3                          index
+	!   r4          src0            DESTROYED
+	!   r5          src1            DESTROYED
+	!   r6          len             len
+	!   r7                          DESTROYED ch0
+	!   r8     	                DESTROYED ch1
+	!
+	!   ctr                         DESTROYED
+	!   cr0                         DESTROYED
+
+	li	    r3, 0		    ! index = 0
+	cmpwi	    cr0, r6,0		    ! if len <= 0
+	bclr	    BO_IF_NOT_2, CR0_GT	    ! return 0 (unlikely)
+
+	addi	    r4, r4, -1
+	addi	    r5, r5, -1
+	mtctr	    r6			    ! Note CTR >= 1
+L.arrayCmpLenScalar1:
+    	lbzu	    r7, 1(r4)		    ! ch0 = *++src0
+	lbzu	    r8, 1(r5)		    ! ch1 = *++src1
+	cmpw	    cr0, r7, r8
+	bc	    BO_IF_NOT, CR0_EQ, L.arrayCmpLenScalar2
+	addi	    r3, r3, 1
+	bdnz	    L.arrayCmpLenScalar1
+L.arrayCmpLenScalar2:
+	blr
+
+      	endproc.__arrayCmpLenScalar:
+
+! .data section
+#ifdef AIXPPC
+	.toc
+TOC__arrayCmpCommVMXConst:
+	.tc       __arrayCmpCommVMXConst[TC],__arrayCmpCommVMXConst
+
+	.csect    __arrayCmpLenVMX{DS}
+	ADDR      .__arrayCmpLenVMX
+	ADDR      TOC{TC0}
+	ADDR      0x00000000
+! End   csect     __arrayCmpLenVMX{DS}
+
+#elif defined(LINUXPPC64)
+	.section  ".toc"
+TOC__arrayCmpCommVMXConst:
+	.tc       __arrayCmpCommVMXConst[TC],__arrayCmpCommVMXConst
+
+#if !defined(__LITTLE_ENDIAN__)
+	.section  ".opd","aw"
+	.align    3
+	.globl    __arrayCmpLenVMX
+	.size     __arrayCmpLenVMX,24
+__arrayCmpLenVMX:
+	.quad     .__arrayCmpLenVMX
+	.quad     .TOC.@tocbase
+	.long     0x00000000
+	.long     0x00000000
+#endif
+#endif
+
+#if defined(AIXPPC)
+	.csect    ArrayCmpLenVMX_DATA{RW}
+#elif defined(LINUXPPC64)
+	.section  ".data"
+	.align	4
+   .type __arrayCmpCommVMXConst,@object
+   .size __arrayCmpCommVMXConst,264
+
+#endif
+	.align	4
+__arrayCmpCommVMXConst:
+	! vmask value
+    	.long	0x80200802
+	.long	0x80200802
+	.long	0x80200802
+	.long	0x80200802
+	! vmerge value
+	.long	0x03070b0f
+	.long	0
+	.long	0
+	.long	0
+#endif

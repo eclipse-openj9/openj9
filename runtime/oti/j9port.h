@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #if !defined(OTI_J9PORT_H_)
@@ -647,6 +647,7 @@ typedef struct J9CacheInfoQuery {
 #define J9PORT_VMEM_ZTPF_USE_31BIT_MALLOC OMRPORT_VMEM_ZTPF_USE_31BIT_MALLOC
 #define J9PORT_VMEM_ZOS_USE_EXTENDED_PRIVATE_AREA OMRPORT_VMEM_ZOS_USE2TO32G_AREA
 #define J9PORT_VMEM_ALLOCATE_TOP_DOWN OMRPORT_VMEM_ALLOCATE_TOP_DOWN
+#define J9PORT_VMEM_ADDRESS_HINT OMRPORT_VMEM_ADDRESS_HINT
 
 #define J9PORT_SLOPEN_DECORATE OMRPORT_SLOPEN_DECORATE
 #define J9PORT_SLOPEN_LAZY OMRPORT_SLOPEN_LAZY

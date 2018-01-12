@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /**
@@ -30,7 +30,7 @@
 #define ENV_DEBUG
 #endif
 
-#if defined(LINUX) && !defined(J9ZTPF)
+#if (defined(LINUX) || defined(OSX)) && !defined(J9ZTPF)
 #define _GNU_SOURCE
 #endif
 #include <inttypes.h>
@@ -477,7 +477,7 @@ getLinuxPPCDescription(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	char* platform = NULL;
 	char* base_platform = NULL;
 
-	/* initialize libauxv to query the auxv */
+	/* initialize auxv prior to querying the auxv */
 	if (prefetch_auxv()) {
 		desc->processor = PROCESSOR_PPC_UNKNOWN;
 		desc->physicalProcessor = PROCESSOR_PPC_UNKNOWN;

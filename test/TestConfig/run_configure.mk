@@ -17,7 +17,7 @@
 #  [1] https://www.gnu.org/software/classpath/license.html
 #  [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ##############################################################################
 
 .PHONY: autoconfig autogen clean help
@@ -37,12 +37,21 @@ ifneq (,$(findstring Win,$(OS)))
 CURRENT_DIR := $(subst \,/,$(CURRENT_DIR))
 endif
 
+ifndef SPEC
+$(error Please provide SPEC that matches the current platform (e.g. SPEC=linux_x86-64))
+endif
+
+ifndef JAVA_VERSION
+export JAVA_VERSION:=SE90
+endif
+
+
 autoconfig:
 	perl configure.pl
 
 autogen: autoconfig
 	cd $(CURRENT_DIR)$(D)scripts$(D)testKitGen; \
-	perl testKitGen.pl $(OPTS); \
+	perl testKitGen.pl --graphSpecs=$(SPEC) --javaVersion=$(JAVA_VERSION) $(OPTS); \
 	cd $(CURRENT_DIR);
 
 AUTOGEN_FILES = $(wildcard $(CURRENT_DIR)$(D)jvmTest.mk)

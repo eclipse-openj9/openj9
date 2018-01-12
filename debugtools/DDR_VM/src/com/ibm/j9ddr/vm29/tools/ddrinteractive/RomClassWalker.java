@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.tools.ddrinteractive;
 
@@ -155,10 +155,8 @@ public class RomClassWalker extends ClassWalker {
 		allSlotsInCPShapeDescriptionDo();
 		allSlotsInOptionalInfoDo();
 		
-		if (J9BuildFlags.interp_useSplitSideTables) {
-			allSlotsInStaticSplitMethodRefIndexesDo();
-			allSlotsInSpecialSplitMethodRefIndexesDo();
-		}
+		allSlotsInStaticSplitMethodRefIndexesDo();
+		allSlotsInSpecialSplitMethodRefIndexesDo();
 	}
 	private void allSlotsInROMHeaderDo() throws CorruptDataException {
 		classWalkerCallback.addSection(clazz, clazz, J9ROMClass.SIZEOF, "romHeader", true);
@@ -657,8 +655,7 @@ public class RomClassWalker extends ClassWalker {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_SRPNAS, ref.nameAndSignatureEA(), "cpFieldNAS");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, ref.classRefCPIndexEA(), "cpFieldClassRef");
 				
-			} else if (((!J9BuildFlags.interp_useSplitSideTables) && (shapeDesc == J9CPTYPE_SHARED_METHOD)) ||
-					(shapeDesc == J9CPTYPE_HANDLE_METHOD) ||
+			} else if ((shapeDesc == J9CPTYPE_HANDLE_METHOD) ||
 					(shapeDesc == J9CPTYPE_STATIC_METHOD) || 
 					(shapeDesc == J9CPTYPE_INSTANCE_METHOD) ||
 					(shapeDesc == J9CPTYPE_INTERFACE_METHOD)) {

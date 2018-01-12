@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # Externalised messages for the RAStrace module.
@@ -138,7 +138,7 @@ J9NLS_TRC_MODULE_NOT_LOADED=M\u00f3dulo n\u00e3o configurado para rastreio: %s
 # START NON-TRANSLATABLE
 J9NLS_TRC_MODULE_NOT_LOADED.explanation=The JVM could not configure trace for the specified module, typically due to a native out of memory situation.
 J9NLS_TRC_MODULE_NOT_LOADED.system_action=The JVM continues but there is no trace data generated for this module.
-J9NLS_TRC_MODULE_NOT_LOADED.user_response=Contact your IBM service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
+J9NLS_TRC_MODULE_NOT_LOADED.user_response=Contact your service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
 J9NLS_TRC_MODULE_NOT_LOADED.sample_input_1=
 # END NON-TRANSLATABLE
 
@@ -162,7 +162,7 @@ J9NLS_TRC_TRACE_INIT_FAILED=Falha na inicializa\u00e7\u00e3o do mecanismo de ras
 # START NON-TRANSLATABLE
 J9NLS_TRC_TRACE_INIT_FAILED.explanation=The JVM cannot start the trace engine.
 J9NLS_TRC_TRACE_INIT_FAILED.system_action=The JVM ends.
-J9NLS_TRC_TRACE_INIT_FAILED.user_response=Contact your IBM service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
+J9NLS_TRC_TRACE_INIT_FAILED.user_response=Contact your service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
 J9NLS_TRC_TRACE_INIT_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
@@ -170,7 +170,7 @@ J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED=Erro ao registrar assinante de grava\u00e7\
 # START NON-TRANSLATABLE
 J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.explanation=The JVM cannot start the trace subscriber thread that writes trace buffers to disk.
 J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.system_action=The JVM continues but trace data is not written to disk.
-J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.user_response=Contact your IBM service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
+J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.user_response=Contact your service representative. You might need to obtain additional information by running with -Xtrace:debug=<n>.
 J9NLS_TRC_REGISTER_SUBSCRIBER_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
@@ -178,7 +178,7 @@ J9NLS_TRC_RAS_GLOBAL_STORAGE=Armazenamento para RasGlobalStorage n\u00e3o dispon
 # START NON-TRANSLATABLE
 J9NLS_TRC_RAS_GLOBAL_STORAGE.explanation=The JVM could not initialize.
 J9NLS_TRC_RAS_GLOBAL_STORAGE.system_action=The JVM ends.
-J9NLS_TRC_RAS_GLOBAL_STORAGE.user_response=Contact your IBM service representative.
+J9NLS_TRC_RAS_GLOBAL_STORAGE.user_response=Contact your service representative.
 J9NLS_TRC_RAS_GLOBAL_STORAGE.sample_input_1=
 # END NON-TRANSLATABLE
 
@@ -186,7 +186,7 @@ J9NLS_TRC_RAS_TLS_ALLOC_FAILED=N\u00e3o foi poss\u00edvel alocar chave de armaze
 # START NON-TRANSLATABLE
 J9NLS_TRC_RAS_TLS_ALLOC_FAILED.explanation=The JVM could not initialize.
 J9NLS_TRC_RAS_TLS_ALLOC_FAILED.system_action=The JVM ends.
-J9NLS_TRC_RAS_TLS_ALLOC_FAILED.user_response=Contact your IBM service representative.
+J9NLS_TRC_RAS_TLS_ALLOC_FAILED.user_response=Contact your service representative.
 J9NLS_TRC_RAS_TLS_ALLOC_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
@@ -194,7 +194,7 @@ J9NLS_TRC_UTE_TLS_ALLC_FAILED=N\u00e3o foi poss\u00edvel alocar chave de armazen
 # START NON-TRANSLATABLE
 J9NLS_TRC_UTE_TLS_ALLC_FAILED.explanation=The JVM could not initialize.
 J9NLS_TRC_UTE_TLS_ALLC_FAILED.system_action=The JVM ends.
-J9NLS_TRC_UTE_TLS_ALLC_FAILED.user_response=Contact your IBM service representative.
+J9NLS_TRC_UTE_TLS_ALLC_FAILED.user_response=Contact your service representative.
 J9NLS_TRC_UTE_TLS_ALLC_FAILED.sample_input_1=
 # END NON-TRANSLATABLE
 
@@ -202,7 +202,7 @@ J9NLS_TRC_TRACE_INIT_FAILED_RC=Falha na inicializa\u00e7\u00e3o adequada do meca
 # START NON-TRANSLATABLE
 J9NLS_TRC_TRACE_INIT_FAILED_RC.explanation=The JVM could not initialize.
 J9NLS_TRC_TRACE_INIT_FAILED_RC.system_action=The JVM ends.
-J9NLS_TRC_TRACE_INIT_FAILED_RC.user_response=Contact your IBM service representative.
+J9NLS_TRC_TRACE_INIT_FAILED_RC.user_response=Contact your service representative.
 J9NLS_TRC_TRACE_INIT_FAILED_RC.sample_input_1=
 # END NON-TRANSLATABLE
 
@@ -210,5 +210,5 @@ J9NLS_TRC_SHUTDOWN_TIMEOUT=Ocorreu um tempo limite durante o encerramento do mec
 # START NON-TRANSLATABLE
 J9NLS_TRC_SHUTDOWN_TIMEOUT.explanation=A timeout occurred during JVM shutdown, when the trace engine is waiting for trace subscriber threads to finish.
 J9NLS_TRC_SHUTDOWN_TIMEOUT.system_action=The JVM terminates without waiting for trace subscriber threads to finish.
-J9NLS_TRC_SHUTDOWN_TIMEOUT.user_response=Contact your IBM service representative.
+J9NLS_TRC_SHUTDOWN_TIMEOUT.user_response=Contact your service representative.
 # END NON-TRANSLATABLE

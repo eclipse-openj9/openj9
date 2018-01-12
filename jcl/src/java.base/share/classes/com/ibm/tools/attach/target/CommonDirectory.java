@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,13 +19,14 @@ package com.ibm.tools.attach.target;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Objects;
 
 public abstract class CommonDirectory {
 	private static final String ATTACH_LOCK = "_attachlock"; //$NON-NLS-1$
@@ -43,6 +44,7 @@ public abstract class CommonDirectory {
 	private static File commonDirFile; /* file where all IPC files are held */
 	private static FileLock masterLock;
 	private static String semaphoreId;
+	private static int masterLockCount = 0;
 	/**
 	 * default name of directories where VMs place their advertisements
 	 */
@@ -88,7 +90,7 @@ public abstract class CommonDirectory {
 				(new File(systemTmpDir,".com_ibm_tools_attach")).getPath()); //$NON-NLS-1$
 		/*[PR CMVC 165300 restriction on embedded blanks was unnecessary. Also, trailing separators were redundant. ]*/
 		if (IPC.loggingEnabled ) {
-			IPC.logMessage("IPC Directory", ipcDirProperty); //$NON-NLS-1$
+			IPC.logMessage("IPC Directory=", ipcDirProperty); //$NON-NLS-1$
 		}
 		File cd = new File(ipcDirProperty);
 		setCommonDirFileObject(cd);
@@ -126,32 +128,65 @@ public abstract class CommonDirectory {
 	 * Lock the master lock file. Create the lockfile if necessary.
 	 * @throws IOException if the file is already locked.
 	 */
-	/*[PR Jazz 30075] obtainMasterLock(File commonDirectory) is never used. */		
 	public static void obtainMasterLock() throws IOException {
-		getMasterLock().lockFile(true);
+		FileLock masterLockCopy = null;
+		synchronized (accessorMutex) {
+			++masterLockCount;
+			if (1 == masterLockCount) {
+				masterLockCopy = getMasterLock();
+			}
+		}
+		if (null != masterLockCopy) { /* first entry */
+			masterLockCopy.lockFile(true);
+		}
 	}
 
 	/**
-	 * non-blocking lock the master lockfile. Create the lockfile if necessary.
+	 * non-blocking lock the master lockfile. 
+	 * Create the lockfile if necessary.
 	 * @return true if lock obtained
-	 * @throws IOException if file already locked
 	 */
-	static boolean tryObtainMasterLock() throws IOException {
-		return getMasterLock().lockFile(false);
+	static boolean tryObtainMasterLock() {
+		boolean masterLockEntered = true;
+		synchronized (accessorMutex) {
+			++masterLockCount; /* optimistically assume we enter the lock */
+			if (1 == masterLockCount) { /* first time in */
+				try {
+					masterLockEntered = getMasterLock().lockFile(false);
+					if (!masterLockEntered) { /* lock failed, so revert */
+						--masterLockCount;
+					}
+				} catch (IOException e) { /* this shouldn't happen */
+					masterLockEntered = false;
+					IPC.logMessage("IOException in tryObtainMasterLock," //$NON-NLS-1$
+							+ " masterLockCount=" +masterLockCount, e); //$NON-NLS-1$
+				}
+			}
+			return masterLockEntered;		
+		}
 	}
 
 	/**
 	 * Release the lock on the master lock file
 	 */
 	public static void releaseMasterLock() {
-		getMasterLock().unlockFile();		
+		synchronized (accessorMutex) {
+			if (masterLockCount <= 0) {
+				IPC.logMessage("releaseMasterLock: Illegal value for masterLockCount", masterLockCount); //$NON-NLS-1$
+				return;
+			}
+			--masterLockCount;
+			if (Objects.nonNull(masterLock) && (0 == masterLockCount)) {
+				masterLock.unlockFile();
+				masterLock = null;
+			}
+		}
 	}
 
 	/**
 	 * Lock the attach lockfile. Create the lockfile if necessary.
 	 * @throws IOException if file already locked
 	 */
-	/*[PR Jazz 30075] obtainAttachLock(File commonDirectory) is never used.. */
 	 
 	public static void obtainAttachLock() throws IOException {
 		getAttachLock().lockFile(true);
@@ -269,7 +304,7 @@ public abstract class CommonDirectory {
 			return 0;
 		} else {
 			int count = 0;
-			for (int i=0; i < vmDirs.length; ++i) {
+			for (int i = 0; i < vmDirs.length; ++i) {
 				String dirMemberName = vmDirs[i].getName();
 				if (dirMemberName.startsWith(TRASH_PREFIX) || isCommonControlFile(dirMemberName)) {
 					continue;
@@ -417,14 +452,16 @@ public abstract class CommonDirectory {
 		return attachLock;
 	}
 	
+	/**
+	 * Returns a FileLock object, creating it if necessary.
+	 * @return FileLock object
+	 * @note this is not thread safe.  This should be called while holding accessorMutex.
+	 */
 	private static FileLock getMasterLock() {
-		synchronized (accessorMutex) {
-			if (null == masterLock) {
-				/*[PR Jazz 30075] inlined function which was called only from this method */
-				File commonDirFileObject = new File(getCommonDirFileObject(), MASTER_LOCKFILE);
-				String commonDirPath = commonDirFileObject.getAbsolutePath();
-				masterLock = new FileLock(commonDirPath, COMMON_LOCK_FILE_PERMISSIONS);
-			}
+		if (null == masterLock) {
+			File commonDirFileObject = new File(getCommonDirFileObject(), MASTER_LOCKFILE);
+			String commonDirPath = commonDirFileObject.getAbsolutePath();
+			masterLock = new FileLock(commonDirPath, COMMON_LOCK_FILE_PERMISSIONS);
 		}
 		return masterLock;
 	}

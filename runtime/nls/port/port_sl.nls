@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # Externalised messages for common elements of the port library
@@ -72,7 +72,7 @@ J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE=Med pisanjem v datoteko ni bilo mogo\u01
 # START NON-TRANSLATABLE
 J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE.explanation=The system was unable to satisfy a memory allocation request
 J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE.system_action=Subsequent memory allocation attempts will likely fail as a result of which the process will terminate
-J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE.user_response=Increase the amount of memory available to the process and/or contact your IBM service representative
+J9NLS_PORT_FILE_MEMORY_ALLOCATE_FAILURE.user_response=Increase the amount of memory available to the process and/or contact your service representative
 
 # END NON-TRANSLATABLE
 
@@ -83,7 +83,7 @@ J9NLS_PORT_SL_UNKOWN_ERROR=Neznana napaka pri nalaganju knji\u017enice v skupni 
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_UNKOWN_ERROR.explanation=There was an unknown error loading a shared library
 J9NLS_PORT_SL_UNKOWN_ERROR.system_action=Process shuts down
-J9NLS_PORT_SL_UNKOWN_ERROR.user_response=This message will be accompanied by another message providing more detail. Verify that the shared library exists and contact your IBM service representative if it does.
+J9NLS_PORT_SL_UNKOWN_ERROR.user_response=This message will be accompanied by another message providing more detail. Verify that the shared library exists and contact your service representative if it does.
 
 # END NON-TRANSLATABLE
 
@@ -93,7 +93,7 @@ J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE=Odvisnega modula %s ni mogo\u010de 
 J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.sample_input_1=a_dependant_module
 J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.explanation=The named dependent module could not be loaded
 J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.system_action=If the module was critical to the JVM the process will terminate
-J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.user_response=Contact your IBM service representative if the JVM terminates
+J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.user_response=Contact your service representative if the JVM terminates
 
 # END NON-TRANSLATABLE
 
@@ -101,7 +101,7 @@ J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE=Napaka pri razre\u0161itvi simbola
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.explanation=There was a problem with symbol resolution while looking for a particular symbol
 J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.system_action=The JVM will terminate with more information if the symbol was critical
-J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.user_response=Contact your IBM service representative if the JVM terminates
+J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.user_response=Contact your service representative if the JVM terminates
 
 # END NON-TRANSLATABLE
 
@@ -199,7 +199,7 @@ J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES=Sklica na knji\u017enico v skupni rab
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES.explanation=The operating system was not able to resolve a shared library reference. A prerequisite shared library may be missing
 J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES.system_action=If the library is critical to the JVM the process will terminate
-J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES.user_response=If the process terminates, verify that the library exists and if it does, contact your IBM Service representative.
+J9NLS_PORT_SL_UNABLE_TO_RESOLVE_REFERENCES.user_response=If the process terminates, verify that the library exists and if it does, contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -208,7 +208,7 @@ J9NLS_PORT_SL_INTERNAL_ERROR=Notranja napaka %i
 J9NLS_PORT_SL_INTERNAL_ERROR.sample_input_1=1
 J9NLS_PORT_SL_INTERNAL_ERROR.explanation=An internal error occurred while looking for a shared library
 J9NLS_PORT_SL_INTERNAL_ERROR.system_action=If the library is critical to the JVM the process will terminate
-J9NLS_PORT_SL_INTERNAL_ERROR.user_response=If the process terminates, verify that the library exists and if it does, contact your IBM service representative
+J9NLS_PORT_SL_INTERNAL_ERROR.user_response=If the process terminates, verify that the library exists and if it does, contact your service representative
 
 # END NON-TRANSLATABLE
 
@@ -246,7 +246,7 @@ J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR=Imenika %s ni mogo\u010de iz
 J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.sample_input_1=/temp/sharedresource
 J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.explanation=The user included a directory when they provided the name of the shared classes cache. This directory could not be created.
 J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
-J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.user_response=Contact your IBM service representative
+J9NLS_PORT_SHAREDHELPER_CANNOT_CREATE_TOP_LEVEL_DIR.user_response=Contact your service representative
 
 # END NON-TRANSLATABLE
 
@@ -302,7 +302,7 @@ J9NLS_PORT_FILE_LOCK_INVALID_FLAG=Neveljaven tip zaklepa za operacijo zaklepa da
 J9NLS_PORT_FILE_LOCK_INVALID_FLAG.sample_input_1=3
 J9NLS_PORT_FILE_LOCK_INVALID_FLAG.explanation=File lock operation failed due to invalid value of the flag specifying the type of lock.
 J9NLS_PORT_FILE_LOCK_INVALID_FLAG.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
-J9NLS_PORT_FILE_LOCK_INVALID_FLAG.user_response=Contact your IBM service representative.
+J9NLS_PORT_FILE_LOCK_INVALID_FLAG.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -310,7 +310,7 @@ J9NLS_PORT_FILE_OPEN_FILE_IS_DIR=Podana datoteka je imenik
 # START NON-TRANSLATABLE
 J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.explanation=File open operation failed while trying to open a directory as a file.
 J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
-J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.user_response=Contact your IBM service representative.
+J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -318,7 +318,7 @@ J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION=Operacija mmap ni uspela zaradi nevelj
 # START NON-TRANSLATABLE
 J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.explanation=Invalid value for memory protection parameter.
 J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
-J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.user_response=Contact your IBM service representative.
+J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -326,7 +326,7 @@ J9NLS_PORT_MMAP_INVALID_FLAG=Operacija mmap ni uspela zaradi neveljavnih mo\u017
 # START NON-TRANSLATABLE
 J9NLS_PORT_MMAP_INVALID_FLAG.explanation=Invalid value in flag parameter specifying mapping options.
 J9NLS_PORT_MMAP_INVALID_FLAG.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
-J9NLS_PORT_MMAP_INVALID_FLAG.user_response=Contact your IBM service representative.
+J9NLS_PORT_MMAP_INVALID_FLAG.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -335,7 +335,7 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE=Neveljavna ro\u010dka. ro\u010dka datoteke: 
 J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.sample_input_1=-1
 J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.explanation=File map operation failed due to invalid file handle.
 J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.
-J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your IBM service representative.
+J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -356,7 +356,7 @@ J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.sample_input_1=CEE
 J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.sample_input_2=5206
 J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.explanation=The JVM was instructed at startup to run with LE condition handlers instead of POSIX signal handlers. A LE condition corresponding to a software-raised POSIX signal was received.
 J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.system_action=The JVM will dump diagnostics and exit.
-J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.user_response=Contact your IBM service representative.
+J9NLS_PORT_ZOS_CONDITION_FOR_SOFTWARE_RAISED_SIGNAL_RECEIVED.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -364,7 +364,7 @@ J9NLS_PORT_HYPERVISOR_OPFAILED=Operacija, povezana s hipervizorjem, ni uspela.
 # START NON-TRANSLATABLE
 J9NLS_PORT_HYPERVISOR_OPFAILED.explanation=Operation related to Hypervisor failed.
 J9NLS_PORT_HYPERVISOR_OPFAILED.system_action=The JVM will continue, but no hypervisor related information will be provided.
-J9NLS_PORT_HYPERVISOR_OPFAILED.user_response=Contact your IBM service representative.
+J9NLS_PORT_HYPERVISOR_OPFAILED.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -389,7 +389,7 @@ J9NLS_PORT_MALLOC31_FAILURE=__malloc31 ni uspel dodeliti medpomnilnika v sistemu
 # START NON-TRANSLATABLE
 J9NLS_PORT_MALLOC31_FAILURE.explanation=__malloc31 failed to allocate buffer
 J9NLS_PORT_MALLOC31_FAILURE.system_action=The JVM will continue, but no hypervisor related information will be provided.
-J9NLS_PORT_MALLOC31_FAILURE.user_response=Contact your IBM service representative.
+J9NLS_PORT_MALLOC31_FAILURE.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -397,7 +397,7 @@ J9NLS_PORT_CSRSIC_FAILURE=Nepri\u010dakovana povratna koda iz storitve CSRSI v s
 # START NON-TRANSLATABLE
 J9NLS_PORT_CSRSIC_FAILURE.explanation=Unexpected return code from CSRSI service on z/OS
 J9NLS_PORT_CSRSIC_FAILURE.system_action=The JVM will continue, but no hypervisor related information will be provided.
-J9NLS_PORT_CSRSIC_FAILURE.user_response=Contact your IBM service representative.
+J9NLS_PORT_CSRSIC_FAILURE.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -461,14 +461,14 @@ J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG=Dodelitev pomnilnika med pridobiva
 # START NON-TRANSLATABLE
 J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG.explanation=The system was unable to satisfy a memory allocation request.
 J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG.system_action=Subsequent memory allocation attempts will likely fail as a result of which the process will terminate.
-J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG.user_response=Increase the amount of memory available to the process and/or contact your IBM service representative.
+J9NLS_PORT_HYPERVISOR_OUT_OF_MEMORY_ERROR_MSG.user_response=Increase the amount of memory available to the process and/or contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG=Dodelitev pomnilnika med pridobivanjem informacij o sistemu ni uspela.
 # START NON-TRANSLATABLE
 J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG.explanation=The system was unable to satisfy a memory allocation request.
 J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG.system_action=Subsequent memory allocation attempts will likely fail as a result of which the process will terminate.
-J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG.user_response=Increase the amount of memory available to the process and/or contact your IBM service representative.
+J9NLS_PORT_SYSINFO_OUT_OF_MEMORY_ERROR_MSG.user_response=Increase the amount of memory available to the process and/or contact your service representative.
 # END NON-TRANSLATABLE
 
 #***********************/

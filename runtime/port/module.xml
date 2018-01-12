@@ -19,7 +19,7 @@
    [1] https://www.gnu.org/software/classpath/license.html
    [2] http://openjdk.java.net/legal/assembly-exception.html
 
-   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -105,6 +105,7 @@
 		<object name="j9gs_s390">
 			<include-if condition="spec.linux_390.*"/>
 			<include-if condition="spec.zos_390.*"/>
+			<include-if condition="spec.linux_ztpf.*"/>
 			<exclude-if condition="spec.linux_x86.*"/>
 			<exclude-if condition="spec.win_x86.*"/>
 		</object>	
@@ -152,6 +153,7 @@
 			<include-if condition="spec.win_x86.*"/>
 			<include-if condition="spec.linux_390.*"/>
 			<include-if condition="spec.zos_390.*"/>
+			<include-if condition="spec.osx_x86.*"/>
 		</object>
 		<object name="j9mem_basic" />
 		<object name="j9portcontrol" />
@@ -216,6 +218,9 @@
 			</include>
 			<include path="$(OMRPORT_SRCDIR)linuxamd64" type="relativepath">
 				<include-if condition="spec.linux_x86-64.*"/>
+			</include>
+			<include path="$(OMRPORT_SRCDIR)osx" type="relativepath">
+				<include-if condition="spec.osx_x86.*"/>
 			</include>
 			<include path="$(OMRPORT_SRCDIR)linux386" type="relativepath">
 				<include-if condition="spec.linux_x86.*"/>
@@ -306,6 +311,9 @@
 			<vpath pattern="%" path="linuxamd64" augmentIncludes="true" type="relativepath">
 				<include-if condition="spec.linux_x86-64.*"/>
 			</vpath>
+			<vpath pattern="%" path="osx" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.osx_x86.*"/>
+			</vpath>
 			<vpath pattern="%" path="linux386" augmentIncludes="true" type="relativepath">
 				<include-if condition="spec.linux_x86.*"/>
 			</vpath>
@@ -369,6 +377,7 @@
 			<library name="omrglue" type="external"/>
 			<library name="iconv" type="system">
 				<include-if condition="spec.aix_.*"/>
+				<include-if condition="spec.osx_x86.*"/>
 			</library>
 			<library name="perfstat" type="system">
 				<include-if condition="spec.aix_.*"/>

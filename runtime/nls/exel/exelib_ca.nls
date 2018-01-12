@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 #
@@ -480,14 +480,14 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY=Error intern de VM: sense mem\u00f2ri
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY.explanation=There are not enough virtual memory to satisfy memory allocation request.
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS=Error intern de VM: no s'ha pogut trobar la classe java/lang/String
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS.explanation=java/lang/String class is not found in class path.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_TO_FIND_JLS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA=Error intern de VM: no s'ha pogut crear la matriu de bytes per al nom de classe %s
@@ -495,7 +495,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA=Error intern de VM: no s'ha pogut 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.sample_input_1=Main
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.explanation=Byte Array creation failed.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BA.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME=Error intern de VM: no s'ha pogut crear java/lang/String per al nom de classe %s
@@ -503,7 +503,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME=Error intern de VM:
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.sample_input_1=Main
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.explanation=Creation of java/lang/String failed.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_CLASSNAME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # VM and UTF are not translatable
@@ -512,7 +512,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING=Error intern de VM: s'ha e
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.sample_input_1=Main
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.explanation=Amount of available memory is too low.
 J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_OUT_OF_MEMORY_CONVERTING.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_CLASS_DOES_NOT_IMPL_MAIN=La classe %s no implementa main()
@@ -534,7 +534,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY=Error intern de VM: no s'ha
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY.explanation=Internal JVM error encountered.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY=Error intern de VM: no s'ha pogut crear la matriu de bytes per a l'argument %s
@@ -542,7 +542,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY=Error intern de VM: no s'h
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.sample_input_1=test
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.explanation=Internal JVM error encountered.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_BYTE_ARRAY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG=Error intern de VM: no s'ha pogut crear java/lang/String per a l'argument %s
@@ -550,7 +550,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG=Error intern de VM: no s'
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.sample_input_1=test
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.explanation=Internal JVM error encountered.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JLS_FOR_ARG.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM=Error intern de VM: no s'ha pogut establir l'element de la matriu per %s
@@ -558,7 +558,7 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM=Error intern de VM: no s'ha p
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.sample_input_1=test
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.explanation=Internal JVM error encountered.
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.system_action=The JVM will terminate.
-J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.user_response=Contact IBM Service.
+J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_SET_ARRAY_ELEM.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # J9SourceStandaloneExe - gpProtectedMain

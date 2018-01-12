@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <project name="URLHelperTests" default="build" basedir=".">
@@ -30,7 +30,6 @@
 
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/shareClassTests/URLHelperTests" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src" location="."/>
 	<property name="build" location="./bin"/>
@@ -44,7 +43,7 @@
 	<import file="../../../cmdline_options_tester/build.xml" />
 	
 	<target name="init">
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 	</target>
 	
@@ -61,7 +60,7 @@
 		<echo>===fork:				yes</echo>
 		<echo>===executable:			${compiler.javac}</echo>
 		<echo>===debug:				on</echo>
-		<echo>===destdir:				${dist}</echo>	
+		<echo>===destdir:				${DEST}</echo>	
 
 		<!--
 		1.) Copy config files ...
@@ -77,9 +76,21 @@
 		<copy todir="${build}/APITests">
 			<fileset dir="${src}/APITests/"/>
 		</copy>
-		<javac srcdir="${build}/APITests" destdir="${build}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
-			<src path="${SharedClassUtils_srddir}"/>
-		</javac>
+		<if>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<then>
+				<javac srcdir="${build}/APITests" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+			</then>
+			<else>
+				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
+				<javac srcdir="${build}/APITests" destdir="${build}" classpath="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+					<src path="${SharedClassUtils_srddir}"/>
+					<compilerarg line='${addExports}' />
+				</javac>
+			</else>
+		</if>
 		
 		<!--
 		3.) ClassPathMatchingTests directory ...
@@ -88,9 +99,21 @@
 		<copy todir="${build}/ClassPathMatchingTests">
 			<fileset dir="${src}/ClassPathMatchingTests/"/>
 		</copy>
-		<javac srcdir="${build}/ClassPathMatchingTests" destdir="${build}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
-			<src path="${SharedClassUtils_srddir}"/>
-		</javac>
+		<if>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			<then>
+				<javac srcdir="${build}/ClassPathMatchingTests" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+			</then>
+			<else>
+				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
+				<javac srcdir="${build}/ClassPathMatchingTests" destdir="${build}" classpath="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+					<src path="${SharedClassUtils_srddir}"/>
+					<compilerarg line='${addExports}' />
+				</javac>
+			</else>
+		</if>
 		
 		<!--
 		4.) PartitioningTests directory ...
@@ -107,7 +130,7 @@
 		<copy todir="${build}/PartitioningTests/props_win">
 			<fileset dir="${src}/PartitioningTests/props_win"/>
 		</copy>
-		<javac srcdir="${build}/PartitioningTests" destdir="${build}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+		<javac srcdir="${build}/PartitioningTests" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 		</javac>
 		
 		<!--
@@ -125,18 +148,16 @@
 		<copy todir="${build}/StaleClassPathEntryTests/props_win">
 			<fileset dir="${src}/StaleClassPathEntryTests/props_win"/>
 		</copy>
-		<javac srcdir="${build}/StaleClassPathEntryTests" destdir="${build}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
+		<javac srcdir="${build}/StaleClassPathEntryTests" destdir="${build}" fork="true" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" encoding="ISO-8859-1">
 		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
-		<jar jarfile="${dist}/URLHelperTests.jar" filesonly="true">
+		<jar jarfile="${DEST}/URLHelperTests.jar" filesonly="true">
 			<fileset dir="${build}" />
 		</jar>
-		<copy todir="${dist}">
-			<fileset dir="${src}" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}" />
 			<fileset dir="${src}" includes="*.mk" />
 		</copy>
 	</target>

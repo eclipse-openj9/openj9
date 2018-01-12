@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include <string.h>
@@ -384,16 +384,14 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 	char *serviceLevel = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_16) {
-		javaVersion = "JRE 1.6.0";
-	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_17) {
-		javaVersion = "JRE 1.7.0";
-	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
+	if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_18) {
 		javaVersion = "JRE 1.8.0";
 	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_19) {
 		javaVersion = "JRE 9";
+	} else if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V10) {
+		javaVersion = "JRE 10";
 	} else {
-		javaVersion = "J2ME";
+		javaVersion = "UNKNOWN";
 	}
 
 	if ((NULL == runtimeVersion) || ('\0' == *runtimeVersion)) {

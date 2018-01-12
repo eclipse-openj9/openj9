@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # Externalised messages for the verbose module.
@@ -228,7 +228,7 @@ J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR=\u7121\u52b9\u306a\u30af\u30e9\u30b9\
 J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.sample_input_1=/path/java/user.jar
 J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.explanation=An unexpected error occurred while reading the specified ZIP file
 J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.system_action=The JVM will warn the user and may either ignore the issue or throw a java/io/IOException
-J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.user_response=If the problem persists then contact your IBM Service representative
+J9NLS_VERB_CLASS_BAD_CPENTRY_UNKNOWN_ERROR.user_response=If the problem persists then contact your service representative
 # END NON-TRANSLATABLE
 
 J9NLS_VERB_CLASS_BAD_CPENTRY_JXE_MISSING_ROM_CLASSES=\u7121\u52b9\u306a\u30af\u30e9\u30b9\u30d1\u30b9\u9805\u76ee: %s (jxe \u306b rom.classes \u304c\u3042\u308a\u307e\u305b\u3093)

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "cfreader.h"
@@ -50,16 +50,16 @@ static U_8 attributeTagFor (J9CfrConstantPoolInfo *utf8, BOOLEAN stripDebugAttri
 static I_32 readAnnotations (J9CfrClassFile * classfile, J9CfrAnnotation * pAnnotations, U_32 annotationCount, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags);
 static I_32 readTypeAnnotation (J9CfrClassFile * classfile, J9CfrTypeAnnotation * pAnnotations, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags);
 static I_32 readAnnotationElement (J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnnotationElement, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags);
-static I_32 checkClassVersion (J9CfrClassFile* classfile, U_8* segment, U_32 flags);
+static I_32 checkClassVersion (J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted);
 static BOOLEAN utf8EqualUtf8 (J9CfrConstantPoolInfo *utf8a, J9CfrConstantPoolInfo *utf8b);
 static BOOLEAN utf8Equal (J9CfrConstantPoolInfo* utf8, char* string, UDATA length);
 static I_32 readMethods (J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags);
 static I_32 readPool (J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer);
 static I_32 checkDuplicateMembers (J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U_32 flags, UDATA memberSize);
 static I_32 checkPool (J9CfrClassFile* classfile, U_8* segment, U_8* poolStart, I_32 *maxBootstrapMethodIndex, U_32 flags);
-static I_32 checkClass (J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32 endOfConstantPool, U_32 flags);
+static I_32 checkClass (J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32 endOfConstantPool, U_32 vmVersionShifted, U_32 flags);
 static I_32 readFields (J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags);
-static I_32 checkMethods (J9CfrClassFile* classfile, U_8* segment, U_32 flags);
+static I_32 checkMethods (J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags);
 static BOOLEAN memberEqual (J9CfrClassFile * classfile, J9CfrMember* a, J9CfrMember* b);
 static void sortMethodIndex(J9CfrConstantPoolInfo* constantPool, J9CfrMethod *list, IDATA start, IDATA end);
 static IDATA compareMethodIDs(J9CfrConstantPoolInfo* constantPool, J9CfrMethod *a, J9CfrMethod *b);
@@ -1166,6 +1166,28 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 			i++;
 			break;
 
+		case CFR_CONSTANT_Module:
+		case CFR_CONSTANT_Package:
+			if (classfile->majorVersion < 53) {
+				errorCode = J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53__ID;
+				offset = (U_32)(index - data - 1);
+				goto _errorFound;
+			}
+
+			if (!J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_MODULE)) {
+				if (J9_ARE_ALL_BITS_SET(info->tag, CFR_CONSTANT_Module)) {
+					errorCode = J9NLS_CFR_ERR_CONSTANT_MODULE_OUTSIDE_MODULE__ID;
+				} else {
+					errorCode = J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE__ID;
+				}
+				offset = (U_32)(index - data - 1);
+				goto _errorFound;
+			}
+			CHECK_EOF(2);
+			NEXT_U16(info->slot1, index);
+			i++;
+			break;
+
 		default:
 			errorCode = J9NLS_CFR_ERR_UNKNOWN_CONSTANT__ID;
 			offset = (U_32) (index - data - 1);
@@ -1377,6 +1399,11 @@ checkPool(J9CfrClassFile* classfile, U_8* segment, U_8* poolStart, I_32 *maxBoot
 			index += 5;
 			break;
 
+		case CFR_CONSTANT_Module:
+		case CFR_CONSTANT_Package:
+			index += 3;
+			break;
+
 		default:
 			errorCode = J9NLS_CFR_ERR_UNKNOWN_CONSTANT__ID;
 			goto _errorFound;
@@ -1503,7 +1530,7 @@ _errorFound:
 */
 
 static I_32 
-checkMethods(J9CfrClassFile* classfile, U_8* segment, U_32 flags)
+checkMethods(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags)
 {
 	J9CfrMethod* method;
 	U_32 value = 0;
@@ -1555,13 +1582,42 @@ checkMethods(J9CfrClassFile* classfile, U_8* segment, U_32 flags)
 			 */
 			if (classfileVersion < BCT_Java7MajorVersionShifted) {
 				method->accessFlags |= CFR_ACC_STATIC;
-				method->accessFlags &= CFR_CLINIT_METHOD_ACCESS_MASK;
-			} else if (J9_ARE_ALL_BITS_SET(method->accessFlags, CFR_ACC_STATIC)) {
-				method->accessFlags &= CFR_CLINIT_METHOD_ACCESS_MASK;
-				/* missing code attribute  detected elsewhere */
+
+			/* Leave this here to find usages of the following check:
+			 * if (J2SE_VERSION(vm) >= J2SE_19) { 
+			 */
+			} else if (vmVersionShifted >= BCT_Java9MajorVersionShifted) {
+				if (J9_ARE_NO_BITS_SET(method->accessFlags, CFR_ACC_STATIC)) {
+					/* missing code attribute  detected elsewhere */
+					errorCode = J9NLS_CFR_ERR_CLINIT_NOT_STATIC__ID;
+					goto _errorFound;
+				}
 			}
+
+			method->accessFlags &= CFR_CLINIT_METHOD_ACCESS_MASK;
 			goto _nameCheck;
+
 		} 
+
+		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<init>", 6)) {
+
+			/* check no invalid flags set */
+			if (value & ~CFR_INIT_METHOD_ACCESS_MASK) {
+				errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;
+				goto _errorFound;
+			}
+
+			/* Java SE 9 Edition:
+			 * A method is an instance initialization method if
+			 * it is defined in a class (not an interface).
+			 */
+			if (vmVersionShifted >= BCT_Java9MajorVersionShifted) {
+				if (classfile->accessFlags & CFR_ACC_INTERFACE) {
+					errorCode = J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE__ID;
+					goto _errorFound;
+				}
+			}
+		}
 
 		/* Check interface-method-only access flag constraints. */
 		if (classfile->accessFlags & CFR_ACC_INTERFACE) {
@@ -1600,13 +1656,7 @@ checkMethods(J9CfrClassFile* classfile, U_8* segment, U_32 flags)
 		}
 
 		/* handling method of generic classes (non-interface) */
-		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<init>", 6)) {
-			/* check no invalid flags set */
-			if (value & ~CFR_INIT_METHOD_ACCESS_MASK) {
-				errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;	
-				goto _errorFound;
-			}
-		} else if (value & CFR_ACC_ABSTRACT) {
+		if (value & CFR_ACC_ABSTRACT) {
  			/* check abstract methods */
 			if (value & ~CFR_ABSTRACT_METHOD_ACCESS_MASK) {
 				errorCode = J9NLS_CFR_ERR_ABSTRACT_METHOD__ID;
@@ -2080,11 +2130,11 @@ _errorFound:
 */
 
 static I_32 
-checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 flags)
+checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted)
 {
 	U_32 errorCode = J9NLS_CFR_ERR_MAJOR_VERSION__ID;
 	U_32 offset = 6;
-	U_16 max_allowed_version = flags >> BCT_MajorClassFileVersionMaskShift;
+	U_16 max_allowed_version = vmVersionShifted >> BCT_MajorClassFileVersionMaskShift;
 
 	/* Support versions 45.0 -> <whatever is legal for this VM> */
 	if((classfile->majorVersion >= 45) && (classfile->majorVersion <= max_allowed_version)) {
@@ -2111,7 +2161,7 @@ checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 flags)
 */
 
 static I_32 
-checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32 endOfConstantPool, U_32 flags)
+checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32 endOfConstantPool, U_32 vmVersionShifted, U_32 flags)
 {
 	U_32 value, errorCode, offset;
 	U_32 i;
@@ -2229,7 +2279,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 		return -1;
 	}
 
-	if(checkMethods(classfile, segment, flags)) {
+	if(checkMethods(classfile, segment, vmVersionShifted, flags)) {
 		return -1;
 	}
 
@@ -2296,7 +2346,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 
 I_32
 j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
-	IDATA (*verifyFunction) (J9PortLibrary *aPortLib, J9CfrClassFile* classfile, U_8* segment, U_8* segmentLength, U_8* freePointer, U_32 flags, I_32 *hasRET),
+	IDATA (*verifyFunction) (J9PortLibrary *aPortLib, J9CfrClassFile* classfile, U_8* segment, U_8* segmentLength, U_8* freePointer, U_32 vmVersionShifted, U_32 flags, I_32 *hasRET),
 	U_8* data, UDATA dataLength, U_8* segment, UDATA segmentLength, U_32 flags, U_8** segmentFreePointer, void *verboseContext, UDATA findClassFlags, UDATA romClassSortingThreshold)
 {
 	U_8* dataEnd;
@@ -2311,6 +2361,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	UDATA i;
 	I_32 hasRET = 0;
 	UDATA syntheticFound = FALSE;
+	U_32 vmVersionShifted = flags & BCT_MajorClassFileVersionMask;
 
 	Trc_BCU_j9bcutil_readClassFileBytes_Entry();
 
@@ -2318,11 +2369,6 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	if(segmentLength < (UDATA) sizeof(J9CfrClassFile)) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(-2);
 		return -2;
-	}
-
-	/* protect the callers with default values */
-	if ((flags & BCT_MajorClassFileVersionMask) == 0) {
-		flags |= BCT_Java9MajorVersionShifted;
 	}
 
 	index = data;
@@ -2342,6 +2388,13 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 
 	NEXT_U16(classfile->minorVersion, index);
 	NEXT_U16(classfile->majorVersion, index);
+
+	/* Make sure the structure and static verification below uses the class file version
+	 * number. VM version is maintained in vmVersionShifted.
+	 */
+	flags &= ~BCT_MajorClassFileVersionMask;
+	flags |= ((UDATA) classfile->majorVersion) << BCT_MajorClassFileVersionMaskShift;
+
 	NEXT_U16(classfile->constantPoolCount, index);
 
 	if(classfile->constantPoolCount < 1) {
@@ -2366,7 +2419,19 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	VERBOSE_END(ParseClassFileConstantPool);
 
 	CHECK_EOF(8);
-	classfile->accessFlags = NEXT_U16(classfile->accessFlags, index) & CFR_CLASS_ACCESS_MASK;
+	classfile->accessFlags = NEXT_U16(classfile->accessFlags, index);
+
+	/* class files with the ACC_MODULE flag set cannot be loaded */
+	if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java9MajorVersionShifted)
+		&& J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_MODULE)
+	) {
+		errorCode = J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS__ID;
+		offset = index - data - 2;
+		goto _errorFound;
+	}
+
+	/* mask access flags to remove unused access bits */
+	classfile->accessFlags &= CFR_CLASS_ACCESS_MASK;
 	classfile->j9Flags = 0;
 
 	/* Certain versions of the Java compiler forget to tag interfaces as abstract. Fix it. */
@@ -2522,18 +2587,14 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		classfile->classFileSize += 1 + ROM_ADDRESS_LENGTH;
 	}
 	/* Ensure that this is a supported class file version. */
-	if(checkClassVersion(classfile, segment, flags)) {
+	if(checkClassVersion(classfile, segment, vmVersionShifted)) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(-1);
 		return -1;
 	}
-
-	/* Make sure that following verification uses the class file version number */
-	flags &= ~BCT_MajorClassFileVersionMask;
-	flags |= ((UDATA) classfile->majorVersion) << BCT_MajorClassFileVersionMaskShift;
 	
 	/* Structure verification. This is "Pass 1". */
 	if (0 != (flags & CFR_StaticVerification)) {
-		if(checkClass(portLib, classfile, segment, (U_32) (endOfConstantPool - data), flags)) {
+		if(checkClass(portLib, classfile, segment, (U_32) (endOfConstantPool - data), vmVersionShifted, flags)) {
 			Trc_BCU_j9bcutil_readClassFileBytes_Exit(-1);
 			return -1;
 		}
@@ -2543,7 +2604,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	VERBOSE_START(ParseClassFileVerifyClass);
 	/* Static verification. This is the first half of "Pass 2". */
 	if (0 != (flags & CFR_StaticVerification)) {
-		if((result = (I_32)(verifyFunction)(portLib, classfile, segment, segmentEnd, freePointer, flags, &hasRET)) != 0) {
+		if((result = (I_32)(verifyFunction)(portLib, classfile, segment, segmentEnd, freePointer, vmVersionShifted, flags, &hasRET)) != 0) {
 			Trc_BCU_j9bcutil_readClassFileBytes_Exit(result);
 			return result;
 		}

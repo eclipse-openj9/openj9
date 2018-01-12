@@ -17,12 +17,13 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j2sever.h"
 #include "j9protos.h"
 #include "ut_j9util.h"
+#include "j9java8packages.h"
 
 /* Ensure J9VM_JAVA9_BUILD is always defined to simplify conditions. */
 #ifndef J9VM_JAVA9_BUILD
@@ -269,9 +270,13 @@ isPackageExportedToModuleHelper(J9VMThread *currentThread, J9Module *fromModule,
 			}
 		} else if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_DENY_ILLEGAL_ACCESS)) {
 			/* in Java9 --illegal-access=permit is turned on by default. This opens
-			 * each package to all-unnamed modules unless illegal-access=deny is specified
+			 * each package (that existed in java8) to all-unnamed modules unless
+			 * illegal-access=deny is specified.
 			 */
-			isExported = TRUE;
+			J9UTF8 *pkgName = j9package->packageName;
+			if (NULL != lookupJava8Package((const char*) J9UTF8_DATA(pkgName), J9UTF8_LENGTH(pkgName))) {
+				isExported = TRUE;
+			}
 		}
 	}
 	return isExported;

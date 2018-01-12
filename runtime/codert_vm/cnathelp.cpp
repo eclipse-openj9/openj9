@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9.h"
@@ -1522,12 +1522,10 @@ old_slow_jitResolveSpecialMethod(J9VMThread *currentThread)
 	DECLARE_JIT_INT_PARM(cpIndex, 3);
 	J9Method *method = NULL;
 	buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_SPECIAL_METHOD, parmCount, true, 0, jitEIP);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	/* If cpIndex has the J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG bit set, it is an index into split table, otherwise it is an index in constant pool */
 	if (J9_ARE_ANY_BITS_SET(cpIndex, J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG)) {
 		method = currentThread->javaVM->internalVMFunctions->resolveSpecialSplitMethodRef(currentThread, ramConstantPool, cpIndex & J9_SPLIT_TABLE_INDEX_MASK, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 	} else
-#endif /* J9VM_INTERP_USE_SPLIT_SIDE_TABLES */
 	{
 		method = currentThread->javaVM->internalVMFunctions->resolveSpecialMethodRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 	}
@@ -1548,12 +1546,10 @@ old_slow_jitResolveStaticMethod(J9VMThread *currentThread)
 	DECLARE_JIT_INT_PARM(cpIndex, 3);
 	UDATA method = 0;
 	buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_STATIC_METHOD, parmCount, true, 0, jitEIP);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 	/* If cpIndex has the J9_STATIC_SPLIT_TABLE_INDEX_FLAG bit set, it is an index into split table, otherwise it is an index in constant pool */
 	if (J9_ARE_ANY_BITS_SET(cpIndex, J9_STATIC_SPLIT_TABLE_INDEX_FLAG)) {
 		method = (UDATA)currentThread->javaVM->internalVMFunctions->resolveStaticSplitMethodRef(currentThread, ramConstantPool, cpIndex & J9_SPLIT_TABLE_INDEX_MASK, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 	} else
-#endif /* J9VM_INTERP_USE_SPLIT_SIDE_TABLES */
 	{
 		method = (UDATA)currentThread->javaVM->internalVMFunctions->resolveStaticMethodRef(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 	}
@@ -2491,7 +2487,12 @@ fast_jitCollapseJNIReferenceFrame(J9VMThread *currentThread)
 }
 
 UDATA J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitInstanceOf(J9VMThread *currentThread, j9object_t object, J9Class *castClass)
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitInstanceOf(J9VMThread *currentThread, J9Class *castClass, j9object_t object)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 	JIT_HELPER_PROLOGUE();
 	UDATA isInstance = 0;
@@ -2540,7 +2541,12 @@ fast_jitNewObjectNoZeroInit(J9VMThread *currentThread, J9Class *objectClass)
 }
 
 void* J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitANewArray(J9VMThread *currentThread, I_32 size, J9Class *elementClass)
+#else /* J9VM_ARCH_X86  || J9VM_ARCH_S390*/
 fast_jitANewArray(J9VMThread *currentThread, J9Class *elementClass, I_32 size)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitANewArray(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2553,7 +2559,12 @@ fast_jitANewArray(J9VMThread *currentThread, J9Class *elementClass, I_32 size)
 }
 
 void* J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitANewArrayNoZeroInit(J9VMThread *currentThread, I_32 size, J9Class *elementClass)
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitANewArrayNoZeroInit(J9VMThread *currentThread, J9Class *elementClass, I_32 size)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitANewArrayNoZeroInit(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2566,7 +2577,12 @@ fast_jitANewArrayNoZeroInit(J9VMThread *currentThread, J9Class *elementClass, I_
 }
 
 void* J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitNewArray(J9VMThread *currentThread, I_32 size, I_32 arrayType)
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitNewArray(J9VMThread *currentThread, I_32 arrayType, I_32 size)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitNewArray(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2579,7 +2595,12 @@ fast_jitNewArray(J9VMThread *currentThread, I_32 arrayType, I_32 size)
 }
 
 void* J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitNewArrayNoZeroInit(J9VMThread *currentThread, I_32 size, I_32 arrayType)
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitNewArrayNoZeroInit(J9VMThread *currentThread, I_32 arrayType, I_32 size)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitNewArrayNoZeroInit(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2592,7 +2613,12 @@ fast_jitNewArrayNoZeroInit(J9VMThread *currentThread, I_32 arrayType, I_32 size)
 }
 
 void* J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitCheckCast(J9VMThread *currentThread, j9object_t object, J9Class *castClass)
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitCheckCast(J9VMThread *currentThread, J9Class *castClass, j9object_t object)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitCheckCast(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2611,7 +2637,12 @@ fast_jitCheckCast(J9VMThread *currentThread, J9Class *castClass, j9object_t obje
 }
 
 void* J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitCheckCastForArrayStore(J9VMThread *currentThread, j9object_t object, J9Class *castClass)
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitCheckCastForArrayStore(J9VMThread *currentThread, J9Class *castClass, j9object_t object)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitCheckCastForArrayStore(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2628,7 +2659,12 @@ fast_jitCheckCastForArrayStore(J9VMThread *currentThread, J9Class *castClass, j9
 }
 
 void* J9FASTCALL
+#if defined(J9VM_ARCH_X86)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitLookupInterfaceMethod(J9VMThread *currentThread, void *jitEIP, J9Class *receiverClass, UDATA *indexAndLiteralsEA)
+#else /* J9VM_ARCH_X86 */
 fast_jitLookupInterfaceMethod(J9VMThread *currentThread, J9Class *receiverClass, UDATA *indexAndLiteralsEA, void *jitEIP)
+#endif /* J9VM_ARCH_X86 */
 {
 //	extern void* slow_jitLookupInterfaceMethod(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2706,7 +2742,12 @@ fast_jitMonitorExit(J9VMThread *currentThread, j9object_t syncObject)
 }
 
 void* J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread, j9object_t objectBeingStored, j9object_t destinationObject)
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread, j9object_t destinationObject, j9object_t objectBeingStored)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 //	extern void* slow_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread);
 	JIT_HELPER_PROLOGUE();
@@ -2719,7 +2760,12 @@ fast_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread, j9object_t d
 }
 
 void* J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitTypeCheckArrayStore(J9VMThread *currentThread, j9object_t objectBeingStored, j9object_t destinationObject)
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 fast_jitTypeCheckArrayStore(J9VMThread *currentThread, j9object_t destinationObject, j9object_t objectBeingStored)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
 {
 	JIT_HELPER_PROLOGUE();
 	/* Not omitting NULL check */

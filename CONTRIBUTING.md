@@ -17,7 +17,7 @@ OpenJDK Assembly Exception [2].
 [1] https://www.gnu.org/software/classpath/license.html
 [2] http://openjdk.java.net/legal/assembly-exception.html
 
-SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 # Contributing to Eclipse OpenJ9
@@ -69,6 +69,10 @@ copying resources into the body of the commit over providing external links.
 Structure large commit messages with headers, references etc. Remember, however,
 that the commit message is always going to be rendered in plain text.
 
+Please add `[skip ci]` to the commit message when the change doesn't require a 
+compilation, such as documentation only changes, to avoid unnecessarily wasting
+the project's build resources.
+
 Use the commit footer to place commit metadata. The footer is the last block of
 contiguous text in the message. It is separated from the body by one or more
 blank lines, and as such cannot contain any blank lines. Lines in the footer are
@@ -86,7 +90,7 @@ Correct race in frobnicator
 
 This patch eliminates the race condition in issue #1234.
 
-Issue: #1234
+Fixes: #1234
 ```
 
 Sign off on your commit in the footer. By doing this, you assert original
@@ -107,6 +111,10 @@ or your commit will fail IP validation.
 It is important that you read and understand the legal considerations found
 below when signing off or contributing any commit.
 
+When appropriate, use the keywords described in the following help article to 
+automatically close issues.
+https://help.github.com/articles/closing-issues-using-keywords/
+
 ### Example commits
 
 Here is an example of a *good* commit:
@@ -125,7 +133,7 @@ The guidelines are changed to:
 - Encourage contributors to put more information into the commit
   message.
 
-Issue: #124
+Closes: #124
 Signed-off-by: Robert Young <rwy0717@gmail.com>
 ```
 
@@ -208,6 +216,6 @@ The template for the copyright notice and dual-license is as follows:
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  * 
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 ```

@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <project name="Compile Java Test Projects" basedir="." default="build">
@@ -34,12 +34,12 @@
 	<property name="JAVA_BIN" value="${JAVA_BIN}" />
 	<echo> JAVA_BIN is ${JAVA_BIN} </echo>
 	<if>
-		<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+		<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 		<then>
-			<property name="JAVAC" value="${JAVA_BIN}/javac" />
+			<property name="JAVAC" value="${JAVA_BIN}/../../bin/javac" />
 		</then>
 		<else>
-			<property name="JAVAC" value="${JAVA_BIN}/../../bin/javac" />
+			<property name="JAVAC" value="${JAVA_BIN}/javac" />
 		</else>
 	</if>
 
@@ -69,42 +69,20 @@
 
 	<target name="build" depends="stage_test_material" description="using ${JAVA_VERSION} compile the source ">
 		<if>
-			<equals arg1="${JCL_VERSION}" arg2="latest"/>
+			<equals arg1="${JAVA_VERSION}" arg2="Panama"/>
 			<then>
 				<subant target="">
 					<property name="build.dir" value="subant1.build" />
 					<property name="not.overloaded" value="not.overloaded" />
 					<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
 					<property name="compiler.javac" value="${JAVAC}" />
-					<fileset dir="../../" includes="${build.list}" >
-						<exclude name="TEST_*/build.xml" />
-						<exclude name="cmd*/build.xml" />
-						<exclude name="Jsr292/build.xml" />
-						<exclude name="Jsr335/build.xml" />
-						<exclude name="NativeTest/build.xml" />
-						<exclude name="UnsafeTest/build.xml" />
-						<exclude name="SharedCPEntryInvokerTests/build.xml" />
-						<exclude name="Valhalla/build.xml" />
-						<exclude name="Panama/build.xml" />
+					<fileset dir="../../">
+						<include name="Panama/build.xml" />
 					</fileset>
 				</subant>
 			</then>
 			<elseif>
-				<equals arg1="${JCL_VERSION}" arg2="Panama"/>
-				<then>
-					<subant target="">
-						<property name="build.dir" value="subant1.build" />
-						<property name="not.overloaded" value="not.overloaded" />
-						<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
-						<property name="compiler.javac" value="${JAVAC}" />
-						<fileset dir="../../">
-							<include name="Panama/build.xml" />
-						</fileset>
-					</subant>
-				</then>
-			</elseif>
-			<elseif>
-				<equals arg1="${JCL_VERSION}" arg2="Valhalla"/>
+				<equals arg1="${JAVA_VERSION}" arg2="Valhalla"/>
 				<then>
 					<subant target="">
 						<property name="build.dir" value="subant1.build" />
@@ -117,15 +95,78 @@
 					</subant>
 				</then>
 			</elseif>
+			<elseif>
+				<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+				<then>
+					<if>
+						<equals arg1="${JCL_VERSION}" arg2="latest"/>
+						<then>
+							<subant target="">
+								<property name="build.dir" value="subant1.build" />
+								<property name="not.overloaded" value="not.overloaded" />
+								<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
+								<property name="compiler.javac" value="${JAVAC}" />
+								<fileset dir="../../" includes="${build.list}" >
+									<exclude name="TEST_*/build.xml" />
+									<exclude name="NativeTest/build.xml" />
+									<exclude name="SharedCPEntryInvokerTests/build.xml" />
+								</fileset>
+							</subant>
+						</then>
+						<else>
+							<subant target="">
+								<property name="build.dir" value="subant1.build" />
+								<property name="not.overloaded" value="not.overloaded" />
+								<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
+								<property name="compiler.javac" value="${JAVAC}" />
+								<fileset dir="../../" includes="${build.list}" >
+									<exclude name="TEST_*/build.xml" />
+									<exclude name="OpenJ9_Jsr_292_API/build.xml" />
+								</fileset>
+							</subant>
+						</else>
+					</if>
+				</then>
+			</elseif>
+			<elseif>
+				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+				<then>
+					<if>
+						<equals arg1="${JCL_VERSION}" arg2="latest"/>
+						<then>
+							<subant target="">
+								<property name="build.dir" value="subant1.build" />
+								<property name="not.overloaded" value="not.overloaded" />
+								<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
+								<property name="compiler.javac" value="${JAVAC}" />
+								<fileset dir="../../" includes="${build.list}" >
+									<exclude name="TEST_*/build.xml" />
+									<exclude name="NativeTest/build.xml" />
+								</fileset>
+							</subant>
+						</then>
+						<else>
+							<subant target="">
+								<property name="build.dir" value="subant1.build" />
+								<property name="not.overloaded" value="not.overloaded" />
+								<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
+								<property name="compiler.javac" value="${JAVAC}" />
+								<fileset dir="../../" includes="${build.list}" >
+									<exclude name="TEST_*/build.xml" />
+								</fileset>
+							</subant>
+						</else>
+					</if>
+				</then>
+			</elseif>
 			<else>
 				<subant target="">
 					<property name="build.dir" value="subant1.build" />
 					<property name="not.overloaded" value="not.overloaded" />
 					<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
 					<property name="compiler.javac" value="${JAVAC}" />
-					<fileset dir="../../" includes="${build.list}" >
+					<fileset dir="../../" includes="${build.list}">
 						<exclude name="TEST_*/build.xml" />
-						<exclude name="Panama/build.xml" />
 					</fileset>
 				</subant>
 			</else>

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "jvmtiHelpers.h"
@@ -25,11 +25,11 @@
 #include "j2sever.h"
 
 typedef struct {
-	char * errorName;
+	const char *errorName;
 	jvmtiError errorValue;
 } J9JvmtiErrorMapping;
 
-static J9JvmtiErrorMapping errorMap[] = {
+static const J9JvmtiErrorMapping errorMap[] = {
 	{ "JVMTI_ERROR_NONE" , 0 },
 	{ "JVMTI_ERROR_INVALID_THREAD" , 10 },
 	{ "JVMTI_ERROR_INVALID_THREAD_GROUP" , 11 },
@@ -43,6 +43,7 @@ static J9JvmtiErrorMapping errorMap[] = {
 	{ "JVMTI_ERROR_INVALID_METHODID" , 23 },
 	{ "JVMTI_ERROR_INVALID_LOCATION" , 24 },
 	{ "JVMTI_ERROR_INVALID_FIELDID" , 25 },
+	{ "JVMTI_ERROR_INVALID_MODULE" , 26 },
 	{ "JVMTI_ERROR_NO_MORE_FRAMES" , 31 },
 	{ "JVMTI_ERROR_OPAQUE_FRAME" , 32 },
 	{ "JVMTI_ERROR_TYPE_MISMATCH" , 34 },
@@ -65,6 +66,7 @@ static J9JvmtiErrorMapping errorMap[] = {
 	{ "JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_MODIFIERS_CHANGED" , 70 },
 	{ "JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_MODIFIERS_CHANGED" , 71 },
 	{ "JVMTI_ERROR_UNMODIFIABLE_CLASS" , 79 },
+	{ "JVMTI_ERROR_UNMODIFIABLE_MODULE" , 80 },
 	{ "JVMTI_ERROR_NOT_AVAILABLE" , 98 },
 	{ "JVMTI_ERROR_MUST_POSSESS_CAPABILITY" , 99 },
 	{ "JVMTI_ERROR_NULL_POINTER" , 100 },
@@ -189,7 +191,7 @@ jvmtiGetErrorName(jvmtiEnv* env,
 	jvmtiError error,
 	char** name_ptr)
 {
-	J9JvmtiErrorMapping * mapping;
+	const J9JvmtiErrorMapping *mapping = NULL;
 	jvmtiError rc = JVMTI_ERROR_ILLEGAL_ARGUMENT;
 	PORT_ACCESS_FROM_JVMTI(env);
 

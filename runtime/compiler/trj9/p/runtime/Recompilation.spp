@@ -1,0 +1,713 @@
+!! Copyright (c) 2000, 2017 IBM Corp. and others
+!!
+!! This program and the accompanying materials are made available under
+!! the terms of the Eclipse Public License 2.0 which accompanies this
+!! distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+!! or the Apache License, Version 2.0 which accompanies this distribution and
+!! is available at https://www.apache.org/licenses/LICENSE-2.0.
+!!
+!! This Source Code may also be made available under the following
+!! Secondary Licenses when the conditions for such availability set
+!! forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+!! General Public License, version 2 with the GNU Classpath
+!! Exception [1] and GNU General Public License, version 2 with the
+!! OpenJDK Assembly Exception [2].
+!!
+!! [1] https://www.gnu.org/software/classpath/license.html
+!! [2] http://openjdk.java.net/legal/assembly-exception.html
+!!
+!! SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+
+#include "j9cfg.h"
+#include "jilconsts.inc"
+#include "p/runtime/ppcasmdefines.inc"
+	.file "Recompilation.s"
+
+	.set	PPCOP_BLT_MASK, 0xFF83;
+	.set	PPCOP_BLT_ENCODING, 0x4180;
+	.set	J9TR_SamplingLR_BodyInfo, 0;
+	.set	J9TR_SamplingLR_StartPC, 8 + ALen;
+	.set	J9TR_CountingLR_BodyInfo, 0;
+	.set	J9TR_CountingLR_StartPC, ALen;
+#ifdef TR_HOST_64BIT
+	.set	J9TR_CountingPrologueSize, 40;
+#else
+	.set	J9TR_CountingPrologueSize, 28;
+#endif
+	.set	J9TR_CPatchLR_Branch, 0;
+	.set    J9TR_BodyInfo_MethodInfo, ALen ;
+	.set	J9TR_MethodInfo_J9Method, 0;
+
+#ifdef AIXPPC
+	.globl	._samplingRecompileMethod
+	.globl	_samplingRecompileMethod{DS}
+	.globl	._samplingPatchCallSite
+	.globl	_samplingPatchCallSite
+	.globl	._countingRecompileMethod
+	.globl	_countingRecompileMethod{DS}
+	.globl	._countingPatchCallSite
+	.globl	_countingPatchCallSite
+	.globl	._induceRecompilation
+	.globl	_induceRecompilation
+	.globl  ._initialInvokeExactThunkGlue
+	.globl  _initialInvokeExactThunkGlue
+	.globl  ._revertToInterpreterGlue
+	.globl  _revertToInterpreterGlue
+
+#elif defined(LINUXPPC64)
+	.globl	FUNC_LABEL(_samplingRecompileMethod)
+	.type	FUNC_LABEL(_samplingRecompileMethod),@function
+	.globl	FUNC_LABEL(_samplingPatchCallSite)
+	.type	FUNC_LABEL(_samplingPatchCallSite),@function
+	.globl	FUNC_LABEL(_countingRecompileMethod)
+	.type	FUNC_LABEL(_countingRecompileMethod),@function
+	.globl	FUNC_LABEL(_countingPatchCallSite)
+	.type	FUNC_LABEL(_countingPatchCallSite),@function
+	.globl	FUNC_LABEL(_induceRecompilation)
+	.type	FUNC_LABEL(_induceRecompilation),@function
+	.globl  FUNC_LABEL(_initialInvokeExactThunkGlue)
+	.type   FUNC_LABEL(_initialInvokeExactThunkGlue),@function
+	.globl  FUNC_LABEL(_revertToInterpreterGlue)
+	.type   FUNC_LABEL(_revertToInterpreterGlue),@function
+
+#elif defined(LINUX)
+	.globl	_samplingRecompileMethod
+	.globl	_samplingPatchCallSite
+	.globl	_countingRecompileMethod
+	.globl	_countingPatchCallSite
+	.globl	_induceRecompilation
+	.globl   _initialInvokeExactThunkGlue
+	.globl   _revertToInterpreterGlue
+#endif
+
+	.extern	jitRetranslateMethod
+	.extern	__refreshHelper
+	.extern jitCallCFunction
+	.extern mcc_callPointPatching_unwrapper
+	.extern ppcIndirectCallPatching_unwrapper
+	.extern	induceRecompilation_unwrapper
+	.extern	initialInvokeExactThunk_unwrapper
+
+#ifdef AIXPPC
+! .text section
+	.csect    Recomp_TEXT{PR}
+#elif defined(LINUXPPC64)
+	.section  ".text"
+	.align    2
+#endif
+
+
+#ifdef AIXPPC
+._countingRecompileMethod:
+	.function ._countingRecompileMethod,startproc._countingRecompileMethod,16,0,(endproc._countingRecompileMethod-startproc._countingRecompileMethod)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(_countingRecompileMethod):
+#else
+_countingRecompileMethod:
+#endif
+! on entry, r0 contains the saved LR, r12 may contain a vtable offset
+! normal parameter registers also live
+	startproc._countingRecompileMethod:
+	addi	J9SP, J9SP, -(11*ALen)
+	staddr	r12, 9*ALen(J9SP)			! save r12 - it has the vtable offset if we came via IPICDispatch
+	staddr  r0, 8*ALen(J9SP)			! save senderPC
+	mflr	r12					! fetch snippetPC (countingLR) into r12
+	staddr	r3, 7*ALen(J9SP)			! push argument registers onto the stack
+	staddr	r4, 6*ALen(J9SP)
+	staddr	r5, 5*ALen(J9SP)
+	staddr	r6, 4*ALen(J9SP)
+	staddr	r7, 3*ALen(J9SP)
+	staddr	r8, 2*ALen(J9SP)
+	staddr	r9, 1*ALen(J9SP)
+	staddr	r10, 0*ALen(J9SP)
+
+	laddr	r11, J9TR_CountingLR_BodyInfo(r12)	!
+	laddr   r11, J9TR_BodyInfo_MethodInfo(r11)	! fetch method info
+	laddr	r4, J9TR_CountingLR_StartPC(r12)	! r4 is the old startPC (second arg to jitRetranslateMethod)
+	staddr	r4, 10*ALen(J9SP)			! save old startPC
+
+#ifdef	AIXPPC
+	laddr	RTOC, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r10, TOCjitRetranslateMethod(RTOC)
+	laddr	r10, 0(r10)
+#elif defined(LINUXPPC64)
+	laddr	RTOC, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r10, TOCjitRetranslateMethod@toc(RTOC)
+#if !defined(__LITTLE_ENDIAN__)
+	laddr	r10, 0(r10)
+#endif
+#else
+	laddr	r10, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r10, jitRetranslateMethod@got(r10)
+#endif
+	mtctr	r10
+
+#ifdef  TR_HOST_64BIT
+	tdeqi	r11, 0					! assert valid method info
+#else
+	tweqi	r11, 0					! assert valid method info
+#endif
+	laddr	r3, J9TR_MethodInfo_J9Method(r11)		! r3 is the rammethod (first arg to jitRetranslateMethod)
+	mr	r5, r0					! senderPC (third arg to jitRetranslateMethod)
+#ifdef  TR_HOST_64BIT
+	rldicr	r4, r4, 0, 61				! mask bottom 2 bits out
+#else
+	rlwinm	r4, r4, 0, 0, 29				! mask bottom 2 bits out
+#endif
+	bctrl
+	laddr	r7, 10*ALen(J9SP)				! fetch old startPC
+#ifdef  TR_HOST_64BIT
+	rldicr	r8, r7, 0, 61
+#else
+	rlwinm	r8, r7, 0, 0, 29
+#endif
+	cmpi	cr0, CmpAddr, r3, 0
+	bc	BO_IF_NOT, CR0_EQ, L.CGotNewAddress		! Either new or old startPC in r3
+	lwz	r4, -4(r8)
+	rlwinm	r4, r4, 16, 0x0000FFFF
+	rlwinm	r7, r7, 2, 29, 29
+	add	r9, r4, r8
+	addi	r7, r7, J9TR_CountingPrologueSize		! Recomp not done yet, so bypass counting preprologue
+	add	r9, r9, r7				! Old JIT entry
+	b	L.CDispatch
+L.CGotNewAddress:
+	lwz	r4, -4(r3)
+	rlwinm	r4, r4, 16, 0x0000FFFF
+	add	r9, r3, r4				! r9 is now the new jitStartPC
+L.CDispatch:
+	mtctr	r9
+	laddr	r12, 9*ALen(J9SP)
+	laddr	r11, 8*ALen(J9SP)
+	laddr	r3, 7*ALen(J9SP)
+	laddr	r4, 6*ALen(J9SP)
+	laddr	r5, 5*ALen(J9SP)
+	mtlr	r11
+	laddr	r6, 4*ALen(J9SP)
+	laddr	r7, 3*ALen(J9SP)
+	laddr	r8, 2*ALen(J9SP)
+	laddr	r9, 1*ALen(J9SP)
+	laddr	r10, 0*ALen(J9SP)
+	addi	J9SP, J9SP, 11*ALen
+	bctr
+	endproc._countingRecompileMethod:
+
+
+#ifdef AIXPPC
+._samplingRecompileMethod:
+	.function ._samplingRecompileMethod,startproc._samplingRecompileMethod,16,0,(endproc._samplingRecompileMethod-startproc._samplingRecompileMethod)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(_samplingRecompileMethod):
+#else
+_samplingRecompileMethod:
+#endif
+	startproc._samplingRecompileMethod:
+! on entry, r0 contains the saved LR, r12 may contain a vtable offset
+! normal parameter registers also live
+	addi    J9SP, J9SP, -(11*ALen)
+	staddr	r12, 9*ALen(J9SP)			! save r12 - it has the vtable offset if we came via IPICDispatch
+	staddr	r0, 8*ALen(J9SP)			! save senderPC
+	mflr	r12					! fetch prologuePC (samplingLR) into r12
+	staddr	r3, 7*ALen(J9SP)			! push argument registers onto the stack
+	staddr	r4, 6*ALen(J9SP)
+	staddr	r5, 5*ALen(J9SP)
+	staddr	r6, 4*ALen(J9SP)
+	staddr	r7, 3*ALen(J9SP)
+	staddr	r8, 2*ALen(J9SP)
+	staddr	r9, 1*ALen(J9SP)
+	staddr	r10, 0*ALen(J9SP)
+
+	laddr	r11, J9TR_SamplingLR_BodyInfo(r12)	!
+	laddr	r11, J9TR_BodyInfo_MethodInfo(r11)	! fetch method info
+	addi	r4, r12, J9TR_SamplingLR_StartPC	! r4 is the old startPC (second arg to jitRetranslateMethod)
+	staddr	r4, 10*ALen(J9SP)			! save old startPC
+
+#ifdef	AIXPPC
+	laddr	RTOC, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r10, TOCjitRetranslateMethod(RTOC)
+	laddr	r10, 0(r10)
+#elif defined(LINUXPPC64)
+	laddr	RTOC, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r10, TOCjitRetranslateMethod@toc(RTOC)
+#if !defined(__LITTLE_ENDIAN__)
+	laddr	r10, 0(r10)
+#endif
+#else
+	laddr	r10, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r10, jitRetranslateMethod@got(r10)
+#endif
+	mtctr	r10
+
+#ifdef  TR_HOST_64BIT
+	tdeqi	r11, 0					! assert valid method info
+#else
+	tweqi	r11, 0					! assert valid method info
+#endif
+	laddr	r3, J9TR_MethodInfo_J9Method(r11)	! r3 is the rammethod (first arg to jitRetranslateMethod)
+	mr	r5, r0					! senderPC (third arg to jitRetranslateMethod)
+	bctrl
+	cmpi	cr0, CmpAddr, r3, 0
+	bc	BO_IF_NOT, CR0_EQ, L.SgotNewAddress
+	laddr	r4, 10*ALen(J9SP)			! fetch startPC from the stack
+	lwz	r5, -4(r4)				! interpreter entry prologue size
+	rlwinm	r5, r5, 16, 0x0000FFFF
+	add	r9, r4, r5				! r9 is now the old jitStartPC
+	b	L.SDispatch
+L.SgotNewAddress:
+	lwz	r4, -4(r3)				! interpreter entry prologue size
+	rlwinm	r4, r4, 16, 0x0000FFFF
+	add	r9, r3, r4				! r9 is now the new jitStartPC
+L.SDispatch:
+	mtctr	r9
+	laddr	r12, 9*ALen(J9SP)
+	laddr	r11, 8*ALen(J9SP)
+	laddr	r3, 7*ALen(J9SP)
+	laddr	r4, 6*ALen(J9SP)
+	mtlr	r11
+	laddr	r5, 5*ALen(J9SP)
+	laddr	r6, 4*ALen(J9SP)
+	laddr	r7, 3*ALen(J9SP)
+	laddr	r8, 2*ALen(J9SP)
+	laddr	r9, 1*ALen(J9SP)
+	laddr	r10, 0*ALen(J9SP)
+	addi	J9SP, J9SP, 11*ALen
+	bctr
+	endproc._samplingRecompileMethod:
+
+
+#ifdef AIXPPC
+._countingPatchCallSite:
+	.function ._countingPatchCallSite,startproc._countingPatchCallSite,16,0,(endproc._countingPatchCallSite-startproc._countingPatchCallSite)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(_countingPatchCallSite):
+#else
+_countingPatchCallSite:
+#endif
+! on entry, r0 contains the saved LR, r12 may contain a vtable offset
+! normal parameter registers also live
+	startproc._countingPatchCallSite:
+	addi	J9SP, J9SP, -4*ALen			! Free a few registers for utility
+	staddr	r12, 0(J9SP)
+	staddr	r10, ALen(J9SP)
+	mr	r11, r0
+	mfspr	r10, LR
+	staddr	r9, 2*ALen(J9SP)
+	staddr	r8, 3*ALen(J9SP)
+
+	lwzu	r12, J9TR_CPatchLR_Branch(r10)
+	rlwinm	r8, r12, 16, 16, 31
+	rlwinm	r9, r12, 0, 16, 31
+	andi.	r0, r8, PPCOP_BLT_MASK
+	cmpli	cr0, 0, r0, PPCOP_BLT_ENCODING
+	bc	BO_IF, CR0_EQ, L.ready_CountingLR
+	lwzu	r12, 4(r10)
+	rlwinm	r9, r12, 0, 6, 29
+L.ready_CountingLR:
+	add	r12, r10, r9
+	addi	r10, r12, 4
+	laddr	r9, J9TR_CountingLR_BodyInfo(r10)		! BodyInfo
+	laddr	r9, J9TR_BodyInfo_MethodInfo(r9)		! MethodInfo
+
+	! HCR
+	laddr	r8, J9TR_MethodInfo_J9Method(r9)
+	laddr	r8, J9TR_MethodPCStartOffset(r8)
+	andi.	r8, r8, J9TR_MethodNotCompiledBit
+	bc	BO_IF, CR0_EQ, L.continuePatching
+	mtlr	r10					! Fake coming from the snippet
+	mr	r0, r11
+	laddr	r12, 0(J9SP)
+	laddr	r10, ALen(J9SP)
+	laddr	r9, 2*ALen(J9SP)
+	laddr	r8, 3*ALen(J9SP)
+	addi	J9SP, J9SP, 4*ALen
+	b	startproc._countingRecompileMethod
+L.continuePatching:
+	laddr	r10, J9TR_CountingLR_StartPC(r10)		! Old startPC
+#ifdef	TR_HOST_64BIT
+	rldicr	r10, r10, 0, 61
+#else
+	rlwinm	r10, r10, 0, 0, 29
+#endif
+	b	L.commonPatchPoint
+	endproc._countingPatchCallSite:
+
+
+#ifdef AIXPPC
+._samplingPatchCallSite:
+	.function ._samplingPatchCallSite,startproc._samplingPatchCallSite,16,0,(endproc._samplingPatchCallSite-startproc._samplingPatchCallSite)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(_samplingPatchCallSite):
+#else
+_samplingPatchCallSite:
+#endif
+! on entry, r0 contains the saved LR, r12 may contain a vtable offset
+! normal parameter registers also live
+	startproc._samplingPatchCallSite:
+	addi	J9SP, J9SP, -4*ALen					! Free a few registers for utility
+	staddr	r12, 0(J9SP)
+	staddr	r10, 1*ALen(J9SP)
+	mr	r11, r0
+	mfspr	r10, LR
+	staddr	r9, 2*ALen(J9SP)
+	staddr	r8, 3*ALen(J9SP)
+
+	! Check whether we come from code cache: for now, we assume there is only one cache. For multiple
+	!    caches, we probably have to go to a C routine.
+	laddr	r9, J9TR_SamplingLR_BodyInfo(r10)		! BodyInfo
+	laddr	r9, J9TR_BodyInfo_MethodInfo(r9)		! MethodInfo
+
+	! HCR
+	laddr	r8, J9TR_MethodInfo_J9Method(r9)
+	laddr	r8, J9TR_MethodPCStartOffset(r8)
+	andi.	r8, r8, J9TR_MethodNotCompiledBit
+	addi	r10, r10, J9TR_SamplingLR_StartPC		! Old startPC
+	bc	BO_IF, CR0_EQ, L.commonPatchPoint
+	laddr	r12, 0(J9SP)
+	laddr	r10, 1*ALen(J9SP)
+	laddr	r9, 2*ALen(J9SP)
+	laddr	r8, 3*ALen(J9SP)
+	addi	J9SP, J9SP, 4*ALen
+	b	startproc._samplingRecompileMethod
+
+L.commonPatchPoint:						! Stack shape, r9(mthdInfo), r10(oldPC), r11(LR)
+	laddr	r9, J9TR_MethodInfo_J9Method(r9)
+	staddru	r9, -8*ALen(J9SP)
+	laddr	r9, J9TR_MethodPCStartOffset(r9)		! New startPC
+	laddr	RTOC, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	lwz	r8, -4(r11)
+	staddr	r3, 5*ALen(J9SP)
+	staddr	r4, 6*ALen(J9SP)
+	staddr	r5, 7*ALen(J9SP)
+	addi	r3, r11, -4
+	rlwinm	r8, r8, 6, 0x000000FF
+	cmpli	cr0, 0, r8, 0x0052				! == means bl instruction
+	staddr	r3, ALen(J9SP)
+	staddr	r9, 2*ALen(J9SP)
+	staddr	r16, 4*ALen(J9SP)
+	addi	r3, J9SP, 4*ALen
+	staddr	r3, 3*ALen(J9SP)
+#if defined(AIXPPC)
+	laddr	r8, TOCjitCallCFunction(RTOC)
+	laddr	r3, TOCmcc_callPointPatching_unwrapper(RTOC)
+	laddr	r4, TOCppcIndirectCallPatching_unwrapper(RTOC)
+	laddr	r8, 0(r8)
+#elif defined(LINUXPPC64)
+	laddr	r8, TOCjitCallCFunction@toc(RTOC)
+	laddr	r3, TOCmcc_callPointPatching_unwrapper@toc(RTOC)
+	laddr	r4, TOCppcIndirectCallPatching_unwrapper@toc(RTOC)
+#if !defined(__LITTLE_ENDIAN__)
+	laddr	r8, 0(r8)
+#endif
+#else
+	laddr	r8, jitCallCFunction@got(RTOC)
+	laddr	r3, mcc_callPointPatching_unwrapper@got(RTOC)
+	laddr	r4, ppcIndirectCallPatching_unwrapper@got(RTOC)
+#endif
+	bc	BO_IF, CR0_EQ, L.directCallPatching
+	mr	r3, r4
+L.directCallPatching:
+	mr	r4, J9SP
+	mr	r5, J9SP
+	mtctr	r8
+	lwz	r8, -4(r9)					! interpreter entry prologue size
+	rlwinm	r8, r8, 16, 0x0000FFFF
+	add	r9, r8, r9					! New JIT entry
+	bctrl
+	laddr	r3, 5*ALen(J9SP)
+	laddr	r4, 6*ALen(J9SP)
+	laddr	r5, 7*ALen(J9SP)
+	addi	J9SP, J9SP, 8*ALen
+L.done:
+	mtspr	CTR, r9
+	laddr	r12, 0(J9SP)					! Needed for cascading
+	laddr	r10, 1*ALen(J9SP)
+	mtspr	LR, r11
+	laddr	r9, 2*ALen(J9SP)
+	laddr	r8, 3*ALen(J9SP)
+	addi	J9SP, J9SP, 4*ALen
+	bcctr	BO_ALWAYS, CR0_EQ
+
+	endproc._samplingPatchCallSite:
+
+#ifdef AIXPPC
+._induceRecompilation:
+	.function ._induceRecompilation,startproc._induceRecompilation,16,0,(endproc._induceRecompilation-startproc._induceRecompilation)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(_induceRecompilation):
+#else
+_induceRecompilation:
+#endif
+! on entry, r3 contains the startPC of the method to be recompiled
+! registers r4 and r5 are available for use here
+	startproc._induceRecompilation:
+! set up for call to jitCallCFunction
+! get stack space for the memory arguments to jitCallCFunction and LR save
+	mflr	r4
+	addi	J9SP, J9SP, -3*ALen
+! first argument is startPC in r3
+	staddr	r3, 0*ALen(J9SP)
+! second argument is VMThread
+	staddr	J9VM_STRUCT, 1*ALen(J9SP)
+	staddr	r4, 2*ALen(J9SP)
+#if defined(AIXPPC)
+	laddr	r3, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r4, TOCjitCallCFunction(r3)
+	laddr	r3, TOCinduceRecompilation_unwrapper(r3)
+	laddr	r4, 0(r4)
+#elif defined(LINUXPPC64)
+	laddr	r3, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r4, TOCjitCallCFunction@toc(r3)
+	laddr	r3, TOCinduceRecompilation_unwrapper@toc(r3)
+#if !defined(__LITTLE_ENDIAN__)
+	laddr	r4, 0(r4)
+#endif
+#else
+	laddr	r3, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r4, jitCallCFunction@got(r3)
+	laddr	r3, induceRecompilation_unwrapper@got(r3)
+#endif
+	mtctr	r4
+
+! arg pointer passed in r4
+	mr	r4, J9SP
+! result pointer (not used) passed in r5
+	li	r5, 0
+
+	bctrl
+
+	laddr	r4, 2*ALen(J9SP)
+	addi	J9SP, J9SP, 3*ALen
+	mtlr	r4
+	blr
+	endproc._induceRecompilation:
+
+#ifdef AIXPPC
+._revertToInterpreterGlue:
+	.function ._revertToInterpreterGlue,startproc._revertToInterpreterGlue,16,0,(endproc._revertToInterpreterGlue-startproc._revertToInterpreterGlue)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(_revertToInterpreterGlue):
+#else
+_revertToInterpreterGlue:
+#endif
+! on entry, r0 contains the saved LR
+! current LR points to a data area to set up the interpreter call
+! all parameters have been saved in the Java stack
+	startproc._revertToInterpreterGlue:
+	mflr	r4
+	laddr	r5, 1*ALen(r4)
+	laddr	r3, 0(r4)
+	mtlr	r0
+	mtctr	r5
+	bctr
+	endproc._revertToInterpreterGlue:
+
+#ifdef AIXPPC
+._initialInvokeExactThunkGlue:
+	.function ._initialInvokeExactThunkGlue,startproc._initialInvokeExactThunkGlue,16,0,(endproc._initialInvokeExactThunkGlue-startproc._initialInvokeExactThunkGlue)
+#elif defined(LINUXPPC64)
+FUNC_LABEL(_initialInvokeExactThunkGlue):
+#else
+_initialInvokeExactThunkGlue:
+#endif
+	startproc._initialInvokeExactThunkGlue:
+! set up for call to jitCallCFunction
+! get stack space for the memory arguments to jitCallCFunction and LR save
+	addi	J9SP, J9SP, -6*ALen
+! first argument is receiver MethodHandle in r3
+	staddr	r3, 0*ALen(J9SP)
+! second argument is VMThread
+	staddr	J9VM_STRUCT, 1*ALen(J9SP)
+! preserve other argument registers
+	staddr	r5, 5*ALen(J9SP)
+	staddr	r4, 4*ALen(J9SP)
+	staddr	r3, 3*ALen(J9SP)
+	mflr	r4
+	staddr	r4, 2*ALen(J9SP)
+#if defined(AIXPPC)
+	laddr	r3, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r4, TOCjitCallCFunction(r3)
+	laddr	r3, TOCinitialInvokeExactThunk_unwrapper(r3)
+	laddr	r4, 0(r4)
+#elif defined(LINUXPPC64)
+	laddr	r3, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r4, TOCjitCallCFunction@toc(r3)
+	laddr	r3, TOCinitialInvokeExactThunk_unwrapper@toc(r3)
+#if !defined(__LITTLE_ENDIAN__)
+	laddr	r4, 0(r4)
+#endif
+#else
+	laddr	r3, J9TR_VMThreadRTOCOffset(J9VM_STRUCT)
+	laddr	r4, jitCallCFunction@got(r3)
+	laddr	r3, initialInvokeExactThunk_unwrapper@got(r3)
+#endif
+	mtctr	r4
+
+! arg pointer passed in r4
+	mr	r4, J9SP
+! result pointer passed in r5
+	mr	r5, J9SP
+
+	bctrl
+
+! move thunk address to ctr
+	laddr	r4, 0(J9SP)
+	mtctr	r4
+
+! restore registers
+	laddr	r4, 2*ALen(J9SP)
+	mtlr	r4
+	laddr	r3, 3*ALen(J9SP)
+	laddr	r4, 4*ALen(J9SP)
+	laddr	r5, 5*ALen(J9SP)
+
+! free argument buffer
+	addi	J9SP, J9SP, 6*ALen
+
+! jump to thunk; TODO:JSR292: check for null and call vm helper to interpret instead
+	bctr
+	endproc._initialInvokeExactThunkGlue:
+
+! .data section
+#ifdef AIXPPC
+	.toc
+TOCjitRetranslateMethod:
+	.tc	jitRetranslateMethod[TC],jitRetranslateMethod
+TOC__refreshHelper:
+	.tc	__refreshHelper[TC],__refreshHelper
+TOC_samplingPatchCallSite:
+	.tc	_samplingPatchCallSite[TC],_samplingPatchCallSite
+TOC_countingPatchCallSite:
+	.tc	_countingPatchCallSite[TC],_countingPatchCallSite
+TOCjitCallCFunction:
+	.tc     jitCallCFunction[TC],jitCallCFunction
+TOCmcc_callPointPatching_unwrapper:
+	.tc     mcc_callPointPatching_unwrapper[TC],mcc_callPointPatching_unwrapper
+TOCppcIndirectCallPatching_unwrapper:
+	.tc	ppcIndirectCallPatching_unwrapper[TC],ppcIndirectCallPatching_unwrapper
+TOCinduceRecompilation_unwrapper:
+	.tc	induceRecompilation_unwrapper[TC],induceRecompilation_unwrapper
+TOCinitialInvokeExactThunk_unwrapper:
+	.tc	initialInvokeExactThunk_unwrapper[TC],initialInvokeExactThunk_unwrapper
+
+	.csect    _samplingRecompileMethod{DS}
+	ADDR      ._samplingRecompileMethod
+	ADDR      TOC{TC0}
+	ADDR      0x00000000
+! End   csect     _samplingRecompileMethod{DS}
+
+	.csect    _samplingPatchCallSite{DS}
+	ADDR      ._samplingPatchCallSite
+	ADDR      TOC{TC0}
+	ADDR      0x00000000
+! End   csect     _samplingPatchCallSite{DS}
+
+	.csect    _countingRecompileMethod{DS}
+	ADDR      ._countingRecompileMethod
+	ADDR      TOC{TC0}
+	ADDR      0x00000000
+! End   csect     _countingRecompileMethod{DS}
+
+	.csect    _countingPatchCallSite{DS}
+	ADDR      ._countingPatchCallSite
+	ADDR      TOC{TC0}
+	ADDR      0x00000000
+! End   csect     _countingPatchCallSite{DS}
+
+	.csect    _induceRecompilation{DS}
+	ADDR      ._induceRecompilation
+	ADDR      TOC{TC0}
+	ADDR      0x00000000
+! End   csect     _induceRecompilation{DS}
+
+	.csect    _initialInvokeExactThunkGlue{DS}
+	ADDR      ._initialInvokeExactThunkGlue
+	ADDR      TOC{TC0}
+	ADDR      0x00000000
+! End   csect     _initialInvokeExactThunkGlue{DS}
+
+	.csect    _revertToInterpreterGlue{DS}
+	ADDR      ._revertToInterpreterGlue
+	ADDR      TOC{TC0}
+	ADDR      0x00000000
+! End   csect     _revertToInterpreterGlue{DS}
+
+#elif defined(LINUXPPC64)
+	.section  ".toc"
+TOCjitRetranslateMethod:
+	.tc	jitRetranslateMethod[TC],jitRetranslateMethod
+TOC__refreshHelper:
+	.tc	__refreshHelper[TC],__refreshHelper
+TOC_samplingPatchCallSite:
+	.tc	_samplingPatchCallSite[TC],_samplingPatchCallSite
+TOC_countingPatchCallSite:
+	.tc	_countingPatchCallSite[TC],_countingPatchCallSite
+TOCjitCallCFunction:
+	.tc     jitCallCFunction[TC],jitCallCFunction
+TOCmcc_callPointPatching_unwrapper:
+	.tc     mcc_callPointPatching_unwrapper[TC],mcc_callPointPatching_unwrapper
+TOCppcIndirectCallPatching_unwrapper:
+	.tc	ppcIndirectCallPatching_unwrapper[TC],ppcIndirectCallPatching_unwrapper
+TOCinduceRecompilation_unwrapper:
+	.tc	induceRecompilation_unwrapper[TC],induceRecompilation_unwrapper
+TOCinitialInvokeExactThunk_unwrapper:
+	.tc	initialInvokeExactThunk_unwrapper[TC],initialInvokeExactThunk_unwrapper
+
+#if !defined(__LITTLE_ENDIAN__)
+	.section  ".opd","aw"
+	.align    3
+	.globl    _samplingRecompileMethod
+	.size     _samplingRecompileMethod,24
+_samplingRecompileMethod:
+	.quad     ._samplingRecompileMethod
+	.quad     .TOC.@tocbase
+	.long     0x00000000
+	.long     0x00000000
+
+	.globl    _samplingPatchCallSite
+	.size     _samplingPatchCallSite,24
+_samplingPatchCallSite:
+	.quad     ._samplingPatchCallSite
+	.quad     .TOC.@tocbase
+	.long     0x00000000
+	.long     0x00000000
+
+	.globl    _countingRecompileMethod
+	.size     _countingRecompileMethod,24
+_countingRecompileMethod:
+	.quad     ._countingRecompileMethod
+	.quad     .TOC.@tocbase
+	.long     0x00000000
+	.long     0x00000000
+
+	.globl    _countingPatchCallSite
+	.size     _countingPatchCallSite,24
+_countingPatchCallSite:
+	.quad     ._countingPatchCallSite
+	.quad     .TOC.@tocbase
+	.long     0x00000000
+	.long     0x00000000
+
+	.globl    _induceRecompilation
+	.size     _induceRecompilation,24
+_induceRecompilation:
+	.quad     ._induceRecompilation
+	.quad     .TOC.@tocbase
+	.long     0x00000000
+	.long     0x00000000
+
+	.globl    _initialInvokeExactThunkGlue
+	.size     _initialInvokeExactThunkGlue,24
+_initialInvokeExactThunkGlue:
+	.quad     ._initialInvokeExactThunkGlue
+	.quad     .TOC.@tocbase
+	.long     0x00000000
+	.long     0x00000000
+
+	.globl    _revertToInterpreterGlue
+	.size     _revertToInterpreterGlue,24
+_revertToInterpreterGlue:
+	.quad     ._revertToInterpreterGlue
+	.quad     .TOC.@tocbase
+	.long     0x00000000
+	.long     0x00000000
+#endif
+#endif

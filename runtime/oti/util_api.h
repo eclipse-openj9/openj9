@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef util_api_h
@@ -1130,159 +1130,6 @@ jfloat helperCFloatRemainderFloat(jfloat a, jfloat b);
 
 
 #endif /* J9VM_INTERP_FLOAT_SUPPORT */ /* End File Level Build Flags */
-
-
-/* ---------------- flttrig.c ---------------- */
-
-#if (defined(J9VM_INTERP_FLOAT_SUPPORT))  /* File Level Build Flags */
-
-/**
-* @brief
-* @param *a
-* @param *b
-* @return I_32
-*/
-I_32 helperDoubleArcCos(ESDOUBLE *a, ESDOUBLE *b);
-
-
-/**
-* @brief
-* @param *a
-* @param *b
-* @return I_32
-*/
-I_32 helperDoubleArcSin(ESDOUBLE *a, ESDOUBLE *b);
-
-
-/**
-* @brief
-* @param *a
-* @param *b
-* @return I_32
-*/
-I_32 helperDoubleArcTan(ESDOUBLE *a, ESDOUBLE *b);
-
-
-/**
-* @brief
-* @param *a
-* @param *b
-* @param *c
-* @return I_32
-*/
-I_32 helperDoubleArcTan2Double(ESDOUBLE *a, ESDOUBLE *b, ESDOUBLE *c);
-
-
-/**
-* @brief
-* @param *a
-* @param *b
-* @return I_32
-*/
-I_32 helperDoubleExp(ESDOUBLE *a, ESDOUBLE *b);
-
-
-/**
-* @brief
-* @param *a
-* @param *b
-* @param *c
-* @return I_32
-*/
-I_32 helperDoubleIEEERemainderDouble(ESDOUBLE *a, ESDOUBLE *b, ESDOUBLE *c);
-
-
-/**
-* @brief
-* @param *a
-* @param *b
-* @return I_32
-*/
-I_32 helperDoubleLn(ESDOUBLE *a, ESDOUBLE *b);
-
-
-/**
-* @brief
-* @param a
-* @param b
-* @param c
-* @return I_32
-*/
-I_32 helperDoublePowDouble(ESDOUBLE * a, ESDOUBLE * b, ESDOUBLE * c);
-
-
-/**
-* @brief
-* @param a
-* @param b
-* @return I_32
-*/
-I_32 helperDoubleRint(ESDOUBLE * a, ESDOUBLE * b);
-
-
-#endif /* J9VM_INTERP_FLOAT_SUPPORT */ /* End File Level Build Flags */
-
-
-/* ---------------- flttrigcldc.c ---------------- */
-
-#if (defined(J9VM_INTERP_FLOAT_SUPPORT))  /* File Level Build Flags */
-
-/**
-* @brief
-* @param *a
-* @param *b
-* @return I_32
-*/
-I_32 helperDoubleCeil(ESDOUBLE *a, ESDOUBLE *b);
-
-
-/**
-* @brief
-* @param a
-* @param b
-* @return I_32
-*/
-I_32 helperDoubleCos(ESDOUBLE * a, ESDOUBLE * b);
-
-
-/**
-* @brief
-* @param *a
-* @param *b
-* @return I_32
-*/
-I_32 helperDoubleFloor(ESDOUBLE *a, ESDOUBLE *b);
-
-
-/**
-* @brief
-* @param *a
-* @param *b
-* @return I_32
-*/
-I_32 helperDoubleSin(ESDOUBLE *a, ESDOUBLE *b);
-
-
-/**
-* @brief
-* @param *a
-* @param *b
-* @return I_32
-*/
-I_32 helperDoubleSqrt(ESDOUBLE *a, ESDOUBLE *b);
-
-
-/**
-* @brief
-* @param a
-* @param b
-* @return I_32
-*/
-I_32 helperDoubleTan(ESDOUBLE * a, ESDOUBLE * b);
-
-
-#endif /* J9VM_INTERP_FLOAT_SUPPORT */ /* End File Level Build Flags */
-
 
 /* ---------------- j9crc32.c ---------------- */
 
@@ -2644,11 +2491,12 @@ gpProtectAndRun(protected_fn function, JNIEnv * env, void *args);
  * @param currentClass the class that contains the invokespecial
  * @param resolvedClass the class resolved from the MethodRef in the constantpool
  * @param method the J9Method returned by javaLookupMethod() for the MethodRef.
+ * @param lookupOptions options for javaLookupMethod in the case of re-resolution for super send
  *
  * @return the J9Method for the super send or the passed in the J9Method if this is not a super send.
  */
 J9Method *
-getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *resolvedClass, J9Method *method);
+getMethodForSpecialSend(J9VMThread *vmStruct, J9Class *currentClass, J9Class *resolvedClass, J9Method *method, UDATA lookupOptions);
 
 /**
  * JVMS 4.9.2: If resolvedClass is an interface, ensure that it is a DIRECT superinterface of currentClass,

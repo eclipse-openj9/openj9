@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "gc_internal.h"
@@ -58,6 +58,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 #if defined(J9VM_GC_FINALIZATION)
 	j9gc_finalizer_startup,
 	j9gc_finalizer_shutdown,
+	j9gc_wait_for_reference_processing,
 	runFinalization,
 #endif /* J9VM_GC_FINALIZATION */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -75,6 +76,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	getStaticObjectAllocateFlags,
 	j9gc_scavenger_enabled,
 	j9gc_concurrent_scavenger_enabled,
+	j9gc_software_read_barrier_enabled,
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
 	j9gc_concurrent_getCardSize,
 	j9gc_concurrent_getHeapBase,

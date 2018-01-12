@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /**
@@ -338,7 +338,8 @@ BOOLEAN zipCache_copy(J9ZipCache * zipCache, void *cacheData, UDATA dataSize) {
 
 	orgDirEntry = &orgzce->root;
 	/* copy the root file list */
-	if (record = ZIP_SRP_GET(orgDirEntry->fileList, J9ZipFileRecord *)) {
+	record = ZIP_SRP_GET(orgDirEntry->fileList, J9ZipFileRecord *);
+	if (NULL != record) {
 		while (record) {
 			J9ZipFileEntry *fileEntry = record->entry;
 			for (i=0; i<record->entryCount; i++) {
@@ -830,7 +831,8 @@ J9ZipFileEntry *zipCache_addToFileList(J9PortLibrary *portLib, J9ZipCacheEntry *
 	char *name;
 
 	if (chunkActiveDir == dirEntry) {
-		if (entry = (J9ZipFileEntry *) zipCache_reserveEntry(zce, chunk, sizeof(*entry), nameSize, &name)) {
+		entry = (J9ZipFileEntry *) zipCache_reserveEntry(zce, chunk, sizeof(*entry), nameSize, &name);
+		if (NULL != entry) {
 			J9ZipFileRecord *fileList = ZIP_SRP_GET(chunkActiveDir->fileList, J9ZipFileRecord *);
 			/* add to end of existing entry */
 			fileList->entryCount++;

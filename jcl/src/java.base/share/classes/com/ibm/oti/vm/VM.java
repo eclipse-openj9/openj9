@@ -20,7 +20,7 @@ package com.ibm.oti.vm;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 import com.ibm.oti.util.Msg;
@@ -79,12 +79,17 @@ public final class VM {
 	public static final int J9CLASS_SIZE;
 	
 	public static final int J9_JAVA_CLASS_DEPTH_MASK;
+	public static final int J9_JAVA_CLASS_MASK;
 	
 	public static final int J9ROMCLASS_MODIFIERS_OFFSET;
 	
 	public static final int ADDRESS_SIZE;
+
+	public static final int J9_ACC_CLASS_ARRAY;
 	
 	public static final int J9_ACC_CLASS_INTERNAL_PRIMITIVE_TYPE;
+
+	public static final int J9CLASS_INIT_SUCCEEDED;
 
 	/* Valid types for J9_JIT_STRING_DEDUP_POLICY are:
 	 *  - J9_JIT_STRING_DEDUP_POLICY_DISABLED
@@ -150,12 +155,15 @@ public final class VM {
 		J9CLASS_SIZE = 0;
 		
 		J9_JAVA_CLASS_DEPTH_MASK = 0;
+		J9_JAVA_CLASS_MASK = 0;
 		
 		J9ROMCLASS_MODIFIERS_OFFSET = 0;
 		
 		ADDRESS_SIZE = 0;
 		
 		J9_ACC_CLASS_INTERNAL_PRIMITIVE_TYPE = 0;
+		J9_ACC_CLASS_ARRAY = 0;
+		J9CLASS_INIT_SUCCEEDED = 0;
 		
 		J9_JIT_STRING_DEDUP_POLICY = 0;
 		
@@ -225,23 +233,6 @@ public final static native long getUid();
  * @return	true if the specified ClassLoader is the bootstrap ClassLoader
  */
 static private final native boolean isBootstrapClassLoader(ClassLoader loader); 
-
-/*[IF Sidecar19-SE]*/
-/**
- * Native used to find and load a class in a module using the VM. 
- * If it fails to find the class or any exception occurs in finding the class then it returns null. 
- *
- * @return 		java.lang.Class
- *					the class or null.
- * @param		moduleName String
- * 					the name of the module from which to load the class
- * @param 		className String
- *					the name of the class to search for.
- * @param		classLoader
- *					the classloader to do the work
- */
-static native Class findClassInModuleOrNull(String moduleName, String className, ClassLoader classLoader);
-/*[ENDIF]*/
 
 /**
  * Ensures that the caller of the method where this check is made is a bootstrap class. 

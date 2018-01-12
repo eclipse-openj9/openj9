@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package java.lang.invoke;
 
@@ -54,7 +54,7 @@ public class MutableCallSite extends CallSite {
 	private static final long targetFieldOffset = initializeTargetFieldOffset();
 	private static long initializeTargetFieldOffset(){
 		try{
-			return MethodHandle.getUnsafe().objectFieldOffset(MutableCallSite.class.getDeclaredField("target")); //$NON-NLS-1$
+			return MethodHandle.UNSAFE.objectFieldOffset(MutableCallSite.class.getDeclaredField("target")); //$NON-NLS-1$
 		} catch (Exception e) {
 			InternalError ie = new InternalError();
 			ie.initCause(e);
@@ -119,7 +119,7 @@ public class MutableCallSite extends CallSite {
 	private static final Object bypassBase = initializeBypassBase();
 	private static Object initializeBypassBase() {
 		try{
-			return MethodHandle.getUnsafe().staticFieldBase(MutableCallSite.class.getDeclaredField("targetFieldOffset")); //$NON-NLS-1$
+			return MethodHandle.UNSAFE.staticFieldBase(MutableCallSite.class.getDeclaredField("targetFieldOffset")); //$NON-NLS-1$
 		} catch (Exception e) {
 			InternalError ie = new InternalError();
 			ie.initCause(e);
@@ -160,9 +160,9 @@ public class MutableCallSite extends CallSite {
 					// Equivalence check saved us a thaw, so it's worth doing them every time.
 					equivalenceInterval = 1;
 /*[IF Sidecar19-SE-B174]*/				
-					MethodHandle.getUnsafe().compareAndSetObject(this, targetFieldOffset, oldTarget, newTarget);
+					MethodHandle.UNSAFE.compareAndSetObject(this, targetFieldOffset, oldTarget, newTarget);
 /*[ELSE]
-					MethodHandle.getUnsafe().compareAndSwapObject(this, targetFieldOffset, oldTarget, newTarget);
+					MethodHandle.UNSAFE.compareAndSwapObject(this, targetFieldOffset, oldTarget, newTarget);
 /*[ENDIF]*/					
 				} else {
 					thaw(oldTarget, newTarget);
@@ -175,7 +175,7 @@ public class MutableCallSite extends CallSite {
 				thaw(oldTarget, newTarget);
 			}
 			if (globalRefCleaner.bypassOffset != 0) {
-				MethodHandle.getUnsafe().putObject(bypassBase, globalRefCleaner.bypassOffset, newTarget);
+				MethodHandle.UNSAFE.putObject(bypassBase, globalRefCleaner.bypassOffset, newTarget);
 			}
 		}
 	}

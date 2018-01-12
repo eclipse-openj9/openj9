@@ -18,7 +18,7 @@
 	[1] https://www.gnu.org/software/classpath/license.html
 	[2] http://openjdk.java.net/legal/assembly-exception.html
 
-	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module>
 
@@ -71,25 +71,10 @@
 			<include path="j9gcinclude"/>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
 			<include path="j9gcgluejava"/>
-			<include path="../tr.source/runtime" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
-			<include path="../tr.source/ibm/runtime" type="relativepath">
+			<include path="../compiler/runtime" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 			<include path="j9codert_vm">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
-			<include path="../tr.source/codegen" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
-			<include path="../tr.source/ibm/codegen" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>			
-			<include path="../tr.source/base" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
-			<include path="../tr.source/ibm/base" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 		</includes>

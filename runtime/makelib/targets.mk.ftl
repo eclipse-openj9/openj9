@@ -1,25 +1,4 @@
-<#-- 
-	Copyright (c) 1998, 2017 IBM Corp. and others
-	
-	This program and the accompanying materials are made available under
-	the terms of the Eclipse Public License 2.0 which accompanies this
-	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-	or the Apache License, Version 2.0 which accompanies this distribution and
-	is available at https://www.apache.org/licenses/LICENSE-2.0.
-	
-	This Source Code may also be made available under the following
-	Secondary Licenses when the conditions for such availability set
-	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-	General Public License, version 2 with the GNU Classpath
-	Exception [1] and GNU General Public License, version 2 with the
-	OpenJDK Assembly Exception [2].
-	
-	[1] https://www.gnu.org/software/classpath/license.html
-	[2] http://openjdk.java.net/legal/assembly-exception.html
-
-	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
--->
-# Copyright (c) 1998, ${uma.year} IBM Corp. and others
+# Copyright (c) 1998, 2017 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +16,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
 # The following section converts Shared Libraries to Static Libraries
 # when doing a static build.
@@ -116,6 +95,8 @@ ifeq ($(UMA_TARGET_TYPE),EXE)
 endif
 
 CFLAGS+=-DJAVA_SPEC_VERSION=$(VERSION_MAJOR)
+CXXFLAGS+=-DJAVA_SPEC_VERSION=$(VERSION_MAJOR)
+CPPFLAGS+=-DJAVA_SPEC_VERSION=$(VERSION_MAJOR)
 
 # Declare the 'all' target
 
@@ -134,6 +115,8 @@ all: $(TARGETS)
 <#include "targets.mk.ztpf.inc.ftl">
 <#elseif uma.spec.type.linux>
 <#include "targets.mk.linux.inc.ftl">
+<#elseif uma.spec.type.osx>
+<#include "targets.mk.osx.inc.ftl">
 </#if>
 
 # Add OMR include paths
@@ -175,9 +158,10 @@ CPPFLAGS+=$(UMA_C_INCLUDES)
 PATH:=${uma.spec.properties.crossCompilerPath.value}:<#noparse>${PATH}</#noparse>
 </#if>
 
-<#if uma.spec.type.ztpf && uma.spec.properties.tpfRoot.defined>
+<#if uma.spec.type.ztpf && uma.spec.properties.tpfRoot.defined  && uma.spec.properties.tpfProj.defined>
 # Put the proper directories based on cur||commit||svt value in the includes path.
 UMA_ZTPF_ROOT:=${uma.spec.properties.tpfRoot.value}
+UMA_PROJ_ROOT:=${uma.spec.properties.tpfProj.value}
 
 CPATH+=/ztpf/$(UMA_ZTPF_ROOT)/local_mod/base/include:/ztpf/$(UMA_ZTPF_ROOT)/base/include:/ztpf/$(UMA_ZTPF_ROOT)/local_mod/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward:/ztpf/$(UMA_ZTPF_ROOT)/local_mod:/ztpf/$(UMA_ZTPF_ROOT)/base/include
 export $(CPATH)
@@ -185,14 +169,16 @@ export $(CPATH)
 C_INCLUDE_PATH+=/ztpf/$(UMA_ZTPF_ROOT)/local_mod/base/include:/ztpf/$(UMA_ZTPF_ROOT)/base/include:/ztpf/$(UMA_ZTPF_ROOT)/local_mod/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++:/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward:/ztpf/$(UMA_ZTPF_ROOT)/local_mod:/ztpf/$(UMA_ZTPF_ROOT)/base/include
 export $(C_INCLUDE_PATH)
 
-UMA_ZTPF_INCLUDES:=-D_TPF_SOURCE -DJ9ZTPF -DLINUX -DS390 -DS39064 -DFULL_ANSI -DMAXMOVE -DZTPF_POSIX_SOCKET -fPIC -fno-strict-aliasing -D_GNU_SOURCE -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -Wno-format-extra-args  -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -fno-builtin-isdigit -ffloat-store -DIBM_ATOE -fno-strict-aliasing -Wno-unknown-pragmas -Wreturn-type -Wno-unused -Wno-uninitialized -Wno-parentheses -gdwarf-2 -D_PORTABLE_TPF_SIGINFO -I/ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -I/ztpf/$(UMA_ZTPF_ROOT) -I/ztpf/$(UMA_ZTPF_ROOT)/base/include -isystem/ztpf/$(UMA_ZTPF_ROOT)/opensource/include -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++ -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward -I/ztpf/$(UMA_ZTPF_ROOT)/local_mod/base/include -isystem /ztpf/cur/noship/include -iquote ../include
+UMA_ZTPF_INCLUDES:= -D_TPF_SOURCE -DJ9ZTPF -DLINUX -DS390 -DS39064 -DFULL_ANSI -DMAXMOVE -DZTPF_POSIX_SOCKET -fPIC -fno-strict-aliasing -D_GNU_SOURCE -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -Wno-format-extra-args  -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -fno-builtin-isdigit -ffloat-store -DIBM_ATOE -fno-strict-aliasing -Wno-unknown-pragmas -Wreturn-type -Wno-unused -Wno-uninitialized -Wno-parentheses -gdwarf-2 -D_PORTABLE_TPF_SIGINFO -I$(UMA_PROJ_ROOT)/base/a2e/headers -I/ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -I$(UMA_PROJ_ROOT)/base/include -I/ztpf/$(UMA_ZTPF_ROOT)/base/include -I$(UMA_PROJ_ROOT)/opensource/include -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include -isystem $(UMA_PROJ_ROOT)/base/a2e/headers -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -isystem $(UMA_PROJ_ROOT)/base/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/include -isystem $(UMA_PROJ_ROOT)/opensource/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include -isystem $(UMA_PROJ_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT) -iquote ../include
 #Lotsa opensource include files need to be defined as system headers to gcc, well, tpf-g++ at least in order to avoid
 #compile errors.
-UMA_ZTPF_CXX_INCLUDES:=-isystem /ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -isystem /ztpf/$(UMA_ZTPF_ROOT) -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++ -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward -isystem /ztpf/$(UMA_ZTPF_ROOT)/local_mod/base/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/noship/include
+UMA_ZTPF_CXX_INCLUDES:= -D_TPF_SOURCE -DJ9ZTPF -DLINUX -DS390 -DS39064 -DFULL_ANSI -DMAXMOVE -DZTPF_POSIX_SOCKET -fPIC -fno-strict-aliasing -D_GNU_SOURCE -fexec-charset=ISO-8859-1 -fmessage-length=0 -funsigned-char -Wno-format-extra-args  -fverbose-asm -fno-builtin-abort -fno-builtin-exit -fno-builtin-sprintf -fno-builtin-isdigit -ffloat-store -DIBM_ATOE -fno-strict-aliasing -Wno-unknown-pragmas -Wreturn-type -Wno-unused -Wno-uninitialized -Wno-parentheses -gdwarf-2 -D_PORTABLE_TPF_SIGINFO -I$(UMA_PROJ_ROOT)/base/a2e/headers -I/ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -I$(UMA_PROJ_ROOT)/base/include -I/ztpf/$(UMA_ZTPF_ROOT)/base/include -I$(UMA_PROJ_ROOT)/opensource/include -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include -I$(UMA_PROJ_ROOT)/opensource/include46/g++ -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++ -I$(UMA_PROJ_ROOT)/opensource/include46/g++/backward -I/ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward -isystem $(UMA_PROJ_ROOT)/base/a2e/headers -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/a2e/headers -isystem $(UMA_PROJ_ROOT)/base/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/base/include -isystem $(UMA_PROJ_ROOT)/opensource/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include -isystem $(UMA_PROJ_ROOT)/opensource/include46/g++ -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++ -isystem $(UMA_PROJ_ROOT)/opensource/include46/g++/backward -isystem /ztpf/$(UMA_ZTPF_ROOT)/opensource/include46/g++/backward -isystem $(UMA_PROJ_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT)/noship/include -isystem /ztpf/$(UMA_ZTPF_ROOT)
 
-CXXFLAGS+=$(UMA_ZTPF_INCLUDES) $(UMA_ZTPF_CXX_INCLUDES)
-CPPFLAGS+= -I$(UMA_PATH_TO_ROOT)oti
 CFLAGS+=$(UMA_ZTPF_INCLUDES)
+CPPFLAGS+= -I$(UMA_PATH_TO_ROOT)oti
+CXXFLAGS+=$(UMA_ZTPF_CXX_INCLUDES)
+
+
 # Add these flags now since we're using a z/tpf spec file.
 UMA_C_INCLUDES:=$(addprefix $(UMA_C_INCLUDE_PREFIX),$(UMA_INCLUDES)) $(UMA_C_INCLUDES)
 CFLAGS+=$(UMA_C_INCLUDES)
@@ -399,7 +385,7 @@ LIBCDEFS := $(wildcard /ztpf/$(UMA_ZTPF_ROOT)/base/lib/libCDEFSFORASM.so)
 	$(AS) $(ASFLAGS) $<
 <#elseif uma.spec.type.ztpf>
 %$(UMA_DOT_O): %.asm
-	perl $(UMA_PATH_TO_ROOT)tr.source/makelib/masm2gas.pl $(UMA_MASM2GAS_FLAGS) $(UMA_C_INCLUDES) $*.asm
+	perl $(UMA_PATH_TO_ROOT)compiler/makelib/masm2gas.pl $(UMA_MASM2GAS_FLAGS) $(UMA_C_INCLUDES) $*.asm
 	$(AS) $(ASFLAGS) -alshd=$*.lst -o $*.o $*.s
 	-rm $*.s
 	tpfobjpp -O ONotApplicable -g gNotApplicable -c PUT14.1  -f $(LIBCDEFS) $@
@@ -451,7 +437,7 @@ UMA_PASM_INCLUDES:=$(addprefix -I ,$(UMA_INCLUDES))
 	-mv -f $*.s $*.hold
 </#if>
 
-<#if uma.spec.type.linux>
+<#if uma.spec.type.linux || uma.spec.type.osx>
 # compilation rule for .spp files - translate ! to newline and ^ to #
 %$(UMA_DOT_O): %.spp
 	$(CPP) $(CPPFLAGS) -o $*.i $*.spp
@@ -461,7 +447,17 @@ UMA_PASM_INCLUDES:=$(addprefix -I ,$(UMA_INCLUDES))
 	-rm -f $*.i2
 	$(AS) $(ASFLAGS) -o $*.o $*.s
 	-rm -f $*.s
+</#if>
 
+<#if uma.spec.type.osx>
+#compilation rule for .m4 files
+%$(UMA_DOT_O): %.m4
+	m4 -DOSX $(UMA_M4_FLAGS) $(UMA_C_INCLUDES) $< > $*.s
+	$(AS) $(ASFLAGS) -o $*.o $*.s
+	-mv -f $*.s $*.hold
+</#if>
+
+<#if uma.spec.type.linux>
 #compilation rule for .m4 files
 %$(UMA_DOT_O): %.m4
 	m4 $(UMA_M4_FLAGS) $(UMA_C_INCLUDES) $< > $*.s
@@ -486,9 +482,15 @@ UMA_PASM_INCLUDES:=$(addprefix -I ,$(UMA_INCLUDES))
 </#if>
 
 <#if uma.spec.type.windows>
+ifdef USE_MINGW
+UMA_M4_INCLUDES = $(UMA_C_INCLUDES)
+else
+UMA_M4_INCLUDES = $(patsubst /I%,-I%,$(UMA_C_INCLUDES))
+endif
+
 #compilation rule for .m4 files
 %$(UMA_DOT_O): %.m4
-	m4 -DWIN32 $(UMA_M4_FLAGS) $(UMA_C_INCLUDES) $< > $*.asm
+	m4 -DWIN32 $(UMA_M4_FLAGS) $(UMA_M4_INCLUDES) $< > $*.asm
 	$(AS) $(ASFLAGS) $*.asm
 	-mv -f $*.asm $*.hold
 
@@ -599,7 +601,7 @@ endif
 
 .PHONY : all clean ddrgen
 
-<#if uma.spec.type.windows || uma.spec.type.linux>
+<#if uma.spec.type.windows || uma.spec.type.linux || uma.spec.type.osx>
 # GNU make magic, replace the .o in UMA_OBJECTS with .d's
 UMA_DEPS := $(filter-out %.res,$(UMA_OBJECTS))
 UMA_DEPS := $(UMA_DEPS:$(UMA_DOT_O)=.d)

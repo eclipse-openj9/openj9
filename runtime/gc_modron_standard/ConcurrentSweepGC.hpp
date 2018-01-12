@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #if !defined(CONCURRENTSWEEPGC_HPP_)
@@ -29,7 +29,7 @@
 
 #if defined(J9VM_GC_CONCURRENT_SWEEP)
 
-#include "EnvironmentStandard.hpp"
+#include "EnvironmentBase.hpp"
 #include "ParallelGlobalGC.hpp"
 
 class MM_EnvironmentBase;
@@ -53,14 +53,14 @@ protected:
 public:
 	virtual UDATA getVMStateID() { return J9VMSTATE_GC_COLLECTOR_CONCURRENTSWEEPGC; };
 	
-	static MM_ConcurrentSweepGC *newInstance(MM_EnvironmentStandard *env, MM_CollectorLanguageInterface *cli);
+	static MM_ConcurrentSweepGC *newInstance(MM_EnvironmentBase *env);
 
 	virtual void payAllocationTax(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, MM_MemorySubSpace *baseSubSpace, MM_AllocateDescription *allocDescription);
 		
 	virtual bool replenishPoolForAllocate(MM_EnvironmentBase *env, MM_MemoryPool *memoryPool, UDATA size);
 
-	MM_ConcurrentSweepGC(MM_EnvironmentStandard *env, MM_CollectorLanguageInterface *cli)
-		: MM_ParallelGlobalGC(env, cli)
+	MM_ConcurrentSweepGC(MM_EnvironmentBase *env)
+		: MM_ParallelGlobalGC(env)
 		, _javaVM((J9JavaVM*)env->getOmrVM()->_language_vm)
 	{
 		_typeId = __FUNCTION__;

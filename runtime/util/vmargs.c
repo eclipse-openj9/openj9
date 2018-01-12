@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include <string.h>
@@ -174,7 +174,8 @@ findArgInVMArgs(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA match
 					success = FALSE;
 					optionValueOperations(PORTLIB, j9vm_args, optionCntr, GET_OPTION, &valueString, 0, ':', 0, NULL);		/* assumes ':' */
 					if (valueString) {
-						if (cursor = strrchr(valueString, ':')) {			/* Skip past any additional sub-options eg. -Xdump:java:<value> */
+						cursor = strrchr(valueString, ':');			/* Skip past any additional sub-options eg. -Xdump:java:<value> */
+						if (NULL != cursor) {
 							++cursor;
 						} else {
 							cursor = valueString;
@@ -187,7 +188,10 @@ findArgInVMArgs(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA match
 									break;
 								}
 							}
-							if (cursor = strchr(cursor, ',')) ++cursor;		/* skip to next option */
+							cursor = strchr(cursor, ',');
+							if (NULL != cursor) {
+								cursor += 1; /* skip to next option */
+							}
 						}
 					}
 				}
@@ -455,8 +459,10 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 						break;
 					case MAP_TWO_COLONS_TO_ONE :
 						cursor = j9vm_args->actualVMArgs->options[element].optionString;
-						if (cursor = strchr(cursor, ':')) {
-							if (cursor = strchr(++cursor, ':')) {
+						cursor = strchr(cursor, ':');
+						if (NULL != cursor) {
+							cursor = strchr(++cursor, ':');
+							if (NULL != cursor) {
 								if (bufSize > 0) {
 									strncpy(*valuesBuffer, ++cursor, (bufSize-1));
 									if (strlen(cursor) > (bufSize-1)) {
@@ -700,29 +706,22 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 	size_t dllNameLength = -1;
 	size_t argumentLength = -1;
 	char *argString = NULL;
+	UDATA j2seReleaseValue = j2seVersion & J2SE_RELEASE_MASK;
 	J9JavaVMArgInfo *optArg = NULL;
+	
 	PORT_ACCESS_FROM_PORT(portLib);
-
-	if (J2SE_19 <= (j2seVersion & J2SE_RELEASE_MASK)) {
-		switch (j2seVersion & J2SE_SHAPE_MASK) {
-		case J2SE_SHAPE_RAW:
-			Assert_Util_unreachable();
-			break;
-		default:
-			dllName = J9_JAVA_SE_9_DLL_NAME;
-			dllNameLength = sizeof(J9_JAVA_SE_9_DLL_NAME);
-			break;
-		}
-	} else if (J2SE_17 <= (j2seVersion & J2SE_RELEASE_MASK)) {
-		switch (j2seVersion & J2SE_SHAPE_MASK) {
-		case J2SE_SHAPE_RAW:
-			Assert_Util_unreachable();
-			break;
-		default:
-			dllName = J9_JAVA_SE_7_BASIC_DLL_NAME;
-			dllNameLength = sizeof(J9_JAVA_SE_7_BASIC_DLL_NAME);
-			break;
-		}
+	if (J2SE_SHAPE_RAW == (j2seVersion & J2SE_SHAPE_MASK)) {
+		Assert_Util_unreachable();
+	} 
+	if (J2SE_V10 <= j2seReleaseValue) {
+		dllName = J9_JAVA_SE_10_DLL_NAME;
+		dllNameLength = sizeof(J9_JAVA_SE_10_DLL_NAME);
+	} else if (J2SE_19 <= j2seReleaseValue) {
+		dllName = J9_JAVA_SE_9_DLL_NAME;
+		dllNameLength = sizeof(J9_JAVA_SE_9_DLL_NAME);
+	} else if (J2SE_17 <= j2seReleaseValue) {
+		dllName = J9_JAVA_SE_7_BASIC_DLL_NAME;
+		dllNameLength = sizeof(J9_JAVA_SE_7_BASIC_DLL_NAME);
 	} else { /* Java 6 */
 		Assert_Util_unreachable();
 	}

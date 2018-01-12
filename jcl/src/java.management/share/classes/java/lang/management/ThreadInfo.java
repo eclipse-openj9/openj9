@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package java.lang.management;
 
@@ -29,6 +29,7 @@ import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.InvalidKeyException;
 
 import com.ibm.java.lang.management.internal.LockInfoUtil;
+import com.ibm.java.lang.management.internal.ManagementAccessControl;
 import com.ibm.java.lang.management.internal.MonitorInfoUtil;
 import com.ibm.java.lang.management.internal.StackTraceElementUtil;
 import com.ibm.java.lang.management.internal.ThreadInfoUtil;
@@ -40,13 +41,13 @@ import com.ibm.java.lang.management.internal.ThreadInfoUtil;
  */
 public class ThreadInfo {
 
+	/* Set up access to ThreadInfo shared secret.*/
+	static {
+		ManagementAccessControl.setThreadInfoAccess(new ThreadInfoAccessImpl());
+	}
+
 	private long threadId;
 
-	/**
-	 * @brief Do /not/ rename this field; it is initialized but not used within the 
-	 * class's code (hence annotated "unused"), whereas, it is accessed via Reflection.
-	 */
-	@SuppressWarnings("unused")
 	private long nativeTId;
 
 	private String threadName;
@@ -328,6 +329,17 @@ public class ThreadInfo {
 	 */
 	public LockInfo getLockInfo() {
 		return this.lockInfo;
+	}
+
+	/**
+	 * Returns the native thread identifier of the thread represented by this
+	 * <code>ThreadInfo</code>.
+	 * 
+	 * @return the native identifier of the thread corresponding to this
+	 *         <code>ThreadInfo</code>.
+	 */
+	long getNativeThreadId() {
+		return this.nativeTId;
 	}
 
 	/**

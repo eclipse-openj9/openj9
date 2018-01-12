@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
  -->
 
@@ -36,8 +36,11 @@
 
 		<switch value="${module.name}">
 			<case value="java.management">
-				<removeexport package="com.ibm.lang.management" />
-				<removeexport package="com.ibm.virtualization.management" />
+				<removeexportsoropens action="exports" package="com.ibm.lang.management" />
+				<removeexportsoropens action="exports" package="com.ibm.virtualization.management" />
+				<removeexportsoropens action="exports" package="com.ibm.java.lang.management.internal" />
+				<removeexportsoropens action="opens" package="java.lang.management" />
+				<replaceexportsoropens module.old="com.ibm.management" module.new="" action="exports" />
 
 				<delete verbose="true">
 					<fileset dir="${module.dir}/classes">
@@ -46,31 +49,16 @@
 					</fileset>
 				</delete>
 			</case>
-			<case value="jdk.attach">
-				<removeexport package="com.ibm.tools.attach.spi" />
-				<removeprovides interface="com.sun.tools.attach.spi.AttachProvider" />
-				<property name="patch.zip" location="attach-patch.zip" />
-				<if>
-					<available file="${patch.zip}" type="file" />
-					<then>
-						<echo message="Applying attach patch." level="info" />
-						<unzip src="${patch.zip}" dest="${module.dir}/classes" overwrite="true" />
-					</then>
-					<else>
-						<echo message="Can't find attach patch: ${patch.zip}" level="info" />
-					</else>
-				</if>
-				<delete verbose="true">
-					<fileset dir="${module.dir}/classes">
-						<include name="com/ibm/tools/attach/spi/AttachProvider.class" />
-					</fileset>
-				</delete>
-			</case>
 			<case value="java.base">
-				<removeexport package="com.ibm.cuda" />
-				<removeexport package="com.ibm.dataaccess" />
-				<removeexport package="com.ibm.oti.shared" />
-				<removeexport package="com.ibm.sharedclasses.spi" />
+				<removeexportsoropens action="exports" package="com.ibm.cuda" />
+				<removeexportsoropens action="exports" package="com.ibm.dataaccess" />
+				<removeexportsoropens action="exports" package="com.ibm.jvm" />
+				<removeexportsoropens action="exports" package="com.ibm.oti.shared" />
+				<removeexportsoropens action="exports" package="com.ibm.oti.util" />
+				<removeexportsoropens action="exports" package="com.ibm.oti.vm" />
+				<removeexportsoropens action="exports" package="com.ibm.sharedclasses.spi" />
+				<replaceexportsoropens action="exports" module.old="com.ibm.dtfj" module.new="" />
+				<replaceexportsoropens action="exports" module.old="com.ibm.dtfjview" module.new="" />
 
 				<delete verbose="true">
 					<fileset dir="${module.dir}/classes">
@@ -78,6 +66,7 @@
 						<include name="com/ibm/dataaccess/*" />
 						<include name="com/ibm/gpu/*" />
 						<include name="com/ibm/oti/shared/*" />
+						<include name="com/ibm/jvm/*" />
 					</fileset>
 				</delete>
 				
@@ -101,25 +90,78 @@
 					</else>
 				</if>
 			</case>
+			<case value="com.ibm.dtfj">
+				<replaceexportsoropens action="exports" module.old="com.ibm.dtfjview" module.new="" />
+			</case>
+			<case value="com.ibm.dtfjview">
+				<replaceexportsoropens action="exports" module.old="com.ibm.dtfj" module.new="" />
+				<replacerequires module.old="com.ibm.dtfj" module.new="openj9.dtfj" />
+			</case>
+			<case value="jdk.jconsole">
+				<replacerequires module.old="com.ibm.management" module.new="jdk.management" />
+			</case>
+			<case value="jdk.management">
+				<removeexportsoropens action="exports" package="com.sun.management.internal" />
+			</case>
+			<case value="openj9.sfj">
+				<replacerequires module.old="com.ibm.management" module.new="jdk.management" />
+			</case>
 			<default>
 				<echo message="No preparation required for module ${module.name}" />
 			</default>
 		</switch>
 	</target>
 
-	<macrodef name="removeexport">
+	<property name="moduleinfofile" value="${module.dir}/classes/module-info.java" />
+
+	<!-- Removes an exports or opens line based on the package it exports -->
+	<macrodef name="removeexportsoropens">
 		<attribute name="package" />
+		<attribute name="action" />
 		<sequential>
-			<echo message="Removing export of package @{package}" />
+			<echo message="Removing @{action} of package @{package}" />
 			<loadresource property="regexp.@{package}">
 				<string value="@{package}" />
 				<filterchain>
 					<replaceregex pattern="\." replace="\\\\." flags="g" />
 				</filterchain>
 			</loadresource>
-			<replaceregexp file="${module.dir}/classes/module-info.java" replace="" flags="gs">
-				<regexp pattern="\s*\bexports\s+${regexp.@{package}}\b[^;]*;" />
+			<replaceregexp file="${moduleinfofile}" replace="" flags="gs">
+				<regexp pattern="\s*\b@{action}\s+${regexp.@{package}}\b[^;]*;" />
 			</replaceregexp>
+		</sequential>
+	</macrodef>
+
+	<!-- Replaces the module in an exports or opens line with another module or empty string -->
+	<macrodef name="replaceexportsoropens">
+		<attribute name="module.old" />
+		<attribute name="module.new" />
+		<attribute name="action" />
+		<sequential>
+			<echo message="Replacing @{module.old} with @{module.new} in @{action} statements" />
+			<loadresource property="regexp.@{module.old}">
+				<string value="@{module.old}" />
+				<filterchain>
+					<replaceregex pattern="\." replace="\\\\." flags="g" />
+				</filterchain>
+			</loadresource>
+			<if>
+				<length string="@{module.new}" trim="true" length="0" />
+				<then>
+					<replaceregexp file="${moduleinfofile}" replace="\1\3" flags="g">
+						<regexp pattern="(@{action}\s[^;]*?to[^;]*?)(, ${regexp.@{module.old}}\b|${regexp.@{module.old}}, )([^;]*?;)" />
+					</replaceregexp>
+					<!-- deletes entire line if replacement string is empty and module is the only target -->
+					<replaceregexp file="${moduleinfofile}" replace="" flags="g">
+						<regexp pattern="(@{action}\s[^;]*?to\s+?)(${regexp.@{module.old}})(;)" />
+					</replaceregexp>
+				</then>
+				<else>
+					<replaceregexp file="${moduleinfofile}" replace="\1@{module.new}\3" flags="g">
+						<regexp pattern="(@{action}\s[^;]*?to[^;]*?)(${regexp.@{module.old}}\b)([^;]*?;)" />
+					</replaceregexp>
+				</else>
+			</if>
 		</sequential>
 	</macrodef>
 
@@ -133,8 +175,25 @@
 					<replaceregex pattern="\." replace="\\\\." flags="g" />
 				</filterchain>
 			</loadresource>
-			<replaceregexp file="${module.dir}/classes/module-info.java" replace="" flags="gs">
+			<replaceregexp file="${moduleinfofile}" replace="" flags="gs">
 				<regexp pattern="\s*\bprovides\s+${regexp.@{interface}}\s+with[^;]*;" />
+			</replaceregexp>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="replacerequires">
+		<attribute name="module.old" />
+		<attribute name="module.new" />
+		<sequential>
+			<echo message="Replaces requiring @{module.old} with @{module.new}" />
+			<loadresource property="regexp.@{module.old}">
+				<string value="@{module.old}" />
+				<filterchain>
+					<replaceregex pattern="\." replace="\\\\." flags="g" />
+				</filterchain>
+			</loadresource>
+			<replaceregexp file="${moduleinfofile}" replace="\1@{module.new}" flags="gs">
+				<regexp pattern="((?:requires\stransitive|requires)\s+)${regexp.@{module.old}}\b" />
 			</replaceregexp>
 		</sequential>
 	</macrodef>

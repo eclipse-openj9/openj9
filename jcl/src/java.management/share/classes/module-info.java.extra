@@ -18,14 +18,10 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 module java.management {
 	requires java.logging;
-	exports com.ibm.java.lang.management.internal to com.ibm.management, jdk.management;
-	exports sun.management.spi to com.ibm.management;
-	/*[IF Open-Module-Support]*/
-	opens java.lang.management to com.ibm.management;
-	/*[ENDIF]*/
+	exports com.ibm.java.lang.management.internal to jdk.management;
 	uses com.ibm.sharedclasses.spi.SharedClassProvider;
 }

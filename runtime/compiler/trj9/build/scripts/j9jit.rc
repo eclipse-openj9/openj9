@@ -1,0 +1,55 @@
+/*
+ * Copyright (c) 1991, 2017 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ */
+
+#include <windows.h>
+#include <winver.h>
+#include "j9cfg.h"
+#include "j9version.h"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 2,9,0,0
+ PRODUCTVERSION 2,9,0,0
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_DLL
+ FILESUBTYPE 0x0L
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904b0"
+		BEGIN
+			VALUE "CompanyName", "International Business Machines Corporation\0"
+			VALUE "FileDescription", "J9 Virtual Machine Runtime\0"
+			VALUE "FileVersion", "R2.9 (" EsBuildVersionString ")\0"
+			VALUE "InternalName", "j9jit29\0"
+			VALUE "LegalCopyright", J9_COPYRIGHT_STRING "\0"
+			VALUE "OriginalFilename", "j9jit29.dll\0"
+			VALUE "ProductName", "IBM SDK, Java(tm) 2 Technology Edition\0"
+			VALUE "ProductVersion", "R2.9\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x0409, 1200
+	END
+END

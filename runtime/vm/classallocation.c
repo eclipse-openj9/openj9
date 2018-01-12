@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9.h"
@@ -140,10 +140,8 @@ retry:
 		}
 	}
 
-	if ((J2SE_VERSION(javaVM) & J2SE_VERSION_MASK) >= J2SE_17) {
-		if (J9VMJAVALANGCLASSLOADER_ISPARALLELCAPABLE(vmThread, classLoaderObject)) {
-			classLoader->flags |= J9CLASSLOADER_PARALLEL_CAPABLE;
-		}
+	if (J9VMJAVALANGCLASSLOADER_ISPARALLELCAPABLE(vmThread, classLoaderObject)) {
+		classLoader->flags |= J9CLASSLOADER_PARALLEL_CAPABLE;
 	}
 	J9CLASSLOADER_SET_CLASSLOADEROBJECT(vmThread, classLoader, classLoaderObject);
 

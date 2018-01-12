@@ -17,12 +17,11 @@
 // [1] https://www.gnu.org/software/classpath/license.html
 // [2] http://openjdk.java.net/legal/assembly-exception.html
 //
-// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 //******************************************************************************
 
 Executable=ddrext
 DATFileName=J9TraceFormat.dat
-
 
 TraceAssert=Assert_ddrext_true noEnv Overhead=1 Level=1 Assert="(P1)"
 TraceAssert=Assert_ddrext_false noEnv Overhead=1 Level=1 Assert="!(P1)"

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "bcvcfr.h"
@@ -1383,8 +1383,6 @@ _illegalPrimitiveReturn:
 					/* Jazz 82615: Save the location of receiver */
 					receiverPtr = stackTop;
 				}
-				CHECK_STACK_UNDERFLOW;
-
 			} else {
 				/* JBgetfield/JBgetstatic - even bc's */
 				if (bc == JBgetfield) {
@@ -1392,7 +1390,6 @@ _illegalPrimitiveReturn:
 					/* Jazz 82615: Save the location of receiver */
 					receiverPtr = stackTop;
 				}
-				CHECK_STACK_UNDERFLOW;
 				stackTop = pushFieldType(verifyData, utf8string, stackTop);
 			}
 
@@ -1446,6 +1443,7 @@ _illegalPrimitiveReturn:
 				utf8string = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) info))));
 				/* Removes the args from the stack and verify the stack shape is consistent */
 				rc = j9rtv_verifyArguments(verifyData, utf8string, &stackTop);
+				CHECK_STACK_UNDERFLOW;
 				if (BCV_ERR_INSUFFICIENT_MEMORY == rc) {
 					goto _outOfMemoryError;
 				}
@@ -1482,7 +1480,6 @@ _illegalPrimitiveReturn:
 					errorStackIndex = stackTop - liveStack->stackElements;
 					goto _inconsistentStack2;
 				}
-				CHECK_STACK_UNDERFLOW;
 				stackTop = pushReturnType(verifyData, utf8string, stackTop);
 
 				break;
@@ -1493,6 +1490,7 @@ _illegalPrimitiveReturn:
 				utf8string = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_SIGNATURE(SRP_PTR_GET(callSiteData + index, J9ROMNameAndSignature*))));
 				/* Removes the args from the stack and verify the stack shape is consistent */
 				rc = j9rtv_verifyArguments(verifyData, utf8string, &stackTop);
+				CHECK_STACK_UNDERFLOW;
 				if (BCV_ERR_INSUFFICIENT_MEMORY == rc) {
 					goto _outOfMemoryError;
 				}
@@ -1511,7 +1509,6 @@ _illegalPrimitiveReturn:
 					errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 					goto _verifyError;
 				}
-				CHECK_STACK_UNDERFLOW;
 				stackTop = pushReturnType(verifyData, utf8string, stackTop);
 				break;
 			}
@@ -1521,18 +1518,17 @@ _illegalPrimitiveReturn:
 				bc = JBinvokeinterface;
 			}
 			index = PARAM_16(bcIndex, 1);
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 			if (JBinvokestaticsplit == bc) {
 				index = *(U_16 *)(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(romClass) + index);
 			} else if (JBinvokespecialsplit == bc) {
 				index = *(U_16 *)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(romClass) + index);
 			}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			info = &constantPool[index];
 			utf8string = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) info))));
 			cpIndex = ((J9ROMMethodRef *) info)->classRefCPIndex;
 			classRef = (J9ROMStringRef *) &constantPool[cpIndex];
 			rc = j9rtv_verifyArguments(verifyData, utf8string, &stackTop);	/* Removes the args from the stack */
+			CHECK_STACK_UNDERFLOW;
 			if (BCV_ERR_INSUFFICIENT_MEMORY == rc) {
 				goto _outOfMemoryError;
 			}
@@ -1553,18 +1549,14 @@ _illegalPrimitiveReturn:
 			}
 			
 			if ((JBinvokestatic != bc)
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 				&& (JBinvokestaticsplit != bc)
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 			) {
 				IDATA reasonCode = 0;
 
 				type = POP;		/* Remove the receiver from the stack */
 				switch (bc) {
 				case JBinvokespecial:
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 				case JBinvokespecialsplit:
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 					CHECK_STACK_UNDERFLOW;
 					/* cannot use isInitMethod here b/c invokespecial may be invoking a different <init> method then the one we are in */
 					if (J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_NAME(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) info)))[0] == '<') {
@@ -1729,7 +1721,6 @@ _illegalPrimitiveReturn:
 				}
 			}
 
-			CHECK_STACK_UNDERFLOW;
 			utf8string = ((J9UTF8 *) (J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) info))));
 			stackTop = pushReturnType(verifyData, utf8string, stackTop);
 			break;
@@ -2078,14 +2069,14 @@ _illegalPrimitiveReturn:
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			break;
 
 		case RTV_BYTECODE_DUP:
 			POP_TOS_SINGLE(type);
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
@@ -2099,7 +2090,6 @@ _illegalPrimitiveReturn:
 
 		case RTV_BYTECODE_DUPX1:
 			POP_TOS_SINGLE(type);
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
@@ -2108,7 +2098,6 @@ _illegalPrimitiveReturn:
 				goto _miscError;
 			}
 			POP_TOS_SINGLE(temp1);
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
@@ -2123,7 +2112,6 @@ _illegalPrimitiveReturn:
 
 		case RTV_BYTECODE_DUPX2:
 			POP_TOS_SINGLE(type);
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
@@ -2132,12 +2120,12 @@ _illegalPrimitiveReturn:
 				goto _miscError;
 			}
 			POP_TOS_PAIR(temp1, temp2); /* use nverifyPop2 ?? */
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			PUSH(type);
@@ -2148,12 +2136,12 @@ _illegalPrimitiveReturn:
 
 		case RTV_BYTECODE_DUP2:
 			POP_TOS_PAIR(temp1, temp2);
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			PUSH(temp2);
@@ -2164,16 +2152,15 @@ _illegalPrimitiveReturn:
 
 		case RTV_BYTECODE_DUP2X1:
 			POP_TOS_PAIR(type, temp1);
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			POP_TOS_SINGLE(temp2);
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
@@ -2190,21 +2177,21 @@ _illegalPrimitiveReturn:
 
 		case RTV_BYTECODE_DUP2X2:
 			POP_TOS_PAIR(type, temp1);
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			POP_TOS_PAIR(temp2, temp3);
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
 				verboseErrorCode = BCV_ERR_WRONG_TOP_TYPE;
-				errorStackIndex = stackTop - liveStack->stackElements;
+				/* The pair of data types should be printed out once detected as invalid */
+				errorStackIndex = stackTop - liveStack->stackElements + 1;
 				goto _miscError;
 			}
 			/* should probably do more checking to avoid bogus dup's of long/double pairs */
@@ -2218,7 +2205,6 @@ _illegalPrimitiveReturn:
 
 		case RTV_BYTECODE_SWAP:
 			POP_TOS_SINGLE(type);
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;
@@ -2227,7 +2213,6 @@ _illegalPrimitiveReturn:
 				goto _miscError;
 			}
 			POP_TOS_SINGLE(temp1);
-			CHECK_STACK_UNDERFLOW;
 			if (inconsistentStack) {
 				/* Jazz 82615: Set the error code (a non-top type is expected on stack). */
 				errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;

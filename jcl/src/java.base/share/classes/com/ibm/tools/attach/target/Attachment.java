@@ -18,11 +18,12 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package com.ibm.tools.attach.target;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,7 +33,14 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Objects;
 import java.util.Properties;
+/*[IF Sidecar19-SE]*/
+import jdk.internal.vm.VMSupport;
+/*[ELSE] Sidecar19-SE
+import sun.misc.VMSupport;
+/*[ENDIF] Sidecar19-SE */
+import static com.ibm.tools.attach.target.IPC.LOCAL_CONNECTOR_ADDRESS;
 
 /**
  * This class handles established connections initiated by another VM
@@ -64,11 +72,15 @@ final class Attachment extends Thread implements Response {
 				try {
 					/*[IF Sidecar19-SE-B165]*/
 					agentClass = Class.forName("jdk.internal.agent.Agent"); //$NON-NLS-1$
-					startRemoteArgumentType = String.class;
-					/*[ELSE] Sidecar19-SE-B165*/
+					/*[ELSE] Sidecar19-SE-B165 */
 					agentClass = Class.forName("sun.management.Agent"); //$NON-NLS-1$
+					/*[ENDIF] Sidecar19-SE-B165 */
+					
+					/*[IF Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9]*/
+					startRemoteArgumentType = String.class;
+					/*[ELSE] Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9 */
 					startRemoteArgumentType = Properties.class;
-					/*[ENDIF] Sidecar19-SE-B165*/
+					/*[ENDIF] Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9 */
 					startLocalManagementAgentMethod = agentClass.getDeclaredMethod(START_LOCAL_MANAGEMENT_AGENT);
 					startRemoteManagementAgentMethod = agentClass.getDeclaredMethod(START_REMOTE_MANAGEMENT_AGENT, startRemoteArgumentType);
 					startLocalManagementAgentMethod.setAccessible(true);
@@ -105,37 +117,33 @@ final class Attachment extends Thread implements Response {
 	 * @return true if successfully connected
 	 */
 	boolean connectToAttacher(int portNum) {
-
 		try {
-			IPC.logMessage("connectToAttacher portNum=", portNum); //$NON-NLS-1$
-			InetAddress localHost = InetAddress.getLocalHost();
+			InetAddress localHost = InetAddress.getLoopbackAddress();
 			attacherSocket = new Socket(localHost, portNum);
 			IPC.logMessage("connectToAttacher localPort=",  attacherSocket.getLocalPort(), " remotePort=", Integer.toString(attacherSocket.getPort())); //$NON-NLS-1$//$NON-NLS-2$
 			responseStream = attacherSocket.getOutputStream();
 			commandStream = attacherSocket.getInputStream();
-			AttachmentConnection.streamSend(responseStream, Response.CONNECTED + ' '
-					+ key + ' ');
+			AttachmentConnection.streamSend(responseStream, Response.CONNECTED + ' ' + key + ' ');
+			return true;
 		} catch (IOException e) {
 			IPC.logMessage("connectToAttacher exception " + e.getMessage() + " " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
-			try {
-				if (null != responseStream) {
-					responseStream.close();
-				}
-				if (null != commandStream) {
-					commandStream.close();
-				}
-				if (null != attacherSocket) {
-					attacherSocket.close();
-				}
-			} catch (IOException e1) {
-				return false;
-			}
-			return false;
+			closeQuietly(responseStream);
+			closeQuietly(commandStream);
+			closeQuietly(attacherSocket);
 		} catch (Exception otherException) {
 			IPC.logMessage("connectToAttacher exception ", otherException.toString()); //$NON-NLS-1$
-			return false;
 		}
-		return true;
+		return false;
+	}
+
+	private static void closeQuietly(Closeable stream) {
+		if (null != stream) {
+			try {
+				stream.close();
+			} catch (IOException e1) {
+				// ignore
+			}
+		}
 	}
 
 	@Override
@@ -221,7 +229,7 @@ final class Attachment extends Thread implements Response {
 					agentProperties = IPC.receiveProperties(cmdStream, true);
 				}
 				/*[PR 102391 properties may be appended to the command]*/
-				IPC.logMessage("startAgent:"+ cmd); //$NON-NLS-1$
+				IPC.logMessage("startAgent:" +  cmd); //$NON-NLS-1$
 				if (startAgent(agentProperties)) {
 					AttachmentConnection.streamSend(respStream, Response.ACK);
 				} else {
@@ -366,13 +374,13 @@ final class Attachment extends Thread implements Response {
 			IPC.logMessage("startAgent"); //$NON-NLS-1$
 			if (null != MethodRefsHolder.startRemoteManagementAgentMethod) {
 				Object startArgument;
-				/*[IF Sidecar19-SE-B165]*/
+				/*[IF Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9]*/
 				startArgument = agentProperties.entrySet().stream()
 						.map(entry -> entry.getKey() + "=" + entry.getValue()) //$NON-NLS-1$
 						.collect(java.util.stream.Collectors.joining(",")); //$NON-NLS-1$
-				/*[ELSE] Sidecar19-SE-B165*/
+				/*[ELSE] Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9 */
 				startArgument = agentProperties;
-				/*[ENDIF] Sidecar19-SE-B165*/
+				/*[ENDIF] Sidecar19-SE-B165 | Sidecar18-SE-OpenJ9 */
 				MethodRefsHolder.startRemoteManagementAgentMethod.invoke(null, startArgument);
 				return true;
 			}
@@ -393,16 +401,29 @@ final class Attachment extends Thread implements Response {
 			if (null != MethodRefsHolder.startLocalManagementAgentMethod) {	/* forces initialization */			
 				MethodRefsHolder.startLocalManagementAgentMethod.invoke(null);
 			} else {
-				throw new IbmAttachOperationFailedException("startLocalManagementAgent cannot access "+START_LOCAL_MANAGEMENT_AGENT);		 //$NON-NLS-1$
+				throw new IbmAttachOperationFailedException("startLocalManagementAgent cannot access " + START_LOCAL_MANAGEMENT_AGENT);		 //$NON-NLS-1$
 			}
 		} catch (Throwable e) {
-			throw new IbmAttachOperationFailedException("startLocalManagementAgent error starting agent:"+e.getClass()+" "+e.getMessage());		 //$NON-NLS-1$ //$NON-NLS-2$
+			throw new IbmAttachOperationFailedException("startLocalManagementAgent error starting agent:" + e.getClass() + " " + e.getMessage());		 //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		String addr = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty(IPC.LOCAL_CONNECTOR_ADDRESS);
-		if (null == addr) {
-			throw new IbmAttachOperationFailedException("startLocalManagementAgent: "+IPC.LOCAL_CONNECTOR_ADDRESS+" not defined");		 //$NON-NLS-1$ //$NON-NLS-2$
+
+		Properties systemProperties = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties();
+		String addr;
+		synchronized (systemProperties) {
+			addr = systemProperties.getProperty(LOCAL_CONNECTOR_ADDRESS);
+			if (Objects.isNull(addr)) {
+				addr = VMSupport.getAgentProperties().getProperty(LOCAL_CONNECTOR_ADDRESS);
+				if (!Objects.isNull(addr)) {
+					systemProperties.setProperty(LOCAL_CONNECTOR_ADDRESS, addr);
+				}
+			}
 		}
-		IPC.logMessage(IPC.LOCAL_CONNECTOR_ADDRESS+"=", addr); //$NON-NLS-1$
+		if (Objects.isNull(addr)) {
+			/* startLocalAgent() should have set the property. */
+			IPC.logMessage(LOCAL_CONNECTOR_ADDRESS + " not set"); //$NON-NLS-1$
+			throw new IbmAttachOperationFailedException("startLocalManagementAgent: " + LOCAL_CONNECTOR_ADDRESS + " not defined"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		IPC.logMessage(LOCAL_CONNECTOR_ADDRESS + "=", addr); //$NON-NLS-1$
 		return addr;
 	}
 }

@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package java.lang.invoke;
 
@@ -33,24 +33,28 @@ import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.List;
 
+import java.util.Objects;
 // {{{ JIT support
 import java.util.concurrent.ConcurrentHashMap;
+
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.reflect.ConstantPool;
-/*[IF Sidecar19-SE-OpenJ9]
+/*[IF Sidecar18-SE-OpenJ9]
 import java.lang.invoke.LambdaForm;
 /*[ENDIF]*/
 /*[ELSE]*/
 import sun.misc.Unsafe;
 import sun.misc.SharedSecrets;
 import sun.reflect.ConstantPool;
+
 /*[ENDIF]*/
 import com.ibm.jit.JITHelpers;
 import com.ibm.oti.util.Msg;
 // }}} JIT support
 import com.ibm.oti.vm.VM;
+import com.ibm.oti.vm.VMLangAccess;
 
 /**
  * A MethodHandle is a reference to a Java-level method.  It is typed according to the method's signature and can be
@@ -117,29 +121,17 @@ public abstract class MethodHandle {
 	static final byte KIND_DEFAULTVALUE = 33;
 	/*[ENDIF]*/
 
-/*[IF Sidecar19-SE-OpenJ9]
+/*[IF Sidecar18-SE-OpenJ9]
 	MethodHandle asTypeCache = null;
 	LambdaForm form = null;	
 /*[ENDIF]*/	
 	
 	static final int PUBLIC_FINAL_NATIVE = Modifier.PUBLIC | Modifier.FINAL | Modifier.NATIVE | 0x1000 /* Synthetic */;
 	
-	private static final class UnsafeGetter {
-		public static final Unsafe myUnsafe = Unsafe.getUnsafe();
-	}
+	static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
-	static final Unsafe getUnsafe() {
-		return UnsafeGetter.myUnsafe;
-	}
-	
-	private static final class JITHelpersGetter {
-		public static final JITHelpers myJITHelpers = JITHelpers.getHelpers();
-	}
+	static final JITHelpers JITHELPERS = JITHelpers.getHelpers();
 
-	static final JITHelpers getJITHelpers() {
-		return JITHelpersGetter.myJITHelpers;
-	}
-	
 	private static final int CUSTOM_THUNK_INVOCATION_COUNT = 1000;
 	private static final int DONT_CHECK_FOR_A_WHILE_COUNT  = -1000000000;
 
@@ -224,11 +216,10 @@ public abstract class MethodHandle {
 	}
 
 	static long getJ9ClassFromClass(Class<?> c) {
-		JITHelpers h = getJITHelpers();
-		if (h.is32Bit()) {
-			return h.getJ9ClassFromClass32(c);
+		if (JITHELPERS.is32Bit()) {
+			return JITHELPERS.getJ9ClassFromClass32(c);
 		} else {
-			return h.getJ9ClassFromClass64(c);
+			return JITHELPERS.getJ9ClassFromClass64(c);
 		}
 	}
 
@@ -250,7 +241,16 @@ public abstract class MethodHandle {
 	/*[IF ]*/
 	// Until the JIT can synthesize calls to virtual methods, we must synthesize calls to these static ones instead
 	/*[ENDIF]*/
-	private static MethodHandle asType(MethodHandle mh, MethodType newType) { return mh.asType(newType); }
+	private static MethodHandle asType(MethodHandle mh, MethodType newType) {
+		/*
+		 * JIT can easily propagate type information and fold the if when it can prove early return always happen.
+		 * The early return also saves the JIT from having to inline full asType call
+		 */
+		if (mh.type == newType) {
+			return mh;
+		}
+		return mh.asType(newType);
+	}
 	/*[IF Sidecar19-SE]*/
 	private static MethodHandle asType(MethodHandle mh, MethodType newType, VarHandle varHandle) { return mh.asType(newType.appendParameterTypes(varHandle.getClass())); }
 	/*[ENDIF]*/
@@ -266,17 +266,17 @@ public abstract class MethodHandle {
 		this.kind = kind;
 		/* Must be called last as it may use previously set fields to modify the MethodType */
 		this.type = type;
-		enforceArityLimit(this.type);
+		enforceArityLimit(kind, this.type);
 		/* Must be called even laster as it uses the method type */
 		this.thunks = computeThunks(thunkArg);
-		/* Touch JITHelpers to make sure CP entries are resolved when needed later */
-		getJ9ClassFromClass(MethodHandle.class);
+		/* Touch thunks.invokeExactThunk so that its constant pool entry is resolved by the time it is used by the JIT */
+		long i = thunks.invokeExactThunk;
 	}
 	
 	MethodHandle(MethodHandle original, MethodType newType) {
 		this.kind = original.kind;
 		this.type = newType;
-		enforceArityLimit(newType);
+		enforceArityLimit(original.kind, newType);
 		this.thunks = original.thunks;
 		this.previousAsType = original.previousAsType;
 	}
@@ -794,20 +794,35 @@ public abstract class MethodHandle {
 	/*
 	 * Return the result of J9_CP_TYPE(J9Class->romClass->cpShapeDescription, index)
 	 */
-	private static final native int getCPTypeAt(Class<?> clazz, int index);
+	private static final native int getCPTypeAt(Object internalRamClass, int index);
 
 	/*
 	 * sun.reflect.ConstantPool doesn't have a getMethodTypeAt method.  This is the 
 	 * equivalent for MethodType.
 	 */
-	private static final native MethodType getCPMethodTypeAt(Class<?> clazz, int index);
+	private static final native MethodType getCPMethodTypeAt(Object internalRamClass, int index);
 
 	/*
 	 * sun.reflect.ConstantPool doesn't have a getMethodHandleAt method.  This is the 
 	 * equivalent for MethodHandle.
 	 */
-	private static final native MethodHandle getCPMethodHandleAt(Class<?> clazz, int index);
-
+	private static final native MethodHandle getCPMethodHandleAt(Object internalRamClass, int index);
+	
+	/**
+	 * Get the class name from a constant pool class element, which is located
+	 * at the specified <i>index</i> in <i>clazz</i>'s constant pool.
+	 * 
+	 * @param   an instance of class - its constant pool is accessed
+	 * @param   the constant pool index
+	 * 
+	 * @return  instance of String which contains the class name or NULL in
+	 *          case of error
+	 * 
+	 * @throws  NullPointerException if <i>clazz</i> is null
+	 * @throws  IllegalArgumentException if <i>index</i> has wrong constant pool type
+	 */
+	private static final native String getCPClassNameAt(Class<?> clazz, int index);
+	
 	private static final int BSM_ARGUMENT_SIZE = Short.SIZE / Byte.SIZE;
 	private static final int BSM_ARGUMENT_COUNT_OFFSET = BSM_ARGUMENT_SIZE;
 	private static final int BSM_ARGUMENTS_OFFSET = BSM_ARGUMENT_SIZE * 2;
@@ -817,29 +832,42 @@ public abstract class MethodHandle {
 	private static final int BSM_OPTIONAL_ARGUMENTS_START_INDEX = 3;
 
 	@SuppressWarnings("unused")
-	private static final MethodHandle resolveInvokeDynamic(Class<?> clazz, String name, String methodDescriptor, long bsmData) throws Throwable {
-		Unsafe unsafe = getUnsafe();
+	private static final MethodHandle resolveInvokeDynamic(long j9class, String name, String methodDescriptor, long bsmData) throws Throwable {
 		MethodHandle result = null;
 		MethodType type = null;
 
 		try {
-			type = MethodType.fromMethodDescriptorString(methodDescriptor, VM.getVMLangAccess().getClassloader(clazz));
-			int bsmIndex = unsafe.getShort(bsmData);
-			int bsmArgCount = unsafe.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
+			VMLangAccess access = VM.getVMLangAccess();
+			Object internalRamClass = access.createInternalRamClass(j9class);
+			Class<?> classObject = null;
+			if (JITHELPERS.is32Bit()) {
+				classObject = JITHELPERS.getClassFromJ9Class32((int)j9class);
+			} else {
+				classObject = JITHELPERS.getClassFromJ9Class64(j9class);
+			}
+			
+			Objects.requireNonNull(classObject);
+			
+			type = MethodType.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
+			int bsmIndex = UNSAFE.getShort(bsmData);
+			int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
 			long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
-			MethodHandle bsm = getCPMethodHandleAt(clazz, bsmIndex);
+			MethodHandle bsm = getCPMethodHandleAt(internalRamClass, bsmIndex);
 			if (null == bsm) {
 				/*[MSG "K05cd", "unable to resolve 'bootstrap_method_ref' in '{0}' at index {1}"]*/
-				throw new NullPointerException(Msg.getString("K05cd", clazz.toString(), bsmIndex)); //$NON-NLS-1$
+				throw new NullPointerException(Msg.getString("K05cd", classObject.toString(), bsmIndex)); //$NON-NLS-1$
 			}
 			Object[] staticArgs = new Object[BSM_OPTIONAL_ARGUMENTS_START_INDEX + bsmArgCount];
 			/* Mandatory arguments */
-			staticArgs[BSM_LOOKUP_ARGUMENT_INDEX] = new MethodHandles.Lookup(clazz, false);
+			staticArgs[BSM_LOOKUP_ARGUMENT_INDEX] = new MethodHandles.Lookup(classObject, false);
 			staticArgs[BSM_NAME_ARGUMENT_INDEX] = name;
 			staticArgs[BSM_TYPE_ARGUMENT_INDEX] = type;
 		
 			/* Static optional arguments */
-			ConstantPool cp = SharedSecrets.getJavaLangAccess().getConstantPool(clazz);
+			/* internalRamClass is not a j.l.Class object but the ConstantPool natives know how to
+			 * get the internal constantPool from the j9class
+			 */
+			ConstantPool cp = access.getConstantPool(internalRamClass);
 
 			/* Check if we need to treat the last parameter specially when handling primitives.
 			 * The type of the varargs array will determine how primitive ints from the constantpool
@@ -851,12 +879,15 @@ public abstract class MethodHandle {
 
 			for (int i = 0; i < bsmArgCount; i++) {
 				int staticArgIndex = BSM_OPTIONAL_ARGUMENTS_START_INDEX + i;
-				short index = unsafe.getShort(bsmArgs + (i * BSM_ARGUMENT_SIZE));
-				int cpType = getCPTypeAt(clazz, index);
+				short index = UNSAFE.getShort(bsmArgs + (i * BSM_ARGUMENT_SIZE));
+				int cpType = getCPTypeAt(internalRamClass, index);
 				Object cpEntry = null;
 				switch (cpType) {
 				case 1:
 					cpEntry = cp.getClassAt(index);
+					if (cpEntry == null) {
+						throw throwNoClassDefFoundError(classObject, index);
+					}
 					break;
 				case 2:
 					cpEntry = cp.getStringAt(index);
@@ -892,10 +923,10 @@ public abstract class MethodHandle {
 					cpEntry = cp.getDoubleAt(index);
 					break;
 				case 13:
-					cpEntry = getCPMethodTypeAt(clazz, index);
+					cpEntry = getCPMethodTypeAt(internalRamClass, index);
 					break;
 				case 14:
-					cpEntry = getCPMethodHandleAt(clazz, index);
+					cpEntry = getCPMethodHandleAt(internalRamClass, index);
 					break;
 				default:
 					// Do nothing. The null check below will throw the appropriate exception.
@@ -961,6 +992,26 @@ public abstract class MethodHandle {
 		}
 		
 		return result;
+	}
+
+	/**
+	 * Retrieve the class name of the constant pool class element located at the specified
+	 * index in clazz's constant pool. Then, throw a NoClassDefFoundError with the cause
+	 * set as ClassNotFoundException. The message of NoClassDefFoundError and 
+	 * ClassNotFoundException contains the name of the class, which couldn't be found.
+	 * 
+	 * @param   an instance of Class - its constant pool is accessed
+	 * @param   integer value of the constant pool index
+	 * 
+	 * @return  Throwable to prevent any fall through case
+	 * 
+	 * @throws  NoClassDefFoundError with the cause set as ClassNotFoundException
+	 */
+	private static final Throwable throwNoClassDefFoundError(Class<?> clazz, int index) {
+		String className = getCPClassNameAt(clazz, index);
+		NoClassDefFoundError noClassDefFoundError = new NoClassDefFoundError(className);
+		noClassDefFoundError.initCause(new ClassNotFoundException(className));
+		throw noClassDefFoundError;	
 	}
 	
 	@Override
@@ -1028,25 +1079,6 @@ public abstract class MethodHandle {
 		return asType(newType);
 	}
 	
-	/*[IF Sidecar19-SE]*/
-	/*
-	 * Used to convert an invokehandlegeneric bytecode into an AsTypeHandle + invokeExact OR to
-	 * convert an InvokeGenericHandle into an AsTypeHandle.
-	 * 
-	 * Allows us to only have the conversion logic for the AsTypeHandle and not worry about any
-	 * other similar conversions.
-	 */
-	@SuppressWarnings("unused")  /* Used by builder */
-	@VMCONSTANTPOOL_METHOD
-	private final MethodHandle forGenericInvokeVarHandle(MethodType newType, VarHandle varHandle) {
-		newType = newType.appendParameterTypes(varHandle.getClass());
-		if (this.type == newType) {
-			return this;
-		}
-		return asType(newType);
-	}
-	/*[ENDIF]*/
-	
 	@SuppressWarnings("unused")
 	@VMCONSTANTPOOL_METHOD
 	private static final MethodHandle sendResolveMethodHandle(
@@ -1055,7 +1087,7 @@ public abstract class MethodHandle {
 			Class<?> referenceClazz,
 			String name,
 			String typeDescriptor,
-			ClassLoader loader) throws ClassNotFoundException, IllegalAccessException, NoSuchFieldException, NoSuchMethodException {
+			ClassLoader loader) throws Throwable {
 		MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass, false);
 		MethodType type = null;
 		
@@ -1069,19 +1101,19 @@ public abstract class MethodHandle {
 		case 4: /* putStatic */
 			return lookup.findStaticSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
 		case 5: /* invokeVirtual */
-			type = MethodType.fromMethodDescriptorString(typeDescriptor, loader);
+			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 			return lookup.findVirtual(referenceClazz, name, type);
 		case 6: /* invokeStatic */
-			type = MethodType.fromMethodDescriptorString(typeDescriptor, loader);
+			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 			return lookup.findStatic(referenceClazz, name, type);
 		case 7: /* invokeSpecial */ 
-			type = MethodType.fromMethodDescriptorString(typeDescriptor, loader);
+			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 			return lookup.findSpecial(referenceClazz, name, type, currentClass);
 		case 8: /* newInvokeSpecial */
-			type = MethodType.fromMethodDescriptorString(typeDescriptor, loader);
+			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 			return lookup.findConstructor(referenceClazz, type);
 		case 9: /* invokeInterface */
-			type = MethodType.fromMethodDescriptorString(typeDescriptor, loader);
+			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 			return lookup.findVirtual(referenceClazz, name, type);
 		}
 		/* Can never happen */
@@ -1092,8 +1124,8 @@ public abstract class MethodHandle {
 	 * #fromMethodDescritorString().  The verifier checks to ensure that the typeDescriptor is
 	 * a valid field descriptor so adding the "()V" around it is valid.
 	 */
-	private static final Class<?> resolveFieldHandleHelper(String typeDescriptor, ClassLoader loader) {
-		MethodType mt = MethodType.fromMethodDescriptorString("(" + typeDescriptor + ")V", loader); //$NON-NLS-1$ //$NON-NLS-2$
+	private static final Class<?> resolveFieldHandleHelper(String typeDescriptor, ClassLoader loader) throws Throwable {
+		MethodType mt = MethodType.vmResolveFromMethodDescriptorString("(" + typeDescriptor + ")V", loader, null); //$NON-NLS-1$ //$NON-NLS-2$
 		return mt.parameterType(0);
 	}
 	
@@ -1169,9 +1201,21 @@ public abstract class MethodHandle {
 		throw new UnsupportedOperationException("Subclass must implement this"); //$NON-NLS-1$
 	}
 
-	static final void enforceArityLimit(MethodType type) {
-		if (type.argSlots > 254) {
-			throwIllegalArgumentExceptionForMTArgCount(type.argSlots);
+	static final void enforceArityLimit(byte kind, MethodType type) {
+		int argumentSlots = type.argSlots;
+		
+		/* The upper limit of argument slots is 255. For a constructor, 
+		 * there should be at most 253 argument slots, one slot for
+		 * MethodHandle itself and one slot for the placeholder of a 
+		 * newly created object at the native level. So the slot occupied
+		 * by the placeholder must be counted in when doing the arity check.
+		 */
+		if (KIND_CONSTRUCTOR == kind) {
+			argumentSlots += 1;
+		}
+		
+		if (argumentSlots > 254) {
+			throwIllegalArgumentExceptionForMTArgCount(argumentSlots);
 		}
 	}
 	
@@ -1203,12 +1247,12 @@ public abstract class MethodHandle {
 		return "KIND_#"+kind; //$NON-NLS-1$
 	}
 
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF Sidecar18-SE-OpenJ9]*/
 	MethodHandle(MethodType mt, LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
-	protected MethodHandle getTarget() {
+	MethodHandle getTarget() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
@@ -1216,7 +1260,7 @@ public abstract class MethodHandle {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
-	public MethodHandle asTypeUncached(MethodType newType) {
+	MethodHandle asTypeUncached(MethodType newType) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
@@ -1236,9 +1280,11 @@ public abstract class MethodHandle {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
+/*[IF Sidecar19-SE-OpenJ9]*/
 	void customize() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+/*[ENDIF]*/
 	
 	void updateForm(LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();

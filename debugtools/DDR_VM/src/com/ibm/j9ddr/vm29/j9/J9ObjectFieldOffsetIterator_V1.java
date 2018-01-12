@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.j9;
 
@@ -349,10 +349,10 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		 * Give instance fields priority for backfill slots.
 		 * Note that the hidden fields remember their offsets, so this need be done once only.
 		 */
-		if (!extraHiddenFields.isEmpty()) {
+		if (!hiddenInstanceFieldList.isEmpty()) {
 			UDATA hiddenSingleOffset = firstSingleOffset.add(J9Object.SIZEOF + (fieldInfo.getNonBackfilledInstanceSingleCount() * U32.SIZEOF));
 			UDATA hiddenDoubleOffset = firstDoubleOffset.add(J9Object.SIZEOF + (fieldInfo.getInstanceDoubleCount() * U64.SIZEOF));
-			UDATA hiddenObjectOffset =  firstObjectOffset.add(J9Object.SIZEOF + (fieldInfo.getNonBackfilledInstanceObjectCount() * J9Object.SIZEOF));
+			UDATA hiddenObjectOffset =  firstObjectOffset.add(J9Object.SIZEOF + (fieldInfo.getNonBackfilledInstanceObjectCount() * fj9object_t_SizeOf));
 			boolean useBackfillForObject = false;
 			boolean useBackfillForSingle = false;
 
@@ -365,7 +365,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 				}
 			}
 
-			for (HiddenInstanceField hiddenField: extraHiddenFields) {
+			for (HiddenInstanceField hiddenField: hiddenInstanceFieldList) {
 				U32 modifiers = hiddenField.shape().modifiers();
 
 				if (modifiers.allBitsIn(J9FieldFlagObject)) {
@@ -374,7 +374,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 						useBackfillForObject = false;
 					} else {
 						hiddenField.setFieldOffset(hiddenObjectOffset);
-						hiddenObjectOffset = hiddenObjectOffset.add(J9Object.SIZEOF);
+						hiddenObjectOffset = hiddenObjectOffset.add(fj9object_t_SizeOf);
 					}
 				} else if (modifiers.allBitsIn(J9FieldSizeDouble)) {
 					hiddenField.setFieldOffset(hiddenDoubleOffset);

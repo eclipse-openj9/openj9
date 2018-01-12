@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "jni.h"
@@ -52,6 +52,21 @@ Java_java_lang_ref_Reference_reprocess(JNIEnv *env, jobject recv)
 	if (!fastJNI) {
 		vmFuncs->internalReleaseVMAccess(currentThread);
 	}
+}
+
+/* java.lang.ref.Reference: static private native boolean waitForReferenceProcessingImpl(); */
+jboolean JNICALL
+Java_java_lang_ref_Reference_waitForReferenceProcessingImpl(JNIEnv *env, jclass recv)
+{
+	jboolean result = JNI_FALSE;
+#if defined(J9VM_GC_FINALIZATION)
+	J9JavaVM *vm = ((J9VMThread*)env)->javaVM;
+	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+	if (0 != mmFuncs->j9gc_wait_for_reference_processing(vm)) {
+		result = JNI_TRUE;
+	}
+#endif
+	return result;
 }
 
 }

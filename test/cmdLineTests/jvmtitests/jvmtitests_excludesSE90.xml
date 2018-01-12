@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <!DOCTYPE suite SYSTEM "excludes.dtd">
@@ -48,10 +48,6 @@
 	<!-- Windows IA32 New ROMClass Builder - the test requires retransform support, which will be implemented under JAZZ 19331 -->
 	<exclude id="gpc002" platform="win_x86_newrom" shouldFix="true" expiry="Oct 8 2009">
 		<reason>Testcase requires retransform support, which will be implemented under JAZZ 19331</reason>
-	</exclude>
-
-	<exclude id="rc012" platform="all" shouldFix="true" >
-		<reason>JAZZ 133850: jvmtitests_hrc failed at rc012 testRedefineRunningMethod with java.lang.IllegalArgumentException: Wrong type at constant pool index" </reason>
 	</exclude>
 
 </suite>

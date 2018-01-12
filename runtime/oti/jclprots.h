@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef JCLPROTS_H
@@ -112,6 +112,8 @@ extern J9_CFUNC jobject JNICALL
 Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getNameImpl (JNIEnv *env, jobject beanInstance);
 extern J9_CFUNC jlong JNICALL
 Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getProcessIDImpl(JNIEnv *env, jclass clazz);
+extern J9_CFUNC jint JNICALL
+Java_com_ibm_lang_management_internal_ExtendedRuntimeMXBeanImpl_getVMIdleStateImpl(JNIEnv *env, jclass clazz);
 
 /* J9SourceManagementOperatingSystem*/
 jdouble JNICALL
@@ -729,18 +731,6 @@ createStackTraceThrowable (J9VMThread *currentThread,  const UDATA *frames, UDAT
 extern J9_CFUNC j9object_t
 getStackTraceForThread (J9VMThread * vmThread, J9VMThread *targetThread, UDATA skipCount);
 
-/* J9SourceJclHookHelpers*/
-extern J9_CFUNC void
-triggerClassInitializeEvent (J9VMThread* vmThread, J9Class* clazz);
-extern J9_CFUNC void
-triggerClassInitializeFailedEvent (J9VMThread* vmThread, J9Class* clazz);
-extern J9_CFUNC UDATA
-triggerClassPreinitializeEvent (J9VMThread* vmThread, J9Class* clazz);
-extern J9_CFUNC void
-triggerClassLoaderInitializedEvent(J9VMThread* vmThread, J9ClassLoader* classLoader);
-extern J9_CFUNC void  
-triggerClassPrepareEvent(J9VMThread* currentThread, J9Class* clazz);
-
 /* J9SourceJclStandardInit*/
 jint JCL_OnUnload (J9JavaVM* vm, void* reserved);
 jint standardPreconfigure ( JavaVM *jvm);
@@ -974,6 +964,9 @@ jobject JNICALL Java_java_lang_invoke_VarHandle_addAndGet(JNIEnv *env, jobject h
 void JNICALL Java_lang_ref_Finalizer_runAllFinalizersImpl(JNIEnv *env, jclass recv);
 void JNICALL Java_lang_ref_Finalizer_runFinalizationImpl(JNIEnv *env, jclass recv);
 
+/* sun_misc_URLClassLoader.c */
+jobject JNICALL Java_sun_misc_URLClassPath_getLookupCacheURLs(JNIEnv *env, jobject unusedObject, jobject classLoader);
+
 /* sun_reflect_ConstantPool.c */
 jint JNICALL Java_sun_reflect_ConstantPool_getSize0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop);
 jclass JNICALL Java_sun_reflect_ConstantPool_getClassAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
@@ -992,6 +985,7 @@ jobject JNICALL Java_sun_reflect_ConstantPool_getUTF8At0(JNIEnv *env, jobject un
 jint JNICALL Java_java_lang_invoke_MethodHandle_getCPTypeAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex);
 jobject JNICALL Java_java_lang_invoke_MethodHandle_getCPMethodTypeAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex);
 jobject JNICALL Java_java_lang_invoke_MethodHandle_getCPMethodHandleAt(JNIEnv *env, jclass unusedClass, jobject constantPoolOop, jint cpIndex);
+jobject JNICALL Java_java_lang_invoke_MethodHandle_getCPClassNameAt(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
 jint JNICALL Java_jdk_internal_reflect_ConstantPool_getClassRefIndexAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
 jint JNICALL Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefIndexAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);
 jobject JNICALL Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefInfoAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex);

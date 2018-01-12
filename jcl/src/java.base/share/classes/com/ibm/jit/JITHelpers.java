@@ -21,7 +21,7 @@ package com.ibm.jit;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 import java.lang.reflect.Field;
@@ -133,6 +133,37 @@ public final class JITHelpers {
 		}
 		return null;
 	}
+
+	/*
+	 * To be recognized by the JIT and turned into trees that is foldable when obj is known at compile time.
+	 */
+	public boolean isArray(Object obj) {
+		if (is32Bit()) {
+			int j9Class = getJ9ClassFromObject32(obj);
+			int flags = getClassDepthAndFlagsFromJ9Class32(j9Class);
+			return (flags & VM.J9_ACC_CLASS_ARRAY) != 0;
+		}
+		else {
+			long j9Class = getJ9ClassFromObject64(obj);
+			// Cast the flag to int because only the lower 32 bits are valid and VM.J9_ACC_CLASS_ARRAY is int type
+			int flags = (int)getClassDepthAndFlagsFromJ9Class64(j9Class);
+			return (flags & VM.J9_ACC_CLASS_ARRAY) != 0;
+		}
+	}
+
+	/*
+	 * To be recognized by the JIT and turned into a load with vft symbol.
+	 */
+	public long getJ9ClassFromObject64(Object obj) {
+		Class<?> clazz = obj.getClass();
+		return getJ9ClassFromClass64(clazz);
+	}
+
+	public int getJ9ClassFromObject32(Object obj) {
+		Class<?> clazz = obj.getClass();
+		return getJ9ClassFromClass32(clazz);
+	}
+
 
 	/*
 	 * sun.misc.Unsafe.get* and put* have to generate internal control flow for correctness due to different object shapes. The JIT emitted sequences
@@ -676,6 +707,30 @@ public final class JITHelpers {
 		unsafe.storeFence();
 		return clnObj;
 	}
+
+	/**
+	 * Get class initialize status flag. Calls to this method will be recognized and optimized by the JIT.
+	 * @parm defc
+	 *          The class whose initialize status is desired.
+	 * @return
+	 *          initializeStatus from J9Class.
+	 */
+	public final int getClassInitializeStatus(Class<?> defc) {
+		long defcClass = 0;
+		if (is32Bit()) {
+			defcClass = getJ9ClassFromClass32(defc);
+		} else {
+			defcClass = getJ9ClassFromClass64(defc);
+		}
+		int initStatus = 0;
+		if (4 == VM.ADDRESS_SIZE) {
+			initStatus = unsafe.getInt(defcClass + VM.J9CLASS_INITIALIZE_STATUS_OFFSET);
+		} else {
+			initStatus = (int)unsafe.getLong(defcClass + VM.J9CLASS_INITIALIZE_STATUS_OFFSET);
+		}
+		return initStatus;
+	}
+
 
 	/**
 	 * Determines whether the underlying platform's memory model is little-endian.

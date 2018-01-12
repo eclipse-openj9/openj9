@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /* This file contains J9-specific things which have been moved from builder.
@@ -38,6 +38,10 @@
 #define J9VM_DLT_HISTORY_SIZE  16
 #define J9VM_OBJECT_MONITOR_CACHE_SIZE  32
 #define J9VM_ASYNC_MAX_HANDLERS 32
+
+#define CLASSNAME_INVALID			0
+#define CLASSNAME_VALID_NON_ARRARY	1
+#define CLASSNAME_VALID_ARRARY		2
 
 /* @ddr_namespace: map_to_type=J9JITDataCacheConstants */
 /* Constants from J9JITDataCacheConstants */
@@ -1796,7 +1800,7 @@ typedef struct J9TranslationBufferSet {
 	U_8* classFileError;
 	UDATA classFileSize;
 	void* romClassBuilder;
-	IDATA  ( *findLocallyDefinedClassFunction)(struct J9VMThread * vmThread, struct J9Module * j9module, U_8 * className, U_32 classNameLength, struct J9ClassLoader * classLoader, struct J9ClassPathEntry * classPath, UDATA classPathEntryCount, UDATA options, UDATA flags, struct J9TranslationLocalBuffer *localBuffer) ;
+	IDATA  ( *findLocallyDefinedClassFunction)(struct J9VMThread * vmThread, struct J9Module * j9module, U_8 * className, U_32 classNameLength, struct J9ClassLoader * classLoader, struct J9ClassPathEntry * classPath, UDATA classPathEntryCount, UDATA options, struct J9TranslationLocalBuffer *localBuffer) ;
 	struct J9Class*  ( *internalDefineClassFunction)(struct J9VMThread* vmThread, void* className, UDATA classNameLength, U_8* classData, UDATA classDataLength, j9object_t classDataObject, struct J9ClassLoader* classLoader, j9object_t protectionDomain, UDATA options, struct J9ROMClass *existingROMClass, struct J9Class *hostClass, struct J9TranslationLocalBuffer *localBuffer) ;
 	I_32  ( *closeZipFileFunction)(struct J9VMInterface* vmi, struct VMIZipFile* zipFile) ;
 	void  ( *reportStatisticsFunction)(struct J9JavaVM * javaVM, struct J9ClassLoader* loader, struct J9ROMClass* romClass, struct J9TranslationLocalBuffer *localBuffer) ;
@@ -1805,8 +1809,6 @@ typedef struct J9TranslationBufferSet {
 } J9TranslationBufferSet;
 
 #define BCU_UNUSED_2  2
-#define BCU_BOOTSTRAP_ENTRIES_ONLY  16
-#define BCU_NON_BOOTSTRAP_ENTRIES_ONLY  32
 #define BCU_VERBOSE  1
 #define BCU_TRACK_UTF8DATA  4
 #define BCU_UNUSED_40  64
@@ -2015,8 +2017,15 @@ typedef struct J9BCTranslationData {
 #define BCT_InitInstanceFields  19
 #define BCT_ErrConstantPoolMapTooSmall  14
 #define BCT_InitCopyDoubles  5
-#define BCT_Java9MajorVersionShifted  0x35000000
+
+/* When adding a new major version update BCT_JavaMaxMajorVersionShifted to
+ * the maximum allowed value.
+ */
 #define BCT_Java8MajorVersionShifted  0x34000000
+#define BCT_Java9MajorVersionShifted  0x35000000
+#define BCT_Java10MajorVersionShifted 0x36000000
+#define BCT_JavaMaxMajorVersionShifted BCT_Java10MajorVersionShifted
+
 #define BCT_ActionUnused  6
 #define BCT_ErrFallOffLastInstruction  8
 #define BCT_ActionNone  0
@@ -2089,9 +2098,10 @@ typedef struct J9ConstantPool {
 #define J9CPTYPE_METHOD_TYPE  13
 #define J9CPTYPE_METHODHANDLE  14
 #define J9CPTYPE_ANNOTATION_UTF8  15
-#define J9_CP_BITS_PER_DESCRIPTION  4
-#define J9_CP_DESCRIPTIONS_PER_U32  8
-#define J9_CP_DESCRIPTION_MASK  15
+
+#define J9_CP_BITS_PER_DESCRIPTION  8
+#define J9_CP_DESCRIPTIONS_PER_U32  4
+#define J9_CP_DESCRIPTION_MASK  255
 #define J9CPTYPE_UNUSED8  8
 
 
@@ -3304,6 +3314,7 @@ typedef struct J9ROMMethod {
 	U_16 tempCount;
 } J9ROMMethod;
 
+#define J9ROMMETHOD_NAMEANDSIGNATURE(base) (&((base)->nameAndSignature))
 #define J9ROMMETHOD_NAME(base) NNSRP_GET((&((base)->nameAndSignature))->name, struct J9UTF8*)
 #define J9ROMMETHOD_SIGNATURE(base) NNSRP_GET((&((base)->nameAndSignature))->signature, struct J9UTF8*)
 /* @ddr_namespace: map_to_type=J9JNIReferenceFrame */
@@ -4181,6 +4192,7 @@ typedef struct J9MemoryManagerFunctions {
 #if defined(J9VM_GC_FINALIZATION)
 	int  ( *j9gc_finalizer_startup)(struct J9JavaVM * vm) ;
 	void  ( *j9gc_finalizer_shutdown)(struct J9JavaVM * vm) ;
+	UDATA ( *j9gc_wait_for_reference_processing)(struct J9JavaVM * vm) ;
 	void  ( *runFinalization)(struct J9VMThread *vmThread) ;
 #endif /* J9VM_GC_FINALIZATION */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -4198,6 +4210,7 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *getStaticObjectAllocateFlags)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_scavenger_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_scavenger_enabled)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_software_read_barrier_enabled)(struct J9JavaVM *javaVM) ;
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
 	UDATA  ( *j9gc_concurrent_getCardSize)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_getHeapBase)(struct J9JavaVM *javaVM) ;
@@ -4643,9 +4656,6 @@ typedef struct J9InternalVMFunctions {
 	int  ( *shutdownJVMRI)(struct J9JavaVM* vm) ;
 	IDATA  ( *getOwnedObjectMonitors)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, struct J9ObjectMonitorInfo *info, IDATA infoLen) ;
 	void  ( *fixUnsafeMethods)(struct J9VMThread* vmStruct, jclass classRef) ;
-	j9object_t  ( *triggerExceptionCatchEvent)(struct J9VMThread* currentThread, j9object_t exception, UDATA* popProtectedFrame) ;
-	void  ( *triggerMethodEnterEvent)(struct J9VMThread* currentThread, struct J9Method* method, void* arg0EA, UDATA methodType, UDATA tracing) ;
-	void  ( *triggerMethodReturnEvent)(struct J9VMThread* currentThread, struct J9Method* method, UDATA poppedByException, void* returnValuePtr, UDATA methodType, UDATA tracing) ;
 #if !defined(J9VM_SIZE_SMALL_CODE)
 	void  ( *fieldIndexTableRemove)(struct J9JavaVM* javaVM, struct J9Class *ramClass) ;
 #endif /* J9VM_SIZE_SMALL_CODE */
@@ -4662,7 +4672,7 @@ typedef struct J9InternalVMFunctions {
 	struct J9Method*  ( *findJNIMethod)(struct J9VMThread* currentThread, J9Class* clazz, char* name, char* signature) ;
 	const char*  ( *getJ9VMVersionString)(struct J9JavaVM * vm) ;
 	j9object_t  ( *resolveMethodTypeRef)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
-	void  (JNICALL *sendFromMethodDescriptorString)(struct J9VMThread *vmThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, UDATA reserved3, UDATA reserved4) ;
+	void  (JNICALL *sendFromMethodDescriptorString)(struct J9VMThread *vmThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType, UDATA reserved4) ;
 	UDATA  ( *addToBootstrapClassLoaderSearch)(struct J9JavaVM * vm, const char * pathSegment, UDATA classLoaderType, BOOLEAN enforceJarRestriction) ;
 	UDATA  ( *addToSystemClassLoaderSearch)(struct J9JavaVM * vm, const char * pathSegment, UDATA classLoaderType, BOOLEAN enforceJarRestriction) ;
 	UDATA  ( *queryLogOptions)(struct J9JavaVM *vm, I_32 buffer_size, void *options_buffer, I_32 *data_size) ;
@@ -4674,7 +4684,6 @@ typedef struct J9InternalVMFunctions {
 	void*  ( *jniArrayAllocateMemoryFromThread)(struct J9VMThread* vmThread, UDATA sizeInBytes) ;
 	void  ( *jniArrayFreeMemoryFromThread)(struct J9VMThread* vmThread, void* location) ;
 	void  (JNICALL *sendForGenericInvoke)(struct J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg, UDATA reserved4) ;
-	void  (JNICALL *sendForGenericInvokeVarHandle)(struct J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, j9object_t varHandle, UDATA reserved4) ;
 	void  (JNICALL *jitFillOSRBuffer)(struct J9VMThread *vmContext, void *osrBlock, UDATA reserved1, UDATA reserved2, UDATA reserved3) ;
 	void  (JNICALL *sendResolveMethodHandle)(struct J9VMThread *vmThread, UDATA cpIndex, J9ConstantPool *ramCP, J9Class *definingClass, J9ROMNameAndSignature* nameAndSig) ;
 	j9object_t  ( *resolveInvokeDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
@@ -4925,6 +4934,8 @@ typedef struct J9VMThread {
 #endif /* J9VM_JIT_TRANSACTION_DIAGNOSTIC_THREAD_BLOCK */
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	struct J9GSParameters gsParameters;
+	void* evacuateBase;
+	void* evacuateTop;
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	UDATA safePointCount;
 } J9VMThread;
@@ -4988,7 +4999,7 @@ typedef struct J9ReflectFunctionTable {
 	j9object_t  ( *createDeclaredMethodObject)(struct J9Method *ramMethod, struct J9Class *declaringClass, j9array_t parameterTypes, struct J9VMThread* vmThread) ;
 	j9object_t  ( *createMethodObject)(struct J9Method *ramMethod, struct J9Class *declaringClass, j9array_t parameterTypes, struct J9VMThread* vmThread) ;
 	void  ( *fillInReflectMethod)(j9object_t methodObject, struct J9Class *declaringClass, jmethodID methodID, struct J9VMThread *vmThread) ;
-	struct J9JNIFieldID*  ( *idFromFieldObject)(struct J9VMThread* vmStruct, j9object_t fieldObject) ;
+	struct J9JNIFieldID*  ( *idFromFieldObject)(struct J9VMThread* vmStruct, j9object_t declaringClassObject, j9object_t fieldObject) ;
 	struct J9JNIMethodID*  ( *idFromMethodObject)(struct J9VMThread* vmStruct, j9object_t methodObject) ;
 	struct J9JNIMethodID*  ( *idFromConstructorObject)(struct J9VMThread* vmStruct, j9object_t constructorObject) ;
 } J9ReflectFunctionTable;
@@ -5006,7 +5017,9 @@ typedef struct J9VMRuntimeStateListener {
 	UDATA idleTuningFlags;
 } J9VMRuntimeStateListener;
 
-/* Values for J9VMRuntimeStateListener.vmRuntimeState */
+/* Values for J9VMRuntimeStateListener.vmRuntimeState
+ * These values are reflected in the Java class library code(RuntimeMXBean)
+ */
 #define J9VM_RUNTIME_STATE_ACTIVE 1
 #define J9VM_RUNTIME_STATE_IDLE 2
 
@@ -5127,6 +5140,8 @@ typedef struct J9JavaVM {
 	UDATA daemonThreadCount;
 	omrthread_t finalizeMasterThread;
 	omrthread_monitor_t finalizeMasterMonitor;
+	omrthread_monitor_t processReferenceMonitor; /* the monitor for synchronizing between reference process and j9gc_wait_for_reference_processing() (only for Java 9 and later) */
+	UDATA processReferenceActive;
 	IDATA finalizeMasterFlags;
 	UDATA exclusiveAccessResponseCount;
 	j9object_t destroyVMState;
@@ -5422,21 +5437,18 @@ typedef struct J9JavaVM {
 #define J9VM_DEFLATION_POLICY_SMART  2
 #define J9VM_DEBUG_ATTRIBUTE_RECORD_ALL  0x8000
 #define J9VM_DEBUG_ATTRIBUTE_CAN_REDEFINE_CLASSES  0x10000
-#define J9VM_DEBUG_ATTRIBUTE_ALLOW_INLINING_WITH_METHOD_ENTER_EXIT  0x80000
+#define J9VM_DEBUG_ATTRIBUTE_UNUSED_0x80000  0x80000
 #define J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER  0x1000000
 #define J9VM_DEBUG_ATTRIBUTE_LINE_NUMBER_TABLE  1
 #define J9VM_DEBUG_ATTRIBUTE_SOURCE_FILE  2
 #define J9VM_ZERO_DEFAULT_OPTIONS  1
 #define J9VM_ZERO_SHAREBOOTZIPCACHE  1
 #define J9VM_DEBUG_ATTRIBUTE_SOURCE_DEBUG_EXTENSION  8
-#define J9VM_DEBUG_ATTRIBUTE_ALLOW_DIRECT_JNI_WITH_METHOD_ENTER_EXIT  0x200000
+#define J9VM_DEBUG_ATTRIBUTE_UNUSED_0x200000  0x200000
 #define J9VM_PHASE_EARLY_STARTUP  0
 #define J9VM_DEBUG_ATTRIBUTE_MAINTAIN_FULL_INLINE_MAP  0x40000
-#define J9VM_DEBUG_ATTRIBUTE_SELECTIVE_METHOD_ENTER_EXIT  0x800000
+#define J9VM_DEBUG_ATTRIBUTE_UNUSED_0x800000  0x800000
 #define J9VM_DEFLATION_POLICY_NEVER  0
-
-/* JIT uses these */
-#define J9SIZEOF_J9OSRFrame sizeof(J9OSRFrame)
 
 #if J9_INLINE_JNI_MAX_ARG_COUNT != 32
 #error Math is depending on J9_INLINE_JNI_MAX_ARG_COUNT being 32

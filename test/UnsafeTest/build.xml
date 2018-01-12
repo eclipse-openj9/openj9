@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,18 +19,17 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-<project name="OpenJ9 Unsupported Tests" default="build" basedir=".">
+<project name="OpenJ9 Unsafe Tests" default="build" basedir=".">
 	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
-		Build OpenJ9 Unsupported Tests
+		Build OpenJ9 Unsafe Tests
 	</description>
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/UnsafeTest" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />
@@ -40,7 +39,7 @@
 	<property name="transformerListener" location="../Utils/src"/>
 
 	<target name="init">
-		<mkdir dir="${dist}" />
+		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 	</target>
 
@@ -50,7 +49,7 @@
 		<echo>===fork:				yes</echo>
 		<echo>===executable:			${compiler.javac}</echo>
 		<echo>===debug:				on</echo>
-		<echo>===destdir:				${dist}</echo>
+		<echo>===destdir:				${DEST}</echo>
 		<if>
 			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
 			<then>
@@ -58,7 +57,7 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src_90}" />
 					<src path="${transformerListener}" />
-					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
+					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED' />
 					<classpath>
 						<pathelement location="../TestConfig/lib/testng.jar" />
 					</classpath>
@@ -77,14 +76,12 @@
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
-		<jar jarfile="${dist}/OpenJ9Unsupported.jar" filesonly="true">
+		<jar jarfile="${DEST}/OpenJ9Unsafe.jar" filesonly="true">
 			<fileset dir="${build}" />
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />
 		</jar>
-		<copy todir="${dist}">
-			<fileset dir="${src}/../" includes="*.xml" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml" />
 			<fileset dir="${src}/../" includes="*.mk" />
 		</copy>
 

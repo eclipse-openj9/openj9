@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /**
@@ -1613,14 +1613,16 @@ openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile,
 				goto failDontUnlink;
 			}
 		} else {
-#if defined (__GNUC__) || defined (AIXPPC)
-#if defined (__GNUC__)
-			/*Use .__key for __GNUC__*/
-			if (buf.shm_perm.__key != controlinfo->common.ftok_key)
-#endif
-#if defined (AIXPPC)
+#if defined(__GNUC__) || defined(AIXPPC)
+#if defined(OSX)
+			/*Use ._key for OSX*/
+			if (buf.shm_perm._key != controlinfo->common.ftok_key)
+#elif defined(AIXPPC)
 			/*Use .key for AIXPPC*/
 			if (buf.shm_perm.key != controlinfo->common.ftok_key)
+#elif defined(__GNUC__)
+			/*Use .__key for __GNUC__*/
+			if (buf.shm_perm.__key != controlinfo->common.ftok_key)
 #endif
 			{
 				Trc_PRT_shmem_j9shmem_openSharedMemory_Msg("The <key,id> pair in our control file is no longer valid.");

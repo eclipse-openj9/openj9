@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package java.lang.invoke;
 
@@ -44,7 +44,7 @@ import java.util.WeakHashMap;
 import com.ibm.oti.util.Msg;
 import com.ibm.oti.vm.VM;
 
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF Sidecar18-SE-OpenJ9]*/
 import java.lang.invoke.MethodTypeForm;
 /*[ENDIF]*/
 
@@ -358,6 +358,69 @@ public final class MethodType implements Serializable {
 		}
 		
 		return mt;
+	}
+	
+	/**
+	 * Internal helper method for generating a MethodType from a descriptor string,
+	 * and append an extra argument type.
+	 * 
+	 * VarHandle call sites use this method to generate the MethodType that matches
+	 * the VarHandle method implementation (extra VarHandle argument).
+	 */
+	@SuppressWarnings("unused")  /* Used by native code */
+	private static final MethodType fromMethodDescriptorStringAppendArg(String methodDescriptor, ClassLoader loader, Class<?> appendArgumentType) {
+		List<Class<?>> types = parseIntoClasses(methodDescriptor, loader);
+		Class<?> returnType = types.remove(types.size() - 1);
+		types.add(appendArgumentType);
+		
+		return methodType(returnType, types);
+	}
+	
+	/**
+	 * This helper calls MethodType.fromMethodDescriptorString(...) or 
+	 * MethodType.fromMethodDescriptorStringAppendArg(...) but throws 
+	 * NoClassDefFoundError instead of TypeNotPresentException during 
+	 * the VM resolve stage.
+	 *
+	 * @param methodDescriptor - the method descriptor string
+	 * @param loader - the ClassLoader to be used
+	 * @param appendArgumentType - an extra argument type
+	 *
+	 * @return a MethodType object representing the method descriptor string
+	 *
+	 * @throws IllegalArgumentException - if the string is not well-formed
+	 * @throws NoClassDefFoundError - if a named type cannot be found
+	 */
+	static final MethodType vmResolveFromMethodDescriptorString(String methodDescriptor, ClassLoader loader, Class<?> appendArgumentType) throws Throwable {
+		try {
+			if (null == appendArgumentType) {
+				return MethodType.fromMethodDescriptorString(methodDescriptor, loader);
+			}
+			return MethodType.fromMethodDescriptorStringAppendArg(methodDescriptor, loader, appendArgumentType);
+		} catch (TypeNotPresentException e) {
+			throw throwNoClassDefFoundError(e);
+		}
+	}
+
+	/**
+	 * Helper method to throw NoClassDefFoundError if the cause of TypeNotPresentException 
+	 * is ClassNotFoundException. Otherwise, re-throw TypeNotPresentException.
+	 * 
+	 * @param e - an instance of TypeNotPresentException
+	 * 
+	 * @return a Throwable object to prevent any fall through case
+	 * 
+	 * @throws NoClassDefFoundError - if the cause of e is ClassNotFoundException
+	 * @throws TypeNotPresentException - if the cause of e is not ClassNotFoundException
+	 */
+	private static final Throwable throwNoClassDefFoundError(TypeNotPresentException e) {
+		Throwable cause = e.getCause();
+		if (cause instanceof ClassNotFoundException) {
+			NoClassDefFoundError noClassDefFoundError = new NoClassDefFoundError(cause.getMessage());
+			noClassDefFoundError.initCause(cause);
+			throw noClassDefFoundError;
+		}
+		throw e;
 	}
 	
 	/*
@@ -1114,7 +1177,7 @@ public final class MethodType implements Serializable {
 		return invoker;
 	}
 	
-/*[IF Sidecar19-SE-OpenJ9]*/	
+/*[IF Sidecar18-SE-OpenJ9]*/	
 	MethodType basicType() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -1134,10 +1197,26 @@ public final class MethodType implements Serializable {
 	Class<?> rtype() {
 		return returnType;
 	}
-	
+
+/*[IF Sidecar19-SE-OpenJ9]*/	
 	MethodType asCollectorType(Class<?> clz, int num1, int num2) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-/*[ENDIF]*/	
+
+	/*[IF Java10]*/
+	/**
+	 * Returns the number of stack slots used by the described args in the MethodType.
+	 * @return The number of stack slots
+	 */
+	int parameterSlotCount() {
+		return argSlots;
+	}
+	/*[ENDIF]*/	
+/*[ELSE]*/
+	MethodType asCollectorType(Class<?> clz, int num1) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF]*/
+/*[ENDIF]*/
 }
 

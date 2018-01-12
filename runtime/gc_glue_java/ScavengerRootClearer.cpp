@@ -17,10 +17,11 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9cfg.h"
+#include "j2sever.h"
 #include "ModronAssertions.h"
 
 #if defined(OMR_GC_MODRON_SCAVENGER)
@@ -75,8 +76,10 @@ MM_ScavengerRootClearer::processReferenceList(MM_EnvironmentStandard *env, MM_He
 
 				referenceStats->_cleared += 1;
 
-				if (J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) {
-					/* Phantom objects keep their referent - scanning will be done after the enqueuing */
+				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
+				J9JavaVM * javaVM = (J9JavaVM*)env->getLanguageVM();
+				if ((J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) && ((J2SE_VERSION(javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
+					/* Scanning will be done after the enqueuing */
 					_scavenger->copyObjectSlot(env, &referentSlotObject);
 				} else {
 					referentSlotObject.writeReferenceToSlot(NULL);

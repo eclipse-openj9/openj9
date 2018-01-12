@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2015 IBM Corp. and others
+ * Copyright (c) 2015, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #if !defined(CONCURRENTSAFEPOINTCALLBACKJAVA_HPP_)
@@ -56,7 +56,7 @@ private:
 	static void registerAsyncEventHandler(MM_EnvironmentBase *env, MM_ConcurrentSafepointCallbackJava *callback);
 	static void asyncEventHandler(J9VMThread *vmThread, intptr_t handlerKey, void *userData);
 
-	void globalGCComplete(MM_EnvironmentStandard *env);
+	void globalGCComplete(MM_EnvironmentBase *env);
 
 protected:
 public:
@@ -66,9 +66,9 @@ public:
 	virtual void registerCallback(MM_EnvironmentBase *env, SafepointCallbackHandler handler, void *userData);
 #endif /* defined(AIXPPC) || defined(LINUXPPC) */
 
-	virtual void cancelCallback(MM_EnvironmentStandard *env);
+	virtual void cancelCallback(MM_EnvironmentBase *env);
 
-	virtual void requestCallback(MM_EnvironmentStandard *env);
+	virtual void requestCallback(MM_EnvironmentBase *env);
 
 	static MM_ConcurrentSafepointCallbackJava *newInstance(MM_EnvironmentBase *env);
 	virtual void kill(MM_EnvironmentBase *env);

@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9.h"
@@ -1200,7 +1200,6 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 			signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef*)romCPItem));
 			break;
 		}
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 		case JBinvokespecialsplit: {
 			/* cpIndex is actually an index into split table. Access the split table to get real constant pool index */
 			J9ROMClass *romClass = J9_CLASS_FROM_METHOD(callingMethod)->romClass;
@@ -1218,7 +1217,6 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 			signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef*)romCPItem));
 			break;
 		}
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 		case JBinvokedynamic: {
 			/* invokedynamic has no receiver, all pushed arguments are described by the signature
 			 * in the call site data.
@@ -1791,9 +1789,8 @@ jitGetOwnedObjectMonitors(J9StackWalkState *walkState)
 			) {
 
 			if (liveMonitorMap) {
-				U_8 *inlineMonitorMask;
-
-				if (inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite)) {
+				U_8 *inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite);
+				if (NULL != inlineMonitorMask) {
 					walkLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, inlineMonitorMask, numberOfMapBits);
 				}
 			}
@@ -1844,9 +1841,8 @@ countOwnedObjectMonitors(J9StackWalkState *walkState)
 			) {
 
 			if (liveMonitorMap) {
-				U_8 *inlineMonitorMask;
-
-				if (inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite)) {
+				U_8 *inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite);
+				if (NULL != inlineMonitorMask) {
 					countLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, inlineMonitorMask, numberOfMapBits);
 				}
 			}

@@ -60,7 +60,7 @@ import sun.reflect.CallerSensitive;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
  
 /**
@@ -257,7 +257,16 @@ public abstract class ClassLoader {
 		
 		/*[IF Sidecar19-SE]*/
 		jdk.internal.misc.VM.initLevel(1);
-		System.bootLayer = jdk.internal.module.ModuleBootstrap.boot();
+		/*[IF Java10]*/
+		try {
+		/*[ENDIF]*/
+			System.bootLayer = jdk.internal.module.ModuleBootstrap.boot();
+		/*[IF Java10]*/
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			System.exit(1);
+		}
+		/*[ENDIF]*/
 		jdk.internal.misc.VM.initLevel(2);
 		String javaSecurityManager = System.internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
 		if (null != javaSecurityManager) {
@@ -930,7 +939,7 @@ public InputStream getResourceAsStream (String resName) {
  *
  * @throws IOException
  */
-protected InputStream getResourceAsStream(String moduleName, String name) throws IOException
+InputStream getResourceAsStream(String moduleName, String name) throws IOException
 {
 	return null;
 }
@@ -968,6 +977,17 @@ static void completeInitialization() {
 	initSystemClassLoader = true;
 }
 
+/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
+//Returns incoming class's classloader without going through security checking
+static ClassLoader getClassLoader(Class<?> clz) {
+	if (null != clz) {
+		return clz.getClassLoader0();
+	} else {
+		return null;
+	}
+}
+/*[ENDIF]*/
+
 /*[IF Sidecar19-SE]*/
 @CallerSensitive
 public static ClassLoader getPlatformClassLoader() {
@@ -980,15 +1000,6 @@ public static ClassLoader getPlatformClassLoader() {
 		}
 	}
 	return platformClassLoader;
-}
-
-// Returns incoming class's classloader without going through security checking
-static ClassLoader getClassLoader(Class<?> clz) {
-	if (null != clz) {
-		return clz.getClassLoader0();
-	} else {
-		return null;
-	}
 }
 
 // Loads a class in a module defined to this classloader
@@ -1194,10 +1205,15 @@ protected Class<?> loadClass(final String className, boolean resolveClass) throw
  */
 final Class<?> loadClass(Module module, String className) {
 	Class<?> localClass = null;
-	try {
-		localClass = loadClassHelper(className, false, false, module);
-	} catch (ClassNotFoundException e) {
-		// returns null if the class can't be found
+	
+	if ((bootstrapClassLoader == null) || (this == bootstrapClassLoader)) {
+		localClass = VMAccess.findClassOrNull(className, bootstrapClassLoader);
+	} else {
+		try {
+			localClass = loadClassHelper(className, false, false, module);
+		} catch (ClassNotFoundException e) {
+			// returns null if the class can't be found
+		}
 	}
 	return localClass;
 }
@@ -2090,7 +2106,11 @@ boolean getDefaultAssertionStatus() {
  */
 private void initializeClassLoaderAssertStatus() {
 	/*[PR CMVC 130382] Optimize checking ClassLoader assertion status */
+	/*[IF Sidecar19-SE]*/
+	boolean bootLoader = bootstrapClassLoader == this;
+	/*[ELSE]
 	boolean bootLoader = bootstrapClassLoader == null;
+	/*[ENDIF]*/
 
 	if (!bootLoader && !checkAssertionOptions) {
 		// if the bootLoader didn't find any assertion options, other

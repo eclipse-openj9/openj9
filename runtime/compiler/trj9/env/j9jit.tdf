@@ -1,0 +1,83 @@
+// Copyright (c) 2000, 2017 IBM Corp. and others
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] http://openjdk.java.net/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+
+// make -f makefile.buildtools tracing
+
+Executable=j9jit
+Submodules=j9codertvm
+DATFileName=J9TraceFormat.dat
+TraceEvent=Trc_JIT_VMInitStages_Event1    Overhead=1 Level=1 Test Template="Trace engine initialized for module j9jit"
+TraceEvent=Trc_JIT_cacheFull              Overhead=1 Level=1 Test Template="<WARNING: JIT CACHES FULL>"
+TraceEvent=Trc_JIT_compileStart           Overhead=1 Level=1 Test Template=" (%s) Compiling %s"
+TraceEvent=Trc_JIT_compileEnd             Overhead=1 Level=1 Test Template="+ (%s%s) %s @ %p-%p/%p-%p gc=%d atlas=%d time=%dus %s [profiling c(%d), f(%d), ivc(%d)]"
+TraceEvent=Trc_JIT_outOfMemory            Overhead=1 Level=1 Test Template="<TRANSLATION FAILURE: out of scratch memory>"
+TraceEvent=Trc_JIT_compilationFailed      Overhead=1 Level=1 Test Template="JIT: translating %s -- FAILED rtn=%d"
+TraceEvent=Trc_JIT_noAttemptToJit         Overhead=1 Level=1 Test Template="JIT: no attempt made to jit %s"
+TraceEvent=Trc_JIT_optimizationPhase      Overhead=1 Level=3 Test Template="JIT: performed optimization: %s"
+TraceEvent=Trc_JIT_codeGeneratorPhase     Overhead=1 Level=3 Test Template="JIT: about to do codegen phase: %s"
+TraceEvent=Trc_JIT_assumeFailure          Overhead=1 Level=1 Test Template="JIT: Assertion error on line %d of %s"
+TraceEvent=Trc_JIT_startCompThreadFailed  Overhead=1 Level=1 Test Template="JIT: Compilation Thread could not be started"
+TraceEvent=Trc_JIT_recoverableCrash       Overhead=1 Level=1 Test Template="JIT: Recoverable Crash in the JIT while compiling %s"
+TraceEvent=Trc_JIT_fatalCrash             Overhead=1 Level=1 Test Template="JIT: Fatal Crash in the JIT while compiling %s"
+TraceEvent=Trc_JIT_Sampling               Overhead=1 Level=3 Test Template="SamplingLog:    %s %s   offset  0x%X"
+TraceEvent=Trc_JIT_Sampling_Detail        Overhead=1 Level=4 Test Template="SamplingLogDetail: ---> %s"
+TraceEvent=Trc_JIT_MethodSampleStart      Group=perfmon Overhead=1 Level=5 Test Template="MTH_S: %p %p %p"
+TraceEvent=Trc_JIT_MethodSampleContinue   Group=perfmon Overhead=1 Level=5 Test Template="MTH_C: %p %p %p"
+TraceEvent=Trc_JIT_MethodSampleFail       Group=perfmon Overhead=1 Level=5 Test Template="Sample stackwalk failure: %d"
+TraceEvent=Trc_JIT_compileEndNew          Group=perfmon Overhead=1 Level=1 Test Template="+ (%s%s) %s @ %p-%p/%p-%p gc=%d atlas=%d time=%dus %s [profiling c(%d), f(%d), ivc(%d)] %p %p"
+
+TraceAssert=Assert_JIT_unreachable noEnv  Overhead=1 Level=1 Assert="(0 /* unreachable */)"
+
+TraceEvent=Trc_JIT_MethodPrexInvalidated  Group=perfmon Overhead=1 Level=1 Test Template="JIT: Compiled body _startPC=%p invalidated by prex"
+TraceEvent=Trc_JIT_IProfilerCapReached    Group=perfmon Overhead=1 Level=1 Test Template="JIT: IProfiler memory cap reached %d KB"
+TraceEvent=Trc_JIT_IncompatibleAOTHeader  Group=perfmon Overhead=1 Level=1 Test Template="JIT: AOT header is incompatible. Disabling AOT loads"
+TraceEvent=Trc_JIT_ManyCompFailures       Group=perfmon Overhead=1 Level=1 Test Template="JIT: Many compilation failures: %d"
+TraceEvent=Trc_JIT_LowUserVirtualMemory   Group=perfmon Overhead=1 Level=1 Test Template="JIT: low virtual memory detected %d MB"
+
+TraceEvent=Trc_JIT_DisableJIT             Overhead=1 Level=1 Test Template="JIT: disableJit"
+TraceEvent=Trc_JIT_EnableJIT              Overhead=1 Level=1 Test Template="JIT: enableJit"
+TraceEvent=Trc_JIT_purgeMethodQueue       Overhead=1 Level=1 Test Template="JIT: purgeMethodQueue"
+TraceEvent=Trc_JIT_dataCacheFull          Overhead=1 Level=1 Test Template="<WARNING: JIT DATA CACHES FULL>"
+
+TraceEvent=Trc_JIT_CodeCacheAllocated     Overhead=1 Level=1 Noenv Template="JIT: allocated codeCache=%p (heapBase=%p, heapTop=%p)"
+
+TraceEvent=Trc_JIT_DumpStart              Overhead=1 Level=1 Test Template="JITDUMP: dump initiated"
+TraceEvent=Trc_JIT_DumpCompilingMethod    Overhead=1 Level=1 Test Template="JITDUMP: recompiling for dump - (method=%p, hotness=%d, oldStartPC=%p)"
+TraceEvent=Trc_JIT_DumpWalkingFrame       Overhead=1 Level=1 Test Template="JITDUMP: walking a frame on Java stack"
+TraceEvent=Trc_JIT_DumpFail               Overhead=1 Level=1 Test Template="JITDUMP: dump failed because %s"
+TraceEvent=Trc_JIT_DumpRecursiveCrash     Overhead=1 Level=1 Test Template="JITDUMP: dump caused a recursive crash - not creating a second dump"
+
+TraceEvent=TRC_JIT_getAvailableVirtualMemoryMBEnter Overhead=1 Level=1 Test Template="JIT: Entering getAvailableVirtualMemoryMB"
+TraceEvent=TRC_JIT_getAvailableVirtualMemoryMBExit Overhead=1 Level=1 Test Template="JIT: Exiting getAvailableVirtualMemoryMB"
+TraceEvent=TRC_JIT_ShutDownBegin          Overhead=1 Level=1 Test Template="JIT: Entering jitShutdown"
+TraceEvent=TRC_JIT_ShutDownEnd            Overhead=1 Level=1 Test Template="JIT: Exiting jitShutdown %s"
+
+TraceEvent=Trc_JIT_MethodSampleStart1     Group=perfmon Overhead=1 Level=5 Test Template="MTH_S: %p"
+TraceEvent=Trc_JIT_MethodSampleContinue2  Group=perfmon Overhead=1 Level=5 Test Template="MTH_C: %p %p"
+TraceEvent=Trc_JIT_MethodSampleContinue1  Group=perfmon Overhead=1 Level=5 Test Template="MTH_C: %p"
+
+TraceEvent=Trc_JIT_CompCPU                Group=perfmon Overhead=1 Level=5 Test Template="JIT: CompThreadID=%d compCPU=%d ms"
+TraceEvent=Trc_JIT_CompRequest            Group=perfmon Overhead=1 Level=5 Test Template="JIT: CompRequest queued. j9m=%p sPC=%p sync=%d opt=%d pri=%d Q_SZ=%d"
+TraceEvent=Trc_JIT_compileEnd15           Group=perfmon Overhead=1 Level=1 Test Template="+ (%s%s) %s @ %p-%p/%p-%p time=%dus %p %p RR=%c Q_SZ=%d bcsz=%d mem=%dKB %s"
+TraceEvent=Trc_JIT_AotLoadEnd             Group=perfmon Overhead=1 Level=1 Test Template="+ (AOT load) %s @ %p-%p/%p-%p time=%dus %p %p Q_SZ=%d bcsz=%d mem=%dKB"
+TraceEvent=Trc_JIT_OverallCompCPU         Group=perfmon Overhead=1 Level=5 Test Template="JIT: compCPUPercent=%d"
+
+TraceEvent=Trc_JIT_SCCInfo                Group=perfmon Overhead=1 Level=5 Test Template="SCC: name=%s path=%s size=%u free=%u softMax=%u ROMClass=%u AOTCode=%u AOTData=%u JITHint=%u JITProfile=%u ROMClasses=%u AOTMethods=%u disabledReason=%d"
+

@@ -17,7 +17,7 @@
 #  [1] https://www.gnu.org/software/classpath/license.html
 #  [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ##############################################################################
 
 #
@@ -80,9 +80,22 @@ D=\\
 PROPS_DIR=props_win
 endif
 
+# Environment variable OSTYPE is set to cygwin if running under cygwin.
+ifndef CYGWIN
+	OSTYPE?=$(shell echo $$OSTYPE)
+	ifeq ($(OSTYPE),cygwin)
+		CYGWIN:=1
+	else
+		CYGWIN:=0
+	endif
+endif
+
 ifndef SRC_ROOT
-SRC_ROOT := $(shell $(PWD))$(D)..
-SRC_ROOT := $(subst \,/,$(SRC_ROOT))
+	SRC_ROOT := $(shell $(PWD))$(D)..
+	ifeq ($(CYGWIN),1)
+		SRC_ROOT := $(shell cygpath -w $(SRC_ROOT))
+	endif
+	SRC_ROOT := $(subst \,/,$(SRC_ROOT))
 endif
 $(info set SRC_ROOT to $(SRC_ROOT))
 
@@ -156,14 +169,17 @@ RESOURCES_DIR=$(JVM_TEST_ROOT)$(D)TestConfig$(D)resources
 #######################################
 # cmdlinetester jars
 #######################################
-CMDLINETESTER_JAR   =$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_tester$(D)$(JAVA_VERSION)$(D)cmdlinetester.jar$(Q)
-CMDLINETESTER_RESJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(D)$(JAVA_VERSION)$(D)cmdlinetestresources.jar$(Q)
+CMDLINETESTER_JAR   =$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_tester$(D)cmdlinetester.jar$(Q)
+CMDLINETESTER_RESJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(D)cmdlinetestresources.jar$(Q)
 
 #######################################
 # testng report dir
 #######################################
 TIMESTAMP := $(shell perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)testKitGen$(D)resultsSummary$(D)getTimeStamp.pl -v)
-TESTOUTPUT = $(shell $(PWD))$(D)test_output_$(TIMESTAMP)
+TESTOUTPUT := $(shell $(PWD))$(D)test_output_$(TIMESTAMP)
+ifeq ($(CYGWIN),1)
+	TESTOUTPUT := $(subst \,/,$(shell cygpath -w $(TESTOUTPUT)))
+endif
 REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@$(Q)
 
 #######################################
@@ -173,7 +189,7 @@ TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); else $(EC
 ifneq ($(DEBUG),)
 $(info TEST_STATUS is $(TEST_STATUS))
 endif
-TEST_SKIP_STATUS=@$(ECHO) $@_SKIPPED
+TEST_SKIP_STATUS=$@_SKIPPED
 
 #######################################
 # include configure makefile
@@ -203,12 +219,12 @@ endif
 
 .PHONY: _$(TESTTARGET) $(TESTTARGET)
 $(TESTTARGET): JVM_TEST_ROOT := $(BUILD_ROOT)
-_$(TESTTARGET): setup_$(TESTTARGET) $(TESTTARGET)
+_$(TESTTARGET): setup_$(TESTTARGET) rmResultFile $(TESTTARGET) resultsSummary
 	@$(ECHO) $@ done
 
 setup_%:
 	@$(ECHO)
-	@$(ECHO) Running test _$(TESTTARGET)
+	@$(ECHO) Running $(TESTTARGET)
 	$(JAVA_COMMAND) -version
 
 #######################################
@@ -223,9 +239,9 @@ endif
 
 .PHONY: test_$(DIRTARGET)
 $(DIRTARGET): JVM_TEST_ROOT := $(BUILD_ROOT)
-test_$(DIRTARGET): rmResultFile $(DIRTARGET)_$(JAVA_VERSION) resultsSummary
+test_$(DIRTARGET): setup_$(DIRTARGET) rmResultFile $(DIRTARGET) resultsSummary
 
-test: getdependency compile runtest
+test: compile runtest
 	@$(ECHO) "All Tests Completed"
 
 ifndef JCL_VERSION
@@ -233,11 +249,17 @@ export JCL_VERSION:=latest
 else
 export JCL_VERSION:=$(JCL_VERSION)
 endif
-$(info set JAVA_VERSION to $(JAVA_VERSION))
+$(info set JCL_VERSION to $(JCL_VERSION))
+
+# Define the EXCLUDE_FILE to be used for temporarily excluding failed tests.
+# This macro is used in /test/Utils/src/org/openj9/test/util/IncludeExcludeTestAnnotationTransformer
+ifndef EXCLUDE_FILE
+	export EXCLUDE_FILE:=$(JVM_TEST_ROOT)$(D)TestConfig$(D)resources$(D)excludes$(D)$(JCL_VERSION)_exclude_$(JAVA_VERSION).txt
+endif
 
 # compile all tests under $(SRC_ROOT)
-compile:
-	ant -f $(SRC_ROOT)$(D)TestConfig$(D)scripts$(D)build_test.xml -DSRC_ROOT=$(SRC_ROOT) -DBUILD_ROOT=$(BUILD_ROOT) -DJAVA_BIN=$(JAVA_BIN) -DJAVA_VERSION=$(JAVA_VERSION) -DJCL_VERSION=$(JCL_VERSION) -DBUILD_LIST=${BUILD_LIST} -DRESOURCES_DIR=${RESOURCES_DIR}
+compile: getdependency
+	ant -f $(SRC_ROOT)$(D)TestConfig$(D)scripts$(D)build_test.xml -DSRC_ROOT=$(SRC_ROOT) -DBUILD_ROOT=$(BUILD_ROOT) -DJAVA_BIN=$(JAVA_BIN) -DJAVA_VERSION=$(JAVA_VERSION) -DJCL_VERSION=$(JCL_VERSION) -DBUILD_LIST=${BUILD_LIST} -DRESOURCES_DIR=${RESOURCES_DIR} -DJCK_ROOT=$(JCK_ROOT) 
 
 #######################################
 # failed target
@@ -258,17 +280,8 @@ rmResultFile:
 resultsSummary:
 	@perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)testKitGen$(D)resultsSummary$(D)resultsSum.pl --failuremk=$(Q)$(FAILEDTAGETS)$(Q) --resultFile=$(Q)$(TEMPRESULTFILE)$(Q) --tapFile=$(Q)$(TAPRESULTFILE)$(Q) --diagnostic=failure
 
-sanity: JVM_TEST_ROOT := $(BUILD_ROOT)
-sanity: rmResultFile sanity_$(JAVA_VERSION) resultsSummary
-
-extended: JVM_TEST_ROOT := $(BUILD_ROOT)
-extended: rmResultFile extended_$(JAVA_VERSION) resultsSummary
-
-openjdk: JVM_TEST_ROOT := $(BUILD_ROOT)
-openjdk: rmResultFile openjdk_$(JAVA_VERSION) resultsSummary
-
-runtest: rmResultFile sanity_$(JAVA_VERSION) extended_$(JAVA_VERSION) openjdk_$(JAVA_VERSION) resultsSummary
-.NOTPARALLEL: extended sanity openjdk runtest rmResultFile resultsSummary
+runtest: setup_runtest rmResultFile sanity extended openjdk external perf jck resultsSummary
+.NOTPARALLEL: extended sanity openjdk external perf jck runtest rmResultFile resultsSummary
 
 # cleanup
 clean:

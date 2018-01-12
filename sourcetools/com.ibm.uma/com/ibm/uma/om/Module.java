@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package com.ibm.uma.om;
 import java.util.Hashtable;
@@ -64,7 +64,11 @@ public class Module extends PredicateList {
 	}
 	
 	public void addExports(String group, Exports exps) {
-		exports.put(group, exps);
+		if ( exports.containsKey(group) ) {
+			exports.get(group).addExports(exps);
+		} else {
+			exports.put(group, exps);
+		}
 	}
 	
 	public void addObjects(String group, Objects objs) {

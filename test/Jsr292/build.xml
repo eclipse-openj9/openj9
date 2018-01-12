@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <project name="J9 JSR 292 Tests" default="build" basedir=".">
@@ -30,7 +30,6 @@
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/Jsr292" />
-	<property name="dist" location="${DEST}/${JAVA_VERSION}" />
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src"/>
@@ -42,7 +41,7 @@
 	<property name="transformerListener" location="../Utils/src"/>
 
 	<target name="init">
-		<mkdir dir="${dist}"/>
+		<mkdir dir="${DEST}"/>
 		<mkdir dir="${build}"/>
 		<mkdir dir="${bootstrapBuild}"/>
 	</target>
@@ -167,6 +166,7 @@
 					<exclude name="**/SamePackageExample.java" />
 					<exclude name="**/LookupAPITests_FindClass.java" />
 					<exclude name="**/LookupAPITests_AccessClass.java"/>
+					<exclude name="**/MethodHandleAPI_dropArgumentsToMatch.java" />
 					
 					<!-- exclude non test files for indyn test -->
 					<exclude name="**/indyn/BootstrapMethods.java" />
@@ -206,16 +206,14 @@
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution" >
-		<copy todir="${dist}">
-			<fileset dir="${src}/../" includes="*.xml,*.policy" />
-		</copy>
 		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml,*.policy" />
 			<fileset dir="${src}/../" includes="*.mk" />
 		</copy>
-		<jar jarfile="${dist}/jsr292test.jar" filesonly="true">
+		<jar jarfile="${DEST}/jsr292test.jar" filesonly="true">
 			<fileset dir="${build}"/>
 		</jar>
-		<jar jarfile="${dist}/jsr292bootstrap.jar" filesonly="true">
+		<jar jarfile="${DEST}/jsr292bootstrap.jar" filesonly="true">
 			<fileset dir="${bootstrapBuild}"/>
 		</jar>
 	</target>

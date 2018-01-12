@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #include <stdio.h>
 #include <math.h>
@@ -35,15 +35,6 @@
 
 #if defined(J9ZTPF)
 #define J9_NO_DENORMAL_FLOAT_SUPPORT 1
-#endif
-
-#ifdef J9VM_MATH_USE_FDLIBM_MATH_LIBRARY
-#undef fmod
-#undef remainder
-#define fmod fdlibm_fmod
-#define remainder fdlibm_remainder
-extern double fmod (double, double);
-extern double remainder (double, double);
 #endif
 
 

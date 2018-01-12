@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef jvmti_internal_h
@@ -503,15 +503,6 @@ jvmtiError JNICALL
 jvmtiSetExtensionEventCallback(jvmtiEnv* env,
 	jint extension_event_index,
 	jvmtiExtensionEvent callback);
-
-
-/**
-* @brief
-* @param env
-* @return jvmtiError
-*/
-jvmtiError
-isOKToEnableMethodEntryExit(jvmtiEnv* env);
 
 
 /* ---------------- jvmtiField.c ---------------- */
@@ -1271,16 +1262,6 @@ UDATA
 findDecompileInfo(J9VMThread *currentThread, J9VMThread *targetThread, UDATA depth, J9StackWalkState *walkState);
 
 /* ---------------- jvmtiHook.c ---------------- */
-
-/**
-* @brief
-* @param *vmThread
-* @param handlerKey
-* @param *userData
-* @return void
-*/
-void
-asyncEventHandler(J9VMThread* vmThread, IDATA handlerKey, void* userData);
 
 /**
 * @brief
@@ -2564,6 +2545,11 @@ jvmtiAddModuleProvides(jvmtiEnv* env,
 		jobject module,
 		jclass service,
 		jclass impl_class);
+
+jvmtiError JNICALL
+jvmtiIsModifiableModule(jvmtiEnv* env,
+		jobject module,
+		jboolean* is_modifiable_module_ptr);
 
 #ifdef __cplusplus
 }

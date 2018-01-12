@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 
@@ -26,6 +26,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9consts.h"
+#include "j2sever.h"
 #include "ModronAssertions.h"
 
 #include <string.h>
@@ -1670,8 +1671,9 @@ MM_GlobalMarkingScheme::processReferenceList(MM_EnvironmentVLHGC *env, J9Object*
 				referenceStats->_cleared += 1;
 				J9GC_J9VMJAVALANGREFERENCE_STATE(env, referenceObj) = GC_ObjectModel::REF_STATE_CLEARED;
 
-				if (J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) {
-					/* Phantom objects keep their referent - scanning will be done after the enqueuing */
+				/* Phantom references keep it's referent alive in Java 8 and doesn't in Java 9 and later */
+				if ((J9_JAVA_CLASS_REFERENCE_PHANTOM == referenceObjectType) && ((J2SE_VERSION(_javaVM) & J2SE_VERSION_MASK) <= J2SE_18)) {
+					/* Scanning will be done after the enqueuing */
 					markObject(env, referent);
 					_interRegionRememberedSet->rememberReferenceForMark(env, referenceObj, referent);
 				} else {

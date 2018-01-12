@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef bcutil_api_h
@@ -177,7 +177,7 @@ bcutil_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved);
 * @return I_32
 */
 I_32 
-j9bcutil_readClassFileBytes (J9PortLibrary *portLib, IDATA (*verifyFunction) (J9PortLibrary *aPortLib, J9CfrClassFile* classfile, U_8* segment, U_8* segmentLength, U_8* freePointer, U_32 flags, I_32 *hasRET), U_8* data, UDATA dataLength, U_8* segment, UDATA segmentLength, U_32 flags, U_8** segmentFreePointer, void *verboseContext, UDATA findClassFlags, UDATA romClassSortingThreshold);
+j9bcutil_readClassFileBytes (J9PortLibrary *portLib, IDATA (*verifyFunction) (J9PortLibrary *aPortLib, J9CfrClassFile* classfile, U_8* segment, U_8* segmentLength, U_8* freePointer, U_32 vmVersionShifted, U_32 flags, I_32 *hasRET), U_8* data, UDATA dataLength, U_8* segment, UDATA segmentLength, U_32 flags, U_8** segmentFreePointer, void *verboseContext, UDATA findClassFlags, UDATA romClassSortingThreshold);
 
 /* ---------------- defineclass.c ---------------- */
 
@@ -256,7 +256,7 @@ internalLoadROMClass(J9VMThread *vmThread, J9LoadROMClassData *loadData, J9Trans
 * @return zero on success, -1 on failure.
 */
 IDATA 
-findLocallyDefinedClass(J9VMThread * vmThread, J9Module *j9module, U_8 * className, U_32 classNameLength, J9ClassLoader * classLoader, J9ClassPathEntry * classPath, UDATA classPathEntryCount, UDATA options, UDATA flags, J9TranslationLocalBuffer *localBuffer);
+findLocallyDefinedClass(J9VMThread * vmThread, J9Module *j9module, U_8 * className, U_32 classNameLength, J9ClassLoader * classLoader, J9ClassPathEntry * classPath, UDATA classPathEntryCount, UDATA options, J9TranslationLocalBuffer *localBuffer);
 
 
 #endif /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */ /* End File Level Build Flags */

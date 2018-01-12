@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /**
@@ -1077,18 +1077,19 @@ openSemaphore(struct J9PortLibrary *portLibrary, intptr_t fd, char *baseFile, j9
 				goto failDontUnlink;
 			}
 		} else {
-#if defined (__GNUC__) || defined (AIXPPC) || defined(J9ZTPF)
-#if defined (__GNUC__) && !defined(J9ZTPF)
-			/*Use .__key for __GNUC__*/
-			if (buf.sem_perm.__key != controlinfo->ftok_key)
-#endif
-#if defined (AIXPPC)
+#if defined(__GNUC__) || defined(AIXPPC) || defined(J9ZTPF)
+#if defined(OSX)
+			/*Use _key for OSX*/
+			if (buf.sem_perm._key != controlinfo->ftok_key)
+#elif defined(AIXPPC)
 			/*Use .key for AIXPPC*/
 			if (buf.sem_perm.key != controlinfo->ftok_key)
-#endif
-#if defined(J9ZTPF)
-            /*Use .key for z/TPF */
+#elif defined(J9ZTPF)
+			/*Use .key for z/TPF */
 			if (buf.key != controlinfo->ftok_key)
+#elif defined(__GNUC__)
+			/*Use .__key for __GNUC__*/
+			if (buf.sem_perm.__key != controlinfo->ftok_key)
 #endif
 			{
 				Trc_PRT_shsem_j9shsem_opensemaphore_Msg("The <key,id> pair in our control file is no longer valid.");

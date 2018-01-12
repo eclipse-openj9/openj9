@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include <string.h>
@@ -803,11 +803,13 @@ jint JNICALL GetEnv(JavaVM *jvm, void **penv, jint version)
 		return rc;
 	}
 
+#ifdef J9VM_OPT_HARMONY
 	/* Allow retrieval of the Harmony VM interface */
 	if (HARMONY_VMI_VERSION_2_0 == version) {
 		*penv = &(vm->harmonyVMInterface);
 		return JNI_OK;
 	}
+#endif /* J9VM_OPT_HARMONY */
 
 	if (version == UTE_VERSION_1_1) {
 		if (vm->j9rasGlobalStorage != NULL) {	

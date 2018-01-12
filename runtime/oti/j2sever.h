@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #ifndef j2sever_h
 #define j2sever_h
@@ -27,15 +27,23 @@
  * note: J2SE_15 needed for shared classes cache introspection but not supported by JVM.
  */
 /*
- * Note: J2SE_LATEST has to be updated to highest Java version supported by VM
- * 		 This allows JVM operates with latest version when classlib.properties doesn't present.
+ * Note: J2SE_LATEST is the highest Java version supported by VM for a JCL level.
+ *       This allows JVM operates with latest version when neither classlib.properties
+ *       nor release file presents.
  */
-#define J2SE_15  0x1500
-#define J2SE_16  0x1600
-#define J2SE_17  0x1700
-#define J2SE_18  0x1800
-#define J2SE_19  0x1900
-#define J2SE_LATEST  J2SE_19
+#define J2SE_15   0x1500
+#define J2SE_16   0x1600
+#define J2SE_17   0x1700
+#define J2SE_18   0x1800
+#define J2SE_19   0x1900
+#define J2SE_V10  0x1A00            /* This refers Java 10 */
+#if JAVA_SPEC_VERSION == 8
+	#define J2SE_LATEST  J2SE_18
+#elif JAVA_SPEC_VERSION == 9
+	#define J2SE_LATEST  J2SE_19
+#else
+	#define J2SE_LATEST  J2SE_V10
+#endif
 
 /**
  * Masks for extracting major and full versions.
@@ -50,14 +58,23 @@
  *  J2SE_SHAPE_RAW = Pure Oracle code without any IBM modifications
  */
 /*
- * Note: J2SE_SHAPE_LATEST has to be updated to highest JCL level supported by VM
- * 		 This allows JVM operates with latest level when classlib.properties doesn't present.
+ * Note: J2SE_SHAPE_LATEST is the highest JCL level supported by VM for a JCL level.
+ *       This allows JVM operates with latest level when neither classlib.properties
+ *       nor release file presents.
  */
-#define J2SE_SHAPE_LATEST    	J2SE_SHAPE_B165
+#if JAVA_SPEC_VERSION == 8
+	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_SUN
+#elif JAVA_SPEC_VERSION == 9
+	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_B165
+#else
+	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V10
+#endif
 #define J2SE_SHAPE_SUN     		0x10000
+#define J2SE_SHAPE_SUN_OPENJDK	0x20000
 #define J2SE_SHAPE_B136    		0x40000
 #define J2SE_SHAPE_B148    		0x50000
 #define J2SE_SHAPE_B165    		0x60000
+#define J2SE_SHAPE_V10			0x70000
 #define J2SE_SHAPE_RAWPLUSJ9	0x80000
 #define J2SE_SHAPE_RAW	 		0x90000
 #define J2SE_SHAPE_MASK 		0xF0000

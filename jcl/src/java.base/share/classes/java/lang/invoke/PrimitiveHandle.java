@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2010, 2010 IBM Corp. and others
+ * Copyright (c) 2010, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,7 +18,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package java.lang.invoke;
 
@@ -26,12 +26,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-/*[IF Sidecar19-SE]
-import jdk.internal.misc.Unsafe;
-/*[ELSE]*/
-import sun.misc.Unsafe;
-/*[ENDIF]*/
 import com.ibm.oti.vm.VM;
+import com.ibm.jit.JITHelpers;
 
 /**
  * PrimitiveHandle is a subclass of MethodHandle used for grouping MethodHandles that directly refer a Java-level method. 
@@ -170,16 +166,8 @@ abstract class PrimitiveHandle extends MethodHandle {
 
 	final void initializeClassIfRequired() {
 		if (Modifier.isStatic(this.rawModifiers)) {
-			long defcClass = getJ9ClassFromClass(defc);
-			Unsafe unsafe = getUnsafe();
-			int initStatus = 0;
-			if (4 == VM.ADDRESS_SIZE) {
-				initStatus = unsafe.getInt(defcClass + com.ibm.oti.vm.VM.J9CLASS_INITIALIZE_STATUS_OFFSET);
-			} else {
-				initStatus = (int)unsafe.getLong(defcClass + com.ibm.oti.vm.VM.J9CLASS_INITIALIZE_STATUS_OFFSET);
-			}
-			if (initStatus != 1) {
-				unsafe.ensureClassInitialized(defc);
+			if (JITHELPERS.getClassInitializeStatus(defc) != VM.J9CLASS_INIT_SUCCEEDED) {
+				UNSAFE.ensureClassInitialized(defc);
 			}
 		}
 	}

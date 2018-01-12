@@ -21,7 +21,7 @@ package com.ibm.oti.vm;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 import java.util.*;
@@ -102,25 +102,6 @@ public Class<?> loadClass(String className) throws ClassNotFoundException {
     /*[ENDIF]*/
 	return loadedClass;
 }
-
-/*[IF Sidecar19-SE]*/
-protected Class<?> findClass(String moduleName, String name) {
-	/*[PR 111332] synchronization required for JVMTI */
-	/*[PR VMDESIGN 1433] Remove Java synchronization (Prevent redundant loads of the same class) */
-	 Class<?> loadedClass = com.ibm.oti.vm.VM.findClassInModuleOrNull(moduleName, name, this);
-
-    if (loadedClass != null) {
-        String packageName = getPackageName(loadedClass);
-        /*[PR CMVC 98313] Avoid deadlock, do not call super.getPackage() in synchronized block */
-        if (packageName != null && super.getPackage(packageName) == null) {
-            int index = VM.getCPIndexImpl(loadedClass);
-            /*[PR CMVC 98059] Only define packages as required to avoid bootstrap problems */
-            addPackage(packageName, index);
-        }
-    }
-	return loadedClass;
-}
-/*[ENDIF] Sidecar19-SE*/
 
 /*[IF Sidecar19-SE]*/
 private void addPackage(final String packageName, final int index) {

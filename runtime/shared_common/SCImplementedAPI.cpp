@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #ifdef __cplusplus
 extern "C"
@@ -488,13 +488,14 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 			/* Bootstrap loader does not provide meaningful extraInfo */
 			if (!classpath && !infoFound) {
 				UDATA pathEntryCount = cpEntryCount;
-				if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_CACHEBOOTCLASSES)) {
-					/* User specified noBootclasspath - do not continue */
-					retval = -1;
-					goto done;
-				}
+
 				if (J2SE_VERSION(vm) >= J2SE_19) {
 					if (classloader == vm->systemClassLoader) {
+						if (J9_ARE_NO_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHEBOOTCLASSES)) {
+							/* User specified noBootclasspath - do not continue */
+							retval = -1;
+							goto done;
+						}
 						/* bootstrap loader searched on path: modulePath:classPathEntries, entryIndex is the index of classPathEntries if loaded from classPathEntries
 						 * or -1 if loaded from modules, so add 1 here */
 						obj->entryIndex += 1;
@@ -502,6 +503,11 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 						classpath = getBootstrapClasspathItem(currentThread, vm->modulesPathEntry, pathEntryCount);
 					}
 				} else {
+					if (J9_ARE_NO_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHEBOOTCLASSES)) {
+						/* User specified noBootclasspath - do not continue */
+						retval = -1;
+						goto done;
+					}
 					classpath = getBootstrapClasspathItem(currentThread, classPathEntries, pathEntryCount);
 				}
 			}

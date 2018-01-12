@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef TEST_HELPERS_H_INCLUDED
@@ -81,10 +81,6 @@ void deleteControlDirectory(struct J9PortLibrary *portLibrary, char* baseDir);
 void getPortLibraryMemoryCategoryData(struct J9PortLibrary *portLibrary, UDATA * blocks, UDATA * bytes);
 int startsWith(char *s, char *prefix);
 UDATA raiseSEGV(J9PortLibrary* portLibrary, void* arg);
-/**
- * @see j9signalTest.c::validateGPInfo
- */
-void validateGPInfo(struct J9PortLibrary* portLibrary, U_32 gpType, j9sig_handler_fn handler, void* gpInfo, const char* testName);
 
 #ifdef __cplusplus
 }

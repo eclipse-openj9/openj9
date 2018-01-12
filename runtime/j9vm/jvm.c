@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #if 0
@@ -76,7 +76,7 @@
 
 #ifdef J9VM_OPT_HARMONY
 #include "harmony_vm.h"
-#endif
+#endif /* J9VM_OPT_HARMONY */
 
 #if defined(DEBUG)
 #define DBG_MSG(x) printf x
@@ -183,6 +183,7 @@ static J9StringBuffer * j9binBuffer = NULL;
 static J9StringBuffer * jrebinBuffer = NULL;
 static J9StringBuffer * j9libBuffer = NULL;
 static J9StringBuffer * j9libvmBuffer = NULL;
+static J9StringBuffer * j9Buffer = NULL;
 static BOOLEAN jvmInSubdir=TRUE;
 
 #if !CALL_BUNDLED_FUNCTIONS_DIRECTLY
@@ -225,7 +226,9 @@ static UDATA monitor = 0;
 static J9InternalVMFunctions globalInvokeInterface;
 
 static struct J9PortLibrary j9portLibrary;
+#ifdef J9VM_OPT_HARMONY
 static struct HyPortLibrary * harmonyPortLibrary = NULL;
+#endif /* J9VM_OPT_HARMONY */
 static char * newPath = NULL;
 
 /* cannot be static because it's declared extern in vmi.c */
@@ -321,6 +324,170 @@ static BOOLEAN librariesLoaded(void);
 #define LD_ENV_PATH "LIBPATH"
 #endif /* defined(J9ZTPF) */
 
+#define J9_SIG_ERR -1
+
+#define J9_PRE_DEFINED_HANDLER_CHECK 2
+#define J9_OLDHANDLER_SAME_AS_NEWHANDLER 2
+
+#define J9_SIG_PREFIX "SIG"
+
+/* Chosen based upon signal names listed in signalMap below. */
+#define J9_SIGNAME_BUFFER_LENGTH 16
+
+static void dummySignalHandler(jint sigNum);
+static BOOLEAN isSignalSpecial(jint sigNum);
+static BOOLEAN isSignalUsedByVM(jint sigNum);
+
+typedef struct {
+	const char *signalName;
+	jint signalValue;
+} J9SignalMapping;
+
+#if defined(WIN32)
+#define J9_SIGNAL_MAP_ENTRY(name, value) { name, value }
+#else /* defined(WIN32) */
+#define J9_SIGNAL_MAP_ENTRY(name, value) { "SIG" name, value }
+#endif /* defined(WIN32) */
+
+static const J9SignalMapping signalMap[] = {
+#if defined(SIGABRT)
+	J9_SIGNAL_MAP_ENTRY("ABRT", SIGABRT),
+#endif /* defined(SIGABRT) */
+#if defined(SIGALRM)
+	J9_SIGNAL_MAP_ENTRY("ALRM", SIGALRM),
+#endif /* defined(SIGALRM) */
+#if defined(SIGBREAK)
+	J9_SIGNAL_MAP_ENTRY("BREAK", SIGBREAK),
+#endif /* defined(SIGBREAK) */
+#if defined(SIGBUS)
+	J9_SIGNAL_MAP_ENTRY("BUS", SIGBUS),
+#endif /* defined(SIGBUS) */
+#if defined(SIGCHLD)
+	J9_SIGNAL_MAP_ENTRY("CHLD", SIGCHLD),
+#endif /* defined(SIGCHLD) */
+#if defined(SIGCONT)
+	J9_SIGNAL_MAP_ENTRY("CONT", SIGCONT),
+#endif /* defined(SIGCONT) */
+#if defined(SIGCPUFAIL)
+	J9_SIGNAL_MAP_ENTRY("CPUFAIL", SIGCPUFAIL),
+#endif /* defined(SIGCPUFAIL) */
+#if defined(SIGDANGER)
+	J9_SIGNAL_MAP_ENTRY("DANGER", SIGDANGER),
+#endif /* defined(SIGDANGER) */
+#if defined(SIGEMT)
+	J9_SIGNAL_MAP_ENTRY("EMT", SIGEMT),
+#endif /* defined(SIGEMT) */
+#if defined(SIGFPE)
+	J9_SIGNAL_MAP_ENTRY("FPE", SIGFPE),
+#endif /* defined(SIGFPE) */
+#if defined(SIGGRANT)
+	J9_SIGNAL_MAP_ENTRY("GRANT", SIGGRANT),
+#endif /* defined(SIGGRANT) */
+#if defined(SIGHUP)
+	J9_SIGNAL_MAP_ENTRY("HUP", SIGHUP),
+#endif /* defined(SIGHUP) */
+#if defined(SIGILL)
+	J9_SIGNAL_MAP_ENTRY("ILL", SIGILL),
+#endif /* defined(SIGILL) */
+#if defined(SIGINFO)
+	J9_SIGNAL_MAP_ENTRY("INFO", SIGINFO),
+#endif /* defined(SIGINFO) */
+#if defined(SIGINT)
+	J9_SIGNAL_MAP_ENTRY("INT", SIGINT),
+#endif /* defined(SIGINT) */
+#if defined(SIGIO)
+	J9_SIGNAL_MAP_ENTRY("IO", SIGIO),
+#endif /* defined(SIGIO) */
+#if defined(SIGKILL)
+	J9_SIGNAL_MAP_ENTRY("KILL", SIGKILL),
+#endif /* defined(SIGKILL) */
+#if defined(SIGMIGRATE)
+	J9_SIGNAL_MAP_ENTRY("MIGRATE", SIGMIGRATE),
+#endif /* defined(SIGMIGRATE) */
+#if defined(SIGMSG)
+	J9_SIGNAL_MAP_ENTRY("MSG", SIGMSG),
+#endif /* defined(SIGMSG) */
+#if defined(SIGPIPE)
+	J9_SIGNAL_MAP_ENTRY("PIPE", SIGPIPE),
+#endif /* defined(SIGPIPE) */
+#if defined(SIGPOLL)
+	J9_SIGNAL_MAP_ENTRY("POLL", SIGPOLL),
+#endif /* defined(SIGPOLL) */
+#if defined(SIGPRE)
+	J9_SIGNAL_MAP_ENTRY("PRE", SIGPRE),
+#endif /* defined(SIGPRE) */
+#if defined(SIGPROF)
+	J9_SIGNAL_MAP_ENTRY("PROF", SIGPROF),
+#endif /* defined(SIGPROF) */
+#if defined(SIGPWR)
+	J9_SIGNAL_MAP_ENTRY("PWR", SIGPWR),
+#endif /* defined(SIGPWR) */
+#if defined(SIGQUIT)
+	J9_SIGNAL_MAP_ENTRY("QUIT", SIGQUIT),
+#endif /* defined(SIGQUIT) */
+#if defined(SIGRETRACT)
+	J9_SIGNAL_MAP_ENTRY("RETRACT", SIGRETRACT),
+#endif /* defined(SIGRETRACT) */
+#if defined(SIGSAK)
+	J9_SIGNAL_MAP_ENTRY("SAK", SIGSAK),
+#endif /* defined(SIGSAK) */
+#if defined(SIGSEGV)
+	J9_SIGNAL_MAP_ENTRY("SEGV", SIGSEGV),
+#endif /* defined(SIGSEGV) */
+#if defined(SIGSOUND)
+	J9_SIGNAL_MAP_ENTRY("SOUND", SIGSOUND),
+#endif /* defined(SIGSOUND) */
+#if defined(SIGSTKFLT)
+	J9_SIGNAL_MAP_ENTRY("STKFLT", SIGSTKFLT),
+#endif /* defined(SIGSTKFLT) */
+#if defined(SIGSTOP)
+	J9_SIGNAL_MAP_ENTRY("STOP", SIGSTOP),
+#endif /* defined(SIGSTOP) */
+#if defined(SIGSYS)
+	J9_SIGNAL_MAP_ENTRY("SYS", SIGSYS),
+#endif /* defined(SIGSYS) */
+#if defined(SIGTERM)
+	J9_SIGNAL_MAP_ENTRY("TERM", SIGTERM),
+#endif /* defined(SIGTERM) */
+#if defined(SIGTRAP)
+	J9_SIGNAL_MAP_ENTRY("TRAP", SIGTRAP),
+#endif /* defined(SIGTRAP) */
+#if defined(SIGTSTP)
+	J9_SIGNAL_MAP_ENTRY("TSTP", SIGTSTP),
+#endif /* defined(SIGTSTP) */
+#if defined(SIGTTIN)
+	J9_SIGNAL_MAP_ENTRY("TTIN", SIGTTIN),
+#endif /* defined(SIGTTIN) */
+#if defined(SIGTTOU)
+	J9_SIGNAL_MAP_ENTRY("TTOU", SIGTTOU),
+#endif /* defined(SIGTTOU) */
+#if defined(SIGUNUSED)
+	J9_SIGNAL_MAP_ENTRY("UNUSED", SIGUNUSED),
+#endif /* defined(SIGUNUSED) */
+#if defined(SIGURG)
+	J9_SIGNAL_MAP_ENTRY("URG", SIGURG),
+#endif /* defined(SIGURG) */
+#if defined(SIGUSR1)
+	J9_SIGNAL_MAP_ENTRY("USR1", SIGUSR1),
+#endif /* defined(SIGUSR1) */
+#if defined(SIGUSR2)
+	J9_SIGNAL_MAP_ENTRY("USR2", SIGUSR2),
+#endif /* defined(SIGUSR2) */
+#if defined(SIGVTALRM)
+	J9_SIGNAL_MAP_ENTRY("VTALRM", SIGVTALRM),
+#endif /* defined(SIGVTALRM) */
+#if defined(SIGWINCH)
+	J9_SIGNAL_MAP_ENTRY("WINCH", SIGWINCH),
+#endif /* defined(SIGWINCH) */
+#if defined(SIGXCPU)
+	J9_SIGNAL_MAP_ENTRY("XCPU", SIGXCPU),
+#endif /* defined(SIGXCPU) */
+#if defined(SIGXFSZ)
+	J9_SIGNAL_MAP_ENTRY("XFSZ", SIGXFSZ),
+#endif /* defined(SIGXFSZ) */
+	{NULL, J9_SIG_ERR}
+};
+
 static void freeGlobals(void)
 {
 	free(newPath);
@@ -337,9 +504,10 @@ static void freeGlobals(void)
 
 	free(j9libvmBuffer);
 	j9libvmBuffer = NULL;
+	
+	free(j9Buffer);
+	j9Buffer = NULL;
 }
-
-
 
 static J9StringBuffer* jvmBufferEnsure(J9StringBuffer* buffer, UDATA len) {
 
@@ -395,10 +563,12 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 	rc = globalDestroyVM(javaVM);
 
 	if (JNI_OK == rc) {
+#ifdef J9VM_OPT_HARMONY
 		if ((NULL != harmonyPortLibrary) && (NULL != j9portLibrary.omrPortLibrary.mem_free_memory)) {
 			j9portLibrary.omrPortLibrary.mem_free_memory(&j9portLibrary.omrPortLibrary, harmonyPortLibrary);
 			harmonyPortLibrary = NULL;
 		}
+#endif /* J9VM_OPT_HARMONY */
 		if (NULL != j9portLibrary.port_shutdown_library) {
 			j9portLibrary.port_shutdown_library(&j9portLibrary);
 		}
@@ -521,6 +691,8 @@ preloadLibraries(void)
 
 	j9libBuffer = jvmBufferCat(NULL, jvmBufferData(jrebinBuffer));
 	truncatePath(jvmBufferData(j9libBuffer));
+	j9Buffer = jvmBufferCat(NULL, jvmBufferData(j9libBuffer));
+	truncatePath(jvmBufferData(j9Buffer));
 	j9libBuffer = jvmBufferCat(j9libBuffer, DIR_SEPARATOR_STR "lib");
 
 	j9libvmBuffer = jvmBufferCat(NULL, jvmBufferData(j9libBuffer));
@@ -534,7 +706,8 @@ preloadLibraries(void)
 	DBG_MSG(("jrebinBuffer  = <%s>\n", jvmBufferData(jrebinBuffer)));
 	DBG_MSG(("j9libBuffer   = <%s>\n", jvmBufferData(j9libBuffer)));
 	DBG_MSG(("j9libvmBuffer = <%s>\n", jvmBufferData(j9libvmBuffer)));
-
+	DBG_MSG(("j9Buffer      = <%s>\n", jvmBufferData(j9Buffer)));
+	
 #if !CALL_BUNDLED_FUNCTIONS_DIRECTLY
 	vmDLL = (HINSTANCE) preloadLibrary(vmDllName, TRUE);
 	preloadLibrary(J9_HOOKABLE_DLL_NAME, TRUE);
@@ -599,8 +772,9 @@ preloadLibraries(void)
 #endif /* !CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 	/* CMVC 152702: with other JVM on the path this library can get loaded from the wrong
 	 * location if not preloaded. */
+#ifdef J9VM_OPT_HARMONY
 	preloadLibrary(J9_HARMONY_PORT_LIBRARY_SHIM_DLL_NAME, TRUE);
-
+#endif /* J9VM_OPT_HARMONY */
 	return TRUE;
 }
 
@@ -690,7 +864,7 @@ getj9bin()
 	/* misnamed - returns the directory that the jvm DLL is found in, NOT the directory that the J9 VM itself is in. */
 
 	J9StringBuffer *result = NULL;
-#if defined(LINUX)
+#if (defined(LINUX) && !defined(J9ZTPF)) || defined(OSX)
 	Dl_info libraryInfo;
 	int rc = dladdr((void *)getj9bin, &libraryInfo);
 
@@ -716,11 +890,9 @@ getj9bin()
 		if(isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME ".so")) {
 			return result;
 		}
-#if defined(J9ZOS390)
+
 		truncatePath(jvmBufferData(result));
-#elif defined(J9ZTPF)
-		truncateStringAtLastOccurence(jvmBufferData(result), DIR_SEPARATOR);
-#endif /* defined(J9ZOS390) */
+
 		/* trying parent */
 		if(isFileInDir(jvmBufferData(result), "lib" VMDLL_NAME ".so")) {
 			return result;
@@ -772,7 +944,7 @@ getj9bin()
 	truncatePath(jvmBufferData(result));
 
 	free(linfo);
-#endif  /* defined(LINUX) */
+#endif  /* defined(LINUX) && !defined(J9ZTPF) */
 	return result;
 }
 #endif /* ifndef WIN32*/
@@ -926,11 +1098,14 @@ preloadLibraries(void)
 	truncatePath(jvmBufferData(j9libBuffer));
 #endif /* J9VM_JAVA9_BUILD < 150 */
 	j9libvmBuffer = jvmBufferCat(NULL, jvmBufferData(j9binBuffer));
+	j9Buffer = jvmBufferCat(NULL, jvmBufferData(jrebinBuffer));
+	truncatePath(jvmBufferData(j9Buffer));
 
 	DBG_MSG(("j9binBuffer   = <%s>\n", jvmBufferData(j9binBuffer)));
 	DBG_MSG(("jrebinBuffer  = <%s>\n", jvmBufferData(jrebinBuffer)));
 	DBG_MSG(("j9libBuffer   = <%s>\n", jvmBufferData(j9libBuffer)));
 	DBG_MSG(("j9libvmBuffer = <%s>\n", jvmBufferData(j9libvmBuffer)));
+	DBG_MSG(("j9Buffer      = <%s>\n", jvmBufferData(j9Buffer)));
 
 	addToLibpath(jvmBufferData(jrebinBuffer), TRUE);
 
@@ -1025,10 +1200,11 @@ preloadLibraries(void)
 	preloadLibrary(J9_CLEAR_VM_INTERFACE_DLL_NAME, TRUE);
 #endif /* J9_CLEAR_VM_INTERFACE_DLL_NAME */
 
+#ifdef J9VM_OPT_HARMONY
 	/* CMVC 152702: with other JVM on the path this library can get loaded from the wrong
 	 * location if not preloaded. */
 	preloadLibrary(J9_HARMONY_PORT_LIBRARY_SHIM_DLL_NAME, TRUE);
-
+#endif /* J9VM_OPT_HARMONY */
 	return TRUE;
 }
 #endif  /* defined(J9UNIX) || defined(J9ZOS390) */
@@ -1144,14 +1320,22 @@ typedef struct VersionSetting {
  * Mapping b135 to J2SE_SHAPE_B136 (changed from previous b136) allows both shape b135 & b136 working
  * and avoid naming change from J2SE_SHAPE_B136 to J2SE_SHAPE_B135.
  * This will be removed when a new stable JCL build level is determined and b135 is obsolete.
+ *
+ * Note about shape "sun_openjdk": 
+ *    This shape is introduced to provide JVM_SocketAvailable() with different return values according to
+ *    the "shape" value specified within classlib.properties such that both IBM and OpenJ9 Java 8 can work properly.
+ *    This is required because IBM Java 8 is applied with a JCL patch which expects different return values from JVM_SocketAvailable().
+ *    Newly added shape value and related code can be removed after IBM JCL patch is removed.
  */
 VersionSetting SHAPE_SETTINGS[] = {
 		{"sun", J2SE_SHAPE_SUN},
+		{"sun_openjdk", J2SE_SHAPE_SUN_OPENJDK},
 		{"raw", J2SE_SHAPE_RAW},
 		{"rawplusj9", J2SE_SHAPE_RAWPLUSJ9},
 		{"b135", J2SE_SHAPE_B136},
 		{"b148", J2SE_SHAPE_B148},
 		{"b165", J2SE_SHAPE_B165},
+		{"b1000", J2SE_SHAPE_V10},
 };
 #define NUM_SHAPE_SETTINGS (sizeof(SHAPE_SETTINGS) / sizeof(VersionSetting))
 
@@ -1219,73 +1403,156 @@ decodeSetting(const char* key, const char* value, VersionSetting* settings, IDAT
 }
 
 /**
- * Loads the classlib.properties file and initialize the bootstrap
- * classpath based on data found there.
- * @param vm
- * @param cursor
- * @return TRUE on success, FALSE otherwise.
+ * Attempt loading 'classlib.properties' file, and get Java version info.
+ * If the file is found, 'version' and 'shape' values are retrieved
+ * and decoded as J2SE_xx and J2SE_SHAPE_xx accordingly.
+ * 'J2SE_xx | J2SE_SHAPE_xx' is returned;
+ * Otherwise, 0 is returned.
+ *
+ * @return 'J2SE_xx | J2SE_SHAPE_xx' decoded from 'version' and 'shape' values in 'classlib.properties';
+ *         or 0 if otherwise.
  */
 static UDATA
 getVersionFromClasslibPropertiesFile(void)
 {
-	if (-1 != jvmSEVersion) {
-		return jvmSEVersion;
-	} else {
-		PORT_ACCESS_FROM_PORT(&j9portLibrary);
-		J9StringBuffer * propsPathBuffer = NULL;
-		j9props_file_t classlibProps;
-		const char* shape;
-		const char* version;
-		UDATA decoded, finalVersion = 0;
+	PORT_ACCESS_FROM_PORT(&j9portLibrary);
+	J9StringBuffer *propsPathBuffer = NULL;
+	j9props_file_t propsFile = NULL;
+	UDATA finalVersion = 0;
 
-		propsPathBuffer = jvmBufferCat(propsPathBuffer, jvmBufferData(j9libBuffer));
-		propsPathBuffer = jvmBufferCat(propsPathBuffer, DIR_SEPARATOR_STR "classlib.properties");
+	propsPathBuffer = jvmBufferCat(propsPathBuffer, jvmBufferData(j9libBuffer));
+	propsPathBuffer = jvmBufferCat(propsPathBuffer, DIR_SEPARATOR_STR "classlib.properties");
+	propsFile = props_file_open(PORTLIB, jvmBufferData(propsPathBuffer), NULL, 0);
+	free(propsPathBuffer);
+	propsPathBuffer = NULL;
 
-		classlibProps = props_file_open(PORTLIB, jvmBufferData(propsPathBuffer), NULL, 0);
-
-		free(propsPathBuffer);
-		propsPathBuffer = NULL;
-
-		if (NULL == classlibProps) {
-	#ifdef DEBUG
-		printf("Could not open %s\n", classlibProps);
-	#endif
-			return J2SE_LATEST|J2SE_SHAPE_LATEST;
-		}
-
-		shape = props_file_get(classlibProps, "shape");
+	if (NULL != propsFile) {
+		const char *shape = NULL;
+		const char *version = NULL;
+		UDATA decoded = 0;
+		
+		shape = props_file_get(propsFile, "shape");
 		if (NULL == shape) {
-	#ifdef DEBUG
-		printf("No 'shape' property in %s\n", classlibProps);
-	#endif
+#ifdef DEBUG
+			printf("No 'shape' property in %s\n", propsFile);
+#endif
 			goto bail;
 		}
 
-		version = props_file_get(classlibProps, "version");
+		version = props_file_get(propsFile, "version");
 		if (NULL == version) {
-	#ifdef DEBUG
-		printf("No 'version' property in %s\n", classlibProps);
-	#endif
+#ifdef DEBUG
+			printf("No 'version' property in %s\n", propsFile);
+#endif
 			goto bail;
 		}
 	
 		decoded = decodeSetting("shape", shape, SHAPE_SETTINGS, NUM_SHAPE_SETTINGS);
-		if (decoded == 0) {
+		if (0 == decoded) {
 			goto bail;
 		}
 		finalVersion |= decoded;
 	
 		decoded = decodeSetting("version", version, VERSION_SETTINGS, NUM_VERSION_SETTINGS);
-		if (decoded == 0) {
+		if (0 == decoded) {
 			goto bail;
 		}
 		finalVersion |= decoded;
 
-	bail:
-		props_file_close(classlibProps);
-		jvmSEVersion = finalVersion;
-		return finalVersion;
+bail:
+		props_file_close(propsFile);
+	} else {
+#ifdef DEBUG
+		printf("Could not open %s\n", propsFile);
+#endif
 	}
+	
+	return finalVersion;
+}
+
+/**
+ * Attempt loading 'release' file, and get Java version info.
+ * If the file is found, 'JAVA_VERSION' value is retrieved and decoded as following:
+ * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_SUN_OPENJDK' assuming this is an OpenJ9 Java 8 build;
+ * "9"         --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
+ * "10"        --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
+ * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
+ * Note: 'release' file contains JAVA_VERSION="10" for Java 10 at this moment.
+ * Otherwise, 0 is returned.
+ *
+ * @return 'J2SE_18 | J2SE_SHAPE_SUN_OPENJDK', 'J2SE_19 | J2SE_SHAPE_B165',
+ *         'J2SE_V10 | J2SE_SHAPE_V10', 'J2SE_LATEST | J2SE_SHAPE_LATEST'
+ *         according to the 'JAVA_VERSION' value found in 'release';
+ *         or 0 if otherwise.
+ */
+static UDATA
+getVersionFromReleaseFile(void)
+{
+	PORT_ACCESS_FROM_PORT(&j9portLibrary);
+	J9StringBuffer *propsPathBuffer = NULL;
+	j9props_file_t propsFile = NULL;
+	UDATA finalVersion = 0;
+
+	propsPathBuffer = jvmBufferCat(propsPathBuffer, jvmBufferData(j9Buffer));
+	propsPathBuffer = jvmBufferCat(propsPathBuffer, DIR_SEPARATOR_STR "release");
+	propsFile = props_file_open(PORTLIB, jvmBufferData(propsPathBuffer), NULL, 0);
+	free(propsPathBuffer);
+	propsPathBuffer = NULL;
+	if (NULL != propsFile) {
+		const char *version = props_file_get(propsFile, "JAVA_VERSION");
+		if (NULL != version) {
+#define	 JAVA_VERSION_8 "\"1.8.0" /* its usual format is "1.8.0_xxx" */
+			if (!strncmp(version, JAVA_VERSION_8, sizeof(JAVA_VERSION_8) - 1)) {
+#undef   JAVA_VERSION_8
+				finalVersion = J2SE_18 | J2SE_SHAPE_SUN_OPENJDK;
+			} else if (!strcmp(version, "\"9\"")) {
+				finalVersion = J2SE_19 | J2SE_SHAPE_B165;
+			} else if (!strcmp(version, "\"10\"")) {
+				finalVersion = J2SE_V10 | J2SE_SHAPE_V10;
+			} else {
+				/* Assume latest Java version and shape */
+				finalVersion = J2SE_LATEST | J2SE_SHAPE_LATEST;
+			}
+		} else {
+#ifdef DEBUG
+			printf("No 'JAVA_VERSION' property in %s\n", propsFile);
+#endif
+		}
+		props_file_close(propsFile);
+	} else {
+#ifdef DEBUG
+		printf("Could not open %s\n", propsFile);
+#endif
+	}
+
+	return finalVersion;
+}
+
+/**
+ * Get Java version of running JVM
+ * Attempt getting the Java version info from 'classlib.properties' first,
+ * if not successful, try 'release' file next,
+ * if still no version info found, 'J2SE_LATEST | J2SE_SHAPE_LATEST' is returned 
+ *
+ * @return 'J2SE_xx | J2SE_SHAPE_xx' decoded from 'classlib.properties' or 'release',
+ *         or 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
+ */
+static UDATA
+getVersionFromPropertiesFile(void)
+{
+	if (-1 == jvmSEVersion) {
+		UDATA finalVersion = 0;
+
+		finalVersion = getVersionFromClasslibPropertiesFile();
+		if (0 == finalVersion) {
+			finalVersion = getVersionFromReleaseFile();
+			if (0 == finalVersion) {
+				return J2SE_LATEST | J2SE_SHAPE_LATEST;
+			}
+		}
+		jvmSEVersion = finalVersion;
+	}
+	return jvmSEVersion;
 }
 
 typedef struct J9SpecialArguments {
@@ -1384,6 +1651,7 @@ printVmArgumentsList(J9VMInitArgs *argList)
 	}
 }
 
+#ifdef J9VM_OPT_HARMONY
 static IDATA
 addHarmonyPortLibrary(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags)
 {
@@ -1396,6 +1664,7 @@ addHarmonyPortLibrary(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsL
 	addHarmonyPortLibToVMArgs(portLib, &(optArg->vmOpt), &dummyArgs, &harmonyPortLibrary);
 	return 0;
 }
+#endif /* J9VM_OPT_HARMONY */
 
 static void
 setNLSCatalog(struct J9PortLibrary* portLib, UDATA j2seVersion)
@@ -1787,7 +2056,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 	/* Register the J9 memory categories with the port library */
 	j9portLibrary.omrPortLibrary.port_control(&j9portLibrary.omrPortLibrary, J9PORT_CTLDATA_MEM_CATEGORIES_SET, (UDATA)&j9MasterMemCategorySet);
 
-	j2seVersion = getVersionFromClasslibPropertiesFile();
+	j2seVersion = getVersionFromPropertiesFile();
 	if (J2SE_17 > j2seVersion) {
 		fprintf(stderr, "Invalid version 0x%" J9PRIz "x detected in classlib.properties!\n", j2seVersion);
 		result = JNI_ERR;
@@ -1882,7 +2151,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 #ifdef J9VM_OPT_HARMONY
 				/* pass in the Harmony library */
 				|| (0 != addHarmonyPortLibrary(&j9portLibrary, &vmArgumentsList, localVerboseLevel))
-#endif
+#endif /* J9VM_OPT_HARMONY */
 				|| (0 != addXserviceArgs(&j9portLibrary, &vmArgumentsList, xServiceBuffer, localVerboseLevel))
 		) {
 			result = JNI_ERR;
@@ -2212,8 +2481,9 @@ JNI_a2e_vsprintf(char *target, const char *format, va_list args)
 
 int isFileInDir(char *dir, char *file){
 	size_t length, dirLength;
-	char *fullpath;
-	FILE *f;
+	char *fullpath = NULL;
+	FILE *f = NULL;
+	int foundFile = 0;
 
 	dirLength = strlen(dir);
 	/* Constuct 'full' path */
@@ -2225,16 +2495,20 @@ int isFileInDir(char *dir, char *file){
 
 	length = dirLength + strlen(file) + 2; /* 2= '/' + null char */
 	fullpath = malloc(length);
-	strcpy(fullpath, dir);
-	fullpath[dirLength] = DIR_SEPARATOR;
-	strcpy(fullpath+dirLength+1, file);
+	if (NULL != fullpath) {
+		strcpy(fullpath, dir);
+		fullpath[dirLength] = DIR_SEPARATOR;
+		strcpy(fullpath+dirLength+1, file);
 
-	/* See if file exists - use fopen() for portability */
-	f = fopen(fullpath, "rb");
-	if (f) {
-		fclose(f);
+		/* See if file exists - use fopen() for portability */
+		f = fopen(fullpath, "rb");
+		if (NULL != f) {
+			foundFile = 1;
+			fclose(f);
+		}
+		free(fullpath);
 	}
-	return f!=0;
+	return foundFile;
 }
 
 
@@ -4137,97 +4411,250 @@ JVM_NativePath(char* path)
 	return path;
 }
 
+/**
+ * Checks if a signal is special.
+ *
+ * @param sigNum Integer value of the signal
+ *
+ * @returns TRUE if the signal is special
+ *          FALSE if the signal is not special
+ */
+static BOOLEAN
+isSignalSpecial(jint sigNum)
+{
+	return
+#if defined(SIGHUP)
+		(SIGHUP == sigNum) ||
+#endif /* defined(SIGHUP) */
+#if defined(SIGINT)
+		(SIGINT == sigNum) ||
+#endif /* defined(SIGINT) */
+#if defined(SIGQUIT)
+		(SIGQUIT == sigNum) ||
+#endif /* defined(SIGQUIT) */
+#if defined(SIGTERM)
+		(SIGTERM == sigNum) ||
+#endif /* defined(SIGTERM) */
+		FALSE;
+}
 
 /**
- * Method stub for method not yet implemented.
+ * Check if a signal is used by the VM.
+ *
+ * @param sigNum Integer value of the signal
+ *
+ * @returns TRUE if the signal is used by the VM
+ *          FALSE if the signal is not used by the VM
+ */
+static BOOLEAN
+isSignalUsedByVM(jint sigNum)
+{
+	return
+#if defined(SIGFPE)
+		(SIGFPE == sigNum) ||
+#endif /* defined(SIGFPE) */
+#if defined(SIGILL)
+		(SIGILL == sigNum) ||
+#endif /* defined(SIGILL) */
+#if defined(SIGSEGV)
+		(SIGSEGV == sigNum) ||
+#endif /* defined(SIGSEGV) */
+		FALSE;
+}
+
+/**
+ * Send a signal to the calling process or thread. If "-Xrs"
+ * commandline option is specified, then signals such as SIGQUIT,
+ * SIGHUP, SIGINT and SIGTERM are ignored.
+ *
+ * @param sigNum Integer value of the signal to be sent to the
+ *               calling process or thread
+ *
+ * @returns JNI_TRUE if the signal is successfully raised/sent
+ *          JNI_FALSE if the signal is not sent
  */
 jboolean JNICALL
 JVM_RaiseSignal(jint sigNum)
 {
+	jboolean rc = JNI_FALSE;
+	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
 
 	Trc_SC_RaiseSignal_Entry(sigNum);
 
-	/**** TBD :: ignore certain signals when -Xrs is on ****/
-	raise(sigNum);
+	if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS)
+			&& isSignalSpecial(sigNum)) {
+		/* Ignore signal */
+	} else {
+		raise(sigNum);
+		rc = JNI_TRUE;
+	}
 
-	Trc_SC_RaiseSignal_Exit(JNI_TRUE);
+	Trc_SC_RaiseSignal_Exit(rc);
 
-	return JNI_TRUE;
+	return rc;
 }
 
+/**
+ * This is a stub for the pre-defined handler. The pre-defined
+ * handler is supposed to be used in JVM_RegisterSignal when
+ * the special value of J9_PRE_DEFINED_HANDLER_CHECK (2) is specified
+ * in the handler. It hasn't been implemented since its functionality
+ * is not known.
+ *
+ * TODO: Implement the pre-defined handler.
+ *
+ * @param sigNum Integer value of the signal to be sent to the
+ *               calling process or thread
+ *
+ * @returns void
+ */
+static void
+dummySignalHandler(int sigNum) {
+
+}
 
 /**
- * Method stub for method not yet implemented.
+ * Register a signal handler for a signal. Signals such as SIGFPE,
+ * SIGILL and SIGSEGV are used by the VM; so, we don't register
+ * a signal handler for these signals. If "-Xrs" commandline option
+ * is specified, then signals such as SIGQUIT, SIGHUP, SIGINT
+ * and SIGTERM are also ignored; thus, we don't register a signal
+ * handler for these signals. If handler has the special value of
+ * J9_PRE_DEFINED_HANDLER_CHECK (2), then handler is changed to
+ * dummySignalHandler before it is registered. If the old handler
+ * is same as the new handler, then a special value,
+ * J9_OLDHANDLER_SAME_AS_NEWHANDLER (2) is returned.
+ *
+ * @param sigNum Integer value of the signal to be sent to the
+ *                  calling process or thread
+ * @param handler New handler to be associated to the signal
+ *
+ * @returns address of the old signal handler on success
+ *          J9_SIG_ERR (-1) in case of error
  */
 void* JNICALL
 JVM_RegisterSignal(jint sigNum, void* handler)
 {
+	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
+	void *oldHandler = (void *)J9_SIG_ERR;
+
+#if !defined(WIN32)
+	struct sigaction newSignalAction = {{0}};
+	struct sigaction oldSignalAction = {{0}};
+#endif /* !defined(WIN32) */
 
 	Trc_SC_RegisterSignal();
 
-	/**** TBD :: allow signal handler registration (thru portlib?) ****/
-	return (void *) -1;
+	if (isSignalUsedByVM(sigNum)) {
+		/* Don't allow user to register a native handler since
+		 * the signal is already used by the VM.
+		 */
+	} else if (J9_ARE_NO_BITS_SET(javaVM->sigFlags, J9_SIG_XRS)
+			&& isSignalSpecial(sigNum)) {
+		/* Don't allow user to register a native handler since
+		 * the signal is already used by the VM.
+		 */
+	} else {
+		/* Register the signal */
+#if defined(WIN32)
+		if ((void *)J9_PRE_DEFINED_HANDLER_CHECK == handler) {
+			handler = (void *)dummySignalHandler;
+		}
+		oldHandler = OMRSIG_SIGNAL(sigNum, handler);
+#else /* defined(WIN32) */
+		sigemptyset(&newSignalAction.sa_mask);
+#if !defined(J9ZTPF)
+		newSignalAction.sa_flags = SA_RESTART;
+#else /* !defined(J9ZTPF) */
+		newSignalAction.sa_flags = 0;
+#endif /* !defined(J9ZTPF) */
+		if ((void *)J9_PRE_DEFINED_HANDLER_CHECK == handler) {
+			newSignalAction.sa_handler = dummySignalHandler;
+		} else {
+			newSignalAction.sa_handler = (void (*)(int))handler;
+		}
+		OMRSIG_SIGACTION(sigNum, &newSignalAction, &oldSignalAction);
+#endif /* defined(WIN32) */
+	}
+
+#if defined(WIN32)
+	if (((void *)J9_SIG_ERR != oldHandler) && (handler == oldHandler)) {
+		oldHandler = (void *)J9_OLDHANDLER_SAME_AS_NEWHANDLER;
+	} else {
+		oldHandler = (void *)oldHandler;
+	}
+#else /* defined(WIN32) */
+	if ((NULL == oldSignalAction.sa_handler)
+			|| (newSignalAction.sa_handler != oldSignalAction.sa_handler)) {
+		oldHandler = (void *)oldSignalAction.sa_handler;
+	} else {
+		oldHandler = (void *)J9_OLDHANDLER_SAME_AS_NEWHANDLER;
+	}
+#endif /* defined(WIN32) */
+
+	return oldHandler;
 }
 
 
 /**
- * Method stub for method not yet implemented.
+ * Return the integer value of the signal given the name of the
+ * signal.
+ *
+ * @param  sigName Name of the signal
+ *
+ * @returns Integer value of the signal on success
+ *          J9_SIG_ERR (-1) on failure
  */
 jint JNICALL
-JVM_FindSignal(const char* sigName)
+JVM_FindSignal(const char *sigName)
 {
+	const J9SignalMapping *mapping = NULL;
+	jint signalValue = J9_SIG_ERR;
+	BOOLEAN nameHasSigPrefix = FALSE;
+	const char *fullSigName = sigName;
+#if !defined(WIN32)
+	char nameWithSIGPrefix[J9_SIGNAME_BUFFER_LENGTH] = {0};
+#endif /* !defined(WIN32) */
 
 	Trc_SC_FindSignal_Entry(sigName);
 
-#define J9_MAP_SIGNAL(ID) ID##U
-#define J9_RETURN_SIGNAL(ID) \
-	const int ID##U = -1; Trc_SC_FindSignal_Exit(J9_MAP_SIGNAL(ID)); return J9_MAP_SIGNAL(ID);
-#define J9_MATCH_SIGNAL(ID) \
-	if (strcmp(sigName, #ID) == 0) {J9_RETURN_SIGNAL(SIG##ID)}
+	if (NULL != sigName) {
+		size_t sigPrefixLength = sizeof(J9_SIG_PREFIX) - 1;
 
-	/* POSIX */
-	J9_MATCH_SIGNAL(HUP)
-	J9_MATCH_SIGNAL(INT)
-	J9_MATCH_SIGNAL(QUIT)
-	J9_MATCH_SIGNAL(ABRT)
-	J9_MATCH_SIGNAL(KILL)
-	J9_MATCH_SIGNAL(ALRM)
-	J9_MATCH_SIGNAL(TERM)
+#if !defined(WIN32)
+		if (0 != strncmp(sigName, J9_SIG_PREFIX, sigPrefixLength)) {
+			/* nameWithSIGPrefix is a char buffer of length J9_SIGNAME_BUFFER_LENGTH.
+			 * We are concatenating SIG + sigName, and storing the new string in
+			 * nameWithSIGPrefix. We want to make sure that the concatenated string
+			 * fits inside nameWithSIGPrefix. We also know that all known signal names
+			 * have less than J9_SIGNAME_BUFFER_LENGTH chars. If the concatenated
+			 * string doesn't fit inside nameWithSIGPrefix, then we can consider signal
+			 * name to be unknown. In sigNameLength, +1 is for the NULL terminator.
+			 */
+			size_t sigNameLength = sigPrefixLength + strlen(sigName) + 1;
+			if (sigNameLength <= J9_SIGNAME_BUFFER_LENGTH) {
+				strcpy(nameWithSIGPrefix, J9_SIG_PREFIX);
+				strcat(nameWithSIGPrefix, sigName);
+				fullSigName = nameWithSIGPrefix;
+			} else {
+				goto exit;
+			}
+		}
+#endif /* !defined(WIN32) */
 
-	/* POSIX 1003.1-2001 */
-	J9_MATCH_SIGNAL(BUS)
-	J9_MATCH_SIGNAL(CHLD)
-	J9_MATCH_SIGNAL(CONT)
-	J9_MATCH_SIGNAL(FPE)
-	J9_MATCH_SIGNAL(ILL)
-	J9_MATCH_SIGNAL(PIPE)
-	J9_MATCH_SIGNAL(SEGV)
-	J9_MATCH_SIGNAL(STOP)
-	J9_MATCH_SIGNAL(TSTP)
-	J9_MATCH_SIGNAL(TTIN)
-	J9_MATCH_SIGNAL(TTOU)
-	J9_MATCH_SIGNAL(URG)
-	J9_MATCH_SIGNAL(USR1)
-	J9_MATCH_SIGNAL(USR2)
+		for (mapping = signalMap; NULL != mapping->signalName; mapping++) {
+			if (0 == strcmp(fullSigName, mapping->signalName)) {
+				signalValue = mapping->signalValue;
+				break;
+			}
+		}
+	}
 
-	/* POSIX 1003.1-2001 with XSI */
-	J9_MATCH_SIGNAL(POLL)
-	J9_MATCH_SIGNAL(PROF)
-	J9_MATCH_SIGNAL(SYS)
-	J9_MATCH_SIGNAL(TRAP)
-	J9_MATCH_SIGNAL(VTALRM)
-	J9_MATCH_SIGNAL(XCPU)
-	J9_MATCH_SIGNAL(XFSZ)
-
-	/* Miscellaneous */
-	J9_MATCH_SIGNAL(IO)
-	J9_MATCH_SIGNAL(WINCH)
-	J9_MATCH_SIGNAL(PWR)
-	J9_MATCH_SIGNAL(UNUSED)
-	J9_MATCH_SIGNAL(BREAK)
-
-	Trc_SC_FindSignal_Exit(-1);
-	return -1;
+#if !defined(WIN32)
+exit:
+#endif /* !defined(WIN32) */
+	Trc_SC_FindSignal_Exit(signalValue);
+	return signalValue;
 }
 
 
@@ -4546,7 +4973,11 @@ JVM_Accept(jint descriptor, struct sockaddr* address, int* length)
 
 			returnVal = select(descriptor+1, &fdset, 0, 0, &tval);
 		} while(returnVal == 0);
-		retVal = accept(descriptor, address, &socklen);
+
+		do {
+			retVal = accept(descriptor, address, &socklen);
+		} while ((-1 == retVal) && (EINTR == errno));
+
 		*length = (int)socklen;
 	}
 #elif defined (WIN32)
@@ -4558,7 +4989,9 @@ JVM_Accept(jint descriptor, struct sockaddr* address, int* length)
 #else
 	{
 		socklen_t socklen = (socklen_t)*length;
-		retVal = accept(descriptor, address, &socklen);
+		do {
+			retVal = accept(descriptor, address, &socklen);
+		} while ((-1 == retVal) && (EINTR == errno));
 		*length = (int)socklen;
 	}
 #endif
@@ -4579,7 +5012,13 @@ JVM_Connect(jint descriptor, const struct sockaddr*address, int length)
 
 	Trc_SC_Connect_Entry(descriptor, address, length);
 
+#if defined (WIN32)
 	retVal = connect(descriptor, address, length);
+#else /* defined (WIN32) */
+	do {
+		retVal = connect(descriptor, address, length);
+	} while ((-1 == retVal) && (EINTR == errno));
+#endif /* defined (WIN32) */
 
 	Trc_SC_Connect_Exit(retVal);
 
@@ -4672,7 +5111,9 @@ JVM_Recv(jint descriptor, char* buffer, jint length, jint flags)
 #ifdef WIN32
 	retVal = recv(descriptor, buffer, (int)length, flags);
 #else
-	retVal = recv(descriptor, buffer, (size_t)length, flags);
+	do {
+		retVal = recv(descriptor, buffer, (size_t)length, flags);
+	} while ((-1 == retVal) && (EINTR == errno));
 #endif
 
 	Trc_SC_Recv_Exit(retVal);
@@ -4696,7 +5137,9 @@ JVM_RecvFrom(jint descriptor, char* buffer, jint length, jint flags, struct sock
 #else
 	{
 		socklen_t address_len = (socklen_t)*fromLength;
-		retVal = recvfrom(descriptor, buffer, (size_t)length, flags, fromAddr, &address_len);
+		do {
+			retVal = recvfrom(descriptor, buffer, (size_t)length, flags, fromAddr, &address_len);
+		} while ((-1 == retVal) && (EINTR == errno));
 		*fromLength = (int)address_len;
 	}
 #endif
@@ -4717,7 +5160,13 @@ JVM_Send(jint descriptor, const char* buffer, jint numBytes, jint flags)
 
 	Trc_SC_Send_Entry(descriptor, buffer, numBytes, flags);
 
+#if defined (WIN32)
 	retVal = send(descriptor, buffer, numBytes, flags);
+#else /* defined (WIN32) */
+	do {
+		retVal = send(descriptor, buffer, numBytes, flags);
+	} while ((-1 == retVal) && (EINTR == errno));
+#endif /* defined (WIN32) */
 
 	Trc_SC_Send_Exit(retVal);
 
@@ -4728,13 +5177,18 @@ JVM_Send(jint descriptor, const char* buffer, jint numBytes, jint flags)
 /**
  * JVM_SendTo
  */
-
 jint JNICALL JVM_SendTo(jint descriptor, const char* buffer, jint length, jint flags, const struct sockaddr* toAddr, int toLength) {
 	jint retVal;
 
 	Trc_SC_SendTo_Entry(descriptor, buffer, length, flags, toAddr, toLength);
 
+#if defined (WIN32)
 	retVal = sendto(descriptor, buffer, length, flags, toAddr, toLength);
+#else /* defined (WIN32) */
+	do {
+		retVal = sendto(descriptor, buffer, length, flags, toAddr, toLength);
+	} while ((-1 == retVal) && (EINTR == errno));
+#endif /* defined (WIN32) */
 
 	Trc_SC_SendTo_Exit(retVal);
 
@@ -4771,27 +5225,68 @@ JVM_Socket(jint domain, jint type, jint protocol)
 
 /**
  * JVM_SocketAvailable
+ * Note: Java 9 and beyond don't use this JVM method.
+ *
+ * @param descriptor socket file descriptor
+ * @param result the number of bytes that can be read without blocking
+ * 
+ * @return result of this JVM method, 0 for failure, 1 (or non-zero value) for success
+ * 
+ * Note: There is a JCL patch applied to IBM Java 8 build which expects 1 for failure, 0 for success.
+ *       Current implementation supports both IBM and OpenJ9 Java 8 builds.
+ *       When the JCL patch is removed, i.e., IBM Java 8 JCL is same as OpenJ9 JCL, following code can be 
+ *       cleaned up to only return 0 for failure, 1 (or non-zero value) for success.
  */
 jint JNICALL
 JVM_SocketAvailable(jint descriptor, jint* result)
 {
-	jint retVal;
+	jint retVal = 0;
 
 	Trc_SC_SocketAvailable_Entry(descriptor, result);
 
 #ifdef WIN32
-	retVal = ioctlsocket(descriptor, FIONREAD, result);
+	/* Windows JCL native doesn't invoke this JVM method */
+	Assert_SC_unreachable();
 #endif
 #if defined(J9UNIX) || defined(J9ZOS390)
-	retVal = 0;
-	if (descriptor<0) {
-		retVal = 1;
-	} else {
-		retVal = ioctl(descriptor, FIONREAD, result);
-		if (retVal<0) {
+	if (0 <= descriptor) {
+		do {
+			retVal = ioctl(descriptor, FIONREAD, result);
+		} while ((-1 == retVal) && (EINTR == errno));
+
+#if defined(OPENJ9_BUILD)
+		if (0 <= retVal) {
+			/* ioctl succeeded, return 1 to indicate that this JVM method succeeds */
+			retVal = 1;
+		} else {
+			/* ioctl failed, return 0 to indicate that this JVM method fails */
+			retVal = 0;
+		}
+#else /* OPENJ9_BUILD */
+		if (J2SE_SHAPE_SUN_OPENJDK == J2SE_SHAPE(BFUjavaVM)) {
+			if (0 <= retVal) {
+				/* ioctl succeeded, return 1 to indicate that this JVM method succeeds */
+				retVal = 1;
+			} else {
+				/* ioctl failed, return 0 to indicate that this JVM method fails */
+				retVal = 0;
+			}
+		} else {
+			if (retVal < 0) {
+				/* ioctl failed, return 1 to indicate that this JVM method fails */
+				retVal = 1;
+			}
+		}
+#endif /* OPENJ9_BUILD */
+	}
+#if !defined(OPENJ9_BUILD)
+	else {
+		if (J2SE_SHAPE_SUN == J2SE_SHAPE(BFUjavaVM)) {
+			/* invalid descriptor, return 1 to indicate that this JVM method fails */
 			retVal = 1;
 		}
 	}
+#endif /* OPENJ9_BUILD */	
 #endif
 
 	Trc_SC_SocketAvailable_Exit(retVal, *result);
@@ -4821,7 +5316,9 @@ JVM_SocketClose(jint descriptor)
 	retVal = 1; /* Always return TRUE */
 #endif
 #if defined(J9UNIX) || defined(J9ZOS390)
-	retVal = close(descriptor);
+	do {
+		retVal = close(descriptor);
+	} while ((-1 == retVal) && (EINTR == errno));
 #endif
 
 	Trc_SC_SocketClose_Exit(retVal);
@@ -5047,7 +5544,7 @@ jint JNICALL
 JVM_GetInterfaceVersion(void)
 {
 	jint result = 4;
-	UDATA j2seVersion = getVersionFromClasslibPropertiesFile();
+	UDATA j2seVersion = getVersionFromPropertiesFile();
 
 	if ((j2seVersion & J2SE_SERVICE_RELEASE_MASK) >= J2SE_19) {
 		result = 5;
@@ -5361,7 +5858,7 @@ JVM_DefineClassWithSource(JNIEnv *env, const char * className, jobject classLoad
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
-	if (!vmFuncs->verifyQualifiedName(currentThread, J9_JNI_UNWRAP_REFERENCE(classNameString))) {
+	if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, J9_JNI_UNWRAP_REFERENCE(classNameString))) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)*(j9object_t*)classNameString);
 		vmFuncs->internalReleaseVMAccess(currentThread);
 		return NULL;

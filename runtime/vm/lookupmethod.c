@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9.h"
@@ -158,26 +158,9 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 	U_32 modifiers = romMethod->modifiers;
 	J9JavaVM * vm = currentThread->javaVM;
 
-	/* Abstract methods are only allowed in abstract classes.  Interface classes are abstract by defintion.
-	 * If we are resolving an interface method ref, or we are looking up a method from JNI, allow the method
-	 * to be found in an interface class.  If not, throw AbstractMethodError.
-	 */
-	if (modifiers & J9AccAbstract) {
-		U_32 classModifiers = methodClass->romClass->modifiers;
-
-		if (((classModifiers & J9AccAbstract) == 0) ||
-				((classModifiers & J9AccInterface) &&
-						((lookupOptions & (J9_LOOK_VIRTUAL | J9_LOOK_INTERFACE | J9_LOOK_JNI)) == 0))
-		) {
-			*exception = J9VMCONSTANTPOOL_JAVALANGABSTRACTMETHODERROR;
-			*exceptionClass = methodClass;
-			return NULL;
-		}
-	}
-
 	/* Check that the found method is visible from the sender */
 
-	if ((NULL != senderClass) && (!J9ROMCLASS_IS_UNSAFE(senderClass->romClass))) {
+	if (J9_ARE_NO_BITS_SET(lookupOptions, J9_LOOK_NO_VISIBILITY_CHECK) && (NULL != senderClass) && (!J9ROMCLASS_IS_UNSAFE(senderClass->romClass))) {
 		U_32 newModifiers = modifiers;
 		BOOLEAN doVisibilityCheck = TRUE;
 
@@ -567,19 +550,29 @@ doneItableSearch:
 
 /* Options explained:
  * 
- * 		lookupOptionsVirtualMethod			- Search for a virtual (instance) method
- * 		lookupOptionsStaticMethod			- Search for a static method
- * 		lookupOptionsInterfaceMethod		- Search for an interface method - assumes given class is interface class and searches only it and its superinterfaces (i.e. does not search Object)
- * 		lookupOptionsJNI							- Use JNI behaviour (allow virtual lookup to succeed when it finds a method in an interface class, throw only NoSuchMethodError on failure, VERIFIED C strings for name and sig)
- * 		lookupOptionsNoClimb					- Search only the given class, no superclasses or superinterfaces
- * 		lookupOptionsNoInterfaces				- Do not search superinterfaces
- * 		lookupOptionsNoThrow					- Do not set the exception if lookup fails
- * 		lookupOptionsNewInstance			- Use newInstance behaviour (translate IllegalAccessError -> IllegalAccessException, all other errors -> InstantiationException)
- * 		lookupOptionsDirectNameAndSig	- NAS contains direct pointers to UTF8, not SRPs (this option is mutually exclusive with lookupOptionsJNI)
- * 		lookupOptionsCheckClassLoadingConstraints - check that the found method doesn't violate any class loading constraints between the found class and the sender class.
- * 		lookupOptionsPartialMatch - Allow the search to match a partial signature
- *  	If lookupOptionsJNI is not specified, virtual and static lookup will fail with AbstractMethodError if the method is found
+ * 		J9_LOOK_VIRTUAL							Search for a virtual (instance) method
+ * 		J9_LOOK_STATIC							Search for a static method
+ * 		J9_LOOK_INTERFACE						Search for an interface method - assumes given class is interface class and searches only it and its superinterfaces (i.e. does not search Object)
+ * 		J9_LOOK_JNI								Use JNI behaviour (allow virtual lookup to succeed when it finds a method in an interface class, throw only NoSuchMethodError on failure, VERIFIED C strings for name and sig)
+ * 		J9_LOOK_NO_CLIMB						Search only the given class, no superclasses or superinterfaces
+ * 		J9_LOOK_NO_INTERFACE					Do not search superinterfaces
+ * 		J9_LOOK_NO_THROW						Do not set the exception if lookup fails
+ * 		J9_LOOK_NEW_INSTANCE					Use newInstance behaviour (translate IllegalAccessError -> IllegalAccessException, all other errors -> InstantiationException)
+ * 		J9_LOOK_DIRECT_NAS						NAS contains direct pointers to UTF8, not SRPs (this option is mutually exclusive with lookupOptionsJNI)
+ * 		J9_LOOK_CLCONSTRAINTS					Check that the found method doesn't violate any class loading constraints between the found class and the sender class.
+ * 		J9_LOOK_PARTIAL_SIGNATURE				Allow the search to match a partial signature
+ *		J9_LOOK_ALLOW_FWD						Allow lookup to follow the forwarding chain
+ *		J9_LOOK_NO_VISIBILITY_CHECK				Do not perform any visilbity checking
+ *		J9_LOOK_NO_JLOBJECT						When doing an interface lookup, do not consider method in java.lang.Object
+ *		J9_LOOK_REFLECT_CALL					Use reflection behaviour when dealing with module visilibity
+ *		J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS	Handle default method conflicts
+ *		J9_LOOK_IGNORE_INCOMPATIBLE_METHODS		If a static/virtual conflict occurs, ignore and move on to the next class
+ *
+ *  	If J9_LOOK_JNI is not specified, virtual and static lookup will fail with AbstractMethodError if the method is found
  * 		in an interface class.
+ *
+ *		If J9_LOOK_NO_VISIBILITY_CHECK is not specified and senderClass is not NULL, a visibility check will be
+ *		performed.
  */
 
 /* Change nameAndSig to void * */
@@ -697,6 +690,15 @@ retry:
 				resultMethod = processMethod(currentThread, lookupOptions, foundMethod, lookupClass, &exception, &exceptionClass, &errorType, nameAndSig, senderClass, targetClass);
 
 				if (resultMethod == NULL) {
+					if (J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR == exception) {
+						/* Incompatible method found - caller may request to ignore this case */
+						if (J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_IGNORE_INCOMPATIBLE_METHODS)) {
+							/* Reset exception state to initial values and move up the hierarchy */
+							exception = J9VMCONSTANTPOOL_JAVALANGNOSUCHMETHODERROR;
+							exceptionClass = targetClass;
+							goto nextClass;
+						}
+					}
 					badMethod = foundMethod; /* for clear illegal access message printing purpose */
 					if (!isInterfaceLookup) {
 						goto done;
@@ -714,7 +716,9 @@ retry:
 			}
 			if (isInterfaceLookup && J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_NO_JLOBJECT)) {
 				 break; /* don't look in superclass, i.e. j.l.Object */
-			} else if (J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_NO_CLIMB)) {
+			}
+nextClass:
+			if (J9_ARE_ANY_BITS_SET(lookupOptions, J9_LOOK_NO_CLIMB)) {
 				goto done;
 			}
 			lookupClass = SUPERCLASS(lookupClass);

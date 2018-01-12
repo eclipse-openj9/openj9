@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # Externalised messages for the VM module.
@@ -93,7 +93,7 @@ J9NLS_VM_CANNOT_LOAD_LIBRARY=Cannot load library required by: %s
 J9NLS_VM_CANNOT_LOAD_LIBRARY.sample_input_1=-XaCommandLineOption
 J9NLS_VM_CANNOT_LOAD_LIBRARY.explanation=The JVM was unable to open a shared library required when the command line option quoted is specified.
 J9NLS_VM_CANNOT_LOAD_LIBRARY.system_action=The JVM will fail to start.
-J9NLS_VM_CANNOT_LOAD_LIBRARY.user_response=Correct the problem with opening the shared library, or contact IBM service.
+J9NLS_VM_CANNOT_LOAD_LIBRARY.user_response=Correct the problem with opening the shared library, or contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_INVALID_ENV_VAR=Invalid value for environment variable: %s
@@ -125,7 +125,7 @@ J9NLS_VM_J9VMDLLMAIN_NOT_FOUND=J9VMDllMain not found
 # START NON-TRANSLATABLE
 J9NLS_VM_J9VMDLLMAIN_NOT_FOUND.explanation=The required exported function J9VMDllMain was not found.
 J9NLS_VM_J9VMDLLMAIN_NOT_FOUND.system_action=This message will be wrapped in another message, that other message will dictate the JVM's action.
-J9NLS_VM_J9VMDLLMAIN_NOT_FOUND.user_response=Contact IBM Service.
+J9NLS_VM_J9VMDLLMAIN_NOT_FOUND.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: do not translate J9VMDllMain
@@ -133,7 +133,7 @@ J9NLS_VM_J9VMDLLMAIN_FAILED=J9VMDllMain failed
 # START NON-TRANSLATABLE
 J9NLS_VM_J9VMDLLMAIN_FAILED.explanation=The J9VMDllMain function returned a failure.
 J9NLS_VM_J9VMDLLMAIN_FAILED.system_action=This message will be wrapped in another message, that other message will dictate the JVM's action.
-J9NLS_VM_J9VMDLLMAIN_FAILED.user_response=Contact IBM Service.
+J9NLS_VM_J9VMDLLMAIN_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: argument is the name of the DLL
@@ -142,7 +142,7 @@ J9NLS_VM_FAILED_TO_INITIALIZE_DLL=Failed to initialize %s
 J9NLS_VM_FAILED_TO_INITIALIZE_DLL.sample_input_1=userLib.dll
 J9NLS_VM_FAILED_TO_INITIALIZE_DLL.explanation=The function JVM_OnLoad() of the specified library returned failure.
 J9NLS_VM_FAILED_TO_INITIALIZE_DLL.system_action=The JNI GetEnv() function will JNI_ERR.
-J9NLS_VM_FAILED_TO_INITIALIZE_DLL.user_response=Contact IBM Service.
+J9NLS_VM_FAILED_TO_INITIALIZE_DLL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the name of the DLL
@@ -153,7 +153,7 @@ J9NLS_VM_UNABLE_TO_LOAD_DLL.sample_input_1=userLib.dll
 J9NLS_VM_UNABLE_TO_LOAD_DLL.sample_input_2=The specified module could not be found.
 J9NLS_VM_UNABLE_TO_LOAD_DLL.explanation=The JVM was unable to load the specified library for the specified reason.
 J9NLS_VM_UNABLE_TO_LOAD_DLL.system_action=The JVM will fail to start.
-J9NLS_VM_UNABLE_TO_LOAD_DLL.user_response=Contact IBM Service.
+J9NLS_VM_UNABLE_TO_LOAD_DLL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the name of the DLL
@@ -164,7 +164,7 @@ J9NLS_VM_UNABLE_TO_UNLOAD_DLL.sample_input_1=userLib.dll
 J9NLS_VM_UNABLE_TO_UNLOAD_DLL.sample_input_2=The specified module could not be found.
 J9NLS_VM_UNABLE_TO_UNLOAD_DLL.explanation=The JVM was unable to unload the specified library for the specified reason.
 J9NLS_VM_UNABLE_TO_UNLOAD_DLL.system_action=The JVM may exit or continue operation.
-J9NLS_VM_UNABLE_TO_UNLOAD_DLL.user_response=Contact IBM Service.
+J9NLS_VM_UNABLE_TO_UNLOAD_DLL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the function name which caused the problem
@@ -177,7 +177,7 @@ J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.sample_input_2=-3
 J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.sample_input_3=JVMJ9VM009E J9VMDllMain failed
 J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.explanation=There was an error returned by the specified function during JVM initialization.
 J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.system_action=The JVM may exit or continue operation.
-J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.user_response=Contact IBM Service.
+J9NLS_VM_INITIALIZATION_ERROR_IN_FUNCTION.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the function name which caused the problem
@@ -190,7 +190,7 @@ J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.sample_input_2=-3
 J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.sample_input_3=JVMJ9VM009E J9VMDllMain failed
 J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.explanation=There was an error return by the specified function during JVM shutdown.
 J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.system_action=The JVM may exit early or may continue with normal shutdown.
-J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.user_response=Contact IBM Service.
+J9NLS_VM_SHUTDOWN_ERROR_IN_FUNCTION.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the library which caused the problem
@@ -203,7 +203,7 @@ J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.sample_input_2=-3
 J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.sample_input_3=JVMJ9VM009E J9VMDllMain failed
 J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.explanation=There was an error trying to initialize the specified library during JVM initialization.
 J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.system_action=The JVM may exit or continue operation.
-J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.user_response=Contact IBM Service.
+J9NLS_VM_INITIALIZATION_ERROR_FOR_LIBRARY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: first argument is the library which caused the problem
@@ -216,7 +216,7 @@ J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.sample_input_2=-3
 J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.sample_input_3=JVMJ9VM009E J9VMDllMain failed
 J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.explanation=There was error returned by the specified library during JVM shutdown.
 J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.system_action=The JVM may exit early or may continue with normal shutdown.
-J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.user_response=Contact IBM Service.
+J9NLS_VM_SHUTDOWN_ERROR_FOR_LIBRARY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_OUT_OF_MEM_FOR_CMD_LINE_OPTS=Could not allocate memory for command line option array
@@ -240,7 +240,7 @@ J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.sample_input_1=9
 J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.sample_input_2=userClass
 J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.explanation=A required class could not be found and/or initialized.
 J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.system_action=The JVM will terminate.
-J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.user_response=Contact IBM Service.
+J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: %.*s is a class path entry (usually a directory name or JAR file name)
@@ -250,14 +250,14 @@ J9NLS_VM_SEARCHED_IN_DIR.sample_input_1=14
 J9NLS_VM_SEARCHED_IN_DIR.sample_input_2=/opt/IBM/Java/
 J9NLS_VM_SEARCHED_IN_DIR.explanation=Lists a class path entry that was searched while trying to find a required class.
 J9NLS_VM_SEARCHED_IN_DIR.system_action=The JVM will terminate.
-J9NLS_VM_SEARCHED_IN_DIR.user_response=Contact IBM Service.
+J9NLS_VM_SEARCHED_IN_DIR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_OUT_OF_STACK_MAP_MEMORY=Out of memory for interpreter stack map - aborting VM
 # START NON-TRANSLATABLE
 J9NLS_VM_OUT_OF_STACK_MAP_MEMORY.explanation=There was a failure to allocate native memory required by the JVM.
 J9NLS_VM_OUT_OF_STACK_MAP_MEMORY.system_action=The JVM will terminate.
-J9NLS_VM_OUT_OF_STACK_MAP_MEMORY.user_response=Contact IBM Service.
+J9NLS_VM_OUT_OF_STACK_MAP_MEMORY.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_STACK_MAP_FAILED=Stack map failed, result = %p - aborting VM
@@ -265,7 +265,7 @@ J9NLS_VM_STACK_MAP_FAILED=Stack map failed, result = %p - aborting VM
 J9NLS_VM_STACK_MAP_FAILED.sample_input_1=0x84723649
 J9NLS_VM_STACK_MAP_FAILED.explanation=An internal error occurred.
 J9NLS_VM_STACK_MAP_FAILED.system_action=The JVM will terminate with exit code 600 or 601.
-J9NLS_VM_STACK_MAP_FAILED.user_response=Contact IBM Service.
+J9NLS_VM_STACK_MAP_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_CHECK_JAVA_HOME=This may indicate that JAVA_HOME is incorrect, or that class libraries are not installed
@@ -361,7 +361,7 @@ J9NLS_VM_JNI_INVALID_UTF8=Invalid UTF8 used in JNI function
 # START NON-TRANSLATABLE
 J9NLS_VM_JNI_INVALID_UTF8.explanation=An invalid UTF8 string was passed as an argument to a JNI function.
 J9NLS_VM_JNI_INVALID_UTF8.system_action=The JVM will exit with exit code 1000 or the JNI function will fail, depending on the function
-J9NLS_VM_JNI_INVALID_UTF8.user_response=Contact IBM service.
+J9NLS_VM_JNI_INVALID_UTF8.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_REQUIRED_CLASS_ON_WRONG_PATH=Required class %2$.*1$s must be in the boot classpath, but was found in the application class path in %4$.*3$s
@@ -383,7 +383,7 @@ J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.sample_input_1=userLib.dll
 J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.sample_input_2=The specified module could not be found.
 J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.explanation=The JVM was unable to load the specified library for the specified reason.
 J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.system_action=The JVM will fail to start.
-J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.user_response=Contact IBM Service.
+J9NLS_VM_ERROR_UNABLE_TO_LOAD_DLL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # Note: argument is the name of the DLL
@@ -392,7 +392,7 @@ J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL=Unrecoverable error: failed to initializ
 J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.sample_input_1=userLib.dll
 J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.explanation=The function JVM_OnLoad() of the specified library returned failure.
 J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.system_action=The JNI GetEnv() function will JNI_ERR.
-J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.user_response=Contact IBM Service.
+J9NLS_VM_ERROR_FAILED_TO_INITIALIZE_DLL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 # JVMRI and -Xtrace are not translatable.
@@ -836,7 +836,7 @@ J9NLS_VM_IFA_SWITCHERROR=Error switching to IFA processor rc: %08x
 # START NON-TRANSLATABLE
 J9NLS_VM_IFA_SWITCHERROR.explanation=The JVM failed to switch to the IFA processor.
 J9NLS_VM_IFA_SWITCHERROR.system_action=The JVM will continue to execute using the regular processor.
-J9NLS_VM_IFA_SWITCHERROR.user_response=Contact IBM service.
+J9NLS_VM_IFA_SWITCHERROR.user_response=Contact your service representative.
 J9NLS_VM_IFA_SWITCHERROR.sample_input_1=5623DA10
 # END NON-TRANSLATABLE
 
@@ -844,7 +844,7 @@ J9NLS_VM_IFA_ERROR=IFA Error: unexpected return code %08x from IFA switch servic
 # START NON-TRANSLATABLE
 J9NLS_VM_IFA_ERROR.explanation=The JVM failed to switch to the IFA processor due to an unexpected error.
 J9NLS_VM_IFA_ERROR.system_action=The JVM will continue to execute using the regular processor.
-J9NLS_VM_IFA_ERROR.user_response=Contact IBM service.
+J9NLS_VM_IFA_ERROR.user_response=Contact your service representative.
 J9NLS_VM_IFA_ERROR.sample_input_1=5623DA10
 # END NON-TRANSLATABLE
 
@@ -1242,7 +1242,7 @@ J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2=Terminating process using CEE3AB2() wi
 # START NON-TRANSLATABLE
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.explanation=The JVM detected an unrecoverable condition and is terminating the process using the z/OS specific system call CEE3AB2, which throws an abend.
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.system_action=The JVM prints the error message and terminates the process
-J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.user_response=Inspect console and operator console messages. Contact IBM Service if assistance is required 
+J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.user_response=Inspect console and operator console messages. Contact your service representative if assistance is required 
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.sample_input_1=0xded
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.sample_input_2=1
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.sample_input_3=2
@@ -1736,3 +1736,49 @@ J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_TOP.system_action=The JVM will throw a 
 J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_TOP.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
+# First argument is the library name
+# Second argument is the module name
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL=Failed to load library %1$s required by module: %2$s
+# START NON-TRANSLATABLE
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.sample_input_1=j9shr29
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.sample_input_2=openj9.sharedclasses
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.explanation=The JVM failed to load the library required by the specified module.
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.system_action=The JVM continues.
+J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL.user_response=No action required if the specified library won't be referenced.
+# END NON-TRANSLATABLE
+
+# Message for LinkageError when a class loading constraint violation occurs when overriding a method
+# arguments 1 and 2 are the overridden method's class's name
+# arguments 3 and 4 are the overridden method name
+# arguments 5 and 6 are the overridden method's signature
+# arguments 7 and 8 are classloader name
+# argument 9 is the classloader's identity hashcode
+# arguments 10 and 11 are classloader's class
+# arguments 12 and 13 are the other classloader name
+# argument 14 is the other classloader's identity hashcode
+# arguments 15 and 16 are the other classloader's class
+# arguments 17 and 18 are the name of class being created
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION=loading constraint violation when overriding method \"%2$.*1$s.%4$.*3$s%6$.*5$s\" during creation of class \"%18$.*17$s\": loader \"%8$.*7$s@%9$x\" of class \"%11$.*10$s\" and loader \"%13$.*12$s@%14$x\" of class \"%16$.*15$s\" have different types for the method signature
+# START NON-TRANSLATABLE
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_1=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_2=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_3=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_4=method
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_5=15
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_6=()LLoadedTwice;
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_7=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_8=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_9=2011a4e
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_10=8
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_11=Violator
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_12=6
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_13=Loader
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_14=200b50c
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_15=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_16=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_17=4
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_18=Main
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.explanation=A class loading constraint has been violated.  The two class loader's have different classes for one of the class names in the signature.
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.system_action=A java/lang/LinkageError will be thrown
+J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.user_response=Examine the use of ClassLoaders to determine why a class of the same name is loaded in two different loaders
+# END NON-TRANSLATABLE

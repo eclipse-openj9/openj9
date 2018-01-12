@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #include "j9protos.h"
@@ -273,9 +273,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	shutdownJVMRI,
 	getOwnedObjectMonitors,
 	fixUnsafeMethods,
-	triggerExceptionCatchEvent,
-	triggerMethodEnterEvent,
-	triggerMethodReturnEvent,
 #if !defined(J9VM_SIZE_SMALL_CODE)
 	fieldIndexTableRemove,
 #endif /* J9VM_SIZE_SMALL_CODE */
@@ -304,7 +301,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	jniArrayAllocateMemoryFromThread,
 	jniArrayFreeMemoryFromThread,
 	sendForGenericInvoke,
-	sendForGenericInvokeVarHandle,
 	jitFillOSRBuffer,
 	sendResolveMethodHandle,
 	resolveInvokeDynamic,

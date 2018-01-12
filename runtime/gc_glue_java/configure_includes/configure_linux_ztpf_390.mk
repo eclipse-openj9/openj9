@@ -17,16 +17,14 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
 include $(CONFIG_INCL_DIR)/configure_common.mk
-# Detect 64-bit vs. 31-bit
-# This overrides the value calculated in configure_common.mk
-ifneq (,$(findstring -64,$(SPEC)))
-	TEMP_TARGET_DATASIZE:=64
-else
-	TEMP_TARGET_DATASIZE:=31
+
+# Override datasize for 31-bit specs.
+ifeq (,$(findstring -64,$(SPEC)))
+  TEMP_TARGET_DATASIZE := 31
 endif
 
 CONFIGURE_ARGS += \
@@ -36,7 +34,6 @@ CONFIGURE_ARGS += \
 
 ifeq (linux_ztpf_390-64_cmprssptrs_codecov, $(SPEC))
 	CONFIGURE_ARGS += \
-		--enable-OMR_RTTI\
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_S390 \
 		--enable-OMR_ENV_DATA64 \
@@ -44,11 +41,11 @@ ifeq (linux_ztpf_390-64_cmprssptrs_codecov, $(SPEC))
 		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
 		--enable-OMR_INTERP_SMALL_MONITOR_SLOT
 #		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+#               --enable-OMR_RTTI
 endif
 
 ifeq (linux_ztpf_390-64_cmprssptrs, $(SPEC))
 	CONFIGURE_ARGS += \
-		--enable-OMR_RTTI\
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_S390 \
 		--enable-OMR_ENV_DATA64 \
@@ -57,11 +54,11 @@ ifeq (linux_ztpf_390-64_cmprssptrs, $(SPEC))
 		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
 		--enable-OMR_INTERP_SMALL_MONITOR_SLOT
 #		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+#               --enable-OMR_RTTI
 endif
 
 ifeq (linux_ztpf_390-64_cmprssptrs_purec, $(SPEC))
 	CONFIGURE_ARGS += \
-		--enable-OMR_RTTI\
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_S390 \
 		--enable-OMR_ENV_DATA64 \
@@ -69,50 +66,51 @@ ifeq (linux_ztpf_390-64_cmprssptrs_purec, $(SPEC))
 		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
 		--enable-OMR_INTERP_SMALL_MONITOR_SLOT
 #		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+#                --enable-OMR_RTTI
 endif
 
 ifeq (linux_ztpf_390-64_codecov, $(SPEC))
 	CONFIGURE_ARGS += \
-		--enable-OMR_RTTI\
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_S390 \
 		--enable-OMR_ENV_DATA64
 #		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+#                --enable-OMR_RTTI
 endif
 
 ifeq (linux_ztpf_390-64, $(SPEC))
 	CONFIGURE_ARGS += \
-		--enable-OMR_RTTI\
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_S390 \
 		--enable-OMR_ENV_DATA64 \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER
 #		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+#                --enable-OMR_RTTI
 endif
 
 ifeq (linux_ztpf_390-64_purec, $(SPEC))
 	CONFIGURE_ARGS += \
-		--enable-OMR_RTTI\
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_S390 \
 		--enable-OMR_ENV_DATA64
 #		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+#                --enable-OMR_RTTI
 endif
 
 ifeq (linux_ztpf_390, $(SPEC))
 	CONFIGURE_ARGS += \
-		--enable-OMR_RTTI\
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_S390
 #		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+#                --enable-OMR_RTTI
 endif
 
 ifeq (linux_ztpf_390_purec, $(SPEC))
 	CONFIGURE_ARGS += \
-		--enable-OMR_RTTI\
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_S390
 #		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
+#                --enable-OMR_RTTI
 endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o

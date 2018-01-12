@@ -18,7 +18,7 @@
 	[1] https://www.gnu.org/software/classpath/license.html
 	[2] http://openjdk.java.net/legal/assembly-exception.html
 
-	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <interface>
 	<publicHeader>vmhook.h</publicHeader>
@@ -1121,7 +1121,6 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<data type="const char*" name="className" description="name of class to find" />
 		<data type="UDATA" name="classNameLength" description="length of the className param" />
 		<data type="struct J9ClassLoader*" name="classloader" description="caller classloader" />
-		<data type="UDATA" name="flags" description="flags that control how class is loaded" />
 		<data type="IDATA*" name="classFound" description="returns non zero if class was found" />
 		<data type="IDATA*" return="true" name="result" description="returns non zero if the hook ran" />
 	</event>

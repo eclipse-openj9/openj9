@@ -19,7 +19,7 @@ package org.openj9.test.support;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 
@@ -153,9 +153,9 @@ public class Support_Exec {
 			execArgs = new String[baseArgsArray.length + args.length];
 			System.arraycopy(baseArgsArray, 0, execArgs, 0,
 					baseArgsArray.length);
-		} else if (vendor.indexOf("IBM") != -1) {
+		} else if (vendor.indexOf("IBM") != -1 || vendor.indexOf("OpenJ9") != -1) {
 			String full = System.getProperty("java.fullversion");
-			logger.debug("***" + full + "***");
+			logger.info("***" + full + "***");
 			boolean jitDisabled = false;
 			if (full != null && full.indexOf("(JIT disabled") >= 0) {
 				jitDisabled = true;

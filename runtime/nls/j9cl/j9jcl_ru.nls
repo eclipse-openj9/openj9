@@ -17,7 +17,7 @@
 # [1] https://www.gnu.org/software/classpath/license.html
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
 # Externalised messages for the VM components of the JCL module.
@@ -122,7 +122,7 @@ J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT=\u041d\u0435\u0442 \u043f\u0440\u0435\u04
 # START NON-TRANSLATABLE
 J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.explanation=The JXEed class library contains no preverification information.
 J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.system_action=The JVM will fail to start.
-J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.user_response=Contact IBM Service.
+J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT.user_response=Contact your service representative.
 
 # END NON-TRANSLATABLE
 
@@ -329,7 +329,7 @@ J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB=\u041d\
 # START NON-TRANSLATABLE
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load dbgwrapper.dll was unsuccessful, the internal error code is shown.
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.system_action=The JVM will proceed but may fail to start.
-J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact IBM Service.
+J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact your service representative.
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_1=5
 # END NON-TRANSLATABLE
 
@@ -346,7 +346,7 @@ J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB=\u041d\u0435 \u044
 # START NON-TRANSLATABLE
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load a dll was unsuccessful, the dll name and internal error code are shown.
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.system_action=The JVM will proceed but may fail to start.
-J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact IBM Service.
+J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact your service representative.
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_1=dbgwrapper.dll
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_2=5
 # END NON-TRANSLATABLE
@@ -390,14 +390,14 @@ J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR=\u041e\u0448\u0438\u0431\u043a\u0430 \u0
 # START NON-TRANSLATABLE
 J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.explanation=Internal error occured when retrieving JVM CPU usage information.
 J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.system_action=The JVM will continue, but no JVM CPU usage related information will be provided.
-J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.user_response=Contact IBM Service.
+J9NLS_JCL_JVM_CPU_USAGE_RETRIEVAL_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP=\u041d\u0435\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u043e\u0435 \u0441\u0438\u0441\u0442\u0435\u043c\u043d\u043e\u0435 \u0432\u0440\u0435\u043c\u044f \u043f\u0440\u0438 \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u0438\u0438 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u0438 \u043e\u0431 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0438 \u043f\u0440\u043e\u0446\u0435\u0441\u0441\u043e\u0440\u0430 \u0432 JVM.
 # START NON-TRANSLATABLE
 J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.explanation=Timestamp is invalid when retrieving JVM CPU usage info.
 J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.system_action=The JVM will continue, but no JVM CPU usage related information will be provided.
-J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.user_response=Contact IBM Service.
+J9NLS_JCL_JVM_CPU_USAGE_INVALID_TIMESTAMP.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_JCL_OOM_NEW_GLOBAL_REF=\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0432\u044b\u0434\u0435\u043b\u0438\u0442\u044c \u043f\u0430\u043c\u044f\u0442\u044c \u0434\u043b\u044f \u043d\u043e\u0432\u043e\u0439 \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e\u0439 \u0441\u0441\u044b\u043b\u043a\u0438 JNI

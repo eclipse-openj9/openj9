@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
@@ -30,7 +30,6 @@
 	<test name="jsr292Test">
 		<classes>
 			<class name="com.ibm.j9.jsr292.AdaptorTests"/>
-			<class name="com.ibm.j9.jsr292.LookupInTests"/>
 			<class name="com.ibm.j9.jsr292.LookupAPITests_Find"/>
 			<class name="com.ibm.j9.jsr292.LookupAPITests_Unreflect"/>
 			<class name="com.ibm.j9.jsr292.Crash"/>
@@ -96,6 +95,7 @@
 			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_arrayLength"/>
 			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_arrayConstructor"/>
 			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_dropLookupMode"/>
+			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_dropArgumentsToMatch"/>
 		</classes>
 	</test>
 

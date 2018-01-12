@@ -16,7 +16,7 @@
 // [1] https://www.gnu.org/software/classpath/license.html
 // [2] http://openjdk.java.net/legal/assembly-exception.html
 //
-// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
 Executable=j9vm
 Submodules=j9vmutil,j9util,pool,avl,map,j9bcverify,j9bcu,module
@@ -760,3 +760,6 @@ TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotSamePackage Overhead=
 TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotSameClassLoader Overhead=1 Level=1 Template="The nest top class (RAM class=%p, class loader=%p, this class loader=%p) has not been loaded by the same class loader."
 TraceException=Trc_VM_CreateRAMClassFromROMClass_nestTopNotVerified Overhead=1 Level=1 Template="The nest top (nest top class=%p, class loader=%p, this class loader=%p) does not claim the nest member (nest member=%p)."
 
+TraceEntry=Trc_VM_sendResolveMethodTypeRefInto_Entry Overhead=1 Level=5 Template="sendResolveMethodTypeRefInto ramCP=%p cpIndex=%zu resolveFlags=%zu"
+TraceException=Trc_VM_sendResolveMethodTypeRefInto_Exception Overhead=1 Level=1 Template="Sender class=%p cannot access receiver class=%p, errorCode=%zi."
+TraceExit=Trc_VM_sendResolveMethodTypeRefInto_Exit Overhead=1 Level=5 Template="sendResolveMethodTypeRefInto methodType=%p."

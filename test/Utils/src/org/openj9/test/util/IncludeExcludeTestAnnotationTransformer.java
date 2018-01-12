@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package org.openj9.test.util;
 
@@ -41,9 +41,6 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 	static {
 		String line = null;
 		String excludeFile = System.getenv("EXCLUDE_FILE");
-		if (null == excludeFile) {
-			excludeFile = IncludeExcludeTestAnnotationTransformer.class.getClassLoader().getResource("excludes/default_exclude.txt").getFile();
-		}
 		logger.info("exclude file is " + excludeFile);
 		try {
 			FileReader fileReader = new FileReader(excludeFile);
@@ -78,9 +75,9 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 			}
 			bufferedReader.close();
 		} catch(FileNotFoundException ex) {
-			logger.info("Unable to open file " + excludeFile);
+			logger.info("Unable to open file " + excludeFile, ex);
 		} catch(IOException ex) {
-			logger.info("Error reading file " + excludeFile);
+			logger.info("Error reading file " + excludeFile, ex);
 		}
 	}
 

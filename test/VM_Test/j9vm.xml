@@ -22,7 +22,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 
@@ -93,6 +93,10 @@
 
 	<exclude id="j9vm.test.romclasscreation.NewROMCreationAfterModifyingExistingClassTest" platform="all">
 		<reason>134161: Java 9 j9vm test: Error: Agent library jvmtitest could not be opened (libjvmtitest.so: cannot open shared object file: No such file or directory)</reason>
+	</exclude>
+
+	<exclude id="j9vm.test.invalidclasspath.SetClasspathTest" platform="win_x86-64_cr">
+		<reason>Issue 680: j9vm.test.invalidclasspath.SetClasspathTest segmentation error for OpenJ9 JDK9 windows platform</reason>
 	</exclude>
 </suite>
 

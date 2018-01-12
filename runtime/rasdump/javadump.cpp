@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /* Includes */
@@ -48,6 +48,7 @@
 #include "omr.h"
 #include "omrutilbase.h"
 #include "j9version.h"
+#include "vendor_version.h"
 
 #include "zip_api.h"
 
@@ -992,6 +993,11 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	_OutputStream.writeCharacters("1CIOMRVERSION  ");
 	_OutputStream.writeCharacters(_VirtualMachine->memoryManagerFunctions->omrgc_get_version(_VirtualMachine->omrVM));
 	_OutputStream.writeCharacters("\n");
+
+#if defined(VENDOR_SHORT_NAME) && defined(VENDOR_SHA)
+	/* Write the Vendor version data */
+	_OutputStream.writeCharacters("1CI" VENDOR_SHORT_NAME "VERSION  " VENDOR_SHA "\n");
+#endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	_OutputStream.writeCharacters("1CIJITMODES    ");
@@ -4329,11 +4335,11 @@ JavaCoreDumpWriter::writeThread(J9VMThread* vmThread, J9PlatformThread *nativeTh
 			frame = frame->parent_frame;
 		}
 	} else {
-#if defined(J9ZOS390)
+#if defined(J9ZOS390) || defined(J9ZTPF)
 		_OutputStream.writeCharacters("3XMTHREADINFO3           No native callstack available on this platform\n");
-#else
+#else /* defined(J9ZOS390) || defined(J9ZTPF) */
 		_OutputStream.writeCharacters("3XMTHREADINFO3           No native callstack available for this thread\n");
-#endif
+#endif /* defined(J9ZOS390) || defined(J9ZTPF) */
 		_OutputStream.writeCharacters("NULL\n");
 	}
 

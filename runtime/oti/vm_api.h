@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 #ifndef vm_api_h
@@ -804,6 +804,9 @@ walkStackForExceptionThrow(J9VMThread * currentThread, j9object_t exception, UDA
 struct J9Class;
 void  
 setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader *loader1, J9Class *class1, J9ClassLoader *loader2, J9Class *class2, J9Class *exceptionClass, U_8 *methodName, UDATA methodNameLength, U_8 *signature, UDATA signatureLength);
+
+void  
+setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newClassNameUTF, J9ClassLoader *loader1, J9UTF8 *class1NameUTF, J9ClassLoader *loader2, J9UTF8 *class2NameUTF, J9UTF8 *exceptionClassNameUTF, U_8 *methodName, UDATA methodNameLength, U_8 *signature, UDATA signatureLength);
 
 /* ---------------- gphandle.c ---------------- */
 
@@ -2272,7 +2275,6 @@ J9Method *
 resolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 /**
  * @brief
  * @param *vmStruct
@@ -2283,7 +2285,6 @@ resolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInde
  */
 J9Method *   
 resolveStaticSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA splitTableIndex, UDATA resolveFlags);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 /**
  * @brief
@@ -2392,7 +2393,6 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 J9Method *   
 resolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 
-#if defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES)
 /**
  * @brief
  * @param *vmStruct
@@ -2403,7 +2403,6 @@ resolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInd
  */
 J9Method *   
 resolveSpecialSplitMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA splitTableIndex, UDATA resolveFlags);
-#endif /* defined(J9VM_INTERP_USE_SPLIT_SIDE_TABLES) */
 
 /**
  * @brief
@@ -2845,10 +2844,14 @@ getStringUTF8Length(J9VMThread *vmThread,j9object_t string);
 
 
 /**
-* @brief
-* @param *vm
-* @param *string
-* @return UDATA
+* Check incoming class name characters and return following values accordingly:
+* 	CLASSNAME_INVALID - if there is a character '/';
+* 	CLASSNAME_VALID_NON_ARRARY - if it is valid and there is no '[' at beginning of class name string;
+* 	CLASSNAME_VALID_ARRARY - if it is valid and there is a '[' at beginning of class name string.
+*
+* @param[in] *vmThread current thread
+* @param[in] string the class name string
+* @return a UDATA to indicate the nature of incoming class name string, see descriptions above.
 */
 UDATA
 verifyQualifiedName(J9VMThread *vmThread, j9object_t string);

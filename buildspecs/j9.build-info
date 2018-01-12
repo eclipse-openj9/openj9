@@ -19,7 +19,7 @@
   [1] https://www.gnu.org/software/classpath/license.html
   [2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
 <build xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ibm.com/j9/builder/build" xsi:schemaLocation="http://www.ibm.com/j9/builder/build build-v6.xsd">
@@ -34,7 +34,7 @@
 	<sourceControl>
 		<repositoryBranch id="fips.repo" name="git@github.ibm.com:runtimes/fips.git"/>
 		<repositoryBranch id="fips.branch" name="master"/>
-		<repositoryBranch id="fips.sha" name="4b5341b"/>
+		<repositoryBranch id="fips.sha" name="edbc462"/>
 		<repositoryBranch id="jit_release" name="tr.dev"/>
 		<repositoryBranch id="rtc_product_stream" name="jvm.29"/>
 		<repositoryBranch id="san_hursley" name="foreman@java-bin.hursley.ibm.com"/>
@@ -97,14 +97,13 @@
 		<project id="omr.jit"/>
 		<project id="oti"/>
 		<project id="port"/>
-		<project id="tr.source"/>
+		<project id="compiler"/>
 		<project id="util_core"/>
 		<project id="VM_AIX32"/>
 		<project id="VM_Binaries"/>
 		<project id="buildspecs"/>
 		<project id="VM_Build-Tools"/>
 		<project id="runtime"/>
-		<project id="VM_FDLIBM"/>
 		<project id="VM_LINUX39031"/>
 		<project id="VM_LINUX39064"/>
 		<project id="VM_LINUXPPC32"/>
@@ -158,6 +157,7 @@
 		<builder id="OS9PPC"/>
 		<builder id="OSEPPC"/>
 		<builder id="OSOpenHC"/>
+		<builder id="OSX"/>
 		<builder id="PowerMac"/>
 		<builder id="RIM 386"/>
 		<builder id="RS6000"/>

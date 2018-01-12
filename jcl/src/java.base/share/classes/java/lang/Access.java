@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@ package java.lang;
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 import java.security.AccessControlContext;
@@ -83,6 +83,14 @@ final class Access implements JavaLangAccess {
 	
 	/** Return the constant pool for a class. */
 	public native ConstantPool getConstantPool(java.lang.Class<?> arg0);
+	
+	/** 
+	 * Return the constant pool for a class. This will call the exact same
+	 * native as 'getConstantPool(java.lang.Class<?> arg0)'. We need this 
+	 * version so we can call it with InternRamClass instead of j.l.Class
+	 * (which is required by JAVALANGACCESS).
+	 */
+	public static native ConstantPool getConstantPool(Object arg0);
 
     /**
      * Returns the elements of an enum class or null if the
@@ -176,6 +184,7 @@ final class Access implements JavaLangAccess {
 		return result;
 	}
 
+	/*[IF !Java10]*/
 	/**
 	 * Return a newly created String that uses the passed in char[]
 	 * without copying.  The array must not be modified after creating
@@ -189,6 +198,7 @@ final class Access implements JavaLangAccess {
 	public java.lang.String newStringUnsafe(char[] data) {
 		return new String(data, true /*ignored*/);
 	}
+	/*[ENDIF]*/
 
 	@Override
 	public void invokeFinalize(java.lang.Object arg0)
@@ -199,7 +209,7 @@ final class Access implements JavaLangAccess {
 		throw new Error("invokeFinalize unimplemented"); //$NON-NLS-1$
 	}
 	
-	/*[IF Sidecar19-SE]*/
+/*[IF Sidecar19-SE]*/
 	public Class<?> findBootstrapClassOrNull(ClassLoader classLoader, String name) {
 		return VMAccess.findClassOrNull(name, ClassLoader.bootstrapClassLoader);
 	 }
@@ -269,8 +279,9 @@ final class Access implements JavaLangAccess {
 		return;
 	}
 
-	public Class<?> defineClass(ClassLoader cl, String className, byte[] classRep, ProtectionDomain protectionDomain, String str) {
-		throw new Error("defineClass unimplemented"); //$NON-NLS-1$
+	public Class<?> defineClass(ClassLoader classLoader, String className, byte[] classRep, ProtectionDomain protectionDomain, String str) {
+		ClassLoader targetClassLoader = (null == classLoader) ? ClassLoader.bootstrapClassLoader : classLoader;
+		return targetClassLoader.defineClass(className, classRep, 0, classRep.length, protectionDomain);
 	}
 
 /*[IF Sidecar19-SE-B165]*/	
@@ -336,7 +347,17 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF]*/	
 	 
-/*[ENDIF]*/
+/*[ENDIF] Sidecar19-SE-B165 */
+
+/*[IF Java10]*/
+	public String newStringUTF8NoRepl(byte[] bytes, int offset, int length) {
+		return StringCoding.newStringUTF8NoRepl(bytes, offset, length);
+	}
+	public byte[] getBytesUTF8NoRepl(String str) {
+		return StringCoding.getBytesUTF8NoRepl(str);
+	}
+/*[ENDIF] Java10 */
+
 	
-	/*[ENDIF]*/
+/*[ENDIF] Sidecar19-SE */
 }

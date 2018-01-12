@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
 /**
@@ -125,7 +125,7 @@ computeCpuTime(struct J9PortLibrary *portLibrary, int64_t *cpuTime)
 	Trc_PRT_computeCpuTime_Entered();
 
 	/* First things first: Query size of the LPDAT structure. */
-	lpdatlen = j9req_lpdatlen();
+	lpdatlen = omrreq_lpdatlen();
 	if (lpdatlen < 0) {
 		/* The query failed!! */
 		Trc_PRT_computeCpuTime_unexpectedLPDataBuffSz(lpdatlen);
@@ -146,7 +146,7 @@ computeCpuTime(struct J9PortLibrary *portLibrary, int64_t *cpuTime)
 	lpdatp->length = lpdatlen;
 
 	/* We now query for the LPAR Data to obtain the CPU service units. */
-	rc = j9req_lpdat((char*)lpdatp);
+	rc = omrreq_lpdat((char*)lpdatp);
 	if (0 != rc) {
 		omrmem_free_memory(lpdatp);
 		Trc_PRT_computeCpuTime_failedRetrievingLparData(rc);
