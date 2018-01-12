@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,9 +57,9 @@ final class MemoryNotificationThread extends Thread {
 	}
 
 	/**
-     * A helper used by processNotificationLoop to construct and dispatch 
+     * A helper used by processNotificationLoop to construct and dispatch
      * garbage collection notification objects
-     * 
+     *
      * @param gcName
      *            the name of garbage collector which we are sending notifications on behalf of
      * @param gcAction
@@ -112,9 +112,9 @@ final class MemoryNotificationThread extends Thread {
     }
 
 	/**
-     * A helper used by processNotificationLoop to construct and dispatch 
+     * A helper used by processNotificationLoop to construct and dispatch
      * memory threshold notification objects
-     * 
+     *
      * @param poolName
      *            the name of pool which we are sending notifications on behalf of
      * @param min
@@ -152,30 +152,39 @@ final class MemoryNotificationThread extends Thread {
 	}
 
 	/**
-	 *  Process notifications on an internal VM queue until a shutdown
-	 *  request is received.
-	 *  */
+	 * Process notifications on an internal VM queue until a shutdown
+	 * request is received.
+	 */
 	private native void processNotificationLoop();
 
-	private void registerShutdownHandler() {
+	private boolean registerShutdownHandler() {
 		Thread notifier = new MemoryNotificationThreadShutdown(this);
-		PrivilegedAction<Object> action = () -> {
-			Runtime.getRuntime().addShutdownHook(notifier);
-			return null;
+		PrivilegedAction<Boolean> action = () -> {
+			try {
+				Runtime.getRuntime().addShutdownHook(notifier);
+				return Boolean.TRUE;
+			} catch (IllegalStateException e) {
+				/*
+				 * This exception will occur if the VM is already shutting down:
+				 * by returning false we avoid starting the notification loop
+				 * that cannot be signalled to terminate.
+				 */
+				return Boolean.FALSE;
+			}
 		};
 
-		AccessController.doPrivileged(action);
+		return AccessController.doPrivileged(action).booleanValue();
 	}
 
 	/**
-	 * Register a shutdown handler that will signal this thread to terminate,
-	 * then enter the native that services an internal notification queue.
+	 * If we're able to register a shutdown handler that will signal this thread
+	 * to terminate, then enter the native that services an internal notification queue.
 	 */
 	@Override
 	public void run() {
-		registerShutdownHandler();
-
-		processNotificationLoop();
+		if (registerShutdownHandler()) {
+			processNotificationLoop();
+		}
 	}
 
 }
