@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -402,7 +402,7 @@ static bool foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, char *className, int32
       return true; // We can ONLY do this opt to fields that are never victimized by setAccessible
    else if (classNameLength >= 30 && !strncmp(className, "java/lang/String$UnsafeHelpers", 30))
       return true;
-   
+
    // Fold static final fields in java/lang/String* for string compression flag
    else if (classNameLength >= 16 && !strncmp(className, "java/lang/String", 16))
       return true;
@@ -1002,7 +1002,7 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
             TR_ASSERT(node->getDataType() == TR::Int32, "Java_lang_String_enableCompression must be Int32");
             bool fieldValue = *(int32_t*)sym->castToStaticSymbol()->getStaticAddress() != 0;
             bool compressionEnabled = IS_STRING_COMPRESSION_ENABLED_VM(static_cast<TR_J9VMBase *>(comp->fe())->getJ9JITConfig()->javaVM);
-            TR_ASSERT((fieldValue && compressionEnabled) || (!fieldValue && !compressionEnabled), 
+            TR_ASSERT((fieldValue && compressionEnabled) || (!fieldValue && !compressionEnabled),
                "java/lang/String.enableCompression and javaVM->strCompEnabled must be in sync");
             if (fieldValue)
                aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_StringCompressionEnabled;
@@ -1267,7 +1267,10 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
 
    if (!fej9->canDereferenceAtCompileTime(symRef, comp))
       {
-      traceMsg(comp, "Abort transformIndirectLoadChain - cannot dereference at compile time!\n");
+      if (comp->getOption(TR_TraceOptDetails))
+         {
+         traceMsg(comp, "Abort transformIndirectLoadChain - cannot dereference at compile time!\n");
+         }
       return false;
       }
 
@@ -1275,7 +1278,10 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
    void *fieldAddress = dereferenceStructPointerChain(baseAddress, baseExpression, node, comp);
    if (!fieldAddress)
       {
-      traceMsg(comp, "Abort transformIndirectLoadChain - cannot verify/dereference field access to %s in %p!\n", symRef->getName(comp->getDebug()), baseAddress);
+      if (comp->getOption(TR_TraceOptDetails))
+         {
+         traceMsg(comp, "Abort transformIndirectLoadChain - cannot verify/dereference field access to %s in %p!\n", symRef->getName(comp->getDebug()), baseAddress);
+         }
       return false;
       }
 

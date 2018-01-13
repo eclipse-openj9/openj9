@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3353,7 +3353,11 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
    if (node->hasFoldedImplicitNULLCHK())
       {
       TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
-      traceMsg(comp,"Node %p has foldedimplicitNULLCHK, and a faulting instruction of %p\n",node,faultingInstruction);
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp,"Node %p has foldedimplicitNULLCHK, and a faulting instruction of %p\n",node,faultingInstruction);
+         }
+
       if (faultingInstruction)
          {
          faultingInstruction->setNeedsGCMap(0xFF00FFFF);
@@ -15869,7 +15873,7 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    // Call was not inlined.  Delegate to the parent directCallEvaluator.
    //
-   return J9::TreeEvaluator::directCallEvaluator(node, cg); 
+   return J9::TreeEvaluator::directCallEvaluator(node, cg);
    }
 
 

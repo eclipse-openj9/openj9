@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3220,7 +3220,7 @@ int32_t TR_CISCTransformer::perform()
          graph = makeCISCGraph(&bblistPred, &bblistBody, &bblistSucc);
          if (!graph)
             {
-            traceMsg(comp(), "Loop %d.  Failed to make CISC Graph.\n", nextLoop->getNumber());
+            if (trace()) traceMsg(comp(), "Loop %d.  Failed to make CISC Graph.\n", nextLoop->getNumber());
             restoreBitsKeepAliveCalls();
             continue;
             }
