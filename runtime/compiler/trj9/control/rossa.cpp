@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1136,32 +1136,41 @@ onLoadInternal(
          jitConfig->codeCacheTotalKB = 64 * 1024;
          jitConfig->dataCacheTotalKB = 192 * 1024;
 #endif
+
 #if defined(J9ZTPF)
-#define ZTPF_PERCENTAGE_OF_MEMORY 20;
          /*
           * The z/TPF OS does not have the ability to reserve memory. It allocates whatever it
           * is asked to allocate. Allocate the code cache based on a percentage (20%) of memory
-          * the process is allowed to have; cap the maximum at 256m and use a minimum of 1m for
-          * a small MAXXMMES. It is found in the z/TPF cinfc table entry CMMMMES.
+          * the process is allowed to have; cap the maximum using the default 256m and use a 1m floor.
           * MAXXMMES is specified as the number of 1MB frames.
-          * Create a 2048 KB data cache. This set of default values for the z/TPF os can be
+          * Use the default 2048 KB data cache. The default values for z/TPF can be
           * overriden via the command line interface.
           */
-         uint16_t physMemory = *(uint16_t*)(cinfc_fast(CINFC_CMMMMES) + 8);
-         if (physMemory < 64)
+         const uint16_t ZTPF_CODE_CACHE_DIVISOR = 5;
+
+         /* Retrieve the maximum number of 1MB frames that a z/TPF process can have and */
+         /* then take 20% of that value to use for the code cache size. */
+         const uint16_t physMemory = *(static_cast<uint16_t*>(cinfc_fast(CINFC_CMMMMES)) + 4) / ZTPF_CODE_CACHE_DIVISOR;
+
+         /* Provide a 1MB floor and 256MB ceiling for the code cache size */
+         if (physMemory <= 1)
             {
-            jitConfig->codeCacheTotalKB = 1024; // use a 1m code cache for small MAXXMMES
+            jitConfig->codeCacheKB = 1024;
+            jitConfig->codeCacheTotalKB = 1024;
             }
-        else
+         else if (physMemory < 256)
             {
-            physMemory /= ZTPF_PERCENTAGE_OF_MEMORY;
-            if (physMemory > 256) //cap code cache at 256m
-               physMemory = 256;
+            jitConfig->codeCacheKB = 2048;
             jitConfig->codeCacheTotalKB = physMemory * 1024;
             }
-        jitConfig->dataCacheKB = 2048;
+         else
+            {
+            jitConfig->codeCacheKB = 2048;
+            jitConfig->codeCacheTotalKB = 256 * 1024;
+            }
 
-
+         jitConfig->dataCacheKB = 2048;
+         jitConfig->dataCacheTotalKB = 384 * 1024;
 #endif
       }
 
