@@ -1,0 +1,8 @@
+NumberOfUrls=1
+Url0=./Alphabet;
+NumberOfClassesToLoad0=1
+LoadClasses0=A
+NumberOfClassesToFind0=1
+FindClasses0=A
+Results0=true
+BatchFileToRun=/bin/sh ./batchfiles/StaleClassPathTest1.sh

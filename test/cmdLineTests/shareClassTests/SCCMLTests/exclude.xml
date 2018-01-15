@@ -81,7 +81,12 @@
 	<exclude id="Test 17: JAZZ 31726 test 7 ensure -Xzero -Xzero:describe shows sharebootzip" platform="SE90">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
-
+	<exclude id="Test 133: Test -Xshareclasses:printallstats=zipcache" platform="SE90" shouldFix="yes">
+		<reason>JCL team has not yet added JVM_ZipHook() in Java 9</reason>
+	</exclude>
+	<exclude id="Test 154: Test -Xshareclasses:printstats=zipcache" platform="SE90" shouldFix="yes">
+		<reason>JCL team has not yet added JVM_ZipHook() in Java 9</reason>
+	</exclude>
 	<exclude id="Test 206-a: Create a new cache with -Xshareclasses:mprotect=default option." platform="zos_390-64.*">
 		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
 	</exclude>

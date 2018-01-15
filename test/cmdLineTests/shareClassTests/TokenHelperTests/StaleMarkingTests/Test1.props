@@ -1,0 +1,12 @@
+NumberOfClassloaders=2
+ClassPath0=./Alphabet;
+NumberOfClassesToLoad0=1
+ClassesToLoad0=A
+ClassPath1=./Vowels;
+NumberOfClassesToLoad1=1
+ClassesToLoad1=A
+FindPath=./Pets;./Alphabet;./Vowels;
+NumberOfClassesToFind=1
+FindClasses=A
+Results=true
+FoundAt=Vowels
