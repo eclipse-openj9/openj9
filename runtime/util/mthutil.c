@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -332,6 +332,7 @@ walkStackMapSlots(U_8 *framePointer, U_16 typeInfoCount)
 			framePointer += 2; /* Skip offset */
 			break;
 		case CFR_STACKMAP_TYPE_BYTE_ARRAY: /* fall through 7 cases */
+		case CFR_STACKMAP_TYPE_BOOL_ARRAY:
 		case CFR_STACKMAP_TYPE_CHAR_ARRAY:
 		case CFR_STACKMAP_TYPE_DOUBLE_ARRAY:
 		case CFR_STACKMAP_TYPE_FLOAT_ARRAY:

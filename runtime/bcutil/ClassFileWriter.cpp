@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1447,6 +1447,7 @@ ClassFileWriter::writeVerificationTypeInfo(U_16 count, U_8 ** typeInfo)
 
 		switch(tag) {
 		case CFR_STACKMAP_TYPE_BYTE_ARRAY:
+		case CFR_STACKMAP_TYPE_BOOL_ARRAY:
 		case CFR_STACKMAP_TYPE_CHAR_ARRAY:
 		case CFR_STACKMAP_TYPE_DOUBLE_ARRAY:
 		case CFR_STACKMAP_TYPE_FLOAT_ARRAY:
@@ -1454,7 +1455,7 @@ ClassFileWriter::writeVerificationTypeInfo(U_16 count, U_8 ** typeInfo)
 		case CFR_STACKMAP_TYPE_LONG_ARRAY:
 		case CFR_STACKMAP_TYPE_SHORT_ARRAY: {
 			/* convert primitive array tag to corresponding class index in constant pool */
-			U_8 typeInfoTagToPrimitiveArrayCharMap[] = { 'I', 'F', 'D', 'J', 'S', 'B', 'C' };
+			U_8 typeInfoTagToPrimitiveArrayCharMap[] = { 'I', 'F', 'D', 'J', 'S', 'B', 'C', 'Z' };
 			U_8 primitiveChar = typeInfoTagToPrimitiveArrayCharMap[tag - CFR_STACKMAP_TYPE_INT_ARRAY];
 			/* An array cannot have more than 255 dimensions as per VM spec */
 			U_8 classUTF8[2 + 255 + 1];		/* represents J9UTF8 for primitive class (size = length + arity + primitiveChar) */
@@ -1466,17 +1467,10 @@ ClassFileWriter::writeVerificationTypeInfo(U_16 count, U_8 ** typeInfo)
 			memset((void *)(classUTF8 + 2), '[', arity);
 			*(classUTF8 + 2 + arity) = primitiveChar;
 
-			/* CFR_STACKMAP_TYPE_BYTE_ARRAY is also used for boolean arrays,
-			 * so it is possible that byte array class is not present in constant pool.
-			 * If so, first call to indexForClass() will fail,
-			 * in which case convert byte array to boolean array, and search again in the hashtable.
+			/* There is no need to double-check the primitive type the in the constant pool in the case
+			 * of boolean arrays because CFR_STACKMAP_TYPE_BYTE_ARRAY is only used for byte arrays and
+			 * CFR_STACKMAP_TYPE_BOOL_ARRAY is used to represent boolean arrays.
 			 */
-			U_16 cpIndex = indexForClass((J9UTF8 *)classUTF8, true);
-			if (0 == cpIndex) {
-				Trc_BCU_Assert_True(CFR_STACKMAP_TYPE_BYTE_ARRAY == tag);
-				*(classUTF8 + 2 + arity) = 'Z';
-				cpIndex = indexForClass((J9UTF8 *)classUTF8);
-			}
 
 			writeU8(CFR_STACKMAP_TYPE_OBJECT);
 			writeU16(indexForClass((J9UTF8 *)classUTF8));
