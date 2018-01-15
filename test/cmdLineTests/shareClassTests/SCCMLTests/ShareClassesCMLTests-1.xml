@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2017 IBM Corp. and others
+  Copyright (c) 2012, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,10 +40,7 @@
 	<variable name="currentMode" value="$mode204$"/>
 	<variable name="XXShareClassesEnableBCI" value="-XX:ShareClassesEnableBCI"/>
 	
- 	<variable name="CP_SPEC2000" value="-cp $JVM_TEST_ROOT$$PATHSEP$VM$PATHSEP$specJBB$PATHSEP$SPECjbb2000$PATHSEP$jbb.jar$CPDL$$JVM_TEST_ROOT$$PATHSEP$VM$PATHSEP$specJBB$PATHSEP$SPECjbb2000$PATHSEP$jbb_no_precompile.jar$CPDL$$JVM_TEST_ROOT$$PATHSEP$VM$PATHSEP$specJBB$PATHSEP$SPECjbb2000$PATHSEP$check.jar$CPDL$$JVM_TEST_ROOT$$PATHSEP$VM$PATHSEP$specJBB$PATHSEP$SPECjbb2000$PATHSEP$reporter.jar" />
- 	<variable name="PROGRAM_SPEC2000" value="spec.jbb.JBBmain" />
- 	
- 	<variable name="CP_HANOI" value="-cp $UTILSJAR$" />
+  	<variable name="CP_HANOI" value="-cp $UTILSJAR$" />
  	<variable name="BOOTCP_HANOI" value="-Xbootclasspath/a:$UTILSJAR$" />
  	<variable name="PROGRAM_HANOI" value="org.openj9.test.ivj.Hanoi 2" />
  	<variable name="BOOTSTRAP_CLASS" value="java/lang/Object" />
