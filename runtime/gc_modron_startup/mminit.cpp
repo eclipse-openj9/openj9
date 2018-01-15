@@ -2711,20 +2711,22 @@ gcInitializeDefaults(J9JavaVM* vm)
 	vm->vmThreadSize = J9_VMTHREAD_SEGREGATED_ALLOCATION_CACHE_OFFSET + vm->segregatedAllocationCacheSize + sizeof(OMR_VMThread);
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	/* after we parsed cmd line options, check if we can obey the request to run CS */
-	if (extensions->concurrentScavengerForced) {
-		if (LOADED == (FIND_DLL_TABLE_ENTRY(J9_JIT_DLL_NAME)->loadFlags & LOADED)) {
-			/* If running jitted, it must be on supported h/w */
-			J9ProcessorDesc  processorDesc;
-			j9sysinfo_get_processor_description(&processorDesc);
-			if ((j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
-					j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS))
-					|| (extensions->softwareEvacuateReadBarrier)) {
+	if (gc_policy_gencon == extensions->configurationOptions._gcPolicy) {
+		/* after we parsed cmd line options, check if we can obey the request to run CS (valid for Gencon only) */
+		if (extensions->concurrentScavengerForced) {
+			if (LOADED == (FIND_DLL_TABLE_ENTRY(J9_JIT_DLL_NAME)->loadFlags & LOADED)) {
+				/* If running jitted, it must be on supported h/w */
+				J9ProcessorDesc  processorDesc;
+				j9sysinfo_get_processor_description(&processorDesc);
+				if ((j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE) &&
+						j9sysinfo_processor_has_feature(&processorDesc, J9PORT_S390_FEATURE_SIDE_EFFECT_ACCESS))
+						|| (extensions->softwareEvacuateReadBarrier)) {
+					extensions->concurrentScavenger = true;
+				}
+			} else {
+				/* running interpreted is ok on any h/w */
 				extensions->concurrentScavenger = true;
 			}
-		} else {
-			/* running interpreted is ok on any h/w */
-			extensions->concurrentScavenger = true;
 		}
 	}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
