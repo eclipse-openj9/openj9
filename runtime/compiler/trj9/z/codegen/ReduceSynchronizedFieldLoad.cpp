@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,7 +128,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
       {
       generateSSFInstruction(cg, TR::InstOpCode::LPD, node, registerPair, loadMemoryReference, lockMemoryReference);
 
-      loadRegisterRequires32BitLogicalSignExtension = loadNode->force64BitLoad();
+      loadRegisterRequires32BitLogicalSignExtension = loadNode->isZeroExtendedTo64BitAtSource();
       }
    else
       {
@@ -170,7 +170,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
             // This is because we must use LPDG to load a 32-bit value using displacement -4
             TR_ASSERT_SAFE_FATAL((loadMemoryReference->getOffset() & 3) == 0, "Field must be aligned on a word boundary\n");
 
-            loadRegisterRequires32BitLogicalSignExtension = loadNode->force64BitLoad();
+            loadRegisterRequires32BitLogicalSignExtension = loadNode->isZeroExtendedTo64BitAtSource();
             alignedLoadMemoryReference = generateS390MemoryReference(*loadMemoryReference, -4, cg);
             }
          }
