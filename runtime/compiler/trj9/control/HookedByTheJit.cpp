@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -7085,7 +7085,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
             }
          }
 
-      if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableJProfilerThread))
+      if (TR::Options::getCmdLineOptions()->getOption(TR_EnableJProfiling) && !TR::Options::getCmdLineOptions()->getOption(TR_DisableJProfilerThread))
          {
          TR_JProfilerThread *jProfiler = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->jProfiler;
          jProfiler->start(javaVM);
