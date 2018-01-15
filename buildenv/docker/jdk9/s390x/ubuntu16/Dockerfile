@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@ FROM s390x/ibmjava:8-sdk
 
 # Install required OS tools
 RUN apt-get update \
-  && apt-get install -qq -y --no-install-recommends \
+  && apt-get install -qq -y --no-install-recommends --fix-missing \
     autoconf \
     ca-certificates \
     ccache \
