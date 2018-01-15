@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2392,7 +2392,7 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 	/* save current and set vmState */
 	oldState = verifyData->vmStruct->omrVMThread->vmState;
 	verifyData->vmStruct->omrVMThread->vmState = J9VMSTATE_BCVERIFY;
-	
+
 	verifyData->romClass = romClass;
 	verifyData->errorPC = 0;
 	

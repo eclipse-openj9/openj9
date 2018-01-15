@@ -332,6 +332,7 @@ walkStackMapSlots(U_8 *framePointer, U_16 typeInfoCount)
 			framePointer += 2; /* Skip offset */
 			break;
 		case CFR_STACKMAP_TYPE_BYTE_ARRAY: /* fall through 7 cases */
+		case CFR_STACKMAP_TYPE_BOOL_ARRAY:
 		case CFR_STACKMAP_TYPE_CHAR_ARRAY:
 		case CFR_STACKMAP_TYPE_DOUBLE_ARRAY:
 		case CFR_STACKMAP_TYPE_FLOAT_ARRAY:

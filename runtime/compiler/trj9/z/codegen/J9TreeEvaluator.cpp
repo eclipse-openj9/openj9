@@ -3438,7 +3438,7 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
          {
          switch (dt)
             {
-            case TR::Int8:   if (loadOrStoreChild->isUnsignedLoad())
+            case TR::Int8:   if (loadOrStoreChild->isZeroExtendedAtSource())
                                op = (TR::Compiler->target.is64Bit() ? TR::InstOpCode::LLGC : TR::InstOpCode::LLC);
                             else
                                op = (TR::Compiler->target.is64Bit() ? TR::InstOpCode::LGB : TR::InstOpCode::LB);
@@ -3460,7 +3460,7 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
                                }
                             break;
             case TR::Int32:
-                            if (loadOrStoreChild->isUnsignedLoad())
+                            if (loadOrStoreChild->isZeroExtendedAtSource())
                                op = (TR::Compiler->target.is64Bit() ? TR::InstOpCode::LLGF : TR::InstOpCode::L);
                             else
                                op = (TR::Compiler->target.is64Bit() ? TR::InstOpCode::LGF : TR::InstOpCode::L);

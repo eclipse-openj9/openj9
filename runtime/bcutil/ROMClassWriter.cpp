@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -651,7 +651,7 @@ CFR_STACKMAP_TYPE_INT_ARRAY, CFR_STACKMAP_TYPE_LONG_ARRAY,  0,                  
 0,                           0,                             0,                             0,
 0,                           0,                             CFR_STACKMAP_TYPE_SHORT_ARRAY, 0,
 0,                           0,                             0,                             0,
-0,                           CFR_STACKMAP_TYPE_BYTE_ARRAY,  0};
+0,                           CFR_STACKMAP_TYPE_BOOL_ARRAY,  0};
 
 class ROMClassWriter::CallSiteWriter : public ConstantPoolMap::CallSiteVisitor
 {
@@ -880,6 +880,7 @@ private:
 			 *  Encode the primitive array type in the tag field.
 			 *  One of:
 			 *   CFR_STACKMAP_TYPE_BYTE_ARRAY
+			 *   CFR_STACKMAP_TYPE_BOOL_ARRAY
 			 *   CFR_STACKMAP_TYPE_CHAR_ARRAY
 			 *   CFR_STACKMAP_TYPE_DOUBLE_ARRAY
 			 *   CFR_STACKMAP_TYPE_FLOAT_ARRAY
