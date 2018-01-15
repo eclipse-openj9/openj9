@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,6 +50,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
 
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/trj9/arm/codegen/J9CodeGenerator.cpp \
+    compiler/trj9/arm/codegen/J9TreeEvaluator.cpp \
     compiler/trj9/arm/codegen/J9ARMEvaluator.cpp \
     compiler/trj9/arm/codegen/J9ARMSnippet.cpp \
     compiler/trj9/arm/codegen/J9UnresolvedDataSnippet.cpp \
