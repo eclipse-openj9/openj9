@@ -114,6 +114,7 @@ TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bo
 bool
 TR_J9ServerVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
    {
+   return false; // JAAS TODO: eliminate this workaround when we cache info about methodEnter/Exit tracing
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_isMethodEnterTracingEnabled, method);
    return std::get<0>(stream->read<bool>());
@@ -122,6 +123,7 @@ TR_J9ServerVM::isMethodEnterTracingEnabled(TR_OpaqueMethodBlock *method)
 bool
 TR_J9ServerVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
    {
+   return false; // JAAS TODO: eliminate this workaround when we cache info about methodEnter/Exit tracing
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_isMethodExitTracingEnabled, method);
    return std::get<0>(stream->read<bool>());
