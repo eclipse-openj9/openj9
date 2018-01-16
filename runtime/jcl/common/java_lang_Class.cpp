@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1774,8 +1774,8 @@ Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
 	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
-	J9Class *nestTop = clazz->memberOfNest;
-	j9object_t resultObject = J9VM_J9CLASS_TO_HEAPCLASS(nestTop);
+	J9Class *nestHost = clazz->nestHost;
+	j9object_t resultObject = J9VM_J9CLASS_TO_HEAPCLASS(nestHost);
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
 
 	if (NULL == result) {

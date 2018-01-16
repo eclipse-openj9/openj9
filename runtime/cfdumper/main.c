@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -673,8 +673,8 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			break;
 		}
 
-		case CFR_ATTRIBUTE_MemberOfNest: {
-			index = ((J9CfrAttributeMemberOfNest*)attrib)->hostClassIndex;
+		case CFR_ATTRIBUTE_NestHost: {
+			index = ((J9CfrAttributeNestHost*)attrib)->hostClassIndex;
 			for(i = 0; i < tabLevel + 1; i++) j9tty_printf( PORTLIB, "  ");
 			j9tty_printf( PORTLIB, "%i -> %s\n", index, classfile->constantPool[classfile->constantPool[index].slot1].bytes);
 			break;

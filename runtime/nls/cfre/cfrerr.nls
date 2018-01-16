@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1280,7 +1280,7 @@ J9NLS_CFR_ERR_MULTIPLE_NEST_ATTRIBUTES.user_response=Contact the provider of the
 # END NON-TRANSLATABLE
 
 #Nest members attribute name is not a utf8
-J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS=Member of nest attribute's nest top must be a constant class
+J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS=Member of nest attribute's nest host must be a constant class
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.explanation=Member of nest attribute must be a constant class
 J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1288,12 +1288,12 @@ J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.user_response=Contact the pro
 
 # END NON-TRANSLATABLE
 
-# Member of nest attribute is not a constant class 
-J9NLS_CFR_ERR_BAD_NEST_TOP_INDEX=Nest top must be a constant class
+# Nest host attribute is not a constant class 
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX=Nest host must be a constant class
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_BAD_NEST_TOP_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_BAD_NEST_TOP_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_BAD_NEST_TOP_INDEX.user_response=Contact the provider of the classfile for a corrected version.
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE
 

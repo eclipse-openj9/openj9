@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,7 +153,7 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_innerClassCount(0),
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	_nestMembersCount(0),
-	_memberOfNest(0),
+	_nestHost(0),
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	_maxBranchCount(1), /* This is required to support buffer size calculations for stackmap support code */
 	_outerClassNameIndex(0),
@@ -503,10 +503,10 @@ ClassFileOracle::walkAttributes()
 			}
 			break;
 
-		case CFR_ATTRIBUTE_MemberOfNest: {
-			U_16 hostClassIndex = ((J9CfrAttributeMemberOfNest *)attrib)->hostClassIndex;
-			_memberOfNest = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, hostClassIndex);
-			markConstantUTF8AsReferenced(_memberOfNest);
+		case CFR_ATTRIBUTE_NestHost: {
+			U_16 hostClassIndex = ((J9CfrAttributeNestHost *)attrib)->hostClassIndex;
+			_nestHost = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, hostClassIndex);
+			markConstantUTF8AsReferenced(_nestHost);
 			break;
 		}
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -232,7 +232,7 @@ typedef struct J9CfrAttribute {
 #define CFR_ATTRIBUTE_RuntimeInvisibleTypeAnnotations  23
 #define CFR_ATTRIBUTE_MethodParameters 24
 #define CFR_ATTRIBUTE_NestMembers 25
-#define CFR_ATTRIBUTE_MemberOfNest 26
+#define CFR_ATTRIBUTE_NestHost 26
 #define CFR_ATTRIBUTE_StrippedLocalVariableTypeTable  122
 #define CFR_ATTRIBUTE_StrippedSourceDebugExtension  123
 #define CFR_ATTRIBUTE_StrippedInnerClasses  124
@@ -479,13 +479,13 @@ typedef struct J9CfrAttributeSynthetic {
 } J9CfrAttributeSynthetic;
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-typedef struct J9CfrAttributeMemberOfNest {
+typedef struct J9CfrAttributeNestHost {
 	U_8 tag;
 	U_16 nameIndex;
 	U_32 length;
 	UDATA romAddress;
 	U_16 hostClassIndex;
-} J9CfrAttributeMemberOfNest;
+} J9CfrAttributeNestHost;
 
 typedef struct J9CfrAttributeNestMembers {
 	U_8 tag;
