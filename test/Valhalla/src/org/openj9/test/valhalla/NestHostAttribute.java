@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,16 +27,16 @@ import org.objectweb.asm.ByteVector;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 
-final class MemberOfNestAttribute extends Attribute {
-	private String nestTop;
+final class NestHostAttribute extends Attribute {
+	private String nestHost;
 
 	public Label[] getLabels(){
 		return null;
 	}
 	
-	public MemberOfNestAttribute(String nestTop){
-		super("MemberOfNest");
-		this.nestTop = nestTop;
+	public NestHostAttribute(String nestTop){
+		super("NestHost");
+		this.nestHost = nestHost;
 	}
 	
 	public boolean isCodeAttribute(){
@@ -51,7 +51,7 @@ final class MemberOfNestAttribute extends Attribute {
 			byte[] code, 	int len,
 			int maxStack, 	int maxLocals){
 
-		int topclass_index = cw.newClass(nestTop);		
+		int topclass_index = cw.newClass(nestHost);		
 		ByteVector b = new ByteVector();
 		b.putShort(topclass_index);
 		return b;

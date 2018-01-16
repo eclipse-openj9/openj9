@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@
 #include "control/CompilationThread.hpp"
 #include "env/VMJ9.h"
 #include "runtime/IProfiler.hpp"
+#include "runtime/J9Profiler.hpp"
 #include "runtime/codertinit.hpp"
 #include "rossa.h"
 
@@ -544,6 +545,26 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                   }
                }
 #endif
+
+            TR_JProfilerThread *jProfiler = ((TR_JitPrivateConfig*)(vm->jitConfig->privateConfig))->jProfiler;
+            if (jProfiler)
+               {
+               J9VMThread *jProfilerThread = jProfiler->getJProfilerThread();
+               if (jProfilerThread)
+                  {
+                  vm->internalVMFunctions->initializeAttachedThread
+                      (curThread, "JProfiler", vm->systemThreadGroupRef,
+                      ((jProfilerThread->privateFlags & J9_PRIVATE_FLAGS_DAEMON_THREAD) != 0),
+                      jProfilerThread);
+                  if ((curThread->currentException != NULL) || (curThread->threadObject == NULL))
+                     {
+                     if (!loadInfo->fatalErrorStr || strlen(loadInfo->fatalErrorStr)==0)
+                        loadInfo->fatalErrorStr = "cannot create the jProfiler Thread object";
+                     return J9VMDLLMAIN_FAILED;
+                     }
+                  TRIGGER_J9HOOK_VM_THREAD_STARTED(vm->hookInterface, curThread, jProfilerThread);
+                  }
+               }
             }
          }
          break;

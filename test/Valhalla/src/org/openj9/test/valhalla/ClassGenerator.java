@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,7 +86,7 @@ public class ClassGenerator implements Opcodes {
 			mv.visitEnd();
 		}
 		{
-			MemberOfNestAttribute attr = new MemberOfNestAttribute("FieldAccess$Inner");
+			NestHostAttribute attr = new NestHostAttribute("FieldAccess$Inner");
 			cw.visitAttribute(attr);
 		}
 		cw.visitEnd();
@@ -117,7 +117,7 @@ public class ClassGenerator implements Opcodes {
 			mv.visitEnd();
 		}
 		{  /* Nestmates attribute(s) */
-			MemberOfNestAttribute attr = new MemberOfNestAttribute("MethodAccess$Inner");
+			NestHostAttribute attr = new NestHostAttribute("MethodAccess$Inner");
 			cw.visitAttribute(attr);
 		}
 		cw.visitEnd();
@@ -205,7 +205,7 @@ public class ClassGenerator implements Opcodes {
 			mv.visitEnd();
 		}
 		{
-			MemberOfNestAttribute attr = new MemberOfNestAttribute("MultipleNestMembers");
+			NestHostAttribute attr = new NestHostAttribute("MultipleNestMembers");
 			cw.visitAttribute(attr);
 		}
 		cw.visitEnd();
@@ -235,7 +235,7 @@ public class ClassGenerator implements Opcodes {
 			mv.visitEnd();
 		}
 		{
-			MemberOfNestAttribute attr = new MemberOfNestAttribute("MultipleNestMembers");
+			NestHostAttribute attr = new NestHostAttribute("MultipleNestMembers");
 			cw.visitAttribute(attr);
 		}
 		cw.visitEnd();
@@ -257,7 +257,7 @@ public class ClassGenerator implements Opcodes {
 			mv.visitEnd();
 		}
 		{
-			MemberOfNestAttribute attr = new MemberOfNestAttribute("MultipleNestMembers");
+			NestHostAttribute attr = new NestHostAttribute("MultipleNestMembers");
 			cw.visitAttribute(attr);
 		}
 		cw.visitEnd();
@@ -291,10 +291,10 @@ public class ClassGenerator implements Opcodes {
 		return cw.toByteArray();
 	}
 
-	public static byte[] MultipleMemberOfNestAttributesdump () throws Exception {
+	public static byte[] MultipleNestHostAttributesdump () throws Exception {
 		ClassWriter cw = new ClassWriter(0);
 		MethodVisitor mv;
-		cw.visit(52, ACC_PUBLIC + ACC_SUPER, "MultipleMemberOfNestAttributes", null, "java/lang/Object", null);
+		cw.visit(52, ACC_PUBLIC + ACC_SUPER, "MultipleNestHostAttributes", null, "java/lang/Object", null);
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
 			mv.visitCode();
@@ -312,11 +312,11 @@ public class ClassGenerator implements Opcodes {
 			mv.visitEnd();
 		}
 		{
-			MemberOfNestAttribute attr = new MemberOfNestAttribute("clazzname");
+			NestHostAttribute attr = new NestHostAttribute("clazzname");
 			cw.visitAttribute(attr);
 		}
 		{
-			MemberOfNestAttribute attr = new MemberOfNestAttribute("clazzname");
+			NestHostAttribute attr = new NestHostAttribute("clazzname");
 			cw.visitAttribute(attr);
 		}
 		cw.visitEnd();
@@ -342,7 +342,7 @@ public class ClassGenerator implements Opcodes {
 			cw.visitAttribute(attr);
 		}
 		{
-			MemberOfNestAttribute attr = new MemberOfNestAttribute("clazzname");
+			NestHostAttribute attr = new NestHostAttribute("clazzname");
 			cw.visitAttribute(attr);
 		}
 		cw.visitEnd();
@@ -395,7 +395,7 @@ public class ClassGenerator implements Opcodes {
 			mv.visitEnd();
 		}
 		{
-			MemberOfNestAttribute attr = new MemberOfNestAttribute("TestClass");
+			NestHostAttribute attr = new NestHostAttribute("TestClass");
 			cw.visitAttribute(attr);
 		}
 		cw.visitEnd();

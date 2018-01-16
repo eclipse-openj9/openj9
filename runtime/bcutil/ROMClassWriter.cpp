@@ -383,7 +383,7 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 		cursor->writeU32(_classFileOracle->getInnerClassCount(), Cursor::GENERIC);
 		cursor->writeSRP(_innerClassesSRPKey, Cursor::SRP_TO_GENERIC);
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-		cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(_classFileOracle->getNestTopNameIndex()), Cursor::SRP_TO_UTF8);
+		cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(_classFileOracle->getNestHostNameIndex()), Cursor::SRP_TO_UTF8);
 		cursor->writeU16(_classFileOracle->getNestMembersCount(), Cursor::GENERIC);
 		cursor->writeU16(0, Cursor::GENERIC); /* padding */
 		cursor->writeSRP(_nestMembersSRPKey, Cursor::SRP_TO_GENERIC);

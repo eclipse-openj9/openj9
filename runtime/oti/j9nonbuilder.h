@@ -2966,7 +2966,7 @@ typedef struct J9Class {
 	struct J9Class* derivedValueType;
 #endif /* defined(J9VM_OPT_VALHALLA_MVT) */
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	struct J9Class* memberOfNest;
+	struct J9Class* nestHost;
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 } J9Class;
 
@@ -3017,7 +3017,7 @@ typedef struct J9ArrayClass {
 	struct J9JITExceptionTable* jitMetaDataList;
 	struct J9Class* gcLink;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	struct J9Class* memberOfNest;
+	struct J9Class* nestHost;
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 } J9ArrayClass;
 
@@ -3110,7 +3110,7 @@ typedef struct J9ROMClass {
 	U_32 innerClassCount;
 	J9SRP innerClasses;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	J9SRP memberOfNest;
+	J9SRP nestHost;
 	U_16 nestMemberCount;
 	U_16 unused;
 	J9SRP nestMembers;
@@ -3153,7 +3153,7 @@ typedef struct J9ROMClass {
 #define J9ROMCLASS_OUTERCLASSNAME(base) SRP_GET((base)->outerClassName, struct J9UTF8*)
 #define J9ROMCLASS_INNERCLASSES(base) NNSRP_GET((base)->innerClasses, J9SRP*)
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-#define J9ROMCLASS_NESTTOPNAME(base) SRP_GET((base)->memberOfNest, struct J9UTF8*)
+#define J9ROMCLASS_NESTHOSTNAME(base) SRP_GET((base)->nestHost, struct J9UTF8*)
 #define J9ROMCLASS_NESTMEMBERS(base) SRP_GET((base)->nestMembers, J9SRP*)
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 #define J9ROMCLASS_OPTIONALINFO(base) SRP_GET((base)->optionalInfo, U_32*)
@@ -3187,7 +3187,7 @@ typedef struct J9ROMArrayClass {
 	U_32 innerClassCount;
 	J9SRP innerClasses;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	J9SRP memberOfNest;
+	J9SRP nestHost;
 	U_16 nestMemberCount;
 	U_16 unused;
 	J9SRP nestMembers;
@@ -3259,7 +3259,7 @@ typedef struct J9ROMReflectClass {
 	U_32 innerClassCount;
 	J9SRP innerClasses;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	J9SRP memberOfNest;
+	J9SRP nestHost;
 	U_16 nestMemberCount;
 	U_16 unused;
 	J9SRP nestMembers;

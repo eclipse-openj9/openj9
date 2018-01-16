@@ -102,7 +102,7 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 			/* Private */
 			if ((sourceClass != destClass)
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-					&& (sourceClass->memberOfNest != destClass->memberOfNest)
+					&& (sourceClass->nestHost != destClass->nestHost)
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 			) {
 				result = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
