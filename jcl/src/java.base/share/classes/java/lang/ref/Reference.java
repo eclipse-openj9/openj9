@@ -1,6 +1,9 @@
 /*[INCLUDE-IF Sidecar16]*/
 package java.lang.ref;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
 import com.ibm.oti.vm.VM;
 
 /*[IF Sidecar19-SE]*/
@@ -9,7 +12,7 @@ import jdk.internal.misc.SharedSecrets;
 /*[ENDIF]*/
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,6 +65,17 @@ public abstract class Reference<T> extends Object {
 	 */
 	static private native boolean waitForReferenceProcessingImpl();
 	
+	/* jdk.lang.ref.disableClearBeforeEnqueue property allow reverting to the old behavior(non clear before enqueue) 
+	 *  defer initializing the immutable variable to avoid bootstrap error 
+	 */
+	static class ClearBeforeEnqueue {
+		@SuppressWarnings("boxing")
+		static final boolean ENABLED =  AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+			@Override public Boolean run() {
+			    return !Boolean.getBoolean("jdk.lang.ref.disableClearBeforeEnqueue"); //$NON-NLS-1$
+			  }
+			});
+	}
 	/*[ENDIF]*/
 	
 /**
@@ -83,6 +97,11 @@ public void clear() {
  * @return	true if Reference is enqueued, false otherwise.
  */	
 public boolean enqueue() {
+	/*[IF Sidecar19-SE]*/
+	if (ClearBeforeEnqueue.ENABLED) {
+		clear();
+	}
+	/*[ENDIF]*/
 	return enqueueImpl();
 }
 
