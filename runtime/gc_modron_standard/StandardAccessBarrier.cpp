@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -598,10 +598,11 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object
 		omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
 
 		if (NULL != forwardPtr) {
-			/* Object has been copied - update the forwarding information and return.
+			/* Object has been copied - ensure the object is fully copied before exposing it, update the slot and return.
 			 *  Slot update needs to be atomic, only if there is a mutator thread racing with a write operation to this same slot.
 			 *  ATM, this barrier is only used to update Monitor table entries, which should not be ever reinitialized by any mutator.
 			 *  Updated can occur, but only by GC threads during STW clearing phase, thus no race with this barrier. */
+			forwardHeader.copyOrWait(forwardPtr);
 			*srcAddress = forwardPtr;
 		} else {
 			omrobjectptr_t destinationObjectPtr = _extensions->scavenger->copyObject(env, &forwardHeader);
@@ -609,11 +610,13 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object
 				/* Failure - the scavenger must back out the work it has done. Attempt to return the original object. */
 				forwardPtr = forwardHeader.setSelfForwardedObject();
 				if (forwardPtr != object) {
-					/* Another thread successfully copied the object */
+					/* Another thread successfully copied the object. Re-fetch forwarding pointer,
+					 * and ensure the object is fully copied before exposing it. */
+					MM_ForwardedHeader(object).copyOrWait(forwardPtr);
 					*srcAddress = forwardPtr;
 				}
 			} else {
-				/* Update the slot */
+				/* Update the slot. copyObject() ensures that the object is fully copied. */
 				*srcAddress = destinationObjectPtr;
 			}
 		}
@@ -634,7 +637,8 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcA
 		omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
 
 		if (NULL != forwardPtr) {
-			/* Object has been copied - update the forwarding information and return */
+			/* Object has been copied - ensure the object is fully copied before exposing it, update the slot and return */
+			forwardHeader.copyOrWait(forwardPtr);
 			*srcAddress = forwardPtr;
 		}
 		/* Do nothing if the object is not copied already.
@@ -661,37 +665,31 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObjec
 		 * if srcObject should (already) be remembered (even if it's old)
 		 */
 
+		GC_SlotObject slotObject(env->getOmrVM(), srcAddress);
 		MM_ForwardedHeader forwardHeader(object);
 		omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
 		if (NULL != forwardPtr) {
-			/* Object has been copied - update the forwarding information and return */
-#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
-			MM_AtomicOperations::lockCompareExchangeU32((uint32_t *)srcAddress, (uint32_t)(uintptr_t)objectToken, (uint32_t)(uintptr_t)convertTokenFromPointer(forwardPtr));
-#else
-			MM_AtomicOperations::lockCompareExchange((uintptr_t *)srcAddress, (uintptr_t)objectToken, (uintptr_t)convertTokenFromPointer(forwardPtr));
-#endif /* OMR_INTERP_COMPRESSED_OBJECT_HEADER */
+			/* Object has been strictly (remotely) forwarded. Ensure the object is fully copied before exposing it, update the slot and return. */
+			forwardHeader.copyOrWait(forwardPtr);
+			slotObject.atomicWriteReferenceToSlot(object, forwardPtr);
 		} else {
 			omrobjectptr_t destinationObjectPtr = _extensions->scavenger->copyObject(env, &forwardHeader);
 			if (NULL == destinationObjectPtr) {
-				/* We have no place to copy. We are forced to return the original location of the object.
+				/* We have no place to copy (or less likely, we lost to another thread forwarding it).
+				 * We are forced to return the original location of the object.
 				 * But we must prevent any other thread of making a copy of this object.
 				 * So we will attempt to atomically self forward it.  */
 				forwardPtr = forwardHeader.setSelfForwardedObject();
 				if (forwardPtr != object) {
-					/* Some other thread successfully copied this object. */
-#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
-					MM_AtomicOperations::lockCompareExchangeU32((uint32_t *)srcAddress, (uint32_t)(uintptr_t)objectToken, (uint32_t)(uintptr_t)convertTokenFromPointer(forwardPtr));
-#else
-					MM_AtomicOperations::lockCompareExchange((uintptr_t *)srcAddress, (uintptr_t)objectToken, (uintptr_t)convertTokenFromPointer(forwardPtr));
-#endif /* OMR_INTERP_COMPRESSED_OBJECT_HEADER */
+					/* Some other thread successfully copied this object. Re-fetch forwarding pointer,
+					 * and ensure the object is fully copied before exposing it. */
+					MM_ForwardedHeader(object).copyOrWait(forwardPtr);
+					slotObject.atomicWriteReferenceToSlot(object, forwardPtr);
 				}
+				/* ... else it's self-forwarded -> no need to update the src slot */
 			} else {
-				/* Update the slot */
-#if defined(OMR_INTERP_COMPRESSED_OBJECT_HEADER)
-				MM_AtomicOperations::lockCompareExchangeU32((uint32_t *)srcAddress, (uint32_t)(uintptr_t)objectToken, (uint32_t)(uintptr_t)convertTokenFromPointer(destinationObjectPtr));
-#else
-				MM_AtomicOperations::lockCompareExchange((uintptr_t *)srcAddress, (uintptr_t)objectToken, (uintptr_t)convertTokenFromPointer(destinationObjectPtr));
-#endif /* OMR_INTERP_COMPRESSED_OBJECT_HEADER */
+				/* Successfully copied (or copied by another thread). copyObject() ensures that the object is fully copied. */
+				slotObject.atomicWriteReferenceToSlot(object, destinationObjectPtr);
 			}
 		}
 	}
