@@ -258,34 +258,33 @@ compareStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA translateDots
 }
 
 #if !defined (J9VM_OUT_OF_PROCESS)
-
 /**
- * Copy certain number of Unicode characters from an offset into a Unicode character array to a UTF8 data buffer.
+ * Copy a Unicode String to a UTF8 data buffer with NULL termination.
  *
  * @param[in] vmThread the current J9VMThread
- * @param[in] compressed if the Unicode character array is compressed
+ * @param[in] string a string object to be copied, it can't be NULL
  * @param[in] nullTermination if the utf8 data is going to be NULL terminated
  * @param[in] stringFlags the flag to determine performing '.' --> '/'
- * @param[in] unicodeBytes a Unicode character array
- * @param[in] unicodeOffset an offset into the Unicode character array
- * @param[in] unicodeLength the number of Unicode characters to be copied
  * @param[in] utf8Data a utf8 data buffer
  * @param[in] utf8Length the size of the utf8 data buffer
  *
  * @return UDATA_MAX if a failure occurred, otherwise the number of utf8 data copied excluding null termination
  */
 UDATA
-copyCharsIntoUTF8Helper(
-	J9VMThread *vmThread, BOOLEAN compressed, BOOLEAN nullTermination, UDATA stringFlags, j9object_t unicodeBytes, UDATA unicodeOffset, UDATA unicodeLength, U_8 *utf8Data, UDATA utf8Length)
+copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, BOOLEAN nullTermination, UDATA stringFlags, U_8 *utf8Data, UDATA utf8Length)
 {
+	Assert_VM_notNull(string);
+
+	UDATA unicodeLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
+	j9object_t unicodeBytes = J9VMJAVALANGSTRING_VALUE(vmThread, string);
 	UDATA remaining = utf8Length;
 	U_8 *data = utf8Data;
 	UDATA result = 0;
 	UDATA i = 0;
 
-	if (compressed) {
+	if (IS_STRING_COMPRESSED(vmThread, string)) {
 		/* following implementation is expected to be different from non-compressed case when String compressing is enabled */
-		for (i = unicodeOffset; i < unicodeOffset + unicodeLength; i++) {
+		for (i = 0; i < unicodeLength; i++) {
 			result = VM_VMHelpers::encodeUTF8CharN(J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i), data, (U_32)remaining);
 			if (0 == result) {
 				return UDATA_MAX;
@@ -298,7 +297,7 @@ copyCharsIntoUTF8Helper(
 			}
 		}
 	} else {
-		for (i = unicodeOffset; i < (unicodeOffset + unicodeLength); i++) {
+		for (i = 0; i < unicodeLength; i++) {
 			result = VM_VMHelpers::encodeUTF8CharN(J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i), data, (U_32)remaining);
 			if (0 == result) {
 				return UDATA_MAX;
@@ -319,29 +318,6 @@ copyCharsIntoUTF8Helper(
 	}
 
 	return data - utf8Data;
-}
-
-/**
- * Copy a Unicode String to a UTF8 data buffer with NULL termination.
- *
- * @param[in] vmThread the current J9VMThread
- * @param[in] string a string object to be copied, it can't be NULL
- * @param[in] nullTermination if the utf8 data is going to be NULL terminated
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
- * @param[in] utf8Data a utf8 data buffer
- * @param[in] utf8Length the size of the utf8 data buffer
- *
- * @return UDATA_MAX if a failure occurred, otherwise the number of utf8 data copied excluding null termination
- */
-UDATA
-copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, BOOLEAN nullTermination, UDATA stringFlags, U_8 *utf8Data, UDATA utf8Length)
-{
-	Assert_VM_notNull(string);
-
-	UDATA unicodeLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
-	j9object_t unicodeBytes = J9VMJAVALANGSTRING_VALUE(vmThread, string);
-
-	return copyCharsIntoUTF8Helper(vmThread, IS_STRING_COMPRESSED(vmThread, string), nullTermination, stringFlags, unicodeBytes, 0, unicodeLength, utf8Data, utf8Length);
 }
 
 
