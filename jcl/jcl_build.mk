@@ -1,5 +1,5 @@
 #/*******************************************************************************
-# * Copyright (c) 2016, 2017 IBM Corp. and others
+# * Copyright (c) 2016, 2018 IBM Corp. and others
 # *
 # * This program and the accompanying materials are made available under
 # * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,13 +149,7 @@ define compile_cuda
 	mkdir -p $(GPU_TMP_DIR)
 	$(JAVAC) -verbose -sourcepath "$(WORKSPACE)/sourcetools/JCL_Ant_Build/tools/" -cp "$(GPU_TMP_DIR)/" -source $(SPEC_VERSION) -target $(SPEC_VERSION) -verbose -d $(GPU_TMP_DIR)/ "$(files)"
 	$(JAVA) -cp $(GPU_TMP_DIR)/ KernelGenerator > $(GPU_TMP_DIR)/SortKernels.cu
-	$(NVCC) \
-		--generate-code arch=compute_20,code=compute_20 \
-		--generate-code arch=compute_20,code=sm_20 \
-		--generate-code arch=compute_30,code=sm_30 \
-		--generate-code arch=compute_35,code=sm_35 \
-		-fatbin --machine 64 --ptxas-options -O4 \
-		-o "$(GPU_BIN_DIR)/SortKernels.fatbin" $(GPU_TMP_DIR)/SortKernels.cu
+	$(MAKE) -f "$(WORKSPACE)/jcl/SortKernels.mk" GPU_BIN_DIR=$(GPU_BIN_DIR) GPU_TMP_DIR=$(GPU_TMP_DIR) NVCC=$(NVCC)
 endef
 
 .PHONY : all init preprocess-jcl compile-jcl generate-cuda copy-files dist clean
