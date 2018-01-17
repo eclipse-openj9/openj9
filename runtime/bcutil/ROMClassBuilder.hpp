@@ -118,7 +118,7 @@ private:
 	UDATA _bufferManagerSize;
 	U_8 *_classFileBuffer;
 	U_8 *_anonClassNameBuffer;
-	UDATA _anonClassNameBufferLength;
+	UDATA _anonClassNameBufferSize;
 	U_8 *_bufferManagerBuffer;
 	StringInternTable _stringInternTable;
 

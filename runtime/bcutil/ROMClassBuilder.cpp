@@ -65,7 +65,7 @@ ROMClassBuilder::ROMClassBuilder(J9JavaVM *javaVM, J9PortLibrary *portLibrary, U
 	_classFileBuffer(NULL),
 	_bufferManagerBuffer(NULL),
 	_anonClassNameBuffer(NULL),
-	_anonClassNameBufferLength(0),
+	_anonClassNameBufferSize(0),
 	_stringInternTable(javaVM, portLibrary, maxStringInternTableSize)
 {
 }
@@ -294,14 +294,14 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile)
 	 * [className]/[ROMClassAddress]\0
 	 */
 
-	if (0 == _anonClassNameBufferLength || (newAnonClassNameLength > _anonClassNameBufferLength)) {
+	if ((0 == _anonClassNameBufferSize) || (newAnonClassNameLength > _anonClassNameBufferSize)) {
 		j9mem_free_memory(_anonClassNameBuffer);
 		_anonClassNameBuffer = (U_8 *)j9mem_allocate_memory(newAnonClassNameLength, J9MEM_CATEGORY_CLASSES);
 		if (NULL == _anonClassNameBuffer) {
 			result = OutOfMemory;
 			goto done;
 		}
-		_anonClassNameBufferLength = newAnonClassNameLength;
+		_anonClassNameBufferSize = newAnonClassNameLength;
 	}
 	constantPool[newUtfCPEntry].bytes = _anonClassNameBuffer;
 
