@@ -794,7 +794,10 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          J9Method *j9method = (J9Method *)method;
          const uint64_t methodIndex = getMethodIndexUnchecked(j9method);
 
-         client->write(resolvedMethod, literals, cpHdr, methodIndex);
+         uintptrj_t jniProps = resolvedMethod->getJNIProperties();
+         void *jniTargetAddr = resolvedMethod->getJNITargetAddress();
+
+         client->write(resolvedMethod, literals, cpHdr, methodIndex, jniProps, jniTargetAddr);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getRemoteROMClass:

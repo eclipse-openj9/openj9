@@ -45,7 +45,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    // Create client side mirror of this object to use for calls involving RAM data
    TR_ResolvedJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JAASServerMethod*) owningMethod)->_remoteMirror : nullptr;
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot);
-   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t>();
+   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uintptrj_t, void*>();
 
    _remoteMirror = std::get<0>(recv);
 
@@ -60,21 +60,9 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _vTableSlot = vTableSlot;
    _j9classForNewInstance = nullptr;
 
-   if (supportsFastJNI(fe))
-      {
-      // a non-NULL target address is returned for both JNI natives and non-JNI natives with FastJNI replacements, NULL otherwise
-      // properties will be non-zero IFF the target address points to a FastJNI replacement
-      _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_jniNativeMethodProperties, _ramMethod);
-      auto recv = _stream->read<uintptrj_t, void*>();
-      _jniProperties = std::get<0>(recv);
-      _jniTargetAddress = std::get<1>(recv);
-      }
-   else
-      {
-      _jniProperties = 0;
-      _jniTargetAddress = NULL;
-      }
-
+   _jniProperties = std::get<4>(recv);
+   _jniTargetAddress = std::get<5>(recv);
+ 
    // initialization from TR_J9Method constructor
    _className = J9ROMCLASS_CLASSNAME(_romClass);
    _name = J9ROMMETHOD_GET_NAME(_romClass, _romMethod);
