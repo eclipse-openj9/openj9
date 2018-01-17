@@ -219,8 +219,8 @@ enum J9ServerMessageType
    runFEMacro_derefUintptrjPtr = 618;
 
    // for JaasPersistentCHTable
-   CHTable_findClassInfo = 700;
-   CHTable_getAllClassInfo = 701;
+   CHTable_getAllClassInfo = 700;
+   CHTable_getClassInfoUpdates = 701;
    }
 
 message J9ServerMessage

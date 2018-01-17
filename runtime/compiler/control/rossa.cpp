@@ -1560,6 +1560,10 @@ onLoadInternal(
       {
       chtable = new (PERSISTENT_NEW) TR_JaasServerPersistentCHTable(persistentMemory);
       }
+   else if (persistentMemory->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+      {
+      chtable = new (PERSISTENT_NEW) TR_JaasClientPersistentCHTable(persistentMemory);
+      }
    else
       {
       chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);

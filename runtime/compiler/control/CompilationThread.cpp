@@ -101,6 +101,7 @@
 #include "runtime/CodeCacheMemorySegment.hpp"
 #include "trj9/env/j9methodServer.hpp"
 #include "control/JaasCompilationThread.hpp"
+#include "env/JaasPersistentCHTable.hpp"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -7776,6 +7777,14 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          if (compiler)
             {
             uint64_t proposedScratchMemoryLimit = (uint64_t)TR::Options::getScratchSpaceLimit();
+
+            // update our cached CHTable
+            if (details.isRemoteMethod())
+               {
+               auto table = (TR_JaasServerPersistentCHTable*)compiler->getPersistentInfo()->getPersistentCHTable();
+               table->doUpdate(compiler);
+               }
+
 
             bool isJSR292 = TR::CompilationInfo::isJSR292(details.getRomMethod());
 

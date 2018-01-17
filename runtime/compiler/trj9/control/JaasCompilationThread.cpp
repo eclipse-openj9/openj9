@@ -1692,23 +1692,22 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          }
          break;
 
-      case J9ServerMessageType::CHTable_findClassInfo:
-         {
-         auto classId = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
-         auto table = TR::comp()->getPersistentInfo()->getPersistentCHTable();
-         TR_PersistentClassInfo* result = table->findClassInfoAfterLocking(classId, TR::comp(), false);
-         std::string encoded = FlatPersistentClassInfo::serialize(result);
-         client->write(encoded);
-         }
-         break;
       case J9ServerMessageType::CHTable_getAllClassInfo:
          {
          client->getRecvData<JAAS::Void>();
-         auto table = TR::comp()->getPersistentInfo()->getPersistentCHTable();
+         auto table = (TR_JaasClientPersistentCHTable*)TR::comp()->getPersistentInfo()->getPersistentCHTable();
          TR_OpaqueClassBlock *rootClass = fe->getSystemClassFromClassName("java/lang/Object", 16);
-         TR_PersistentClassInfo* result = table->findClassInfoAfterLocking(rootClass, TR::comp(), false);
-         std::string encoded = FlatPersistentClassInfo::serialize(result);
+         TR_PersistentClassInfo* result = table->findClassInfoAfterLockingConst(rootClass, TR::comp(), false);
+         std::string encoded = FlatPersistentClassInfo::serializeHierarchy(result);
          client->write(encoded);
+         }
+         break;
+      case J9ServerMessageType::CHTable_getClassInfoUpdates:
+         {
+         client->getRecvData<JAAS::Void>();
+         auto table = (TR_JaasClientPersistentCHTable*)TR::comp()->getPersistentInfo()->getPersistentCHTable();
+         auto encoded = table->serializeUpdates();
+         client->write(encoded.first, encoded.second);
          }
          break;
       default:
