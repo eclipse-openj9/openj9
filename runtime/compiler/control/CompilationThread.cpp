@@ -367,6 +367,11 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    // Do not activate new threads if we are ramping down
    if (getRampDownMCT())
       return TR_no;
+
+   // Always activate in JAAS server mode
+   if (getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      return TR_yes;
+
    // Do not activate if we already exceed the CPU enablement for compilation threads
    if (exceedsCompCpuEntitlement() != TR_no)
       {
@@ -4723,7 +4728,8 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
       // If the request is sync or AOT load or InstantReplay, take it now
       if (compInfoPT->isDiagnosticThread() || // InstantReplay compilations must be processed immediatelly
          _methodQueue->_priority >= CP_SYNC_MIN ||       // sync comp
-         _methodQueue->_methodIsInSharedCache == TR_yes) // very cheap relocation
+         _methodQueue->_methodIsInSharedCache == TR_yes || // very cheap relocation
+         getPersistentInfo()->getJaasMode() == SERVER_MODE) // compile right away in server mode
          {
          m = _methodQueue;
          _methodQueue = _methodQueue->_next;
