@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2016 IBM Corp. and others
+ * Copyright (c) 2013, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.ibm.cuda.CudaBuffer;
 import com.ibm.cuda.CudaDevice;
+import com.ibm.cuda.CudaError;
+import com.ibm.cuda.CudaException;
 import com.ibm.cuda.CudaGrid;
 import com.ibm.cuda.CudaKernel;
 import com.ibm.cuda.CudaModule;
@@ -249,6 +251,8 @@ final class SortNetwork {
 	 * @param array  the array to be sorted
 	 * @param fromIndex  starting index of the sort
 	 * @param toIndex  ending index of the sort
+	 * @throws GPUConfigurationException
+	 * @throws GPUSortException
 	 */
 	static void sortArray(int deviceId, double[] array, int fromIndex,
 			int toIndex) throws GPUConfigurationException, GPUSortException {
@@ -274,6 +278,8 @@ final class SortNetwork {
 	 * @param array  the array to be sorted
 	 * @param fromIndex  starting index of the sort
 	 * @param toIndex  ending index of the sort
+	 * @throws GPUConfigurationException
+	 * @throws GPUSortException
 	 */
 	static void sortArray(int deviceId, float[] array, int fromIndex,
 			int toIndex) throws GPUConfigurationException, GPUSortException {
@@ -299,6 +305,8 @@ final class SortNetwork {
 	 * @param array  the array to be sorted
 	 * @param fromIndex  starting index of the sort
 	 * @param toIndex  ending index of the sort
+	 * @throws GPUConfigurationException
+	 * @throws GPUSortException
 	 */
 	static void sortArray(int deviceId, int[] array, int fromIndex,
 			int toIndex) throws GPUConfigurationException, GPUSortException {
@@ -311,7 +319,7 @@ final class SortNetwork {
 		} catch (GPUConfigurationException | GPUSortException e) {
 			traceFailure(manager, e);
 			throw e;
-		}	
+		}
 
 		traceSuccess(manager, deviceId, "int"); //$NON-NLS-1$
 	}
@@ -324,6 +332,8 @@ final class SortNetwork {
 	 * @param array  the array to be sorted
 	 * @param fromIndex  starting index of the sort
 	 * @param toIndex  ending index of the sort
+	 * @throws GPUConfigurationException
+	 * @throws GPUSortException
 	 */
 	static void sortArray(int deviceId, long[] array, int fromIndex,
 			int toIndex) throws GPUConfigurationException, GPUSortException {
@@ -380,38 +390,50 @@ final class SortNetwork {
 
 	private CudaKernel sortPhase9;
 
+	/**
+	 * Initialize a new SortNetwork for the specified device.
+	 *
+	 * @param deviceId
+	 * @throws GPUConfigurationException
+	 */
 	private SortNetwork(int deviceId) throws GPUConfigurationException {
 		super();
+		this.device = new CudaDevice(deviceId);
 
 		try {
-			this.device = new CudaDevice(deviceId);
-		} catch (NoClassDefFoundError e) {
-			throw new GPUConfigurationException("Unsupported platform detected"); //$NON-NLS-1$
-		}
-
-		try {
-			int capability = device.getAttribute(CudaDevice.ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR);
-
-			if (capability < 2) {
-				throw new GPUConfigurationException("Compute capability 2.0 or better required"); //$NON-NLS-1$
-			}
-
 			this.maxGridDimX = device.getAttribute(CudaDevice.ATTRIBUTE_MAX_GRID_DIM_X);
 		} catch (Exception e) {
 			throw new GPUConfigurationException(e.getLocalizedMessage(), e);
 		}
 	}
 
-	/** Gets an existing SortKernels object for the current device,
+	/**
+	 * Gets an existing SortKernels object for the current device,
 	 * if none exists, create a new one, store it and return it.
 	 *
 	 * @return SortKernels
-	 * @throws CudaException
+	 * @throws GPUConfigurationException
+	 * @throws GPUSortException
 	 */
-	private SortKernels getKernels() throws GPUSortException {
+	private SortKernels getKernels() throws GPUConfigurationException, GPUSortException {
 		try {
 			return deviceMap.computeIfAbsent(device, SortKernels::create);
 		} catch (DelayedException e) {
+			Throwable cause = e.getCause();
+
+			/*
+			 * CUDA 9.0 removed support for devices with compute capability 2
+			 * so the fatbin resource won't have code for those devices when
+			 * CUDA 9+ is used to compile the kernel code. We detect that here
+			 * instead of checking compute capability in the constructor as was
+			 * done originally.
+			 */
+			if (cause instanceof CudaException) {
+				if (((CudaException) cause).code == CudaError.NoKernelImageForDevice) {
+					throw new GPUConfigurationException("Unsupported device detected"); //$NON-NLS-1$
+				}
+			}
+
 			throw new GPUSortException(e.getLocalizedMessage(), e);
 		}
 	}
@@ -442,7 +464,7 @@ final class SortNetwork {
 	}
 
 	private void sort(double[] array, int fromIndex, int toIndex)
-			throws GPUSortException {
+			throws GPUConfigurationException, GPUSortException {
 		final int length = toIndex - fromIndex;
 
 		if (length < 2) {
@@ -469,7 +491,7 @@ final class SortNetwork {
 	}
 
 	private void sort(float[] array, int fromIndex, int toIndex)
-			throws GPUSortException {
+			throws GPUConfigurationException, GPUSortException {
 		final int length = toIndex - fromIndex;
 
 		if (length < 2) {
@@ -496,7 +518,7 @@ final class SortNetwork {
 	}
 
 	private void sort(int[] array, int fromIndex, int toIndex)
-			throws GPUSortException {
+			throws GPUConfigurationException, GPUSortException {
 		final int length = toIndex - fromIndex;
 
 		if (length < 2) {
@@ -528,10 +550,11 @@ final class SortNetwork {
 	 * @param array  array to be sorted
 	 * @param fromIndex  starting index of sort
 	 * @param toIndex  ending index of sort
-	 * @throws CudaException
+	 * @throws GPUConfigurationException
+	 * @throws GPUSortException
 	 */
 	private void sort(long[] array, int fromIndex, int toIndex)
-			throws GPUSortException {
+			throws GPUConfigurationException, GPUSortException {
 		final int length = toIndex - fromIndex;
 
 		if (length < 2) {
@@ -570,7 +593,7 @@ final class SortNetwork {
 		try (CudaStream stream = new CudaStream(device)) {
 			final Integer boxLength = Integer.valueOf(length);
 
-			// launch one kernel for the phases 0-8 regardless of size
+			// launch one kernel for phases 0-8 regardless of size
 			{
 				/*
 				 * In this kernel, each block of threads processes 512 (= 1<<9) elements of data.

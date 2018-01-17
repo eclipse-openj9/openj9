@@ -75,6 +75,8 @@ static U_16 getUTF8Length(J9CfrConstantPoolInfo* constantPool, U_16 cpIndex);
 #define DUP_TIMING 0
 #define DUP_HASH_THRESHOLD 30
 
+#define MAX_CONSTANT_POOL_SIZE 0xFFFF
+
 /* mapping characters A..Z */
 static const U_8 cpTypeCharConversion[] = {
 0,										CFR_CONSTANT_Integer,	CFR_CONSTANT_Integer,	CFR_CONSTANT_Double,
@@ -1079,6 +1081,7 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 				previousUTF8->nextCPIndex = (U_16)i;
 				previousUTF8 = info;
 			}
+			classfile->lastUTF8CPIndex = i;
 			i++;
 			break;
 
@@ -2362,11 +2365,12 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	I_32 hasRET = 0;
 	UDATA syntheticFound = FALSE;
 	U_32 vmVersionShifted = flags & BCT_MajorClassFileVersionMask;
+	U_16 constantPoolAllocationSize = 0;
 
 	Trc_BCU_j9bcutil_readClassFileBytes_Entry();
 
 	/* There must be at least enough space for the classfile struct. */
-	if(segmentLength < (UDATA) sizeof(J9CfrClassFile)) {
+	if (segmentLength < (UDATA) sizeof(J9CfrClassFile)) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(-2);
 		return -2;
 	}
@@ -2380,7 +2384,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 
 	CHECK_EOF(10);
 	NEXT_U32(classfile->magic, index);
-	if(classfile->magic != (U_32) CFR_MAGIC) {
+	if (classfile->magic != (U_32) CFR_MAGIC) {
 		errorCode = J9NLS_CFR_ERR_MAGIC__ID;
 		offset = index - data - 4;
 		goto _errorFound;
@@ -2397,7 +2401,9 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 
 	NEXT_U16(classfile->constantPoolCount, index);
 
-	if(classfile->constantPoolCount < 1) {
+	constantPoolAllocationSize = classfile->constantPoolCount;
+
+	if (constantPoolAllocationSize < 1) {
 		errorCode = J9NLS_CFR_ERR_CONSTANT_POOL_EMPTY__ID;
 		offset = index - data - 2;
 		goto _errorFound;
@@ -2405,18 +2411,39 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 
 	VERBOSE_START(ParseClassFileConstantPool);
 	/* Space for the constant pool */
-	if(!ALLOC_ARRAY(classfile->constantPool, classfile->constantPoolCount, J9CfrConstantPoolInfo)) {
+
+	if (J9_ARE_ANY_BITS_SET(findClassFlags, J9_FINDCLASS_FLAG_ANON)) {
+		/* Pre-emptively add new entry to the end of the constantPool for the modified anonClassName.
+		 * If it turns out we dont need it, simply reduce the constantPoolCount by 1, which is
+		 * cheaper than allocating twice.
+		 *
+		 * Can't modify the classfile->constantPoolCount until after readPool is called so
+		 * the classfile is properly parsed. Instead use a temp variable to track the real
+		 * size for allocation, and re-assign to classfile->constantPoolCount later.
+		 *
+		 * If the size of the constantPool is MAX_CONSTANT_POOL_SIZE then throw an OOM.
+		 */
+		if (constantPoolAllocationSize == MAX_CONSTANT_POOL_SIZE) {
+			Trc_BCU_j9bcutil_readClassFileBytes_MaxCPCount();
+			return BCT_ERR_OUT_OF_MEMORY;
+		}
+		constantPoolAllocationSize += 1;
+	}
+
+	if (!ALLOC_ARRAY(classfile->constantPool, constantPoolAllocationSize, J9CfrConstantPoolInfo)) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(-2);
 		return -2;
 	}
 
 	/* Read the pool. */
-	if((result = readPool(classfile, data, dataEnd, segment, segmentEnd, &index, &freePointer)) != 0) {
+	if ((result = readPool(classfile, data, dataEnd, segment, segmentEnd, &index, &freePointer)) != 0) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(result);
 		return result;
 	}
 	endOfConstantPool = index;
 	VERBOSE_END(ParseClassFileConstantPool);
+
+	classfile->constantPoolCount = constantPoolAllocationSize;
 
 	CHECK_EOF(8);
 	classfile->accessFlags = NEXT_U16(classfile->accessFlags, index);
@@ -2449,49 +2476,6 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 	NEXT_U16(classfile->thisClass, index);
-
-	/* if anonClass create an array for the new class name */
-	if (J9_ARE_ANY_BITS_SET(findClassFlags, J9_FINDCLASS_FLAG_ANON)) {
-		/* find the UTF8 thisClass name slot */
-		U_32 cpThisClassUTF8Slot = classfile->constantPool[classfile->thisClass].slot1;
-		U_32 originalStringLength = classfile->constantPool[cpThisClassUTF8Slot].slot1;
-		const char* originalStringBytes = (const char*)classfile->constantPool[cpThisClassUTF8Slot].bytes;
-		U_32 i = 0;
-		/*
-		 * alloc an array for the new name with the following format:
-		 * [className]/[ROMClassAddress]\0
-		 */
-		if (!ALLOC_ARRAY(classfile->constantPool[cpThisClassUTF8Slot].bytes, originalStringLength + 1 + ROM_ADDRESS_LENGTH + 1, U_8)) {
-			Trc_BCU_j9bcutil_readClassFileBytes_Exit(-2);
-			return -2;
-		}
-		
-		/* update the size */
-		classfile->constantPool[cpThisClassUTF8Slot].slot1 += ROM_ADDRESS_LENGTH + 1;
-
-		/* copy the name into the new location and add the special character, fill the rest with zeroes */
-		memcpy (classfile->constantPool[cpThisClassUTF8Slot].bytes, originalStringBytes, originalStringLength);
-		*(U_8*)((UDATA) classfile->constantPool[cpThisClassUTF8Slot].bytes + originalStringLength) = ANON_CLASSNAME_CHARACTER_SEPARATOR;
-		memset(classfile->constantPool[cpThisClassUTF8Slot].bytes + originalStringLength + 1, '0', ROM_ADDRESS_LENGTH);
-		*(U_8*)((UDATA) classfile->constantPool[cpThisClassUTF8Slot].bytes + originalStringLength + 1 + ROM_ADDRESS_LENGTH) = '\0';
-
-		/* search constpool for all other identical classRefs TODO untested */
-		for (i = 0; i < classfile->constantPoolCount; i++) {
-			if (CFR_CONSTANT_Class == classfile->constantPool[i].tag) {
-				U_32 classNameSlot = classfile->constantPool[i].slot1;
-				if (classNameSlot != cpThisClassUTF8Slot) {
-					U_32 classNameLength = classfile->constantPool[classNameSlot].slot1;
-					if ((classNameLength == originalStringLength)
-						&& (0 == strncmp(originalStringBytes, (const char*)classfile->constantPool[classNameSlot].bytes, originalStringLength)))
-					{
-						/* if it is the same class, point to original class name slot */
-						classfile->constantPool[i].slot1 = cpThisClassUTF8Slot;
-					}
-				}
-			}
-		}
-	}
-
 	NEXT_U16(classfile->superClass, index);
 	NEXT_U16(classfile->interfacesCount, index);
 
@@ -2582,10 +2566,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 	classfile->classFileSize = (U_32) dataLength;
-	if (J9_ARE_ALL_BITS_SET(findClassFlags, J9_FINDCLASS_FLAG_ANON)) {
-		/* additional bytes added for the unique name */
-		classfile->classFileSize += 1 + ROM_ADDRESS_LENGTH;
-	}
+
 	/* Ensure that this is a supported class file version. */
 	if(checkClassVersion(classfile, segment, vmVersionShifted)) {
 		Trc_BCU_j9bcutil_readClassFileBytes_Exit(-1);

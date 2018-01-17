@@ -815,6 +815,7 @@ typedef struct J9CfrClassFile {
     U_16 methodsCount;
     U_16 attributesCount;
     U_16 firstUTF8CPIndex;
+    U_16 lastUTF8CPIndex;
     U_16 firstNATCPIndex;
     struct J9CfrConstantPoolInfo* constantPool;
     U_16* interfaces;

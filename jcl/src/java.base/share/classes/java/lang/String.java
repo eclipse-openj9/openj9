@@ -5307,4 +5307,29 @@ written authorization of the copyright holder.
 		return CharSequence.super.codePoints();
 	}
 /*[ENDIF]*/	
+
+/*[IF Java10]*/
+	/*
+	 * Internal API, assuming no modification to the byte array returned.
+	 * In case of enableSharingInSubstringWhenOffsetIsZero is set to true (by default), the actual bytes will be 
+	 * copied to a new array, and replace the original byte array value via Unsafe.
+	 * The value is returned.
+	 */
+	byte[] value() {
+		int validLen;
+		if (enableCompression) {
+			if ((null == compressionFlag) || (count >= 0)) {
+				validLen = count;
+			} else {
+				validLen = (count & ~uncompressedBit) * 2;
+			}
+		} else {
+			validLen = count * 2;
+		}
+		if (validLen < value.length) {
+			helpers.putObjectInObject(this, UnsafeHelpers.valueFieldOffset, java.util.Arrays.copyOf(value, validLen));
+		}
+		return value;
+	}
+/*[ENDIF] Java10 */	
 }
