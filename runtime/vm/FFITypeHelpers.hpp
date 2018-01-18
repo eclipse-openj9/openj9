@@ -124,11 +124,10 @@ public:
 			}
 		}
 		layout = buf;
-		result = copyFromStringIntoUTF8(_currentThread, layoutStringObject, layout);
+		result = copyStringToUTF8Helper(_currentThread, layoutStringObject, TRUE, J9_STR_NONE, (U_8*)layout, UDATA_MAX);
 		if (UDATA_MAX == result) {
 			goto doneGetCustomFFIType;
 		}
-		layout[length] = '\0';
 		structSize = getIntFromLayout(&layout);
 		*typeFFI = getStructFFIType(&layout, false);
 doneGetCustomFFIType:

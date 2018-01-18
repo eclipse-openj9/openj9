@@ -4493,7 +4493,6 @@ typedef struct J9InternalVMFunctions {
 	void  ( *deallocateVMThread)(struct J9VMThread * vmThread, UDATA decrementZombieCount, UDATA sendThreadDestroyEvent) ;
 	struct J9MemorySegment*  ( *allocateMemorySegment)(struct J9JavaVM *javaVM, UDATA size, UDATA type, U_32 memoryCategory) ;
 	IDATA  ( *javaThreadProc)(void *entryarg) ;
-	UDATA  ( *copyFromStringIntoUTF8)(struct J9VMThread * vmThread, j9object_t string, char * dest) ;
 	char*  ( *copyStringToUTF8WithMemAlloc)(struct J9VMThread *currentThread, j9object_t string, UDATA stringFlags, const char *prependStr, char *buffer, UDATA bufferLength) ;
 	void  ( *internalAcquireVMAccess)(struct J9VMThread * currentThread) ;
 	void  ( *internalAcquireVMAccessWithMask)(struct J9VMThread * currentThread, UDATA haltFlags) ;
