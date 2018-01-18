@@ -77,7 +77,7 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 	j9object_t detailMessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, exception);
 
 	if (NULL != detailMessage) {
-		buf = copyStringToUTF8WithMemAlloc(vmThread, detailMessage, J9_STR_NONE, "", stackBuffer, 256, &length);
+		buf = copyStringToUTF8WithMemAlloc(vmThread, detailMessage, J9_STR_NONE, "", 0, stackBuffer, 256, &length);
 
 		if (NULL != buf) {
 			separator = ": ";
@@ -139,13 +139,13 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, J9ROMClass *rom
 
 				if ((NULL != module) && (module != vm->javaBaseModule)) {
 					moduleNameUTF = copyStringToUTF8WithMemAlloc(
-						vmThread, module->moduleName, J9_STR_NONE, "", nameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+						vmThread, module->moduleName, J9_STR_NONE, "", 0, nameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 					if (nameBuf != moduleNameUTF) {
 						freeModuleName = TRUE;
 					}
 					if (NULL != moduleNameUTF) {
 						moduleVersionUTF = copyStringToUTF8WithMemAlloc(
-							vmThread, module->version, J9_STR_NONE, "", versionBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+							vmThread, module->version, J9_STR_NONE, "", 0, versionBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 						if (versionBuf != moduleVersionUTF) {
 							freeModuleVersion = TRUE;
 						}

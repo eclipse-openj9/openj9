@@ -1004,7 +1004,7 @@ getModuleNameUTF(J9VMThread *currentThread, j9object_t	moduleObject, char *buffe
 	} else {
 #define NAMED_MODULE   "module "
 		nameBuffer = copyStringToUTF8WithMemAlloc(
-			currentThread, module->moduleName, J9_STR_NONE, NAMED_MODULE, buffer, bufferLength, NULL);
+			currentThread, module->moduleName, J9_STR_NONE, NAMED_MODULE, strlen(NAMED_MODULE), buffer, bufferLength, NULL);
 #undef	NAMED_MODULE
 	}
 	return nameBuffer;

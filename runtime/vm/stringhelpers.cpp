@@ -330,6 +330,7 @@ copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlag
  * @param[in] stringFlags the flag to determine performing '.' --> '/'
  * @param[in] prependStr the string to be prepended before the string object to be copied
  * 				it can't be NULL but can be an empty string ""
+ * @param[in] prependStrLength The length of prependStr as computed by strlen.
  * @param[in] buffer the buffer for the string
  * @param[in] bufferLength the buffer length, not expected to larger than 64K
  * @param[out] utf8Length If not NULL returns the computed length (in bytes) of the copied UTF8 string in the buffer excluding the NULL terminator.
@@ -337,15 +338,14 @@ copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlag
  * @return a char pointer to the string (with NULL termination)
  */
 char*
-copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, char *buffer, UDATA bufferLength, UDATA *utf8Length)
+copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength, UDATA *utf8Length)
 {
 	Assert_VM_notNull(prependStr);
 	Assert_VM_notNull(string);
 
 	char *strUTF = NULL;
 	UDATA stringLen = getStringUTF8Length(vmThread, string);
-	UDATA prependStrLen = strlen(prependStr);
-	UDATA length = stringLen + prependStrLen + 1;
+	UDATA length = stringLen + prependStrLength + 1;
 
 	PORT_ACCESS_FROM_VMC(vmThread);
 
@@ -356,10 +356,10 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 		length = bufferLength;
 	}
 	if (NULL != strUTF) {
-		if (0 < prependStrLen) {
-			memcpy(strUTF, prependStr, prependStrLen);
+		if (0 < prependStrLength) {
+			memcpy(strUTF, prependStr, prependStrLength);
 		}
-		if (UDATA_MAX == copyStringToUTF8Helper(vmThread, string, stringFlags, (U_8 *)(strUTF + prependStrLen), length - prependStrLen)) {
+		if (UDATA_MAX == copyStringToUTF8Helper(vmThread, string, stringFlags, (U_8 *)(strUTF + prependStrLength), length - prependStrLength)) {
 			if (buffer != strUTF) {
 				j9mem_free_memory(strUTF);
 			}

@@ -1883,7 +1883,7 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 		j9object_t unicodeChars = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
 
 		if (NULL != unicodeChars) {
-			threadName = copyStringToUTF8WithMemAlloc(currentThread, unicodeChars, J9_STR_NONE, "", threadName, 0, NULL);
+			threadName = copyStringToUTF8WithMemAlloc(currentThread, unicodeChars, J9_STR_NONE, "", 0, threadName, 0, NULL);
 		}
 	} else {
 		j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
