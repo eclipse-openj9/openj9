@@ -1319,7 +1319,7 @@ JVM_IsExportedToModule(JNIEnv * env, jobject fromModule, jstring package, jobjec
 #if J9VM_JAVA9_BUILD >= 156
 		PORT_ACCESS_FROM_VMC(currentThread);
 		char buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-		char *nameUTF = buf;
+		char *nameUTF = NULL;
 		nameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
 			currentThread, pkgObject, J9_STR_NONE, "", buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 		if (NULL == nameUTF) {

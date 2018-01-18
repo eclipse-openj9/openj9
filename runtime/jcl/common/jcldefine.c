@@ -43,6 +43,7 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	J9ClassLoader *classLoader;
 	UDATA retried = FALSE;
 	UDATA utf8Length = 0;
+	char utf8NameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	U_8 *utf8Name = NULL;
 	U_8 *classBytes = NULL;
 	J9Class *clazz = NULL;
@@ -90,7 +91,7 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	/* Allocate and initialize a UTF8 copy of the Unicode class-name */
 	if (className != NULL) {
 		/* For now, use malloc, but this should use stack allocation for short class-names */
-		utf8Name = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(className), J9_STR_XLAT, "", utf8Name, 0, &utf8Length);
+		utf8Name = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(className), J9_STR_XLAT, "", utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
 
 		if (NULL == utf8Name) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
@@ -211,7 +212,9 @@ done:
 
 	vmFuncs->internalReleaseVMAccess(currentThread);
 
-	j9mem_free_memory(utf8Name);
+	if (utf8NameStackBuffer != utf8Name) {
+		j9mem_free_memory(utf8Name);
+	}
 
 	if (!isContiguousClassBytes) {
 		j9mem_free_memory(classBytes);

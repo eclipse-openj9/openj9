@@ -201,7 +201,7 @@ searchClassInModule(J9VMThread * vmThread, J9Module * j9module, U_8 * className,
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	char moduleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-	char *moduleName = moduleNameBuf;
+	char *moduleName = NULL;
 	BOOLEAN freeModuleName = FALSE;
 	IDATA rc = 1;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);

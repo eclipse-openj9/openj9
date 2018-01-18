@@ -66,7 +66,7 @@ printExceptionInThread(J9VMThread* vmThread)
 /* assumes VM access */
 static void
 printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
-	char stackBuffer[64];
+	char stackBuffer[256];
 	char* buf = stackBuffer;
 	UDATA length = 0;
 	const char* separator = "";
@@ -77,7 +77,7 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 	j9object_t detailMessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, exception);
 
 	if (NULL != detailMessage) {
-		buf = copyStringToUTF8WithMemAlloc(vmThread, detailMessage, J9_STR_NONE, "", stackBuffer, 64, &length);
+		buf = copyStringToUTF8WithMemAlloc(vmThread, detailMessage, J9_STR_NONE, "", stackBuffer, 256, &length);
 
 		if (NULL != buf) {
 			separator = ": ";
