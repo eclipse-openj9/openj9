@@ -83,7 +83,7 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 			buf = j9mem_allocate_memory(length, OMRMEM_CATEGORY_VM);
 		}
 		if (buf) {
-			length = copyStringToUTF8Helper(vmThread, detailMessage, TRUE, J9_STR_NONE, (U_8 *)buf, length);
+			length = copyStringToUTF8Helper(vmThread, detailMessage, J9_STR_NONE, (U_8 *)buf, length);
 			if (UDATA_MAX == length) {
 				length = 0;
 			}

@@ -1885,9 +1885,7 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 		threadName = (char*)j9mem_allocate_memory(unicodeLength, OMRMEM_CATEGORY_THREADS);
 		if (NULL != threadName) {
 			memset(threadName, 0, unicodeLength);
-			if (UDATA_MAX == copyStringToUTF8Helper(
-				currentThread, unicodeChars, TRUE, J9_STR_NONE, (U_8 *)threadName, unicodeLength)
-			) {
+			if (UDATA_MAX == copyStringToUTF8Helper(currentThread, unicodeChars, J9_STR_NONE, (U_8 *)threadName, unicodeLength)) {
 				j9mem_free_memory(threadName);
 				threadName = NULL;
 			}

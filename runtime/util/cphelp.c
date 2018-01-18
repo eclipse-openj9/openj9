@@ -155,7 +155,7 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 			}
 			strncpy((char *)J9UTF8_DATA(jrtURL), JRT_URL_PROTOCOL, sizeof(JRT_URL_PROTOCOL) - 1);
 			nameLocation = (char *)J9UTF8_DATA(jrtURL) + sizeof(JRT_URL_PROTOCOL) - 1;
-			if (UDATA_MAX == vmFuncs->copyStringToUTF8Helper(currentThread, module->moduleName, TRUE, J9_STR_NONE, (U_8*)nameLocation, jrtURLLen - sizeof(JRT_URL_PROTOCOL) + 2)) {
+			if (UDATA_MAX == vmFuncs->copyStringToUTF8Helper(currentThread, module->moduleName, J9_STR_NONE, (U_8*)nameLocation, jrtURLLen - sizeof(JRT_URL_PROTOCOL) + 2)) {
 				goto _exit;
 			}
 

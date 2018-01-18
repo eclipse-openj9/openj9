@@ -36,7 +36,7 @@ getVMThreadNameFromString(J9VMThread *vmThread, j9object_t nameObject)
 	UDATA length = fns->getStringUTF8Length(vmThread, nameObject);
 	char *buf = j9mem_allocate_memory(length + 1, OMRMEM_CATEGORY_THREADS);
 	if (buf != NULL) {
-		fns->copyStringToUTF8Helper(vmThread, nameObject, TRUE, J9_STR_NONE, (U_8 *)buf, length + 1);
+		fns->copyStringToUTF8Helper(vmThread, nameObject, J9_STR_NONE, (U_8 *)buf, length + 1);
 	}
 	return buf;
 }

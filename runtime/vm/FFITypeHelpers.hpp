@@ -124,7 +124,7 @@ public:
 			}
 		}
 		layout = buf;
-		result = copyStringToUTF8Helper(_currentThread, layoutStringObject, TRUE, J9_STR_NONE, (U_8*)layout, UDATA_MAX);
+		result = copyStringToUTF8Helper(_currentThread, layoutStringObject, J9_STR_NONE, (U_8*)layout, UDATA_MAX);
 		if (UDATA_MAX == result) {
 			goto doneGetCustomFFIType;
 		}

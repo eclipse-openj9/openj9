@@ -193,7 +193,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 			if (NULL != detail) {
 				detail[0] = ':';
 				detail[1] = ' ';
-				javaVM->internalVMFunctions->copyStringToUTF8Helper(currentThread, detailMessage, TRUE, J9_STR_NONE, (U_8*)detail + 2, buffLen - 2);
+				javaVM->internalVMFunctions->copyStringToUTF8Helper(currentThread, detailMessage, J9_STR_NONE, (U_8*)detail + 2, buffLen - 2);
 			}
 		}
 		swPrintf(walkState, 2, "\tThrowing exception: %.*s%s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className), detail ? detail : "");

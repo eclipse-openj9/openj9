@@ -456,7 +456,7 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 				}
 
 				if (buf != NULL) {
-					buflen = vmThread->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread, emessage, TRUE, J9_STR_NONE, (U_8*)buf, buflen);
+					buflen = vmThread->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread, emessage, J9_STR_NONE, (U_8*)buf, buflen);
 					if (wildcardMatch(matchFlag, needleString, needleLength, buf, buflen)) {
 						retCode = J9RAS_DUMP_MATCH;
 					} else {

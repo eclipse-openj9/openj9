@@ -182,7 +182,7 @@ addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, j9object_t 
 	memcpy(J9UTF8_DATA(j9package->packageName), (void *)packageName, length);
 	J9UTF8_DATA(j9package->packageName)[length] = '\0';
 #else /* J9VM_JAVA9_BUILD >= 156 */
-	vmFuncs->copyStringToUTF8Helper(currentThread, packageName, TRUE, J9_STR_NONE, J9UTF8_DATA(j9package->packageName), length + 1);
+	vmFuncs->copyStringToUTF8Helper(currentThread, packageName, J9_STR_NONE, J9UTF8_DATA(j9package->packageName), length + 1);
 #endif /* J9VM_JAVA9_BUILD >= 156 */
 	J9UTF8_SET_LENGTH(j9package->packageName, length);
 	return TRUE;

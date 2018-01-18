@@ -109,7 +109,7 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 			if (name == NULL) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
-				if (UDATA_MAX == vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, groupName, TRUE, J9_STR_NONE, (U_8*)name, nameLen)) {
+				if (UDATA_MAX == vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, groupName, J9_STR_NONE, (U_8*)name, nameLen)) {
 					rc = JVMTI_ERROR_INTERNAL;
 					goto done;
 				}

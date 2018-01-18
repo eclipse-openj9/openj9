@@ -263,7 +263,6 @@ compareStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA translateDots
  *
  * @param[in] vmThread the current J9VMThread
  * @param[in] string a string object to be copied, it can't be NULL
- * @param[in] nullTermination if the utf8 data is going to be NULL terminated
  * @param[in] stringFlags the flag to determine performing '.' --> '/'
  * @param[in] utf8Data a utf8 data buffer
  * @param[in] utf8Length the size of the utf8 data buffer
@@ -271,7 +270,7 @@ compareStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA translateDots
  * @return UDATA_MAX if a failure occurred, otherwise the number of utf8 data copied excluding null termination
  */
 UDATA
-copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, BOOLEAN nullTermination, UDATA stringFlags, U_8 *utf8Data, UDATA utf8Length)
+copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, UDATA utf8Length)
 {
 	Assert_VM_notNull(string);
 
@@ -359,9 +358,7 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 		if (0 < prependStrLen) {
 			memcpy(strUTF, prependStr, prependStrLen);
 		}
-		if (UDATA_MAX == copyStringToUTF8Helper(
-			vmThread, string, TRUE, stringFlags, (U_8 *)(strUTF + prependStrLen), length - prependStrLen)
-		) {
+		if (UDATA_MAX == copyStringToUTF8Helper(vmThread, string, stringFlags, (U_8 *)(strUTF + prependStrLen), length - prependStrLen)) {
 			if (buffer != strUTF) {
 				j9mem_free_memory(strUTF);
 			}

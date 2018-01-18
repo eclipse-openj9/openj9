@@ -3233,7 +3233,7 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 			}
 
 			if (buf) {
-				len = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, TRUE, J9_STR_NONE, (U_8*)buf, len);
+				len = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, J9_STR_NONE, (U_8*)buf, len);
 			} else {
 				buf = stackBuffer;
 				len = 0;
@@ -3274,7 +3274,7 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 				nestedLen = J9VMJAVALANGSTRING_LENGTH(vmThread, message) * 3 + 1;
 				nestedBuf = (char *)j9mem_allocate_memory(nestedLen, OMRMEM_CATEGORY_VM);
 				if (nestedBuf) {
-					nestedLen = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, TRUE, J9_STR_NONE, (U_8*)nestedBuf, nestedLen);
+					nestedLen = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, J9_STR_NONE, (U_8*)nestedBuf, nestedLen);
 					_OutputStream.writeCharacters(" Detail:  \"");
 					_OutputStream.writeCharacters(nestedBuf, nestedLen);
 					_OutputStream.writeCharacters("\"");

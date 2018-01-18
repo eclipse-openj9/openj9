@@ -455,7 +455,7 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 				if (threadName == NULL) {
 					name[0] = '\0';
 				} else {
-					if (UDATA_MAX == vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, threadName, TRUE, J9_STR_NONE, (U_8*)name, threadNameLen)) {
+					if (UDATA_MAX == vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, threadName, J9_STR_NONE, (U_8*)name, threadNameLen)) {
 						rc = JVMTI_ERROR_INTERNAL;
 						goto done;
 					}

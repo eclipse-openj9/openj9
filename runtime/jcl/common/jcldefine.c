@@ -99,9 +99,7 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
 		}
-		if (UDATA_MAX == vmFuncs->copyStringToUTF8Helper(
-			currentThread, J9_JNI_UNWRAP_REFERENCE(className), TRUE, J9_STR_XLAT, utf8Name, utf8Length + 1)
-		) {
+		if (UDATA_MAX == vmFuncs->copyStringToUTF8Helper(currentThread, J9_JNI_UNWRAP_REFERENCE(className), J9_STR_XLAT, utf8Name, utf8Length + 1)) {
 			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 			goto done;
 		}

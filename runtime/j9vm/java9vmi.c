@@ -1708,7 +1708,7 @@ JVM_GetModuleByPackageName(JNIEnv *env, jobject classLoader, jstring packageName
 				goto exit;
 			}
 		}
-		vmFuncs->copyStringToUTF8Helper(currentThread, packageObj, TRUE, J9_STR_NONE, J9UTF8_DATA(packageUTF8), length + 1);
+		vmFuncs->copyStringToUTF8Helper(currentThread, packageObj, J9_STR_NONE, J9UTF8_DATA(packageUTF8), length + 1);
 		J9UTF8_SET_LENGTH(packageUTF8, (U_16) length);
 		if (NULL != strchr((const char*)J9UTF8_DATA(packageUTF8), '.')) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "package name contains '.' instead of '/'");
