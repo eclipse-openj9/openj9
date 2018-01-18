@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1003,11 +1003,11 @@ releaseSafePointVMAccess(J9VMThread * vmThread)
 		do {
 			VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT, true);
 		} while ((currentThread = currentThread->linkNext) != vmThread);
-		omrthread_monitor_exit(vm->vmThreadListMutex);
 		omrthread_monitor_enter(vm->exclusiveAccessMutex);
 		vm->safePointState = J9_XACCESS_NONE;
 		omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);
+		omrthread_monitor_exit(vm->vmThreadListMutex);
 	}
 	Assert_VM_mustHaveVMAccess(vmThread);
 }
