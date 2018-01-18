@@ -795,11 +795,7 @@ getStringUTFChars(JNIEnv *env, jstring string, jboolean *isCopy)
 		gpCheckSetNativeOutOfMemoryError(currentThread, 0, 0);
 	} else {
 		JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_CHARS, utfLength);
-		if (UDATA_MAX != copyStringToUTF8Helper(currentThread, stringObject, J9_STR_NONE, utfChars, utfLength)) {
-			if (NULL != isCopy) {
-				*isCopy = JNI_TRUE;
-			}
-		}
+		copyStringToUTF8Helper(currentThread, stringObject, J9_STR_NONE, utfChars);
 		JAVA_OFFLOAD_SWITCH_OFF_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_CHARS, utfLength);
 	}
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
