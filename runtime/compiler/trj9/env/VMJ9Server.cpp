@@ -939,6 +939,16 @@ TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj
    return result;
    }
 
+bool
+TR_J9ServerVM::getArrayLengthOfStaticAddress(void *ptr, int32_t &length)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getArrayLengthOfStaticAddress, ptr);
+   auto recv = stream->read<bool, int32_t>();
+   length = std::get<1>(recv);
+   return std::get<0>(recv);
+   }
+
 intptrj_t
 TR_J9ServerVM::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
    {

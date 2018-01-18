@@ -882,6 +882,7 @@ public:
    virtual TR_OpaqueClassBlock *getHostClass(TR_OpaqueClassBlock *clazzOffset);
    virtual bool canAllocateInlineClass(TR_OpaqueClassBlock *clazz);
    virtual bool isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz);
+   virtual bool getArrayLengthOfStaticAddress(void *ptr, int32_t &length) override;
    virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
 
     TR::TreeTop * lowerAsyncCheck( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);

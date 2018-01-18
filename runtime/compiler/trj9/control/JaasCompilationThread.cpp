@@ -777,6 +777,15 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getVFTEntry(std::get<0>(recv), std::get<1>(recv)));
          }
          break;
+      case J9ServerMessageType::VM_getArrayLengthOfStaticAddress:
+         {
+         auto recv = client->getRecvData<void*>();
+         void *ptr = std::get<0>(recv);
+         int32_t length;
+         bool ok = fe->getArrayLengthOfStaticAddress(ptr, length);
+         client->write(ok, length);
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only

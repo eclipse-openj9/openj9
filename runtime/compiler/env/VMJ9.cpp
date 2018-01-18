@@ -6116,6 +6116,23 @@ TR_J9VMBase::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
    return getSystemClassLoader() == getClassLoader(clazz);
    }
 
+bool
+TR_J9VMBase::getArrayLengthOfStaticAddress(void *ptr, int32_t &length)
+   {
+   TR::VMAccessCriticalSection getArrayLengthOfStaticAddress(this);
+   if ((*(void **)ptr != 0))
+      {
+      length = *((int32_t *) (((uintptrj_t) *(void ***)ptr) + (uintptrj_t) getOffsetOfContiguousArraySizeField()));
+
+      if (length == 0 && TR::Compiler->om.useHybridArraylets())
+         {
+         length = *((int32_t *) (((uintptrj_t) *(void ***)ptr) + (uintptrj_t) getOffsetOfDiscontiguousArraySizeField()));
+         }
+      return true;
+      }
+   return false;
+   }
+
 intptrj_t
 TR_J9VMBase::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
    {
