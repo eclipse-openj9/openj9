@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2017 IBM Corp. and others
+  Copyright (c) 2006, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2090,10 +2090,6 @@ Only available on zOS</description>
 	<flag id="opt_remoteConsoleSupport">
 		<description>Include support for remote console (via the -io: cmdline opt).</description>
 		<ifRemoved>No -io: support</ifRemoved>
-	</flag>
-	<flag id="opt_resourceManaged">
-		<description>Enable resource management in the JVM.</description>
-		<ifRemoved></ifRemoved>
 	</flag>
 	<flag id="opt_romImageSupport">
 		<description>Controls if the VM includes basic support for linked rom images</description>

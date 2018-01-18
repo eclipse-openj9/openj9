@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -753,7 +753,6 @@ static J9ThreadEnv threadEnv = {
 /**
  * JVMTI_VERSION_1_0 		0x30010000
  * IFA_ENABLED_JNI_VERSION 0x79xxxxxx	- combine with the JNI_VERSION
- * J9RCM_VMI_VERSION_1_2    0x7A000001
  * J9THREAD_VERSION_1_1 	0x7C010001
  * SUNVMI_VERSION_1_1 		0x7D010001
  * UTE_VERSION_1_1          0x7E000101
