@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -7650,20 +7650,41 @@ TR::CompilationInfoPerThreadBase::compile(
                  compiler->isProfilingCompilation() ? "profiled " : ""
                 );
          bool incomplete;
-         TR_VerboseLog::writeLineLocked(
-            TR_Vlog_COMPSTART,
-            "(%s%s) Compiling %s %s %s j9m=%p t=%u compThread=%d memLimit=%d KB freePhysicalMemory=%lld KB",
-            compilationTypeString,
-            compiler->getHotnessName(compiler->getMethodHotness()),
-            compiler->signature(),
-            compiler->isDLT() ? "DLT" : "",
-            details.name(),
-            method,
-            _compInfo.getPersistentInfo()->getElapsedTime(),
-            compiler->getCompThreadID(),
-            scratchSegmentProvider.allocationLimit() >> 10,
-            _compInfo.computeFreePhysicalMemory(incomplete) >> 10
-            );
+         uint64_t freePhysicalMemorySizeB = _compInfo.computeFreePhysicalMemory(incomplete);
+        
+         if (!incomplete)
+            { 
+            TR_VerboseLog::writeLineLocked(
+               TR_Vlog_COMPSTART,
+               "(%s%s) Compiling %s %s %s j9m=%p t=%llu compThread=%d memLimit=%zu KB freePhysicalMemory=%llu MB",
+               compilationTypeString,
+               compiler->getHotnessName(compiler->getMethodHotness()),
+               compiler->signature(),
+               compiler->isDLT() ? "DLT" : "",
+               details.name(),
+               method,
+               _compInfo.getPersistentInfo()->getElapsedTime(),
+               compiler->getCompThreadID(),
+               scratchSegmentProvider.allocationLimit() >> 10,
+               freePhysicalMemorySizeB >> 20
+               );
+            }
+         else
+            {
+            TR_VerboseLog::writeLineLocked(
+               TR_Vlog_COMPSTART,
+               "(%s%s) Compiling %s %s %s j9m=%p t=%llu compThread=%d memLimit=%zu KB",
+               compilationTypeString,
+               compiler->getHotnessName(compiler->getMethodHotness()),
+               compiler->signature(),
+               compiler->isDLT() ? "DLT" : "",
+               details.name(),
+               method,
+               _compInfo.getPersistentInfo()->getElapsedTime(),
+               compiler->getCompThreadID(),
+               scratchSegmentProvider.allocationLimit() >> 10
+               );
+            }
          }
 
       // Precompile option appears in HRT documentation
@@ -9936,16 +9957,30 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
       TR_VerboseLog::vlogAcquire();
       if (_methodBeingCompiled->_compErrCode != compilationFailure)
          {
-         bool incomplete;
          if ((_jitConfig->runtimeFlags & J9JIT_TESTMODE) && _methodBeingCompiled->_compErrCode == compilationInterrupted)
             TR_VerboseLog::writeLine(TR_Vlog_FAILURE,"<JIT: translating %s -- Interrupted because of %s", compiler->signature(), exceptionName);
          else
-            TR_VerboseLog::writeLine(TR_Vlog_COMPFAIL,"%s time=%dus %s memLimit=%d KB freePhysicalMemory=%lld KB",
+            {
+            bool incomplete;
+            uint64_t freePhysicalMemorySizeB = _compInfo.computeFreePhysicalMemory(incomplete);
+            if (!incomplete)
+               {
+               TR_VerboseLog::writeLine(TR_Vlog_COMPFAIL,"%s time=%dus %s memLimit=%zu KB freePhysicalMemory=%llu MB",
                                            compiler->signature(),
                                            translationTime,
                                            compilationErrorNames[_methodBeingCompiled->_compErrCode],
                                            scratchSegmentProvider.allocationLimit() >> 10,
-                                           _compInfo.computeFreePhysicalMemory(incomplete) >> 10);
+                                           freePhysicalMemorySizeB >> 20);
+               }
+            else
+               {
+               TR_VerboseLog::writeLine(TR_Vlog_COMPFAIL,"%s time=%dus %s memLimit=%zu KB",
+                                           compiler->signature(),
+                                           translationTime,
+                                           compilationErrorNames[_methodBeingCompiled->_compErrCode],
+                                           scratchSegmentProvider.allocationLimit() >> 10);
+               }
+            }
          }
       else
          {
@@ -10274,10 +10309,10 @@ TR::CompilationInfo::increaseUnstoredBytes(U_32 aotBytes, U_32 jitBytes)
 #endif
    }
 
-int64_t
+uint64_t
 TR::CompilationInfo::computeFreePhysicalMemory(bool &incompleteInfo)
    {
-   static bool incomplete = false;
+   bool incomplete = false;
 
    if (_cachedFreePhysicalMemoryB >= 0)
       {
@@ -10294,34 +10329,25 @@ TR::CompilationInfo::computeFreePhysicalMemory(bool &incompleteInfo)
          if (0 == j9sysinfo_get_memory_info(&memInfo)
              && memInfo.availPhysical != OMRPORT_MEMINFO_NOT_AVAILABLE)
             {
-            uint64_t cached = (memInfo.cached == OMRPORT_MEMINFO_NOT_AVAILABLE ? 0 : memInfo.cached);
-            uint64_t availSwap = (memInfo.availSwap == OMRPORT_MEMINFO_NOT_AVAILABLE ? 0 : memInfo.availSwap);
-
+            uint64_t freePhysicalMemorySizeB = memInfo.availPhysical;
+           
+            if (memInfo.cached != OMRPORT_MEMINFO_NOT_AVAILABLE)
+               freePhysicalMemorySizeB += memInfo.cached;
+            else
+               incomplete = true;
 #if defined(LINUX)
-            uint64_t buffered = (memInfo.buffered == OMRPORT_MEMINFO_NOT_AVAILABLE ? 0 : memInfo.buffered);
-#else
-            uint64_t buffered = 0;
+            if (memInfo.buffered != OMRPORT_MEMINFO_NOT_AVAILABLE)
+               freePhysicalMemorySizeB += memInfo.buffered;
+            else
+               incomplete = true;
 #endif
-
-            if (!incomplete)
-               {
-               if (cached == 0 || availSwap == 0)
-                  incomplete = true;
-#if defined(LINUX)
-               else if (buffered == 0)
-                  incomplete = true;
-#endif
-               }
-
-            uint64_t freePhysicalMemorySizeB = memInfo.availPhysical + buffered + cached + availSwap;
-            _cachedFreePhysicalMemoryB = freePhysicalMemorySizeB > LONG_MAX ? LONG_MAX : freePhysicalMemorySizeB;
-
+            _cachedFreePhysicalMemoryB = freePhysicalMemorySizeB;
             lastUpdateTime = crtElapsedTime;
             }
          else
             {
             incomplete = true;
-            _cachedFreePhysicalMemoryB = -1;
+            _cachedFreePhysicalMemoryB = OMRPORT_MEMINFO_NOT_AVAILABLE;
             }
          }
       }
