@@ -1178,8 +1178,15 @@ independentMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 	if (opt_XmsSet) {
 		extensions->initialMemorySize = MM_Math::roundToFloor(extensions->heapAlignment, extensions->initialMemorySize);
 		extensions->initialMemorySize = MM_Math::roundToFloor(extensions->regionSize, extensions->initialMemorySize);
-		extensions->initialMemorySize = OMR_MAX(extensions->regionSize, extensions->initialMemorySize);
 		
+		if (flatConfiguration) {
+			/* Flat configuration Collector can start with one region */
+			extensions->initialMemorySize = OMR_MAX(extensions->regionSize, extensions->initialMemorySize);
+		} else {
+			/* Gencon required at least three regions to start with (one for Tenure and two for Nursery - one for each half) */
+			extensions->initialMemorySize = OMR_MAX(extensions->regionSize * 3, extensions->initialMemorySize);
+		}
+
 		if (extensions->initialMemorySize > maximumXmsValue) {
 			memoryOption = "-Xms";
 			if (maximumXmsValueParameter) {
@@ -1872,11 +1879,20 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 			 * Honour Xmox and Xmnx
 			 */
 			if (opt_XmsSet) {
-				/* Split the available space 75/25
-				 * Xms is guaranteed to be large enough for minimum configurations
-				 */
-				candidateXmnsValue = MM_Math::roundToFloor(extensions->heapAlignment * 2, extensions->initialMemorySize * 1 / 4);
-				candidateXmnsValue = MM_Math::roundToFloor(extensions->regionSize * 2, candidateXmnsValue);
+				if (extensions->initialMemorySize < (8 * extensions->regionSize)) {
+					/*
+					 * Minimum initial size to provide 75/25 split is 8 regions:
+					 * (minimum Nursery size is 2 regions and it is 25%)
+					 * If Initial size is smaller then 8 regions it is not large enough to provide 75/25 proportion
+					 * So set initial Nursery size to minimum (two regions)
+					 */
+					candidateXmnsValue = extensions->regionSize * 2;
+				} else {
+					/* Split the available space 75/25 */
+					candidateXmnsValue = MM_Math::roundToFloor(extensions->heapAlignment * 2, extensions->initialMemorySize * 1 / 4);
+					candidateXmnsValue = MM_Math::roundToFloor(extensions->regionSize * 2, candidateXmnsValue);
+				}
+				/* Reminder goes to Tenure */
 				candidateXmosValue = extensions->initialMemorySize - candidateXmnsValue;
 			} else {
 				candidateXmnsValue = extensions->newSpaceSize;
