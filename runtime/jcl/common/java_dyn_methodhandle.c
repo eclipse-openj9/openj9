@@ -924,11 +924,11 @@ allocateJ9UTF8(JNIEnv *env, jstring name)
 
 	PORT_ACCESS_FROM_ENV(env);
 
-	utf8 = j9mem_allocate_memory(sizeof(U_16) + length, J9MEM_CATEGORY_VM_JCL);
+	utf8 = j9mem_allocate_memory(sizeof(U_16) + length + 1, J9MEM_CATEGORY_VM_JCL);
 	if (NULL != utf8) {
 		J9UTF8_SET_LENGTH(utf8, (U_16) length);
 		/* Can't fail - just translates String->length into data */
-		if (UDATA_MAX == vmFuncs->copyStringToUTF8Helper(vmThread, jlString, FALSE, J9_STR_NONE, J9UTF8_DATA(utf8), length)) {
+		if (UDATA_MAX == vmFuncs->copyStringToUTF8Helper(vmThread, jlString, TRUE, J9_STR_NONE, J9UTF8_DATA(utf8), length + 1)) {
 			j9mem_free_memory(utf8);
 			vmFuncs->setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 			utf8 = NULL;

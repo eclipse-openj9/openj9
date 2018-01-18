@@ -3227,13 +3227,13 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 		j9object_t message = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, *exceptionRef);
 		if (message) {
 			/* length is in jchars. 3x is enough for worst case UTF8 encoding */
-			len = J9VMJAVALANGSTRING_LENGTH(vmThread, message) * 3;
+			len = J9VMJAVALANGSTRING_LENGTH(vmThread, message) * 3 + 1;
 			if (len > sizeof(stackBuffer)) {
 				buf = (char *)j9mem_allocate_memory(len, OMRMEM_CATEGORY_VM);
 			}
 
 			if (buf) {
-				len = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, FALSE, J9_STR_NONE, (U_8*)buf, len);
+				len = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, TRUE, J9_STR_NONE, (U_8*)buf, len);
 			} else {
 				buf = stackBuffer;
 				len = 0;
@@ -3271,10 +3271,10 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 
 				message = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, nestedException);
 				/* length is in jchars. 3x is enough for worst case UTF8 encoding */
-				nestedLen = J9VMJAVALANGSTRING_LENGTH(vmThread, message) * 3;
+				nestedLen = J9VMJAVALANGSTRING_LENGTH(vmThread, message) * 3 + 1;
 				nestedBuf = (char *)j9mem_allocate_memory(nestedLen, OMRMEM_CATEGORY_VM);
 				if (nestedBuf) {
-					nestedLen = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, FALSE, J9_STR_NONE, (U_8*)nestedBuf, nestedLen);
+					nestedLen = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, TRUE, J9_STR_NONE, (U_8*)nestedBuf, nestedLen);
 					_OutputStream.writeCharacters(" Detail:  \"");
 					_OutputStream.writeCharacters(nestedBuf, nestedLen);
 					_OutputStream.writeCharacters("\"");

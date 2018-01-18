@@ -78,12 +78,12 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 
 	if (detailMessage) {
 		/* length is in jchars. 3x is enough for worst case UTF8 encoding */
-		length = J9VMJAVALANGSTRING_LENGTH(vmThread, detailMessage) * 3;
+		length = J9VMJAVALANGSTRING_LENGTH(vmThread, detailMessage) * 3 + 1;
 		if (length > sizeof(stackBuffer)) {
 			buf = j9mem_allocate_memory(length, OMRMEM_CATEGORY_VM);
 		}
 		if (buf) {
-			length = copyStringToUTF8Helper(vmThread, detailMessage, FALSE, J9_STR_NONE, (U_8 *)buf, length);
+			length = copyStringToUTF8Helper(vmThread, detailMessage, TRUE, J9_STR_NONE, (U_8 *)buf, length);
 			if (UDATA_MAX == length) {
 				length = 0;
 			}
