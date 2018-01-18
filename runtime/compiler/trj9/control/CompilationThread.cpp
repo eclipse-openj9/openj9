@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -7650,9 +7650,10 @@ TR::CompilationInfoPerThreadBase::compile(
                  compiler->isProfilingCompilation() ? "profiled " : ""
                 );
          bool incomplete;
-         TR_VerboseLog::writeLineLocked(
+         /* Github issue #424: format specifiers don't match actual types. */
+        TR_VerboseLog::writeLineLocked(
             TR_Vlog_COMPSTART,
-            "(%s%s) Compiling %s %s %s j9m=%p t=%u compThread=%d memLimit=%d KB freePhysicalMemory=%lld KB",
+            "(%s%s) Compiling %s %s %s j9m=%p t=%llu compThread=%d memLimit=%zu KB freePhysicalMemory=%lld KB",
             compilationTypeString,
             compiler->getHotnessName(compiler->getMethodHotness()),
             compiler->signature(),
@@ -10314,7 +10315,8 @@ TR::CompilationInfo::computeFreePhysicalMemory(bool &incompleteInfo)
                }
 
             uint64_t freePhysicalMemorySizeB = memInfo.availPhysical + buffered + cached + availSwap;
-            _cachedFreePhysicalMemoryB = freePhysicalMemorySizeB > LONG_MAX ? LONG_MAX : freePhysicalMemorySizeB;
+            /* Github issue #424: freePhysicalMemory may be larger than 2 GB */
+            _cachedFreePhysicalMemoryB = freePhysicalMemorySizeB;
 
             lastUpdateTime = crtElapsedTime;
             }
