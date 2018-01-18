@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -447,7 +447,7 @@ getStringUTF8Length(J9VMThread *vmThread, j9object_t string)
 
 	if (IS_STRING_COMPRESSED(vmThread, string)) {
 		for (i = 0; i < unicodeLength; i++) {
-			utf8Length += VM_VMHelpers::encodedUTF8Length(J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i));
+			utf8Length += VM_VMHelpers::encodedUTF8LengthI8(J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i));
 		}
 	} else {
 		for (i = 0; i < unicodeLength; i++) {
