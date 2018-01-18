@@ -110,29 +110,20 @@ public:
 	getCustomFFIType(ffi_type** typeFFI, j9object_t layoutStringObject) {
 		PORT_ACCESS_FROM_JAVAVM(_vm);
 
-		UDATA result = 0;
 		*typeFFI = NULL;
 		UDATA structSize = UDATA_MAX;
-		UDATA length = getStringUTF8Length(_currentThread, layoutStringObject);
 		char bufOnStackLocal[J9VM_LAYOUT_STRING_ON_STACK_LIMIT];
-		char *buf = bufOnStackLocal;
-		char *layout = NULL;
-		if (length >= J9VM_LAYOUT_STRING_ON_STACK_LIMIT) {
-			buf = (char *) j9mem_allocate_memory(sizeof(char) * (length + 1), OMRMEM_CATEGORY_VM);
-			if (NULL == buf) {
-				goto doneGetCustomFFIType;
-			}
-		}
-		layout = buf;
-		result = copyStringToUTF8Helper(_currentThread, layoutStringObject, J9_STR_NONE, (U_8*)layout, UDATA_MAX);
-		if (UDATA_MAX == result) {
+		char *layout = copyStringToUTF8WithMemAlloc(_currentThread, layoutStringObject, J9_STR_NONE, "", bufOnStackLocal, J9VM_LAYOUT_STRING_ON_STACK_LIMIT, NULL);
+
+		if (NULL == layout) {
 			goto doneGetCustomFFIType;
 		}
+
 		structSize = getIntFromLayout(&layout);
 		*typeFFI = getStructFFIType(&layout, false);
 doneGetCustomFFIType:
-		if (buf != bufOnStackLocal) {
-			j9mem_free_memory(buf);
+		if (layout != bufOnStackLocal) {
+			j9mem_free_memory(layout);
 		}
 		return structSize;
 	}

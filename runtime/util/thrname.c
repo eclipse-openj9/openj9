@@ -32,13 +32,9 @@ getVMThreadNameFromString(J9VMThread *vmThread, j9object_t nameObject)
 	J9JavaVM *javaVM = vmThread->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
-	J9InternalVMFunctions* fns = javaVM->internalVMFunctions;
-	UDATA length = fns->getStringUTF8Length(vmThread, nameObject);
-	char *buf = j9mem_allocate_memory(length + 1, OMRMEM_CATEGORY_THREADS);
-	if (buf != NULL) {
-		fns->copyStringToUTF8Helper(vmThread, nameObject, J9_STR_NONE, (U_8 *)buf, length + 1);
-	}
-	return buf;
+	char* result = javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, nameObject, J9_STR_NONE, "", NULL, 0, NULL);
+
+	return result;
 }
 
 /*

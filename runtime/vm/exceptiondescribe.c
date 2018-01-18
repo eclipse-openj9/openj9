@@ -76,21 +76,11 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 	J9UTF8* exceptionClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
 	j9object_t detailMessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, exception);
 
-	if (detailMessage) {
-		/* length is in jchars. 3x is enough for worst case UTF8 encoding */
-		length = J9VMJAVALANGSTRING_LENGTH(vmThread, detailMessage) * 3 + 1;
-		if (length > sizeof(stackBuffer)) {
-			buf = j9mem_allocate_memory(length, OMRMEM_CATEGORY_VM);
-		}
-		if (buf) {
-			length = copyStringToUTF8Helper(vmThread, detailMessage, J9_STR_NONE, (U_8 *)buf, length);
-			if (UDATA_MAX == length) {
-				length = 0;
-			}
+	if (NULL != detailMessage) {
+		buf = copyStringToUTF8WithMemAlloc(vmThread, detailMessage, J9_STR_NONE, "", stackBuffer, 64, &length);
+
+		if (NULL != buf) {
 			separator = ": ";
-		} else {
-			buf = stackBuffer;
-			length = 0;
 		}
 	}
 

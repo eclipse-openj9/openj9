@@ -447,16 +447,10 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 			char stackBuffer[256];
 			j9object_t emessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, *eventData->exceptionRef);
 
-			buf = stackBuffer;
-			if (emessage) {
-				/* length is in jchars. 3x is enough for worst case UTF8 encoding */
-				buflen = J9VMJAVALANGSTRING_LENGTH(vmThread, emessage) * 3 + 1;
-				if (buflen > sizeof(stackBuffer)) {
-					buf = (char *)j9mem_allocate_memory(buflen, OMRMEM_CATEGORY_VM);
-				}
+			if (NULL != emessage) {
+				buf = vmThread->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, emessage, J9_STR_NONE, "", stackBuffer, 256, &buflen);
 
-				if (buf != NULL) {
-					buflen = vmThread->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread, emessage, J9_STR_NONE, (U_8*)buf, buflen);
+				if (NULL != buf) {
 					if (wildcardMatch(matchFlag, needleString, needleLength, buf, buflen)) {
 						retCode = J9RAS_DUMP_MATCH;
 					} else {
@@ -465,7 +459,7 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 				}
 			}
 
-			if (buf != NULL && buf != stackBuffer) {
+			if (buf != stackBuffer) {
 				j9mem_free_memory(buf);
 			}
 		}

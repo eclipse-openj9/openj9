@@ -366,7 +366,7 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 			return NULL;
 		}
 		if (NULL != utf8Length) {
-			*utf8Length = length;
+			*utf8Length = length - 1;
 		}
 	}
 	return strUTF;

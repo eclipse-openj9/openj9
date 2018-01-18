@@ -824,7 +824,7 @@ outOfBounds:
 			goto outOfBounds;
 		}
 		JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_REGION, (UDATA)length * sizeof(U_16));
-		copyStringToUTF8Helper(currentThread, stringObject, J9_STR_NONE, (U_8 *)buf, UDATA_MAX);
+		copyStringToUTF8WithMemAlloc(currentThread, stringObject, J9_STR_NONE, "", buf, UDATA_MAX, NULL);
 		JAVA_OFFLOAD_SWITCH_OFF_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_REGION, (UDATA)length * sizeof(U_16));
 	}
 	VM_VMAccess::inlineExitVMToJNI(currentThread);

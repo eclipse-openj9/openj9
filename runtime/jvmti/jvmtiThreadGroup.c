@@ -103,16 +103,11 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 			threadGroupObject = *((j9object_t*) group);
 
 			groupName = J9VMJAVALANGTHREADGROUP_NAME(currentThread, threadGroupObject);
-			/* Allocate the maximum possible bytes per UTF8 character (3 bytes), + 1 for '\0' at the end of the string */
-			nameLen = J9VMJAVALANGSTRING_LENGTH(currentThread, groupName) * 3 + 1;
-			name = j9mem_allocate_memory(nameLen, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-			if (name == NULL) {
+			name = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, groupName, J9_STR_NONE, "", name, 0, NULL);
+
+			if (NULL == name) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
 			} else {
-				if (UDATA_MAX == vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, groupName, J9_STR_NONE, (U_8*)name, nameLen)) {
-					rc = JVMTI_ERROR_INTERNAL;
-					goto done;
-				}
 				info_ptr->name = name;
 				info_ptr->parent = (jthreadGroup) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t)J9VMJAVALANGTHREADGROUP_PARENT(currentThread, threadGroupObject));
 				info_ptr->max_priority = J9VMJAVALANGTHREADGROUP_MAXPRIORITY(currentThread, threadGroupObject);

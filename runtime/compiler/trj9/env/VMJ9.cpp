@@ -5433,6 +5433,7 @@ TR_J9VMBase::getStringUTF8(uintptrj_t objectPointer, char *buffer, intptrj_t buf
    TR_ASSERT(haveAccess(), "Must have VM access to call getStringAscii");
    TR_ASSERT(objectPointer && buffer, "assertion failure");
    TR_ASSERT(bufferSize >= 1+getStringUTF8Length(objectPointer), "getStringUTF8 buffer must be large enough");
+
    if (UDATA_MAX == vmThread()->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread(), (j9object_t)objectPointer, J9_STR_NONE, (U_8*)buffer, UDATA_MAX))
       {
       buffer = NULL;

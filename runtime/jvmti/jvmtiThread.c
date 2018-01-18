@@ -441,22 +441,15 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 				/* java.lang.thread may not have a ref to vm thread. for example, after it gets terminated.
 				 * but we still want to return the name, so we retrieve it from the thread object itself. */
 				j9object_t threadName = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
-				size_t threadNameLen = (threadName == NULL) ? 1 : (J9VMJAVALANGSTRING_LENGTH(currentThread, threadName) * 3) + 1;
-
-				/* Be sure to allocate at least one byte for the nul termination */
-
-				name = j9mem_allocate_memory(threadNameLen, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-				if (name == NULL) {
-					/* failed to allocate memory, so release VMTthread and exit */
-					rc = JVMTI_ERROR_OUT_OF_MEMORY;
-					goto done;
-				}
 
 				if (threadName == NULL) {
+					name = j9mem_allocate_memory(1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 					name[0] = '\0';
 				} else {
-					if (UDATA_MAX == vm->internalVMFunctions->copyStringToUTF8Helper(currentThread, threadName, J9_STR_NONE, (U_8*)name, threadNameLen)) {
-						rc = JVMTI_ERROR_INTERNAL;
+					name = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, threadName, J9_STR_NONE, "", name, 0, NULL);
+
+					if (NULL == name) {
+						rc = JVMTI_ERROR_OUT_OF_MEMORY;
 						goto done;
 					}
 				}

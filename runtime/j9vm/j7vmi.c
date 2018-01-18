@@ -2551,19 +2551,11 @@ jvmDefineClassHelper(JNIEnv *env, jobject classLoaderObject,
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
 	/* Allocate and initialize a UTF8 copy of the Unicode class-name */
-	if (className == NULL) {
-		utf8Length = 0;
-		utf8Name = NULL;
-	} else {
-		utf8Length = vmFuncs->getStringUTF8Length(currentThread, J9_JNI_UNWRAP_REFERENCE(className));
+	if (className != NULL) {
 		/* For now, use malloc, but this should use stack allocation for short class-names */
-		utf8Name = j9mem_allocate_memory(utf8Length+1, J9MEM_CATEGORY_CLASSES);
-		if (utf8Name == NULL) {
+		utf8Name = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(className), J9_STR_XLAT, "", utf8Name, 0, &utf8Length);
+		if (NULL == utf8Name) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-			goto done;
-		}
-		if (UDATA_MAX == vmFuncs->copyStringToUTF8Helper(currentThread, J9_JNI_UNWRAP_REFERENCE(className), J9_STR_XLAT, utf8Name, utf8Length + 1)) {
-			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 			goto done;
 		}
 	}
