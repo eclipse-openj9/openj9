@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,6 @@ import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_MET
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_LONG;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHODHANDLE;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHOD_TYPE;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_SHARED_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STATIC_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STRING;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_UNUSED;
@@ -54,7 +53,6 @@ import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.BCNames;
 import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
-import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.J9ROMFieldShapeIterator;
 import com.ibm.j9ddr.vm29.j9.OptInfo;
 import com.ibm.j9ddr.vm29.j9.ROMHelp;
@@ -68,11 +66,9 @@ import com.ibm.j9ddr.vm29.pointer.StructurePointer;
 import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9EnclosingObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ExceptionHandlerPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ExceptionInfoPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9LineNumberPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodDebugInfoPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodParameterPointer;
@@ -89,12 +85,9 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodTypeRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMNameAndSignaturePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMStringRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VariableInfoPointer;
-import com.ibm.j9ddr.vm29.pointer.helper.J9JavaVMHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodDebugInfoHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
-import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9EnclosingObject;
 import com.ibm.j9ddr.vm29.structure.J9ExceptionHandler;
 import com.ibm.j9ddr.vm29.structure.J9ExceptionInfo;
@@ -107,6 +100,7 @@ import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
+
 /**
  * Walk every slot and sections of a ROMClass
  * @author jeanpb

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,6 @@ import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INSTANCE_METH
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INT;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_LONG;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_SHARED_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STATIC_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STRING;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_UNUSED;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,15 +40,11 @@ import com.ibm.dtfj.java.JavaClass;
 import com.ibm.dtfj.java.JavaClassLoader;
 import com.ibm.dtfj.java.JavaObject;
 import com.ibm.j9ddr.view.dtfj.J9DDRDTFJUtils;
-import com.ibm.j9ddr.view.dtfj.image.J9DDRCorruptData;
 import com.ibm.j9ddr.view.dtfj.java.helper.DTFJJavaFieldHelper;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffset;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
-import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
 
 public class DTFJJavaFieldInstance extends DTFJJavaField {
