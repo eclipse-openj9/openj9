@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,6 @@ import com.ibm.j9ddr.tools.ddrinteractive.BaseStructureFormatter;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.FormatWalkResult;
 import com.ibm.j9ddr.tools.ddrinteractive.IFieldFormatter;
-import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffset;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator;
@@ -48,7 +47,6 @@ import com.ibm.j9ddr.vm29.pointer.I16Pointer;
 import com.ibm.j9ddr.vm29.pointer.I32Pointer;
 import com.ibm.j9ddr.vm29.pointer.I64Pointer;
 import com.ibm.j9ddr.vm29.pointer.ObjectReferencePointer;
-import com.ibm.j9ddr.vm29.pointer.StructurePointer;
 import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U64Pointer;
@@ -62,13 +60,9 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ClassLoaderHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9IndexableObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
-import com.ibm.j9ddr.vm29.structure.J9FieldFlags;
 import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;

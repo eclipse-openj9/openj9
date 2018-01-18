@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@ import java.util.Iterator;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.InvalidDataTypeException;
 import com.ibm.j9ddr.vm29.structure.J9Class;
-import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9JavaClassFlags;
 import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffset;
@@ -51,7 +50,6 @@ import com.ibm.j9ddr.vm29.pointer.AbstractPointer;
 import com.ibm.j9ddr.vm29.pointer.ObjectReferencePointer;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
-import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
@@ -77,7 +75,6 @@ import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 import static com.ibm.j9ddr.vm29.tools.ddrinteractive.gccheck.CheckBase.*;
-import static com.ibm.j9ddr.vm29.tools.ddrinteractive.gccheck.ScanFormatter.formatPointer;
 import static com.ibm.j9ddr.vm29.structure.J9MemorySegment.*;
 import static com.ibm.j9ddr.vm29.structure.J9Object.*;
 import static com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC;

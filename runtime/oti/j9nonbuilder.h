@@ -950,23 +950,6 @@ typedef struct J9CudaGlobals {
 	jmethodID runnable_run;
 } J9CudaGlobals;
 
-#if defined(J9VM_OPT_RESOURCE_MANAGED)
-
-typedef struct J9ResourceManagementGlobals {
-	UDATA flags;
-	void*  ( *j9rcm_vrc_handle_resolver)(void*,UDATA) ;
-	void* resourceManager;
-	void* thrHookHandlerList;
-} J9ResourceManagementGlobals;
-/* @ddr_namespace: map_to_type=J9ClassList */
-#define J9_RCM_DEBUG_ENABLED  2
-#define J9_RCM_TENANT_CONSUMER  16
-#define J9_RCM_ENABLED  1
-#define J9_RCM_THREAD_CONSUMER  32
-#define J9_RCM_AUTOPROCESS_CONSUMER  64
-
-#endif /* J9VM_OPT_RESOURCE_MANAGED */
-
 #if defined(J9VM_OPT_SHARED_CLASSES)
 
 typedef struct J9SharedClassTransaction {

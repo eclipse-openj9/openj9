@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +45,6 @@ import com.ibm.j9ddr.vm29.j9.gc.GCExtensions;
 import com.ibm.j9ddr.vm29.j9.gc.GCHeapRegionDescriptor;
 import com.ibm.j9ddr.vm29.j9.gc.GCHeapRegionIterator;
 import com.ibm.j9ddr.vm29.j9.gc.GCObjectHeapIterator;
-import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.MM_GCExtensionsPointer;

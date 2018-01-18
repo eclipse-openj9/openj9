@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,6 @@ import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_MET
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_LONG;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHOD_TYPE;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHODHANDLE;
-import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_SHARED_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STATIC_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_STRING;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_UNUSED;
@@ -41,10 +40,7 @@ import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_UNUSED8;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_BITS_PER_DESCRIPTION;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_DESCRIPTIONS_PER_U32;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_DESCRIPTION_MASK;
-import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_JAVA_CLASS_ARRAY;
-import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_JAVA_CLASS_HOT_SWAPPED_OUT;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagObject;
-import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldFlagResolved;
 import static com.ibm.j9ddr.vm29.structure.J9FieldFlags.J9FieldSizeDouble;
 
 import java.util.HashMap;
@@ -77,11 +73,9 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9RAMInterfaceMethodRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9RAMMethodHandleRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9RAMMethodRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9RAMMethodTypeRefPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9RAMSpecialMethodRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9RAMStaticFieldRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9RAMStaticMethodRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9RAMStringRefPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9RAMVirtualMethodRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
@@ -98,16 +92,14 @@ import com.ibm.j9ddr.vm29.structure.J9RAMInterfaceMethodRef;
 import com.ibm.j9ddr.vm29.structure.J9RAMMethodHandleRef;
 import com.ibm.j9ddr.vm29.structure.J9RAMMethodRef;
 import com.ibm.j9ddr.vm29.structure.J9RAMMethodTypeRef;
-import com.ibm.j9ddr.vm29.structure.J9RAMSpecialMethodRef;
-import com.ibm.j9ddr.vm29.structure.J9RAMStaticFieldRef;
 import com.ibm.j9ddr.vm29.structure.J9RAMStaticMethodRef;
 import com.ibm.j9ddr.vm29.structure.J9RAMStringRef;
-import com.ibm.j9ddr.vm29.structure.J9RAMVirtualMethodRef;
 import com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.IClassWalkCallbacks.SlotType;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
+
 /**
  * Walk every slot and sections of a RAMClass
  * The sections are:<br>

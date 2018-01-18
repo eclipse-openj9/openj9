@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,13 +91,6 @@ computeJCLRuntimeFlags( J9JavaVM* vm)
 #ifdef J9VM_OPT_REFLECT
 	flags |= JCL_RTFLAG_OPT_REFLECT;
 #endif
-
-#ifdef J9VM_OPT_RESOURCE_MANAGED
-	if (NULL != vm->resourceManagementGlobals) {
-		flags |= JCL_RTFLAG_OPT_RESOURCE_MANAGED;
-	}
-#endif
-
 
 	return flags;
 }

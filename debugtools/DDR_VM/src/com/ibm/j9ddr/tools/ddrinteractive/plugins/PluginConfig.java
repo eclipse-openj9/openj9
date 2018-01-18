@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
 
 package com.ibm.j9ddr.tools.ddrinteractive.plugins;
 
-import java.io.File;
 import java.net.URL;
 
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;

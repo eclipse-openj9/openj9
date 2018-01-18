@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,8 +21,6 @@
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.pointer.helper;
 
-import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_JAVA_CLASS_RAM_SHAPE_SHIFT;
-import static com.ibm.j9ddr.vm29.structure.J9Object.OBJECT_HEADER_SHAPE_MASK;
 import static com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState.*;
 
 import java.lang.reflect.Modifier;
@@ -33,7 +31,6 @@ import java.util.Map;
 import com.ibm.j9ddr.AddressedCorruptDataException;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.InvalidDataTypeException;
-import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffset;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffsetIterator;
@@ -52,7 +49,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.structure.J9Class;
 import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
-import com.ibm.j9ddr.vm29.structure.J9JavaClassFlags;
 import com.ibm.j9ddr.vm29.structure.J9Method;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
