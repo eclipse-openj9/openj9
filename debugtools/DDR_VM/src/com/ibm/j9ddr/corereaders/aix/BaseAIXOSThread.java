@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ibm.j9ddr.CorruptDataException;
-import com.ibm.j9ddr.DataUnavailableException;
 import com.ibm.j9ddr.corereaders.memory.IProcess;
 import com.ibm.j9ddr.corereaders.memory.MemoryFault;
 import com.ibm.j9ddr.corereaders.osthread.IOSStackFrame;

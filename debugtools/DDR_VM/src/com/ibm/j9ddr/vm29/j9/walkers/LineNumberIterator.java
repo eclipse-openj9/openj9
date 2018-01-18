@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,6 @@ import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U8;
 import com.ibm.j9ddr.vm29.events.EventManager;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
-import com.ibm.j9ddr.vm29.j9.OptInfo;
 
 public abstract class LineNumberIterator implements Iterator<LineNumber> {
 

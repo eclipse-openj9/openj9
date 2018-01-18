@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,8 +26,6 @@ import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.*;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMConstantPoolItemPointer;
-import static com.ibm.j9ddr.vm29.structure.J9Object.*;
-
 
 public class J9ROMClassHelper {
 	public static J9ROMConstantPoolItemPointer constantPool(J9ROMClassPointer romclass) {

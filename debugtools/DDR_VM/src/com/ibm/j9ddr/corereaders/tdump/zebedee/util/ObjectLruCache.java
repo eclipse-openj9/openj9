@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2013 IBM Corp. and others
+ * Copyright (c) 2006, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,10 +21,6 @@
  *******************************************************************************/
 
 package com.ibm.j9ddr.corereaders.tdump.zebedee.util;
-
-import java.util.Random;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * This class provides an LRU (Least Recently Used) cache which maps integer keys to object values.
