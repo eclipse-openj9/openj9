@@ -1879,7 +1879,6 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 		
 	threadObject = PEEK_OBJECT_IN_SPECIAL_FRAME(currentThread, 3);
 	if (J2SE_SHAPE(vm) == J2SE_SHAPE_RAW) {
-		PORT_ACCESS_FROM_JAVAVM(vm);
 		j9object_t unicodeChars = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
 
 		if (NULL != unicodeChars) {

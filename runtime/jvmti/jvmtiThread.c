@@ -432,7 +432,7 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
 		if (rc == JVMTI_ERROR_NONE) {
-			char * name;
+			char* name = NULL;
 			j9object_t threadObject = (thread == NULL) ? targetThread->threadObject : *((j9object_t*) thread);
 			jobject threadGroup = NULL;
 			jobject contextClassLoader;

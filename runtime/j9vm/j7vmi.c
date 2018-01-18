@@ -2644,7 +2644,7 @@ done:
 
 	vmFuncs->internalReleaseVMAccess(currentThread);
 
-	if (utf8NameStackBuffer != utf8Name) {
+	if ((U_8*)utf8NameStackBuffer != utf8Name) {
 		j9mem_free_memory(utf8Name);
 	}
 

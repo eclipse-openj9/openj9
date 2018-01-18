@@ -84,14 +84,12 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 	if (JAVAVM_FROM_ENV(env)->jclFlags & J9_JCL_FLAG_THREADGROUPS) {
 		J9JavaVM * vm = JAVAVM_FROM_ENV(env);
 		J9VMThread * currentThread;
-		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		rc = getCurrentVMThread(vm, &currentThread);
 		if (rc == JVMTI_ERROR_NONE) {
 			j9object_t threadGroupObject;
 			j9object_t groupName;
-			char * name;
-			UDATA nameLen = 0;
+			char* name = NULL;
 
 			vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
