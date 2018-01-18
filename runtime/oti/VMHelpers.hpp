@@ -834,7 +834,7 @@ done:
 	 * @returns the number of bytes required to encode the character as UTF8
 	 */
 	static VMINLINE UDATA
-	encodedUTF8Length(I_8 unicode)
+	encodedUTF8LengthI8(I_8 unicode)
 	{
 		return (unicode >= 0x01) && (unicode <= 0x7F) ? 1 : 2;
 	}
