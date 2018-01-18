@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -824,6 +824,19 @@ done:
 			length = 3;
 		}
 		return length;
+	}
+
+	/**
+	 * Determine the number of UTF8 bytes required to encode a unicode character.
+	 *
+	 * @param unicode[in] the unicode character
+	 *
+	 * @returns the number of bytes required to encode the character as UTF8
+	 */
+	static VMINLINE UDATA
+	encodedUTF8Length(I_8 unicode)
+	{
+		return (unicode >= 0x01) && (unicode <= 0x7F) ? 1 : 2;
 	}
 
 	/**
