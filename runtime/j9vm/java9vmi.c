@@ -381,11 +381,11 @@ trcModulesCreationPackage(J9VMThread * currentThread, J9Module * fromModule, j9o
 	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
 	char moduleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *moduleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-		currentThread, fromModule->moduleName, J9_STR_NONE, "", moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+		currentThread, fromModule->moduleName, J9_STR_NONE, "", moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 #if J9VM_JAVA9_BUILD < 156
 	char packageNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *packageNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-		currentThread, package, J9_STR_NONE, "", packageNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+		currentThread, package, J9_STR_NONE, "", packageNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 #endif /* J9VM_JAVA9_BUILD < 156 */
 
 	if (NULL != moduleNameUTF) {
@@ -627,14 +627,14 @@ trcModulesAddModuleExportsToAll(J9VMThread * currentThread, J9Module * fromModul
 	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
 	char fromModuleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *fromModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-		currentThread, fromModule->moduleName, J9_STR_NONE, "", fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+		currentThread, fromModule->moduleName, J9_STR_NONE, "", fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	if (NULL != fromModuleNameUTF) {
 #if J9VM_JAVA9_BUILD >= 156
 		Trc_MODULE_add_module_exports_to_all(currentThread, package, fromModuleNameUTF);
 #else
 		char packageNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 		char *packageNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			currentThread, J9_JNI_UNWRAP_REFERENCE(package), J9_STR_NONE, "", packageNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+			currentThread, J9_JNI_UNWRAP_REFERENCE(package), J9_STR_NONE, "", packageNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 		if (NULL != packageNameUTF) {
 			Trc_MODULE_add_module_exports_to_all(currentThread, packageNameUTF, fromModuleNameUTF);
 			if (packageNameBuf != packageNameUTF) {
@@ -682,14 +682,14 @@ trcModulesAddModuleExportsToAllUnnamed(J9VMThread * currentThread, J9Module * fr
 	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
 	char fromModuleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *fromModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-		currentThread, fromModule->moduleName, J9_STR_NONE, "", fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+		currentThread, fromModule->moduleName, J9_STR_NONE, "", fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	if (NULL != fromModuleNameUTF) {
 #if J9VM_JAVA9_BUILD >= 156
 		Trc_MODULE_add_module_exports_to_all_unnamed(currentThread, package, fromModuleNameUTF);
 #else
 		char packageNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 		char *packageNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			currentThread, J9_JNI_UNWRAP_REFERENCE(package), J9_STR_NONE, "", packageNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+			currentThread, J9_JNI_UNWRAP_REFERENCE(package), J9_STR_NONE, "", packageNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 		if (NULL != packageNameUTF) {
 			Trc_MODULE_add_module_exports_to_all_unnamed(currentThread, packageNameUTF, fromModuleNameUTF);
 			if (packageNameBuf != packageNameUTF) {
@@ -778,16 +778,16 @@ trcModulesAddModuleExports(J9VMThread *currentThread, J9Module *fromModule, jstr
 	char fromModuleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char toModuleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *fromModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-		currentThread, fromModule->moduleName, J9_STR_NONE, "", fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+		currentThread, fromModule->moduleName, J9_STR_NONE, "", fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	char *toModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-		currentThread, toModule->moduleName, J9_STR_NONE, "", toModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+		currentThread, toModule->moduleName, J9_STR_NONE, "", toModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	if ((NULL != fromModuleNameUTF) && (NULL != toModuleNameUTF)) {
 #if J9VM_JAVA9_BUILD >= 156
 		Trc_MODULE_add_module_exports(currentThread, package, fromModuleNameUTF, toModuleNameUTF);
 #else
 		char packageNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 		char *packageNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			currentThread, J9_JNI_UNWRAP_REFERENCE(package), J9_STR_NONE, "", packageNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+			currentThread, J9_JNI_UNWRAP_REFERENCE(package), J9_STR_NONE, "", packageNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 		if (NULL != packageNameUTF) {
 			Trc_MODULE_add_module_exports(currentThread, packageNameUTF, fromModuleNameUTF, toModuleNameUTF);
 			if (packageNameBuf != packageNameUTF) {
@@ -977,7 +977,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jstring version, jstring location
 					char *nameUTF = buf;
 
 					nameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-						currentThread, moduleName, J9_STR_NONE, "", buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+						currentThread, moduleName, J9_STR_NONE, "", buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 					if (NULL == nameUTF) {
 						success = FALSE;
 						goto nativeOOM;
@@ -1154,12 +1154,12 @@ trcModulesAddReadsModule(J9VMThread *currentThread, jobject toModule, J9Module *
 	char fromModuleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char toModuleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *fromModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-		currentThread, j9FromMod->moduleName, J9_STR_NONE, "", fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+		currentThread, j9FromMod->moduleName, J9_STR_NONE, "", fromModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	char *toModuleNameUTF = NULL;
 
 	if (NULL != toModule) {
 		toModuleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			currentThread, j9ToMod->moduleName, J9_STR_NONE, "", toModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+			currentThread, j9ToMod->moduleName, J9_STR_NONE, "", toModuleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	} else {
 #define LOOSE_MODULE   "loose "
 		PORT_ACCESS_FROM_VMC(currentThread);
@@ -1321,7 +1321,7 @@ JVM_IsExportedToModule(JNIEnv * env, jobject fromModule, jstring package, jobjec
 		char buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 		char *nameUTF = buf;
 		nameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			currentThread, pkgObject, J9_STR_NONE, "", buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+			currentThread, pkgObject, J9_STR_NONE, "", buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 		if (NULL == nameUTF) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
@@ -1361,14 +1361,14 @@ trcModulesAddModulePackage(J9VMThread *currentThread, J9Module *j9mod, jstring p
 	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
 	char moduleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *moduleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-		currentThread, j9mod->moduleName, J9_STR_NONE, "", moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+		currentThread, j9mod->moduleName, J9_STR_NONE, "", moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	if (NULL != moduleNameUTF) {
 #if J9VM_JAVA9_BUILD >= 156
 		Trc_MODULE_add_module_package(currentThread, package, moduleNameUTF);
 #else
 		char packageNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 		char *packageNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			currentThread, J9_JNI_UNWRAP_REFERENCE(package), J9_STR_NONE, "", packageNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+			currentThread, J9_JNI_UNWRAP_REFERENCE(package), J9_STR_NONE, "", packageNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 		if (NULL != packageNameUTF) {
 			Trc_MODULE_add_module_package(currentThread, packageNameUTF, moduleNameUTF);
 			if (packageNameBuf != packageNameUTF) {

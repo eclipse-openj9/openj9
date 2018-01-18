@@ -1836,7 +1836,7 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 		moduleNameUTF = moduleNameBuf;
 	} else {
 		moduleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			vmThread, ramClass->module->moduleName, J9_STR_NONE, "", moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+			vmThread, ramClass->module->moduleName, J9_STR_NONE, "", moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	}
 	j9object_t classLoaderName = NULL;
 	if (NULL != classLoader->classLoaderObject) {
@@ -1844,7 +1844,7 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 	}
 	if (NULL != classLoaderName) {
 		classLoaderNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			vmThread, classLoaderName, J9_STR_NONE, "", classLoaderNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+			vmThread, classLoaderName, J9_STR_NONE, "", classLoaderNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	} else {
 #define UNNAMED_NAMED_MODULE   "system classloader"
 		memcpy(classLoaderNameBuf, UNNAMED_NAMED_MODULE, sizeof(UNNAMED_NAMED_MODULE));

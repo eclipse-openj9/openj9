@@ -213,7 +213,7 @@ searchClassInModule(J9VMThread * vmThread, J9Module * j9module, U_8 * className,
 		moduleName = JAVA_BASE_MODULE;
 	} else {
 		moduleName = J9_VM_FUNCTION(vmThread, copyStringToUTF8WithMemAlloc)(
-			vmThread, j9module->moduleName, J9_STR_NONE, "", moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+			vmThread, j9module->moduleName, J9_STR_NONE, "", moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 		if (NULL == moduleName) {
 			rc = -1;
 			goto _end;

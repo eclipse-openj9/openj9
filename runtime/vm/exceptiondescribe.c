@@ -149,13 +149,13 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, J9ROMClass *rom
 
 				if ((NULL != module) && (module != vm->javaBaseModule)) {
 					moduleNameUTF = copyStringToUTF8WithMemAlloc(
-						vmThread, module->moduleName, J9_STR_NONE, "", nameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+						vmThread, module->moduleName, J9_STR_NONE, "", nameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 					if (nameBuf != moduleNameUTF) {
 						freeModuleName = TRUE;
 					}
 					if (NULL != moduleNameUTF) {
 						moduleVersionUTF = copyStringToUTF8WithMemAlloc(
-							vmThread, module->version, J9_STR_NONE, "", versionBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+							vmThread, module->version, J9_STR_NONE, "", versionBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 						if (versionBuf != moduleVersionUTF) {
 							freeModuleVersion = TRUE;
 						}

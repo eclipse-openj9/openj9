@@ -269,13 +269,12 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 			}
 		}
 
-		utf8Name = copyStringToUTF8WithMemAlloc(currentThread, className, J9_STR_XLAT, "", localBuf, sizeof(localBuf));
+		utf8Name = copyStringToUTF8WithMemAlloc(currentThread, className, J9_STR_XLAT, "", localBuf, sizeof(localBuf), &utf8Length);
 		if (NULL == utf8Name) {
 			/* Throw out-of-memory */
 			setNativeOutOfMemoryError(currentThread, 0, 0);
 			return NULL;
 		}
-		utf8Length = (UDATA)getStringUTF8Length(currentThread, className);
 		result = internalFindClassInModule(currentThread, j9module, (U_8 *)utf8Name, utf8Length, classLoader, options);
 		if (utf8Name != localBuf) {
 			j9mem_free_memory(utf8Name);
