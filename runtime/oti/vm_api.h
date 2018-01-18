@@ -2797,22 +2797,6 @@ copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, BOOLEAN nullTerm
 
 /**
  * !!! this method is for backwards compatibility with JIT usage !!!
- * Copy a Unicode String to a UTF8 data buffer with NULL termination.
- *
- * @param[in] vmThread the current J9VMThread
- * @param[in] string a string object to be copied, it can't be NULL
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
- * @param[in] utf8Data a utf8 data buffer
- * @param[in] utf8Length the size of the utf8 data buffer
- *
- * @return 1 if a failure occurred, otherwise 0 for success
- */
-UDATA
-copyStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, UDATA utf8Length);
-
-
-/**
- * !!! this method is for backwards compatibility with JIT usage !!!
  * Copy a Unicode String to a UTF8 data buffer without NULL termination.
  * dest is assumed to have enough length - the easiest way to ensure this is to pass a buffer with 1.5 * string length in it
  *

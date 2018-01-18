@@ -238,7 +238,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	prepareForExceptionThrow,
 	copyUTF8ToUnicode,
 	verifyQualifiedName,
-	copyStringToUTF8,
 	copyStringToUTF8Helper,
 	sendCompleteInitialization,
 	J9RegisterAsyncEvent,
