@@ -370,3 +370,5 @@ TraceEvent=Trc_BCU_readFileFromJImage_LookupPassed_V1 NoEnv Overhead=1 Level=2 T
 TraceEvent=Trc_BCU_searchClassInCPEntry_UnexpectedCPE Noenv Overhead=1 Level=3 Template="BCU searchClassInCPEntry did not expect class path entry %s type %i to be searched for the class"
 
 TraceException=Trc_BCU_j9bcutil_readClassFileBytes_MaxCPCount NoEnv Overhead=1 Level=1 Template="No new cpEntry can be allocated for Unsafe.defineAnonClass because constantPoolCount is at MAX_CONSTANT_POOL_SIZE"
+
+TraceException=Trc_BCU_internalDefineClass_orphanNotFound Overhead=1 Level=1 Template="orphan ROM class %p not found in table, table entry was %p"
