@@ -26,8 +26,8 @@ bin
 test_output_*
 
 # misc auto generated files
-autoGenTest.mk
-TestConfig/jvmTest.mk
+autoGen.mk
+TestConfig/utils.mk
 TestConfig/specToPlat.mk
 TestConfig/*.log
 TestConfig/*.tap

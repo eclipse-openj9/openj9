@@ -109,27 +109,17 @@ make test
 
   * sanity tests
     ```
-    make sanity
-    ```
-
-  * extended tests
-    ```
-    make extended
+    make _sanity
     ```
 
   * external tests
     ```
-    make external
+    make _external
     ```
 
   * perf tests
     ```
-    make perf
-    ```
-
-  * openjdk tests
-    ```
-    make openjdk
+    make _perf
     ```
 
   * a specific individual test
@@ -139,7 +129,8 @@ make test
 
   * a directory of tests
     ```
-    make test_NameOfTestDir (for example: make test_Jsr292 or make test_cmdLineTests.verbosetest, with nested directories separated by '.')
+    cd path/to/directory
+    make -f autoGen.mk testTarget  (for example: cd test/TestExample; make -f autoGen.mk _sanity)
     ```
 
   * component specific tests (WIP)
@@ -185,6 +176,19 @@ make test
     in the corresponding test project.
 
 5. Exclude tests:
+
+  * exclude test target in playlist.xml
+
+    Add 
+    ```
+    <disabled>Reason for disabling test, preferably includes issue number<disabled>
+    (for example: <disabled>issue #1 test failed due to OOM<disabled>)
+    ```
+    inside the
+    ```
+    <test>
+    ```
+    element that you want to exclude.
 
   * temporarily on all platforms
 
