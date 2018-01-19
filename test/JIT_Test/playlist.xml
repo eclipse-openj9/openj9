@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -218,6 +218,29 @@
 	NewInstanceTest,\
 	signExtensionATest,\
 	VPTypeTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.arm</platformRequirements>
+		<tags>
+			<tag>sanity</tag>
+		</tags>
+		<subsets>
+			<subset>SE80</subset>
+			<subset>SE90</subset>
+		</subsets>
+	</test>
+
+	<test>
+		<testCaseName>StringPeepholeTest</testCaseName>
+		<variations>
+			<variation>-XX:-EnableHCR -Xjit:count=0,optLevel=hot</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames \
+	StringPeepholeTest \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
