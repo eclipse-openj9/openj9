@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2016, 2017 IBM Corp. and others
+#  Copyright (c) 2016, 2018 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,7 +84,6 @@ endif
 # if TEST_RESULTSTORE is enabled, failed test will uploaded to vmfarm result store
 #######################################
 ifneq ($(TEST_RESULTSTORE),)
-$(info TEST_RESULTSTORE is enabled. This is a J9 Lab specific setting. BUILD_ID, JOB_ID and JAVATEST_ROOT are needed.)
 ifndef BUILD_ID
 $(error BUILD_ID is needed for uploading files to result store)
 endif
@@ -94,7 +93,6 @@ endif
 ifndef JAVATEST_ROOT
 $(error JAVATEST_ROOT is needed for uploading files to result store)
 endif
-$(info JAVATEST_ROOT is $(JAVATEST_ROOT))
 AXXONRESULTSSERVER=vmfarm.ottawa.ibm.com:31
 TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); else perl $(Q)-I$(JAVATEST_ROOT)$(D)lib$(D)perl$(Q) -mResultStore::Uploader -e $(Q)ResultStore::Uploader::upload('.',$(BUILD_ID),$(JOB_ID),'$(AXXONRESULTSSERVER)','results-$(JOB_ID)')$(Q); $(ECHO); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); fi
 endif

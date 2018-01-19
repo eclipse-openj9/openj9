@@ -115,7 +115,7 @@ internalDefineClass(
 	}
 
 	if (!isAnonFlagSet) {
-		/* See if there's already an orphan romClass available */
+		/* See if there's already an orphan romClass available - still own classTableMutex at this point */
 		if (NULL != classLoader->romClassOrphansHashTable) {
 			orphanROMClass = romClassHashTableFind(classLoader->romClassOrphansHashTable, className, classNameLength);
 			if (NULL != orphanROMClass) {
@@ -168,8 +168,11 @@ internalDefineClass(
 		if (NULL == result) {
 			/* ramClass creation failed - remember the orphan romClass for next time */
 			if (orphanROMClass != romClass) {
-				J9HashTable *hashTable = classLoader->romClassOrphansHashTable;
+				J9HashTable *hashTable = NULL;
 
+				/* All access to the orphan table must be done while holding classTableMutex */
+				omrthread_monitor_enter(vm->classTableMutex);
+				hashTable = classLoader->romClassOrphansHashTable;
 				if (NULL == hashTable) {
 					hashTable = romClassHashTableNew(vm, 16);
 					classLoader->romClassOrphansHashTable = hashTable;
@@ -186,11 +189,23 @@ internalDefineClass(
 						romClassHashTableAdd(hashTable, romClass);
 					}
 				}
+				omrthread_monitor_exit(vm->classTableMutex);
 			}
 		} else if (NULL != orphanROMClass) {
+			J9ROMClass *tableEntry = NULL;
 			/* ramClass creation succeeded - the orphanROMClass is no longer an orphan */
 			Trc_BCU_romClassOrphansHashTableDelete(vmThread, classNameLength, className, orphanROMClass);
-			romClassHashTableDelete(classLoader->romClassOrphansHashTable, orphanROMClass);
+			/* All access to the orphan table must be done while holding classTableMutex.
+			 * Ensure the entry is still in the table before removing it.
+			 */
+			omrthread_monitor_enter(vm->classTableMutex);
+			tableEntry = romClassHashTableFind(classLoader->romClassOrphansHashTable, className, classNameLength);
+			if (tableEntry == orphanROMClass) {
+				romClassHashTableDelete(classLoader->romClassOrphansHashTable, orphanROMClass);
+			} else {
+				Trc_BCU_internalDefineClass_orphanNotFound(vmThread, orphanROMClass, tableEntry);
+			}
+			omrthread_monitor_exit(vm->classTableMutex);
 		}
 	}
 
