@@ -1542,7 +1542,7 @@ typedef struct J9DbgROMClassBuilder {
 	U_8* classFileBuffer;
 	U_8* bufferManagerBuffer;
 	U_8* anonClassNameBuffer;
-	UDATA anonClassNameBufferLength;
+	UDATA anonClassNameBufferSize;
 	struct J9DbgStringInternTable stringInternTable;
 } J9DbgROMClassBuilder;
 
