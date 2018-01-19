@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2740,19 +2740,31 @@ TR_IPBCDataCallGraph::setData(uintptrj_t v, uint32_t freq)
    PORT_ACCESS_FROM_PORT(staticPortLib);
    bool found = false;
    int32_t returnCount = 0;
-   int32_t maxWeight = 0;
+   uint16_t maxWeight = 0;
    J9Class* receiverClass;
 
    for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
       {
       if (_csInfo.getClazz(i) == v)
          {
-         // Check for overflow
+         // check for overflow
          uint16_t newWeight = _csInfo._weight[i] + freq;
          if (newWeight >= _csInfo._weight[i])
+            {
             _csInfo._weight[i] = newWeight;
-         else
-            _csInfo._weight[i] = 0xFFFF;
+            }
+         else // newWeight is a wrap around value
+            {
+            // shift right unsigned 0xFFFF by 1, then add the wrap around value
+            _csInfo._weight[i] = 0x7FFF + newWeight;
+            // shift right the other _weight's, _residueWeight as well as maxWeight by 1
+            for (int32_t j = 0; j < NUM_CS_SLOTS && j != i; j++)
+               {
+               _csInfo._weight[j] = _csInfo._weight[j] >> 1;
+               }
+            _csInfo._residueWeight = _csInfo._residueWeight >> 1;
+            maxWeight = maxWeight >> 1;
+            }
          returnCount = _csInfo._weight[i];
          found = true;
          break;
@@ -2760,7 +2772,7 @@ TR_IPBCDataCallGraph::setData(uintptrj_t v, uint32_t freq)
       else if (_csInfo.getClazz(i) == 0)
          {
          _csInfo.setClazz(i, v);
-         _csInfo._weight[i] += freq;
+         _csInfo._weight[i] = freq;
          returnCount = _csInfo._weight[i];
          found = true;
          break;
@@ -2770,8 +2782,24 @@ TR_IPBCDataCallGraph::setData(uintptrj_t v, uint32_t freq)
          maxWeight = _csInfo._weight[i];
       }
 
-   if (!found && _csInfo._residueWeight >= 0x7FFF)
+   if (!found)
       {
+      uint16_t newWeight = _csInfo._residueWeight + freq;
+      if (newWeight <= 0x7FFF)
+         {
+         _csInfo._residueWeight = newWeight;
+         }
+      else
+         {
+         // shift right _residueWeight,  _weight[] as well as maxWeight by 1
+         _csInfo._residueWeight = 0x3FFF + (newWeight - 0x7FFF);
+         for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
+            {
+            _csInfo._weight[i] = _csInfo._weight[i] >> 1;
+            }
+         maxWeight = maxWeight >> 1;
+         }
+
       if (_csInfo._residueWeight > maxWeight)
          {
          if (lockEntry())
@@ -2790,12 +2818,6 @@ TR_IPBCDataCallGraph::setData(uintptrj_t v, uint32_t freq)
          }
       else
          {
-         // Check for overflow
-         uint16_t newWeight = _csInfo._residueWeight + freq;
-         if (newWeight >= _csInfo._residueWeight)
-            _csInfo._residueWeight = newWeight;
-         else
-            _csInfo._residueWeight = 0xFFFF;
          returnCount = _csInfo._residueWeight;
          }
       }
