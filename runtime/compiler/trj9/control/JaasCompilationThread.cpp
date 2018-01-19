@@ -796,8 +796,9 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
 
          uintptrj_t jniProps = resolvedMethod->getJNIProperties();
          void *jniTargetAddr = resolvedMethod->getJNITargetAddress();
+         bool isInterpreted = resolvedMethod->isInterpreted();
 
-         client->write(resolvedMethod, literals, cpHdr, methodIndex, jniProps, jniTargetAddr);
+         client->write(resolvedMethod, literals, cpHdr, methodIndex, jniProps, jniTargetAddr, isInterpreted);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getRemoteROMClass:

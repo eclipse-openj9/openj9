@@ -45,7 +45,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    // Create client side mirror of this object to use for calls involving RAM data
    TR_ResolvedJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JAASServerMethod*) owningMethod)->_remoteMirror : nullptr;
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot);
-   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uintptrj_t, void*>();
+   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uintptrj_t, void*, bool>();
 
    _remoteMirror = std::get<0>(recv);
 
@@ -62,6 +62,8 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
 
    _jniProperties = std::get<4>(recv);
    _jniTargetAddress = std::get<5>(recv);
+
+   _isInterpreted = std::get<6>(recv);
  
    // initialization from TR_J9Method constructor
    _className = J9ROMCLASS_CLASSNAME(_romClass);
@@ -100,12 +102,6 @@ TR_ResolvedJ9JAASServerMethod::isJNINative()
    return std::get<0>(_stream->read<bool>());
    }
 
-bool
-TR_ResolvedJ9JAASServerMethod::isInterpreted()
-   {
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isInterpreted, _remoteMirror);
-   return std::get<0>(_stream->read<bool>());
-   }
 
 void
 TR_ResolvedJ9JAASServerMethod::setRecognizedMethodInfo(TR::RecognizedMethod rm)

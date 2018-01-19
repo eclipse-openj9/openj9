@@ -2206,6 +2206,8 @@ J9::Options::fePostProcessJIT(void * base)
          // The server can compile with VM access in hand because GC is not a factor here
          // For the same reason we don't have to use TR_EnableYieldVMAccess
          self()->setOption(TR_DisableNoVMAccess); 
+
+         self()->setOption(TR_DisableMethodIsCold); // shady heuristic; better to disable to reduce client/server traffic
          }
       }
 
