@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2010, 2017 IBM Corp. and others
+  Copyright (c) 2010, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,5 +163,40 @@
 	<exclude id="Test 206-aa: Reuse the cache with -Xshareclasses:mprotect=none option and verify that memory protection is disabled." platform="zos_390-64.*">
 		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it.</reason>
 	</exclude>
-	
+	<exclude id="Test 180-a: Create a system dump by using a shared cache with enableBCI option and with a JVMTI agent" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 180-b: Make sure system dump exists." platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 180-c: Verify that Intermediate Class Data is present for non-bootstrap class" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 180-d: Verify that Intermediate Class Data is present for bootstrap class" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 180-g: Verify that Intermediate Class Data is present for non-bootstrap class" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 180-h: Verify that Intermediate Class Data is present for bootstrap class" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 181-b: Create a system dump by using previously created cache in read only mode with a JVMTI agent that has retransformation enabled" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 181-c: Make sure system dump exists." platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 181-d: Verify that Intermediate Class Data is present" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 182-b: Create a system dump using previously created cache in read only mode with a JVMTI agent that has retransformation disabled" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 182-c: Make sure system dump exists." platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
+	<exclude id="Test 182-d: Verify that Intermediate Class Data is present" platform="latest">
+		<reason>This test doesn't work for openj9</reason>
+	</exclude>
 </suite>
