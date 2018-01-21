@@ -93,7 +93,7 @@ proto: ; @echo SUCCESS - All proto files are recompiled
 REQUIRE_VARS=$(foreach VAR,$(1),$(if $($(VAR)),,$(error $(VAR) must be set)))
 
 # Verify SDK pointer for non-cleaning targets
-ifeq (,$(filter clean cleandeps cleandll,$(MAKECMDGOALS)))
+ifeq (,$(filter proto clean cleandeps cleandll,$(MAKECMDGOALS)))
     $(call REQUIRE_VARS,J9SRC)
 endif
 
