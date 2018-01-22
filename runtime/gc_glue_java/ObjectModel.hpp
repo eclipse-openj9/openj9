@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -556,7 +556,7 @@ public:
 	}
 
 	/**
-	 * Extract the size from an unforwarded object.
+	 * Extract the size (as getSizeInElements()) from an unforwarded object
 	 *
 	 * This method will assert if the object is not indexable or has been marked as forwarded.
 	 *
@@ -588,6 +588,37 @@ public:
 #endif
 
 		return size;
+	}
+	
+	/**
+	 * Extract the array layout from preserved info in Forwarded header
+	 * (this mimics getArrayLayout())
+	 *
+	 * @param[in] forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @return the ArrayLayout for the forwarded object
+	 */
+	GC_ArrayletObjectModel::ArrayLayout
+	getPreservedArrayLayout(MM_ForwardedHeader *forwardedHeader)
+	{
+		GC_ArrayletObjectModel::ArrayLayout layout = GC_ArrayletObjectModel::InlineContiguous;
+#if defined(J9VM_GC_HYBRID_ARRAYLETS)
+#if defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER)
+		uint32_t size = forwardedHeader->getPreservedOverlap();
+#else /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */
+		uint32_t size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
+#endif /* defined (OMR_INTERP_COMPRESSED_OBJECT_HEADER) */		
+		
+		if (0 != size) {
+			return layout;
+		}
+#endif /* J9VM_GC_HYBRID_ARRAYLETS */
+
+		/* we know we are dealing with heap object, so we don't need to check against _arrayletRangeBase/Top, like getArrayLayout does */
+		J9Class *clazz = getPreservedClass(forwardedHeader);
+		uintptr_t dataSizeInBytes = _indexableObjectModel->getDataSizeInBytes(clazz, getPreservedIndexableSize(forwardedHeader));
+		layout = _indexableObjectModel->getArrayletLayout(clazz, dataSizeInBytes);
+		
+		return layout;	
 	}
 
 	/**
@@ -626,10 +657,11 @@ public:
 		} else if (hasBeenHashed(getPreservedFlags(forwardedHeader))) {
 			/* The object has been hashed and has not been moved so we must store the previous address into the hashcode slot at hashcode offset. */
 			uintptr_t hashOffset;
-			if (isIndexable(destinationObjectPtr)) {
-				hashOffset = _indexableObjectModel->getHashcodeOffset((J9IndexableObject *)destinationObjectPtr);
+			J9Class *clazz = getPreservedClass(forwardedHeader);
+			if (isIndexable(clazz)) {
+				hashOffset = _indexableObjectModel->getHashcodeOffset(clazz, getPreservedArrayLayout(forwardedHeader), getPreservedIndexableSize(forwardedHeader));
 			} else {
-				hashOffset = _mixedObjectModel->getHashcodeOffset(destinationObjectPtr);
+				hashOffset = _mixedObjectModel->getHashcodeOffset(clazz);
 			}
 			uint32_t *hashCodePointer = (uint32_t*)((uint8_t*) destinationObjectPtr + hashOffset);
 			*hashCodePointer = convertValueToHash(_javaVM, (uintptr_t)forwardedHeader->getObject());
