@@ -138,7 +138,6 @@
 			<class name="org.openj9.test.java.lang.Test_Compiler"/>
 			<class name="org.openj9.test.java.lang.Test_InstantiationError"/>
 			<class name="org.openj9.test.java.lang.Test_InstantiationException"/>
-			<class name="org.openj9.test.java.lang.Test_J9VMInternals"/>
 			<class name="org.openj9.test.java.lang.Test_Object"/>
 			<class name="org.openj9.test.java.lang.Test_OutOfMemoryError"/>
 			<class name="org.openj9.test.java.lang.Test_RuntimePermission"/>
@@ -150,6 +149,11 @@
 			<class name="org.openj9.test.java.lang.Test_ThreadGroup"/>
 			<class name="org.openj9.test.java.lang.Test_Throwable"/>
 			<class name="org.openj9.test.java.lang.Test_VMAccess"/>
+		</classes>
+	</test>
+	<test name="JCL_TEST_Java-Internals">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_J9VMInternals"/>
 		</classes>
 	</test>
 	<test name="JCL_TEST_Java-Lang-Package">
