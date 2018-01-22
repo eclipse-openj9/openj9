@@ -2,6 +2,7 @@
 #define J9_CLIENT_H
 
 #include <grpc++/grpc++.h>
+#include <chrono>
 #include "compile/CompilationTypes.hpp"
 #include "rpc/types.h"
 #include "rpc/ProtobufTypeConvert.hpp"
@@ -14,22 +15,30 @@ namespace JAAS
 class J9ClientStream
    {
 public:
-   J9ClientStream(std::string address)
-      : _stub(J9CompileService::NewStub(grpc::CreateChannel(address, grpc::InsecureChannelCredentials())))
+   J9ClientStream(std::string address, uint32_t timeout=0)
+      : _stub(J9CompileService::NewStub(grpc::CreateChannel(address, grpc::InsecureChannelCredentials()))),
+        _msTimeout(timeout)
       {}
 
 
    void buildCompileRequest(uint64_t clientId, std::string romClassStr, uint32_t mOffset, J9Method *method, J9Class* clazz, TR_Hotness optLevel, std::string detailsStr, J9::IlGeneratorMethodDetailsType detailsType)
       {
       _ctx.reset(new grpc::ClientContext);
-      _stream = _stub->Compile(_ctx.get());
+      _stream = _stub->AsyncCompile(_ctx.get(), &_cq, this);
+      if (!waitOnQueue())
+         throw StreamFailure("Failed to connect to server");
 
       write(clientId, romClassStr, mOffset, method, clazz, optLevel, detailsStr, detailsType);
       }
 
    Status waitForFinish()
       {
-      return _stream->Finish();
+      void *tag;
+      Status status;
+      _stream->Finish(&status, &tag);
+      if (waitOnQueue())
+         return status;
+      return Status::CANCELLED;
       }
 
    template <typename ...T>
@@ -37,22 +46,34 @@ public:
       {
       _clientMsg.set_status(true);
       setArgs<T...>(_clientMsg.mutable_data(), args...);
-      if (!_stream->Write(_clientMsg))
+      _stream->Write(_clientMsg, this);
+      if (!waitOnQueue())
+         {
+         shutdown();
          throw StreamFailure("Client stream failure while doing a write");
+         }
       }
 
    void writeError()
       {
       _clientMsg.set_status(false);
       _clientMsg.mutable_data()->clear_data();
-      if (!_stream->Write(_clientMsg))
+      _stream->Write(_clientMsg, this);
+      if (!waitOnQueue())
+         {
+         shutdown();
          throw StreamFailure("Client stream failure in writeEror()");
+         }
       }
 
    J9ServerMessageType read()
       {
-      if (!_stream->Read(&_serverMsg))
+      _stream->Read(&_serverMsg, this);
+      if (!waitOnQueue())
+         {
+         shutdown();
          throw StreamFailure("Client stream failure while doing a read");
+         }
       return _serverMsg.type();
       }
 
@@ -62,10 +83,41 @@ public:
       return getArgs<T...>(_serverMsg.mutable_data());
       }
 
+   void shutdown()
+      {
+      void *tag;
+      bool ok;
+      _ctx->TryCancel();
+      _cq.Shutdown();
+      while (_cq.Next(&tag, &ok));
+      }
+
 private:
+   std::chrono::system_clock::time_point deadlineFromNow()
+      {
+      return std::chrono::system_clock::now() + std::chrono::milliseconds(_msTimeout);
+      }
+
+   bool waitOnQueue()
+      {
+      void *tag;
+      bool ok;
+      if (_msTimeout == 0)
+         {
+         return _cq.Next(&tag, &ok) && ok;
+         }
+      else
+         {
+         auto nextStatus = _cq.AsyncNext(&tag, &ok, deadlineFromNow());
+         return ok && nextStatus == grpc::CompletionQueue::GOT_EVENT;
+         }
+      }
+
    std::unique_ptr<JAAS::J9CompileService::Stub> _stub;
    std::unique_ptr<grpc::ClientContext> _ctx;
    std::unique_ptr<JAAS::J9ClientReaderWriter> _stream;
+   grpc::CompletionQueue _cq;
+   uint32_t _msTimeout;
 
    // re-useable message objects
    JAAS::J9ClientMessage _clientMsg;
