@@ -44,11 +44,13 @@ my $allSubsets = '';
 my $output = '';
 my $graphSpecs = '';
 my $javaVersion = '';
+my $allImpls = '';
+my $impl = '';
 my $modes_hs = '';
 my $sp_hs = '';
 
 sub runmkgen {
-	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $javaVersion, my $modesxml, my $ottawacsv ) = @_;
+	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $javaVersion, $allImpls, $impl, my $modesxml, my $ottawacsv ) = @_;
 
 	$testRoot = $projectRootDir;
 	if ($output) {
@@ -222,35 +224,53 @@ sub parseXML {
 			}
 			$test{'variation'} = $variation;
 
-			#TODO: temporarily use tag for group and level
-			my $tags = getElementByTag( $testlines, 'tags' );
-			my $tag = getElementsByTag( $testlines, 'tag' );
-			foreach my $eachtag ( @{$tag} ) {
-				if ($eachtag eq 'sanity') {
-					$test{'level'} = 'sanity';
-				} elsif ($eachtag eq 'extended') {
-					$test{'level'} = 'extended';
-				} elsif (grep(/^$eachtag$/, @{$allGroups}) ) {
-					$test{'group'} = $eachtag;
+			$test{'levels'} = getElementsByTag( $testlines, 'level' );
+			# defaults to extended
+			if (!@{$test{'levels'}}) {
+				$test{'levels'} = ['extended'];
+			}
+			foreach my $level ( @{$test{'levels'}} ) {
+				if ( !grep(/^$level$/, @{$allLevels}) ) {
+					die "The level: " . $level . " for test " . $test{'testCaseName'} . " is not valid, the valid level strings are " . join(",", @{$allLevels}) . ".";
 				}
 			}
 
-			#TODO: temporarily defaults to functional
-			if (!defined $test{'group'}) {
-				$test{'group'} = 'functional';
+			$test{'groups'} = getElementsByTag( $testlines, 'group' );
+			# defaults to functional
+			if (!@{$test{'groups'}}) {
+				$test{'groups'} = ['functional'];
+			}
+			foreach my $group ( @{$test{'groups'}} ) {
+				if ( !grep(/^$group$/, @{$allGroups}) ) {
+					die "The group: " . $group . " for test " . $test{'testCaseName'} . " is not valid, the valid group strings are " . join(",", @{$allGroups}) . ".";
+				}
 			}
 
-			#TODO: temporarily defaults to 'sanity'
-			if (!defined $test{'level'}) {
-				$test{'level'} = 'sanity';
+			my $impls = getElementsByTag( $testlines, 'impl' );
+			# defaults to all impls
+			if (!@{$impls}) {
+				$impls = $allImpls;
+			}
+			foreach my $impl ( @{$impls} ) {
+				if ( !grep(/^$impl$/, @{$allImpls}) ) {
+					die "The impl: " . $impl . " for test " . $test{'testCaseName'} . " is not valid, the valid impl strings are " . join(",", @{$allImpls}) . ".";
+				}
+			}
+			# do not generate make taget if impl doesn't match the exported impl
+			if ( !grep(/^$impl$/, @{$impls}) ) {
+				next;
 			}
 
 			my $subsets = getElementsByTag( $testlines, 'subset' );
 			# defaults to all subsets
-			if (!$subsets) {
+			if (!@{$subsets}) {
 				$subsets = $allSubsets;
 			}
-
+			foreach my $subset ( @{$subsets} ) {
+				if ( !grep(/^$subset$/, @{$allSubsets}) ) {
+					die "The subset: " . $subset . " for test " . $test{'testCaseName'} . " is not valid, the valid subset strings are " . join(",", @{$allSubsets}) . ".";
+				}
+			}
 			# do not generate make taget if subset doesn't match javaVersion
 			if ( !grep(/^$javaVersion$/, @{$subsets}) ) {
 				next;
@@ -283,8 +303,6 @@ sub writeTargets {
 	}
 	foreach my $test ( @{ $result->{'tests'} } ) {
 		my $count     = 0;
-		my $level = $test->{'level'};
-		my $group = $test->{'group'};
 		foreach my $var ( @{ $test->{'variation'} } ) {
 			my $jvmoptions = ' ' . $var . ' ';
 			$jvmoptions =~ s/\ NoOptions\ //x;
@@ -360,10 +378,18 @@ sub writeTargets {
 				print $fhOut "$name: JVM_OPTIONS=\$(RESERVED_OPTIONS) \$(EXTRA_OPTIONS)\n";
 			}
 
-			print $fhOut "$name: TEST_GROUP=level.$level\n";
+			my $levelStr = '';
+			foreach my $level (@{$test->{'levels'}}) {
+				if ($levelStr ne '') {
+					$levelStr .= ',';
+				}
+				$levelStr .= "level." . $level;
+			}
+			
+			print $fhOut "$name: TEST_GROUP=" . $levelStr . "\n";
 			my $indent .= "\t";
 			print $fhOut "$name:\n";
-			print $fhOut "$indent\$(MKDIR) -p \$(REPORTDIR);\n";
+			print $fhOut "$indent\@\$(MKTREE) \$(REPORTDIR);\n";
 			print $fhOut "$indent\@echo \"\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			print $fhOut "$indent\@echo \"===============================================\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			print $fhOut "$indent\@echo \"Running test \$\@ ...\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
@@ -406,8 +432,14 @@ sub writeTargets {
 				print $fhOut "endif\n";
 			}
 			print $fhOut "\n.PHONY: $name\n\n";
-			my $groupTargetKey = $level . '.' . $group;
-			push(@{$groupTargets{$groupTargetKey}}, $name);
+
+			foreach my $eachGroup (@{$test->{'groups'}}) {
+				foreach my $eachLevel (@{$test->{'levels'}}) {
+					my $groupTargetKey = $eachLevel . '.' . $eachGroup;
+					push(@{$groupTargets{$groupTargetKey}}, $name);
+				}
+			}
+
 			$count++;
 		}
 	}

@@ -36,10 +36,12 @@ my $modesxml       = "../../resources/modes.xml";
 my $ottawacsv      = "../../resources/ottawa.csv";
 my $graphSpecs     = '';
 my $javaVersion    = '';
+my $impl           = '';
 my $output         = '';
 my @allLevels = ( "sanity", "extended" );
 my @allGroups = ( "functional", "openjdk", "external", "perf", "jck", "system" );
 my @allSubsets = ( "SE80", "SE90", "SE100", "Panama", "Valhalla" );
+my @allImpls = ( "openj9", "hotspot" );
 
 foreach my $argv (@ARGV) {
 	if ( $argv =~ /^\-\-graphSpecs=/ ) {
@@ -47,6 +49,9 @@ foreach my $argv (@ARGV) {
 	}
 	elsif ( $argv =~ /^\-\-javaVersion=/ ) {
 		($javaVersion) = $argv =~ /^\-\-javaVersion=(.*)/;
+	}
+	elsif ( $argv =~ /^\-\-impl=/ ) {
+		($impl) = $argv =~ /^\-\-impl=(.*)/;
 	}
 	elsif ( $argv =~ /^\-\-projectRootDir=/ ) {
 		($projectRootDir) = $argv =~ /^\-\-projectRootDir=(.*)/;
@@ -68,6 +73,7 @@ foreach my $argv (@ARGV) {
 		print "Options:\n"
 		  . "--graphSpecs=<specs>    Comma separated specs that the build will run on.\n"
 		  . "--javaVersion=<version> Java version that the build will run on.\n"
+		  . "--impl=<implementation> Java Implementation, e.g., openj9, hotspot.\n" 
 		  . "--output=<path>         Path to output makefiles.\n"
 		  . "--projectRootDir=<path> Root path for searching playlist.xml.\n"
 		  . "--modesXml=<path>       Path to modes.xml file.\n"
@@ -82,7 +88,7 @@ if ( !$projectRootDir ) {
 	$projectRootDir = getcwd . "/../../..";
 	if ( -e $projectRootDir ) {
 		print
-"projectRootDir is not provided. Set projectRootDir = $projectRootDir\n";
+"projectRootDir is not provided. Using $projectRootDir\n";
 	}
 	else {
 		die
@@ -97,7 +103,12 @@ if ( !$graphSpecs ) {
 if ( !$javaVersion ) {
 	die "Please provide javaVersion!"
 }
+
+if ( $impl ) {
+	
+}
+
 # run make file generator
-runmkgen( $projectRootDir, \@allLevels, \@allGroups, \@allSubsets, $output, $graphSpecs, $javaVersion, $modesxml, $ottawacsv );
+runmkgen( $projectRootDir, \@allLevels, \@allGroups, \@allSubsets, $output, $graphSpecs, $javaVersion, \@allImpls, $impl, $modesxml, $ottawacsv );
 
 print "\nTEST AUTO GEN SUCCESSFUL\n";
