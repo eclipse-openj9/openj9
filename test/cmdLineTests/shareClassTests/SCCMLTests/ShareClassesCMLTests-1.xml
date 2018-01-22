@@ -26,8 +26,7 @@
 
 <!-- Test 1 to Test 52: 68 tests -->
 
-<!-- #### RUN TokenHelperTests SUITE #### -->
-<suite id="Shared Classes CommandLineOptionTests Suite">
+<suite id="Shared Classes CommandLineOptionTests Suite ">
 
 	<!-- Our test modes for this suite -->
 	<variable name="mode204" value="-Xshareclasses:name=ShareClassesCMLTests"/>
@@ -36,11 +35,10 @@
 	<variable name="JAVAC_DIR" value="$JAVA_HOME$$PATHSEP$bin"/>
 	<variable name="CACHE_DIR" value="cacheDir=."/>
 	
-	<variable name="BOOTCLASSPATH" value="-Xbootclasspath/p:.$PATHSEP$Utils$CPDL$."/>
 	<variable name="currentMode" value="$mode204$"/>
 	<variable name="XXShareClassesEnableBCI" value="-XX:ShareClassesEnableBCI"/>
-	
-  	<variable name="CP_HANOI" value="-cp $UTILSJAR$" />
+
+ 	<variable name="CP_HANOI" value="-cp $UTILSJAR$" />
  	<variable name="BOOTCP_HANOI" value="-Xbootclasspath/a:$UTILSJAR$" />
  	<variable name="PROGRAM_HANOI" value="org.openj9.test.ivj.Hanoi 2" />
  	<variable name="BOOTSTRAP_CLASS" value="java/lang/Object" />

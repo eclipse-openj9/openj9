@@ -24,10 +24,9 @@
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<!-- Test 1 to Test 52: 68 tests -->
+<!--  Test 59 to Test 119: 68 tests -->
 
-<!-- #### RUN TokenHelperTests SUITE #### -->
-<suite id="Shared Classes CommandLineOptionTests Suite">
+<suite id="Shared Classes CommandLineOptionTests Suite ">
 
 	<!-- Our test modes for this suite -->
 	<variable name="mode204" value="-Xshareclasses:name=ShareClassesCMLTests"/>
@@ -39,7 +38,6 @@
 	<variable name="JAVAC_DIR" value="$JAVA_HOME$$PATHSEP$bin"/>
 	<variable name="CACHE_DIR" value="cacheDir=."/>
 	
-	<variable name="BOOTCLASSPATH" value="-Xbootclasspath/p:.$PATHSEP$Utils$CPDL$."/>
 	<variable name="currentMode" value="$mode204$"/>
 	<variable name="XXShareClassesEnableBCI" value="-XX:ShareClassesEnableBCI"/>
 	
