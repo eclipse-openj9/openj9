@@ -26,7 +26,7 @@ def BAD_FILES = []
 String HASHES = '###################################'
 
 stage('Line Endings Check') {
-    node ('master') {
+    node ('worker') {
         timestamps {
             git url: SRC_REPO
             sh "git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*"
