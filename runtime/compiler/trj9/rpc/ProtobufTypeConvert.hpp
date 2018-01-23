@@ -126,7 +126,7 @@ namespace JAAS
       static TypeID type;
       using ProtoType = std::string;
 
-      static_assert(std::is_arithmetic<T>::value, "ProtobufTypeConvert for vector of non-fundemental type");
+      static_assert(std::is_trivially_copyable<T>::value, "ProtobufTypeConvert for vector of non-trivially copyable type");
       static_assert(!std::is_same<T, bool>::value, "ProtobufTypeConvert for vector of bools (non-contiguous in standard)");
 
       static std::vector<T> onRecv(Any *in)
