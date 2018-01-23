@@ -1,0 +1,42 @@
+/*******************************************************************************
+ * Copyright (c) 2017, 2017 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+
+def OPENJDK_REPO = 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
+def OPENJDK_BRANCH = 'openj9'
+def OPENJ9_REPO = 'https://github.com/eclipse/openj9.git'
+def OPENJ9_BRANCH = 'master'
+def OMR_REPO = 'https://github.com/eclipse/openj9-omr.git'
+def OMR_BRANCH = 'openj9'
+
+def BUILD_JOB_NAME = 'Build-JDK8-linux_390-64_cmprssptrs'
+def SANITY_JOB_NAME = 'Test-Sanity-JDK8-linux_390-64_cmprssptrs'
+def EXTENDED_JOB_NAME = 'Test-Extended-JDK8-linux_390-64_cmprssptrs'
+
+node('master') {
+	checkout scm
+	buildfile = load "${WORKSPACE}/buildenv/jenkins/pipeline-functions"
+	SHAS = buildfile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
+}
+
+BUILD_JOB = buildfile.build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'])
+SANITY_JOB = buildfile.build_with_one_upstream(SANITY_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber())
+EXTENDED_JOB = buildfile.build_with_one_upstream(EXTENDED_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber())

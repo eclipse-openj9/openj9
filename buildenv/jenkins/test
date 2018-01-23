@@ -1,0 +1,78 @@
+/*******************************************************************************
+ * Copyright (c) 2017, 2017 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+
+def fetch_artifacts_for_test(){
+    stage('Fetch Artifacts') {
+        timestamps {
+            deleteDir()
+            step([$class: 'CopyArtifact',
+                fingerprintArtifacts: true,
+                projectName: "$UPSTREAM_JOB_NAME",
+                selector: [$class: 'SpecificBuildSelector',
+                            buildNumber: "${params.UPSTREAM_JOB_NUMBER}"]])
+            sh 'for filename in *.tar.gz; do tar zxf $filename; done'
+        }
+    }
+}
+
+def test() {
+    stage('Configure Test') {
+        timestamps {
+            dir ('openj9/test/TestConfig') {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
+                    sh 'make -f run_configure.mk'
+                }
+            }
+        }
+    }
+    stage('Get Test Dependencies') {
+        timestamps {
+            copyArtifacts fingerprintArtifacts: true, projectName: 'test.getDependency', selector: lastSuccessful(), target: 'openj9/test/TestConfig/lib'
+        }
+    }
+    stage('Compile Test') {
+        timestamps {
+            dir ('openj9/test/TestConfig') {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
+                    sh 'make compile'  
+                }
+            }
+        }
+    }
+    stage('Test') {
+        timestamps {
+            dir ('openj9/test/TestConfig') {
+                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
+                    sh "make ${TEST_TARGET}"
+                }
+            }
+        }
+    }
+    stage('Publish Test Results') {
+        timestamps {
+            junit allowEmptyResults: true, keepLongStdio: true, testResults: '**/junitreports/**/*.xml'
+            step([$class: 'Publisher', reportFilenamePattern: '**/testng-results.xml'])
+            step([$class: "TapPublisher", testResults: "**/*.tap"])
+        }
+    }
+}
+return this
