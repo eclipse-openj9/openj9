@@ -45,10 +45,21 @@ stage('Copyright Check') {
                     script: "date +%Y",
                     returnStdout: true
                 ).trim()
+                
+                // Set a different Copyright regex depending on the Repo the PR is from
+                if (ghprbGhRepository ==~ "eclipse.*") {
+                    REGEX = "\'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR} IBM Corp. and others\'"
+                } else if (ghprbGhRepository ==~ "ibmruntimes.*") {
+                    REGEX = "\'\\(c\\) Copyright IBM Corp. ([0-9]{4}), ${DATE_YEAR} All Rights Reserved\'"
+                } else {
+                    echo "ERROR: Unrecognized repository. Unable to determine correct Copyright regex"
+                    sh 'exit 1'
+                }
+
                 FILES_LIST.each() {
                     println "Checking file: '${it}'"
                     RESULT = sh (
-                        script: "grep -qE 'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR} IBM Corp. and others' '${it}'",
+                        script: "grep -qE ${REGEX} '${it}'",
                         returnStatus: true)
                     if(RESULT != 0) {
                         echo "FAILURE - Copyright date in file: '${it}' appears to be incorrect"
