@@ -488,12 +488,12 @@ public:
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm);
 
    virtual bool                  owningMethodDoesntMatter();
+   virtual bool isMethodInValidLibrary();
 
 protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }
    TR_ResolvedJ9Method(TR_FrontEnd *, TR_ResolvedMethod * owningMethod = 0);
    virtual void construct(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot = 0);
-   virtual bool isMethodInValidLibrary();
 
 // JAAS TODO
 //private:

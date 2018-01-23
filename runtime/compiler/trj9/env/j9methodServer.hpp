@@ -16,6 +16,7 @@ public:
    virtual J9Class *constantPoolHdr() override;
    virtual bool isJNINative() override;
    virtual bool isInterpreted() override { return _isInterpreted; };
+   virtual bool isMethodInValidLibrary() override { return _isMethodInValidLibrary; };
    virtual bool shouldFailSetRecognizedMethodInfoBecauseOfHCR() override;
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm) override;
    virtual J9ClassLoader *getClassLoader() override;
@@ -74,6 +75,7 @@ private:
    J9Class *_ramClass; // client pointer to RAM class
    TR_ResolvedJ9Method *_remoteMirror;
    bool _isInterpreted; // cached information coming from client
+   bool _isMethodInValidLibrary;
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
