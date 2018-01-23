@@ -370,8 +370,10 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/trj9/runtime/GPUHelpers.cpp \
     compiler/trj9/runtime/CRuntimeImpl.cpp \
     compiler/trj9/runtime/JitRuntime.cpp \
+    omr/compiler/runtime/RuntimeHelpers.cpp \
     compiler/trj9/runtime/RuntimeAssumptions.cpp \
     compiler/trj9/runtime/ValueProfiler.cpp
+
 
 -include $(JIT_MAKE_DIR)/files/extra.mk
 include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk
