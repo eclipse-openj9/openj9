@@ -29,7 +29,7 @@ The OpenJ9 JVM is composed of two code repositories:
 
 OpenJ9 needs to be combined with code from OpenJDK to create a Java SDK.
 The OpenJDK code is managed in separate github repos referred to as the 
-"OpenJDK extensions for OpenJ9 for JDK X".  Currently there are two 
+"Extensions for OpenJDKx for OpenJ9".  Currently there are two 
 extensions repos:
 
 * JDK8 [https://github.com/ibmruntimes/openj9-openjdk-jdk8]()
@@ -48,6 +48,8 @@ ensure that releases can be rebuilt or branched later.
 binaries at the correct levels have been created. 
 * Clearly define the supported platforms
 * Should not regress performance from release to release.
+* Use Github releases to identify releases and link to the relevant
+data.
 
 
 ## Release cadence
@@ -64,7 +66,7 @@ functional and stress, and 3rd party applications that should pass for
 every release.
 
 ## Platform support
-Define the platforms that are supported by this release.  The set of 
+Define the platforms that are supported by a release.  The set of 
 platforms will depend on the availability of hardware at OpenJ9 and 
 AdoptOpenJDK that can be used to validate the platform meets the quality 
 bar.  The code base may support more platforms than can be validated by 
@@ -72,28 +74,39 @@ the quality.  Such platforms will not be officially included in the release.
 
 ## Performance
 OpenJ9 should avoid regressing performance from release to release.
-This is harder to validate in the open project given the limitted 
-hardware resources available.  Work is being done at AdoptOpenJDK to 
-enable performance testing.
+Each release should document the set of benchmarks and performance measures
+that will be tracked for the release.  These measures should include the
+acceptable noise margins that will be used when tracking the measure.
+Regressions may be unavoidable at times due to changes required to be compliant
+with the Java specifications, to close security holes, or to address the
+need to update / modify the architecture.  Some regressions may simply be 
+found too late in a release to address them.  
+The project may decide to trade performance - whether throughput, startup 
+or fooprint - for another important measure. 
+Any regressions should be documented as part of the release plan.
+
+Note, detecting regressions will be difficult in the open project 
+given the limited hardware resources available.  Work is being done at 
+AdoptOpenJDK to enable performance testing.
 
 # Release Process
 
 1. Create an issue to track the release and record the information required
 above, including the SHAs and tags.  This information will mostly be duplicated
 with the Eclipse release plan.
-1. Ask committers - via Slack and mailing list -  to refrain from committing any
-further changes until an "all clear" signal is broadcast.  Disable the promotion
-from the `openj9-omr` `master` branch to the `openj9` branch.
 1. Pick a candidate OpenJ9 level to mark as the initial release candidate.  This
 should be a level that has successfully passed the nightly testing builds at 
-AdoptOpenJDK.
-1. Tag the `openj9` & `openj9-omr` repos at the specified level with a tag of the
-following form: `openj9-#releaseNumber#RC#candidatenumber#`.  For the `0.8` 
-release, this would result in a `openj9-0.8RC1` tag.
-1. Tag the Extensions repos at the levels that passed the AdoptOpenJDK builds with
-the same tag.
-1. Sound the "all-clear". The OpenJ9 `master` branch and `openj9-omr` promotion 
-can be reopened for pull requests at this point.
+both OpenJ9 and AdoptOpenJDK. Given these builds may target a range of SHAs, a
+candidate SHA should be taken from within that range.
+1. Branch the `openj9` & `openj9-omr` repos at the specified level.  Immediately
+tag the newly created branch with a tag of the following form: 
+`openj9-#releaseNumber#RC#candidatenumber#`.  For the `0.8` release, this would 
+result in a `openj9-0.8RC1` tag.  These branches are not intended as development
+branches and no continued support will be done on them.  They are merely points
+in time.
+1. The Extensions repos should have been branched for each of the releases.
+Update the Extensions branches to pull the tagged levels from the `openj9` 
+& `openj9-omr` release branches.
 1. Rebuild the tagged levels and ensure they pass the quality bar defined by 
 AdoptOpenJDK.
 1. Provide a window of time (a week?) for any stakeholders to highlight any 
@@ -104,6 +117,9 @@ determination can be made to either:
 	changes that have gone in between the initial RC tag and now are safe.
 1. Retag the `RCx` level as `openj9-#releaseNumber#`.  For the `0.8` release this 
 will be `openj9-0.8`.
+1. Create the [https://help.github.com/articles/creating-releases/](github release)
+corresponding to the tagged level.  The release should link to the Eclipse Release 
+document, the release issue, and the AdoptOpenJDK download links.
 
 The `java -version` should now show the tagged level.
 
