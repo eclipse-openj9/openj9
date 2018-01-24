@@ -1,4 +1,4 @@
-# Copyright (c) 1998, 2017 IBM Corp. and others
+# Copyright (c) 1998, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -495,7 +495,7 @@ endif
 	-mv -f $*.asm $*.hold
 
 ifdef USE_MINGW
-MINGW_CXXFLAGS+=-mdll -mwin32 -mthreads -fno-rtti -fno-threadsafe-statics -fno-strict-aliasing -fno-exceptions -fno-use-linker-plugin
+MINGW_CXXFLAGS+=-mdll -mwin32 -mthreads -fno-rtti -fno-threadsafe-statics -fno-strict-aliasing -fno-exceptions -fno-use-linker-plugin -fno-asynchronous-unwind-tables
 ifdef VS12AndHigher
 MINGW_CXXFLAGS+=-std=c++0x -D_CRT_SUPPRESS_RESTRICT -DVS12AndHigher
 <#if uma.spec.processor.x86>
