@@ -152,7 +152,7 @@ static J9Class* internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *
 	J9UTF8 *className, J9CreateRAMClassState *state);
 static J9Class* internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state,
-	J9ClassLoader* hostClassLoader, J9Class *hostClass);
+	J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module);
 static J9MemorySegment* internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassAllocationRequest *allocationRequests, UDATA allocationRequestCount);
 static I_32 interfaceDepthCompare(const void *a, const void *b);
 #if defined(J9VM_INTERP_CUSTOM_SPIN_OPTIONS)
@@ -1725,32 +1725,14 @@ nativeOOM:
 			J9STATIC_OBJECT_STORE(vmThread, state->ramClass, (j9object_t*)&state->ramClass->classObject, (j9object_t)state->classObject);
 
 			if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
+				J9Module *module = state->ramClass->module;
 				j9object_t moduleObject = NULL;
-				if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
-					moduleObject = J9VMJAVALANGCLASS_MODULE(vmThread, state->ramClass->hostClass->classObject);
+				if (J9_IS_J9MODULE_UNNAMED(javaVM, module)) {
+					moduleObject = J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(vmThread, classLoader->classLoaderObject);
 				} else {
-					J9Module *module = NULL;
-					U_8 *packageUTF = NULL;
-					UDATA length = 0;
-
-					if (J9CLASS_IS_ARRAY(state->ramClass)) {
-						J9ROMClass *leafType = ((J9ArrayClass*)state->ramClass)->leafComponentType->romClass;
-						packageUTF = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(leafType));
-						length = packageNameLength(leafType);
-					} else {
-						packageUTF = J9UTF8_DATA(className);
-						length = packageNameLength(romClass);
-					}
-					omrthread_monitor_enter(javaVM->classLoaderModuleAndLocationMutex);
-					module = findModuleForPackage(vmThread, classLoader, packageUTF, (U_32)length);
-					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
-					if (NULL != module) {
-						moduleObject = module->moduleObject;
-					} else {
-						moduleObject = J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(vmThread, classLoader->classLoaderObject);
-						Assert_VM_notNull(moduleObject);
-					}
+					moduleObject = module->moduleObject;
 				}
+				Assert_VM_notNull(moduleObject);
 				J9VMJAVALANGCLASS_SET_MODULE(vmThread, state->ramClass->classObject, moduleObject);
 			}
 		}
@@ -1879,7 +1861,7 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 static J9Class*
 internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass,
 	UDATA options, J9Class *elementClass, J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined,
-	UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state, J9ClassLoader* hostClassLoader, J9Class *hostClass)
+	UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state, J9ClassLoader* hostClassLoader, J9Class *hostClass, J9Module *module)
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	BOOLEAN retried = state->retry;
@@ -1907,7 +1889,6 @@ internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *clas
 	IDATA maxInterfaceDepth = -1;
 	UDATA inheritedInterfaceCount = 0;
 	UDATA defaultConflictCount = 0;
-	UDATA length = 0;
 	J9OverrideErrorData errorData = {0};
 
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
@@ -2685,40 +2666,10 @@ fail:
 					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
 				}
 			}
-			length = packageNameLength(romClass);
-
-			if (J2SE_VERSION(javaVM) >= J2SE_19) {
-				if (NULL == classBeingRedefined) {
-					if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
-						/* VM does not create J9Module for unnamed modules except the unnamed module for bootloader.
- 						 * Therefore J9Class.module should be NULL for classes loaded from classpath by non-bootloaders.
-						 * The call to findModuleForPackage() should correctly set J9Class.module as it would return
-						 * NULL for classes loaded from classpath.
-						 * For bootloader, unnamed module is represented by J9JavaVM.unamedModuleForSystemLoader.
-						 * Therefore for classes loaded by bootloader from boot classpath, 
-						 * J9Class.module should be set to J9JavaVM.unamedModuleForSystemLoader. 
-						 */
-						if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
-							ramClass->module = hostClass->module;
-						} else if ((classLoader != javaVM->systemClassLoader)
-							|| ((LOAD_LOCATION_PATCH_PATH == locationType) || (LOAD_LOCATION_MODULE == locationType))
-						) {
-							omrthread_monitor_enter(javaVM->classLoaderModuleAndLocationMutex);
-							ramClass->module = findModuleForPackage(vmThread, classLoader, (U_8 *)J9UTF8_DATA(className), (U_32)length);
-							omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
-						} else {
-							ramClass->module = javaVM->unamedModuleForSystemLoader;
-						}
-					} else {
-						if ((LOAD_LOCATION_PATCH_PATH == locationType) || (LOAD_LOCATION_MODULE == locationType)) {
-							ramClass->module = javaVM->javaBaseModule;
-						} else {
-							ramClass->module = javaVM->unamedModuleForSystemLoader;
-						}
-					}
-					if (TrcEnabled_Trc_MODULE_setting_package) {
-						trcModulesSettingPackage(vmThread, ramClass, classLoader, className);
-					}
+			if ((J2SE_VERSION(javaVM) >= J2SE_19) && (NULL == classBeingRedefined)) {
+				ramClass->module = module;
+				if (TrcEnabled_Trc_MODULE_setting_package) {
+					trcModulesSettingPackage(vmThread, ramClass, classLoader, className);
 				}
 			}
 		} else {
@@ -2772,6 +2723,7 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	J9CreateRAMClassState state;
 	J9Class *result;
 	J9ClassLoader* hostClassLoader = classLoader;
+	J9Module* module = NULL;
 
 	/* if this is an anon class classLoader should be anonClassLoader */
 	if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
@@ -2826,6 +2778,49 @@ retry:
 	/* To prevent deadlock, release the classTableMutex before loading the classes required for the new class. */
 	omrthread_monitor_exit(javaVM->classTableMutex);
 
+	if (J2SE_VERSION(javaVM) >= J2SE_19) {
+		if (NULL == classBeingRedefined) {
+			if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
+				/* VM does not create J9Module for unnamed modules except the unnamed module for bootloader.
+				 * Therefore J9Class.module should be NULL for classes loaded from classpath by non-bootloaders.
+				 * The call to findModuleForPackage() should correctly set J9Class.module as it would return
+				 * NULL for classes loaded from classpath.
+				 * For bootloader, unnamed module is represented by J9JavaVM.unamedModuleForSystemLoader.
+				 * Therefore for classes loaded by bootloader from boot classpath,
+				 * J9Class.module should be set to J9JavaVM.unamedModuleForSystemLoader.
+				 */
+				if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
+					module = hostClass->module;
+				} else if ((classLoader != javaVM->systemClassLoader)
+					|| ((LOAD_LOCATION_PATCH_PATH == locationType)
+					|| (LOAD_LOCATION_MODULE == locationType))
+				) {
+					U_8* packageUTF = NULL;
+					J9ROMClass *packageRomClass = romClass;
+					U_32 pkgNameLength = 0;
+
+					if (J9ROMCLASS_IS_ARRAY(romClass)) {
+						packageRomClass = elementClass->romClass;
+					}
+
+					packageUTF = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(packageRomClass));
+					pkgNameLength = packageNameLength(packageRomClass);
+
+					omrthread_monitor_enter(javaVM->classLoaderModuleAndLocationMutex);
+					module = findModuleForPackage(vmThread, classLoader, packageUTF, (U_32)pkgNameLength);
+					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
+				} else {
+					module = javaVM->unamedModuleForSystemLoader;
+				}
+			} else {
+				if ((LOAD_LOCATION_PATCH_PATH == locationType) || (LOAD_LOCATION_MODULE == locationType)) {
+					module = javaVM->javaBaseModule;
+				} else {
+					module = javaVM->unamedModuleForSystemLoader;
+				}
+			}
+		}
+	}
 
 	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, elementClass, packageID, hotswapping, classPreloadFlags, &superclass)) {
 		omrthread_monitor_enter(javaVM->classTableMutex);
@@ -2834,7 +2829,7 @@ retry:
 
 	
 	result = internalCreateRAMClassFromROMClassImpl(vmThread, classLoader, romClass, options, elementClass,
-		methodRemapArray, entryIndex, locationType, classBeingRedefined, packageID, superclass, &state, hostClassLoader, hostClass);
+		methodRemapArray, entryIndex, locationType, classBeingRedefined, packageID, superclass, &state, hostClassLoader, hostClass, module);
 	if (state.retry) {
 		goto retry;
 	}
