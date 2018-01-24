@@ -2364,6 +2364,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return false;
 		}
 
+		// Zero length strings are equal
+		if (0 == s1len) {
+			return true;
+		}
+
 		int o1 = 0;
 		int o2 = 0;
 
@@ -2379,7 +2384,20 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		/*[ENDIF]*/
 
 		if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
-			while (o1 < end) {
+			// Compare the last chars.
+			// In order to tell 2 chars are different:
+			// Under string compression, the compressible char set obeys 1-1 mapping for upper/lower case,
+			// converting to lower cases then compare should be sufficient.
+			byte byteAtO1Last = helpers.getByteFromArrayByIndex(s1Value, s1len-1);
+			byte byteAtO2Last = helpers.getByteFromArrayByIndex(s2Value, s1len-1);
+
+			if (byteAtO1Last != byteAtO2Last
+					&& toUpperCase(helpers.byteToCharUnsigned(byteAtO1Last)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2Last))) {
+				return false;
+			}
+
+
+			while (o1 < end-1) {
 				byte byteAtO1 = helpers.getByteFromArrayByIndex(s1Value, o1++);
 				byte byteAtO2 = helpers.getByteFromArrayByIndex(s2Value, o2++);
 
@@ -2388,17 +2406,31 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				// overloads rather than code points.
 				/*[ENDIF]*/
 				if (byteAtO1 != byteAtO2 
-						&& toUpperCase(helpers.byteToCharUnsigned(byteAtO1)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2))
-						&& toLowerCase(helpers.byteToCharUnsigned(byteAtO1)) != toLowerCase(helpers.byteToCharUnsigned(byteAtO2))) {
+						&& toUpperCase(helpers.byteToCharUnsigned(byteAtO1)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2))) {
 					return false;
 				}
 			}
 		} else {
-			while (o1 < end) {
+			// Compare the last chars.
+			// In order to tell 2 chars are different:
+			// If at least one char is ASCII, converting to upper cases then compare should be sufficient.
+			// If both chars are not in ASCII char set, need to convert to lower case and compare as well.
+			char charAtO1Last = s1.charAtInternal(s1len-1, s1Value);
+			char charAtO2Last = s2.charAtInternal(s1len-1, s2Value);
+
+			if (charAtO1Last != charAtO2Last 
+					&& toUpperCase(charAtO1Last) != toUpperCase(charAtO2Last)
+					&& ((charAtO1Last < 256 && charAtO2Last < 256) || Character.toLowerCase(charAtO1Last) != Character.toLowerCase(charAtO2Last))) {
+				return false;
+			}
+
+			while (o1 < end-1) {
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
 
-				if (charAtO1 != charAtO2 && toUpperCase(charAtO1) != toUpperCase(charAtO2) && toLowerCase(charAtO1) != toLowerCase(charAtO2)) {
+				if (charAtO1 != charAtO2 
+						&& toUpperCase(charAtO1) != toUpperCase(charAtO2) 
+						&& ((charAtO1 < 256 && charAtO2 < 256) || Character.toLowerCase(charAtO1) != Character.toLowerCase(charAtO2))) {
 					return false;
 				}
 			}
