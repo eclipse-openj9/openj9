@@ -2289,7 +2289,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       _jniTargetAddress = NULL;
       }
 
-   construct(aMethod, fe, trMemory, owner, vTableSlot);
+   construct();
    }
 
 // protected constructor to be used by JAAS
@@ -2299,7 +2299,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
    {
    }
 
-void TR_ResolvedJ9Method::construct(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot)
+void TR_ResolvedJ9Method::construct()
    {
 #define x(a, b, c) a, sizeof(b) - 1, b, (int16_t)strlen(c), c
 
