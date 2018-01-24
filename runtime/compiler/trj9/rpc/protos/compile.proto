@@ -13,6 +13,7 @@ message Any
       int32 int32_v = 5;
       bytes bytes_v = 6;
       bool bool_v = 7;
+      AnyData vector_v = 8;
       }
    }
 
@@ -221,6 +222,7 @@ enum J9ServerMessageType
    // for JaasPersistentCHTable
    CHTable_getAllClassInfo = 700;
    CHTable_getClassInfoUpdates = 701;
+   CHTable_commit = 702;
    }
 
 message J9ServerMessage
