@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3615,7 +3615,12 @@ done:
 		j9object_t value = *(j9object_t*)_sp;
 		UDATA offset = (UDATA)*(I_64*)(_sp + 1);
 		j9object_t obj = *(j9object_t*)(_sp + 3);
+		
+		buildInternalNativeStackFrame(REGISTER_ARGS);
+		updateVMStruct(REGISTER_ARGS);
 		VM_UnsafeAPI::putObject(_currentThread, &_objectAccessBarrier, obj, offset, isVolatile, value);
+		restoreInternalNativeStackFrame(REGISTER_ARGS);
+
 		returnVoidFromINL(REGISTER_ARGS, 5);
 		return rc;
 	}
@@ -3733,7 +3738,12 @@ done:
 		j9object_t compareValue = *(j9object_t*)(_sp + 1);
 		UDATA offset = (UDATA)*(I_64*)(_sp + 2);
 		j9object_t obj = *(j9object_t*)(_sp + 4);
+
+		buildInternalNativeStackFrame(REGISTER_ARGS);
+		updateVMStruct(REGISTER_ARGS);
 		bool value = VM_UnsafeAPI::compareAndSwapObject(_currentThread, &_objectAccessBarrier, obj, offset, compareValue, swapValue);
+		restoreInternalNativeStackFrame(REGISTER_ARGS);
+
 		returnSingleFromINL(REGISTER_ARGS, value ? 1 : 0, 6);
 		return rc;
 	}
@@ -3747,7 +3757,12 @@ done:
 		U_64 compareValue = *(U_64*)(_sp + 2);
 		UDATA offset = (UDATA)*(I_64*)(_sp + 4);
 		j9object_t obj = *(j9object_t*)(_sp + 6);
+
+		buildInternalNativeStackFrame(REGISTER_ARGS);
+		updateVMStruct(REGISTER_ARGS);
 		bool value = VM_UnsafeAPI::compareAndSwapLong(_currentThread, &_objectAccessBarrier, obj, offset, compareValue, swapValue);
+		restoreInternalNativeStackFrame(REGISTER_ARGS);
+
 		returnSingleFromINL(REGISTER_ARGS, value ? 1 : 0, 8);
 		return rc;
 	}
@@ -3761,7 +3776,12 @@ done:
 		U_32 compareValue = *(U_32*)(_sp + 1);
 		UDATA offset = (UDATA)*(I_64*)(_sp + 2);
 		j9object_t obj = *(j9object_t*)(_sp + 4);
+
+		buildInternalNativeStackFrame(REGISTER_ARGS);
+		updateVMStruct(REGISTER_ARGS);
 		bool value = VM_UnsafeAPI::compareAndSwapInt(_currentThread, &_objectAccessBarrier, obj, offset, compareValue, swapValue);
+		restoreInternalNativeStackFrame(REGISTER_ARGS);
+
 		returnSingleFromINL(REGISTER_ARGS, value ? 1 : 0, 6);
 		return rc;
 	}

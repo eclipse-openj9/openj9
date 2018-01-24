@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,6 +59,7 @@
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 #include "ras/DebugCounter.hpp"
+#include "j9consts.h"
 
 namespace TR { class SimpleRegex; }
 
@@ -486,11 +487,11 @@ TR_J9InlinerPolicy::createUnsafeAddressWithOffset(TR::Node * unsafeCall)
    {
    if (TR::Compiler->target.is64Bit())
       {
-      TR::Node *constNode = TR::Node::lconst(unsafeCall, -2);
+      TR::Node *constNode = TR::Node::lconst(unsafeCall, ~(J9_SUN_FIELD_OFFSET_MASK));
       return TR::Node::create(TR::aladd, 2, unsafeCall->getChild(1), TR::Node::create(TR::land, 2, unsafeCall->getChild(2), constNode));
       }
 
-   return TR::Node::create(TR::aiadd, 2, unsafeCall->getChild(1), TR::Node::create(TR::iand, 2, TR::Node::create(TR::l2i, 1, unsafeCall->getChild(2)), TR::Node::iconst(unsafeCall, -2)));
+   return TR::Node::create(TR::aiadd, 2, unsafeCall->getChild(1), TR::Node::create(TR::iand, 2, TR::Node::create(TR::l2i, 1, unsafeCall->getChild(2)), TR::Node::iconst(unsafeCall, ~(J9_SUN_FIELD_OFFSET_MASK))));
    }
 
 void
