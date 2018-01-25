@@ -956,7 +956,9 @@
 			<featureId>125310</featureId>
 		</featureIds>
 		<testCaseName>memoryCategories</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(MKDIR) -p $(REPORTDIR); \
+		cd $(REPORTDIR); \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames memoryCategories \
