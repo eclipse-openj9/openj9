@@ -227,4 +227,33 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+	<test>
+		<testCaseName>testSCCMLSoftmx</testCaseName>
+		<variations>
+			<variation>Mode110</variation>
+			<variation>Mode610</variation>
+		</variations>
+		<command>$(MKDIR) -p $(REPORTDIR); \
+	$(CD) $(REPORTDIR); \
+	cp $(Q)$(TEST_RESROOT)$(D)..$(D)..$(D)..$(D)cmdline_options_testresources$(D)cmdlinetestresources.jar$(Q) .; \
+	true URLHelperTests.jar ;\
+	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf cmdlinetestresources.jar; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
+	-DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJAVA_HOME='$(JDK_HOME)' -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
+	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
+	-DUTILSDIR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)testSCCMLSoftmx.xml$(Q) -xids all,$(PLATFORM),$(VARIATION),$(JAVA_VERSION),$(JCL_VERSION) -plats all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-nonZeroExitWhenError \
+	-outputLimit 300; \
+	$(TEST_STATUS)</command>
+		<tags>
+			<tag>extended</tag>
+		</tags>
+		<subsets>
+			<subset>SE80</subset>
+			<subset>SE90</subset>
+		</subsets>
+	</test>
 </playlist>
