@@ -169,6 +169,10 @@
 		<description>Buildspec compiles sources with openjdk-jdk8.</description>
 		<ifRemoved>OpenJ9 compile job, sanity and extended tests no longer run on this buildspec.</ifRemoved>
 	</flag>
+	<flag id="build_openj9JDK10">
+		<description>Buildspec compiles sources with openjdk Java 10 extension.</description>
+		<ifRemoved>OpenJ9 compile job no longer run on this buildspec.</ifRemoved>
+	</flag>
 	<flag id="build_ouncemake">
 		<description>Buildspec compiles source using ouncemake for appscan.</description>
 		<ifRemoved>Ouncemake compile jobs will no longer run on this buildspec.</ifRemoved>
