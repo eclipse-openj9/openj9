@@ -654,12 +654,14 @@ bool
 MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObject, fj9object_t *srcAddress)
 {
 	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);
-	Assert_GC_true_with_message(env, !_extensions->scavenger->isObjectInEvacuateMemory((J9Object *)srcAddress) || _extensions->isScavengerBackOutFlagRaised(), "readObject %llx in Evacuate\n", srcAddress);
+	Assert_GC_true_with_message(env, !_extensions->scavenger->isObjectInEvacuateMemory((omrobjectptr_t)srcAddress) || _extensions->isScavengerBackOutFlagRaised(), "readObject %llx in Evacuate\n", srcAddress);
 
-	fomrobject_t objectToken = *srcAddress;
+	/* with volatile cast, ensure that we are really getting a snapshot (instead of the slot being re-read at later points with possibly different values) */
+	fomrobject_t objectToken = *(volatile fomrobject_t *)srcAddress;
 	omrobjectptr_t object = convertPointerFromToken(objectToken);
 	if (_extensions->scavenger->isObjectInEvacuateMemory(object)) {
-		Assert_MM_true(_extensions->scavenger->isConcurrentInProgress());
+		Assert_GC_true_with_message2(env, _extensions->scavenger->isConcurrentInProgress(),
+				"CS not in progress, found a object in Survivor: slot %llx object %llx\n", srcAddress, object);
 		Assert_MM_true(_extensions->scavenger->isMutatorThreadInSyncWithCycle(env));
 		/* since object is still in evacuate, srcObject has not been scanned yet => we cannot assert
 		 * if srcObject should (already) be remembered (even if it's old)
