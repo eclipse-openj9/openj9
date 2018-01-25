@@ -2804,10 +2804,10 @@ retry:
 					}
 
 					packageUTF = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(packageRomClass));
-					pkgNameLength = packageNameLength(packageRomClass);
+					pkgNameLength = (U_32) packageNameLength(packageRomClass);
 
 					omrthread_monitor_enter(javaVM->classLoaderModuleAndLocationMutex);
-					module = findModuleForPackage(vmThread, classLoader, packageUTF, (U_32)pkgNameLength);
+					module = findModuleForPackage(vmThread, classLoader, packageUTF, pkgNameLength);
 					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
 				} else {
 					module = javaVM->unamedModuleForSystemLoader;
