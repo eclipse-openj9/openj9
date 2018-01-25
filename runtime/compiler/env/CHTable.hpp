@@ -407,13 +407,18 @@ class TR_CHTable
    // which will result in the failure of the current compilation
    //
    bool commit(TR::Compilation *comp);
+   bool commitLocal(TR::Compilation *comp, TR::list<TR_VirtualGuard*> &vguards, TR::list<TR_VirtualGuardSite*> &sideEffectPatchSites);
 
    void commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> &sites,
                            TR_PersistentCHTable *table, TR::Compilation *comp);
    void commitOSRVirtualGuards(TR::Compilation *comp, TR::list<TR_VirtualGuard*> &vguards);
 
+   // JAAS
+   bool commitRemote(TR::Compilation *comp);
+
    TR_Array<TR_OpaqueClassBlock *> *getClasses() { return _classes;}
    TR_Array<TR_OpaqueClassBlock *> *getClassesThatShouldNotBeNewlyExtended() { return _classesThatShouldNotBeNewlyExtended;}
+   TR_Array<TR_ResolvedMethod *> *getPreXMethods() { return _preXMethods;}
 
    TR_Memory *               trMemory()                    { return _trMemory; }
    TR_StackMemory            trStackMemory()               { return _trMemory; }

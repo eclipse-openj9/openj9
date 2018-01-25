@@ -1,3 +1,6 @@
+#ifndef JAAS_PERSISTENT_CHTABLE_H
+#define JAAS_PERSISTENT_CHTABLE_H
+
 #include "env/PersistentCHTable.hpp"
 #include "env/CHTable.hpp"
 #include <unordered_map>
@@ -123,3 +126,5 @@ public:
    uint32_t                            _numSubClasses;
    TR_OpaqueClassBlock                *_subClasses[0];
    };
+
+#endif // JAAS_PERSISTENT_CHTABLE_H

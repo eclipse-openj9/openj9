@@ -248,12 +248,24 @@ void TR_CHTable::cleanupNewlyExtendedInfo(TR::Compilation *comp)
 //
 bool TR_CHTable::commit(TR::Compilation *comp)
    {
-   TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
-   TR::list<TR_VirtualGuardSite*> *sideEffectPatchSites = comp->getSideEffectGuardPatchSites();
+   if (TR::CompilationInfo::getStream())
+      {
+      return commitRemote(comp);
+      }
+   else
+      {
+      TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
+      TR::list<TR_VirtualGuardSite*> &sideEffectPatchSites = *comp->getSideEffectGuardPatchSites();
 
+      return commitLocal(comp, vguards, sideEffectPatchSites);
+      }
+   }
+
+bool TR_CHTable::commitLocal(TR::Compilation *comp, TR::list<TR_VirtualGuard*> &vguards, TR::list<TR_VirtualGuardSite*> &sideEffectPatchSites)
+   {
    if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
       return true;
-   if (vguards.empty() && sideEffectPatchSites->empty() && !_preXMethods && !_classes && !_classesThatShouldNotBeNewlyExtended)
+   if (vguards.empty() && sideEffectPatchSites.empty() && !_preXMethods && !_classes && !_classesThatShouldNotBeNewlyExtended)
       return true;
 
    cleanupNewlyExtendedInfo(comp);
@@ -396,7 +408,7 @@ bool TR_CHTable::commit(TR::Compilation *comp)
          }
       }
 
-   if (!sideEffectPatchSites->empty())
+   if (!sideEffectPatchSites.empty())
       table->commitSideEffectGuards(comp);
 
    return true;

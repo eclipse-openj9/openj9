@@ -24,6 +24,9 @@ TR_JaasServerPersistentCHTable::InternalData &TR_JaasServerPersistentCHTable::ge
 
 void TR_JaasServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
    {
+   if (comp->getOption(TR_DisableCHOpts))
+      return;
+
    auto& data = getData(comp);
    if (data.initialized)
       return;
@@ -42,6 +45,9 @@ void TR_JaasServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
 
 void TR_JaasServerPersistentCHTable::doUpdate(TR::Compilation *comp)
    {
+   if (comp->getOption(TR_DisableCHOpts))
+      return;
+
       {
       TR::ClassTableCriticalSection doUpdate(comp->fe());
       initializeIfNeeded(comp);
@@ -56,7 +62,8 @@ void TR_JaasServerPersistentCHTable::doUpdate(TR::Compilation *comp)
    TR::ClassTableCriticalSection doUpdate(comp->fe());
    commitModifications(comp, modifyStr);
    commitRemoves(comp, removeStr);
-   fprintf(stderr, "CHTable updated with %d bytes\n", modifyStr.size() + removeStr.size());
+   //if (modifyStr.size() + removeStr.size() != 0)
+      //fprintf(stderr, "CHTable updated with %d bytes\n", modifyStr.size() + removeStr.size());
    }
 
 void TR_JaasServerPersistentCHTable::commitRemoves(TR::Compilation *comp, std::string &rawData)
@@ -66,7 +73,10 @@ void TR_JaasServerPersistentCHTable::commitRemoves(TR::Compilation *comp, std::s
    size_t num = rawData.size() / sizeof(TR_OpaqueClassBlock*);
    for (size_t i = 0; i < num; i++)
       {
+      auto item = data.classMap[ptr[i]];
       data.classMap.erase(ptr[i]);
+      if (item) // may have already been removed earlier in this update block
+         jitPersistentFree(item);
       }
    }
 
@@ -139,7 +149,6 @@ TR_JaasClientPersistentCHTable::serializeRemoves()
 
    for (auto clazz : _remove)
       {
-      fprintf(stderr, "remove class %p\n", clazz);
       *ptr++ = clazz;
       // Also remove removes from dirty table so they don't get recreated
       _dirty.erase(clazz);
@@ -312,7 +321,10 @@ TR_JaasClientPersistentCHTable::findClassInfoAfterLockingConst(
 TR_PersistentClassInfo *
 TR_JaasClientPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
-   markDirty(classId);
+      //{
+      //TR::ClassTableCriticalSection findClassInfo(TR::comp()->fe());
+      //markDirty(classId);
+      //}
    return TR_PersistentCHTable::findClassInfo(classId);
    }
 

@@ -7,6 +7,8 @@
 #include "control/MethodToBeCompiled.hpp"
 #include "runtime/CodeCache.hpp"
 #include "env/JaasPersistentCHTable.hpp"
+#include "env/JaasCHTable.hpp"
+#include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 
 uint32_t serverMsgTypeCount[JAAS::J9ServerMessageType_ARRAYSIZE] = {};
 
@@ -1708,6 +1710,19 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto table = (TR_JaasClientPersistentCHTable*)TR::comp()->getPersistentInfo()->getPersistentCHTable();
          auto encoded = table->serializeUpdates();
          client->write(encoded.first, encoded.second);
+         }
+         break;
+      case J9ServerMessageType::CHTable_commit:
+         {
+         auto recv = client->getRecvData<std::vector<TR_OpaqueClassBlock*>, std::vector<TR_OpaqueClassBlock*>, std::vector<TR_ResolvedMethod*>, std::vector<VirtualGuardForCHTable>>();
+         TR_CHTable *chTable = TR::comp()->getCHTable();
+         auto classes = std::get<0>(recv);
+         auto classesThatShouldNotBeNewlyExtended = std::get<1>(recv);
+         auto preXMethods = std::get<2>(recv);
+         auto vguards = std::get<3>(recv);
+         TR::ClassTableCriticalSection lock(fe);
+         bool ok = jaasCHTableCommit(TR::comp(), classes, classesThatShouldNotBeNewlyExtended, preXMethods, {}, vguards);
+         client->write(ok);
          }
          break;
       default:
