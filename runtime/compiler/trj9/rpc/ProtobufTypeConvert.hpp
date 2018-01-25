@@ -34,19 +34,13 @@ namespace JAAS
          }
       };
 
-   template<size_t... I> struct index_tuple
-      {
-      template <size_t N> using append = index_tuple<I..., N>;
-      };
-   template<size_t N> struct index_tuple_gen
-      {
-      using type = typename index_tuple_gen<N - 1>::type::template append<N - 1>;
-      };
-   template <> struct index_tuple_gen<0>
-      {
-      using type = index_tuple<>;
-      };
+   // used to unpack a tuple into variadic args
+   template <size_t... I> struct index_tuple { template <size_t N> using type = index_tuple<I..., N>; };
+   template <size_t N> struct index_tuple_gen { using type = typename index_tuple_gen<N - 1>::type::template type<N - 1>; };
+   template <> struct index_tuple_gen<0> { using type = index_tuple<>; };
 
+   // handles (de)serialization of "primitive" types, i.e. those that do not require more advanced pre/post processing
+   // this includes: int, bool, string, trivially copyable types, vector<T>, and tuple<T...> where T is primitive
    template <typename T, typename = void> struct AnyPrimitive { };
    template <> struct AnyPrimitive<uint32_t>
       {
@@ -84,6 +78,7 @@ namespace JAAS
       static inline void write(Any* msg, std::string val) { msg->set_bytes_v(val); }
       static inline Any::TypeCase typeCase() { return Any::kBytesV; }
       };
+   // trivially copyable
    template <typename T> struct AnyPrimitive<T, typename std::enable_if<std::is_trivially_copyable<T>::value>::type>
       {
       static inline T read(Any *msg)
@@ -100,6 +95,7 @@ namespace JAAS
          }
       static inline Any::TypeCase typeCase() { return Any::kBytesV; }
       };
+   // vector
    template <typename T> struct AnyPrimitive<T, typename std::enable_if<std::is_same<T, std::vector<typename T::value_type>>::value>::type>
       {
       static inline T read(Any *msg)
@@ -123,6 +119,9 @@ namespace JAAS
          }
       static inline Any::TypeCase typeCase() { return Any::kVectorV; }
       };
+   // tuple
+   // using getArgs and setArgs here is perhaps a bit heavyweight, but it does allow non-primitives to be sent,
+   // which we can't do with vectors right now. (should be trivial to add support for though, just forward declare and use ProtoBufTypeConvert)
    template <typename... T> struct AnyPrimitive<std::tuple<T...>>
       {
       static inline std::tuple<T...> read(Any *msg)
@@ -142,41 +141,6 @@ namespace JAAS
          write_impl(msg, val, Idx());
          }
       static inline Any::TypeCase typeCase() { return Any::kVectorV; }
-      };
-
-   // The ProtobufTypeConvert struct is intended to allow custom conversions to happen automatically before protobuf serialization
-   // and after protobuf deserialization. We use specialization to implement it for specific types.
-   //
-   // The base implementation here simply does nothing to any types that have not been specialized.
-   // It will be used if you pass a protobuf type through directly such as JAAS::Void.
-
-
-   // Specialize conversion for trivially copyable types by serializing to a string (types which can be memcpy'd)
-   template <typename T, typename = void> struct ProtobufTypeConvert
-      {
-      static_assert(std::is_trivially_copyable<T>::value, "Fell back to base impl of ProtobufTypeConvert but not given trivially copyable type - your type is not supported");
-      static TypeID type;
-      using ProtoType = std::string;
-      static T onRecv(Any *in)
-         {
-         if (type.id != in->extendedtypetag())
-            throw StreamTypeMismatch("Trivially copyable type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in->extendedtypetag()));
-         T val = AnyPrimitive<T>::read(in);
-         return val;
-         }
-      static void onSend(Any *out, T in)
-         {
-         out->set_extendedtypetag(type.id);
-         AnyPrimitive<T>::write(out, in);
-         }
-      };
-   template <typename T, typename U> TypeID ProtobufTypeConvert<T, U>::type;
-
-   template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_base_of<google::protobuf::Message, T>::value>::type>
-      {
-      using ProtoType = T;
-      static T onRecv(ProtoType in) { return in; }
-      static ProtoType onSend(T in) { return in; }
       };
 
    // This struct is used as a base for conversions that can be done by a simple cast between data types of the same size.
@@ -201,6 +165,21 @@ namespace JAAS
       };
    template <typename Primitive, typename Proto> TypeID PrimitiveTypeConvert<Primitive, Proto>::type;
 
+   // ProtobufTypeConvert is the midsection between primitives and get/setArgs
+   // It decides how to map some non-primitive types down onto primitives.
+   template <typename T, typename = void> struct ProtobufTypeConvert : PrimitiveTypeConvert<T>
+      {
+      static_assert(std::is_trivially_copyable<T>::value, "Fell back to base impl of ProtobufTypeConvert but not given trivially copyable type - your type is not supported");
+      };
+
+   // Specialize for directly sending protobuf messages
+   template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_base_of<google::protobuf::Message, T>::value>::type>
+      {
+      using ProtoType = T;
+      static T onRecv(ProtoType in) { return in; }
+      static ProtoType onSend(T in) { return in; }
+      };
+
    // Specialize ProtobufTypeConvert for various primitive types by inheriting from a specifically instantiated PrimitiveTypeConvert
    template <> struct ProtobufTypeConvert<bool> : PrimitiveTypeConvert<bool> { };
    template <> struct ProtobufTypeConvert<uint64_t> : PrimitiveTypeConvert<uint64_t> { };
@@ -212,51 +191,19 @@ namespace JAAS
    template <typename... T> struct ProtobufTypeConvert<std::tuple<T...>> : PrimitiveTypeConvert<std::tuple<T...>> { };
 
    // Specialize conversion for all enums by widening to 64 bits
-   template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type>
+   template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type> : PrimitiveTypeConvert<T, uint64_t>
       {
-      static TypeID type;
-      using ProtoType = uint64_t;
       static_assert(sizeof(T) <= 8, "Enum is larger than 8 bytes!");
-      static T onRecv(Any *in)
-         {
-         if (type.id != in->extendedtypetag())
-            throw StreamTypeMismatch("Enum type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in->extendedtypetag()));
-         return (T) AnyPrimitive<uint64_t>::read(in);
-         }
-      static void onSend(Any *out, T in)
-         {
-         out->set_extendedtypetag(type.id);
-         AnyPrimitive<uint64_t>::write(out, (uint64_t) in);
-         }
       };
-   template <typename T> TypeID ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type>::type;
 
    // Specialize conversion for pointer types
    template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_pointer<T>::value>::type> : PrimitiveTypeConvert<T, uint64_t> { };
 
    // Specialize conversion for std::vector
-   template <typename T> struct ProtobufTypeConvert<std::vector<T>>
+   template <typename T> struct ProtobufTypeConvert<std::vector<T>> : PrimitiveTypeConvert<std::vector<T>>
       {
-      static TypeID type;
-      using ProtoType = std::vector<T>;
-
-      //static_assert(std::is_trivially_copyable<T>::value, "ProtobufTypeConvert for vector of non-trivially copyable type");
       static_assert(!std::is_same<T, bool>::value, "ProtobufTypeConvert for vector of bools (non-contiguous in standard)");
-
-      static std::vector<T> onRecv(Any *in)
-         {
-         if (type.id != in->extendedtypetag())
-            throw StreamTypeMismatch("Vector type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in->extendedtypetag()));
-         std::vector<T> vec = AnyPrimitive<std::vector<T>>::read(in);
-         return vec;
-         }
-      static void onSend(Any *out, std::vector<T> in)
-         {
-         out->set_extendedtypetag(type.id);
-         AnyPrimitive<std::vector<T>>::write(out, in);
-         }
       };
-   template <typename T> TypeID ProtobufTypeConvert<std::vector<T>>::type;
 
 
    // setArgs fills out a protobuf AnyData message with values from a variadic argument list.
