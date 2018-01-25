@@ -78,6 +78,9 @@ VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_Virt
 
 bool TR_CHTable::commitRemote(TR::Compilation *comp)
    {
+   if (comp->getOption(TR_DisableCHOpts))
+      return true;
+
    // collect info from TR_CHTable
    std::vector<TR_OpaqueClassBlock*> classes = _classes
       ? std::vector<TR_OpaqueClassBlock*>(&(_classes->element(0)), (&(_classes->element(_classes->lastIndex()))) + 1)
