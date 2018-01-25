@@ -53,10 +53,6 @@
 			<fileset dir="${build}" />
 			<fileset dir="${src}" />
 		</jar>
-		<jar jarfile="${DEST}/utilsBK.jar" filesonly="true">
-			<fileset dir="${build}" />
-			<fileset dir="${src}" />
-		</jar>
 		<copy todir="${DEST}">
 			<fileset dir="${src}/../" includes="*.xml" />
 			<fileset dir="${src}/../" includes="*.mk" />
