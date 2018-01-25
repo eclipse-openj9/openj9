@@ -79,6 +79,7 @@
 		<source path="src/openj9.dataaccess/share/classes"/>
 		<source path="src/openj9.gpu/share/classes" />
 		<source path="src/openj9.sharedclasses/share/classes"/>
+		<source path="src/openj9.zosconditionhandling/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
@@ -102,6 +103,7 @@
 		<source path="src/openj9.dataaccess/share/classes"/>
 		<source path="src/openj9.gpu/share/classes" />
 		<source path="src/openj9.sharedclasses/share/classes"/>
+		<source path="src/openj9.zosconditionhandling/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
@@ -125,6 +127,7 @@
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190.jar"/>
 		<source path="src"/>
@@ -151,6 +154,7 @@
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190.jar"/>
 		<source path="src"/>
@@ -177,6 +181,7 @@
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190b165.jar"/>
 		<source path="src"/>
@@ -203,6 +208,7 @@
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190b165.jar"/>
 		<source path="src"/>
@@ -229,6 +235,7 @@
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190b174.jar"/>
 		<source path="src"/>
@@ -255,6 +262,7 @@
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190b174.jar"/>
 		<source path="src"/>
@@ -281,6 +289,7 @@
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190b174.jar"/>
 		<source path="src"/>
@@ -307,6 +316,7 @@
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava10.jar"/>
 		<source path="src"/>
@@ -333,6 +343,7 @@
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190Panama.jar"/>
 		<source path="src"/>
@@ -359,6 +370,7 @@
 		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190.jar"/>
 		<source path="src"/>
@@ -383,6 +395,7 @@
 		<source path="src/openj9.jvm/share/classes"/>
 		<source path="src/openj9.dataaccess/share/classes"/>
 		<source path="src/openj9.sharedclasses/share/classes"/>
+		<source path="src/openj9.zosconditionhandling/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
@@ -398,6 +411,7 @@
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
 		<source path="src/java.base/share/classes"/>
 		<source path="src/openj9.dataaccess/share/classes"/>
+		<source path="src/openj9.zosconditionhandling/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
@@ -413,6 +427,7 @@
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<source path="src/java.base/share/classes"/>
 		<source path="src/openj9.dtfj/share/classes"/>
+		<source path="src/openj9.zosconditionhandling/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
@@ -429,6 +444,7 @@
 		<source path="src/java.base/share/classes"/>
 		<source path="src/openj9.dtfj/share/classes"/>
 		<source path="src/openj9.dtfjview/share/classes"/>
+		<source path="src/openj9.zosconditionhandling/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
@@ -437,6 +453,7 @@
 	<configuration label="CUDA4J" outputpath="CUDA4J/src" flags="CUDA4J" jdkcompliance="1.8">
 		<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 		<source path="src/java.base/share/classes" />
+		<source path="src/openj9.zosconditionhandling/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util" />
 		<parameter name="jxerules:outputdir" value="java/lang" />
@@ -452,6 +469,7 @@
 		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<source path="src/java.base/share/classes"/>
 		<source path="src/openj9.traceformat/share/classes"/>
+		<source path="src/openj9.zosconditionhandling/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
