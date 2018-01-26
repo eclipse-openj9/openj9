@@ -96,16 +96,15 @@
 	cp $(Q)$(TEST_RESROOT)$(D)..$(D)DataHelperTests$(D)DataHelperTests.jar$(Q) .; \
 	true DataHelperTests.jar ;\
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf DataHelperTests.jar; \
-	$(CD) .$(D)datacaching$(D)dataone.contents; \
 	$(CONVERT_TO_EBCDIC_CMD) \
+	$(CD) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)dataone.contents$(Q); \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) cf dataone.jar *.txt; \
-    $(CD) ..$(D)..$(D); \
-	$(CD) .$(D)datacaching$(D)datatwo.contents; \
-    $(CONVERT_TO_EBCDIC_CMD) \
-    $(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) cf datatwo.jar *.txt; \
-    $(CD) ..$(D)..$(D); \
-	mv .$(D)datacaching$(D)dataone.contents$(D)dataone.jar .$(D)datacaching; \
-	mv .$(D)datacaching$(D)datatwo.contents$(D)datatwo.jar .$(D)datacaching; \
+	$(CD) $(REPORTDIR); \
+	$(CD) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)datatwo.contents$(Q); \
+	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) cf datatwo.jar *.txt; \
+	$(CD) $(REPORTDIR); \
+	mv $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)dataone.contents$(D)dataone.jar$(Q) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(Q); \
+	mv $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)datatwo.contents$(D)datatwo.jar$(Q) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(Q); \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJAVA_HOME='$(JDK_HOME)' -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
