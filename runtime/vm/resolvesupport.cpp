@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "j2sever.h"
 #include "j9.h"
 #include "j9protos.h"
 #include "j9consts.h"
@@ -120,6 +121,25 @@ packageAccessIsLegal(J9VMThread *currentThread, J9Class *targetClass, j9object_t
 		}
 	}
 	return legal;
+}
+
+BOOLEAN
+requirePackageAccessCheck(J9JavaVM *vm, J9ClassLoader *srcClassLoader, J9Module *srcModule, J9Class *targetClass)
+{
+	BOOLEAN checkFlag = TRUE;
+	if (J2SE_VERSION(vm) >= J2SE_19) {
+		if (srcModule == targetClass->module) {
+			if (NULL != srcModule) {
+				/* same named module */
+				checkFlag = FALSE;
+			} else if (srcClassLoader == targetClass->classLoader) {
+				/* same unnamed module */
+				checkFlag = FALSE;
+			}
+		}
+	}
+	
+	return checkFlag;
 }
 
 j9object_t   
@@ -359,8 +379,12 @@ tryAgain:
 	 * No check is required if any of the following is true:
 	 * 		- the current class and resolved class are identical
 	 * 		- the current class was loaded by the bootstrap class loader
+	 * 		- the current class and resolved class are in same module
 	 */
-	if ((currentClass != resolvedClass) && (classLoader != bootstrapClassLoader)) {
+	if ((currentClass != resolvedClass) 
+		&& (classLoader != bootstrapClassLoader)
+		&& requirePackageAccessCheck(vm, classLoader, currentClass->module, resolvedClass)
+	) {
 		/* AOT resolves class refs inside J9Classes which have not yet
 		 * had the java/lang/Class associated with them.  canRunJavaCode must be false
 		 * in this case.  The protectionDomain object is only used if canRunJavaCode

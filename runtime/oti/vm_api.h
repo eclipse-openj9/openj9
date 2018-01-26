@@ -2217,6 +2217,19 @@ UDATA
 packageAccessIsLegal(J9VMThread *currentThread, J9Class *targetClass, j9object_t protectionDomain, UDATA canRunJavaCode);
 
 /**
+ * Determine if the targetClass is subject to the package access check.
+ * Assuming targetClass is NOT NULL.
+ *
+ * @param *vm[in] the J9JavaVM
+ * @param srcClassLoader[in] Current class loader creating RAM class
+ * @param srcModule[in] The module where current RAM class is loaded from
+ * @param targetClass[in] The RAM class being examined to be determined if a package access check should be performed
+ * @return TRUE if a package access check is required, otherwise FALSE.
+ */
+BOOLEAN
+requirePackageAccessCheck(J9JavaVM *vm, J9ClassLoader *srcClassLoader, J9Module *srcModule, J9Class *targetClass);
+
+/**
  * @brief
  * @param *vmStruct
  * @param *constantPool
