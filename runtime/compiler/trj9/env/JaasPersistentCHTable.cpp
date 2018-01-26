@@ -21,7 +21,26 @@ TR_JaasServerPersistentCHTable::InternalData &TR_JaasServerPersistentCHTable::ge
    {
    auto stream = TR::CompilationInfo::getStream();
    uint64_t clientId = stream->getClientId();
-   return _data[clientId];
+   auto &data = _data[clientId];
+   int64_t time = TR::Compiler->vm.getUSecClock()/1000000; // date +%s
+   data.lastTime = time;
+   return data;
+   }
+
+void TR_JaasServerPersistentCHTable::cleanUpExpiredData()
+   {
+   int64_t time = TR::Compiler->vm.getUSecClock()/1000000; // date +%s
+   for (auto it = _data.begin(); it != _data.end();)
+      {
+      if (time - it->second.lastTime > 60 * 5) // entries are freed after 5 minutes
+	 {
+	 it = _data.erase(it);
+	 }
+      else
+	 {
+	 it++;
+	 }
+      }
    }
 
 void TR_JaasServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
@@ -53,6 +72,7 @@ void TR_JaasServerPersistentCHTable::doUpdate(TR::Compilation *comp)
       {
       TR::ClassTableCriticalSection doUpdate(comp->fe());
       initializeIfNeeded(comp);
+      cleanUpExpiredData();
       }
 
    auto stream = TR::CompilationInfo::getStream();

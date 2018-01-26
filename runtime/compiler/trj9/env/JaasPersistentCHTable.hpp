@@ -52,10 +52,12 @@ public:
 private:
    void commitRemoves(TR::Compilation *comp, std::string &data);
    void commitModifications(TR::Compilation *comp, std::string &data);
+   void cleanUpExpiredData();
 
    struct InternalData
       {
       bool initialized = false;
+      int64_t lastTime = 0;
       std::unordered_map<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> classMap;
       };
 
