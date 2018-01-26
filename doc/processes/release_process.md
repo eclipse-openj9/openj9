@@ -98,7 +98,8 @@ with the Eclipse release plan.
 should be a level that has successfully passed the nightly testing builds at 
 both OpenJ9 and AdoptOpenJDK. Given these builds may target a range of SHAs, a
 candidate SHA should be taken from within that range.
-1. Branch the `openj9` & `openj9-omr` repos at the specified level.  Immediately
+1. Branch the `openj9` & `openj9-omr` repos at the specified level.  Branch names
+should be of the form: `openj9-#releaseNumber#`.  Immediately
 tag the newly created branch with a tag of the following form: 
 `openj9-#releaseNumber#RC#candidatenumber#`.  For the `0.8` release, this would 
 result in a `openj9-0.8RC1` tag.  These branches are not intended as development
@@ -112,14 +113,16 @@ AdoptOpenJDK.
 1. Provide a window of time (a week?) for any stakeholders to highlight any 
 stopship issues with the release candidate build.  If any are found, a 
 determination can be made to either:
-	* Branch from the the `RCx` tag and apply a targetted fix, or
-	* Create the next release candidate build from the master stream if the 
+	* Apply a targetted fix to the release branch and retag, or
+	* Rebase the release branch on the master branch if the 
 	changes that have gone in between the initial RC tag and now are safe.
 1. Retag the `RCx` level as `openj9-#releaseNumber#`.  For the `0.8` release this 
 will be `openj9-0.8`.
 1. Create the [https://help.github.com/articles/creating-releases/](github release)
 corresponding to the tagged level.  The release should link to the Eclipse Release 
 document, the release issue, and the AdoptOpenJDK download links.
+1. Open an Eclipse Bugzilla requesting the branch be marked `protected` to prevent 
+commits after the release is complete.
 
 The `java -version` should now show the tagged level.
 
