@@ -293,6 +293,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint32_t getJaasServerPort() const { return _jaasServerPort; }
    void setJaasServerPort(uint32_t port) { _jaasServerPort = port; }
    std::string getJaasServerConnectionInfo() const { return _jaasServerAddress + ":" + std::to_string(_jaasServerPort); }
+   uint64_t getJaasId() { return _jaasId; }
+   void setJaasId(uint64_t val) { _jaasId = val; }
 
    private:
    TR_AddressSet *_unloadedClassAddresses;
@@ -379,6 +381,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    JaasModes _jaasMode; // NONJAAS_MODE, CLIENT_MODE, SERVER_MODE
    std::string _jaasServerAddress;
    uint32_t _jaasServerPort;
+   uint64_t _jaasId;
    };
 
 }

@@ -133,22 +133,24 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
    {
    try
       {
-      auto req = stream->read<std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, J9::IlGeneratorMethodDetailsType>();
+      auto req = stream->read<uint64_t, std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, J9::IlGeneratorMethodDetailsType>();
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
       TR_J9SharedCache *cache = fej9->sharedCache();
-      std::string romClassStr = std::get<0>(req);
+      uint64_t clientId = std::get<0>(req);
+      stream->setClientId(clientId);
+      std::string romClassStr = std::get<1>(req);
       J9ROMClass *romClass = (J9ROMClass*) fej9->jitPersistentAlloc(romClassStr.size());
       memcpy(romClass, &romClassStr[0], romClassStr.size());
-      uint32_t romMethodOffset = std::get<1>(req);
+      uint32_t romMethodOffset = std::get<2>(req);
       J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*) romClass + romMethodOffset);
-      J9Method *ramMethod = std::get<2>(req);
-      J9Class *clazz = std::get<3>(req);
-      TR_Hotness opt = std::get<4>(req);
-      std::string detailsStr = std::get<5>(req);
+      J9Method *ramMethod = std::get<3>(req);
+      J9Class *clazz = std::get<4>(req);
+      TR_Hotness opt = std::get<5>(req);
+      std::string detailsStr = std::get<6>(req);
       TR::IlGeneratorMethodDetails *details = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
-      auto detailsType = std::get<6>(req);
+      auto detailsType = std::get<7>(req);
       doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType);
       }
    catch (const JAAS::StreamFailure &e)

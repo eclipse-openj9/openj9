@@ -23,6 +23,7 @@
 #include "control/J9Options.hpp"
 
 #include <algorithm>
+#include <random>
 #include <ctype.h>
 #include <stdint.h>
 #include "jitprotos.h"
@@ -2067,6 +2068,15 @@ J9::Options::fePreProcess(void * base)
                   }
                }
             }
+         }
+      if (compInfo->getPersistentInfo()->getJaasMode() != NONJAAS_MODE)
+         {
+         // generate a random identifier for this JaaS instance.
+         // TODO: prevent collisions with some kind of atomic registration algo!
+         std::random_device rd;
+         std::mt19937_64 rng(rd());
+         std::uniform_int_distribution<uint64_t> dist;
+         compInfo->getPersistentInfo()->setJaasId(dist(rng));
          }
       }
 

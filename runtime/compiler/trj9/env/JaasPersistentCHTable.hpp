@@ -62,7 +62,7 @@ private:
    InternalData &getData(TR::Compilation *comp);
 
    // one per compilation thread
-   InternalData _data[1];
+   std::unordered_map<uint64_t, InternalData> _data;
    };
 
 class TR_JaasClientPersistentCHTable : public TR_PersistentCHTable

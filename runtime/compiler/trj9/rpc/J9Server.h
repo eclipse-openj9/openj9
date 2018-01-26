@@ -44,6 +44,14 @@ public:
    void cancel();   // Same as finish, but with Status::CANCELLED
    void finishCompilation(uint32_t statusCode, std::string codeCache = "", std::string dataCache = "", std::string metaDataRelocation = "");
    void acceptNewRPC();
+   void setClientId(uint64_t clientId)
+      {
+      _clientId = clientId;
+      }
+   uint64_t getClientId() const
+      {
+      return _clientId;
+      }
 
 private:
    void readBlocking();
@@ -55,6 +63,7 @@ private:
    J9CompileService::AsyncService *const _service;
    std::unique_ptr<J9ServerReaderWriter> _stream;
    std::unique_ptr<grpc::ServerContext> _ctx;
+   uint64_t _clientId;
 
    // re-usable message objects
    J9ServerMessage _sMsg;

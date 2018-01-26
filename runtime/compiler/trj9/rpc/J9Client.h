@@ -19,12 +19,12 @@ public:
       {}
 
 
-   void buildCompileRequest(std::string romClassStr, uint32_t mOffset, J9Method *method, J9Class* clazz, TR_Hotness optLevel, std::string detailsStr, J9::IlGeneratorMethodDetailsType detailsType)
+   void buildCompileRequest(uint64_t clientId, std::string romClassStr, uint32_t mOffset, J9Method *method, J9Class* clazz, TR_Hotness optLevel, std::string detailsStr, J9::IlGeneratorMethodDetailsType detailsType)
       {
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->Compile(_ctx.get());
 
-      write(romClassStr, mOffset, method, clazz, optLevel, detailsStr, detailsType);
+      write(clientId, romClassStr, mOffset, method, clazz, optLevel, detailsStr, detailsType);
       }
 
    Status waitForFinish()

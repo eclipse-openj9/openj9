@@ -19,7 +19,9 @@ TR_JaasServerPersistentCHTable::TR_JaasServerPersistentCHTable(TR_PersistentMemo
 
 TR_JaasServerPersistentCHTable::InternalData &TR_JaasServerPersistentCHTable::getData(TR::Compilation *comp)
    {
-   return _data[0];
+   auto stream = TR::CompilationInfo::getStream();
+   uint64_t clientId = stream->getClientId();
+   return _data[clientId];
    }
 
 void TR_JaasServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
