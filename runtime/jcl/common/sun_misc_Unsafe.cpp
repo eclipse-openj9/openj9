@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -630,6 +630,10 @@ Java_sun_misc_Unsafe_staticFieldOffset(JNIEnv *env, jobject receiver, jobject fi
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		} else {
 			offset = fieldID->offset | J9_SUN_STATIC_FIELD_OFFSET_TAG;
+
+			if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
+				offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
+			}
 		}
 	}
 	vmFuncs->internalReleaseVMAccess(currentThread);

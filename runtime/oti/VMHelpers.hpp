@@ -1364,6 +1364,34 @@ exit:
 			break;
 		}
 	}
+
+	/**
+	 * @brief Notify JIT upon the first modification of a final field, a stack frame should be build before calling this method to make the stack walkable
+	 * @param currentThread
+	 * @param fieldClass The declaring class of the final field
+	 */
+	static VMINLINE void
+	reportFinalFieldModified(J9VMThread* currentThread, J9Class* fieldClass)
+	{
+		if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassHasIllegalFinalFieldModifications)) {
+			J9JavaVM* vm = currentThread->javaVM;
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT)) {
+				J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
+				vmFuncs->acquireSafePointVMAccess(currentThread);
+				/* check class flag again after aquiring VM access */
+				if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassHasIllegalFinalFieldModifications)) {
+					fieldClass->classFlags |= J9ClassHasIllegalFinalFieldModifications;
+					J9JITConfig* jitConfig = vm->jitConfig;
+					if (NULL != jitConfig) {
+						if (NULL != jitConfig->jitIllegalFinalFieldModification) {
+							jitConfig->jitIllegalFinalFieldModification(currentThread, fieldClass);
+						}
+					}
+				}
+				vmFuncs->releaseSafePointVMAccess(currentThread);
+			}
+		}
+	}
 };
 
 #endif /* VMHELPERS_HPP_ */

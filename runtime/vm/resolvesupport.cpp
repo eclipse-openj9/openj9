@@ -759,6 +759,8 @@ illegalAccess:
 				if (!finalFieldSetAllowed(vmStruct, true, method, definingClass, field, jitFlags)) {
 					staticAddress = NULL;
 					goto done;
+				} else { /* finalFieldSetAllowed */
+					VM_VMHelpers::reportFinalFieldModified(vmStruct, definingClass);
 				}
 			}
 			
