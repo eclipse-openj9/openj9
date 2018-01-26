@@ -2791,9 +2791,9 @@ copyStringToUTF8WithMemAlloc(J9VMThread *currentThread, j9object_t string, UDATA
  * @param[in] stringFlags the flag to determine performing '.' --> '/'
  * @param[in] utf8Data a utf8 data buffer
  *
- * @return A pointer to the copied UTF8 bytes.
+ * @return The computed length (in bytes) of the copied UTF8 string in the buffer excluding the NULL terminator.
  */
-U_8*
+UDATA
 copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data);
 
 
