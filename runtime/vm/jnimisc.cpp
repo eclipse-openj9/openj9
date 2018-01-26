@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1053,6 +1053,11 @@ setStaticIntField(JNIEnv *env, jclass clazz, jfieldID fieldID, jint value)
 		}
 	}
 	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
+
+	if (J9_ARE_ANY_BITS_SET(modifiers, J9AccFinal)) {
+		VM_VMHelpers::reportFinalFieldModified(currentThread, declaringClass);
+	}
+
 	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
 	{
 		objectAccessBarrier.inlineStaticStoreU32(currentThread, declaringClass, (U_32*)valueAddress, (U_32)value, isVolatile);
@@ -1107,6 +1112,11 @@ setStaticDoubleFieldIndirect(JNIEnv *env, jobject clazz, jfieldID fieldID, void 
 		}
 	}
 	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
+
+	if (J9_ARE_ANY_BITS_SET(modifiers, J9AccFinal)) {
+		VM_VMHelpers::reportFinalFieldModified(currentThread, declaringClass);
+	}
+
 	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
 	{
 		objectAccessBarrier.inlineStaticStoreU64(currentThread, declaringClass, (U_64*)valueAddress, *(U_64*)value, isVolatile);
@@ -1163,6 +1173,11 @@ setStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID, jobject value)
 		}
 	}
 	bool isVolatile = J9_ARE_ANY_BITS_SET(modifiers, J9AccVolatile);
+
+	if (J9_ARE_ANY_BITS_SET(modifiers, J9AccFinal)) {
+		VM_VMHelpers::reportFinalFieldModified(currentThread, declaringClass);
+	}
+
 	MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
 	j9object_t valueObject = (NULL == value) ? NULL : J9_JNI_UNWRAP_REFERENCE(value);
 	{

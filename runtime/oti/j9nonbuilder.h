@@ -157,7 +157,7 @@
 #define J9ClassIsAnonymous 0x40
 #define J9ClassIsDerivedValueType 0x80
 #define J9ClassDoNotAttemptToSetInitCache 0x1
-#define J9ClassUnused02 0x2
+#define J9ClassHasIllegalFinalFieldModifications 0x2
 #define J9ClassReusedStatics 0x4
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
@@ -3656,6 +3656,7 @@ typedef struct J9JITConfig {
 	UDATA ( *jitGetExceptionCatcher)(struct J9VMThread *currentThread, void *handlerPC, struct J9JITExceptionTable *metaData, struct J9Method **method, IDATA *location) ;
 	void ( *jitMethodBreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitMethodUnbreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
+	void ( *jitIllegalFinalFieldModification)(struct J9VMThread *currentThread, struct J9Class *fieldClass);
 } J9JITConfig;
 
 #define J9JIT_GROW_CACHES  0x100000
@@ -4021,6 +4022,7 @@ typedef struct J9AOTConfig {
 	UDATA remainingSizeJxeBuffer;
 	void* firstClassLocation;
 	void* aotCompilationInfo;
+	void ( *jitIllegalFinalFieldModification)(struct J9VMThread *currentThread, struct J9Class *fieldClass);
 } J9AOTConfig;
 
 #if defined(J9VM_ARCH_X86)
