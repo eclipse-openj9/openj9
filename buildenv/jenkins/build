@@ -112,7 +112,7 @@ def get_source() {
                 }
             }
 
-            git branch: "${OPENJDK_BRANCH}", url: "${OPENJDK_REPO}"
+            checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: "${OPENJDK_BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 30]], submoduleCfg: [], userRemoteConfigs: [[url: "${OPENJDK_REPO}"]]]
             sh "git checkout ${OPENJDK_SHA}"
             sh "bash ./get_source.sh ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
         }
