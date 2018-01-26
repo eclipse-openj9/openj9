@@ -183,9 +183,9 @@
 		<command>$JAVA_EXE$ $currentMode$,reset,cacheDir=$CACHE_DIR_FOR_PERM_TEST$,cacheDirPerm=0577 -version</command>
 		<output type="success" caseSensitive="yes" regex="no" platforms="$NON_WINDOWS_PLATFORMS$">Invalid setting for cacheDirPerm option</output>
 		<output type="required" caseSensitive="yes" regex="no" platforms="$NON_WINDOWS_PLATFORMS$">Initialization error</output>
-		<output type="failure" caseSensitive="no" regex="no" platforms="$NON_WINDOWS_PLATFORMS$">java version</output>
+		<output type="failure" caseSensitive="no" regex="yes" platforms="$NON_WINDOWS_PLATFORMS$" javaUtilPattern="yes">(java|openjdk) version</output>
 		
-		<output type="success" caseSensitive="no" regex="no" platforms="$WINDOWS_PLATFORMS$">java version</output>
+		<output type="success" caseSensitive="no" regex="yes" platforms="$WINDOWS_PLATFORMS$" javaUtilPattern="yes">(java|openjdk) version</output>
 		
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
