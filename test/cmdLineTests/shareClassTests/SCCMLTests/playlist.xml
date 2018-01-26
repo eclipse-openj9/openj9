@@ -205,4 +205,27 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+	<test>
+		<testCaseName>testSCCMLSnapshot</testCaseName>
+		<variations>
+			<variation>Mode110</variation>
+			<variation>Mode610</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
+	-DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DJAVA_HOME='$(JDK_HOME)' -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)testSCCMLSnapshot.xml$(Q) -xids all,$(PLATFORM),$(VARIATION),$(JAVA_VERSION),$(JCL_VERSION) -plats all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-nonZeroExitWhenError \
+	-outputLimit 300; \
+	$(TEST_STATUS)</command>
+	<platformRequirements>^os.win</platformRequirements>
+		<tags>
+			<tag>extended</tag>
+		</tags>
+		<subsets>
+			<subset>SE80</subset>
+			<subset>SE90</subset>
+		</subsets>
+	</test>
 </playlist>
