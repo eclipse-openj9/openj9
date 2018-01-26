@@ -142,7 +142,7 @@ static UDATA checkPackageAccess(J9VMThread *vmThread, J9Class *foundClass, UDATA
 static void setCurrentExceptionForBadClass(J9VMThread *vmThread, J9UTF8 *badClassName, UDATA exceptionIndex);
 static BOOLEAN verifyClassLoadingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass);
 static void popFromClassLoadingStack(J9VMThread *vmThread);
-static VMINLINE BOOLEAN loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *elementClass, UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut);
+static VMINLINE BOOLEAN loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *elementClass, UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module);
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 static J9Class *loadNestHost(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *nestHostName, UDATA classPreloadFlags);
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
@@ -1495,7 +1495,6 @@ popFromClassLoadingStack(J9VMThread *vmThread)
 	pool_removeElement(vmThread->javaVM->classLoadingStackPool, topOfStack);
 }
 
-
 /**
  * Attempts to recursively load (if necessary) the required superclass and
  * interfaces for the class being loaded.
@@ -1507,12 +1506,13 @@ popFromClassLoadingStack(J9VMThread *vmThread)
  */
 static VMINLINE BOOLEAN
 loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *elementClass,
-	UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut)
+	UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module)
 {
+	J9JavaVM *vm = vmThread->javaVM;
 	const BOOLEAN isROMClassUnsafe = (J9ROMCLASS_IS_UNSAFE(romClass) != 0);
 	J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-	J9UTF8 *superclassName;
-	J9Class *superclass;
+	J9UTF8 *superclassName = NULL;
+	J9Class *superclass = NULL;
 
 	superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
 	if (superclassName == NULL) {
@@ -1538,7 +1538,9 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 		}
 
 		if (!hotswapping) {
-			if (checkPackageAccess(vmThread, superclass, classPreloadFlags) != 0) {
+			if (requirePackageAccessCheck(vm, classLoader, module, superclass) 
+				&& (checkPackageAccess(vmThread, superclass, classPreloadFlags) != 0)
+			) {
 				return FALSE;
 			}
 
@@ -1578,7 +1580,9 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 					if (interfaceClass == NULL) {
 						return FALSE;
 					}
-					if (checkPackageAccess(vmThread, interfaceClass, classPreloadFlags) != 0) {
+					if (requirePackageAccessCheck(vm, classLoader, module, interfaceClass) 
+						&& (checkPackageAccess(vmThread, interfaceClass, classPreloadFlags) != 0)
+					) {
 						return FALSE;
 					}
 					/* ensure that the interface is in fact an interface */
@@ -2714,14 +2718,14 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, J9Class *hostClass)
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
-	J9Class *superclass;
-	J9UTF8 *className;
-	UDATA packageID;
+	J9Class *superclass = NULL;
+	J9UTF8 *className = NULL;
+	UDATA packageID = 0;
 	UDATA classPreloadFlags = 0;
 	BOOLEAN hotswapping = (0 != (options & J9_FINDCLASS_FLAG_NO_DEBUG_EVENTS));
 	BOOLEAN fastHCR = (0 != (options & J9_FINDCLASS_FLAG_FAST_HCR));
-	J9CreateRAMClassState state;
-	J9Class *result;
+	J9CreateRAMClassState state = {0};
+	J9Class *result = NULL;
 	J9ClassLoader* hostClassLoader = classLoader;
 	J9Module* module = NULL;
 
@@ -2822,7 +2826,7 @@ retry:
 		}
 	}
 
-	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, elementClass, packageID, hotswapping, classPreloadFlags, &superclass)) {
+	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module)) {
 		omrthread_monitor_enter(javaVM->classTableMutex);
 		return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, &state);
 	}
