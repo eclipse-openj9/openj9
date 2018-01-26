@@ -543,6 +543,7 @@
 	</test>
 	
 	<test id="Test 205-h: Using existing cache run another application without -Xshareclasses:allowClasspaths option. Verify the trace point prohibiting addition of classpath is triggered." timeout="600" runPath=".">
+		<exec command="cp $UTILSDIR$$PATHSEP$utils.jar $UTILSDIR$$PATHSEP$utilsBK.jar"/>
 		<command>$JAVA_EXE$ $currentMode$,verbose -Xtrace:print={j9shr.2097} $CP_FIB$ $PROGRAM_FIB$</command>
 		<output type="success" caseSenditive="no" regex="no">Fibonacci: iterations</output>
 		<output type="required" caseSensitive="yes" regex="no">JVM cannot store classpaths into the shared cache</output>
