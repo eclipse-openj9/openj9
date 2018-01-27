@@ -22,7 +22,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/arm/codegen/ARMBinaryEncoding.cpp \
     omr/compiler/arm/codegen/OMRCodeGenerator.cpp \
     omr/compiler/arm/codegen/ARMDebug.cpp \
-    omr/compiler/arm/codegen/ARMDisassem.cpp \
     omr/compiler/arm/codegen/ARMGenerateInstructions.cpp \
     omr/compiler/arm/codegen/OMRInstruction.cpp \
     omr/compiler/arm/codegen/OMRMachine.cpp \
