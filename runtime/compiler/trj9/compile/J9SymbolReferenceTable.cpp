@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,9 @@ J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation 
      _immutableSymRefNumbers(c->trMemory(), _numImmutableClasses),
      _dynamicMethodSymrefsByCallSiteIndex(c->trMemory()),
      _unsafeJavaStaticSymRefs(NULL),
-     _unsafeJavaStaticVolatileSymRefs(NULL)
+     _unsafeJavaStaticVolatileSymRefs(NULL),
+     _currentThreadDebugEventDataSymbol(0),
+     _currentThreadDebugEventDataSymbolRefs(c->trMemory())
    {
    for (uint32_t i = 0; i < _numImmutableClasses; i++)
       _immutableSymRefNumbers[i] = new (trHeapMemory()) TR_BitVector(sizeHint, c->trMemory(), heapAlloc, growable);
