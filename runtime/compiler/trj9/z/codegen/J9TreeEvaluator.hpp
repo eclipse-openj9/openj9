@@ -133,7 +133,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *i2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *l2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register* pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* cg, bool isUseVectorBCD);
-   static TR::Node* constructDAAAddressPointer(TR::Node* callNode, TR::CodeGenerator* cg);
    static TR::Register *generatePackedToBinaryConversion(TR::Node * node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator * cg);
    static TR::Register *generateVectorPackedToBinaryConversion(TR::Node * node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator * cg);
    static TR::Register *generateBinaryToPackedConversion(TR::Node * node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator * cg);

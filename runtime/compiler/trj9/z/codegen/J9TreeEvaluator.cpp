@@ -18821,65 +18821,6 @@ J9::Z::TreeEvaluator::pd2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    return reg;
    }
 
-/** \brief Reconstruct an address node for byte array packed decimal
- *
- * TODO: Remove duplication.
- * This is a duplicate function of DataAccessAccelerator::constructAddressNode(); and ideally
- * we should restructure variable precision pd2i/pd2l trees to avoid constructing nodes in the codegen.
- * However, this is a potentially large change as decimalPrecision is a TR::Node property and is used by
- * many optimizations such as the simplifier.
-*/
-TR::Node*
-J9::Z::TreeEvaluator::constructDAAAddressPointer(TR::Node* callNode, TR::CodeGenerator* cg)
-   {
-   TR::Node* base = callNode->getChild(0);
-   TR::Node* index = callNode->getChild(1);
-
-   TR::Node * pdBufAddressNode = NULL;
-   TR::Node * pdBufPositionNode = NULL;
-
-   if (callNode->getSymbol()->getResolvedMethodSymbol())
-      {
-      if (callNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod())
-         {
-         if ((callNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_ByteBuffer_)
-               || (callNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_ByteBuffer_))
-            {
-            pdBufAddressNode = callNode->getChild(4);
-            pdBufPositionNode = callNode->getChild(6);
-            return TR::Node::create(TR::l2a, 1, TR::Node::create(TR::ladd, 2, pdBufAddressNode, TR::Node::create(TR::i2l, 1, TR::Node::create(TR::iadd, 2, pdBufPositionNode, index))));
-            }
-         }
-      }
-
-   if (TR::Compiler->target.is64Bit())
-      {
-      TR::Node* addressBase   = base;
-      TR::Node* addressIndex  = TR::Node::create(TR::i2l,    1, index);
-      TR::Node* addressHeader = TR::Node::create(TR::lconst, 0, 0);
-      TR::Node* addressOffset = TR::Node::create(TR::aladd,  2, addressHeader, addressIndex);
-
-      // Update the address header size
-      addressHeader->setLongInt(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-
-      // Compute the final address as base + header + index
-      return TR::Node::create(TR::aladd, 2, addressBase, addressOffset);
-      }
-   else
-      {
-      TR::Node* addressBase   = base;
-      TR::Node* addressIndex  = index;
-      TR::Node* addressHeader = TR::Node::create(TR::iconst, 0, 0);
-      TR::Node* addressOffset = TR::Node::create(TR::aiadd,  2, addressHeader, addressIndex);
-
-      // Update the address header size
-      addressHeader->setInt(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-
-      // Compute the final address as base + header + index
-      return TR::Node::create(TR::aiadd, 2, addressBase, addressOffset);
-      }
-   }
-
 TR::Register*
 J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* cg, bool isUseVectorBCD)
    {
@@ -18887,8 +18828,7 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
    cg->generateDebugCounter("PD-Op/pd2l-var", 1, TR::DebugCounter::Cheap);
 
    TR::Node* pdOpNode      = node->getChild(0);
-   TR::Node* pdAddressNode = constructDAAAddressPointer(pdOpNode, cg);
-   cg->incReferenceCount(pdAddressNode);
+   TR::Node* pdAddressNode = node->getChild(1);
 
    TR::Compilation *comp = cg->comp();
 
