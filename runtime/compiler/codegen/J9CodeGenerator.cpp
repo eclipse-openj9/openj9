@@ -67,7 +67,8 @@ J9::CodeGenerator::CodeGenerator() :
       OMR::CodeGeneratorConnector(),
    _gpuSymbolMap(self()->comp()->allocator()),
    _stackLimitOffsetInMetaData(self()->comp()->fej9()->thisThreadGetStackLimitOffset()),
-   _liveMonitors(NULL)
+   _liveMonitors(NULL),
+   _uncommonedNodes(self()->comp()->trMemory(), stackAlloc)
    {
    }
 
@@ -579,8 +580,8 @@ J9::CodeGenerator::preLowerTrees()
 */
 
    // For dual operator lowering
-   _uncommmonedNodes.reset();
-   _uncommmonedNodes.init(64, true);
+   _uncommonedNodes.reset();
+   _uncommonedNodes.init(64, true);
    }
 
 
@@ -4477,3 +4478,21 @@ J9::CodeGenerator::isMethodInAtomicLongGroup(TR::RecognizedMethod rm)
       }
    }
 
+TR::Node *
+J9::CodeGenerator::createOrFindClonedNode(TR::Node *node, int32_t numChildren)
+   {
+   TR_HashId index;
+   if (_uncommonedNodes.locate(node->getGlobalIndex(), index))
+      {
+      // found previously cloned node
+      node = (TR::Node *) _uncommonedNodes.getData(index);
+      }
+   else
+      {
+      // has not been uncommoned already, clone and store for later
+      TR::Node *clone = TR::Node::copy(node, numChildren);
+      _uncommonedNodes.add(node->getGlobalIndex(), index, clone);
+      node = clone;
+      }
+   return node;
+   }

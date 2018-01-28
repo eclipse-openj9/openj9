@@ -39,6 +39,7 @@ namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
 #include "env/IO.hpp"      // for POINTER_PRINTF_FORMAT
 #include "env/jittypes.h"  // for uintptr_t
 #include "infra/List.hpp"  // for List, etc
+#include "infra/HashTab.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -264,6 +265,12 @@ public:
 
    TR_BitVector *getLiveMonitors() {return _liveMonitors;}
    TR_BitVector *setLiveMonitors(TR_BitVector *v) {return (_liveMonitors = v);}
+
+   TR::Node *createOrFindClonedNode(TR::Node *node, int32_t numChildren);
+
+protected:
+   
+   TR_HashTabInt _uncommonedNodes;               // uncommoned nodes keyed by the original nodes
 
 private:
 
