@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2017 IBM Corp. and others
+Copyright (c) 2017, 2018 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,8 @@ This directory contains documentation about various components in OpenJ9
 
 * **`compiler`**: Documentation about the compiler technology, codenamed
   Testarossa. 
+
+* **`processes`**: Documentation about the processes used in OpenJ9.
 
 Much documentation about OpenJ9 is best considered in tandem with the
 [documentation from Eclipse OMR](https://github.com/eclipse/omr/tree/master/doc),
