@@ -41,6 +41,9 @@
 #include "omrversionstrings.h"
 #include "j9modron.h"
 #include "omr.h"
+#if defined(OPENJ9_BUILD)
+#include "openj9_version_info.h"
+#endif
 #include "vendor_version.h"
 
 /* The vm version which must match the JCL.
@@ -146,6 +149,12 @@ jint computeFullVersionString(J9JavaVM* vm)
 	#define OMR_INFO ""
 #endif /* J9VM_GC_MODRON_GC */
 
+#if defined(OPENJDK_TAG) && defined(OPENJDK_SHA)
+	#define OPENJDK_INFO "\nJCL      - " OPENJDK_SHA " based on " OPENJDK_TAG
+#else
+	#define OPENJDK_INFO ""
+#endif /* OPENJDK_TAG && OPENJDK_SHA */
+
 #if defined(VENDOR_SHORT_NAME) && defined(VENDOR_SHA)
 	#define VENDOR_INFO "\n" VENDOR_SHORT_NAME "      - " VENDOR_SHA
 #else
@@ -153,7 +162,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 #endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
 
 	if (BUFFER_SIZE <= j9str_printf(PORTLIB, fullversion, BUFFER_SIZE + 1,
-			"JRE %s IBM J9 %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO,
+			"JRE %s IBM J9 %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO OPENJDK_INFO,
 			j2se_version_info,
 			EsVersionString,
 			(NULL != osname ? osname : " "),
@@ -166,7 +175,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 	}
 
 	if (BUFFER_SIZE <= j9str_printf(PORTLIB, vminfo, BUFFER_SIZE + 1,
-			"JRE %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO,
+			"JRE %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO OPENJDK_INFO,
 			j2se_version_info,
 			(NULL != osname ? osname : " "),
 			osarch,

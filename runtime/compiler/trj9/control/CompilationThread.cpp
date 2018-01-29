@@ -474,17 +474,12 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
          }
       else
          {
-         // Is it grace-period?
-         if (persistentInfo->getElapsedTime() < (uint64_t)persistentInfo->getClassLoadingPhaseGracePeriod())
+         // We may skip downgrading during grace period
+         if (TR::Options::getCmdLineOptions()->getOption(TR_DontDowgradeToColdDuringGracePeriod) &&
+             persistentInfo->getElapsedTime() < (uint64_t)persistentInfo->getClassLoadingPhaseGracePeriod())
             {
-            // During grace period only downgrade non-bootstrap methods
-            //TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, NULL);
-            //if (fe && !fe->isClassLibraryMethod(method))
-            //   {
-            //   doDowngrade = true;
-            //   }
             }
-         else // no grace period here
+         else 
             {
             // Downgrade during CLP when queue grows too large
             if ((persistentInfo->isClassLoadingPhase() && getNumQueuedFirstTimeCompilations() > TR::Options::_qsziThresholdToDowngradeDuringCLP) ||
