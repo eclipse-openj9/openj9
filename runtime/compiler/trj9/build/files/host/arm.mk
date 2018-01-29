@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,17 +19,17 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
 JIT_PRODUCT_BACKEND_SOURCES+= \
-    omr/compiler/arm/runtime/FlushICache.armasm \
     omr/compiler/arm/runtime/CodeSync.cpp \
+    omr/compiler/arm/runtime/FlushICache.armasm \
     omr/compiler/arm/runtime/VirtualGuardRuntime.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/arm/runtime/MathHelp.c \
-    compiler/trj9/arm/runtime/PicBuilder.armasm \
-    compiler/trj9/arm/runtime/ThunkHelpersARM.c \
-    compiler/trj9/arm/runtime/Math.armasm \
+    compiler/trj9/arm/runtime/ARMRelocationTarget.cpp \
     compiler/trj9/arm/runtime/ArrayCopy.armasm \
+    compiler/trj9/arm/runtime/Math.armasm \
+    compiler/trj9/arm/runtime/MathHelp.c \
+    compiler/trj9/arm/runtime/MTHelpersARM.cpp \
+    compiler/trj9/arm/runtime/PicBuilder.armasm \
     compiler/trj9/arm/runtime/Recomp.cpp \
     compiler/trj9/arm/runtime/Recompilation.armasm \
-    compiler/trj9/arm/runtime/MTHelpersARM.cpp \
-    compiler/trj9/arm/runtime/ARMRelocationTarget.cpp
+    compiler/trj9/arm/runtime/ThunkHelpersARM.c

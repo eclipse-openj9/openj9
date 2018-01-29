@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,23 +22,23 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/p/runtime/VirtualGuardRuntime.spp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/p/runtime/J9PPCArrayCopy.spp \
-    compiler/trj9/p/runtime/J9PPCArrayCmp.spp \
-    compiler/trj9/p/runtime/J9PPCArrayTranslate.spp \
-    compiler/trj9/p/runtime/J9PPCEncodeUTF16.spp \
-    compiler/trj9/p/runtime/J9PPCCompressString.spp \
-    compiler/trj9/p/runtime/J9PPCCRC32.spp \
-    compiler/trj9/p/runtime/J9PPCCRC32_wrapper.c \
     compiler/trj9/p/runtime/CodeSync.cpp \
-    compiler/trj9/p/runtime/Math.spp \
-    compiler/trj9/p/runtime/PicBuilder.spp \
-    compiler/trj9/p/runtime/PPCRelocationTarget.cpp \
-    compiler/trj9/p/runtime/Recomp.cpp \
-    compiler/trj9/p/runtime/Recompilation.spp \
-    compiler/trj9/p/runtime/PPCHWProfiler.cpp \
-    compiler/trj9/p/runtime/PPCLMGuardedStorage.cpp \
     compiler/trj9/p/runtime/ebb.spp \
     compiler/trj9/p/runtime/Emulation.c \
+    compiler/trj9/p/runtime/J9PPCArrayCmp.spp \
+    compiler/trj9/p/runtime/J9PPCArrayCopy.spp \
+    compiler/trj9/p/runtime/J9PPCArrayTranslate.spp \
+    compiler/trj9/p/runtime/J9PPCCRC32.spp \
+    compiler/trj9/p/runtime/J9PPCCRC32_wrapper.c \
+    compiler/trj9/p/runtime/J9PPCCompressString.spp \
+    compiler/trj9/p/runtime/J9PPCEncodeUTF16.spp \
+    compiler/trj9/p/runtime/Math.spp \
+    compiler/trj9/p/runtime/PPCHWProfiler.cpp \
+    compiler/trj9/p/runtime/PPCLMGuardedStorage.cpp \
+    compiler/trj9/p/runtime/PPCRelocationTarget.cpp \
+    compiler/trj9/p/runtime/PicBuilder.spp \
+    compiler/trj9/p/runtime/Recomp.cpp \
+    compiler/trj9/p/runtime/Recompilation.spp \
     omr/compiler/p/runtime/OMRCodeCacheConfig.cpp
 
 ifeq ($(OS),aix)
