@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -382,7 +382,7 @@ j9shsem_destroy (struct J9PortLibrary *portLibrary, struct j9shsem_handle **hand
 			 ours to delete. However, given the dir permissions, we can still unlink it. Therefore, try an operation for which we need
 			 to own the file. If it succeeds, that means we own it and can go ahead and unlink it. */
 			Trc_PRT_shsem_j9shsem_destroy_Debug2((*handle)->semid, myerrno);
-			rc = chown((*handle)->baseFile, -1, getegid()); /* Completely benign - done anyway when the file is created */
+			rc = omrfile_chown((*handle)->baseFile, OMRPORT_FILE_IGNORE_ID, getegid()); /* Completely benign - done anyway when the file is created */
 		} else {
 			Trc_PRT_shsem_j9shsem_destroy_Debug2((*handle)->semid, myerrno);
 			rc = -1;
@@ -475,7 +475,7 @@ ensureBaseFile(struct J9PortLibrary *portLibrary, char *filename)
 	omrfile_close(fd);
 
 	Trc_PRT_shsem_createbaseFile_Event1(filename, gid);
-	rc = chown(filename, -1, gid);
+	rc = omrfile_chown(filename, OMRPORT_FILE_IGNORE_ID, gid);
 	Trc_PRT_shsem_createbaseFile_Event2(rc, errno);
 
 	Trc_PRT_shsem_createbaseFile_Exit();
