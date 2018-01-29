@@ -290,6 +290,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJaasMode(JaasModes m) { _jaasMode = m; }
    std::string getJaasServerAddress() const { return _jaasServerAddress; }
    void setJaasServerAddress(char *addr) { _jaasServerAddress = addr; }
+   uint32_t getJaasTimeout() { return _timeout; }
+   void setJaasTimeout(uint32_t t) { _timeout = t; }
    uint32_t getJaasServerPort() const { return _jaasServerPort; }
    void setJaasServerPort(uint32_t port) { _jaasServerPort = port; }
    std::string getJaasServerConnectionInfo() const { return _jaasServerAddress + ":" + std::to_string(_jaasServerPort); }
@@ -382,6 +384,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    std::string _jaasServerAddress;
    uint32_t _jaasServerPort;
    uint64_t _jaasId;
+   uint32_t _timeout;
    };
 
 }

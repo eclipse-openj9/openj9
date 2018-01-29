@@ -1775,7 +1775,9 @@ remoteCompile(
    std::string romClassStr = packROMClass(romClass, compiler->trMemory());
    std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
 
-   JAAS::J9ClientStream client(TR::comp()->getPersistentInfo()->getJaasServerConnectionInfo());
+   JAAS::J9ClientStream client(TR::comp()->getPersistentInfo()->getJaasServerConnectionInfo(),
+                               TR::comp()->getPersistentInfo()->getJaasTimeout());
+   client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJaasId(), romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), detailsStr, details.getType());
 
    uint32_t statusCode = compilationFailure;
    std::string codeCacheStr;

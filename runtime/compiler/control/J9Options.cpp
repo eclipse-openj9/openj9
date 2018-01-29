@@ -1037,6 +1037,24 @@ bool J9::Options::showPID()
    return false;
    }
 
+static uint32_t getJaasTimeoutFromCommandLineOptions(char **options, char delimiter)
+   {
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
+   char *startChar = scan_to_delim(PORTLIB, options, delimiter);
+   uint32_t timeout = 0;
+   UDATA scanResult = scan_u32(&startChar, &timeout);
+   if (scanResult != 0)
+      {
+      if (scanResult == 1)
+         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_MUST_BE_NUMBER, "timeout=");
+      else
+         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED, "timeout=");
+      }
+   else
+      getCompilationInfo(jitConfig)->getPersistentInfo()->setJaasTimeout(timeout);
+   }
+
 static void getJaasServerPortFromCommandLineOptions(char **options, char delimiter)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
@@ -2022,6 +2040,8 @@ J9::Options::fePreProcess(void * base)
                      }
                   else if (try_scan(&options, "port=")) // parse port=<number> option
                      getJaasServerPortFromCommandLineOptions(&options, delimiter);
+                  else if (try_scan(&options, "timeout="))
+                     getJaasTimeoutFromCommandLineOptions(&options, delimiter);
                   else                                  // option not known
                      {
                      if (unRecognizedOptions != options) // try to loop through all known options
