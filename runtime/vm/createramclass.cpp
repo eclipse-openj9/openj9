@@ -142,9 +142,10 @@ static UDATA checkPackageAccess(J9VMThread *vmThread, J9Class *foundClass, UDATA
 static void setCurrentExceptionForBadClass(J9VMThread *vmThread, J9UTF8 *badClassName, UDATA exceptionIndex);
 static BOOLEAN verifyClassLoadingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass);
 static void popFromClassLoadingStack(J9VMThread *vmThread);
-static VMINLINE BOOLEAN loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *elementClass, UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module);
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-static J9Class *loadNestHost(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *nestHostName, UDATA classPreloadFlags);
+static VMINLINE BOOLEAN loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *elementClass, UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module, J9Class **nestHostOut);
+#else /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+static VMINLINE BOOLEAN loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *elementClass, UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module);
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 static J9Class* internalCreateRAMClassDropAndReturn(J9VMThread *vmThread, J9ROMClass *romClass, J9CreateRAMClassState *state);
 static J9Class* internalCreateRAMClassDoneNoMutex(J9VMThread *vmThread, J9ROMClass *romClass, UDATA options, J9CreateRAMClassState *state);
@@ -1506,7 +1507,11 @@ popFromClassLoadingStack(J9VMThread *vmThread)
  */
 static VMINLINE BOOLEAN
 loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *elementClass,
-	UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module)
+	UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	, J9Class **nestHostOut
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+	)
 {
 	J9JavaVM *vm = vmThread->javaVM;
 	const BOOLEAN isROMClassUnsafe = (J9ROMCLASS_IS_UNSAFE(romClass) != 0);
@@ -1604,19 +1609,25 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 			}
 		}
 	}
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	{
+		J9UTF8 *nestHostName = J9ROMCLASS_NESTHOSTNAME(romClass);
+
+		/* Only loads nest host if one is named*/
+		if (NULL != nestHostName) {
+			*nestHostOut = internalFindClassUTF8(vmThread, J9UTF8_DATA(nestHostName), J9UTF8_LENGTH(nestHostName), classLoader, classPreloadFlags);
+			Trc_VM_CreateRAMClassFromROMClass_nestHostLoaded(vmThread, J9UTF8_LENGTH(nestHostName), J9UTF8_DATA(nestHostName), *nestHostOut);
+
+			/* If nest host loading failed, an exception has been set; end loading early */
+			if (NULL == *nestHostOut) {
+				return FALSE;
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 
 	return TRUE;
 }
-
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
-static J9Class *
-loadNestHost(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *nestHostName, UDATA classPreloadFlags)
-{
-	J9Class *nestHost = internalFindClassUTF8(vmThread, J9UTF8_DATA(nestHostName), J9UTF8_LENGTH(nestHostName), classLoader, classPreloadFlags);
-	Trc_VM_CreateRAMClassFromROMClass_nestHostLoaded(vmThread, J9UTF8_LENGTH(nestHostName), J9UTF8_DATA(nestHostName), nestHost);
-	return nestHost;
-}
-#endif
 
 static J9Class*
 internalCreateRAMClassDropAndReturn(J9VMThread *vmThread, J9ROMClass *romClass, J9CreateRAMClassState *state)
@@ -2322,34 +2333,6 @@ fail:
 				ramClass->hostClass = ramClass;
 			}
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
-			{
-				J9Class *nestHost = NULL;
-				J9UTF8 *nestHostName = J9ROMCLASS_NESTHOSTNAME(romClass);
-
-				/* If no nest host is named, class is own nest host */
-				if (NULL == nestHostName) {
-					nestHost = ramClass;
-				} else {
-					UDATA nestHostClassPreloadFlags = 0;
-					if (hotswapping) {
-						nestHostClassPreloadFlags = J9_FINDCLASS_FLAG_EXISTING_ONLY;
-					} else {
-						nestHostClassPreloadFlags = J9_FINDCLASS_FLAG_THROW_ON_FAIL;
-						if (classLoader != javaVM->systemClassLoader) {
-							nestHostClassPreloadFlags |= J9_FINDCLASS_FLAG_CHECK_PKG_ACCESS;
-						}
-					}
-					nestHost = loadNestHost(vmThread, hostClassLoader, nestHostName, nestHostClassPreloadFlags);
-				}
-				/* If nest host loading failed, an exception has been set; end loading early */
-				if (NULL == nestHost) {
-					return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, state);
-				}
-				ramClass->nestHost = nestHost;
-			}
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
-
 			/* Initialize the methods. */
 			if (romClass->romMethodCount != 0) {
 				J9Method *currentRAMMethod = ramClass->ramMethods;
@@ -2728,6 +2711,10 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	J9Class *result = NULL;
 	J9ClassLoader* hostClassLoader = classLoader;
 	J9Module* module = NULL;
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	J9Class *nestHost = NULL;
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+
 
 	/* if this is an anon class classLoader should be anonClassLoader */
 	if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
@@ -2826,11 +2813,14 @@ retry:
 		}
 	}
 
-	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module)) {
+	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+			, &nestHost
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+	)) {
 		omrthread_monitor_enter(javaVM->classTableMutex);
 		return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, &state);
 	}
-
 	
 	result = internalCreateRAMClassFromROMClassImpl(vmThread, classLoader, romClass, options, elementClass,
 		methodRemapArray, entryIndex, locationType, classBeingRedefined, packageID, superclass, &state, hostClassLoader, hostClass, module);
@@ -2870,6 +2860,17 @@ retry:
 		}
 		result->classFlags |= J9ClassIsAnonymous;
 	}
+
+
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	if (NULL != result) {
+		/* If no nest host is named & loaded, class is own nest host */
+		if (NULL == nestHost) {
+			nestHost = result;
+		}
+		result->nestHost = nestHost;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 
 	return result;
 }
