@@ -2021,7 +2021,7 @@ fail:
 		} else {
 			interfaceHead = markInterfaces(romClass, superclass, hostClassLoader, &foundCloneable, &interfaceCount, &inheritedInterfaceCount, &maxInterfaceDepth);
 			/* Compute the number of slots required for the interpreter and jit (if enabled) vTables. */
-			vTable = computeVTable(vmThread, classLoader, superclass, romClass, packageID, methodRemapArray, interfaceHead, &defaultConflictCount, interfaceCount, inheritedInterfaceCount, &errorData);
+			vTable = computeVTable(vmThread, hostClassLoader, superclass, romClass, packageID, methodRemapArray, interfaceHead, &defaultConflictCount, interfaceCount, inheritedInterfaceCount, &errorData);
 			if (vTable == NULL) {
 				unmarkInterfaces(interfaceHead);
 				popFromClassLoadingStack(vmThread);
