@@ -1225,6 +1225,7 @@ independentMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 	if (opt_XmnsSet) {
 		extensions->newSpaceSize = MM_Math::roundToFloor(2*extensions->heapAlignment, extensions->newSpaceSize);
 		extensions->newSpaceSize = MM_Math::roundToFloor(2*extensions->regionSize, extensions->newSpaceSize);
+		extensions->newSpaceSize = OMR_MAX(extensions->regionSize * 2, extensions->newSpaceSize);
 
 		if (extensions->newSpaceSize < newSpaceSizeMinimum) {
 			memoryOption = displayXmnOrXmns(memoryParameters);
@@ -1254,12 +1255,6 @@ independentMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 		extensions->maxNewSpaceSize = MM_Math::roundToFloor(2*extensions->regionSize, extensions->maxNewSpaceSize);
 
 		if (extensions->maxNewSpaceSize < newSpaceSizeMinimum) {
-			/* Display minSubSpace size, or Xmns/Xmnx value if both were set */
-			if (opt_XmnsSet) {
-				subSpaceTooLargeOption = displayXmnOrXmnx(memoryParameters);
-				memoryOption = displayXmnOrXmns(memoryParameters);
-				goto _subSpaceTooLarge;
-			}
 			memoryOption = displayXmnOrXmnx(memoryParameters);
 			minimumSizeValue = newSpaceSizeMinimum; /* display min size */
 			goto _subSpaceTooSmallForValue;
@@ -1288,6 +1283,7 @@ independentMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 	if (opt_XmosSet) {
 		extensions->oldSpaceSize = MM_Math::roundToFloor(extensions->heapAlignment, extensions->oldSpaceSize);
 		extensions->oldSpaceSize = MM_Math::roundToFloor(extensions->regionSize, extensions->oldSpaceSize);
+		extensions->oldSpaceSize = OMR_MAX(extensions->regionSize, extensions->oldSpaceSize);
 
 		if (extensions->oldSpaceSize < oldSpaceSizeMinimum) {
 			memoryOption = displayXmoOrXmos(memoryParameters);
@@ -1781,9 +1777,18 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 					goto _subSpaceTooLarge;
 				}
 			} else {
-				/* Make Xmns 1/4 of the Xms value, i.e. 1/3 of Xmos. Xms will be reset */
-				candidateXmnsValue = MM_Math::roundToFloor(extensions->heapAlignment * 2,extensions->oldSpaceSize / 3);
-				candidateXmnsValue = MM_Math::roundToFloor(extensions->regionSize * 2, candidateXmnsValue);
+				if (extensions->oldSpaceSize < (6 * extensions->regionSize)) {
+					/*
+					 * Minimum initial heap size to provide 75/25 split is 8 regions, six for Tenure and two for Nursery.
+					 * If Tenure Initial size is smaller then six regions it is not large enough to provide 75/25 proportion
+					 * So set initial Nursery size to minimum (two regions) and use reminder for Tenure
+					 */
+					candidateXmnsValue = extensions->regionSize * 2;
+				} else {
+					/* Make Xmns 1/4 of the Xms value, i.e. 1/3 of Xmos. Xms will be reset */
+					candidateXmnsValue = MM_Math::roundToFloor(extensions->heapAlignment * 2, extensions->oldSpaceSize / 3);
+					candidateXmnsValue = MM_Math::roundToFloor(extensions->regionSize * 2, candidateXmnsValue);
+				}
 
 				/* Ensure Xmos + Xmns < MaxXms */
 				if ((extensions->oldSpaceSize + candidateXmnsValue) > maximumXmsValue) {
