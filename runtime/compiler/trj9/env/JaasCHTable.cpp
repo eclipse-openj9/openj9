@@ -1,4 +1,3 @@
-#include "env/JaasCHTable.hpp"
 #include "env/CHTable.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/j9methodServer.hpp"
@@ -76,11 +75,9 @@ VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_Virt
    return info;
    }
 
-bool TR_CHTable::commitRemote(TR::Compilation *comp)
+CHTableCommitData
+TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
    {
-   if (comp->getOption(TR_DisableCHOpts))
-      return true;
-
    // collect info from TR_CHTable
    std::vector<TR_OpaqueClassBlock*> classes = _classes
       ? std::vector<TR_OpaqueClassBlock*>(&(_classes->element(0)), (&(_classes->element(_classes->lastIndex()))) + 1)
@@ -135,34 +132,56 @@ bool TR_CHTable::commitRemote(TR::Compilation *comp)
       fprintf(stderr, "site %p %p %p\n", site->getLocation(), site->getLocation2(), site->getDestination());
       }
 
-   auto stream = TR::CompilationInfo::getStream();
-   stream->write(JAAS::J9ServerMessageType::CHTable_commit, classes, classesThatShouldNotBeNewlyExtended, preXMethods, serialVGuards);
-   auto recv = stream->read<bool>();
+   uint8_t *startPC = comp->cg()->getCodeStart();
 
-   return std::get<0>(recv);
+   return {classes, classesThatShouldNotBeNewlyExtended, preXMethods, {}, serialVGuards, startPC};
    }
+
+// Must hold classTableMonitor when calling this method
+void cleanupNewlyExtendedInfo(TR::Compilation *comp, std::vector<TR_OpaqueClassBlock*> &classesThatShouldNotBeNewlyExtended)
+   {
+   TR_PersistentCHTable *table = comp->getPersistentInfo()->getPersistentCHTable();
+   for (auto classId : classesThatShouldNotBeNewlyExtended)
+      {
+      TR_PersistentClassInfo * cl = table->findClassInfo(classId);
+      // The class may have been unloaded during this compilation and the search may return NULL
+      // This method is called even if we abort the compilation. Hence, killing the
+      // compilation after a class unload (which we already do) is not ehough
+      // If we get really unlucky a new class could be unloaded exactly in the place of the
+      // unloaded one (the window of time is very small for this to occur). However, resetting
+      // the flag for the newly loaded class is not going to create any problems (it's
+      // supposed to be reset to start with)
+      if (cl)
+         cl->resetShouldNotBeNewlyExtended(comp->getCompThreadID());
+      }
+   }
+
 
 
 bool jaasCHTableCommit(
       TR::Compilation *comp,
-      std::vector<TR_OpaqueClassBlock*> classes,
-      std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended,
-      std::vector<TR_ResolvedMethod*> preXMethods,
-      std::vector<TR_VirtualGuardSite> sideEffectPatchSites,
-      std::vector<VirtualGuardForCHTable> vguards)
+      TR_MethodMetaData *metaData,
+      CHTableCommitData &data)
    {
+   std::vector<TR_OpaqueClassBlock*> &classes = std::get<0>(data);
+   std::vector<TR_OpaqueClassBlock*> &classesThatShouldNotBeNewlyExtended = std::get<1>(data);
+   std::vector<TR_ResolvedMethod*> &preXMethods = std::get<2>(data);
+   std::vector<TR_VirtualGuardSite> &sideEffectPatchSites = std::get<3>(data);
+   std::vector<VirtualGuardForCHTable> &vguards = std::get<4>(data);
+   uint8_t *serverStartPC = std::get<5>(data);
+   uint8_t *startPC = (uint8_t*) metaData->startPC;
+
    if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
       return true;
    if (vguards.empty() && sideEffectPatchSites.empty() && preXMethods.empty() && classes.empty() && classesThatShouldNotBeNewlyExtended.empty())
       return true;
 
-   //cleanupNewlyExtendedInfo(comp); TODO
+   cleanupNewlyExtendedInfo(comp, classesThatShouldNotBeNewlyExtended);
    if (comp->getFailCHTableCommit())
       return false;
 
    TR_PersistentCHTable *table       = comp->getPersistentInfo()->getPersistentCHTable();
    TR_ResolvedMethod  *currentMethod = comp->getCurrentMethod();
-   uint8_t   *startPC                = comp->cg()->getCodeStart(); //TODO is this OK?
    TR_Hotness hotness                = comp->getMethodHotness();
 
    if (!preXMethods.empty())
@@ -263,7 +282,12 @@ bool jaasCHTableCommit(
          auto &innerAssumptions = std::get<2>(guard);
          if (sites.empty())
             continue;
-
+         for (auto &site : sites)
+            {
+            site.setDestination(site.getDestination() - serverStartPC + startPC);
+            site.setLocation(site.getLocation() - serverStartPC + startPC);
+            fprintf(stderr, "\nsite: location=%p dest=%p, serverStartPC=%p, startPc=%p\n", site.getLocation(), site.getDestination(), serverStartPC, startPC);
+            }
          // Commit the virtual guard itself
          //
          jaasCommitVirtualGuard(&info, sites, table, comp);

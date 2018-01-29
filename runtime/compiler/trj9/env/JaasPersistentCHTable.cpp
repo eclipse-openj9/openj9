@@ -233,6 +233,7 @@ size_t FlatPersistentClassInfo::serializeClass(TR_PersistentClassInfo *clazz, Fl
    info->_timeStamp = clazz->_timeStamp;
    info->_nameLength = clazz->_nameLength;
    info->_flags = clazz->_flags;
+   TR_ASSERT(!clazz->getFieldInfo(), "field info not supported");
    info->_shouldNotBeNewlyExtended = clazz->_shouldNotBeNewlyExtended;
    int idx = 0;
    for (TR_SubClass *c = clazz->getFirstSubclass(); c; c = c->getNext())

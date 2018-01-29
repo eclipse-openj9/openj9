@@ -39,12 +39,18 @@ struct VirtualGuardInfoForCHTable
 
 using VirtualGuardForCHTable = std::tuple<VirtualGuardInfoForCHTable, std::vector<TR_VirtualGuardSite>, std::vector<VirtualGuardInfoForCHTable>>;
 
+using CHTableCommitData = std::tuple<
+      std::vector<TR_OpaqueClassBlock*>, // classes
+      std::vector<TR_OpaqueClassBlock*>, // classesThatShouldNotBeNewlyExtended
+      std::vector<TR_ResolvedMethod*>, // preXMethods
+      std::vector<TR_VirtualGuardSite>, // sideEffectPatchSites
+      std::vector<VirtualGuardForCHTable>, // vguards
+      uint8_t*>; // startPC
+
+
 bool jaasCHTableCommit(
       TR::Compilation *comp,
-      std::vector<TR_OpaqueClassBlock*> classes,
-      std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended,
-      std::vector<TR_ResolvedMethod*> preXMethods,
-      std::vector<TR_VirtualGuardSite> sideEffectPatchSites,
-      std::vector<VirtualGuardForCHTable> vguards);
+      TR_MethodMetaData *metaData,
+      CHTableCommitData &data);
 
 #endif // JAAS_CHTABLE_H

@@ -33,6 +33,7 @@
 #include "env/jittypes.h"                  // for uintptrj_t
 #include "infra/Link.hpp"                  // for TR_Link, TR_LinkHead
 #include "runtime/RuntimeAssumptions.hpp"
+#include "env/JaasCHTable.hpp"
 
 class TR_FrontEnd;
 class TR_OpaqueClassBlock;
@@ -413,8 +414,7 @@ class TR_CHTable
                            TR_PersistentCHTable *table, TR::Compilation *comp);
    void commitOSRVirtualGuards(TR::Compilation *comp, TR::list<TR_VirtualGuard*> &vguards);
 
-   // JAAS
-   bool commitRemote(TR::Compilation *comp);
+   CHTableCommitData computeDataForCHTableCommit(TR::Compilation *comp);
 
    TR_Array<TR_OpaqueClassBlock *> *getClasses() { return _classes;}
    TR_Array<TR_OpaqueClassBlock *> *getClassesThatShouldNotBeNewlyExtended() { return _classesThatShouldNotBeNewlyExtended;}

@@ -4,6 +4,7 @@
 #include <grpc++/grpc++.h>
 #include "rpc/types.h"
 #include "rpc/ProtobufTypeConvert.hpp"
+#include "env/CHTable.hpp"
 
 namespace JAAS
 {
@@ -42,7 +43,7 @@ public:
 
    void finish();
    void cancel();   // Same as finish, but with Status::CANCELLED
-   void finishCompilation(uint32_t statusCode, std::string codeCache = "", std::string dataCache = "", std::string metaDataRelocation = "");
+   void finishCompilation(uint32_t statusCode, std::string codeCache = "", std::string dataCache = "", CHTableCommitData chTableData = {});
    void acceptNewRPC();
    void setClientId(uint64_t clientId)
       {

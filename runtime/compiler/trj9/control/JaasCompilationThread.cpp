@@ -1712,19 +1712,6 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(encoded.first, encoded.second);
          }
          break;
-      case J9ServerMessageType::CHTable_commit:
-         {
-         auto recv = client->getRecvData<std::vector<TR_OpaqueClassBlock*>, std::vector<TR_OpaqueClassBlock*>, std::vector<TR_ResolvedMethod*>, std::vector<VirtualGuardForCHTable>>();
-         TR_CHTable *chTable = TR::comp()->getCHTable();
-         auto classes = std::get<0>(recv);
-         auto classesThatShouldNotBeNewlyExtended = std::get<1>(recv);
-         auto preXMethods = std::get<2>(recv);
-         auto vguards = std::get<3>(recv);
-         TR::ClassTableCriticalSection lock(fe);
-         bool ok = jaasCHTableCommit(TR::comp(), classes, classesThatShouldNotBeNewlyExtended, preXMethods, {}, vguards);
-         client->write(ok);
-         }
-         break;
       default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure("JAAS: handleServerMessage received an unknown message type");
@@ -1765,15 +1752,15 @@ remoteCompile(
    uint32_t statusCode = compilationFailure;
    std::string codeCacheStr;
    std::string dataCacheStr;
-   std::string metaRelocationInfo;
+   CHTableCommitData chTableData;
    try
       {
       while(!handleServerMessage(&client, compiler->fej9vm()));
-      auto recv = client.getRecvData<uint32_t, std::string, std::string, std::string>();
+      auto recv = client.getRecvData<uint32_t, std::string, std::string, CHTableCommitData>();
       statusCode = std::get<0>(recv);
       codeCacheStr = std::get<1>(recv);
       dataCacheStr = std::get<2>(recv);
-      metaRelocationInfo = std::get<3>(recv);
+      chTableData = std::get<3>(recv);
       if (statusCode >= compilationMaxError)
          throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
       }
@@ -1798,6 +1785,20 @@ remoteCompile(
                compiler->getCurrentCodeCache(), (uint8_t *)&codeCacheStr[0], (J9JITDataCacheHeader *)&dataCacheStr[0],
                method, false, TR::comp()->getOptions(), TR::comp(), compilee);
 
+            {
+            TR::ClassTableCriticalSection commit(compiler->fe());
+            TR_ASSERT(jaasCHTableCommit(compiler, metaData, chTableData), "commit fail");
+            }
+
+         if (!metaData)
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJaas))
+               {
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS,
+                                              "JaaS Relocation failure: %d",
+                                              compInfoPT->reloRuntime()->returnCode());
+               }
+            }
          TR_ASSERT(metaData, "relocation must succeed");
 
 
@@ -1875,7 +1876,10 @@ remoteCompilationEnd(
    std::string codeCacheStr((char*) codeCacheHeader, codeSize);
    std::string dataCacheStr((char*) dataCacheHeader, dataSize);
 
-   entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr);
+   TR_CHTable *chTable = comp->getCHTable();
+   auto chTableData = chTable->computeDataForCHTableCommit(comp);
+
+   entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr, chTableData);
 
    if (TR::Options::getVerboseOption(TR_VerboseJaas))
       {
