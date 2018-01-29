@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1984,10 +1984,9 @@ TR::ParameterSymbol *
 J9::SymbolReferenceTable::createParameterSymbol(
       TR::ResolvedMethodSymbol *owningMethodSymbol,
       int32_t slot,
-      TR::DataType type,
-      bool isUnsigned)
+      TR::DataType type)
    {
-   TR::ParameterSymbol * sym = TR::ParameterSymbol::create(trHeapMemory(),type,isUnsigned,slot);
+   TR::ParameterSymbol * sym = TR::ParameterSymbol::create(trHeapMemory(),type,slot);
 
    if (comp()->getOption(TR_MimicInterpreterFrameShape))
       {

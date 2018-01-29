@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3468,87 +3468,87 @@ J9::CodeGenerator::generateGPU()
       TR::ParameterSymbol *parmSymbol;
       int slot = 0;
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Address, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Address);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setLinkageRegisterIndex(0);
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Address, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Address);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setLinkageRegisterIndex(1);
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Address, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Address);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setLinkageRegisterIndex(2);
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Address, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Address);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setLinkageRegisterIndex(3);
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setLinkageRegisterIndex(4);
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setLinkageRegisterIndex(5);
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setLinkageRegisterIndex(6);
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setLinkageRegisterIndex(7);
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Int32);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setTypeSignature("", 0);
       la.add(parmSymbol);
 
-      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Address, false);
+      parmSymbol = method->comp()->getSymRefTab()->createParameterSymbol(method, slot, TR::Address);
       parmSymbol->setOrdinal(slot++);
       parmSymbol->setReferencedParameter();
       parmSymbol->setTypeSignature("", 0);
