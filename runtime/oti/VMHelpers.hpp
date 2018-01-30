@@ -1373,6 +1373,7 @@ exit:
 	static VMINLINE void
 	reportFinalFieldModified(J9VMThread* currentThread, J9Class* fieldClass)
 	{
+#if 0
 		if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassHasIllegalFinalFieldModifications)) {
 			J9JavaVM* vm = currentThread->javaVM;
 			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT)) {
@@ -1391,6 +1392,7 @@ exit:
 				vmFuncs->releaseSafePointVMAccess(currentThread);
 			}
 		}
+#endif
 	}
 };
 
