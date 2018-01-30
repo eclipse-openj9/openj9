@@ -22,7 +22,6 @@
 
 # Exclude tests temporarily
 
-org.openj9.test.java.lang.Test_J9VMInternals:test_checkPackageAccess													849 generic-all
 org.openj9.test.java.security.Test_AccessController:test_doPrivilegedWithCombiner4										858 generic-all
 org.openj9.test.java.security.Test_AccessController:test_doPrivileged_createAccessControlContext						858 generic-all
 org.openj9.test.java.lang.Test_ClassLoader																				995 generic-all

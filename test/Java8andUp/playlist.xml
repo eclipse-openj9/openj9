@@ -866,6 +866,64 @@
 
 	<test>
 		<featureIds>
+			<featureId>J9VMInternals</featureId>
+		</featureIds>
+		<testCaseName>J9VMInternals_Test_SE90</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(MKDIR) -p $(REPORTDIR); \
+	cd $(REPORTDIR); \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-Xbootclasspath/a:$(TEST_RESROOT)$(D)TestResources.jar \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames JCL_TEST_Java-Internals \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^vm.hrt</platformRequirements>
+		<tags>
+			<tag>sanity</tag>
+		</tags>
+		<subsets>
+			<subset>SE90</subset>
+		</subsets>
+	</test>
+
+	<test>
+		<featureIds>
+			<featureId>J9VMInternals</featureId>
+		</featureIds>
+		<testCaseName>J9VMInternals_Test_SE80</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>-XX:RecreateClassfileOnload</variation>
+		</variations>
+		<command>$(MKDIR) -p $(REPORTDIR); \
+	cd $(REPORTDIR); \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-Xbootclasspath/a:$(TEST_RESROOT)$(D)TestResources.jar \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames  JCL_TEST_Java-Internals \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^vm.hrt</platformRequirements>
+		<tags>
+			<tag>sanity</tag>
+			<tag>test.180</tag>
+		</tags>
+		<subsets>
+			<subset>SE80</subset>
+		</subsets>
+	</test>
+
+	<test>
+		<featureIds>
 			<featureId>125377</featureId>
 		</featureIds>
 		<testCaseName>JCL_Test_JIT_Helper_SE80</testCaseName>
