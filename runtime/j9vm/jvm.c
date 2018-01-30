@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1476,12 +1476,13 @@ bail:
  * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_SUN_OPENJDK' assuming this is an OpenJ9 Java 8 build;
  * "9"         --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
  * "10"        --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
+ * "11"        --- Java 11, 'J2SE_V11 | J2SE_SHAPE_V11';
  * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
- * Note: 'release' file contains JAVA_VERSION="10" for Java 10 at this moment.
  * Otherwise, 0 is returned.
  *
  * @return 'J2SE_18 | J2SE_SHAPE_SUN_OPENJDK', 'J2SE_19 | J2SE_SHAPE_B165',
- *         'J2SE_V10 | J2SE_SHAPE_V10', 'J2SE_LATEST | J2SE_SHAPE_LATEST'
+ *         'J2SE_V10 | J2SE_SHAPE_V10', 'J2SE_V11 | J2SE_SHAPE_V11',
+ *         'J2SE_LATEST | J2SE_SHAPE_LATEST' 
  *         according to the 'JAVA_VERSION' value found in 'release';
  *         or 0 if otherwise.
  */
@@ -1509,6 +1510,8 @@ getVersionFromReleaseFile(void)
 				finalVersion = J2SE_19 | J2SE_SHAPE_B165;
 			} else if (!strcmp(version, "\"10\"")) {
 				finalVersion = J2SE_V10 | J2SE_SHAPE_V10;
+			} else if (!strcmp(version, "\"11\"")) {
+				finalVersion = J2SE_V11 | J2SE_SHAPE_V11;
 			} else {
 				/* Assume latest Java version and shape */
 				finalVersion = J2SE_LATEST | J2SE_SHAPE_LATEST;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,12 +37,15 @@
 #define J2SE_18   0x1800
 #define J2SE_19   0x1900
 #define J2SE_V10  0x1A00            /* This refers Java 10 */
+#define J2SE_V11  0x1B00            /* This refers Java 11 */
 #if JAVA_SPEC_VERSION == 8
 	#define J2SE_LATEST  J2SE_18
 #elif JAVA_SPEC_VERSION == 9
 	#define J2SE_LATEST  J2SE_19
-#else
+#elif JAVA_SPEC_VERSION == 10
 	#define J2SE_LATEST  J2SE_V10
+#else
+	#define J2SE_LATEST  J2SE_V11
 #endif
 
 /**
@@ -66,8 +69,10 @@
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_SUN
 #elif JAVA_SPEC_VERSION == 9
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_B165
-#else
+#elif JAVA_SPEC_VERSION == 10
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V10
+#else
+	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V11
 #endif
 #define J2SE_SHAPE_SUN     		0x10000
 #define J2SE_SHAPE_SUN_OPENJDK	0x20000
@@ -75,6 +80,7 @@
 #define J2SE_SHAPE_B148    		0x50000
 #define J2SE_SHAPE_B165    		0x60000
 #define J2SE_SHAPE_V10			0x70000
+#define J2SE_SHAPE_V11			0x80000
 #define J2SE_SHAPE_RAWPLUSJ9	0x80000
 #define J2SE_SHAPE_RAW	 		0x90000
 #define J2SE_SHAPE_MASK 		0xF0000
