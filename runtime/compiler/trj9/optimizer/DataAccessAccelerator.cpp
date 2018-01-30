@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1823,7 +1823,8 @@ TR_DataAccessAccelerator::generatePD2IVariableParameter(TR::TreeTop* treeTop, TR
 
    // Create BCDCHK node
    TR::SymbolReference*  bcdChkSymRef = fastNode->getSymbolReference();
-   TR::Node* bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 1, 1, fastNode, bcdChkSymRef);
+   TR::Node* pdAddressNode = constructAddressNode(fastNode, fastNode->getChild(0), fastNode->getChild(1));
+   TR::Node* bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 2, 2, fastNode, pdAddressNode, bcdChkSymRef);
    fastTT->setNode(bcdchkNode);
 
    // TreeTop replaced by BCDCHK, so we lose 1 reference

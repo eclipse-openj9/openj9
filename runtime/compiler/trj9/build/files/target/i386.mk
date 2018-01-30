@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,14 +19,14 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
 JIT_PRODUCT_BACKEND_SOURCES+=\
+    omr/compiler/x/i386/codegen/IA32SystemLinkage.cpp \
     omr/compiler/x/i386/codegen/OMRCodeGenerator.cpp \
     omr/compiler/x/i386/codegen/OMRMachine.cpp \
     omr/compiler/x/i386/codegen/OMRRealRegister.cpp \
-    omr/compiler/x/i386/codegen/IA32SystemLinkage.cpp \
     omr/compiler/x/i386/codegen/OMRTreeEvaluator.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/x/i386/codegen/J9CodeGenerator.cpp \
+    compiler/trj9/x/i386/codegen/IA32J9SystemLinkage.cpp \
     compiler/trj9/x/i386/codegen/IA32JNILinkage.cpp \
     compiler/trj9/x/i386/codegen/IA32PrivateLinkage.cpp \
-    compiler/trj9/x/i386/codegen/IA32J9SystemLinkage.cpp
+    compiler/trj9/x/i386/codegen/J9CodeGenerator.cpp
