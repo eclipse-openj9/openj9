@@ -187,6 +187,7 @@ TR_JaasClientPersistentCHTable::serializeModifications()
    for (auto classId : _dirty)
       {
       auto clazz = findClassInfo(classId);
+      if (!clazz) continue;
       size_t size = FlatPersistentClassInfo::classSize(clazz);
       numBytes += size;
       }
@@ -197,6 +198,7 @@ TR_JaasClientPersistentCHTable::serializeModifications()
    for (auto classId : _dirty)
       {
       auto clazz = findClassInfo(classId);
+      if (!clazz) continue;
       FlatPersistentClassInfo* info = (FlatPersistentClassInfo*)&data[bytesWritten];
       bytesWritten += FlatPersistentClassInfo::serializeClass(clazz, info);
       }
