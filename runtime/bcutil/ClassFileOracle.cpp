@@ -498,8 +498,8 @@ ClassFileOracle::walkAttributes()
 			 * be kept in the constant pool.
 			 */
 			for (U_16 i = 0; i < _nestMembersCount; i++) {
-				U_16 classIndex = _nestMembers->classes[i];
-				markConstantUTF8AsReferenced(classIndex);
+				U_16 classNameIndex = UTF8_INDEX_FROM_CLASS_INDEX(_classFile->constantPool, _nestMembers->classes[i]);
+				markConstantUTF8AsReferenced(classNameIndex);
 			}
 			break;
 
