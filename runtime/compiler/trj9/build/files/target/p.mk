@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,48 +23,48 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/p/codegen/ControlFlowEvaluator.cpp \
     omr/compiler/p/codegen/FPTreeEvaluator.cpp \
     omr/compiler/p/codegen/GenerateInstructions.cpp \
+    omr/compiler/p/codegen/OMRCodeGenerator.cpp \
+    omr/compiler/p/codegen/OMRConstantDataSnippet.cpp \
+    omr/compiler/p/codegen/OMRInstruction.cpp \
+    omr/compiler/p/codegen/OMRLinkage.cpp \
+    omr/compiler/p/codegen/OMRMachine.cpp \
     omr/compiler/p/codegen/OMRMemoryReference.cpp \
+    omr/compiler/p/codegen/OMRRealRegister.cpp \
+    omr/compiler/p/codegen/OMRRegisterDependency.cpp \
+    omr/compiler/p/codegen/OMRRegisterIterator.cpp \
+    omr/compiler/p/codegen/OMRSnippet.cpp \
+    omr/compiler/p/codegen/OMRTreeEvaluator.cpp \
     omr/compiler/p/codegen/OpBinary.cpp \
     omr/compiler/p/codegen/OpProperties.cpp \
     omr/compiler/p/codegen/PPCAOTRelocation.cpp \
     omr/compiler/p/codegen/PPCBinaryEncoding.cpp \
-    omr/compiler/p/codegen/OMRCodeGenerator.cpp \
-    omr/compiler/p/codegen/OMRInstruction.cpp \
     omr/compiler/p/codegen/PPCDebug.cpp \
     omr/compiler/p/codegen/PPCHelperCallSnippet.cpp \
     omr/compiler/p/codegen/PPCInstruction.cpp \
-    omr/compiler/p/codegen/OMRLinkage.cpp \
-    omr/compiler/p/codegen/PPCSystemLinkage.cpp \
-    omr/compiler/p/codegen/OMRMachine.cpp \
     omr/compiler/p/codegen/PPCOutOfLineCodeSection.cpp \
-    omr/compiler/p/codegen/OMRRealRegister.cpp \
-    omr/compiler/p/codegen/OMRRegisterDependency.cpp \
-    omr/compiler/p/codegen/OMRSnippet.cpp \
+    omr/compiler/p/codegen/PPCSystemLinkage.cpp \
     omr/compiler/p/codegen/PPCTableOfConstants.cpp \
-    omr/compiler/p/codegen/OMRTreeEvaluator.cpp \
     omr/compiler/p/codegen/TreeEvaluatorVMX.cpp \
     omr/compiler/p/codegen/UnaryEvaluator.cpp \
-    omr/compiler/p/codegen/OMRConstantDataSnippet.cpp \
-    omr/compiler/p/codegen/OMRRegisterIterator.cpp \
     omr/compiler/p/env/OMRCPU.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/p/codegen/J9UnresolvedDataSnippet.cpp \
-    compiler/trj9/p/codegen/J9CodeGenerator.cpp \
-    compiler/trj9/p/codegen/J9TreeEvaluator.cpp \
-    compiler/trj9/p/codegen/GenerateInstructions.cpp \
-    compiler/trj9/p/codegen/J9PPCSnippet.cpp \
-    compiler/trj9/p/codegen/J9AheadOfTimeCompile.cpp \
-    compiler/trj9/p/codegen/PPCPrivateLinkage.cpp \
-    compiler/trj9/p/codegen/PPCJNILinkage.cpp \
-    compiler/trj9/p/codegen/InterfaceCastSnippet.cpp \
     compiler/trj9/p/codegen/CallSnippet.cpp \
-    compiler/trj9/p/codegen/StackCheckFailureSnippet.cpp \
     compiler/trj9/p/codegen/DFPTreeEvaluator.cpp \
-    compiler/trj9/p/codegen/J9PPCInstruction.cpp \
     compiler/trj9/p/codegen/ForceRecompilationSnippet.cpp \
+    compiler/trj9/p/codegen/GenerateInstructions.cpp \
+    compiler/trj9/p/codegen/InterfaceCastSnippet.cpp \
+    compiler/trj9/p/codegen/J9AheadOfTimeCompile.cpp \
+    compiler/trj9/p/codegen/J9CodeGenerator.cpp \
+    compiler/trj9/p/codegen/J9PPCInstruction.cpp \
+    compiler/trj9/p/codegen/J9PPCSnippet.cpp \
+    compiler/trj9/p/codegen/J9TreeEvaluator.cpp \
+    compiler/trj9/p/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/trj9/p/codegen/PPCJNILinkage.cpp \
+    compiler/trj9/p/codegen/PPCPrivateLinkage.cpp \
     compiler/trj9/p/codegen/PPCRecompilation.cpp \
     compiler/trj9/p/codegen/PPCRecompilationSnippet.cpp \
+    compiler/trj9/p/codegen/StackCheckFailureSnippet.cpp \
     compiler/trj9/p/codegen/Trampoline.cpp \
     compiler/trj9/p/env/J9CPU.cpp \
     omr/compiler/p/env/OMRDebugEnv.cpp

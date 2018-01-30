@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,14 +22,14 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/x/runtime/VirtualGuardRuntime.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/x/runtime/X86LockReservation.asm \
+    compiler/trj9/x/runtime/Recomp.cpp \
     compiler/trj9/x/runtime/X86ArrayTranslate.asm \
     compiler/trj9/x/runtime/X86Codert.asm \
+    compiler/trj9/x/runtime/X86EncodeUTF16.asm \
+    compiler/trj9/x/runtime/X86LockReservation.asm \
     compiler/trj9/x/runtime/X86PicBuilder.pasm \
     compiler/trj9/x/runtime/X86PicBuilderC.cpp \
     compiler/trj9/x/runtime/X86RelocationTarget.cpp \
-    compiler/trj9/x/runtime/X86Unresolveds.pasm \
-    compiler/trj9/x/runtime/X86EncodeUTF16.asm \
-    compiler/trj9/x/runtime/Recomp.cpp
+    compiler/trj9/x/runtime/X86Unresolveds.pasm
 
 include $(JIT_MAKE_DIR)/files/host/$(HOST_SUBARCH).mk
