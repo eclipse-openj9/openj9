@@ -3871,6 +3871,11 @@ TR_J9VMBase::tryToAcquireAccess(TR::Compilation * comp, bool *haveAcquiredVMAcce
    {
    bool hasVMAccess;
    *haveAcquiredVMAccess = false;
+
+   // JAAS TODO: For now, we always take the "safe path" on the server
+   if (TR::CompilationInfo::getStream())
+      return false;
+
    if (!comp->getOption(TR_DisableNoVMAccess))
       {
       if (!(vmThread()->publicFlags &  J9_PUBLIC_FLAGS_VM_ACCESS))
