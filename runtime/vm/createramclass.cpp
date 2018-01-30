@@ -1509,10 +1509,15 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 	UDATA packageID, BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module)
 {
 	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	const BOOLEAN isROMClassUnsafe = (J9ROMCLASS_IS_UNSAFE(romClass) != 0);
 	J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
 	J9UTF8 *superclassName = NULL;
 	J9Class *superclass = NULL;
+	J9Class thisClass = {0};
+	thisClass.module = module;
+	thisClass.packageID = packageID;
+	thisClass.romClass = romClass;
 
 	superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
 	if (superclassName == NULL) {
@@ -1538,7 +1543,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 		}
 
 		if (!hotswapping) {
-			if (requirePackageAccessCheck(vm, classLoader, module, superclass) 
+			if (requirePackageAccessCheck(vm, classLoader, module, superclass)
 				&& (checkPackageAccess(vmThread, superclass, classPreloadFlags) != 0)
 			) {
 				return FALSE;
@@ -1558,12 +1563,10 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 
 			/* ensure that the superclass is visible */
 			if (!isROMClassUnsafe) {
-				if ((superclass->romClass->modifiers & J9_JAVA_PUBLIC) != J9_JAVA_PUBLIC) {
-					if (packageID != superclass->packageID) {
-						Trc_VM_CreateRAMClassFromROMClass_superclassNotVisible(vmThread, superclass, superclass->classLoader, classLoader);
-						setCurrentExceptionForBadClass(vmThread, superclassName, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR);
-						return FALSE;
-					}
+				if (J9_VISIBILITY_ALLOWED != vmFuncs->checkVisibility(vmThread, &thisClass, superclass, superclass->romClass->modifiers, 0)) {
+					Trc_VM_CreateRAMClassFromROMClass_superclassNotVisible(vmThread, superclass, superclass->classLoader, classLoader);
+					setCurrentExceptionForBadClass(vmThread, superclassName, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR);
+					return FALSE;
 				}
 			}
 
@@ -1580,7 +1583,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 					if (interfaceClass == NULL) {
 						return FALSE;
 					}
-					if (requirePackageAccessCheck(vm, classLoader, module, interfaceClass) 
+					if (requirePackageAccessCheck(vm, classLoader, module, interfaceClass)
 						&& (checkPackageAccess(vmThread, interfaceClass, classPreloadFlags) != 0)
 					) {
 						return FALSE;
@@ -1592,12 +1595,10 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 						return FALSE;
 					}
 					if (!isROMClassUnsafe) {
-						if ((interfaceClass->romClass->modifiers & J9_JAVA_PUBLIC) != J9_JAVA_PUBLIC) {
-							if (packageID != interfaceClass->packageID) {
-								Trc_VM_CreateRAMClassFromROMClass_interfaceNotVisible(vmThread, interfaceClass, interfaceClass->classLoader, classLoader);
-								setCurrentExceptionForBadClass(vmThread, J9ROMCLASS_CLASSNAME(interfaceClass->romClass), J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR);
-								return FALSE;
-							}
+						if (J9_VISIBILITY_ALLOWED != vmFuncs->checkVisibility(vmThread, &thisClass, interfaceClass, interfaceClass->romClass->modifiers, 0)) {
+							Trc_VM_CreateRAMClassFromROMClass_interfaceNotVisible(vmThread, interfaceClass, interfaceClass->classLoader, classLoader);
+							setCurrentExceptionForBadClass(vmThread, J9ROMCLASS_CLASSNAME(interfaceClass->romClass), J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR);
+							return FALSE;
 						}
 					}
 				}
