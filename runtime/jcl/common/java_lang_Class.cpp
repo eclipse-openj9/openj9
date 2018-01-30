@@ -90,6 +90,11 @@ isPrivilegedFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkSta
 	J9JNIMethodID *doPrivilegedWithContextMethodID2 = (J9JNIMethodID *) vm->doPrivilegedWithContextMethodID2;
 	J9Method *currentMethod = walkState->method;
 
+	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(currentMethod)->modifiers, J9_JAVA_METHOD_FRAME_ITERATOR_SKIP)) {
+		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
+		return J9_STACKWALK_KEEP_ITERATING;
+	}
+
 	if (NULL == walkState->userData2) {
 		J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
 		if ((walkState->method == vm->jlrMethodInvoke)
@@ -131,7 +136,7 @@ Java_java_lang_Class_getStackClasses(JNIEnv *env, jclass jlHeapClass, jint maxDe
 	J9StackWalkState walkState = {0};
 	J9Class *jlClass = NULL;
 	J9Class *arrayClass = NULL;
-	UDATA walkFlags = J9_STACKWALK_CACHE_CPS | J9_STACKWALK_COUNT_SPECIFIED | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_INCLUDE_NATIVES;
+	UDATA walkFlags = J9_STACKWALK_CACHE_METHODS | J9_STACKWALK_COUNT_SPECIFIED | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_INCLUDE_NATIVES;
 	UDATA framesWalked = 0;
 	UDATA *cacheContents = NULL;
 	UDATA i = 0;
@@ -180,9 +185,11 @@ Java_java_lang_Class_getStackClasses(JNIEnv *env, jclass jlHeapClass, jint maxDe
 	cacheContents = walkState.cache;
 
 	for (i = framesWalked; i > 0; i--) {
-		J9Class *currentClass = ((J9ConstantPool *)*cacheContents)->ramClass;
+		J9Method *currentMethod = (J9Method *)*cacheContents;
+		J9Class *currentClass = J9_CLASS_FROM_METHOD(currentMethod);
 
-		if ( (vm->jliArgumentHelper && instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_JCLASS(vmThread, vm->jliArgumentHelper))) || 
+		if ( J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(currentMethod)->modifiers, J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) ||
+			 (vm->jliArgumentHelper && instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_JCLASS(vmThread, vm->jliArgumentHelper))) ||
 			 (vm->srMethodAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, *((j9object_t*) vm->srMethodAccessor)))) ||
 			 (vm->srConstructorAccessor && vmFuncs->instanceOfOrCheckCast(currentClass, J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, *((j9object_t*) vm->srConstructorAccessor))))
 		) {
@@ -1226,6 +1233,11 @@ isPrivilegedFrameIteratorGetAccSnapshot(J9VMThread * currentThread, J9StackWalkS
 	J9JNIMethodID *doPrivilegedWithContextPermissionMethodID2 = (J9JNIMethodID *) vm->doPrivilegedWithContextPermissionMethodID2;
 	J9Method *currentMethod = walkState->method;
 
+	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(currentMethod)->modifiers, J9_JAVA_METHOD_FRAME_ITERATOR_SKIP)) {
+		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
+		return J9_STACKWALK_KEEP_ITERATING;
+	}
+
 	if ((NULL == walkState->userData4)
 		|| (STACK_WALK_STATE_LIMITED_DOPRIVILEGED == walkState->userData3)
 		|| (STACK_WALK_STATE_FULL_DOPRIVILEGED == walkState->userData3)
@@ -1646,6 +1658,11 @@ _walkStateUninitialized:
 static UDATA
 isPrivilegedFrameIteratorGetCallerPD(J9VMThread * currentThread, J9StackWalkState * walkState)
 {
+	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9_JAVA_METHOD_FRAME_ITERATOR_SKIP)) {
+		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
+		return J9_STACKWALK_KEEP_ITERATING;
+	}
+
 	J9JavaVM *vm = currentThread->javaVM;
 	J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
 	if ((walkState->method == vm->jlrMethodInvoke)
