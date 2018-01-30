@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,7 +82,7 @@ struct CompileParameters
    {
    CompileParameters(
          TR::CompilationInfoPerThreadBase *compilationInfo,
-         TR_J9VMBase * vm,
+         TR_J9VMBase* vm,
          J9VMThread * vmThread,
          TR_OptimizationPlan * optimizationPlan,
          TR::SegmentAllocator &scratchSegmentProvider,
@@ -97,9 +97,7 @@ struct CompileParameters
       _scratchSegmentProvider(scratchSegmentProvider),
       _dispatchRegion(dispatchRegion),
       _trMemory(trMemory),
-      _ilGenRequest(ilGenRequest),
-      _compiler(0),
-      _addToJProfilingQueue(false)
+      _ilGenRequest(ilGenRequest)
       {}
 
    TR_Memory *trMemory() { return &_trMemory; }
@@ -109,11 +107,9 @@ struct CompileParameters
    J9VMThread         *_vmThread;
    TR_OptimizationPlan*_optimizationPlan;
    TR::SegmentAllocator &_scratchSegmentProvider;
-   TR::Region &_dispatchRegion;
-   TR_Memory          &_trMemory;
+   TR::Region           &_dispatchRegion;
+   TR_Memory            &_trMemory;
    TR::CompileIlGenRequest  _ilGenRequest;
-   TR::Compilation     *_compiler;
-   bool                 _addToJProfilingQueue;
    };
 
 #if defined(TR_HOST_S390)
@@ -149,6 +145,25 @@ class CompilationInfoPerThreadBase
    void *compile(J9VMThread *context, TR_MethodToBeCompiled *entry, J9::J9SegmentProvider &scratchSegmentProvider);
    TR_MethodMetaData *compile(J9VMThread *context, TR::Compilation *,
                  TR_ResolvedMethod *compilee, TR_J9VMBase &, TR_OptimizationPlan*, TR::SegmentAllocator const &scratchSegmentProvider);
+
+   void preCompilationTasks(J9VMThread * vmThread,
+                            J9JavaVM *javaVM,
+                            TR_MethodToBeCompiled *entry,
+                            J9Method *method,
+                            const void **aotCachedMethod,
+                            TR_Memory &trMemory,
+                            bool &canDoRelocatableCompile,
+                            bool &eligibleForRelocatableCompile,
+                            TR_RelocationRuntime *reloRuntime);
+
+   void *postCompilationTasks(J9VMThread * vmThread,
+                              TR_MethodToBeCompiled *entry,
+                              J9Method *method,
+                              const void *aotCachedMethod,
+                              TR_MethodMetaData *metaData,
+                              bool canDoRelocatableCompile,
+                              bool eligibleForRelocatableCompile,
+                              TR_RelocationRuntime *reloRuntime);
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
    TR_MethodMetaData *installAotCachedMethod(
@@ -214,7 +229,7 @@ class CompilationInfoPerThreadBase
    uintptr_t              getTimeWhenCompStarted() const { return _timeWhenCompStarted; }
    void                   setTimeWhenCompStarted(UDATA t) { _timeWhenCompStarted = t; }
 
-   TR_RelocationRuntime  *reloRuntime() { return &_reloRuntime; };
+   TR_RelocationRuntime  *reloRuntime() { return &_reloRuntime; }
    static TR::FILE *getPerfFile() { return _perfFile; } // used on Linux for perl tool support
    static void setPerfFile(TR::FILE *f) { _perfFile = f; }
 
@@ -226,6 +241,7 @@ class CompilationInfoPerThreadBase
    int32_t const                _compThreadId; // unique number starting from 0; Only used for compilation on separate thread
    bool const                   _onSeparateThread;
 
+   TR_J9VMBase *                _vm;
    TR_MethodToBeCompiled *      _methodBeingCompiled;
    TR::Compilation *            _compiler;
    TR_MethodMetaData *          _metadata;
@@ -234,6 +250,7 @@ class CompilationInfoPerThreadBase
    int32_t                      _numJITCompilations; // num JIT compilations this thread has performed; AOT loads not counted
    int32_t                      _qszWhenCompStarted; // size of compilation queue and compilation starts
    bool                         _compilationCanBeInterrupted;
+   bool                         _addToJProfilingQueue;
 
    volatile CompilationThreadState _compilationThreadState;
    volatile CompilationThreadState _previousCompilationThreadState;
