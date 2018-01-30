@@ -24,16 +24,16 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 The OpenJ9 JVM is composed of two code repositories:
 
-* OpenJ9 [https://github.com/eclipse/openj9]()
-* OMR [https://github.com/eclipse/openj9-omr]()
+* OpenJ9 https://github.com/eclipse/openj9
+* OMR https://github.com/eclipse/openj9-omr
 
 OpenJ9 needs to be combined with code from OpenJDK to create a Java SDK.
 The OpenJDK code is managed in separate github repos referred to as the 
 "Extensions for OpenJDKx for OpenJ9".  Currently there are two 
 extensions repos:
 
-* JDK8 [https://github.com/ibmruntimes/openj9-openjdk-jdk8]()
-* JDK9 [https://github.com/ibmruntimes/openj9-openjdk-jdk9]()
+* JDK8 https://github.com/ibmruntimes/openj9-openjdk-jdk8
+* JDK9 https://github.com/ibmruntimes/openj9-openjdk-jdk9
 
 OpenJ9 binaries are built by the AdoptOpenJDK community.  
 
@@ -118,7 +118,7 @@ determination can be made to either:
 	changes that have gone in between the initial RC tag and now are safe.
 1. Retag the `RCx` level as `openj9-#releaseNumber#`.  For the `0.8` release this 
 will be `openj9-0.8`.
-1. Create the [https://help.github.com/articles/creating-releases/](github release)
+1. Create the [github release](https://help.github.com/articles/creating-releases/)
 corresponding to the tagged level.  The release should link to the Eclipse Release 
 document, the release issue, and the AdoptOpenJDK download links.
 1. Open an Eclipse Bugzilla requesting the branch be marked `protected` to prevent 
