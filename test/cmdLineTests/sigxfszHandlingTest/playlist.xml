@@ -29,7 +29,7 @@
 			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
-	$(MKDIR) -p $(REPORTDIR); \
+	$(MKTREE) $(REPORTDIR); \
 	cd $(REPORTDIR); \
 	ulimit -f 4000 && \
 	ulimit && \
@@ -39,9 +39,12 @@
 	-plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError  ; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^os.win</platformRequirements>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>

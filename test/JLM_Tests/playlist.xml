@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,9 +42,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS); \
 	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 		</subsets>
@@ -68,9 +71,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS); \
 	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -93,9 +99,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS); \
 	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 		</subsets>
@@ -119,9 +128,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS); \
 	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -144,9 +156,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS); \
 	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 		</subsets>
@@ -170,9 +185,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS); \
 	$(JAVA_COMMAND) -Xshareclasses:name=testJLM,destroy || echo "cache cleanup done"</command>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -198,9 +216,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^spec.linux_390</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -227,9 +248,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>spec.linux_390,bits.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -256,9 +280,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>spec.linux_390,bits.31</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -285,9 +312,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^os.zos,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -313,9 +343,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^os.zos,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -342,9 +375,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.ppc,^arch.390</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -371,8 +407,13 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>os.aix</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<tags>
-			<tag>extended</tag>
 			<tag>test:largepages</tag>
 		</tags>
 		<subsets>
@@ -401,9 +442,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^spec.linux_390</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -430,9 +474,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>spec.linux_390,bits.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -459,9 +506,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>spec.linux_390,bits.31</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -488,9 +538,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.ppc,^arch.390</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -517,8 +570,13 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>os.aix</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<tags>
-			<tag>extended</tag>
 			<tag>test:largepages</tag>
 		</tags>
 		<subsets>
@@ -547,9 +605,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.390</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -576,9 +637,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>spec.linux_390,bits.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -605,9 +669,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>spec.linux_390,bits.31</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -634,9 +701,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.ppc,^arch.390</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -663,8 +733,13 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>os.aix</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<tags>
-			<tag>extended</tag>
 			<tag>test:largepages</tag>
 		</tags>
 		<subsets>
@@ -693,9 +768,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.390</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -722,9 +800,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>spec.linux_390,bits.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -751,9 +832,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>spec.linux_390,bits.31</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -780,9 +864,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^os.zos</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -809,9 +896,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^os.zos</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -836,9 +926,12 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -863,9 +956,12 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -889,9 +985,12 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 		</subsets>
@@ -914,9 +1013,12 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -940,9 +1042,12 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 		</subsets>
@@ -966,9 +1071,12 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -991,9 +1099,12 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -1018,9 +1129,12 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -1042,9 +1156,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -1066,9 +1183,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -1094,9 +1214,12 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^os.zos,bits.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -253,6 +253,9 @@
 
 		<!-- copy Test_JITHelper dependencies to ${build_resource}, and add them into -Xbootclasspath/a-->
 		<copy file="${build}/org/openj9/test/com/ibm/jit/Test_JITHelpersImpl.class" todir="${build_resource}/org/openj9/test/com/ibm/jit" />
+
+		<!-- move classfiles in a restricted package to ${build_resource} so they can be added to a module-->
+		<move file="${build}/sun" todir="${build_resource}"/>
 	</target>
 
 	<target name="dist" depends="pack_resources" description="generate the distribution">

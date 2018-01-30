@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKDIR) -p $(REPORTDIR); \
+		<command>$(MKTREE) $(REPORTDIR); \
 	$(CD) $(REPORTDIR); \
 	cp -r $(Q)$(TEST_RESROOT)$(D)URLHelperTests.jar$(Q) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLHelperTests.jar; \
@@ -40,9 +40,12 @@
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 		</subsets>
@@ -53,7 +56,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>$(MKDIR) -p $(REPORTDIR); \
+		<command>$(MKTREE) $(REPORTDIR); \
 	$(CD) $(REPORTDIR); \
 	cp -r $(Q)$(TEST_RESROOT)$(D)URLHelperTests.jar$(Q) .; \
 	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLHelperTests.jar; \
@@ -64,9 +67,12 @@
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>

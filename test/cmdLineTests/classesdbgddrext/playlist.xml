@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2017, 2017 IBM Corp. and others
+  Copyright (c) 2017, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,9 +40,12 @@
 	-xlist $(Q)$(TEST_RESROOT)$(D)dbgextddrtests_excludes.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>os.zos</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -67,9 +70,12 @@
 	-xlist $(Q)$(TEST_RESROOT)$(D)dbgextddrtests_excludes.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^os.zos,^os.zos</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -93,9 +99,12 @@
 	-xlist $(Q)$(TEST_RESROOT)$(D)dbgextddrtests_excludes.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>os.aix</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>

@@ -31,6 +31,7 @@ help:
 CD        = cd
 ECHO      = echo
 MKDIR     = mkdir
+MKTREE    = mkdir -p
 PWD       = pwd
 EXECUTABLE_SUFFIX =
 RUN_SCRIPT = sh
@@ -233,7 +234,7 @@ FAILEDTARGETS = $(TESTOUTPUT)$(D)failedtargets.mk
 #TODO: disable failed target until fix
 #-include $(FAILEDTARGETS)
 
-#######################################f
+#######################################
 # result Summary
 #######################################
 TEMPRESULTFILE=$(TESTOUTPUT)$(D)TestTargetResult

@@ -35,7 +35,7 @@
 			<variation>Mode301</variation>
 			<variation>Mode501</variation>
 		</variations>
-		<command>$(MKDIR) -p $(REPORTDIR); \
+		<command>$(MKTREE) $(REPORTDIR); \
 	cd $(REPORTDIR); \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
@@ -46,7 +46,13 @@
 		<subsets>
 			<subset>SE80</subset>
 		</subsets>
-	</test>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+</test>
 	<test>
 		<featureIds>
 			<featureId>115726</featureId>
@@ -59,7 +65,7 @@
 			<variation>Mode301</variation>
 			<variation>Mode501</variation>
 		</variations>
-		<command>$(MKDIR) -p $(REPORTDIR); \
+		<command>$(MKTREE) $(REPORTDIR); \
 	cd $(REPORTDIR); \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
@@ -70,7 +76,13 @@
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
-	</test>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+</test>
 	<test>
 		<featureIds>
 			<featureId>115726</featureId>
@@ -83,9 +95,12 @@
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
 	org.openj9.test.jsr335.defendersupersends.TestDefenderSupersends; \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 		</subsets>
@@ -102,9 +117,12 @@
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
 	org.openj9.test.jsr335.defendersupersends.TestDefenderSupersends; \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
