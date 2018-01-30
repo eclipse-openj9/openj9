@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -264,6 +264,11 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
 
    TR::SymbolReference * findShadowSymbol(TR_ResolvedMethod * owningMethod, int32_t cpIndex, TR::DataType, TR::Symbol::RecognizedField *recognizedField = NULL);
+
+   protected:
+
+   TR::Symbol                           *_currentThreadDebugEventDataSymbol;
+   List<TR::SymbolReference>            _currentThreadDebugEventDataSymbolRefs;
 
    private:
 
