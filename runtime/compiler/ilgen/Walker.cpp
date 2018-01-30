@@ -5165,7 +5165,7 @@ break
             TR_OpaqueClassBlock *orbClass = fej9()->getClassFromSignature(ORB_REPLACE_CLASS_NAME, ORB_REPLACE_CLASS_LEN, callNode->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod());
 
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "orbClass = %p, orbClassLoader %s systemClassLoader\n", orbClass, (fej9()->getClassLoader(cl) != fej9()->getSystemClassLoader()) ? "!=" : "==");
+               traceMsg(comp(), "orbClass = %p, orbClassLoader %s systemClassLoader\n", orbClass, (!fej9()->isClassLoadedBySystemClassLoader(cl)) ? "!=" : "==");
 
             // PR107804 if the ORB class is loaded we cannot do the serialization opt since the
             // ObjectInputStream.redirectedReadObject cannot handle ORB for some reason
@@ -5174,7 +5174,7 @@ break
                canDoSerializationOpt = false;
                }
 
-            if (orbClass && (fej9()->getClassLoader(cl) != fej9()->getSystemClassLoader()))
+            if (orbClass && !fej9()->isClassLoadedBySystemClassLoader(cl))
                {
                TR_ScratchList<TR_ResolvedMethod> methods(trMemory());
                fej9()->getResolvedMethods(trMemory(), orbClass, &methods);
@@ -5250,8 +5250,8 @@ break
                   {
                   TR_OpaqueClassBlock *serialClass = fej9()->getClassFromSignature(JAVA_SERIAL_REPLACE_CLASS_NAME, JAVA_SERIAL_REPLACE_CLASS_LEN, callNode->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod());
                   if (comp()->getOption(TR_TraceILGen))
-                     traceMsg(comp(), "serialClass = %p, serialClassLoader %s systemClassLoader\n", serialClass, (fej9()->getClassLoader(cl) != fej9()->getSystemClassLoader()) ? "!=" : "==");
-                  if (serialClass && (fej9()->getClassLoader(cl) != fej9()->getSystemClassLoader()))
+                     traceMsg(comp(), "serialClass = %p, serialClassLoader %s systemClassLoader\n", serialClass, (!fej9()->isClassLoadedBySystemClassLoader(cl)) ? "!=" : "==");
+                  if (serialClass && !fej9()->isClassLoadedBySystemClassLoader(cl))
                      {
                      TR_ScratchList<TR_ResolvedMethod> methods(trMemory());
                      fej9()->getResolvedMethods(trMemory(), serialClass, &methods);
