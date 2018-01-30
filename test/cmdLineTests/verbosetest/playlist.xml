@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,9 +37,12 @@
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DTESTNG=$(Q)$(TESTNG)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJAVA_VERSION=$(Q)$(JAVA_VERSION)$(Q) -DREPORTDIR=$(Q)$(REPORTDIR)$(Q) -DTEST_GROUP=$(Q)$(TEST_GROUP)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)verbosetests.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>

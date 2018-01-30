@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,9 +42,12 @@
 	j9vm.runner.Menu A -exe=$(Q)$(JAVA_BIN_TMP)$(D)java $(JVM_OPTIONS) -Xdump$(Q) -version=$(JAVA_VERSION) -jar=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) -xlist=$(Q)$(TEST_RESROOT)$(D)j9vm.xml$(Q) \
 	-xids=all,$(PLATFORM); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -67,9 +70,12 @@
 	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)junit4.jar$(Q) \
 	j9vm.test.threads.regression.RegressionTests $(Q)$(TEST_RESROOT)$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -86,9 +92,12 @@
 	perl $(TEST_RESROOT)$(D)SharedClassesSysVTesting$(D)testSC_SysV_Java7_Tests.pl linux ; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>os.linux,^arch.390</platformRequirements>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>

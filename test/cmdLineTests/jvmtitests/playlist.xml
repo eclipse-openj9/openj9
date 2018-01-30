@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,9 +48,12 @@
 	-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -82,9 +85,12 @@
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 		</subsets>
@@ -115,9 +121,12 @@
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -148,9 +157,12 @@
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -181,9 +193,12 @@
 	-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>arch.390</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -215,9 +230,12 @@
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>arch.390</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 		</subsets>
@@ -248,9 +266,12 @@
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>arch.390</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -276,9 +297,12 @@
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 		</subsets>
@@ -302,9 +326,12 @@
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -336,9 +363,12 @@
 	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>arch.390</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -361,9 +391,12 @@
 	-explainExcludes -xids all,linux_ppc -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -verbose -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.arm</platformRequirements>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -387,9 +420,12 @@
 	-explainExcludes -xids all,linux_ppc -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes$(JAVA_VERSION).xml$(Q) -verbose -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.arm</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
@@ -405,9 +441,12 @@
 	-cp $(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(Q) com.ibm.jvmti.tests.decompileAtMethodResolve.ResolveTest; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.arm</platformRequirements>
-		<tags>
-			<tag>sanity</tag>
-		</tags>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>

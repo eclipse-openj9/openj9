@@ -50,6 +50,7 @@ make test
     JAVA_BIN=<path to JDK bin directory that you wish to test>
     SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] platform_on_which_to_test
     JAVA_VERSION=[SE80|SE90] (SE90 default value)
+    JAVA_IMPL=openj9 (openj9 default value)
     ```
 
   * list of dependent jars
