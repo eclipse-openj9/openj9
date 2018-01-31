@@ -2761,9 +2761,11 @@ romImageNewSegment(J9JavaVM *vm, J9ROMImageHeader *header, UDATA isBaseType, J9C
 
 
 /**
- * Copy a string object to a UTF8 data buffer, optionally to prepend a string before it
+ * Copy a string object to a UTF8 data buffer, and optionally prepend a string before it.
  *
- * ***The caller must free the memory from this pointer if the return value is NOT the buffer argument ***
+ * @note The caller must free the memory from this pointer if the return value is NOT the buffer argument.
+ * @note If the buffer is not large enough to encode the string this function will allocate enough memory to encode
+ *       the worst-case UTF8 encoding of the supplied UTF16 string (length of string * 3 bytes).
  *
  * @param[in] currentThread the current J9VMThread
  * @param[in] string a string object to be copied

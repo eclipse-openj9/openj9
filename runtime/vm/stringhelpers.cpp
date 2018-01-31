@@ -321,24 +321,6 @@ copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlag
 	return (UDATA)(data - utf8Data);
 }
 
-
-/**
- * Copy a string object to a UTF8 data buffer, optionally to prepend a string before it
- *
- * ***The caller must free the memory from this pointer if the return value is NOT the buffer argument ***
- *
- * @param[in] vmThread the current J9VMThread
- * @param[in] string a string object to be copied, it can't be NULL
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
- * @param[in] prependStr the string to be prepended before the string object to be copied
- * 				it can't be NULL but can be an empty string ""
- * @param[in] prependStrLength The length of prependStr as computed by strlen.
- * @param[in] buffer the buffer for the string
- * @param[in] bufferLength the buffer length, not expected to larger than 64K
- * @param[out] utf8Length If not NULL returns the computed length (in bytes) of the copied UTF8 string in the buffer excluding the NULL terminator.
- *
- * @return a char pointer to the string (with NULL termination)
- */
 char*
 copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength, UDATA *utf8Length)
 {
