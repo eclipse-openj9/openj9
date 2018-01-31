@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -714,6 +714,7 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 		Assert_Util_unreachable();
 	} 
 	if (J2SE_V10 <= j2seReleaseValue) {
+		/* Java 11 shares same dll with Java 10 for now */
 		dllName = J9_JAVA_SE_10_DLL_NAME;
 		dllNameLength = sizeof(J9_JAVA_SE_10_DLL_NAME);
 	} else if (J2SE_19 <= j2seReleaseValue) {

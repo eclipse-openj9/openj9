@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -159,6 +159,9 @@ getShcModlevelForJCL(uintptr_t j2seVersion)
 	case J2SE_V10 :
 		modLevel = J9SH_MODLEVEL_JAVA10;
 		break;
+	case J2SE_V11 :
+		modLevel = J9SH_MODLEVEL_JAVA11;
+		break;
 	}
 	return modLevel;
 }
@@ -192,6 +195,9 @@ getJCLForShcModlevel(uintptr_t modlevel)
 		break;
 	case J9SH_MODLEVEL_JAVA10 :
 		j2seVersion = J2SE_V10;
+		break;
+	case J9SH_MODLEVEL_JAVA11 :
+		j2seVersion = J2SE_V11;
 		break;
 	}
 	return j2seVersion;
@@ -254,6 +260,9 @@ getStringForShcModlevel(J9PortLibrary* portlib, uint32_t modlevel, char* buffer)
 		break;
 	case J9SH_MODLEVEL_JAVA10 :
 		strcpy(buffer, "Java10");
+		break;
+	case J9SH_MODLEVEL_JAVA11 :
+		strcpy(buffer, "Java11");
 		break;
 	default :
 		strcpy(buffer, "Unknown");
