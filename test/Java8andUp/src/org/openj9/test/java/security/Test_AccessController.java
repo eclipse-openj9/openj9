@@ -1,7 +1,7 @@
 package org.openj9.test.java.security;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,14 +26,12 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.security.AccessControlContext;
 import java.security.AccessControlException;
 import java.security.AccessController;
 import java.security.AllPermission;
 import java.security.CodeSource;
 import java.security.DomainCombiner;
-import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.security.PrivilegedAction;
@@ -42,9 +40,9 @@ import java.security.PrivilegedExceptionAction;
 import java.security.ProtectionDomain;
 import java.security.SecurityPermission;
 import java.util.PropertyPermission;
-import org.openj9.test.java.security.TestPrivilegedAction;
-import org.openj9.test.java.security.TestPrivilegedExceptionAction;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 import org.testng.Assert;
@@ -53,7 +51,10 @@ import org.testng.AssertJUnit;
 @Test(groups = { "level.sanity" })
 public class Test_AccessController {
 
-	private static Logger logger = Logger.getLogger(Test_AccessController.class);
+	static final String PASSED_SECURITY_EXCEPTION_EXPECTED = "PASSED: security exception expected."; //$NON-NLS-1$
+	static final String PASSED_ACCESS_CONTROL_EXCEPTION_EXPECTED = "PASSED: expected AccessControlException thrown"; //$NON-NLS-1$
+	static Logger logger = Logger.getLogger(Test_AccessController.class);
+	private SecurityManager oldSecurityManager;
 
 	/**
 	 *  java.security.AccessController#AccessController()
@@ -201,7 +202,7 @@ public class Test_AccessController {
 	 */
 	@Test
 	public void test_doPrivilegedWithCombiner4() {
-		ClassLoader cl = new URLClassLoader(
+		ClassLoader cl = new TestURLClassLoader(
 				new URL[] { getClass().getProtectionDomain().getCodeSource().getLocation() }, null) {
 			public PermissionCollection getPermissions(CodeSource cs) {
 				PermissionCollection pc = super.getPermissions(cs);
@@ -249,7 +250,7 @@ public class Test_AccessController {
 						logger.error("FAILED: checkPermission should NOT succeed!");
 						return false;
 					} catch (AccessControlException ace) {
-						logger.debug("GOOD: AccessControlException expected!");
+						logger.debug(PASSED_ACCESS_CONTROL_EXCEPTION_EXPECTED);
 					}
 					return AccessController.doPrivilegedWithCombiner(new PrivilegedAction<Boolean>() {
 						public Boolean run() {
@@ -273,7 +274,7 @@ public class Test_AccessController {
 								logger.error("FAILED: checkPermission should NOT succeed!");
 								return false;
 							} catch (AccessControlException ace) {
-								logger.debug("GOOD: AccessControlException expected!");
+								logger.debug(PASSED_ACCESS_CONTROL_EXCEPTION_EXPECTED);
 							}
 							return true;
 						}
@@ -311,7 +312,6 @@ public class Test_AccessController {
 	public void test_doPrivilegedWithCombiner5() {
 		Boolean pass = false;
 
-		SecurityManager oldSecurityManager = System.getSecurityManager();
 		System.setSecurityManager(new SecurityManager());
 		TestPrivilegedAction tpa = new TestPrivilegedAction();
 		TestPrivilegedExceptionAction tpea = new TestPrivilegedExceptionAction();
@@ -336,7 +336,6 @@ public class Test_AccessController {
 		}
 
 		AssertJUnit.assertTrue("Expected AccessControlException", pass);
-		System.setSecurityManager(oldSecurityManager);
 	}
 
 	static class TestPrintOut {
@@ -353,17 +352,18 @@ public class Test_AccessController {
 		final String PROP_JAVA_HOME = "java.home";
 
 		com.ibm.oti.util.PriviAction pa = new com.ibm.oti.util.PriviAction(PROP_JAVA_HOME);
-		SecurityManager oldSecurityManager = System.getSecurityManager();
 		System.setSecurityManager(new SecurityManager());
 		try {
 			String result = (String)java.security.AccessController.doPrivileged(pa);
 			Assert.fail("FAIL: security exception NOT thrown, get system property " + PROP_JAVA_HOME + " : " + result);
 		} catch (java.security.AccessControlException e) {
-			logger.debug("PASS: security exception expected.");
+			logger.debug(PASSED_SECURITY_EXCEPTION_EXPECTED);
 		}
 
-		// loop 20 time here such that the reflection object are optimized and bytecodes are created in a new class
-		// (after calling invoke() about 15 times), which introduces a slightly different reflection frame
+		/*
+		 * Loop 20 time here such that the reflection object are optimized and bytecodes are created in a new class
+		 * (after calling invoke() about 15 times), which introduces a slightly different reflection frame
+		 */
 		for (int i = 0; i < 20; i++) {
 			try {
 				Method m = AccessController.class.getMethod("doPrivileged", PrivilegedAction.class);
@@ -372,7 +372,7 @@ public class Test_AccessController {
 						"FAIL: security exception NOT thrown, get system property " + PROP_JAVA_HOME + " : " + result);
 			} catch (java.lang.reflect.InvocationTargetException e) {
 				if (e.getCause() instanceof java.security.AccessControlException) {
-					logger.debug("PASS: security exception expected.");
+					logger.debug(PASSED_SECURITY_EXCEPTION_EXPECTED);
 				} else {
 					e.printStackTrace();
 					Assert.fail("FAIL: unexpected exception.");
@@ -388,10 +388,10 @@ public class Test_AccessController {
 					MethodType.methodType(Object.class, PrivilegedAction.class)).invoke(pa);
 			Assert.fail("FAIL: security exception NOT thrown, get system property " + PROP_JAVA_HOME + " : " + result);
 		} catch (java.security.AccessControlException e) {
-			logger.debug("PASS: security exception expected.");
+			logger.debug(PASSED_SECURITY_EXCEPTION_EXPECTED);
 		} catch (Throwable e) {
 			e.printStackTrace();
-			Assert.fail("FAIL: unexpected exception.");
+			Assert.fail("FAIL: unexpected exception.", e);
 		}
 
 		try {
@@ -404,13 +404,11 @@ public class Test_AccessController {
 					.invokeExact((PrivilegedAction)pa);
 			Assert.fail("FAIL: security exception NOT thrown");
 		} catch (java.security.AccessControlException e) {
-			logger.debug("PASS: security exception expected.");
+			logger.debug(PASSED_SECURITY_EXCEPTION_EXPECTED);
 		} catch (Throwable e) {
 			e.printStackTrace();
 			Assert.fail("FAIL: unexpected exception.");
 		}
-
-		System.setSecurityManager(oldSecurityManager);
 	}
 
 	/**
@@ -418,8 +416,10 @@ public class Test_AccessController {
 	 */
 	@Test
 	public void test_doPrivileged_createAccessControlContext() {
-		// Classes loaded by this Classloader withPermCL have the Permission JAVA_HOME_READ & CREATE_ACC
-		ClassLoader withPermCL = new URLClassLoader(
+		/*
+		 * Classes loaded by this Classloader withPermCL have the Permission JAVA_HOME_READ & CREATE_ACC
+		 */
+		ClassLoader withPermCL = new TestURLClassLoader(
 				new URL[] { this.getClass().getProtectionDomain().getCodeSource().getLocation() }, null) {
 			public PermissionCollection getPermissions(CodeSource cs) {
 				PermissionCollection pc = super.getPermissions(cs);
@@ -454,9 +454,8 @@ public class Test_AccessController {
 
 		@Test
 		public void testCreateACC() {
-			SecurityManager oldSecurityManager = System.getSecurityManager();
 			// Classes loaded by this Classloader noCreateACCPermCL only have the Permission JAVA_HOME_READ but NOT CREATE_ACC
-			ClassLoader noCreateACCPermCL = new URLClassLoader(
+			ClassLoader noCreateACCPermCL = new TestURLClassLoader(
 					new URL[] { this.getClass().getProtectionDomain().getCodeSource().getLocation() }, null) {
 				public PermissionCollection getPermissions(CodeSource cs) {
 					PermissionCollection pc = super.getPermissions(cs);
@@ -645,14 +644,13 @@ public class Test_AccessController {
 				logger.debug("TEST PASSED");
 			} catch (Exception e) {
 				e.printStackTrace();
-				Assert.fail("FAIL: TEST FAILED, probably setup issue.");
-			} finally {
-				System.setSecurityManager(oldSecurityManager);
+				Assert.fail("FAIL: TEST FAILED, probably setup issue.", e);
 			}
 		}
 	}
 
 	public static class AppNoCreateACCPriv {
+		private static final String PASSED_EXPECTED_ACCESS_CONTROL_EXCEPTION_THROWN = "PASSED: Expected AccessControlException thrown";
 		private static final PropertyPermission JAVA_HOME_READ = new PropertyPermission("java.home", "read");
 		private static final PropertyPermission USER_DIR_READ = new PropertyPermission("user.dir", "read");
 		private static final PermissionCollection PERMISSIONS = new Permissions();
@@ -700,6 +698,7 @@ public class Test_AccessController {
 						 * Method.invoke(Object, Object...)
 						 * TestCreateACCPriv.test()
 						 */
+						logger.debug(PASSED_EXPECTED_ACCESS_CONTROL_EXCEPTION_THROWN);											
 					} catch (Exception e) {
 						Assert.fail("FAIL: Unexpected exception");
 					}
@@ -740,6 +739,7 @@ public class Test_AccessController {
 						 * Method.invoke(Object, Object...)
 						 * TestCreateACCPriv.test()
 						 */
+						logger.debug(PASSED_EXPECTED_ACCESS_CONTROL_EXCEPTION_THROWN);						
 					} catch (Exception e) {
 						Assert.fail("FAIL: Unexpected exception");
 					}
@@ -787,5 +787,17 @@ public class Test_AccessController {
 				}
 			}, ACC_JAVA_HOME, JAVA_HOME_READ);
 		}
+	}
+	
+	@BeforeMethod
+	public void printTestEntry(Method testMethod) {
+		logger.debug("> Enter "+testMethod.getName());
+		oldSecurityManager = System.getSecurityManager();
+	}
+	
+	@AfterMethod
+	public void printTestExit(Method testMethod) {
+		System.setSecurityManager(oldSecurityManager);
+		logger.debug("< Exit "+testMethod.getName());
 	}
 }
