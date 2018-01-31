@@ -122,6 +122,13 @@ jint computeFullVersionString(J9JavaVM* vm)
 			j2se_version_info = "10.?";
 		}
 		break;
+	case J2SE_V11:
+		if ((J2SE_VERSION(vm) & J2SE_RELEASE_MASK) == J2SE_V11) {
+			j2se_version_info = "11";
+		} else {
+			j2se_version_info = "11.?";
+		}
+		break;
 	default:
 		j2se_version_info = "?.?.?";
 	}

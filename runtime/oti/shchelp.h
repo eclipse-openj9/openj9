@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,7 @@ extern "C" {
 #define J9SH_MODLEVEL_JAVA8  4
 #define J9SH_MODLEVEL_JAVA9  5
 #define J9SH_MODLEVEL_JAVA10 6
+#define J9SH_MODLEVEL_JAVA11 7
 
 /*	JVM feature bit flag(s)	*/
 /*

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -685,25 +685,28 @@ initializeSystemProperties(J9JavaVM * vm)
 	}
 
 	/* Properties that always exist */
+	specificationVendor = "Oracle Corporation";
 	switch (j2seVersion) {
 		case J2SE_18:
 			classVersion = "52.0";
 			specificationVersion = "1.8";
-			specificationVendor = "Oracle Corporation";
 			break;
 
 		case J2SE_19:
 			classVersion = "53.0";
 			specificationVersion = "9";
-			specificationVendor = "Oracle Corporation";
 			break;
 			
 		case J2SE_V10:
-			/* FALLTHROUGH */
-		default:
 			classVersion = "54.0";
 			specificationVersion = "10";
-			specificationVendor = "Oracle Corporation";
+			break;
+			
+		case J2SE_V11:
+			/* FALLTHROUGH */
+		default:
+			classVersion = "55.0";
+			specificationVersion = "11";
 			break;
 	}
 	rc = addSystemProperty(vm, "java.class.version", classVersion, 0);
