@@ -49,8 +49,8 @@ make test
     ```
     JAVA_BIN=<path to JDK bin directory that you wish to test>
     SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] platform_on_which_to_test
-    JAVA_VERSION=[SE80|SE90] (SE90 default value)
-    JAVA_IMPL=openj9 (openj9 default value)
+    JAVA_VERSION=[SE80|SE90|SE100|Panama|Valhalla] (SE90 default value)
+    JAVA_IMPL=[openj9|hotspot] (openj9 default value)
     ```
 
   * list of dependent jars
@@ -92,9 +92,21 @@ make test
     - If you have many new test cases to add, then you may want to
     copy the TestExample project, change the name,replace the test
     examples with your own code, update the build.xml and playlist.xml
-    files to match your new Test class names.
+    files to match your new Test class names. The playlist.xml format 
+    is defined in TestConfig/playlist.xsd.
 
-    - Most OpenJ9 FV tests are written with TestNG.  We leverage
+    - A test can be tagged with following elements:
+      - level:   [sanity|extended] (extended default value)
+      - group:   [functional|openjdk|external|perf|jck|system] (required 
+                 to provide one group per test)
+      - impl:    [openj9|hotspot] (filter test based on exported JAVA_IMPL 
+                 value; a test can be tagged with multiple impls at the 
+                 same time; default to all impls)
+      - subset:  [SE80|SE90|SE100|Panama|Valhalla] (filter test based on 
+                 exported JAVA_VERSION value; a test can be tagged with 
+                 multiple subsets at the same time; default to all subsets)
+
+    - Most OpenJ9 FV tests are written with TestNG. We leverage
     TestNG groups to create test make targets. This means that
     minimally your test source code should belong to either
     level.sanity or level.extended group to be included in main
@@ -103,56 +115,57 @@ make test
 4. Run tests:
 
   * all tests
+    - compile & run tests
+        ```
+        make test
+        ```
+    - run all tests without recompiling them
+        ```
+        make runtest
+        ```
+
+  * group of tests <br />
+    make _group <br />
+    e.g., 
     ```
-    make test (to compile & run)
-    make runtest (to run all tests without recompiling them)
+    make _functional
     ```
 
-  * sanity tests
+  * level of tests <br />
+    make _level <br />
+    e.g., 
     ```
     make _sanity
     ```
 
-  * external tests
+  * level of tests with specified group <br />
+    make _level.group <br />
+    e.g., 
     ```
-    make _external
-    ```
-
-  * perf tests
-    ```
-    make _perf
+    make _sanity.functional
     ```
 
-  * a specific individual test
+  * a specific individual test <br />
+    make _testTargetName <br />
+    e.g., 
     ```
     make _generalExtendedTest_0
     ```
 
-  * a directory of tests
+  * a directory of tests <br />
+    cd path/to/directory; make -f autoGen.mk testTarget <br />
+    or make -C path/to/directory -f autoGen.mk testTarget <br />
+    e.g., 
     ```
-    cd path/to/directory
-    make -f autoGen.mk testTarget  (for example: cd test/TestExample; make -f autoGen.mk _sanity)
+    cd test/TestExample
+    make -f autoGen.mk _sanity
     ```
 
-  * component specific tests (WIP)
+  * against specific (e.g., hotspot SE80) SDK
 
-  * against an IBM Java8 SDK
-
-    Same general instructions for Configure environment, and
-    make test, but export JAVA_VERSION=SE80 explicitly before
-    run_configure.mk step.
-
-  * against an OpenJ9 Java 9 SDK
-
-    No special steps to accomplish this, as JAVA_VERSION=SE90
-    by default, so simply need to Configure environment and run
-    make test.
-
-  * against a Java8 or Java9 OpenJDK/Oracle JDK (WIP)
-
-    We are annotating the OpenJ9 specific tests, so that they will be
-    excluded from compilation and execution against an implementation
-    that they are not intended to test.
+    impl and subset are used to annotate tests in playlist.xml, 
+    so that the tests will be run against the targeted JAVA_IMPL 
+    and JAVA_VERSION.
 
   * rerun the failed tests from the last run
     ```
