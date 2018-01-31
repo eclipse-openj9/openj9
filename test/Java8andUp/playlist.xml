@@ -24,9 +24,6 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>114360</featureId>
-		</featureIds>
 		<testCaseName>generalSanityTest_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -43,12 +40,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-</test>
+	</test>
 
 	<test>
-		<featureIds>
-			<featureId>114360</featureId>
-		</featureIds>
 		<testCaseName>generalSanityTest_SE90</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -65,12 +59,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-</test>
+	</test>
 
 	<test>
-		<featureIds>
-			<featureId>114360</featureId>
-		</featureIds>
 		<testCaseName>generalExtendedTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -91,9 +82,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>114360</featureId>
-		</featureIds>
 		<testCaseName>regressionFastresolve_mode110</testCaseName>
 		<variations>
 			<variation> Mode110 -Xfastresolve0</variation>
@@ -114,12 +102,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-</test>
+	</test>
 
 	<test>
-		<featureIds>
-			<featureId>114360</featureId>
-		</featureIds>
 		<testCaseName>regressionFastresolve_mode150</testCaseName>
 		<variations>
 			<variation>Mode150 -Xfastresolve0</variation>
@@ -140,12 +125,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-</test>
+	</test>
 
 	<test>
-		<featureIds>
-			<featureId>114360</featureId>
-		</featureIds>
 		<testCaseName>regressionBucketDefault</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -170,9 +152,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>114360</featureId>
-		</featureIds>
 		<testCaseName>jsr335_interfacePrivateMethod_mode100</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -193,13 +172,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-</test>
+	</test>
 
 	<!-- Attach API tests -->
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>AttachAPISanity_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -221,9 +197,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>AttachAPISanity_SE90</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
@@ -248,9 +221,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>TestAttachAPI_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -272,9 +242,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>TestAttachAPI_SE90</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
@@ -298,9 +265,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>TestAttachAPIEnabling_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -320,9 +284,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>TestAttachAPIEnabling_SE90</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
@@ -347,9 +308,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>TestAttachErrorHandling_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -371,9 +329,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>TestAttachErrorHandling_SE90</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
@@ -397,9 +352,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>TestSunAttachClasses_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -421,9 +373,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>TestSunAttachClasses_SE90</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
@@ -448,9 +397,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>TestManagementAgent_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -472,9 +418,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>113813</featureId>
-		</featureIds>
 		<testCaseName>TestManagementAgent_SE90</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
@@ -499,9 +442,6 @@
 	<!-- Attach API tests -->
 
 	<test>
-		<featureIds>
-			<featureId>116957</featureId>
-		</featureIds>
 		<testCaseName>TestFileLocking_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -522,9 +462,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>116957</featureId>
-		</featureIds>
 		<testCaseName>TestFileLocking_SE90</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
@@ -547,9 +484,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>115821</featureId>
-		</featureIds>
 		<testCaseName>gcNotificationTest_GenCon</testCaseName>
 		<variations>
 			<variation>-Xgcpolicy:gencon -Xmx512m</variation>
@@ -574,9 +508,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>115821</featureId>
-		</featureIds>
 		<testCaseName>gcNotificationTest_Optthruput</testCaseName>
 		<variations>
 			<variation>-Xgcpolicy:optthruput -Xmx512m</variation>
@@ -601,9 +532,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>115821</featureId>
-		</featureIds>
 		<testCaseName>gcNotificationTest_OptAvgpause</testCaseName>
 		<variations>
 			<variation>-Xgcpolicy:optavgpause -Xmx512m</variation>
@@ -628,9 +556,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>115821</featureId>
-		</featureIds>
 		<testCaseName>gcNotificationTest_Balanced</testCaseName>
 		<variations>
 			<variation>Mode551 -Xmx512m</variation>
@@ -655,9 +580,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>115821</featureId>
-		</featureIds>
 		<testCaseName>gcNotificationTest_Metronome</testCaseName>
 		<variations>
 			<variation>Mode351 -Xmx512m</variation>
@@ -680,10 +602,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>JEP-142</featureId>
-		</featureIds>
 		<testCaseName>ContendedFieldsTests_80</testCaseName>
 		<variations>
 			<variation></variation>
@@ -709,10 +629,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>JEP-142</featureId>
-		</featureIds>
 		<testCaseName>ContendedFieldsTests_90</testCaseName>
 		<variations>
 			<variation></variation>
@@ -739,10 +657,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>114360</featureId>
-		</featureIds>
 		<testCaseName>CtorBCVTests</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
@@ -760,12 +676,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-</test>
+	</test>
 
 	<test>
-		<featureIds>
-			<featureId>123042</featureId>
-		</featureIds>
 		<testCaseName>JCL_Test_SE90</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -819,9 +732,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>123042</featureId>
-		</featureIds>
 		<testCaseName>JCL_Test_SE80</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -865,9 +775,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>J9VMInternals</featureId>
-		</featureIds>
 		<testCaseName>J9VMInternals_Test_SE90</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -896,9 +803,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>J9VMInternals</featureId>
-		</featureIds>
 		<testCaseName>J9VMInternals_Test_SE80</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -928,9 +832,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>125377</featureId>
-		</featureIds>
 		<testCaseName>JCL_Test_JIT_Helper_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
@@ -948,12 +849,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-</test>
+	</test>
 
 	<test>
-		<featureIds>
-			<featureId>125377</featureId>
-		</featureIds>
 		<testCaseName>JCL_Test_JIT_Helper_SE90</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --add-exports=java.base/com.ibm.jit=ALL-UNNAMED \
 	-Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
@@ -971,12 +869,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-</test>
+	</test>
 
 	<test>
-		<featureIds>
-			<featureId>122290</featureId>
-		</featureIds>
 		<testCaseName>VmArgumentTests</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -996,10 +891,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>124761</featureId>
-		</featureIds>
 		<testCaseName>threadMXBeanTestSuite1</testCaseName>
 		<variations>
 			<variation>Mode110 -Xint</variation>
@@ -1031,10 +924,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125060</featureId>
-		</featureIds>
 		<testCaseName>threadMXBeanTestSuite2</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -1062,10 +953,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125060</featureId>
-		</featureIds>
 		<testCaseName>threadMXBeanTimedParkTest</testCaseName>
 		<variations>
 			<variation>Mode110 -Xthr:minimizeUserCPU</variation>
@@ -1093,10 +982,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125060</featureId>
-		</featureIds>
 		<testCaseName>threadMXBeanTimersTest</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -1124,10 +1011,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>TestArrayCopy</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -1154,10 +1039,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>memoryCategories</testCaseName>
 		<command>$(MKDIR) -p $(REPORTDIR); \
 		cd $(REPORTDIR); \
@@ -1180,10 +1063,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>HashConsistency</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1204,10 +1085,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>HashPerformance</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1000M \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1228,10 +1107,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>jniOnLoadExceptions</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -1259,10 +1136,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>badUTF8inJNI</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -1288,10 +1163,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>pthreadDestructor</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS)  \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1312,10 +1185,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testReflectInvoke</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1336,10 +1207,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>126608</featureId>
-		</featureIds>
 		<testCaseName>testInvokeSpecialInsideInterface</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1359,10 +1228,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>129718</featureId>
-		</featureIds>
 		<testCaseName>testContendedClassLoading</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1382,10 +1249,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>133585</featureId>
-		</featureIds>
 		<testCaseName>testClassLoadingDelegation</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1406,10 +1271,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testvmcheck</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -1438,10 +1301,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>TestSoftMxCallBackOOM</testCaseName>
 		<variations>
 			<variation>Mode101</variation>
@@ -1467,10 +1328,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>TestSoftMxCallBackExtend</testCaseName>
 		<variations>
 			<variation>Mode101</variation>
@@ -1496,10 +1355,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>130311</featureId>
-		</featureIds>
 		<testCaseName>reflect_getMethods</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1519,10 +1376,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>130524</featureId>
-		</featureIds>
 		<testCaseName>NoSuchMethodTests</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1542,10 +1397,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>131373</featureId>
-		</featureIds>
 		<testCaseName>reattachAfterExit</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1565,10 +1418,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>131487</featureId>
-		</featureIds>
 		<testCaseName>JCL_Test_Package</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
@@ -1589,10 +1440,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>132786</featureId>
-		</featureIds>
 		<testCaseName>hanoiTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump  \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1617,9 +1466,6 @@
 	before the test. These tests were added just to make sure the VM will not fail to
 	start when the customer sets JAVA_THREAD_MODEL (PR 100512)-->
 	<test>
-		<featureIds>
-			<featureId>132786</featureId>
-		</featureIds>
 		<testCaseName>hanoiTestTM_NATIVE</testCaseName>
 		<command>JAVA_THREAD_MODEL=NATIVE \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump  \
@@ -1641,10 +1487,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>132786</featureId>
-		</featureIds>
 		<testCaseName>hanoiTestTM_MEDIUM</testCaseName>
 		<command>JAVA_THREAD_MODEL=MEDIUM \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump  \
@@ -1666,10 +1510,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>132786</featureId>
-		</featureIds>
 		<testCaseName>hanoiTestTM_HEAVY</testCaseName>
 		<command>JAVA_THREAD_MODEL=HEAVY \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump  \
@@ -1691,11 +1533,9 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+	
 	<!-- This test should fail, so a wrapper is used to wrap the return non-zero code -->
 	<test>
-		<featureIds>
-			<featureId>132786</featureId>
-		</featureIds>
 		<testCaseName>hanoiTestTM_SHOULDFAIL</testCaseName>
 		<command>JAVA_THREAD_MODEL=SHOULDFAIL \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump  \
@@ -1719,13 +1559,7 @@
 		</subsets>
 	</test>
 
-
-
-
 	<test>
-		<featureIds>
-			<featureId>132786</featureId>
-		</featureIds>
 		<testCaseName>memleaksTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-Xint -verbose:shutdown -Dibm.java9.forceCommonCleanerShutdown=true -Xcheck:memory:ignoreUnfreedCallsite=zip/:dbgwrapper:unknown:wrapper -Dcom.ibm.tools.attach.logging=yes \
@@ -1746,10 +1580,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>132786</featureId>
-		</featureIds>
 		<testCaseName>fibTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint -Xdump  \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -1769,10 +1601,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>131373</featureId>
-		</featureIds>
 		<testCaseName>testStringInterning</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -1796,10 +1626,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>133171</featureId>
-		</featureIds>
 		<testCaseName>floatSanityTests</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>

@@ -24,11 +24,11 @@ use Cwd;
 use strict;
 use warnings;
 use lib "./makeGenTool";
-require "mkgen.pl";
 use File::Basename;
 use File::Path qw/make_path/;
 use Data::Dumper;
 use feature 'say';
+require "mkgen.pl";
 
 my $all            = 0;
 my $projectRootDir = '';
@@ -38,10 +38,10 @@ my $graphSpecs     = '';
 my $javaVersion    = '';
 my $impl           = '';
 my $output         = '';
-my @allLevels = ( "sanity", "extended" );
-my @allGroups = ( "functional", "openjdk", "external", "perf", "jck", "system" );
-my @allSubsets = ( "SE80", "SE90", "SE100", "Panama", "Valhalla" );
-my @allImpls = ( "openj9", "hotspot" );
+my @allLevels      = ( "sanity", "extended" );
+my @allGroups      = ( "functional", "openjdk", "external", "perf", "jck", "system" );
+my @allSubsets     = ( "SE80", "SE90", "SE100", "Panama", "Valhalla" );
+my @allImpls       = ( "openj9", "hotspot" );
 
 foreach my $argv (@ARGV) {
 	if ( $argv =~ /^\-\-graphSpecs=/ ) {
@@ -104,8 +104,8 @@ if ( !$javaVersion ) {
 	die "Please provide javaVersion!"
 }
 
-if ( $impl ) {
-	
+if ( !$impl ) {
+	die "Please provide impl!"
 }
 
 # run make file generator

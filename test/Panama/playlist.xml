@@ -24,9 +24,6 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>122874</featureId>
-		</featureIds>
 		<testCaseName>NativeMethodHandleTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)PanamaTests.jar$(Q) \
@@ -47,9 +44,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>123942</featureId>
-		</featureIds>
 		<testCaseName>HigherLevelNativeMethodHandleTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)panamatest.jar$(P)$(TEST_RESROOT)$(D)PanamaTests.jar$(Q) \
@@ -70,9 +64,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>123991</featureId>
-		</featureIds>
 		<testCaseName>CustomFFINativeMethodHandleTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)panamatest.jar$(P)$(TEST_RESROOT)$(D)PanamaTests.jar$(Q) \

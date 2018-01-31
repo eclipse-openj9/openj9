@@ -25,9 +25,6 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<!-- jit.test.jitt tests start here -->
 	<test>
-		<featureIds>
-			<featureId>122624</featureId>
-		</featureIds>
 		<testCaseName>finalizerTest</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -49,6 +46,7 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
 		<testCaseName>stringConcatOptTest</testCaseName>
 		<variations>
@@ -72,10 +70,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>122624</featureId>
-		</featureIds>
 		<testCaseName>jit_jitt</testCaseName>
 		<variations>
 			<variation>-Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
@@ -122,10 +118,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>122624</featureId>
-		</featureIds>
 		<testCaseName>jit_jitt_XCEEHDLR</testCaseName>
 		<variations>
 			<variation>-XCEEHDLR -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
@@ -176,9 +170,6 @@
 
 	<!-- jit.test.jar tests start here -->
 	<test>
-		<featureIds>
-			<featureId>122624</featureId>
-		</featureIds>
 		<testCaseName>jit_jar</testCaseName>
 		<variations>
 			<variation>-Xjit:optlevel=warm,count=0 -DjarTesterArgs=$(Q)$(TEST_RESROOT)$(D)jitt.jar$(Q)</variation>
@@ -204,10 +195,7 @@
 	</test>
 
 	<!-- jit.test.tr start here -->
-		<test>
-		<featureIds>
-			<featureId>122624</featureId>
-		</featureIds>
+	<test>
 		<testCaseName>jit_tr</testCaseName>
 		<variations>
 			<variation>-Xjit:noJitUntilMain -Xdump:java</variation>
@@ -277,9 +265,6 @@
 
 	<!-- jit.test.hw tests start here -->
 	<test>
-		<featureIds>
-			<featureId>122624</featureId>
-		</featureIds>
 		<testCaseName>jit_hw</testCaseName>
 		<variations>
 			<variation>-Xdump:java -Xgcpolicy:gencon -Xjit:count=0,optLevel=hot</variation>
@@ -306,10 +291,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>122624</featureId>
-		</featureIds>
 		<testCaseName>jit_hwWarm</testCaseName>
 		<variations>
 			<variation>-Xdump:java -Xjit:optlevel=warm,count=0</variation>
@@ -337,9 +320,6 @@
 
 	<!-- jit.test.vich tests start here -->
 	<test>
-		<featureIds>
-			<featureId>122624</featureId>
-		</featureIds>
 		<testCaseName>jit_vich</testCaseName>
 		<variations>
 			<variation>-Xdump</variation>

@@ -24,9 +24,6 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>113705</featureId>
-		</featureIds>
 		<testCaseName>testExample</testCaseName>
 		<variations>
 			<variation>-Xint</variation>
