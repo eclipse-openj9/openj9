@@ -274,6 +274,7 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)
 		</command>
+		<disabled>ISSUE#1086</disabled>
 		<levels>
 			<level>extended</level>
 		</levels>
