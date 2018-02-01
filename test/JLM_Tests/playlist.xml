@@ -807,7 +807,36 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^os.zos</platformRequirements>
+		<platformRequirements>^os.zos,^os.linux_390</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>SE80</subset>
+			<subset>SE90</subset>
+		</subsets>
+	</test>
+	<test>
+		<testCaseName>testDefaultDisclaimMemory_zlinux</testCaseName>
+		<variations>
+			<variation>Mode110</variation>
+			<variation>Mode119</variation>
+			<variation>Mode601</variation>
+			<variation>Mode501</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-Xdump:none -Xsoftmx512m -Xmx1024m -Xmn1m \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames testSoftMxDisclaimMemory \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>os.linux_390,bits.64</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
