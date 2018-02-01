@@ -24,9 +24,6 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>133961</featureId>
-		</featureIds>
 		<testCaseName>IllegalAccessProtectedMethodTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)IllegalAccessProtectedMethod.jar$(Q) \

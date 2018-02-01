@@ -24,9 +24,6 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>115726</featureId>
-		</featureIds>
 		<testCaseName>jsr335tests_SE80</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -52,11 +49,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-</test>
+	</test>
+
 	<test>
-		<featureIds>
-			<featureId>115726</featureId>
-		</featureIds>
 		<testCaseName>jsr335tests_SE90</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -82,11 +77,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-</test>
+	</test>
+
 	<test>
-		<featureIds>
-			<featureId>115726</featureId>
-		</featureIds>
 		<testCaseName>jsr335tests_defendersupersends_SE80</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -105,10 +98,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>115726</featureId>
-		</featureIds>
 		<testCaseName>jsr335tests_defendersupersends_SE90</testCaseName>
 		<variations>
 			<variation>Mode100</variation>

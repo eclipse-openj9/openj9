@@ -24,9 +24,6 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>133610</featureId>
-		</featureIds>
 		<testCaseName>J9vmTest</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -55,9 +52,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>133610</featureId>
-		</featureIds>
 		<testCaseName>ThreadRegressionTests</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -83,9 +77,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>134688</featureId>
-		</featureIds>
 		<testCaseName>SharedClassesSysVTesting</testCaseName>
 		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
 	cd $(JAVA_BIN) ; \

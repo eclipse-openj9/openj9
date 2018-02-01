@@ -24,9 +24,6 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>112724</featureId>
-		</featureIds>
 		<testCaseName>jsr335_interfaceStaticMethod</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
