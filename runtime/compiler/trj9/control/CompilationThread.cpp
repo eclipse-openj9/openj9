@@ -3277,7 +3277,10 @@ TR::CompilationInfoPerThread::initializeSegmentCache(J9::J9SegmentProvider &segm
       }
    catch (const std::bad_alloc &allocationFailure)
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Failed to initialize segment cache of size 1 << 24");
+      if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Failed to initialize segment cache of size 1 << 24");
+         }
       }
    try
       {
@@ -3286,7 +3289,10 @@ TR::CompilationInfoPerThread::initializeSegmentCache(J9::J9SegmentProvider &segm
       }
    catch (const std::bad_alloc &allocationFailure)
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Failed to initialize segment cache of size 1 << 21");
+      if (TR::Options::getVerboseOption(TR_VerbosePerformance))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Failed to initialize segment cache of size 1 << 21");
+         }
       }
    J9::J9SegmentCache segmentCache(1 << 16, segmentProvider);
    return segmentCache;
