@@ -1280,6 +1280,12 @@ TR_J9VMBase::getReferenceFieldAtAddress(uintptrj_t fieldAddress)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getReferenceFieldAtAddress");
    TR::Compilation* comp = TR::comp();
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+   // Emit read barrier
+   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
+      vmThread()->javaVM->javaVM->memoryManagerFunctions->J9ReadBarrier(vmThread(), (fj9object_t *)fieldAddress);
+#endif
+
 #if defined(J9VM_GC_COMPRESSED_POINTERS)
    uintptrj_t compressedResult = *(uint32_t*)fieldAddress;
    return (compressedResult << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress();
@@ -1292,7 +1298,7 @@ uintptrj_t
 TR_J9VMBase::getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getReferenceFieldAt");
-   return getReferenceFieldAtAddress(objectPointer + sizeof(J9Object) + fieldOffset);
+   return (uintptrj_t)J9OBJECT_OBJECT_LOAD(vmThread(), objectPointer, J9_OBJECT_HEADER_SIZE + fieldOffset);
    }
 
 uintptrj_t
@@ -1347,100 +1353,14 @@ int32_t
 TR_J9VMBase::getInt32Element(uintptrj_t objectPointer, int32_t elementIndex)
    {
    TR_ASSERT(haveAccess(), "getInt32Element requires VM access");
-
-   TR::Compilation* comp = TR::comp();
-   uintptrj_t dataStart = objectPointer;
-   bool       hasSpine  = TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.useHybridArraylets();
-
-   const uint32_t elementSize = sizeof(int32_t);
-
-   intptrj_t arrayLengthInBytes = getArrayLengthInElements(dataStart) * elementSize;
-   if (TR::Compiler->om.canGenerateArraylets() && TR::Compiler->om.useHybridArraylets() && TR::Compiler->om.isDiscontiguousArray(arrayLengthInBytes))
-      {
-      dataStart += sizeof(J9IndexableObjectDiscontiguous);
-      hasSpine = true;
-      }
-   else
-      {
-      dataStart += sizeof(J9IndexableObjectContiguous);
-      }
-
-   int32_t result;
-   if (hasSpine)
-      {
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
-      uint32_t *spine = (uint32_t*)dataStart;
-      uintptrj_t compressedArrayletPtr = (uintptrj_t)(spine[elementIndex >> getArraySpineShift(elementSize)]);
-      int32_t *arraylet = (int32_t*)((compressedArrayletPtr << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress());
-#else
-      uintptrj_t *spine = (uintptrj_t*)dataStart;
-      int32_t *arraylet = (int32_t *)(spine[elementIndex >> getArraySpineShift(elementSize)]);
-#endif
-      result = arraylet[elementIndex & getArrayletMask(elementSize)];
-      }
-   else
-      {
-      result = ((int32_t*)dataStart)[elementIndex];
-      }
-
-   return result;
+   return J9JAVAARRAYOFINT_LOAD(vmThread(), objectPointer, elementIndex);
    }
 
 uintptrj_t
 TR_J9VMBase::getReferenceElement(uintptrj_t objectPointer, intptrj_t elementIndex)
    {
    TR_ASSERT(haveAccess(), "getReferenceElement requires VM access");
-
-   TR::Compilation* comp = TR::comp();
-   uintptrj_t dataStart = objectPointer;
-   bool hasSpine = TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.useHybridArraylets();
-
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
-   const uint32_t elementSize = sizeof(uint32_t);
-#else
-   const uint32_t elementSize = sizeof(uintptrj_t);
-#endif
-
-   intptrj_t arrayLengthInBytes = getArrayLengthInElements(dataStart) * elementSize;
-   if (TR::Compiler->om.canGenerateArraylets() && TR::Compiler->om.useHybridArraylets() && TR::Compiler->om.isDiscontiguousArray(arrayLengthInBytes))
-      {
-      dataStart += sizeof(J9IndexableObjectDiscontiguous);
-      hasSpine = true;
-      }
-   else
-      {
-      dataStart += sizeof(J9IndexableObjectContiguous);
-      }
-
-   uintptrj_t rawResult;
-   if (hasSpine)
-      {
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
-      uint32_t *spine = (uint32_t*)dataStart;
-      uintptrj_t compressedArrayletPtr = (uintptrj_t)(spine[elementIndex >> getArraySpineShift(elementSize)]);
-      uint32_t *arraylet = (uint32_t*)((compressedArrayletPtr << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress());
-#else
-      uintptrj_t *spine = (uintptrj_t*)dataStart;
-      uintptrj_t *arraylet = (uintptrj_t *)(spine[elementIndex >> getArraySpineShift(elementSize)]);
-#endif
-      rawResult = arraylet[elementIndex & getArrayletMask(elementSize)];
-      }
-   else
-      {
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
-      uint32_t *elementArray = (uint32_t*)dataStart;
-#else
-      uintptrj_t *elementArray = (uintptrj_t*)dataStart;
-#endif
-      rawResult = elementArray[elementIndex];
-      }
-
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
-   return (rawResult << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress();
-#else
-   return rawResult;
-#endif
-
+   return (uintptrj_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread(), objectPointer, elementIndex);
    }
 
 TR_OpaqueClassBlock *
