@@ -28,7 +28,9 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
+		<command>$(MKTREE) $(REPORTDIR); \
+		cd $(REPORTDIR); \
+		perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1G \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
@@ -58,7 +60,9 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
+		<command>$(MKTREE) $(REPORTDIR); \
+		cd $(REPORTDIR); \
+		perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl all ; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1G \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
@@ -87,7 +91,9 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
-		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl aix ; \
+		<command>$(MKTREE) $(REPORTDIR); \
+		cd $(REPORTDIR); \
+		perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl aix ; \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1G \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
