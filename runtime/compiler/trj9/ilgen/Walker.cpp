@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -6936,7 +6936,7 @@ TR_J9ByteCodeIlGenerator::genNewArray(int32_t typeIndex)
    if (!comp()->getOption(TR_DisableSeparateInitFromAlloc) &&
        !node->canSkipZeroInitialization() &&
        !generateArraylets && separateInitializationFromAllocation &&
-       (comp()->cg()->getSupportsArraySet() || comp()->cg()->getSupportsArraySetToZero()))
+       comp()->cg()->getSupportsArraySet())
       {
       node->setCanSkipZeroInitialization(true);
 
