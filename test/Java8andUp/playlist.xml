@@ -705,6 +705,7 @@
 	JCL_TEST_Test-Annotation,\
 	JCL_TEST_Test-Annotation-Identity,\
 	JCL_TEST_Test-Annotation-ClassLoader,\
+	JCL_TEST_Java-Lang_ClassLoader,\
 	JCL_TEST_Test-Annotation-Package,\
 	JCL_TEST_Test-Defects,\
 	JCL_TEST_Test-UnsafeFence,\
@@ -748,6 +749,7 @@
 	JCL_TEST_Test-Annotation,\
 	JCL_TEST_Test-Annotation-Identity,\
 	JCL_TEST_Test-Annotation-ClassLoader,\
+	JCL_TEST_Java-Lang_ClassLoader,\
 	JCL_TEST_Test-Annotation-Package,\
 	JCL_TEST_Test-Defects,\
 	JCL_TEST_Test-UnsafeFence,\
