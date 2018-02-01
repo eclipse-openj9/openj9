@@ -496,6 +496,7 @@ UDATA walkFrame(J9StackWalkState * walkState)
 			*walkState->cacheCursor++ = (UDATA) cachePC;
 		}
 		if (walkState->flags & J9_STACKWALK_CACHE_CPS) *walkState->cacheCursor++ = (UDATA) walkState->constantPool;
+		if (walkState->flags & J9_STACKWALK_CACHE_METHODS) *walkState->cacheCursor++ = (UDATA) walkState->method;
 	}
 
 	++walkState->framesWalked;
@@ -545,6 +546,7 @@ static UDATA allocateCache(J9StackWalkState * walkState)
 	cacheElementSize = 0;
 	if (walkState->flags & J9_STACKWALK_CACHE_PCS) ++cacheElementSize;
 	if (walkState->flags & J9_STACKWALK_CACHE_CPS) ++cacheElementSize;
+	if (walkState->flags & J9_STACKWALK_CACHE_METHODS) ++cacheElementSize;
 
 	cacheSize = framesPresent * cacheElementSize;
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
