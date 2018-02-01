@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1492,7 +1492,10 @@ void TR::AMD64PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite &site, 
       generateLabelInstruction(LABEL, site.getCallNode(), entryLabel, cg());
 
    TR::SymbolReference *methodSymRef = site.getSymbolReference();
-   traceMsg(comp(), "buildVirtualOrComputedCall(%p), isComputed=%d\n", site.getCallNode(), methodSymRef->getSymbol()->castToMethodSymbol()->isComputed());
+   if (comp()->getOption(TR_TraceCG))
+      {
+      traceMsg(comp(), "buildVirtualOrComputedCall(%p), isComputed=%d\n", site.getCallNode(), methodSymRef->getSymbol()->castToMethodSymbol()->isComputed());
+      }
    bool evaluateVftEarly = methodSymRef->isUnresolved() || fej9->forceUnresolvedDispatch();
 
    if (methodSymRef->getSymbol()->castToMethodSymbol()->isComputed())

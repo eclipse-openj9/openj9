@@ -3218,7 +3218,7 @@ int32_t TR_CISCTransformer::perform()
          graph = makeCISCGraph(&bblistPred, &bblistBody, &bblistSucc);
          if (!graph)
             {
-            traceMsg(comp(), "Loop %d.  Failed to make CISC Graph.\n", nextLoop->getNumber());
+            if (trace()) traceMsg(comp(), "Loop %d.  Failed to make CISC Graph.\n", nextLoop->getNumber());
             restoreBitsKeepAliveCalls();
             continue;
             }

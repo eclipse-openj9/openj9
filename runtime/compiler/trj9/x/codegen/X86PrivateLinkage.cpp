@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1338,7 +1338,10 @@ void TR::X86PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    if (cg()->getStackFramePaddingSizeInBytes())
       {
       deallocateSize += cg()->getStackFramePaddingSizeInBytes();
-      traceMsg(comp(), "Bytes of stack frame padding to be dealloated %d\n", cg()->getStackFramePaddingSizeInBytes());
+      if (comp()->getOption(TR_TraceCG))
+         {
+         traceMsg(comp(), "Bytes of stack frame padding to be deallocated %d\n", cg()->getStackFramePaddingSizeInBytes());
+         }
       }
 
    if (deallocateSize)

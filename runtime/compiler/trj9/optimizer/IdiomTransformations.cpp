@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -520,7 +520,7 @@ reorderTargetNodesInBB(TR_CISCTransformer *trans)
                   {
                   T->duplicateListsDuplicator();
                   // OK, we can move the node t!
-                  traceMsg(comp,"We can move the node %d to %p(%d)\n",tID,tgt,tgt->getID());
+                  if (disptrace) traceMsg(comp,"We can move the node %d to %p(%d)\n",tID,tgt,tgt->getID());
                   anyChanged = changed = true;
 
                   trans->moveCISCNodes(t, t, tgt, "reorderTargetNodesInBB");
