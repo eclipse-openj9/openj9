@@ -21,26 +21,22 @@
  *******************************************************************************/
 package com.ibm.j9ddr.corereaders.elf;
 
-abstract class Address {
+class Address64 extends Address {
 
-	private long _value;
-
-	Address(long value) {
-		_value = value;
+	Address64(long value) {
+		super(value);
 	}
 
-	long getValue() {
-		return _value;
+	Address add(long offset) {
+		return new Address64(getValue() + offset);
 	}
 
-	abstract Address add(long offset);
-
-	boolean isNil() {
-		return 0L == getValue();
+	Number asNumber() {
+		return Long.valueOf(getValue());
 	}
 
-	abstract Number asNumber();
-
-	abstract Address nil();
+	Address nil() {
+		return new Address64(0);
+	}
 
 }
