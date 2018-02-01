@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2081,7 +2081,10 @@ TR_J9ByteCodeIlGenerator::genUnary(TR::ILOpCodes unaryOp, bool isForArrayAccess)
    TR::Node *node = TR::Node::create(unaryOp, 1, pop());
    if(isForArrayAccess)
       {
-      traceMsg(comp(), "setting i2l node %p n%dn nonegative because it's for array access\n");
+      if (comp()->getOption(TR_TraceILGen))
+         {
+         traceMsg(comp(), "setting i2l node %p n%dn non-negative because it's for array access\n");
+         }
       node->setIsNonNegative(true);
       }
    push(node);
@@ -2172,9 +2175,9 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
         }
 
       if ((comp()->getOption(TR_MimicInterpreterFrameShape) ||
-            comp()->getOption(TR_FullSpeedDebug) || 
+            comp()->getOption(TR_FullSpeedDebug) ||
             comp()->getHCRMode() == TR::osr ||
-            ((n->getNumChildren() > 0) && n->getFirstChild()->getOpCode().isCall() && !OSRTooExpensive && comp()->getOption(TR_EnableOSR))) 
+            ((n->getNumChildren() > 0) && n->getFirstChild()->getOpCode().isCall() && !OSRTooExpensive && comp()->getOption(TR_EnableOSR)))
             && !comp()->isPeekingMethod())
          {
          if (comp()->isOSRTransitionTarget(TR::postExecutionOSR))
@@ -2583,7 +2586,7 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
 
    if (comp()->isPeekingMethod()
        || !comp()->getOption(TR_EnableOSR)
-       || _cannotAttemptOSR 
+       || _cannotAttemptOSR
        || !comp()->isOSRTransitionTarget(TR::postExecutionOSR))
       return;
 
@@ -2625,7 +2628,7 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
 
    TR::MethodSymbol *symbol = symRef->getSymbol()->castToMethodSymbol();
    int32_t numArgs = symbol->getMethod()->numberOfExplicitParameters() + (symbol->isStatic() ? 0 : 1);
-   
+
    TR_OSRMethodData *osrMethodData =
       comp()->getOSRCompilationData()->findOrCreateOSRMethodData(comp()->getCurrentInlinedSiteIndex(), _methodSymbol);
    osrMethodData->ensureArgInfoAt(_bcIndex, numArgs);
@@ -2637,13 +2640,13 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
    for (int32_t i = 0; i < _stack->size(); ++i)
       {
       TR::Node * n = _stack->element(i);
-      if (_stack->size() - numArgs <= i) 
+      if (_stack->size() - numArgs <= i)
          {
          TR::SymbolReference * symRef = symRefTab()->findOrCreatePendingPushTemporary(_methodSymbol, slot, getDataType(n));
          osrMethodData->addArgInfo(_bcIndex, arg, symRef->getReferenceNumber());
          arg++;
          }
-      slot += n->getNumberOfSlots(); 
+      slot += n->getNumberOfSlots();
       }
    }
 
@@ -4296,7 +4299,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
       }
 
 #if !defined(TR_HOST_ARM)
-   
+
    if (comp()->supportsQuadOptimization())
       {
       // Under DLT, the Quad opts don't work because the interpreted Quad
@@ -6863,7 +6866,7 @@ TR_J9ByteCodeIlGenerator::genNew(TR::ILOpCodes opCode)
           ((len == 68) && strncmp(sig, "Ljava/util/concurrent/locks/ReentrantReadWriteLock$Sync$HoldCounter;", 68) == 0) ||
           ((len == 25) && strncmp(sig, "Ljava/util/PriorityQueue;", 25) == 0) ||
           ((len == 42) && strncmp(sig, "Ljava/util/concurrent/locks/ReentrantLock;", 42) == 0) ||
-          ((len == 54) && strncmp(sig, "Ljava/util/concurrent/locks/ReentrantLock$NonfairSync;", 54) == 0) 
+          ((len == 54) && strncmp(sig, "Ljava/util/concurrent/locks/ReentrantLock$NonfairSync;", 54) == 0)
          )
          {
          skipFlush = true;
@@ -6936,7 +6939,7 @@ TR_J9ByteCodeIlGenerator::genNewArray(int32_t typeIndex)
    if (!comp()->getOption(TR_DisableSeparateInitFromAlloc) &&
        !node->canSkipZeroInitialization() &&
        !generateArraylets && separateInitializationFromAllocation &&
-       (comp()->cg()->getSupportsArraySet() || comp()->cg()->getSupportsArraySetToZero()))
+       comp()->cg()->getSupportsArraySet())
       {
       node->setCanSkipZeroInitialization(true);
 
@@ -7062,7 +7065,7 @@ TR_J9ByteCodeIlGenerator::genReturn(TR::ILOpCodes nodeop, bool monitorExit)
    static const char* disableMethodHookForCallees = feGetEnv("TR_DisableMethodHookForCallees");
    if ((fej9()->isMethodExitTracingEnabled(_methodSymbol->getResolvedMethod()->getPersistentIdentifier()) ||
         TR::Compiler->vm.canMethodExitEventBeHooked(comp()))
-         && (isOutermostMethod() || !disableMethodHookForCallees)) 
+         && (isOutermostMethod() || !disableMethodHookForCallees))
       {
       TR::SymbolReference * methodExitSymRef = symRefTab()->findOrCreateReportMethodExitSymbolRef(_methodSymbol);
 

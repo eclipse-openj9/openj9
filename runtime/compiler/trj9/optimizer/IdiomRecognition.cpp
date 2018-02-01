@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1041,9 +1041,7 @@ TR_CISCGraph::makePreparedCISCGraphs(TR::Compilation *c)
    bool genTROT = c->cg()->getSupportsArrayTranslateTROT();
    bool genTRT =  c->cg()->getSupportsArrayTranslateAndTest();
    bool genMemcpy = c->cg()->getSupportsReferenceArrayCopy() || c->cg()->getSupportsPrimitiveArrayCopy();
-   static const bool allowZeroOnlyMemset = feGetEnv("TR_disableZeroOnlyMemsetIdiom") == NULL;
-   bool genMemset = c->cg()->getSupportsArraySet()
-      || (allowZeroOnlyMemset && c->cg()->getSupportsArraySetToZero());
+   bool genMemset = c->cg()->getSupportsArraySet();
    bool genMemcmp = c->cg()->getSupportsArrayCmp();
    bool genIDiv2Mul = c->cg()->getSupportsLoweringConstIDiv();
    bool genLDiv2Mul = c->cg()->getSupportsLoweringConstLDiv();
@@ -3220,7 +3218,7 @@ int32_t TR_CISCTransformer::perform()
          graph = makeCISCGraph(&bblistPred, &bblistBody, &bblistSucc);
          if (!graph)
             {
-            traceMsg(comp(), "Loop %d.  Failed to make CISC Graph.\n", nextLoop->getNumber());
+            if (trace()) traceMsg(comp(), "Loop %d.  Failed to make CISC Graph.\n", nextLoop->getNumber());
             restoreBitsKeepAliveCalls();
             continue;
             }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1323,7 +1323,7 @@ void TR_EscapeAnalysis::findCandidates()
          //
          _dememoizationSymRef = node->getSymbolReference();
 
-         traceMsg(comp(), "Attempt dememoize on %p\n", node);
+         if (trace()) traceMsg(comp(), "Attempt dememoize on %p\n", node);
          TR_OpaqueMethodBlock *constructor = comp()->getOption(TR_DisableDememoization)? NULL : comp()->fej9()->getMethodFromName("java/lang/Integer", "<init>", "(I)V");
          if (  constructor
             && performTransformation(comp(), "%sTry dememoizing %p\n", OPT_DETAILS, node))
@@ -5771,7 +5771,7 @@ void TR_EscapeAnalysis::avoidStringCopyAllocation(Candidate *candidate)
  */
 bool TR_EscapeAnalysis::tryToZeroInitializeUsingArrayset(Candidate* candidate, TR::TreeTop* precedingTreeTop)
    {
-   if (cg()->getSupportsArraySetToZero())
+   if (cg()->getSupportsArraySet())
       {
       int32_t candidateHeaderSizeInBytes = candidate->_origKind == TR::New ? comp()->fej9()->getObjectHeaderSizeInBytes() : TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
@@ -5911,14 +5911,14 @@ void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
       // the collectable slots (in addition to their initialization at method entry)
       //
       initTree = candidate->_treeTop;
-      
+
       if (candidate->_kind == TR::newarray)
          {
-         // TODO (Task 118458): We need to investigate the effect of using arrayset on small number of elements. This involves verifying the instruction 
+         // TODO (Task 118458): We need to investigate the effect of using arrayset on small number of elements. This involves verifying the instruction
          // sequences each induvidual codegen will generate and only if the codegens can handle arraysets of small number of elements in a performant manner
          // can we enable this optimization.
          const bool enableNewArrayArraySetPendingInvestigation = false;
-         
+
          // Non-collectable slots should be initialized with arrayset since they do not have field symrefs
          if (enableNewArrayArraySetPendingInvestigation && tryToZeroInitializeUsingArrayset(candidate, initTree))
             {
@@ -5927,7 +5927,7 @@ void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
             return;
             }
          }
-      
+
       int32_t headerSize = (candidate->_kind == TR::New) ?
          comp()->fej9()->getObjectHeaderSizeInBytes() :
          TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
