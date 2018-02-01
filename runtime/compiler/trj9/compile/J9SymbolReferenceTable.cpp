@@ -1986,10 +1986,9 @@ TR::ParameterSymbol *
 J9::SymbolReferenceTable::createParameterSymbol(
       TR::ResolvedMethodSymbol *owningMethodSymbol,
       int32_t slot,
-      TR::DataType type,
-      bool isUnsigned)
+      TR::DataType type)
    {
-   TR::ParameterSymbol * sym = TR::ParameterSymbol::create(trHeapMemory(),type,isUnsigned,slot);
+   TR::ParameterSymbol * sym = TR::ParameterSymbol::create(trHeapMemory(),type,slot);
 
    if (comp()->getOption(TR_MimicInterpreterFrameShape))
       {
