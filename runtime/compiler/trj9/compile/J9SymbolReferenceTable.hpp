@@ -229,13 +229,10 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     * \param type
     *    TR::DataType of the parameter.
     *
-    * \param isUnsigned
-    *    Unused and deprecated.
-    *
     * \return
     *    The created TR::ParameterSymbol
     */
-   TR::ParameterSymbol * createParameterSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType type, bool isUnsigned);
+   TR::ParameterSymbol * createParameterSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t slot, TR::DataType type);
 
    void initShadowSymbol(TR_ResolvedMethod *, TR::SymbolReference *, bool, TR::DataType, uint32_t, bool);
 
