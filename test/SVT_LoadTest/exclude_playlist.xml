@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2017, 2017 IBM Corp. and others
+  Copyright (c) 2017, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,9 +35,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=DaaLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)DaaLoadTest_all$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -52,9 +55,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=DaaLoadTest -test-args=$(Q)workload=daa1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)DaaLoadTest_Daa1$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -69,9 +75,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=DaaLoadTest -test-args=$(Q)workload=daa2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)DaaLoadTest_Daa2$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -86,9 +95,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=DaaLoadTest -test-args=$(Q)workload=daa3$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)DaaLoadTest_Daa3$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -106,9 +118,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=ClassloadingLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)ClassloadingLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -126,9 +141,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=ConcurrentLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)ConcurrentLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -146,9 +164,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=LambdaLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)LambdaLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -166,9 +187,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=LangLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)LangLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -186,9 +210,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MathLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)MathLoadTest_all$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -203,9 +230,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MathLoadTest -test-args=$(Q)workload=autoSimd$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MathLoadTest_autoSimd$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -220,9 +250,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MathLoadTest -test-args=$(Q)workload=bigDecimal$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MathLoadTest_bigDecimal$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -240,9 +273,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MixLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)MixLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -260,9 +296,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MXBeansLoadTest -test-args=$(Q)workload=jvmcpumonitorWl1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MXBeansLoadTest_jvmcpumonitorWl1$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -277,9 +316,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MXBeansLoadTest -test-args=$(Q)workload=jvmcpumonitorWl2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MXBeansLoadTest_jvmcpumonitorWl2$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -294,9 +336,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MXBeansLoadTest -test-args=$(Q)workload=mxbean$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MXBeansLoadTest_mxbean$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -311,9 +356,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MXBeansLoadTest -test-args=$(Q)workload=osmxbean$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MXBeansLoadTest_osmxbean$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -328,9 +376,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MXBeansLoadTest -test-args=$(Q)workload=virtualization$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MXBeansLoadTest_virtualization$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -348,9 +399,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=NioLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)NioLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -368,9 +422,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=SerializationLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)SerializationLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -388,9 +445,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=UtilLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)UtilLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -408,9 +468,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=AnnotationsLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)AnnotationsLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -428,9 +491,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=DirectByteBufferLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)DirectByteBufferLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -448,9 +514,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HeapHogLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)HeapHogLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -468,9 +537,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=LockingLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)LockingLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -488,9 +560,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=ObjectTreeLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)ObjectTreeLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -508,9 +583,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=ReadWriteLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)ReadWriteLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -528,9 +606,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MauveMultiThreadLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)MauveMultiThreadLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -545,9 +626,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MauveSingleThreadLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)MauveSingleThreadLoadTest$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -565,9 +649,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=all$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_all$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -582,9 +669,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=jndi$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_jndi$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -599,9 +689,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=luni1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_luni1$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -616,9 +709,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=luni2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_luni2$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -633,9 +729,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=luni3$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_luni3$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -650,9 +749,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=luni4$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_luni4$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -667,9 +769,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=network$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_network$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -684,9 +789,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=nio1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_nio1$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -701,9 +809,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=nio2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_nio2$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -718,9 +829,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=others1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_others1$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -735,9 +849,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=others2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_others2$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -752,9 +869,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=others3$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_others3$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -769,9 +889,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security1$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -786,9 +909,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security2$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -803,9 +929,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security3$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security3$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -820,9 +949,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security4$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security4$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -837,9 +969,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security5$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security5$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -854,9 +989,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security6$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security6$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -871,9 +1009,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=serialization$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_serialization$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -888,9 +1029,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=sql$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_sql$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -915,9 +1059,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=DaaLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)DaaLoadTest_all$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -932,9 +1079,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=DaaLoadTest -test-args=$(Q)workload=daa1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)DaaLoadTest_Daa1$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -949,9 +1099,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=DaaLoadTest -test-args=$(Q)workload=daa2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)DaaLoadTest_Daa2$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -966,9 +1119,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=DaaLoadTest -test-args=$(Q)workload=daa3$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)DaaLoadTest_Daa3$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -986,9 +1142,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=ClassloadingLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)ClassloadingLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1006,9 +1165,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=ConcurrentLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)ConcurrentLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1026,9 +1188,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=LambdaLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)LambdaLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1046,9 +1211,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=LangLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)LangLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1066,9 +1234,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MathLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)MathLoadTest_all$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1083,9 +1254,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MathLoadTest -test-args=$(Q)workload=autoSimd$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MathLoadTest_autoSimd$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1100,9 +1274,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MathLoadTest -test-args=$(Q)workload=bigDecimal$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MathLoadTest_bigDecimal$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1120,9 +1297,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MixLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)MixLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1140,9 +1320,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MXBeansLoadTest -test-args=$(Q)workload=jvmcpumonitorWl1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MXBeansLoadTest_jvmcpumonitorWl1$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1157,9 +1340,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MXBeansLoadTest -test-args=$(Q)workload=jvmcpumonitorWl2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MXBeansLoadTest_jvmcpumonitorWl2$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1174,9 +1360,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MXBeansLoadTest -test-args=$(Q)workload=mxbean$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MXBeansLoadTest_mxbean$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1191,9 +1380,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MXBeansLoadTest -test-args=$(Q)workload=osmxbean$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MXBeansLoadTest_osmxbean$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1208,9 +1400,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MXBeansLoadTest -test-args=$(Q)workload=virtualization$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)MXBeansLoadTest_virtualization$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1228,9 +1423,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=NioLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)NioLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1248,9 +1446,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=SerializationLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)SerializationLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1268,9 +1469,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=UtilLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)UtilLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1288,9 +1492,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=AnnotationsLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)AnnotationsLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1308,9 +1515,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=DirectByteBufferLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)DirectByteBufferLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1328,9 +1538,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HeapHogLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)HeapHogLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1348,9 +1561,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=LockingLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)LockingLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1368,9 +1584,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=ObjectTreeLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)ObjectTreeLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1388,9 +1607,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=ReadWriteLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)ReadWriteLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1408,9 +1630,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MauveMultiThreadLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)MauveMultiThreadLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1425,9 +1650,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=MauveSingleThreadLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)MauveSingleThreadLoadTest$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1445,9 +1673,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=all$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_all$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1462,9 +1693,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=jndi$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_jndi$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1479,9 +1713,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=luni1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_luni1$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1496,9 +1733,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=luni2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_luni2$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1513,9 +1753,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=luni3$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_luni3$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1530,9 +1773,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=luni4$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_luni4$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1547,9 +1793,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=network$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_network$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1564,9 +1813,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=nio1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_nio1$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1581,9 +1833,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=nio2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_nio2$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1598,9 +1853,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=others1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_others1$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1615,9 +1873,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=others2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_others2$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1632,9 +1893,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=others3$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_others3$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1649,9 +1913,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security1$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security1$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1666,9 +1933,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security2$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security2$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1683,9 +1953,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security3$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security3$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1700,9 +1973,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security4$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security4$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1717,9 +1993,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security5$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security5$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1734,9 +2013,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=security6$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_security6$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1751,9 +2033,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=serialization$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_serialization$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -1768,9 +2053,12 @@
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=HarmonyLoadTest -test-args=$(Q)suite=sql$(Q) -results-root=$(Q)$(TEMP_ROOT)$(D)HarmonyLoadTest_sql$(Q); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>arch.390,bit.64</platformRequirements>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>

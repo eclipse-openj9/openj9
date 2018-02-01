@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2017, 2017 IBM Corp. and others
+  Copyright (c) 2017, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,9 +32,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=CpMpTest -test-args=variant=CpMp -results-root=$(Q)$(TEMP_ROOT)$(D)cpmp.test.cpmp$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -50,9 +53,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=CpMpTest -test-args=variant=Mp -results-root=$(Q)$(TEMP_ROOT)$(D)cpmp.test.mp$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -68,9 +74,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=AutomaticModulesTest -test-args=variant=AutomaticModulesTest1 -results-root=$(Q)$(TEMP_ROOT)$(D)automatic.modules.test1$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -86,9 +95,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=AutomaticModulesTest -test-args=variant=AutomaticModulesTest2 -results-root=$(Q)$(TEMP_ROOT)$(D)automatic.modules.test2$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -104,9 +116,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=AutomaticModulesTest -test-args=variant=ImpliedReadabilityTest1 -results-root=$(Q)$(TEMP_ROOT)$(D)implied.readability.test1$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -122,9 +137,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=AutomaticModulesTest -test-args=variant=ImpliedReadabilityTest2 -results-root=$(Q)$(TEMP_ROOT)$(D)implied.readability.test2$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -140,9 +158,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=AutomaticModulesTest -test-args=variant=ImpliedReadabilityTest3 -results-root=$(Q)$(TEMP_ROOT)$(D)implied.readability.test3$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -158,9 +179,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=ExplicitModulesTest -results-root=$(Q)$(TEMP_ROOT)$(D)explicit.modules.test$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -176,9 +200,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=JDKInternalAPIsTest -results-root=$(Q)$(TEMP_ROOT)$(D)jdk.internal.api.test$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -194,9 +221,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=CLTest -test-args=variant=CLTest -results-root=$(Q)$(TEMP_ROOT)$(D)classloading.test$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -212,9 +242,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=CLTestImage -test-args=variant=CLTest -results-root=$(Q)$(TEMP_ROOT)$(D)classloading.customimage.test$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -230,9 +263,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=CLTest -test-args=variant=CLTestUsingResourceFiles -results-root=$(Q)$(TEMP_ROOT)$(D)classloading.resource.test$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -248,9 +284,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=CLTestImage -test-args=variant=CLTestUsingResourceFiles -results-root=$(Q)$(TEMP_ROOT)$(D)classloading.customimage.resource.test$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -266,9 +305,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=ServiceLoadersTest -results-root=$(Q)$(TEMP_ROOT)$(D)serviceloader.test$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -284,9 +326,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=PatchModuleTest -test-args=variant=PlatformModPatchModule -results-root=$(Q)$(TEMP_ROOT)$(D)patchmodule.test.PlatformModPatchModule$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -302,9 +347,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=PatchModuleTest -test-args=variant=AppModPatchModule -results-root=$(Q)$(TEMP_ROOT)$(D)patchmodule.test.AppModPatchModule$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -320,9 +368,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=PatchModuleTest -test-args=variant=UnexportedTypePatchModule -results-root=$(Q)$(TEMP_ROOT)$(D)patchmodule.test.UnexportedTypePatchModule$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -338,9 +389,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=PatchModuleTest -test-args=variant=AdvancedPatchModule -results-root=$(Q)$(TEMP_ROOT)$(D)patchmodule.test.AdvancedPatchModule$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -356,9 +410,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=PatchModuleImageTest -test-args=variant=PlatformModPatchModule -results-root=$(Q)$(TEMP_ROOT)$(D)patchmodule.test.image.PlatformModPatchModule$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -374,9 +431,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=PatchModuleImageTest -test-args=variant=AppModPatchModule -results-root=$(Q)$(TEMP_ROOT)$(D)patchmodule.test.image.AppModPatchModule$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -392,9 +452,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=PatchModuleImageTest -test-args=variant=UnexportedTypePatchModule -results-root=$(Q)$(TEMP_ROOT)$(D)patchmodule.test.image.UnexportedTypePatchModule$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -410,9 +473,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=PatchModuleImageTest -test-args=variant=AdvancedPatchModule -results-root=$(Q)$(TEMP_ROOT)$(D)patchmodule.test.image.AdvancedPatchModule$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -428,9 +494,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=UpgradeModPathTest -test-args=variant=ExpDirModUpgrade -results-root=$(Q)$(TEMP_ROOT)$(D)upgrademodpath.test.ExpDirModUpgrade$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -446,9 +515,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=UpgradeModPathTest -test-args=variant=ExpDirModUpgradeCRImage -results-root=$(Q)$(TEMP_ROOT)$(D)upgrademodpath.test.ExpDirModUpgradeCRImage$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -464,9 +536,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=UpgradeModPathTest -test-args=variant=JarredModUpgrade -results-root=$(Q)$(TEMP_ROOT)$(D)upgrademodpath.test.JarredModUpgrade$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -482,9 +557,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=UpgradeModPathTest -test-args=variant=JarredModUpgradeCRImage -results-root=$(Q)$(TEMP_ROOT)$(D)upgrademodpath.test.JarredModUpgradeCRImage$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -500,9 +578,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=JlinkTest -test-args=variant=RequiredMod -results-root=$(Q)$(TEMP_ROOT)$(D)jlink.test.requiredmod$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -518,9 +599,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=JlinkTest -test-args=variant=AddModLimitMod -results-root=$(Q)$(TEMP_ROOT)$(D)jlink.test.addmodlimitmod$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -537,9 +621,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=LayersTest -test-args=heapsize=10m -results-root=$(Q)$(TEMP_ROOT)$(D)layers.test$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -555,9 +642,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=CLLoadTest -results-root=$(Q)$(TEMP_ROOT)$(D)loadtest.classloading$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -573,9 +663,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=CLStressWithLayers -results-root=$(Q)$(TEMP_ROOT)$(D)stresstest.classloading.multilayer$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>
@@ -591,9 +684,12 @@
 		</variations>
 		<command>perl $(Q)$(JAVASVT_ROOT)$(D)javasvt$(D)stf$(D)scripts$(D)stf.pl$(Q) -java-args=$(Q)$(JVM_OPTIONS)$(Q) -test-root=$(Q)$(JAVASVT_ROOT)$(D)javasvt$(Q) -javasvt-prereqs=$(Q)$(JAVASVT_ROOT)$(D)..$(D)javasvt_prereqs$(Q) -test=CLStressWithLayersCRI -results-root=$(Q)$(TEMP_ROOT)$(D)stresstest.classloading.multilayer.CRI$(Q); \
 	$(TEST_STATUS)</command>
-		<tags>
-			<tag>extended</tag>
-		</tags>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>system</group>
+		</groups>
 		<subsets>
 			<subset>SE90</subset>
 		</subsets>

@@ -30,13 +30,6 @@
         <xs:element name="test" maxOccurs="unbounded" minOccurs="0">
           <xs:complexType>
             <xs:all>
-              <xs:element name="featureIds" minOccurs="0">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element type="xs:string" name="featureId" maxOccurs="unbounded"/>
-                  </xs:sequence>
-                </xs:complexType>
-              </xs:element>
               <xs:element type="xs:string" name="testCaseName"/>
               <xs:element name="variations" minOccurs="0" >
                 <xs:complexType>

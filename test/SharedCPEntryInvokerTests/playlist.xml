@@ -24,9 +24,6 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>133082</featureId>
-		</featureIds>
 		<testCaseName>SharedCPEntryInvokerTests</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>

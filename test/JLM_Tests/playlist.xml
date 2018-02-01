@@ -25,9 +25,6 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>120379</featureId>
-		</featureIds>
 		<testCaseName>JLM_Tests_interface_SE80</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -52,10 +49,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>120379</featureId>
-		</featureIds>
 		<testCaseName>JLM_Tests_interface_SE90</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -81,10 +76,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>120379</featureId>
-		</featureIds>
 		<testCaseName>JLM_Tests_class_SE80</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -109,10 +102,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>120379</featureId>
-		</featureIds>
 		<testCaseName>JLM_Tests_class_SE90</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -138,10 +129,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>120379</featureId>
-		</featureIds>
 		<testCaseName>JLM_Tests_IBMinternal_SE80</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -166,10 +155,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>120379</featureId>
-		</featureIds>
 		<testCaseName>JLM_Tests_IBMinternal_SE90</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -195,10 +182,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxLocal</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -227,10 +212,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxLocal_zlinux_64</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -259,10 +242,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxLocal_zlinux_31</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -293,9 +274,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>SoftmxRASTest2</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -323,10 +301,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>SoftmxRASTest1</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -354,10 +330,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxLocal_LP4k</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -386,10 +360,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxLocal_LP64k</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -421,10 +393,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxRemote</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -453,10 +423,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxRemote_zlinux_64</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -485,10 +453,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxRemote_zlinux_31</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -517,10 +483,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxRemote_LP4k</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -549,10 +513,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxRemote_LP64k</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -584,10 +546,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxDisclaimMemory</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -616,10 +576,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxDisclaimMemory_zlinux_64</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -648,10 +606,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxDisclaimMemory_zlinux_31</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -680,10 +636,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxDisclaimMemory_LP4k</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -712,10 +666,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxDisclaimMemory_LP64k</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -747,10 +699,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxNotDisclaimMemory</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -779,10 +729,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxNotDisclaimMemory_zlinux_64</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -811,10 +759,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxNotDisclaimMemory_zlinux_31</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -843,10 +789,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testDefaultDisclaimMemory</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -875,10 +819,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>125310</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxDisclaimMemory_GC</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
@@ -909,9 +851,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>130967</featureId>
-		</featureIds>
 		<testCaseName>testOSMXBeanLocal</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -937,10 +876,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>130967</featureId>
-		</featureIds>
 		<testCaseName>testOSMXBeanRemote</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -967,10 +904,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>130967</featureId>
-		</featureIds>
 		<testCaseName>testJCMMXBeanLocal_SE80</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -995,10 +930,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>130967</featureId>
-		</featureIds>
 		<testCaseName>testJCMMXBeanLocal_SE90</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -1023,10 +956,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>130967</featureId>
-		</featureIds>
 		<testCaseName>testJCMMXBeanRemote_SE80</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -1052,10 +983,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>130967</featureId>
-		</featureIds>
 		<testCaseName>testJCMMXBeanRemote_SE90</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -1081,10 +1010,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>130967</featureId>
-		</featureIds>
 		<testCaseName>testGuestOSMXBeanLocal</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -1110,10 +1037,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>130967</featureId>
-		</featureIds>
 		<testCaseName>testGuestOSMXBeanRemote</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -1140,10 +1065,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>133585</featureId>
-		</featureIds>
 		<testCaseName>testCpuUtilization_testSingleCpuLoadObject</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -1167,10 +1090,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>133585</featureId>
-		</featureIds>
 		<testCaseName>testCpuUtilization_testMxBean</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -1194,10 +1115,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>133585</featureId>
-		</featureIds>
 		<testCaseName>testSoftMxUserScenario</testCaseName>
 		<variations>
 			<variation>Mode110</variation>

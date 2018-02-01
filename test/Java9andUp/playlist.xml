@@ -24,9 +24,6 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>StackWalkerTest</testCaseName>
 		<variations>
 			<variation>-Xint</variation>
@@ -50,9 +47,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>124869</featureId>
-		</featureIds>
 		<testCaseName>CallerSensitiveGetCallerClassTest</testCaseName>
 		<variations>
 		</variations>
@@ -75,9 +69,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>120087</featureId>
-		</featureIds>
 		<testCaseName>VarHandleInvokerTest</testCaseName>
 		<variations>
 			<variation>-Xint</variation>
@@ -101,9 +92,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>121329</featureId>
-		</featureIds>
 		<testCaseName>VarHandle</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -121,10 +109,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>121329</featureId>
-		</featureIds>
 		<testCaseName>View-LE-OnHeap</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -142,10 +128,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>121329</featureId>
-		</featureIds>
 		<testCaseName>View-LE-OffHeap</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -163,10 +147,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>121329</featureId>
-		</featureIds>
 		<testCaseName>View-BE-OnHeap</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -184,10 +166,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>121329</featureId>
-		</featureIds>
 		<testCaseName>View-BE-OffHeap</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -205,6 +185,7 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
 		<testCaseName>defineModuleAsClassTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -303,10 +284,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>openj9 issue #126</featureId>
-		</featureIds>
 		<testCaseName>TestJava9AttachAPI</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \

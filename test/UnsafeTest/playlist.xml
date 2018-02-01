@@ -24,9 +24,6 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>132532</featureId>
-		</featureIds>
 		<testCaseName>UnsafeTests_SE80</testCaseName>
 		<variations>
 			<variation>-DScenario=Regular</variation>
@@ -49,10 +46,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>132532</featureId>
-		</featureIds>
 		<testCaseName>UnsafeTests_SE90</testCaseName>
 		<variations>
 			<variation>-DScenario=Regular</variation>

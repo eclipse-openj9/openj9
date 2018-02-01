@@ -177,9 +177,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>116831</featureId>
-		</featureIds>
 		<testCaseName>jsr292_MethodHandleAPI_Test</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED \
@@ -202,9 +199,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>116831</featureId>
-		</featureIds>
 		<testCaseName>jsr292_MethodHandleAPI_Test_JitCount1</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED \

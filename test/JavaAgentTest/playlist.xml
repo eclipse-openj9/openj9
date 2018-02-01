@@ -24,9 +24,6 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestFlushReflectionCache_SE90</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -52,10 +49,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI_SE90</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -80,10 +75,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI_JIT_ON_SE90</testCaseName>
 		<variations>
 			<variation>Mode107</variation>
@@ -107,10 +100,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_FAST_HCR_SE90</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -136,10 +127,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_EXTENDED_HCR_SE90</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -164,10 +153,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestGCClassWithStaticRetransformInGencon_SE90</testCaseName>
 		<variations>
 			<variation>Mode109</variation>
@@ -191,10 +178,8 @@
 			<subset>SE90</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestGCClassWithStaticRetransformInBalanced_SE90</testCaseName>
 		<variations>
 			<variation>Mode550</variation>
@@ -220,9 +205,6 @@
 	</test>
 
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestFlushReflectionCache_SE80</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -246,10 +228,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI_SE80</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -272,10 +252,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI_JIT_ON_SE80</testCaseName>
 		<variations>
 			<variation>Mode107</variation>
@@ -297,10 +275,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_FAST_HCR_SE80</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
@@ -323,10 +299,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_FAST_HCR_JIT_ON_SE80</testCaseName>
 		<variations>
 			<variation>Mode107</variation>
@@ -348,10 +322,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_EXTENDED_HCR_SE80</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
@@ -373,10 +345,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_EXTENDED_HCR_JIT_ON_SE80</testCaseName>
 		<variations>
 			<variation>Mode107</variation>
@@ -398,10 +368,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestGCClassWithStaticRetransformInGencon_SE80</testCaseName>
 		<variations>
 			<variation>Mode109</variation>
@@ -423,10 +391,8 @@
 			<subset>SE80</subset>
 		</subsets>
 	</test>
+
 	<test>
-		<featureIds>
-			<featureId>111173</featureId>
-		</featureIds>
 		<testCaseName>TestGCClassWithStaticRetransformInBalanced_SE80</testCaseName>
 		<variations>
 			<variation>Mode550</variation>
