@@ -197,8 +197,11 @@ UMA_LINK_PATH+=-L/ztpf/$(UMA_ZTPF_ROOT)/base/oco/stdlib
 <#if uma.spec.type.windows>
 ifdef USE_MINGW
   MINGW_CXXFLAGS+=$(UMA_C_INCLUDES)
-  MINGW_INCLUDES:="$(subst ;," -I",$(INCLUDE))"
-  MINGW_CXXFLAGS+=-I../oti/mingw $(UMA_C_INCLUDE_PREFIX)$(MINGW_INCLUDES)
+  MINGW_CXXFLAGS+=-I../oti/mingw
+  ifneq ($(OPENJ9_BUILD),true)
+    MINGW_INCLUDES:="$(subst ;," -I",$(INCLUDE))"
+    MINGW_CXXFLAGS+=$(UMA_C_INCLUDE_PREFIX)$(MINGW_INCLUDES)
+  endif # OPENJ9_BUILD
 endif
 </#if>
 <#if uma.spec.processor.ppc>
