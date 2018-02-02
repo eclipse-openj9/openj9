@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1013,6 +1013,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jstring version, jstring location
 
 						clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, vm->systemClassLoader);
 						while (NULL != clazz) {
+							Assert_SC_true(clazz->module == vm->javaBaseModule);
 							J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazz->classObject, modObj);
 							clazz = vmFuncs->allClassesNextDo(&classWalkState);
 						}
