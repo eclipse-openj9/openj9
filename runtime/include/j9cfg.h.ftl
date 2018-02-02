@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,8 @@ extern "C" {
 #endif
 
 #include "omrcfg.h"
+#include "openj9_version_info.h"
+#include "vendor_version.h"
 
 #define J9_COPYRIGHT_STRING "(c) Copyright 1991, ${uma.year} IBM Corp. and others."
 
@@ -42,7 +44,6 @@ extern "C" {
 #undef EsVersionMinor
 #define EsVersionMinor ${uma.buildinfo.version.minor}0
 
-#define EsVersionString "${uma.buildinfo.version.major}.${uma.buildinfo.version.minor}"
 #define EsExtraVersionString ""
 
 /*  Note: The following defines record flags used to build VM.  */

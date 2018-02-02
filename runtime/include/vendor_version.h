@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/* Example usage for inclusion of a vendor name and repository sha.  These values
+/* This file provides a means to supply vendor specific version info such as 
+ * short name, SHA, and version string.
+ * These vendor version info can be defined either in this file or other places.
+ * 
+ * Example usage for inclusion of a vendor name and repository sha.  These values
  * will be inserted into the java.fullversion and java.vm.info system properties
  * and in a generated javacore file.
  *
@@ -31,4 +35,8 @@
  *
  * #define VENDOR_SHORT_NAME "ABC"
  * #define VENDOR_SHA "1a2b3c4"
+ *
+ * Example usage for inclusion of a vendor version string.
+ * This value will be stored in the system property java.vm.version.
+ * #define J9JVM_VERSION_STRING "0.8.1"
  */

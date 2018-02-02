@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,7 +80,7 @@ GC_CheckCycle::printHelp(J9PortLibrary *portLib)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 
-	j9tty_printf(PORTLIB, "gcchk for J9, Version " EsVersionString "\n");
+	j9tty_printf(PORTLIB, "gcchk for J9, Version " J9JVM_VERSION_STRING "\n");
 	j9tty_printf(PORTLIB, J9_COPYRIGHT_STRING "\n\n");
 	j9tty_printf(PORTLIB, "Usage: -Xcheck:gc[:scanOption,...][:verifyOption,...][:miscOption,...]\n");
 	j9tty_printf(PORTLIB, "scan options (default is all):\n");

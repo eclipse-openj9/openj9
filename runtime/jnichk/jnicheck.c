@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -980,7 +980,7 @@ jniVerboseGetID(const char *function, JNIEnv *env, jclass classRef, const char *
 static void printJnichkHelp(J9PortLibrary* portLib) {
 	PORT_ACCESS_FROM_PORT(portLib);
 
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_JNICHK_HELP_1, NULL), EsVersionString);
+	j9file_printf(PORTLIB, J9PORT_TTY_OUT, j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_JNICHK_HELP_1, NULL), J9JVM_VERSION_STRING);
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, J9_COPYRIGHT_STRING "\n\n");
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_JNICHK_HELP_2, NULL));
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "\n");
