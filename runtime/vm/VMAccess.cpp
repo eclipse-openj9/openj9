@@ -951,7 +951,15 @@ acquireSafePointVMAccess(J9VMThread * vmThread)
 			VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_REQUEST_SAFE_POINT, true);
 			VM_AtomicSupport::writeBarrier(); // necessary?
 			if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT | J9_PUBLIC_FLAGS_VM_ACCESS)) {
-				responsesExpected++;
+				VM_AtomicSupport::readBarrier(); // necessary?
+				if (currentThread->inNative) {
+					Assert_VM_false(J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT));
+					VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT, true);				
+					VM_AtomicSupport::writeBarrier(); // necessary?
+					VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_REQUEST_SAFE_POINT, true);
+				} else {
+					responsesExpected++;
+				}
 			} else {
 				VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT, true);				
 				VM_AtomicSupport::writeBarrier(); // necessary?

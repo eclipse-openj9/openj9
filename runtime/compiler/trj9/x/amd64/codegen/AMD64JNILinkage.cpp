@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1111,8 +1111,8 @@ void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
                              generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()),
                              cg());
 
-   OMR::LabelSymbol *longReleaseSnippetLabel = generateLabelSymbol(cg());
-   OMR::LabelSymbol *longReleaseRestartLabel = generateLabelSymbol(cg());
+   TR::LabelSymbol *longReleaseSnippetLabel = generateLabelSymbol(cg());
+   TR::LabelSymbol *longReleaseRestartLabel = generateLabelSymbol(cg());
 
    if (J9_PUBLIC_FLAGS_HALT_THREAD_ANY > 0x7fffffff && TR::Compiler->target.is64Bit())
       {
@@ -1179,8 +1179,8 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
                              generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()),
                              cg());
 
-   OMR::LabelSymbol *longAcquireSnippetLabel = generateLabelSymbol(cg());
-   OMR::LabelSymbol *longAcquireRestartLabel = generateLabelSymbol(cg());
+   TR::LabelSymbol *longAcquireSnippetLabel = generateLabelSymbol(cg());
+   TR::LabelSymbol *longAcquireRestartLabel = generateLabelSymbol(cg());
 
    if (J9_PUBLIC_FLAGS_VM_ACCESS > 0x7fffffff && TR::Compiler->target.is64Bit())
       {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -743,7 +743,7 @@ void TR::PPCJNILinkage::releaseVMAccessAtomicFree(TR::Node* callNode, TR::Regist
       }
 
    TR::SymbolReference *jitReleaseVMAccessSymRef = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getJittedMethodSymbol());
-   OMR::LabelSymbol *releaseVMAcessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitReleaseVMAccessSymRef);
+   TR::LabelSymbol *releaseVMAcessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitReleaseVMAccessSymRef);
    if (!releaseVMAcessSnippetLabel)
       {
       releaseVMAcessSnippetLabel = generateLabelSymbol(cg());
@@ -777,7 +777,7 @@ void TR::PPCJNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::Regist
       }
 
    TR::SymbolReference *jitAcquireVMAccessSymRef = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getJittedMethodSymbol());
-   OMR::LabelSymbol *acquireVMAcessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitAcquireVMAccessSymRef);
+   TR::LabelSymbol *acquireVMAcessSnippetLabel = cg()->lookUpSnippet(TR::Snippet::IsHelperCall, jitAcquireVMAccessSymRef);
    if (!acquireVMAcessSnippetLabel)
       {
       acquireVMAcessSnippetLabel = generateLabelSymbol(cg());
