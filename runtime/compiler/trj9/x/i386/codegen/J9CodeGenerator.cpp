@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@
 #include "codegen/IA32PrivateLinkage.hpp"
 #include "codegen/IA32J9SystemLinkage.hpp"
 #include "codegen/IA32JNILinkage.hpp"
+#include "il/Node_inlines.hpp"
 
 TR::Linkage *
 J9::X86::i386::CodeGenerator::createLinkage(TR_LinkageConventions lc)
