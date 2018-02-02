@@ -288,7 +288,7 @@
 	
  	<test id="Test 9-a: create a new cache" timeout="600" runPath=".">
  		<command>$JAVA_EXE$ $currentMode$,reset $PROGRAM$</command>
-  		<output type="success" caseSensitive="yes" regex="no">IBM J9</output>
+  		<output type="success" caseSensitive="yes" regex="no">java.runtime.version</output>
   		
   		<output type="failure" caseSensitive="no" regex="no">error</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
@@ -301,7 +301,7 @@
  	
  	<test id="Test 9-b: Mark previous class entry as stale" timeout="600" runPath=".">
  		<command>$JAVA_EXE$ $currentMode$ $PROGRAM$</command>
-  		<output type="success" caseSensitive="yes" regex="no">IBM J9</output>
+  		<output type="success" caseSensitive="yes" regex="no">java.runtime.version</output>
   		
   		<output type="failure" caseSensitive="no" regex="no">error</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
