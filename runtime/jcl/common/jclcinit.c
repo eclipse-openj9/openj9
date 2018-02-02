@@ -77,7 +77,6 @@ jint computeFullVersionString(J9JavaVM* vm)
 #define BUFFER_SIZE 512
 
 	/* The actual allowed BUFFER_SIZE is 512, the extra 1 char is added to check for overflow */
-	char fullversion[BUFFER_SIZE + 1];
 	char vminfo[BUFFER_SIZE + 1];
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
@@ -168,19 +167,6 @@ jint computeFullVersionString(J9JavaVM* vm)
 	#define VENDOR_INFO ""
 #endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
 
-	if (BUFFER_SIZE <= j9str_printf(PORTLIB, fullversion, BUFFER_SIZE + 1,
-			"JRE %s IBM J9 %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO OPENJDK_INFO,
-			j2se_version_info,
-			EsVersionString,
-			(NULL != osname ? osname : " "),
-			osarch,
-			EsBuildVersionString,
-			jitEnabled,
-			aotEnabled)) {
-		j9tty_err_printf(PORTLIB, "\n%s - %d: %s: Error: Java full version string exceeds buffer size\n", __FILE__, __LINE__, __FUNCTION__);
-		return JNI_ERR;
-	}
-
 	if (BUFFER_SIZE <= j9str_printf(PORTLIB, vminfo, BUFFER_SIZE + 1,
 			"JRE %s %s %s" MEM_INFO "%s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO OPENJDK_INFO,
 			j2se_version_info,
@@ -200,8 +186,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 #undef VENDOR_INFO
 
 	(*VMI)->SetSystemProperty(VMI, "java.vm.info", vminfo);
-	/*[PR 114306] System property java.fullversion is not initialized properly */
-	(*VMI)->SetSystemProperty(VMI, "java.fullversion", fullversion);
+	(*VMI)->SetSystemProperty(VMI, "java.fullversion", vminfo);
 	return JNI_OK;
 }
 
