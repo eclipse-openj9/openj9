@@ -3484,8 +3484,9 @@ private class MethodInfo {
 		if (!that.getClass().equals(this.getClass())) {
 			return false;
 		}
+		@SuppressWarnings("unchecked")
 		MethodInfo otherMethod = (MethodInfo) that;
-		if (!otherMethod.methodName.equals(otherMethod.methodName)) {
+		if (!methodName.equals(otherMethod.methodName)) {
 			return false;
 		}
 		if (null == returnType) {
