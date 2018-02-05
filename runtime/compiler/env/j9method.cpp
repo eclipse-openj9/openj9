@@ -5815,6 +5815,13 @@ TR_ResolvedJ9Method::addressOfClassOfMethod()
       return (void*&)J9_CLASS_FROM_METHOD(ramMethod());
    }
 
+
+void
+TR_ResolvedJ9Method::setClassForNewInstance(J9Class *c)
+   {
+   _j9classForNewInstance = c;
+   }
+
 I_32
 TR_ResolvedJ9Method::exceptionData(I_32 exceptionNumber, I_32 * startIndex, I_32 * endIndex, I_32 * catchType)
    {

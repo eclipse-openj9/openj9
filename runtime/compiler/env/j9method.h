@@ -478,7 +478,7 @@ public:
    virtual const char *          newInstancePrototypeSignature(TR_Memory * m, TR_AllocationKind = heapAlloc);
 
    J9ExceptionHandler *          exceptionHandler();
-   void                          setClassForNewInstance(J9Class *c) { _j9classForNewInstance = c; }
+   virtual void                  setClassForNewInstance(J9Class *c);
    bool                          fieldIsFromLocalClass(int32_t cpIndex);
 
    virtual char *fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);

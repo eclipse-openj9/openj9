@@ -1278,6 +1278,15 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(mirror->methodIsNotzAAPEligible());
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_setClassForNewInstance:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method*, J9Class*>();
+         TR_ResolvedJ9Method *mirror = std::get<0>(recv);
+         J9Class *clazz = std::get<1>(recv);
+         mirror->setClassForNewInstance(clazz);
+         client->write(JAAS::Void());
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());

@@ -814,3 +814,23 @@ TR_ResolvedJ9JAASServerMethod::methodIsNotzAAPEligible()
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_methodIsNotzAAPEligible, _remoteMirror);
    return std::get<0>(_stream->read<bool>());
    }
+void
+TR_ResolvedJ9JAASServerMethod::setClassForNewInstance(J9Class *c)
+   {
+   _j9classForNewInstance = c;
+   fprintf(stderr, "setClassForNewInstance %p", _j9classForNewInstance);
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_setClassForNewInstance, _remoteMirror, c);
+   _stream->read<JAAS::Void>();
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedJ9JAASServerMethod::classOfMethod()
+      {
+      if (isNewInstanceImplThunk())
+         {
+         TR_ASSERT(_j9classForNewInstance, "Must have the class for the newInstance");
+         //J9Class * clazz = (J9Class *)((intptrj_t)ramMethod()->extra & ~J9_STARTPC_NOT_TRANSLATED);
+         return _fe->convertClassPtrToClassOffset(_j9classForNewInstance);//(TR_OpaqueClassBlock *&)(rc);
+         }
+      return _fe->convertClassPtrToClassOffset(_ramClass);
+      }

@@ -65,17 +65,10 @@ public:
    virtual void setVirtualMethodIsOverridden() override;
    virtual void * addressContainingIsOverriddenBit() override;
    virtual bool methodIsNotzAAPEligible() override;
+   virtual void setClassForNewInstance(J9Class *c) override;
+   virtual TR_OpaqueClassBlock * classOfMethod() override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
-   virtual TR_OpaqueClassBlock * classOfMethod() override
-      {
-      return _fe->convertClassPtrToClassOffset(_ramClass);
-      }
-   virtual void * & addressOfClassOfMethod() override
-      {
-      return (void*&)(_ramClass);
-      }
-
    bool inROMClass(void *address);
 
 private:
