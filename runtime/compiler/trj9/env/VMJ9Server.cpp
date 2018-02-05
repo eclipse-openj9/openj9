@@ -54,7 +54,6 @@ TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_Opaque
       result->setSignature(signature, signatureLength, trMemory);
    if (classForNewInstance)
       {
-      // TODO: also set on mirror?
       result->setClassForNewInstance((J9Class*)classForNewInstance);
       TR_ASSERT(result->isNewInstanceImplThunk(), "createResolvedMethodWithSignature: if classForNewInstance is given this must be a thunk");
       }
@@ -76,14 +75,6 @@ TR_J9ServerVM::isInterfaceClass(TR_OpaqueClassBlock *clazzPointer)
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_isInterfaceClass, clazzPointer);
-   return std::get<0>(stream->read<bool>());
-   }
-
-bool
-TR_J9ServerVM::isClassArray(TR_OpaqueClassBlock *clazzPointer)
-   {
-   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_isClassArray, clazzPointer);
    return std::get<0>(stream->read<bool>());
    }
 
@@ -955,4 +946,22 @@ TR_J9ServerVM::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_getVFTEntry, clazz, offset);
    return std::get<0>(stream->read<intptrj_t>());
+   }
+
+bool
+TR_J9ServerVM::isClassArray(TR_OpaqueClassBlock *klass)
+   {
+   // If we have the comp, then we can cache the rom class locally
+   if (TR::comp())
+      {
+      return TR_J9VMBase::isClassArray(klass);
+      }
+   else
+      {
+      // otherwise, do it remote
+      TR_ASSERT(_compInfoPT, "must have either compInfoPT or Compiler");
+      JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JAAS::J9ServerMessageType::VM_isClassArray, klass);
+      return std::get<0>(stream->read<bool>());
+      }
    }

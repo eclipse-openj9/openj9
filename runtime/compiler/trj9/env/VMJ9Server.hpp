@@ -28,7 +28,6 @@ public:
                                                                  char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod) override;
    virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed, bool optimizeForAOT) override;
 //   virtual bool isInterfaceClass(TR_OpaqueClassBlock *clazzPointer) override;
-//   virtual bool isClassArray(TR_OpaqueClassBlock *) override;
 //   virtual bool isClassFinal(TR_OpaqueClassBlock *) override;
 //   virtual bool isAbstractClass(TR_OpaqueClassBlock *clazzPointer) override;
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT) override;
@@ -56,8 +55,8 @@ public:
    virtual int32_t getByteOffsetToLockword(TR_OpaqueClassBlock * clazz) override;
    virtual bool isString(TR_OpaqueClassBlock * clazz) override;
    virtual void * getMethods(TR_OpaqueClassBlock * clazz) override;
-//   virtual uint32_t getNumMethods(TR_OpaqueClassBlock * clazz) override;
-//   virtual uint32_t getNumInnerClasses(TR_OpaqueClassBlock * clazz) override;
+   //virtual uint32_t getNumMethods(TR_OpaqueClassBlock * clazz) override;
+   //virtual uint32_t getNumInnerClasses(TR_OpaqueClassBlock * clazz) override;
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *clazz) override;
    virtual uint32_t getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getObjectClass(uintptrj_t objectPointer) override;
@@ -124,6 +123,7 @@ public:
    virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
    virtual bool getArrayLengthOfStaticAddress(void *ptr, int32_t &length) override;
    virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
+   virtual bool isClassArray(TR_OpaqueClassBlock *klass) override;
    };
 
 #endif // VMJ9SERVER_H

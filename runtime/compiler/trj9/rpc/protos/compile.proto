@@ -74,6 +74,7 @@ enum J9ServerMessageType
    ResolvedMethod_setVirtualMethodIsOverridden = 142;
    ResolvedMethod_addressContainingIsOverriddenBit = 143;
    ResolvedMethod_methodIsNotzAAPEligible = 144;
+   ResolvedMethod_setClassForNewInstance = 145;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;
@@ -81,7 +82,7 @@ enum J9ServerMessageType
    VM_getSuperClass = 202;
    VM_isInstanceOf = 203;
    VM_getArrayLengthOfStaticAddress = 204;
-//   VM_isClassArray = 205;
+   VM_isClassArray = 205;
 //   VM_isClassFinal = 206;
 //   VM_isAbstractClass = 207;
    VM_getSystemClassFromClassName = 208;

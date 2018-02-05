@@ -789,6 +789,13 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(ok, length);
          }
          break;
+      case J9ServerMessageType::VM_isClassArray:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock*>();
+         auto clazz = std::get<0>(recv);
+         client->write(fe->isClassArray(clazz));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only
