@@ -1808,10 +1808,7 @@ remoteCompile(
                compiler->getCurrentCodeCache(), (uint8_t *)&codeCacheStr[0], (J9JITDataCacheHeader *)&dataCacheStr[0],
                method, false, TR::comp()->getOptions(), TR::comp(), compilee);
 
-            {
-            TR::ClassTableCriticalSection commit(compiler->fe());
-            TR_ASSERT(jaasCHTableCommit(compiler, metaData, chTableData), "commit fail");
-            }
+         TR::compInfoPT->setMetadata(metaData);
 
          if (!metaData)
             {
@@ -1824,12 +1821,15 @@ remoteCompile(
             }
          TR_ASSERT(metaData, "relocation must succeed");
 
+            {
+            TR::ClassTableCriticalSection commit(compiler->fe());
+            TR_ASSERT(jaasCHTableCommit(compiler, metaData, chTableData), "commit fail");
+            }
 
          TR::compInfoPT->relocateThunks();
 
          TR_ASSERT(!metaData->startColdPC, "coldPC should be null");
 
-         //setMetadata(metaData);
 
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             {

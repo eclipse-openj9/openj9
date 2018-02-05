@@ -286,7 +286,7 @@ bool jaasCHTableCommit(
             {
             site.setDestination(site.getDestination() - serverStartPC + startPC);
             site.setLocation(site.getLocation() - serverStartPC + startPC);
-            fprintf(stderr, "\nsite: location=%p dest=%p, serverStartPC=%p, startPc=%p\n", site.getLocation(), site.getDestination(), serverStartPC, startPC);
+            //fprintf(stderr, "\nsite: location=%p dest=%p, serverStartPC=%p, startPc=%p\n", site.getLocation(), site.getDestination(), serverStartPC, startPC);
             }
          // Commit the virtual guard itself
          //

@@ -9252,7 +9252,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          J9::NewInstanceThunkDetails &mhDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
          J9Class *clazz = mhDetails.classNeedingThunk();
 
-         TR_VerboseLog::writeLineLocked( TR_Vlog_JAAS, "server newInstanceTHunk clazz=%p startPc=%p", clazz, startPC);
          remoteCompilationEnd(details, jitConfig, fe, entry, comp);
          }
       else

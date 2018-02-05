@@ -488,7 +488,6 @@ j9jit_createNewInstanceThunk_err(
    event._j9method = method;
    event._oldStartPC = 0;
    event._vmThread = vmThread;
-   event._classNeedingThunk = classNeedingThunk;
    bool newPlanCreated;
    TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
    UDATA result = 0;
