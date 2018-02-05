@@ -2208,6 +2208,7 @@ J9::Options::fePostProcessJIT(void * base)
       self()->setOption(TR_DisableInterpreterProfiling);
       self()->setOption(TR_DisableSharedCacheHints);
       self()->setIsVariableHeapBaseForBarrierRange0(true);
+      self()->setOption(TR_DisableCHOpts);
       if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
          {
          _samplingFrequency = 0; // disable sampling (including samplingThread)
