@@ -6153,7 +6153,6 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    TR::VMAccessCriticalSection loadStaticCriticalSection(fej9,
                                                           TR::VMAccessCriticalSection::tryToAcquireVMAccess,
                                                           comp());
-
    if (canOptimizeFinalStatic &&
        loadStaticCriticalSection.hasVMAccess())
       {
@@ -7835,6 +7834,9 @@ void TR_J9ByteCodeIlGenerator::genFullFence(TR::Node *node)
 
 void TR_J9ByteCodeIlGenerator::performClassLookahead(TR_PersistentClassInfo *classInfo)
    {
+   // do not perform lookahead in server mode
+   if (TR::CompilationInfo::getStream())
+      return;
    // Do not perform class lookahead when peeking (including recursive class lookahead)
    //
    if (comp()->isPeekingMethod())
