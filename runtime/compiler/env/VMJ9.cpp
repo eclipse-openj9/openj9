@@ -3905,7 +3905,6 @@ TR_J9VMBase::tryToAcquireAccess(TR::Compilation * comp, bool *haveAcquiredVMAcce
       {
       traceMsg(comp, "tryToAcquireAccess couldn't acquire vm access");
       }
-
    return hasVMAccess;
    }
 
