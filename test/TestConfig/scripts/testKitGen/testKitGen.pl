@@ -41,7 +41,7 @@ my $output         = '';
 my @allLevels      = ( "sanity", "extended" );
 my @allGroups      = ( "functional", "openjdk", "external", "perf", "jck", "system" );
 my @allSubsets     = ( "SE80", "SE90", "SE100", "Panama", "Valhalla" );
-my @allImpls       = ( "openj9", "hotspot" );
+my @allImpls       = ( "openj9", "hotspot", "sap" );
 
 foreach my $argv (@ARGV) {
 	if ( $argv =~ /^\-\-graphSpecs=/ ) {
@@ -73,7 +73,7 @@ foreach my $argv (@ARGV) {
 		print "Options:\n"
 		  . "--graphSpecs=<specs>    Comma separated specs that the build will run on.\n"
 		  . "--javaVersion=<version> Java version that the build will run on.\n"
-		  . "--impl=<implementation> Java Implementation, e.g., openj9, hotspot.\n" 
+		  . "--impl=<implementation> Java Implementation, e.g., openj9, hotspot, sap.\n" 
 		  . "--output=<path>         Path to output makefiles.\n"
 		  . "--projectRootDir=<path> Root path for searching playlist.xml.\n"
 		  . "--modesXml=<path>       Path to modes.xml file.\n"
