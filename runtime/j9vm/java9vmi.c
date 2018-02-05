@@ -1670,14 +1670,13 @@ JVM_GetModuleByPackageName(JNIEnv *env, jobject classLoader, jstring packageName
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, "package name is null");
 	} else {
 		J9ClassLoader *thisVMClassLoader = NULL;
-		U_8 *packageName = NULL;
+		J9UTF8 *packageUTF8 = NULL;
 		UDATA packageLength = 0;
 		char buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 		j9object_t packageObj = J9_JNI_UNWRAP_REFERENCE(packageName);
 		j9object_t moduleObj = NULL;
 		J9Module *vmModule = NULL;
 		PORT_ACCESS_FROM_VMC(currentThread);
-		UDATA length = 0;
 
 		if (NULL == classLoader) {
 			thisVMClassLoader = vm->systemClassLoader;
@@ -1699,18 +1698,20 @@ JVM_GetModuleByPackageName(JNIEnv *env, jobject classLoader, jstring packageName
 			thisVMClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, thisClassloader);
 		}
 
-		packageName = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, packageObj, J9_STR_NONE, "", 0, buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &length);
+		packageUTF8 = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, packageObj, J9_STR_NONE, "\0\0", sizeof(packageUTF8->length), buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &packageLength);
 
-		if (NULL == packageName) {
+		if (NULL == packageUTF8) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto exit;
 		}
+
+		J9UTF8_SET_LENGTH(packageUTF8, (U_16)packageLength);
 		
-		if (NULL != strchr((const char*)packageName, '.')) {
+		if (NULL != strchr((const char*)J9UTF8_DATA(packageUTF8), '.')) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "package name contains '.' instead of '/'");
 		} else {
-			if (vmFuncs->isAnyClassLoadedFromPackage(thisVMClassLoader, packageName, packageLength)) {
-				vmModule = vmFuncs->findModuleForPackage(currentThread, thisVMClassLoader, packageName, (U_32)packageLength);
+			if (vmFuncs->isAnyClassLoadedFromPackage(thisVMClassLoader, J9UTF8_DATA(packageUTF8), J9UTF8_LENGTH(packageUTF8))) {
+				vmModule = vmFuncs->findModuleForPackageUTF8(currentThread, thisVMClassLoader, packageUTF8);
 				if (NULL == vmModule) {
 					moduleObj = J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(currentThread, thisVMClassLoader->classLoaderObject);
 				} else {
@@ -1722,8 +1723,8 @@ JVM_GetModuleByPackageName(JNIEnv *env, jobject classLoader, jstring packageName
 				}
 			}
 		}
-		if (packageName != (U_8*)buf) {
-			j9mem_free_memory(packageName);
+		if (packageUTF8 != (J9UTF8*)buf) {
+			j9mem_free_memory(packageUTF8);
 		}
 	}
 exit:
