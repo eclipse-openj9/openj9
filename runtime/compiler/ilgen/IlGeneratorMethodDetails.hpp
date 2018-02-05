@@ -174,17 +174,17 @@ public:
    NewInstanceThunkDetails(J9Method * const method, J9Class *clazz) :
       TR::IlGeneratorMethodDetails(method)
       {
-      _class = clazz;
+      _data._classNeedingThunk = clazz;
       }
    NewInstanceThunkDetails(TR_ResolvedMethod *method, J9Class *clazz) :
       TR::IlGeneratorMethodDetails(method)
       {
-      _class = clazz;
+      _data._classNeedingThunk = clazz;
       }
    NewInstanceThunkDetails(const NewInstanceThunkDetails & other) :
       TR::IlGeneratorMethodDetails(other)
       {
-      _class = other._class;
+      _data._classNeedingThunk = other._data._classNeedingThunk;
       }
 
    virtual const char * name()         const { return "NewInstanceThunk"; }
@@ -193,13 +193,16 @@ public:
    virtual bool isNewInstanceThunk()   const { return true; }
    virtual bool supportsInvalidation() const { return false; }
 
-   bool isThunkFor(J9Class *clazz)     const { return clazz == getClass(); }
+   J9Class *classNeedingThunk()        const { return _data._classNeedingThunk; }
+   //virtual J9Class *getClass()         const { return _data._classNeedingThunk; }
+
+   bool isThunkFor(J9Class *clazz)     const { return clazz == classNeedingThunk(); }
 
    virtual bool sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
       {
       return other.isNewInstanceThunk() &&
              sameMethod(other) &&
-             static_cast<NewInstanceThunkDetails &>(other).getClass() == getClass();
+             static_cast<NewInstanceThunkDetails &>(other).classNeedingThunk() == classNeedingThunk();
       }
 
    virtual void printDetails(TR_FrontEnd *fe, TR::FILE *file);

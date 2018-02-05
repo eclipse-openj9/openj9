@@ -1926,7 +1926,7 @@ bool TR::CompilationInfo::shouldAbortCompilation(TR_MethodToBeCompiled *entry, T
       {
       TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
       J9Class *clazz = details.isNewInstanceThunk() ?
-         static_cast<J9::NewInstanceThunkDetails &>(details).getClass() :
+         static_cast<J9::NewInstanceThunkDetails &>(details).classNeedingThunk() :
          (J9Class*)J9JitMemory::convertClassPtrToClassOffset(J9_CLASS_FROM_METHOD(details.getMethod()));
 
       if (clazz && J9_IS_CLASS_OBSOLETE(clazz))
@@ -3802,7 +3802,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    if (details.isNewInstanceThunk())
       {
       J9::NewInstanceThunkDetails &newInstanceDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
-      J9Class  *classForNewInstance = newInstanceDetails.getClass();
+      J9Class  *classForNewInstance = newInstanceDetails.classNeedingThunk();
       TR::CompilationInfo::setJ9MethodExtra(method,(uintptrj_t)classForNewInstance | J9_STARTPC_NOT_TRANSLATED);
       }
 
@@ -4924,7 +4924,7 @@ void *TR::CompilationInfo::startPCIfAlreadyCompiled(J9VMThread * vmThread, TR::I
    {
    if (details.isNewInstanceThunk())
       {
-      return jitNewInstanceMethodStartAddress(vmThread, static_cast<J9::NewInstanceThunkDetails &>(details).getClass());
+      return jitNewInstanceMethodStartAddress(vmThread, static_cast<J9::NewInstanceThunkDetails &>(details).classNeedingThunk());
       }
    else if (details.isMethodHandleThunk())
       {
@@ -5072,6 +5072,11 @@ void *TR::CompilationInfo::compileRemoteMethod(J9VMThread * vmThread, TR::IlGene
       J9Method *method = details.getMethod();
       TR_VerboseLog::vlogAcquire();
       TR_VerboseLog::writeLine(TR_Vlog_CR, "%p   Compile request %s", vmThread, details.name());
+      if (details.isNewInstanceThunk())
+         {
+         J9Class *clazz = static_cast<J9::NewInstanceThunkDetails&>(details).classNeedingThunk();
+         TR_VerboseLog::write(" j9class=%p", clazz);
+         }
       TR_VerboseLog::write(" j9method=%p ", method);
       CompilationInfo::printMethodNameToVlog(romClass, romMethod);
       TR_VerboseLog::write("  optLevel=%d", optimizationPlan->getOptLevel());
@@ -5180,7 +5185,7 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
 
    J9Class *clazz = NULL;
    if (newInstanceThunkDetails)
-      clazz = newInstanceThunkDetails->getClass();
+      clazz = newInstanceThunkDetails->classNeedingThunk();
    else
       clazz = details.getClass();
 
@@ -5988,7 +5993,7 @@ void *TR::CompilationInfo::compileOnApplicationThread(J9VMThread * vmThread, TR:
       if (details.isNewInstanceThunk())
          setJ9MethodVMExtra(method,
                             reinterpret_cast<uintptr_t>(
-                               static_cast<J9::NewInstanceThunkDetails &>(details).getClass()
+                               static_cast<J9::NewInstanceThunkDetails &>(details).classNeedingThunk()
                                ) | J9_STARTPC_NOT_TRANSLATED);
 
       if (getPersistentInfo()->isClassLoadingPhase() &&
@@ -7292,7 +7297,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       else if (details.isNewInstanceThunk())
          {
          J9::NewInstanceThunkDetails &niDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
-         compilee = vm->createResolvedMethod(p->trMemory(), method, NULL, (TR_OpaqueClassBlock *) niDetails.getClass());
+         compilee = vm->createResolvedMethod(p->trMemory(), method, NULL, (TR_OpaqueClassBlock *) niDetails.classNeedingThunk());
          }
       else
          {
@@ -7303,7 +7308,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       // filters to see if compilation is to be suppressed.
 
       TR_FilterBST *filterInfo = NULL;
-      if (!that->methodCanBeCompiled(p->trMemory(), vm, compilee, filterInfo))
+      // JAAS: methodCanBeCompiled check should have been done on the client, skip it on the server.
+      if (!details.isRemoteMethod() && !that->methodCanBeCompiled(p->trMemory(), vm, compilee, filterInfo))
          {
          that->_methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
 
@@ -8568,7 +8574,6 @@ TR::CompilationInfoPerThreadBase::compile(
                   bodyInfo->getMethodInfo()->setNextCompileLevel(bodyInfo->getHotness(), false);
                   }
                }
-
             if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
                {
                TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Failure while committing chtable for %s", compiler->signature());
@@ -9244,12 +9249,16 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       {
       if (comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
          {
+         J9::NewInstanceThunkDetails &mhDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
+         J9Class *clazz = mhDetails.classNeedingThunk();
+
+         TR_VerboseLog::writeLineLocked( TR_Vlog_JAAS, "server newInstanceTHunk clazz=%p startPc=%p", clazz, startPC);
          remoteCompilationEnd(details, jitConfig, fe, entry, comp);
          }
       else
          {
          J9::NewInstanceThunkDetails &mhDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
-         J9Class *clazz = mhDetails.getClass();
+         J9Class *clazz = mhDetails.classNeedingThunk();
 
          TR_VerboseLog::writeLineLocked( TR_Vlog_JAAS, "newInstanceTHunk clazz=%p startPc=%p", clazz, startPC);
          if (startPC)
@@ -10776,7 +10785,7 @@ TR::CompilationInfo::debugPrint(char * debugString, TR::IlGeneratorMethodDetails
    fprintf(stderr, "%8x:", vmThread);
    if (details.isNewInstanceThunk())
       {
-      J9Class *classForNewInstance = static_cast<J9::NewInstanceThunkDetails &>(details).getClass();
+      J9Class *classForNewInstance = static_cast<J9::NewInstanceThunkDetails &>(details).classNeedingThunk();
       fprintf(stderr, "%s for newInstanceThunk ", debugString);
       int32_t len;
       TR_J9VMBase * fej9 = TR_J9VMBase::get(_jitConfig, vmThread);

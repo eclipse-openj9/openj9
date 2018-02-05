@@ -141,6 +141,7 @@ protected:
    const J9ROMClass *_romClass;
    union
       {
+      J9Class *_classNeedingThunk;
       int32_t _byteCodeIndex;
       struct
          {
