@@ -265,7 +265,9 @@ jint standardInit( J9JavaVM *vm, char* dllName)
 	 * We need to initialize the methodID caches for String.<init> and String.getBytes(String) while we are still in single threaded cade.
 	 * The JCL natives that initialize this are not thread safe and we run the risk of invoking these methods with a NULL methodID.
 	 * This code is a work around that forces the methodID cache initialization code to be run.
+	 * Ensure VM access is released when calling registerBootstrapLibrary.
 	 */
+	vmFuncs->internalReleaseVMAccessInJNI(vmThread);
 	if (0 == vmFuncs->registerBootstrapLibrary(vmThread, "java", &javaLibHandle, 0)) {
 		jstring (JNICALL *nativeFuncAddr)(JNIEnv *env, const char *str) = NULL;
 		PORT_ACCESS_FROM_JAVAVM(vm);
