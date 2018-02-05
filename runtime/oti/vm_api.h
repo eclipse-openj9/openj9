@@ -2785,18 +2785,19 @@ copyStringToUTF8WithMemAlloc(J9VMThread *currentThread, j9object_t string, UDATA
 
 
 /**
- * Copy a Unicode String to a UTF8 data buffer with NULL termination. This function makes an assumption that the
- * caller has guaranteed the buffer is of the appropriate size to fit the encoded UTF8 string.
+ * Copy a Unicode String to a UTF8 data buffer. This function makes an assumption that the caller has guaranteed the
+ * buffer is of the appropriate size to fit the encoded UTF8 string.
  *
  * @param[in] vmThread the current J9VMThread
  * @param[in] string a string object to be copied, it can't be NULL
  * @param[in] stringFlags the flag to determine performing '.' --> '/'
  * @param[in] utf8Data a utf8 data buffer
+ * @param[in] isNullTerminated determines whether utf8Data will be null terminated or not
  *
  * @return The computed length (in bytes) of the copied UTF8 string in the buffer excluding the NULL terminator.
  */
 UDATA
-copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data);
+copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, BOOLEAN isNullTerminated);
 
 
 /**

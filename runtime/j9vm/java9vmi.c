@@ -1698,7 +1698,7 @@ JVM_GetModuleByPackageName(JNIEnv *env, jobject classLoader, jstring packageName
 			thisVMClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, thisClassloader);
 		}
 
-		packageUTF8 = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, packageObj, J9_STR_NONE, "\0\0", sizeof(packageUTF8->length), buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &packageLength);
+		packageUTF8 = (J9UTF8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, packageObj, J9_STR_NONE, "\0\0", sizeof(packageUTF8->length), buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &packageLength);
 
 		if (NULL == packageUTF8) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);

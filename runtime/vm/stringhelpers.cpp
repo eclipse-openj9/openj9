@@ -259,7 +259,7 @@ compareStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA translateDots
 
 #if !defined (J9VM_OUT_OF_PROCESS)
 UDATA
-copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data)
+copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, BOOLEAN isNullTerminated)
 {
 	Assert_VM_notNull(string);
 
@@ -303,7 +303,9 @@ copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlag
 		}
 	}
 
-	*data = '\0';
+	if (isNullTerminated) {
+		*data = '\0';
+	}
 
 	return (UDATA)(data - utf8Data);
 }
@@ -332,7 +334,7 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 			memcpy(strUTF, prependStr, prependStrLength);
 		}
 
-		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, (U_8 *)(strUTF + prependStrLength));
+		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, (U_8 *)(strUTF + prependStrLength), TRUE);
 
 		if (NULL != utf8Length) {
 			*utf8Length = computedUtf8Length + prependStrLength;
