@@ -2851,26 +2851,25 @@ retry:
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_MVT) */
 
-	if ((NULL != result) && (0 != (J9_FINDCLASS_FLAG_ANON & options))) {
-		/* if anonClass replace classLoader with hostClassLoader, no one can know about anonClassLoader */
-		result->classLoader = hostClassLoader;
-		if (NULL != result->classObject) {
-			/* no object is created when doing hotswapping */
-			J9VMJAVALANGCLASS_SET_CLASSLOADER(vmThread, result->classObject, hostClassLoader->classLoaderObject);
+	if (NULL != result) {
+		if (0 != (J9_FINDCLASS_FLAG_ANON & options)) {
+			/* if anonClass replace classLoader with hostClassLoader, no one can know about anonClassLoader */
+			result->classLoader = hostClassLoader;
+			if (NULL != result->classObject) {
+				/* no object is created when doing hotswapping */
+				J9VMJAVALANGCLASS_SET_CLASSLOADER(vmThread, result->classObject, hostClassLoader->classLoaderObject);
+			}
+			result->classFlags |= J9ClassIsAnonymous;
 		}
-		result->classFlags |= J9ClassIsAnonymous;
-	}
-
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-	if (NULL != result) {
 		/* If no nest host is named & loaded, class is own nest host */
 		if (NULL == nestHost) {
 			nestHost = result;
 		}
 		result->nestHost = nestHost;
-	}
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+	}
 
 	return result;
 }
