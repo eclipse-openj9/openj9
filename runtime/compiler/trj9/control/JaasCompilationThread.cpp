@@ -904,19 +904,26 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethod:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32, bool>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
-         J9Method *ramMethod = jitGetJ9MethodUsingIndex(fe->vmThread(), method->cp(), cpIndex);
-         bool resolve = !((fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
+         bool canBeUnresolved = std::get<2>(recv);
+         J9Method *ramMethod = nullptr;
+         bool unresolved = false, tookBranch = false;
+         if (canBeUnresolved)
+            {
+            ramMethod = jitGetJ9MethodUsingIndex(fe->vmThread(), method->cp(), cpIndex);
+            unresolved = true;
+            }
+         if (!((fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
                            TR::comp()->ilGenRequest().details().isMethodHandleThunk() &&
-                           performTransformation(TR::comp(), "Setting as unresolved special call cpIndex=%d\n",cpIndex));
-         if (resolve)
+                           performTransformation(TR::comp(), "Setting as unresolved special call cpIndex=%d\n",cpIndex)))
             {
             TR::VMAccessCriticalSection resolveSpecialMethodRef(fe);
             ramMethod = jitResolveSpecialMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+            tookBranch = true;
             }
-         client->write(ramMethod, resolve);
+         client->write(ramMethod, unresolved, tookBranch);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_classCPIndexOfMethod:

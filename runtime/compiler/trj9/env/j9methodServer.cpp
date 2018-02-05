@@ -301,14 +301,18 @@ TR_ResolvedJ9JAASServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, 
    if (unresolvedInCP)
       *unresolvedInCP = true;
 
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethod, _remoteMirror, cpIndex);
-   auto recv = _stream->read<J9Method *, bool>();
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getResolvedSpecialMethod, _remoteMirror, cpIndex, unresolvedInCP != nullptr);
+   auto recv = _stream->read<J9Method *, bool, bool>();
    J9Method * ramMethod = std::get<0>(recv);
-   bool resolve = std::get<1>(recv);
+   bool unresolved = std::get<1>(recv);
+   bool tookBranch = std::get<2>(recv);
 
-   if (resolve && ramMethod)
+   if (unresolved && unresolvedInCP)
+      *unresolvedInCP = true;
+
+   if (tookBranch && ramMethod)
       {
-      TR_AOTInliningStats *aotStats = nullptr;
+      TR_AOTInliningStats *aotStats = NULL;
       if (comp->getOption(TR_EnableAOTStats))
          aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->specialMethods);
       resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats);
