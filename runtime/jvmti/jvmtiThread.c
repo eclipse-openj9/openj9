@@ -433,16 +433,16 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 		rc = getVMThread(currentThread, thread, &targetThread, TRUE, FALSE);
 		if (rc == JVMTI_ERROR_NONE) {
 			char* name = NULL;
-			j9object_t threadObject = (thread == NULL) ? targetThread->threadObject : *((j9object_t*) thread);
+			j9object_t threadObject = (NULL == thread) ? targetThread->threadObject : *((j9object_t*) thread);
 			jobject threadGroup = NULL;
 			jobject contextClassLoader;
 
-			if (targetThread == NULL) {
+			if (NULL == targetThread) {
 				/* java.lang.thread may not have a ref to vm thread. for example, after it gets terminated.
 				 * but we still want to return the name, so we retrieve it from the thread object itself. */
 				j9object_t threadName = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
 
-				if (threadName == NULL) {
+				if (NULL == threadName) {
 					name = j9mem_allocate_memory(1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 					name[0] = '\0';
 				} else {
@@ -460,14 +460,14 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 				/* Be sure to allocate at least one byte for the nul termination */
 
 				name = j9mem_allocate_memory(threadNameLen, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-				if (name == NULL) {
+				if (NULL == name) {
 					/* failed to allocate memory, so release VMTthread and exit */
 					releaseOMRVMThreadName(targetThread->omrVMThread);
 					rc = JVMTI_ERROR_OUT_OF_MEMORY;
 					goto done;
 				}
 
-				if (threadName == NULL) {
+				if (NULL == threadName) {
 					name[0] = '\0';
 				} else {
 					memcpy(name, threadName, threadNameLen);
