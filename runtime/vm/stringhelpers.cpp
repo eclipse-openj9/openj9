@@ -258,17 +258,6 @@ compareStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA translateDots
 }
 
 #if !defined (J9VM_OUT_OF_PROCESS)
-/**
- * Copy a Unicode String to a UTF8 data buffer with NULL termination. This function makes an assumption that the
- * caller has guaranteed the buffer is of the appropriate size to fit the encoded UTF8 string.
- *
- * @param[in] vmThread the current J9VMThread
- * @param[in] string a string object to be copied, it can't be NULL
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
- * @param[in] utf8Data a utf8 data buffer
- *
- * @return The computed length (in bytes) of the copied UTF8 string in the buffer excluding the NULL terminator.
- */
 UDATA
 copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data)
 {

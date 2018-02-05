@@ -911,9 +911,9 @@ Java_java_lang_Class_getMethodImpl(JNIEnv *env, jobject recv, jobject name, jobj
 
 			J9JNINameAndSignature nameAndSig;
 			char nameBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-			UDATA nameBufferLength;
+			UDATA nameBufferLength = 0;
 			char signatureBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-			UDATA signatureLength;
+			UDATA signatureLength = 0;
 			nameAndSig.name = nameBuffer;
 			nameAndSig.nameLength = 0;
 			nameAndSig.signature = signatureBuffer;
