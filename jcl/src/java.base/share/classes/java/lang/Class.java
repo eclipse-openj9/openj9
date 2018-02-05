@@ -4287,6 +4287,15 @@ static byte[] getExecutableTypeAnnotationBytes(Executable exec) {
 private native Class<?> getNestHostImpl();
 
 /**
+ * Answers the nest member classes of the receiver's nest host.
+ *
+ * @return		the host class of the receiver.
+ * 
+ * @implNote This implementation does not remove duplicate nest members if they are present.
+ */
+private native Class<?>[] getNestMembersImpl();
+
+/**
  * Answers the host class of the receiver's nest.
  *
  * @return		the host class of the receiver.
@@ -4297,13 +4306,25 @@ public Class<?> getNestHost() {
 
 /**
  * Returns true if the class passed has the same nest top as this class.
- *
+ * The list of nest members in the classfile is permitted to contain
+ * duplicates, or to explicitly include the nest host. It is not required
+ * that an implementation of this method removes these duplicates.
+ * 
  * @param		that		The class to compare
  * @return		true if class is a nestmate of this class; false otherwise.
  *
  */
-public boolean isInSameNest(Class<?> that) {
+public boolean isNestmateOf(Class<?> that) {
 	return this.getNestHost() == that.getNestHost();
+}
+
+/**
+ * Answers the nest member classes of the receiver's nest host.
+ *
+ * @return		the host class of the receiver.
+ */
+public Class<?>[] getNestMembers() {
+	return getNestMembersImpl();
 }
 /*[ENDIF] Valhalla-NestMates*/
 }
