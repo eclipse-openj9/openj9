@@ -1,6 +1,20 @@
+#include <chrono>
 #include "J9Server.h"
 #include "control/Options.hpp"
 #include "env/VerboseLog.hpp"
+
+bool
+JAAS::J9ServerStream::waitOnQueue()
+   {
+   void *tag;
+   bool ok;
+   if (_msTimeout == 0)
+      return _cq->Next(&tag, &ok) && ok;
+
+   auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(_msTimeout);
+   grpc::CompletionQueue::NextStatus nextStatus = _cq->AsyncNext(&tag, &ok, deadline);
+   return ok && nextStatus == grpc::CompletionQueue::GOT_EVENT;
+   }
 
 void
 JAAS::J9ServerStream::readBlocking()
@@ -8,7 +22,7 @@ JAAS::J9ServerStream::readBlocking()
    auto tag = (void *)_streamNum;
    bool ok;
    _stream->Read(&_cMsg, tag);
-   if (!_cq.Next(&tag, &ok) || !ok)
+   if (!waitOnQueue())
       throw JAAS::StreamFailure("Server stream failure while doing readBlocking()");
    }
 
@@ -18,7 +32,7 @@ JAAS::J9ServerStream::writeBlocking()
    auto tag = (void *)_streamNum;
    bool ok;
    _stream->Write(_sMsg, tag);
-   if (!_cq.Next(&tag, &ok) || !ok)
+   if (!waitOnQueue())
       throw JAAS::StreamFailure("Server stream failure while doing writeBlocking()");
    }
 
@@ -28,7 +42,8 @@ JAAS::J9ServerStream::finish()
    auto tag = (void *)_streamNum;
    bool ok;
    _stream->Finish(Status::OK, tag);
-   _cq.Next(&tag, &ok);
+   _cq->Next(&tag, &ok);
+   drainQueue();
    acceptNewRPC();
    }
 
@@ -38,7 +53,8 @@ JAAS::J9ServerStream::cancel()
    auto tag = (void *)_streamNum;
    bool ok;
    _stream->Finish(Status::CANCELLED, tag);
-   _cq.Next(&tag, &ok);
+   _cq->Next(&tag, &ok);
+   drainQueue();
    acceptNewRPC();
    }
 
@@ -65,11 +81,21 @@ JAAS::J9ServerStream::acceptNewRPC()
    {
    _ctx.reset(new grpc::ServerContext);
    _stream.reset(new J9ServerReaderWriter(_ctx.get()));
-   _service->RequestCompile(_ctx.get(), _stream.get(), &_cq, _notif, (void *)_streamNum);
+   _cq.reset(new grpc::CompletionQueue);
+   _service->RequestCompile(_ctx.get(), _stream.get(), _cq.get(), _notif, (void *)_streamNum);
    }
 
 void
-JAAS::J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t port)
+JAAS::J9ServerStream::drainQueue()
+   {
+   void *tag;
+   bool ok;
+   _cq->Shutdown();
+   while (_cq->Next(&tag, &ok));
+   }
+
+void
+JAAS::J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t port, uint32_t timeout)
    {
    grpc::ServerBuilder builder;
    builder.AddListeningPort("0.0.0.0:" + std::to_string(port), grpc::InsecureServerCredentials());
@@ -77,11 +103,11 @@ JAAS::J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t
    _notificationQueue = builder.AddCompletionQueue();
 
    _server = builder.BuildAndStart();
-   serve(compiler);
+   serve(compiler, timeout);
    }
 
 void
-JAAS::J9CompileServer::serve(J9BaseCompileDispatcher *compiler)
+JAAS::J9CompileServer::serve(J9BaseCompileDispatcher *compiler, uint32_t timeout)
    {
    bool ok = false;
    void *tag;
@@ -89,7 +115,7 @@ JAAS::J9CompileServer::serve(J9BaseCompileDispatcher *compiler)
    // JAAS TODO: make this nicer; 7 should be stored in a const somewhere
    for (size_t i = 0; i < 7; ++i)
       {
-      _streams.push_back(std::unique_ptr<J9ServerStream>(new J9ServerStream(i, &_service, _notificationQueue.get())));
+      _streams.push_back(std::unique_ptr<J9ServerStream>(new J9ServerStream(i, &_service, _notificationQueue.get(), timeout)));
       }
 
    while (true)

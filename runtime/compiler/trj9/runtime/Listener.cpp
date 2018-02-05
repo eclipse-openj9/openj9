@@ -41,7 +41,8 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
 
    JAAS::J9CompileServer server;
    J9CompileDispatcher handler(jitConfig, listenerThread);
-   server.buildAndServe(&handler, getCompilationInfo(jitConfig)->getPersistentInfo()->getJaasServerPort());
+   TR::PersistentInfo *info = getCompilationInfo(jitConfig)->getPersistentInfo();
+   server.buildAndServe(&handler, info->getJaasServerPort(), info->getJaasTimeout());
 
    if (TR::Options::getVerboseOption(TR_VerboseJaas))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Detaching JaasServer listening thread");

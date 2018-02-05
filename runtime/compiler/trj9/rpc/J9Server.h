@@ -13,16 +13,12 @@ class J9ServerStream
    {
 public:
    J9ServerStream(size_t streamNum,
-                   J9CompileService::AsyncService *service,
-                   grpc::ServerCompletionQueue *notif)
-      : _streamNum(streamNum), _service(service), _notif(notif)
+                  J9CompileService::AsyncService *service,
+                  grpc::ServerCompletionQueue *notif,
+                  uint32_t timeout)
+      : _streamNum(streamNum), _service(service), _notif(notif), _msTimeout(timeout)
       {
       acceptNewRPC();
-      }
-
-   ~J9ServerStream()
-      {
-      _cq.Shutdown();
       }
 
    template <typename ...T>
@@ -57,11 +53,14 @@ public:
 private:
    void readBlocking();
    void writeBlocking();
+   bool waitOnQueue();
+   void drainQueue();
 
+   uint32_t _msTimeout;
    const size_t _streamNum; // tagging for notification loop, used to identify associated CompletionQueue in vector
    grpc::ServerCompletionQueue *_notif;
-   grpc::CompletionQueue _cq;
    J9CompileService::AsyncService *const _service;
+   std::unique_ptr<grpc::CompletionQueue> _cq;
    std::unique_ptr<J9ServerReaderWriter> _stream;
    std::unique_ptr<grpc::ServerContext> _ctx;
    uint64_t _clientId;
@@ -89,10 +88,11 @@ public:
       _notificationQueue->Shutdown();
       }
 
-   void buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t port);
+   void buildAndServe(J9BaseCompileDispatcher *compiler, uint32_t port, uint32_t timeout);
 
 private:
-   void serve(J9BaseCompileDispatcher *compiler);
+   void serve(J9BaseCompileDispatcher *compiler, uint32_t timeout);
+   bool waitOnQueue();
 
    std::unique_ptr<grpc::Server> _server;
    J9CompileService::AsyncService _service;

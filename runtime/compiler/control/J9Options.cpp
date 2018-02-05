@@ -2075,6 +2075,8 @@ J9::Options::fePreProcess(void * base)
                   {
                   if (try_scan(&options, "port=")) // parse port=<number> option
                      getJaasServerPortFromCommandLineOptions(&options, delimiter);
+                  else if (try_scan(&options, "timeout="))
+                     getJaasTimeoutFromCommandLineOptions(&options, delimiter);
                   else                                  // option not known
                      {
                      if (unRecognizedOptions != options) // try to loop through all known options
