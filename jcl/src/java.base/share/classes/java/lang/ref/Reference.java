@@ -6,9 +6,14 @@ import java.security.PrivilegedAction;
 
 import com.ibm.oti.vm.VM;
 
+/*[IF Sidecar18-SE-OpenJ9 | Sidecar19-SE]*/
 /*[IF Sidecar19-SE]*/
 import jdk.internal.misc.JavaLangRefAccess;
 import jdk.internal.misc.SharedSecrets;
+/*[ELSE]
+import sun.misc.JavaLangRefAccess;
+import sun.misc.SharedSecrets;
+/*[ENDIF]*/
 /*[ENDIF]*/
 
 /*******************************************************************************
@@ -49,6 +54,14 @@ public abstract class Reference<T> extends Object {
 	private ReferenceQueue queue;
 	private int state;
 
+	/*[IF Sidecar18-SE-OpenJ9 | Sidecar19-SE]*/
+	/**
+	 *  Wait for progress in reference processing.
+	 * return false if there is no processing reference,
+	 * return true after wait the notification from the reference processing thread if currently the thread is processing references. 
+	 */
+	static private native boolean waitForReferenceProcessingImpl();
+	
 	/*[IF Sidecar19-SE]*/
 	static {
 		SharedSecrets.setJavaLangRefAccess(new JavaLangRefAccess() {
@@ -57,13 +70,6 @@ public abstract class Reference<T> extends Object {
 			}
 		});
 	}
-	
-	/**
-	 *  Wait for progress in reference processing.
-	 * return false if there is no processing reference,
-	 * return true after wait the notification from the reference processing thread if currently the thread is processing references. 
-	 */
-	static private native boolean waitForReferenceProcessingImpl();
 	
 	/* jdk.lang.ref.disableClearBeforeEnqueue property allow reverting to the old behavior(non clear before enqueue) 
 	 *  defer initializing the immutable variable to avoid bootstrap error 
@@ -76,6 +82,16 @@ public abstract class Reference<T> extends Object {
 			  }
 			});
 	}
+	/*[ELSE]
+	static {
+		SharedSecrets.setJavaLangRefAccess(new JavaLangRefAccess() {
+			public boolean tryHandlePendingReference() {
+				return waitForReferenceProcessingImpl();
+			}
+		});
+	}
+
+	/*[ENDIF]*/
 	/*[ENDIF]*/
 	
 /**
