@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,4 +73,17 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 {
 	/* NOTE: Stub function. */
 	return NULL;
+}
+
+BOOLEAN
+initVMSignalDispatchThreadSynchronizationVariables(J9JavaVM *vm)
+{
+	/* NOTE: Stub function. */
+	return FALSE;
+}
+
+void
+destroyVMSignalDispatchThreadSynchronizationVariables(J9JavaVM *vm)
+{
+	/* NOTE: Stub function. */
 }

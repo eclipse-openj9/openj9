@@ -628,6 +628,8 @@ freeJavaVM(J9JavaVM * vm)
 		stopVMRuntimeStateListener(vm);
 	}
 
+	stopSignalDispatchThread(vm);
+
 	if (NULL != vm->dllLoadTable) {
 		runShutdownStage(vm, INTERPRETER_SHUTDOWN, NULL, 0);
 	}
@@ -2290,6 +2292,10 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				&& (0 != vm->vmRuntimeStateListener.minIdleWaitTime)
 			) {
 				startVMRuntimeStateListener(vm);
+			}
+			/* Don't start VM Signal Dispatch Thread if -Xrs option is specified. */
+			if (J9_ARE_NO_BITS_SET(vm->sigFlags, J9_SIG_XRS | J9_SIG_XRS_ASYNC)) {
+				startSignalDispatchThread(vm);
 			}
 			break;
 	}

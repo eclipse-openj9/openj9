@@ -3511,6 +3511,72 @@ updateVMRuntimeState(J9JavaVM *vm, U_32 newState);
 U_32
 getVMMinIdleWaitTime(J9JavaVM *vm);
 
+/* ---------------- signaldispatchthread.c ---------------- */
+
+/**
+ * Starts the VM signal dispatch thread.
+ *
+ * @param vm pointer to J9JavaVM
+ *
+ * return 0 on success, -1 on error
+ */
+I_32
+startSignalDispatchThread(J9JavaVM* vm);
+
+/**
+ * Stops the VM signal dispatch thread.
+ *
+ * @param vm pointer to J9JavaVM
+ *
+ * @return void
+ */
+void
+stopSignalDispatchThread(J9JavaVM *vm);
+
+/**
+ * Records the received signal and notifies VM signal
+ * dispatch thread to execute registered handler for
+ * the received signal.
+ *
+ * @param vm pointer to J9JavaVM
+ * @param sigNum integer value of the received signal
+ *
+ * @return TRUE on success, FALSE on error
+ */
+BOOLEAN
+recordAndNotifySignalReceived(J9JavaVM *vm, UDATA sigNum);
+
+/**
+ * Checks if a signal is used for shutdown.
+ *
+ * @param sigNum Integer value of the signal
+ *
+ * @returns TRUE if the signal is used for shutdown
+ *          FALSE if the signal is not used for shutdown
+ */
+BOOLEAN
+isSignalUsedForShutdown(UDATA sigNum);
+
+/**
+ * Initialize synchronization variables for VM Signal Dispatch Thread.
+ *
+ * @param vm pointer to J9JavaVM
+ *
+ * @return TRUE on success and FALSE on failure
+ */
+BOOLEAN
+initVMSignalDispatchThreadSynchronizationVariables(J9JavaVM *vm);
+
+/**
+ * Destroy synchronization variables for VM Signal Dispatch Thread.
+ *
+ * @param vm pointer to J9JavaVM
+ *
+ * @return void
+ */
+void
+destroyVMSignalDispatchThreadSynchronizationVariables(J9JavaVM *vm);
+
 /* ---------------- vmthinit.c ---------------- */
 
 /**
