@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,11 @@ import java.util.Iterator;
 import java.util.List;
 
 public class GetMethodsTests {
+	/* contrived method names which have the same String.hashCode(). */
+	private static final String METHOD_NAME21 = "methodName21"; //$NON-NLS-1$
+	private static final String METHOD_NAME1P = "methodName1P"; //$NON-NLS-1$	
+	private static final String EXAMPLE_CLASS = "org.openj9.test.reflect.ExampleClass."; //$NON-NLS-1$
+	
 	public static final Logger logger = Logger.getLogger(GetMethodsTests.class);
 	private final static boolean isJava8 = System.getProperty("java.specification.version").equals("1.8");  //$NON-NLS-1$//$NON-NLS-2$
 
@@ -289,6 +294,16 @@ public class GetMethodsTests {
 				"org.openj9.test.reflect.J.m()void" }));
 		methodLists.put("org.openj9.test.reflect.I", new String[] { "org.openj9.test.reflect.I.m()void" });
 		methodLists.put("org.openj9.test.reflect.J", new String[] { "org.openj9.test.reflect.J.m()void" });
+		methodLists.put("org.openj9.test.reflect.ExampleClass",  //$NON-NLS-1$
+				concatenateObjectMethods(new String[] {
+				EXAMPLE_CLASS+METHOD_NAME1P+"()boolean", //$NON-NLS-1$
+				EXAMPLE_CLASS+METHOD_NAME1P+"(java.lang.String)boolean", //$NON-NLS-1$
+				EXAMPLE_CLASS+METHOD_NAME21+"()boolean", //$NON-NLS-1$
+				EXAMPLE_CLASS+METHOD_NAME21+"(java.lang.String)boolean", //$NON-NLS-1$
+				EXAMPLE_CLASS+METHOD_NAME1P+"(java.lang.Integer)void", //$NON-NLS-1$
+				EXAMPLE_CLASS+METHOD_NAME21+"(java.lang.Integer)void" //$NON-NLS-1$
+		}));
+
 		return methodLists;
 	}
 
