@@ -69,7 +69,7 @@
 
 	<target name="build" depends="stage_test_material" description="using ${JAVA_VERSION} compile the source ">
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="Panama"/>
+			<equals arg1="${JAVA_VERSION}" arg2="FutureJEPs"/>
 			<then>
 				<subant target="">
 					<property name="build.dir" value="subant1.build" />
@@ -77,24 +77,10 @@
 					<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
 					<property name="compiler.javac" value="${JAVAC}" />
 					<fileset dir="../../">
-						<include name="Panama/build.xml" />
+						<include name="FutureJEPs/build.xml" />
 					</fileset>
 				</subant>
 			</then>
-			<elseif>
-				<equals arg1="${JAVA_VERSION}" arg2="Valhalla"/>
-				<then>
-					<subant target="">
-						<property name="build.dir" value="subant1.build" />
-						<property name="not.overloaded" value="not.overloaded" />
-						<property name="JAVA_VERSION" value="${JAVA_VERSION}" />
-						<property name="compiler.javac" value="${JAVAC}" />
-						<fileset dir="../../">
-							<include name="Valhalla/build.xml" />
-						</fileset>
-					</subant>
-				</then>
-			</elseif>
 			<elseif>
 				<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
 				<then>

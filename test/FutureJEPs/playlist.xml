@@ -26,7 +26,7 @@
 	<test>
 		<testCaseName>NativeMethodHandleTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)PanamaTests.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)FutureJEPsTests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NativeMethodHandleTest \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -39,14 +39,14 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>Panama</subset>
+			<subset>FutureJEPs</subset>
 		</subsets>
 	</test>
 
 	<test>
 		<testCaseName>HigherLevelNativeMethodHandleTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)panamatest.jar$(P)$(TEST_RESROOT)$(D)PanamaTests.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)panamatest.jar$(P)$(TEST_RESROOT)$(D)FutureJEPsTests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames HigherLevelNativeMethodHandleTest \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -59,14 +59,14 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>Panama</subset>
+			<subset>FutureJEPs</subset>
 		</subsets>
 	</test>
 
 	<test>
 		<testCaseName>CustomFFINativeMethodHandleTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)panamatest.jar$(P)$(TEST_RESROOT)$(D)PanamaTests.jar$(Q) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)panamatest.jar$(P)$(TEST_RESROOT)$(D)FutureJEPsTests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames CustomFFINativeMethodHandleTest \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -79,7 +79,28 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>Panama</subset>
+			<subset>FutureJEPs</subset>
 		</subsets>
+	</test>
+	
+		<test>
+		<testCaseName>NestAttributeTest</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(LIB_DIR)$(D)asm-all.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)FutureJEPsTests.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestAttributeTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>os.linux,arch.x86,bits.64</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>FutureJEPs</subset>
+		</subsets>
+		<disabled>Nestmates draft spec are no longer aligned; disabling until updated </disabled>
 	</test>
 </playlist>

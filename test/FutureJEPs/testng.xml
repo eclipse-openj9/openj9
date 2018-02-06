@@ -22,26 +22,32 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Panama suite" parallel="none" verbose="2">
+<suite name="Experimental suite" parallel="none" verbose="2">
 	<listeners>
 		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer"/>
 	</listeners>
 	<test name="NativeMethodHandleTest">
-		<parameter name="path" value="${JVM_TEST_ROOT}/Panama"/>
+		<parameter name="path" value="${JVM_TEST_ROOT}/FutureJEPs"/>
 		<classes>
 			<class name="org.openj9.test.panama.NativeMethodHandleTest" />
 		</classes>
 	</test>
 	<test name="HigherLevelNativeMethodHandleTest">
-		<parameter name="path" value="${JVM_TEST_ROOT}/Panama"/>
+		<parameter name="path" value="${JVM_TEST_ROOT}/FutureJEPs"/>
 		<classes>
 			<class name="org.openj9.test.panama.HigherLevelNativeMethodHandleTest" />
 		</classes>
 	</test>
 	<test name="CustomFFINativeMethodHandleTest">
-		<parameter name="path" value="${JVM_TEST_ROOT}/Panama"/>
+		<parameter name="path" value="${JVM_TEST_ROOT}/FutureJEPs"/>
 		<classes>
 			<class name="org.openj9.test.panama.CustomFFINativeMethodHandleTest" />
+		</classes>
+	</test>
+		<test name="NestAttributeTest">
+		<parameter name="path" value="${JVM_TEST_ROOT}/FutureJEPs"/>
+		<classes>
+			<class name="org.openj9.test.valhalla.NestAttributeTest" />
 		</classes>
 	</test>
 </suite> <!-- Suite -->

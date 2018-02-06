@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2017 IBM Corp. and others
+# Copyright (c) 2016, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,7 @@ ifeq (linux_x86-64_cmprssptrs, $(SPEC))
 		--enable-OMR_PORT_NUMA_SUPPORT
 endif
 
-ifeq (linux_x86-64_cmprssptrs_panama, $(SPEC))
+ifeq (linux_x86-64_cmprssptrs_futurejeps, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
