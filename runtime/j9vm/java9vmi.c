@@ -409,7 +409,10 @@ trcModulesCreationPackage(J9VMThread * currentThread, J9Module * fromModule, j9o
 		if (moduleNameBuf != moduleNameUTF) {
 			j9mem_free_memory(moduleNameUTF);
 		}
+	} else {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 	}
+
 #if J9VM_JAVA9_BUILD < 156
 	if (packageNameBuf != packageNameUTF) {
 		j9mem_free_memory(packageNameUTF);
