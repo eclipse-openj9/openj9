@@ -40,3 +40,16 @@
  * This value will be stored in the system property java.vm.version.
  * #define J9JVM_VERSION_STRING "0.8.1"
  */
+
+#ifndef vendor_version_h
+#define vendor_version_h
+
+#include "openj9_version_info.h"
+
+#define VENDOR_SHORT_NAME "OpenJ9"
+
+#define JAVA_VENDOR "Eclipse OpenJ9"
+#define JAVA_VENDOR_URL "http://www.eclipse.org/openj9"
+#define JAVA_VM_NAME "Eclipse OpenJ9 VM"
+
+#endif     /* vendor_version_h */
