@@ -6,6 +6,21 @@
 #include <unordered_map>
 #include <unordered_set>
 
+template<typename T>
+using PersistentVectorAllocator = TR::typed_allocator<T, TR::PersistentAllocator&>;
+template<typename T>
+using PersistentVector = std::vector<T, PersistentVectorAllocator<T>>;
+
+template<typename T>
+using PersistentUnorderedSetAllocator = TR::typed_allocator<T, TR::PersistentAllocator&>;
+template<typename T>
+using PersistentUnorderedSet = std::unordered_set<T, std::hash<T>, std::equal_to<T>, PersistentUnorderedSetAllocator<T>>;
+
+template<typename T, typename U>
+using PersistentUnorderedMapAllocator = TR::typed_allocator<std::pair<const T, U>, TR::PersistentAllocator&>;
+template<typename T, typename U>
+using PersistentUnorderedMap = std::unordered_map<T, U, std::hash<T>, std::equal_to<T>, PersistentUnorderedMapAllocator<T, U>>;
+
 class TR_JaasServerPersistentCHTable : public TR_PersistentCHTable
    {
 public:
@@ -56,15 +71,20 @@ private:
 
    struct InternalData
       {
-      bool initialized = false;
-      int64_t lastTime = 0;
-      std::unordered_map<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> classMap;
+      InternalData()
+         : initialized(false)
+         , lastTime(0)
+         , classMap(decltype(classMap)::allocator_type(TR::Compiler->persistentAllocator()))
+      { }
+      bool initialized;
+      int64_t lastTime;
+      PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> classMap;
       };
 
    InternalData &getData(TR::Compilation *comp);
 
    // one per compilation thread
-   std::unordered_map<uint64_t, InternalData> _data;
+   PersistentUnorderedMap<uint64_t, InternalData> _data;
    };
 
 class TR_JaasClientPersistentCHTable : public TR_PersistentCHTable
@@ -99,8 +119,8 @@ private:
    std::string serializeRemoves();
    std::string serializeModifications();
 
-   std::unordered_set<TR_OpaqueClassBlock*> _dirty;
-   std::unordered_set<TR_OpaqueClassBlock*> _remove;
+   PersistentUnorderedSet<TR_OpaqueClassBlock*> _dirty;
+   PersistentUnorderedSet<TR_OpaqueClassBlock*> _remove;
    };
 
 class FlatPersistentClassInfo

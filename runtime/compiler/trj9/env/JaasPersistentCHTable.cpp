@@ -14,6 +14,7 @@
 
 TR_JaasServerPersistentCHTable::TR_JaasServerPersistentCHTable(TR_PersistentMemory *trMemory)
    : TR_PersistentCHTable(trMemory)
+   , _data(decltype(_data)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    }
 
@@ -325,6 +326,8 @@ std::vector<TR_PersistentClassInfo*> FlatPersistentClassInfo::deserializeHierarc
 
 TR_JaasClientPersistentCHTable::TR_JaasClientPersistentCHTable(TR_PersistentMemory *trMemory)
    : TR_PersistentCHTable(trMemory)
+   , _dirty(decltype(_dirty)::allocator_type(TR::Compiler->persistentAllocator()))
+   , _remove(decltype(_remove)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    }
 
