@@ -3110,7 +3110,7 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
          case TR::java_lang_String_toLowerHWOptimizedDecompressed:
          case TR::java_lang_String_toUpperHWOptimized:
          case TR::java_lang_String_toLowerHWOptimized:
-            if(comp->cg()->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDStringCaseConv))
+            if(comp->cg()->getSupportsInlineStringCaseConversion())
                {
                dontInlineRecognizedMethod = true;
                break;
