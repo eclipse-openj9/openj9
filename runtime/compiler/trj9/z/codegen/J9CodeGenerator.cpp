@@ -104,6 +104,9 @@ J9::Z::CodeGenerator::CodeGenerator() :
    if (!comp->getOption(TR_FullSpeedDebug))
       cg->setSupportsDirectJNICalls();
 
+   if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDStringCaseConv))
+      cg->setSupportsInlineStringCaseConversion();
+
    // Let's turn this on.  There is more work needed in the opt
    // to catch the case where the BNDSCHK is inserted after
    //

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1483,11 +1483,7 @@ TR_J9ByteCodeIlGenerator::genHWOptimizedStrProcessingAvailable()
    setIsGenerated(_bcIndex);
    if (constToLoad == -1)
       {
-      bool disable = comp()->getOption(TR_DisableSIMDStringCaseConv);
-      bool platformSupported = TR::Compiler->target.cpu.isZ();
-      bool vecInstrAvailable = cg()->getSupportsVectorRegisters();
-
-      if (platformSupported && vecInstrAvailable && !disable)
+      if (cg()->getSupportsInlineStringCaseConversion())
          constToLoad = 1;
       else
          constToLoad = 0;
