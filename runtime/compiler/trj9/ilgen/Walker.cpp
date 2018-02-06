@@ -5215,32 +5215,26 @@ break
          }
       }
 
-   if (!comp()->getOption(TR_DisableSIMDStringCaseConv))
+   if(symbol->getRecognizedMethod() == TR::java_lang_String_StrHWAvailable)
       {
-      bool platformSupported = TR::Compiler->target.cpu.isZ();
-      bool vecInstrAvailable = cg()->getSupportsVectorRegisters();
+      if (cg()->getSupportsInlineStringCaseConversion())
+         constToLoad = 1;
+      else
+         constToLoad  = 0; // should already be 0 but just incase..
 
-      if(symbol->getRecognizedMethod() == TR::java_lang_String_StrHWAvailable)
-         {
-         if (platformSupported && vecInstrAvailable)
-            constToLoad = 1;
-         else
-            constToLoad  = 0; // should already be 0 but just incase..
+      loadConstant(TR::iconst, constToLoad);
+      return NULL;
+      }
 
-         loadConstant(TR::iconst, constToLoad);
-         return NULL;
-         }
-
-      if (platformSupported && vecInstrAvailable &&
-            (symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimizedCompressed ||
-             symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimizedCompressed ||
-             symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimizedDecompressed ||
-             symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimizedDecompressed ||
-             symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimized ||
-             symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimized))
-         {
-         isDirectCall = true;
-         }
+   if (cg()->getSupportsInlineStringCaseConversion() &&
+         (symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimizedCompressed ||
+            symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimizedCompressed ||
+            symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimizedDecompressed ||
+            symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimizedDecompressed ||
+            symbol->getRecognizedMethod() == TR::java_lang_String_toUpperHWOptimized ||
+            symbol->getRecognizedMethod() == TR::java_lang_String_toLowerHWOptimized))
+      {
+      isDirectCall = true;
       }
 
    if (!comp()->getOption(TR_DisableSIMDDoubleMaxMin))

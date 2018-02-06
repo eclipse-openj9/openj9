@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -369,6 +369,15 @@ public:
    // Determines whether high-resolution timer can be used to implement java/lang/System.currentTimeMillis()
    bool getSupportsMaxPrecisionMilliTime() {return _j9Flags.testAny(SupportsMaxPrecisionMilliTime);}
    void setSupportsMaxPrecisionMilliTime() {_j9Flags.set(SupportsMaxPrecisionMilliTime);}
+   
+   /** \brief
+    *    Determines whether the code generator supports inlining of java/lang/String.toUpperCase() and toLowerCase()
+    */
+   bool getSupportsInlineStringCaseConversion() { return _j9Flags.testAny(SupportsInlineStringCaseConversion);}
+   /** \brief
+    *    The code generator supports inlining of java/lang/String.toUpperCase() and toLowerCase()
+    */
+   void setSupportsInlineStringCaseConversion() { return _j9Flags.set(SupportsInlineStringCaseConversion);}
 
    /**
     * \brief
@@ -381,8 +390,9 @@ private:
 
    enum // Flags
       {
-      HasFixedFrameC_CallingConvention = 0x00000001,
-      SupportsMaxPrecisionMilliTime    = 0x00000002
+      HasFixedFrameC_CallingConvention    = 0x00000001,
+      SupportsMaxPrecisionMilliTime       = 0x00000002,
+      SupportsInlineStringCaseConversion  = 0x00000004 /*! codegen inlining of Java string case conversion */ 
       };
 
    flags32_t _j9Flags;

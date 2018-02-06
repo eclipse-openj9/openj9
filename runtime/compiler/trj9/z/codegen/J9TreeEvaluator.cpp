@@ -12477,7 +12477,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       }
 #endif
 
-   if (!comp->getOption(TR_DisableSIMDStringCaseConv) && cg->getSupportsVectorRegisters())
+   if (cg->getSupportsInlineStringCaseConversion())
       {
       switch (methodSymbol->getRecognizedMethod())
          {
