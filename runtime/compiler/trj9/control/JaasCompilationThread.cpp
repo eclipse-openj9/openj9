@@ -9,6 +9,7 @@
 #include "env/JaasPersistentCHTable.hpp"
 #include "env/JaasCHTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
+#include "exceptions/RuntimeFailure.hpp"       // for CHTableCommitFailure
 
 uint32_t serverMsgTypeCount[JAAS::J9ServerMessageType_ARRAYSIZE] = {};
 
@@ -1823,7 +1824,14 @@ remoteCompile(
 
             {
             TR::ClassTableCriticalSection commit(compiler->fe());
-            TR_ASSERT(jaasCHTableCommit(compiler, metaData, chTableData), "commit fail");
+            if (!jaasCHTableCommit(compiler, metaData, chTableData))
+               {
+               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJaas, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Failure while committing chtable for %s", compiler->signature());
+                  }
+               compiler->failCompilation<J9::CHTableCommitFailure>("CHTable commit failure");
+               }
             }
 
          TR::compInfoPT->relocateThunks();
