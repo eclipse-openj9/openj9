@@ -1,4 +1,4 @@
-!! Copyright (c) 2000, 2017 IBM Corp. and others
+!! Copyright (c) 2000, 2018 IBM Corp. and others
 !!
 !! This program and the accompanying materials are made available under
 !! the terms of the Eclipse Public License 2.0 which accompanies this
@@ -305,7 +305,8 @@ __arrayTranslateTRTO:
         stfdx           fp1, r4, r7                     ! store elements 8-15
 #endif
 
-#else ! Little Endian path
+#else
+        ! Little Endian path
         vspltisb        vr1, 0x1f             ! vr1 = 16*{0xff}               - Upper byte mask
 
         vspltisb        vr4, 4              ! vr4 = 16*{4}
@@ -333,7 +334,8 @@ __arrayTranslateTRTO:
         vrlw            vr2, vr2, vr6                   ! fix byte ordering for a little endian store
         stxvw4x         vs34, r0, r4                     ! store elements 0-15
 
-#endif ! End Little Endian Path
+        ! End Little Endian Path
+#endif
         addi            r3, r3, 32                      ! bump input ptr
         addi            r4, r4, 16                      ! bump output ptr
         bdnz            .L.__vectorLoop_TRTO
