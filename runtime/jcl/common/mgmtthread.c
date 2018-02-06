@@ -657,7 +657,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getMultiThreadInfoIm
 
 jobjectArray JNICALL
 Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
-	jboolean getLockedMonitors, jboolean getLockedSynchronizers)
+	jboolean getLockedMonitors, jboolean getLockedSynchronizers, jint maxDepth)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	PORT_ACCESS_FROM_VMC(currentThread);
@@ -705,7 +705,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl(J
 				{
 					++numThreads;
 					exc = getThreadInfo(currentThread, vmThread, info,
-							J9_THREADINFO_MAX_STACK_DEPTH, getLockedMonitors);
+							maxDepth, getLockedMonitors);
 					if (exc > 0) {
 						freeThreadInfos(currentThread, allinfo, numThreads);
 						goto dumpAll_failWithExclusive;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2017, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,11 @@
 	<test name="StackWalkerTestJava10">
 		<classes>
 			<class name="org.openj9.test.stackWalker.StackWalkerTestJava10" />
+		</classes>
+	</test>
+	<test name="threadMXBeanTestSuiteJava10">
+		<classes>
+			<class name="org.openj9.test.java.lang.management.ThreadMXBean.APITestJava10" />
 		</classes>
 	</test>
 </suite> <!-- Suite -->
