@@ -146,18 +146,15 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 		if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 			/* set jrt URL for the module */
 #define JRT_URL_PROTOCOL "jrt:/"
-			char *nameLocation = NULL;
-			UDATA jrtURLLen = vmFuncs->getStringUTF8Length(currentThread, module->moduleName) + sizeof(JRT_URL_PROTOCOL) - 1;
+			UDATA jrtURLLength = 0;
 
-			jrtURL = j9mem_allocate_memory(sizeof(jrtURL->length) + jrtURLLen + 1, OMRMEM_CATEGORY_VM);
+			jrtURL = (J9UTF8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, module->moduleName, J9_STR_NONE, "\0\0", sizeof(jrtURL->length), NULL, 0, &jrtURLLength);
+
 			if (NULL == jrtURL) {
 				goto _exit;
 			}
-			strncpy((char *)J9UTF8_DATA(jrtURL), JRT_URL_PROTOCOL, sizeof(JRT_URL_PROTOCOL) - 1);
-			nameLocation = (char *)J9UTF8_DATA(jrtURL) + sizeof(JRT_URL_PROTOCOL) - 1;
-			vmFuncs->copyStringToUTF8Helper(currentThread, module->moduleName, J9_STR_NONE, (U_8*)nameLocation, TRUE);
 
-			J9UTF8_SET_LENGTH(jrtURL, (U_16) jrtURLLen);
+			J9UTF8_SET_LENGTH(jrtURL, (U_16)jrtURLLength);
 #undef JRT_URL_PROTOCOL
 		} else {
 			/* its java.base module */
