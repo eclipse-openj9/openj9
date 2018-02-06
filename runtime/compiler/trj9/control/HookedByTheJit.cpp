@@ -4775,21 +4775,29 @@ void JitShutdown(J9JITConfig * jitConfig)
    if (jProfiler != NULL)
       jProfiler->stop(javaVM);
 
-   {
-   TR::RawAllocator rawAllocator(jitConfig->javaVM);
-   J9::SegmentAllocator segmentAllocator(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *jitConfig->javaVM);
-   J9::SystemSegmentProvider regionSegmentProvider(
-      1 << 20,
-      1 << 20,
-      TR::Options::getScratchSpaceLimit(),
-      segmentAllocator,
-      rawAllocator
-      );
-   TR::Region dispatchRegion(regionSegmentProvider, rawAllocator);
-   TR_Memory trMemory(*compInfo->persistentMemory(), dispatchRegion);
    if (options && options->getOption(TR_DumpFinalMethodNamesAndCounts))
-      compInfo->getPersistentInfo()->getPersistentCHTable()->dumpMethodCounts(vm, trMemory);
-   }
+      {
+      try
+         {
+         TR::RawAllocator rawAllocator(jitConfig->javaVM);
+         J9::SegmentAllocator segmentAllocator(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *jitConfig->javaVM);
+         J9::SystemSegmentProvider regionSegmentProvider(
+            1 << 20,
+            1 << 20,
+            TR::Options::getScratchSpaceLimit(),
+            segmentAllocator,
+            rawAllocator
+            );
+         TR::Region dispatchRegion(regionSegmentProvider, rawAllocator);
+         TR_Memory trMemory(*compInfo->persistentMemory(), dispatchRegion);
+
+         compInfo->getPersistentInfo()->getPersistentCHTable()->dumpMethodCounts(vm, trMemory);
+         }
+      catch (const std::exception &e)
+         {
+         fprintf(stderr, "Failed to dump Final Method Names and Counts\n");
+         }
+      }
 
    TR::Compilation::shutdown(vm);
 
