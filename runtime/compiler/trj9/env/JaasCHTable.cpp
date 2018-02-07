@@ -134,7 +134,7 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
 
    uint8_t *startPC = comp->cg()->getCodeStart();
 
-   return {classes, classesThatShouldNotBeNewlyExtended, preXMethods, {}, serialVGuards, startPC};
+   return std::make_tuple(classes, classesThatShouldNotBeNewlyExtended, preXMethods, std::vector<TR_VirtualGuardSite>(), serialVGuards, startPC);
    }
 
 // Must hold classTableMonitor when calling this method
