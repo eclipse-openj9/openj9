@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2961,12 +2961,12 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::java_lang_String_compress,            "compress",            "([C[BII)I")},
       {x(TR::java_lang_String_compressNoCheck,     "compressNoCheck",     "([C[BII)V")},
       {x(TR::java_lang_String_andOR,               "andOR",               "([CII)I")},
-      {x(TR::java_lang_String_toUpperHWOptimizedCompressed,  "toUpperHWOptimizedCompressed",  "(Ljava/lang/String;)Ljava/lang/String;")},
-      {x(TR::java_lang_String_toUpperHWOptimizedDecompressed,"toUpperHWOptimizedDecompressed","(Ljava/lang/String;)Ljava/lang/String;")},
-      {x(TR::java_lang_String_toUpperHWOptimized,  "toUpperHWOptimized","(Ljava/lang/String;)Ljava/lang/String;")},
-      {x(TR::java_lang_String_toLowerHWOptimizedCompressed,  "toLowerHWOptimizedCompressed",  "(Ljava/lang/String;)Ljava/lang/String;")},
-      {x(TR::java_lang_String_toLowerHWOptimizedDecompressed,"toLowerHWOptimizedDecompressed",  "(Ljava/lang/String;)Ljava/lang/String;")},
-      {x(TR::java_lang_String_toLowerHWOptimized,  "toLowerHWOptimized",  "(Ljava/lang/String;)Ljava/lang/String;")},
+      {x(TR::java_lang_String_toUpperHWOptimizedCompressed,  "toUpperHWOptimizedCompressed",  "(Ljava/lang/String;)Z")},
+      {x(TR::java_lang_String_toUpperHWOptimizedDecompressed,"toUpperHWOptimizedDecompressed","(Ljava/lang/String;)Z")},
+      {x(TR::java_lang_String_toUpperHWOptimized,  "toUpperHWOptimized","(Ljava/lang/String;)Z")},
+      {x(TR::java_lang_String_toLowerHWOptimizedCompressed,  "toLowerHWOptimizedCompressed",  "(Ljava/lang/String;)Z")},
+      {x(TR::java_lang_String_toLowerHWOptimizedDecompressed,"toLowerHWOptimizedDecompressed",  "(Ljava/lang/String;)Z")},
+      {x(TR::java_lang_String_toLowerHWOptimized,  "toLowerHWOptimized",  "(Ljava/lang/String;)Z")},
       {x(TR::java_lang_String_StrHWAvailable,      "StrHWAvailable", "()Z")},
       {x(TR::java_lang_String_unsafeCharAt,        "unsafeCharAt",        "(I)C")},
       {x(TR::java_lang_String_split_str_int,       "split",               "(Ljava/lang/String;I)[Ljava/lang/String;")},
