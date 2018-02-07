@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1216,6 +1216,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 	MM_CompactGroupPersistentStats::updateStatsBeforeCollect(env, persistentStats);
 	if (_schedulingDelegate.isGlobalSweepRequired()) {
 		Assert_MM_true(NULL == env->_cycleState->_externalCycleState);
+
 		_reclaimDelegate.runGlobalSweepBeforePGC(env, allocDescription, env->_cycleState->_activeSubSpace, env->_cycleState->_gcCode);
 
 		/* TODO: lpnguyen make another statisticsDelegate or something that both schedulingDelegate and reclaimDelegate can see
@@ -1228,11 +1229,6 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 
 		double optimalEmptinessRegionThreshold = _reclaimDelegate.calculateOptimalEmptinessRegionThreshold(env, regionConsumptionRate, avgSurvivorRegions, avgCopyForwardRate, scanTimeCostPerGMP);
 		_schedulingDelegate.setAutomaticDefragmentEmptinessThreshold(optimalEmptinessRegionThreshold);
-
-		/* recalculate ratios due to sweep */
-		_schedulingDelegate.calculatePGCCompactionRate(env, _schedulingDelegate.getCurrentEdenSizeInRegions(env) * _regionManager->getRegionSize());
-		_schedulingDelegate.calculateHeapOccupancyTrend(env);
-		_schedulingDelegate.calculateScannableBytesRatio(env);
 	}
 
 	if (env->_cycleState->_shouldRunCopyForward) {
@@ -1373,6 +1369,10 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingCopyForward(MM_Environme
 		_reclaimDelegate.performAtomicSweep(env, allocDescription, env->_cycleState->_activeSubSpace, env->_cycleState->_gcCode);
 	}
 
+	/* calculatePGCCompactionRate() has to be after PGC due to half of Eden regions has not been marked after final GMP (the sweep could not collect those regions) */
+	/* calculatePGCCompactionRate() has to be before estimateReclaimableRegions(), which need to use the result of calculatePGCCompactionRate() - region->_defragmentationTarget */
+	_schedulingDelegate.recalculateRatesOnFirstPGCAfterGMP(env);
+
 	/* Need to understand how to do the estimates here found within the following two calls */
 	UDATA defragmentReclaimableRegions = 0;
 	UDATA reclaimableRegions = 0;
@@ -1444,6 +1444,8 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingMarkCompact(MM_Environme
 		_reclaimDelegate.runReclaimCompleteCompact(env, allocDescription, env->_cycleState->_activeSubSpace, env->_cycleState->_gcCode, _markMapManager->getGlobalMarkPhaseMap(), compactSelectionGoalInBytes);
 		Trc_MM_ReclaimDelegate_runReclaimComplete_Exit(env->getLanguageVMThread(), 0);
 	}
+
+	_schedulingDelegate.recalculateRatesOnFirstPGCAfterGMP(env);
 
 	UDATA defragmentReclaimableRegions = 0;
 	UDATA reclaimableRegions = 0;
