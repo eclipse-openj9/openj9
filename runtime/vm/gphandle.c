@@ -1151,7 +1151,7 @@ generateDiagnosticFiles(struct J9PortLibrary* portLibrary, void* userData)
 	gpHaveRASdump = ( vm->j9rasDumpFunctions && vm->j9rasDumpFunctions->reserved != 0 );
 #endif
 
-	/* Generate primary crash dump (but only if RASdump not activated) */
+	/* Generate primary crash dump (but only if RASdump is not activated) */
 	if (!gpHaveRASdump) {
 		generateSystemDump(portLibrary, gpInfo);
 	}
@@ -1161,7 +1161,9 @@ generateDiagnosticFiles(struct J9PortLibrary* portLibrary, void* userData)
 		vmThread->gpInfo = gpInfo;
 		printBacktrace(vm, gpInfo);
 	}
-	if (NULL != vm->j9rasDumpFunctions) {
+
+	/* Trigger dump only if RASdump is activated */
+	if (gpHaveRASdump) {
 		J9DMP_TRIGGER( vm, vmThread, J9RAS_DUMP_ON_GP_FAULT );
 	}
 #else

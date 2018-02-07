@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1364,16 +1364,21 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			 * from pushDumpFacade so we need to process -Xdump:directory first and the
 			 * error handling is best done here.
 			 */
-			if (initDumpDirectory(vm) != OMR_ERROR_NONE) {
+			if (OMR_ERROR_NONE != initDumpDirectory(vm)) {
 				retVal = J9VMDLLMAIN_FAILED;
 			} else {
+				/* Defer enabling dump agents until initRasDumpGlobalStorage() is finished
+				 * so as to avoid triggering dump agent before RAS is ready for use.
+				 */
+				initRasDumpGlobalStorage(vm);
+
 				/* Swap in new dump facade */
-				if (pushDumpFacade(vm) == OMR_ERROR_NONE) {
-					initRasDumpGlobalStorage(vm);
+				if (OMR_ERROR_NONE == pushDumpFacade(vm)) {
 					retVal = configureDumpAgents(vm);
 					/* Allow configuration updates now that we've done initial setup */
 					unlockConfig();
 				} else {
+					freeRasDumpGlobalStorage(vm);
 					retVal = J9VMDLLMAIN_FAILED;
 				}
 			}
