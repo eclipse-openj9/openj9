@@ -281,7 +281,21 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
     or were skipped, along with other information like execution time and
     error messages, exceptions and logs from the individual test methods.
 
+  * TAP result files
+
+    TAP files are created. Depending on the requirement there are three
+    different diagnostic levels.
+    
+		* export DIAGNOSTICLEVEL=failure
+			Default level. Log all detailed failure information if test fails
+		* export DIAGNOSTICLEVEL=all
+			Log all detailed information no matter test failures or succeed
+		* export DIAGNOSTICLEVEL=nodetails
+			No need to log any detailed information. Top level TAP test result
+			summary is enough 
+			
   * in the cloud (WIP)
+  
 
 7. Attach a debugger:
 

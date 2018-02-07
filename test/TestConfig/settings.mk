@@ -97,16 +97,6 @@ ifeq ($(JAVA_VERSION),SE80)
 JDK_HOME := $(JAVA_BIN_TMP)$(D)..$(D)..
 endif
 
-ifdef JTREG_DIR
-# removing "
-JTREG_DIR := $(subst ",,$(JTREG_DIR))
-endif
-
-ifdef JTREG_TEST_DIR
-# removing "
-JTREG_TEST_DIR := $(subst ",,$(JTREG_TEST_DIR))
-endif
-
 #######################################
 # Set OS, ARCH and BITS based on SPEC
 #######################################
@@ -240,9 +230,13 @@ FAILEDTARGETS = $(TESTOUTPUT)$(D)failedtargets.mk
 TEMPRESULTFILE=$(TESTOUTPUT)$(D)TestTargetResult
 TAPRESULTFILE=$(TESTOUTPUT)$(D)TestTargetResult.tap
 
+ifndef DIAGNOSTICLEVEL
+export DIAGNOSTICLEVEL:=failure
+endif
+
 rmResultFile:
 	@$(RM) $(Q)$(TEMPRESULTFILE)$(Q)
 
 resultsSummary:
-	@perl $(Q)$(TEST_ROOT)$(D)TestConfig$(D)scripts$(D)testKitGen$(D)resultsSummary$(D)resultsSum.pl$(Q) --failuremk=$(Q)$(FAILEDTARGETS)$(Q) --resultFile=$(Q)$(TEMPRESULTFILE)$(Q) --tapFile=$(Q)$(TAPRESULTFILE)$(Q) --diagnostic=failure
+	@perl $(Q)$(TEST_ROOT)$(D)TestConfig$(D)scripts$(D)testKitGen$(D)resultsSummary$(D)resultsSum.pl$(Q) --failuremk=$(Q)$(FAILEDTARGETS)$(Q) --resultFile=$(Q)$(TEMPRESULTFILE)$(Q) --tapFile=$(Q)$(TAPRESULTFILE)$(Q) --diagnostic=$(DIAGNOSTICLEVEL)
 
