@@ -108,7 +108,6 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
    bool wrapRefs;
    bool passReceiver;
    bool passThread;
-   bool jniAccelerated;
    uintptrj_t targetAddress;
 
    bool crc32m1 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_update);
@@ -146,7 +145,6 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
       wrapRefs = !fej9->jniDoNotWrapObjects(resolvedMethod);
       passReceiver = !fej9->jniDoNotPassReceiver(resolvedMethod);
       passThread = !fej9->jniDoNotPassThread(resolvedMethod);
-      jniAccelerated = false;
       targetAddress = (uintptrj_t)resolvedMethod->startAddressForJNIMethod(comp());
       }
    else
@@ -168,16 +166,10 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
       wrapRefs = false; //unused for this code path
       passReceiver = true;
       passThread = false;
-      jniAccelerated = false; //unused for this code path
       targetAddress = (uintptrj_t)callSymbol->getMethodAddress();
       }
 
-   if (!isGPUHelper && (TR::Options::getJniAccelerator() != NULL))
-      {
-      jniAccelerated = TR::SimpleRegex::match(TR::Options::getJniAccelerator(), resolvedMethod->signature(comp()->trMemory()));
-      }
-
-   if (!isGPUHelper && (callSymbol->isPureFunction() || resolvedMethodSymbol->canDirectNativeCall() || jniAccelerated || specialCaseJNI))
+   if (!isGPUHelper && (callSymbol->isPureFunction() || resolvedMethodSymbol->canDirectNativeCall() || specialCaseJNI))
       {
       dropVMAccess = false;
       killNonVolatileGPRs = false;

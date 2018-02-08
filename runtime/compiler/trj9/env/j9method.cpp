@@ -24,6 +24,7 @@
 
 #include <stddef.h>
 #include "bcnames.h"
+#include "fastJNI.h"
 #include "j9.h"
 #include "j9cfg.h"
 #include "jitprotos.h"
@@ -46,6 +47,7 @@
 #include "il/DataTypes.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "infra/SimpleRegex.hpp"
 #include "optimizer/Inliner.hpp"
 #include "optimizer/PreExistence.hpp"
 #include "runtime/MethodMetaData.h"
@@ -2218,6 +2220,17 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       // a non-NULL target address is returned for both JNI natives and non-JNI natives with FastJNI replacements, NULL otherwise
       // properties will be non-zero IFF the target address points to a FastJNI replacement
       _jniTargetAddress = j9fe->getJ9JITConfig()->javaVM->internalVMFunctions->jniNativeMethodProperties(j9fe->vmThread(), _ramMethod, &_jniProperties);
+
+	  // Check for user specified FastJNI override
+	  if (TR::Options::getJniAccelerator() != NULL && TR::SimpleRegex::match(TR::Options::getJniAccelerator(), signature(trMemory)))
+         {
+		 _jniProperties |= 
+             J9_FAST_JNI_RETAIN_VM_ACCESS | 
+             J9_FAST_JNI_NOT_GC_POINT |
+             J9_FAST_NO_NATIVE_METHOD_FRAME |
+             J9_FAST_JNI_NO_EXCEPTION_THROW |
+             J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN;
+         }
       }
    else
       {
