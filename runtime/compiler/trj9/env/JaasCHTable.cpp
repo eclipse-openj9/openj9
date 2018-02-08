@@ -47,6 +47,10 @@ VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_Virt
    info._calleeIndex = vguard->getCalleeIndex();
    info._byteCodeIndex = vguard->getByteCodeIndex();
 
+   // info below is not used if there are no nop sites
+   if (vguard->getNOPSites().isEmpty())
+      return info;
+
    TR::SymbolReference *symRef = vguard->getSymbolReference();
    TR::MethodSymbol *methodSymbol = symRef->getSymbol()->castToMethodSymbol();
    TR::ResolvedMethodSymbol *resolvedMethodSymbol = methodSymbol->getResolvedMethodSymbol();
