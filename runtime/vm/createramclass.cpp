@@ -2700,6 +2700,10 @@ fail:
 #if defined(J9VM_THR_LOCK_NURSERY) && defined(J9VM_THR_LOCK_NURSERY_FAT_ARRAYS)
 				ramArrayClass->lockOffset = (UDATA)TMP_OFFSETOF_J9INDEXABLEOBJECT_MONITOR;
 #endif
+			} else if (J9ROMCLASS_IS_PRIMITIVE_TYPE(ramClass->romClass)) {
+				ramClass->module = module;
+			} else {
+				Assert_VM_unreachable();
 			}
 		}
 	}
@@ -2785,7 +2789,14 @@ retry:
 
 	if (J2SE_VERSION(javaVM) >= J2SE_19) {
 		if (NULL == classBeingRedefined) {
-			if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
+			if (J9ROMCLASS_IS_ARRAY(romClass)) {
+				/* At this point the elementClass has been loaded. No
+				 * need to check if java.base was created and no need to
+				 * do a lookup. Just assign the arrayClass the same module
+				 * which was used for the elementClass.
+				 */
+				module = elementClass->module;
+			} else if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 				/* VM does not create J9Module for unnamed modules except the unnamed module for bootloader.
 				 * Therefore J9Class.module should be NULL for classes loaded from classpath by non-bootloaders.
 				 * The call to findModuleForPackage() should correctly set J9Class.module as it would return
@@ -2800,25 +2811,19 @@ retry:
 					|| ((LOAD_LOCATION_PATCH_PATH == locationType)
 					|| (LOAD_LOCATION_MODULE == locationType))
 				) {
-					U_8* packageUTF = NULL;
-					J9ROMClass *packageRomClass = romClass;
-					U_32 pkgNameLength = 0;
-
-					if (J9ROMCLASS_IS_ARRAY(romClass)) {
-						packageRomClass = elementClass->romClass;
-					}
-
-					packageUTF = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(packageRomClass));
-					pkgNameLength = (U_32) packageNameLength(packageRomClass);
+					U_32 pkgNameLength = (U_32) packageNameLength(romClass);
 
 					omrthread_monitor_enter(javaVM->classLoaderModuleAndLocationMutex);
-					module = findModuleForPackage(vmThread, classLoader, packageUTF, pkgNameLength);
+					module = findModuleForPackage(vmThread, classLoader, J9UTF8_DATA(className), pkgNameLength);
 					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
 				} else {
 					module = javaVM->unamedModuleForSystemLoader;
 				}
 			} else {
-				if ((LOAD_LOCATION_PATCH_PATH == locationType) || (LOAD_LOCATION_MODULE == locationType)) {
+				if (J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)
+					|| (LOAD_LOCATION_PATCH_PATH == locationType)
+					|| (LOAD_LOCATION_MODULE == locationType)
+				) {
 					module = javaVM->javaBaseModule;
 				} else {
 					module = javaVM->unamedModuleForSystemLoader;
