@@ -1855,7 +1855,7 @@ static void dumpHelpText( J9PortLibrary *portLib, int argc, char **argv)
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	vmDetailString(portLib, detailString, 1024);
-	j9file_printf( PORTLIB, J9PORT_TTY_OUT, "\nOpenJ9 Java(TM) Class File Reader, Version " EsVersionString);
+	j9file_printf( PORTLIB, J9PORT_TTY_OUT, "\nOpenJ9 Java(TM) Class File Reader, Version " J9JVM_VERSION_STRING);
 	j9file_printf( PORTLIB, J9PORT_TTY_OUT, "\n" J9_COPYRIGHT_STRING);
 	j9file_printf( PORTLIB, J9PORT_TTY_OUT, "\nTarget: %s\n", detailString);
 	j9file_printf( PORTLIB, J9PORT_TTY_OUT, "\nJava and all Java-based marks and logos are trademarks or registered");
