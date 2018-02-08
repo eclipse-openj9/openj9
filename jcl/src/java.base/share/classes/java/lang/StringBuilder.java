@@ -218,7 +218,7 @@ public StringBuilder (String string) {
 			value = new char[newLength];
 			/*[ENDIF]*/
 			
-			string.getChars(0, stringLength, value, 0);
+			string.getCharsNoBoundChecks(0, stringLength, value, 0);
 
 			/*[IF Sidecar19-SE]*/
 			/*[ELSE]*/
@@ -236,7 +236,7 @@ public StringBuilder (String string) {
 		value = new char[newLength];
 		/*[ENDIF]*/
 		
-		string.getChars(0, stringLength, value, 0);
+		string.getCharsNoBoundChecks(0, stringLength, value, 0);
 
 		/*[IF !Sidecar19-SE]*/
 		capacity = newLength;
@@ -280,11 +280,7 @@ public StringBuilder append (char[] chars) {
 				ensureCapacityImpl(newLength);
 			}
 			
-			/*[IF Sidecar19-SE]*/
 			String.decompressedArrayCopy(chars, 0, value, currentLength, chars.length);
-			/*[ELSE]*/
-			System.arraycopy(chars, 0, value, currentLength, chars.length);
-			/*[ENDIF]*/
 			
 			count = newLength | uncompressedBit;
 		}
@@ -293,11 +289,7 @@ public StringBuilder append (char[] chars) {
 			ensureCapacityImpl(newLength);
 		}
 		
-		/*[IF Sidecar19-SE]*/
 		String.decompressedArrayCopy(chars, 0, value, currentLength, chars.length);
-		/*[ELSE]*/
-		System.arraycopy(chars, 0, value, currentLength, chars.length);
-		/*[ENDIF]*/
 		
 		count = newLength;
 	}
@@ -345,11 +337,7 @@ public StringBuilder append (char chars[], int start, int length) {
 					ensureCapacityImpl(newLength);
 				}
 				
-				/*[IF Sidecar19-SE]*/
 				String.decompressedArrayCopy(chars, start, value, currentLength, length);
-				/*[ELSE]*/
-				System.arraycopy(chars, start, value, currentLength, length);
-				/*[ENDIF]*/
 				
 				count = newLength | uncompressedBit;
 			}
@@ -358,11 +346,7 @@ public StringBuilder append (char chars[], int start, int length) {
 				ensureCapacityImpl(newLength);
 			}
 			
-			/*[IF Sidecar19-SE]*/
 			String.decompressedArrayCopy(chars, start, value, currentLength, length);
-			/*[ELSE]*/
-			System.arraycopy(chars, start, value, currentLength, length);
-			/*[ENDIF]*/
 			
 			count = newLength;
 		}
@@ -406,11 +390,7 @@ StringBuilder append (char[] chars, int start, int length, boolean compressed) {
 			if (compressed) {
 				String.decompress(chars, start, value, currentLength, length);
 			} else {
-				/*[IF Sidecar19-SE]*/
 				String.decompressedArrayCopy(chars, start, value, currentLength, length);
-				/*[ELSE]*/
-				System.arraycopy(chars, start, value, currentLength, length);
-				/*[ENDIF]*/
 			}
 			
 			count = newLength | uncompressedBit;
@@ -423,11 +403,7 @@ StringBuilder append (char[] chars, int start, int length, boolean compressed) {
 		if (compressed) {
 			String.decompress(chars, start, value, currentLength, length);
 		} else {
-			/*[IF Sidecar19-SE]*/
 			String.decompressedArrayCopy(chars, start, value, currentLength, length);
-			/*[ELSE]*/
-			System.arraycopy(chars, start, value, currentLength, length);
-			/*[ENDIF]*/
 		}
 		
 		count = newLength;
@@ -846,11 +822,7 @@ public StringBuilder delete(int start, int end) {
 						if (String.enableCompression && count >= 0) {
 							String.compressedArrayCopy(value, end, value, start, numberOfTailChars);
 						} else {
-							/*[IF Sidecar19-SE]*/
 							String.decompressedArrayCopy(value, end, value, start, numberOfTailChars);
-							/*[ELSE]*/
-							System.arraycopy(value, end, value, start, numberOfTailChars);
-							/*[ENDIF]*/
 						}
 					}
 				} else {
@@ -871,19 +843,11 @@ public StringBuilder delete(int start, int end) {
 						}
 					} else {
 						if (start > 0) {
-							/*[IF Sidecar19-SE]*/
 							String.decompressedArrayCopy(value, 0, newData, 0, start);
-							/*[ELSE]*/
-							System.arraycopy(value, 0, newData, 0, start);
-							/*[ENDIF]*/
 						}
 						
 						if (numberOfTailChars > 0) {
-							/*[IF Sidecar19-SE]*/
 							String.decompressedArrayCopy(value, end, newData, start, numberOfTailChars);
-							/*[ELSE]*/
-							System.arraycopy(value, end, newData, start, numberOfTailChars);
-							/*[ENDIF]*/
 						}
 					}
 					
@@ -1074,22 +1038,14 @@ public StringBuilder insert(int index, char[] chars) {
 					decompress(value.length);
 				}
 				
-				/*[IF Sidecar19-SE]*/
 				String.decompressedArrayCopy(chars, 0, value, index, chars.length);
-				/*[ELSE]*/
-				System.arraycopy(chars, 0, value, index, chars.length);
-				/*[ENDIF]*/
 				
 				count = count | uncompressedBit;
 				
 				return this;
 			}
 		} else {
-			/*[IF Sidecar19-SE]*/
 			String.decompressedArrayCopy(chars, 0, value, index, chars.length);
-			/*[ELSE]*/
-			System.arraycopy(chars, 0, value, index, chars.length);
-			/*[ENDIF]*/
 			
 			count = currentLength + chars.length;
 			
@@ -1140,22 +1096,14 @@ public StringBuilder insert(int index, char[] chars, int start, int length) {
 						decompress(value.length);
 					}
 					
-					/*[IF Sidecar19-SE]*/
 					String.decompressedArrayCopy(chars, start, value, index, length);
-					/*[ELSE]*/
-					System.arraycopy(chars, start, value, index, length);
-					/*[ENDIF]*/
 					
 					count = count | uncompressedBit;
 					
 					return this;
 				}
 			} else {
-				/*[IF Sidecar19-SE]*/
 				String.decompressedArrayCopy(chars, start, value, index, length);
-				/*[ELSE]*/
-				System.arraycopy(chars, start, value, index, length);
-				/*[ENDIF]*/
 				
 				count = currentLength + length;
 				
@@ -1193,22 +1141,14 @@ StringBuilder insert(int index, char[] chars, int start, int length, boolean com
 				decompress(value.length);
 			}
 			
-			/*[IF Sidecar19-SE]*/
 			String.decompressedArrayCopy(chars, start, value, index, length);
-			/*[ELSE]*/
-			System.arraycopy(chars, start, value, index, length);
-			/*[ENDIF]*/
 			
 			count = count | uncompressedBit;
 			
 			return this;
 		}
 	} else {
-		/*[IF Sidecar19-SE]*/
 		String.decompressedArrayCopy(chars, start, value, index, length);
-		/*[ELSE]*/
-		System.arraycopy(chars, start, value, index, length);
-		/*[ENDIF]*/
 		
 		count = currentLength + length;
 		
@@ -1387,14 +1327,14 @@ public StringBuilder insert(int index, String string) {
 					decompress(value.length);
 				}
 				
-				string.getChars(0, stringLength, value, index);
+				string.getCharsNoBoundChecks(0, stringLength, value, index);
 				
 				count = count | uncompressedBit;
 				
 				return this;
 			}
 		} else {
-			string.getChars(0, stringLength, value, index);
+			string.getCharsNoBoundChecks(0, stringLength, value, index);
 			
 			count = currentLength + stringLength;
 			
@@ -1498,7 +1438,7 @@ private void move(int size, int index) {
 				String.decompressedArrayCopy(value, index, value, index + size, currentLength - index);
 			/*[ELSE]*/
 			if (capacity >= 0) {
-				System.arraycopy(value, index, value, index + size, currentLength - index);
+				String.decompressedArrayCopy(value, index, value, index + size, currentLength - index);
 			/*[ENDIF]*/
 				
 				return;
@@ -1511,15 +1451,12 @@ private void move(int size, int index) {
 		
 		/*[IF Sidecar19-SE]*/
 		byte[] newData = new byte[newLength * 2];
-		
-		String.decompressedArrayCopy(value, 0, newData, 0, index);
-		String.decompressedArrayCopy(value, index, newData, index + size, currentLength - index);
 		/*[ELSE]*/
 		char[] newData = new char[newLength];
-		
-		System.arraycopy(value, 0, newData, 0, index);
-		System.arraycopy(value, index, newData, index + size, currentLength - index);
 		/*[ENDIF]*/
+
+		String.decompressedArrayCopy(value, 0, newData, 0, index);
+		String.decompressedArrayCopy(value, index, newData, index + size, currentLength - index);
 		
 		value = newData;
 
@@ -1634,21 +1571,17 @@ public StringBuilder replace(int start, int end, String string) {
 							String.decompressedArrayCopy(value, end, value, start + size, currentLength - end);
 						/*[ELSE]*/
 						if (capacity >= 0) {
-							System.arraycopy(value, end, value, start + size, currentLength - end);
+							String.decompressedArrayCopy(value, end, value, start + size, currentLength - end);
 						/*[ENDIF]*/
 						} else {
 							/*[IF Sidecar19-SE]*/
-							byte[] newData = new byte[value.length];
-							
-							String.decompressedArrayCopy(value, 0, newData, 0, start);
-							String.decompressedArrayCopy(value, end, newData, start + size, currentLength - end);
+							byte[] newData = new byte[value.length];							
 							/*[ELSE]*/
 							char[] newData = new char[value.length];
-							
-							System.arraycopy(value, 0, newData, 0, start);
-							System.arraycopy(value, end, newData, start + size, currentLength - end);
 							/*[ENDIF]*/
-							
+
+							String.decompressedArrayCopy(value, 0, newData, 0, start);
+							String.decompressedArrayCopy(value, end, newData, start + size, currentLength - end);
 							
 							value = newData;
 							
@@ -1674,7 +1607,7 @@ public StringBuilder replace(int start, int end, String string) {
 						/*[ENDIF]*/
 					}
 					
-					string.getChars(0, size, value, start);
+					string.getCharsNoBoundChecks(0, size, value, start);
 					
 					count = (currentLength - difference) | uncompressedBit;
 					
@@ -1707,20 +1640,17 @@ public StringBuilder replace(int start, int end, String string) {
 						String.decompressedArrayCopy(value, end, value, start + size, currentLength - end);
 					/*[ELSE]*/
 					if (capacity >= 0) {
-						System.arraycopy(value, end, value, start + size, currentLength - end);
+						String.decompressedArrayCopy(value, end, value, start + size, currentLength - end);
 					/*[ENDIF]*/
 					} else {
 						/*[IF Sidecar19-SE]*/
 						byte[] newData = new byte[value.length];
-						
-						String.decompressedArrayCopy(value, 0, newData, 0, start);
-						String.decompressedArrayCopy(value, end, newData, start + size, currentLength - end);
 						/*[ELSE]*/
 						char[] newData = new char[value.length];
-						
-						System.arraycopy(value, 0, newData, 0, start);
-						System.arraycopy(value, end, newData, start + size, currentLength - end);
 						/*[ENDIF]*/
+												
+						String.decompressedArrayCopy(value, 0, newData, 0, start);
+						String.decompressedArrayCopy(value, end, newData, start + size, currentLength - end);
 						
 						value = newData;
 						
@@ -1746,7 +1676,7 @@ public StringBuilder replace(int start, int end, String string) {
 					/*[ENDIF]*/
 				}
 				
-				string.getChars(0, size, value, start);
+				string.getCharsNoBoundChecks(0, size, value, start);
 				
 				count = currentLength - difference;
 				
@@ -2126,11 +2056,7 @@ public void setLength(int length) {
 			/*[ENDIF]*/
 			
 			if (length > 0) {
-				/*[IF Sidecar19-SE]*/
 				String.decompressedArrayCopy(value, 0, newData, 0, length);
-				/*[ELSE]*/
-				System.arraycopy(value, 0, newData, 0, length);
-				/*[ENDIF]*/
 			}
 			
 			value = newData;
@@ -3226,14 +3152,12 @@ public void trimToSize() {
 		/*[IF Sidecar19-SE]*/
 		if (!shared && currentCapacity != currentLength) {
 			byte[] newData = new byte[currentLength * 2];
-			
-			String.decompressedArrayCopy(value, 0, newData, 0, currentLength);
 		/*[ELSE]*/
 		if (capacity >= 0 && currentCapacity != currentLength) {
 			char[] newData = new char[currentLength];
-				
-			System.arraycopy(value, 0, newData, 0, currentLength);
 		/*[ENDIF]*/
+
+			String.decompressedArrayCopy(value, 0, newData, 0, currentLength);
 			
 			value = newData;
 			
