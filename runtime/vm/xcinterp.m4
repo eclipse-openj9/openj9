@@ -163,7 +163,7 @@ START_PROC(c_cInterpreter)
 	mov uword ptr J9TR_ELS_jitGlobalStorageBase[_rax],_rbx
 	lea _rbx,J9TR_cframe_jitFPRs[_rsp]
 	mov uword ptr J9TR_ELS_jitFPRegisterStorageBase[_rax],_rbx
-cInterpreter:
+C_FUNCTION_SYMBOL(cInterpreter):
 	mov _rax,uword ptr J9TR_VMThread_javaVM[_rbp]
 	CALL_C_WITH_VMTHREAD(uword ptr J9TR_JavaVM_bytecodeLoop[_rax],0)
 	cmp _rax,J9TR_bcloop_exit_interpreter
