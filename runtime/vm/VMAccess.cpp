@@ -301,31 +301,31 @@ void   internalAcquireVMAccessNoMutexWithMask(J9VMThread * vmThread, UDATA haltM
 	}
 	Assert_VM_mustNotHaveVMAccess(vmThread);
 
-	if((vmThread->publicFlags & (J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS | J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)) == (J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS | J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)) {
+	if(J9_ARE_ALL_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS)) {
 		/* In a critical region and about to block acquiring VM access. */
-		U_64 timeNow;
-
 		reacquireJNICriticalAccess = TRUE;
 		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS);
 
-		omrthread_monitor_enter(vm->exclusiveAccessMutex);
+		if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)) {
+			omrthread_monitor_enter(vm->exclusiveAccessMutex);
 
-		timeNow = updateExclusiveVMAccessStats(vmThread);
+			U_64 timeNow = updateExclusiveVMAccessStats(vmThread);
 
-		--vm->jniCriticalResponseCount;
-		if(vm->jniCriticalResponseCount == 0) {
-			U_64 timeTaken = j9time_hires_delta(vm->omrVM->exclusiveVMAccessStats.startTime, timeNow, J9PORT_TIME_DELTA_IN_MILLISECONDS);
+			--vm->jniCriticalResponseCount;
+			if(vm->jniCriticalResponseCount == 0) {
+				U_64 timeTaken = j9time_hires_delta(vm->omrVM->exclusiveVMAccessStats.startTime, timeNow, J9PORT_TIME_DELTA_IN_MILLISECONDS);
 
-			UDATA slowTolerance = J9_EXCLUSIVE_SLOW_TOLERANCE_STANDARD;
-			if (OMR_GC_ALLOCATION_TYPE_SEGREGATED == vm->gcAllocationType) {
-				slowTolerance = J9_EXCLUSIVE_SLOW_TOLERANCE_REALTIME;
+				UDATA slowTolerance = J9_EXCLUSIVE_SLOW_TOLERANCE_STANDARD;
+				if (OMR_GC_ALLOCATION_TYPE_SEGREGATED == vm->gcAllocationType) {
+					slowTolerance = J9_EXCLUSIVE_SLOW_TOLERANCE_REALTIME;
+				}
+				if (timeTaken > slowTolerance) {
+					TRIGGER_J9HOOK_VM_SLOW_EXCLUSIVE(vm->hookInterface, vmThread, (UDATA) timeTaken);
+				}
+				omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
 			}
-			if (timeTaken > slowTolerance) {
-				TRIGGER_J9HOOK_VM_SLOW_EXCLUSIVE(vm->hookInterface, vmThread, (UDATA) timeTaken);
-			}
-			omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
+			omrthread_monitor_exit(vm->exclusiveAccessMutex);
 		}
-		omrthread_monitor_exit(vm->exclusiveAccessMutex);
 	}
 
 

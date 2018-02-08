@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright (c) 2006, 2017 IBM Corp. and others
+   Copyright (c) 2006, 2018 IBM Corp. and others
 
    This program and the accompanying materials are made available under
    the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,14 @@
 			<xi:include href="vendor_port_default.xml"></xi:include>
 		</xi:fallback>
 	</xi:include>
-
+	
+	<!-- ri_support.xml can contain the RI support on z/OS-->
+	<xi:include href="ri_support.xml">
+		<xi:fallback>
+			<xi:include href="ri_support_default.xml"></xi:include>
+		</xi:fallback>
+	</xi:include>
+	
 	<objects group="all">
 		<object name="j9gp" />
 
@@ -81,11 +88,8 @@
 		<object name="j9port" />
 		<object name="j9process" />
 		<object name="j9gs"/>
-		<object name="j9gs_authorize_64">
-			<include-if condition="spec.zos_390.* and spec.flags.J9VM_ENV_DATA64"/>
-		</object>
-		<object name="j9gs_authorize_31">
-			<include-if condition="spec.zos_390.* and not spec.flags.J9VM_ENV_DATA64"/>
+		<object name="j9guardedstorage">
+			<include-if condition="spec.zos_390.*"/>
 		</object>
 		<object name="j9gs_get_supported">
 			<include-if condition="spec.zos_390.*"/>
@@ -108,35 +112,11 @@
 			<include-if condition="spec.linux_ztpf.*"/>
 			<exclude-if condition="spec.linux_x86.*"/>
 			<exclude-if condition="spec.win_x86.*"/>
-		</object>	
+		</object>
 		<object name="j9ri">
 			<include-if condition="spec.flags.port_runtimeInstrumentation"/>
 		</object>
-		<object name="j9ri_authorize_31">
-			<include-if condition="spec.zos_390.* and not spec.flags.J9VM_ENV_DATA64 and spec.flags.port_runtimeInstrumentation"/>
-		</object>
-		<object name="j9ri_authorize_64">
-			<include-if condition="spec.zos_390.* and spec.flags.J9VM_ENV_DATA64 and spec.flags.port_runtimeInstrumentation"/>
-		</object>
-		<object name="j9ri_get_supported">
-			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
-		</object>
-		<object name="j9ri_mric">
-			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
-		</object>
-		<object name="j9ri_rioff">
-			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
-		</object>
-		<object name="j9ri_rion">
-			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
-		</object>
-		<object name="j9ri_stric">
-			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
-		</object>
-		<object name="j9ri_tric">
-			<include-if condition="spec.zos_390.* and spec.flags.port_runtimeInstrumentation"/>
-		</object>
-
+		
 		<object name="j9sharedhelper">
 			<exclude-if condition="spec.win_x86.*"/>
 		</object>
@@ -163,7 +143,7 @@
 		</object>
 		<object name="ut_j9prt" />
 	</objects>
-
+	
 	<!-- vendor_port_flags.xml can contain vendor specific configuration -->
 	<xi:include href="vendor_port_flags.xml">
 		<xi:fallback>
@@ -362,6 +342,7 @@
 
 		<objects>
 			<group name="all"/>
+			<group name="ri_support"/>
 			<group name="vendor_port"/>
 		</objects>
 
