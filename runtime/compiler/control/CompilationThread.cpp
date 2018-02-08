@@ -7785,7 +7785,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             uint64_t proposedScratchMemoryLimit = (uint64_t)TR::Options::getScratchSpaceLimit();
 
             // update our cached CHTable
-            if (details.isRemoteMethod())
+            if (details.isRemoteMethod() && !comp()->getOption(TR_DisableCHOpts))
                {
                auto table = (TR_JaasServerPersistentCHTable*)compiler->getPersistentInfo()->getPersistentCHTable();
                table->doUpdate(compiler);

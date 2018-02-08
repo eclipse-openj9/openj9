@@ -1822,6 +1822,7 @@ remoteCompile(
             }
          TR_ASSERT(metaData, "relocation must succeed");
 
+         if (!TR::comp()->getOption(TR_DisableCHOpts))
             {
             TR::ClassTableCriticalSection commit(compiler->fe());
             if (!jaasCHTableCommit(compiler, metaData, chTableData))
@@ -1907,8 +1908,12 @@ remoteCompilationEnd(
    std::string codeCacheStr((char*) codeCacheHeader, codeSize);
    std::string dataCacheStr((char*) dataCacheHeader, dataSize);
 
-   TR_CHTable *chTable = comp->getCHTable();
-   auto chTableData = chTable->computeDataForCHTableCommit(comp);
+   CHTableCommitData chTableData;
+   if (!comp->getOption(TR_DisableCHOpts))
+      {
+      TR_CHTable *chTable = comp->getCHTable();
+      chTableData = chTable->computeDataForCHTableCommit(comp);
+      }
 
    entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr, chTableData);
 
