@@ -58,6 +58,10 @@ else
 export JAVA_VERSION:=$(JAVA_VERSION)
 endif
 
+ifndef JAVA_IMPL
+export JAVA_IMPL:=openj9
+endif
+
 ifneq (,$(findstring win,$(SPEC)))
 P=;
 D=\\
@@ -199,6 +203,7 @@ setup_%:
 	@$(ECHO) Running make $(MAKE_VERSION)
 	@$(ECHO) set TEST_ROOT to $(TEST_ROOT)
 	@$(ECHO) set JAVA_VERSION to $(JAVA_VERSION)
+	@$(ECHO) set JAVA_IMPL to $(JAVA_IMPL)
 	@$(ECHO) set JCL_VERSION to $(JCL_VERSION)
 	@$(ECHO) set JAVA_BIN to $(JAVA_BIN)
 	@$(ECHO) set SPEC to $(SPEC)
