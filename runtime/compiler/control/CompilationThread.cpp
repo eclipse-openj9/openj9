@@ -9237,6 +9237,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                                    void *oldStartPC, TR_FrontEnd *fe, TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    {
 
+   if (!comp)
+      return NULL;
+
    // This method is only called with both VMAccess and CompilationMutex in hand.
    // Performs some necessary updates once a compilation has been attempted
    //
