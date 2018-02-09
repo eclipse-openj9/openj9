@@ -24,7 +24,6 @@
 
 org.openj9.test.java.security.Test_AccessController:test_doPrivilegedWithCombiner4										858 generic-all
 org.openj9.test.java.security.Test_AccessController:test_doPrivileged_createAccessControlContext						858 generic-all
-org.openj9.test.java.lang.Test_ClassLoader																				995 generic-all
 org.openj9.test.attachAPI.TestAttachAPI:test_agntld01																	238 generic-all
 org.openj9.test.attachAPI.TestAttachAPI:test_agntld02																	238 generic-all
 org.openj9.test.attachAPI.TestAttachAPI:test_agntld03																	238 generic-all

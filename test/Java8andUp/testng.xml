@@ -115,6 +115,11 @@
 			<class name="org.openj9.test.annotation.Test_Annotation"/>
 		</classes>
 	</test>
+	<test name="JCL_TEST_Java-Lang_ClassLoader">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_ClassLoader"/>
+		</classes>
+	</test>
 	<test name="JCL_TEST_Test-Annotation-ClassLoader">
 		<classes>
 			<class name="org.openj9.test.annotationClassLoader.Test_ClassLoader"/>
