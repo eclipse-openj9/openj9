@@ -5,6 +5,16 @@
 #include "env/CHTable.hpp"
 #include <unordered_map>
 #include <unordered_set>
+#include <atomic>
+
+#define COLLECT_CHTABLE_STATS
+
+#ifdef COLLECT_CHTABLE_STATS
+#define CHTABLE_UPDATE_COUNTER(counter, value) counter += value
+#else
+#define CHTABLE_UPDATE_COUNTER(counter, value)
+#endif
+
 
 template<typename T>
 using PersistentVectorAllocator = TR::typed_allocator<T, TR::PersistentAllocator&>;
@@ -64,6 +74,16 @@ public:
    virtual void removeClass(TR_FrontEnd *, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *info, bool removeInfo);
    virtual void resetVisitedClasses(); // highly time consumming
 */
+
+#ifdef COLLECT_CHTABLE_STATS
+   // Statistical counters
+   std::atomic_uint32_t _numUpdates; // aka numCompilations
+   std::atomic_uint32_t _numClassesUpdated;
+   std::atomic_uint32_t _numClassesRemoved;
+   std::atomic_uint32_t _numQueries;
+   std::atomic_uint32_t _updateBytes;
+#endif
+
 private:
    void commitRemoves(TR::Compilation *comp, std::string &data);
    void commitModifications(TR::Compilation *comp, std::string &data);
@@ -111,6 +131,15 @@ public:
    virtual void classGotUnloadedPost(TR_FrontEnd *fe, TR_OpaqueClassBlock *classId);
    virtual void removeClass(TR_FrontEnd *, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *info, bool removeInfo);
    virtual void resetVisitedClasses(); // highly time consumming
+
+#ifdef COLLECT_CHTABLE_STATS
+   std::atomic_uint32_t _numUpdates; // aka numCompilations
+   std::atomic_uint32_t _numAssumptions;
+   std::atomic_uint32_t _numCommitFailures;
+   std::atomic_uint32_t _numClassesUpdated;
+   std::atomic_uint32_t _numClassesRemoved;
+   std::atomic_uint32_t _updateBytes;
+#endif
 
 private:
    void markForRemoval(TR_OpaqueClassBlock *clazz);

@@ -1,5 +1,5 @@
 #include "env/CHTable.hpp"
-#include "env/PersistentCHTable.hpp"
+#include "env/JaasPersistentCHTable.hpp"
 #include "env/j9methodServer.hpp"
 #include "infra/List.hpp"                      // for TR::list
 #include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
@@ -184,9 +184,13 @@ bool jaasCHTableCommit(
    if (comp->getFailCHTableCommit())
       return false;
 
-   TR_PersistentCHTable *table       = comp->getPersistentInfo()->getPersistentCHTable();
+   TR_JaasClientPersistentCHTable *table = (TR_JaasClientPersistentCHTable*) comp->getPersistentInfo()->getPersistentCHTable();
    TR_ResolvedMethod  *currentMethod = comp->getCurrentMethod();
    TR_Hotness hotness                = comp->getMethodHotness();
+
+#ifdef COLLECT_CHTABLE_STATS
+   size_t numAssumptionsBefore = comp->getPersistentInfo()->getRuntimeAssumptionTable()->countRatAssumptions();
+#endif
 
    if (!preXMethods.empty())
       {
@@ -305,6 +309,12 @@ bool jaasCHTableCommit(
 
    //if (!sideEffectPatchSites.empty())
       //table->commitSideEffectGuards(comp);
+
+#ifdef COLLECT_CHTABLE_STATS
+   size_t numAssumptionsAfter = comp->getPersistentInfo()->getRuntimeAssumptionTable()->countRatAssumptions();
+   table->_numAssumptions += numAssumptionsAfter - numAssumptionsBefore;
+#endif
+
    return true;
    }
 /* TODO

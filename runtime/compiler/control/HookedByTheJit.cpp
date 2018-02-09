@@ -1952,6 +1952,23 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
    {
    Trc_JIT_DumpStart(crashedThread);
 
+   if (context && context->javaVM && context->javaVM->jitConfig)
+      {
+      J9JITConfig *jitConfig = context->javaVM->jitConfig;
+      TR::CompilationInfo *compInfo = TR::CompilationInfo::get(context->javaVM->jitConfig);
+      if (compInfo)
+         {
+         static char * isPrintJaasMsgStats = feGetEnv("TR_PrintJaasMsgStats");
+         if (isPrintJaasMsgStats && compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+            printJaasMsgStats(jitConfig);
+
+         static char * isPrintJaasCHTableStats = feGetEnv("TR_PrintJaasCHTableStats");
+         if (isPrintJaasCHTableStats)
+            printJaasCHTableStats(jitConfig, compInfo);
+         }
+      }
+
+
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "JIT dump initiated. Crashed vmThread=%p", crashedThread);
 
@@ -4777,6 +4794,10 @@ void JitShutdown(J9JITConfig * jitConfig)
    static char * isPrintJaasMsgStats = feGetEnv("TR_PrintJaasMsgStats");
    if (isPrintJaasMsgStats && compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
       printJaasMsgStats(jitConfig);
+
+   static char * isPrintJaasCHTableStats = feGetEnv("TR_PrintJaasCHTableStats");
+   if (isPrintJaasCHTableStats)
+      printJaasCHTableStats(jitConfig, compInfo);
 
    TRC_JIT_ShutDownEnd(vmThread, "end of JitShutdown function");
    }

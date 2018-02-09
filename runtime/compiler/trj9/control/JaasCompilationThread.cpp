@@ -1827,6 +1827,10 @@ remoteCompile(
             TR::ClassTableCriticalSection commit(compiler->fe());
             if (!jaasCHTableCommit(compiler, metaData, chTableData))
                {
+#ifdef COLLECT_CHTABLE_STATS
+               TR_JaasClientPersistentCHTable *table = (TR_JaasClientPersistentCHTable*) TR::comp()->getPersistentInfo()->getPersistentCHTable();
+               table->_numCommitFailures += 1;
+#endif
                if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJaas, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
                   {
                   TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Failure while committing chtable for %s", compiler->signature());
@@ -1935,4 +1939,37 @@ void printJaasMsgStats(J9JITConfig *jitConfig)
       if (serverMsgTypeCount[i] > 0)
          j9tty_printf(PORTLIB, "#%04d %7u %s\n", i, serverMsgTypeCount[i], descriptor->FindValueByNumber(i)->name().c_str());
       }
+   }
+
+void printJaasCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
+   {
+#ifdef COLLECT_CHTABLE_STATS
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+   j9tty_printf(PORTLIB, "JAAS CHTable Statistics:\n");
+   if (compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+      {
+      TR_JaasClientPersistentCHTable *table = (TR_JaasClientPersistentCHTable*) compInfo->getPersistentInfo()->getPersistentCHTable();
+      j9tty_printf(PORTLIB, "Num updates sent: %d (1 per compilation)\n", table->_numUpdates.load());
+      if (table->_numUpdates.load())
+         {
+         j9tty_printf(PORTLIB, "Num runtime assumptions created: %d. Average per compilation: %f\n", table->_numAssumptions.load(), table->_numAssumptions.load() / float(table->_numUpdates.load()));
+         j9tty_printf(PORTLIB, "Num commit failures: %d. Average per compilation: %f\n", table->_numCommitFailures.load(), table->_numCommitFailures.load() / float(table->_numUpdates.load()));
+         j9tty_printf(PORTLIB, "Num classes updated: %d. Average per compilation: %f\n", table->_numClassesUpdated.load(), table->_numClassesUpdated.load() / float(table->_numUpdates.load()));
+         j9tty_printf(PORTLIB, "Num classes removed: %d. Average per compilation: %f\n", table->_numClassesRemoved.load(), table->_numClassesRemoved.load() / float(table->_numUpdates.load()));
+         j9tty_printf(PORTLIB, "Total update bytes: %d. Average per compilation: %f\n", table->_updateBytes.load(), table->_updateBytes.load() / float(table->_numUpdates.load()));
+         }
+      }
+   else if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      {
+      TR_JaasServerPersistentCHTable *table = (TR_JaasServerPersistentCHTable*) compInfo->getPersistentInfo()->getPersistentCHTable();
+      j9tty_printf(PORTLIB, "Num updates received: %d (1 per compilation)\n", table->_numUpdates.load());
+      if (table->_numUpdates.load())
+         {
+         j9tty_printf(PORTLIB, "Num classes updated: %d. Average per compilation: %f\n", table->_numClassesUpdated.load(), table->_numClassesUpdated.load() / float(table->_numUpdates.load()));
+         j9tty_printf(PORTLIB, "Num classes removed: %d. Average per compilation: %f\n", table->_numClassesRemoved.load(), table->_numClassesRemoved.load() / float(table->_numUpdates.load()));
+         j9tty_printf(PORTLIB, "Num class info queries: %d. Average per compilation: %f\n", table->_numQueries.load(), table->_numQueries.load() / float(table->_numUpdates.load()));
+         j9tty_printf(PORTLIB, "Total update bytes: %d. Average per compilation: %f\n", table->_updateBytes.load(), table->_updateBytes.load() / float(table->_numUpdates.load()));
+         }
+      }
+#endif
    }
