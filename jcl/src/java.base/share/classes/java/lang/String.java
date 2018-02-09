@@ -3646,11 +3646,9 @@ written authorization of the copyright holder.
 		}
 
 		if (StrHWAvailable() && language == "en") { //$NON-NLS-1$
-			String output = toLowerHWOptimized(new String(lengthInternal()));
-
-			if (output != null) {
+			String output = new String(lengthInternal());
+			if (toLowerHWOptimized(output))
 				return output;
-			}
 		}
 
 		return toLowerCaseCore(language);
@@ -3974,9 +3972,8 @@ written authorization of the copyright holder.
 		}
 
 		if (StrHWAvailable() && language == "en") { //$NON-NLS-1$
-			String output = toUpperHWOptimized(new String(lengthInternal()));
-
-			if (output != null)
+		   String output = new String(lengthInternal()); 
+		   if (toUpperHWOptimized(output))
 				return output;
 		}
 
@@ -5307,16 +5304,12 @@ written authorization of the copyright holder.
 	}
 
 	// DO NOT CHANGE CONTENTS OF THESE METHODS
-	private final String toUpperHWOptimized(String input) {
-		input = toUpperCaseCore("en"); //$NON-NLS-1$
-
-		return input;
+	private final boolean toUpperHWOptimized(String input) {
+		return false;
 	}
 
-	private final String toLowerHWOptimized(String input) {
-		input = toLowerCaseCore("en");//$NON-NLS-1$
-
-		return input;
+	private final boolean toLowerHWOptimized(String input) {
+		return false;
 	}
 	
 /*[IF Sidecar19-SE]*/
