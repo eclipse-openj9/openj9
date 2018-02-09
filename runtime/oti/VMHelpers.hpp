@@ -1387,9 +1387,7 @@ exit:
 					fieldClass->classFlags |= J9ClassHasIllegalFinalFieldModifications;
 					J9JITConfig* jitConfig = vm->jitConfig;
 					if (NULL != jitConfig) {
-						if (NULL != jitConfig->jitIllegalFinalFieldModification) {
-							jitConfig->jitIllegalFinalFieldModification(currentThread, fieldClass);
-						}
+						jitConfig->jitIllegalFinalFieldModification(currentThread, fieldClass);
 					}
 				}
 				vmFuncs->releaseSafePointVMAccess(currentThread);

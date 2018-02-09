@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2017 IBM Corp. and others
+dnl Copyright (c) 2017, 2018 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -281,6 +281,7 @@ SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportMethodExit,2)
 DUAL_MODE_HELPER_NO_RETURN_VALUE(jitTypeCheckArrayStore,2)
 DUAL_MODE_HELPER_NO_RETURN_VALUE(jitTypeCheckArrayStoreWithNullCheck,2)
 FAST_PATH_ONLY_HELPER(jitObjectHashCode,1)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportFinalFieldModified,1)
 
 dnl Trap handlers
 
