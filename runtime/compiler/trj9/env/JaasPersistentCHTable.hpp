@@ -77,11 +77,11 @@ public:
 
 #ifdef COLLECT_CHTABLE_STATS
    // Statistical counters
-   std::atomic_uint32_t _numUpdates; // aka numCompilations
-   std::atomic_uint32_t _numClassesUpdated;
-   std::atomic_uint32_t _numClassesRemoved;
-   std::atomic_uint32_t _numQueries;
-   std::atomic_uint32_t _updateBytes;
+   std::atomic<std::uint32_t> _numUpdates; // aka numCompilations
+   std::atomic<std::uint32_t> _numClassesUpdated;
+   std::atomic<std::uint32_t> _numClassesRemoved;
+   std::atomic<std::uint32_t> _numQueries;
+   std::atomic<std::uint32_t> _updateBytes;
 #endif
 
 private:
@@ -133,12 +133,12 @@ public:
    virtual void resetVisitedClasses(); // highly time consumming
 
 #ifdef COLLECT_CHTABLE_STATS
-   std::atomic_uint32_t _numUpdates; // aka numCompilations
-   std::atomic_uint32_t _numAssumptions;
-   std::atomic_uint32_t _numCommitFailures;
-   std::atomic_uint32_t _numClassesUpdated;
-   std::atomic_uint32_t _numClassesRemoved;
-   std::atomic_uint32_t _updateBytes;
+   std::atomic<std::uint32_t> _numUpdates; // aka numCompilations
+   std::atomic<std::uint32_t> _numAssumptions;
+   std::atomic<std::uint32_t> _numCommitFailures;
+   std::atomic<std::uint32_t> _numClassesUpdated;
+   std::atomic<std::uint32_t> _numClassesRemoved;
+   std::atomic<std::uint32_t> _updateBytes;
 #endif
 
 private:

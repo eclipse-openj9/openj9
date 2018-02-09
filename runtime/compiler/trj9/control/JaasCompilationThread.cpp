@@ -10,6 +10,7 @@
 #include "env/JaasCHTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 #include "exceptions/RuntimeFailure.hpp"       // for CHTableCommitFailure
+#include "j9port.h" // for j9time_current_time_millis
 
 uint32_t serverMsgTypeCount[JAAS::J9ServerMessageType_ARRAYSIZE] = {};
 
@@ -1948,7 +1949,7 @@ void printJaasCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo
    j9tty_printf(PORTLIB, "JAAS CHTable Statistics:\n");
    if (compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
       {
-      TR_JaasClientPersistentCHTable *table = (TR_JaasClientPersistentCHTable*) compInfo->getPersistentInfo()->getPersistentCHTable();
+      TR_JaasClientPersistentCHTable *table = (TR_JaasClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
       j9tty_printf(PORTLIB, "Num updates sent: %d (1 per compilation)\n", table->_numUpdates.load());
       if (table->_numUpdates.load())
          {
@@ -1961,7 +1962,7 @@ void printJaasCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo
       }
    else if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
       {
-      TR_JaasServerPersistentCHTable *table = (TR_JaasServerPersistentCHTable*) compInfo->getPersistentInfo()->getPersistentCHTable();
+      TR_JaasServerPersistentCHTable *table = (TR_JaasServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
       j9tty_printf(PORTLIB, "Num updates received: %d (1 per compilation)\n", table->_numUpdates.load());
       if (table->_numUpdates.load())
          {
@@ -1972,4 +1973,108 @@ void printJaasCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo
          }
       }
 #endif
+   }
+
+void
+ClientSessionData::updateTimeOfLastAccess()
+   {
+   PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
+   _timeOfLastAccess = j9time_current_time_millis();
+   }
+
+ClientSessionData::ClientSessionData()
+   {
+   updateTimeOfLastAccess();
+   _javaLangClassPtr = nullptr;
+   _inUse = 1;
+   }
+
+
+ClientSessionHT*
+ClientSessionHT::allocate()
+   {
+   return new (PERSISTENT_NEW) ClientSessionHT();
+   }
+
+// Search the clientSessionHashtable for the given clientUID and return the
+// data corresponding to the client.
+// If the clientUID does not already exist in the HT, insert a new blank entry.
+// Must have compilation monitor in hand when calling this function.
+// Side effects: _inUse is incremented on the ClientSessionData and the
+// timeOflastAccess is updated with curent time.
+ClientSessionData * 
+ClientSessionHT::findOrCreateClientSession(uint64_t clientUID)
+   {
+   ClientSessionData *clientData = nullptr;
+   auto clientDataIt = _clientSessionMap.find(clientUID);
+   if (clientDataIt != _clientSessionMap.end())
+      {
+      // if clientData found in hashtable, update the access time before returning it
+      clientData = clientDataIt->second;
+      clientData->incInUse();
+      clientData->updateTimeOfLastAccess();
+      }
+   else
+      {
+      // alocate a new ClientSessionData object and create a clientUID mapping
+      clientData = new (PERSISTENT_NEW) ClientSessionData();
+      if (clientData)
+         {
+         _clientSessionMap[clientUID] = clientData;
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server allocated data for a new clientUID %llu", (unsigned long long)clientUID);
+         }
+      }
+   return clientData;
+   }
+
+ClientSessionHT::ClientSessionHT() : _clientSessionMap(ClientSessionMapAllocator(TR::Compiler->persistentAllocator())),
+                                     TIME_BETWEEN_PURGES(1000*60), // JAAS TODO: this must come from options
+                                     OLD_AGE(1000*60*2) // 1000 minutes
+   {
+   PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
+   _timeOfLastPurge = j9time_current_time_millis();
+   _clientSessionMap.reserve(250); // allow room for at least 250 clients 
+   }
+
+// The destructor is currently never called because the server does not exit cleanly
+ClientSessionHT::~ClientSessionHT()
+   {
+   for (auto iter = _clientSessionMap.begin(); iter != _clientSessionMap.end(); ++iter)
+      {
+      TR_PersistentMemory::jitPersistentFree(iter->second); // delete the client data
+      _clientSessionMap.erase(iter); // delete the mapping from the hashtable
+      }
+   }
+
+// Purge the old client session data from the hashtable and
+// update the timeOfLastPurge.
+// Entries with _inUse > 0 must be left alone, though having
+// very old entries in use it's a sign of a programming error.
+// This routine must be executed with compilation monitor in hand.
+void 
+ClientSessionHT::purgeOldDataIfNeeded()
+   {
+   PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
+   int64_t crtTime = j9time_current_time_millis();
+   if (crtTime - _timeOfLastPurge > TIME_BETWEEN_PURGES)
+      {
+      // Time for a purge operation.
+      // Scan the entire table and delete old elements that are not in use
+      for (auto iter = _clientSessionMap.begin(); iter != _clientSessionMap.end(); ++iter)
+         {
+         TR_ASSERT(iter->second->getInUse() >= 0, "_inUse=%d must be positive\n", iter->second->getInUse());
+         if (iter->second->getInUse() == 0 &&
+             crtTime - iter->second->getTimeOflastAccess() > OLD_AGE)
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJaas))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server will purge session data for clientUID %llu", (unsigned long long)iter->first);
+            TR_PersistentMemory::jitPersistentFree(iter->second); // delete the client data
+            _clientSessionMap.erase(iter); // delete the mapping from the hashtable
+            }
+         }
+      _timeOfLastPurge = crtTime;
+
+      // JAAS TODO: keep stats on how many elements were purged
+      }
    }

@@ -66,6 +66,7 @@ namespace TR { class CompilationInfo; }              // forward declaration
 struct TR_MethodToBeCompiled;
 class TR_ResolvedMethod;
 class TR_RelocationRuntime;
+class ClientSessionData;
 
 enum CompilationThreadState
    {
@@ -238,6 +239,10 @@ class CompilationInfoPerThreadBase
    static TR::FILE *getPerfFile() { return _perfFile; } // used on Linux for perl tool support
    static void setPerfFile(TR::FILE *f) { _perfFile = f; }
 
+   // JAAS
+   void                   setClientData(ClientSessionData *data) { _cachedClientDataPtr = data; }
+   ClientSessionData     *getClientData() const { return _cachedClientDataPtr; }
+
    protected:
 
    TR::CompilationInfo &         _compInfo;
@@ -267,6 +272,8 @@ class CompilationInfoPerThreadBase
 
    static TR::FILE *_perfFile; // used on Linux for perl tool support
 
+   // JAAS
+   ClientSessionData * _cachedClientDataPtr;
 
 private:
    void logCompilationSuccess(

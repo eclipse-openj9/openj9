@@ -70,6 +70,7 @@
 #include "env/ClassTableCriticalSection.hpp"
 
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
+#include "trj9/control/JaasCompilationThread.hpp"
 
 /* Hardware Profiling */
 #if defined(TR_HOST_S390) && defined(BUILD_Z_RUNTIME_INSTRUMENTATION)
@@ -1572,7 +1573,10 @@ onLoadInternal(
    persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
    
    if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
-   {
+      {
+      // Allocate the hashtable that holds information about clients
+      compInfo->setClientSessionHT(ClientSessionHT::allocate());
+
       ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener = TR_Listener::allocate();
       if (!((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener)
       {

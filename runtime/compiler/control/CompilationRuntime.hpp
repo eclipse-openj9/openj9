@@ -71,6 +71,7 @@ struct TR_JitPrivateConfig;
 struct TR_MethodToBeCompiled;
 template <typename T> class TR_PersistentArray;
 typedef J9JITExceptionTable TR_MethodMetaData;
+class ClientSessionHT; // JAAS TODO: maybe move all JAAS specific stuff in an extension for CompInfo
 
 struct TR_SignatureCountPair
 {
@@ -941,6 +942,9 @@ public:
    bool getSuspendThreadDueToLowPhysicalMemory() const { return _suspendThreadDueToLowPhysicalMemory; }
    void setSuspendThreadDueToLowPhysicalMemory(bool b) { _suspendThreadDueToLowPhysicalMemory = b; }
 
+   ClientSessionHT *getClientSessionHT() { return _clientSessionHT; }
+   void setClientSessionHT(ClientSessionHT *ht) { _clientSessionHT = ht; }
+
    static int32_t         VERY_SMALL_QUEUE;
    static int32_t         SMALL_QUEUE;
    static int32_t         MEDIUM_LARGE_QUEUE;
@@ -1120,6 +1124,9 @@ private:
    // freeing scratch segments it holds to
    bool _suspendThreadDueToLowPhysicalMemory;
    TR_InterpreterSamplingTracking *_interpSamplTrackingInfo;
+
+   // JAAS hashtable that holds session information about JAAS clients
+   ClientSessionHT *_clientSessionHT;
    }; // CompilationInfo
 }
 

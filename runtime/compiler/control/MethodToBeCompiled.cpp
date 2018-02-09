@@ -26,6 +26,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "j9.h"
+#include "rpc/J9Server.h" // for _stream
 
 int16_t TR_MethodToBeCompiled::_globalIndex = 0;
 
@@ -129,4 +130,10 @@ TR_MethodToBeCompiled::setAotCodeToBeRelocated(const void *m)
    {
    _aotCodeToBeRelocated = m;
    _optimizationPlan->setIsAotLoad(m!=0);
+   }
+
+uint64_t 
+TR_MethodToBeCompiled::getClientUID() const
+   {
+   _stream->getClientId();
    }

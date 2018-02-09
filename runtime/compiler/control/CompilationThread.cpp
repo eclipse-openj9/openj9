@@ -818,7 +818,8 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _compilationCanBeInterrupted(false),
    _compilationThreadState(COMPTHREAD_UNINITIALIZED),
    _compilationShouldBeInterrupted(false),
-   _addToJProfilingQueue(false)
+   _addToJProfilingQueue(false),
+   _cachedClientDataPtr(nullptr)
    {
    TR_ASSERT(_compThreadId < MAX_TOTAL_COMP_THREADS, "Cannot have a compId greater than MAX_TOTAL_COMP_THREADS");
    }
@@ -988,6 +989,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _lowPriorityCompilationScheduler.setCompInfo(this);
    _JProfilingQueue.setCompInfo(this);
    _interpSamplTrackingInfo = new (PERSISTENT_NEW) TR_InterpreterSamplingTracking(this);
+   _clientSessionHT = nullptr; // This will be set later when options are processed
    }
 
 bool TR::CompilationInfo::initializeCompilationOnApplicationThread()
@@ -6577,6 +6579,24 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                                                       bool &eligibleForRemoteCompile,
                                                       TR_RelocationRuntime *reloRuntime)
    {
+   // Get the session info
+   // JAAS TODO: move this into the try/catch block Irwin is going to create
+   if (entry->isRemoteCompReq())
+      {
+      uint64_t clientUID = entry->getClientUID();
+      // Get the compilation monitor RIIA style because we may throw bad_alloc 
+      // when tryimg to add a new entry in the unordered_map
+      OMR::CriticalSection compilationMonitorLock(_compInfo.getCompilationMonitor());
+     
+      // Try to purge old data
+      _compInfo.getClientSessionHT()->purgeOldDataIfNeeded();
+      // Search the hashtable
+      ClientSessionData *clientSession = _compInfo.getClientSessionHT()->findOrCreateClientSession(clientUID);
+      // we should probably abort this compilation if we cannot get memory and clientSession==NULL
+      // Cache the session data in compInfoPTBase
+      setClientData(clientSession);
+      }
+
    // Check to see if we find an AOT version in the shared cache
    //
    entry->setAotCodeToBeRelocated(NULL);  // make sure decision to load AOT comes from below and not previous compilation/relocation pass
@@ -7236,6 +7256,14 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
    vmThread->omrVMThread->vmState = oldState;
    vmThread->jitMethodToBeCompiled = NULL;
+
+   // Reset the pointer to the cached client session data
+   if (entry->isRemoteCompReq() && getClientData())
+      {
+      // We have the compilation monitor so it's safe to access the inUse counter
+      getClientData()->decInUse();
+      setClientData(nullptr);
+      }
 
    return startPC;
    }
