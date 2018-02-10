@@ -84,6 +84,9 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
 
    // release VM access before doing a potentially long wait
    TR_ASSERT(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS, "Must have VM access");
+   TR_ASSERT(TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(compInfoPT->getCompThreadId()) == 0, "Must not hold classUnloadMonitor");
+   TR::MonitorTable *table = TR::MonitorTable::get();
+   TR_ASSERT(table && table->isThreadInSafeMonitorState(vmThread), "Must not hold any monitors when waiting for server");
    releaseVMAccess(vmThread);
 
    auto response = client->read();
@@ -1773,13 +1776,32 @@ remoteCompile(
    std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
 
    JAAS::J9ClientStream client(TR::comp()->getPersistentInfo()->getJaasServerConnectionInfo());
-   client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJaasId(), romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), detailsStr, details.getType());
+
    uint32_t statusCode = compilationFailure;
    std::string codeCacheStr;
    std::string dataCacheStr;
    CHTableCommitData chTableData;
    try
       {
+      // release VM access just before sending the compilation request
+      // message just in case we block in the wite operation   
+      releaseVMAccess(vmThread);
+
+      client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJaasId(), romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), detailsStr, details.getType());
+
+      // re-acquire VM access and check for possible class unloading
+      acquireVMAccessNoSuspend(vmThread);
+      if (compInfoPT->compilationShouldBeInterrupted())
+         {
+         // JAAS FIXME: The server is not informed that the client is going to abort
+         // Is it better to let the code flow into handleServerMessage() wait for a 
+         // query from the server and then abort sending a "cancel" message back?
+         auto comp = compInfoPT->getCompilation();
+         if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Interrupting remote compilation of %s @ %s", comp->signature(), comp->getHotnessName());
+         comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
+         }
+
       while(!handleServerMessage(&client, compiler->fej9vm()));
       auto recv = client.getRecvData<uint32_t, std::string, std::string, CHTableCommitData>();
       statusCode = std::get<0>(recv);
