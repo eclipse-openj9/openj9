@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1995,15 +1995,15 @@ MM_CopyForwardScheme::addCopyCachesToFreeList(MM_EnvironmentVLHGC *env)
 MMINLINE void
 MM_CopyForwardScheme::updateHotFieldStats(MM_EnvironmentVLHGC *env, J9Object *childPtr)
 {
-	if (_extensions->scavengerTraceHotFields) {
-		J9Object *objectPtr = env->_hotFieldStats._objectPtr;
+	if (NULL != env->_hotFieldStats) {
+		J9Object *objectPtr = env->_hotFieldStats->_objectPtr;
 		if (NULL == objectPtr) {
 			/* don't update statistics */
 			return;
 		}
 		bool isParentInNewSpace = isObjectInNurseryMemory(objectPtr);
 		bool isChildInNewSpace = isObjectInNurseryMemory(childPtr);
-		env->_hotFieldStats.updateStats(isParentInNewSpace, isChildInNewSpace, childPtr);
+		env->_hotFieldStats->updateStats(isParentInNewSpace, isChildInNewSpace, childPtr);
 	}
 }
 
@@ -2016,9 +2016,9 @@ MM_CopyForwardScheme::updateHotFieldStats(MM_EnvironmentVLHGC *env, J9Object *ch
 MMINLINE void
 MM_CopyForwardScheme::setFieldHotness(MM_EnvironmentVLHGC *env, fj9object_t *slotPtr, uintptr_t instanceHotFieldDescription)
 {
-	if (_extensions->scavengerTraceHotFields) {
+	if (NULL != env->_hotFieldStats) {
 		/* record field hotness of the slot for reporting purposes */
-		env->_hotFieldStats.setHotnessOfField((fomrobject_t *)slotPtr, instanceHotFieldDescription);
+		env->_hotFieldStats->setHotnessOfField((fomrobject_t *)slotPtr, instanceHotFieldDescription);
 	}
 }
 
@@ -2031,9 +2031,9 @@ MM_CopyForwardScheme::setFieldHotness(MM_EnvironmentVLHGC *env, fj9object_t *slo
 MMINLINE void
 MM_CopyForwardScheme::setCurrentObjectForHotFieldStats(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
 {
-	if (_extensions->scavengerTraceHotFields) {
-		env->_hotFieldStats._objectPtr = (omrobjectptr_t) objectPtr;
-		env->_hotFieldStats.clearHotnessOfField();
+	if (NULL != env->_hotFieldStats) {
+		env->_hotFieldStats->_objectPtr = (omrobjectptr_t) objectPtr;
+		env->_hotFieldStats->clearHotnessOfField();
 	}
 }
 
@@ -2043,8 +2043,8 @@ MM_CopyForwardScheme::setCurrentObjectForHotFieldStats(MM_EnvironmentVLHGC *env,
 void
 MM_CopyForwardScheme::masterClearHotFieldStats()
 {
-	if (_extensions->scavengerTraceHotFields) {
-		_extensions->scavengerHotFieldStats.clear();
+	if (NULL != _extensions->scavengerHotFieldStats) {
+		_extensions->scavengerHotFieldStats->clear();
 	}
 }
 
@@ -2055,8 +2055,8 @@ MM_CopyForwardScheme::masterClearHotFieldStats()
 void
 MM_CopyForwardScheme::masterReportHotFieldStats()
 {
-	if (_extensions->scavengerTraceHotFields) {
-		_extensions->scavengerHotFieldStats.reportStats(_extensions->getOmrVM());
+	if (NULL != _extensions->scavengerHotFieldStats) {
+		_extensions->scavengerHotFieldStats->reportStats(_extensions->getOmrVM());
 	}
 }
 
@@ -2066,8 +2066,8 @@ MM_CopyForwardScheme::masterReportHotFieldStats()
 void
 MM_CopyForwardScheme::clearHotFieldStats(MM_EnvironmentVLHGC *env)
 {
-	if (_extensions->scavengerTraceHotFields) {
-		env->_hotFieldStats.clear();
+	if (NULL != env->_hotFieldStats) {
+		env->_hotFieldStats->clear();
 	}
 }
 
@@ -2077,8 +2077,8 @@ MM_CopyForwardScheme::clearHotFieldStats(MM_EnvironmentVLHGC *env)
 void
 MM_CopyForwardScheme::mergeHotFieldStats(MM_EnvironmentVLHGC *env)
 {
-	if (_extensions->scavengerTraceHotFields) {
-		_extensions->scavengerHotFieldStats.mergeStats(&env->_hotFieldStats);
+	if (NULL != _extensions->scavengerHotFieldStats) {
+		_extensions->scavengerHotFieldStats->mergeStats(env->_hotFieldStats);
 	}
 }
 
