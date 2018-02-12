@@ -2058,8 +2058,8 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID)
    }
 
 ClientSessionHT::ClientSessionHT() : _clientSessionMap(ClientSessionMapAllocator(TR::Compiler->persistentAllocator())),
-                                     TIME_BETWEEN_PURGES(1000*60), // JAAS TODO: this must come from options
-                                     OLD_AGE(1000*60*2) // 1000 minutes
+                                     TIME_BETWEEN_PURGES(1000*60*30), // JAAS TODO: this must come from options
+                                     OLD_AGE(1000*60*1000) // 1000 minutes
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    _timeOfLastPurge = j9time_current_time_millis();
