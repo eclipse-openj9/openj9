@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ##############################################################################
-#  Copyright (c) 2016, 2017 IBM Corp. and others
+#  Copyright (c) 2016, 2018 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,7 +125,7 @@ if ( $task eq "default" ) {
 			print "$filename exits, skip downloading \n"
 		} else {
 			print "downloading $url \n";
-			my $output = qx{wget --quiet --output-document=$filename $url 2>&1};
+			my $output = qx{wget --no-check-certificate --quiet --output-document=$filename $url 2>&1};
 			if ($? == 0 ) {
 				print "--> file downloaded to $filename \n";
 			} else {
