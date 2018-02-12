@@ -303,6 +303,7 @@ sub writeTargets {
 	}
 	foreach my $test ( @{ $result->{'tests'} } ) {
 		my $count     = 0;
+		my @subtests = ();
 		foreach my $var ( @{ $test->{'variation'} } ) {
 			my $jvmoptions = ' ' . $var . ' ';
 			$jvmoptions =~ s/\ NoOptions\ //x;
@@ -353,6 +354,7 @@ sub writeTargets {
 			# generate make target
 			my $name = $test->{'testCaseName'};
 			$name .= "_$count";
+			push (@subtests, $name);
 
 			my $condition_platform = undef;
 			if (@allInvalidSpecs) {
@@ -442,6 +444,11 @@ sub writeTargets {
 
 			$count++;
 		}
+		print $fhOut $test->{'testCaseName'} . ":";
+		foreach my $subTest (@subtests) {
+			print $fhOut " \\\n$subTest";
+		}
+		print $fhOut "\n\n.PHONY: " . $test->{'testCaseName'} . "\n\n";
 	}
 
 	foreach my $eachLevel (sort @{$allLevels}) {
