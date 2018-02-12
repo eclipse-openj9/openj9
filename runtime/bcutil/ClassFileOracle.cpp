@@ -1391,6 +1391,15 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 
 	U_8 *code = codeAttribute->code;
 	for (U_32 codeIndex = 0; codeIndex < codeAttribute->codeLength; codeIndex += step) { /* NOTE codeIndex is modified below for CFR_BC_tableswitch and CFR_BC_lookupswitch */
+
+#if defined(J9VM_OPT_VALHALLA_VALUETYPES)
+		if (204 == code[codeIndex]) { /* TODO: Remap defaultvalue opcode */
+			code[codeIndex] = CFR_BC_vdefault;
+		} else if (203 == code[codeIndex]) { /* TODO: Remap withfield opcode */
+			code[codeIndex] = CFR_BC_vwithfield;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUETYPES) */
+
 		U_8 sunInstruction = code[codeIndex];
 
 		step = sunJavaInstructionSizeTable[sunInstruction];
