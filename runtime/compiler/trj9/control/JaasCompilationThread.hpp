@@ -5,7 +5,6 @@
 #include "control/CompilationThread.hpp"
 #include "rpc/J9Client.h"
 
-class J9Class;
 
 class ClientSessionData
    {
@@ -13,8 +12,8 @@ class ClientSessionData
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
    ClientSessionData();
 
-   void setJavaLangClassPtr(J9Class* j9clazz) { _javaLangClassPtr = j9clazz; }
-   J9Class * getsetJavaLangClassPtr() const { return _javaLangClassPtr; }
+   void setJavaLangClassPtr(TR_OpaqueClassBlock* j9clazz) { _javaLangClassPtr = j9clazz; }
+   TR_OpaqueClassBlock * getJavaLangClassPtr() const { return _javaLangClassPtr; }
 
    void incInUse() { _inUse++; }
    void decInUse() { _inUse--; TR_ASSERT(_inUse >= 0, "_inUse=%d must be positive\n", _inUse); }
@@ -25,7 +24,7 @@ class ClientSessionData
 
    private:
    int64_t  _timeOfLastAccess; // in ms
-   J9Class *_javaLangClassPtr; // nullptr means not set
+   TR_OpaqueClassBlock *_javaLangClassPtr; // nullptr means not set
    int8_t  _inUse;  // Number of concurrent compilations from the same client 
                     // Accessed with compilation monitor in hand
    }; // ClientSessionData

@@ -2046,6 +2046,11 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID)
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server allocated data for a new clientUID %llu", (unsigned long long)clientUID);
          }
+      else
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "ERROR: Server could not allocate client session data");
+         }
       }
    return clientData;
    }

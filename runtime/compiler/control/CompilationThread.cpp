@@ -6592,9 +6592,14 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       _compInfo.getClientSessionHT()->purgeOldDataIfNeeded();
       // Search the hashtable
       ClientSessionData *clientSession = _compInfo.getClientSessionHT()->findOrCreateClientSession(clientUID);
+
       // we should probably abort this compilation if we cannot get memory and clientSession==NULL
       // Cache the session data in compInfoPTBase
       setClientData(clientSession);
+
+      if (TR::Options::getVerboseOption(TR_VerboseJaas))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server cached clientSessionData=%p for clientUID=%llu compThreadID=%d", 
+            clientSession, (unsigned long long)clientUID, getCompThreadId());
       }
 
    // Check to see if we find an AOT version in the shared cache

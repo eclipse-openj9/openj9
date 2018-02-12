@@ -7,6 +7,7 @@
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
+#include "trj9/control/JaasCompilationThread.hpp"
 
 bool
 TR_J9ServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
@@ -123,9 +124,17 @@ TR_J9ServerVM::isMethodExitTracingEnabled(TR_OpaqueMethodBlock *method)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
    {
-   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_getClassClassPointer, objectClassPointer);
-   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   // First, search the client session data for a cached answer
+   TR_OpaqueClassBlock *javaLangClass = _compInfoPT->getClientData()->getJavaLangClassPtr();
+   if (!javaLangClass)
+      {
+      // If value is not cached, fetch it from client and cache it
+      JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JAAS::J9ServerMessageType::VM_getClassClassPointer, objectClassPointer);
+      javaLangClass = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+      _compInfoPT->getClientData()->setJavaLangClassPtr(javaLangClass); // cache value for later
+      }
+   return javaLangClass;
    }
 
 void *

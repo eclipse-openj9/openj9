@@ -241,7 +241,7 @@ class CompilationInfoPerThreadBase
 
    // JAAS
    void                   setClientData(ClientSessionData *data) { _cachedClientDataPtr = data; }
-   ClientSessionData     *getClientData() const { return _cachedClientDataPtr; }
+   ClientSessionData     *getClientData() { return _cachedClientDataPtr; }
 
    protected:
 
