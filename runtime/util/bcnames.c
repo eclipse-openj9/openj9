@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -240,18 +240,6 @@ const char * const JavaBCNames[] = {
 "JBunimplemented" /* 214 */,
 "JBaload0getfield" /* 215 */,
 "JBnewdup" /* 216 */,
-#if defined(J9_VALHALLA_MVT)
-"JBvload" /* 217 */,
-"JBvstore" /* 218 */,
-"JBvreturn" /* 219 */,
-"JBvbox" /* 220 */,
-"JBvunbox" /* 221 */,
-"JBvaload" /* 222 */,
-"JBvastore" /* 223 */,
-"JBvdefault" /* 224 */,
-"JBvgetfield" /* 225 */,
-"JBvwithfield" /* 226 */,
-#else /* defined(J9_VALHALLA_MVT) */
 "JBunimplemented" /* 217 */,
 "JBunimplemented" /* 218 */,
 "JBunimplemented" /* 219 */,
@@ -259,10 +247,15 @@ const char * const JavaBCNames[] = {
 "JBunimplemented" /* 221 */,
 "JBunimplemented" /* 222 */,
 "JBunimplemented" /* 223 */,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+"JBdefaultvalue" /* 224 */,
+"JBunimplemented" /* 225 */,
+"JBwithfield" /* 226 */,
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 "JBunimplemented" /* 224 */,
 "JBunimplemented" /* 225 */,
 "JBunimplemented" /* 226 */,
-#endif /* defined(J9_VALHALLA_MVT) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 "JBunimplemented" /* 227 */,
 "JBreturnFromConstructor" /* 228 */,
 "JBgenericReturn" /* 229 */,
@@ -512,18 +505,6 @@ const char * const sunJavaBCNames[] = {
 "JBunimplemented" /* 214 */,
 "JBunimplemented" /* 215 */,
 "JBunimplemented" /* 216 */,
-#if defined(J9_VALHALLA_MVT)
-"JBvload" /* 217 */,
-"JBvstore" /* 218 */,
-"JBvreturn" /* 219 */,
-"JBvbox" /* 220 */,
-"JBvunbox" /* 221 */,
-"JBvaload" /* 222 */,
-"JBvastore" /* 223 */,
-"JBvdefault" /* 224 */,
-"JBvgetfield" /* 225 */,
-"JBvwithfield" /* 226 */,
-#else /* defined(J9_VALHALLA_MVT) */
 "JBunimplemented" /* 217 */,
 "JBunimplemented" /* 218 */,
 "JBunimplemented" /* 219 */,
@@ -531,10 +512,15 @@ const char * const sunJavaBCNames[] = {
 "JBunimplemented" /* 221 */,
 "JBunimplemented" /* 222 */,
 "JBunimplemented" /* 223 */,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+"JBdefaultvalue" /* 224 */,
+"JBunimplemented" /* 225 */,
+"JBwithfield" /* 226 */,
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 "JBunimplemented" /* 224 */,
 "JBunimplemented" /* 225 */,
 "JBunimplemented" /* 226 */,
-#endif /* defined(J9_VALHALLA_MVT) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 "JBunimplemented" /* 227 */,
 "JBunimplemented" /* 228 */,
 "JBunimplemented" /* 229 */,

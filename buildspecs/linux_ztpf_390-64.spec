@@ -245,7 +245,7 @@
 		<flag id="opt_sidecar" value="true"/>
 		<flag id="opt_srpAvlTreeSupport" value="true"/>
 		<flag id="opt_stringCompression" value="true"/>
-		<flag id="opt_valhallaMvt" value="false"/>
+		<flag id="opt_valhallaValueTypes" value="false"/>
 		<flag id="opt_useFfi" value="true"/>
 		<flag id="opt_useFfiOnly" value="true"/>
 		<flag id="opt_zipSupport" value="true"/>

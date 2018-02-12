@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2017 IBM Corp. and others
+  Copyright (c) 2006, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -244,7 +244,7 @@
 		<flag id="opt_stringCompression" value="true"/>
 		<flag id="opt_useFfi" value="true"/>
 		<flag id="opt_useFfiOnly" value="true"/>
-		<flag id="opt_valhallaMvt" value="false"/>
+		<flag id="opt_valhallaValueTypes" value="false"/>
 		<flag id="opt_zipSupport" value="true"/>
 		<flag id="opt_zlibCompression" value="true"/>
 		<flag id="opt_zlibSupport" value="true"/>
