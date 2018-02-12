@@ -135,5 +135,5 @@ TR_MethodToBeCompiled::setAotCodeToBeRelocated(const void *m)
 uint64_t 
 TR_MethodToBeCompiled::getClientUID() const
    {
-   _stream->getClientId();
+   return _stream->getClientId();
    }
