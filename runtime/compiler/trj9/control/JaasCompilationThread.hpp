@@ -5,6 +5,12 @@
 #include "control/CompilationThread.hpp"
 #include "rpc/J9Client.h"
 
+template<typename T, typename U>
+using PersistentUnorderedMapAllocator = TR::typed_allocator<std::pair<const T, U>, TR::PersistentAllocator&>;
+template<typename T, typename U>
+using PersistentUnorderedMap = std::unordered_map<T, U, std::hash<T>, std::equal_to<T>, PersistentUnorderedMapAllocator<T, U>>;
+
+class TR_PersistentClassInfo;
 
 class ClientSessionData
    {
@@ -14,6 +20,7 @@ class ClientSessionData
 
    void setJavaLangClassPtr(TR_OpaqueClassBlock* j9clazz) { _javaLangClassPtr = j9clazz; }
    TR_OpaqueClassBlock * getJavaLangClassPtr() const { return _javaLangClassPtr; }
+   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> & getCHTableClassMap() { return _chTableClassMap; }
 
    void incInUse() { _inUse++; }
    void decInUse() { _inUse--; TR_ASSERT(_inUse >= 0, "_inUse=%d must be positive\n", _inUse); }
@@ -25,6 +32,7 @@ class ClientSessionData
    private:
    int64_t  _timeOfLastAccess; // in ms
    TR_OpaqueClassBlock *_javaLangClassPtr; // nullptr means not set
+   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _chTableClassMap; // cache of persistent CHTable
    int8_t  _inUse;  // Number of concurrent compilations from the same client 
                     // Accessed with compilation monitor in hand
    }; // ClientSessionData
@@ -45,9 +53,7 @@ class ClientSessionHT
    void purgeOldDataIfNeeded();
 
    private:
-   typedef TR::typed_allocator<std::pair<uint64_t, ClientSessionData*>, TR::PersistentAllocator &> ClientSessionMapAllocator;
-   typedef std::unordered_map<uint64_t, ClientSessionData*, std::hash<uint64_t>, std::equal_to<uint64_t>, ClientSessionMapAllocator> ClientSessionMap;
-   ClientSessionMap _clientSessionMap;
+   PersistentUnorderedMap<uint64_t, ClientSessionData*> _clientSessionMap;
 
    uint64_t _timeOfLastPurge;
    const int64_t TIME_BETWEEN_PURGES; // ms; this defines how often we are willing to scan for old entries to be purged

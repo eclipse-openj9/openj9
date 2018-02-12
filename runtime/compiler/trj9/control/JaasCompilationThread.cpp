@@ -2006,7 +2006,7 @@ ClientSessionData::updateTimeOfLastAccess()
    _timeOfLastAccess = j9time_current_time_millis();
    }
 
-ClientSessionData::ClientSessionData()
+ClientSessionData::ClientSessionData() : _chTableClassMap(decltype(_chTableClassMap)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = nullptr;
@@ -2057,7 +2057,7 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID)
    return clientData;
    }
 
-ClientSessionHT::ClientSessionHT() : _clientSessionMap(ClientSessionMapAllocator(TR::Compiler->persistentAllocator())),
+ClientSessionHT::ClientSessionHT() : _clientSessionMap(decltype(_clientSessionMap)::allocator_type(TR::Compiler->persistentAllocator())),
                                      TIME_BETWEEN_PURGES(1000*60*30), // JAAS TODO: this must come from options
                                      OLD_AGE(1000*60*1000) // 1000 minutes
    {

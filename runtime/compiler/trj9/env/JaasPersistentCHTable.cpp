@@ -3,6 +3,8 @@
 #include "control/CompilationRuntime.hpp"
 #include "J9Server.h"
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
+#include "control/CompilationThread.hpp"       // for TR::compInfoPT
+#include "control/JaasCompilationThread.hpp"   // for ClientSessionData
 
 
 // plan: send the whole table once,
@@ -14,34 +16,13 @@
 
 TR_JaasServerPersistentCHTable::TR_JaasServerPersistentCHTable(TR_PersistentMemory *trMemory)
    : TR_PersistentCHTable(trMemory)
-   , _data(decltype(_data)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    }
 
-TR_JaasServerPersistentCHTable::InternalData &TR_JaasServerPersistentCHTable::getData(TR::Compilation *comp)
+PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &TR_JaasServerPersistentCHTable::getData(TR::Compilation *)
    {
-   auto stream = TR::CompilationInfo::getStream();
-   uint64_t clientId = stream->getClientId();
-   auto &data = _data[clientId];
-   int64_t time = TR::Compiler->vm.getUSecClock()/1000000; // date +%s
-   data.lastTime = time;
+   auto &data = TR::compInfoPT->getClientData()->getCHTableClassMap();
    return data;
-   }
-
-void TR_JaasServerPersistentCHTable::cleanUpExpiredData()
-   {
-   int64_t time = TR::Compiler->vm.getUSecClock()/1000000; // date +%s
-   for (auto it = _data.begin(); it != _data.end();)
-      {
-      if (time - it->second.lastTime > 60 * 5) // entries are freed after 5 minutes
-	 {
-	 it = _data.erase(it);
-	 }
-      else
-	 {
-	 it++;
-	 }
-      }
    }
 
 void TR_JaasServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
@@ -50,7 +31,7 @@ void TR_JaasServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
       return;
 
    auto& data = getData(comp);
-   if (data.initialized)
+   if (!data.empty())
       return;
 
    auto stream = TR::CompilationInfo::getStream();
@@ -59,9 +40,8 @@ void TR_JaasServerPersistentCHTable::initializeIfNeeded(TR::Compilation *comp)
    auto infos = FlatPersistentClassInfo::deserializeHierarchy(rawData);
    for (auto clazz : infos)
       {
-      data.classMap.insert({clazz->getClassId(), clazz});
+      data.insert({clazz->getClassId(), clazz});
       }
-   data.initialized = true;
    CHTABLE_UPDATE_COUNTER(_numClassesUpdated, infos.size());
    }
 
@@ -73,7 +53,6 @@ void TR_JaasServerPersistentCHTable::doUpdate(TR::Compilation *comp)
       {
       TR::ClassTableCriticalSection doUpdate(comp->fe());
       initializeIfNeeded(comp);
-      cleanUpExpiredData();
       }
 
    auto stream = TR::CompilationInfo::getStream();
@@ -98,8 +77,8 @@ void TR_JaasServerPersistentCHTable::commitRemoves(TR::Compilation *comp, std::s
    size_t num = rawData.size() / sizeof(TR_OpaqueClassBlock*);
    for (size_t i = 0; i < num; i++)
       {
-      auto item = data.classMap[ptr[i]];
-      data.classMap.erase(ptr[i]);
+      auto item = data[ptr[i]];
+      data.erase(ptr[i]);
       if (item) // may have already been removed earlier in this update block
          jitPersistentFree(item);
       }
@@ -122,7 +101,7 @@ void TR_JaasServerPersistentCHTable::commitModifications(TR::Compilation *comp, 
       if (!clazz)
          {
          clazz = new (PERSISTENT_NEW) TR_PersistentClassInfo(nullptr);
-         data.classMap.insert({classId, clazz});
+         data.insert({classId, clazz});
          }
       infoMap.insert({classId, {info, clazz}});
       bytesRead += FlatPersistentClassInfo::deserializeClassSimple(clazz, info);
@@ -148,8 +127,8 @@ TR_JaasServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    CHTABLE_UPDATE_COUNTER(_numQueries, 1);
    initializeIfNeeded(TR::comp());
    auto& data = getData(TR::comp());
-   auto it = data.classMap.find(classId);
-   if (it != data.classMap.end())
+   auto it = data.find(classId);
+   if (it != data.end())
       return it->second;
    return nullptr;
    }
