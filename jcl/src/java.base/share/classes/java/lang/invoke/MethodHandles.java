@@ -397,7 +397,7 @@ public class MethodHandles {
 			} else if (Modifier.isPrivate(memberModifiers)) {
 				if (Modifier.isPrivate(accessMode) && ((targetClass == accessClass)
 /*[IF Valhalla-NestMates]*/
-						|| targetClass.isInSameNest(accessClass)
+						|| targetClass.isNestmateOf(accessClass)
 /*[ENDIF] Valhalla-NestMates*/	
 				)) {
 					return;
