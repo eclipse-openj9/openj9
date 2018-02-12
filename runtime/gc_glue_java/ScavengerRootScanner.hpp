@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ public:
 	 */
 private:
 #if defined(J9VM_GC_FINALIZATION)
-	void startUnfinalizedProcessing(MM_EnvironmentStandard *env);
+	void startUnfinalizedProcessing(MM_EnvironmentBase *env);
 	void scavengeFinalizableObjects(MM_EnvironmentStandard *env);
 #endif /* defined(J9VM_GC_FINALIZATION) */
 
@@ -191,6 +191,13 @@ public:
 			MM_RootScanner::scanJNIWeakGlobalReferences(env);
 		}
 	}
+	
+	virtual void scanRoots(MM_EnvironmentBase *env) 
+	{
+		MM_RootScanner::scanRoots(env);
+		
+		startUnfinalizedProcessing(env);
+	}
 
 	void
 	scavengeRememberedSet(MM_EnvironmentStandard *env)
@@ -198,7 +205,6 @@ public:
 		reportScanningStarted(RootScannerEntity_ScavengeRememberedSet);
 		_scavenger->scavengeRememberedSet(env);
 		reportScanningEnded(RootScannerEntity_ScavengeRememberedSet);
-		startUnfinalizedProcessing(env);
 	}
 
 	void
