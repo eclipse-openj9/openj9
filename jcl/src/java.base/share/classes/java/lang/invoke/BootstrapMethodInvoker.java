@@ -1,7 +1,7 @@
-/*[INCLUDE-IF Sidecar18-SE-OpenJ9|Sidecar19-SE-B174]*/
+/*[INCLUDE-IF Java11]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,19 +21,15 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-/*[IF Java11]*/
-
 package java.lang.invoke;
 
 /*
  * Stub class for compilation
  */
 
-class MethodHandleNatives {
+class BootstrapMethodInvoker {
 
-	static LinkageError mapLookupExceptionToError(ReflectiveOperationException roe) {
+	static <T> T invoke(Class<T> clz1, MethodHandle mh, String str, Object obj1, Object obj2, Class<?> clz2) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 }
-
-/*[ENDIF]*/
