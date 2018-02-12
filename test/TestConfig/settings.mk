@@ -58,6 +58,34 @@ else
 export JAVA_VERSION:=$(JAVA_VERSION)
 endif
 
+ifndef JAVA_IMPL
+export JAVA_IMPL:=openj9
+endif
+
+ifndef JVM_VERSION
+ifeq ($(JAVA_VERSION), SE80)
+	JDK_VERSION = openjdk8
+else
+	ifeq ($(JAVA_VERSION), SE90)
+		JDK_VERSION = openjdk9
+	else
+		ifeq ($(JAVA_VERSION), SE100)
+			JDK_VERSION = openjdk10
+		endif
+	endif
+endif
+ifneq (, $(findstring openj9, $(JAVA_IMPL)))
+	JVM_VERSION = $(JDK_VERSION)-openj9
+else 
+	ifeq (, $(findstring sap, $(JAVA_IMPL)))
+		JVM_VERSION = $(JDK_VERSION)-sap
+	else 
+		JVM_VERSION = $(JDK_VERSION)
+	endif
+endif
+export JVM_VERSION:=$(JVM_VERSION)
+endif
+
 ifneq (,$(findstring win,$(SPEC)))
 P=;
 D=\\
@@ -199,6 +227,8 @@ setup_%:
 	@$(ECHO) Running make $(MAKE_VERSION)
 	@$(ECHO) set TEST_ROOT to $(TEST_ROOT)
 	@$(ECHO) set JAVA_VERSION to $(JAVA_VERSION)
+	@$(ECHO) set JAVA_IMPL to $(JAVA_IMPL)
+	@$(ECHO) set JVM_VERSION to $(JVM_VERSION)
 	@$(ECHO) set JCL_VERSION to $(JCL_VERSION)
 	@$(ECHO) set JAVA_BIN to $(JAVA_BIN)
 	@$(ECHO) set SPEC to $(SPEC)
