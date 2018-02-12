@@ -125,7 +125,7 @@ if ( $task eq "default" ) {
 			print "$filename exits, skip downloading \n"
 		} else {
 			print "downloading $url \n";
-			my $output = qx{wget --quiet --output-document=$filename $url 2>&1};
+			my $output = qx{wget --no-check-certificate --quiet --output-document=$filename $url 2>&1};
 			if ($? == 0 ) {
 				print "--> file downloaded to $filename \n";
 			} else {
