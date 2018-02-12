@@ -127,6 +127,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _jaasMode(NONJAAS_MODE),
          _jaasServerAddress("localhost"),
          _jaasServerPort(38400),
+         _timeout(0),
       OMR::PersistentInfoConnector(pm)
       {}
 
