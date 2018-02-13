@@ -631,19 +631,6 @@ TR_IProfiler::shutdown()
 
    }
 
-static uint16_t cpIndexFromPC(uintptrj_t pc) { return *((uint16_t*)(pc + 1)); }
-static U_32 vftOffsetFromPC (J9Method *method, uintptrj_t pc)
-   {
-   uint16_t cpIndex = cpIndexFromPC(pc);
-   TR_ASSERT(cpIndex != (uint16_t)~0, "cpIndex shouldn't be -1");
-   J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *) J9_CP_FROM_METHOD(method);
-   UDATA vTableSlot = ((J9RAMVirtualMethodRef *)literals)[cpIndex].methodIndexAndArgCount >> 8;
-   TR_ASSERT(vTableSlot, "vTableSlot called for unresolved method");
-
-   return (U_32) (J9JIT_INTERP_VTABLE_OFFSET - vTableSlot);
-   }
-
-
 bool
 TR_IProfiler::isCallGraphProfilingEnabled()
    {
