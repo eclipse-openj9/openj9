@@ -227,7 +227,7 @@ void TR_ReadSampleRequestsHistory::advanceEpoch() // performed by sampling threa
 
 uintptrj_t
 TR_IProfiler::createBalancedBST(uintptrj_t *pcEntries, int32_t low, int32_t high, uintptrj_t memChunk,
-                                TR::Compilation *comp, uintptrj_t cacheStartAddress, uintptrj_t cacheSize)
+                                uintptrj_t cacheStartAddress, uintptrj_t cacheSize)
    {
    if (high < low)
       return NULL;
@@ -239,7 +239,7 @@ TR_IProfiler::createBalancedBST(uintptrj_t *pcEntries, int32_t low, int32_t high
    entry->createPersistentCopy(cacheStartAddress, cacheSize, storage, _compInfo->getPersistentInfo());
 
    uintptrj_t leftChild = createBalancedBST(pcEntries, low, middle-1,
-                                            memChunk + bytes, comp, cacheStartAddress, cacheSize);
+                                            memChunk + bytes, cacheStartAddress, cacheSize);
 
    if (leftChild)
       {
@@ -248,7 +248,7 @@ TR_IProfiler::createBalancedBST(uintptrj_t *pcEntries, int32_t low, int32_t high
       }
 
    uintptrj_t rightChild = createBalancedBST(pcEntries, middle+1, high,
-                                             memChunk + bytes + leftChild, comp, cacheStartAddress, cacheSize);
+                                             memChunk + bytes + leftChild, cacheStartAddress, cacheSize);
    if (rightChild)
       {
       TR_ASSERT(bytes + leftChild < 1 << 16, "Error storing iprofile information: right child too far away"); // current size of right child
@@ -445,7 +445,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
                   fprintf(stderr, "\n");
 #endif
                   void * memChunk = comp->trMemory()->allocateMemory(bytesFootprint, stackAlloc);
-                  intptrj_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptrj_t) memChunk, comp, cacheOffset, cacheSize);
+                  intptrj_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptrj_t) memChunk, cacheOffset, cacheSize);
                   TR_ASSERT(bytes == bytesFootprint, "BST doesn't match expected footprint");
 
 
