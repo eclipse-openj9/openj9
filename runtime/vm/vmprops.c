@@ -779,6 +779,20 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
+#if defined(J9JDK_EXT_NAME)
+	rc = addSystemProperty(vm, "jdk.extensions.name", J9JDK_EXT_NAME, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+#endif
+
+#if defined(J9JDK_EXT_VERSION)
+	rc = addSystemProperty(vm, "jdk.extensions.version", J9JDK_EXT_VERSION, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+#endif
+
 	/* Don't know the JIT yet, put in a placeholder and make it writeable for now */
 	rc = addSystemProperty(vm, "java.compiler", "", J9SYSPROP_FLAG_WRITEABLE);
 	if (J9SYSPROP_ERROR_NONE != rc) {

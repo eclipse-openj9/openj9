@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -9095,7 +9095,11 @@ static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8
    //Set the conditions and dependencies
    conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint16_t) numDeps, (uint16_t) numDeps, cg->trMemory());
    addDependency(conditions, valueReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   conditions->getPreConditions()->getRegisterDependency(0)->setExcludeGPR0();
+   conditions->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
    addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   conditions->getPreConditions()->getRegisterDependency(1)->setExcludeGPR0();
+   conditions->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0();
    addDependency(conditions, deltaReg, TR::RealRegister::NoReg, TR_GPR, cg);
    addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
    addDependency(conditions, fieldOffsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
