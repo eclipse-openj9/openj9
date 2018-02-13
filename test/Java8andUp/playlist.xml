@@ -679,7 +679,7 @@
 	</test>
 
 	<test>
-		<testCaseName>JCL_Test_SE90</testCaseName>
+		<testCaseName>JCL_Test_SE90+</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
@@ -728,6 +728,7 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
 		</subsets>
 	</test>
 
