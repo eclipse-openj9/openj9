@@ -628,7 +628,6 @@ private:
    bool invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry);
    bool isNewOpCode(uintptrj_t pc);
    bool isSwitch(uintptrj_t pc);
-   J9Class *getInterfaceClass(J9Method *aMethod, TR::Compilation *comp);
    int32_t getOrSetSwitchData(TR_IPBCDataEightWords *entry, uint32_t data, bool isSet, bool isLookup);
    TR_IPBytecodeHashTableEntry *getProfilingEntry(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *);
 

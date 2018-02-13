@@ -2339,15 +2339,6 @@ TR_IProfiler::resetProfiler()
    _maxCount = DEFAULT_PROFILING_COUNT;
    }
 
-J9Class *
-TR_IProfiler::getInterfaceClass(J9Method *aMethod, TR::Compilation *comp)
-   {
-   J9UTF8 * className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD((aMethod))->romClass);
-   int32_t len = J9UTF8_LENGTH(className);
-   char * s = classNameToSignature(utf8Data(className), len, comp);
-   return (J9Class *)(comp->fej9()->getClassFromSignature(s, len, (TR_OpaqueMethodBlock *)aMethod));
-   }
-
 TR_AbstractInfo *
 TR_IProfiler::createIProfilingValueInfo (TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
    {
