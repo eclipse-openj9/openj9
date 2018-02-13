@@ -144,10 +144,6 @@ public class Test_System {
 	 */
 	@Test
 	public void test_getProperties() {
-		Properties p = System.getProperties();
- 		AssertJUnit.assertTrue("Incorrect properties returned", p.getProperty(
- 				"java.version").indexOf("9", 0) == 0);
-
 		// ensure spec'ed properties are non-null. See System.getProperties()
 		// spec.
 		String[] props = { "java.version", "java.vendor", "java.vendor.url",
@@ -162,15 +158,6 @@ public class Test_System {
 		for (int i = 0; i < props.length; i++) {
 			AssertJUnit.assertTrue(props[i], System.getProperty(props[i]) != null);
 		}
-
-		/*
-		 * This test should only run for Java 1.8.0 and above. For Java 1.9.0
-		 * and above, we do not support java.ext.dirs property.
-		 */
-		if (p.getProperty("java.version").startsWith("1.8.0")) {
-			String javaExtDirs = "java.ext.dirs";
-			AssertJUnit.assertTrue(javaExtDirs, System.getProperty(javaExtDirs) != null);
-		}
 	}
 
 	/**
@@ -178,9 +165,6 @@ public class Test_System {
 	 */
 	@Test
 	public void test_getProperty() {
- 		AssertJUnit.assertTrue("Incorrect properties returned", System.getProperty(
- 				"java.version").indexOf("9", 0) == 0);
-
 		boolean is8859_1 = true;
 		String encoding = System.getProperty("file.encoding");
 		byte[] bytes = new byte[128];
@@ -217,10 +201,6 @@ public class Test_System {
 	 */
 	@Test
 	public void test_getProperty2() {
- 		AssertJUnit.assertTrue("Failed to return correct property value: "
- 				+ System.getProperty("java.version", "99999"), System
- 				.getProperty("java.version", "99999").indexOf("9", 0) >= 0);
-
 		AssertJUnit.assertTrue("Failed to return correct property value", System
 				.getProperty("bogus.prop", "bogus").equals("bogus"));
 	}
