@@ -1044,6 +1044,79 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 	PORT_ACCESS_FROM_VMC(currentThread);
 	Trc_VM_illegalAccessMessage_Entry(currentThread, J9UTF8_LENGTH(senderClassNameUTF), J9UTF8_DATA(senderClassNameUTF),
 			J9UTF8_LENGTH(targetClassNameUTF), J9UTF8_DATA(targetClassNameUTF), badMemberModifier);
+
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	/* If an issue with the nest host loading and verification occurred, then
+	 * it will be one of:
+	 * 		J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR
+	 * 		J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR
+	 * 		J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR
+	 * Otherwise, it is one of:
+	 * 		J9_VISIBILITY_NON_MODULE_ACCESS_ERROR
+	 * 		J9_VISIBILITY_MODULE_READ_ACCESS_ERROR
+	 * 		J9_VISIBILITY_MODULE_PACKAGE_EXPORT_ERROR
+	 */
+	if ((J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR == errorType)
+			|| (J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR == errorType)
+			|| (J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR == errorType)
+	) {
+		J9Class *unverifiedNestMemberClass = NULL;
+		J9ROMClass *romClass = NULL;
+		J9UTF8 *nestMemberNameUTF = NULL;
+		J9UTF8 *nestHostNameUTF = NULL;
+
+		/*
+		 * The specification asserts that, during access checking, the accessing
+		 * class's nest host is loaded first and the class being accessed loads
+		 * its nest host after.
+		 * Access checking produces an IllegalAccessError if an exception is thrown
+		 * when loading the nest host and the nest host field is not set. Therefore,
+		 * the class which throws the nestmates related error can be determined by
+		 * checking which class
+		 */
+		if (NULL == senderClass->nestHost) {
+			unverifiedNestMemberClass = senderClass;
+		} else {
+			unverifiedNestMemberClass = targetClass;
+		}
+
+		romClass = unverifiedNestMemberClass->romClass;
+		nestMemberNameUTF = J9ROMCLASS_CLASSNAME(romClass);
+		nestHostNameUTF = J9ROMCLASS_NESTHOSTNAME(romClass);
+
+		if (J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR == errorType) {
+			errorMsg = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_VM_NEST_HOST_FAILED_TO_LOAD,
+					NULL);
+		} else if (J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR == errorType) {
+			errorMsg = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE,
+					NULL);
+		} else if (J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR == errorType) {
+			errorMsg = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST,
+					NULL);
+		}
+
+		bufLen = j9str_printf(PORTLIB, NULL, 0, errorMsg,
+				J9UTF8_LENGTH(nestMemberNameUTF),
+				J9UTF8_DATA(nestMemberNameUTF),
+				J9UTF8_LENGTH(nestHostNameUTF),
+				J9UTF8_DATA(nestHostNameUTF));
+
+		if (bufLen > 0) {
+			buf = j9mem_allocate_memory(bufLen, OMRMEM_CATEGORY_VM);
+			if (NULL == buf) {
+				goto allocationFailure;
+			}
+			j9str_printf(PORTLIB, buf, bufLen, errorMsg,
+					J9UTF8_LENGTH(nestMemberNameUTF),
+					J9UTF8_DATA(nestMemberNameUTF),
+					J9UTF8_LENGTH(nestHostNameUTF),
+					J9UTF8_DATA(nestHostNameUTF));
+		}
+	} else
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 	if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR != errorType) {
 		/* illegal module access */
 		j9object_t srcModuleObject = J9VMJAVALANGCLASS_MODULE(currentThread, senderClass->classObject);
