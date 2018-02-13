@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,5 +70,10 @@ final class MemberName {
 	public Class<?> getDeclaringClass() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+	/*[IF Java11]*/
+	public boolean isFinal() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	/*[ENDIF]*/
 	/*[ENDIF]*/
 }
