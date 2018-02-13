@@ -32,6 +32,7 @@ openj9.sharedclasses
 openj9.traceformat
 jdk.attach
 openj9.jvm
+java.management
 
 # requires openj9.cuda
 openj9.gpu
@@ -39,7 +40,6 @@ openj9.gpu
 # requires java.logging
 openj9.dtfj
 openj9.dtfjview
-java.management
 
 # requires java.management
 jdk.management

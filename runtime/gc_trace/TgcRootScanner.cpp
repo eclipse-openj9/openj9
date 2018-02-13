@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 #include "VMThreadListIterator.hpp"
 
 static void printRootScannerStats(OMR_VMThread *omrVMThread);
-static void tgcHookGlobalGcCycleEnd(J9HookInterface** hook, UDATA eventNumber, void* eventData, void* userData);
+static void tgcHookGCEnd(J9HookInterface** hook, UDATA eventNumber, void* eventData, void* userData);
 
 /**
  * XML attribute names corresponding to entities in the root scanner enumeration.
@@ -83,7 +83,8 @@ tgcRootScannerInitialize(J9JavaVM *javaVM)
 		extensions->rootScannerStatsEnabled = true;
 
 		J9HookInterface** mmOmrHooks = J9_HOOK_INTERFACE(extensions->omrHookInterface);
-		(*mmOmrHooks)->J9HookRegisterWithCallSite(mmOmrHooks, J9HOOK_MM_OMR_GC_CYCLE_END, tgcHookGlobalGcCycleEnd, OMR_GET_CALLSITE(), NULL);
+		(*mmOmrHooks)->J9HookRegisterWithCallSite(mmOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_END, tgcHookGCEnd, OMR_GET_CALLSITE(), NULL);
+		(*mmOmrHooks)->J9HookRegisterWithCallSite(mmOmrHooks, J9HOOK_MM_OMR_GLOBAL_GC_END, tgcHookGCEnd, OMR_GET_CALLSITE(), NULL);
 	}
 	
 	return true;
@@ -149,7 +150,7 @@ printRootScannerStats(OMR_VMThread *omrVMThread)
 }
 
 static void
-tgcHookGlobalGcCycleEnd(J9HookInterface** hook, UDATA eventNumber, void* eventData, void* userData)
+tgcHookGCEnd(J9HookInterface** hook, UDATA eventNumber, void* eventData, void* userData)
 {
 	MM_GCCycleEndEvent* event = (MM_GCCycleEndEvent*) eventData;
 	
