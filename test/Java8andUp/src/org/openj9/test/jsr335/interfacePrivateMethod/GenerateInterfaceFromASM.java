@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,7 +70,7 @@ public class GenerateInterfaceFromASM {
 		{
 			mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "RunTest_private_static_method_with_InvokeStatic", "()Ljava/lang/String;", null, null);
 			mv.visitCode();
-			mv.visitMethodInsn(INVOKESTATIC, "ITest", "private_static_method", "()Ljava/lang/String;", false);
+			mv.visitMethodInsn(INVOKESTATIC, "ITest", "private_static_method", "()Ljava/lang/String;", true);
 			mv.visitInsn(ARETURN);
 			mv.visitMaxs(1, 0);
 			mv.visitEnd();
@@ -79,7 +79,7 @@ public class GenerateInterfaceFromASM {
 			mv = cw.visitMethod(ACC_PUBLIC, "RunTest_private_non_static_method_with_InvokeStatic", "()Ljava/lang/String;", null, null);
 			mv.visitCode();
 			mv.visitVarInsn(ALOAD, 0);
-			mv.visitMethodInsn(INVOKESTATIC, "ITest", "private_non_static_method", "()Ljava/lang/String;", false);
+			mv.visitMethodInsn(INVOKESTATIC, "ITest", "private_non_static_method", "()Ljava/lang/String;", true);
 			mv.visitInsn(ARETURN);
 			mv.visitMaxs(1, 1);
 			mv.visitEnd();
@@ -106,7 +106,7 @@ public class GenerateInterfaceFromASM {
 			mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "RunTest_private_static_method_with_InvokeSpecial", "(LITest;)Ljava/lang/String;", null, null);
 			mv.visitCode();
 			mv.visitVarInsn(ALOAD, 0);
-			mv.visitMethodInsn(INVOKESPECIAL, "ITest", "private_static_method", "()Ljava/lang/String;", false);
+			mv.visitMethodInsn(INVOKESPECIAL, "ITest", "private_static_method", "()Ljava/lang/String;", true);
 			mv.visitInsn(ARETURN);
 			mv.visitMaxs(1, 1);
 			mv.visitEnd();
@@ -115,7 +115,7 @@ public class GenerateInterfaceFromASM {
 			mv = cw.visitMethod(ACC_PUBLIC, "RunTest_private_non_static_method_with_InvokeSpecial", "(LITest;)Ljava/lang/String;", null, null);
 			mv.visitCode();
 			mv.visitVarInsn(ALOAD, 0);
-			mv.visitMethodInsn(INVOKESPECIAL, "ITest", "private_non_static_method", "()Ljava/lang/String;", false);
+			mv.visitMethodInsn(INVOKESPECIAL, "ITest", "private_non_static_method", "()Ljava/lang/String;", true);
 			mv.visitInsn(ARETURN);
 			mv.visitMaxs(1, 2);
 			mv.visitEnd();

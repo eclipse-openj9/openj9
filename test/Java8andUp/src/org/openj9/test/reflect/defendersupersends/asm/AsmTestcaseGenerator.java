@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -175,7 +175,9 @@ public class AsmTestcaseGenerator {
 					MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, tests[i], "()C", null, null);
 					mv.visitCode();
 					mv.visitVarInsn(ALOAD, 0);
-					mv.visitMethodInsn(INVOKESPECIAL, targetSend, tests[i], "()C");
+
+					/* the targetSend Class is always an Interface in this test case, so the itf flag will be set to true for all tests */
+					mv.visitMethodInsn(INVOKESPECIAL, targetSend, tests[i], "()C", true);
 					mv.visitInsn(IRETURN);
 					mv.visitMaxs(1, 1);
 					mv.visitEnd();

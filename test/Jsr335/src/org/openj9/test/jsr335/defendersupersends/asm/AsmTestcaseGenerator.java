@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -237,7 +237,9 @@ public class AsmTestcaseGenerator {
 					MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, tests[i], "()C", null, null);
 					mv.visitCode();
 					mv.visitVarInsn(ALOAD, 0);
-					mv.visitMethodInsn(INVOKESPECIAL, targetSend, tests[i], "()C");
+
+					/* the targetSend Class is always an Interface in this test case, so the itf flag will be set to true for all tests */
+					mv.visitMethodInsn(INVOKESPECIAL, targetSend, tests[i], "()C", true);
 					mv.visitInsn(IRETURN);
 					mv.visitMaxs(1, 1);
 					mv.visitEnd();
@@ -526,15 +528,15 @@ public class AsmTestcaseGenerator {
 					mv = cw.visitMethod(ACC_PUBLIC, name, "()V", null, new String[] { "java/lang/Throwable" });
 					mv.visitCode();
 					mv.visitLdcInsn(callTo);
-					mv.visitMethodInsn(INVOKESTATIC, AsmUtils.class.getName().replace('.', '/'), "newInstance", "(Ljava/lang/String;)Ljava/lang/Object;");
+					mv.visitMethodInsn(INVOKESTATIC, AsmUtils.class.getName().replace('.', '/'), "newInstance", "(Ljava/lang/String;)Ljava/lang/Object;", false);
 					mv.visitTypeInsn(CHECKCAST, TestHarness.class.getName().replace('.', '/'));
 					mv.visitVarInsn(ASTORE, 1);
 					mv.visitVarInsn(ALOAD, 1);
-					mv.visitMethodInsn(INVOKEINTERFACE, TestHarness.class.getName().replace('.', '/'), "m", "()C");
+					mv.visitMethodInsn(INVOKEINTERFACE, TestHarness.class.getName().replace('.', '/'), "m", "()C", true);
 					mv.visitVarInsn(ISTORE, 2);
 					mv.visitIntInsn(BIPUSH, expectedReturnValue);
 					mv.visitVarInsn(ILOAD, 2);
-					mv.visitMethodInsn(INVOKESTATIC, JUnitTestcase.this.asmName(), "assertEquals", "(CC)V");
+					mv.visitMethodInsn(INVOKESTATIC, JUnitTestcase.this.asmName(), "assertEquals", "(CC)V", false);
 					mv.visitInsn(RETURN);
 					mv.visitMaxs(2, 3);
 					mv.visitEnd();

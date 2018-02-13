@@ -1,7 +1,7 @@
 package org.openj9.test.jsr335.interfaceStaticMethod;
 
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,13 +69,13 @@ public class InvokeStaticTest {
 		}
 	}
 
-	// test invokestatic A.bar() should fail with NoSuchMethodError public
+	// test invokestatic A.bar() should fail with IncompatibleClassChangeError
 	@Test
 	public void test_A_bar() {
 		try {
 			String s = org.openj9.test.jsr335.interfaceStaticMethod.GenInvokeStatic.test_A_bar();
-			Assert.fail("noSuchMethodErrorThrown not thrown");
-		} catch (NoSuchMethodError e) {
+			Assert.fail("IncompatibleClassChangeError not thrown");
+		} catch (java.lang.IncompatibleClassChangeError e) {
 			// do nothing
 		}
 	}
