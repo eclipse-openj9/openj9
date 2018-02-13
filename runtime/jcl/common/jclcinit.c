@@ -196,7 +196,7 @@ static jint initializeStaticMethod(J9JavaVM* vm, UDATA offset)
 	J9ROMClass * jclROMClass = jclConstantPool->ramClass->romClass;
 	U_32 * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(jclROMClass);
 
-	if (J9CPTYPE_STATIC_METHOD == J9_CP_TYPE(cpShapeDescription, offset)) {
+	if (J9CPTYPE_STATIC_METHOD == J9_CP_TYPE(cpShapeDescription, offset) || J9CPTYPE_INTERFACE_STATIC_METHOD == J9_CP_TYPE(cpShapeDescription, offset)) {
 		if (NULL == vm->internalVMFunctions->resolveStaticMethodRef(vm->mainThread, jclConstantPool, offset, J9_RESOLVE_FLAG_NO_THROW_ON_FAIL | J9_RESOLVE_FLAG_JCL_CONSTANT_POOL)) {
 			if (NULL == J9VMCONSTANTPOOL_CLASSREF_AT(vm, romMethodConstantPool[offset].classRefCPIndex)->value) {
 				Trc_JCL_initializeKnownClasses_ClassRefNotResolvedForMethodRef(vm->mainThread, romMethodConstantPool[offset].classRefCPIndex, offset);
@@ -305,7 +305,7 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 					return JNI_ERR;
 				}
 			}
-		} else if (J9CPTYPE_INSTANCE_METHOD == J9_CP_TYPE(cpShapeDescription, i)) {
+		} else if (J9CPTYPE_INSTANCE_METHOD == J9_CP_TYPE(cpShapeDescription, i) || J9CPTYPE_INTERFACE_INSTANCE_METHOD == J9_CP_TYPE(cpShapeDescription, i)) {
 			J9ROMClassRef* romClassRef = &romClassConstantPool[romMethodConstantPool[i].classRefCPIndex];
 
 			if (0 == (romClassRef->runtimeFlags & runtimeFlags)) {
@@ -331,7 +331,7 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 					}
 				}
 			}
-		} else if (J9CPTYPE_STATIC_METHOD == J9_CP_TYPE(cpShapeDescription, i)) {
+		} else if (J9CPTYPE_STATIC_METHOD == J9_CP_TYPE(cpShapeDescription, i) || J9CPTYPE_INTERFACE_STATIC_METHOD == J9_CP_TYPE(cpShapeDescription, i)) {
 			J9ROMClassRef* romClassRef = &romClassConstantPool[romMethodConstantPool[i].classRefCPIndex];
 			if (0 == (romClassRef->runtimeFlags & runtimeFlags)) {
 				Trc_JCL_initializeKnownClasses_SkippingResolve(vm->mainThread, i, romClassRef, romClassRef->runtimeFlags, runtimeFlags);

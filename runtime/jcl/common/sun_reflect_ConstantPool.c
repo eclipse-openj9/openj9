@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -212,7 +212,8 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 			J9ConstantPool *constantPool = J9_CP_FROM_CLASS(cpClass);
 			switch (cpType) {
 			case J9CPTYPE_HANDLE_METHOD: /* fall through */
-			case J9CPTYPE_INSTANCE_METHOD:
+			case J9CPTYPE_INSTANCE_METHOD: /* fall through */
+			case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
 				/* Check for resolved special first, then try to resolve as virtual, then special and then static */
 				method = ((J9RAMMethodRef *) ramConstantRef)->method;
 				if ((NULL == method) || (NULL == method->constantPool)) {
@@ -231,7 +232,8 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 					}
 				}
 				break;
-			case J9CPTYPE_STATIC_METHOD:
+			case J9CPTYPE_STATIC_METHOD: /* fall through */
+			case J9CPTYPE_INTERFACE_STATIC_METHOD:
 				method = ((J9RAMStaticMethodRef *) ramConstantRef)->method;
 				/* TODO is this the right check for an unresolved method? Can I check against vm->initialMethods.initialStaticMethod */
 				if ((NULL == method) || (NULL == method->constantPool)) {
@@ -260,7 +262,7 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 
 		if (NULL != methodID) {
 			if (NULL != jlClass) {
-				returnValue = (*env)->ToReflectedMethod(env, jlClass, methodID, J9CPTYPE_STATIC_METHOD == cpType);
+				returnValue = (*env)->ToReflectedMethod(env, jlClass, methodID, (J9CPTYPE_STATIC_METHOD == cpType || J9CPTYPE_INTERFACE_STATIC_METHOD == cpType));
 			} else {
 				throwNativeOOMError(env, 0, 0);
 			}
@@ -540,7 +542,9 @@ Java_sun_reflect_ConstantPool_getMemberRefInfoAt0(JNIEnv *env, jobject unusedObj
 			case J9CPTYPE_HANDLE_METHOD: /* fall thru */
 			case J9CPTYPE_INSTANCE_METHOD: /* fall thru */
 			case J9CPTYPE_STATIC_METHOD: /* fall thru */
-			case J9CPTYPE_INTERFACE_METHOD:
+			case J9CPTYPE_INTERFACE_METHOD: /* fall thru */
+			case J9CPTYPE_INTERFACE_INSTANCE_METHOD: /* fall thru */
+			case J9CPTYPE_INTERFACE_STATIC_METHOD:
 				classRefCPIndex = ((J9ROMMethodRef *) romCPItem)->classRefCPIndex;
 				nameAndSignature = J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) romCPItem);
 				break;
