@@ -1980,7 +1980,7 @@ void printJaasCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo
          j9tty_printf(PORTLIB, "Num commit failures: %d. Average per compilation: %f\n", table->_numCommitFailures.load(), table->_numCommitFailures.load() / float(table->_numUpdates.load()));
          j9tty_printf(PORTLIB, "Num classes updated: %d. Average per compilation: %f\n", table->_numClassesUpdated.load(), table->_numClassesUpdated.load() / float(table->_numUpdates.load()));
          j9tty_printf(PORTLIB, "Num classes removed: %d. Average per compilation: %f\n", table->_numClassesRemoved.load(), table->_numClassesRemoved.load() / float(table->_numUpdates.load()));
-         j9tty_printf(PORTLIB, "Total update bytes: %d. Average per compilation: %f\n", table->_updateBytes.load(), table->_updateBytes.load() / float(table->_numUpdates.load()));
+         j9tty_printf(PORTLIB, "Total update bytes: %d. Compilation max: %d. Average per compilation: %f\n", table->_updateBytes.load(), table->_maxUpdateBytes.load(), table->_updateBytes.load() / float(table->_numUpdates.load()));
          }
       }
    else if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
@@ -1992,7 +1992,7 @@ void printJaasCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo
          j9tty_printf(PORTLIB, "Num classes updated: %d. Average per compilation: %f\n", table->_numClassesUpdated.load(), table->_numClassesUpdated.load() / float(table->_numUpdates.load()));
          j9tty_printf(PORTLIB, "Num classes removed: %d. Average per compilation: %f\n", table->_numClassesRemoved.load(), table->_numClassesRemoved.load() / float(table->_numUpdates.load()));
          j9tty_printf(PORTLIB, "Num class info queries: %d. Average per compilation: %f\n", table->_numQueries.load(), table->_numQueries.load() / float(table->_numUpdates.load()));
-         j9tty_printf(PORTLIB, "Total update bytes: %d. Average per compilation: %f\n", table->_updateBytes.load(), table->_updateBytes.load() / float(table->_numUpdates.load()));
+         j9tty_printf(PORTLIB, "Total update bytes: %d. Compilation max: %d. Average per compilation: %f\n", table->_updateBytes.load(), table->_maxUpdateBytes.load(), table->_updateBytes.load() / float(table->_numUpdates.load()));
          }
       }
 #endif

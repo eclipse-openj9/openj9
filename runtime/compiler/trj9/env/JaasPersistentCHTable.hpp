@@ -51,6 +51,7 @@ public:
    std::atomic<std::uint32_t> _numClassesRemoved;
    std::atomic<std::uint32_t> _numQueries;
    std::atomic<std::uint32_t> _updateBytes;
+   std::atomic<std::uint32_t> _maxUpdateBytes;
 #endif
 
 private:
@@ -87,6 +88,7 @@ public:
    std::atomic<std::uint32_t> _numClassesUpdated;
    std::atomic<std::uint32_t> _numClassesRemoved;
    std::atomic<std::uint32_t> _updateBytes;
+   std::atomic<std::uint32_t> _maxUpdateBytes;
 #endif
 
 private:
