@@ -9,7 +9,7 @@
 namespace JAAS
    {
    template <typename... Args>
-   std::tuple<Args...> getArgs(AnyData *message);
+   std::tuple<Args...> getArgs(const AnyData *message);
    template <typename... Args>
    void setArgs(AnyData *message, Args... args);
 
@@ -17,7 +17,7 @@ namespace JAAS
    struct Void {
       Void() {}
       Void(bool) {}
-      operator bool() { return false; }
+      operator bool() const { return false; }
    };
 
    // This struct and global is used as a hacky replacement for run-time type information (rtti), which is not enabled in our build.
@@ -44,51 +44,51 @@ namespace JAAS
    template <typename T, typename = void> struct AnyPrimitive { };
    template <> struct AnyPrimitive<uint32_t>
       {
-      static inline uint32_t read(Any *msg) { return msg->uint32_v(); }
-      static inline void write(Any* msg, uint32_t val) { msg->set_uint32_v(val); }
+      static inline uint32_t read(const Any *msg) { return msg->uint32_v(); }
+      static inline void write(Any* msg, const uint32_t val) { msg->set_uint32_v(val); }
       static inline Any::TypeCase typeCase() { return Any::kUint32V; }
       };
    template <> struct AnyPrimitive<uint64_t>
       {
-      static inline uint64_t read(Any *msg) { return msg->uint64_v(); }
-      static inline void write(Any* msg, uint64_t val) { msg->set_uint64_v(val); }
+      static inline uint64_t read(const Any *msg) { return msg->uint64_v(); }
+      static inline void write(Any* msg, const uint64_t val) { msg->set_uint64_v(val); }
       static inline Any::TypeCase typeCase() { return Any::kUint64V; }
       };
    template <> struct AnyPrimitive<int32_t>
       {
-      static inline int32_t read(Any *msg) { return msg->int32_v(); }
-      static inline void write(Any* msg, int32_t val) { msg->set_int32_v(val); }
+      static inline int32_t read(const Any *msg) { return msg->int32_v(); }
+      static inline void write(Any* msg, const int32_t val) { msg->set_int32_v(val); }
       static inline Any::TypeCase typeCase() { return Any::kInt32V; }
       };
    template <> struct AnyPrimitive<int64_t>
       {
-      static inline int64_t read(Any *msg) { return msg->int64_v(); }
-      static inline void write(Any* msg, int64_t val) { msg->set_int64_v(val); }
+      static inline int64_t read(const Any *msg) { return msg->int64_v(); }
+      static inline void write(Any* msg, const int64_t val) { msg->set_int64_v(val); }
       static inline Any::TypeCase typeCase() { return Any::kInt64V; }
       };
    template <> struct AnyPrimitive<bool>
       {
-      static inline bool read(Any *msg) { return msg->bool_v(); }
-      static inline void write(Any* msg, bool val) { msg->set_bool_v(val); }
+      static inline bool read(const Any *msg) { return msg->bool_v(); }
+      static inline void write(Any* msg, const bool val) { msg->set_bool_v(val); }
       static inline Any::TypeCase typeCase() { return Any::kBoolV; }
       };
-   template <> struct AnyPrimitive<std::string>
+   template <> struct AnyPrimitive<const std::string>
       {
-      static inline std::string read(Any *msg) { return msg->bytes_v(); }
-      static inline void write(Any* msg, std::string val) { msg->set_bytes_v(val); }
+      static inline const std::string& read(const Any *msg) { return msg->bytes_v(); }
+      static inline void write(Any* msg, const std::string &val) { msg->set_bytes_v(val); }
       static inline Any::TypeCase typeCase() { return Any::kBytesV; }
       };
    // trivially copyable
    template <typename T> struct AnyPrimitive<T, typename std::enable_if<std::is_trivially_copyable<T>::value>::type>
       {
-      static inline T read(Any *msg)
+      static inline T read(const Any *msg)
          {
-         T val;
-         std::string strVal = msg->bytes_v();
+         typename std::remove_const<T>::type val;
+         const std::string &strVal = msg->bytes_v();
          memcpy(&val, &strVal[0], sizeof(T));
          return val;
          }
-      static inline void write(Any *msg, T val)
+      static inline void write(Any *msg, const T &val)
          {
          std::string strVal((char*) &val, sizeof(T));
          msg->set_bytes_v(strVal);
@@ -98,23 +98,23 @@ namespace JAAS
    // vector
    template <typename T> struct AnyPrimitive<T, typename std::enable_if<std::is_same<T, std::vector<typename T::value_type>>::value>::type>
       {
-      static inline T read(Any *msg)
+      static inline T read(const Any *msg)
          {
          std::vector<typename T::value_type> out;
-         auto items = msg->vector_v();
+         auto &items = msg->vector_v();
          for (size_t i = 0; i < items.data_size(); i++)
             {
             auto item = items.data(i);
-            out.push_back(AnyPrimitive<typename T::value_type>::read(&item));
+            out.push_back(AnyPrimitive<const typename T::value_type>::read(&item));
             }
          return out;
          }
-      static inline void write(Any *msg, T val)
+      static inline void write(Any *msg, const T &val)
          {
          auto data = msg->mutable_vector_v();
-         for (typename T::value_type& item : val)
+         for (const typename T::value_type& item : val)
             {
-            AnyPrimitive<typename T::value_type>::write(data->add_data(), item);
+            AnyPrimitive<const typename T::value_type>::write(data->add_data(), item);
             }
          }
       static inline Any::TypeCase typeCase() { return Any::kVectorV; }
@@ -122,20 +122,20 @@ namespace JAAS
    // tuple
    // using getArgs and setArgs here is perhaps a bit heavyweight, but it does allow non-primitives to be sent,
    // which we can't do with vectors right now. (should be trivial to add support for though, just forward declare and use ProtoBufTypeConvert)
-   template <typename... T> struct AnyPrimitive<std::tuple<T...>>
+   template <typename... T> struct AnyPrimitive<const std::tuple<T...>>
       {
-      static inline std::tuple<T...> read(Any *msg)
+      static inline std::tuple<T...> read(const Any *msg)
          {
-         auto items = msg->vector_v();
+         auto &items = msg->vector_v();
          return getArgs<T...>(&items);
          }
       template <typename Tuple, size_t... Idx>
-      static inline void write_impl(Any *msg, Tuple &&val, index_tuple<Idx...>)
+      static inline void write_impl(Any *msg, const Tuple &val, index_tuple<Idx...>)
          {
          auto data = msg->mutable_vector_v();
          setArgs(data, std::get<Idx>(val)...);
          }
-      static inline void write(Any *msg, std::tuple<T...> val)
+      static inline void write(Any *msg, const std::tuple<T...> &val)
          {
          using Idx = typename index_tuple_gen<sizeof...(T)>::type;
          write_impl(msg, val, Idx());
@@ -150,14 +150,14 @@ namespace JAAS
       {
       static TypeID type;
       using ProtoType = Proto;
-      static Primitive onRecv(Any *in)
+      static Primitive onRecv(const Any *in)
          {
          if (type.id != in->extendedtypetag())
             throw StreamTypeMismatch("Primitive type mismatch: " + std::to_string(type.id) + " != "  + std::to_string(in->extendedtypetag()));
-         Proto out = AnyPrimitive<Proto>::read(in);
+         const Proto &out = AnyPrimitive<Proto>::read(in);
          return (Primitive) out;
          }
-      static void onSend(Any *out, Primitive in)
+      static void onSend(Any *out, const Primitive &in)
          {
          out->set_extendedtypetag(type.id);
          AnyPrimitive<Proto>::write(out, (Proto) in);
@@ -176,8 +176,8 @@ namespace JAAS
    template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_base_of<google::protobuf::Message, T>::value>::type>
       {
       using ProtoType = T;
-      static T onRecv(ProtoType in) { return in; }
-      static ProtoType onSend(T in) { return in; }
+      static inline T &onRecv(const ProtoType &in) { return in; }
+      static inline ProtoType &onSend(const T &in) { return in; }
       };
 
    // Specialize ProtobufTypeConvert for various primitive types by inheriting from a specifically instantiated PrimitiveTypeConvert
@@ -186,9 +186,9 @@ namespace JAAS
    template <> struct ProtobufTypeConvert<int64_t> : PrimitiveTypeConvert<int64_t> { };
    template <> struct ProtobufTypeConvert<uint32_t> : PrimitiveTypeConvert<uint32_t> { };
    template <> struct ProtobufTypeConvert<int32_t> : PrimitiveTypeConvert<int32_t> { };
-   template <> struct ProtobufTypeConvert<std::string> : PrimitiveTypeConvert<std::string> { };
+   template <> struct ProtobufTypeConvert<std::string> : PrimitiveTypeConvert<const std::string> { };
    template <> struct ProtobufTypeConvert<Void> : PrimitiveTypeConvert<Void, bool> { };
-   template <typename... T> struct ProtobufTypeConvert<std::tuple<T...>> : PrimitiveTypeConvert<std::tuple<T...>> { };
+   template <typename... T> struct ProtobufTypeConvert<std::tuple<T...>> : PrimitiveTypeConvert<const std::tuple<T...>> { };
 
    // Specialize conversion for all enums by widening to 64 bits
    template <typename T> struct ProtobufTypeConvert<T, typename std::enable_if<std::is_enum<T>::value>::type> : PrimitiveTypeConvert<T, uint64_t>
@@ -237,7 +237,7 @@ namespace JAAS
    template <typename Arg1, typename... Args>
    struct GetArgs
       {
-      static std::tuple<Arg1, Args...> getArgs(AnyData *message, size_t n)
+      static std::tuple<Arg1, Args...> getArgs(const AnyData *message, size_t n)
          {
          return std::tuple_cat(GetArgs<Arg1>::getArgs(message, n), GetArgs<Args...>::getArgs(message, n + 1));
          }
@@ -245,7 +245,7 @@ namespace JAAS
    template <typename Arg>
    struct GetArgs<Arg>
       {
-      static std::tuple<Arg> getArgs(AnyData *message, size_t n)
+      static std::tuple<Arg> getArgs(const AnyData *message, size_t n)
          {
          auto data = message->data(n);
          if (data.type_case() != AnyPrimitive<typename ProtobufTypeConvert<Arg>::ProtoType>::typeCase())
@@ -254,7 +254,7 @@ namespace JAAS
          }
       };
    template <typename... Args>
-   std::tuple<Args...> getArgs(AnyData *message)
+   std::tuple<Args...> getArgs(const AnyData *message)
       {
       if (sizeof...(Args) != message->data_size())
          throw StreamArityMismatch("Expected " + std::to_string(message->data_size()) + " args to unpack but got " + std::to_string(sizeof...(Args)) + "-tuple");
