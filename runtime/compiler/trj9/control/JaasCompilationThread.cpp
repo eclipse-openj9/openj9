@@ -1777,7 +1777,6 @@ remoteCompile(
 
    JAAS::J9ClientStream client(TR::comp()->getPersistentInfo()->getJaasServerConnectionInfo(),
                                TR::comp()->getPersistentInfo()->getJaasTimeout());
-   client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJaasId(), romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), detailsStr, details.getType());
 
    uint32_t statusCode = compilationFailure;
    std::string codeCacheStr;
