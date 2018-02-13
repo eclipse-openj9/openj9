@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,6 +103,7 @@ SH_OSCachesysv::initialize(J9PortLibrary* portLib, char* memForConstructor, UDAT
 	_attach_count = 0;
 	_shmhandle = NULL;
 	_semhandle = NULL;
+	_actualCacheSize = 0;
 	_shmFileName = NULL;
 	_semFileName = NULL;
 	_openSharedMemory = false;
@@ -475,6 +476,7 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 			}
 #endif /* !defined(WIN32) */
 			setError(J9SH_OSCACHE_CREATED);
+			getTotalSize();
 			Trc_SHR_OSC_startup_Exit_Created(cacheName);
 			_startupCompleted=true;
 			return true;
@@ -488,6 +490,7 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 				}
 			}
 			setError(J9SH_OSCACHE_OPENED);
+			getTotalSize();
 			Trc_SHR_OSC_startup_Exit_Opened(cacheName);
 			_startupCompleted=true;
 			return true;
@@ -1647,6 +1650,10 @@ SH_OSCachesysv::getTotalSize()
 	J9PortShmemStatistic statbuf;
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
+	if (_actualCacheSize > 0) {
+		return _actualCacheSize;
+	}
+
 	if (j9shmem_stat(_cacheDirName, _groupPerm, _shmFileName, &statbuf) == (UDATA)-1) {
 		/* CMVC 143141: If shared memory can not be stat'd then it 
 		 * doesn't exist.  In this case we return 0 because a cache 
@@ -1654,8 +1661,9 @@ SH_OSCachesysv::getTotalSize()
 		 */
 		return 0;
 	}
-
-	return (U_32)statbuf.size;
+	
+	_actualCacheSize = (U_32)statbuf.size;
+	return _actualCacheSize;
 }
 
 
