@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -373,8 +373,8 @@ enum INIT_STAGE {
 
 #define VMOPT_TUNE_VIRTUALIZED "-Xtune:virtualized"
 
-#define VMOPT_XXSTRINGCOMPRESSION "-XX:+StringCompression"
-#define VMOPT_XXNOSTRINGCOMPRESSION "-XX:-StringCompression"
+#define VMOPT_XXCOMPACTSTRINGS "-XX:+CompactStrings"
+#define VMOPT_XXNOCOMPACTSTRINGS "-XX:-CompactStrings"
 
 #define VMOPT_XXSHARECLASSESENABLEBCI "-XX:ShareClassesEnableBCI"
 #define VMOPT_XXSHARECLASSESDISABLEBCI "-XX:ShareClassesDisableBCI"
