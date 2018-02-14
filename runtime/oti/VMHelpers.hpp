@@ -1373,8 +1373,11 @@ exit:
 	static VMINLINE void
 	reportFinalFieldModified(J9VMThread* currentThread, J9Class* fieldClass)
 	{
-#if 0
-		if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassHasIllegalFinalFieldModifications)) {
+		/** Only report modifications after class initalization
+		 *  Since final field write is allowed during class init process,
+		 *  JIT will not start to trust final field values until the class has completed initialization
+		 */
+		if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassHasIllegalFinalFieldModifications) && (J9ClassInitSucceeded == fieldClass->initializeStatus)) {
 			J9JavaVM* vm = currentThread->javaVM;
 			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_OSR_SAFE_POINT)) {
 				J9InternalVMFunctions* vmFuncs = vm->internalVMFunctions;
@@ -1392,7 +1395,6 @@ exit:
 				vmFuncs->releaseSafePointVMAccess(currentThread);
 			}
 		}
-#endif
 	}
 };
 
