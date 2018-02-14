@@ -20,10 +20,11 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-# Panama Test
-- Contains [tests](src/org/openj9/test/panama/) for native method handles
-- Build with the "Build git tests - panama" job
-- Run with linux_x86-64_cmprssptrs_panama.spec on the rawbuild-panama_xa64-b136 sdk
+# Future JEPs Test
+- Contains [tests](src/org/openj9/test/panama/) for Project Panama native method handles
+- Contains [tests](src/org/openj9/test/valhalla/) for Project Valhalla nest host & nest members attributes
+- Build with the "Build git tests - experimental" job
+- Run with linux_x86-64_cmprssptrs_futurejeps.spec on the rawbuild-futurejeps_xa64-b136 sdk
 - [HigherLevelNativeMethodHandleTest](src/org/openj9/test/panama/HigherLevelNativeMethodHandleTest.java) uses [panamatest.jar](lib/panamatest.jar), created from [panamatest.c](panamatest.c) with the jextract groveller
 
 

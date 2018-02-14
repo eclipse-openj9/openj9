@@ -77,7 +77,7 @@
 					<and>
 						<available file="${patch-b148.zip}" type="file" />
 						<not>
-							<equals arg1="${module.platform}" arg2="panama_xa64" />
+							<equals arg1="${module.platform}" arg2="futurejeps_xa64" />
 						</not>
 						<not>
 							<isset property="rawbuild.level" />

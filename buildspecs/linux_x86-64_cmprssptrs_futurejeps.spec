@@ -22,8 +22,8 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-<spec xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ibm.com/j9/builder/spec" xsi:schemaLocation="http://www.ibm.com/j9/builder/spec spec-v1.xsd" id="linux_x86-64_cmprssptrs_panama">
-	<name>Linux Hammer Compressed Pointers Panama</name>
+<spec xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ibm.com/j9/builder/spec" xsi:schemaLocation="http://www.ibm.com/j9/builder/spec spec-v1.xsd" id="linux_x86-64_cmprssptrs_futurejeps">
+	<name>Linux Hammer Compressed Pointers FutureJEPs</name>
 	<asmBuilderName>LinuxHammer</asmBuilderName>
 	<cpuArchitecture>x86</cpuArchitecture>
 	<os>linux</os>
@@ -85,7 +85,7 @@
 		<property name="jitTestingOptLevel" value="optlevel=warm"/>
 		<property name="localRootPath" value="$(J9_UNIX_ROOT)"/>
 		<property name="longLimitCmd" value=""/>
-		<property name="main_shortname" value="panama_xa64"/>
+		<property name="main_shortname" value="futurejeps_xa64"/>
 		<property name="os.lineDelimiter" value="unix"/>
 		<property name="platform_arch" value="amd64"/>
 		<property name="svn_stream" value=""/>
@@ -255,6 +255,7 @@
 		<flag id="opt_useFfi" value="true"/>
 		<flag id="opt_useFfiOnly" value="true"/>
 		<flag id="opt_valhallaMvt" value="false"/>
+		<flag id="opt_valhallaNestmates" value="true"/>
 		<flag id="opt_zipSupport" value="true"/>
 		<flag id="opt_zlibCompression" value="true"/>
 		<flag id="opt_zlibSupport" value="true"/>
