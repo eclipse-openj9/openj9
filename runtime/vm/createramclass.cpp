@@ -264,6 +264,59 @@ unmarkInterfaces(J9Class *interfaceHead)
 }
 
 static void
+addITableMethods(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClass, UDATA **currentSlot)
+{
+	J9ROMClass *interfaceRomClass = interfaceClass->romClass;
+	UDATA count = interfaceRomClass->romMethodCount;
+	if (count != 0) {
+		UDATA *vTable = (UDATA *)(ramClass + 1);
+		UDATA vTableSize = *vTable;
+		J9Method *interfaceRamMethod = interfaceClass->ramMethods;
+		while (count-- > 0) {
+			J9ROMMethod *interfaceRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(interfaceRamMethod);
+			J9UTF8 *interfaceMethodName = J9ROMMETHOD_NAME(interfaceRomMethod);
+			J9UTF8 *interfaceMethodSig = J9ROMMETHOD_SIGNATURE(interfaceRomMethod);
+			UDATA vTableIndex = 0;
+			UDATA searchIndex = 2;
+			
+			/* Search the vTable for a public method of the correct name. */
+			while (searchIndex <= vTableSize) {
+				J9Method *vTableRamMethod = (J9Method *)vTable[searchIndex];
+				J9ROMMethod *vTableRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(vTableRamMethod);
+				J9UTF8 *vTableMethodName = J9ROMMETHOD_NAME(vTableRomMethod);
+				J9UTF8 *vTableMethodSig = J9ROMMETHOD_SIGNATURE(vTableRomMethod);
+
+				if (vTableRomMethod->modifiers & J9_JAVA_PUBLIC) {
+					if ((J9UTF8_LENGTH(interfaceMethodName) == J9UTF8_LENGTH(vTableMethodName))
+					&& (J9UTF8_LENGTH(interfaceMethodSig) == J9UTF8_LENGTH(vTableMethodSig))
+					&& (memcmp(J9UTF8_DATA(interfaceMethodName), J9UTF8_DATA(vTableMethodName), J9UTF8_LENGTH(vTableMethodName)) == 0)
+					&& (memcmp(J9UTF8_DATA(interfaceMethodSig), J9UTF8_DATA(vTableMethodSig), J9UTF8_LENGTH(vTableMethodSig)) == 0)
+					) {
+						vTableIndex = (searchIndex * sizeof(UDATA))	+ sizeof(J9Class);
+						break;
+					}
+				}
+				searchIndex++;
+			}
+
+#if defined(J9VM_TRACE_ITABLE)
+			{
+				PORT_ACCESS_FROM_VMC(vmStruct);
+				j9tty_printf(PORTLIB, "\n  map %.*s%.*s to vTableIndex=%d (%d)", J9UTF8_LENGTH(interfaceMethodName),
+						J9UTF8_DATA(interfaceMethodName), J9UTF8_LENGTH(interfaceMethodSig), J9UTF8_DATA(interfaceMethodSig), vTableIndex, searchIndex);
+			}
+#endif
+
+			/* fill in interface index --> vTableIndex mapping */
+			**currentSlot = vTableIndex;
+			(*currentSlot)++;
+
+			interfaceRamMethod++;
+		}
+	}
+}
+
+static void
 createITable(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClass, J9ITable ***previousLink, UDATA **currentSlot, UDATA depth)
 {
 	/* Fill in the iTable header and link it into the list. */
@@ -276,54 +329,12 @@ createITable(J9VMThread* vmStruct, J9Class *ramClass, J9Class *interfaceClass, J
 
 	/* If the newly-built class is not an interface class, fill in the iTable. */
 	if (J9_JAVA_INTERFACE != (ramClass->romClass->modifiers & J9_JAVA_INTERFACE)) {
-		J9ROMClass *interfaceRomClass = interfaceClass->romClass;
-		UDATA count = interfaceRomClass->romMethodCount;
-		if (count != 0) {
-			UDATA *vTable = (UDATA *)(ramClass + 1);
-			UDATA vTableSize = *vTable;
-			J9Method *interfaceRamMethod = interfaceClass->ramMethods;
-			while (count-- > 0) {
-				J9ROMMethod *interfaceRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(interfaceRamMethod);
-				J9UTF8 *interfaceMethodName = J9ROMMETHOD_NAME(interfaceRomMethod);
-				J9UTF8 *interfaceMethodSig = J9ROMMETHOD_SIGNATURE(interfaceRomMethod);
-				UDATA vTableIndex = 0;
-				UDATA searchIndex = 2;
-				
-				/* Search the vTable for a public method of the correct name. */
-				while (searchIndex <= vTableSize) {
-					J9Method *vTableRamMethod = (J9Method *)vTable[searchIndex];
-					J9ROMMethod *vTableRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(vTableRamMethod);
-					J9UTF8 *vTableMethodName = J9ROMMETHOD_NAME(vTableRomMethod);
-					J9UTF8 *vTableMethodSig = J9ROMMETHOD_SIGNATURE(vTableRomMethod);
-
-					if (vTableRomMethod->modifiers & J9_JAVA_PUBLIC) {
-						if ((J9UTF8_LENGTH(interfaceMethodName) == J9UTF8_LENGTH(vTableMethodName))
-						&& (J9UTF8_LENGTH(interfaceMethodSig) == J9UTF8_LENGTH(vTableMethodSig))
-						&& (memcmp(J9UTF8_DATA(interfaceMethodName), J9UTF8_DATA(vTableMethodName), J9UTF8_LENGTH(vTableMethodName)) == 0)
-						&& (memcmp(J9UTF8_DATA(interfaceMethodSig), J9UTF8_DATA(vTableMethodSig), J9UTF8_LENGTH(vTableMethodSig)) == 0)
-						) {
-							vTableIndex = (searchIndex * sizeof(UDATA))	+ sizeof(J9Class);
-							break;
-						}
-					}
-					searchIndex++;
-				}
-
-#if defined(J9VM_TRACE_ITABLE)
-				{
-					PORT_ACCESS_FROM_VMC(vmStruct);
-					j9tty_printf(PORTLIB, "\n  map %.*s%.*s to vTableIndex=%d (%d)", J9UTF8_LENGTH(interfaceMethodName),
-							J9UTF8_DATA(interfaceMethodName), J9UTF8_LENGTH(interfaceMethodSig), J9UTF8_DATA(interfaceMethodSig), vTableIndex, searchIndex);
-				}
-#endif
-
-				/* fill in interface index --> vTableIndex mapping */
-				**currentSlot = vTableIndex;
-				(*currentSlot)++;
-
-				interfaceRamMethod++;
-			}
-		}
+		/* iTables contain all methods from the local interface, and any interfaces it extends */
+		J9ITable *allInterfaces = (J9ITable*)interfaceClass->iTable;
+		do {
+			addITableMethods(vmStruct, ramClass, allInterfaces->interfaceClass, currentSlot);
+			allInterfaces = allInterfaces->next;
+		} while (NULL != allInterfaces);
 	}
 }
 
@@ -1323,30 +1334,6 @@ getVTableIndexForNameAndSigStartingAt(UDATA *vTable, J9UTF8 *name, J9UTF8 *signa
 }
 
 UDATA
-getITableIndexForMethod(J9Method * method)
-{
-	/* The iTableIndex is the same as the (ram/rom)method index. 
-	 * This includes static and private methods - they just exist 
-	 * as dead entries in the iTable.
-	 * 
-	 * Code below is the equivalent of doing:
-	 *	for (; methodIndex < methodCount; methodIndex++) {
-	 *		if (ramMethod == method) {
-	 *				return methodIndex;
-	 *		}
-	 *		ramMethod++;
-	 *	}
-	 */
-	J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
-	const UDATA methodCount = methodClass->romClass->romMethodCount;
-	const UDATA methodIndex = method - methodClass->ramMethods;
-	if (methodIndex < methodCount) {
-		return methodIndex;
-	}
-	return -1;
-}
-
-UDATA
 getVTableIndexForMethod(J9Method * method, J9Class *clazz, J9VMThread *vmThread)
 {
 	UDATA vTableIndex;
@@ -2073,7 +2060,11 @@ fail:
 				while (interfaceWalk != NULL) {
 					/* The iTables for interface classes do not contain entries for methods. */
 					/* add methods supported by this interface to tally */
-					iTableSlotCount += interfaceWalk->romClass->romMethodCount;
+					J9ITable *allInterfaces = (J9ITable*)interfaceWalk->iTable;
+					do {
+						iTableSlotCount += allInterfaces->interfaceClass->romClass->romMethodCount;	
+						allInterfaces = allInterfaces->next;
+					} while (NULL != allInterfaces);
 					interfaceWalk = (J9Class *)((UDATA)interfaceWalk->instanceDescription & ~INTERFACE_TAG);
 				}
 			}

@@ -3888,14 +3888,6 @@ fillJITVTableSlot(J9VMThread *vmStruct, UDATA *currentSlot, J9Method *currentMet
 /**
  * @brief
  * @param method
- * @return UDATA
- */
-UDATA
-getITableIndexForMethod(J9Method * method);
-
-/**
- * @brief
- * @param method
  * @param clazz
  * @param vmThread
  * @return UDATA

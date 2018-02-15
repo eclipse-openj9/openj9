@@ -1005,15 +1005,23 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 	if (method != NULL) {
 		if (ramCPEntry != NULL) {
 			J9RAMInterfaceMethodRef *ramInterfaceMethodRef = (J9RAMInterfaceMethodRef *)&ramCP[cpIndex];
-			UDATA methodIndex = getITableIndexForMethod(method) << 8;
+			J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+			UDATA methodIndex = 0;
 			UDATA oldArgCount = ramInterfaceMethodRef->methodIndexAndArgCount & 255;
-			J9Class *methodClass;
+			/* Object methods may be invoked via invokeinterface.  In that case, use Object
+			 * for the interfaceClass in the ref.  The methodIndex value doesn't matter as
+			 * Object will never be found in an iTable.
+			 */
+			if (J9_ARE_ANY_BITS_SET(methodClass->romClass->modifiers, J9_JAVA_INTERFACE)) {
+				methodIndex = getITableIndexForMethod(method, interfaceClass) << 8;
+			} else {
+				interfaceClass = methodClass;
+			}
 			methodIndex |= oldArgCount;
-			methodClass = J9_CLASS_FROM_METHOD(method);
 			ramCPEntry->methodIndexAndArgCount = methodIndex;
 			/* interfaceClass is used to indicate resolved. Make sure to write it last */
 			issueWriteBarrier();
-			ramCPEntry->interfaceClass = (UDATA)methodClass;
+			ramCPEntry->interfaceClass = (UDATA)interfaceClass;
 		}
 		/* indicate success */
 		returnValue = method;

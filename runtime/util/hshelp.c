@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -993,25 +993,28 @@ fixITablesForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs)
 				}
 
 				while (superITable != iTable) {
-					J9Class *interfaceClass = iTable->interfaceClass;
-					J9JVMTIClassPair exemplar;
-					J9JVMTIClassPair *result;
-
-					exemplar.originalRAMClass = interfaceClass;
-					result = hashTableFind(classPairs, &exemplar);
-					if ((NULL != result) && (NULL != result->methodRemap)) {
-						UDATA methodIndex;
+					J9ITable *allInterfaces = (J9ITable*)iTable->interfaceClass->iTable;
+					UDATA *iTableMethods = (UDATA *)(iTable + 1);
+					do {
+						J9Class *interfaceClass = allInterfaces->interfaceClass;
+						J9JVMTIClassPair exemplar;
+						J9JVMTIClassPair *result;
 						UDATA methodCount = interfaceClass->romClass->romMethodCount;
-						UDATA *vTable = (UDATA *)(clazz + 1);
-						UDATA *iTableMethods = (UDATA *)(iTable + 1);
 
-						for (methodIndex = 0; methodIndex < methodCount; methodIndex++) {
-							UDATA vTableIndex = findMethodInVTable(&interfaceClass->ramMethods[methodIndex], vTable);
-
-							Assert_hshelp_false((UDATA)-1 == vTableIndex);
-							iTableMethods[methodIndex] = (vTableIndex * sizeof(UDATA)) + sizeof(J9Class);
+						exemplar.originalRAMClass = interfaceClass;
+						result = hashTableFind(classPairs, &exemplar);
+						if ((NULL != result) && (NULL != result->methodRemap)) {
+							UDATA methodIndex;
+							UDATA *vTable = (UDATA *)(clazz + 1);
+	
+							for (methodIndex = 0; methodIndex < methodCount; methodIndex++) {
+								UDATA vTableIndex = findMethodInVTable(&interfaceClass->ramMethods[methodIndex], vTable);
+								iTableMethods[methodIndex] = (vTableIndex * sizeof(UDATA)) + sizeof(J9Class);
+							}
 						}
-					}
+						iTableMethods += methodCount;
+						allInterfaces = allInterfaces->next;
+					} while (NULL != allInterfaces);
 					iTable = iTable->next;
 				}
 			}
@@ -1695,24 +1698,41 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 			case J9CPTYPE_INTERFACE_METHOD: {
 				J9RAMInterfaceMethodRef *methodRef = (J9RAMInterfaceMethodRef *) &ramConstantPool[cpIndex];
 				UDATA methodIndex = ((methodRef->methodIndexAndArgCount & ~255) >> 8);
-				J9Class *interfaceClass = (J9Class *) methodRef->interfaceClass;
-
-				classPair.originalRAMClass = interfaceClass;
-				classResult = hashTableFind(classHashTable, &classPair);
-				if (NULL != classResult) {
-					J9Class *obsoleteClass = classResult->replacementClass.ramClass;
-
-					if (NULL != obsoleteClass) {
-						J9Method *method = &obsoleteClass->ramMethods[methodIndex];
-
-						methodPair.oldMethod = method;
-						methodResult = hashTableFind(methodHashTable, &methodPair);
-						if (NULL != methodResult) {
-							UDATA argCount = (methodRef->methodIndexAndArgCount & 255);
-							UDATA newMethodIndex = getMethodIndex(methodResult->newMethod);
-
-							methodRef->methodIndexAndArgCount = ((newMethodIndex << 8) | argCount);
+				J9Class *resolvedClass = (J9Class *) methodRef->interfaceClass;
+				/* Don't fix unresolved entries */
+				if (NULL != resolvedClass) {
+					/* Find the appropriate segment for the referenced method within the
+					 * resolvedClass iTable.  This is fast HCR (no addition or removal of
+					 * methods), so the shape of the iTables cannot change, just the ordering
+					 * of methods within them.
+					 */
+					J9ITable *allInterfaces = (J9ITable*)resolvedClass->iTable;
+					for(;;) {
+						J9Class *interfaceClass = allInterfaces->interfaceClass;
+						UDATA methodCount = interfaceClass->romClass->romMethodCount;
+						if (methodIndex < methodCount) {
+							classPair.originalRAMClass = interfaceClass;
+							classResult = hashTableFind(classHashTable, &classPair);
+							/* If the class was not replaced, no need to update the constant pool */
+							if (NULL != classResult) {
+								J9Class *obsoleteClass = classResult->replacementClass.ramClass;
+								if (NULL != obsoleteClass) {
+									/* If the referenced method was not reordered, no need to update the constant pool */
+									methodPair.oldMethod = obsoleteClass->ramMethods + methodIndex;
+									methodResult = hashTableFind(methodHashTable, &methodPair);
+									if (NULL != methodResult) {
+										UDATA argCount = (methodRef->methodIndexAndArgCount & 255);
+										UDATA newMethodIndex = getITableIndexForMethod(methodResult->newMethod, resolvedClass);
+										/* Fix the index in the resolved CP entry, retaining the argCount */
+										methodRef->methodIndexAndArgCount = ((newMethodIndex << 8) | argCount);
+									}
+								}
+							}
+							/* iTable segment was located, stop the scan */
+							break;
 						}
+						methodIndex -= methodCount;
+						allInterfaces = allInterfaces->next;
 					}
 				}
 				break;

@@ -215,6 +215,47 @@ getCodeTypeAnnotationsDataFromROMMethod(J9ROMMethod *romMethod)
 	return result;
 }
 
+UDATA
+getITableIndexForMethod(J9Method * method, J9Class *targetInterface)
+{
+	J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+	const UDATA methodCount = methodClass->romClass->romMethodCount;
+	const UDATA methodIndex = method - methodClass->ramMethods;
+	UDATA skip = 0;
+	/* NULL targetInterface implies searching only within methodClass, which may be an obsolete class.
+	 * This works because the methods for the local interface always appear first in the iTable, with
+	 * extended interface methods appearing after.
+	 */
+	if (NULL != targetInterface) {
+		/* Locate methodClass within the extends chain of targetInterface */
+		J9ITable *allInterfaces = (J9ITable*)targetInterface->iTable;
+		for(;;) {
+			J9Class *interfaceClass = allInterfaces->interfaceClass;
+			if (interfaceClass == methodClass) {
+				break;
+			}
+			skip += interfaceClass->romClass->romMethodCount;
+			allInterfaces = allInterfaces->next;
+		}
+	}
+	/* The iTableIndex is the same as the (ram/rom)method index. 
+	 * This includes static and private methods - they just exist 
+	 * as dead entries in the iTable.
+	 * 
+	 * Code below is the equivalent of doing:
+	 *	for (; methodIndex < methodCount; methodIndex++) {
+	 *		if (ramMethod == method) {
+	 *				return methodIndex;
+	 *		}
+	 *		ramMethod++;
+	 *	}
+	 */
+	if (methodIndex < methodCount) {
+		return methodIndex + skip;
+	}
+	return -1;
+}
+
 J9MethodDebugInfo *
 methodDebugInfoFromROMMethod(J9ROMMethod *romMethod)
 {
