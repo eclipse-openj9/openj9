@@ -589,7 +589,10 @@ getOrSetArrayRegion(JNIEnv *env, jarray array, jsize start, jsize len, void *buf
 	UDATA ustart = (UDATA)(IDATA)start;
 	UDATA ulen = (UDATA)(IDATA)len;
 	UDATA end = ustart + ulen;
-	if ((ustart >= size) || (end > size)) {
+	if ((ustart >= size) 
+		|| (end > size)
+		|| (end < ustart) /* overflow */
+	) {
 		if ((ustart != size) || (0 != ulen)) {
 			gpCheckSetCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGARRAYINDEXOUTOFBOUNDSEXCEPTION, NULL);
 		}
@@ -808,7 +811,10 @@ getStringUTFRegion(JNIEnv *env, jstring str, jsize start, jsize len, char *buf)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	if ((start < 0) || (len < 0)) {
+	if ((start < 0) 
+		|| (len < 0)
+		|| (((U_32) (start + len)) > I_32_MAX)
+	) {
 outOfBounds:
 		gpCheckSetCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGSTRINGINDEXOUTOFBOUNDSEXCEPTION, NULL);
 	} else {
@@ -937,7 +943,10 @@ getStringRegion(JNIEnv *env, jstring str, jsize start, jsize len, jchar *buf)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
-	if ((start < 0) || (len < 0)) {
+	if ((start < 0) 
+		|| (len < 0)
+		|| (((U_32) (start + len)) > I_32_MAX)
+	) {
 outOfBounds:
 		gpCheckSetCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGSTRINGINDEXOUTOFBOUNDSEXCEPTION, NULL);
 	} else {
