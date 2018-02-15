@@ -619,8 +619,6 @@ UDATA
 getITableIndexForMethod(J9Method * method, J9Class *targetInterface)
 {
 	J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
-	const UDATA methodCount = methodClass->romClass->romMethodCount;
-	const UDATA methodIndex = method - methodClass->ramMethods;
 	UDATA skip = 0;
 	/* NULL targetInterface implies searching only within methodClass, which may be an obsolete class.
 	 * This works because the methods for the local interface always appear first in the iTable, with
@@ -650,6 +648,8 @@ getITableIndexForMethod(J9Method * method, J9Class *targetInterface)
 	 *		ramMethod++;
 	 *	}
 	 */
+	const UDATA methodCount = methodClass->romClass->romMethodCount;
+	const UDATA methodIndex = method - methodClass->ramMethods;
 	if (methodIndex < methodCount) {
 		return methodIndex + skip;
 	}
