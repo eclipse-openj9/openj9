@@ -4481,7 +4481,6 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *resolveVirtualMethodRef)(struct J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpIndex, UDATA resolveFlags, struct J9Method **resolvedMethod) ;
 	struct J9Method*  ( *resolveInterfaceMethodRef)(struct J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpIndex, UDATA resolveFlags) ;
 	UDATA  ( *getVTableIndexForMethod)(struct J9Method * method, struct J9Class *clazz, struct J9VMThread *vmThread) ;
-	UDATA  ( *getITableIndexForMethod)(struct J9Method * method) ;
 	IDATA  ( *checkVisibility)(struct J9VMThread* currentThread, struct J9Class* sourceClass, struct J9Class* destClass, UDATA modifiers, UDATA lookupOptions) ;
 	void  (JNICALL *sendClinit)(struct J9VMThread *vmContext, struct J9Class *clazz, UDATA reserved1, UDATA reserved2, UDATA reserved3) ;
 	void  ( *freeStackWalkCaches)(struct J9VMThread * currentThread, J9StackWalkState * walkState) ;
