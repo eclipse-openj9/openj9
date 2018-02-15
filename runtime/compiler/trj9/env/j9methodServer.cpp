@@ -800,8 +800,17 @@ TR_ResolvedJ9JAASServerMethod::isSameMethod(TR_ResolvedMethod * m2)
 bool
 TR_ResolvedJ9JAASServerMethod::isInlineable(TR::Compilation *comp)
    {
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isInlineable, _remoteMirror);
-   return std::get<0>(_stream->read<bool>());
+   // Reduce number of remote queries by testing the options first
+   // This assumes knowledge of how the original is implemented
+   if (comp->getOption(TR_FullSpeedDebug) && comp->getOption(TR_EnableOSR))
+      {
+      _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isInlineable, _remoteMirror);
+      return std::get<0>(_stream->read<bool>());
+      }
+   else
+      {
+      return true;
+      }
    }
 
 bool
