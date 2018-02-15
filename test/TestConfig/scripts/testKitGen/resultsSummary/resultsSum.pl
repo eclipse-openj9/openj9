@@ -57,7 +57,7 @@ sub resultReporter {
 	my $numOfTotal = 0;
 	my @passed;
 	my @failed;
-	my @skipped;
+	my @capSkipped;
 	my $tapString = '';
 	my $fhIn;
 
@@ -96,7 +96,12 @@ sub resultReporter {
 						last;
 					} elsif ($result =~ /(capabilities \(.*?\))\s*=>\s*${testName}_SKIPPED\n/) {
 						my $capabilities = $1;
-						push (@skipped, "$testName - $capabilities");
+						push (@capSkipped, "$testName - $capabilities");
+						$numOfSkipped++;
+						$numOfTotal++;
+						$tapString .= "ok " . $numOfTotal . " - " . $testName . " # skip\n";
+						last;
+					} elsif ($result =~ /(jvm options|platform requirements).*=>\s*${testName}_SKIPPED\n/) {
 						$numOfSkipped++;
 						$numOfTotal++;
 						$tapString .= "ok " . $numOfTotal . " - " . $testName . " # skip\n";
@@ -127,8 +132,9 @@ sub resultReporter {
 		print "\n";
 	}
 
-	if ($numOfSkipped != 0) {
-		printTests(\@skipped, "SKIPPED test targets due to capabilities");
+	# only print out skipped due to capabilities in console
+	if (@capSkipped) {
+		printTests(\@capSkipped, "SKIPPED test targets due to capabilities");
 		print "\n";
 	}
 

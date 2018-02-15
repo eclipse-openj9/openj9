@@ -40,6 +40,8 @@ Q="
 P=:
 PROPS_DIR=props_unix
 
+include $(TEST_ROOT)$(D)TestConfig$(D)utils.mk
+
 ifndef JAVA_BIN
 $(error Please provide JAVA_BIN value.)
 else
@@ -232,7 +234,10 @@ setup_%:
 	@$(ECHO) set JCL_VERSION to $(JCL_VERSION)
 	@$(ECHO) set JAVA_BIN to $(JAVA_BIN)
 	@$(ECHO) set SPEC to $(SPEC)
-	@$(ECHO) Running $(TESTTARGET)
+	@$(ECHO) Running $(TESTTARGET) ...
+	@if [ $(TOTALCOUNT) -ne 0 ]; then \
+		$(ECHO) There are $(TOTALCOUNT) test targets in $(TESTTARGET).; \
+	fi
 	$(JAVA_COMMAND) -version
 
 ifndef JCL_VERSION

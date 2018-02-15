@@ -48,6 +48,7 @@ my $allImpls = '';
 my $impl = '';
 my $modes_hs = '';
 my $sp_hs = '';
+my %targetGroup = ();
 
 sub runmkgen {
 	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $javaVersion, $allImpls, $impl, my $modesxml, my $ottawacsv ) = @_;
@@ -74,6 +75,13 @@ sub runmkgen {
 		my $data = getFileData($modesxml, $ottawacsv);
 		$modes_hs = $data->{'modes'};
 		$sp_hs = $data->{'specPlatMapping'};
+	}
+
+	foreach my $eachLevel (sort @{$allLevels}) {
+		foreach my $eachGroup (sort @{$allGroups}) {
+			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
+			$targetGroup{$groupTargetKey} = 0;
+		}
 	}
 
 	generateOnDir();
@@ -182,7 +190,6 @@ sub writeVars {
 	print $fhOut "endif\n\n";
 	print $fhOut "SUBDIRS = " . join(" ", @{$subdirsHavePlaylist}) . "\n\n";
 	print $fhOut 'include $(TEST_ROOT)$(D)TestConfig$(D)' . $settings . "\n\n";
-	print $fhOut 'include $(TEST_ROOT)$(D)TestConfig$(D)' . $utilsmk . "\n\n";
 	close $fhOut;
 }
 
@@ -427,9 +434,9 @@ sub writeTargets {
 			if ($condition_platform) {
 				print $fhOut "else\n";
 				if (defined($platformRequirements)) {
-					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) and/or platform requirements ($platformRequirements) => \$(TEST_SKIP_STATUS)\"\n";
+					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) and/or platform requirements ($platformRequirements) => \$(TEST_SKIP_STATUS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q)\n";
 				} else{
-					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) => \$(TEST_SKIP_STATUS)\"\n";
+					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) => \$(TEST_SKIP_STATUS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q)\n";
 				}
 				print $fhOut "endif\n";
 			}
@@ -459,6 +466,7 @@ sub writeTargets {
 			foreach my $test (@{$tests}) {
 				print $fhOut " \\\n$test";
 			}
+			$targetGroup{$groupTargetKey} += @{$tests};
 			print $fhOut "\n\n.PHONY: $groupTargetKey\n\n";
 		}
 	}
@@ -575,6 +583,32 @@ sub utilsGen {
 		}
 	}
 	print $fhOut $spec2platform;
+	
+	foreach my $eachLevel (sort @{$allLevels}) {
+		$targetGroup{$eachLevel} = 0;
+		foreach my $eachGroup (sort @{$allGroups}) {
+			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
+			$targetGroup{$eachLevel} += $targetGroup{$groupTargetKey};
+		}
+	}
+	
+	foreach my $eachGroup (sort @{$allGroups}) {
+		$targetGroup{$eachGroup} = 0;
+		foreach my $eachLevel (sort @{$allLevels}) {
+			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
+			$targetGroup{$eachGroup} += $targetGroup{$groupTargetKey};
+		}
+	}
+
+	print $fhOut "_GROUPTARGET = \$(firstword \$(MAKECMDGOALS))\n\n";
+	print $fhOut "GROUPTARGET = \$(patsubst _%,%,\$(_GROUPTARGET))\n\n";
+	print $fhOut "TOTALCOUNT := 0\n\n";
+	foreach my $targetGroupKey (keys %targetGroup) {
+		print $fhOut "ifeq (\$(GROUPTARGET),$targetGroupKey)\n";
+		print $fhOut "\tTOTALCOUNT := $targetGroup{$targetGroupKey}\n";
+		print $fhOut "endif\n\n";
+	}
+
 	close $fhOut;
 	print "\nGenerated $utilsmk\n";
 }
