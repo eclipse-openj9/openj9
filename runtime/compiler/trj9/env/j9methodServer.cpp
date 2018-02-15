@@ -643,8 +643,27 @@ TR_ResolvedJ9JAASServerMethod::stringConstant(I_32 cpIndex)
 bool
 TR_ResolvedJ9JAASServerMethod::isSubjectToPhaseChange(TR::Compilation *comp)
    {
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isSubjectToPhaseChange, _remoteMirror);
-   return std::get<0>(_stream->read<bool>());
+   bool candidate = comp->getOptLevel() <= warm &&
+        // comp->getPersistentInfo()->getJitState() == STARTUP_STATE // This needs to be asked at the server
+        isPublic() &&
+        (
+         strncmp("java/util/AbstractCollection", comp->signature(), 28) == 0 ||
+         strncmp("java/util/Hash", comp->signature(), 14) == 0 ||
+         strncmp("java/lang/String", comp->signature(), 16) == 0 ||
+         strncmp("sun/nio/", comp->signature(), 8) == 0
+         );
+ 
+   if (!candidate)
+      {
+      return false;
+      }
+   else
+      {
+      _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_isSubjectToPhaseChange, _remoteMirror);
+      return std::get<0>(_stream->read<bool>());
+      // JAAS TODO: cache the JitState when we create  TR_ResolvedJ9JAASServerMethod
+      // This may not behave exactly like the non-JAAS due to timing differences
+      }
    }
 
 TR_ResolvedMethod *
