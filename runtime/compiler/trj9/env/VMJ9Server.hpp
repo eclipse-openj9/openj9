@@ -124,6 +124,7 @@ public:
    virtual bool getArrayLengthOfStaticAddress(void *ptr, int32_t &length) override;
    virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
    virtual bool isClassArray(TR_OpaqueClassBlock *klass) override;
+   virtual uintptrj_t getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef) override { return 0; } // safe answer
    };
 
 #endif // VMJ9SERVER_H
