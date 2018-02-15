@@ -6915,6 +6915,7 @@ static void jitHookReleaseCodeGlobalGCEnd(J9HookInterface **hook, UDATA eventNum
    MM_GlobalGCEndEvent *event = (MM_GlobalGCEndEvent *)eventData;
    J9VMThread  *vmThread  = (J9VMThread*)event->currentThread->_language_vmthread;
    jitReleaseCodeStackWalk(vmThread->omrVMThread);
+   jitReclaimMarkedAssumptions();
    }
 
 static void jitHookReleaseCodeGCCycleEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
@@ -6926,12 +6927,14 @@ static void jitHookReleaseCodeGCCycleEnd(J9HookInterface **hook, UDATA eventNum,
       condYield = event->condYieldFromGCFunction;
 
    jitReleaseCodeStackWalk(omrVMThread,condYield);
+   jitReclaimMarkedAssumptions();
    }
 
 static void jitHookReleaseCodeLocalGCEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
    {
    MM_LocalGCEndEvent *event = (MM_LocalGCEndEvent *)eventData;
    jitReleaseCodeStackWalk(event->currentThread);
+   jitReclaimMarkedAssumptions();
    }
 
 
