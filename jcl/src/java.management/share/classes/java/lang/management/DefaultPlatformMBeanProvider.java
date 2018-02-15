@@ -22,7 +22,7 @@
  *******************************************************************************/
 package java.lang.management;
 
-/*[IF Sidecar19-SE-B165]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 import java.lang.ModuleLayer;
 /*[ELSE]
 import java.lang.reflect.Layer;
@@ -70,7 +70,7 @@ final class DefaultPlatformMBeanProvider extends sun.management.spi.PlatformMBea
 		/* LoggingMXBeanImpl depends on java.logging. If java.logging is not 
 		 * available exclude this component.
 		 */
-/*[IF Sidecar19-SE-B165]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 		if (ModuleLayer.boot().findModule("java.logging").isPresent()) //$NON-NLS-1$
 /*[ELSE]
 		if (Layer.boot().findModule("java.logging").isPresent()) //$NON-NLS-1$

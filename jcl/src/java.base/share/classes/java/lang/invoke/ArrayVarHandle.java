@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -195,7 +195,7 @@ final class ArrayVarHandle extends VarHandle {
 				receiver.getClass();
 				boundsCheck(((Object[])receiver).length, index);
 				storeCheck(newValue, receiver.getClass().getComponentType());
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetObject(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndSwapObject(receiver, computeOffset(index), testValue, newValue);
@@ -206,7 +206,7 @@ final class ArrayVarHandle extends VarHandle {
 				receiver.getClass();
 				boundsCheck(((Object[])receiver).length, index);
 				storeCheck(newValue, receiver.getClass().getComponentType());
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeObject(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndExchangeObjectVolatile(receiver, computeOffset(index), testValue, newValue);
@@ -231,7 +231,7 @@ final class ArrayVarHandle extends VarHandle {
 				receiver.getClass();
 				boundsCheck(((Object[])receiver).length, index);
 				storeCheck(newValue, receiver.getClass().getComponentType());
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetObjectPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapObject(receiver, computeOffset(index), testValue, newValue);
@@ -242,7 +242,7 @@ final class ArrayVarHandle extends VarHandle {
 				receiver.getClass();
 				boundsCheck(((Object[])receiver).length, index);
 				storeCheck(newValue, receiver.getClass().getComponentType());
-/*[IF Sidecar19-SE-B174]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetObjectAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapObjectAcquire(receiver, computeOffset(index), testValue, newValue);
@@ -253,7 +253,7 @@ final class ArrayVarHandle extends VarHandle {
 				receiver.getClass();
 				boundsCheck(((Object[])receiver).length, index);
 				storeCheck(newValue, receiver.getClass().getComponentType());
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetObjectRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapObjectRelease(receiver, computeOffset(index), testValue, newValue);
@@ -264,7 +264,7 @@ final class ArrayVarHandle extends VarHandle {
 				receiver.getClass();
 				boundsCheck(((Object[])receiver).length, index);
 				storeCheck(newValue, receiver.getClass().getComponentType());
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetObjectPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapObject(receiver, computeOffset(index), testValue, newValue);
@@ -400,7 +400,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean compareAndSet(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((byte[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetByte(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndSwapByte(receiver, computeOffset(index), testValue, newValue);
@@ -410,7 +410,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final byte compareAndExchange(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((byte[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeByte(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndExchangeByteVolatile(receiver, computeOffset(index), testValue, newValue);
@@ -432,7 +432,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSet(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((byte[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBytePlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapByte(receiver, computeOffset(index), testValue, newValue);
@@ -442,7 +442,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((byte[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetByteAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapByteAcquire(receiver, computeOffset(index), testValue, newValue);
@@ -452,7 +452,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetRelease(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((byte[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetByteRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapByteRelease(receiver, computeOffset(index), testValue, newValue);
@@ -462,7 +462,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetPlain(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((byte[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBytePlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapByte(receiver, computeOffset(index), testValue, newValue);
@@ -619,7 +619,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean compareAndSet(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((char[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetChar(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndSwapChar(receiver, computeOffset(index), testValue, newValue);
@@ -629,7 +629,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final char compareAndExchange(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((char[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeChar(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndExchangeCharVolatile(receiver, computeOffset(index), testValue, newValue);
@@ -651,7 +651,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSet(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((char[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetCharPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapChar(receiver, computeOffset(index), testValue, newValue);
@@ -661,7 +661,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((char[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetCharAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapCharAcquire(receiver, computeOffset(index), testValue, newValue);
@@ -671,7 +671,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetRelease(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((char[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetCharRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapCharRelease(receiver, computeOffset(index), testValue, newValue);
@@ -681,7 +681,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetPlain(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((char[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetCharPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapChar(receiver, computeOffset(index), testValue, newValue);
@@ -838,7 +838,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean compareAndSet(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((double[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetDouble(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndSwapDouble(receiver, computeOffset(index), testValue, newValue);
@@ -848,7 +848,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final double compareAndExchange(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((double[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndExchangeDouble(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndExchangeDoubleVolatile(receiver, computeOffset(index), testValue, newValue);
@@ -870,7 +870,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSet(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((double[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapDouble(receiver, computeOffset(index), testValue, newValue);
@@ -880,7 +880,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((double[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoubleAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapDoubleAcquire(receiver, computeOffset(index), testValue, newValue);
@@ -890,7 +890,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetRelease(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((double[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoubleRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapDoubleRelease(receiver, computeOffset(index), testValue, newValue);
@@ -900,7 +900,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetPlain(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((double[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapDouble(receiver, computeOffset(index), testValue, newValue);
@@ -1039,7 +1039,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean compareAndSet(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((float[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetFloat(receiver, computeOffset(index), testValue, newValue);				
 /*[ELSE]
 				return _unsafe.compareAndSwapFloat(receiver, computeOffset(index), testValue, newValue);
@@ -1049,7 +1049,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final float compareAndExchange(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((float[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeFloat(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndExchangeFloatVolatile(receiver, computeOffset(index), testValue, newValue);
@@ -1071,7 +1071,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSet(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((float[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapFloat(receiver, computeOffset(index), testValue, newValue);
@@ -1081,7 +1081,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((float[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapFloatAcquire(receiver, computeOffset(index), testValue, newValue);
@@ -1091,7 +1091,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetRelease(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((float[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapFloatRelease(receiver, computeOffset(index), testValue, newValue);
@@ -1101,7 +1101,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetPlain(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((float[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapFloat(receiver, computeOffset(index), testValue, newValue);
@@ -1240,7 +1240,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean compareAndSet(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((int[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetInt(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndSwapInt(receiver, computeOffset(index), testValue, newValue);
@@ -1250,7 +1250,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final int compareAndExchange(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((int[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeInt(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndExchangeIntVolatile(receiver, computeOffset(index), testValue, newValue);
@@ -1272,7 +1272,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSet(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((int[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapInt(receiver, computeOffset(index), testValue, newValue);
@@ -1282,7 +1282,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((int[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapIntAcquire(receiver, computeOffset(index), testValue, newValue);
@@ -1292,7 +1292,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetRelease(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((int[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapIntRelease(receiver, computeOffset(index), testValue, newValue);
@@ -1302,7 +1302,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetPlain(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((int[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapInt(receiver, computeOffset(index), testValue, newValue);
@@ -1459,7 +1459,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean compareAndSet(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((long[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetLong(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndSwapLong(receiver, computeOffset(index), testValue, newValue);
@@ -1469,7 +1469,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final long compareAndExchange(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((long[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeLong(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndExchangeLongVolatile(receiver, computeOffset(index), testValue, newValue);
@@ -1491,7 +1491,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSet(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((long[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapLong(receiver, computeOffset(index), testValue, newValue);
@@ -1501,7 +1501,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((long[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapLongAcquire(receiver, computeOffset(index), testValue, newValue);
@@ -1511,7 +1511,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetRelease(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((long[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapLongRelease(receiver, computeOffset(index), testValue, newValue);
@@ -1521,7 +1521,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetPlain(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((long[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapLong(receiver, computeOffset(index), testValue, newValue);
@@ -1678,7 +1678,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean compareAndSet(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((short[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetShort(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndSwapShort(receiver, computeOffset(index), testValue, newValue);
@@ -1688,7 +1688,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final short compareAndExchange(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((short[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeShort(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndExchangeShortVolatile(receiver, computeOffset(index), testValue, newValue);
@@ -1710,7 +1710,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSet(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((short[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetShortPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapShort(receiver, computeOffset(index), testValue, newValue);
@@ -1720,7 +1720,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((short[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetShortAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapShortAcquire(receiver, computeOffset(index), testValue, newValue);
@@ -1730,7 +1730,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetRelease(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((short[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetShortRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapShortRelease(receiver, computeOffset(index), testValue, newValue);
@@ -1740,7 +1740,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetPlain(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((short[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetShortPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapShort(receiver, computeOffset(index), testValue, newValue);
@@ -1897,7 +1897,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean compareAndSet(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((boolean[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetBoolean(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndSwapBoolean(receiver, computeOffset(index), testValue, newValue);
@@ -1907,7 +1907,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean compareAndExchange(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((boolean[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeBoolean(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndExchangeBooleanVolatile(receiver, computeOffset(index), testValue, newValue);
@@ -1929,7 +1929,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSet(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((boolean[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBooleanPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapBoolean(receiver, computeOffset(index), testValue, newValue);
@@ -1939,7 +1939,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((boolean[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBooleanAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapBooleanAcquire(receiver, computeOffset(index), testValue, newValue);
@@ -1949,7 +1949,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetRelease(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((boolean[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBooleanRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapBooleanRelease(receiver, computeOffset(index), testValue, newValue);
@@ -1959,7 +1959,7 @@ final class ArrayVarHandle extends VarHandle {
 			private static final boolean weakCompareAndSetPlain(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
 				boundsCheck(((boolean[])receiver).length, index);
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBooleanPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.weakCompareAndSwapBoolean(receiver, computeOffset(index), testValue, newValue);

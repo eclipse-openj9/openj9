@@ -27,7 +27,7 @@ import java.lang.invoke.MethodType;
 /*[ENDIF]*/
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Version;
-/*[IF Sidecar19-SE-B165]
+/*[IF Sidecar19-SE-OpenJ9]
 import java.lang.IllegalCallerException;
 import java.lang.Module;
 /*[ELSE]
@@ -185,7 +185,7 @@ public final class StackWalker {
 				s -> s.limit(2).collect(Collectors.toList()));
 		if (result.size() < 2) {
 			/*[MSG "K0640", "getCallerClass() called from method with no caller"]*/
-			/*[IF Sidecar19-SE-B165]
+			/*[IF Sidecar19-SE-OpenJ9]
 			throw new IllegalCallerException(com.ibm.oti.util.Msg.getString("K0640")); //$NON-NLS-1$
 			/*[ELSE]*/
 			throw new IllegalStateException(com.ibm.oti.util.Msg.getString("K0640")); //$NON-NLS-1$

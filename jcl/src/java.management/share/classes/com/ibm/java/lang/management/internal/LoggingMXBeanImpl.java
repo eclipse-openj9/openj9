@@ -24,7 +24,7 @@ package com.ibm.java.lang.management.internal;
 
 import java.lang.management.PlatformLoggingMXBean;
 /*[IF Sidecar19-SE]*/
-/*[IF Sidecar19-SE-B165]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 import java.lang.Module;
 import java.lang.ModuleLayer;
 /*[ELSE]
@@ -79,7 +79,7 @@ public final class LoggingMXBeanImpl
 /*[IF Sidecar19-SE]*/
 		try {
 
-/*[IF Sidecar19-SE-B165]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 			Module java_logging = ModuleLayer.boot().findModule("java.logging").get(); //$NON-NLS-1$
 /*[ELSE]
 			Module java_logging = Layer.boot().findModule("java.logging").get(); //$NON-NLS-1$

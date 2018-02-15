@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.VM;
 import java.lang.StackWalker.Option;
-/*[IF Sidecar19-SE-B165]
+/*[IF Sidecar19-SE-OpenJ9]
 import java.lang.Module;
 /*[ELSE]
 import java.lang.reflect.Module;
@@ -102,7 +102,7 @@ public final class System {
 	private static String osEncoding;
 
 /*[IF Sidecar19-SE]*/
-/*[IF Sidecar19-SE-B165]
+/*[IF Sidecar19-SE-OpenJ9]
 	static java.lang.ModuleLayer	bootLayer;
 /*[ELSE]*/
 	static java.lang.reflect.Layer	bootLayer;

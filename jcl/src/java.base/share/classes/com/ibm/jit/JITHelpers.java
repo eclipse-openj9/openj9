@@ -3,7 +3,7 @@
 package com.ibm.jit;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -222,7 +222,7 @@ public final class JITHelpers {
 	}
 
 	public boolean compareAndSwapIntInObject(Object obj, long offset, int expected, int value) {
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 		return unsafe.compareAndSetInt(obj, offset, expected, value);
 /*[ELSE]
 		return unsafe.compareAndSwapInt(obj, offset, expected, value);
@@ -230,7 +230,7 @@ public final class JITHelpers {
 	}
 
 	public boolean compareAndSwapLongInObject(Object obj, long offset, long expected, long value) {
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 		return unsafe.compareAndSetLong(obj, offset, expected, value);
 /*[ELSE]
 		return unsafe.compareAndSwapLong(obj, offset, expected, value);
@@ -238,7 +238,7 @@ public final class JITHelpers {
 	}
 
 	public boolean compareAndSwapObjectInObject(Object obj, long offset, Object expected, Object value) {
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 		return unsafe.compareAndSetObject(obj, offset, expected, value);
 /*[ELSE]
 		return unsafe.compareAndSwapObject(obj, offset, expected, value);
@@ -326,7 +326,7 @@ public final class JITHelpers {
 	}
 
 	public boolean compareAndSwapIntInArray(Object obj, long offset, int expected, int value) {
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 		return unsafe.compareAndSetInt(obj, offset, expected, value);
 /*[ELSE]
 		return unsafe.compareAndSwapInt(obj, offset, expected, value);
@@ -334,7 +334,7 @@ public final class JITHelpers {
 	}
 
 	public boolean compareAndSwapLongInArray(Object obj, long offset, long expected, long value) {
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 		return unsafe.compareAndSetLong(obj, offset, expected, value);
 /*[ELSE]
 		return unsafe.compareAndSwapLong(obj, offset, expected, value);
@@ -342,7 +342,7 @@ public final class JITHelpers {
 	}
 
 	public boolean compareAndSwapObjectInArray(Object obj, long offset, Object expected, Object value) {
-/*[IF Sidecar19-SE-B174]*/				
+/*[IF Sidecar19-SE-OpenJ9]*/				
 		return unsafe.compareAndSetObject(obj, offset, expected, value);
 /*[ELSE]
 		return unsafe.compareAndSwapObject(obj, offset, expected, value);

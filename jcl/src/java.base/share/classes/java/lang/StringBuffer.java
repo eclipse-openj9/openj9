@@ -511,7 +511,7 @@ public StringBuffer append (float value) {
  */
 public synchronized StringBuffer append(int value) {
 	/*[IF Sidecar19-SE]*/
-	/*[IF Sidecar19-SE-B174]*/
+	/*[IF Sidecar19-SE-OpenJ9]*/
 	int currentLength = lengthInternalUnsynchronized();
 	int currentCapacity = capacityInternal();
 
@@ -588,7 +588,7 @@ public synchronized StringBuffer append(int value) {
  */
 public synchronized StringBuffer append(long value) {
 	/*[IF Sidecar19-SE]*/
-	/*[IF Sidecar19-SE-B174]*/
+	/*[IF Sidecar19-SE-OpenJ9]*/
 	int currentLength = lengthInternalUnsynchronized();
 	int currentCapacity = capacityInternal();
 
