@@ -63,7 +63,7 @@ public:
    virtual bool isWarmCallGraphTooBig(uint32_t, TR::Compilation *) override;
    virtual void setWarmCallGraphTooBig(uint32_t, TR::Compilation *) override;
    virtual void setVirtualMethodIsOverridden() override;
-   virtual void * addressContainingIsOverriddenBit() override;
+   virtual void * addressContainingIsOverriddenBit() override { return _addressContainingIsOverriddenBit; }
    virtual bool methodIsNotzAAPEligible() override;
    virtual void setClassForNewInstance(J9Class *c) override;
    virtual TR_OpaqueClassBlock * classOfMethod() override;
@@ -78,9 +78,11 @@ private:
    J9Class *_ramClass; // client pointer to RAM class
    TR_ResolvedJ9Method *_remoteMirror;
    void *_startAddressForJittedMethod; // JIT entry point
+   void *_addressContainingIsOverriddenBit; // Only valid at the client. Cached info from the client
    bool _isInterpreted; // cached information coming from client
    bool _isMethodInValidLibrary;
-   bool _virtualMethodIsOverridden;
+   bool _virtualMethodIsOverridden; // cached information coming from client
+  
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);

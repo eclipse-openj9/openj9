@@ -827,8 +827,10 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          void * startAddressForJittedMethod = TR::CompilationInfo::isCompiled(resolvedMethod->ramMethod()) ?
                                                  resolvedMethod->startAddressForJittedMethod() : NULL;
          bool virtualMethodIsOverridden = resolvedMethod->virtualMethodIsOverridden();
+         void *addressContainingIsOverriddenBit = resolvedMethod->addressContainingIsOverriddenBit();
+
          client->write(resolvedMethod, literals, cpHdr, methodIndex, jniProps, jniTargetAddr, isInterpreted, isMethodInValidLibrary, 
-                       mandatoryRm, rm, startAddressForJittedMethod, virtualMethodIsOverridden);
+                       mandatoryRm, rm, startAddressForJittedMethod, virtualMethodIsOverridden, addressContainingIsOverriddenBit);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getRemoteROMClass:
