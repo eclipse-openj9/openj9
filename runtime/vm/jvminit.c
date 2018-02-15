@@ -5269,8 +5269,8 @@ processCompressionOptions(J9JavaVM *vm){
 	IDATA argIndex2;
 
 	/* The last (right-most) argument gets precedence */
-	argIndex1 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSTRINGCOMPRESSION, NULL);
-	argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOSTRINGCOMPRESSION, NULL);
+	argIndex1 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXCOMPACTSTRINGS, NULL);
+	argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOCOMPACTSTRINGS, NULL);
 
 	/* Default setting */
 	vm->strCompEnabled = FALSE;
