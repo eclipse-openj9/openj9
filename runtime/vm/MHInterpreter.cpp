@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,13 +186,13 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			if (NULL != receiver) {
 				_currentThread->sp += 1;
 				J9Class *receiverClazz = J9OBJECT_CLAZZ(_currentThread, receiver);
-				J9Class *interfaceClazz = getPrimitiveHandleDefc(methodHandle);
+				J9Class *interfaceClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, J9VMJAVALANGINVOKEPRIMITIVEHANDLE_REFERENCECLASS(_currentThread, methodHandle));
 				method = convertITableIndexToVirtualMethod(receiverClazz, interfaceClazz, getVMSlot(methodHandle));
 				if (NULL != method) {
 					goto runMethod;
 				}
 				prepareForExceptionThrow(_currentThread);
-				setClassCastException(_currentThread, receiverClazz, interfaceClazz);
+				setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 				goto throwCurrentException;
 			}
 			nextAction = THROW_NPE;

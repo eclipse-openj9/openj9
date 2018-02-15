@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2110,7 +2110,11 @@ initializeMethodID(J9VMThread * currentThread, J9JNIMethodID * methodID, J9Metho
 		J9Class * declaringClass = J9_CLASS_FROM_METHOD(method);
 
 		if (declaringClass->romClass->modifiers & J9AccInterface) {
-			vTableIndex = getITableIndexForMethod(method) | J9_JNI_MID_INTERFACE;
+			/* Because methodIDs do not store the original lookup class for interface methods,
+			 * always use the declaring class of the interface method.  Pass NULL here to allow
+			 * for methodIDs to be created on obsolete classes for HCR purposes.
+			 */
+			vTableIndex = getITableIndexForMethod(method, NULL) | J9_JNI_MID_INTERFACE;
 		} else {
 			vTableIndex = getVTableIndexForMethod(method, declaringClass, currentThread);
 		}
