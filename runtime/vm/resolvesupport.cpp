@@ -1005,13 +1005,15 @@ resolveInterfaceMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA
 	if (method != NULL) {
 		if (ramCPEntry != NULL) {
 			J9RAMInterfaceMethodRef *ramInterfaceMethodRef = (J9RAMInterfaceMethodRef *)&ramCP[cpIndex];
-			UDATA methodIndex = getITableIndexForMethod(method, interfaceClass) << 8;
+			UDATA methodIndex = getITableIndexForMethod(method) << 8;
 			UDATA oldArgCount = ramInterfaceMethodRef->methodIndexAndArgCount & 255;
+			J9Class *methodClass;
 			methodIndex |= oldArgCount;
+			methodClass = J9_CLASS_FROM_METHOD(method);
 			ramCPEntry->methodIndexAndArgCount = methodIndex;
 			/* interfaceClass is used to indicate resolved. Make sure to write it last */
 			issueWriteBarrier();
-			ramCPEntry->interfaceClass = (UDATA)interfaceClass;
+			ramCPEntry->interfaceClass = (UDATA)methodClass;
 		}
 		/* indicate success */
 		returnValue = method;
