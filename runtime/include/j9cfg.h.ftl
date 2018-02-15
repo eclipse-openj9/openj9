@@ -33,7 +33,6 @@ extern "C" {
 #endif
 
 #include "omrcfg.h"
-#include "openj9_version_info.h"
 #include "vendor_version.h"
 
 #define J9_COPYRIGHT_STRING "(c) Copyright 1991, ${uma.year} IBM Corp. and others."

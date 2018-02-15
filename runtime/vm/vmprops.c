@@ -31,6 +31,7 @@
 #include "jvminit.h"
 #include "ut_j9vm.h"
 #include "vmargs_api.h"
+#include "vendor_version.h"
 
 #if defined(LINUX)
 /* Copy the system properties names and values into malloced memory */
@@ -729,17 +730,11 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
-#if !defined(JAVA_VENDOR)
-#define JAVA_VENDOR "Eclipse OpenJ9"
-#endif /*JAVA_VENDOR*/
- 	rc = addSystemProperty(vm, "java.vendor", JAVA_VENDOR, 0);
+	rc = addSystemProperty(vm, "java.vendor", JAVA_VENDOR, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
 
-#if !defined(JAVA_VENDOR_URL)
-#define JAVA_VENDOR_URL "http://www.eclipse.org/openj9"
-#endif /*JAVA_VENDOR_URL*/
 	rc = addSystemProperty(vm, "java.vendor.url", JAVA_VENDOR_URL, 0);
 
 	if (J9SYSPROP_ERROR_NONE != rc) {
@@ -771,9 +766,6 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
-#if !defined(JAVA_VM_NAME)
-#define JAVA_VM_NAME "Eclipse OpenJ9 VM"
-#endif /*JAVA_VM_NAME*/
 	rc = addSystemProperty(vm, "java.vm.name", JAVA_VM_NAME, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
