@@ -77,6 +77,7 @@ private:
    J9RAMConstantPoolItem *_literals; // client pointer to constant pool
    J9Class *_ramClass; // client pointer to RAM class
    TR_ResolvedJ9Method *_remoteMirror;
+   void *_startAddressForJittedMethod; // JIT entry point
    bool _isInterpreted; // cached information coming from client
    bool _isMethodInValidLibrary;
 

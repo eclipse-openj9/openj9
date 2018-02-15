@@ -824,8 +824,10 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          bool isMethodInValidLibrary = resolvedMethod->isMethodInValidLibrary();
          TR::RecognizedMethod mandatoryRm = resolvedMethod->getMandatoryRecognizedMethod();
          TR::RecognizedMethod rm = ((TR_ResolvedMethod*)resolvedMethod)->getRecognizedMethod();
+         void * startAddressForJittedMethod = TR::CompilationInfo::isCompiled(resolvedMethod->ramMethod()) ?
+                                                 resolvedMethod->startAddressForJittedMethod() : NULL;
 
-         client->write(resolvedMethod, literals, cpHdr, methodIndex, jniProps, jniTargetAddr, isInterpreted, isMethodInValidLibrary, mandatoryRm, rm);
+         client->write(resolvedMethod, literals, cpHdr, methodIndex, jniProps, jniTargetAddr, isInterpreted, isMethodInValidLibrary, mandatoryRm, rm, startAddressForJittedMethod);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getRemoteROMClass:

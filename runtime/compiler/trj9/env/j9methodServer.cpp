@@ -45,7 +45,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    // Create client side mirror of this object to use for calls involving RAM data
    TR_ResolvedJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JAASServerMethod*) owningMethod)->_remoteMirror : nullptr;
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot);
-   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uintptrj_t, void*, bool, bool, TR::RecognizedMethod, TR::RecognizedMethod>();
+   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uintptrj_t, void*, bool, bool, TR::RecognizedMethod, TR::RecognizedMethod, void*>();
 
    _remoteMirror = std::get<0>(recv);
 
@@ -68,6 +68,8 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
 
    TR::RecognizedMethod mandatoryRm = std::get<8>(recv);
    TR::RecognizedMethod rm = std::get<9>(recv);
+
+   _startAddressForJittedMethod = std::get<10>(recv);
  
    // initialization from TR_J9Method constructor
    _className = J9ROMCLASS_CLASSNAME(_romClass);
@@ -347,8 +349,16 @@ TR_ResolvedJ9JAASServerMethod::classCPIndexOfMethod(uint32_t methodCPIndex)
 void *
 TR_ResolvedJ9JAASServerMethod::startAddressForJittedMethod()
    {
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_startAddressForJittedMethod, _remoteMirror);
-   return std::get<0>(_stream->read<void *>());
+   // return the cached value if we have any
+   if (_startAddressForJittedMethod)
+      {
+      return _startAddressForJittedMethod;
+      }
+   else // Otherwise ask the client for it
+      {
+      _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_startAddressForJittedMethod, _remoteMirror);
+      return std::get<0>(_stream->read<void *>());
+      }
    }
 
 char *
