@@ -20,21 +20,23 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
- node('ppcle') {
+def OPENJDK_REPO = 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
+def OPENJDK_BRANCH = 'openj9'
+def OPENJ9_REPO = 'https://github.com/eclipse/openj9.git'
+def OPENJ9_BRANCH = 'master'
+def OMR_REPO = 'https://github.com/eclipse/openj9-omr.git'
+def OMR_BRANCH = 'openj9'
 
-    SDK_VERSION = "8"
-    OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
-    OPENJDK_BRANCH = "openj9"
-    BOOT_JDK = "/usr/lib/jvm/java-7-openjdk-ppc64el"
-    FREEMARKER = "$HOME/openj9/freemarker.jar"
-    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-linux_ppc-64_cmprssptrs_le-"
-    SDK_SUFFIX = ".tar.gz"
-    TEST_PREFIX = "test-"
-    TEST_SUFFIX = ".tar.gz"
-    RELEASE = "linux-ppc64-normal-server-release"
-    JDK_FOLDER = "j2sdk-image"
+def BUILD_JOB_NAME = 'Build-JDK9-linux_390-64_cmprssptrs'
+def SANITY_JOB_NAME = 'Test-Sanity-JDK9-linux_390-64_cmprssptrs'
+def EXTENDED_JOB_NAME = 'Test-Extended-JDK9-linux_390-64_cmprssptrs'
 
+node('master') {
     checkout scm
-    def buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
-    buildfile.build_all()
+    buildfile = load "${WORKSPACE}/buildenv/jenkins/common/pipeline-functions"
+    SHAS = buildfile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 }
+
+BUILD_JOB = buildfile.build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'])
+SANITY_JOB = buildfile.build_with_one_upstream(SANITY_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber())
+EXTENDED_JOB = buildfile.build_with_one_upstream(EXTENDED_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber())

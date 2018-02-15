@@ -22,38 +22,14 @@
 
 node('390') {
 
-    SDK_VERSION = "9"
-
-    // Clone
-    OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
-    OPENJDK_BRANCH = "openj9"
-
-    // Build
-    BOOT_JDK = "$HOME/openj9/ibm-java-s390x-80"
-    FREEMARKER = "$HOME/openj9/freemarker.jar"
-    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-PR${ghprbPullId}-linux_390-64_cmprssptrs-"
-    SDK_SUFFIX = ".tar.gz"
-    TEST_PREFIX = "test-"
-    TEST_SUFFIX = ".tar.gz"
+    JDK_FOLDER = "j2sdk-image"
     RELEASE = "linux-s390x-normal-server-release"
-    JDK_FOLDER = "jdk"
+    JAVA_BIN = "${WORKSPACE}/build/${RELEASE}/images/${JDK_FOLDER}/jre/bin"
+    SPEC = 'linux_390-64_cmprssptrs'
+    JAVA_VERSION = 'SE80'
+    TEST_TARGET = '_sanity'
 
     checkout scm
-    buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
-    testfile = load "${WORKSPACE}/buildenv/jenkins/test"
-
-    buildfile.build_pr()
-
-    // Test
-    JAVA_BIN = "${WORKSPACE}/build/$RELEASE/images/${JDK_FOLDER}/bin"
-    SPEC = 'linux_390-64_cmprssptrs'
-    JAVA_VERSION = "SE${SDK_VERSION}0"
-    TEST_TARGET = '_extended'
-
-    archive_test = [:]
-    archive_test['Archive'] = { buildfile.archive() }
-    archive_test['Test'] = { testfile.test_all() }
-
-    parallel archive_test
-    buildfile.git_clean()
+    def buildfile = load "${WORKSPACE}/buildenv/jenkins/common/test"
+    buildfile.test_all_with_fetch()
 }

@@ -20,23 +20,40 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-def OPENJDK_REPO = 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
-def OPENJDK_BRANCH = 'openj9'
-def OPENJ9_REPO = 'https://github.com/eclipse/openj9.git'
-def OPENJ9_BRANCH = 'master'
-def OMR_REPO = 'https://github.com/eclipse/openj9-omr.git'
-def OMR_BRANCH = 'openj9'
+node('390') {
 
-def BUILD_JOB_NAME = 'Build-JDK9-linux_390-64_cmprssptrs'
-def SANITY_JOB_NAME = 'Test-Sanity-JDK9-linux_390-64_cmprssptrs'
-def EXTENDED_JOB_NAME = 'Test-Extended-JDK9-linux_390-64_cmprssptrs'
+    SDK_VERSION = "9"
 
-node('master') {
+    // Clone
+    OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
+    OPENJDK_BRANCH = "openj9"
+
+    // Build
+    BOOT_JDK = "$HOME/openj9/ibm-java-s390x-80"
+    FREEMARKER = "$HOME/openj9/freemarker.jar"
+    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-PR${ghprbPullId}-linux_390-64_cmprssptrs-"
+    SDK_SUFFIX = ".tar.gz"
+    TEST_PREFIX = "test-"
+    TEST_SUFFIX = ".tar.gz"
+    RELEASE = "linux-s390x-normal-server-release"
+    JDK_FOLDER = "jdk"
+
     checkout scm
-    buildfile = load "${WORKSPACE}/buildenv/jenkins/pipeline-functions"
-    SHAS = buildfile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
-}
+    buildfile = load "${WORKSPACE}/buildenv/jenkins/common/build"
+    testfile = load "${WORKSPACE}/buildenv/jenkins/common/test"
 
-BUILD_JOB = buildfile.build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'])
-SANITY_JOB = buildfile.build_with_one_upstream(SANITY_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber())
-EXTENDED_JOB = buildfile.build_with_one_upstream(EXTENDED_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber())
+    buildfile.build_pr()
+
+    // Test
+    JAVA_BIN = "${WORKSPACE}/build/$RELEASE/images/${JDK_FOLDER}/bin"
+    SPEC = 'linux_390-64_cmprssptrs'
+    JAVA_VERSION = "SE${SDK_VERSION}0"
+    TEST_TARGET = '_sanity'
+
+    archive_test = [:]
+    archive_test['Archive'] = { buildfile.archive() }
+    archive_test['Test'] = { testfile.test_all() }
+
+    parallel archive_test
+    buildfile.git_clean()
+}
