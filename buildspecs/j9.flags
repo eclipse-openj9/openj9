@@ -2072,6 +2072,10 @@ Only available on zOS</description>
 		<description>Enables support for Project Valhalla Minimal Value Types</description>
 		<ifRemoved>No support for Project Valhalla Minimal Value Types</ifRemoved>
 	</flag>
+	<flag id="opt_valhallaValueTypes">
+		<description>Enables support for Project Valhalla L-World Value Types</description>
+		<ifRemoved>No support for Project Valhalla L-World Value Types</ifRemoved>
+	</flag>
 	<flag id="opt_valhallaNestmates">
 		<description>Enables support for Project Valhalla Nest Mates</description>
 		<ifRemoved>No support for Project Valhalla Nest Mates</ifRemoved>

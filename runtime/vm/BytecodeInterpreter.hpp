@@ -7881,9 +7881,9 @@ done:
 		return GOTO_DONE;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_MVT)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	VMINLINE VM_BytecodeAction
-	vload(REGISTER_ARGS_LIST)
+	defaultvalue(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		// TODO: Implement bytecode
@@ -7891,77 +7891,13 @@ done:
 	}
 
 	VMINLINE VM_BytecodeAction
-	vstore(REGISTER_ARGS_LIST)
+	withfield(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		// TODO: Implement bytecode
 		return rc;
 	}
-
-	VMINLINE VM_BytecodeAction
-	vreturn(REGISTER_ARGS_LIST)
-	{
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
-		return rc;
-	}
-
-	VMINLINE VM_BytecodeAction
-	vbox(REGISTER_ARGS_LIST)
-	{
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
-		return rc;
-	}
-
-	VMINLINE VM_BytecodeAction
-	vunbox(REGISTER_ARGS_LIST)
-	{
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
-		return rc;
-	}
-
-	VMINLINE VM_BytecodeAction
-	vaload(REGISTER_ARGS_LIST)
-	{
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
-		return rc;
-	}
-
-	VMINLINE VM_BytecodeAction
-	vastore(REGISTER_ARGS_LIST)
-	{
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
-		return rc;
-	}
-
-	VMINLINE VM_BytecodeAction
-	vdefault(REGISTER_ARGS_LIST)
-	{
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
-		return rc;
-	}
-
-	VMINLINE VM_BytecodeAction
-	vgetfield(REGISTER_ARGS_LIST)
-	{
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
-		return rc;
-	}
-
-	VMINLINE VM_BytecodeAction
-	vwithfield(REGISTER_ARGS_LIST)
-	{
-		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
-		return rc;
-	}
-#endif
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 protected:
 
@@ -8259,18 +8195,6 @@ public:
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBaload0getfield),
 		JUMP_TABLE_ENTRY(JBnewdup),
-#if defined(J9VM_OPT_VALHALLA_MVT)
-		JUMP_TABLE_ENTRY(JBvload),
-		JUMP_TABLE_ENTRY(JBvstore),
-		JUMP_TABLE_ENTRY(JBvreturn),
-		JUMP_TABLE_ENTRY(JBvbox),
-		JUMP_TABLE_ENTRY(JBvunbox),
-		JUMP_TABLE_ENTRY(JBvaload),
-		JUMP_TABLE_ENTRY(JBvastore),
-		JUMP_TABLE_ENTRY(JBvdefault),
-		JUMP_TABLE_ENTRY(JBvgetfield),
-		JUMP_TABLE_ENTRY(JBvwithfield),
-#else /* defined(J9VM_OPT_VALHALLA_MVT) */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
@@ -8278,10 +8202,15 @@ public:
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		JUMP_TABLE_ENTRY(JBdefaultvalue),
+		JUMP_TABLE_ENTRY(JBunimplemented),
+		JUMP_TABLE_ENTRY(JBwithfield),
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBreturnFromConstructor),
 		JUMP_TABLE_ENTRY(JBgenericReturn),
@@ -9795,38 +9724,14 @@ executeBytecodeFromLocal:
 		JUMP_TARGET(JBimpdep2):
 			/* No single step for this bytecode */
 			PERFORM_ACTION(impdep2(REGISTER_ARGS));
-#if defined(J9VM_OPT_VALHALLA_MVT)
-		JUMP_TARGET(JBvload):
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		JUMP_TARGET(JBdefaultvalue):
 			SINGLE_STEP();
-			PERFORM_ACTION(vload(REGISTER_ARGS));
-		JUMP_TARGET(JBvstore):
+			PERFORM_ACTION(defaultvalue(REGISTER_ARGS));
+		JUMP_TARGET(JBwithfield):
 			SINGLE_STEP();
-			PERFORM_ACTION(vstore(REGISTER_ARGS));
-		JUMP_TARGET(JBvreturn):
-			SINGLE_STEP();
-			PERFORM_ACTION(vreturn(REGISTER_ARGS));
-		JUMP_TARGET(JBvbox):
-			SINGLE_STEP();
-			PERFORM_ACTION(vbox(REGISTER_ARGS));
-		JUMP_TARGET(JBvunbox):
-			SINGLE_STEP();
-			PERFORM_ACTION(vunbox(REGISTER_ARGS));
-		JUMP_TARGET(JBvaload):
-			SINGLE_STEP();
-			PERFORM_ACTION(vaload(REGISTER_ARGS));
-		JUMP_TARGET(JBvastore):
-			SINGLE_STEP();
-			PERFORM_ACTION(vastore(REGISTER_ARGS));
-		JUMP_TARGET(JBvdefault):
-			SINGLE_STEP();
-			PERFORM_ACTION(vdefault(REGISTER_ARGS));
-		JUMP_TARGET(JBvgetfield):
-			SINGLE_STEP();
-			PERFORM_ACTION(vgetfield(REGISTER_ARGS));
-		JUMP_TARGET(JBvwithfield):
-			SINGLE_STEP();
-			PERFORM_ACTION(vwithfield(REGISTER_ARGS));
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
+			PERFORM_ACTION(withfield(REGISTER_ARGS));
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(USE_COMPUTED_GOTO)
 		cJBunimplemented:
 #else

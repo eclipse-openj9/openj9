@@ -204,51 +204,6 @@ findFieldSignatureClass(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA field
 	return resolvedClass;
 }
 
-#if defined(J9VM_OPT_VALHALLA_MVT)
-static bool
-ensureClassHasDVT(J9VMThread *vmStruct, J9Class *resolvedClass, U_16 classNameLength, U_8 *classNameData)
-{
-	PORT_ACCESS_FROM_VMC(vmStruct);
-	bool verified = false;
-	const char *nlsMsgFormat = NULL;
-
-	if (J9_ARE_NO_BITS_SET(resolvedClass->romClass->extraModifiers, J9AccClassIsValueCapable)) {
-		/* Error - Resolved class is not value capable */
-		nlsMsgFormat = j9nls_lookup_message(
-				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-				J9NLS_VM_CLASS_NOT_VALUE_CAPABLE,
-				"The resolved class %2$.*1$s is not value capable");
-	} else if (NULL == resolvedClass->derivedValueType) {
-		/* Error - DVT is not set */
-		nlsMsgFormat = j9nls_lookup_message(
-				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-				J9NLS_VM_DVT_NOT_SET,
-				"The value capable class %2$.*1$s does not have a derived value type");
-	} else {
-		/* Success - The DVT is available */
-		verified = true;
-	}
-
-	if (!verified) {
-		/* Construct error message */
-		char *msgChars = NULL;
-		UDATA msgCharLength = strlen(nlsMsgFormat);
-		msgCharLength += classNameLength;
-		msgChars = (char *)j9mem_allocate_memory(msgCharLength + 1, J9MEM_CATEGORY_VM);
-		if (NULL != msgChars) {
-			j9str_printf(PORTLIB, msgChars, msgCharLength, nlsMsgFormat, classNameLength, classNameData);
-		}
-
-		/* Throw InternalError */
-		setCurrentExceptionUTF(vmStruct, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, msgChars);
-
-		j9mem_free_memory(msgChars);
-	}
-
-	return verified;
-}
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
-
 J9Class *   
 resolveClassRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags)
 {
@@ -268,10 +223,6 @@ resolveClassRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDAT
 	UDATA findClassFlags = 0;
 	UDATA accessModifiers = 0;
 	j9object_t detailString = NULL;
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	bool resolvingDVT = false;
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
-
 	Trc_VM_resolveClassRef_Entry(vmStruct, ramCP, cpIndex, resolveFlags);
 
 tryAgain:
@@ -296,19 +247,6 @@ tryAgain:
 	}
 
 	Trc_VM_resolveClassRef_lookup(vmStruct, classNameLength, classNameData);
-
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	/* If the class name starts with ;Q, resolve to the derived value type (DVT).
-	 * We get to the DVT by loading the value capable class (VCC) it was derived from,
-	 * and then read the DVT from the VCC's derivedValueType field.
-	 */
-	if ((';' == classNameData[0]) && ('Q' == classNameData[1])) {
-		/* To load the VCC, we extract the actual class name (remove ";Q" prefix and "$value" suffix). */
-		classNameLength -= (strlen(";Q") + strlen("$value"));
-		classNameData += strlen(";Q");
-		resolvingDVT = true;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
 
 	findClassFlags = 0;
 	if (canRunJavaCode) {
@@ -363,17 +301,6 @@ tryAgain:
 		}
 		goto done;
 	}
-
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	if (resolvingDVT) {
-		if (!ensureClassHasDVT(vmStruct, resolvedClass, classNameLength, classNameData)) {
-			/* The class doesn't have a DVT - exception has been set */
-			goto done;
-		}
-		/* Read the DVT from the VCC's derivedValueType field */
-		resolvedClass = resolvedClass->derivedValueType;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
 
 	/* Perform a package access check from the current class to the resolved class.
 	 * No check is required if any of the following is true:

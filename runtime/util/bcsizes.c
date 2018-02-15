@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+#include "j9.h"
 
 const unsigned char JavaByteCodeRelocation[] = {
 0x01 /* JBnop = 0 */ ,
@@ -238,18 +239,6 @@ const unsigned char JavaByteCodeRelocation[] = {
 0x01 /* JBunimplemented = 214 */ ,
 0x01 /* JBaload0getfield = 215 */ ,
 0x0B /* JBnewdup = 216 */ ,
-#if defined(J9_VALHALLA_MVT)
-0x02 /* JBvload = 217 */ ,
-0x02 /* JBvstore = 218 */ ,
-0x01 /* JBvreturn = 219 */ ,
-0x01 /* JBvbox = 220 */ ,
-0x01 /* JBvunbox = 221 */ ,
-0x01 /* JBvaload = 222 */ ,
-0x01 /* JBvastore = 223 */ ,
-0x01 /* JBvdefault = 224 */ ,
-0x0B /* JBvgetfield = 225 */ ,
-0x0B /* JBvwithfield = 226 */ ,
-#else /* defined(J9_VALHALLA_MVT) */
 0x01 /* JBunimplemented = 217 */ ,
 0x01 /* JBunimplemented = 218 */ ,
 0x01 /* JBunimplemented = 219 */ ,
@@ -257,10 +246,15 @@ const unsigned char JavaByteCodeRelocation[] = {
 0x01 /* JBunimplemented = 221 */ ,
 0x01 /* JBunimplemented = 222 */ ,
 0x01 /* JBunimplemented = 223 */ ,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+0x01 /* JBdefaultvalue = 224 */ ,
+0x01 /* JBunimplemented = 225 */ ,
+0x0B /* JBwithfield = 226 */ ,
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x01 /* JBunimplemented = 224 */ ,
 0x01 /* JBunimplemented = 225 */ ,
 0x01 /* JBunimplemented = 226 */ ,
-#endif /* defined(J9_VALHALLA_MVT) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x01 /* JBunimplemented = 227 */ ,
 0x01 /* JBreturnFromConstructor = 228 */ ,
 0x01 /* JBgenericReturn = 229 */ ,

@@ -80,7 +80,7 @@
 #include "omrsig.h"
 #include "bcnames.h"
 #include "jimagereader.h"
-#include "openj9_version.h"
+#include "vendor_version.h"
 
 #ifdef J9VM_OPT_ZIP_SUPPORT
 #include "zip_api.h"
@@ -1569,6 +1569,26 @@ dumpLoadedClassList(J9HookInterface **hookInterface, uintptr_t eventNum, void *e
 		j9file_close(fd);
 	}
 
+}
+
+/* Print out the internal version information for openj9 */
+static void
+j9print_internal_version(J9PortLibrary *portLib) {
+	PORT_ACCESS_FROM_PORT(portLib);
+
+#if defined(OPENJ9_BUILD)
+#if defined(J9JDK_EXT_VERSION) && defined(J9JDK_EXT_NAME)
+	j9tty_err_printf(PORTLIB, "Eclipse OpenJ9 %s %s-bit Server VM (%s) from %s-%s JRE with %s %s, built on %s %s by %s with %s\n",
+		J9PRODUCT_NAME, J9TARGET_CPU_BITS, J9VERSION_STRING, J9TARGET_OS, J9TARGET_CPU_OSARCH,
+		J9JDK_EXT_NAME, J9JDK_EXT_VERSION,__DATE__, __TIME__, J9USERNAME, J9COMPILER_VERSION_STRING);
+#else
+        j9tty_err_printf(PORTLIB, "Eclipse OpenJ9 %s %s-bit Server VM (%s) from %s-%s JRE, built on %s %s by %s with %s\n",
+                J9PRODUCT_NAME, J9TARGET_CPU_BITS, J9VERSION_STRING, J9TARGET_OS, J9TARGET_CPU_OSARCH,
+                __DATE__, __TIME__, J9USERNAME, J9COMPILER_VERSION_STRING);
+#endif /* J9JDK_EXT_VERSION && J9JDK_EXT_NAME */
+#else /* OPENJ9_BUILD */
+	j9tty_err_printf(PORTLIB, "internal version not supported\n");
+#endif /* OPENJ9_BUILD */
 }
 
 /* The equivalent of a J9VMDllMain for the VM init module */

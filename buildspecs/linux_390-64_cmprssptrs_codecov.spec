@@ -253,7 +253,7 @@
 		<flag id="opt_srpAvlTreeSupport" value="true"/>
 		<flag id="opt_useFfi" value="true"/>
 		<flag id="opt_useFfiOnly" value="true"/>
-		<flag id="opt_valhallaMvt" value="false"/>
+		<flag id="opt_valhallaValueTypes" value="false"/>
 		<flag id="opt_zipSupport" value="true"/>
 		<flag id="opt_zlibCompression" value="true"/>
 		<flag id="opt_zlibSupport" value="true"/>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -243,18 +243,10 @@ extern J9_CDATA char * const sunJavaBCNames[];
 #define JBiincw 213
 #define JBaload0getfield 215
 #define JBnewdup 216
-#if defined(J9VM_OPT_VALHALLA_MVT)
-#define JBvload 217
-#define JBvstore 218
-#define JBvreturn 219
-#define JBvbox 220
-#define JBvunbox 221
-#define JBvaload 222
-#define JBvastore 223
-#define JBvdefault 224
-#define JBvgetfield 225
-#define JBvwithfield 226
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define JBdefaultvalue 224
+#define JBwithfield 226
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define JBreturnFromConstructor 228
 #define JBgenericReturn 229
 #define JBinvokeinterface2 231

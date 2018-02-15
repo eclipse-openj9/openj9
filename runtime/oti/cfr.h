@@ -779,18 +779,10 @@ typedef struct J9CfrMethod {
 #define CFR_BC_ifnonnull 199
 #define CFR_BC_goto_w 200
 #define CFR_BC_jsr_w 201
-#if defined(J9VM_OPT_VALHALLA_MVT)
-#define CFR_BC_vload 217
-#define CFR_BC_vstore 218
-#define CFR_BC_vreturn 219
-#define CFR_BC_vbox 220
-#define CFR_BC_vunbox 221
-#define CFR_BC_vaload 222
-#define CFR_BC_vastore 223
-#define CFR_BC_vdefault 224
-#define CFR_BC_vgetfield 225
-#define CFR_BC_vwithfield 226
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define CFR_BC_defaultvalue 224
+#define CFR_BC_withfield 226
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define CFR_BC_breakpoint 202  			/* Reserved opcodes */
 #define CFR_BC_impdep1 254
 #define CFR_BC_impdep2 255

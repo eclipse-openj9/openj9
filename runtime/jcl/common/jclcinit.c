@@ -41,9 +41,6 @@
 #include "omrversionstrings.h"
 #include "j9modron.h"
 #include "omr.h"
-#if defined(OPENJ9_BUILD)
-#include "openj9_version_info.h"
-#endif
 #include "vendor_version.h"
 
 /* The vm version which must match the JCL.
