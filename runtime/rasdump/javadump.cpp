@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2017 IBM Corp. and others
+ * Copyright (c) 2003, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -969,6 +969,13 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	_OutputStream.writeCharacters(EsBuildVersionString);
 	_OutputStream.writeCharacters("\n");
 
+#if defined(OPENJ9_TAG)
+	/* Write the OpenJ9 tag when it has a value */
+	if (strlen(OPENJ9_TAG) > 0) {
+		_OutputStream.writeCharacters("1CIJ9VMTAG     " OPENJ9_TAG "\n");
+	}
+#endif
+
 	/* Write the VM version data */
 	_OutputStream.writeCharacters("1CIJ9VMVERSION ");
 	_OutputStream.writeCharacters(_VirtualMachine->internalVMFunctions->getJ9VMVersionString(_VirtualMachine));
@@ -998,6 +1005,11 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	/* Write the Vendor version data */
 	_OutputStream.writeCharacters("1CI" VENDOR_SHORT_NAME "VERSION  " VENDOR_SHA "\n");
 #endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
+
+#if defined(OPENJDK_TAG) && defined(OPENJDK_SHA)
+	/* Write the JCL version data */
+	_OutputStream.writeCharacters("1CIJCLVERSION  " OPENJDK_SHA " based on " OPENJDK_TAG "\n");
+#endif
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	_OutputStream.writeCharacters("1CIJITMODES    ");
