@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1563,7 +1563,7 @@ j9shr_storeCompiledMethod(J9VMThread* currentThread, const J9ROMMethod* romMetho
 	UDATA oldState = (UDATA)-1;
 	UDATA* currentState = &(currentThread->omrVMThread->vmState);
 	const U_8* returnVal = 0;
-	SH_CacheMap* cm = (SH_CacheMap*)(sharedClassConfig->sharedClassCache);
+	SH_CacheMap* cm = NULL;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -1574,6 +1574,7 @@ j9shr_storeCompiledMethod(J9VMThread* currentThread, const J9ROMMethod* romMetho
 		return NULL;
 	}
 
+	cm = (SH_CacheMap*)(sharedClassConfig->sharedClassCache);
 	cm->updateRuntimeFullFlags(currentThread);
 
 	localRuntimeFlags = sharedClassConfig->runtimeFlags;
