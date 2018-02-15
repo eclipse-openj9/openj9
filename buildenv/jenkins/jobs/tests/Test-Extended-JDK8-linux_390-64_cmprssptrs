@@ -20,40 +20,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-node('390') {
+ node('390') {
 
-    SDK_VERSION = "8"
-
-    // Clone
-    OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
-    OPENJDK_BRANCH = "openj9"
-
-    // Build
-    BOOT_JDK = "/usr/lib/jvm/java-7-openjdk-s390x"
-    FREEMARKER = "$HOME/openj9/freemarker.jar"
-    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-PR${ghprbPullId}-linux_390-64_cmprssptrs-"
-    SDK_SUFFIX = ".tar.gz"
-    TEST_PREFIX = "test-"
-    TEST_SUFFIX = ".tar.gz"
-    RELEASE = "linux-s390x-normal-server-release"
     JDK_FOLDER = "j2sdk-image"
-
-    checkout scm
-    buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
-    testfile = load "${WORKSPACE}/buildenv/jenkins/test"
-
-    buildfile.build_pr()
-
-    // Test
-    JAVA_BIN = "${WORKSPACE}/build/$RELEASE/images/${JDK_FOLDER}/jre/bin"
+    RELEASE = "linux-s390x-normal-server-release"
+    JAVA_BIN = "${WORKSPACE}/build/${RELEASE}/images/${JDK_FOLDER}/jre/bin"
     SPEC = 'linux_390-64_cmprssptrs'
-    JAVA_VERSION = "SE${SDK_VERSION}0"
+    JAVA_VERSION = 'SE80'
     TEST_TARGET = '_extended'
 
-    archive_test = [:]
-    archive_test['Archive'] = { buildfile.archive() }
-    archive_test['Test'] = { testfile.test_all() }
-
-    parallel archive_test
-    buildfile.git_clean()
+    checkout scm
+    def buildfile = load "${WORKSPACE}/buildenv/jenkins/common/test"
+    buildfile.test_all_with_fetch()
 }
