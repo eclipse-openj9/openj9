@@ -1749,9 +1749,6 @@ nativeOOM:
 		if ((!fastHCR)
 			&& (0 == J9ROMCLASS_IS_PRIMITIVE_OR_ARRAY(romClass))
 			&& J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)
-#if defined(J9VM_OPT_VALHALLA_MVT)
-			&& J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_DERIVED_VALUE_TYPE)
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
 		) {
 			if (hashClassTableAtPut(vmThread, classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className), state->ramClass)) {
 				if (hotswapping) {
@@ -2124,11 +2121,7 @@ fail:
 		return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, state);
 	}
 
-	if (!hotswapping 
-#if defined(J9VM_OPT_VALHALLA_MVT)
-		&& J9_ARE_NO_BITS_SET(romClass->extraModifiers, J9AccClassIsValueCapable)
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
-	) {
+	if (!hotswapping) {
 		if (elementClass == NULL) {
 			ramClass = hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 		} else {
@@ -2843,29 +2836,6 @@ retry:
 	if (state.retry) {
 		goto retry;
 	}
-
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	/* If the class is value capable (VCC), derive a value type (DVT) */
-	if (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassIsValueCapable)) {
-		/* The class is expected to be on the class loading stack, but has already been popped. Push again. */
-		if (!hotswapping) {
-			/* check to see if this class is already in my list */
-			if (!verifyClassLoadingStack(vmThread, classLoader, romClass)) {
-				return internalCreateRAMClassDropAndReturn(vmThread, romClass, &state);
-			}
-		}
-
-		/* Create J9Class with DVT option */
-		UDATA customOptions = (options | J9_FINDCLASS_FLAG_DERIVED_VALUE_TYPE);
-		J9Class *derivedValueType = internalCreateRAMClassFromROMClassImpl(vmThread, classLoader, romClass, customOptions, elementClass,
-				methodRemapArray, entryIndex, locationType, classBeingRedefined, packageID, superclass, &state, hostClassLoader, hostClass);
-		derivedValueType->classFlags |= J9ClassIsDerivedValueType;
-
-		/* Connect the VCC and the DVT */
-		result->derivedValueType = derivedValueType;
-		derivedValueType->derivedValueType = result;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
 
 	if ((NULL != result) && (0 != (J9_FINDCLASS_FLAG_ANON & options))) {
 		/* if anonClass replace classLoader with hostClassLoader, no one can know about anonClassLoader */

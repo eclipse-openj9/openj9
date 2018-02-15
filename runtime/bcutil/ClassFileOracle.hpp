@@ -920,9 +920,9 @@ class NameAndTypeIterator
 	bool hasClinit() const { return _hasClinit; }
 	bool annotationRefersDoubleSlotEntry() const { return _annotationRefersDoubleSlotEntry; }
 	bool isInnerClass() const { return _isInnerClass; }
-#if defined(J9VM_OPT_VALHALLA_MVT)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	bool isClassValueCapable() const { return _isClassValueCapable; }
-#endif /* J9VM_OPT_VALHALLA_MVT */
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 private:
 	class InterfaceVisitor;
@@ -931,9 +931,6 @@ private:
 		FRAMEITERATORSKIP_ANNOTATION,
 		SUN_REFLECT_CALLERSENSITIVE_ANNOTATION,
 		JDK_INTERNAL_REFLECT_CALLERSENSITIVE_ANNOTATION,
-#if defined(J9VM_OPT_VALHALLA_MVT)
-		DERIVE_VALUE_TYPE_ANNOTATION,
-#endif /* J9VM_OPT_VALHALLA_MVT */
 		JAVA8_CONTENDED_ANNOTATION,
 		CONTENDED_ANNOTATION,
 		KNOWN_ANNOTATION_COUNT
@@ -980,9 +977,9 @@ private:
 	bool _hasClinit;
 	bool _annotationRefersDoubleSlotEntry;
 	bool _isInnerClass;
-#if defined(J9VM_OPT_VALHALLA_MVT)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	bool _isClassValueCapable;
-#endif /* J9VM_OPT_VALHALLA_MVT */
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	FieldInfo *_fieldsInfo;
 	MethodInfo *_methodsInfo;

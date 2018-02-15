@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -240,18 +240,6 @@ const U_16 J9JavaBytecodeVerificationTable[] = {
 		0x1700 /* JBunimplemented - 214 */,
 		0x0487 /* JBaload0getfield - 215 */,
 		0x1200 /* JBnewdup - 216 */,
-#if defined(J9_VALHALLA_MVT)
-		0x0000 /* JBvload = 217 */ ,
-		0x0000 /* JBvstore = 218 */ ,
-		0x0000 /* JBvreturn = 219 */ ,
-		0x0000 /* JBvbox = 220 */ ,
-		0x0000 /* JBvunbox = 221 */ ,
-		0x0000 /* JBvaload = 222 */ ,
-		0x0000 /* JBvastore = 223 */ ,
-		0x0000 /* JBvdefault = 224 */ ,
-		0x0000 /* JBvgetfield = 225 */ ,
-		0x0000 /* JBvwithfield = 226 */ ,
-#else /* defined(J9_VALHALLA_MVT) */
 		0x1700 /* JBunimplemented - 217 */,
 		0x1700 /* JBunimplemented - 218 */,
 		0x1700 /* JBunimplemented - 219 */,
@@ -259,10 +247,15 @@ const U_16 J9JavaBytecodeVerificationTable[] = {
 		0x1700 /* JBunimplemented - 221 */,
 		0x1700 /* JBunimplemented - 222 */,
 		0x1700 /* JBunimplemented - 223 */,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		0x0000 /* JBdefaultvalue = 224 */ ,
+		0x1700 /* JBunimplemented - 225 */,
+		0x0000 /* JBwithfield = 226 */ ,
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		0x1700 /* JBunimplemented - 224 */,
 		0x1700 /* JBunimplemented - 225 */,
 		0x1700 /* JBunimplemented - 226 */,
-#endif /* defined(J9_VALHALLA_MVT) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		0x1700 /* JBunimplemented - 227 */,
 		0x0F00 /* JBreturnFromConstructor - 228 */,
 		0x0F00 /* JBgenericReturn - 229 */,

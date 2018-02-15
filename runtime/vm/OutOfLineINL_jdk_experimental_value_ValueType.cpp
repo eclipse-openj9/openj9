@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,14 +33,7 @@ VM_BytecodeAction
 OutOfLineINL_jdk_experimental_value_ValueType_valueClassImpl(J9VMThread *currentThread, J9Method *method)
 {
 	VM_BytecodeAction rc = EXECUTE_BYTECODE;
-	j9object_t classObject = *(j9object_t*)currentThread->sp;
-	if (NULL == classObject) {
-		rc = THROW_NPE;
-	} else {
-		J9Class *sourceClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
-		J9Class *valueClass = sourceClass->derivedValueType;
-		VM_OutOfLineINL_Helpers::returnObject(currentThread, J9VM_J9CLASS_TO_HEAPCLASS(valueClass), 1);
-	}
+	// TODO
 	return rc;
 }
 #endif /* defined(J9VM_OPT_VALHALLA_MVT) */

@@ -2948,9 +2948,6 @@ typedef struct J9Class {
 	struct J9JITExceptionTable* jitMetaDataList;
 	struct J9Class* gcLink;
 	struct J9Class* hostClass;
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	struct J9Class* derivedValueType;
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	struct J9Class* nestHost;
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */

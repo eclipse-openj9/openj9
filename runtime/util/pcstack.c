@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+#include "j9.h"
 
 /* high nybble = branch action, low nybble = instruction size */
 const unsigned char J9JavaInstructionSizeAndBranchActionTable[] = {
@@ -239,18 +240,6 @@ const unsigned char J9JavaInstructionSizeAndBranchActionTable[] = {
 0x00 /* JBunimplemented = 214 */,
 0x01 /* JBaload0getfield = 215 */,
 0x03 /* JBnewdup = 216 */,
-#if defined(J9_VALHALLA_MVT)
-0x02 /* JBvload = 217 */ ,
-0x02 /* JBvstore = 218 */ ,
-0x01 /* JBvreturn = 219 */ ,
-0x01 /* JBvbox = 220 */ ,
-0x01 /* JBvunbox = 221 */ ,
-0x01 /* JBvaload = 222 */ ,
-0x01 /* JBvastore = 223 */ ,
-0x01 /* JBvdefault = 224 */ ,
-0x03 /* JBvgetfield = 225 */ ,
-0x03 /* JBvwithfield = 226 */ ,
-#else /* defined(J9_VALHALLA_MVT) */
 0x00 /* JBunimplemented = 217 */,
 0x00 /* JBunimplemented = 218 */,
 0x00 /* JBunimplemented = 219 */,
@@ -258,10 +247,15 @@ const unsigned char J9JavaInstructionSizeAndBranchActionTable[] = {
 0x00 /* JBunimplemented = 221 */,
 0x00 /* JBunimplemented = 222 */,
 0x00 /* JBunimplemented = 223 */,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+0x01 /* JBdefaultvalue = 224 */ ,
+0x00 /* JBunimplemented = 225 */,
+0x03 /* JBwithfield = 226 */ ,
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x00 /* JBunimplemented = 224 */,
 0x00 /* JBunimplemented = 225 */,
 0x00 /* JBunimplemented = 226 */,
-#endif /* defined(J9_VALHALLA_MVT) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x00 /* JBunimplemented = 227 */,
 0x41 /* JBreturnFromConstructor = 228 */,
 0x41 /* JBgenericReturn = 229 */,
@@ -517,18 +511,6 @@ const unsigned char JavaStackActionTable[] = {
 0x00 /* JBunimplemented = 214  -- pops: 0 pushes: 0*/ ,
 0x50 /* JBaload0getfield = 215  -- pops: 0 pushes: 1*/ ,
 0x50 /* JBnewdup = 216  -- pops: 0 pushes: 1*/ ,
-#if defined(J9_VALHALLA_MVT)
-0x50 /* JBvload = 217 -- pops: 0 pushes: 1*/ ,
-0x01 /* JBvstore = 218 -- pops: 1 pushes: 0 */ ,
-0x01 /* JBvreturn = 219 -- pops: 1 pushes: 0 */ ,
-0x01 /* JBvbox = 220 -- pops: 1 pushes: 1 */ ,
-0x01 /* JBvunbox = 221 -- pops: 1 pushes: 1 */ ,
-0x52 /* JBvaload = 222 -- pops: 2 pushes: 1 */ ,
-0x03 /* JBvastore = 223 -- pops: 3 pushes: 0 */ ,
-0x01 /* JBvdefault = 224 -- pops: 0 pushes: 1 */ ,
-0x80 /* JBvgetfield = 225 -- pops: 1 pushes: 1 */ ,
-0x80 /* JBvwithfield = 226 -- pops: 2 pushes: 1 */ ,
-#else /* defined(J9_VALHALLA_MVT) */
 0x00 /* JBunimplemented = 217  -- pops: 0 pushes: 0*/ ,
 0x00 /* JBunimplemented = 218  -- pops: 0 pushes: 0*/ ,
 0x00 /* JBunimplemented = 219  -- pops: 0 pushes: 0*/ ,
@@ -536,10 +518,15 @@ const unsigned char JavaStackActionTable[] = {
 0x00 /* JBunimplemented = 221  -- pops: 0 pushes: 0*/ ,
 0x00 /* JBunimplemented = 222  -- pops: 0 pushes: 0*/ ,
 0x00 /* JBunimplemented = 223  -- pops: 0 pushes: 0*/ ,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+0x01 /* JBdefaultvalue = 224 -- pops: 0 pushes: 1 */ ,
+0x00 /* JBunimplemented = 225  -- pops: 0 pushes: 0*/ ,
+0x80 /* JBwithfield = 226 -- pops: 2 pushes: 1 */ ,
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x00 /* JBunimplemented = 224  -- pops: 0 pushes: 0*/ ,
 0x00 /* JBunimplemented = 225  -- pops: 0 pushes: 0*/ ,
 0x00 /* JBunimplemented = 226  -- pops: 0 pushes: 0*/ ,
-#endif /* defined(J9_VALHALLA_MVT) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 0x00 /* JBunimplemented = 227  -- pops: 0 pushes: 0*/ ,
 0x00 /* JBreturnFromConstructor = 228  -- pops: 0 pushes: 0*/ ,
 0x00 /* JBgenericReturn = 229  -- pops: 0 pushes: 0*/ ,
@@ -798,18 +785,6 @@ const unsigned char J9BytecodeSlotUseTable[] = {
 	0x0 /* JBunimplemented (16rD6) */,
 	0x84 /* JBaload0getfield (16rD7) <oslot><read><encodedparam>*/,
 	0x0 /* JBnewdup (16rD8) */,
-#if defined(J9_VALHALLA_MVT)
-	0x0 /* JBvload (16rD9) */ ,
-	0x0 /* JBvstore (16rDA) */ ,
-	0x0 /* JBvreturn (16rDB) */ ,
-	0x0 /* JBvbox (16rDC) */ ,
-	0x0 /* JBvunbox (16rDD) */ ,
-	0x0 /* JBvaload (16rDE) */ ,
-	0x0 /* JBvastore (16rDF) */ ,
-	0x0 /* JBvdefault (16rE0) */ ,
-	0x0 /* JBvgetfield (16rE1) */ ,
-	0x0 /* JBvwithfield (16rE2) */ ,
-#else /* defined(J9_VALHALLA_MVT) */
 	0x0 /* JBunimplemented (16rD9) */,
 	0x0 /* JBunimplemented (16rDA) */,
 	0x0 /* JBunimplemented (16rDB) */,
@@ -817,10 +792,15 @@ const unsigned char J9BytecodeSlotUseTable[] = {
 	0x0 /* JBunimplemented (16rDD) */,
 	0x0 /* JBunimplemented (16rDE) */,
 	0x0 /* JBunimplemented (16rDF) */,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	0x0 /* JBdefaultvalue (16rE0) */ ,
+	0x0 /* JBunimplemented (16rE1) */ ,
+	0x0 /* JBwithfield (16rE2) */ ,
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	0x0 /* JBunimplemented (16rE0) */,
 	0x0 /* JBunimplemented (16rE1) */,
 	0x0 /* JBunimplemented (16rE2) */,
-#endif /* defined(J9_VALHALLA_MVT) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	0x0 /* JBunimplemented (16rE3) */,
 	0x0 /* JBreturnFromConstructor (16rE4) */,
 	0x0 /* JBgenericReturn (16rE5) */,

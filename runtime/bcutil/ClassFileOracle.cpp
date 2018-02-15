@@ -48,11 +48,6 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 #define JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE "Ljdk/internal/reflect/CallerSensitive;"
 		{JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE, sizeof(JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE)},
 #undef JDK_INTERNAL_REFLECT_CALLERSENSITIVE_SIGNATURE
-#if defined(J9VM_OPT_VALHALLA_MVT)
-#define DERIVE_VALUE_TYPE_SIGNATURE "Ljvm/internal/value/DeriveValueType;"
-		{DERIVE_VALUE_TYPE_SIGNATURE, sizeof(DERIVE_VALUE_TYPE_SIGNATURE)},
-#undef DERIVE_VALUE_TYPE_SIGNATURE
-#endif /* J9VM_OPT_VALHALLA_MVT */
 #define JAVA8_CONTENDED_SIGNATURE "Lsun/misc/Contended;" /* TODO remove this if VM does not support Java 8 */
 		{JAVA8_CONTENDED_SIGNATURE, sizeof(JAVA8_CONTENDED_SIGNATURE)},
 #undef JAVA8_CONTENDED_SIGNATURE
@@ -183,9 +178,9 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_nestMembers(NULL),
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	_isClassContended(false),
-#if defined(J9VM_OPT_VALHALLA_MVT)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	_isClassValueCapable(false),
-#endif /* J9VM_OPT_VALHALLA_MVT */
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_isInnerClass(false)
 {
 	Trc_BCU_Assert_NotEquals( classFile, NULL );
@@ -448,9 +443,6 @@ ClassFileOracle::walkAttributes()
 			break;
 		case CFR_ATTRIBUTE_RuntimeVisibleAnnotations: {
 			UDATA knownAnnotations = 0;
-#if defined(J9VM_OPT_VALHALLA_MVT)
-			knownAnnotations = addAnnotationBit(knownAnnotations, DERIVE_VALUE_TYPE_ANNOTATION);
-#endif /* J9VM_OPT_VALHALLA_MVT */
 			if ((NULL != _context->javaVM()) && J9_ARE_ALL_BITS_SET(_context->javaVM()->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_ALLOW_CONTENDED_FIELDS) &&
 					(_context->isBootstrapLoader() || (J9_ARE_ALL_BITS_SET(_context->javaVM()->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_ALLOW_APPLICATION_CONTENDED_FIELDS)))) {
 				knownAnnotations = addAnnotationBit(knownAnnotations, CONTENDED_ANNOTATION);
@@ -459,11 +451,6 @@ ClassFileOracle::walkAttributes()
 			_annotationsAttribute = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
 			if (0 == _annotationsAttribute->rawDataLength) {
 				UDATA foundAnnotations = walkAnnotations(_annotationsAttribute->numberOfAnnotations, _annotationsAttribute->annotations, knownAnnotations);
-#if defined(J9VM_OPT_VALHALLA_MVT)
-				if (containsKnownAnnotation(foundAnnotations, DERIVE_VALUE_TYPE_ANNOTATION)) {
-					_isClassValueCapable = true;
-				}
-#endif /* J9VM_OPT_VALHALLA_MVT */
 				if (containsKnownAnnotation(foundAnnotations, CONTENDED_ANNOTATION) || containsKnownAnnotation(foundAnnotations, JAVA8_CONTENDED_ANNOTATION)) {
 					_isClassContended = true;
 				}
