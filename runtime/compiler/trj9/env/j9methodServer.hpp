@@ -33,7 +33,7 @@ public:
    virtual bool fieldAttributes(TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override;
    virtual void * startAddressForJittedMethod() override;
    virtual char * localName(uint32_t slotNumber, uint32_t bcIndex, int32_t &len, TR_Memory *) override;
-   virtual bool virtualMethodIsOverridden() override;
+   virtual bool virtualMethodIsOverridden() override { return _virtualMethodIsOverridden; }
    virtual TR_ResolvedMethod * getResolvedInterfaceMethod(TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
    virtual TR_OpaqueClassBlock * getResolvedInterfaceMethod(int32_t cpIndex, uintptrj_t * pITableIndex) override;
    virtual uint32_t getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex) override;
@@ -80,6 +80,7 @@ private:
    void *_startAddressForJittedMethod; // JIT entry point
    bool _isInterpreted; // cached information coming from client
    bool _isMethodInValidLibrary;
+   bool _virtualMethodIsOverridden;
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);

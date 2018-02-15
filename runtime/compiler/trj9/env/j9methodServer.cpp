@@ -45,7 +45,8 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    // Create client side mirror of this object to use for calls involving RAM data
    TR_ResolvedJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JAASServerMethod*) owningMethod)->_remoteMirror : nullptr;
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot);
-   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uintptrj_t, void*, bool, bool, TR::RecognizedMethod, TR::RecognizedMethod, void*>();
+   auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uintptrj_t, void*, bool, bool, 
+      TR::RecognizedMethod, TR::RecognizedMethod, void*, bool>();
 
    _remoteMirror = std::get<0>(recv);
 
@@ -70,6 +71,8 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    TR::RecognizedMethod rm = std::get<9>(recv);
 
    _startAddressForJittedMethod = std::get<10>(recv);
+
+   _virtualMethodIsOverridden = std::get<11>(recv);
  
    // initialization from TR_J9Method constructor
    _className = J9ROMCLASS_CLASSNAME(_romClass);
@@ -371,14 +374,6 @@ TR_ResolvedJ9JAASServerMethod::localName(U_32 slotNumber, U_32 bcIndex, I_32 &le
    memcpy(out, &nameString[0], len);
    return out;
    }
-
-bool
-TR_ResolvedJ9JAASServerMethod::virtualMethodIsOverridden()
-   {
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_virtualMethodIsOverridden, _remoteMirror);
-   return std::get<0>(_stream->read<bool>());
-   }
-
 
 TR_OpaqueClassBlock *
 TR_ResolvedJ9JAASServerMethod::getResolvedInterfaceMethod(I_32 cpIndex, UDATA *pITableIndex)
