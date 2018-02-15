@@ -20,20 +20,20 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-def OPENJDK_REPO = 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
+def OPENJDK_REPO = 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
 def OPENJDK_BRANCH = 'openj9'
 def OPENJ9_REPO = 'https://github.com/eclipse/openj9.git'
 def OPENJ9_BRANCH = 'master'
 def OMR_REPO = 'https://github.com/eclipse/openj9-omr.git'
 def OMR_BRANCH = 'openj9'
 
-def BUILD_JOB_NAME = 'Build-JDK8-linux_390-64_cmprssptrs'
-def SANITY_JOB_NAME = 'Test-Sanity-JDK8-linux_390-64_cmprssptrs'
-def EXTENDED_JOB_NAME = 'Test-Extended-JDK8-linux_390-64_cmprssptrs'
+def BUILD_JOB_NAME = 'Build-JDK9-linux_ppc-64_cmprssptrs_le'
+def SANITY_JOB_NAME = 'Test-Sanity-JDK9-linux_ppc-64_cmprssptrs_le'
+def EXTENDED_JOB_NAME = 'Test-Extended-JDK9-linux_ppc-64_cmprssptrs_le'
 
 node('master') {
     checkout scm
-    buildfile = load "${WORKSPACE}/buildenv/jenkins/pipeline-functions"
+    buildfile = load "${WORKSPACE}/buildenv/jenkins/common/pipeline-functions"
     SHAS = buildfile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 }
 

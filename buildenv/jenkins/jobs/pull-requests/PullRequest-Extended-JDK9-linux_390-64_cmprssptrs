@@ -39,8 +39,8 @@ node('390') {
     JDK_FOLDER = "jdk"
 
     checkout scm
-    buildfile = load "${WORKSPACE}/buildenv/jenkins/build"
-    testfile = load "${WORKSPACE}/buildenv/jenkins/test"
+    buildfile = load "${WORKSPACE}/buildenv/jenkins/common/build"
+    testfile = load "${WORKSPACE}/buildenv/jenkins/common/test"
 
     buildfile.build_pr()
 
@@ -48,7 +48,7 @@ node('390') {
     JAVA_BIN = "${WORKSPACE}/build/$RELEASE/images/${JDK_FOLDER}/bin"
     SPEC = 'linux_390-64_cmprssptrs'
     JAVA_VERSION = "SE${SDK_VERSION}0"
-    TEST_TARGET = '_sanity'
+    TEST_TARGET = '_extended'
 
     archive_test = [:]
     archive_test['Archive'] = { buildfile.archive() }
