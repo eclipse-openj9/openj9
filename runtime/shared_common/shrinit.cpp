@@ -1084,10 +1084,9 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 static void
 j9shr_dump_help(J9JavaVM* vm, UDATA more) 
 {
-	const char* tmpcstr;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_SHRC_SHRINIT_HELP_HEADER, NULL);
+	const char* tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_SHRC_SHRINIT_HELP_HEADER, NULL);
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	IDATA i=0;
@@ -1558,12 +1557,9 @@ j9shr_storeCompiledMethod(J9VMThread* currentThread, const J9ROMMethod* romMetho
 {
 	J9JavaVM* vm = currentThread->javaVM;
 	J9SharedClassConfig* sharedClassConfig = vm->sharedClassConfig;
-	U_64 localRuntimeFlags;
-	UDATA localVerboseFlags;
 	UDATA oldState = (UDATA)-1;
 	UDATA* currentState = &(currentThread->omrVMThread->vmState);
 	const U_8* returnVal = 0;
-	SH_CacheMap* cm = NULL;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -1574,11 +1570,11 @@ j9shr_storeCompiledMethod(J9VMThread* currentThread, const J9ROMMethod* romMetho
 		return NULL;
 	}
 
-	cm = (SH_CacheMap*)(sharedClassConfig->sharedClassCache);
+	SH_CacheMap* cm = (SH_CacheMap*)(sharedClassConfig->sharedClassCache);
 	cm->updateRuntimeFullFlags(currentThread);
 
-	localRuntimeFlags = sharedClassConfig->runtimeFlags;
-	localVerboseFlags = sharedClassConfig->verboseFlags;
+	U_64 localRuntimeFlags = sharedClassConfig->runtimeFlags;
+	UDATA localVerboseFlags = sharedClassConfig->verboseFlags;
 
 	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) || 
 		(localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES)) {
@@ -1673,8 +1669,6 @@ j9shr_findSharedData(J9VMThread* currentThread, const char* key, UDATA keylen, U
 {
 	J9JavaVM* vm = currentThread->javaVM;
 	J9SharedClassConfig* sharedClassConfig = vm->sharedClassConfig;
-	U_64 localRuntimeFlags;
-	UDATA localVerboseFlags;
 	UDATA oldState = (UDATA)-1;
 	UDATA* currentState = &(currentThread->omrVMThread->vmState);
 	IDATA returnVal = -1;
@@ -1688,8 +1682,8 @@ j9shr_findSharedData(J9VMThread* currentThread, const char* key, UDATA keylen, U
 		return -1;
 	}
 
-	localRuntimeFlags = sharedClassConfig->runtimeFlags;
-	localVerboseFlags = sharedClassConfig->verboseFlags;
+	U_64 localRuntimeFlags = sharedClassConfig->runtimeFlags;
+	UDATA localVerboseFlags = sharedClassConfig->verboseFlags;
 
 	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) ||
 		(localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_ACCESS)) {
@@ -1753,12 +1747,9 @@ j9shr_storeSharedData(J9VMThread* currentThread, const char* key, UDATA keylen, 
 {
 	J9JavaVM* vm = currentThread->javaVM;
 	J9SharedClassConfig* sharedClassConfig = vm->sharedClassConfig;
-	U_64 localRuntimeFlags;
-	UDATA localVerboseFlags;
 	UDATA oldState = (UDATA)-1;
 	UDATA* currentState = &(currentThread->omrVMThread->vmState);
 	const U_8* returnVal = NULL;
-	SH_CacheMap* cm = (SH_CacheMap*)(sharedClassConfig->sharedClassCache);
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -1769,10 +1760,11 @@ j9shr_storeSharedData(J9VMThread* currentThread, const char* key, UDATA keylen, 
 		return NULL;
 	}
 	
+	SH_CacheMap* cm = (SH_CacheMap*)(sharedClassConfig->sharedClassCache);
 	cm->updateRuntimeFullFlags(currentThread);
 
-	localRuntimeFlags = sharedClassConfig->runtimeFlags;
-	localVerboseFlags = sharedClassConfig->verboseFlags;
+	U_64 localRuntimeFlags = sharedClassConfig->runtimeFlags;
+	UDATA localVerboseFlags = sharedClassConfig->verboseFlags;
 
 	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) || 
 		(J9_ARE_ANY_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL | J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES))
@@ -1853,11 +1845,9 @@ j9shr_storeAttachedData(J9VMThread* currentThread, const void* addressInCache, c
 {
 	J9JavaVM* vm = currentThread->javaVM;
 	J9SharedClassConfig* sharedClassConfig = vm->sharedClassConfig;
-	U_64 localRuntimeFlags;
 	UDATA oldState = (UDATA)-1;
 	UDATA* currentState = &(currentThread->omrVMThread->vmState);
 	UDATA returnVal = 0;
-	SH_CacheMap* cm = (SH_CacheMap*)(sharedClassConfig->sharedClassCache);
 
 #if defined(J9SHR_CACHELET_SUPPORT)
 	return J9SHR_RESOURCE_STORE_ERROR;
@@ -1869,9 +1859,10 @@ j9shr_storeAttachedData(J9VMThread* currentThread, const void* addressInCache, c
 		return J9SHR_RESOURCE_PARAMETER_ERROR;
 	}
 	
+	SH_CacheMap* cm = (SH_CacheMap*)(sharedClassConfig->sharedClassCache);
 	cm->updateRuntimeFullFlags(currentThread);
 
-	localRuntimeFlags = sharedClassConfig->runtimeFlags;
+	U_64 localRuntimeFlags = sharedClassConfig->runtimeFlags;
 
 	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) ||
 		(localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES) ||
@@ -1945,7 +1936,6 @@ j9shr_findAttachedData(J9VMThread* currentThread, const void* addressInCache, J9
 {
 	J9JavaVM* vm = currentThread->javaVM;
 	J9SharedClassConfig* sharedClassConfig = vm->sharedClassConfig;
-	U_64 localRuntimeFlags;
 	UDATA oldState = (UDATA)-1;
 	UDATA* currentState = &(currentThread->omrVMThread->vmState);
 	const U_8* returnVal = 0;
@@ -1961,7 +1951,7 @@ j9shr_findAttachedData(J9VMThread* currentThread, const void* addressInCache, J9
 		return (U_8*)J9SHR_RESOURCE_PARAMETER_ERROR;
 	}
 
-	localRuntimeFlags = sharedClassConfig->runtimeFlags;
+	U_64 localRuntimeFlags = sharedClassConfig->runtimeFlags;
 
 	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) ||
 		(localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_ACCESS)
@@ -2020,7 +2010,6 @@ j9shr_updateAttachedData(J9VMThread* currentThread, const void* addressInCache, 
 {
 	J9JavaVM* vm = currentThread->javaVM;
 	J9SharedClassConfig* sharedClassConfig = vm->sharedClassConfig;
-	U_64 localRuntimeFlags;
 	UDATA oldState = (UDATA)-1;
 	UDATA* currentState = &(currentThread->omrVMThread->vmState);
 	UDATA returnVal = 0;
@@ -2035,7 +2024,7 @@ j9shr_updateAttachedData(J9VMThread* currentThread, const void* addressInCache, 
 		return J9SHR_RESOURCE_PARAMETER_ERROR;
 	}
 
-	localRuntimeFlags = sharedClassConfig->runtimeFlags;
+	U_64 localRuntimeFlags = sharedClassConfig->runtimeFlags;
 
 	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) ||
 		(localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES) ||
@@ -2092,7 +2081,6 @@ j9shr_updateAttachedUDATA(J9VMThread* currentThread, const void* addressInCache,
 {
 	J9JavaVM* vm = currentThread->javaVM;
 	J9SharedClassConfig* sharedClassConfig = vm->sharedClassConfig;
-	U_64 localRuntimeFlags;
 	UDATA oldState = (UDATA)-1;
 	UDATA* currentState = &(currentThread->omrVMThread->vmState);
 	UDATA returnVal = 0;
@@ -2109,7 +2097,7 @@ j9shr_updateAttachedUDATA(J9VMThread* currentThread, const void* addressInCache,
 		return J9SHR_RESOURCE_PARAMETER_ERROR;
 	}
 
-	localRuntimeFlags = sharedClassConfig->runtimeFlags;
+	U_64 localRuntimeFlags = sharedClassConfig->runtimeFlags;
 
 	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) ||
 		(localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES) ||
@@ -2208,7 +2196,7 @@ resetSharedTable(J9SharedInvariantInternTable* sharedTable)
 {
 	*(sharedTable->sharedTailNodePtr) = 0;
 	*(sharedTable->sharedHeadNodePtr) = 0;
-    *(sharedTable->totalSharedNodesPtr) = 0;
+	*(sharedTable->totalSharedNodesPtr) = 0;
 	*(sharedTable->totalSharedWeightPtr) = 0;
 	sharedTable->headNode = NULL;
 	sharedTable->tailNode = NULL;
@@ -2253,7 +2241,6 @@ j9shr_resetSharedStringTable(J9JavaVM* vm)
 static void
 reportUtilityNotApplicable(J9JavaVM* vm, const char* ctrlDirName, const char* cacheName, UDATA verboseFlags, U_64 runtimeFlags, UDATA command)
 {
-	IDATA reportedIncompatibleNum;
 	J9PortShcVersion versionData;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	char cacheDirName[J9SH_MAXPATH];
@@ -2277,7 +2264,7 @@ reportUtilityNotApplicable(J9JavaVM* vm, const char* ctrlDirName, const char* ca
 		optionName = OPTION_PRINTALLSTATS;
 	}
 
-	reportedIncompatibleNum = j9shr_report_utility_incompatible(vm, ctrlDirName, groupPerm, verboseFlags, cacheName, optionName);
+	IDATA reportedIncompatibleNum = j9shr_report_utility_incompatible(vm, ctrlDirName, groupPerm, verboseFlags, cacheName, optionName);
 
 	if (SH_OSCache::getCacheDir(PORTLIB, ctrlDirName, cacheDirName, J9SH_MAXPATH, versionData.cacheType) == -1) {
 		return;
@@ -4601,8 +4588,6 @@ j9shr_findCompiledMethodEx1(J9VMThread* currentThread, const J9ROMMethod* romMet
 {
 	J9JavaVM* vm = currentThread->javaVM;
 	J9SharedClassConfig* sharedClassConfig = vm->sharedClassConfig;
-	U_64 localRuntimeFlags = 0;
-	UDATA localVerboseFlags = 0;
 	UDATA oldState = (UDATA)-1;
 	UDATA* currentState = &(currentThread->omrVMThread->vmState);
 	const U_8* returnVal = 0;
@@ -4616,8 +4601,8 @@ j9shr_findCompiledMethodEx1(J9VMThread* currentThread, const J9ROMMethod* romMet
 		return NULL;
 	}
 
-	localRuntimeFlags = sharedClassConfig->runtimeFlags;
-	localVerboseFlags = sharedClassConfig->verboseFlags;
+	U_64 localRuntimeFlags = sharedClassConfig->runtimeFlags;
+	UDATA localVerboseFlags = sharedClassConfig->verboseFlags;
 
 	if (J9_ARE_NO_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) ||
 		J9_ARE_ALL_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_DENY_CACHE_ACCESS)) {
