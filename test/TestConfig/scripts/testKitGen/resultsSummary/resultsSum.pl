@@ -174,12 +174,17 @@ sub failureMkGen {
 		. "########################################################\n"
 		. "\n";
 		print $fhOut $headerComments;
-		print $fhOut "failed:";
-		print $fhOut " \\\nrmResultFile";
+		print $fhOut ".DEFAULT_GOAL := failed\n\n"
+					. "D = /\n\n"
+					. "ifndef TEST_ROOT\n"
+					. "\tTEST_ROOT := \$(shell pwd)\$(D)..\n"
+					. "endif\n\n"
+					. "failed:\n";
 		foreach my $target (@$failureTargets) {
-			print $fhOut " \\\n" . $target;
+			print $fhOut '	@$(MAKE) -C $(TEST_ROOT) -f autoGen.mk ' . $target . "\n";
 		}
-		print $fhOut " \\\nresultsSummary";
+		print $fhOut "\n.PHONY: failed\n"
+					. ".NOTPARALLEL: failed";
 		close $fhOut;
 	}
 }

@@ -114,16 +114,6 @@ make test
 
 4. Run tests:
 
-  * all tests
-    - compile & run tests
-        ```
-        make test
-        ```
-    - run all tests without recompiling them
-        ```
-        make runtest
-        ```
-
   * group of tests <br />
     make _group <br />
     e.g., 
@@ -161,6 +151,16 @@ make test
     make -f autoGen.mk _sanity
     ```
 
+  * all tests
+    - compile & run tests
+        ```
+        make test
+        ```
+    - run all tests without recompiling them
+        ```
+        make runtest
+        ```
+
   * against specific (e.g., hotspot SE80) SDK
 
     impl and subset are used to annotate tests in playlist.xml, 
@@ -169,7 +169,7 @@ make test
 
   * rerun the failed tests from the last run
     ```
-    make failed
+    make _failed
     ```
 
   * with a different set of JVM options
