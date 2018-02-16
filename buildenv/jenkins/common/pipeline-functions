@@ -21,34 +21,35 @@
  *******************************************************************************/
 
  def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH) {
+    // Get a set of SHAs for a standard OpenJ9 build
     def SHAS = [:]
     stage ('Sniff Repos') {
         dir('openjdk') {
-            echo OPENJDK_REPO
-            echo "${OPENJDK_REPO}"
-            SHAS['OPENJDK'] = sh (
-                        script: "git ls-remote $OPENJDK_REPO | grep refs/heads/$OPENJDK_BRANCH | awk \'{ print \$1 }\' | sed -r 's/(^.{7}).*/\\1/'",
-                        returnStdout: true
-                    ).trim()
+            SHAS['OPENJDK'] = get_sha(OPENJDK_REPO, OPENJDK_BRANCH)
         }
         dir('openj9') {
-            SHAS['OPENJ9'] = sh (
-                        script: "git ls-remote $OPENJ9_REPO | grep refs/heads/$OPENJ9_BRANCH | awk \'{ print \$1 }\' | sed -r 's/(^.{7}).*/\\1/'",
-                        returnStdout: true
-                    ).trim()
+            SHAS['OPENJ9'] = get_sha(OPENJ9_REPO, OPENJ9_BRANCH)
         }
         dir('omr') {
-            SHAS['OMR'] = sh (
-                        script: "git ls-remote $OMR_REPO | grep refs/heads/$OMR_BRANCH | awk \'{ print \$1 }\' | sed -r 's/(^.{7}).*/\\1/'",
-                        returnStdout: true
-                    ).trim()
+            SHAS['OMR'] = get_sha(OMR_REPO, OMR_BRANCH)
         }
+        // Write the SHAs to the Build Description
         echo "OPENJDK_SHA:${SHAS['OPENJDK']}"
         echo "OPENJ9_SHA:${SHAS['OPENJ9']}"
         echo "OMR_SHA:${SHAS['OMR']}"
         currentBuild.description = "OpenJ9: ${SHAS['OPENJ9']}<br/>OMR: ${SHAS['OMR']}<br/>OpenJDK: ${SHAS['OPENJDK']}"
         return SHAS
     }
+}
+
+def get_sha(REPO, BRANCH) {
+    // Get the SHA at the tip of the BRANCH in REPO.
+    // Allows Pipelines to kick off multiple builds and have the same SHA built everywhere.
+    return sh (
+            // "git ls-remote $REPO" will return all refs, adding "$BRANCH" will only return the specific branch we are interested in
+            script: "git ls-remote $REPO refs/heads/$BRANCH | cut -c1-7",
+            returnStdout: true
+        ).trim()
 }
 
 def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA) {
