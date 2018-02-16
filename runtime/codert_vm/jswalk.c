@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1095,14 +1095,6 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 		stackSpillCount = J9SW_ARGUMENT_REGISTER_COUNT;
 		walkState->unwindSP += J9SW_ARGUMENT_REGISTER_COUNT;
 		stackSpillCursor = walkState->unwindSP - 1;
-#endif
-#ifdef J9SW_JIT_RECOMPILATION_RESOLVE_OFFSET_TO_SAVED_RECEIVER
-		if (walkStackedReceiver && (walkState->flags & J9_STACKWALK_ITERATE_O_SLOTS)) {
-#ifdef J9VM_INTERP_STACKWALK_TRACING
-			swPrintf(walkState, 4, "\tObject push (recompilation saved receiver)\n");
-#endif
-			WALK_O_SLOT((j9object_t*) (walkState->unwindSP + J9SW_JIT_RECOMPILATION_RESOLVE_OFFSET_TO_SAVED_RECEIVER));
-		}
 #endif
 		walkState->unwindSP += getJitRecompilationResolvePushes();
 	} else if (resolveFrameType == J9_STACK_FLAGS_JIT_LOOKUP_RESOLVE) {

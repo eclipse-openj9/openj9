@@ -401,17 +401,6 @@ public class JITStackWalker
 					stackSpillCursor = walkState.unwindSP.sub(1);
 				}
 
-				if (J9SW_JIT_RECOMPILATION_RESOLVE_OFFSET_TO_SAVED_RECEIVER_DEFINED) {
-					if (walkStackedReceiver && ((walkState.flags & J9_STACKWALK_ITERATE_O_SLOTS) != 0)) {
-						try {
-							swPrintf(walkState, 4, "\tObject push (recompilation saved receiver)");
-							WALK_O_SLOT(walkState,PointerPointer.cast(walkState.unwindSP.add(J9SW_JIT_RECOMPILATION_RESOLVE_OFFSET_TO_SAVED_RECEIVER)));
-						} catch (CorruptDataException ex) {
-							handleOSlotsCorruption(walkState, "JITStackWalker_29_V0", "jitWalkResolveMethodFrame", ex);
-						}
-					}
-				}
-
 				walkState.unwindSP = walkState.unwindSP.add(getJitRecompilationResolvePushes());
 			} else if (resolveFrameType.eq(J9_STACK_FLAGS_JIT_LOOKUP_RESOLVE)) {
 				UDATAPointer interfaceObjectAndISlot = UDATAPointer.cast(JIT_RESOLVE_PARM(walkState,2));
