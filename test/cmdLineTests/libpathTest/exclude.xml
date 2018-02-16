@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2004, 2017 IBM Corp. and others
+  Copyright (c) 2004, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,4 @@
 <!DOCTYPE suite SYSTEM "excludes.dtd">
 <?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
 <suite id="LIBPATH Rtf test intended for PMR56610 (CMVC 201272)">
-	<exclude id="PMR testcase with Rtf/RtfChild involved" platform="win_x86-64_cr" shouldFix="true">
-		<reason>Issue 681: cmdLineTester_libpathTestRtfChild_0 segmentation fault on OpenJ9 JDK9 windows platform</reason>
-	</exclude>
 </suite>

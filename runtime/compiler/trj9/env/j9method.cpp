@@ -841,7 +841,7 @@ TR_ResolvedJ9MethodBase::owningMethodDoesntMatter()
          case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress: // This is just a getter that's practically always inlined
             return true;
          default:
-         	break;
+            break;
          }
       }
    else if (!strncmp((char*)J9UTF8_DATA(className), "java/lang/invoke/ILGenMacros", J9UTF8_LENGTH(className)))
@@ -2969,6 +2969,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::java_lang_String_toCharArray,         "toCharArray",         "(Ljava/util/Locale;)Ljava/lang/String;")},
       {x(TR::java_lang_String_regionMatches,       "regionMatches",       "(ILjava/lang/String;II)Z")},
       {x(TR::java_lang_String_regionMatches_bool,  "regionMatches",       "(ZILjava/lang/String;II)Z")},
+      {  TR::java_lang_String_regionMatchesInternal, 21, "regionMatchesInternal", (int16_t)-1, "*"},
       {x(TR::java_lang_String_equalsIgnoreCase,    "equalsIgnoreCase",    "(Ljava/lang/String;)Z")},
       {x(TR::java_lang_String_compareToIgnoreCase, "compareToIgnoreCase", "(Ljava/lang/String;)I")},
       {x(TR::java_lang_String_compress,            "compress",            "([C[BII)I")},
@@ -3803,8 +3804,8 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {
       {x(TR::java_lang_invoke_CollectHandle_numArgsToPassThrough,          "numArgsToPassThrough",        "()I")},
       {x(TR::java_lang_invoke_CollectHandle_numArgsToCollect,              "numArgsToCollect",            "()I")},
-	  {x(TR::java_lang_invoke_CollectHandle_collectionStart,     	       "collectionStart",             "()I")},
-	  {x(TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray,      "numArgsAfterCollectArray",    "()I")},
+      {x(TR::java_lang_invoke_CollectHandle_collectionStart,     	       "collectionStart",             "()I")},
+      {x(TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray,      "numArgsAfterCollectArray",    "()I")},
       {  TR::unknownMethod}
       };
 
@@ -4853,7 +4854,7 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
      //SYM     564  0.02    TR::sun_misc_Unsafe_putLong(__complex __complex)
                setRecognizedMethod(rm);
             default:
-            	break;
+               break;
             } // ens case
          }
       else
@@ -5321,7 +5322,7 @@ TR_J9MethodBase::isUnsafeWithObjectArg(TR::Compilation * c)
       case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V:
          return true;
       default:
-      	return false;
+         return false;
       }
 
    return false;
@@ -6982,13 +6983,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             TR::VMAccessCriticalSection invokeCollectHandleNumArgsToCollect(fej9);
             methodHandle = *thunkDetails->getHandleRef();
             collectArraySize = fej9->getInt32Field(methodHandle, "collectArraySize");
-            if ((symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() ==
-            		TR::java_lang_invoke_CollectHandle_collectionStart)
-            || (symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() ==
-            		TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray)
-			) {
-            	collectionStart = fej9->getInt32Field(methodHandle, "collectPosition");
-            }
+            if ((symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_CollectHandle_collectionStart)
+             || (symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray))
+               {
+               collectionStart = fej9->getInt32Field(methodHandle, "collectPosition");
+               }
             arguments = fej9->getReferenceField(fej9->getReferenceField(methodHandle, "type", "Ljava/lang/invoke/MethodType;"), "arguments", "[Ljava/lang/Class;");
             numArguments = (int32_t)fej9->getArrayLengthInElements(arguments);
             }
@@ -7008,7 +7007,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                loadConstant(TR::iconst, numArguments - collectionStart - collectArraySize);
                break;
             default:
-            	break;
+                break;
             }
          return true;
          }
@@ -7449,7 +7448,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                loadConstant(TR::iconst, numValues);
                break;
             default:
-            	break;
+               break;
             }
          }
          return true;
@@ -7593,7 +7592,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                   }
                break;
             default:
-            	break;
+               break;
             }
          push(result);
          }
@@ -7723,7 +7722,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                loadConstant(TR::iconst, numArguments - 1 - spreadStart);
                break;
             default:
-            	break;
+               break;
             }
          return true;
          }
@@ -7894,7 +7893,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                loadConstant(TR::iconst, numFilters);
                break;
             default:
-            	break;
+               break;
             }
          return true;
          }

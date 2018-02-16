@@ -381,6 +381,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       {
       case TR::java_lang_J9VMInternals_fastIdentityHashCode:
       case TR::java_lang_Class_getSuperclass:
+      case TR::java_lang_String_regionMatchesInternal:
       case TR::java_lang_String_regionMatches:
       case TR::java_lang_Class_newInstance:
       // we rely on inlining compareAndSwap so we see the inner native call and can special case it

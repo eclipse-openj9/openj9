@@ -4,7 +4,7 @@
 
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,10 +93,6 @@
 
 	<exclude id="j9vm.test.romclasscreation.NewROMCreationAfterModifyingExistingClassTest" platform="all">
 		<reason>134161: Java 9 j9vm test: Error: Agent library jvmtitest could not be opened (libjvmtitest.so: cannot open shared object file: No such file or directory)</reason>
-	</exclude>
-
-	<exclude id="j9vm.test.invalidclasspath.SetClasspathTest" platform="win_x86-64_cr">
-		<reason>Issue 680: j9vm.test.invalidclasspath.SetClasspathTest segmentation error for OpenJ9 JDK9 windows platform</reason>
 	</exclude>
 </suite>
 
