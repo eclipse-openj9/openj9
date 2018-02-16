@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -189,6 +189,7 @@
    java_lang_String_toCharArray,
    java_lang_String_regionMatches,
    java_lang_String_regionMatches_bool,
+   java_lang_String_regionMatchesInternal,
    java_lang_String_equalsIgnoreCase,
    java_lang_String_compareToIgnoreCase,
    java_lang_String_compress,
