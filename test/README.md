@@ -67,6 +67,12 @@ make test
     To get the above dependent jars, please run `make getdependency`.
     getdependency target will get called when running make compile
     or test target.
+    
+    Valhalla tests currently make use of the nestmates capabilities
+    which are available starting in asm version 7. In order to run
+    the Valhalla nestmates on a local machine, you must manually get
+    the asm-7.0.jar and put it in TestConfig/lib/. Avoid using asm 7
+    in other tests as this is a temporary solution.
 
 2. Compile tests:
 
