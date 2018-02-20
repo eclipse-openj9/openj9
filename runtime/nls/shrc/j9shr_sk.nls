@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5993,7 +5993,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Vytla\u010di\u0165 met\u00f3dy AOT, ktor\u00e9 sa zhoduj\u00fa so \u0161pecifik\u00e1ciami met\u00f3dy.\n\
-\t<\u0161pecifik\u00e1cia_met\u00f3dy> je definovan\u00e1 takto:[!]{*|[*]<n\u00e1zov_bal\u00edka/n\u00e1zov_triedy>[*]}[.{*|[*]<n\u00e1zov_met\u00f3dy>[*]}][({*|[*]<parametre>[*]})].
+\t<\u0161pecifik\u00e1cia_met\u00f3dy> je definovan\u00e1 takto:[!]{*|[*]<n\u00e1zov_bal\u00edka/n\u00e1zov_triedy>[*]}[.{*|[*]<n\u00e1zov_met\u00f3dy>[*]}[({*|[*]<parametre>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6015,7 +6015,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=Form\u00e1t pre <\u0161pecifik\u00e1cia_met\u00f3dy> je [!]{*|[*]<n\u00e1zov_bal\u00edka/n\u00e1zov_triedy>[*]}[.{*|[*]<n\u00e1zov_met\u00f3dy>[*]}][({*|[*]<parametre>[*]})]. Pr\u00edklad:\n\
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=Form\u00e1t pre <\u0161pecifik\u00e1cia_met\u00f3dy> je [!]{*|[*]<n\u00e1zov_bal\u00edka/n\u00e1zov_triedy>[*]}[.{*|[*]<n\u00e1zov_met\u00f3dy>[*]}[({*|[*]<parametre>[*]})]]. Pr\u00edklad:\n\
 \n\
 \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
