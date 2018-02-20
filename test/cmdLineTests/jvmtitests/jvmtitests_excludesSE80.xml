@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2004, 2017 IBM Corp. and others
+  Copyright (c) 2004, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,10 @@
 	<!-- Windows IA32 New ROMClass Builder - the test requires retransform support, which will be implemented under JAZZ 19331 -->
 	<exclude id="gpc002" platform="win_x86_newrom" shouldFix="true" expiry="Oct 8 2009">
 		<reason>Testcase requires retransform support, which will be implemented under JAZZ 19331</reason>
+	</exclude>
+	
+	<exclude id="nmr001" platform="all">
+		<reason>Nestmates are not enabled on java8</reason>
 	</exclude>
 
 </suite>
