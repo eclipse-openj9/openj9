@@ -37,10 +37,7 @@ extern "C" {
 
 #define J9_COPYRIGHT_STRING "(c) Copyright 1991, ${uma.year} IBM Corp. and others."
 
-/* undef these flags temporarily so they do not conflict with the version defined in omrcfg.h */
-#undef EsVersionMajor
 #define EsVersionMajor ${uma.buildinfo.version.major}
-#undef EsVersionMinor
 #define EsVersionMinor ${uma.buildinfo.version.minor}0
 
 #define EsExtraVersionString ""
