@@ -649,6 +649,43 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcA
 	return true;
 }
 
+bool
+MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Class *srcClass, j9object_t *srcAddress)
+{
+	omrobjectptr_t object = *(volatile omrobjectptr_t *)srcAddress;
+
+	if (_extensions->scavenger->isObjectInEvacuateMemory(object)) {
+		MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);
+		Assert_MM_true(_extensions->scavenger->isConcurrentInProgress());
+		Assert_MM_true(_extensions->scavenger->isMutatorThreadInSyncWithCycle(env));
+
+		MM_ForwardedHeader forwardHeader(object);
+		omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
+
+		if (NULL != forwardPtr) {
+			/* Object has been strictly (remotely) forwarded. Ensure the object is fully copied before exposing it, update the slot and return. */
+			forwardHeader.copyOrWait(forwardPtr);
+			MM_AtomicOperations::lockCompareExchange((uintptr_t *)srcAddress, (uintptr_t)object, (uintptr_t)forwardPtr);
+		} else {
+			omrobjectptr_t destinationObjectPtr = _extensions->scavenger->copyObject(env, &forwardHeader);
+			if (NULL == destinationObjectPtr) {
+				/* Failure - the scavenger must back out the work it has done. Attempt to return the original object. */
+				forwardPtr = forwardHeader.setSelfForwardedObject();
+				if (forwardPtr != object) {
+					/* Another thread successfully copied the object. Re-fetch forwarding pointer,
+					 * and ensure the object is fully copied before exposing it. */
+					MM_ForwardedHeader(object).copyOrWait(forwardPtr);
+					MM_AtomicOperations::lockCompareExchange((uintptr_t *)srcAddress, (uintptr_t)object, (uintptr_t)forwardPtr);
+				}
+			} else {
+				/* Update the slot. copyObject() ensures that the object is fully copied. */
+				MM_AtomicOperations::lockCompareExchange((uintptr_t *)srcAddress, (uintptr_t)object, (uintptr_t)destinationObjectPtr);
+			}
+		}
+	}
+
+	return true;
+}
 
 bool
 MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObject, fj9object_t *srcAddress)
