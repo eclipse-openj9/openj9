@@ -478,7 +478,7 @@ TraceEvent=Trc_VM_acquireExclusiveVMAccess_GrantingExclusiveAccessFirst Group=ex
 TraceEvent=Trc_VM_acquireExclusiveVMAccess_GrantingExclusiveAccess Group=exvmaccess Overhead=1 Level=1 Template="Thread is woken up from waiting, exclusive access being handed off to this thread. Changing state to J9_XACCESS_HANDED_OFF."
 TraceEvent=Trc_VM_acquireExclusiveVMAccess_PostedHaltRequest Group=exvmaccess Overhead=1 Level=1 Template="Posted Halt request to %d threads."
 TraceEvent=Trc_VM_acquireExclusiveVMAccess_WaitingForResponses Group=exvmaccess Overhead=1 Level=1 Template="Waiting for %d thread halt responses."
-TraceEvent=Trc_VM_acquireExclusiveVMAccess_ChangingStateExclusive Group=exvmaccess Overhead=1 Level=1 Template="Changing exclusiveAccessState to J9_XACCESS_EXCLUSIVE." 
+TraceEvent=Trc_VM_acquireExclusiveVMAccess_ChangingStateExclusive Group=exvmaccess Overhead=1 Level=1 Template="Changing exclusiveAccessState to J9_XACCESS_EXCLUSIVE."
 TraceExit=Trc_VM_acquireExclusiveVMAccess_Exit Group=exvmaccess Overhead=1 Level=1 Template="Exclusive VM Access acquired."
 
 TraceEntry=Trc_VM_releaseExclusiveVMAccess_Entry Group=exvmaccess Overhead=1 Level=1 Template="Releasing exclusive VM Access"
@@ -494,9 +494,9 @@ TraceExit=Trc_VM_internalReleaseVMAccessNoMutex_Exit Overhead=1 Level=9 Template
 TraceEvent=Trc_VM_acquireExclusiveVMAccess_SettingResponsesExpected Group=exvmaccess Overhead=1 Level=1 Template="State is J9_XACCESS_HANDING_OFF, Setting repsonsesExpected to 1"
 
 TraceEntry=Trc_JNIinv_DestroyJavaVM_Entry NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM javaVM=%p"
-TraceExit=Trc_JNIinv_DestroyJavaVM_alreadyShutdown_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM shutdown already started" Exception
-TraceExit=Trc_JNIinv_DestroyJavaVM_failedAttach_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM couldn't attach thread to shutdown" Exception
-TraceExit=Trc_JNIinv_DestroyJavaVM_verifyCurrentThreadAttached_Exit Obsolete NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM current thread not attached. result=%d" Exception
+TraceExit-Exception=Trc_JNIinv_DestroyJavaVM_alreadyShutdown_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM shutdown already started"
+TraceExit-Exception=Trc_JNIinv_DestroyJavaVM_failedAttach_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM couldn't attach thread to shutdown"
+TraceExit-Exception=Trc_JNIinv_DestroyJavaVM_verifyCurrentThreadAttached_Exit Obsolete NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM current thread not attached. result=%d"
 TraceEntry=Trc_JNIinv_protectedDestroyJavaVM_Entry NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_StartingThreadWait NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM waiting for Java threads to stop"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_FinishedThreadWait NoEnv Overhead=1 Level=3 Template="protectedDestoryJavaVM all Java threads have stopped"
@@ -504,8 +504,8 @@ TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmCleanupDone NoEnv Overhead=1 Leve
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmShutdownHookFired NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM VM Shutting Down Hook Fired"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_HeapManagementShutdown NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM GC HeapManagement Shutdown"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmShutdownDone NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM vmShutdown returned"
-TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_CallingExitHookSecondary NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM calling exitHook secondary path" 
-TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_terminateRemainingThreadsFailed NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM terminateRemainingThreads failed" Exception
+TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_CallingExitHookSecondary NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM calling exitHook secondary path"
+TraceException=Trc_JNIinv_protectedDestroyJavaVM_terminateRemainingThreadsFailed NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM terminateRemainingThreads failed"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_CallingExitHook NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM calling exitHook"
 
 TraceEvent=Trc_VM_stringTableCacheHit Obsolete Overhead=1 Level=3 Template="String table cache hit %p"
@@ -583,7 +583,7 @@ TraceEvent=Trc_VM_resolveKnownClass_SkipResolveOfStringBytesCompressedFieldRef O
 TraceEvent=Trc_VM_yieldAlgorithmSelected Overhead=1 Level=3 Template="Thread yield algorithm information: sched_compat_yield=%c, yieldAlgorithm=%zu, yieldUsleepMultiplier=%zu."
 
 TraceEvent=Trc_VM_mhStackValidator_mismatchDetected Overhead=1 Level=1 Template="[MethodHandle StackValidator]"
-TraceEvent=Trc_VM_mhStackValidator_mh Overhead=1 Level=1 Template="MethodHandle = 0x%p"				
+TraceEvent=Trc_VM_mhStackValidator_mh Overhead=1 Level=1 Template="MethodHandle = 0x%p"
 TraceEvent=Trc_VM_mhStackValidator_mh_methodType Overhead=1 Level=1 Template="MethodType = 0x%p"
 TraceEvent=Trc_VM_mhStackValidator_mh_methodType_argSlots Overhead=1 Level=1 Template="MethodType.argSlots = %d"
 TraceEvent=Trc_VM_mhStackValidator_mh_methodType_arguments_length Overhead=1 Level=1 Template="MethodType.arguments[].length = %d"
@@ -625,7 +625,7 @@ TraceExit=Trc_VM_sendRunThread_Exit Overhead=1 Level=2 Template="sendRunThread"
 TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_IllegalPackedObject Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState in objectMonitorExit. obj=%p is packed.)"
 TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_IllegalNullMonitor Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState in objectMonitorExit. NULL monitor table entry for obj=%p.)"
 
-TraceExit=Trc_JNIinv_DestroyJavaVM_DetachCurrentThread_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM failed to detach current thread. result=%d" Exception
+TraceExit-Exception=Trc_JNIinv_DestroyJavaVM_DetachCurrentThread_Exit NoEnv Overhead=1 Level=3 Template="JNIinv DestroyJavaVM failed to detach current thread. result=%d"
 
 TraceEvent=Trc_VM_VMPhases_JVMPhaseChange NoEnv Overhead=1 Level=4 Template="jvmPhaseChange occured (Phase = %u)"
 TraceEvent=Trc_VM_VMPhases_FastClassHashTable_Enabled NoEnv Overhead=1 Level=4 Template="Enabled FastClassHashTable"
