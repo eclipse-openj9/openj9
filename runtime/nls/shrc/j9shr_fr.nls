@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5993,7 +5993,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS=Affichez les m\u00e9thodes AOT correspondant aux sp\u00e9cifications de la m\u00e9thode.\n\
-\t<sp\u00e9cification_m\u00e9thode> est d\u00e9finie comme suit : [!]{*|[*]<nom_module/nom_classe>[*]}[.{*|[*]<nom_m\u00e9thode>[*]}][({*|[*]<param\u00e8tres>[*]})].
+\t<sp\u00e9cification_m\u00e9thode> est d\u00e9finie comme suit : [!]{*|[*]<nom_module/nom_classe>[*]}[.{*|[*]<nom_m\u00e9thode>[*]}[({*|[*]<param\u00e8tres>[*]})]].
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_FIND_AOT_METHODS.system_action=
@@ -6015,7 +6015,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_AOT_METHODS_OPERATION.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=Le format de <sp\u00e9cification_m\u00e9thode> est [!]{*|[*]<nom_module/nom_classe>[*]}[.{*|[*]<nom_m\u00e9thode>[*]}][({*|[*]<param\u00e8tres>[*]})], par exemple :\n\
+J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC=Le format de <sp\u00e9cification_m\u00e9thode> est [!]{*|[*]<nom_module/nom_classe>[*]}[.{*|[*]<nom_m\u00e9thode>[*]}[({*|[*]<param\u00e8tres>[*]})]], par exemple :\n\
 \n\
 \t-Xshareclasses:name=Cache1,%sjava/util/HashMap.hash(Ljava/lang/Object;)\n
 # START NON-TRANSLATABLE
