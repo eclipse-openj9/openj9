@@ -398,6 +398,15 @@ tryAgain:
 		}
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_CHECK_VALUE_CLASS)) {
+		if (J9_ARE_NO_BITS_SET(accessModifiers, J9AccValueType)) {
+			setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL); // TODO: add detail message
+			goto bail;
+		}
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	/* Do not update the constant pool in the AOT load-time resolve case. */
 	if (J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_AOT_LOAD_TIME)) {
 		goto done;

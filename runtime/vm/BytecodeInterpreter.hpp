@@ -7873,8 +7873,65 @@ done:
 	VMINLINE VM_BytecodeAction
 	defaultvalue(REGISTER_ARGS_LIST)
 	{
+retry:
+		j9object_t newObject = NULL;
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		// TODO: Implement bytecode
+		U_16 index = *(U_16*)(_pc + 1);
+		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9RAMClassRef *ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
+		J9Class* volatile resolvedClass = ramCPEntry->value;
+
+		if ((NULL != resolvedClass) && (resolvedClass->romClass->modifiers & J9AccValueType)) {
+
+			if (!VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
+				j9object_t instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
+				if (NULL == instance) {
+					updateVMStruct(REGISTER_ARGS);
+					instance = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, resolvedClass, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					if (J9_UNEXPECTED(NULL == instance)) {
+						rc = THROW_HEAP_OOM;
+						goto done;
+					}
+				}
+				newObject = instance;
+				goto done;
+			}
+			/* Class requires initialization */
+			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+			updateVMStruct(REGISTER_ARGS);
+			initializeClass(_currentThread, resolvedClass);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			restoreGenericSpecialStackFrame(REGISTER_ARGS);
+			if (immediateAsyncPending()) {
+				rc = GOTO_ASYNC_CHECK;
+				goto done;
+			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+			goto retry;
+		}
+
+		/* Unresolved */
+		buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+		updateVMStruct(REGISTER_ARGS);
+		resolveClassRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_INIT_CLASS | J9_RESOLVE_FLAG_INSTANTIABLE | J9_RESOLVE_FLAG_CHECK_VALUE_CLASS);
+		VMStructHasBeenUpdated(REGISTER_ARGS);
+		restoreGenericSpecialStackFrame(REGISTER_ARGS);
+		if (immediateAsyncPending()) {
+			rc = GOTO_ASYNC_CHECK;
+			goto done;
+		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
+			rc = GOTO_THROW_CURRENT_EXCEPTION;
+			goto done;
+		}
+		goto retry;
+done:
+		if (EXECUTE_BYTECODE == rc) {
+			_pc += 3;
+			*(j9object_t*)--_sp = newObject;
+		}
 		return rc;
 	}
 

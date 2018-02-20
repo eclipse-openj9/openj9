@@ -247,7 +247,7 @@ const unsigned char sunJavaInstructionSizeTable[] = {
 0x00 /* JBunimplemented = 222 = 0xDE */,
 0x00 /* JBunimplemented = 223 = 0xDF */,
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-0x01 /* JBdefaultvalue = 224 = 0xE0 */ ,
+0x03 /* JBdefaultvalue = 224 = 0xE0 */ ,
 0x00 /* JBunimplemented = 225 = 0xE1 */,
 0x03 /* JBwithfield = 226 = 0xE2 */ ,
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
