@@ -903,10 +903,6 @@ typedef struct J9VMDllLoadInfo {
 	void* reserved;
 } J9VMDllLoadInfo;
 
-typedef struct J9VMSemaphore {
-	j9sem_t sem;
-} J9VMSemaphore;
-
 typedef struct J9SigContext {
 	IDATA sigNum;
 	void* sigInfo;
@@ -5028,7 +5024,6 @@ struct J9Pool; /* Forward struct declaration */
 struct J9JXEDescription ; /* Forward struct declaration */
 struct J9SharedClassPreinitConfig; /* Forward struct declaration */
 struct J9ConstantPool ; /* Forward struct declaration */
-struct J9VMSemaphore; /* Forward struct declaration */
 struct J9RASdumpFunctions; /* Forward struct declaration */
 struct J9ROMClass ; /* Forward struct declaration */
 struct J9RAS; /* Forward struct declaration */
@@ -5221,9 +5216,7 @@ typedef struct J9JavaVM {
 	IDATA sigQuitFlags;
 	omrthread_t sigQuitThread;
 	omrthread_monitor_t sigQuitMutex;
-	struct J9VMSemaphore* sigQuitSemaphore;
 	void  ( *J9SigQuitShutdown)(struct J9JavaVM *vm) ;
-	IDATA  ( *j9SemPost)(j9sem_t s) ;
 	U_32 globalEventFlags;
 	void  ( *sidecarInterruptFunction)(struct J9VMThread * vmThread) ;
 	struct J9ReflectFunctionTable reflectFunctions;
