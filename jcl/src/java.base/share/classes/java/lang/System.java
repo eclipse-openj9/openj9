@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -203,6 +203,7 @@ native static void startSNMPAgent();
 	
 static void completeInitialization() {
 	/*[IF !Sidecar19-SE_RAWPLUSJ9]*/	
+	/*[IF !Sidecar18-SE-OpenJ9]*/
 	Class<?> systemInitialization = null;
 	Method hook;
 	try {
@@ -218,7 +219,6 @@ static void completeInitialization() {
 		throw new InternalError(e.toString());
 	} 	
 	try {
-		/*[PR 111936] Give Hursley hooks into JCL startup */
 		if (null != systemInitialization) {
 			hook = systemInitialization.getMethod("firstChanceHook");	//$NON-NLS-1$
 			hook.invoke(null);
@@ -226,20 +226,21 @@ static void completeInitialization() {
 	} catch (Exception e) {
 		throw new InternalError(e.toString());
 	}
+	/*[ENDIF]*/ // Sidecar18-SE-OpenJ9
+	
 	/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
 	setIn(new BufferedInputStream(new FileInputStream(FileDescriptor.in)));
 	/*[ELSE]*/
 	/*[PR 100718] Initialize System.in after the main thread*/
 	setIn(com.ibm.jvm.io.ConsoleInputStream.localize(new BufferedInputStream(new FileInputStream(FileDescriptor.in))));
-	/*[ENDIF]*/
-	/*[ENDIF] */
+	/*[ENDIF]*/ //Sidecar18-SE-OpenJ9|Sidecar19-SE
+	/*[ENDIF] */ //!Sidecar19-SE_RAWPLUSJ9
 		
 	/*[PR 102344] call Terminator.setup() after Thread init */
 	Terminator.setup();
 	
-	/*[IF !Sidecar19-SE_RAWPLUSJ9]*/
+	/*[IF !Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9]*/
 	try {
-		/*[PR 111936] Give Hursley hooks into JCL startup */
 		if (null != systemInitialization) {
 			hook = systemInitialization.getMethod("lastChanceHook");	//$NON-NLS-1$
 			hook.invoke(null);
@@ -247,7 +248,7 @@ static void completeInitialization() {
 	} catch (Exception e) {
 		throw new InternalError(e.toString());
 	}
-	/*[ENDIF]*/	
+	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
 }
 
 
