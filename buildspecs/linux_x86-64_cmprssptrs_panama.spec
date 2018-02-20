@@ -161,7 +161,6 @@
 		<flag id="interp_nativeSupport" value="true"/>
 		<flag id="interp_profilingBytecodes" value="true"/>
 		<flag id="interp_sigQuitThread" value="true"/>
-		<flag id="interp_sigQuitThreadUsesSemaphores" value="true"/>
 		<flag id="interp_useUnsafeHelper" value="true"/>
 		<flag id="ive_jxeFileRelocator" value="true"/>
 		<flag id="ive_jxeInPlaceRelocator" value="true"/>

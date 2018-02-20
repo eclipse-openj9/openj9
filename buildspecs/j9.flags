@@ -957,13 +957,6 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 			<require flag="interp_gpHandler"/>
 		</requires>
 	</flag>
-	<flag id="interp_sigQuitThreadUsesSemaphores">
-		<description>Controls if a SIGQUIT handler thread uses Semaphores or sigwait.</description>
-		<ifRemoved>thread will use sigwait.</ifRemoved>
-		<requires>
-			<require flag="interp_sigQuitThread"/>
-		</requires>
-	</flag>
 	<flag id="interp_smallMonitorSlot">
 		<description>Flag to indicate that on 64-bit platforms, the monitor slot in object headers is a U32 rather than a UDATA.</description>
 		<ifRemoved>The monitor slot is a UDATA.</ifRemoved>
