@@ -920,9 +920,6 @@ class NameAndTypeIterator
 	bool hasClinit() const { return _hasClinit; }
 	bool annotationRefersDoubleSlotEntry() const { return _annotationRefersDoubleSlotEntry; }
 	bool isInnerClass() const { return _isInnerClass; }
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	bool isClassValueCapable() const { return _isClassValueCapable; }
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 private:
 	class InterfaceVisitor;
@@ -977,9 +974,6 @@ private:
 	bool _hasClinit;
 	bool _annotationRefersDoubleSlotEntry;
 	bool _isInnerClass;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	bool _isClassValueCapable;
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	FieldInfo *_fieldsInfo;
 	MethodInfo *_methodsInfo;

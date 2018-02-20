@@ -84,7 +84,6 @@
 #define J9AccClassIntermediateDataIsClassfile 0x20000
 #define J9AccClassInternalPrimitiveType 0x20000
 #define J9AccClassIsContended 0x1000000
-#define J9AccClassIsValueCapable 0x100
 #define J9AccClassOwnableSynchronizer 0x200000
 #define J9AccClassUnused200 0x200
 #define J9AccClassUnused400 0x400
