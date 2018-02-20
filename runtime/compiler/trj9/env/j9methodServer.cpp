@@ -846,7 +846,6 @@ void
 TR_ResolvedJ9JAASServerMethod::setClassForNewInstance(J9Class *c)
    {
    _j9classForNewInstance = c;
-   fprintf(stderr, "setClassForNewInstance %p", _j9classForNewInstance);
    _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_setClassForNewInstance, _remoteMirror, c);
    _stream->read<JAAS::Void>();
    }
