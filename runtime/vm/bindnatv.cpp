@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -277,9 +277,6 @@ static J9OutOfLineINLMapping outOfLineINLmappings[] = {
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeInt__Ljava_lang_Object_2JII", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeIntVolatile },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile__Ljava_lang_Object_2JJJ", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndExchangeLong__Ljava_lang_Object_2JJJ", OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeLongVolatile },
-#if defined(J9VM_OPT_VALHALLA_MVT)
-	{ "Java_jdk_experimental_value_ValueType_valueClassImpl__Ljava_lang_Class_2", OutOfLineINL_jdk_experimental_value_ValueType_valueClassImpl },
-#endif /* defined(J9VM_OPT_VALHALLA_MVT) */
 #if defined(J9VM_OPT_PANAMA)
 	{ "Java_java_lang_invoke_NativeMethodHandle_initJ9NativeCalloutDataRef___3Ljava_lang_String_2", OutOfLineINL_java_lang_invoke_NativeMethodHandle_initJ9NativeCalloutDataRef },
 	{ "Java_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef__", OutOfLineINL_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef },

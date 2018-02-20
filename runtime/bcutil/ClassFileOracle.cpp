@@ -178,9 +178,6 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_nestMembers(NULL),
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	_isClassContended(false),
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	_isClassValueCapable(false),
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_isInnerClass(false)
 {
 	Trc_BCU_Assert_NotEquals( classFile, NULL );

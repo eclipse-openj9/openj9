@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,9 +116,6 @@ public abstract class MethodHandle {
 	static final byte KIND_VARHANDLEINVOKEGENERIC = 31;
 	/*[IF Panama]*/
 	static final byte KIND_NATIVE = 32;
-	/*[ENDIF]*/
-	/*[IF Valhalla-MVT]*/
-	static final byte KIND_DEFAULTVALUE = 33;
 	/*[ENDIF]*/
 
 /*[IF Sidecar18-SE-OpenJ9]

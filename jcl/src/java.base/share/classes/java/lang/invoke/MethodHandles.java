@@ -3367,10 +3367,6 @@ public class MethodHandles {
 				/* rely on widening conversion from byte to everything */
 				defaultValue = Byte.valueOf((byte) 0);
 			}
-		/*[IF Valhalla-MVT]*/
-		} else if (jdk.experimental.value.ValueType.classHasValueType(targetType)) {
-			return new DefaultValueHandle(targetType);
-		/*[ENDIF]*/
 		}
 		return constant(targetType, defaultValue);
 	}

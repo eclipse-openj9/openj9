@@ -50,7 +50,7 @@
 		for debugging, and are not yet used in a configuration. -->
 	<set
 		label="newflags"
-		flags="AnnotateOverride,Sidecar15,Valhalla-MVT"/>
+		flags="AnnotateOverride,Sidecar15"/>
 
 	<set
 		label="oldflags"
@@ -382,7 +382,7 @@
 	<configuration
 		  label="VALHALLA"
 		  outputpath="VALHALLA/src"
-		  flags="Valhalla, Valhalla-MVT, Valhalla-NestMates"
+		  flags="Valhalla, Valhalla-NestMates"
 		  dependencies="SIDECAR19-SE-B136"
 		  jdkcompliance="1.8">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
