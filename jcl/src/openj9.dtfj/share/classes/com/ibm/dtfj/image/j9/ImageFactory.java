@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,39 +53,53 @@ import com.ibm.dtfj.utils.file.ManagedImageSource;
 import com.ibm.dtfj.utils.file.MultipleCandidateException;
 
 public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
-	class ImageReference {
+
+	static final class ImageReference {
 		Image image;
 	}
 
-	private static final String FACTORY_DTFJ = "com.ibm.dtfj.image.j9.DTFJImageFactory";
-	private static final String FACTORY_DDR = "com.ibm.j9ddr.view.dtfj.image.J9DDRImageFactory";
-	private final ArrayList<Exception> exceptions = new ArrayList<Exception>();
-	//log exceptions that occur when trying to find the correct image factory
+	private static final String FACTORY_DTFJ = "com.ibm.dtfj.image.j9.DTFJImageFactory"; //$NON-NLS-1$
+	private static final String FACTORY_DDR = "com.ibm.j9ddr.view.dtfj.image.J9DDRImageFactory"; //$NON-NLS-1$
+	private final ArrayList<Exception> exceptions = new ArrayList<>();
+	// log exceptions that occur when trying to find the correct image factory
 	private final Logger log = Logger.getLogger(DTFJ_LOGGER_NAME);
 	private ClassLoader imageFactoryClassLoader;
-	private File tmpdir = null;			//the directory which holds any extracted files
+	private File tmpdir = null; // the directory which holds any extracted files
 
 	static {
 		/* 
-		 * Following is to add exports java.base/jdk.internal.org.objectweb.asm 
-		 * programmatically to unnamed modules (j9ddr.jar) via reflection APIs.
+		 * Even though j9ddr.jar is a resource within the module openj9.dtfj,
+		 * the classes contained within appear at runtime to be in the un-named module.
+		 * The following programmatically exports jdk.internal.org.objectweb.asm
+		 * from java.base and certain packages from openj9.dtfj to the un-named
+		 * module via reflection APIs for use by j9ddr.jar.
 		 */
 		try {
-			Class<?> moduleClass = Class.forName("java.lang.reflect.Module");	
-			Class<?> modulesClass = Class.forName("jdk.internal.module.Modules");
-	 		Method	getModule = Class.class.getDeclaredMethod("getModule", new Class<?>[] {});
+			Class<?> modulesClass = Class.forName("jdk.internal.module.Modules"); //$NON-NLS-1$
+			Class<?> moduleClass;
 
-			Method  addExportsToAllUnnamed = modulesClass.getDeclaredMethod("addExportsToAllUnnamed", new Class<?>[] {moduleClass, String.class});
-			addExportsToAllUnnamed.invoke(null, getModule.invoke(String.class), "jdk.internal.org.objectweb.asm");
-			
-			// following workaround is required after following com.ibm.dtfj packages are exported only to com.ibm.dtfjview
-			// these can be removed after j9ddr.jar is converted to a named module
-			addExportsToAllUnnamed.invoke(null, getModule.invoke(ImageFactory.class), "com.ibm.dtfj.image.j9");
-			addExportsToAllUnnamed.invoke(null, getModule.invoke(ImageFactory.class), "com.ibm.dtfj.utils.file");
-			addExportsToAllUnnamed.invoke(null, getModule.invoke(ImageFactory.class), "com.ibm.java.diagnostics.utils");
-			addExportsToAllUnnamed.invoke(null, getModule.invoke(ImageFactory.class), "com.ibm.java.diagnostics.utils.commands");
+			try {
+				moduleClass = Class.forName("java.lang.Module"); //$NON-NLS-1$
+			} catch (ClassNotFoundException e) {
+				// fallback to name before b165
+				moduleClass = Class.forName("java.lang.reflect.Module"); //$NON-NLS-1$
+			}
+
+			Method exportToAll = modulesClass.getDeclaredMethod("addExportsToAllUnnamed", //$NON-NLS-1$ 
+					moduleClass, String.class);
+
+			Method getModule = Class.class.getDeclaredMethod("getModule"); //$NON-NLS-1$
+			Object baseModule = getModule.invoke(String.class);
+			Object thisModule = getModule.invoke(ImageFactory.class);
+
+			exportToAll.invoke(null, baseModule, "jdk.internal.org.objectweb.asm"); //$NON-NLS-1$
+
+			exportToAll.invoke(null, thisModule, "com.ibm.dtfj.image.j9"); //$NON-NLS-1$
+			exportToAll.invoke(null, thisModule, "com.ibm.dtfj.utils.file"); //$NON-NLS-1$
+			exportToAll.invoke(null, thisModule, "com.ibm.java.diagnostics.utils"); //$NON-NLS-1$
+			exportToAll.invoke(null, thisModule, "com.ibm.java.diagnostics.utils.commands"); //$NON-NLS-1$
 		} catch (Exception e) {
-			// assuming pre-Java 9 jvm
+			// assume pre-Java 9 jvm
 		}
 	}
 	
@@ -93,56 +108,57 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	 * This class will generally be referred to by name (e.g. using Class.forName()).
 	 * 
 	 * @see com.ibm.dtfj.image.ImageFactory
-	 *
 	 */
 	public ImageFactory() {
-		//when the vm shuts down we need to make sure that all our extracted files are deleted
+		// when the vm shuts down we need to make sure that all our extracted files are deleted
 	}
 
+	@Override
 	public Image[] getImagesFromArchive(File archive, boolean extract) throws IOException {
-		if (archive != null && !FileManager.fileExists(archive)) {
-			throw new FileNotFoundException("Archive '" + archive.getAbsolutePath() + "' not found.");
+		Objects.requireNonNull(archive);
+		if (!FileManager.fileExists(archive)) {
+			throw new FileNotFoundException("Archive '" + archive.getAbsolutePath() + "' not found."); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		if(!FileManager.isArchive(archive)) {
-			throw new IOException("The specified archive " + archive.getAbsolutePath() + " was not recognised");
+		if (!FileManager.isArchive(archive)) {
+			throw new IOException("The specified archive " + archive.getAbsolutePath() + " was not recognised"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		ArrayList<Image> images = new ArrayList<Image>();		//images created from this zip file
+		ArrayList<Image> images = new ArrayList<>(); // images created from this zip file
 		exceptions.clear();
 		//the cast to an ArchiveFileManager is safe as we've already checked earlier with FileManager.isArchive
-		CompressedFileManager manager = (CompressedFileManager)FileManager.getManager(archive);
+		CompressedFileManager manager = (CompressedFileManager) FileManager.getManager(archive);
 		List<ManagedImageSource> sources = manager.getImageSources();
-		if(extract) {	//create the temporary directory in preparation for the extraction
+		if (extract) { //create the temporary directory in preparation for the extraction
 			File parent = getTempDirParent();
 			tmpdir = FileManager.createTempDir(parent);
 		}
-		for(ManagedImageSource source : sources) {
+		for (ManagedImageSource source : sources) {
 			ImageInputStream corestream = null;
 			ImageInputStream metastream = null;
-			if(extract) {					//extract the files to disk
+			if (extract) { //extract the files to disk
 				manager.extract(source, tmpdir);
 				File coreFile = new File(source.getPathToExtractedFile());
 				corestream = new J9FileImageInputStream(coreFile, source);
-				if(source.hasMetaData()) {
+				if (source.hasMetaData()) {
 					manager.extract(source.getMetadata(), tmpdir);
 					File metaFile = new File(source.getMetadata().getPathToExtractedFile());
 					metastream = new J9FileImageInputStream(metaFile, source.getMetadata());
 				}
-			} else {						//run from in memory
+			} else { //run from in memory
 				corestream = manager.getStream(source);
-				if(source.hasMetaData()) {
+				if (source.hasMetaData()) {
 					metastream = manager.getStream(source.getMetadata());
 				}
 			}
 			try {
 				// Try each factory listed for this source file type, checking to see if we find a JRE
 				ImageReference imageReference = new ImageReference();
-				for(String factory : source.getType().getFactoryNames()) {
+				for (String factory : source.getType().getFactoryNames()) {
 					if (foundRuntimeInImage(factory, imageReference, source.toURI(), corestream, metastream)) {
-						if(imageReference.image instanceof ManagedImage) {
-							((ManagedImage)imageReference.image).setImageSource(source);
+						if (imageReference.image instanceof ManagedImage) {
+							((ManagedImage) imageReference.image).setImageSource(source);
 						}
 						images.add(imageReference.image);
-						break;		//quit looking for an image
+						break; //quit looking for an image
 					}
 					imageReference.image = null;
 				}
@@ -162,7 +178,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 			}
 		}
 		printExceptions();
-		return images.toArray(new Image[]{});
+		return images.toArray(new Image[images.size()]);
 	}
 	
 	/**
@@ -172,10 +188,12 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	 * @return an instance of Image (null if no image can be constructed from the given file)
 	 * @throws IOException
 	 */
+	@Override
 	public Image getImage(File imageFile) throws IOException {
+		Objects.requireNonNull(imageFile);
 		ImageReference imageReference = new ImageReference();
-		if (imageFile != null && !FileManager.fileExists(imageFile)) {
-			throw new FileNotFoundException("Image file '" + imageFile.getAbsolutePath() + "' not found.");
+		if (!FileManager.fileExists(imageFile)) {
+			throw new FileNotFoundException("Image file '" + imageFile.getAbsolutePath() + "' not found."); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		exceptions.clear();
 		FileManager manager = FileManager.getManager(imageFile);
@@ -183,52 +201,52 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		ManagedImageSource source = null;
 		File core = null;
 		File meta = null;
-		if(FileManager.isArchive(imageFile)) {
-			boolean foundCoreFile = false;		//flag to indicate that a core file has been found
-			CompressedFileManager archiveManager = (CompressedFileManager)manager;
-			for(ManagedImageSource candidate : candidates) {
-				if(candidate.getType().equals(ImageSourceType.CORE)) {
-					if(foundCoreFile) {
+		if (FileManager.isArchive(imageFile)) {
+			boolean foundCoreFile = false; //flag to indicate that a core file has been found
+			CompressedFileManager archiveManager = (CompressedFileManager) manager;
+			for (ManagedImageSource candidate : candidates) {
+				if (candidate.getType().equals(ImageSourceType.CORE)) {
+					if (foundCoreFile) {
 						//for legacy behaviour compatibility this can only return 1 core when invoked this way
 						throw new MultipleCandidateException(candidates, imageFile);
 					}
-					source = candidate;		//note the core file
+					source = candidate; //note the core file
 					foundCoreFile = true;
 				}
 			}
-			if(foundCoreFile) {
+			if (foundCoreFile) {
 				//if a single core file has been located then extract it and any associated meta data into a temp directory
 				File parent = getTempDirParent();
 				tmpdir = FileManager.createTempDir(parent);
 				archiveManager.extract(source, tmpdir);
 				core = source.getExtractedTo();
-				if(source.hasMetaData()) {
+				if (source.hasMetaData()) {
 					archiveManager.extract(source.getMetadata(), tmpdir);
-					if(source.getType().equals(ImageSourceType.CORE)) {					
-						meta = imageFile;		//when extracting from a zip the archive itself is now the metadata file
+					if (source.getType().equals(ImageSourceType.CORE)) {
+						meta = imageFile; //when extracting from a zip the archive itself is now the metadata file
 					} else {
 						meta = source.getMetadata().getExtractedTo();
 					}
 				}
 			} else {
-				throw new IOException("No core files were detected in " + imageFile.getAbsolutePath());
+				throw new IOException("No core files were detected in " + imageFile.getAbsolutePath()); //$NON-NLS-1$
 			}
 		} else {
-			if(candidates.size() > 1) {
+			if (candidates.size() > 1) {
 				//for backwards behavioural compatibility only one image is allowed to be returned from the supplied file
 				throw new MultipleCandidateException(candidates, imageFile);
 			}
 			source = candidates.get(0);
 			core = new File(source.getPath());
-			if(source.hasMetaData()) {
+			if (source.hasMetaData()) {
 				//the presence of a metadata file means that this is not a z/OS dataset and so a FileImageInputStream is safe
 				meta = new File(source.getMetadata().getPath());
 			}
 		}
-		for(String factory : source.getType().getFactoryNames()) {
+		for (String factory : source.getType().getFactoryNames()) {
 			if (foundImage(factory, imageReference, core, meta)) {
-				if(imageReference.image instanceof ManagedImage) {
-					((ManagedImage)imageReference.image).setImageSource(source);
+				if (imageReference.image instanceof ManagedImage) {
+					((ManagedImage) imageReference.image).setImageSource(source);
 				}
 				return imageReference.image;
 			}
@@ -236,15 +254,15 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 
 		printExceptions();
 		//the final fallback is to try and get just the native aspect if the file is a core file
-		if(source.getType().equals(ImageSourceType.CORE)) {
+		if (source.getType().equals(ImageSourceType.CORE)) {
 			com.ibm.dtfj.image.ImageFactory f = createImageFactory(FACTORY_DDR);
 			//no valid runtime so return DDR factory for use with Image API
 			if (null == f) {
-				propagateIOException("Could not create a valid ImageFactory");
+				throw propagateIOException("Could not create a valid ImageFactory"); //$NON-NLS-1$
 			}
 			return f.getImage(imageFile);
 		} else {
-			throw new IOException("The file " + imageFile.getAbsolutePath() + " was not recognised by any reader");
+			throw new IOException("The file " + imageFile.getAbsolutePath() + " was not recognised by any reader"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
@@ -255,6 +273,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	 * @return an instance of Image (null if no image can be constructed from the given file)
 	 * @throws IOException
 	 */
+	@Override
 	public Image getImage(ImageInputStream in, URI sourceID) throws IOException {
 		return getImage(in , null, sourceID);
 	}
@@ -266,6 +285,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	 * @return an instance of Image (null if no image can be constructed from the given file)
 	 * @throws IOException
 	 */
+	@Override
 	public Image getImage(ImageInputStream in, ImageInputStream meta, URI sourceID) throws IOException {
 		ImageReference imageReference = new ImageReference();
 		com.ibm.dtfj.image.ImageFactory factory = null;
@@ -282,16 +302,16 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		//no valid runtime so return DDR factory for use with Image API
 		printExceptions();
 		if (null == factory) {
-			propagateIOException("Could not create a valid ImageFactory");
+			throw propagateIOException("Could not create a valid ImageFactory"); //$NON-NLS-1$
 		}
 		return factory.getImage(in, meta, sourceID);
 	}
-	
-	private File getTempDirParent() {
-		String tmpdir = System.getProperty(ImageFactory.SYSTEM_PROPERTY_TMPDIR);
-		if(tmpdir == null) {
+
+	private static File getTempDirParent() {
+		String tmpdir = System.getProperty(SYSTEM_PROPERTY_TMPDIR);
+		if (tmpdir == null) {
 			//hasn't been overridden so return value for java.io.tmpdir
-			return new File(System.getProperty("java.io.tmpdir"));
+			return new File(System.getProperty("java.io.tmpdir")); //$NON-NLS-1$
 		} else {
 			return new File(tmpdir);
 		}
@@ -309,13 +329,15 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	 * This is left as a separate implementation to provide a route by which legacy behaviour
 	 * can be invoked first as all other Image creation mechanisms will try DDR first.
 	 */
+	@Override
 	public Image getImage(File imageFile, File metadata) throws IOException {
+		Objects.requireNonNull(imageFile);
 		if (metadata != null && !metadata.exists()) {
 			//xml file is not supported as a dataset, so the File.exists() check is fine
-			throw new FileNotFoundException("Metadata file '" + metadata.getAbsolutePath() + "' not found.");
+			throw new FileNotFoundException("Metadata file '" + metadata.getAbsolutePath() + "' not found."); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		if (imageFile != null && !FileManager.fileExists(imageFile)) {
-			throw new FileNotFoundException("Image file '" + imageFile.getAbsolutePath() + "' not found.");
+		if (!FileManager.fileExists(imageFile)) {
+			throw new FileNotFoundException("Image file '" + imageFile.getAbsolutePath() + "' not found."); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		ImageReference imageReference = new ImageReference();
 		com.ibm.dtfj.image.ImageFactory factory = null;
@@ -339,7 +361,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		factory = createImageFactory(FACTORY_DDR);
 		printExceptions();
 		if (null == factory) {
-			propagateIOException("Could not create a valid ImageFactory");
+			throw propagateIOException("Could not create a valid ImageFactory"); //$NON-NLS-1$
 		}
 		return factory.getImage(imageFile);
 	}
@@ -352,7 +374,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		if (0 == exceptions.size()) {
 			return; //nothing went wrong
 		}
-		log.fine("Warning : errors encountered whilst creating ImageFactory");
+		log.fine("Warning : errors encountered whilst creating ImageFactory"); //$NON-NLS-1$
 		for (int i = 0; i < exceptions.size(); i++) {
 			Object obj = exceptions.get(i);
 			if (obj instanceof Exception) {
@@ -372,7 +394,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	 * @param newExceptionMessage
 	 * @throws IOException
 	 */
-	private void propagateIOException(String newExceptionMessage) throws IOException {
+	private IOException propagateIOException(String newExceptionMessage) throws IOException {
 		if (exceptions.size() == 1 && exceptions.get(0) instanceof IOException) {
 			throw (IOException) exceptions.get(0);
 		} else {
@@ -395,7 +417,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 			imageReference.image = (metadata == null) ? _factory.getImage(imageFile) : _factory.getImage(imageFile,
 					metadata);
 			boolean foundRuntime = hasJavaRuntime(imageReference);
-			if(!foundRuntime && (imageReference.image != null)) {
+			if (!foundRuntime && (imageReference.image != null)) {
 				//close and release resources used whilst detecting the image
 				imageReference.image.close();
 			}
@@ -449,7 +471,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	 * run time data.
 	 * @return true if a non-corrupt runtime is returned
 	 */
-	private boolean hasJavaRuntime(ImageReference imageReference) {
+	private static boolean hasJavaRuntime(ImageReference imageReference) {
 		if (null == imageReference || null == imageReference.image) {
 			return false;
 		}
@@ -480,6 +502,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.image.ImageFactory#getDTFJMajorVersion()
 	 */
+	@Override
 	public int getDTFJMajorVersion() {
 		return DTFJ_MAJOR_VERSION;
 	}
@@ -487,6 +510,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.image.ImageFactory#getDTFJMinorVersion()
 	 */
+	@Override
 	public int getDTFJMinorVersion() {
 		return DTFJ_MINOR_VERSION;
 	}
@@ -494,6 +518,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.image.ImageFactory#getDTFJModificationLevel()
 	 */
+	@Override
 	public int getDTFJModificationLevel() {
 		// modification level is VM stream plus historically the tag from RAS_Auto-Build/projects.psf - now just a number
 		return 29003;
@@ -503,14 +528,14 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		// add all JAR files in the DDR directory to class path
 		// use property com.ibm.java.diagnostics.ddr.home if set, otherwise {java.home}/lib/ddr
 		File ddrDir = null;
-		String ddrHome = System.getProperty("com.ibm.java.diagnostics.ddr.home");
+		String ddrHome = System.getProperty("com.ibm.java.diagnostics.ddr.home"); //$NON-NLS-1$
 		if (ddrHome != null) {
-			ddrDir = new File(ddrHome); 
+			ddrDir = new File(ddrHome);
 		} else {
-			ddrDir = new File(System.getProperty("java.home", ""), "lib/ddr");
+			ddrDir = new File(System.getProperty("java.home", ""), "lib/ddr"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
-		
-		if( ddrDir.isDirectory() ) {
+
+		if (ddrDir.isDirectory()) {
 			File[] jarFiles = null;
 			FilenameFilter jarFilter = new JarFilter();
 			jarFiles = ddrDir.listFiles(jarFilter);
@@ -529,12 +554,18 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		}
 	}
 
-	private class JarFilter implements FilenameFilter {
+	private static final class JarFilter implements FilenameFilter {
 
+		JarFilter() {
+			super();
+		}
+
+		@Override
 		public boolean accept(File dir, String name) {
 			// accept JAR files *.jar only
-			return name.toLowerCase().endsWith(".jar");
+			return name.regionMatches(true, name.length() - 4, ".jar", 0, 4); //$NON-NLS-1$
 		}
 
 	}
+
 }
