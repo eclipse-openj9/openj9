@@ -5213,9 +5213,6 @@ typedef struct J9JavaVM {
 	UDATA gcPolicy;
 	UDATA gcCycleOn;
 	omrthread_monitor_t gcCycleOnMonitor;
-	IDATA sigQuitFlags;
-	omrthread_t sigQuitThread;
-	omrthread_monitor_t sigQuitMutex;
 	void  ( *J9SigQuitShutdown)(struct J9JavaVM *vm) ;
 	U_32 globalEventFlags;
 	void  ( *sidecarInterruptFunction)(struct J9VMThread * vmThread) ;
