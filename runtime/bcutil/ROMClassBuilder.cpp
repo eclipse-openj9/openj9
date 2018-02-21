@@ -1127,12 +1127,6 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 		modifiers |= J9AccClassIsContended;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	if (classFileOracle->isClassValueCapable()) {
-		modifiers |= J9AccClassIsValueCapable;
-	}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-
 	U_32 classNameindex = classFileOracle->getClassNameIndex();
 
 #define WEAK_NAME "java/lang/ref/WeakReference"

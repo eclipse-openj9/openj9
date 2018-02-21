@@ -2061,10 +2061,6 @@ Only available on zOS</description>
 		<description>Enables support for Project Panama features such as native method handles</description>
 		<ifRemoved>No support for Project Panama features such as native method handles</ifRemoved>
 	</flag>
-	<flag id="opt_valhallaMvt">
-		<description>Enables support for Project Valhalla Minimal Value Types</description>
-		<ifRemoved>No support for Project Valhalla Minimal Value Types</ifRemoved>
-	</flag>
 	<flag id="opt_valhallaValueTypes">
 		<description>Enables support for Project Valhalla L-World Value Types</description>
 		<ifRemoved>No support for Project Valhalla L-World Value Types</ifRemoved>

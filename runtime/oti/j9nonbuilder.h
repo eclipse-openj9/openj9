@@ -84,7 +84,6 @@
 #define J9AccClassIntermediateDataIsClassfile 0x20000
 #define J9AccClassInternalPrimitiveType 0x20000
 #define J9AccClassIsContended 0x1000000
-#define J9AccClassIsValueCapable 0x100
 #define J9AccClassOwnableSynchronizer 0x200000
 #define J9AccClassUnused200 0x200
 #define J9AccClassUnused400 0x400
@@ -140,6 +139,9 @@
 #define J9AccSynchronized 0x20
 #define J9AccSynthetic 0x1000
 #define J9AccTransient 0x80
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define J9AccValueType 0x100
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #define J9AccVarArgs 0x80
 #define J9AccVolatile 0x40
 #define J9StaticFieldRefBaseType 0x1

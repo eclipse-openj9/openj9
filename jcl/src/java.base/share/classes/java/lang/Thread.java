@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -184,8 +184,10 @@ void completeInitialization() {
 	contextClassLoader = ClassLoader.getSystemClassLoader();
 	/*[IF Sidecar19-SE]*/
 	jdk.internal.misc.VM.initLevel(4);
+	/*[ENDIF]*/ // Sidecar19-SE
+	/*[IF Sidecar19-SE|Sidecar18-SE-OpenJ9]*/
 	System.startSNMPAgent();
-	/*[ENDIF]*/
+	/*[ENDIF]*/ // Sidecar19-SE|Sidecar18-SE-OpenJ9
 }
 
 /**
