@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2017 IBM Corp. and others
+Copyright (c) 2017, 2018 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,17 +73,11 @@ Please add `[skip ci]` to the commit message when the change doesn't require a
 compilation, such as documentation only changes, to avoid unnecessarily wasting
 the project's build resources.
 
-Use the commit footer to place commit metadata. The footer is the last block of
-contiguous text in the message. It is separated from the body by one or more
-blank lines, and as such cannot contain any blank lines. Lines in the footer are
-of the form:
-
-```
-Key: Value
-```
-
 When a commit has related issues or commits, explain the relation in the message
-body. You should also leave an `Issue` tag in the footer. For example:
+body. When appropriate, use the keywords described in the following help article
+to automatically close issues.
+https://help.github.com/articles/closing-issues-using-keywords/
+For example:
 
 ```
 Correct race in frobnicator 
@@ -110,10 +104,6 @@ or your commit will fail IP validation.
 
 It is important that you read and understand the legal considerations found
 below when signing off or contributing any commit.
-
-When appropriate, use the keywords described in the following help article to 
-automatically close issues.
-https://help.github.com/articles/closing-issues-using-keywords/
 
 ### Example commits
 
