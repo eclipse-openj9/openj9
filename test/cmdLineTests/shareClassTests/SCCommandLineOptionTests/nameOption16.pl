@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2017 IBM Corp. and others
+# Copyright (c) 2009, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,8 @@
 # @author Radhakrishnan Thangamuthu
 # @summary check if a cache can be created with maximum allowed length
 # @summary and that the destroy command works
+
+use lib ".";
 require "sharedClassesUtil.pl";
 
 use strict;
