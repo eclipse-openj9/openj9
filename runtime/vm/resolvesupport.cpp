@@ -621,7 +621,7 @@ tryAgain:
 		fieldLookupFlags = 0;
 		if (jitFlags) {
 			UDATA initStatus = resolvedClass->initializeStatus;
-			if ( (J9ClassInitSucceeded != initStatus) && (J9ClassInitTenant != initStatus) ) {
+			if (J9ClassInitSucceeded != initStatus) {
 				goto done;
 			}
 			fieldLookupFlags |= J9_RESOLVE_FLAG_NO_THROW_ON_FAIL;
@@ -722,7 +722,7 @@ illegalAccess:
 			/* If this is a JIT compile-time resolve, do not allow fields declared in uninitialized classes. */
 			if (jitFlags) {
 				UDATA initStatus = localClassAndFlags->initializeStatus;
-				if ( (J9ClassInitSucceeded != initStatus) && (J9ClassInitTenant != initStatus) ) {
+				if (J9ClassInitSucceeded != initStatus) {
 					staticAddress = NULL;
 					goto done;
 				}

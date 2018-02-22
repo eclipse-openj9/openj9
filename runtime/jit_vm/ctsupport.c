@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corp. and others
+ * Copyright (c) 2008, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,7 +95,7 @@ jitGetClassOfFieldFromCP(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDA
 	if (J9RAMSTATICFIELDREF_IS_RESOLVED(ramRefWrapper)) {
 		J9Class *classWrapper = J9RAMSTATICFIELDREF_CLASS(ramRefWrapper);
 		UDATA initStatus = classWrapper->initializeStatus;
-		if ((J9ClassInitSucceeded == initStatus)  || (J9ClassInitTenant == initStatus)  || ((UDATA) vmStruct == initStatus)) {
+		if ((J9ClassInitSucceeded == initStatus) || ((UDATA) vmStruct == initStatus)) {
 			result = classWrapper;
 		}
 	}
