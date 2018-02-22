@@ -62,6 +62,58 @@ to another value.
 How a language runtime manages its assumed states during method compilation 
 and method execution is up to the language runtime developers.
 
+Removing runtime assumptions from the *runtime assumption table* is required in 
+the following cases:
+
+1. When a JIT body is being reclaimed because its class is being unloaded during 
+a GC cycle.
+2. When a JIT body is being partially reclaimed during a GC cycle because a 
+recompile has occurred which replaces a previous JIT body for a method.
+3. When a JIT compile has been aborted after registering runtime assumptions.
+
+In cases where runtime assumption reclaiming is done during a gc cycle, it's very
+important that we minimize the processing time so that we don't unduly extend
+the GC pause times.
+
+Currently there are two methods for removing runtime assumptions. The first is to
+remove assumptions one at a time which can be costly if many assumptions are being 
+removed in sequence during a GC cycle. The second method is to mark a set of 
+assumptions that are going to be removed and then do a single scan of the runtime 
+assumption table to remove all the marked assumptions in one pass.
+
+**Implementation details** for the marking runtime assumption reclaiming method:
+
+An array of bools is created, one element in the array for each assumption "kind"
+in the *runtime assumption table* (RAT). The bool is set to "true" when at least 
+one assumption of that "kind" has been marked. In the Hashtable of assumptions 
+(there is one hashtable for each assumption "kind") an array of 32bit integers is 
+created that matches the number of buckets in the hashtable. This array of 
+integers is used to count the number of marked assumptions in each hashtable 
+bucket.
+
+When an assumption is marked *markForDetachFromRAT()* the bool array and a 
+hashtable integer array is updated. Marking is implemented as a low-order bit 
+being set on the "next" pointer *_nextAssumptionForSameJittedBody* and therefore 
+it's important that the assumption is detached from the JIT body linked-list when 
+marking happens. The routine *markAssumptionsAndDetach()* is responsible for 
+detaching JIT body assumptions from the body linked-list and marking assumptions.
+
+After all assumptions have been marked that are in need of being reclaimed, we 
+can initiate a single pass over the RAT using *reclaimMarkedAssumptionsFromRAT()*. 
+For each assumption "kind" hashtable which has been marked as having at least 
+one marked assumption and for each hashtable bucket that has a marked count that 
+is greater then zero, we walk the buckets linked-list removing any marked 
+assumption.
+
+This mark and sweep process allows us to efficiently remove assumptions from the 
+RAT without having to have a "previous" pointer in the runtime assumption 
+structure. Since the number of runtime assumptions can at times number in the 
+hundreds of thousands, it's important to keep the runtime assumption structure as 
+compact as possible. The mark and sweep reclaiming process is now used for all
+cases of assumption reclaiming during a GC cycle, but it can be disabled by
+setting the *TR_useOldRAReclaim* environment variable to "1" which will cause
+the "one at a time" reclaiming process to be used during GC cycles.
+
 ---
 
 For J9, there is an important distinction between true runtime assumptions and
