@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,6 +68,7 @@ char const * const runtimeAssumptionKindNames[LastAssumptionKind] =
 struct TR_RatHT
    {
    OMR::RuntimeAssumption ** _htSpineArray;
+   uint32_t              * _markedforDetachCount;
    size_t                  _spineArraySize;
    };
 
@@ -111,15 +112,21 @@ class TR_RuntimeAssumptionTable
    void incReclaimedAssumptionCount(int32_t tableId) { reclaimedAssumptionCount[tableId]++; }
    void detachFromRAT(OMR::RuntimeAssumption *assumption);
 
+   void markAssumptionsAndDetach(void *reclaimedMetaData, bool reclaimPrePrologueAssumptions = false);
+   void reclaimMarkedAssumptionsFromRAT();
+
    int32_t countRatAssumptions();
 
    private:
    friend class OMR::RuntimeAssumption;
    void addAssumption(OMR::RuntimeAssumption *a, TR_RuntimeAssumptionKind kind, TR_FrontEnd *fe, OMR::RuntimeAssumption **sentinel);
    int32_t reclaimAssumptions(void *md, OMR::RuntimeAssumption **hashTable, OMR::RuntimeAssumption **possiblyRelevantHashTable);
+   void markForDetachFromRAT(OMR::RuntimeAssumption *assumption);
 
    // My table of hash tables; init() allocate memory and populate it
    TR_RatHT _tables[LastAssumptionKind];
+   bool     _detachPending[LastAssumptionKind]; // Marks tables that have assumptions waiting to be removed
+   uint32_t _marked;                            // Counts the number of assumptions waiting to be removed
    int32_t assumptionCount[LastAssumptionKind]; // this never gets decremented
    int32_t reclaimedAssumptionCount[LastAssumptionKind];
    };

@@ -170,7 +170,6 @@
 #define J9FieldFlagConstant 0x400000
 #define J9FieldFlagHasFieldAnnotations 0x20000000
 #define J9FieldFlagHasGenericSignature 0x40000000
-#define J9FieldFlagHasTenantAnnotation 0x0
 #define J9FieldFlagHasTypeAnnotations 0x800000
 #define J9FieldFlagIsContended 0x10000000
 #define J9FieldFlagUnused_2000000 0x2000000
@@ -231,13 +230,12 @@
 /* @ddr_namespace: map_to_type=J9ClassInitFlags */
 
 /* Constants from J9ClassInitFlags */
-#define J9ClassInitFailed 0x2
 #define J9ClassInitNotInitialized 0x0
-#define J9ClassInitStatusMask 0xFF
 #define J9ClassInitSucceeded 0x1
-#define J9ClassInitTenant 0x5
-#define J9ClassInitUnprepared 0x4
+#define J9ClassInitFailed 0x2
 #define J9ClassInitUnverified 0x3
+#define J9ClassInitUnprepared 0x4
+#define J9ClassInitStatusMask 0xFF
 
 /* @ddr_namespace: map_to_type=J9DescriptionBits */
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -154,10 +154,14 @@ TR_PersistentClassInfo::removeUnloadedSubClasses()
        _tables[i]._spineArraySize = sizes[i];
        size_t storageSize = sizeof(OMR::RuntimeAssumption*)*_tables[i]._spineArraySize;
        _tables[i]._htSpineArray = (OMR::RuntimeAssumption**)TR_PersistentMemory::jitPersistentAlloc(storageSize);
-       if (!_tables[i]._htSpineArray)
+       _tables[i]._markedforDetachCount = (uint32_t*)TR_PersistentMemory::jitPersistentAlloc(sizeof(uint32_t)*_tables[i]._spineArraySize);
+       if (!_tables[i]._htSpineArray || !_tables[i]._markedforDetachCount)
           return false;
        memset(_tables[i]._htSpineArray, 0, storageSize);
+       memset(_tables[i]._markedforDetachCount, 0, sizeof(uint32_t)*_tables[i]._spineArraySize);
        }
+    _marked=0;
+    memset(_detachPending, 0, sizeof(bool)*LastAssumptionKind);
     return true;
     }
 
@@ -351,6 +355,134 @@ TR_RuntimeAssumptionTable::detachFromRAT(OMR::RuntimeAssumption *assumption)
    TR_ASSERT(cursor, "Must find my assumption in rat\n");
    }
 
+/** 
+ * Mark an assumption for future detach and reclaiming from the RAT
+ * @param assumption The assumption to be marked for removal
+ * Once all assumptions are marked a call to reclaimMarkedFromRAT() will free
+ * the marked assumptions. The caller must obtain the assumptionTableMutex lock
+ * and must remove the assumption from the metadata linked list right after
+ * calling this method because the metadata assumption list next pointer is
+ * unusable after this method is executed.
+ */
+void TR_RuntimeAssumptionTable::markForDetachFromRAT(OMR::RuntimeAssumption *assumption)
+   {
+   TR_RatHT *hashTable = findAssumptionHashTable(assumption->getAssumptionKind());
+   _detachPending[assumption->getAssumptionKind()] = true;
+   hashTable->_markedforDetachCount[(assumption->hashCode() % hashTable->_spineArraySize)]++;
+   assumption->markForDetach();
+   }
+
+/**
+ * Traverse the entire RAT detaching and reclaiming all marked assumptions.
+ * This assumes that the assumptions have already been detached from the 
+ * metadata's linked list. Only RAT 'kinds' that have any marked assumptions
+ * will be traversed, and only the hashtable linked-lists that have a non-zero 
+ * marked for detach count will be traversed.
+ */
+void TR_RuntimeAssumptionTable::reclaimMarkedAssumptionsFromRAT()
+   {
+   TR_RatHT *hashTable;
+   OMR::RuntimeAssumption *cursor, *next, *prev;
+   int kind, reclaimed=0;
+
+   assumptionTableMutex->enter();
+   for (kind=0; kind < LastAssumptionKind; kind++) // for each table
+      {
+      if (_detachPending[kind] == true)  // Is there anything to remove from this table?
+         {
+         hashTable = _tables + kind;
+         for (size_t i = 0; i < hashTable->_spineArraySize; ++i) // for each bucket in the table
+            {
+            // Look for linked list nodes to remove until all marked nodes have been deleted
+            for (cursor = hashTable->_htSpineArray[i], prev = NULL; cursor && hashTable->_markedforDetachCount[i] > 0; cursor = next)
+               {
+               next = cursor->getNext();
+               if (cursor->isMarkedForDetach())
+                  {
+                  if (prev)
+                     prev->setNext(next);
+                  else
+                     {
+                     TR_ASSERT( hashTable->_htSpineArray[i] == cursor, "RAT spine head is not cursor!" );
+                     hashTable->_htSpineArray[i] = next;
+                     }
+                  hashTable->_markedforDetachCount[i]--;
+                  // Now release the assumption
+                  incReclaimedAssumptionCount(kind);
+                  cursor->reclaim();
+                  cursor->paint(); // RAS
+                  TR_PersistentMemory::jitPersistentFree(cursor);
+                  reclaimed++; // RAS
+                  }
+               else
+                  {
+                  prev = cursor;
+                  }
+               }
+            TR_ASSERT( hashTable->_markedforDetachCount[i]==0, "RAT detach count should be 0!" );
+            }
+         _detachPending[kind] = false;
+         }
+      }
+   TR_ASSERT( _marked == reclaimed, "Did not reclaim all the marked assumptions!" );
+   _marked=0;
+   assumptionTableMutex->exit();
+   }
+
+/**
+ * Mark and detach all of the assumptions in the metadata's circular linked list
+ * @param md The metadata for which to mark & detach assumptions from.
+ * @param reclaimPrePrologueAssumptions Are all assumptions free to be removed (ClassUnloading vs. recompiled)
+ * This only detaches from the metadata's linked list, not a detach from the RAT,
+ * to remove from the RAT you need to call reclaimMarkedAssumptionsFromRAT()
+ */
+void TR_RuntimeAssumptionTable::markAssumptionsAndDetach(void * md, bool reclaimPrePrologueAssumptions)
+   {
+   J9JITExceptionTable *metaData = (J9JITExceptionTable*) md;
+   OMR::RuntimeAssumption *sentry = (OMR::RuntimeAssumption*)(metaData->runtimeAssumptionList);
+   OMR::RuntimeAssumption *cursor, *next;
+
+   assumptionTableMutex->enter();
+   if (sentry)
+      {
+      TR_ASSERT(sentry->getAssumptionKind() == RuntimeAssumptionSentinel, "First assumption must be the sentinel\n");
+      OMR::RuntimeAssumption *notReclaimedList = sentry;
+      for ( cursor=sentry->getNextAssumptionForSameJittedBody(); cursor != sentry; cursor=next)
+         {
+         next = cursor->getNextAssumptionForSameJittedBody();
+         if (cursor->isAssumingMethod(metaData, reclaimPrePrologueAssumptions))
+            {
+            markForDetachFromRAT(cursor); // Mark for deletion
+            _marked++;
+            }
+         else // This could be an assumption to the persistentBodyInfo which is not reclaimed
+            {
+            #if defined(PROD_WITH_ASSUMES) || defined(DEBUG)
+            TR_RuntimeAssumptionKind kind = cursor->getAssumptionKind();
+            TR_ASSERT(kind == RuntimeAssumptionOnClassRedefinitionPIC ||
+               kind == RuntimeAssumptionOnClassRedefinitionUPIC || kind == RuntimeAssumptionOnClassRedefinitionNOP,
+               "non redefinition assumption (RA=%p kind=%d key=%p assumingPC=%p) left after metadata reclamation\n"
+               cursor, kind, cursor->getKey(), cursor->getAssumingPC());
+            #endif
+            cursor->setNextAssumptionForSameJittedBody(notReclaimedList);
+            notReclaimedList = cursor;
+            }
+         }
+
+      if (notReclaimedList != sentry) // some entries were not reclaimed
+         {
+         // Must attach the notReclaimedList to the sentinel
+         sentry->setNextAssumptionForSameJittedBody(notReclaimedList);
+         }
+      else // nothing is kept in this list; free the sentry too
+         {
+         sentry->paint(); // RAS
+         TR_PersistentMemory::jitPersistentFree(sentry);
+         metaData->runtimeAssumptionList = NULL;
+         }
+      }
+   assumptionTableMutex->exit();
+   }
 
 
 // Reclaim all assumptions that are placed in a circular linked list

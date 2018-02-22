@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,7 +112,19 @@ namespace  {
       // expunge the runtime assumptions that exist on this method body
       pointer_cast<TR_PersistentMemory *>( jitConfig->scratchSegment )->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimAssumptions(metaData, reclaimPrePrologueAssumptions);
       }
-   
+
+   inline void markAssumptionsAndDetach(J9JITConfig *jitConfig, J9JITExceptionTable *metaData, bool reclaimPrePrologueAssumptions)
+      {
+      // mark and detach the runtime assumptions, which will then be deleted from the RAT in the GC end hook
+      pointer_cast<TR_PersistentMemory *>( jitConfig->scratchSegment )->getPersistentInfo()->getRuntimeAssumptionTable()->markAssumptionsAndDetach(metaData, reclaimPrePrologueAssumptions);
+      }
+
+   inline void reclaimMarkedAssumptionsFromRAT()
+      {
+      // expunge any runtime assumptions in the RAT that have previously been marked
+      pointer_cast<TR_PersistentMemory *>( jitConfig->scratchSegment )->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimMarkedAssumptionsFromRAT();
+      }
+
    inline void freeFastWalkCache(J9VMThread *vmThread, J9JITExceptionTable *metaData)
       {
       if (metaData->bodyInfo)
@@ -248,6 +260,7 @@ void cleanUpJitArtifactSearchCache(J9VMThread *vmThread, J9JITExceptionTable *me
 
 void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread, J9JITExceptionTable *metaData, OMR::FaintCacheBlock *faintCacheBlock)
    {
+   static const char *useOldRAReclaim = feGetEnv("TR_useOldRAReclaim");
    TR_TranslationArtifactManager *artifactManager = TR_TranslationArtifactManager::getGlobalArtifactManager();
    bool freeExistingExceptionTable = false;
    
@@ -260,10 +273,22 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
       cleanUpJitExceptionHandlerCache(vmThread,metaData);
       cleanUpJitArtifactSearchCache(vmThread,metaData);
 
-      // 3rd parameter to reclaimAssumptions determines whether we reclaim preprologue assumptions.
-      // We should only do that if we are in class unloading and will be reclaiming the entire method body,
-      // which means faintCacheBlock is NULL.
-      reclaimAssumptions(jitConfig, metaData, (NULL == faintCacheBlock));
+      if (useOldRAReclaim)
+         {
+         // 3rd parameter to reclaimAssumptions determines whether we reclaim preprologue assumptions.
+         // We should only do that if we are in class unloading and will be reclaiming the entire method body,
+         // which means faintCacheBlock is NULL.
+         reclaimAssumptions(jitConfig, metaData, (NULL == faintCacheBlock));
+         }
+      else
+         {
+         // Mark the runtime assumptions so thay can be deleted at the end of the GC cycle.
+         // The 3rd parameter to markAssumptionsAndDetach determines whether we mark preprologue assumptions.
+         // We should only do that if we are in class unloading and will be reclaiming the entire method body,
+         // which means faintCacheBlock is NULL.
+         markAssumptionsAndDetach(jitConfig, metaData, (NULL == faintCacheBlock));
+         }
+
       artifactManager->removeArtifact(metaData);
       dispatchUnloadHooks(jitConfig, vmThread, metaData);
 
@@ -361,6 +386,14 @@ void jitRemoveAllMetaDataForClassLoader(J9VMThread * vmThread, J9ClassLoader * c
    classLoader->jitMetaDataList = NULL;
    }
 
+void jitReclaimMarkedAssumptions()
+   {
+   static const char *useOldRAReclaim = feGetEnv("TR_useOldRAReclaim");
+   if (!useOldRAReclaim)
+      {
+      reclaimMarkedAssumptionsFromRAT();
+      }
+   }
 
 void vlogReclamation(const char * prefix, J9JITExceptionTable *metaData, size_t bytesToSaveAtStart)
    {
