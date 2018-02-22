@@ -255,9 +255,7 @@ endif
 #######################################
 # failed target
 #######################################
-FAILEDTARGETS = $(TESTOUTPUT)$(D)failedtargets.mk
-#TODO: disable failed target until fix
-#-include $(FAILEDTARGETS)
+FAILEDTARGETS = $(TEST_ROOT)$(D)TestConfig$(D)failedtargets.mk
 
 #######################################
 # result Summary

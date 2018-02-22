@@ -51,11 +51,19 @@ test: compile runtest
 
 .NOTPARALLEL: test
 
+failed:
+	@$(MAKE) -f failedtargets.mk failed
+
+.PHONY: failed
+
+.NOTPARALLEL: failed
+
 cleanBuild:
 	$(RM) -r $(BUILD_ROOT)
 
 clean: cleanBuild
 	$(RM) -r $(TEST_ROOT)$(D)TestConfig$(D)test_output_*
+	$(RM) $(FAILEDTARGETS)
 
 .PHONY: cleanBuild clean
 
