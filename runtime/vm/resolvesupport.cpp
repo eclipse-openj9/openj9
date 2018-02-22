@@ -687,6 +687,13 @@ illegalAccess:
 					staticAddress = NULL;
 					goto done;
 				} else { /* finalFieldSetAllowed */
+					if (0 != jitFlags) {
+						/* Don't report the final field modification for JIT compile-time resolves.
+					 	 * Reporting may deadlock due to interaction between safepoint and ClassUnloadMutex.
+					 	 */
+						staticAddress = NULL;
+						goto done;
+					}
 					VM_VMHelpers::reportFinalFieldModified(vmStruct, definingClass);
 				}
 			}

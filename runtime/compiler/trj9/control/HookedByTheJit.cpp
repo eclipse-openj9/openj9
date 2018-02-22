@@ -2903,6 +2903,10 @@ static void jitHookClassLoaderUnload(J9HookInterface * * hookInterface, UDATA ev
    J9VMThread * vmThread = unloadedEvent->currentThread;
    J9ClassLoader * classLoader = unloadedEvent->classLoader;
 
+   // Assumptions are registered during class loading event. For a class loader that has never loaded a class, the JIT won't know about it
+   if (classLoader->classSegments == NULL)
+      return;
+
    J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
