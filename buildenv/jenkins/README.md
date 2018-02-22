@@ -26,13 +26,17 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 
 ### Triggering Pull Request Builds from Github
 
-- Current supported PR builds are "Compile", "Compile & Sanity", or "Compile & Extended"
+- You can request a PR build to do compile or compile & test
+- Current supported test levels are functional sanity and functional extended
 - Current available platforms are Linux s390x (zLinux) and Linux PPCLE (pLinux)
 - Current supported Java verisons are Java8 and Java9
 - OpenJ9 committers can request builds by commenting in a pull request
-    - Format: `Jenkins <build level> <platform(s)> <java version(s)>`
+    - Format: `Jenkins <build type> <level> <platform(s)> <java version(s)>`
+    - Build Types: compile,test
+    - Levels: sanity,extended (only if Build Type is test)
     - Platforms: zlinux,plinux
     - Java Versions: jdk8,jdk9
+- Note: You can use keyword `all` for level, platform or version
 
 ###### Examples
 - Request a Compile-only build on all platforms and all java versions by commenting in a PR
@@ -41,10 +45,13 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 - Request a Sanity build on zLinux all java versions
     - `Jenkins test sanity zlinux`
     - `Jenkins test sanity zlinux all`
-- Request a Extended build on pLinux java8 only
+- Request an Extended build on pLinux java8 only
     - `Jenkins test extended plinux jdk8`
 - Request a Sanity build on z,p Linux on java 8,9
     - `Jenkins test sanity zlinux,plinux jdk8,jdk9`
+- Request all tests on all platforms all java versions
+    - `Jenkins test all`
+    - `Jenkins test all all all`
 
 You can also request a "Compile & Sanity" build from the extensions repos or openj9-omr
 - [openj9-openjdk-jdk8](https://github.com/ibmruntimes/openj9-openjdk-jdk8)
