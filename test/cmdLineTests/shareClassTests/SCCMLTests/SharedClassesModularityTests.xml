@@ -124,6 +124,43 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
+	
+	<test id="Test 3 cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+
+	<test id="Test 4 set-up: create a shared cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 4: Class from unresolved module should not be found" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2262} -verbose --module-path $UTILSJAR$ -m utils/$PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">INIT hookFindSharedClass: Class .* is from an unresolved module. Returning NULL.</output>
+
+		<!-- OpenJ9 issue 1081: assertion failure at j9vmutil(j9vrb).15 if class from unresolved module is found -->
+		<output type="failure" caseSensitive="no" regex="no">ASSERTION FAILED</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
 
 	<test id="At end destroy cache for cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>

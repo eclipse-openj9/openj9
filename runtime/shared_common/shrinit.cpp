@@ -379,6 +379,7 @@ static bool recoverMethodSpecSeparator(char* string, char* end);
 static void adjustCacheSizes(J9PortLibrary* portlib, UDATA verboseFlags, J9SharedClassPreinitConfig* piconfig, U_64 newSize);
 static IDATA checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, const char* cacheName, J9PortShcVersion* versionData, U_32 cacheType);
 static bool isClassFromPatchedModule(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
+static J9Module* getModule(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
 
 typedef struct J9SharedVerifyStringTable {
 	void *romClassAreaStart;
@@ -1327,7 +1328,14 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 		return;
 	}
 
-	if (isClassFromPatchedModule(currentThread, eventData->j9module, (U_8*)eventData->className, realClassNameLength, eventData->classloader)) {
+	J9Module* module = eventData->j9module;
+	if ((J2SE_VERSION(vm) >= J2SE_19)
+		&& (NULL == module)
+	) {
+		module = getModule(currentThread, (U_8*)eventData->className, realClassNameLength, eventData->classloader);
+	}
+
+	if (isClassFromPatchedModule(currentThread, module, (U_8*)eventData->className, realClassNameLength, eventData->classloader)) {
 		Trc_SHR_INIT_hookFindSharedClass_exit_Noop(currentThread);
 		return;
 	}
@@ -1422,6 +1430,14 @@ hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidD
 		 * So when loaded from the shared cache, entryIndex needs to be decreased by 1 to recover the real classpath entryIndex here.
 		 */
 		*entryIndex = *entryIndex - 1;
+		if ((-1 == *entryIndex)
+			&& (NULL == module)
+		) {
+			/* entryIndex is -1 means class is from Jimage, do not return the class if its module is not resolved. */
+			Trc_SHR_INIT_hookFindSharedClass_classFromUnresolvedModule(currentThread, fixedNameSize, fixedName);
+			eventData->result = NULL;
+			goto _donePostFixedClassname;
+		}
 	}
 
 	if (eventData->doPreventStore && (NULL == eventData->result)) {
@@ -4757,20 +4773,7 @@ isClassFromPatchedModule(J9VMThread* vmThread, J9Module *j9module, U_8* classNam
 	if (J9_ARE_NO_BITS_SET(vm->jclFlags, J9_JCL_FLAG_JDK_MODULE_PATCH_PROP)) {
 		return ret;
 	}
-
-	if (NULL == module) {
-		if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
-			module = vm->javaBaseModule;
-		} else {
-			char* packageEnd = strnrchrHelper((const char*)className, '/', classNameLength);
-
-			if (NULL != packageEnd) {
-				omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-				module = vmFuncs->findModuleForPackage(vmThread, classLoader, className, (U_32)((U_8 *)packageEnd - className));
-				omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-			}
-		}
-	}
+	
 	if (NULL != module) {
 		if (NULL != classLoader->moduleExtraInfoHashTable) {
 			J9ModuleExtraInfo *moduleInfo = NULL;
@@ -4793,6 +4796,36 @@ isClassFromPatchedModule(J9VMThread* vmThread, J9Module *j9module, U_8* classNam
 	}
 
 	return ret;
+}
+
+/**
+ * This function returns which module a class belongs to
+ * @param[in] vmThread The current VM thread
+ * @param[in] className The name of the class
+ * @param[in] classNameLength The number of bytes in className
+ * @param[in] classLoader Pointer to the classLoader
+ *
+ * @return The resolved module from which the class belongs to, NULL otherwise.
+ */
+static J9Module*
+getModule(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader)
+{
+	J9Module *module = NULL;
+	J9JavaVM* vm = vmThread->javaVM;
+	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+
+	if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
+		module = vm->javaBaseModule;
+	} else {
+		char* packageEnd = strnrchrHelper((const char*)className, '/', classNameLength);
+
+		if (NULL != packageEnd) {
+			omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
+			module = vmFuncs->findModuleForPackage(vmThread, classLoader, className, (U_32)((U_8 *)packageEnd - className));
+			omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
+		}
+	}
+	return module;
 }
 
 } /* extern "C" */
