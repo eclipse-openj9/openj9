@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,8 @@
 
 #ifndef methodmetadata_h
 #define methodmetadata_h
+
+/* @ddr_namespace: map_to_type=J9StackWalkFlags */
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 #define jitExceptionHandlerSearch jitExceptionHandlerSearchVerbose
@@ -204,6 +206,8 @@ typedef struct TR_MapIterator
 #endif /* WINDOWS */
 #endif
 
+/* @ddr_namespace: map_to_type=MethodMetaDataConstants */
+
 #if defined(TR_HOST_POWER)
 #define INTERNAL_PTR_REG_MASK 0x00040000
 #else
@@ -232,7 +236,6 @@ typedef struct TR_MapIterator
 
 #define ADDRESS_OF_BYTECODEINFO_IN_STACK_MAP(fourByteOffset, stackMap) ((U_8 *)stackMap + SIZEOF_MAP_OFFSET(fourByteOffset))
 #define ADDRESS_OF_LOW_PC_OFFSET_IN_STACK_MAP(fourByteOffset, stackMap) stackMap
-
 
 /* { RTSJ Support begins */
 #define RANGE_NEEDS_FOUR_BYTE_OFFSET(r)   (((r) >= (USHRT_MAX   )) ? 1 : 0)
@@ -418,7 +421,3 @@ J9JITExceptionTable * jitGetMetaDataFromPC(J9VMThread* currentThread, UDATA pc);
 #endif
 
 #endif
-
-
-
-

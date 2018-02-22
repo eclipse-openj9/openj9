@@ -27,6 +27,7 @@
 
 #ifndef J9NONBUILDER_H
 #define J9NONBUILDER_H
+
 /* @ddr_namespace: map_to_type=J9NonbuilderConstants */
 
 #include "j9vmconstantpool.h"
@@ -44,6 +45,7 @@
 #define CLASSNAME_VALID_ARRARY		2
 
 /* @ddr_namespace: map_to_type=J9JITDataCacheConstants */
+
 /* Constants from J9JITDataCacheConstants */
 #define J9DataTypeAotMethodHeader 0x80
 #define J9DataTypeAOTPersistentInfo 0x400
@@ -58,6 +60,7 @@
 #define J9DataTypeUnallocated 0x100
 
 /* @ddr_namespace: map_to_type=J9JavaAccessFlags */
+
 /* Constants from J9JavaAccessFlags */
 #define J9AccAbstract 0x400
 #define J9AccAnnotation 0x2000
@@ -150,6 +153,7 @@
 #define J9StaticFieldRefVolatile 0x4
 
 /* @ddr_namespace: map_to_type=J9JavaClassFlags */
+
 /* Constants from J9JavaClassFlags */
 #define J9ClassContainsJittedMethods 0x8
 #define J9ClassContainsMethodsPresentInMCCHash 0x10
@@ -161,6 +165,7 @@
 #define J9ClassReusedStatics 0x4
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
+
 /* Constants from J9FieldFlags */
 #define J9FieldFlagConstant 0x400000
 #define J9FieldFlagHasFieldAnnotations 0x20000000
@@ -188,11 +193,14 @@
 #define J9FieldTypeShort 0x280000
 
 /* @ddr_namespace: map_to_type=J9ArrayShapeFlags */
+
 /* Constants from J9ArrayShapeFlags */
 #define J9ArraySizeBytes 0x0
 #define J9ArraySizeDoubles 0x3
 #define J9ArraySizeLongs 0x2
 #define J9ArraySizeWords 0x1
+
+/* @ddr_namespace: map_to_type=J9NonbuilderConstants */
 
 /* Constants from J9PreInitInstructions */
 #define J9InitCopyDoubles 0x5
@@ -221,6 +229,7 @@
 #define J9InitVirtualsW 0x8
 
 /* @ddr_namespace: map_to_type=J9ClassInitFlags */
+
 /* Constants from J9ClassInitFlags */
 #define J9ClassInitFailed 0x2
 #define J9ClassInitNotInitialized 0x0
@@ -231,6 +240,7 @@
 #define J9ClassInitUnverified 0x3
 
 /* @ddr_namespace: map_to_type=J9DescriptionBits */
+
 /* Constants from J9DescriptionBits */
 #define J9DescriptionCpTypeClass 0x2
 #define J9DescriptionCpTypeMask 0xF
@@ -242,6 +252,7 @@
 #define J9DescriptionImmediate 0x1
 
 /* @ddr_namespace: map_to_type=J9NativeTypeCodes */
+
 /* Constants from J9NativeTypeCodes */
 #define J9NtcBoolean 0x1
 #define J9NtcByte 0x2
@@ -257,6 +268,7 @@
 #define J9NtcVoid 0x0
 
 /* @ddr_namespace: map_to_type=J9VMRuntimeFlags */
+
 /* Constants from J9VMRuntimeFlags */
 #define J9RuntimeFlagAggressive 0x100000
 #define J9RuntimeFlagAggressiveVerification 0x1000000
@@ -288,6 +300,7 @@
 #define J9RuntimeFlagXfuture 0x200
 
 /* @ddr_namespace: map_to_type=J9RemoteDbgInfoConstants */
+
 /* Constants from J9RemoteDbgInfoConstants */
 #define RDBGID_JXE 0x2
 #define RDBGID_ROM 0x1
@@ -305,6 +318,7 @@
 #define RDBGRequestType_TranslateClass 0x5
 
 /* @ddr_namespace: map_to_type=J9NonbuilderConstants */
+
 #define J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME 0x1
 #define J9_ROMCLASS_OPTINFO_GENERIC_SIGNATURE 0x2
 #define J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION 0x4
@@ -328,6 +342,7 @@
 #define J9_VISIBILITY_NON_MODULE_ACCESS_ERROR 0
 #define J9_VISIBILITY_MODULE_READ_ACCESS_ERROR -1
 #define J9_VISIBILITY_MODULE_PACKAGE_EXPORT_ERROR -2
+
 /* @ddr_namespace: map_to_type=J9CfrError */
 
 /* Jazz 82615: Both errorPC (current pc value) and errorFrameBCI (bci value in the stack map frame)
@@ -380,6 +395,7 @@ typedef struct J9ROMClassCfrMember {
 } J9ROMClassCfrMember;
 
 /* @ddr_namespace: map_to_type=J9ContendedLoadTableEntry */
+
 typedef struct J9ContendedLoadTableEntry {
 	U_8* className; /* these three fields are used as search keys */
 	UDATA classNameLength;
@@ -390,6 +406,7 @@ typedef struct J9ContendedLoadTableEntry {
 	UDATA status;
 	struct J9VMThread *thread; /* to detect class circularity */
 } J9ContendedLoadTableEntry;
+
 #define CLASSLOADING_DUMMY 0
 #define	CLASSLOADING_LOAD_IN_PROGRESS 1
 #define	CLASSLOADING_LOAD_SUCCEEDED 2
@@ -505,6 +522,7 @@ typedef struct J9JITFrame {
 } J9JITFrame;
 
 /* @ddr_namespace: map_to_type=J9VTuneInterface */
+
 typedef struct J9VTuneInterface {
 	UDATA dllHandle;
 	void* iJIT_NotifyEvent;
@@ -518,6 +536,7 @@ typedef struct J9VTuneInterface {
 } J9VTuneInterface;
 
 #define J9VTUNE_TRACE_LINE_NUMBERS  1
+
 /* @ddr_namespace: map_to_type=J9JITExceptionTable */
 
 /* This structure is exposed by the compile_info field of CompiledMethodLoad() / JVMTI_EVENT_COMPILED_METHOD_LOAD.
@@ -726,7 +745,9 @@ typedef struct J9ROMStaticFieldShape {
 
 #define J9ROMSTATICFIELDSHAPE_NAME(base) NNSRP_GET((&((base)->nameAndSignature))->name, struct J9UTF8*)
 #define J9ROMSTATICFIELDSHAPE_SIGNATURE(base) NNSRP_GET((&((base)->nameAndSignature))->signature, struct J9UTF8*)
+
 /* @ddr_namespace: map_to_type=J9VMExt */
+
 #define J9MEMORYPOOLDATA_MAX_NAME_BUFFER_SIZE   32
 #define J9GARBAGECOLLECTORDATA_MAX_NAME_BUFFER_SIZE   32
 #define J9VM_MAX_HEAP_MEMORYPOOL_COUNT 4
@@ -870,7 +891,9 @@ typedef struct J9ObjectMonitorCustomSpinOptions {
 	UDATA thrMaxTryEnterSpins2BeforeBlocking;
 	UDATA thrMaxTryEnterYieldsBeforeBlocking;
 } J9ObjectMonitorCustomSpinOptions;
+
 /* @ddr_namespace: map_to_type=J9VMCustomSpinOptions */
+
 typedef struct J9VMCustomSpinOptions {
 	const char* className;
 	J9ObjectMonitorCustomSpinOptions j9monitorOptions;
@@ -923,7 +946,9 @@ typedef struct J9VMInitArgs {
 	struct J9CmdLineOption* j9Options;
 	UDATA nOptions;
 } J9VMInitArgs;
+
 /* @ddr_namespace: map_to_type=J9IdentityHashData */
+
 typedef struct J9IdentityHashData {
 	UDATA hashData1;
 	UDATA hashData2;
@@ -982,7 +1007,9 @@ typedef struct J9SharedStringTransaction {
 	UDATA transactionState;
 	IDATA isOK;
 } J9SharedStringTransaction;
+
 /* @ddr_namespace: map_to_type=J9GenericByID */
+
 typedef struct J9GenericByID {
 	U_8 magic;
 	U_8 type;
@@ -1034,7 +1061,9 @@ typedef struct J9SharedInvariantInternTable {
 	U_32* totalSharedWeightPtr;
 	struct J9ClassLoader* systemClassLoader;
 } J9SharedInvariantInternTable;
+
 /* @ddr_namespace: map_to_type=J9SharedInternSRPHashTableEntry */
+
 typedef struct J9SharedInternSRPHashTableEntry {
 	J9SRP utf8SRP;
 	U_16 flags;
@@ -1050,7 +1079,9 @@ typedef struct J9SharedInternSRPHashTableEntry {
 #define J9SHAREDINTERNSRPHASHTABLEENTRY_UTF8SRP(base) SRP_GET((base)->utf8SRP, struct J9UTF8*)
 #define J9SHAREDINTERNSRPHASHTABLEENTRY_PREVNODE(base) SRP_GET((base)->prevNode, struct J9SharedInternSRPHashTableEntry*)
 #define J9SHAREDINTERNSRPHASHTABLEENTRY_NEXTNODE(base) SRP_GET((base)->nextNode, struct J9SharedInternSRPHashTableEntry*)
+
 /* @ddr_namespace: map_to_type=J9SharedDataDescriptor */
+
 typedef struct J9SharedDataDescriptor {
 	U_8* address;
 	UDATA length;
@@ -1344,7 +1375,9 @@ typedef struct J9RASCrashInfo {
 	UDATA failingThreadID;
 	char* gpInfo;
 } J9RASCrashInfo;
+
 /* @ddr_namespace: map_to_type=J9RAS */
+
 typedef struct J9RAS {
 	U_8 eyecatcher[8];
 	U_32 bitpattern1;
@@ -1397,7 +1430,9 @@ typedef struct J9VMLSTable {
 } J9VMLSTable;
 
 #endif /* J9VM_OPT_VM_LOCAL_STORAGE */
+
 /* @ddr_namespace: map_to_type=J9Statistic */
+
 typedef struct J9Statistic {
 	U_64 dataSlot;
 	struct J9Statistic* nextStatistic;
@@ -1419,7 +1454,9 @@ typedef struct J9Statistic {
 #define J9STAT_POINTER  1
 #define J9STAT_STRING  12
 #define J9STAT_DOUBLE  14
+
 /* @ddr_namespace: map_to_type=J9PackageIDTableEntry */
+
 typedef struct J9PackageIDTableEntry {
 	UDATA taggedROMClass;
 } J9PackageIDTableEntry;
@@ -1563,7 +1600,9 @@ typedef struct J9HiddenInstanceField {
 	UDATA* offsetReturnPtr;
 	struct J9HiddenInstanceField* next;
 } J9HiddenInstanceField;
+
 /* @ddr_namespace: map_to_type=J9ROMFieldOffsetWalkState */
+
 typedef struct J9ROMFieldOffsetWalkState {
 	struct J9ROMFieldWalkState fieldWalkState;
 	struct J9ROMFieldOffsetWalkResult result;
@@ -1625,7 +1664,9 @@ typedef struct J9AnnotationInfoEntry {
 #define J9ANNOTATIONINFOENTRY_MEMBERNAME(base) SRP_GET((base)->memberName, struct J9UTF8*)
 #define J9ANNOTATIONINFOENTRY_MEMBERSIGNATURE(base) SRP_GET((base)->memberSignature, struct J9UTF8*)
 #define J9ANNOTATIONINFOENTRY_ANNOTATIONDATA(base) SRP_GET((base)->annotationData, UDATA*)
+
 /* @ddr_namespace: map_to_type=J9AnnotationInfo */
+
 typedef struct J9AnnotationInfo {
 	J9SRP defaultValues;
 	J9SRP firstClass;
@@ -1753,6 +1794,7 @@ typedef struct J9JImageIntf {
 	I_32 (* jimageGetResource)(struct J9JImageIntf *jimageIntf, UDATA handle, UDATA resourceLocation, char *buffer, I_64 bufferSize, I_64 *resourceSize);
 	const char * (* jimagePackageToModule)(struct J9JImageIntf *jimageIntf, UDATA handle, const char *packageName);
 } J9JImageIntf;
+
 /* @ddr_namespace: map_to_type=J9TranslationBufferSet */
 
 struct J9ROMClass; /* Forward struct declaration */
@@ -1857,6 +1899,7 @@ typedef struct J9BytecodeVerificationData {
 	struct J9PortLibrary * portLib;
 	struct J9JavaVM* javaVM;
 } J9BytecodeVerificationData;
+
 /* @ddr_namespace: map_to_type=J9NativeLibrary */
 
 struct J9HookedNative; /* Forward struct declaration */
@@ -1894,6 +1937,7 @@ typedef struct J9NativeLibrary {
 #define J9NATIVELIB_LOAD_ERR_JNI_ONLOAD_FAILED  4
 #define J9NATIVELIB_LOAD_ERR_INVALID  5
 #define J9NATIVELIB_LOAD_OK  0
+
 /* @ddr_namespace: map_to_type=J9ClassPathEntry */
 
 typedef struct J9ClassPathEntry {
@@ -1932,6 +1976,7 @@ typedef struct J9ClassPathEntry {
  */
 
 /* @ddr_namespace: map_to_type=J9BCTranslationData */
+
 typedef struct J9BCTranslationData {
 	UDATA structureUnusedButConstantsUsedInDDR;
 } J9BCTranslationData;
@@ -2058,6 +2103,7 @@ typedef struct J9JavaVMAttachArgs {
 	const char* name;
 	j9object_t* group;
 } J9JavaVMAttachArgs;
+
 /* @ddr_namespace: map_to_type=J9ConstantPool */
 
 typedef struct J9ConstantPool {
@@ -2193,6 +2239,7 @@ typedef struct J9ROMFieldRef {
 } J9ROMFieldRef;
 
 #define J9ROMFIELDREF_NAMEANDSIGNATURE(base) NNSRP_GET((base)->nameAndSignature, struct J9ROMNameAndSignature*)
+
 /* @ddr_namespace: map_to_type=J9ROMMethodHandleRef */
 
 typedef struct J9ROMMethodHandleRef {
@@ -2350,6 +2397,7 @@ typedef struct J9I2JState {
 	struct J9Method* literals;
 	U_8* pc;
 } J9I2JState;
+
 /* @ddr_namespace: map_to_type=J9StackWalkState */
 
 struct J9VMThread ; /* Forward struct declaration */
@@ -2434,6 +2482,7 @@ typedef struct J9OSRBuffer {
 	UDATA numberOfFrames;
 	void* jitPC;
 } J9OSRBuffer;
+
 /* @ddr_namespace: map_to_type=J9JITDecompilationInfo */
 
 typedef struct J9JITDecompilationInfo {
@@ -2456,6 +2505,7 @@ typedef struct J9JITDecompilationInfo {
 #define JITDECOMP_DATA_BREAKPOINT  8
 #define JITDECOMP_STACK_LOCALS_MODIFIED  64
 #define JITDECOMP_ON_STACK_REPLACEMENT  0x80
+
 /* @ddr_namespace: map_to_type=J9SFStackFrame */
 
 typedef struct J9SFStackFrame {
@@ -2607,6 +2657,7 @@ typedef struct J9SFMethodTypeFrame {
 	U_8* savedPC;
 	UDATA* savedA0;
 } J9SFMethodTypeFrame;
+
 /* @ddr_namespace: map_to_type=J9AsyncEventRecord */
 
 typedef struct J9AsyncEventRecord {
@@ -2619,6 +2670,7 @@ typedef struct J9AsyncEventRecord {
 #define J9ASYNC_ERROR_INVALID_HANDLER_KEY  -2
 #define J9ASYNC_ERROR_HANDLER_NOT_HOOKED  -3
 #define J9ASYNC_MAX_HANDLERS  J9VM_ASYNC_MAX_HANDLERS
+
 /* @ddr_namespace: map_to_type=J9VMGCSublistHeader */
 
 typedef struct J9VMGCSublistHeader {
@@ -2631,6 +2683,7 @@ typedef struct J9VMGCSublistHeader {
 } J9VMGCSublistHeader;
 
 #define J9_GCSUBLISTHEADER_FLAG_NEW_STORE  1
+
 /* @ddr_namespace: map_to_type=J9VMGCSubList */
 
 typedef struct J9VMGCSublist {
@@ -2653,6 +2706,7 @@ typedef struct J9VMGCSublistFragment {
 	UDATA deferredFlushID;
 	UDATA count;
 } J9VMGCSublistFragment;
+
 /* @ddr_namespace: map_to_type=J9DLTInformationBlock */
 
 typedef struct J9DLTInformationBlock {
@@ -2736,6 +2790,7 @@ typedef struct J9JavaStack {
 	struct J9JavaStack* previous;
 	UDATA firstReferenceFrame;
 } J9JavaStack;
+
 /* @ddr_namespace: map_to_type=J9Object */
 
 typedef struct J9Object {
@@ -2857,6 +2912,7 @@ typedef struct J9CheckJNIData {
 typedef struct J9AttachContext {
 	struct j9shsem_handle* semaphore;
 } J9AttachContext;
+
 /* @ddr_namespace: map_to_type=J9ROMImageHeader */
 
 typedef struct J9ROMImageHeader {
@@ -2881,6 +2937,8 @@ typedef struct J9ROMImageHeader {
 #define J9ROMIMAGEHEADER_TABLEOFCONTENTS(base) NNSRP_GET((base)->tableOfContents, struct J9ROMClassTOCEntry*)
 #define J9ROMIMAGEHEADER_FIRSTCLASS(base) NNSRP_GET((base)->firstClass, struct J9ROMClass*)
 #define J9ROMIMAGEHEADER_AOTPOINTER(base) SRP_GET((base)->aotPointer, void*)
+
+/* @ddr_namespace: map_to_type=J9ClassLocation */
 
 struct J9Class;
 typedef struct J9ClassLocation {
@@ -3007,6 +3065,7 @@ typedef struct J9HookedNative {
 	void* jniFunction;
 	UDATA userdata;
 } J9HookedNative;
+
 /* @ddr_namespace: map_to_type=J9ClassLoader */
 
 typedef struct J9ClassLoader {
@@ -3296,6 +3355,7 @@ typedef struct J9ROMMethod {
 #define J9ROMMETHOD_NAMEANDSIGNATURE(base) (&((base)->nameAndSignature))
 #define J9ROMMETHOD_NAME(base) NNSRP_GET((&((base)->nameAndSignature))->name, struct J9UTF8*)
 #define J9ROMMETHOD_SIGNATURE(base) NNSRP_GET((&((base)->nameAndSignature))->signature, struct J9UTF8*)
+
 /* @ddr_namespace: map_to_type=J9JNIReferenceFrame */
 
 typedef struct J9JNIReferenceFrame {
@@ -3336,6 +3396,8 @@ typedef struct J9ClassCastParms {
 	struct J9Class* instanceClass;
 	struct J9Class* castClass;
 } J9ClassCastParms;
+
+/* @ddr_namespace: map_to_type=J9JITConfig */
 
 struct J9RASdumpContext; /* Forward struct declaration */
 typedef struct J9JITConfig {
@@ -3692,7 +3754,6 @@ typedef struct J9JITConfig {
 #define J9JIT_JVMPI_INLINE_ALLOCATION_OFF  32
 #define J9JIT_J2PROF  0x100
 
-/* @ddr_namespace: map_to_type=J9JITConfig */
 struct J9RASdumpContext; /* Forward struct declaration */
 typedef struct J9AOTConfig {
 	IDATA  ( *entryPoint)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
@@ -4735,6 +4796,7 @@ typedef struct J9InvocationJavaVM {
 	void * reserved1_identifier;
 	J9NativeLibrary * reserved2_library;
 } J9InvocationJavaVM;
+
 /* @ddr_namespace: map_to_type=J9VMThread */
 
 typedef struct J9VMThread {
@@ -4983,7 +5045,8 @@ typedef struct J9ReflectFunctionTable {
 	struct J9JNIMethodID*  ( *idFromMethodObject)(struct J9VMThread* vmStruct, j9object_t methodObject) ;
 	struct J9JNIMethodID*  ( *idFromConstructorObject)(struct J9VMThread* vmStruct, j9object_t constructorObject) ;
 } J9ReflectFunctionTable;
-/* @ddr_namespace: map_to_type=J9JavaVM */
+
+/* @ddr_namespace: map_to_type=J9VMRuntimeStateListener */
 
 struct J9JavaVM; /* Forward struct declaration */
 struct J9VMThread; /* Forward struct declaration */
@@ -5009,6 +5072,8 @@ typedef struct J9VMRuntimeStateListener {
 #define J9VM_RUNTIME_STATE_LISTENER_STOP 2
 #define J9VM_RUNTIME_STATE_LISTENER_ABORT 3
 #define J9VM_RUNTIME_STATE_LISTENER_TERMINATED 4
+
+/* @ddr_namespace: map_to_type=J9JavaVM */
 
 struct J9TranslationBufferSet; /* Forward struct declaration */
 struct J9SharedInvariantInternTable; /* Forward struct declaration */
