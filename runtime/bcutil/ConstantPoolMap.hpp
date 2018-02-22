@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -348,6 +348,9 @@ public:
 		PUT_FIELD = SPLIT1,
 		GET_FIELD = SPLIT1,
 		NEW = SPLIT1,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		WITH_FIELD = SPLIT1,
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		INVOKE_HANDLEGENERIC = SPLIT5,
 		INVOKE_HANDLEEXACT = SPLIT5,
 		INVOKE_STATIC = SPLIT4,

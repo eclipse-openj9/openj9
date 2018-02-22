@@ -1734,6 +1734,13 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 			}
 			break;
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_BC_withfield:
+			cpIndex = PARAM_U16();
+			addBytecodeFixupEntry(entry++, codeIndex + 1, cpIndex, ConstantPoolMap::WITH_FIELD);
+			markFieldRefAsUsedByPutField(cpIndex);
+			break;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		default:
 			/* Do nothing */
