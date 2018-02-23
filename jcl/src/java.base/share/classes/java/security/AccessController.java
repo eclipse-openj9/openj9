@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -240,10 +240,12 @@ private static boolean checkPermissionHelper(Permission perm, AccessControlConte
 			checked = new AccessCache(); /* checked was null initially when Pre-JEP140 format */
 			return AccessControlContext.checkPermissionWithCache(perm, pDomains, debug, acc, false, null, null, checked);
 		} else {
-			for (int i = 0; i < length ; ++i) {
-				// invoke PD within acc.context first
-				if (null != pDomains && !pDomains[length - i - 1].implies(perm)) {
-					throwACE((debug & AccessControlContext.DEBUG_ACCESS_DENIED) != 0, perm, pDomains[length - i - 1], false);
+			if (pDomains != null) {
+				for (int i = 0; i < length ; ++i) {
+					// invoke PD within acc.context first
+					if ((pDomains[length - i - 1] != null) && !pDomains[length - i - 1].implies(perm)) {
+						throwACE((debug & AccessControlContext.DEBUG_ACCESS_DENIED) != 0, perm, pDomains[length - i - 1], false);
+					}
 				}
 			}
 		}

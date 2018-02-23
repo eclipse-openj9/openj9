@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -838,16 +838,10 @@ public boolean equals(Object o) {
 public int hashCode() {
 	int result = 0;
 	int i = context == null ? 0 : context.length;
-	while (--i >= 0)
+	while ((--i >= 0) && (context[i] != null)) {
 		result ^= context[i].hashCode();
-/*
-	// JCK test doesn't include following two fields during hashcode calculation
-	if (null != this.domainCombiner) {
-		result ^= this.domainCombiner.hashCode();
 	}
 
-	result = result + (this.isAuthorized ? 1231 : 1237);
-*/
 	// RI equals not impacted by limited context,
 	// JCK still passes with following cause the AccessControlContext in question doesn't have limited context
 	// J9 might fail JCK test if JCK hashcode test changes
