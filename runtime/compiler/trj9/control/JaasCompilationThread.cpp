@@ -836,7 +836,8 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::ResolvedMethod_getRemoteROMClass:
          {
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
-         client->write(packROMClass(clazz->romClass, trMemory));
+         J9Method *methodsOfClass = (J9Method*) fe->getMethods((TR_OpaqueClassBlock*) clazz);
+         client->write(packROMClass(clazz->romClass, trMemory), methodsOfClass);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isJNINative:
@@ -1779,6 +1780,10 @@ remoteCompile(
    uint32_t romMethodOffset = uint32_t((uint8_t*) romMethod - (uint8_t*) romClass);
    std::string romClassStr = packROMClass(romClass, compiler->trMemory());
    std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
+   TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
+   std::vector<TR_OpaqueClassBlock*> unloadedClasses(compInfo->getUnloadedClassesTempList()->begin(), compInfo->getUnloadedClassesTempList()->end());
+   compInfo->getUnloadedClassesTempList()->clear();
+   J9Method *methodsOfClass = (J9Method*) compiler->fej9vm()->getMethods((TR_OpaqueClassBlock*) clazz);
 
    JAAS::J9ClientStream client(TR::comp()->getPersistentInfo()->getJaasServerConnectionInfo(),
                                TR::comp()->getPersistentInfo()->getJaasTimeout());
@@ -1793,7 +1798,7 @@ remoteCompile(
       // message just in case we block in the wite operation   
       releaseVMAccess(vmThread);
 
-      client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJaasId(), romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), detailsStr, details.getType());
+      client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJaasId(), romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), unloadedClasses, methodsOfClass);
 
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
@@ -2010,11 +2015,40 @@ ClientSessionData::updateTimeOfLastAccess()
    _timeOfLastAccess = j9time_current_time_millis();
    }
 
-ClientSessionData::ClientSessionData() : _chTableClassMap(decltype(_chTableClassMap)::allocator_type(TR::Compiler->persistentAllocator()))
+ClientSessionData::ClientSessionData() : _chTableClassMap(decltype(_chTableClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
+                                         _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
+                                         _romMethodMap(decltype(_romMethodMap)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = nullptr;
    _inUse = 1;
+   }
+
+ClientSessionData::~ClientSessionData()
+   {
+   for (auto it : _romClassMap)
+      {
+      TR_Memory::jitPersistentFree(it.second.first);
+      }
+   }
+
+void
+ClientSessionData::processUnloadedClasses(std::vector<TR_OpaqueClassBlock*> &classes)
+   {
+   for (TR_OpaqueClassBlock *clazz : classes)
+      {
+      auto it = _romClassMap.find((J9Class*) clazz);
+      if (it == _romClassMap.end())
+         continue; // unloaded class was never cached
+      J9ROMClass *romClass = it->second.first;
+      J9Method *methods = it->second.second;
+      for (size_t i = 0; i < romClass->romMethodCount; i++)
+         {
+         _romMethodMap.erase(&methods[i]);
+         }
+      TR_Memory::jitPersistentFree(romClass);
+      _romClassMap.erase(it);
+      }
    }
 
 

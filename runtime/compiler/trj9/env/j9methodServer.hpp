@@ -8,7 +8,7 @@ class TR_ResolvedJ9JAASServerMethod : public TR_ResolvedJ9Method
 public:
    TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
-   static J9ROMClass *getRemoteROMClass(J9Class *, JAAS::J9ServerStream *stream, TR_Memory *trMemory);
+   static J9ROMClass *getRemoteROMClass(J9Class *, JAAS::J9ServerStream *stream, TR_Memory *trMemory, J9Method **methods);
    static J9ROMClass * romClassFromString(const std::string &romClassStr, TR_Memory *trMemory);
 
    virtual J9ROMClass *romClassPtr() override;

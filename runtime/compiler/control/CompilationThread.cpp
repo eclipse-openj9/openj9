@@ -625,16 +625,23 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
    }
 
 void
-TR::CompilationInfoPerThread::cacheRemoteROMClass(J9Class *clazz, J9ROMClass *romClass)
+TR::CompilationInfoPerThread::cacheRemoteROMClass(J9Class *clazz, J9ROMClass *romClass, J9Method *methods)
    {
-   _cachedROMClasses[clazz] = romClass;
+   getClientData()->getROMClassMap().insert({clazz, {romClass, methods}});
+   uint32_t numMethods = romClass->romMethodCount;
+   J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+   for (uint32_t i = 0; i < numMethods; i++)
+      {
+      getClientData()->getROMMethodMap().insert({&methods[i], romMethod});
+      romMethod = nextROMMethod(romMethod);
+      }
    }
 
 J9ROMClass *
 TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
    {
-   auto it = _cachedROMClasses.find(clazz);
-   return (it == _cachedROMClasses.end()) ? nullptr : it->second;
+   auto it = getClientData()->getROMClassMap().find(clazz);
+   return (it == getClientData()->getROMClassMap().end()) ? nullptr : it->second.first;
    }
 
 J9ROMClass *
@@ -643,8 +650,9 @@ TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memor
    auto romClass = getRemoteROMClassIfCached(clazz);
    if (romClass == nullptr)
       {
-      romClass = TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory());
-      cacheRemoteROMClass(clazz, romClass);
+      J9Method *methods;
+      romClass = TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &methods);
+      cacheRemoteROMClass(clazz, romClass, methods);
       }
    return romClass;
    }
@@ -827,7 +835,6 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
 TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
                                    : TR::CompilationInfoPerThreadBase(compInfo, jitConfig, id, true),
                                      _compThreadCPU(_compInfo.persistentMemory()->getPersistentInfo(), jitConfig, 490000000, id),
-                                     _cachedROMClasses(ClassCacheMapAllocator(TR::Compiler->persistentAllocator())),
                                      _thunksToBeRelocated(ThunkVectorAllocator(TR::Compiler->persistentAllocator())),
                                      _invokeExactThunksToBeRelocated(InvokeExactThunkVectorAllocator(TR::Compiler->persistentAllocator()))
    {
@@ -990,6 +997,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _JProfilingQueue.setCompInfo(this);
    _interpSamplTrackingInfo = new (PERSISTENT_NEW) TR_InterpreterSamplingTracking(this);
    _clientSessionHT = nullptr; // This will be set later when options are processed
+   _unloadedClassesTempList = nullptr;
    }
 
 bool TR::CompilationInfo::initializeCompilationOnApplicationThread()
@@ -3782,10 +3790,6 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       return;
       }
 
-   // If this is a request for a remote compilation, cache the ROMClass
-   if (entry.isRemoteCompReq())
-      cacheRemoteROMClass(details.getClass(), const_cast<J9ROMClass*>(details.getRomClass()));
-
    _thunksToBeRelocated.clear();
    _invokeExactThunksToBeRelocated.clear();
 
@@ -3831,13 +3835,6 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    // Unpin the class
    if (!entry.isRemoteCompReq())
       compThread->javaVM->internalVMFunctions->j9jni_deleteLocalRef((JNIEnv*)compThread, classObject);
-
-   // free the cached classes
-   if (entry.isRemoteCompReq())
-      {
-      _cachedROMClasses.clear();
-      getServerVM()->jitPersistentFree(const_cast<J9ROMClass*>(entry.getMethodDetails().getRomClass()));
-      }
 
    // Update how many compilation threads are working on hot/scorching methods
    if (entry._hasIncrementedNumCompThreadsCompilingHotterMethods)
@@ -6587,7 +6584,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       // Get the compilation monitor RIIA style because we may throw bad_alloc 
       // when tryimg to add a new entry in the unordered_map
       OMR::CriticalSection compilationMonitorLock(_compInfo.getCompilationMonitor());
-     
+
       // Try to purge old data
       _compInfo.getClientSessionHT()->purgeOldDataIfNeeded();
       // Search the hashtable
@@ -6599,7 +6596,9 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 
       if (TR::Options::getVerboseOption(TR_VerboseJaas))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server cached clientSessionData=%p for clientUID=%llu compThreadID=%d", 
-            clientSession, (unsigned long long)clientUID, getCompThreadId());
+                                        clientSession, (unsigned long long)clientUID, getCompThreadId());
+
+      ((TR::CompilationInfoPerThread*)this)->cacheRemoteROMClass(entry->getMethodDetails().getClass(), const_cast<J9ROMClass*>(entry->getMethodDetails().getRomClass()), entry->getMethodDetails().getMethodsOfClass());
       }
 
    // Check to see if we find an AOT version in the shared cache

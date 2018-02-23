@@ -47,7 +47,7 @@ IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR:
    // If other is not one of these classes, then it will assert.
 
    if (other.isRemoteMethod()) // this check has to go first because we can be both remote and X
-      return &storage.createRemoteMethodDetails(other, other.getType(), other.getMethod(), other.getRomClass(), other.getRomMethod(), other.getClass());
+      return &storage.createRemoteMethodDetails(other, other.getType(), other.getMethod(), other.getRomClass(), other.getRomMethod(), other.getClass(), other.getMethodsOfClass());
    if (other.isOrdinaryMethod())
       return new (&storage) TR::IlGeneratorMethodDetails(static_cast<const TR::IlGeneratorMethodDetails &>(other));
    else if (other.isDumpMethod())
@@ -157,25 +157,26 @@ TR::IlGeneratorMethodDetails & IlGeneratorMethodDetails::createRemoteMethodDetai
                                                                                    J9Method * const method,
                                                                                    const J9ROMClass *romClass,
                                                                                    const J9ROMMethod *romMethod,
-                                                                                   J9Class *clazz)
+                                                                                   J9Class *clazz,
+                                                                                   J9Method * const methodsOfClass)
    {
    if (type & DUMP_METHOD)
-      return * new (self()) RemoteMethodDetails<DumpMethodDetails>(static_cast<const DumpMethodDetails &>(other), method, romClass, romMethod, clazz);
+      return * new (self()) RemoteMethodDetails<DumpMethodDetails>(static_cast<const DumpMethodDetails &>(other), method, romClass, romMethod, clazz, methodsOfClass);
    else if (type & NEW_INSTANCE_THUNK)
-      return * new (self()) RemoteMethodDetails<NewInstanceThunkDetails>(static_cast<const NewInstanceThunkDetails &>(other), method, romClass, romMethod, clazz);
+      return * new (self()) RemoteMethodDetails<NewInstanceThunkDetails>(static_cast<const NewInstanceThunkDetails &>(other), method, romClass, romMethod, clazz, methodsOfClass);
    else if (type & METHOD_IN_PROGRESS)
-      return * new (self()) RemoteMethodDetails<MethodInProgressDetails>(static_cast<const MethodInProgressDetails &>(other), method, romClass, romMethod, clazz);
+      return * new (self()) RemoteMethodDetails<MethodInProgressDetails>(static_cast<const MethodInProgressDetails &>(other), method, romClass, romMethod, clazz, methodsOfClass);
    else if (type & METHOD_HANDLE_THUNK)
       {
       if (type & SHAREABLE_THUNK)
-         return * new (self()) RemoteMethodDetails<ShareableInvokeExactThunkDetails>(static_cast<const ShareableInvokeExactThunkDetails &>(other), method, romClass, romMethod, clazz);
+         return * new (self()) RemoteMethodDetails<ShareableInvokeExactThunkDetails>(static_cast<const ShareableInvokeExactThunkDetails &>(other), method, romClass, romMethod, clazz, methodsOfClass);
       else if (type & CUSTOM_THUNK)
-         return * new (self()) RemoteMethodDetails<CustomInvokeExactThunkDetails>(static_cast<const CustomInvokeExactThunkDetails &>(other), method, romClass, romMethod, clazz);
+         return * new (self()) RemoteMethodDetails<CustomInvokeExactThunkDetails>(static_cast<const CustomInvokeExactThunkDetails &>(other), method, romClass, romMethod, clazz, methodsOfClass);
       }
    else if (type & ARCHETYPE_SPECIMEN)
-      return * new (self()) RemoteMethodDetails<ArchetypeSpecimenDetails>(static_cast<const ArchetypeSpecimenDetails &>(other), method, romClass, romMethod, clazz);
+      return * new (self()) RemoteMethodDetails<ArchetypeSpecimenDetails>(static_cast<const ArchetypeSpecimenDetails &>(other), method, romClass, romMethod, clazz, methodsOfClass);
    if (type & ORDINARY_METHOD)
-      return * new (self()) RemoteMethodDetails<TR::IlGeneratorMethodDetails>(static_cast<const TR::IlGeneratorMethodDetails &>(other), method, romClass, romMethod, clazz);
+      return * new (self()) RemoteMethodDetails<TR::IlGeneratorMethodDetails>(static_cast<const TR::IlGeneratorMethodDetails &>(other), method, romClass, romMethod, clazz, methodsOfClass);
 
    TR_ASSERT(0, "Unexpected IlGeneratorMethodDetails object\n");
    return *(self());

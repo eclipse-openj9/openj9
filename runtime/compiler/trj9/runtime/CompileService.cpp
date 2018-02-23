@@ -1,6 +1,7 @@
 #include "runtime/CompileService.hpp"
 #include "j9.h"
 #include "control/CompilationRuntime.hpp"
+#include "control/JaasCompilationThread.hpp"
 
 
 
@@ -36,7 +37,8 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
    J9ROMClass* romClass, const J9ROMMethod* romMethod,
    J9Method* ramMethod, J9Class *clazz, JAAS::J9ServerStream *rpc, TR_Hotness optLevel,
    TR::IlGeneratorMethodDetails *clientDetails,
-   J9::IlGeneratorMethodDetailsType methodDetailsType)
+   J9::IlGeneratorMethodDetailsType methodDetailsType,
+   J9Method *methodsOfClass)
    {
    J9UTF8 *methodNameUTF = J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature);
    std::string methodNameStr((const char*)methodNameUTF->data, (size_t)methodNameUTF->length);
@@ -76,7 +78,7 @@ static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          {
          TR::IlGeneratorMethodDetails details;
          *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
-         TR::IlGeneratorMethodDetails &remoteDetails = details.createRemoteMethodDetails(*clientDetails, methodDetailsType, ramMethod, romClass, romMethod, clazz);
+         TR::IlGeneratorMethodDetails &remoteDetails = details.createRemoteMethodDetails(*clientDetails, methodDetailsType, ramMethod, romClass, romMethod, clazz, methodsOfClass);
          result = (IDATA)compInfo->compileRemoteMethod(vmThread, remoteDetails, romMethod, romClass, 0, &compErrCode, &queued, plan, rpc);
 
          if (newPlanCreated)
@@ -133,7 +135,7 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
    {
    try
       {
-      auto req = stream->read<uint64_t, std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, J9::IlGeneratorMethodDetailsType>();
+      auto req = stream->read<uint64_t, std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>, J9Method*>();
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
@@ -151,7 +153,17 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       std::string detailsStr = std::get<6>(req);
       TR::IlGeneratorMethodDetails *details = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
       auto detailsType = std::get<7>(req);
-      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType);
+      TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+      auto &unloadedClasses = std::get<8>(req);
+         {
+         OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
+         auto clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId);
+         clientSession->processUnloadedClasses(unloadedClasses);
+         clientSession->decInUse();
+         }
+      J9Method *methodsOfClass = std::get<9>(req);
+
+      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType, methodsOfClass);
       }
    catch (const JAAS::StreamFailure &e)
       {

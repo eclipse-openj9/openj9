@@ -17,10 +17,14 @@ class ClientSessionData
    public:
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
    ClientSessionData();
+   ~ClientSessionData();
 
    void setJavaLangClassPtr(TR_OpaqueClassBlock* j9clazz) { _javaLangClassPtr = j9clazz; }
    TR_OpaqueClassBlock * getJavaLangClassPtr() const { return _javaLangClassPtr; }
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> & getCHTableClassMap() { return _chTableClassMap; }
+   PersistentUnorderedMap<J9Class*, std::pair<J9ROMClass*, J9Method*>> & getROMClassMap() { return _romClassMap; }
+   PersistentUnorderedMap<J9Method*, J9ROMMethod*> & getROMMethodMap() { return _romMethodMap; }
+   void processUnloadedClasses(std::vector<TR_OpaqueClassBlock*> &classes);
 
    void incInUse() { _inUse++; }
    void decInUse() { _inUse--; TR_ASSERT(_inUse >= 0, "_inUse=%d must be positive\n", _inUse); }
@@ -33,6 +37,8 @@ class ClientSessionData
    int64_t  _timeOfLastAccess; // in ms
    TR_OpaqueClassBlock *_javaLangClassPtr; // nullptr means not set
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _chTableClassMap; // cache of persistent CHTable
+   PersistentUnorderedMap<J9Class*, std::pair<J9ROMClass*, J9Method*>> _romClassMap;
+   PersistentUnorderedMap<J9Method*, J9ROMMethod*> _romMethodMap;
    int8_t  _inUse;  // Number of concurrent compilations from the same client 
                     // Accessed with compilation monitor in hand
    }; // ClientSessionData

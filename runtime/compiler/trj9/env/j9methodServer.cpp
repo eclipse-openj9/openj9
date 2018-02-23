@@ -7,7 +7,7 @@
 J9ROMClass *
 TR_ResolvedJ9JAASServerMethod::romClassFromString(const std::string &romClassStr, TR_Memory *trMemory)
    {
-   auto romClass = (J9ROMClass *)(trMemory->allocateHeapMemory(romClassStr.size()));
+   auto romClass = (J9ROMClass *)(trMemory->trPersistentMemory()->allocatePersistentMemory(romClassStr.size()));
    if (!romClass)
       throw std::bad_alloc();
    memcpy(romClass, &romClassStr[0], romClassStr.size());
@@ -24,10 +24,12 @@ romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
    }
 
 J9ROMClass *
-TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(J9Class *clazz, JAAS::J9ServerStream *stream, TR_Memory *trMemory)
+TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(J9Class *clazz, JAAS::J9ServerStream *stream, TR_Memory *trMemory, J9Method **methods)
    {
    stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getRemoteROMClass, clazz);
-   auto str = std::get<0>(stream->read<std::string>());
+   auto recv = stream->read<std::string, J9Method*>();
+   auto &str = std::get<0>(recv);
+   *methods = std::get<1>(recv);
    return romClassFromString(str, trMemory);
    }
 

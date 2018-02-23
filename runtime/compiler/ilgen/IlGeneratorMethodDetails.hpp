@@ -64,7 +64,7 @@ class RemoteMethodDetails : public T
    {
    static std::string _name;
 public:
-   RemoteMethodDetails(const T &other, J9Method * const method, const J9ROMClass *romClass, const J9ROMMethod *romMethod, J9Class *clazz) : T(other)
+   RemoteMethodDetails(const T &other, J9Method * const method, const J9ROMClass *romClass, const J9ROMMethod *romMethod, J9Class *clazz, J9Method *methodsOfClass) : T(other)
       {
       if (_name.length() == 0)
          _name = std::string("Remote") + T::name();
@@ -73,6 +73,7 @@ public:
       this->_romClass = romClass;
       this->_romMethod = romMethod;
       this->_class = clazz;
+      this->_methodsOfClass = methodsOfClass;
       }
 
    virtual bool isRemoteMethod() const { return true; }

@@ -372,7 +372,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    JAAS::J9ServerStream  *getStream();
    J9ROMClass            *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=nullptr);
    J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
-   void                   cacheRemoteROMClass(J9Class *, J9ROMClass *);
+   void                   cacheRemoteROMClass(J9Class *, J9ROMClass *, J9Method *);
    void                   addThunkToBeRelocated(void *thunk, std::string signature);
    void                   addInvokeExactThunkToBeRelocated(TR_J2IThunk *thunk);
    void                   relocateThunks();
@@ -397,10 +397,6 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    std::vector<std::pair<void *, std::string>, ThunkVectorAllocator> _thunksToBeRelocated;
    typedef TR::typed_allocator<TR_J2IThunk *, TR::PersistentAllocator&> InvokeExactThunkVectorAllocator;
    std::vector<TR_J2IThunk *, InvokeExactThunkVectorAllocator> _invokeExactThunksToBeRelocated;
-
-   typedef TR::typed_allocator<std::pair<const J9Class *, J9ROMClass * const>, TR::PersistentAllocator &> ClassCacheMapAllocator;
-   typedef std::unordered_map<J9Class *, J9ROMClass *, std::hash<J9Class *>, std::equal_to<J9Class *>, ClassCacheMapAllocator> PersistentClassMap;
-   PersistentClassMap _cachedROMClasses;
    }; // CompilationInfoPerThread
 
 extern thread_local TR::CompilationInfoPerThread * compInfoPT;

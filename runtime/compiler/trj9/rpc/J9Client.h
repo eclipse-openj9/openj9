@@ -21,14 +21,15 @@ public:
       {}
 
 
-   void buildCompileRequest(uint64_t clientId, std::string romClassStr, uint32_t mOffset, J9Method *method, J9Class* clazz, TR_Hotness optLevel, std::string detailsStr, J9::IlGeneratorMethodDetailsType detailsType)
+   template <typename... T>
+   void buildCompileRequest(T... args)
       {
       _ctx.reset(new grpc::ClientContext);
       _stream = _stub->AsyncCompile(_ctx.get(), &_cq, this);
       if (!waitOnQueue())
          throw StreamFailure("Failed to connect to server");
 
-      write(clientId, romClassStr, mOffset, method, clazz, optLevel, detailsStr, detailsType);
+      write(args...);
       }
 
    Status waitForFinish()

@@ -94,7 +94,8 @@ public:
                                                             J9Method * const method,
                                                             const J9ROMClass *romClass,
                                                             const J9ROMMethod *romMethod,
-                                                            J9Class *clazz);
+                                                            J9Class *clazz,
+                                                            J9Method * const methodsOfClass);
 
    virtual const char * name() const { return "OrdinaryMethod"; }
 
@@ -112,6 +113,7 @@ public:
    virtual J9Class *getClass() const { return _class; }
    virtual const J9ROMClass *getRomClass() const { return _romClass; }
    virtual const J9ROMMethod *getRomMethod() const { return _romMethod; }
+   J9Method *getMethodsOfClass() const { return _methodsOfClass; }
 
    virtual TR_IlGenerator *getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
                                           TR_FrontEnd * fe,
@@ -139,6 +141,7 @@ protected:
    J9Class *_class;
    const J9ROMMethod *_romMethod;
    const J9ROMClass *_romClass;
+   J9Method *_methodsOfClass;
    union
       {
       J9Class *_classNeedingThunk;

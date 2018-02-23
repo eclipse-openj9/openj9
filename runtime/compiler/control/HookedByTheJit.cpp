@@ -2746,6 +2746,10 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
    if (table)
       table->classGotUnloaded(fej9, clazz);
 
+   // Add to Jaas unload list
+   if (compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+      compInfo->getUnloadedClassesTempList()->push_back(clazz);
+
    }
 #endif /* defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)*/
 

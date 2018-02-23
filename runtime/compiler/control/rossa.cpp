@@ -1579,13 +1579,16 @@ onLoadInternal(
 
       ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener = TR_Listener::allocate();
       if (!((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener)
-      {
-        // warn that Listener was not allocated
-        j9tty_printf(PORTLIB, "Jaas Listener not allocated, abort.\n");
-        return -1; 
+         {
+         // warn that Listener was not allocated
+         j9tty_printf(PORTLIB, "Jaas Listener not allocated, abort.\n");
+         return -1; 
+         }
       }
-
-   }
+   else if (compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+      {
+      compInfo->setUnloadedClassesTempList(new (PERSISTENT_NEW) std::vector<TR_OpaqueClassBlock*>());
+      }
 
 #if defined(TR_HOST_S390)
    if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads())
