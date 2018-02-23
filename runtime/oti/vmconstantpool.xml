@@ -125,17 +125,17 @@
 	<classref name="com/ibm/oti/vm/VM"/> 
 	<classref name="java/lang/System"/> 
 	<classref name="java/lang/reflect/Module" jcl="se9_before_b165" flags="opt_module"/>
-	<classref name="java/lang/Module" jcl="se9,se10" flags="opt_module"/>
-	<classref name="java/lang/invoke/VarHandle" jcl="se9_before_b165,se9,se10"/>
-	<classref name="java/lang/invoke/VarHandleInvokeHandle" jcl="se9_before_b165,se9,se10"/>
+	<classref name="java/lang/Module" jcl="se9,se10,se11" flags="opt_module"/>
+	<classref name="java/lang/invoke/VarHandle" jcl="se9_before_b165,se9,se10,se11"/>
+	<classref name="java/lang/invoke/VarHandleInvokeHandle" jcl="se9_before_b165,se9,se10,se11"/>
 
 	<fieldref class="java/lang/ClassLoader" name="parent" signature="Ljava/lang/ClassLoader;"/>
 	<fieldref class="java/lang/ClassLoader" name="vmRef" signature="J" cast="struct J9ClassLoader *"/>
 	<fieldref class="java/lang/ClassLoader" name="isParallelCapable" signature="Z"/>
 	<fieldref class="java/lang/ClassLoader" name="unnamedModule" signature="Ljava/lang/reflect/Module;" flags="opt_module" jcl="se9_before_b165">
-		<fieldalias name="unnamedModule" signature="Ljava/lang/Module;" flags="opt_module" jcl="se9,se10" />
+		<fieldalias name="unnamedModule" signature="Ljava/lang/Module;" flags="opt_module" jcl="se9,se10,se11" />
 	</fieldref> 
-	<fieldref class="java/lang/ClassLoader" name="classLoaderName" signature="Ljava/lang/String;" flags="opt_module" jcl="se9_before_b165,se9,se10" />
+	<fieldref class="java/lang/ClassLoader" name="classLoaderName" signature="Ljava/lang/String;" flags="opt_module" jcl="se9_before_b165,se9,se10,se11" />
 	<fieldref class="java/lang/Class" name="reflectCache" signature="Ljava/lang/Class$ReflectCache;"/>
 	<fieldref class="java/lang/Class" name="classLoader" signature="Ljava/lang/ClassLoader;"/>
 	<fieldref class="java/lang/Class" name="vmRef" signature="J" cast="struct J9Class *"/>
@@ -144,21 +144,21 @@
 	<fieldref class="java/lang/Class" name="classNameString" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/Class" name="annotationCache" signature="Ljava/lang/Class$AnnotationCache;"/>
 	<fieldref class="java/lang/Class" name="module" signature="Ljava/lang/reflect/Module;" flags="opt_module" jcl="se9_before_b165">
-		<fieldalias name="module" signature="Ljava/lang/Module;" flags="opt_module" jcl="se9,se10" />
+		<fieldalias name="module" signature="Ljava/lang/Module;" flags="opt_module" jcl="se9,se10,se11" />
 	</fieldref> 
 	<fieldref class="java/lang/Class" name="methodHandleCache" signature="Ljava/lang/Object;" flags="opt_methodHandle"/>
 	
 	<staticfieldref class="java/lang/String" name="compressionFlag" signature="Ljava/lang/String$StringCompressionFlag;"/>
-	<fieldref class="java/lang/String" name="value" signature="[B" jcl="se9_before_b165,se9,se10">
+	<fieldref class="java/lang/String" name="value" signature="[B" jcl="se9_before_b165,se9,se10,se11">
 		<fieldalias name="value" signature="[C" jcl="se7_basic" />
 	</fieldref> 
 	<fieldref class="java/lang/String" name="count" signature="I"/>
 	<fieldref class="java/lang/String" name="hashCode" signature="I"/>
-	<fieldref class="java/lang/String" name="coder" signature="B" jcl="se10"/>
-	<fieldref class="java/lang/StackTraceElement" name="moduleName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10" flags="opt_module"/>
-	<fieldref class="java/lang/StackTraceElement" name="moduleVersion" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10" flags="opt_module"/>
+	<fieldref class="java/lang/String" name="coder" signature="B" jcl="se10,se11"/>
+	<fieldref class="java/lang/StackTraceElement" name="moduleName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10,se11" flags="opt_module"/>
+	<fieldref class="java/lang/StackTraceElement" name="moduleVersion" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10,se11" flags="opt_module"/>
 	<fieldref class="java/lang/StackTraceElement" name="declaringClass" signature="Ljava/lang/String;"/>
-	<fieldref class="java/lang/StackTraceElement" name="classLoaderName" signature="Ljava/lang/String;" flags="opt_module" jcl="se9_before_b165,se9,se10" />
+	<fieldref class="java/lang/StackTraceElement" name="classLoaderName" signature="Ljava/lang/String;" flags="opt_module" jcl="se9_before_b165,se9,se10,se11" />
 	<fieldref class="java/lang/StackTraceElement" name="methodName" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/StackTraceElement" name="fileName" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/StackTraceElement" name="lineNumber" signature="I"/>
@@ -169,17 +169,17 @@
 	<fieldref class="java/lang/Thread" name="started" signature="Z"/>
 	<fieldref class="java/lang/Thread" name="name" signature="Ljava/lang/String;"/>
 	
-	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="declaringClass" signature="Ljava/lang/Class;" jcl="se9_before_b165,se9,se10"/>
-	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="callerSensitive" signature="Z" jcl="se9_before_b165,se9,se10"/>
-	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="fileName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10"/>
-	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="bytecodeIndex" signature="I" jcl="se9_before_b165,se9,se10"/>
-	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="className" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10"/>
-	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="classLoaderName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10"/>
-	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="lineNumber" signature="I" jcl="se9_before_b165,se9,se10"/>
-	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="methodName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10"/>
-	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="methodSignature" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="declaringClass" signature="Ljava/lang/Class;" jcl="se9_before_b165,se9,se10,se11"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="callerSensitive" signature="Z" jcl="se9_before_b165,se9,se10,se11"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="fileName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10,se11"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="bytecodeIndex" signature="I" jcl="se9_before_b165,se9,se10,se11"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="className" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10,se11"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="classLoaderName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10,se11"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="lineNumber" signature="I" jcl="se9_before_b165,se9,se10,se11"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="methodName" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10,se11"/>
+	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="methodSignature" signature="Ljava/lang/String;" jcl="se9_before_b165,se9,se10,se11"/>
 	<fieldref class="java/lang/StackWalker$StackFrameImpl" name="frameModule" signature="Ljava/lang/reflect/Module;" jcl="se9_before_b165">
-		<fieldalias name="frameModule" signature="Ljava/lang/Module;" jcl="se9,se10" />
+		<fieldalias name="frameModule" signature="Ljava/lang/Module;" jcl="se9,se10,se11" />
 	</fieldref> 
 	
 	<fieldref class="java/lang/Thread" name="priority" signature="I"/>
@@ -313,22 +313,22 @@
 	<fieldref class="java/lang/invoke/ConstantLongHandle" name="value" signature="J" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/ConstantDoubleHandle" name="value" signature="D" cast="U_64" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/InvokeGenericHandle" name="castType" signature="Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/VarHandle" name="handleTable" signature="[Ljava/lang/invoke/MethodHandle;" jcl="se9_before_b165,se9,se10"/>
-	<fieldref class="java/lang/invoke/VarHandle" name="modifiers" signature="I" jcl="se9_before_b165,se9,se10"/>
+	<fieldref class="java/lang/invoke/VarHandle" name="handleTable" signature="[Ljava/lang/invoke/MethodHandle;" jcl="se9_before_b165,se9,se10,se11"/>
+	<fieldref class="java/lang/invoke/VarHandle" name="modifiers" signature="I" jcl="se9_before_b165,se9,se10,se11"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="foldPosition" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="argumentIndices" signature="[I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/MethodHandleCache" name="directHandlesHead" signature="Lcom/ibm/oti/util/WeakReferenceNode;" flags="opt_methodHandle"/>	
-	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="operation" signature="I" jcl="se9_before_b165,se9,se10"/>
-	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="accessModeType" signature="Ljava/lang/invoke/MethodType;" jcl="se9_before_b165,se9,se10"/>
+	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="operation" signature="I" jcl="se9_before_b165,se9,se10,se11"/>
+	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="accessModeType" signature="Ljava/lang/invoke/MethodType;" jcl="se9_before_b165,se9,se10,se11"/>
 
 	<fieldref class="java/lang/reflect/Module" name="loader" signature="Ljava/lang/ClassLoader;" jcl="se9_before_b165" flags="opt_module"/>
-	<fieldref class="java/lang/Module" name="loader" signature="Ljava/lang/ClassLoader;" jcl="se9,se10" flags="opt_module"/>
+	<fieldref class="java/lang/Module" name="loader" signature="Ljava/lang/ClassLoader;" jcl="se9,se10,se11" flags="opt_module"/>
 	<fieldref class="java/lang/reflect/Module" name="name" signature="Ljava/lang/String;" jcl="se9_before_b165" flags="opt_module"/>
-	<fieldref class="java/lang/Module" name="name" signature="Ljava/lang/String;" jcl="se9,se10" flags="opt_module"/>
+	<fieldref class="java/lang/Module" name="name" signature="Ljava/lang/String;" jcl="se9,se10,se11" flags="opt_module"/>
 	
 	<fieldref class="java/lang/InternalRamClass" name="vmref" signature="J" cast="struct J9Class *"/>
 	
-	<fieldref class="com/ibm/oti/util/WeakReferenceNode" name="next" signature="Lcom/ibm/oti/util/WeakReferenceNode;" jcl="se7_basic,se9,se10" flags="opt_methodHandle"/>
+	<fieldref class="com/ibm/oti/util/WeakReferenceNode" name="next" signature="Lcom/ibm/oti/util/WeakReferenceNode;" jcl="se7_basic,se9,se10,se11" flags="opt_methodHandle"/>
 
 	<staticmethodref class="java/lang/J9VMInternals" name="completeInitialization" signature="()V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="checkPackageAccess" signature="(Ljava/lang/Class;Ljava/security/ProtectionDomain;)V"/>
