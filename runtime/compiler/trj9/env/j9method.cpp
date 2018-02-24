@@ -3359,6 +3359,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::java_lang_Integer_rotateRight,             "rotateRight",           "(II)I")},
       {x(TR::java_lang_Integer_valueOf,                 "valueOf",               "(I)Ljava/lang/Integer;")},
       {  TR::java_lang_Integer_init,              6,    "<init>", (int16_t)-1,    "*"},
+      {x(TR::java_lang_Integer_toUnsignedLong,          "toUnsignedLong",         "(I)J")},
       {  TR::unknownMethod}
       };
 
