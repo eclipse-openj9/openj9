@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,7 +111,7 @@ public:
 	}
 
 	/**
-	 * Exit a JNI critical region (i.e. GetPrimitiveArrayCritical or GetStringCritical).
+	 * Exit a JNI critical region (i.e. ReleasePrimitiveArrayCritical or ReleaseStringCritical).
 	 * Once a thread has successfully exitted a critical region, objects in the java
 	 * heap are allowed to move again.
 	 *
