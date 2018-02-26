@@ -259,7 +259,7 @@ compareStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA translateDots
 
 #if !defined (J9VM_OUT_OF_PROCESS)
 UDATA
-copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, UDATA utf8DataLength, BOOLEAN isNullTerminated)
+copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, UDATA utf8DataLength)
 {
 	Assert_VM_notNull(string);
 
@@ -305,7 +305,7 @@ copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlag
 
 	UDATA returnLength = (UDATA)(data - utf8Data);
 
-	if (isNullTerminated) {
+	if ((stringFlags & J9_STR_NULL_TERMINATE_RESULT) != 0) {
 		*data = '\0';
 
 		Assert_VM_true(utf8DataLength >= returnLength + 1);
@@ -324,7 +324,11 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 
 	char *strUTF = NULL;
 	UDATA stringLen = J9VMJAVALANGSTRING_LENGTH(vmThread, string) * 3;
-	UDATA length = stringLen + prependStrLength + 1;
+	UDATA length = stringLen + prependStrLength;
+
+	if ((stringFlags & J9_STR_NULL_TERMINATE_RESULT) != 0) {
+		++length;
+	}
 
 	PORT_ACCESS_FROM_VMC(vmThread);
 
@@ -340,7 +344,7 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 			memcpy(strUTF, prependStr, prependStrLength);
 		}
 
-		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, (U_8 *)(strUTF + prependStrLength), length, TRUE);
+		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, (U_8 *)(strUTF + prependStrLength), length);
 
 		if (NULL != utf8Length) {
 			*utf8Length = computedUtf8Length + prependStrLength;

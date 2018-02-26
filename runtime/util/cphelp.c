@@ -148,7 +148,7 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 #define JRT_URL_PROTOCOL "jrt:/"
 			UDATA jrtURLLength = 0;
 
-			jrtURL = (J9UTF8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, module->moduleName, J9_STR_NONE, "\0\0", sizeof(jrtURL->length), NULL, 0, &jrtURLLength);
+			jrtURL = (J9UTF8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "\0\0", sizeof(jrtURL->length), NULL, 0, &jrtURLLength);
 
 			if (NULL == jrtURL) {
 				goto _exit;

@@ -922,8 +922,6 @@ allocateJ9UTF8(JNIEnv *env, jstring name)
 	j9object_t jlString = J9_JNI_UNWRAP_REFERENCE(name);
 	UDATA utf8Length = 0;
 
-	PORT_ACCESS_FROM_ENV(env);
-
 	utf8 = (J9UTF8*)vmFuncs->copyStringToUTF8WithMemAlloc(vmThread, jlString, J9_STR_NONE, "\0\0", sizeof(utf8->length), NULL, 0, &utf8Length);
 
 	if (NULL == utf8) {

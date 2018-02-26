@@ -446,7 +446,7 @@ jvmtiGetThreadInfo(jvmtiEnv* env,
 					name = j9mem_allocate_memory(1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
 					name[0] = '\0';
 				} else {
-					name = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, threadName, J9_STR_NONE, "", 0, name, 0, NULL);
+					name = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, threadName, J9_STR_NULL_TERMINATE_RESULT, "", 0, name, 0, NULL);
 
 					if (NULL == name) {
 						rc = JVMTI_ERROR_OUT_OF_MEMORY;

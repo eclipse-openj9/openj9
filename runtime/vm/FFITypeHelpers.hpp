@@ -113,7 +113,7 @@ public:
 		*typeFFI = NULL;
 		UDATA structSize = UDATA_MAX;
 		char bufOnStackLocal[J9VM_LAYOUT_STRING_ON_STACK_LIMIT];
-		char *layout = copyStringToUTF8WithMemAlloc(_currentThread, layoutStringObject, J9_STR_NONE, "", 0, bufOnStackLocal, J9VM_LAYOUT_STRING_ON_STACK_LIMIT, NULL);
+		char *layout = copyStringToUTF8WithMemAlloc(_currentThread, layoutStringObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, bufOnStackLocal, J9VM_LAYOUT_STRING_ON_STACK_LIMIT, NULL);
 
 		if (NULL == layout) {
 			goto doneGetCustomFFIType;

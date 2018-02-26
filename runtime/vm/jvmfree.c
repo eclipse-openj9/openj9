@@ -288,7 +288,7 @@ trcModulesFreeJ9ModuleEntry(J9JavaVM *javaVM, J9Module *j9module)
 	PORT_ACCESS_FROM_VMC(currentThread);
 	char moduleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *moduleNameUTF = copyStringToUTF8WithMemAlloc(
-		currentThread, j9module->moduleName, J9_STR_NONE, "", 0, moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+		currentThread, j9module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 	if (NULL != moduleNameUTF) {
 		Trc_MODULE_freeJ9Module_entry(currentThread, moduleNameUTF);
 		if (moduleNameBuf != moduleNameUTF) {

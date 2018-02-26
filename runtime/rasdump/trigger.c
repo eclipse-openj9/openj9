@@ -448,7 +448,7 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 			j9object_t emessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, *eventData->exceptionRef);
 
 			if (NULL != emessage) {
-				buf = vmThread->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, emessage, J9_STR_NONE, "", 0, stackBuffer, 256, &buflen);
+				buf = vmThread->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, emessage, J9_STR_NULL_TERMINATE_RESULT, "", 0, stackBuffer, 256, &buflen);
 
 				if (NULL != buf) {
 					if (wildcardMatch(matchFlag, needleString, needleLength, buf, buflen)) {

@@ -101,7 +101,7 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 			threadGroupObject = *((j9object_t*) group);
 
 			groupName = J9VMJAVALANGTHREADGROUP_NAME(currentThread, threadGroupObject);
-			name = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, groupName, J9_STR_NONE, "", 0, name, 0, NULL);
+			name = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, groupName, J9_STR_NULL_TERMINATE_RESULT, "", 0, name, 0, NULL);
 
 			if (NULL == name) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;

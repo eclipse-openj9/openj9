@@ -5269,7 +5269,7 @@ TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRe
    int32_t len = (int32_t)jitConfig->javaVM->internalVMFunctions->getStringUTF8Length(vmThread(), classString);
    U_8* u8ClassString = (U_8*)comp->trMemory()->allocateStackMemory(len + 1);
 
-   jitConfig->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread(), classString, J9_STR_XLAT, u8ClassString, len + 1, TRUE);
+   jitConfig->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread(), classString, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, u8ClassString, len + 1);
 
    /**
    //fprintf(stderr,"name is (res is %d) classString is %p\n",res, classString); fflush(stderr);
@@ -5300,7 +5300,7 @@ TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRe
    len = (int32_t)jitConfig->javaVM->internalVMFunctions->getStringUTF8Length(vmThread(), fieldString);
    U_8* u8FieldString = (U_8*)comp->trMemory()->allocateStackMemory(len + 1);
 
-   jitConfig->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread(), fieldString, J9_STR_NONE, u8FieldString, len + 1, TRUE);
+   jitConfig->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread(), fieldString, J9_STR_NULL_TERMINATE_RESULT, u8FieldString, len + 1);
 
    ListIterator<TR_VMField> itr(fields.getFields()) ;
    TR_VMField* field;
@@ -5426,7 +5426,7 @@ TR_J9VMBase::getStringUTF8(uintptrj_t objectPointer, char *buffer, intptrj_t buf
    {
    TR_ASSERT(haveAccess(), "Must have VM access to call getStringAscii");
 
-   vmThread()->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread(), (j9object_t)objectPointer, J9_STR_NONE, (U_8*)buffer, (UDATA)bufferSize, TRUE);
+   vmThread()->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread(), (j9object_t)objectPointer, J9_STR_NULL_TERMINATE_RESULT, (U_8*)buffer, (UDATA)bufferSize);
 
    return buffer;
    }

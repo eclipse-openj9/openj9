@@ -3226,7 +3226,7 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 	if (exceptionRef && *exceptionRef) {
 		j9object_t message = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, *exceptionRef);
 		if (NULL != message) {
-			buf = _VirtualMachine->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, message, J9_STR_NONE, "", 0, stackBuffer, _MaximumExceptionNameLength, &len);
+			buf = _VirtualMachine->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, message, J9_STR_NULL_TERMINATE_RESULT, "", 0, stackBuffer, _MaximumExceptionNameLength, &len);
 		}
 
 		if (0 != len) {
@@ -3261,7 +3261,7 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 
 				message = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, nestedException);
 				if (NULL != message) {
-					nestedBuf = _VirtualMachine->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, message, J9_STR_NONE, "", 0, detailMessageStackBuffer, _MaximumExceptionNameLength, &nestedLen);
+					nestedBuf = _VirtualMachine->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, message, J9_STR_NULL_TERMINATE_RESULT, "", 0, detailMessageStackBuffer, _MaximumExceptionNameLength, &nestedLen);
 				}
 				
 				if (0 != nestedLen) {

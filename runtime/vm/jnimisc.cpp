@@ -795,7 +795,7 @@ getStringUTFChars(JNIEnv *env, jstring string, jboolean *isCopy)
 		gpCheckSetNativeOutOfMemoryError(currentThread, 0, 0);
 	} else {
 		JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_CHARS, utfLength);
-		copyStringToUTF8Helper(currentThread, stringObject, J9_STR_NONE, utfChars, utfLength, TRUE);
+		copyStringToUTF8Helper(currentThread, stringObject, J9_STR_NULL_TERMINATE_RESULT, utfChars, utfLength);
 
 		if (NULL != isCopy) {
 			*isCopy = JNI_TRUE;
@@ -824,7 +824,7 @@ outOfBounds:
 			goto outOfBounds;
 		}
 		JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_REGION, (UDATA)length * sizeof(U_16));
-		copyStringToUTF8WithMemAlloc(currentThread, stringObject, J9_STR_NONE, "", 0, buf, UDATA_MAX, NULL);
+		copyStringToUTF8WithMemAlloc(currentThread, stringObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, buf, UDATA_MAX, NULL);
 		JAVA_OFFLOAD_SWITCH_OFF_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_REGION, (UDATA)length * sizeof(U_16));
 	}
 	VM_VMAccess::inlineExitVMToJNI(currentThread);

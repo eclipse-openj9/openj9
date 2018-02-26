@@ -605,6 +605,8 @@ extern "C" {
 #define J9_STR_INTERN 0x8
 #define J9_STR_UNICODE 0x10
 #define J9_STR_ANON_CLASS_NAME 0x20
+/* Determines whether a copied string result will be null terminated */
+#define J9_STR_NULL_TERMINATE_RESULT 0x40
 #define J9_STR_COMPRESSION_THRESHOLD 0xFF
 
 #define J9_JCL_FLAG_REFERENCE_OBJECTS 0x1
