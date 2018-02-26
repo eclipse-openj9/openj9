@@ -4275,9 +4275,8 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_jit_isInlineAllocationSupported)(struct J9JavaVM *javaVM) ;
 	void  ( *J9MetronomeWriteBarrierStore)(struct J9VMThread *vmThread, J9Object *dstObject, fj9object_t *dstAddress, J9Object *srcObject) ;
 	void  ( *J9MetronomeWriteBarrierJ9ClassStore)(struct J9VMThread *vmThread, J9Object *dstObject, J9Object **dstAddress, J9Object *srcObject) ;
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	void  ( *J9ReadBarrier)(struct J9VMThread *vmThread, fj9object_t *srcAddress);
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+	void  ( *J9ReadBarrierJ9Class)(struct J9VMThread *vmThread, j9object_t *srcAddress);
 	j9object_t  ( *j9gc_objaccess_monitorTableReadObject)(struct J9VMThread *vmThread, j9object_t *srcAddress);
 	j9object_t  ( *j9gc_objaccess_monitorTableReadObjectVM)(struct J9JavaVM *vm, j9object_t *srcAddress);
 	UDATA  ( *j9gc_ext_check_is_valid_heap_object)(struct J9JavaVM *javaVM, j9object_t ptr, UDATA flags) ;
