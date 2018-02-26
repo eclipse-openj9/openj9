@@ -427,6 +427,7 @@
    java_lang_Integer_rotateLeft,
    java_lang_Integer_rotateRight,
    java_lang_Integer_valueOf,
+   java_lang_Integer_toUnsignedLong,
    java_lang_Long_bitCount,
    java_lang_Long_lowestOneBit,
    java_lang_Long_highestOneBit,
