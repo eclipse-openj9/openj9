@@ -795,7 +795,7 @@ getStringUTFChars(JNIEnv *env, jstring string, jboolean *isCopy)
 		gpCheckSetNativeOutOfMemoryError(currentThread, 0, 0);
 	} else {
 		JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_UTF_CHARS, utfLength);
-		copyStringToUTF8Helper(currentThread, stringObject, J9_STR_NONE, utfChars, TRUE);
+		copyStringToUTF8Helper(currentThread, stringObject, J9_STR_NONE, utfChars, utfLength, TRUE);
 
 		if (NULL != isCopy) {
 			*isCopy = JNI_TRUE;
