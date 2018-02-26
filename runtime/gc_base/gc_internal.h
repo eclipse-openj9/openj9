@@ -189,6 +189,7 @@ extern J9_CFUNC UDATA j9gc_ext_is_marked(J9JavaVM *javaVM, j9object_t objectPtr)
 extern J9_CFUNC void J9MetronomeWriteBarrierStore(J9VMThread *vmThread, J9Object *dstObject, fj9object_t *dstAddress, J9Object *srcObject);
 extern J9_CFUNC void J9MetronomeWriteBarrierJ9ClassStore(J9VMThread *vmThread, J9Object *dstObject, J9Object **dstAddress, J9Object *srcObject);
 extern J9_CFUNC void J9ReadBarrier(J9VMThread *vmThread, fj9object_t *srcAddress);
+extern J9_CFUNC void J9ReadBarrierJ9Class(J9VMThread *vmThread, j9object_t *srcAddress);
 extern J9_CFUNC j9object_t j9gc_objaccess_monitorTableReadObject(J9VMThread *vmThread, j9object_t *srcAddress);
 extern J9_CFUNC j9object_t j9gc_objaccess_monitorTableReadObjectVM(J9JavaVM *vm, j9object_t *srcAddress);
 extern J9_CFUNC UDATA isStaticObjectAllocateFlags(J9JavaVM *javaVM);
