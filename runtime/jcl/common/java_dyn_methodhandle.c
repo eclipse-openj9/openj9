@@ -920,16 +920,16 @@ allocateJ9UTF8(JNIEnv *env, jstring name)
 	J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
 	J9UTF8 *utf8 = NULL;
 	j9object_t jlString = J9_JNI_UNWRAP_REFERENCE(name);
-	UDATA length = vmFuncs->getStringUTF8Length(vmThread, jlString);
+	UDATA utf8Length = 0;
 
 	PORT_ACCESS_FROM_ENV(env);
 
-	utf8 = j9mem_allocate_memory(sizeof(utf8->length) + length, J9MEM_CATEGORY_VM_JCL);
-	if (NULL != utf8) {
-		J9UTF8_SET_LENGTH(utf8, (U_16) length);
-		vmFuncs->copyStringToUTF8Helper(vmThread, jlString, J9_STR_NONE, J9UTF8_DATA(utf8), FALSE);
-	} else {
+	utf8 = (J9UTF8*)vmFuncs->copyStringToUTF8WithMemAlloc(vmThread, jlString, J9_STR_NONE, "\0\0", sizeof(utf8->length), NULL, 0, &utf8Length);
+
+	if (NULL == utf8) {
 		vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
+	} else {
+		J9UTF8_SET_LENGTH(utf8, (U_16)utf8Length);
 	}
 
 	return utf8;

@@ -275,7 +275,7 @@ copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlag
 			}
 		} else {
 			for (UDATA i = 0; i < unicodeLength; i++) {
-				UDATA encodedLength = VM_VMHelpers::encodeUTF8Char(J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i), data);
+				UDATA encodedLength = VM_VMHelpers::encodeUTF8CharI8(J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i), data);
 
 				if ('.' == *data) {
 					*data = '/';
@@ -288,7 +288,7 @@ copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlag
 		/* Manually version J9_STR_XLAT flag checking from the loop for performance as the compiler does not do it */
 		if ((stringFlags & J9_STR_XLAT) == 0) {
 			for (UDATA i = 0; i < unicodeLength; i++) {
-				data += VM_VMHelpers::encodeUTF8CharI8(J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i), data);
+				data += VM_VMHelpers::encodeUTF8Char(J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i), data);
 			}
 		} else {
 			for (UDATA i = 0; i < unicodeLength; i++) {
