@@ -35,6 +35,7 @@ my $headerComments =
 
 my $mkName = "autoGen.mk";
 my $utilsmk = "utils.mk";
+my $countmk = "count.mk";
 my $settings = "settings.mk";
 my $projectRootDir = '';
 my $testRoot = '';
@@ -77,6 +78,7 @@ sub runmkgen {
 		$sp_hs = $data->{'specPlatMapping'};
 	}
 
+	$targetGroup{"all"} = 0;
 	foreach my $eachLevel (sort @{$allLevels}) {
 		foreach my $eachGroup (sort @{$allGroups}) {
 			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
@@ -86,6 +88,7 @@ sub runmkgen {
 
 	generateOnDir();
 	utilsGen();
+	countGen();
 }
 
 sub generateOnDir {
@@ -183,7 +186,6 @@ sub writeVars {
 	}
 	
 	print $fhOut $headerComments ."\n";
-	print $fhOut ".DEFAULT_GOAL := all\n\n";
 	print $fhOut "D=/\n\n";
 	print $fhOut "ifndef TEST_ROOT\n";
 	print $fhOut "\tTEST_ROOT := $testRoot\n";
@@ -583,15 +585,23 @@ sub utilsGen {
 		}
 	}
 	print $fhOut $spec2platform;
-	
+	close $fhOut;
+	print "\nGenerated $utilsmk\n";
+}
+
+sub countGen {
+	my $countmkpath = $testRoot . "/TestConfig/" . $countmk;
+	open( my $fhOut, '>', $countmkpath ) or die "Cannot create file $countmkpath";
+
 	foreach my $eachLevel (sort @{$allLevels}) {
 		$targetGroup{$eachLevel} = 0;
 		foreach my $eachGroup (sort @{$allGroups}) {
 			my $groupTargetKey = $eachLevel . '.' . $eachGroup;
 			$targetGroup{$eachLevel} += $targetGroup{$groupTargetKey};
 		}
+		$targetGroup{"all"} += $targetGroup{$eachLevel};
 	}
-	
+
 	foreach my $eachGroup (sort @{$allGroups}) {
 		$targetGroup{$eachGroup} = 0;
 		foreach my $eachLevel (sort @{$allLevels}) {
@@ -602,7 +612,6 @@ sub utilsGen {
 
 	print $fhOut "_GROUPTARGET = \$(firstword \$(MAKECMDGOALS))\n\n";
 	print $fhOut "GROUPTARGET = \$(patsubst _%,%,\$(_GROUPTARGET))\n\n";
-	print $fhOut "TOTALCOUNT := 0\n\n";
 	foreach my $targetGroupKey (keys %targetGroup) {
 		print $fhOut "ifeq (\$(GROUPTARGET),$targetGroupKey)\n";
 		print $fhOut "\tTOTALCOUNT := $targetGroup{$targetGroupKey}\n";
@@ -610,7 +619,7 @@ sub utilsGen {
 	}
 
 	close $fhOut;
-	print "\nGenerated $utilsmk\n";
+	print "\nGenerated $countmk\n";
 }
 
 1;

@@ -36,6 +36,8 @@ endif
 
 include settings.mk
 
+include count.mk
+
 #######################################
 # run all tests under $(TEST_ROOT)
 #######################################
