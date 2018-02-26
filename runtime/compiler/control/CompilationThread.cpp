@@ -641,7 +641,7 @@ J9ROMClass *
 TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
    {
    auto it = getClientData()->getROMClassMap().find(clazz);
-   return (it == getClientData()->getROMClassMap().end()) ? nullptr : it->second.first;
+   return (it == getClientData()->getROMClassMap().end()) ? nullptr : it->second.romClass;
    }
 
 J9ROMClass *

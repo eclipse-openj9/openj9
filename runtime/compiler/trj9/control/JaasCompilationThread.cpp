@@ -2028,7 +2028,7 @@ ClientSessionData::~ClientSessionData()
    {
    for (auto it : _romClassMap)
       {
-      TR_Memory::jitPersistentFree(it.second.first);
+      TR_Memory::jitPersistentFree(it.second.romClass);
       }
    }
 
@@ -2040,8 +2040,8 @@ ClientSessionData::processUnloadedClasses(std::vector<TR_OpaqueClassBlock*> &cla
       auto it = _romClassMap.find((J9Class*) clazz);
       if (it == _romClassMap.end())
          continue; // unloaded class was never cached
-      J9ROMClass *romClass = it->second.first;
-      J9Method *methods = it->second.second;
+      J9ROMClass *romClass = it->second.romClass;
+      J9Method *methods = it->second.methodsOfClass;
       for (size_t i = 0; i < romClass->romMethodCount; i++)
          {
          _romMethodMap.erase(&methods[i]);
