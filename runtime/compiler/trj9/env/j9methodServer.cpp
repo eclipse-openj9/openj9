@@ -26,7 +26,7 @@ romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
 J9ROMClass *
 TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(J9Class *clazz, JAAS::J9ServerStream *stream, TR_Memory *trMemory, J9Method **methods)
    {
-   stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getRemoteROMClass, clazz);
+   stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
    auto recv = stream->read<std::string, J9Method*>();
    auto &str = std::get<0>(recv);
    *methods = std::get<1>(recv);

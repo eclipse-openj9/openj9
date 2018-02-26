@@ -833,7 +833,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
                        mandatoryRm, rm, startAddressForJittedMethod, virtualMethodIsOverridden, addressContainingIsOverriddenBit);
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getRemoteROMClass:
+      case J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods:
          {
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
          J9Method *methodsOfClass = (J9Method*) fe->getMethods((TR_OpaqueClassBlock*) clazz);
