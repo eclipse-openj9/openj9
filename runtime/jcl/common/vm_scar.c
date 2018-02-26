@@ -56,6 +56,8 @@
 #define J9_DLL_NAME J9_JAVA_SE_9_DLL_NAME
 #elif defined(J9VM_JCL_SE10)
 #define J9_DLL_NAME J9_JAVA_SE_10_DLL_NAME
+#elif defined(J9VM_JCL_SE11)
+#define J9_DLL_NAME J9_JAVA_SE_11_DLL_NAME
 #else
 #error Unknown J9VM_JCL_SE
 #endif

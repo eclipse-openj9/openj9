@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -251,28 +251,34 @@ getCallerClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState * walk
  * JVM_GetCallerClass
  */
 JNIEXPORT jobject JNICALL
+#if J9VM_JCL_SE11
+JVM_GetCallerClass_Impl(JNIEnv *env)
+#else /* J9VM_JCL_SE11 */
 JVM_GetCallerClass_Impl(JNIEnv *env, jint depth)
+#endif /* J9VM_JCL_SE11 */
 {
 	J9VMThread * vmThread = (J9VMThread *) env;
 	J9JavaVM * vm = vmThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	J9StackWalkState walkState;
+	J9StackWalkState walkState = {0};
 	jobject result = NULL;
+#if J9VM_JCL_SE11
+	/* Java 11 removed getCallerClass(depth), and getCallerClass() is equivalent to getCallerClass(-1) */
+	jint depth = -1;
+#endif /* J9VM_JCL_SE11 */
 	
 	Trc_SunVMI_GetCallerClass_Entry(env, depth);
 	
 	walkState.frameWalkFunction = getCallerClassIterator;
 
-	if (J2SE_18 <= (J2SE_VERSION(vm) & J2SE_VERSION_MASK)) {
-		if (-1 == depth) {
-			/* Assumes the stack looks like:
-			 * [2] sun.reflect.Reflection.getCallerClass()
-			 * [1] Method requesting caller
-			 * [0] actual caller
-			 */
-			depth = 2;
-			walkState.frameWalkFunction = getCallerClassJEP176Iterator;
-		}
+	if (-1 == depth) {
+		/* Assumes the stack looks like:
+		 * [2] [jdk.internal|sun].reflect.Reflection.getCallerClass()
+		 * [1] Method requesting caller
+		 * [0] actual caller
+		 */
+		depth = 2;
+		walkState.frameWalkFunction = getCallerClassJEP176Iterator;
 	}
 
 	walkState.walkThread = vmThread;

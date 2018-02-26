@@ -713,8 +713,10 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 	if (J2SE_SHAPE_RAW == (j2seVersion & J2SE_SHAPE_MASK)) {
 		Assert_Util_unreachable();
 	} 
-	if (J2SE_V10 <= j2seReleaseValue) {
-		/* Java 11 shares same dll with Java 10 for now */
+	if (J2SE_V11 <= j2seReleaseValue) {
+		dllName = J9_JAVA_SE_11_DLL_NAME;
+		dllNameLength = sizeof(J9_JAVA_SE_11_DLL_NAME);
+	} else if (J2SE_V10 <= j2seReleaseValue) {
 		dllName = J9_JAVA_SE_10_DLL_NAME;
 		dllNameLength = sizeof(J9_JAVA_SE_10_DLL_NAME);
 	} else if (J2SE_19 <= j2seReleaseValue) {

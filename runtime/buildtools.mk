@@ -1,7 +1,7 @@
 # buildtools Makefile
 
 ###############################################################################
-# Copyright (c) 1998, 2017 IBM Corp. and others
+# Copyright (c) 1998, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,7 +165,7 @@ uma : buildtools copya2e
 
 # process constant pool definition file to generate jcl constant pool definitions and header file
 CONSTANTPOOL_TOOL    := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)sourcetools/lib/j9vmcp.jar" com.ibm.oti.VMCPTool.Main
-CONSTANTPOOL_OPTIONS := -rootDir . -buildSpecId $(SPEC) -configDir $(SPEC_DIR) -jcls se7_basic,se9_before_b165,se9,se10
+CONSTANTPOOL_OPTIONS := -rootDir . -buildSpecId $(SPEC) -configDir $(SPEC_DIR) -jcls se7_basic,se9_before_b165,se9,se10,se11
 constantpool : buildtools
 	$(CONSTANTPOOL_TOOL) $(CONSTANTPOOL_OPTIONS)
 

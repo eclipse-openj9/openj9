@@ -52,7 +52,8 @@ static J9JCLConfigurationInfo jclConfigs[] = {
 	{ "se7b" },
 	{ "se7r" },
 	{ "se9" },
-	{ "se10" }
+	{ "se10" },
+	{ "se11" }
 };
 
 #define NUM_JCL_CONFIGS (sizeof(jclConfigs) / sizeof(J9JCLConfigurationInfo))
