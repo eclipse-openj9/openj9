@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2018, 2018 IBM Corp. and others
+ 
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+ 
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+ 
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<module xmlns:xi="http://www.w3.org/2001/XInclude">
+	<xi:include href="../j9vm/j9vmnatives.xml"><xi:fallback/></xi:include>
+
+	<exports group="all">
+		<export name="JNI_CreateJavaVM"/>
+		<export name="JNI_GetCreatedJavaVMs"/>
+		<export name="JNI_GetDefaultJavaVMInitArgs"/>
+	</exports>
+
+	<artifact type="shared" name="jvm" scope="jdk11" loadgroup="top" buildlocal="true" appendrelease="false">
+		<include-if condition="spec.flags.module_j9vm"/>
+		<options>
+			<option name="requiresPrimitiveTable"/>
+			<option name="prototypeHeaderFileNames" data="jvm.h"/>
+		</options>
+		<phase>core quick j2se</phase>
+		<exports>
+			<group name="all"/>
+			<group name="j9vmnatives"/>
+		</exports>
+		<flags>
+			<flag name="J9VM_JAVA9_BUILD" value="156"/>
+			<flag name="J9VM_JCL_SE11"/>
+		</flags>
+		<includes>
+			<include path="j9include"/>
+			<include path="j9oti"/>
+			<include path="harmony_include"/>
+			<include path="jclcommon">
+				<include-if condition="spec.flags.build_realtime"/>
+			</include>
+				<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
+				<include path="j9gcgluejava"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+		</makefilestubs>
+		<vpaths>
+			<vpath path="harmony_jvm" pattern="%.c" augmentIncludes="true">
+				<include-if condition="spec.flags.opt_harmony"/>
+			</vpath>
+			<vpath pattern="copyright.c" path="../makelib" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
+			<vpath pattern="j7verify.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
+			<vpath pattern="j7vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
+			<vpath pattern="j8vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
+			<vpath pattern="j9memcategories.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
+			<vpath pattern="java9vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
+			<vpath pattern="jvm.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
+			<vpath pattern="ut_j9scar.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
+			<vpath pattern="vmi.c" path="../j9vm" augmentObjects="true" augmentIncludes="true" type="relativepath"/>
+		</vpaths>
+		<objects>
+			<object name="java9vmi"/>
+			<object name="j8vmi"/>
+			<object name="j7vmi"/>
+			<object name="j7verify"/>
+			<object name="jvm"/>
+			<object name="vmi"/>
+			<object name="ut_j9scar"/>
+			<object name="j9memcategories"/>
+			<object name="harmony_vm">
+				<include-if condition="spec.flags.opt_harmony"/>
+			</object>
+		</objects>
+
+		<!--
+		  WARNING: DO NOT LINK SHARED LIBRARIES AGAINST THIS SHARED LIBRARY
+		           WE NEED TO BE ABLE TO LOAD IT WITHOUT ANYTHING ELSE ON THE
+		           LIBPATH.
+		           This is required because of sidecar configurations.
+		-->
+		<libraries>
+			<library name="socket" type="macro"/>
+			<library name="j9exelib"/>
+			<library name="j9util_b156"/>
+			<library name="j9utilcore"/>
+			<library name="j9avl" type="external"/>
+			<library name="j9hashtable" type="external"/>
+			<library name="j9pool" type="external"/>
+			<library name="j9vmi"/>
+			<!--  for advance toolchain pthread must be last in the link order -->
+			<library name="pthread" type="system">
+				<include-if condition="spec.linux.* and not spec.linux_ztpf.*"/>
+			</library>
+		</libraries>
+	</artifact>
+</module>
