@@ -342,20 +342,17 @@ LIBCDEFS := $(wildcard /ztpf/$(UMA_ZTPF_ROOT)/base/lib/libCDEFSFORASM.so)
 		$(CXX) $(CXXFLAGS) -c $<
 </#if>
 
-# ddr preprocessor targets
-%.i: %.c
+# ddrgen preprocessor targets
+%.i : %.c
 	$(CC) $(CFLAGS) -E $< -o $@
 
-%.i: %.cpp
+%.i : %.cpp
 	$(CXX) $(CXXFLAGS) -E $< -o $@
 
-# just create an empty output file
-%.i: %.s
-	touch $@
-
-# just create an empty output file
-%.i: %.asm
-	touch $@
+# just create empty output files
+%.i : %.asm ; touch $@
+%.i : %.m4  ; touch $@
+%.i : %.s   ; touch $@
 
 <#if uma.spec.type.windows>
 # compilation rule for resource files.

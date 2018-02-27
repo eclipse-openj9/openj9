@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2017 IBM Corp. and others
+# Copyright (c) 2016, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,6 @@ CONFIGURE_ARGS += \
   --enable-OMR_THREAD \
   --enable-OMR_OMRSIG \
   --enable-tracegen \
-  --disable-debug \
   --enable-OMR_GC_ARRAYLETS \
   --enable-OMR_GC_DYNAMIC_CLASS_UNLOADING \
   --enable-OMR_GC_MODRON_COMPACTION \
@@ -52,6 +51,13 @@ CONFIGURE_ARGS += \
   --enable-OMR_PORT_ASYNC_HANDLER \
   --enable-OMR_THR_CUSTOM_SPIN_OPTIONS \
   --enable-OMR_NOTIFY_POLICY_CONTROL
+
+# Configure OpenJ9 builds with DDR enabled to use tooling from OMR.
+<#if uma.spec.flags.opt_useOmrDdr.enabled>
+CONFIGURE_ARGS += --enable-debug --enable-DDR
+<#else>
+CONFIGURE_ARGS += --disable-debug
+</#if>
 
 CONFIGURE_ARGS += 'lib_output_dir=$$(top_srcdir)/../lib'
 CONFIGURE_ARGS += 'exe_output_dir=$$(top_srcdir)/..'
