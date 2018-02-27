@@ -5,9 +5,9 @@
 #include "control/MethodToBeCompiled.hpp"
 
 J9ROMClass *
-TR_ResolvedJ9JAASServerMethod::romClassFromString(const std::string &romClassStr, TR_Memory *trMemory)
+TR_ResolvedJ9JAASServerMethod::romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory)
    {
-   auto romClass = (J9ROMClass *)(trMemory->trPersistentMemory()->allocatePersistentMemory(romClassStr.size()));
+   auto romClass = (J9ROMClass *)(trMemory->allocatePersistentMemory(romClassStr.size(), TR_Memory::ROMClass));
    if (!romClass)
       throw std::bad_alloc();
    memcpy(romClass, &romClassStr[0], romClassStr.size());
@@ -30,7 +30,7 @@ TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(J9Class *clazz, JAAS::J9ServerS
    auto recv = stream->read<std::string, J9Method*>();
    auto &str = std::get<0>(recv);
    *methods = std::get<1>(recv);
-   return romClassFromString(str, trMemory);
+   return romClassFromString(str, trMemory->trPersistentMemory());
    }
 
 TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)

@@ -2,8 +2,7 @@
 #include "j9.h"
 #include "control/CompilationRuntime.hpp"
 #include "control/JaasCompilationThread.hpp"
-
-
+#include "env/j9methodServer.hpp"
 
 static J9Method *ramMethodFromRomMethod(J9JITConfig *jitConfig, J9VMThread *vmThread,
                                        const J9ROMClass* romClass, const J9ROMMethod* romMethod,
@@ -143,8 +142,7 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       uint64_t clientId = std::get<0>(req);
       stream->setClientId(clientId);
       std::string romClassStr = std::get<1>(req);
-      J9ROMClass *romClass = (J9ROMClass*) fej9->jitPersistentAlloc(romClassStr.size());
-      memcpy(romClass, &romClassStr[0], romClassStr.size());
+      J9ROMClass *romClass = TR_ResolvedJ9JAASServerMethod::romClassFromString(romClassStr, fej9->_compInfo->persistentMemory());
       uint32_t romMethodOffset = std::get<2>(req);
       J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*) romClass + romMethodOffset);
       J9Method *ramMethod = std::get<3>(req);
