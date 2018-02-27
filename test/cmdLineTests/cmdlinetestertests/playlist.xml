@@ -27,7 +27,8 @@
 		<testCaseName>cmdLineTester_test</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DCMDLINETESTERJAR=$(CMDLINETESTER_JAR) \
-	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)cmdlinetests.xml$(Q) \
+	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -DRUN_SCRIPT_STRING=$(RUN_SCRIPT_STRING) \
+	-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)cmdlinetests.xml$(Q) \
 	-xids all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
