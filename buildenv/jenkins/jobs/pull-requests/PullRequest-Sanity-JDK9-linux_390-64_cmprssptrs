@@ -20,36 +20,28 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-node('390') {
+SDK_VERSION = '9'
+SPEC = 'linux_390-64_cmprssptrs'
+TEST_TARGET = '_sanity'
 
-    SDK_VERSION = "9"
-
-    // Clone
-    OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
-    OPENJDK_BRANCH = "openj9"
-
-    // Build
-    BOOT_JDK = "$HOME/openj9/ibm-java-s390x-80"
-    FREEMARKER = "$HOME/openj9/freemarker.jar"
-    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-PR${ghprbPullId}-linux_390-64_cmprssptrs-"
-    SDK_SUFFIX = ".tar.gz"
-    TEST_PREFIX = "test-"
-    TEST_SUFFIX = ".tar.gz"
-    RELEASE = "linux-s390x-normal-server-release"
-    JDK_FOLDER = "jdk"
+node('master') {
 
     checkout scm
-    buildfile = load "${WORKSPACE}/buildenv/jenkins/common/build"
-    testfile = load "${WORKSPACE}/buildenv/jenkins/common/test"
+    variableFile = load 'buildenv/jenkins/common/variables-functions'
+    variableFile.set_job_variables('pullRequest')
+    cleanWs()
+}
 
+node("${NODE}") {
+
+    checkout scm
+    buildfile = load 'buildenv/jenkins/common/build'
+    testfile = load 'buildenv/jenkins/common/test'
+
+    // Build
     buildfile.build_pr()
 
     // Test
-    JAVA_BIN = "${WORKSPACE}/build/$RELEASE/images/${JDK_FOLDER}/bin"
-    SPEC = 'linux_390-64_cmprssptrs'
-    JAVA_VERSION = "SE${SDK_VERSION}0"
-    TEST_TARGET = '_sanity'
-
     archive_test = [:]
     archive_test['Archive'] = { buildfile.archive() }
     archive_test['Test'] = { testfile.test_all() }

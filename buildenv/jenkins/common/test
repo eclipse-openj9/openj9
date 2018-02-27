@@ -20,6 +20,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+// Set JAVA_BIN here not in the variables-functions.set_job_variables() function
+// to ensure a correct JAVA_BIN path. JAVA_BIN should be available on the
+// machine the tests run.
+// set_job_variables() is usually called on the master not on the node (where
+// the tests run) and the master's WORKSPACE is different than the node's WORKSPACE
+JRE_FOLDER = (SDK_VERSION == '8') ? '/jre' : ''
+JAVA_BIN = "${WORKSPACE}/build/${RELEASE}/images/${JDK_FOLDER}${JRE_FOLDER}/bin"
+
 def fetch_artifacts(){
     stage('Fetch Artifacts') {
         timestamps {
@@ -49,7 +57,7 @@ def configure() {
 def get_dependencies() {
     stage('Get Test Dependencies') {
         timestamps {
-            copyArtifacts fingerprintArtifacts: true, projectName: 'test.getDependency', selector: lastSuccessful(), target: 'openj9/test/TestConfig/lib'
+            copyArtifacts fingerprintArtifacts: true, projectName: "${TEST_DEPENDENCIES_JOB_NAME}", selector: lastSuccessful(), target: 'openj9/test/TestConfig/lib'
         }
     }
 }
@@ -99,5 +107,6 @@ def test_all() {
 def test_all_with_fetch() {
     fetch_artifacts()
     test_all()
+    cleanWs()
 }
 return this

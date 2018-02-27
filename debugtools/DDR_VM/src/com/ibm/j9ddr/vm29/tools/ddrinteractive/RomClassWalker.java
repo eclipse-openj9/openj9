@@ -84,7 +84,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodTypeRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMNameAndSignaturePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMStringRefPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9VariableInfoPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodDebugInfoHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
@@ -94,7 +93,6 @@ import com.ibm.j9ddr.vm29.structure.J9ExceptionInfo;
 import com.ibm.j9ddr.vm29.structure.J9MethodDebugInfo;
 import com.ibm.j9ddr.vm29.structure.J9ROMClass;
 import com.ibm.j9ddr.vm29.structure.J9ROMConstantPoolItem;
-import com.ibm.j9ddr.vm29.structure.J9VariableInfo;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.IClassWalkCallbacks.SlotType;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U16;
@@ -966,49 +964,30 @@ public class RomClassWalker extends ClassWalker {
 				}
 			}
 		}
-		
-		if (AlgorithmVersion.getVersionOf("VM_LOCAL_VARIABLE_TABLE_VERSION").getAlgorithmVersion() < 1) {
-			J9VariableInfoPointer variableTable = OptInfo.getV0VariableTableForROMClass(methodDebugInfo);
-			if (variableTable.notNull()) {
-				for (int j = 0; j < methodDebugInfo.varInfoCount().longValue(); j++) {
-					long entryLength = J9VariableInfo.SIZEOF;
-	
-					addObjectsasSlot(variableTable);
-	
-					if (variableTable.visibilityLength().anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_VARIABLE_TABLE_HAS_GENERIC)) {
-						U32Pointer typePtr = U32Pointer.cast(variableTable.add(1));
-						classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, typePtr, "methodVariableGeneric");
-						entryLength += SelfRelativePointer.SIZEOF;
-					}
-					classWalkerCallback.addSection(clazz, variableTable, entryLength, "variableInfo" + (inlineDebugExtension?" Inline":""), inlineDebugExtension);
-					variableTable = J9VariableInfoPointer.cast(variableTable.addOffset(entryLength));
-				}
-			}
-		} else {
-			U8Pointer variableTable = OptInfo.getV1VariableTableForMethodDebugInfo(methodDebugInfo);
-			if (variableTable.notNull()) {
-				LocalVariableTableIterator variableInfoValuesIterator = LocalVariableTableIterator.localVariableTableIteratorFor(methodDebugInfo);
-				U8Pointer start = variableInfoValuesIterator.getLocalVariableTablePtr();
-				while (variableInfoValuesIterator.hasNext()) {
-					LocalVariableTable values = variableInfoValuesIterator.next();
 
-					// Need to walk the name and signature to add them to the UTF8 section
-					classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getName(), "name");
-					classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getSignature(), "getSignature");
-					if (values.getGenericSignature().notNull()) {
-						classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getGenericSignature(), "getGenericSignature");
-					}
+		U8Pointer variableTable = OptInfo.getV1VariableTableForMethodDebugInfo(methodDebugInfo);
+		if (variableTable.notNull()) {
+			LocalVariableTableIterator variableInfoValuesIterator = LocalVariableTableIterator.localVariableTableIteratorFor(methodDebugInfo);
+			U8Pointer start = variableInfoValuesIterator.getLocalVariableTablePtr();
+			while (variableInfoValuesIterator.hasNext()) {
+				LocalVariableTable values = variableInfoValuesIterator.next();
+
+				// Need to walk the name and signature to add them to the UTF8 section
+				classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getName(), "name");
+				classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getSignature(), "getSignature");
+				if (values.getGenericSignature().notNull()) {
+					classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getGenericSignature(), "getGenericSignature");
 				}
-				U8Pointer end = variableInfoValuesIterator.getLocalVariableTablePtr();
-				int localVariableSectionSize = end.sub(start).intValue();
-				
-				for (int j = 0; j < localVariableSectionSize; j++) {
-					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, start, "variableInfo compressed");
-					start = start.add(1);
-				}
-				
-				classWalkerCallback.addSection(clazz, variableTable, localVariableSectionSize, "variableInfo" + (inlineDebugExtension?" Inline":""), inlineDebugExtension);
 			}
+			U8Pointer end = variableInfoValuesIterator.getLocalVariableTablePtr();
+			int localVariableSectionSize = end.sub(start).intValue();
+
+			for (int j = 0; j < localVariableSectionSize; j++) {
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, start, "variableInfo compressed");
+				start = start.add(1);
+			}
+
+			classWalkerCallback.addSection(clazz, variableTable, localVariableSectionSize, "variableInfo" + (inlineDebugExtension?" Inline":""), inlineDebugExtension);
 		}
 		classWalkerCallback.addSection(clazz, methodDebugInfo, sectionSizeBytes, "methodDebugInfo" + (inlineDebugExtension?" Inline":""), inlineDebugExtension);
 		return inlineSize;

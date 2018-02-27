@@ -1,0 +1,94 @@
+/*******************************************************************************
+ * Copyright (c) 2018, 2018 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+
+def SDK_VERSIONS = ['8', '9']
+def SPECS = ['linux_ppc-64_cmprssptrs_le', 'linux_390-64_cmprssptrs']
+
+def OPENJDK_REPOS = ['8': 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git',
+                     '9': 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git']
+def OPENJDK_BRANCHES = ['8': 'openj9',
+                        '9': 'openj9']
+
+def OPENJ9_REPO = 'https://github.com/eclipse/openj9.git'
+def OPENJ9_BRANCH = 'master'
+
+def OMR_REPO = 'https://github.com/eclipse/openj9-omr.git'
+def OMR_BRANCH = 'openj9'
+
+def builds = [:]
+
+node('worker') {
+
+    checkout scm
+    buildFile = load 'buildenv/jenkins/common/pipeline-functions'
+
+    // fetch SHAs
+    OPENJ9_SHA = buildFile.get_sha(OPENJ9_REPO, OPENJ9_BRANCH)
+    OMR_SHA = buildFile.get_sha(OMR_REPO, OMR_BRANCH)
+
+    // update build description
+    currentBuild.description = "OpenJ9: ${OPENJ9_SHA}<br/>OMR: ${OMR_SHA}"
+
+    SDK_VERSIONS.each { SDK_VERSION ->
+        OPENJDK_REPO = OPENJDK_REPOS["${SDK_VERSION}"]
+        OPENJDK_BRANCH = OPENJDK_BRANCHES["${SDK_VERSION}"]
+        OPENJDK_SHA = buildFile.get_sha(OPENJDK_REPO, OPENJDK_BRANCH)
+
+        // append OpenJDK SHA to the build description
+        currentBuild.description += "<br/>OpenJDK${SDK_VERSION}: ${OPENJDK_SHA}"
+
+        echo "Building OpenJ9 extensions for OpenJDK${SDK_VERSION}"
+        echo "OPENJDK_SHA:${OPENJDK_SHA}"
+        echo "OPENJ9_SHA:${OPENJ9_SHA}"
+        echo "OMR_SHA:${OMR_SHA}"
+
+        SPECS.each { SPEC ->
+             builds["build_JDK${SDK_VERSION} ${SPEC}"] = { build(OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, SDK_VERSION, SPEC) }
+         }
+    }
+
+    cleanWs()
+}
+
+parallel builds
+
+/*
+* Returns the Jenkins pipeline job that builds and tests OpenJ9 extensions for
+* OpenJDK for give version and spec.
+*/
+def build(OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, SDK_VERSION, SPEC) {
+    stage ("Build JDK${SDK_VERSION} ${SPEC}") {
+        def JOB_NAME = "Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
+        JOB = build job: JOB_NAME,
+                parameters: [
+                    string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
+                    string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH),
+                    string(name: 'OPENJDK_SHA', value: OPENJDK_SHA),
+                    string(name: 'OPENJ9_REPO', value: OPENJ9_REPO),
+                    string(name: 'OPENJ9_BRANCH', value: OPENJ9_BRANCH),
+                    string(name: 'OPENJ9_SHA', value: OPENJ9_SHA),
+                    string(name: 'OMR_REPO', value: OMR_REPO),
+                    string(name: 'OMR_BRANCH', value: OMR_BRANCH),
+                    string(name: 'OMR_SHA', value: OMR_SHA)]
+        return JOB
+    }
+}

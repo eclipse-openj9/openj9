@@ -34,88 +34,31 @@ def get_source() {
             git_clean()
 
             // Setup REPO variables
-            script {
-                try {
-                    if ( OPENJDK_REPO == "" ) {
-                        error("Must specify the OpenJDK Repo")
-                    }
-                } catch(ex) {
-                    error("Must specify the OpenJDK Repo")
-                }
-                try {
-                    if ( OPENJDK_BRANCH == "" ) {
-                       OPENJDK_BRANCH = DEFAULT_OPENJDK_BRANCH
-                    }
-                } catch(ex) {
-                    OPENJDK_BRANCH = 'openj9'
-                }
-                try {
-                    if ( OPENJDK_SHA == "" ) {
-                        OPENJDK_SHA = ''
-                    }
-                } catch(ex) {
-                    OPENJDK_SHA = ''
-                }
-                try {
-                    if ( OPENJ9_REPO != "" ) {
-                        OPENJ9_REPO_OPTION = "-openj9-repo=${OPENJ9_REPO}"
-                    } else {
-                        OPENJ9_REPO_OPTION = ''
-                    }
-                } catch(ex) {
-                    OPENJ9_REPO_OPTION = ''
-                }
-                try {
-                    if ( OPENJ9_BRANCH != "" ) {
-                        OPENJ9_BRANCH_OPTION = "-openj9-branch=${OPENJ9_BRANCH}"
-                    } else {
-                        OPENJ9_BRANCH_OPTION = ''
-                    }
-                } catch(ex) {
-                    OPENJ9_BRANCH_OPTION = ''
-                }
-                try {
-                    if ( OPENJ9_SHA != "" ) {
-                        OPENJ9_SHA_OPTION = "-openj9-sha=${OPENJ9_SHA}"
-                    } else {
-                        OPENJ9_SHA_OPTION = ''
-                    }
-                } catch (ex) {
-                    OPENJ9_SHA_OPTION = ''
-                }
-                try {
-                    if ( OMR_REPO != "" ) {
-                        OMR_REPO_OPTION = "-omr-repo=${OMR_REPO}"
-                    } else {
-                        OMR_REPO_OPTION = ''
-                    }
-                } catch(ex) {
-                    OMR_REPO_OPTION = ''
-                }
-                try {
-                    if ( OMR_BRANCH != "" ) {
-                        OMR_BRANCH_OPTION = "-omr-branch=${OMR_BRANCH}"
-                    } else {
-                        OMR_BRANCH_OPTION = ''
-                    }
-                } catch(ex) {
-                    OMR_BRANCH_OPTION = ''
-                }
-                try {
-                    if ( OMR_SHA != "" ) {
-                        OMR_SHA_OPTION = "-omr-sha=${OMR_SHA}"
-                    } else {
-                        OMR_SHA_OPTION = ''
-                    }
-                } catch(ex) {
-                    OMR_SHA_OPTION = ''
-                }
-            }
+            OPENJ9_REPO_OPTION = (OPENJ9_REPO != "") ? "-openj9-repo=${OPENJ9_REPO}" : ""
+            OPENJ9_BRANCH_OPTION = (OPENJ9_BRANCH != "") ? "-openj9-branch=${OPENJ9_BRANCH}" : ""
+            OPENJ9_SHA_OPTION = (OPENJ9_SHA != "") ? "-openj9-sha=${OPENJ9_SHA}" : ""
+            OMR_REPO_OPTION = (OMR_REPO != "") ? "-omr-repo=${OMR_REPO}" : ""
+            OMR_BRANCH_OPTION = (OMR_BRANCH != "")? "-omr-branch=${OMR_BRANCH}" : ""
+            OMR_SHA_OPTION = (OMR_SHA != "") ? "-omr-sha=${OMR_SHA}" : ""
 
-            checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: "${OPENJDK_BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 30]], submoduleCfg: [], userRemoteConfigs: [[url: "${OPENJDK_REPO}"]]]
-            sh "git checkout ${OPENJDK_SHA}"
-            sh "bash ./get_source.sh ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
+            if (USER_CREDENTIALS_ID != '') {
+                get_sources_with_authentication()
+            } else {
+                get_sources()
+            }
         }
+    }
+}
+
+def get_sources() {
+    checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: "${OPENJDK_BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 30]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: "${USER_CREDENTIALS_ID}", url: "${OPENJDK_REPO}"]]]
+    sh "git checkout ${OPENJDK_SHA}"
+    sh "bash ./get_source.sh ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
+}
+
+def get_sources_with_authentication() {
+    sshagent(credentials:["${USER_CREDENTIALS_ID}"]) {
+        get_sources()
     }
 }
 

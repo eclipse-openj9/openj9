@@ -29,6 +29,7 @@
 		<export name="JNI_CreateJavaVM"/>
 		<export name="JNI_GetCreatedJavaVMs"/>
 		<export name="JNI_GetDefaultJavaVMInitArgs"/>
+		<export name="_JVM_GetCallerClass@4" />
 	</exports>
 
 	<artifact type="shared" name="jvm" scope="jdk11" loadgroup="top" buildlocal="true" appendrelease="false">

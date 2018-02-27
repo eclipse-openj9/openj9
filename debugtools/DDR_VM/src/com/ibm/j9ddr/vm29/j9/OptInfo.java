@@ -29,7 +29,6 @@ import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPT
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SIMPLE_NAME;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME;
-import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_VARIABLE_TABLE_HAS_GENERIC;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_TYPE_ANNOTATION_INFO;
 
 import java.util.Iterator;
@@ -39,6 +38,7 @@ import java.util.List;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.walkers.LineNumber;
 import com.ibm.j9ddr.vm29.j9.walkers.LineNumberIterator;
+import com.ibm.j9ddr.vm29.j9.walkers.LocalVariableTableIterator;
 import com.ibm.j9ddr.vm29.pointer.SelfRelativePointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
@@ -49,12 +49,9 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9SourceDebugExtensionPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9VariableInfoPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodDebugInfoHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
-import com.ibm.j9ddr.vm29.structure.J9LineNumber;
 import com.ibm.j9ddr.vm29.structure.J9MethodDebugInfo;
-import com.ibm.j9ddr.vm29.structure.J9VariableInfo;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
@@ -147,30 +144,14 @@ public class OptInfo {
 	}
 
 	public static int countBits(U32 word) {
-		int count;
-
-		long x = word.longValue();
-
-		for (count = 0; x != 0; x >>= 1) {
-			if ((x & 1) != 0) {
-				count++;
-			}
-		}
-
-		return count;
+		return Long.bitCount(word.longValue());
 	}
 
-	/**
-	 * This method should be used when VM_LOCAL_VARIABLE_TABLE_VERSION < 1
-	 */
-	public static J9VariableInfoPointer getV0VariableTableForROMClass(J9MethodDebugInfoPointer methodInfo) throws CorruptDataException {
-		return J9VariableInfoPointer.cast(OptInfo._getVariableTableForMethodDebugInfo(methodInfo));
-	}
-	
 	/**
 	 * This method should be used when VM_LOCAL_VARIABLE_TABLE_VERSION >= 1
 	 */
 	public static U8Pointer	getV1VariableTableForMethodDebugInfo(J9MethodDebugInfoPointer methodInfo) throws CorruptDataException {
+		LocalVariableTableIterator.checkVariableTableVersion();
 		return U8Pointer.cast(OptInfo._getVariableTableForMethodDebugInfo(methodInfo));
 	}
 	private static VoidPointer _getVariableTableForMethodDebugInfo(J9MethodDebugInfoPointer methodInfo) throws CorruptDataException {
@@ -182,12 +163,7 @@ public class OptInfo {
 				 * low tag indicates that debug information is in line 
 				 * skip over J9MethodDebugInfo header and the J9LineNumber table
 				 */
-				U32 lineNumberTableSize;
-				if (AlgorithmVersion.getVersionOf("VM_LINE_NUMBER_TABLE_VERSION").getAlgorithmVersion() < 1) {
-					lineNumberTableSize = methodInfo.lineNumberCount().mult((int) J9LineNumber.SIZEOF);
-				} else {
-					lineNumberTableSize = J9MethodDebugInfoHelper.getLineNumberCompressedSize(methodInfo);
-				}
+				U32 lineNumberTableSize = J9MethodDebugInfoHelper.getLineNumberCompressedSize(methodInfo);
 				return VoidPointer.cast(((U8Pointer.cast(methodInfo).addOffset(J9MethodDebugInfo.SIZEOF).addOffset(lineNumberTableSize))));
 			} else {
 				/* 
@@ -198,14 +174,6 @@ public class OptInfo {
 			}
 		}
 		return VoidPointer.NULL;
-	}
-
-	public static UDATA variableInfoSize(UDATA modifiers) {
-		UDATA size = new UDATA(J9VariableInfo.SIZEOF);
-		if (modifiers.allBitsIn(J9_ROMCLASS_OPTINFO_VARIABLE_TABLE_HAS_GENERIC)) {
-			size = size.add(U32.SIZEOF);
-		}
-		return size;
 	}
 
 	public static U32 COUNT_MASK(U32 value, long mask) {

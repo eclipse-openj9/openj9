@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package com.ibm.j9ddr.vm29.j9.walkers;
 
 import java.util.Iterator;
@@ -34,7 +33,6 @@ import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodDebugInfoPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9VariableInfoPointer;
 import com.ibm.j9ddr.vm29.structure.J9UTF8;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U16;
@@ -44,13 +42,16 @@ import com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants;
 
 public abstract class LocalVariableTableIterator implements Iterator<LocalVariableTable> {
 
-	public static LocalVariableTableIterator localVariableTableIteratorFor(J9MethodDebugInfoPointer methodInfo) throws CorruptDataException {
-		/* If the version is right */
-		if (AlgorithmVersion.getVersionOf("VM_LOCAL_VARIABLE_TABLE_VERSION").getAlgorithmVersion() < 1) {
-			return new LocalVariableTableIterator_V0(methodInfo);
-		} else {
-			return new LocalVariableTableIterator_V1(methodInfo);
+	public static void checkVariableTableVersion() throws CorruptDataException {
+		int version = AlgorithmVersion.getVersionOf("VM_LOCAL_VARIABLE_TABLE_VERSION").getAlgorithmVersion();
+		if (version < 1) {
+			throw new CorruptDataException("Unexpected local variable table version " + version);
 		}
+	}
+
+	public static LocalVariableTableIterator localVariableTableIteratorFor(J9MethodDebugInfoPointer methodInfo) throws CorruptDataException {
+		checkVariableTableVersion();
+		return new LocalVariableTableIterator_V1(methodInfo);
 	}
 
 	public void remove() {
@@ -59,63 +60,6 @@ public abstract class LocalVariableTableIterator implements Iterator<LocalVariab
 
 	public abstract U8Pointer getLocalVariableTablePtr();
 
-	private static class LocalVariableTableIterator_V0 extends LocalVariableTableIterator {
-		private long variablesLeft;
-		private J9VariableInfoPointer variable;
-
-		public LocalVariableTableIterator_V0(J9MethodDebugInfoPointer methodInfo) throws CorruptDataException {
-			variablesLeft = methodInfo.varInfoCount().longValue();
-			variable = OptInfo.getV0VariableTableForROMClass(methodInfo);
-		}
-		public boolean hasNext() {
-			return variablesLeft != 0;
-		}
-		
-		public LocalVariableTable next() {
-			variablesLeft--;
-			try {
-				J9VariableInfoPointer result = variable;
-				
-				/* Move to the next J9VariableInfo */
-				variable = variable.add(1);
-				
-				U32 slotNumber = result.slotNumber();
-				U32 startVisibility = result.startVisibility();
-				U32 visibilityLength = result.visibilityLength();
-				
-				J9UTF8Pointer name = result.name();
-				J9UTF8Pointer signature = result.signature();
-				J9UTF8Pointer genericSignature = null;
-				if (visibilityLength.anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_VARIABLE_TABLE_HAS_GENERIC)) {
-					visibilityLength = visibilityLength.bitAnd(~J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_VARIABLE_TABLE_HAS_GENERIC);
-					/**
-					 * If J9VariableInfo has generic structure, 
-					 * then SRP to the generic structure is stored in the first 4 bytes 
-					 * starting the end of the current J9VariableInfo structure, which overlaps with the following 
-					 * J9VariableInfo's first 4 bytes which is J9SRP name field. So this field can be used to get the generic structure. 
-					 */
-					result = result.add(1);
-					genericSignature = result.name();
-					
-					/* If the J9VariableInfo has generic signature then 
-					 * it uses another 4 bytes for SRP to the generic structure after the end of the current J9VariableInfo.
-					 * Therefore, move next J9VariableInfo address another 4 bytes.
-					 */
-					variable = variable.addOffset(SelfRelativePointer.SIZEOF);
-				}
-				
-				return new LocalVariableTable(slotNumber, startVisibility, visibilityLength, genericSignature, name, signature);
-			} catch (CorruptDataException ex) {
-				EventManager.raiseCorruptDataEvent("CorruptData encountered walking local variable table.", ex, false);
-				return null;
-			}
-		}
-		@Override
-		public U8Pointer getLocalVariableTablePtr() {
-			return U8Pointer.cast(variable);
-		}
-	}
-	
 	private static class LocalVariableTableIterator_V1 extends LocalVariableTableIterator {
 		private J9MethodDebugInfoPointer methodInfo;
 		private U32 count = new U32(0);
