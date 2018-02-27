@@ -531,6 +531,7 @@ typedef struct J9CfrConstantPoolInfo {
 #define CFR_CONSTANT_NameAndType  12
 #define CFR_CONSTANT_MethodHandle  15
 #define CFR_CONSTANT_MethodType  16
+#define CFR_CONSTANT_Dynamic  17
 #define CFR_CONSTANT_InvokeDynamic  18
 #define CFR_CONSTANT_Module 19
 #define CFR_CONSTANT_Package 20

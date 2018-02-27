@@ -1128,12 +1128,20 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 			i++;
 			break;
 
+		case CFR_CONSTANT_Dynamic:
+			if (classfile->majorVersion < 55) {
+				errorCode = J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51__ID;
+				offset = (U_32) (index - data - 1);
+				goto _errorFound;
+			}
+			/* fall through */
 		case CFR_CONSTANT_InvokeDynamic:
 			if (classfile->majorVersion < 51) {
 				errorCode = J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51__ID;
 				offset = (U_32) (index - data - 1);
 				goto _errorFound;
 			}
+			/* fall through */
 		case CFR_CONSTANT_Fieldref:
 		case CFR_CONSTANT_Methodref:
 		case CFR_CONSTANT_InterfaceMethodref:
@@ -1384,6 +1392,7 @@ checkPool(J9CfrClassFile* classfile, U_8* segment, U_8* poolStart, I_32 *maxBoot
 			index += 4;
 			break;
 
+		case CFR_CONSTANT_Dynamic: /* fall through */
 		case CFR_CONSTANT_InvokeDynamic:
 			/* Slot1 is an index into the BootstrapMethods_attribute - can't be validated yet */
 			if (((I_32) info->slot1) > *maxBootstrapMethodIndex) {
