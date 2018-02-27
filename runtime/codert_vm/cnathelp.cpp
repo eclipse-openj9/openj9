@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2772,6 +2772,20 @@ fast_jitTypeCheckArrayStore(J9VMThread *currentThread, j9object_t destinationObj
 	return fast_jitTypeCheckArrayStoreWithNullCheck(currentThread, destinationObject, objectBeingStored);
 }
 
+void* J9FASTCALL
+old_slow_jitReportFinalFieldModified(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(1);
+	DECLARE_JIT_PARM(J9Class*, fieldClass, 1);
+
+	void* oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+	VM_VMHelpers::reportFinalFieldModified(currentThread, fieldClass);
+	void* addr = restoreJITResolveFrame(currentThread, oldPC, true, false);
+
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
 void
 initPureCFunctionTable(J9JavaVM *vm)
 {
@@ -2875,6 +2889,7 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_slow_jitInterpretNewInstanceMethod = (void*)old_slow_jitInterpretNewInstanceMethod;
 	jitConfig->old_slow_jitNewInstanceImplAccessCheck = (void*)old_slow_jitNewInstanceImplAccessCheck;
 	jitConfig->old_slow_jitTranslateNewInstanceMethod = (void*)old_slow_jitTranslateNewInstanceMethod;
+	jitConfig->old_slow_jitReportFinalFieldModified = (void*)old_slow_jitReportFinalFieldModified;
 	jitConfig->fast_jitNewObject = (void*)fast_jitNewObject;
 	jitConfig->fast_jitNewObjectNoZeroInit = (void*)fast_jitNewObjectNoZeroInit;
 	jitConfig->fast_jitANewArray = (void*)fast_jitANewArray;
