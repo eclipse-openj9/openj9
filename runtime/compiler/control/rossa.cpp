@@ -1587,7 +1587,8 @@ onLoadInternal(
       }
    else if (compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
       {
-      compInfo->setUnloadedClassesTempList(new (PERSISTENT_NEW) std::vector<TR_OpaqueClassBlock*>());
+      compInfo->setUnloadedClassesTempList(new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock*>(
+         PersistentVector<TR_OpaqueClassBlock*>::allocator_type(TR::Compiler->persistentAllocator())));
       }
 
 #if defined(TR_HOST_S390)

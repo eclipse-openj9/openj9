@@ -4,11 +4,7 @@
 #include <unordered_map>
 #include "control/CompilationThread.hpp"
 #include "rpc/J9Client.h"
-
-template<typename T, typename U>
-using PersistentUnorderedMapAllocator = TR::typed_allocator<std::pair<const T, U>, TR::PersistentAllocator&>;
-template<typename T, typename U>
-using PersistentUnorderedMap = std::unordered_map<T, U, std::hash<T>, std::equal_to<T>, PersistentUnorderedMapAllocator<T, U>>;
+#include "env/PersistentCollections.hpp"
 
 class TR_PersistentClassInfo;
 

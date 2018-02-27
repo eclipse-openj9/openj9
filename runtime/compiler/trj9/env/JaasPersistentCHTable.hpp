@@ -2,6 +2,7 @@
 #define JAAS_PERSISTENT_CHTABLE_H
 
 #include "env/PersistentCHTable.hpp"
+#include "env/PersistentCollections.hpp"
 #include "env/CHTable.hpp"
 #include <unordered_map>
 #include <unordered_set>
@@ -15,21 +16,6 @@
 #define CHTABLE_UPDATE_COUNTER(counter, value)
 #endif
 
-
-template<typename T>
-using PersistentVectorAllocator = TR::typed_allocator<T, TR::PersistentAllocator&>;
-template<typename T>
-using PersistentVector = std::vector<T, PersistentVectorAllocator<T>>;
-
-template<typename T>
-using PersistentUnorderedSetAllocator = TR::typed_allocator<T, TR::PersistentAllocator&>;
-template<typename T>
-using PersistentUnorderedSet = std::unordered_set<T, std::hash<T>, std::equal_to<T>, PersistentUnorderedSetAllocator<T>>;
-
-template<typename T, typename U>
-using PersistentUnorderedMapAllocator = TR::typed_allocator<std::pair<const T, U>, TR::PersistentAllocator&>;
-template<typename T, typename U>
-using PersistentUnorderedMap = std::unordered_map<T, U, std::hash<T>, std::equal_to<T>, PersistentUnorderedMapAllocator<T, U>>;
 
 class TR_JaasServerPersistentCHTable : public TR_PersistentCHTable
    {

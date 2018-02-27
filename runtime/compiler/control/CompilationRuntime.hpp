@@ -40,6 +40,7 @@
 #include "infra/Statistics.hpp"
 #include "control/rossa.h"
 #include "runtime/RelocationRuntime.hpp"
+#include "env/PersistentCollections.hpp"
 
 extern "C" {
 struct J9Method;
@@ -945,8 +946,8 @@ public:
    // for JaaS
    ClientSessionHT *getClientSessionHT() { return _clientSessionHT; }
    void setClientSessionHT(ClientSessionHT *ht) { _clientSessionHT = ht; }
-   std::vector<TR_OpaqueClassBlock*> *getUnloadedClassesTempList() { return _unloadedClassesTempList; }
-   void setUnloadedClassesTempList(std::vector<TR_OpaqueClassBlock*> *it) { _unloadedClassesTempList = it; }
+   PersistentVector<TR_OpaqueClassBlock*> *getUnloadedClassesTempList() { return _unloadedClassesTempList; }
+   void setUnloadedClassesTempList(PersistentVector<TR_OpaqueClassBlock*> *it) { _unloadedClassesTempList = it; }
 
    static int32_t         VERY_SMALL_QUEUE;
    static int32_t         SMALL_QUEUE;
@@ -1131,7 +1132,7 @@ private:
    // JAAS hashtable that holds session information about JAAS clients
    ClientSessionHT *_clientSessionHT;
    // JAAS list of classes unloaded 
-   std::vector<TR_OpaqueClassBlock*> *_unloadedClassesTempList;
+   PersistentVector<TR_OpaqueClassBlock*> *_unloadedClassesTempList;
    }; // CompilationInfo
 }
 
