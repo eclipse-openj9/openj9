@@ -23,15 +23,20 @@
 -->
 
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
-        
-    <xi:include href="../j9vm/j9vmnatives.xml"><xi:fallback/></xi:include>
-    
+	<xi:include href="../j9vm/j9vmnatives.xml"><xi:fallback/></xi:include>
+	
 	<exports group="all">
 		<export name="JNI_CreateJavaVM" />
 		<export name="JNI_GetCreatedJavaVMs" />
 		<export name="JNI_GetDefaultJavaVMInitArgs" />
 	</exports>
-
+	<exports group="jdk11">
+		<export name="_JVM_GetCallerClass@4" />
+	</exports>
+	<exports group="prejdk11">
+		<export name="_JVM_GetCallerClass@8" />
+	</exports>
+		
 	<artifact type="shared" name="jvm_b150" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
 		<options>
@@ -40,6 +45,7 @@
 		</options>
 		<phase>core quick j2se</phase>
 		<exports>
+			<group name="prejdk11"/>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
 		</exports>
@@ -89,6 +95,7 @@
 		</options>
 		<phase>core quick j2se</phase>
 		<exports>
+			<group name="prejdk11"/>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
 		</exports>
@@ -138,6 +145,7 @@
 		</options>
 		<phase>core quick j2se</phase>
 		<exports>
+			<group name="jdk11"/>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
 		</exports>
@@ -189,6 +197,7 @@
 		</options>
 		<phase>core quick j2se</phase>		
 		<exports>
+			<group name="prejdk11"/>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
 		</exports>
