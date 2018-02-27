@@ -2112,6 +2112,7 @@ ClientSessionHT::~ClientSessionHT()
    {
    for (auto iter = _clientSessionMap.begin(); iter != _clientSessionMap.end(); ++iter)
       {
+      iter->second->~ClientSessionData();
       TR_PersistentMemory::jitPersistentFree(iter->second); // delete the client data
       _clientSessionMap.erase(iter); // delete the mapping from the hashtable
       }
@@ -2139,6 +2140,7 @@ ClientSessionHT::purgeOldDataIfNeeded()
             {
             if (TR::Options::getVerboseOption(TR_VerboseJaas))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server will purge session data for clientUID %llu", (unsigned long long)iter->first);
+            iter->second->~ClientSessionData();
             TR_PersistentMemory::jitPersistentFree(iter->second); // delete the client data
             _clientSessionMap.erase(iter); // delete the mapping from the hashtable
             }
