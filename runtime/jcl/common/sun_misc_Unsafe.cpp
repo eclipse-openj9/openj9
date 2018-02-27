@@ -159,6 +159,8 @@ Java_sun_misc_Unsafe_pageSize(JNIEnv *env, jobject receiver)
 jint JNICALL
 Java_sun_misc_Unsafe_getLoadAverage(JNIEnv *env, jobject receiver, jdoubleArray loadavg, jint nelems)
 {
+	/* stub implementation */
+	assert(!"Java_sun_misc_Unsafe_getLoadAverage is unimplemented");
 	return -1;
 }
 
