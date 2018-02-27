@@ -2033,7 +2033,7 @@ ClientSessionData::~ClientSessionData()
    }
 
 void
-ClientSessionData::processUnloadedClasses(std::vector<TR_OpaqueClassBlock*> &classes)
+ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes)
    {
    for (TR_OpaqueClassBlock *clazz : classes)
       {

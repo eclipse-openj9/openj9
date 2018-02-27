@@ -26,7 +26,7 @@ class ClientSessionData
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> & getCHTableClassMap() { return _chTableClassMap; }
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method*, J9ROMMethod*> & getROMMethodMap() { return _romMethodMap; }
-   void processUnloadedClasses(std::vector<TR_OpaqueClassBlock*> &classes);
+   void processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes);
 
    void incInUse() { _inUse++; }
    void decInUse() { _inUse--; TR_ASSERT(_inUse >= 0, "_inUse=%d must be positive\n", _inUse); }
