@@ -2022,10 +2022,12 @@ ClientSessionData::ClientSessionData() : _chTableClassMap(decltype(_chTableClass
    updateTimeOfLastAccess();
    _javaLangClassPtr = nullptr;
    _inUse = 1;
+   _romMapMonitor = TR::Monitor::create("JIT-JaaSROMMapMonitor");
    }
 
 ClientSessionData::~ClientSessionData()
    {
+   _romMapMonitor->destroy();
    for (auto it : _romClassMap)
       {
       TR_Memory::jitPersistentFree(it.second.romClass);
@@ -2035,6 +2037,7 @@ ClientSessionData::~ClientSessionData()
 void
 ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes)
    {
+   OMR::CriticalSection processUnloadedClasses(getROMMapMonitor());
    for (TR_OpaqueClassBlock *clazz : classes)
       {
       auto it = _romClassMap.find((J9Class*) clazz);

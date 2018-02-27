@@ -627,6 +627,7 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
 void
 TR::CompilationInfoPerThread::cacheRemoteROMClass(J9Class *clazz, J9ROMClass *romClass, J9Method *methods)
    {
+   OMR::CriticalSection cacheRemoteROMClass(getClientData()->getROMMapMonitor());
    getClientData()->getROMClassMap().insert({clazz, {romClass, methods}});
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
@@ -640,6 +641,7 @@ TR::CompilationInfoPerThread::cacheRemoteROMClass(J9Class *clazz, J9ROMClass *ro
 J9ROMClass *
 TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
    {
+   OMR::CriticalSection getRemoteROMClass(getClientData()->getROMMapMonitor());
    auto it = getClientData()->getROMClassMap().find(clazz);
    return (it == getClientData()->getROMClassMap().end()) ? nullptr : it->second.romClass;
    }

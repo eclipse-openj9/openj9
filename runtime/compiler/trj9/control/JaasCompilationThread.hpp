@@ -27,6 +27,7 @@ class ClientSessionData
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method*, J9ROMMethod*> & getROMMethodMap() { return _romMethodMap; }
    void processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes);
+   TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
 
    void incInUse() { _inUse++; }
    void decInUse() { _inUse--; TR_ASSERT(_inUse >= 0, "_inUse=%d must be positive\n", _inUse); }
@@ -41,6 +42,7 @@ class ClientSessionData
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _chTableClassMap; // cache of persistent CHTable
    PersistentUnorderedMap<J9Class*, ClassInfo> _romClassMap;
    PersistentUnorderedMap<J9Method*, J9ROMMethod*> _romMethodMap;
+   TR::Monitor *_romMapMonitor;
    int8_t  _inUse;  // Number of concurrent compilations from the same client 
                     // Accessed with compilation monitor in hand
    }; // ClientSessionData
