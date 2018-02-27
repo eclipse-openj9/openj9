@@ -23,15 +23,28 @@
  def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH) {
     // Get a set of SHAs for a standard OpenJ9 build
     def SHAS = [:]
+
+    // check if the SHAs are set as build parameters
+    // if not set, sniff the remote repositories references
+
     stage ('Sniff Repos') {
         dir('openjdk') {
-            SHAS['OPENJDK'] = get_sha(OPENJDK_REPO, OPENJDK_BRANCH)
+            SHAS['OPENJDK'] = OPENJDK_SHA
+            if (SHAS['OPENJDK'] == '') {
+                SHAS['OPENJDK'] = get_repository_sha(OPENJDK_REPO, OPENJDK_BRANCH)
+            }
         }
         dir('openj9') {
-            SHAS['OPENJ9'] = get_sha(OPENJ9_REPO, OPENJ9_BRANCH)
+            SHAS['OPENJ9'] = OPENJ9_SHA
+            if ((SHAS['OPENJ9'] == '') && ((OPENJ9_REPO != '') && (OPENJ9_BRANCH != ''))) {
+                SHAS['OPENJ9'] = get_repository_sha(OPENJ9_REPO, OPENJ9_BRANCH)
+            }
         }
         dir('omr') {
-            SHAS['OMR'] = get_sha(OMR_REPO, OMR_BRANCH)
+            SHAS['OMR'] = OMR_SHA
+            if ((SHAS['OMR'] == '') && ((OMR_REPO != '') && (OMR_BRANCH != ''))){
+                SHAS['OMR'] = get_repository_sha(OMR_REPO, OMR_BRANCH)
+            }
         }
         // Write the SHAs to the Build Description
         echo "OPENJDK_SHA:${SHAS['OPENJDK']}"
@@ -40,6 +53,17 @@
         currentBuild.description = "OpenJ9: ${SHAS['OPENJ9']}<br/>OMR: ${SHAS['OMR']}<br/>OpenJDK: ${SHAS['OPENJDK']}"
         return SHAS
     }
+}
+
+def get_repository_sha(REPO, BRANCH) {
+   // use ssh-agent to avoid permission denied on private repositories
+    if (USER_CREDENTIALS_ID != '') {
+        return sshagent(credentials:["${USER_CREDENTIALS_ID}"]) {
+            get_sha(REPO, BRANCH)
+        }
+    }
+
+    return get_sha(REPO, BRANCH)
 }
 
 def get_sha(REPO, BRANCH) {
@@ -52,16 +76,16 @@ def get_sha(REPO, BRANCH) {
         ).trim()
 }
 
-def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA) {
+def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE) {
     stage ('Build') {
-        JOB = build job: BUILD_JOB_NAME, parameters: [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO), string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH), string(name: 'OPENJDK_SHA', value: OPENJDK_SHA), string(name: 'OPENJ9_REPO', value: OPENJ9_REPO), string(name: 'OPENJ9_BRANCH', value: OPENJ9_BRANCH), string(name: 'OPENJ9_SHA', value: OPENJ9_SHA), string(name: 'OMR_REPO', value: OMR_REPO), string(name: 'OMR_BRANCH', value: OMR_BRANCH), string(name: 'OMR_SHA', value: OMR_SHA)]
+        JOB = build job: BUILD_JOB_NAME, parameters: [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO), string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH), string(name: 'OPENJDK_SHA', value: OPENJDK_SHA), string(name: 'OPENJ9_REPO', value: OPENJ9_REPO), string(name: 'OPENJ9_BRANCH', value: OPENJ9_BRANCH), string(name: 'OPENJ9_SHA', value: OPENJ9_SHA), string(name: 'OMR_REPO', value: OMR_REPO), string(name: 'OMR_BRANCH', value: OMR_BRANCH), string(name: 'OMR_SHA', value: OMR_SHA), string(name: 'VARIABLE_FILE', value: VARIABLE_FILE)]
         return JOB
     }
 }
 
-def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER) {
+def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE) {
     stage ("${JOB_NAME}") {
-        JOB = build job: JOB_NAME, parameters: [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME), string(name: 'UPSTREAM_JOB_NUMBER', value: "${UPSTREAM_JOB_NUMBER}")]
+        JOB = build job: JOB_NAME, parameters: [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME), string(name: 'UPSTREAM_JOB_NUMBER', value: "${UPSTREAM_JOB_NUMBER}"), string(name: 'VARIABLE_FILE', value: VARIABLE_FILE)]
         return JOB
     }
 }

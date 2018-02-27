@@ -20,21 +20,20 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
- node('390') {
+SDK_VERSION = '8'
+SPEC = 'linux_390-64_cmprssptrs'
 
-    SDK_VERSION = "8"
-    OPENJDK_REPO = "https://github.com/ibmruntimes/openj9-openjdk-jdk${SDK_VERSION}.git"
-    OPENJDK_BRANCH = "openj9"
-    BOOT_JDK = "/usr/lib/jvm/java-7-openjdk-s390x"
-    FREEMARKER = "$HOME/openj9/freemarker.jar"
-    SDK_PREFIX = "OpenJ9-JDK${SDK_VERSION}-linux_390-64_cmprssptrs-"
-    SDK_SUFFIX = ".tar.gz"
-    TEST_PREFIX = "test-"
-    TEST_SUFFIX = ".tar.gz"
-    RELEASE = "linux-s390x-normal-server-release"
-    JDK_FOLDER = "j2sdk-image"
+node('master') {
 
     checkout scm
-    def buildfile = load "${WORKSPACE}/buildenv/jenkins/common/build"
+    variableFile = load 'buildenv/jenkins/common/variables-functions'
+    variableFile.set_job_variables('build')
+    cleanWs()
+}
+
+ node("${NODE}") {
+
+    checkout scm
+    def buildfile = load "buildenv/jenkins/common/build"
     buildfile.build_all()
 }
