@@ -1962,9 +1962,11 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
          if (isPrintJaasMsgStats && compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
             printJaasMsgStats(jitConfig);
 
-         static char * isPrintJaasCHTableStats = feGetEnv("TR_PrintJaasCHTableStats");
-         if (isPrintJaasCHTableStats)
+         if (feGetEnv("TR_PrintJaasCHTableStats"))
             printJaasCHTableStats(jitConfig, compInfo);
+
+         if (feGetEnv("TR_PrintJaasCacheStats"))
+            printJaasCacheStats(jitConfig, compInfo);
          }
       }
 

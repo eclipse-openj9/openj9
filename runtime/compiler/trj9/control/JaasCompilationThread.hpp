@@ -36,6 +36,8 @@ class ClientSessionData
    void updateTimeOfLastAccess();
    int64_t getTimeOflastAccess() const { return _timeOfLastAccess; }
 
+   void printStats();
+
    private:
    int64_t  _timeOfLastAccess; // in ms
    TR_OpaqueClassBlock *_javaLangClassPtr; // nullptr means not set
@@ -61,6 +63,7 @@ class ClientSessionHT
    static ClientSessionHT* allocate(); // allocates a new instance of this class
    ClientSessionData * findOrCreateClientSession(uint64_t clientUID);
    void purgeOldDataIfNeeded();
+   void printStats();
 
    private:
    PersistentUnorderedMap<uint64_t, ClientSessionData*> _clientSessionMap;
@@ -80,5 +83,6 @@ void remoteCompilationEnd(TR::IlGeneratorMethodDetails &details, J9JITConfig *ji
       TR_FrontEnd *fe, TR_MethodToBeCompiled *entry, TR::Compilation *comp);
 void printJaasMsgStats(J9JITConfig *);
 void printJaasCHTableStats(J9JITConfig *, TR::CompilationInfo *);
+void printJaasCacheStats(J9JITConfig *, TR::CompilationInfo *);
 
 #endif

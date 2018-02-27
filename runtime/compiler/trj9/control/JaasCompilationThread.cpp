@@ -2008,6 +2008,16 @@ void printJaasCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo
 #endif
    }
 
+void printJaasCacheStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
+   {
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+   if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      {
+      auto clientSessionHT = compInfo->getClientSessionHT();
+      clientSessionHT->printStats();
+      }
+   }
+
 void
 ClientSessionData::updateTimeOfLastAccess()
    {
@@ -2052,6 +2062,20 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
       TR_Memory::jitPersistentFree(romClass);
       _romClassMap.erase(it);
       }
+   }
+
+void
+ClientSessionData::printStats()
+   {
+   PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
+   j9tty_printf(PORTLIB, "\tNum cached ROM classes: %d\n", _romClassMap.size());
+   j9tty_printf(PORTLIB, "\tNum cached ROM methods: %d\n", _romMethodMap.size());
+   size_t total = 0;
+   for (auto it : _romClassMap)
+      {
+      total += it.second.romClass->romSize;
+      }
+   j9tty_printf(PORTLIB, "\tTotal size of cached ROM classes + methods: %d bytes\n", total);
    }
 
 
@@ -2148,5 +2172,21 @@ ClientSessionHT::purgeOldDataIfNeeded()
       _timeOfLastPurge = crtTime;
 
       // JAAS TODO: keep stats on how many elements were purged
+      }
+   }
+
+// to print these stats,
+// set the env var `TR_PrintJaasCacheStats=1`
+// run the server with `-Xdump:jit:events=user`
+// then `kill -3` it when you want to print them 
+void
+ClientSessionHT::printStats()
+   {
+   PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
+   j9tty_printf(PORTLIB, "Client sessions:\n");
+   for (auto session : _clientSessionMap)
+      {
+      j9tty_printf(PORTLIB, "Session for id %d:\n", session.first);
+      session.second->printStats();
       }
    }
