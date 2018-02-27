@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2015 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,8 +149,6 @@ public class StructureTypeManager
 	
 	public int getType(String type)
 	{
-		CTypeParser parser = new CTypeParser(type);
-		
 		// trim off the const modifier, if present
 		if(type.startsWith("const ")) {
 			return getType(type.substring("const ".length()).trim());
@@ -196,7 +194,9 @@ public class StructureTypeManager
 		if (type.equals("iconv_t")) {
 			return TYPE_IDATA;
 		}	
-		
+
+		CTypeParser parser = new CTypeParser(type);
+
 		// array?
 		if(parser.getSuffix().endsWith("]")) {
 			return TYPE_ARRAY;
@@ -241,13 +241,17 @@ public class StructureTypeManager
 			}
 		}
 		
-		// SRP?
-		if(type.startsWith("J9SRP")) {
+		/* SRP?
+		 * Match types like J9SRP or J9SRP(UDATA) but not J9SRP* or J9SRPHashTable.
+		 */
+		if (type.equals("J9SRP") || type.startsWith("J9SRP(")) {
 			return TYPE_J9SRP;
 		}
-		
-		// WSRP?
-		if(type.startsWith("J9WSRP")) {
+
+		/* WSRP?
+		 * Match types like J9WSRP or J9WSRP(UDATA) but not J9WSRP*.
+		 */
+		if (type.equals("J9WSRP") || type.startsWith("J9WSRP(")) {
 			return TYPE_J9WSRP;
 		}
 		

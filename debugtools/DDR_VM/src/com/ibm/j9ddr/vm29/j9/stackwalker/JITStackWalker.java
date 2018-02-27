@@ -82,6 +82,7 @@ import static com.ibm.j9ddr.vm29.structure.J9Consts.*;
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.*;
 import static com.ibm.j9ddr.vm29.structure.J9StackWalkConstants.*;
 import static com.ibm.j9ddr.vm29.structure.J9StackWalkState.*;
+import static com.ibm.j9ddr.vm29.structure.MethodMetaDataConstants.INTERNAL_PTR_REG_MASK;
 
 /**
  * Stack walker for processing JIT frames. Don't call directly - go through
