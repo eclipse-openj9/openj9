@@ -127,6 +127,7 @@ public:
    virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
    virtual bool isClassArray(TR_OpaqueClassBlock *klass) override;
    virtual uintptrj_t getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef) override { return 0; } // safe answer
+   virtual bool instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass) override;
    };
 
 #endif // VMJ9SERVER_H

@@ -1010,6 +1010,8 @@ public:
    virtual void *getLocationOfClassLoaderObjectPointer(TR_OpaqueClassBlock *classPointer);
    virtual bool isMethodBreakpointed(TR_OpaqueMethodBlock *method);
 
+   virtual bool instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass);
+
    protected:
 #if defined(TR_TARGET_S390)
    int32_t getS390MachineName(TR_S390MachineType machine, char* processorName, int32_t stringLength);

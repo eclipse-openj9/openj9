@@ -3547,9 +3547,10 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
    uintptrj_t guessClass = 0;
    TR_OpaqueClassBlock* guessClassArray[NUM_PICS];
    auto num_PICs = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(cg, node, guessClassArray);
+   auto fej9 = (TR_J9VMBase *)(cg->comp()->fe());
    for (uint8_t i = 0; i < num_PICs; i++)
       {
-      if (instanceOfOrCheckCast((J9Class*)guessClassArray[i], (J9Class*)clazz))
+      if (fej9->instanceOfOrCheckCast((J9Class*)guessClassArray[i], (J9Class*)clazz))
          {
          guessClass = (uintptrj_t)guessClassArray[i];
          }
