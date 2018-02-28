@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -657,6 +657,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitInterpretNewInstanceMethod", offsetof(J9JITConfig, old_slow_jitInterpretNewInstanceMethod)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitNewInstanceImplAccessCheck", offsetof(J9JITConfig, old_slow_jitNewInstanceImplAccessCheck)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitTranslateNewInstanceMethod", offsetof(J9JITConfig, old_slow_jitTranslateNewInstanceMethod)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportFinalFieldModified", offsetof(J9JITConfig, old_slow_jitReportFinalFieldModified)) |
 
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitNewObject", offsetof(J9JITConfig, fast_jitNewObject)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitNewObjectNoZeroInit", offsetof(J9JITConfig, fast_jitNewObjectNoZeroInit)) |
