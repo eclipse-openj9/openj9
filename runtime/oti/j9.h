@@ -60,6 +60,7 @@
 #include "omr.h"
 #include "temp.h"
 #include "j9thread.h"
+#include "j2sever.h"
 
 typedef struct J9JNIRedirectionBlock {
 	struct J9JNIRedirectionBlock* next;
@@ -129,21 +130,35 @@ typedef struct J9ClassLoaderWalkState {
 
 #define IS_STRING_COMPRESSED(vmThread, object) \
 	(IS_STRING_COMPRESSION_ENABLED(vmThread) ? \
-		(((I_32) J9VMJAVALANGSTRING_COUNT(vmThread, object)) >= 0) : FALSE)
+		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_19 ? \
+			(((I_32) J9VMJAVALANGSTRING_CODER(vmThread, object)) == 0) : \
+			(((I_32) J9VMJAVALANGSTRING_COUNT(vmThread, object)) >= 0)) : \
+		FALSE)
 
 #define IS_STRING_COMPRESSED_VM(javaVM, object) \
 	(IS_STRING_COMPRESSION_ENABLED_VM(javaVM) ? \
-		(((I_32) J9VMJAVALANGSTRING_COUNT_VM(javaVM, object)) >= 0) : FALSE)
+		(J2SE_VERSION(javaVM) >= J2SE_19 ? \
+			(((I_32) J9VMJAVALANGSTRING_CODER_VM(javaVM, object)) == 0) : \
+			(((I_32) J9VMJAVALANGSTRING_COUNT_VM(javaVM, object)) >= 0)) : \
+		FALSE)
 
 #define J9VMJAVALANGSTRING_LENGTH(vmThread, object) \
 	(IS_STRING_COMPRESSION_ENABLED(vmThread) ? \
-		(J9VMJAVALANGSTRING_COUNT(vmThread, object) & 0x7FFFFFFF) : \
-		(J9VMJAVALANGSTRING_COUNT(vmThread, object)))
+		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_19 ? \
+			(J9INDEXABLEOBJECT_SIZE(vmThread, J9VMJAVALANGSTRING_VALUE(vmThread, object)) >> ((I_32) J9VMJAVALANGSTRING_CODER(vmThread, object))) : \
+			(J9VMJAVALANGSTRING_COUNT(vmThread, object) & 0x7FFFFFFF)) : \
+		(J2SE_VERSION((vmThread)->javaVM) >= J2SE_19 ? \
+			(J9INDEXABLEOBJECT_SIZE(vmThread, J9VMJAVALANGSTRING_VALUE(vmThread, object)) >> 1) : \
+			(J9VMJAVALANGSTRING_COUNT(vmThread, object))))
 
 #define J9VMJAVALANGSTRING_LENGTH_VM(javaVM, object) \
 	(IS_STRING_COMPRESSION_ENABLED_VM(javaVM) ? \
-		(J9VMJAVALANGSTRING_COUNT_VM(javaVM, object) & 0x7FFFFFFF) : \
-		(J9VMJAVALANGSTRING_COUNT_VM(javaVM, object)))
+		(J2SE_VERSION(javaVM) >= J2SE_19 ? \
+			(J9INDEXABLEOBJECT_SIZE_VM(javaVM, J9VMJAVALANGSTRING_VALUE_VM(javaVM, object)) >> ((I_32) J9VMJAVALANGSTRING_CODER(javaVM, object))) : \
+			(J9VMJAVALANGSTRING_COUNT_VM(javaVM, object) & 0x7FFFFFFF)) : \
+		(J2SE_VERSION(javaVM) >= J2SE_19 ? \
+			(J9INDEXABLEOBJECT_SIZE_VM(javaVM, J9VMJAVALANGSTRING_VALUE_VM(javaVM, object)) >> 1) : \
+			(J9VMJAVALANGSTRING_COUNT_VM(javaVM, object))))
 
 /* UTF8 access macros - all access to J9UTF8 fields should be done through these macros */
 
