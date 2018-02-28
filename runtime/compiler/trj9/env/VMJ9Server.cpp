@@ -98,9 +98,31 @@ TR_J9ServerVM::isAbstractClass(TR_OpaqueClassBlock *clazzPointer)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT)
    {
-   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JAAS::J9ServerMessageType::VM_getSystemClassFromClassName, std::string(name, length), isVettedForAOT);
-   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   TR_OpaqueClassBlock * clazz = nullptr;
+   // check the cache first
+   std::string className(name, length);
+   PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & systemClassByNameMap = _compInfoPT->getClientData()->getSystemClassByNameMap();
+   auto it = systemClassByNameMap.find(className);
+   if (it != systemClassByNameMap.end())
+      {
+      clazz = it->second;
+      }
+   else // classname not found; ask the client and cache the answer
+      {
+      JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JAAS::J9ServerMessageType::VM_getSystemClassFromClassName, className, isVettedForAOT);
+      clazz = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+      if (clazz)
+         {
+         systemClassByNameMap.insert(std::make_pair(className, clazz));
+         }
+      else
+         {
+         // Class with given name does not exist yet, but it could be
+         // loaded in the future, thus we should not cache NULL pointers.
+         }
+      }
+   return clazz;
    }
 
 bool
