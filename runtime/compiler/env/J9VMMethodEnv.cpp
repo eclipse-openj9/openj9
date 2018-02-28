@@ -25,6 +25,8 @@
 #include "env/CompilerEnv.hpp"
 #include "env/VMMethodEnv.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
+#include "control/JaasCompilationThread.hpp"
 #include "j9.h"
 #include "j9cfg.h"
 #include "jilconsts.h"
@@ -57,11 +59,43 @@ J9::VMMethodEnv::startPC(TR_OpaqueMethodBlock *method)
    return reinterpret_cast<uintptr_t>(TR::CompilationInfo::getJ9MethodStartPC(j9method));
    }
 
+J9ROMMethod *romMethodOfRamMethod(J9Method* method)
+   {
+   if (!TR::CompilationInfo::getStream()) // If not jaas server
+      return J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+
+   // else, jaas
+   auto clientData = TR::compInfoPT->getClientData();
+   J9ROMMethod *romMethod;
+
+   // check if the method is already cached
+      {
+      OMR::CriticalSection romCache(clientData->getROMMapMonitor());
+      auto &map = clientData->getROMMethodMap();
+      romMethod = map[(J9Method*) method];
+      }
+
+   // if not, go cache the associated ROM class and get the ROM method from it
+   if (!romMethod)
+      {
+      auto stream = TR::CompilationInfo::getStream();
+      stream->write(JAAS::J9ServerMessageType::VM_getClassOfMethod, (TR_OpaqueMethodBlock*) method);
+      J9Class *clazz = (J9Class*) std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+      TR::compInfoPT->getAndCacheRemoteROMClass(clazz);
+         {
+         OMR::CriticalSection romCache(clientData->getROMMapMonitor());
+         auto &map = clientData->getROMMethodMap();
+         romMethod = map[(J9Method*) method];
+         }
+      }
+   TR_ASSERT(romMethod, "Should have acquired romMethod");
+   return romMethod;
+   }
 
 uintptr_t
 J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+   J9ROMMethod *romMethod = romMethodOfRamMethod((J9Method*) method);
    return (uintptr_t)(J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
    }
 
@@ -69,7 +103,7 @@ J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
 uint32_t
 J9::VMMethodEnv::bytecodeSize(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+   J9ROMMethod *romMethod = romMethodOfRamMethod((J9Method*) method);
    return (uint32_t)(J9_BYTECODE_END_FROM_ROM_METHOD(romMethod) -
                      J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
    }
