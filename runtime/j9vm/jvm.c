@@ -1321,15 +1321,12 @@ typedef struct VersionSetting {
  * and avoid naming change from J2SE_SHAPE_B136 to J2SE_SHAPE_B135.
  * This will be removed when a new stable JCL build level is determined and b135 is obsolete.
  *
- * Note about shape "sun_openjdk": 
- *    This shape is introduced to provide JVM_SocketAvailable() with different return values according to
- *    the "shape" value specified within classlib.properties such that both IBM and OpenJ9 Java 8 can work properly.
- *    This is required because IBM Java 8 is applied with a JCL patch which expects different return values from JVM_SocketAvailable().
- *    Newly added shape value and related code can be removed after IBM JCL patch is removed.
+ * Note: shapes "sun" and "sun_openjdk" here are for accommodation of such values within Java 8 classlib.properties.
+ *       Both shapes are mapped to J2SE_SHAPE_OPENJDK to indicate a Java 8 SDK.
  */
 VersionSetting SHAPE_SETTINGS[] = {
-		{"sun", J2SE_SHAPE_SUN},
-		{"sun_openjdk", J2SE_SHAPE_SUN_OPENJDK},
+		{"sun", J2SE_SHAPE_OPENJDK},
+		{"sun_openjdk", J2SE_SHAPE_OPENJDK},
 		{"raw", J2SE_SHAPE_RAW},
 		{"rawplusj9", J2SE_SHAPE_RAWPLUSJ9},
 		{"b135", J2SE_SHAPE_B136},
@@ -1473,14 +1470,14 @@ bail:
 /**
  * Attempt loading 'release' file, and get Java version info.
  * If the file is found, 'JAVA_VERSION' value is retrieved and decoded as following:
- * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_SUN_OPENJDK' assuming this is an OpenJ9 Java 8 build;
+ * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_OPENJDK';
  * "9"         --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
  * "10"        --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
  * "11"        --- Java 11, 'J2SE_V11 | J2SE_SHAPE_V11';
  * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
  * Otherwise, 0 is returned.
  *
- * @return 'J2SE_18 | J2SE_SHAPE_SUN_OPENJDK', 'J2SE_19 | J2SE_SHAPE_B165',
+ * @return 'J2SE_18 | J2SE_SHAPE_OPENJDK', 'J2SE_19 | J2SE_SHAPE_B165',
  *         'J2SE_V10 | J2SE_SHAPE_V10', 'J2SE_V11 | J2SE_SHAPE_V11',
  *         'J2SE_LATEST | J2SE_SHAPE_LATEST' 
  *         according to the 'JAVA_VERSION' value found in 'release';
@@ -1505,7 +1502,7 @@ getVersionFromReleaseFile(void)
 #define	 JAVA_VERSION_8 "\"1.8.0" /* its usual format is "1.8.0_xxx" */
 			if (!strncmp(version, JAVA_VERSION_8, sizeof(JAVA_VERSION_8) - 1)) {
 #undef   JAVA_VERSION_8
-				finalVersion = J2SE_18 | J2SE_SHAPE_SUN_OPENJDK;
+				finalVersion = J2SE_18 | J2SE_SHAPE_OPENJDK;
 			} else if (!strcmp(version, "\"9\"")) {
 				finalVersion = J2SE_19 | J2SE_SHAPE_B165;
 			} else if (!strcmp(version, "\"10\"")) {
@@ -5234,11 +5231,6 @@ JVM_Socket(jint domain, jint type, jint protocol)
  * @param result the number of bytes that can be read without blocking
  * 
  * @return result of this JVM method, 0 for failure, 1 (or non-zero value) for success
- * 
- * Note: There is a JCL patch applied to IBM Java 8 build which expects 1 for failure, 0 for success.
- *       Current implementation supports both IBM and OpenJ9 Java 8 builds.
- *       When the JCL patch is removed, i.e., IBM Java 8 JCL is same as OpenJ9 JCL, following code can be 
- *       cleaned up to only return 0 for failure, 1 (or non-zero value) for success.
  */
 jint JNICALL
 JVM_SocketAvailable(jint descriptor, jint* result)
@@ -5257,7 +5249,6 @@ JVM_SocketAvailable(jint descriptor, jint* result)
 			retVal = ioctl(descriptor, FIONREAD, result);
 		} while ((-1 == retVal) && (EINTR == errno));
 
-#if defined(OPENJ9_BUILD)
 		if (0 <= retVal) {
 			/* ioctl succeeded, return 1 to indicate that this JVM method succeeds */
 			retVal = 1;
@@ -5265,31 +5256,7 @@ JVM_SocketAvailable(jint descriptor, jint* result)
 			/* ioctl failed, return 0 to indicate that this JVM method fails */
 			retVal = 0;
 		}
-#else /* OPENJ9_BUILD */
-		if (J2SE_SHAPE_SUN_OPENJDK == J2SE_SHAPE(BFUjavaVM)) {
-			if (0 <= retVal) {
-				/* ioctl succeeded, return 1 to indicate that this JVM method succeeds */
-				retVal = 1;
-			} else {
-				/* ioctl failed, return 0 to indicate that this JVM method fails */
-				retVal = 0;
-			}
-		} else {
-			if (retVal < 0) {
-				/* ioctl failed, return 1 to indicate that this JVM method fails */
-				retVal = 1;
-			}
-		}
-#endif /* OPENJ9_BUILD */
 	}
-#if !defined(OPENJ9_BUILD)
-	else {
-		if (J2SE_SHAPE_SUN == J2SE_SHAPE(BFUjavaVM)) {
-			/* invalid descriptor, return 1 to indicate that this JVM method fails */
-			retVal = 1;
-		}
-	}
-#endif /* OPENJ9_BUILD */	
 #endif
 
 	Trc_SC_SocketAvailable_Exit(retVal, *result);

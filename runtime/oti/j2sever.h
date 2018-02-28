@@ -57,7 +57,7 @@
 
 /**
  * Masks and constants for describing J2SE shapes.
- *  J2SE_SHAPE_SUN = Sun core libraries (aka IBM 'sidecar', Sun code + IBM kernel)
+ *  J2SE_SHAPE_OPENJDK = OpenJDK core libraries (aka J9 'sidecar', OpenJDK code + J9 kernel)
  *  J2SE_SHAPE_RAW = Pure Oracle code without any IBM modifications
  */
 /*
@@ -66,7 +66,7 @@
  *       nor release file presents.
  */
 #if JAVA_SPEC_VERSION == 8
-	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_SUN
+	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_OPENJDK
 #elif JAVA_SPEC_VERSION == 9
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_B165
 #elif JAVA_SPEC_VERSION == 10
@@ -74,8 +74,7 @@
 #else
 	#define J2SE_SHAPE_LATEST       J2SE_SHAPE_V11
 #endif
-#define J2SE_SHAPE_SUN     		0x10000
-#define J2SE_SHAPE_SUN_OPENJDK	0x20000
+#define J2SE_SHAPE_OPENJDK 		0x10000
 #define J2SE_SHAPE_B136    		0x40000
 #define J2SE_SHAPE_B148    		0x50000
 #define J2SE_SHAPE_B165    		0x60000
