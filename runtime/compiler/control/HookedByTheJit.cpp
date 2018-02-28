@@ -2993,6 +2993,10 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
       methodCount = classPair->methodCount;
       methodList = classPair->methodList;
 
+      // Add to Jaas unload list
+      if (compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+         compInfo->getUnloadedClassesTempList()->push_back(staleClass);
+
       // Step 3  patch modified classes
       if (rat)
          {
