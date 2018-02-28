@@ -6583,24 +6583,28 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    if (entry->isRemoteCompReq())
       {
       uint64_t clientUID = entry->getClientUID();
-      // Get the compilation monitor RIIA style because we may throw bad_alloc 
-      // when tryimg to add a new entry in the unordered_map
-      OMR::CriticalSection compilationMonitorLock(_compInfo.getCompilationMonitor());
+         {
+         // Get the compilation monitor RIIA style because we may throw bad_alloc 
+         // when tryimg to add a new entry in the unordered_map
+         OMR::CriticalSection compilationMonitorLock(_compInfo.getCompilationMonitor());
 
-      // Try to purge old data
-      _compInfo.getClientSessionHT()->purgeOldDataIfNeeded();
-      // Search the hashtable
-      ClientSessionData *clientSession = _compInfo.getClientSessionHT()->findOrCreateClientSession(clientUID);
+         // Try to purge old data
+         _compInfo.getClientSessionHT()->purgeOldDataIfNeeded();
+         // Search the hashtable
+         ClientSessionData *clientSession = _compInfo.getClientSessionHT()->findOrCreateClientSession(clientUID);
 
-      // we should probably abort this compilation if we cannot get memory and clientSession==NULL
-      // Cache the session data in compInfoPTBase
-      setClientData(clientSession);
+         // we should probably abort this compilation if we cannot get memory and clientSession==NULL
+         // Cache the session data in compInfoPTBase
+         setClientData(clientSession);
 
-      if (TR::Options::getVerboseOption(TR_VerboseJaas))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server cached clientSessionData=%p for clientUID=%llu compThreadID=%d", 
-                                        clientSession, (unsigned long long)clientUID, getCompThreadId());
-
-      ((TR::CompilationInfoPerThread*)this)->cacheRemoteROMClass(entry->getMethodDetails().getClass(), const_cast<J9ROMClass*>(entry->getMethodDetails().getRomClass()), entry->getMethodDetails().getMethodsOfClass());
+         if (TR::Options::getVerboseOption(TR_VerboseJaas))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server cached clientSessionData=%p for clientUID=%llu compThreadID=%d",
+               clientSession, (unsigned long long)clientUID, getCompThreadId());
+         // Release the compilationMonitor before calling cacheRemoteClass
+         }
+      // Cache the ROMClass for the method to be compiled if not already cached
+      if (!((TR::CompilationInfoPerThread*)this)->getRemoteROMClassIfCached(entry->getMethodDetails().getClass()))
+         ((TR::CompilationInfoPerThread*)this)->cacheRemoteROMClass(entry->getMethodDetails().getClass(), const_cast<J9ROMClass*>(entry->getMethodDetails().getRomClass()), entry->getMethodDetails().getMethodsOfClass());
       }
 
    // Check to see if we find an AOT version in the shared cache

@@ -18,7 +18,7 @@ class ClientSessionData
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
-   ClientSessionData();
+   ClientSessionData(uint64_t clientUID);
    ~ClientSessionData();
 
    void setJavaLangClassPtr(TR_OpaqueClassBlock* j9clazz) { _javaLangClassPtr = j9clazz; }
@@ -39,6 +39,7 @@ class ClientSessionData
    void printStats();
 
    private:
+   uint64_t _clientUID; // for RAS
    int64_t  _timeOfLastAccess; // in ms
    TR_OpaqueClassBlock *_javaLangClassPtr; // nullptr means not set
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _chTableClassMap; // cache of persistent CHTable
@@ -62,6 +63,7 @@ class ClientSessionHT
    ~ClientSessionHT();
    static ClientSessionHT* allocate(); // allocates a new instance of this class
    ClientSessionData * findOrCreateClientSession(uint64_t clientUID);
+   ClientSessionData * findClientSession(uint64_t clientUID);
    void purgeOldDataIfNeeded();
    void printStats();
 

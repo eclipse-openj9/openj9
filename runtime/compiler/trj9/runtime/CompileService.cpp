@@ -32,7 +32,7 @@ static J9Method *ramMethodFromRomMethod(J9JITConfig *jitConfig, J9VMThread *vmTh
    return NULL;
    }
 
-static void doAOTCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
+static void doRemoteCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
    J9ROMClass* romClass, const J9ROMMethod* romMethod,
    J9Method* ramMethod, J9Class *clazz, JAAS::J9ServerStream *rpc, TR_Hotness optLevel,
    TR::IlGeneratorMethodDetails *clientDetails,
@@ -153,15 +153,23 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       auto detailsType = std::get<7>(req);
       TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
       auto &unloadedClasses = std::get<8>(req);
+      // If new classes have been unloaded at the client, 
+      // delete relevant entries from the persistent caches we hold per client
+      if (unloadedClasses.size() != 0)
          {
          OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
-         auto clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId);
-         clientSession->processUnloadedClasses(unloadedClasses);
-         clientSession->decInUse();
+         auto clientSession = compInfo->getClientSessionHT()->findClientSession(clientId); // cannot throw
+         if (clientSession)
+            {
+            // This could be an expensive operation and we are holding the compilation monitor
+            // Maybe we should create another monitor
+            clientSession->processUnloadedClasses(unloadedClasses);
+            clientSession->decInUse();
+            }
          }
       J9Method *methodsOfClass = std::get<9>(req);
 
-      doAOTCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType, methodsOfClass);
+      doRemoteCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType, methodsOfClass);
       }
    catch (const JAAS::StreamFailure &e)
       {

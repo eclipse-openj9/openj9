@@ -2025,9 +2025,11 @@ ClientSessionData::updateTimeOfLastAccess()
    _timeOfLastAccess = j9time_current_time_millis();
    }
 
-ClientSessionData::ClientSessionData() : _chTableClassMap(decltype(_chTableClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
-                                         _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
-                                         _romMethodMap(decltype(_romMethodMap)::allocator_type(TR::Compiler->persistentAllocator()))
+ClientSessionData::ClientSessionData(uint64_t clientUID) : 
+   _clientUID(clientUID),
+   _chTableClassMap(decltype(_chTableClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _romMethodMap(decltype(_romMethodMap)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = nullptr;
@@ -2047,6 +2049,8 @@ ClientSessionData::~ClientSessionData()
 void
 ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes)
    {
+   if (TR::Options::getVerboseOption(TR_VerboseJaas))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "Server will process a list of %u unloaded classes for clientUID %llu", (unsigned)classes.size(), (unsigned long long)_clientUID);
    OMR::CriticalSection processUnloadedClasses(getROMMapMonitor());
    for (TR_OpaqueClassBlock *clazz : classes)
       {
@@ -2094,19 +2098,11 @@ ClientSessionHT::allocate()
 ClientSessionData * 
 ClientSessionHT::findOrCreateClientSession(uint64_t clientUID)
    {
-   ClientSessionData *clientData = nullptr;
-   auto clientDataIt = _clientSessionMap.find(clientUID);
-   if (clientDataIt != _clientSessionMap.end())
-      {
-      // if clientData found in hashtable, update the access time before returning it
-      clientData = clientDataIt->second;
-      clientData->incInUse();
-      clientData->updateTimeOfLastAccess();
-      }
-   else
+   ClientSessionData *clientData = findClientSession(clientUID);
+   if (!clientData)
       {
       // alocate a new ClientSessionData object and create a clientUID mapping
-      clientData = new (PERSISTENT_NEW) ClientSessionData();
+      clientData = new (PERSISTENT_NEW) ClientSessionData(clientUID);
       if (clientData)
          {
          _clientSessionMap[clientUID] = clientData;
@@ -2118,6 +2114,26 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID)
          if (TR::Options::getVerboseOption(TR_VerboseJaas))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "ERROR: Server could not allocate client session data");
          }
+      }
+   return clientData;
+   }
+
+// Search the clientSessionHashtable for the given clientUID and return the
+// data corresponding to the client.
+// Must have compilation monitor in hand when calling this function.
+// Side effects: _inUse is incremented on the ClientSessionData and the
+// timeOflastAccess is updated with curent time.
+ClientSessionData *
+ClientSessionHT::findClientSession(uint64_t clientUID)
+   {
+   ClientSessionData *clientData = nullptr;
+   auto clientDataIt = _clientSessionMap.find(clientUID);
+   if (clientDataIt != _clientSessionMap.end())
+      {
+      // if clientData found in hashtable, update the access time before returning it
+      clientData = clientDataIt->second;
+      clientData->incInUse();
+      clientData->updateTimeOfLastAccess();
       }
    return clientData;
    }
