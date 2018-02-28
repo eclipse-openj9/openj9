@@ -1130,7 +1130,7 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 
 		case CFR_CONSTANT_Dynamic:
 			if (classfile->majorVersion < 55) {
-				errorCode = J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51__ID;
+				errorCode = J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55__ID;
 				offset = (U_32) (index - data - 1);
 				goto _errorFound;
 			}
