@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -395,7 +395,25 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
          }
       }
 
-   gcPoint = generateRRInstruction(codeGen, TR::InstOpCode::BASR, callNode, systemReturnAddressRegister, systemEntryPointRegister, deps);
+   /**
+    * NOP padding is needed because returning from XPLINK functions skips the XPLink eyecatcher and
+    * always return to a point that's 2 or 4 bytes after the return address.
+    *
+    * In 64 bit XPLINK, the caller returns with a 'branch relative on condition' instruction with a 2 byte offset:
+    *
+    *   0x47F07002                    B        2(,r7)
+    *
+    * In 31-bit XPLINK, this offset is 4-byte.
+    *
+    * As a result of this, JIT'ed code that does XPLINK calls needs 2 or 4-byte NOP paddings to ensure entry to valid instruction.
+    *
+    * The BASR and NOP padding must stick together and can't have reverse spills in the middle.
+    * Hence, splitting the dependencies to avoid spill instructions.
+    */
+   TR::RegisterDependencyConditions* callPreDeps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(deps->getPreConditions(), NULL, deps->getAddCursorForPre(), 0, codeGen);
+   TR::RegisterDependencyConditions* callPostDeps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(NULL, deps->getPostConditions(), 0, deps->getAddCursorForPost(), codeGen);
+
+   gcPoint = generateRRInstruction(codeGen, TR::InstOpCode::BASR, callNode, systemReturnAddressRegister, systemEntryPointRegister, callPreDeps);
    if (isJNIGCPoint)
          gcPoint->setNeedsGCMap(0x00000000);
 
@@ -403,15 +421,18 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
 
    generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, returnFromJNICallLabel);
 
+   TR::Instruction * cursor = NULL;
    if (TR::Compiler->target.is64Bit())
       {
       //In 64 bit XPLINK, the caller returns at RetAddr+2, so add 2 byte nop
-      TR::Instruction * cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, codeGen);
+      cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, codeGen);
       }
    else
       {
-      genCallNOPAndDescriptor(NULL, callNode, callNode, callType);
+      cursor = genCallNOPAndDescriptor(NULL, callNode, callNode, callType);
       }
+
+   cursor->setDependencyConditions(callPostDeps);
 
    if (cg()->supportsJITFreeSystemStackPointer())
       {
