@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
-import org.openj9.test.java.lang.management.ThreadMXBean.ThreadMXBeanTestCase.TimeoutNotifier;
+import org.openj9.test.java.lang.management.ThreadMXBean.ThreadMXBeanTestCaseCommon.TimeoutNotifier;
 
 public class NoBlock extends ThreadMXBeanTestCase implements TimeoutNotifier {
 	private SoftAssert softAssert = new SoftAssert();
