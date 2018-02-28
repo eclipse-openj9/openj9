@@ -173,6 +173,7 @@ enum J9ServerMessageType
    VM_getClassFromStatic = 293;
    VM_setInvokeExactJ2IThunk = 294;
    VM_createMethodHandleArchetypeSpecimen = 295;
+   VM_getSystemClassLoader = 296;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

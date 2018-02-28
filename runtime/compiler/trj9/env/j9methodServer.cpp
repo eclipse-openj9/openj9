@@ -48,7 +48,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    TR_ResolvedJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JAASServerMethod*) owningMethod)->_remoteMirror : nullptr;
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot);
    auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uintptrj_t, void*, bool, bool, 
-      TR::RecognizedMethod, TR::RecognizedMethod, void*, bool, void*>();
+      TR::RecognizedMethod, TR::RecognizedMethod, void*, bool, void*, J9ClassLoader*>();
 
    _remoteMirror = std::get<0>(recv);
 
@@ -75,6 +75,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _startAddressForJittedMethod = std::get<10>(recv);
    _virtualMethodIsOverridden = std::get<11>(recv);
    _addressContainingIsOverriddenBit = std::get<12>(recv);
+   _classLoader = std::get<13>(recv);
  
    // initialization from TR_J9Method constructor
    _className = J9ROMCLASS_CLASSNAME(_romClass);
@@ -126,8 +127,7 @@ TR_ResolvedJ9JAASServerMethod::setRecognizedMethodInfo(TR::RecognizedMethod rm)
 J9ClassLoader *
 TR_ResolvedJ9JAASServerMethod::getClassLoader()
    {
-   TR_ASSERT(false, "Should not call getClassLoader on the server.");
-   return nullptr;
+   return _classLoader; // cached version
    }
 
 bool

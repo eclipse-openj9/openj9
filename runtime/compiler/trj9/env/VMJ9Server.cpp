@@ -170,6 +170,52 @@ TR_J9ServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayCl
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
+
+
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT)
+   {
+   TR_OpaqueClassBlock * clazz = nullptr;
+   J9ClassLoader * cl = ((TR_ResolvedJ9Method *)method)->getClassLoader();
+   // If the classloader is the systemClassLoader, which cannot be unloaded,
+   // then look into the global, 'per client', cache
+   void * systemClassLoader = getSystemClassLoader();
+   if (cl == (J9ClassLoader*)systemClassLoader)
+      {
+      PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & systemClassByNameMap = _compInfoPT->getClientData()->getSystemClassByNameMap();
+      auto it = systemClassByNameMap.find(std::string(sig, length));
+      if (it != systemClassByNameMap.end())
+         {
+         clazz = it->second;
+         }
+      else // classname not found; ask the client and cache the answer
+         {
+         clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
+         if (clazz)
+            {
+            systemClassByNameMap.insert(std::make_pair(std::string(sig, length), clazz));
+            }
+         else
+            {
+            // Class with given name does not exist yet, but it could be
+            // loaded in the future, thus we should not cache NULL pointers.
+            // Note: many times we get in here due to Ljava/lang/String$StringCompressionFlag;
+            // In theory we could consider this a special case and watch the CHTable updates
+            // for a class load event for Ljava/lang/String$StringCompressionFlag, but it may not
+            // be worth the trouble.
+            //static unsigned long errorsSystem = 0;
+            //printf("ErrorSystem %lu for cl=%p\tclassName=%.*s\n", ++errorsSystem, cl, length, sig);
+            }
+         }
+      }
+   else // ask the client
+      {
+      clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
+      }
+   return clazz;
+   }
+
+
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT)
    {
@@ -177,6 +223,22 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_OpaqueM
    std::string str(sig, length);
    stream->write(JAAS::J9ServerMessageType::VM_getClassFromSignature, str, method, isVettedForAOT);
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }
+
+void *
+TR_J9ServerVM::getSystemClassLoader()
+   {
+   // First, search the client session data for a cached answer
+   void * systemClassLoader = _compInfoPT->getClientData()->getSystemClassLoader();
+   if (!systemClassLoader)
+      {
+      // If value is not cached, fetch it from client and cache it
+      JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JAAS::J9ServerMessageType::VM_getSystemClassLoader, JAAS::Void());
+      systemClassLoader = std::get<0>(stream->read<void *>());
+      _compInfoPT->getClientData()->setSystemClassLoader(systemClassLoader); // cache value for later
+      }
+   return systemClassLoader;
    }
 
 bool

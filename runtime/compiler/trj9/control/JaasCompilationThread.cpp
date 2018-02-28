@@ -205,6 +205,12 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(clazz);
          }
          break;
+      case J9ServerMessageType::VM_getSystemClassLoader:
+         {
+         client->getRecvData<JAAS::Void>();
+         client->write(fe->getSystemClassLoader());
+         }
+         break;
       case J9ServerMessageType::VM_jitFieldsAreSame:
          {
          auto recv = client->getRecvData<TR_ResolvedMethod*, int32_t, TR_ResolvedMethod *, int32_t, int32_t>();
@@ -828,9 +834,11 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
                                                  resolvedMethod->startAddressForJittedMethod() : NULL;
          bool virtualMethodIsOverridden = resolvedMethod->virtualMethodIsOverridden();
          void *addressContainingIsOverriddenBit = resolvedMethod->addressContainingIsOverriddenBit();
+         J9ClassLoader *classLoader = resolvedMethod->getClassLoader();
 
          client->write(resolvedMethod, literals, cpHdr, methodIndex, jniProps, jniTargetAddr, isInterpreted, isMethodInValidLibrary, 
-                       mandatoryRm, rm, startAddressForJittedMethod, virtualMethodIsOverridden, addressContainingIsOverriddenBit);
+                       mandatoryRm, rm, startAddressForJittedMethod, virtualMethodIsOverridden, addressContainingIsOverriddenBit,
+                       classLoader);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods:
@@ -2029,10 +2037,12 @@ ClientSessionData::ClientSessionData(uint64_t clientUID) :
    _clientUID(clientUID),
    _chTableClassMap(decltype(_chTableClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _romMethodMap(decltype(_romMethodMap)::allocator_type(TR::Compiler->persistentAllocator()))
+   _romMethodMap(decltype(_romMethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _systemClassByNameMap(decltype(_systemClassByNameMap)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = nullptr;
+   _systemClassLoader = nullptr;
    _inUse = 1;
    _romMapMonitor = TR::Monitor::create("JIT-JaaSROMMapMonitor");
    }

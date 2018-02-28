@@ -79,6 +79,7 @@ private:
    TR_ResolvedJ9Method *_remoteMirror;
    void *_startAddressForJittedMethod; // JIT entry point
    void *_addressContainingIsOverriddenBit; // Only valid at the client. Cached info from the client
+   J9ClassLoader *_classLoader; // class loader for the class of this method; only valid at the client
    bool _isInterpreted; // cached information coming from client
    bool _isMethodInValidLibrary;
    bool _virtualMethodIsOverridden; // cached information coming from client

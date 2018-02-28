@@ -23,9 +23,12 @@ class ClientSessionData
 
    void setJavaLangClassPtr(TR_OpaqueClassBlock* j9clazz) { _javaLangClassPtr = j9clazz; }
    TR_OpaqueClassBlock * getJavaLangClassPtr() const { return _javaLangClassPtr; }
+   void * getSystemClassLoader() const { return _systemClassLoader; }
+   void   setSystemClassLoader(void * cl) { _systemClassLoader = cl; }
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> & getCHTableClassMap() { return _chTableClassMap; }
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method*, J9ROMMethod*> & getROMMethodMap() { return _romMethodMap; }
+   PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & getSystemClassByNameMap() { return _systemClassByNameMap; }
    void processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
 
@@ -42,9 +45,14 @@ class ClientSessionData
    uint64_t _clientUID; // for RAS
    int64_t  _timeOfLastAccess; // in ms
    TR_OpaqueClassBlock *_javaLangClassPtr; // nullptr means not set
+   void *              _systemClassLoader; // declared as void* so that we don't try to dereference it
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _chTableClassMap; // cache of persistent CHTable
    PersistentUnorderedMap<J9Class*, ClassInfo> _romClassMap;
    PersistentUnorderedMap<J9Method*, J9ROMMethod*> _romMethodMap;
+   // The following hashtable caches <classname> --> <J9Class> mappings
+   // All classes in here are loaded by the systemClassLoader so we know they cannot be unloaded
+   PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> _systemClassByNameMap;
+ 
    TR::Monitor *_romMapMonitor;
    int8_t  _inUse;  // Number of concurrent compilations from the same client 
                     // Accessed with compilation monitor in hand
