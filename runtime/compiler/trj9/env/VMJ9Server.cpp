@@ -208,10 +208,37 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_Resolve
             }
          }
       }
-   else // ask the client
+   else // look into the 'per compilation' cache
       {
-      clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
+      ClassLoaderStringPair key = {cl, std::string(sig, length)};
+      auto it = _compInfoPT->getCustomClassByNameMap().find(key);
+
+      // If not found in the cache, ask the client
+      if (it == _compInfoPT->getCustomClassByNameMap().end())
+         {
+         clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
+         if (clazz)
+            {
+            //static unsigned long misses = 0;
+            //printf("misses=%lu Will cache cl=%p\tclassName=%.*s\n", ++misses, cl, length, sig);
+            // Put into the HT for next time
+            _compInfoPT->getCustomClassByNameMap()[key] = clazz;
+            }
+         else
+            {
+            //static unsigned long errors = 0;
+            //printf("Error %lu for cl=%p\tclassName=%.*s\n", ++errors, cl, length, sig);
+            }
+         }
+      else
+         {
+         //static unsigned long hits = 0;
+         //printf("hits=%lu Found cl=%p\tclassName=%.*s\n", ++hits, cl, length, sig);
+         clazz = it->second;
+         }
+         
       }
+
    return clazz;
    }
 

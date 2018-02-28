@@ -47,6 +47,7 @@
 #include "env/J9SegmentCache.hpp"
 #include "env/VMJ9Server.hpp"
 #include "env/J2IThunk.hpp"
+#include "env/PersistentCollections.hpp"
 
 #define METHOD_POOL_SIZE_THRESHOLD 64
 #define MAX_SAMPLING_FREQUENCY     0x7FFFFFFF
@@ -322,6 +323,33 @@ private:
    }; // CompilationInfoPerThreadBase
 }
 
+struct ClassLoaderStringPair
+   {
+   J9ClassLoader *_classLoader;
+   std::string    _className;
+
+   bool operator==(const ClassLoaderStringPair &other) const
+      {
+      return _classLoader == other._classLoader &&  _className == other._className;
+      }
+   };
+
+
+// custom specialization of std::hash injected in std namespace
+namespace std
+   {
+   template<> struct hash<ClassLoaderStringPair>
+      {
+      typedef ClassLoaderStringPair argument_type;
+      typedef std::size_t result_type;
+      result_type operator()(argument_type const& clsPair) const noexcept
+         {
+         return std::hash<void*>()((void*)(clsPair._classLoader)) ^ std::hash<std::string>()(clsPair._className);
+         }
+      };
+   }
+
+
 //--------------------------------------------------------------------
 // The following class will be use by the separate compilation threads
 // TR::CompilationInfoPerThreadBase will be used by compilation on application thread
@@ -376,6 +404,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    void                   addThunkToBeRelocated(void *thunk, std::string signature);
    void                   addInvokeExactThunkToBeRelocated(TR_J2IThunk *thunk);
    void                   relocateThunks();
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getCustomClassByNameMap() { return _customClassByNameMap; }
 
    private:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
@@ -397,6 +426,9 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    std::vector<std::pair<void *, std::string>, ThunkVectorAllocator> _thunksToBeRelocated;
    typedef TR::typed_allocator<TR_J2IThunk *, TR::PersistentAllocator&> InvokeExactThunkVectorAllocator;
    std::vector<TR_J2IThunk *, InvokeExactThunkVectorAllocator> _invokeExactThunksToBeRelocated;
+   // The following hastable caches <classLoader,classname> --> <J9Class> mappings
+   // The cache only lives during a compilation due to class unloading concerns
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> _customClassByNameMap;
    }; // CompilationInfoPerThread
 
 extern thread_local TR::CompilationInfoPerThread * compInfoPT;

@@ -838,7 +838,8 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
                                    : TR::CompilationInfoPerThreadBase(compInfo, jitConfig, id, true),
                                      _compThreadCPU(_compInfo.persistentMemory()->getPersistentInfo(), jitConfig, 490000000, id),
                                      _thunksToBeRelocated(ThunkVectorAllocator(TR::Compiler->persistentAllocator())),
-                                     _invokeExactThunksToBeRelocated(InvokeExactThunkVectorAllocator(TR::Compiler->persistentAllocator()))
+                                     _invokeExactThunksToBeRelocated(InvokeExactThunkVectorAllocator(TR::Compiler->persistentAllocator())),
+                                     _customClassByNameMap(decltype(_customClassByNameMap)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    _initializationSucceeded = false;
@@ -3837,6 +3838,8 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    // Unpin the class
    if (!entry.isRemoteCompReq())
       compThread->javaVM->internalVMFunctions->j9jni_deleteLocalRef((JNIEnv*)compThread, classObject);
+   else
+      _customClassByNameMap.clear(); // reset before next compilation starts
 
    // Update how many compilation threads are working on hot/scorching methods
    if (entry._hasIncrementedNumCompThreadsCompilingHotterMethods)
