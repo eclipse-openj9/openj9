@@ -403,6 +403,8 @@ public final class Unsafe {
 	/**
 	 * Gets the value of the Object in memory referenced by address.
 	 * This is a non-volatile operation.
+	 * 
+	 * NOTE: native implementation is a stub.
 	 *
 	 * @param address position of the object in memory
 	 * @return Object value stored in memory
@@ -943,6 +945,8 @@ public final class Unsafe {
 
 	/* 
 	 * Get the load average in the system.
+	 * 
+	 * NOTE: native implementation is a stub.
 	 * 
 	 * @param loadavg array of elements
 	 * @param numberOfElements number of samples
@@ -3125,6 +3129,8 @@ public final class Unsafe {
 
 	/**
 	 * Get the load average in the system.
+	 * 
+	 * NOTE: native implementation is a stub.
 	 * 
 	 * @param loadavg array of elements
 	 * @param numberOfElements number of samples
