@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2017 IBM Corp. and others
+# Copyright (c) 2009, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -220,7 +220,7 @@ sub do_create_cache {
 						,$is_output_stream_needed);
 
 	#leaving debug messages commented
-	printf "\n command to execute :$cmd_to_execute: \n" ;
+	print "\n command to execute :$cmd_to_execute: \n" ;
 
 	if( !$is_output_stream_needed && !$is_err_stream_needed ) {
 		`$cmd_to_execute`;
@@ -289,6 +289,7 @@ sub get_path_separator {
 # fails with the error message specified in the argument list
 sub test_unsuccessful_cache_creation {
 	my ($java_bin, $test_name, $cache_name, $error_msg)=@_;
+	$java_bin =~ s/\\/\\\\/g;
 	my $return_status;
 	my $create_status;
 	my $destroy_status;
@@ -301,10 +302,10 @@ sub test_unsuccessful_cache_creation {
 
 	if ($is_create_failed) {
 		$return_status = 1;
-		printf "\n TEST PASSED \n";
+		print "\n TEST PASSED \n";
 	} else 	{
 		$return_status = 0;
-		printf "\n TEST FAILED : missing error message \n";
+		print "\n TEST FAILED : missing error message \n";
 	}
 
 	return $return_status;
@@ -313,6 +314,7 @@ sub test_unsuccessful_cache_creation {
 # Given a cache name it checks for the creation of the cache and declares pass/fail.
 sub test_successful_cache_creation {
 	my ($java_bin, $test_name, $cache_name, $cache_grep_name)=@_;
+	$java_bin =~ s/\\/\\\\/g;
 	my $return_status=0;
 	my $create_status=0;
 	my $destroy_status=0;
@@ -328,10 +330,10 @@ sub test_successful_cache_creation {
 
 	if ($create_status && $destroy_status) {
 		$return_status = 1;
-		printf "\n TEST PASSED \n";
+		print "\n TEST PASSED \n";
 	} else 	{
 		$return_status = 0;
-		printf "\n TEST FAILED : create_status:$create_status destroy_status:$destroy_status \n";
+		print "\n TEST FAILED : create_status:$create_status destroy_status:$destroy_status \n";
 	}
 
 	return $return_status;
@@ -411,7 +413,7 @@ sub cache_name_with_fixed_length_test {
 	# name of the cache that is obtained by expanding %u or %g ( if any ) in the specified_cache_name
 	$expanded_cache_name = $arr[1];
 
-	printf "cache name to create: " . $specified_cache_name . ":to grep: " . "$expanded_cache_name  \n";
+	print "cache name to create: " . $specified_cache_name . ":to grep: " . "$expanded_cache_name  \n";
 	test_successful_cache_creation ($java_bin , $test_name, $specified_cache_name, $expanded_cache_name);
 }
 

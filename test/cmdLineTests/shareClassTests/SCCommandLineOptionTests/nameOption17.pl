@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2017 IBM Corp. and others
+# Copyright (c) 2009, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 # rem @summary check if a cache is not created with a length  
 # rem @summary greater than the allowed length
 
+use lib ".";
 require "sharedClassesUtil.pl";
 
 use strict;
