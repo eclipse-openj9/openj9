@@ -20,16 +20,21 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-node('390') {
+SDK_VERSION = '8'
+SPEC = 'linux_390-64_cmprssptrs'
+TEST_TARGET = '_sanity'
 
-    JDK_FOLDER = "j2sdk-image"
-    RELEASE = "linux-s390x-normal-server-release"
-    JAVA_BIN = "${WORKSPACE}/build/${RELEASE}/images/${JDK_FOLDER}/jre/bin"
-    SPEC = 'linux_390-64_cmprssptrs'
-    JAVA_VERSION = 'SE80'
-    TEST_TARGET = '_sanity'
+node('master') {
 
     checkout scm
-    def buildfile = load "${WORKSPACE}/buildenv/jenkins/common/test"
+    def variableFile = load 'buildenv/jenkins/common/variables-functions'
+    variableFile.set_job_variables('test')
+    cleanWs()
+}
+
+node("${NODE}") {
+
+    checkout scm
+    def buildfile = load 'buildenv/jenkins/common/test'
     buildfile.test_all_with_fetch()
 }

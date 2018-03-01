@@ -418,7 +418,7 @@ public class RamClassWalker extends ClassWalker {
 		if (ramClass.ramStatics().isNull()) {
 			return;
 		}
-		Iterator ofoIterator = J9ObjectFieldOffsetIterator.J9ObjectFieldOffsetIteratorFor(ramClass, J9ClassHelper.superclass(ramClass), new U32(J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC));
+		Iterator<?> ofoIterator = J9ObjectFieldOffsetIterator.J9ObjectFieldOffsetIteratorFor(ramClass, J9ClassHelper.superclass(ramClass), new U32(J9ROMFieldOffsetWalkState.J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC));
 		J9ObjectFieldOffset fields = null;
 		while (ofoIterator.hasNext()) {
 			fields = (J9ObjectFieldOffset) ofoIterator.next();

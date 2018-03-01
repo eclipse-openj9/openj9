@@ -101,9 +101,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_jit_isInlineAllocationSupported,
 	J9MetronomeWriteBarrierStore,
 	J9MetronomeWriteBarrierJ9ClassStore,
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	J9ReadBarrier,
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+	J9ReadBarrierJ9Class,
 	j9gc_objaccess_monitorTableReadObject,
 	j9gc_objaccess_monitorTableReadObjectVM,
 	j9gc_ext_check_is_valid_heap_object,

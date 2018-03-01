@@ -403,6 +403,8 @@ public final class Unsafe {
 	/**
 	 * Gets the value of the Object in memory referenced by address.
 	 * This is a non-volatile operation.
+	 * 
+	 * NOTE: native implementation is a stub.
 	 *
 	 * @param address position of the object in memory
 	 * @return Object value stored in memory
@@ -851,6 +853,19 @@ public final class Unsafe {
 	 * @throws IllegalArgumentException if field is static
 	 */
 	private native long objectFieldOffset0(Field field);
+	
+/*[IF Java10]*/
+	/*
+	 * Returns byte offset to field.
+	 * 
+	 * @param class with desired field
+	 * @param string name of desired field
+	 * @return offset to start of class or interface
+	 * 
+	 * @throws IllegalArgumentException if field is static
+	 */
+	private native long objectFieldOffset1(Class<?> c, String fieldName);
+/*[ENDIF]*/
 
 	/* 
 	 * Returns byte offset to start of static class or interface.
@@ -930,6 +945,8 @@ public final class Unsafe {
 
 	/* 
 	 * Get the load average in the system.
+	 * 
+	 * NOTE: native implementation is a stub.
 	 * 
 	 * @param loadavg array of elements
 	 * @param numberOfElements number of samples
@@ -1354,6 +1371,24 @@ public final class Unsafe {
 		Objects.requireNonNull(field);
 		return objectFieldOffset0(field);
 	}
+	
+/*[IF Java10]*/
+	/**
+	 * Returns byte offset to field.
+	 * 
+	 * @param class with desired field
+	 * @param string name of desired field
+	 * @return offset to start of class or interface
+	 * 
+	 * @throws NullPointerException if field parameter is null
+	 * @throws IllegalArgumentException if field is static
+	 */
+	public long objectFieldOffset(Class<?> c, String fieldName) {
+		Objects.requireNonNull(c);
+		Objects.requireNonNull(fieldName);
+		return objectFieldOffset1(c, fieldName);
+	}
+/*[ENDIF]*/
 
 	/**
 	 * Returns byte offset to start of static class or interface.
@@ -3094,6 +3129,8 @@ public final class Unsafe {
 
 	/**
 	 * Get the load average in the system.
+	 * 
+	 * NOTE: native implementation is a stub.
 	 * 
 	 * @param loadavg array of elements
 	 * @param numberOfElements number of samples

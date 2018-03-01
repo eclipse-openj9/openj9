@@ -35,6 +35,7 @@ MKTREE    = mkdir -p
 PWD       = pwd
 EXECUTABLE_SUFFIX =
 RUN_SCRIPT = sh
+RUN_SCRIPT_STRING = "sh -c"
 SCRIPT_SUFFIX=.sh
 Q="
 P=:
@@ -93,6 +94,7 @@ P=;
 D=\\
 EXECUTABLE_SUFFIX=.exe
 RUN_SCRIPT="cmd /c" 
+RUN_SCRIPT_STRING=$(RUN_SCRIPT)
 SCRIPT_SUFFIX=.bat
 PROPS_DIR=props_win
 endif

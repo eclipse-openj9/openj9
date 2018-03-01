@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@ import static com.ibm.j9ddr.vm29.j9.stackwalker.StackWalkerUtils.*;
 import static com.ibm.j9ddr.vm29.pointer.generated.J9StackWalkFlags.J9SW_REGISTER_MAP_WALK_REGISTERS_LOW_TO_HIGH;
 import static com.ibm.j9ddr.vm29.structure.J9StackWalkConstants.J9SW_POTENTIAL_SAVED_REGISTERS;
 import static com.ibm.j9ddr.vm29.structure.J9StackWalkConstants.J9SW_REGISTER_MAP_MASK;
+import static com.ibm.j9ddr.vm29.structure.MethodMetaDataConstants.INTERNAL_PTR_REG_MASK;
 import static com.ibm.j9ddr.vm29.structure.MethodMetaDataConstants.J9TR_SHRINK_WRAP;
 import static com.ibm.j9ddr.vm29.structure.J9JITExceptionTable.*;
 
@@ -35,8 +36,6 @@ import java.util.List;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.AlgorithmPicker;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
-import com.ibm.j9ddr.vm29.j9.BaseAlgorithm;
-import com.ibm.j9ddr.vm29.j9.IAlgorithm;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
@@ -82,8 +81,6 @@ public class MethodMetaData
 	public static final long REGISTER_MAP_VALUE_FOR_GAP = 0xFADECAFE;
 	
 	public static final long BYTE_CODE_INFO_VALUE_FOR_GAP = 0x0;
-	
-	public static final long INTERNAL_PTR_REG_MASK = TRBuildFlags.host_POWER ? 0x00040000 : 0x80000000;
 	
 	public static I16 getJitTotalFrameSize(J9JITExceptionTablePointer md) throws CorruptDataException
 	{
@@ -279,7 +276,8 @@ public class MethodMetaData
 		return impl;
 	}
 	
-	private static interface MethodMetaDataImpl extends IAlgorithm
+	/* In Java 8 builds, the (interim) compiler gets confused if IAlgorithm is not fully qualified. */
+	private static interface MethodMetaDataImpl extends com.ibm.j9ddr.vm29.j9.IAlgorithm
 	{
 		public UDATAPointer getObjectTempScanCursor(WalkState walkState) throws CorruptDataException;
 		
@@ -355,8 +353,8 @@ public class MethodMetaData
 		public void markClassesInInlineRanges(J9JITExceptionTablePointer metaData, WalkState walkState) throws CorruptDataException;
 	}
 
-
-	private static class MethodMetaData_29_V0 extends BaseAlgorithm implements MethodMetaDataImpl
+	/* In Java 8 builds, the (interim) compiler gets confused if BaseAlgorithm is not fully qualified. */
+	private static class MethodMetaData_29_V0 extends com.ibm.j9ddr.vm29.j9.BaseAlgorithm implements MethodMetaDataImpl
 	{
 
 		private static boolean alignStackMaps = TRBuildFlags.host_ARM || TRBuildFlags.host_SH4 || TRBuildFlags.host_MIPS;

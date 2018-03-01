@@ -1,0 +1,63 @@
+###############################################################################
+# Copyright (c) 2018, 2018 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+###############################################################################
+#========================================#
+# Git repositories
+#========================================#
+openjdk_repo:
+  8: 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
+  9: 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
+openjdk_branch: 'openj9'
+#========================================#
+# Miscellaneous settings
+#========================================#
+jdk_image_dir:
+  8: 'j2sdk-image'
+  9: 'jdk'
+test_dependencies_job_name: 'test.getDependency'
+#========================================#
+# Linux PPCLE 64bits Compressed Pointers
+#========================================#
+linux_ppc-64_cmprssptrs_le:
+  boot_jdk:
+    8: '/usr/lib/jvm/java-7-openjdk-ppc64el'
+    9: '${HOME}/openj9/ibm-java-ppc64le-80'
+  release:
+    8: 'linux-ppc64-normal-server-release'
+    9: 'linux-ppc64le-normal-server-release'
+  freemarker: '${HOME}/openj9/freemarker.jar'
+  node_labels:
+    build: 'ppcle'
+    test: 'ppcle'
+#========================================#
+# Linux S390 64bits Compressed Pointers
+#========================================#
+linux_390-64_cmprssptrs:
+  boot_jdk:
+    8: '/usr/lib/jvm/java-7-openjdk-s390x'
+    9: '${HOME}/openj9/ibm-java-s390x-80'
+  release:
+    8: 'linux-s390x-normal-server-release'
+    9: 'linux-s390x-normal-server-release'
+  freemarker: '${HOME}/openj9/freemarker.jar'
+  node_labels:
+    build: '390'
+    test: '390'
