@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,15 +52,13 @@ public class MainTester {
 		result.add(new TestUnsafeCopyMemory(scenario));
 		result.add(new TestUnsafePutGetAddress(scenario));
 		result.add(new TestCompareAndSwap(scenario));
-		result.add(new TestUnsafeAllocateDirectByteBuffer(scenario));
 		return result.toArray();
 	}
 	
 	private static void compileClass() {
 		try {
 			String[] classNames = { "MainTester", "TestCompareAndSwap", "TestUnsafeAccess",
-					"TestUnsafeAccessVolatile", "UnsafeTestBase",
-					"TestUnsafeAllocateDirectByteBuffer" };
+					"TestUnsafeAccessVolatile", "UnsafeTestBase" };
 
 			for (int i = 0; i < classNames.length; i++) {
 				Class clazz = Class.forName("org.openj9.test.unsafe."

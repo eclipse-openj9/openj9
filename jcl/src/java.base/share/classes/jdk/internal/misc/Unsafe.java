@@ -410,35 +410,6 @@ public final class Unsafe {
 	 * @return Object value stored in memory
 	 */
 	public native Object getUncompressedObject(long address);
-	
-	/**
-	 * Allocates a block of memory
-	 *
-	 * @param size number of bytes to allocate
-	 * @return address of allocated buffer
-	 * 
-	 * @throws IllegalArgumentException if size is negative
-	 */
-	public native long allocateDBBMemory(long size);
-	
-	/**
-	 * Reallocates a block of memory.
-	 * 
-	 * @param address of old buffer
-	 * @param size new size of buffer to allocate
-	 * @return address of new buffer
-	 * 
-	 * @throws IllegalArgumentException if size is negative
-	 */
-	public native long reallocateDBBMemory(long address, long size);
-	
-	/**
-	 * Removes the block from the list.  Note that the pointers are located 
-	 * immediately before the address value.
-	 * 
-	 * @param address of buffer
-	 */
-	public native void freeDBBMemory(long address);
 
 	/**
 	 * Returns the size of a page in memory in bytes.
