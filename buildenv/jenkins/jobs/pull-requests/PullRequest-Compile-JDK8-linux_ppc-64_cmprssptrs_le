@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 SDK_VERSION = '8'
-SPEC = 'linux_ppc-64_cmprssptrs_le
+SPEC = 'linux_ppc-64_cmprssptrs_le'
 
 node('master') {
 
