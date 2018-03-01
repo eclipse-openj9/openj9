@@ -338,7 +338,7 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 		strUTF = buffer;
 	}
 	if (NULL != strUTF) {
-		UDATA computedUtf8Length;
+		UDATA computedUtf8Length = 0;
 
 		if (0 < prependStrLength) {
 			memcpy(strUTF, prependStr, prependStrLength);
