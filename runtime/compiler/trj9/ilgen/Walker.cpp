@@ -2799,7 +2799,7 @@ TR_J9ByteCodeIlGenerator::loadConstantValueIfPossible(TR::Node *topNode, uintptr
 
          if (loadConstantValueCriticalSection.hasVMAccess())
             {
-            uintptrj_t objectPointer = *(uintptrj_t*)symbol->getStaticAddress();
+            uintptrj_t objectPointer = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)symbol->getStaticAddress());
             if (objectPointer)
                {
                switch (symbol->getDataType())
@@ -6358,7 +6358,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
       switch (type)
          {
          case TR::Address:
-            if (*(void **)p == 0)
+            if ((void *)comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)p) == 0)
                {
                loadConstant(TR::aconst, 0);
                break;

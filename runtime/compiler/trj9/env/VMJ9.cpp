@@ -1269,10 +1269,15 @@ TR_OpaqueClassBlock *
 TR_J9VMBase::getObjectClass(uintptrj_t objectPointer)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getObjectClass");
-   if (TR::Compiler->om.generateCompressedObjectHeaders())
-      return (TR_OpaqueClassBlock*)((uintptrj_t)*(uint32_t*)(objectPointer + TR::Compiler->om.offsetOfObjectVftField()) & TR::Compiler->om.maskOfObjectVftField());
-   else
-      return (TR_OpaqueClassBlock*)(*(uintptrj_t*)(objectPointer + TR::Compiler->om.offsetOfObjectVftField()) & TR::Compiler->om.maskOfObjectVftField());
+   J9Class *j9class = J9OBJECT_CLAZZ(vmThread(), objectPointer);
+   return convertClassPtrToClassOffset(j9class);
+   }
+
+uintptrj_t
+TR_J9VMBase::getStaticReferenceFieldAtAddress(uintptrj_t fieldAddress)
+   {
+   TR_ASSERT(haveAccess(), "Must haveAccess in getStaticReferenceFieldAtAddress");
+   return (uintptrj_t)J9STATIC_OBJECT_LOAD(vmThread(), NULL, fieldAddress);
    }
 
 uintptrj_t
@@ -5218,8 +5223,8 @@ TR_J9VMBase::getStringFieldByName(TR::Compilation * comp, TR::SymbolReference * 
 
    TR_ASSERT(!stringRef->isUnresolved(), "don't handle unresolved constant strings yet");
 
-   j9object_t string = *(j9object_t*)stringRef->getSymbol()->castToStaticSymbol()->getStaticAddress();
-
+   uintptrj_t stringStaticAddr = (uintptrj_t)stringRef->getSymbol()->castToStaticSymbol()->getStaticAddress();
+   j9object_t string = (j9object_t)getStaticReferenceFieldAtAddress(stringStaticAddr);
 
    TR::Symbol::RecognizedField   field = fieldRef->getSymbol()->getRecognizedField();
 
@@ -5257,9 +5262,9 @@ TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRe
    {
    TR_ResolvedMethod* method = classRef->getOwningMethod(comp);
    TR::StaticSymbol* classSym = classRef->getSymbol()->castToStaticSymbol();
-   j9object_t classString = *(j9object_t*)classSym->getStaticAddress();
+   j9object_t classString = (j9object_t)getStaticReferenceFieldAtAddress((uintptrj_t)classSym->getStaticAddress());
    TR::StaticSymbol* fieldSym = fieldRef->getSymbol()->castToStaticSymbol();
-   j9object_t fieldString = *(j9object_t*)fieldSym->getStaticAddress();
+   j9object_t fieldString = (j9object_t)getStaticReferenceFieldAtAddress((uintptrj_t)fieldSym->getStaticAddress());
 
    int32_t len, res;
    len = (int32_t)jitConfig->javaVM->internalVMFunctions->getStringUTF8Length(vmThread(), classString);
@@ -8500,22 +8505,6 @@ TR_J9VM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
 
    j9class = (J9Class *)((uintptrj_t)j9class & TR::Compiler->om.maskOfObjectVftField());
 
-   return convertClassPtrToClassOffset(j9class);
-   }
-
-
-
-TR_OpaqueClassBlock *
-TR_J9VMBase::getClassFromStatic(void *p)
-   {
-   J9Class *j9class;
-
-   if (TR::Compiler->om.generateCompressedObjectHeaders())
-      j9class = (J9Class *) *((uint32_t *) ((uintptrj_t) *((void ***)p) + (uintptrj_t) TR::Compiler->om.offsetOfObjectVftField()));
-   else
-      j9class = (J9Class *)(*((J9Class **) ((uintptrj_t) *((void ***)p) + (uintptrj_t) TR::Compiler->om.offsetOfObjectVftField())));
-
-   j9class = (J9Class *)((uintptrj_t)j9class & TR::Compiler->om.maskOfObjectVftField());
    return convertClassPtrToClassOffset(j9class);
    }
 
