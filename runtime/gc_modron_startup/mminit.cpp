@@ -170,7 +170,7 @@ initializeMutatorModelJava(J9VMThread* vmThread)
 #if defined(J9VM_GC_GENERATIONAL)
 		vmThread->gcRememberedSet.fragmentCurrent = NULL;
 		vmThread->gcRememberedSet.fragmentTop = NULL;
-		vmThread->gcRememberedSet.fragmentSize = J9_SCV_REMSET_FRAGMENT_SIZE;
+		vmThread->gcRememberedSet.fragmentSize = OMR_SCV_REMSET_FRAGMENT_SIZE;
 #endif /* J9VM_GC_GENERATIONAL */
 
 		void *lowAddress = extensions->heapBaseForBarrierRange0;
