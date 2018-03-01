@@ -184,7 +184,7 @@ REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@$(Q)
 #######################################
 # TEST_STATUS
 #######################################
-TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); else $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); fi
+TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); else $(ECHO) -e $(Q)\n$@$(Q)$(Q)_FAILED\n$(Q); fi
 ifneq ($(DEBUG),)
 $(info TEST_STATUS is $(TEST_STATUS))
 endif
@@ -225,6 +225,8 @@ _$(TESTTARGET): setup_$(TESTTARGET) rmResultFile $(TESTTARGET) resultsSummary
 .PHONY: _$(TESTTARGET) $(TESTTARGET) $(SUBDIRS) $(SUBDIRS_TESTTARGET)
 
 .NOTPARALLEL: _$(TESTTARGET) $(TESTTARGET) $(SUBDIRS) $(SUBDIRS_TESTTARGET)
+
+TOTALCOUNT := 0
 
 setup_%:
 	@$(ECHO)

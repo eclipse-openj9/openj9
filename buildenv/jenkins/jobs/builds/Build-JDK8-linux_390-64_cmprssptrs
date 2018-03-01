@@ -28,7 +28,6 @@ node('master') {
     checkout scm
     variableFile = load 'buildenv/jenkins/common/variables-functions'
     variableFile.set_job_variables('build')
-    cleanWs()
 }
 
  node("${NODE}") {
