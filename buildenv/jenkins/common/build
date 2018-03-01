@@ -163,9 +163,15 @@ def build() {
 def archive() {
     stage('Archive') {
         timestamps {
+            // Do not archive test material in PR jobs, only "Build" jobs
+            // https://github.com/eclipse/openj9/issues/1114
+            // ghprbPullId is the PullRequest ID which only shows up in Pull Requests
+            if ((params.ghprbPullId == "") || (params.ghprbPullId == "null")) {
+                sh "tar -zcvf ${WORKSPACE}/${TEST_PREFIX}`git -C openj9 rev-parse --short HEAD`${TEST_SUFFIX} openj9/test/"
+                archiveArtifacts artifacts: "**/${TEST_PREFIX}*${TEST_SUFFIX}", fingerprint: true, onlyIfSuccessful: true
+            }
             sh "tar -zcvf ${WORKSPACE}/${SDK_PREFIX}`date +%Y%d%m%H%M`${SDK_SUFFIX} build/$RELEASE/images/${JDK_FOLDER}"
-            sh "tar -zcvf ${WORKSPACE}/${TEST_PREFIX}`git -C openj9 rev-parse --short HEAD`${TEST_SUFFIX} openj9/test/"
-            archiveArtifacts artifacts: "**/${SDK_PREFIX}*${SDK_SUFFIX}, **/${TEST_PREFIX}*${TEST_SUFFIX}", fingerprint: true, onlyIfSuccessful: true
+            archiveArtifacts artifacts: "**/${SDK_PREFIX}*${SDK_SUFFIX}", fingerprint: true, onlyIfSuccessful: true
         }
     }
 }
