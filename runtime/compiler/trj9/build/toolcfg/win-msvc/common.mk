@@ -49,18 +49,22 @@ DEPSUFF=.depend.mk
 #
 
 ifeq ($(HOST_BITS),32)
-    ML_PATH?=ml
+    ML?=ml
 endif
 
 ifeq ($(HOST_BITS),64)
-    ML_PATH?=ml64
+    ML?=ml64
 endif
 
-RC_PATH?=rc
-PERL_PATH?=perl
-LINK_PATH?=link
-CC_PATH?=cl
-CXX_PATH?=cl
+RC?=rc
+PERL?=perl
+LINK?=link
+ifeq (default,$(origin CC))
+    CC=cl
+endif
+ifeq (default,$(origin CXX))
+    CXX=cl
+endif
 
 # This is the script that's used to generate TRBuildName.cpp
 GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
@@ -138,12 +142,12 @@ ifeq ($(BUILD_CONFIG),prod)
     CX_FLAGS+=$(CX_FLAGS_PROD)
 endif
 
-C_CMD?=$(CC_PATH)
+C_CMD?=$(CC)
 C_INCLUDES=$(PRODUCT_INCLUDES)
 C_DEFINES+=$(CX_DEFINES) $(CX_DEFINES_EXTRA) $(C_DEFINES_EXTRA)
 C_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(C_FLAGS_EXTRA)
 
-CXX_CMD?=$(CXX_PATH)
+CXX_CMD?=$(CXX)
 CXX_INCLUDES=$(PRODUCT_INCLUDES)
 CXX_DEFINES+=$(CX_DEFINES) $(CX_DEFINES_EXTRA) $(CXX_DEFINES_EXTRA)
 CXX_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(CXX_FLAGS_EXTRA)
@@ -151,7 +155,7 @@ CXX_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(CXX_FLAGS_EXTRA)
 #
 # Now setup ASM
 #
-ASM_CMD?=$(ML_PATH)
+ASM_CMD?=$(ML)
 
 ASM_INCLUDES=$(PRODUCT_INCLUDES)
 ASM_DEFINES+=\
@@ -190,7 +194,7 @@ ASM_FLAGS+=$(ASM_FLAGS_EXTRA)
 #
 # Setup PASM
 #
-PASM_CMD?=$(CC_PATH)
+PASM_CMD?=$(CC)
 
 PASM_INCLUDES=$(PRODUCT_INCLUDES)
 
@@ -207,7 +211,7 @@ PASM_FLAGS+=$(PASM_FLAGS_EXTRA)
 #
 # Setup RC
 #
-RC_CMD?=$(RC_PATH)
+RC_CMD?=$(RC)
 
 RC_INCLUDES=$(PRODUCT_INCLUDES)
 
@@ -227,7 +231,7 @@ RC_FLAGS+=$(RC_FLAGS_EXTRA)
 #
 # Finally setup the linker
 #
-SOLINK_CMD?=$(LINK_PATH)
+SOLINK_CMD?=$(LINK)
 
 SOLINK_FLAGS+=-nologo -nodefaultlib -incremental:no -debug
 SOLINK_LIBPATH+=$(PRODUCT_LIBPATH)

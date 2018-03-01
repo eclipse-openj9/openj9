@@ -94,9 +94,9 @@ ifeq ($(HOST_ARCH),z)
 #
 define DEF_RULE.m4
 $(1).s: $(2) | jit_createdirs
-	$$(PERL_PATH) $$(ZASM_SCRIPT) $$<
+	$$(PERL) $$(ZASM_SCRIPT) $$<
 	$$(M4_CMD) $$(M4_FLAGS) $$(patsubst %,-I'%',$$(M4_INCLUDES)) $$(patsubst %,-D%,$$(M4_DEFINES)) $$< > $$@
-	$$(PERL_PATH) $$(ZASM_SCRIPT) $$@
+	$$(PERL) $$(ZASM_SCRIPT) $$@
 
 JIT_DIR_LIST+=$(dir $(1))
 

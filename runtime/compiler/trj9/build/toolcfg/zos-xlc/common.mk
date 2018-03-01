@@ -43,11 +43,17 @@ TGTLEVEL?=zOSV1R13
 # for example, you want to compile .spp files with a different C++ compiler than you use
 # to compile .cpp files
 #
-AR_PATH?=ar
-M4_PATH?=m4
-PERL_PATH?=perl
-CC_PATH?=xlc
-CXX_PATH?=xlC
+
+# Use default AR=ar
+# Use default AS=as
+M4?=m4
+PERL?=perl
+ifeq (default,$(origin CC))
+    CC=xlc
+endif
+ifeq (default,$(origin CXX))
+    CXX=xlC
+endif
 
 # This is the script that's used to generate TRBuildName.cpp
 GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
@@ -57,8 +63,8 @@ GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
 #
 #     Note: "CX" means both C and C++
 #
-C_CMD?=$(CC_PATH)
-CXX_CMD?=$(CXX_PATH)
+C_CMD?=$(CC)
+CXX_CMD?=$(CXX)
 
 CX_DEFINES+=\
     $(PRODUCT_DEFINES) \
@@ -146,7 +152,7 @@ CXX_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(CXX_FLAGS_EXTRA)
 #
 # Now setup the z/OS Assembler (which uses the compiler driver)
 #
-S_CMD?=$(CC_PATH)
+S_CMD?=$(CC)
 
 S_FLAGS+=-Wa,asa,goff -Wa,xplink
 
@@ -165,7 +171,7 @@ S_FLAGS+=$(S_FLAGS_EXTRA)
 #
 # Now we setup M4 to preprocess Z assembly files
 #
-M4_CMD?=$(M4_PATH)
+M4_CMD?=$(M4)
 
 M4_INCLUDES=$(PRODUCT_INCLUDES)
 M4_DEFINES+=\
@@ -202,12 +208,12 @@ M4_FLAGS+=$(M4_FLAGS_EXTRA)
 #
 # Now the Z archiver
 #
-AR_CMD?=$(AR_PATH)
+AR_CMD?=$(AR)
 
 #
 # Finally setup the linker
 #
-SOLINK_CMD?=$(CXX_PATH)
+SOLINK_CMD?=$(CXX)
 
 SOLINK_FLAGS+=-g -Wl,xplink,dll,map,list,compat=$(TGTLEVEL)
 SOLINK_LIBPATH+=$(J9SRC) $(J9SRC)/lib

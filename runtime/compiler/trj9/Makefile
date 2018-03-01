@@ -42,26 +42,40 @@ ifeq ($(PLATFORM),amd64-linux64-clang)
 endif
 
 ifeq ($(PLATFORM),ppc64-linux64-clang)
-    export CC_PATH?=/tr/llvm_checker/ppc-64/sles11/bin/clang
-    export CXX_PATH?=/tr/llvm_checker/ppc-64/sles11/bin/clang++
+    ifeq (default,$(origin CC))
+        export CC=/tr/llvm_checker/ppc-64/sles11/bin/clang
+    endif
+    ifeq (default,$(origin CXX))
+        export CXX=/tr/llvm_checker/ppc-64/sles11/bin/clang++
+    endif
 endif
 
 ifeq ($(PLATFORM),s390-zos64-vacpp)
-    export CC_PATH?=/usr/lpp/cbclib/xlc/bin/xlc
-    export CXX_PATH?=/usr/lpp/cbclib/xlc/bin/xlC
+    ifeq (default,$(origin CC))
+        export CC=/usr/lpp/cbclib/xlc/bin/xlc
+    endif
+    ifeq (default,$(origin CXX))
+        export CXX=/usr/lpp/cbclib/xlc/bin/xlC
+    endif
     export A2E_INCLUDE_PATH?=/usr/lpp/cbclib/include
 endif
 
 ifeq ($(PLATFORM),arm-linux-gcc-cross)
-   OPENJ9_CC_PREFIX ?= arm-bcm2708hardfp-linux-gnueabi
-   export CC_PATH?=$(OPENJ9_CC_PREFIX)-gcc
-   export CXX_PATH?=$(OPENJ9_CC_PREFIX)-g++
-   export AS_PATH?=$(OPENJ9_CC_PREFIX)-as
-   SUBMAKE_EXTRAARGS=PLATFORM=arm-linux-gcc
+    OPENJ9_CC_PREFIX ?= arm-bcm2708hardfp-linux-gnueabi
+    ifeq (default,$(origin CC))
+        export CC=$(OPENJ9_CC_PREFIX)-gcc
+    endif
+    ifeq (default,$(origin CXX))
+        export CXX=$(OPENJ9_CC_PREFIX)-g++
+    endif
+    ifeq (default,$(origin AS))
+        export AS=$(OPENJ9_CC_PREFIX)-as
+    endif
+    SUBMAKE_EXTRAARGS=PLATFORM=arm-linux-gcc
 endif
 
 ifneq ($(findstring DPROD_WITH_ASSUMES, $(USERCFLAGS)),)
-   SUBMAKE_EXTRAARGS+=ASSUMES=1
+    SUBMAKE_EXTRAARGS+=ASSUMES=1
 endif
 
 #

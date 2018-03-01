@@ -39,11 +39,13 @@ DEPSUFF=.depend.mk
 # to compile .cpp files
 #
 
-AS_PATH?=tpf-as
-M4_PATH?=m4
-SED_PATH?=sed
-AR_PATH?=ar
-PERL_PATH?=perl
+# Use default AR=ar
+ifeq (default,$(origin AS))
+    AS=tpf-as
+endif
+M4?=m4
+SED?=sed
+PERL?=perl
 
 #
 # z/Architecture arch and tune level
@@ -55,8 +57,12 @@ PERL_PATH?=perl
 ARCHLEVEL?=z10
 TUNELEVEL?=z9-109
 
-CC_PATH?=tpf-gcc
-CXX_PATH?=tpf-g++
+ifeq (default,$(origin CC))
+    CC=tpf-gcc
+endif
+ifeq (default,$(origin CXX))
+    CXX=tpf-g++
+endif
 
 # This is the script that's used to generate TRBuildName.cpp
 GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
@@ -178,12 +184,12 @@ ifeq ($(BUILD_CONFIG),prod)
     CX_FLAGS+=$(CX_FLAGS_PROD)
 endif
 
-C_CMD?=$(CC_PATH)
+C_CMD?=$(CC)
 C_INCLUDES=$(PRODUCT_INCLUDES)
 C_DEFINES+=$(CX_DEFINES) $(CX_DEFINES_EXTRA) $(C_DEFINES_EXTRA)
 C_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(C_FLAGS_EXTRA)
 
-CXX_CMD?=$(CXX_PATH)
+CXX_CMD?=$(CXX)
 CXX_INCLUDES=$(PRODUCT_INCLUDES)
 CXX_DEFINES+=$(CX_DEFINES) $(CX_DEFINES_EXTRA) $(CXX_DEFINES_EXTRA)
 CXX_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(CXX_FLAGS_EXTRA)
@@ -191,7 +197,7 @@ CXX_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(CXX_FLAGS_EXTRA)
 #
 # Now setup GAS
 #
-S_CMD?=$(AS_PATH)
+S_CMD?=$(AS)
 
 S_INCLUDES=$(PRODUCT_INCLUDES)
 
@@ -220,7 +226,7 @@ S_FLAGS+=$(S_FLAGS_EXTRA)
 # Now we setup M4 to preprocess Z assembly files
 #
 ifeq ($(HOST_ARCH),z)
-    M4_CMD?=$(M4_PATH)
+    M4_CMD?=$(M4)
 
     M4_INCLUDES=$(PRODUCT_INCLUDES)
     
@@ -252,7 +258,7 @@ endif
 #
 # Finally setup the linker
 #
-SOLINK_CMD?=$(CXX_PATH)
+SOLINK_CMD?=$(CXX)
 
 SOLINK_FLAGS+=
 SOLINK_FLAGS_PROD+=-Wl,-S

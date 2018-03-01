@@ -40,11 +40,11 @@ DEPSUFF=.depend.mk
 # to compile .cpp files
 #
 
-AS_PATH?=as
-M4_PATH?=m4
-SED_PATH?=sed
-AR_PATH?=ar
-PERL_PATH?=perl
+# Use default AR=ar
+# Use default AS=as
+M4?=m4
+SED?=sed
+PERL?=perl
 
 #
 # z/Architecture arch and tune level
@@ -54,13 +54,19 @@ ARCHLEVEL?=z9-109
 TUNELEVEL?=z10
 
 ifeq ($(C_COMPILER),gcc)
-    CC_PATH?=gcc
-    CXX_PATH?=g++
+    ifeq (default,$(origin CC))
+        CC=gcc
+    endif
+    # Use default CXX=g++
 endif
 
 ifeq ($(C_COMPILER),clang)
-    CC_PATH?=clang
-    CXX_PATH?=clang++
+    ifeq (default,$(origin CC))
+        CC=clang
+    endif
+    ifeq (default,$(origin CXX))
+        CXX=clang++
+    endif
 endif
 
 # This is the script that's used to generate TRBuildName.cpp
@@ -179,12 +185,12 @@ ifeq ($(BUILD_CONFIG),prod)
     CX_FLAGS+=$(CX_FLAGS_PROD)
 endif
 
-C_CMD?=$(CC_PATH)
+C_CMD?=$(CC)
 C_INCLUDES=$(PRODUCT_INCLUDES)
 C_DEFINES+=$(CX_DEFINES) $(CX_DEFINES_EXTRA) $(C_DEFINES_EXTRA)
 C_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(C_FLAGS_EXTRA)
 
-CXX_CMD?=$(CXX_PATH)
+CXX_CMD?=$(CXX)
 CXX_INCLUDES=$(PRODUCT_INCLUDES)
 CXX_DEFINES+=$(CX_DEFINES) $(CX_DEFINES_EXTRA) $(CXX_DEFINES_EXTRA)
 CXX_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(CXX_FLAGS_EXTRA)
@@ -192,7 +198,7 @@ CXX_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(CXX_FLAGS_EXTRA)
 #
 # Now setup GAS
 #
-S_CMD?=$(AS_PATH)
+S_CMD?=$(AS)
 
 S_INCLUDES=$(PRODUCT_INCLUDES)
 
@@ -274,7 +280,7 @@ ifeq ($(HOST_ARCH),x)
     
     ASM_FLAGS+=$(ASM_FLAGS_EXTRA)
     
-    PASM_CMD=$(CC_PATH)
+    PASM_CMD=$(CC)
     
     PASM_INCLUDES=$(PRODUCT_INCLUDES)
     PASM_DEFINES+=$(HOST_DEFINES) $(TARGET_DEFINES)
@@ -294,7 +300,7 @@ endif
 # Setup CPP and SED to preprocess PowerPC Assembly Files
 # 
 ifeq ($(HOST_ARCH),p)
-    IPP_CMD=$(SED_PATH)
+    IPP_CMD=$(SED)
     
     ifeq ($(BUILD_CONFIG),debug)
         IPP_FLAGS+=$(IPP_FLAGS_DEBUG)
@@ -306,7 +312,7 @@ ifeq ($(HOST_ARCH),p)
     
     IPP_FLAGS+=$(IPP_FLAGS_EXTRA)
     
-    SPP_CMD=$(CC_PATH)
+    SPP_CMD=$(CC)
     
     SPP_INCLUDES=$(PRODUCT_INCLUDES)
     SPP_DEFINES+=$(CX_DEFINES) $(SPP_DEFINES_EXTRA)
@@ -327,7 +333,7 @@ endif
 # Now we setup M4 to preprocess Z assembly files
 #
 ifeq ($(HOST_ARCH),z)
-    M4_CMD?=$(M4_PATH)
+    M4_CMD?=$(M4)
 
     M4_INCLUDES=$(PRODUCT_INCLUDES)
     
@@ -364,9 +370,9 @@ endif
 # Now setup stuff for ARM assembly
 #
 ifeq ($(HOST_ARCH),arm)
-    ARMASM_CMD?=$(SED_PATH)
+    ARMASM_CMD?=$(SED)
 
-    SPP_CMD?=$(CC_PATH)
+    SPP_CMD?=$(CC)
     
     SPP_INCLUDES=$(PRODUCT_INCLUDES)
     SPP_DEFINES+=$(CX_DEFINES)
@@ -389,7 +395,7 @@ endif
 #
 # Finally setup the linker
 #
-SOLINK_CMD?=$(CXX_PATH)
+SOLINK_CMD?=$(CXX)
 
 SOLINK_FLAGS+=
 SOLINK_FLAGS_PROD+=-Wl,-S

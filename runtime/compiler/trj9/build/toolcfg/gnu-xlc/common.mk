@@ -40,12 +40,17 @@ DEPSUFF=.depend.mk
 # to compile .cpp files
 #
 
-AS_PATH?=as
-SED_PATH?=sed
-PERL_PATH?=perl
+# Use default AR=ar
+# Use default AS=as
+SED?=sed
+PERL?=perl
 
-CC_PATH?=xlc_r
-CXX_PATH?=xlC_r
+ifeq (default,$(origin CC))
+    CC=xlc_r
+endif
+ifeq (default,$(origin CXX))
+    CXX=xlC_r
+endif
 
 # This is the script that's used to generate TRBuildName.cpp
 GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
@@ -109,12 +114,12 @@ ifeq ($(BUILD_CONFIG),prod)
     CX_FLAGS+=$(CX_FLAGS_PROD)
 endif
 
-C_CMD?=$(CC_PATH)
+C_CMD?=$(CC)
 C_INCLUDES=$(PRODUCT_INCLUDES)
 C_DEFINES+=$(CX_DEFINES) $(CX_DEFINES_EXTRA) $(C_DEFINES_EXTRA)
 C_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(C_FLAGS_EXTRA)
 
-CXX_CMD?=$(CXX_PATH)
+CXX_CMD?=$(CXX)
 CXX_INCLUDES=$(PRODUCT_INCLUDES)
 CXX_DEFINES+=$(CX_DEFINES) $(CX_DEFINES_EXTRA) $(CXX_DEFINES_EXTRA)
 CXX_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(CXX_FLAGS_EXTRA)
@@ -122,7 +127,7 @@ CXX_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(CXX_FLAGS_EXTRA)
 #
 # Now setup GAS
 #
-S_CMD?=$(AS_PATH)
+S_CMD?=$(AS)
 
 S_FLAGS+=-maltivec
 
@@ -142,7 +147,7 @@ S_FLAGS+=$(S_FLAGS_EXTRA)
 #
 # Setup IPP
 #
-IPP_CMD?=$(SED_PATH)
+IPP_CMD?=$(SED)
 
 #
 #
@@ -194,7 +199,7 @@ ifeq ($(BUILD_CONFIG),prod)
     SPP_FLAGS+=$(SPP_FLAGS_PROD)
 endif
 
-SPP_CMD?=$(CC_PATH)
+SPP_CMD?=$(CC)
 SPP_INCLUDES=$(PRODUCT_INCLUDES)
 SPP_DEFINES+=$(SPP_DEFINES_EXTRA)
 SPP_FLAGS+=$(SPP_FLAGS_EXTRA)
@@ -202,7 +207,7 @@ SPP_FLAGS+=$(SPP_FLAGS_EXTRA)
 #
 # Finally setup the linker
 #
-SOLINK_CMD?=$(CC_PATH)
+SOLINK_CMD?=$(CC)
 
 SOLINK_FLAGS+=-qmkshrobj -qxflag=selinux
 SOLINK_LIBPATH+=$(PRODUCT_LIBPATH)

@@ -96,7 +96,7 @@ ifeq ($(HOST_ARCH),x)
 #
 define DEF_RULE.asm
 $(1).s: $(2) | jit_createdirs
-	$$(PERL_PATH) $$(ASM_SCRIPT) $$(ASM_FLAGS) $$(patsubst %,-I'%',$$(ASM_INCLUDES)) -o$$(dir $$@) $$<
+	$$(PERL) $$(ASM_SCRIPT) $$(ASM_FLAGS) $$(patsubst %,-I'%',$$(ASM_INCLUDES)) -o$$(dir $$@) $$<
 	-mv $$(dir $$@)$$(notdir $$(basename $$<).s) $$@ || true
 
 JIT_DIR_LIST+=$(dir $(1))
@@ -177,9 +177,9 @@ ifeq ($(HOST_ARCH),z)
 #
 define DEF_RULE.m4
 $(1).s: $(2) | jit_createdirs
-	$$(PERL_PATH) $$(ZASM_SCRIPT) $$<
+	$$(PERL) $$(ZASM_SCRIPT) $$<
 	$$(M4_CMD) $$(M4_FLAGS) $$(patsubst %,-I'%',$$(M4_INCLUDES)) $$(patsubst %,-D%,$$(M4_DEFINES)) $$< > $$@
-	$$(PERL_PATH) $$(ZASM_SCRIPT) $$@
+	$$(PERL) $$(ZASM_SCRIPT) $$@
 
 JIT_DIR_LIST+=$(dir $(1))
 

@@ -40,12 +40,17 @@ DEPSUFF=.depend.mk
 # to compile .cpp files
 #
 
-AS_PATH?=as
-CC_PATH?=xlc_r
-CXX_PATH?=xlC_r
-SED_PATH?=sed
-PERL_PATH?=perl
-SHAREDLIB_PATH?=makeC++SharedLib_r
+# Use default AR=ar
+# Use default AS=as
+ifeq (default,$(origin CC))
+    CC=xlc_r
+endif
+ifeq (default,$(origin CXX))
+    CXX=xlC_r
+endif
+SED?=sed
+PERL?=perl
+SHAREDLIB?=makeC++SharedLib_r
 
 # This is the script that's used to generate TRBuildName.cpp
 GENERATE_VERSION_SCRIPT?=$(JIT_SCRIPT_DIR)/generateVersion.pl
@@ -112,12 +117,12 @@ ifeq ($(BUILD_CONFIG),prod)
     CX_FLAGS+=$(CX_FLAGS_PROD)
 endif
 
-C_CMD?=$(CC_PATH)
+C_CMD?=$(CC)
 C_INCLUDES=$(PRODUCT_INCLUDES)
 C_DEFINES+=$(CX_DEFINES) $(CX_DEFINES_EXTRA) $(C_DEFINES_EXTRA)
 C_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(C_FLAGS_EXTRA)
 
-CXX_CMD?=$(CXX_PATH)
+CXX_CMD?=$(CXX)
 CXX_INCLUDES=$(PRODUCT_INCLUDES)
 CXX_DEFINES+=$(CX_DEFINES) $(CX_DEFINES_EXTRA) $(CXX_DEFINES_EXTRA)
 CXX_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(CXX_FLAGS_EXTRA)
@@ -125,7 +130,7 @@ CXX_FLAGS+=$(CX_FLAGS) $(CX_FLAGS_EXTRA) $(CXX_FLAGS_EXTRA)
 #
 # Now setup Assembler
 #
-S_CMD?=$(AS_PATH)
+S_CMD?=$(AS)
 
 ifeq ($(HOST_BITS),32)
     S_FLAGS+=-mppc
@@ -148,7 +153,7 @@ S_FLAGS+=$(S_FLAGS_EXTRA)
 #
 # Now setup SPP
 #
-SPP_CMD?=$(CC_PATH)
+SPP_CMD?=$(CC)
 
 SPP_INCLUDES=$(PRODUCT_INCLUDES)
 
@@ -174,7 +179,7 @@ endif
 SPP_FLAGS+=$(SPP_FLAGS_EXTRA)
 
 # Now setup IPP
-IPP_CMD?=$(SED_PATH)
+IPP_CMD?=$(SED)
 
 ifeq ($(BUILD_CONFIG),debug)
     IPP_FLAGS+=$(IPP_FLAGS_DEBUG)
@@ -189,7 +194,7 @@ IPP_FLAGS+=$(IPP_FLAGS_EXTRA)
 #
 # Finally setup the linker
 #
-SOLINK_CMD?=$(SHAREDLIB_PATH)
+SOLINK_CMD?=$(SHAREDLIB)
 
 SOLINK_FLAGS+=-p0 -bloadmap:lmap -brtl -bnoentry
 
