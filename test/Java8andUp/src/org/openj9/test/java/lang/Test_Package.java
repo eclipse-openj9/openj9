@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,10 @@ import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 import org.testng.Assert;
 import java.lang.annotation.*;
+
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
 import java.io.*;
 import sun.misc.Unsafe;
 import java.lang.reflect.Field;
@@ -43,6 +47,7 @@ public class Test_Package {
 	public void test_GetPackages() {
 
 		try {
+			final boolean isJava8 = System.getProperty("java.specification.version").equals("1.8");
 			String PACKAGE_NAME = "org.openj9.resources.packagetest";
 			String PACKAGE = "/org/openj9/resources/packagetest/";
 			
@@ -59,9 +64,13 @@ public class Test_Package {
 			if (generatedClass == null) {
 				Assert.fail("Failed to generate class - org.openj9.resources.packagetest.ClassGenerated");
 			}
-			/* NullPointerException should not be thrown */
-			if (findPackage(PACKAGE_NAME)) {
-				Assert.fail("For generated classes, package information should not be available");
+			if (isJava8) {
+				/* NullPointerException should not be thrown */
+				assertFalse(findPackage(PACKAGE_NAME),
+						"For generated classes, package information should not be available"); //$NON-NLS-1$
+			} else { /* Java 9 adds all classes to a package */
+				assertTrue(findPackage(PACKAGE_NAME),
+						"Package information should be available for all classes"); //$NON-NLS-1$
 			}
 			
 			/* Load a class from org.openj9.resources.packagetest package - not generated */			
@@ -78,15 +87,21 @@ public class Test_Package {
 			
 			/* NullPointerException should not be thrown when executing Package.getPackages() */
 			Package.getPackages();
-		} catch (Throwable ex) {
-			Assert.fail("Unexpected exception, thrown " + ex.getMessage());
+		} catch (IOException 
+				| NoSuchFieldException 
+				| SecurityException 
+				| IllegalArgumentException 
+				| IllegalAccessException 
+				| ClassNotFoundException ex) {
+			Assert.fail("Unexpected exception thrown: " + ex.getMessage()); //$NON-NLS-1$
 		}
 	}
 	
 	/**
-	 * Check if a package if available in Package.getPackages()
+	 * Check if a package is available in Package.getPackages().
+	 * Make it private to prevent warnings from testNG.
 	 */
-	public static boolean findPackage(String name) {
+	private static boolean findPackage(String name) {
 		boolean rc = false;
 		Package[] pack = Package.getPackages();
 		for (int i = 0; i < pack.length; i++) {
