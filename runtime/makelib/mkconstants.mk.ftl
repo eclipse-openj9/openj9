@@ -33,27 +33,134 @@ ifndef UMA_TARGET_PATH
 endif
 
 # Define all the tool used for compilation and linking.
-<#if uma.spec.tools.interp_gcc.needed>INTERP_GCC=${uma.spec.tools.interp_gcc.name}<#else>#INTERP_GCC not used</#if>
-<#if uma.spec.tools.as.needed>AS=${uma.spec.tools.as.name}<#else># AS not used</#if>
-<#if uma.spec.tools.cc.needed>CC=${uma.spec.tools.cc.name}<#else># CC not used</#if>
-<#if uma.spec.tools.cpp.needed>CPP=${uma.spec.tools.cpp.name}<#else># CPP not used</#if>
-<#if uma.spec.tools.cxx.needed>CXX=${uma.spec.tools.cxx.name}<#else># CXX not used</#if>
-<#if uma.spec.tools.rc.needed>RC=${uma.spec.tools.rc.name}<#else># RC not used</#if>
-<#if uma.spec.tools.link.needed>LINK=${uma.spec.tools.link.name}<#else># LINK not used</#if>
-<#if uma.spec.tools.mt.needed>MT=${uma.spec.tools.mt.name}<#else># MT not used</#if>
-<#if uma.spec.tools.implib.needed>IMPLIB=${uma.spec.tools.implib.name}<#else># IMPLIB not used</#if>
-<#if uma.spec.tools.ar.needed>AR=${uma.spec.tools.ar.name}<#else># AR not used</#if>
-<#if uma.spec.tools.ranlib.needed>RANLIB=${uma.spec.tools.ranlib.name}<#else># RANLIB not used</#if>
-<#if uma.spec.tools.dll_ld.needed>DLL_LD=${uma.spec.tools.dll_ld.name}<#else># DLL_LD not used</#if>
-<#if uma.spec.tools.cxx_dll_ld.needed>CXX_DLL_LD=${uma.spec.tools.cxx_dll_ld.name}<#else># CXX_DLL_LD not used</#if>
-<#if uma.spec.tools.exe_ld.needed>EXE_LD=${uma.spec.tools.exe_ld.name}<#else># EXE_LD not used</#if>
-<#if uma.spec.tools.cxx_exe_ld.needed>CXX_EXE_LD=${uma.spec.tools.cxx_exe_ld.name}<#else># CXX_EXE_LD not used</#if>
-<#if uma.spec.tools.dll_ld.needed>UMA_DLL_LD=$(if $(UMA_IS_C_PLUS_PLUS),$(CXX_DLL_LD),$(DLL_LD))</#if>
-<#if uma.spec.tools.exe_ld.needed>UMA_EXE_LD=$(if $(UMA_IS_C_PLUS_PLUS),$(CXX_EXE_LD),$(EXE_LD))</#if>
+<#if uma.spec.tools.interp_gcc.needed>
+ifneq (default,$(origin CC))
+  ifndef INTERP_GCC
+    # If the user has overridden CC we'll want to let them know that INTERP_GCC exists.
+    ifndef PRINT_ONCE_INTERP_GCC
+      $(info ****************)
+      $(info *)
+      $(info * CC=$(CC) (overridden), note that this build will also invoke another compiler that can be overridden: INTERP_GCC=${uma.spec.tools.interp_gcc.name})
+      $(info *)
+      $(info ****************)
+      export PRINT_ONCE_INTERP_GCC=1
+    endif
+  endif
+endif
+INTERP_GCC?=${uma.spec.tools.interp_gcc.name}
+<#else>
+#INTERP_GCC not used
+</#if>
+
+<#if uma.spec.type.windows>
+<#if uma.spec.flags.build_VS12AndHigher.enabled>
+VS12AndHigher:=1
+</#if>
+ifndef NO_USE_MINGW
+USE_MINGW:=1
+endif
+ifdef USE_MINGW
+<#if uma.spec.tools.mingw_cxx.needed>
+ifneq (default,$(origin CXX))
+  ifndef MINGW_CXX
+    # If the user has overridden CXX we'll want to let them know that MINGW_CXX exists.
+    ifndef PRINT_ONCE_MINGW_CXX
+      $(info ****************)
+      $(info *)
+      $(info * CXX=$(CXX) (overridden), note that this build will also invoke another compiler that can be overridden: MINGW_CXX=${uma.spec.tools.mingw_cxx.name})
+      $(info *)
+      $(info ****************)
+      export PRINT_ONCE_MINGW_CXX=1
+    endif
+  endif
+endif
+MINGW_CXX?=${uma.spec.tools.mingw_cxx.name}
+<#else>
+# MINGW_CXX not used
+</#if>
+endif
+</#if>
+
+<#if uma.spec.processor.ppc && uma.spec.type.linux && !uma.spec.flags.env_advanceToolchain.enabled && !uma.spec.flags.uma_codeCoverage.enabled>
+ifndef NO_USE_PPC_GCC
+USE_PPC_GCC:=1
+endif
+ifdef USE_PPC_GCC
+<#if uma.spec.tools.ppc_gcc_cxx.needed>
+ifneq (default,$(origin CXX))
+  ifndef PPC_GCC_CXX
+    # If the user has overridden CXX we'll want to let them know that PPC_GCC_CXX exists.
+    ifndef PRINT_ONCE_PPC_GCC_CXX
+      $(info ****************)
+      $(info *)
+      $(info * CXX=$(CXX) (overridden), note that this build will also invoke another compiler that can be overridden: PPC_GCC_CXX=${uma.spec.tools.ppc_gcc_cxx.name})
+      $(info *)
+      $(info ****************)
+      export PRINT_ONCE_PPC_GCC_CXX=1
+    endif
+  endif
+endif
+PPC_GCC_CXX?=${uma.spec.tools.ppc_gcc_cxx.name}
+<#else>
+# PPC_GCC_CXX not used
+</#if>
+endif
+</#if>
+
+<#if uma.spec.tools.as.needed>
+ifeq (default,$(origin AS))
+  AS=${uma.spec.tools.as.name}
+endif
+<#else>
+# AS not used
+</#if>
+<#if uma.spec.tools.cc.needed>
+ifeq (default,$(origin CC))
+  CC=${uma.spec.tools.cc.name}
+endif
+<#else>
+# CC not used
+</#if>
+<#if uma.spec.tools.cpp.needed>
+ifeq (default,$(origin CPP))
+  CPP=${uma.spec.tools.cpp.name}
+endif
+<#else>
+# CPP not used
+</#if>
+<#if uma.spec.tools.cxx.needed>
+ifeq (default,$(origin CXX))
+  CXX=${uma.spec.tools.cxx.name}
+endif
+<#else>
+# CXX not used
+</#if>
+<#if uma.spec.tools.rc.needed>RC?=${uma.spec.tools.rc.name}<#else># RC not used</#if>
+<#if uma.spec.tools.link.needed>LINK?=${uma.spec.tools.link.name}<#else># LINK not used</#if>
+<#if uma.spec.tools.mt.needed>MT?=${uma.spec.tools.mt.name}<#else># MT not used</#if>
+<#if uma.spec.tools.implib.needed>IMPLIB?=${uma.spec.tools.implib.name}<#else># IMPLIB not used</#if>
+<#if uma.spec.tools.ar.needed>
+ifeq (default,$(origin AR))
+  AR=${uma.spec.tools.ar.name}
+endif
+<#else>
+  # AR not used
+</#if>
+<#if uma.spec.tools.ranlib.needed>RANLIB?=${uma.spec.tools.ranlib.name}<#else># RANLIB not used</#if>
+<#if uma.spec.tools.dll_ld.needed>DLL_LD?=${uma.spec.tools.dll_ld.name}<#else># DLL_LD not used</#if>
+<#if uma.spec.tools.cxx_dll_ld.needed>CXX_DLL_LD?=${uma.spec.tools.cxx_dll_ld.name}<#else># CXX_DLL_LD not used</#if>
+<#if uma.spec.tools.exe_ld.needed>EXE_LD?=${uma.spec.tools.exe_ld.name}<#else># EXE_LD not used</#if>
+<#if uma.spec.tools.cxx_exe_ld.needed>CXX_EXE_LD?=${uma.spec.tools.cxx_exe_ld.name}<#else># CXX_EXE_LD not used</#if>
+<#if uma.spec.tools.dll_ld.needed>UMA_DLL_LD?=$(if $(UMA_IS_C_PLUS_PLUS),$(CXX_DLL_LD),$(DLL_LD))</#if>
+<#if uma.spec.tools.exe_ld.needed>UMA_EXE_LD?=$(if $(UMA_IS_C_PLUS_PLUS),$(CXX_EXE_LD),$(EXE_LD))</#if>
 
 ifdef UMA_CLANG
-  CC=clang
-  CXX=clang++
+  ifeq (default,$(origin CC))
+    CC=clang
+  endif
+  ifeq (default,$(origin CXX))
+    CXX=clang++
+  endif
 endif
 
 # Define the JIT HOST type.
@@ -159,33 +266,4 @@ UMA_OBJECTS+=$(patsubst %.mc,%.res,$(wildcard *.mc))
 
 <#if uma.spec.type.windows>
 UMA_WINDOWS_PARRALLEL_HACK=-j $(NUMBER_OF_PROCESSORS)
-</#if>
-
-<#if uma.spec.type.windows>
-<#if uma.spec.flags.build_VS12AndHigher.enabled>
-VS12AndHigher:=1
-</#if>
-ifndef NO_USE_MINGW
-USE_MINGW:=1
-endif
-ifdef USE_MINGW
-<#if uma.spec.tools.mingw_cxx.needed>
-MINGW_CXX=${uma.spec.tools.mingw_cxx.name}
-<#else>
-# MINGW_CXX not used
-</#if>
-endif
-</#if>
-
-<#if uma.spec.processor.ppc && uma.spec.type.linux && !uma.spec.flags.env_advanceToolchain.enabled && !uma.spec.flags.uma_codeCoverage.enabled>
-ifndef NO_USE_PPC_GCC
-USE_PPC_GCC:=1
-endif
-ifdef USE_PPC_GCC
-<#if uma.spec.tools.ppc_gcc_cxx.needed>
-PPC_GCC_CXX=${uma.spec.tools.ppc_gcc_cxx.name}
-<#else>
-# PPC_GCC_CXX not used
-</#if>
-endif
 </#if>

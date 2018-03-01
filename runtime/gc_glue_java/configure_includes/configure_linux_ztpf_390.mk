@@ -115,16 +115,23 @@ endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
+ifeq (default,$(origin CC))
+	CC=tpf-gcc
+endif
+ifeq (default,$(origin CXX))
+	CXX=tpf-g++
+endif
+
 CONFIGURE_ARGS += --host=s390x-ibm-tpf
 CONFIGURE_ARGS += --build=s390x-ibm-linux-gnu
-CONFIGURE_ARGS += 'AS=as'
-CONFIGURE_ARGS += 'CC=tpf-gcc'
-CONFIGURE_ARGS += 'CXX=tpf-g++'
-CONFIGURE_ARGS += 'CCLINKEXE=tpf-gcc'
-CONFIGURE_ARGS += 'CCLINKSHARED=tpf-gcc'
-CONFIGURE_ARGS += 'CXXLINKEXE=tpf-gcc'
-CONFIGURE_ARGS += 'CXXLINKSHARED=tpf-gcc'
-CONFIGURE_ARGS += 'AR=ar'
+CONFIGURE_ARGS += 'AS=$(AS)'
+CONFIGURE_ARGS += 'CC=$(CC)'
+CONFIGURE_ARGS += 'CXX=$(CXX)'
+CONFIGURE_ARGS += 'CCLINKEXE=$$(CC)'
+CONFIGURE_ARGS += 'CCLINKSHARED=$$(CC)'
+CONFIGURE_ARGS += 'CXXLINKEXE=$$(CC)'
+CONFIGURE_ARGS += 'CXXLINKSHARED=$$(CC)'
+CONFIGURE_ARGS += 'AR=$(AR)'
 CONFIGURE_ARGS += 'RM=$(RM)'
 
 CONFIGURE_ARGS += 'CFLAGS=-D_TPF_SOURCE'

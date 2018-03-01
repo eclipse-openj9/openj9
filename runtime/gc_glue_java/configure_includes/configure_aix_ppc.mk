@@ -96,14 +96,21 @@ endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
-CONFIGURE_ARGS += 'AS=as'
-CONFIGURE_ARGS += 'CC=xlC_r'
-CONFIGURE_ARGS += 'CXX=$$(CC)'
+ifeq (default,$(origin CC))
+	CC=xlC_r
+endif
+ifeq (default,$(origin CXX))
+	CXX=$(CC)
+endif
+
+CONFIGURE_ARGS += 'AS=$(AS)'
+CONFIGURE_ARGS += 'CC=$(CC)'
+CONFIGURE_ARGS += 'CXX=$(CXX)'
 CONFIGURE_ARGS += 'CCLINKEXE=$$(CC)'
 CONFIGURE_ARGS += 'CCLINKSHARED=ld'
 CONFIGURE_ARGS += 'CXXLINKEXE=$$(CC)'
 CONFIGURE_ARGS += 'CXXLINKSHARED=makeC++SharedLib_r'
-CONFIGURE_ARGS += 'AR=ar'
+CONFIGURE_ARGS += 'AR=$(AR)'
 
 CONFIGURE_ARGS += 'OMR_HOST_OS=aix'
 CONFIGURE_ARGS += 'OMR_HOST_ARCH=ppc'

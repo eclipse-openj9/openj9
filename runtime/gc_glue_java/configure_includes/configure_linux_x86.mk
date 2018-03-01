@@ -155,14 +155,18 @@ endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
-CONFIGURE_ARGS += 'AS=as'
-CONFIGURE_ARGS += 'CC=cc'
-CONFIGURE_ARGS += 'CXX=c++'
+ifeq (default,$(origin CXX))
+	CXX=c++
+endif
+
+CONFIGURE_ARGS += 'AS=$(AS)'
+CONFIGURE_ARGS += 'CC=$(CC)'
+CONFIGURE_ARGS += 'CXX=$(CXX)'
 CONFIGURE_ARGS += 'CCLINKEXE=$$(CC)'
 CONFIGURE_ARGS += 'CCLINKSHARED=$$(CC)'
 CONFIGURE_ARGS += 'CXXLINKEXE=$$(CXX)'
 CONFIGURE_ARGS += 'CXXLINKSHARED=$$(CXX)'
-CONFIGURE_ARGS += 'AR=ar'
+CONFIGURE_ARGS += 'AR=$(AR)'
 
 CONFIGURE_ARGS += 'OMR_HOST_OS=linux'
 CONFIGURE_ARGS += 'OMR_HOST_ARCH=x86'

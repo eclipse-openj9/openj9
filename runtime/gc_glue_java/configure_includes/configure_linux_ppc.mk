@@ -22,36 +22,6 @@
 
 include $(CONFIG_INCL_DIR)/configure_common.mk
 
-GCC_TOOLS:=\
-'OMR_TOOLCHAIN=gcc' \
-'AS=as' \
-'CC=gcc' \
-'CXX=c++' \
-'CCLINKEXE=$$(CC)' \
-'CCLINKSHARED=$$(CC)' \
-'CXXLINKEXE=$$(CXX)' \
-'CXXLINKSHARED=$$(CXX)'
-# CPP is unused: 'CPP=cpp' 
-
-XLC_TOOLS:=\
-'OMR_TOOLCHAIN=xlc' \
-'AS=xlC_r' \
-'CC=xlC_r' \
-'CXX=$$(CC)' \
-'CCLINKEXE=xlc_r' \
-'CCLINKSHARED=xlc_r' \
-'CXXLINKEXE=$$(CC)' \
-'CXXLINKSHARED=xlc_r'
-# CPP is unused: 'CPP=cpp' 
-
-# All specs except buildspecs named "_gcc" currently use XLC 
-# buildspecs named "_gcc" use gcc
-ifneq (,$(findstring _gcc,$(SPEC)))
-	TEMP_TOOLS=$(GCC_TOOLS)
-else
-	TEMP_TOOLS=$(XLC_TOOLS)
-endif
-
 CONFIGURE_ARGS += \
 	--enable-OMR_THR_THREE_TIER_LOCKING \
 	--enable-OMR_THR_YIELD_ALG \
@@ -188,14 +158,43 @@ endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
-ifndef TEMP_TOOLS
-  $(error No toolchain selected)
+# All specs except buildspecs named "_gcc" currently use XLC
+# buildspecs named "_gcc" use gcc
+ifneq (,$(findstring _gcc,$(SPEC)))
+	ifeq (default,$(origin CC))
+		CC=gcc
+	endif
+	ifeq (default,$(origin CXX))
+		CXX=c++
+	endif
+	CONFIGURE_ARGS += 'OMR_TOOLCHAIN=gcc'
+	CONFIGURE_ARGS += 'AS=$(AS)'
+	CONFIGURE_ARGS += 'CC=$(CC)'
+	CONFIGURE_ARGS += 'CXX=$(CXX)'
+	CONFIGURE_ARGS += 'CCLINKEXE=$$(CC)'
+	CONFIGURE_ARGS += 'CCLINKSHARED=$$(CC)'
+	CONFIGURE_ARGS += 'CXXLINKEXE=$$(CXX)'
+	CONFIGURE_ARGS += 'CXXLINKSHARED=$$(CXX)'
+	# CPP is unused: 'CPP=cpp'
+else
+	ifeq (default,$(origin AS))
+		AS=xlC_r
+	endif
+	ifeq (default,$(origin CC))
+		CC=xlC_r
+	endif
+	CONFIGURE_ARGS += 'OMR_TOOLCHAIN=xlc'
+	CONFIGURE_ARGS += 'AS=$(AS)'
+	CONFIGURE_ARGS += 'CC=$(CC)'
+	CONFIGURE_ARGS += 'CXX=$$(CC)'
+	CONFIGURE_ARGS += 'CCLINKEXE=xlc_r'
+	CONFIGURE_ARGS += 'CCLINKSHARED=xlc_r'
+	CONFIGURE_ARGS += 'CXXLINKEXE=$$(CC)'
+	CONFIGURE_ARGS += 'CXXLINKSHARED=xlc_r'
+	# CPP is unused: 'CPP=cpp'
 endif
 
-CONFIGURE_ARGS += $(TEMP_TOOLS)
-CONFIGURE_ARGS += 'AR=ar'
-
+CONFIGURE_ARGS += 'AR=$(AR)'
 CONFIGURE_ARGS += 'OMR_HOST_OS=linux'
 CONFIGURE_ARGS += 'OMR_HOST_ARCH=ppc'
 CONFIGURE_ARGS += 'OMR_TARGET_DATASIZE=$(TEMP_TARGET_DATASIZE)'
-# OMR_TOOLCHAIN is set as part of TEMP_TOOLS above.
