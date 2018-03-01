@@ -200,9 +200,11 @@ else
 endif
 
 #######################################
-# include sub makefile
+# include openj9 specific settings
 #######################################
--include $(JVM_TEST_ROOT)$(D)TestConfig$(D)extraSettings.mk
+ifeq ($(JAVA_IMPL), openj9)
+	include $(TEST_ROOT)$(D)TestConfig$(D)openj9Settings.mk
+endif
 
 #######################################
 # generic target

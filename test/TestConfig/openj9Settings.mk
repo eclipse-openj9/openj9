@@ -21,7 +21,7 @@
 ##############################################################################
 
 #
-# This makefile contains J9 specific settings
+# This makefile contains openJ9 specific settings
 #
 
 #######################################
