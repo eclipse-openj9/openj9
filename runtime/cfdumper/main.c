@@ -36,6 +36,7 @@
 #include "j9cp.h"
 #include "bcutil_api.h"
 #include "cfdumper_internal.h"
+#include "vendor_version.h"
 
 #if defined(J9ZOS390)
 #include "atoe.h"
