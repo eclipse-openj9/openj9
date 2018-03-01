@@ -2486,9 +2486,6 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	IDATA xxnoverboseverificationIndex = -1;
 	IDATA xxverifyerrordetailsIndex = -1;
 	IDATA xxnoverifyerrordetailsIndex = -1;
-#ifdef J9VM_OPT_JVMTI
-	UDATA jvmti = FALSE;
-#endif
 
 	IDATA xxjitdirectoryIndex = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -2544,13 +2541,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 #if defined(J9VM_OPT_JVMTI)
 		if ((strstr(testString, VMOPT_AGENTLIB_COLON)==testString) || (strstr(testString, VMOPT_AGENTPATH_COLON)==testString)) {
 			ADD_FLAG_AT_INDEX( ARG_REQUIRES_LIBRARY, i );
-			jvmti = TRUE;
-		} else
-#if defined(J9VM_OPT_SIDECAR)
-		if ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) >= J2SE_16) {
-			jvmti = TRUE;
 		}
-#endif
 #endif
 
 		if (strcmp(testString, VMOPT_XINT)==0) {
@@ -2606,11 +2597,9 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	}
 
 #if defined(J9VM_OPT_JVMTI)
-	if (jvmti) {
-		entry = findDllLoadInfo(loadTable, J9_JVMTI_DLL_NAME);
-		entry->loadFlags |= LOAD_BY_DEFAULT;
-		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "JVMTI required... whacking table\n");
-	}
+	entry = findDllLoadInfo(loadTable, J9_JVMTI_DLL_NAME);
+	entry->loadFlags |= LOAD_BY_DEFAULT;
+	JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "JVMTI required... whacking table\n");
 #endif
 
 /**
@@ -2713,11 +2702,9 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	}
 
 #if defined( J9VM_OPT_SIDECAR )
-	if ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) >= J2SE_16) {
-		entry = findDllLoadInfo(loadTable, J9_VERBOSE_DLL_NAME);
-		entry->loadFlags |= LOAD_BY_DEFAULT;
-		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "verbose support required in j2se... whacking table\n");
-	}
+	entry = findDllLoadInfo(loadTable, J9_VERBOSE_DLL_NAME);
+	entry->loadFlags |= LOAD_BY_DEFAULT;
+	JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "verbose support required in j2se... whacking table\n");
 #endif
 
 	if ( xverbosegclog ) {
@@ -3700,10 +3687,8 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	changeCursor = &jitOpt[strlen(jitOpt)];
 
 #ifdef J9VM_OPT_JVMTI
-	if ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) >= J2SE_16) {
-		if (registerCmdLineMapping(vm, MAPOPT_JAVAAGENT_COLON, MAPOPT_AGENTLIB_INSTRUMENT_EQUALS, MAP_WITH_INCLUSIVE_OPTIONS) == RC_FAILED) {
-			return RC_FAILED;
-		}
+	if (registerCmdLineMapping(vm, MAPOPT_JAVAAGENT_COLON, MAPOPT_AGENTLIB_INSTRUMENT_EQUALS, MAP_WITH_INCLUSIVE_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
 	}
 #endif
 
