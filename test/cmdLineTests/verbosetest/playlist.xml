@@ -34,7 +34,7 @@
 			<variation>Mode351</variation>
 			<variation>Mode551</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DTESTNG=$(Q)$(TESTNG)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJAVA_VERSION=$(Q)$(JAVA_VERSION)$(Q) -DREPORTDIR=$(Q)$(REPORTDIR)$(Q) -DTEST_GROUP=$(Q)$(TEST_GROUP)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)verbosetests.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRESOURCES_DIR=$(Q)$(RESOURCES_DIR)$(Q) -DTESTNG=$(Q)$(TESTNG)$(Q) -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) -DJAVA_VERSION=$(Q)$(JAVA_VERSION)$(Q) -DREPORTDIR=$(REPORTDIR) -DTEST_GROUP=$(Q)$(TEST_GROUP)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)verbosetests.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
