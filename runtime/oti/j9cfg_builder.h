@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,9 +119,7 @@
 #define J9_IGC_OVERFLOW_LIST_MAX 16384
 #define J9_SCV_TENURE_RATIO_HIGH 30
 #define J9_IGC_OBJECT_SCAN_QUEUE_SIZE_MAX 16384
-#define J9_SCV_REMSET_MAX 65536
 #define J9_INITIAL_MEMORY_SIZE_SCALE_DENOMINATOR 1000
-#define J9_SCV_REMSET_FRAGMENT_SIZE 32
 #define J9_RESMAN_DEFAULT_MEMORY_SPACE_MAX_DIVISOR 8
 #define J9_GC_UNFINALIZED_LIST_INCREMENT 4096
 #define J9_OLD_SPACE_SIZE_SCALE_NUMERATOR 125
@@ -130,7 +128,6 @@
 #define J9_IGC_MINIMUM_FREE_RATIO 25
 #define J9_PHYSICAL_MEMORY_SCALE_DENOMINATOR 4
 #define J9_OLD_SPACE_SIZE_MAX 8388608
-#define J9_SCV_REMSET_SIZE 16384
 #define J9_FIXED_SPACE_SIZE_ROUND_TO 1024
 #define J9_ALLOCATION_INCREMENT_ROUND_TO 1024
 #define J9_NEW_SPACE_SIZE_MAX 4194304
