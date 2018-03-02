@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -183,80 +183,6 @@ TR::J9S390zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
 
 }
 
-void
-TR::J9S390zLinuxSystemLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_DispatchType dispatchType,
-   TR::RegisterDependencyConditions * &deps, int64_t & killMask, TR::SystemLinkage * systemLinkage,
-   TR::Node * &GlobalRegDeps, bool &hasGlRegDeps, TR::Register ** methodAddressReg, TR::Register * &javaLitOffsetReg)
-   {
-   // call j9 private linkage specialization
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   privateLinkage->setupRegisterDepForLinkage(callNode, dispatchType, deps, killMask, systemLinkage, GlobalRegDeps, hasGlRegDeps, methodAddressReg, javaLitOffsetReg);
-   }
-
-void
-TR::J9S390zLinuxSystemLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::RegisterDependencyConditions * deps, bool isFastJNI,
-      bool isPassReceiver, int64_t & killMask, TR::Node * GlobalRegDeps, bool hasGlRegDeps, TR::SystemLinkage * systemLinkage)
-   {
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   privateLinkage->setupBuildArgForLinkage(callNode, dispatchType, deps, isFastJNI, isPassReceiver, killMask, GlobalRegDeps, hasGlRegDeps, systemLinkage);
-   }
-
-void
-TR::J9S390zLinuxSystemLinkage::performCallNativeFunctionForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::Register * &javaReturnRegister, TR::SystemLinkage * systemLinkage,
-      TR::RegisterDependencyConditions * &deps, TR::Register * javaLitOffsetReg, TR::Register * methodAddressReg, bool isJNIGCPoint)
-   {
-   // call base class implementation first
-   OMR::Z::Linkage::performCallNativeFunctionForLinkage(callNode, dispatchType, javaReturnRegister, systemLinkage, deps, javaLitOffsetReg, methodAddressReg, isJNIGCPoint);
-
-   // get javaStack Real Register
-   TR::CodeGenerator * codeGen = cg();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(codeGen->fe());
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   TR::RealRegister * javaStackPointerRealRegister = privateLinkage->getStackPointerRealRegister();
-
-   // get methodMetaDataVirtualRegister
-   TR::Register * methodMetaDataVirtualRegister = NULL;
-   if (codeGen->comp()->getOption(TR_Enable390FreeVMThreadReg))
-     methodMetaDataVirtualRegister = codeGen->getVMThreadRegister();
-   else
-     methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
-
-   // restore java stack pointer
-   generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), callNode, javaStackPointerRealRegister,
-                         new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaSPOffset(), codeGen));
-   }
-
-void
-TR::J9S390zLinuxSystemLinkage::doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, bool isFastJNI, int64_t &killMask)
-   {
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   privateLinkage->doNotKillSpecialRegsForBuildArgs(linkage, isFastJNI, killMask);
-   }
-
-void
-TR::J9S390zLinuxSystemLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies, int32_t& from, int32_t step)
-   {
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   privateLinkage->addSpecialRegDepsForBuildArgs(callNode, dependencies, from, step);
-   }
-
-int64_t
-TR::J9S390zLinuxSystemLinkage::addFECustomizedReturnRegDependency(int64_t killMask, TR::Linkage* linkage, TR::DataType resType, TR::RegisterDependencyConditions * dependencies)
-   {
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   killMask = privateLinkage->addFECustomizedReturnRegDependency(killMask, linkage, resType, dependencies);
-   return killMask;
-   }
-
-int32_t
-TR::J9S390zLinuxSystemLinkage::storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Linkage* linkage, TR::RegisterDependencyConditions * dependencies,
-      bool isFastJNI, int32_t stackOffset, int8_t gprSize, uint32_t &numIntegerArgs)
-   {
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   stackOffset = privateLinkage->storeExtraEnvRegForBuildArgs(callNode, linkage, dependencies, isFastJNI, stackOffset, gprSize, numIntegerArgs);
-   return stackOffset;
-   }
-
 ////////////////////////////////////////////////////////////////////////////////
 //  TR::J9S390zOSSystemLinkage Implementations
 ////////////////////////////////////////////////////////////////////////////////
@@ -425,82 +351,6 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
    generateRRInstruction(codeGen, TR::InstOpCode::getLoadRegOpCode(), callNode, systemEntryPointRegister, javaLitOffsetReg);
    }
 
-void
-TR::J9S390zOSSystemLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_DispatchType dispatchType,
-   TR::RegisterDependencyConditions * &deps, int64_t & killMask, TR::SystemLinkage * systemLinkage,
-   TR::Node * &GlobalRegDeps, bool &hasGlRegDeps, TR::Register ** methodAddressReg, TR::Register * &javaLitOffsetReg)
-   {
-   // call j9 private linkage specialization
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   privateLinkage->setupRegisterDepForLinkage(callNode, dispatchType, deps, killMask, systemLinkage, GlobalRegDeps, hasGlRegDeps, methodAddressReg, javaLitOffsetReg);
-   }
-
-void
-TR::J9S390zOSSystemLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::RegisterDependencyConditions * deps, bool isFastJNI,
-      bool isPassReceiver, int64_t & killMask, TR::Node * GlobalRegDeps, bool hasGlRegDeps, TR::SystemLinkage * systemLinkage)
-   {
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   privateLinkage->setupBuildArgForLinkage(callNode, dispatchType, deps, isFastJNI, isPassReceiver, killMask, GlobalRegDeps, hasGlRegDeps, systemLinkage);
-   }
-
-void
-TR::J9S390zOSSystemLinkage::performCallNativeFunctionForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::Register * &javaReturnRegister, TR::SystemLinkage * systemLinkage,
-      TR::RegisterDependencyConditions * &deps, TR::Register * javaLitOffsetReg, TR::Register * methodAddressReg, bool isJNIGCPoint)
-   {
-   // call base class implementation first
-   OMR::Z::Linkage::performCallNativeFunctionForLinkage(callNode, dispatchType, javaReturnRegister, systemLinkage, deps, javaLitOffsetReg, methodAddressReg, isJNIGCPoint);
-
-   // get javaStack Real Register
-   TR::CodeGenerator * codeGen = cg();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(codeGen->fe());
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   TR::RealRegister * javaStackPointerRealRegister = privateLinkage->getStackPointerRealRegister();
-
-   // get methodMetaDataVirtualRegister
-   TR::Register * methodMetaDataVirtualRegister = NULL;
-   if (codeGen->comp()->getOption(TR_Enable390FreeVMThreadReg))
-     methodMetaDataVirtualRegister = codeGen->getVMThreadRegister();
-   else
-     methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
-
-   // restore java stack pointer
-   generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), callNode, javaStackPointerRealRegister,
-                         new (trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, (int32_t)fej9->thisThreadGetJavaSPOffset(), codeGen));
-   }
-
-void
-TR::J9S390zOSSystemLinkage::doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, bool isFastJNI, int64_t &killMask)
-   {
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   privateLinkage->doNotKillSpecialRegsForBuildArgs(linkage, isFastJNI, killMask);
-   }
-
-void
-TR::J9S390zOSSystemLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies, int32_t& from, int32_t step)
-   {
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   privateLinkage->addSpecialRegDepsForBuildArgs(callNode, dependencies, from, step);
-   }
-
-int32_t
-TR::J9S390zOSSystemLinkage::storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Linkage* linkage, TR::RegisterDependencyConditions * dependencies,
-      bool isFastJNI, int32_t stackOffset, int8_t gprSize, uint32_t &numIntegerArgs)
-   {
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   stackOffset = privateLinkage->storeExtraEnvRegForBuildArgs(callNode, linkage, dependencies, isFastJNI, stackOffset, gprSize, numIntegerArgs);
-   return stackOffset;
-   }
-
-int64_t
-TR::J9S390zOSSystemLinkage::addFECustomizedReturnRegDependency(int64_t killMask, TR::Linkage* linkage, TR::DataType resType, TR::RegisterDependencyConditions * dependencies)
-   {
-   TR::S390PrivateLinkage * privateLinkage = (TR::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
-   killMask = privateLinkage->addFECustomizedReturnRegDependency(killMask, linkage, resType, dependencies);
-   return killMask;
-   }
-
-
-
 /**
  * General XPLink utility
  */
@@ -522,7 +372,8 @@ TR::J9S390zOSSystemLinkage::genCallNOPAndDescriptor(TR::Instruction * cursor, TR
       TR::S390ConstantDataSnippet *callDescSnippet ;
       uint32_t callDescValues = calculateCallDescriptorFlags(callNode);  // lower 32 bits
 
-      callDescSnippet = createCallDescriptor(node, (uint64_t)callDescValues);
+      //Create the XPLink descriptor that is realized in binary as an 8 byte value
+      callDescSnippet = (TR::S390ConstantDataSnippet *) cg()->findOrCreate8ByteConstant(node, (int64_t)callDescValues, false);
       if (cursor != NULL) // TBD: this is needed but need to understand  why - problem in else case if remove this and provide NULL cursor to the following constructor
          cursor = nop = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 4, callDescSnippet, node, cursor, codeGen);
       else
@@ -551,18 +402,4 @@ TR::J9S390zOSSystemLinkage::genCallNOPAndDescriptor(TR::Instruction * cursor, TR
       }
    nop->setCallType(callType);
    return cursor;
-   }
-
-/**
- * General XPLink utility
- *
- * Create the XPLink descriptor that is realized in binary as an
- * 8 byte value
- */
-TR::S390ConstantDataSnippet *
-TR::J9S390zOSSystemLinkage::createCallDescriptor(TR::Node *node, uint64_t initialValue)
-   {
-   TR::S390ConstantDataSnippet *desc;
-   desc = (TR::S390ConstantDataSnippet *) cg()->findOrCreate8ByteConstant(node, (int64_t)initialValue, false);
-   return desc;
    }
