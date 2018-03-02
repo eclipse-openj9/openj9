@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,6 @@
 #include "j9port.h"
 #include "j9.h"
 #include "vmi.h"
-#include "../j9vm/jvm.h"
 #ifndef WIN32
 #include <pthread.h>
 #include <stdlib.h>
