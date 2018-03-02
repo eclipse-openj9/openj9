@@ -22,116 +22,229 @@
 
 package org.openj9.test.valhalla;
 
-import java.io.FileOutputStream;
 import java.lang.reflect.*;
-import java.lang.annotation.Annotation;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.ClassLoader;
-import java.lang.invoke.*;
-import org.objectweb.asm.*;
-import org.testng.annotations.*;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 @Test(groups = { "level.sanity" })
 public class NestAttributeTest {
-	private static CustomClassLoader classloader = new CustomClassLoader();
-	private static CustomClassLoader classloader2 = new CustomClassLoader();
-
+	
+	/*
+	 * A class may have no more than one nest members attribute.
+	 */
+	@Test(expectedExceptions = java.lang.ClassFormatError.class)
+	static public void testMultipleNestMembersAttributes() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.MultipleNestMembersAttributesdump();
+		Class<?> clazz = classloader.getClass("MultipleNestMembersAttributes", bytes);
+		try {
+			Object instance = clazz.getDeclaredConstructor().newInstance();
+		} catch (InvocationTargetException e) {
+			throw e.getCause();
+		}
+	}
+	
+	@Test(expectedExceptions = java.lang.ClassFormatError.class)
+	static public void testMultipleNestHostAttributes() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.MultipleNestHostAttributesdump();
+		try {
+			Class<?> clazz = classloader.getClass("MultipleNestHostAttributes", bytes);
+			Object instance = clazz.getDeclaredConstructor().newInstance();
+		} catch (InvocationTargetException e) {
+			throw e.getCause();
+		}
+	}
+	
+	@Test(expectedExceptions = java.lang.ClassFormatError.class)
+	static public void testMultipleNestAttributes() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.MultipleNestAttributesdump();
+		try {
+			Class<?> clazz = classloader.getClass("MultipleNestAttributes", bytes);
+			Object instance = clazz.getDeclaredConstructor().newInstance();
+		} catch (InvocationTargetException e) {
+			throw e.getCause();
+		}
+	}
+	
+	/* 
+	 * It is valid for a class to say that its nest host is itself or to claim
+	 * itself within its own nest members list.
+	 */
 	@Test
-	static public void fieldAccess() throws Exception {
+	static public void testClassIsOwnNestHost() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.ClassIsOwnNestHostdump();
+		try {
+			Class<?> clazz = classloader.getClass("ClassIsOwnNestHost", bytes);
+			Object instance = clazz.getDeclaredConstructor().newInstance();
+		} catch (InvocationTargetException e) {
+			throw e.getCause();
+		}
+	}
+	
+	@Test
+	static public void testNestMemberIsItself() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.NestMemberIsItselfdump();
+		try {
+			Class<?> clazz = classloader.getClass("NestMemberIsItself", bytes);
+			Object instance = clazz.getDeclaredConstructor().newInstance();
+		} catch (InvocationTargetException e) {
+			throw e.getCause();
+		}
+	}
+	
+	/*
+	 * If a nest member and nest host are loaded on a different class loader
+	 * or in a different package, they should load and run as normal until
+	 * access between private members of the nest member and either the nest
+	 * host or another nest member is attempted.
+	 */
+	@Test
+	static public void testDifferentClassLoadersWithoutAccess() throws Throwable {
+		CustomClassLoader classloader1 = new CustomClassLoader();
+		CustomClassLoader classloader2 = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.fieldAccessDump();
+		byte[] bytesInner = ClassGenerator.fieldAccess$InnerDump();
+		Class<?> clazz = classloader1.getClass("FieldAccess", bytes);
+		Class<?> clazzInner = classloader2.getClass("FieldAccess$Inner", bytesInner);
+		Object instance = clazz.getDeclaredConstructor().newInstance();
+		Method bar = clazz.getDeclaredMethod("foo");
+	}
+	
+	@Test(expectedExceptions = java.lang.NoClassDefFoundError.class)
+	static public void testDifferentClassLoadersWithAccess() throws Throwable {
+		CustomClassLoader classloader1 = new CustomClassLoader();
+		CustomClassLoader classloader2 = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.fieldAccessDump();
+		byte[] bytesInner = ClassGenerator.fieldAccess$InnerDump();
+		Class<?> clazz = classloader1.getClass("FieldAccess", bytes);
+		Class<?> clazzInner = classloader2.getClass("FieldAccess$Inner", bytesInner);
+		Object instance = clazz.getDeclaredConstructor().newInstance();
+		Method bar = clazz.getDeclaredMethod("foo");
+		try {
+			Assert.assertEquals(3, bar.invoke(instance));
+		} catch (InvocationTargetException e) {
+			throw e.getCause();
+		}
+	}
+	
+	@Test
+	static public void testDifferentPackagesWithoutAccess() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.fieldAccessDump_different_package();
+		byte[] bytesInner = ClassGenerator.fieldAccess$InnerDump_different_package();
+		Class<?> clazz = classloader.getClass("FieldAccess", bytes);
+		Class<?> clazzInner = classloader.getClass("pkg.FieldAccess$Inner", bytesInner);
+		Object instance = clazz.getDeclaredConstructor().newInstance();
+		Method bar = clazz.getDeclaredMethod("foo");
+	}
+
+	@Test(expectedExceptions = java.lang.LinkageError.class)
+	static public void testDifferentPackagesWithAccess() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.fieldAccessDump_different_package();
+		byte[] bytesInner = ClassGenerator.fieldAccess$InnerDump_different_package();
+		Class<?> clazz = classloader.getClass("FieldAccess", bytes);
+		Class<?> clazzInner = classloader.getClass("pkg.FieldAccess$Inner", bytesInner);
+		Object instance = clazz.getDeclaredConstructor().newInstance();
+		Method bar = clazz.getDeclaredMethod("foo");
+		try {
+			Assert.assertEquals(3, bar.invoke(instance));
+		} catch (InvocationTargetException e) {
+			throw e.getCause();
+		}
+	}
+
+	/*
+	 * If there is incompatibility between two classes' nest definitions (eg. a
+	 * nest host does not verify another class which claims it as a nest member,
+	 * or a nest host verifies a nest member which does not claim it as a nest
+	 * class), both will load and run as normal until private access is attempted
+	 * between the two classes.
+	 */
+	
+	@Test
+	static public void testNestMemberNotVerifiedWithoutAccess() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.fieldAccessDump_nest_member_not_verified();
+		byte[] bytesInner = ClassGenerator.fieldAccess$InnerDump_nest_member_not_verified();
+		Class<?> clazz = classloader.getClass("FieldAccess", bytes);
+		Class<?> clazzInner = classloader.getClass("FieldAccess$Inner", bytesInner);
+		Object instance = clazz.getDeclaredConstructor().newInstance();
+		Method bar = clazz.getDeclaredMethod("foo");
+	}
+	
+	@Test(expectedExceptions = java.lang.LinkageError.class)
+	static public void testNestMemberNotVerifiedWithAccess() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.fieldAccessDump_nest_member_not_verified();
+		byte[] bytesInner = ClassGenerator.fieldAccess$InnerDump_nest_member_not_verified();
+		Class<?> clazz = classloader.getClass("FieldAccess", bytes);
+		Class<?> clazzInner = classloader.getClass("FieldAccess$Inner", bytesInner);
+		Object instance = clazz.getDeclaredConstructor().newInstance();
+		Method bar = clazz.getDeclaredMethod("foo");
+		try {
+			Assert.assertEquals(3, bar.invoke(instance));
+		} catch (InvocationTargetException e) {
+			throw e.getCause();
+		}
+	}
+	
+	@Test
+	static public void testNesthostNotClaimedWithoutAccess() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.fieldAccessDump_nest_host_not_claimed();
+		byte[] bytesInner = ClassGenerator.fieldAccess$InnerDump_nest_host_not_claimed();
+		Class<?> clazz = classloader.getClass("FieldAccess", bytes);
+		Class<?> clazzInner = classloader.getClass("FieldAccess$Inner", bytesInner);
+		Object instance = clazz.getDeclaredConstructor().newInstance();
+		Method bar = clazz.getDeclaredMethod("foo");
+	}
+	
+	@Test(expectedExceptions = java.lang.IllegalAccessError.class)
+	static public void testNesthostNotClaimedWithAccess() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
+		byte[] bytes = ClassGenerator.fieldAccessDump_nest_host_not_claimed();
+		byte[] bytesInner = ClassGenerator.fieldAccess$InnerDump_nest_host_not_claimed();
+		Class<?> clazz = classloader.getClass("FieldAccess", bytes);
+		Class<?> clazzInner = classloader.getClass("FieldAccess$Inner", bytesInner);
+		Object instance = clazz.getDeclaredConstructor().newInstance();
+		Method bar = clazz.getDeclaredMethod("foo");
+		try {
+			Assert.assertEquals(3, bar.invoke(instance));
+		} catch (InvocationTargetException e) {
+			throw e.getCause();
+		}
+	}
+	
+	/*
+	 * If two classes are in the same nest, then they should allow access to
+	 * each other's private members - both fields and methods.
+	 */
+	@Test
+	static public void testFieldAccessAllowed() throws Throwable {
+		CustomClassLoader classloader = new CustomClassLoader();
 		byte[] bytes = ClassGenerator.fieldAccessDump();
 		byte[] bytesInner = ClassGenerator.fieldAccess$InnerDump();
 		Class<?> clazz = classloader.getClass("FieldAccess", bytes);
-		Class<?> clazzInner = classloader.getClass("FieldAccess$Inner", bytes);
+		Class<?> clazzInner = classloader.getClass("FieldAccess$Inner", bytesInner);
 		Object instance = clazz.getDeclaredConstructor().newInstance();
 		Method bar = clazz.getDeclaredMethod("foo");
 		Assert.assertEquals(3, bar.invoke(instance));
 	}
 	
 	@Test
-	static public void methodAccess() throws Exception {
+	static public void testMethodAccessAllowed() throws Exception {
+		CustomClassLoader classloader = new CustomClassLoader();
 		byte[] bytes = ClassGenerator.methodAccessDump();
 		byte[] bytesInner = ClassGenerator.methodAcccess$InnerDump();
 		Class<?> clazz = classloader.getClass("MethodAccess", bytes);
-		Class<?> clazzInner = classloader.getClass("MethodAccess$Inner", bytes);
+		Class<?> clazzInner = classloader.getClass("MethodAccess$Inner", bytesInner);
 		Object instance = clazz.getDeclaredConstructor().newInstance();
 		Method bar = clazz.getDeclaredMethod("bar");
 		Assert.assertEquals(3, bar.invoke(instance));
-	}
-	
-	@Test(expectedExceptions = java.lang.ClassFormatError.class)
-	static public void testMultipleNestMembersAttributes() throws Exception {
-		byte[] bytes = ClassGenerator.MultipleNestMembersAttributesdump();
-		Class<?> clazz = classloader.getClass("MultipleNestMembersAttributes", bytes);
-		Object instance = clazz.getDeclaredConstructor().newInstance();
-	}
-	
-	@Test(expectedExceptions = java.lang.ClassFormatError.class)
-	static public void testMultipleMemberOfNestAttributes() throws Exception {
-		byte[] bytes = ClassGenerator.MultipleNestHostAttributesdump();
-		Class<?> clazz = classloader.getClass("MultipleMemberOfNestAttributes", bytes);
-		Object instance = clazz.getDeclaredConstructor().newInstance();
-	}
-	
-	@Test(expectedExceptions = java.lang.ClassFormatError.class)
-	static public void testMultipleNestAttributes() throws Exception {
-		byte[] bytes = ClassGenerator.MultipleNestAttributesdump();
-		Class<?> clazz = classloader.getClass("MultipleNestAttributes", bytes);
-		Object instance = clazz.getDeclaredConstructor().newInstance();
-	}
-	
-	@Test(expectedExceptions = java.lang.VerifyError.class)
-	static public void testDifferentClassLoaders() throws Exception {
-		byte[] bytes = ClassGenerator.fieldAccessDump();
-		byte[] bytesInner = ClassGenerator.fieldAccess$InnerDump();
-		Class<?> clazz = classloader.getClass("FieldAccess", bytes);
-		Class<?> clazzInner = classloader2.getClass("FieldAccess$Inner", bytes);
-	}
-	
-	@Test(expectedExceptions = java.lang.VerifyError.class)
-	static public void testDifferentPackages() throws Exception {
-		byte[] bytes = ClassGenerator.DifferentPackagedump();
-		byte[] bytesInner = ClassGenerator.DifferentPackage$Innerdump();
-		Class<?> testClass = classloader.getClass("TestClass", bytes);
-		Class<?> testClass$Inner = classloader.getClass("p.TestClass$Inner", bytesInner);		
-	}
-	
-	@Test(expectedExceptions = java.lang.VerifyError.class)
-	static public void testNestMemberNotClaimed() throws Exception {
-		byte[] bytes = ClassGenerator.nestTopNotClaimedDump();
-		byte[] bytesInner = ClassGenerator.nestTopNotClaimed$InnerDump();
-		Class<?> nestTopNotClaimed = classloader.getClass("NestTopNotClaimed", bytes);
-		Class<?> bestTopNotClaimed = classloader2.getClass("NestTopNotClaimed$Inner", bytesInner);		
-		Method bar = nestTopNotClaimed.getDeclaredMethod("bar");
-		Object nestTopNotClaimedInstance = nestTopNotClaimed.getDeclaredConstructor().newInstance();
-	}
-	
-	/* If a class claims a nest member, but the member class does not claim
-	 * the nest top, both classes load & link without error - an error will
-	 * only occur if/when another nest member attempts to access a private
-	 * member of the class.
-	 */
-	@Test
-	static public void testNestTopNotClaimedWithoutAccess() throws Exception {
-		byte[] bytes = ClassGenerator.nestTopNotClaimedDump();
-		byte[] bytesInner = ClassGenerator.nestTopNotClaimed$InnerDump();
-		Class<?> nestTopNotClaimed = classloader.getClass("NestTopNotClaimed", bytes);
-		Class<?> nestTopNotClaimed$Inner = classloader2.getClass("NestTopNotClaimed$Inner", bytesInner);		
-		Method bar = nestTopNotClaimed.getDeclaredMethod("bar");
-		Object nestTopNotClaimedInstance = nestTopNotClaimed.getDeclaredConstructor().newInstance();
-	}
-	
-	@Test(expectedExceptions = java.lang.IllegalAccessException.class)
-	static public void testNestTopNotClaimedWithAccess() throws Exception {
-		byte[] bytes = ClassGenerator.nestTopNotClaimedDump();
-		byte[] bytesInner = ClassGenerator.nestTopNotClaimed$InnerDump();
-		Class<?> nestTopNotClaimed = classloader.getClass("NestTopNotClaimed", bytes);
-		Class<?> nestTopNotClaimed$Inner = classloader2.getClass("NestTopNotClaimed$Inner", bytesInner);		
-		Method bar = nestTopNotClaimed.getDeclaredMethod("bar");
-		Object nestTopNotClaimedInstance = nestTopNotClaimed.getDeclaredConstructor().newInstance();
-		Assert.assertEquals(3, bar.invoke(nestTopNotClaimedInstance));
 	}
 }

@@ -36,7 +36,7 @@ final class NestHostAttribute extends Attribute {
 	
 	public NestHostAttribute(String nestTop){
 		super("NestHost");
-		this.nestHost = nestHost;
+		this.nestHost = nestTop;
 	}
 	
 	public boolean isCodeAttribute(){
