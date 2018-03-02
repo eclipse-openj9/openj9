@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,21 +48,6 @@ public:
 		   TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
 		   TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint);
 
-	virtual void setupRegisterDepForLinkage(TR::Node *, TR_DispatchType, TR::RegisterDependencyConditions * &,
-         int64_t &, TR::SystemLinkage *, TR::Node * &, bool &, TR::Register **, TR::Register *&);
-
-   virtual void setupBuildArgForLinkage(TR::Node *, TR_DispatchType, TR::RegisterDependencyConditions *, bool, bool,
-         int64_t &, TR::Node *, bool, TR::SystemLinkage *);
-
-   virtual void performCallNativeFunctionForLinkage(TR::Node *, TR_DispatchType, TR::Register *&, TR::SystemLinkage *,
-         TR::RegisterDependencyConditions *&, TR::Register *, TR::Register *, bool);
-
-   virtual void doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, bool isFastJNI, int64_t &killMask);
-   virtual void addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies, int32_t& from, int32_t step);
-   virtual int64_t addFECustomizedReturnRegDependency(int64_t killMask, TR::Linkage* linkage, TR::DataType resType, TR::RegisterDependencyConditions * dependencies);
-   virtual int32_t storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Linkage* linkage, TR::RegisterDependencyConditions * dependencies,
-         bool isFastJNI, int32_t stackOffset, int8_t gprSize, uint32_t &numIntegerArgs);
-
    };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -77,29 +62,7 @@ public:
          intptrj_t targetAddress, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg, TR::LabelSymbol * returnFromJNICallLabel,
          TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint = true);
 
-
-
-   // this set of 3 method called by buildNative Dispatch is the same as the J9S390zLinux methods above
-   // omr todo: need to find a better way instead of duplicating them
-   virtual void setupRegisterDepForLinkage(TR::Node *, TR_DispatchType, TR::RegisterDependencyConditions * &,
-         int64_t &, TR::SystemLinkage *, TR::Node * &, bool &, TR::Register **, TR::Register *&);
-
-   virtual void setupBuildArgForLinkage(TR::Node *, TR_DispatchType, TR::RegisterDependencyConditions *, bool, bool,
-         int64_t &, TR::Node *, bool, TR::SystemLinkage *);
-
-   virtual void performCallNativeFunctionForLinkage(TR::Node *, TR_DispatchType, TR::Register *&, TR::SystemLinkage *,
-         TR::RegisterDependencyConditions *&, TR::Register *, TR::Register *, bool);
-
-   //called by buildArgs, same as J9S390zLinux methods above
-   // omr todo: need to find a better way instead of duplicating them
-   virtual void doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, bool isFastJNI, int64_t &killMask);
-   virtual void addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies, int32_t& from, int32_t step);
-   virtual int64_t addFECustomizedReturnRegDependency(int64_t killMask, TR::Linkage* linkage, TR::DataType resType, TR::RegisterDependencyConditions * dependencies);
-   virtual int32_t storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Linkage* linkage, TR::RegisterDependencyConditions * dependencies,
-         bool isFastJNI, int32_t stackOffset, int8_t gprSize, uint32_t &numIntegerArgs);
-
    virtual TR::Instruction * genCallNOPAndDescriptor(TR::Instruction * cursor, TR::Node *node, TR::Node *callNode, TR_XPLinkCallTypes callType);
-   virtual TR::S390ConstantDataSnippet *createCallDescriptor(TR::Node *node, uint64_t initialValue);
    };
 
 }
