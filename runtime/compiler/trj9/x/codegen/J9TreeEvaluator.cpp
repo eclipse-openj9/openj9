@@ -15040,21 +15040,26 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
          {
          bool is64Bit = TR::Compiler->target.is64Bit(); // On compressed refs, owningObjectReg is already uncompressed, and the vmthread fields are 64 bits
          labelAfterBranchToSnippet = generateLabelSymbol(cg);
-
-         if (!comp->getOptions()->isVariableHeapBaseForBarrierRange0())
+         static bool ProtoTypeFixedHeap = feGetEnv("TR_ProtoTypeFixedHeap");
+         if (ProtoTypeFixedHeap && !comp->getOptions()->isVariableHeapBaseForBarrierRange0() && !comp->getOptions()->isVariableHeapBaseForBarrierRange0()) // TODO: NOT WORKING WITH AOT!!!!
+            {
+            uintptr_t che = comp->getOptions()->getHeapBaseForBarrierRange0() + comp->getOptions()->getHeapSizeForBarrierRange0();
+            if (TR::Compiler->target.is64Bit() && !IS_32BIT_SIGNED(che))
+               {
+               generateRegMemInstruction(CMP8RegMem, node, owningObjectReg, generateX86MemoryReference(cg->findOrCreate8ByteConstant(node, che), cg), cg);
+               }
+            else
+               {
+               generateRegImmInstruction(CMPRegImms(), node, owningObjectReg, (int32_t)che, cg);
+               }
+            generateLabelInstruction(JAE1, node, labelAfterBranchToSnippet, cg);
+            }
+         else if (!comp->getOptions()->isVariableHeapBaseForBarrierRange0())
             {
             TR::Register *tempReg = srm->findOrCreateScratchRegister();
             generateRegRegInstruction(MOVRegReg(),  node, tempReg, owningObjectReg, cg);
             uintptr_t chb = comp->getOptions()->getHeapBaseForBarrierRange0();
-            // asum chb is align to 2
-            uintptr_t halfchb = chb >> 1;
-
-            if (TR::Compiler->target.is64Bit() && !TR::Compiler->om.nativeAddressesCanChangeSize() && !IS_32BIT_SIGNED(chb) && IS_32BIT_SIGNED(halfchb))
-               {
-               generateRegImmInstruction(SUBRegImm4(), node, tempReg, (int32_t)halfchb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
-               generateRegImmInstruction(SUBRegImm4(), node, tempReg, (int32_t)halfchb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
-               }
-            else if (TR::Compiler->target.is64Bit() && (!IS_32BIT_SIGNED(chb) || TR::Compiler->om.nativeAddressesCanChangeSize()))
+            if (TR::Compiler->target.is64Bit() && (!IS_32BIT_SIGNED(chb) || TR::Compiler->om.nativeAddressesCanChangeSize()))
                {
                TR::Register *chbReg = srm->findOrCreateScratchRegister();
                generateRegImm64Instruction(MOV8RegImm64, node, chbReg, chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
@@ -15112,15 +15117,8 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
             TR::Register *tempReg = srm->findOrCreateScratchRegister();
             generateRegRegInstruction(MOVRegReg(),  node, tempReg, owningObjectReg, cg);
             uintptr_t chb = comp->getOptions()->getHeapBaseForBarrierRange0();
-            // asum chb is align to 2
-            uintptr_t halfchb = chb >> 1;
 
-            if (TR::Compiler->target.is64Bit() && !TR::Compiler->om.nativeAddressesCanChangeSize() && !IS_32BIT_SIGNED(chb) && IS_32BIT_SIGNED(halfchb))
-               {
-               generateRegImmInstruction(SUBRegImm4(), node, tempReg, (int32_t)halfchb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
-               generateRegImmInstruction(SUBRegImm4(), node, tempReg, (int32_t)halfchb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
-               }
-            else if (TR::Compiler->target.is64Bit() && (!IS_32BIT_SIGNED(chb) || TR::Compiler->om.nativeAddressesCanChangeSize()))
+            if (TR::Compiler->target.is64Bit() && (!IS_32BIT_SIGNED(chb) || TR::Compiler->om.nativeAddressesCanChangeSize()))
                {
                TR::Register *chbReg = srm->findOrCreateScratchRegister();
                generateRegImm64Instruction(MOV8RegImm64, node, chbReg, chb, cg, TR_HEAP_BASE_FOR_BARRIER_RANGE);
