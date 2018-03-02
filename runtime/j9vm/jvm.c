@@ -251,7 +251,6 @@ static jmethodID notifyAllMID = NULL;
 static UDATA jvmSEVersion = -1;
 
 static void *omrsigDLL = NULL;
-int (*g_sigaction)(int signum, const struct sigaction *act, struct sigaction *oldact);
 
 static void addToLibpath(const char *, BOOLEAN isPrepend);
 
@@ -1118,17 +1117,16 @@ preloadLibraries(void)
 		fprintf(stderr, "libomrsig failed to load: omrsig\n" );
 		exit( -1 ); /* failed */
 	}
-	g_sigaction = (SigAction) dlsym(omrsigDLL, "sigaction");
 
 	vmDLL = preloadLibrary(vmDllName, TRUE);
-
-	if (!vmDLL) {
+	if (NULL == vmDLL) {
 		fprintf(stderr,"libjvm.so failed to load: %s\n", vmDllName);
 		exit( -1 );	/* failed */
-	};
+	}
+
 	globalCreateVM = (CreateVM) dlsym (vmDLL, CREATE_JAVA_VM_ENTRYPOINT );
 	globalGetVMs = (GetVMs) dlsym (vmDLL,  GET_JAVA_VMS_ENTRYPOINT);
-	if (!globalCreateVM || !globalGetVMs) {
+	if ((NULL == globalCreateVM) || (NULL == globalGetVMs)) {
 		dlclose(vmDLL);
 		fprintf(stderr,"libjvm.so failed to load: global entrypoints not found\n");
 		exit( -1 );	/* failed */
