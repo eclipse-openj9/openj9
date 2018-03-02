@@ -2227,7 +2227,6 @@ J9::Options::fePostProcessJIT(void * base)
        compInfo->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
       {
       self()->setOption(TR_DisableSamplingJProfiling);
-      self()->setOption(TR_DisableInterpreterProfiling);
       self()->setOption(TR_DisableSharedCacheHints);
       self()->setIsVariableHeapBaseForBarrierRange0(true);
       self()->setOption(TR_DisableOSR);

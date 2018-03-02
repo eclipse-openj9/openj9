@@ -58,6 +58,7 @@
 #include "runtime/CodeCacheReclamation.h"
 #include "runtime/codertinit.hpp"
 #include "runtime/IProfiler.hpp"
+#include "runtime/JaasIProfiler.hpp"
 #include "runtime/HWProfiler.hpp"
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/PersistentInfo.hpp"
@@ -1485,7 +1486,14 @@ onLoadInternal(
 
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
       {
-      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_IProfiler::allocate(jitConfig);
+      if (persistentMemory->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+         {
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_JaasIProfiler::allocate(jitConfig);
+         }
+      else
+         {
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_IProfiler::allocate(jitConfig);
+         }
       if (!(((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler))
          {
          // Warn that IProfiler was not allocated

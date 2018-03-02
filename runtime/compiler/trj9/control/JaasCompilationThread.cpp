@@ -10,6 +10,8 @@
 #include "env/JaasCHTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 #include "exceptions/RuntimeFailure.hpp"       // for CHTableCommitFailure
+#include "runtime/IProfiler.hpp"               // for TR_IProfiler
+#include "runtime/JaasIProfiler.hpp"           // for TR_ContiguousIPMethodHashTableEntry
 #include "j9port.h" // for j9time_current_time_millis
 
 uint32_t serverMsgTypeCount[JAAS::J9ServerMessageType_ARRAYSIZE] = {};
@@ -1762,6 +1764,25 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(encoded.first, encoded.second);
          }
          break;
+     case J9ServerMessageType::IProfiler_searchForMethodSample:
+        {
+        auto recv = client->getRecvData<TR_OpaqueMethodBlock*, int32_t>();
+        auto method = std::get<0>(recv);
+        auto bucket = std::get<1>(recv);
+        TR_IProfiler *iProfiler = fe->getIProfiler();
+        auto entry = iProfiler->searchForMethodSample(method, bucket);
+        if (entry)
+           {
+           auto serialEntry = TR_ContiguousIPMethodHashTableEntry::serialize(entry);
+           std::string entryStr((char *) &serialEntry, sizeof(TR_ContiguousIPMethodHashTableEntry));
+           client->write(entryStr);
+           }
+        else
+           {
+           client->write(std::string());
+           }
+        }
+        break;
       default:
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure("JAAS: handleServerMessage received an unknown message type");

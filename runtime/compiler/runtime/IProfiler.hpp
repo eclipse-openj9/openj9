@@ -180,7 +180,6 @@ enum TR_EntryStatusInfo
    IPBC_ENTRY_PERSIST_UNLOADED
    };
 
-
 #define TR_IPBC_PERSISTENT_ENTRY_READ  0x1 // used to check if the persistent entry has been read, if so we want to avoid the overhead introduced by calculating sample counts
 
 // Hash table for bytecodes
@@ -248,6 +247,7 @@ class TR_IPMethodData
    void setMethod (TR_OpaqueMethodBlock *meth) { _method = meth; }
    uint32_t getWeight() { return _weight; }
    void     incWeight() { ++_weight; }
+   void     setWeight(uint32_t weight) { _weight = weight; }
    uint32_t getPCIndex() { return _pcIndex; }
    void     setPCIndex(uint32_t i) { _pcIndex = i; }
 
@@ -556,6 +556,25 @@ public:
    bool postIprofilingBufferToWorkingQueue(J9VMThread * vmThread, const U_8* dataStart, UDATA size);
    // this is wapper of registered version, for the helper function, from JitRunTime
 
+   // Data accessors, overridden for JaaS
+   //
+
+   // This method is used to search only the hash table
+   virtual TR_IPBytecodeHashTableEntry *profilingSample (uintptrj_t pc, uintptrj_t data, bool addIt, bool isRIData = false, uint32_t freq  = 1);
+   // This method is used to search the hash table first, then the shared cache
+   virtual TR_IPBytecodeHashTableEntry *profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex,
+                                                 TR::Compilation *comp, uintptrj_t data = 0xDEADF00D, bool addIt = false);
+   virtual uintptrj_t getProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *);
+   virtual uintptrj_t getProfilingData(TR::Node *node, TR::Compilation *comp);
+   uintptrj_t getSearchPC (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *);
+   virtual TR_IPBytecodeHashTableEntry *searchForSample(uintptrj_t pc, int32_t bucket);
+   virtual TR_IPMethodHashTableEntry *searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket);
+
+protected:
+   bool isCompact(U_8 byteCode);
+   bool isSwitch(U_8 byteCode);
+   bool isNewOpCode(U_8 byteCode);
+
 private:
 #ifdef J9VM_INTERP_PROFILING_BYTECODES
    U_8 *getProfilingBufferCursor(J9VMThread *vmThread) const { return vmThread->profilingBufferCursor; }
@@ -590,37 +609,22 @@ private:
    static int32_t methodHash(uintptrj_t pc);
 //   static int32_t pcHash(uintptrj_t pc);
 
-   bool isCompact(U_8 byteCode);
-   bool isSwitch(U_8 byteCode);
-   bool isNewOpCode(U_8 byteCode);
-
    bool acquireHashTableWriteLock(bool forceFullLock);
    void releaseHashTableWriteLock();
 
-   TR_IPBytecodeHashTableEntry *searchForSample(uintptrj_t pc, int32_t bucket);
    TR_IPBCDataStorageHeader *searchForPersistentSample(TR_IPBCDataStorageHeader  *root, uintptrj_t pc);
    TR_IPBCDataAllocation *searchForAllocSample(uintptrj_t pc, int32_t bucket);
 
-   // This method is used to search the hash table first, then the shared cache
-   TR_IPBytecodeHashTableEntry *profilingSample (uintptrj_t pc, uintptrj_t data, bool addIt, bool isRIData = false, uint32_t freq  = 1);
-   // This method is used to search only the hash table
-   TR_IPBytecodeHashTableEntry *profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex,
-                                                 TR::Compilation *comp, uintptrj_t data = 0xDEADF00D, bool addIt = false);
-   TR_IPBytecodeHashTableEntry *profilingSample1 (uintptrj_t pc, uintptrj_t data, bool addIt = false);
    TR_IPBytecodeHashTableEntry * persistentProfilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *comp, bool *methodProfileExistsInSCC);
    TR_IPBCDataStorageHeader * persistentProfilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *comp, bool *methodProfileExistsInSCC, uintptrj_t *cacheOffset, TR_IPBCDataStorageHeader *store);
 
    TR_IPBCDataAllocation *profilingAllocSample (uintptrj_t pc, uintptrj_t data, bool addIt);
    TR_IPBytecodeHashTableEntry *findOrCreateEntry (int32_t bucket, uintptrj_t pc, bool addIt);
    TR_IPBCDataAllocation *findOrCreateAllocEntry (int32_t bucket, uintptrj_t pc, bool addIt);
-   uintptrj_t getProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *);
-   uintptrj_t getProfilingData(TR::Node *node, TR::Compilation *comp);
    TR_OpaqueMethodBlock * getMethodFromNode(TR::Node *node, TR::Compilation *comp);
-   uintptrj_t getSearchPC (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *);
    bool addSampleData(TR_IPBytecodeHashTableEntry *entry, uintptrj_t data, bool isRIData = false, uint32_t freq = 1);
    TR_AbstractInfo *createIProfilingValueInfo( TR::Node *node, TR::Compilation *comp);
 
-   TR_IPMethodHashTableEntry *searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket);
 
    bool branchHasSameDirection(TR::ILOpCodes nodeOpCode, TR::Node *node, TR::Compilation *comp);
    bool branchHasOppositeDirection(TR::ILOpCodes nodeOpCode, TR::Node *node, TR::Compilation *comp);

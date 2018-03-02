@@ -261,8 +261,7 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
                   // check for bootstrap classloader, if so
                   // return null (see semantics of ClassLoader.callerClassLoader())
                   //
-                  if ((void *)fej9()->getClassLoader(caller->classOfMethod()) ==
-                        (void *)fej9()->getSystemClassLoader())
+                  if (fej9()->isClassLoadedBySystemClassLoader(caller->classOfMethod()))
                      {
                      loadConstant(TR::aconst, (void *)0);
                      }
