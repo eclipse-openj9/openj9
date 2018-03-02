@@ -192,6 +192,7 @@ def set_build_variables() {
     // fetch values per spec and Java version from the variables file
     BOOT_JDK = get_value(VARIABLES."${SPEC}".boot_jdk, SDK_VERSION)
     FREEMARKER = VARIABLES."${SPEC}".freemarker
+    EXTRA_CONFIGURE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_configure_options, SDK_VERSION)
     set_release()
     set_jdk_folder()
 
