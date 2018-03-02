@@ -4539,8 +4539,11 @@ JVM_RegisterSignal(jint sigNum, void* handler)
 	void *oldHandler = (void *)J9_SIG_ERR;
 
 #if !defined(WIN32)
-	struct sigaction newSignalAction = {{0}};
-	struct sigaction oldSignalAction = {{0}};
+	struct sigaction newSignalAction;
+	struct sigaction oldSignalAction;
+
+	memset(&newSignalAction, 0, sizeof(struct sigaction));
+	memset(&oldSignalAction, 0, sizeof(struct sigaction));
 #endif /* !defined(WIN32) */
 
 	Trc_SC_RegisterSignal();
