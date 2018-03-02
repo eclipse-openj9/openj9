@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,5 +19,44 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+changequote(`[',`]')dnl
 
-<#include "../j9vm/generated.h.ftl" >
+#ifndef jvm_generated_h
+#define jvm_generated_h
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/** WARNING: Automatically Generated File
+ *
+ * This file contains automatically generated function prototypes
+ * for Sun VM Interface (i.e. JVM_) functions. It is created during
+ * makefile generation.
+ *
+ * DO NOT ADD PROTOTYPES MANUALLY, instead modify the table in:
+ * VM_Redirector\redirector\forwarders.ftl
+ *
+ * Generated prototypes for all forwarded functions, see
+ * redirector/forwarders.ftl for source data.
+ */
+
+include([helpers.m4])
+define([_IF],
+[#if $1
+$2
+dnl #endif /* $1 */
+#endif
+])
+dnl        (1-name,2-cc, 3-decorate, 4-ret, 5-args..)
+define([_X],
+[$4 $2
+$1(join([, ],mshift(4,$@)));])
+
+include([forwarders.m4])
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* jvm_generated_h */

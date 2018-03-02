@@ -1,5 +1,6 @@
+changequote(`[',`]')dnl
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,8 +48,14 @@
 #define dlclose dllfree
 #endif
 
-<#-- Include the data table which defines forwarded functions -->
-<#include "forwarders.ftl" >
+include(helpers.m4)
+
+define([_IF],
+[#if $1
+$2
+#endif
+])
+dnl        (name,cc, decorate, ret, args..)
 
 /* Manual typedefs for functions that can't be generated easily */
 typedef int (*jio_fprintf_Type)(FILE * stream, const char * format, ...);
@@ -56,38 +63,18 @@ typedef int (*jio_snprintf_Type)(char * str, int n, const char * format, ...);
 typedef void (JNICALL *JVM_OnExit_Type)(void (*func)(void));
  
 /* Generated typedefs for all forwarded functions */
-<#list functions as function>
-<#if function.if??>
-#if ${function.if}
-<#elseif function.ifdef??>
-#ifdef ${function.ifdef}
-<#elseif function.ifndef??>
-#ifndef ${function.ifndef}
-</#if>
-typedef ${function.return} (${function.cc} *${function.name}_Type)(${function.args});
-<#if function.if?? | function.ifdef?? | function.ifndef??>
-#endif
-</#if>
-</#list>
+define([_X],
+[typedef $4 ($2 *$1_Type)(join([, ],mshift(4,$@)));])dnl
+include([forwarders.m4])
 typedef void*  (JNICALL *JVM_LoadSystemLibrary_Type)(const char *libName);
 
 /* Manually declared functions for non-generated forwarders */
 static JVM_OnExit_Type global_JVM_OnExit;
 
 /* Declare a static variable to hold each dynamically resolved function pointer. */
-<#list functions as function>
-<#if function.if??>
-#if ${function.if}
-<#elseif function.ifdef??>
-#ifdef ${function.ifdef}
-<#elseif function.ifndef??>
-#ifndef ${function.ifndef}
-</#if>
-static ${function.name}_Type global_${function.name};
-<#if function.if?? | function.ifdef?? | function.ifndef??>
-#endif
-</#if>
-</#list>
+define([_X],[static $1_Type global_$1;])
+include([forwarders.m4])
+
 
 static volatile JVM_LoadSystemLibrary_Type global_JVM_LoadSystemLibrary;
 
@@ -131,77 +118,14 @@ JVM_OnExit(void (*func)(void))
 }
 
 
-<#-- Utility function to compute decorated function name -->
-<#function decorate function >
-	<#assign name = function.name >
-	<#assign args = function.args >
-	<#assign arglist = args?split(",")>
-
-	<#if function.decorate == "true">
-		<#assign size = 0 >
-	
-		<#if args == "void">
-			<#assign result = "_" + name + "@0" >
-			<#return result />
-		</#if>
-
-		<#list arglist as arg >
-			<#assign size = size + 4 > 
-			<#if !arg?contains("*")>
-				<#assign type = arg?word_list?first>
-				<#if (type == "jlong") || (type == "jdouble") >
-					<#assign size = size + 4 >
-				</#if>
-			</#if>
-		</#list>
-		<#assign result = "_" + name + "@" + size >
-	<#else>
-		<#assign result = name >
-	</#if>
-	<#return result />
-</#function>
-
-<#-- Utility function to compute argument names -->
-<#function extractNames args>
-	<#if args == "void">
-		<#return "" />
-	</#if>
-	<#assign result = "" >
-	<#list args?split(",") as x>
-		<#assign filtered = x?replace("*","") >
-		<#assign chunks = filtered?word_list >
-		<#assign result = result + chunks?last + ", " >
-	</#list>
-	
-	<#-- Chop off the trailing comma and space -->
-	<#return result?substring(0, (result?length) - 2) />
-</#function>
-
-
-<#function invokePrefix returnType>
-	<#if returnType?trim == "void">
-		<#return "" />
-	<#else>
-		<#return "return" />
-	</#if>
-</#function>
-
-
-/* Declare a forwarder for each function. */
-<#list functions as function>
-
-<#if function.if??>
-#if ${function.if}
-<#elseif function.ifdef??>
-#ifdef ${function.ifdef}
-<#elseif function.ifndef??>
-#ifndef ${function.ifndef}
-</#if>
-${function.return} ${function.cc}
-${function.name}(${function.args})
+dnl        (1-name,2-cc, 3-decorate, 4-ret, 5-args..)
+define([_X],
+[dnl
+$4 $2
+$1(join([, ],mshift(4,$@)))
 {
-	if(global_${function.name} != NULL) {
-		${invokePrefix(function.return)} global_${function.name}( ${extractNames( function.args )} );
+	if(global_$1 != NULL) {
+		invokePrefix($4)[]global_$1(arg_names_list(mshift(4,$@)));
 #if defined(AIXPPC)
 	} else if (!table_initialized) {
 		/* attempt to open the 'master redirector' and try again */
@@ -211,18 +135,15 @@ ${function.name}(${function.args})
 			exit(998);
 		}
 		/* re-try to run this function */
-		${invokePrefix(function.return)} ${function.name}( ${extractNames( function.args )} );
+		invokePrefix($4)[]$1(arg_names_list(mshift(4,$@)));
 #endif
 	} else {
-		printf("Fatal Error: Missing forwarder for ${function.name}()");
+		printf("Fatal Error: Missing forwarder for $1[]()");
 		exit(969); 
 	}
 }
-<#if function.if?? | function.ifdef?? | function.ifndef??>
-#endif
-</#if>
-</#list>
-
+])
+include([forwarders.m4])
 
 static void *functionLookup(void *dllAddr, const char *functionName) {
 #if defined(WIN32) && !defined(J9VM_ENV_DATA64)
@@ -230,19 +151,19 @@ static void *functionLookup(void *dllAddr, const char *functionName) {
 #else
 	/* remove the decorations (leading _ and trailing @<number>) if present. */
 #define J9_SYM_MAX 256
-	char localFunctionName[J9_SYM_MAX];
+	char localFunctionName[[J9_SYM_MAX]];
 	char *addrOfAtSymbol, *startOfFunctionName;
 
 	if(strlen(functionName) >= J9_SYM_MAX) {
 		printf("Symbol too long - %s - exiting\n", functionName);
 	}
 
-	startOfFunctionName = (char *) ((functionName[0] == '_') ? (functionName + 1) : functionName);
+	startOfFunctionName = (char *) ((functionName[[0]] == '_') ? (functionName + 1) : functionName);
 
 	addrOfAtSymbol = strchr(functionName, '@');
 	if(addrOfAtSymbol) {
 		memcpy(localFunctionName, startOfFunctionName, addrOfAtSymbol - startOfFunctionName);
-		localFunctionName[addrOfAtSymbol - startOfFunctionName] = '\0';
+		localFunctionName[[addrOfAtSymbol - startOfFunctionName]] = '\0';
 	} else {
 		strcpy(localFunctionName, functionName);
 	}
@@ -256,22 +177,12 @@ static void *functionLookup(void *dllAddr, const char *functionName) {
 
 #endif
 }
+dnl        (1-name,2-cc, 3-decorate, 4-ret, 5-args..)
+define([_X],[	global_$1 = ($1_Type) functionLookup(vmdll, "decorate_function_name($@)" );])dnl
 
 void lookupJVMFunctions(void *vmdll) {
 	global_JVM_OnExit = (JVM_OnExit_Type) functionLookup(vmdll, "_JVM_OnExit@4" );
-<#list functions as function>
-<#if function.if??>
-#if ${function.if}
-<#elseif function.ifdef??>
-#ifdef ${function.ifdef}
-<#elseif function.ifndef??>
-#ifndef ${function.ifndef}
-</#if>
-	global_${function.name} = (${function.name}_Type) functionLookup(vmdll, "${decorate( function )}" );
-<#if function.if?? | function.ifdef?? | function.ifndef??>
-#endif
-</#if>
-</#list>
+include([forwarders.m4])
 	global_JVM_LoadSystemLibrary = (JVM_LoadSystemLibrary_Type) functionLookup(vmdll, "_JVM_LoadSystemLibrary@4" );
 #if defined(AIXPPC)
 	table_initialized = 1;
