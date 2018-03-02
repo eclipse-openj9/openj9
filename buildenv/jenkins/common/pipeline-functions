@@ -112,7 +112,7 @@ def workflow() {
         }
 
         // run tests against the SDK build in the upstream job: Build-JDK${SDK_VERSION}-${SPEC}
-        jobs["${level}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber(), params.VARIABLE_FILE)
+        jobs["${level}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE)
     }
 
     // return jobs for further reference
