@@ -89,4 +89,33 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VA
         return JOB
     }
 }
+
+def workflow() {
+    def jobs = [:]
+
+    // compile the source and build the SDK
+    BUILD_JOB_NAME = "Build-JDK${SDK_VERSION}-${SPEC}"
+    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE)
+
+    levels = TESTS_TARGETS.split(",")
+    levels.each { level ->
+        switch (level.trim().toLowerCase()) {
+            case "_sanity":
+                TEST_JOB_NAME = "Test-Sanity-JDK${SDK_VERSION}-${SPEC}"
+                break
+            case "_extended":
+                TEST_JOB_NAME = "Test-Extended-JDK${SDK_VERSION}-${SPEC}"
+                break
+            default:
+                echo "error: Unknown test target: ${level}"
+                error()
+        }
+
+        // run tests against the SDK build in the upstream job: Build-JDK${SDK_VERSION}-${SPEC}
+        jobs["${level}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber(), params.VARIABLE_FILE)
+    }
+
+    // return jobs for further reference
+    return jobs
+}
 return this

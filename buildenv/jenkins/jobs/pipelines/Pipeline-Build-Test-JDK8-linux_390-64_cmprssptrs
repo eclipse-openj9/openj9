@@ -20,13 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-def BUILD_JOB_NAME = 'Build-JDK8-linux_390-64_cmprssptrs'
-def SANITY_JOB_NAME = 'Test-Sanity-JDK8-linux_390-64_cmprssptrs'
-def EXTENDED_JOB_NAME = 'Test-Extended-JDK8-linux_390-64_cmprssptrs'
+SDK_VERSION = '8'
+SPEC = 'linux_390-64_cmprssptrs'
 
 node('master') {
-    SDK_VERSION = '8'
-    SPEC = 'linux_390-64_cmprssptrs'
 
     checkout scm
     def commonFile = load 'buildenv/jenkins/common/variables-functions'
@@ -36,6 +33,4 @@ node('master') {
     SHAS = buildfile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 }
 
-BUILD_JOB = buildfile.build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE)
-SANITY_JOB = buildfile.build_with_one_upstream(SANITY_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber(), params.VARIABLE_FILE)
-EXTENDED_JOB = buildfile.build_with_one_upstream(EXTENDED_JOB_NAME, BUILD_JOB_NAME, BUILD_JOB.getNumber(), params.VARIABLE_FILE)
+jobs = buildfile.workflow()

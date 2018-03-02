@@ -126,9 +126,11 @@ def set_repos_variables() {
 * if the map contains no mapping for the key.
 */
 def get_value(MAP, KEY) {
-    for (item in MAP) {
-        if ("${item.key}" == "${KEY}") {
-            return "${item.value}"
+    if (MAP != null) {
+        for (item in MAP) {
+            if ("${item.key}" == "${KEY}") {
+                return "${item.value}"
+            }
         }
     }
 
@@ -141,9 +143,16 @@ def get_value(MAP, KEY) {
 * Returns empty string if no values is provided in the variables file (not
 * required for public repositories).
 */
-def get_git_user_credentials_id () {
-    if (VARIABLES.user != null) {
-        return VARIABLES.user.credentials_id
+def get_git_user_credentials_id() {
+    return get_user_credentials_id("git")
+}
+
+/*
+* Returns Jenkins credentials ID from the variable file for given key.
+*/
+def get_user_credentials_id(KEY) {
+    if ((VARIABLES.credentials != null) && (VARIABLES.credentials."${KEY}" != null)) {
+        return VARIABLES.credentials."${KEY}"
     }
 
     return ''
@@ -208,6 +217,17 @@ def set_test_variables() {
 }
 
 /*
+* Set TESTS_TARGETS, indicating the level of testing. 
+*/
+def set_test_targets() {
+    TESTS_TARGETS = params.TESTS_TARGETS
+    if (!TESTS_TARGETS) {
+        // set default TESTS_TARGETS for pipeline job (run all tests)
+        TESTS_TARGETS = "_sanity,_extended"
+    }
+}
+
+/*
 * Initializes all of the required variables for a Jenkins job by given job type.
 */
 def set_job_variables(job_type) {
@@ -240,6 +260,7 @@ def set_job_variables(job_type) {
         case "pipeline":
             // set variables for a pipeline job
             set_repos_variables()
+            set_test_targets()
             break
         default:
             error("Unknown Jenkins job type!")
