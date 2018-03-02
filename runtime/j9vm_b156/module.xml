@@ -39,6 +39,9 @@
 			<option name="prototypeHeaderFileNames" data="jvm.h"/>
 		</options>
 		<phase>core quick j2se</phase>
+		<dependencies>
+			<dependency name="generate_j9vm"/>
+		</dependencies>
 		<exports>
 			<group name="all"/>
 			<group name="j9vmnatives"/>

@@ -37,6 +37,24 @@
 		<export name="_JVM_GetCallerClass@8" />
 	</exports>
 		
+	<artifact type="target" name="generated.c" all="false">
+		<dependencies>
+			<dependency name="generated.c.m4"/>
+			<dependency name="forwarders.m4"/>
+			<dependency name="$(UMA_PATH_TO_ROOT)oti/helpers.m4"/>
+		</dependencies>
+		<commands>
+			<command type="all" line="m4 -I$(UMA_PATH_TO_ROOT)oti generated.c.m4 > generated.c"/>
+			<command type="clean" line="rm generated.c"/>
+		</commands>
+	</artifact>
+	<artifact type="target" name="generate_redirector">
+		<commands>
+			<command type="all" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)redirector generated.c"/>
+			<command type="clean" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)redirector generated.c_clean"/>
+		</commands>
+	</artifact>
+
 	<artifact type="shared" name="jvm_b150" scope="redirector" loadgroup="top" buildlocal="true" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm"/>
 		<options>
@@ -44,6 +62,10 @@
 			<option name="linuxVersionName" data ="JVM_2.3"/>
 		</options>
 		<phase>core quick j2se</phase>
+		<dependencies>
+			<dependency name="generate_redirector"/>
+			<dependency name="generate_j9vm"/>
+		</dependencies>
 		<exports>
 			<group name="prejdk11"/>
 			<group name="all"/>
@@ -94,6 +116,9 @@
 			<option name="linuxVersionName" data ="JVM_2.3"/>
 		</options>
 		<phase>core quick j2se</phase>
+		<dependencies>
+			<dependency name="generate_redirector"/>
+		</dependencies>
 		<exports>
 			<group name="prejdk11"/>
 			<group name="all"/>
@@ -195,7 +220,10 @@
 			<!-- Need this for compatibility with older UMA versions in ifix streams -->
 			<option name="linuxVersionName" data ="JVM_2.3" />
 		</options>
-		<phase>core quick j2se</phase>		
+		<phase>core quick j2se</phase>
+		<dependencies>
+			<dependency name="generate_redirector"/>
+		</dependencies>
 		<exports>
 			<group name="prejdk11"/>
 			<group name="all"/>

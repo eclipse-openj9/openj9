@@ -31,6 +31,23 @@
 		<export name="JNI_GetDefaultJavaVMInitArgs" />
 		<export name="_JVM_GetCallerClass@8" />
 	</exports>
+	<artifact type="target" name="generated.h" all="false">
+		<dependencies>
+			<dependency name="generated.h.m4"/>
+			<dependency name="$(UMA_PATH_TO_ROOT)redirector/forwarders.m4"/>
+			<dependency name="$(UMA_PATH_TO_ROOT)oti/helpers.m4"/>
+		</dependencies>
+		<commands>
+			<command type="all" line="m4 -I$(UMA_PATH_TO_ROOT)oti -I$(UMA_PATH_TO_ROOT)redirector generated.h.m4 > generated.h"/>
+			<command type="clean" line="rm generated.h"/>
+		</commands>
+	</artifact>
+	<artifact type="target" name="generate_j9vm">
+		<commands>
+			<command type="all" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)j9vm generated.h"/>
+			<command type="clean" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)j9vm generated.h_clean"/>
+		</commands>
+	</artifact>
 
 	<artifact type="shared" name="jvm" bundle="jvm" loadgroup="" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm" />
@@ -38,7 +55,10 @@
 			<option name="requiresPrimitiveTable"/>
 			<option name="prototypeHeaderFileNames" data="jvm.h"/>
 		</options>
-		<phase>core quick j2se</phase>		
+		<phase>core quick j2se</phase>
+		<dependencies>
+			<dependency name="generate_j9vm"/>
+		</dependencies>
 		<exports>
 			<group name="all"/>
 			<group name="j9vmnatives"/>

@@ -39,6 +39,9 @@
 			<option name="prototypeHeaderFileNames" data="jvm.h"/>
 		</options>
 		<phase>core quick j2se</phase>
+		<dependencies>
+			<dependency name="generate_j9vm"/>
+		</dependencies>
 		<exports>
 			<group name="all"/>
 			<group name="j9vmnatives"/>
@@ -53,8 +56,8 @@
 			<include path="jclcommon">
 				<include-if condition="spec.flags.build_realtime"/>
 			</include>
-                        <include path="$(OMR_DIR)/gc/include" type="relativepath"/>
-                        <include path="j9gcgluejava"/>
+			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
+			<include path="j9gcgluejava"/>
 		</includes>
 		<makefilestubs>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
