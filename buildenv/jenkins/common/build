@@ -166,7 +166,7 @@ def archive() {
             // Do not archive test material in PR jobs, only "Build" jobs
             // https://github.com/eclipse/openj9/issues/1114
             // ghprbPullId is the PullRequest ID which only shows up in Pull Requests
-            if ((params.ghprbPullId == "") || (params.ghprbPullId == "null")) {
+            if (!params.ghprbPullId) {
                 sh "tar -zcvf ${WORKSPACE}/${TEST_PREFIX}`git -C openj9 rev-parse --short HEAD`${TEST_SUFFIX} openj9/test/"
                 archiveArtifacts artifacts: "**/${TEST_PREFIX}*${TEST_SUFFIX}", fingerprint: true, onlyIfSuccessful: true
             }
