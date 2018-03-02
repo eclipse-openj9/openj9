@@ -29,6 +29,75 @@
 #include "util_api.h"
 #include "vm_internal.h"
 
+
+
+/**
+ * Check module access from srcModule to destModule.
+ *
+ * The algorithm for validating module access is:
+ * 1) check to see if the source module `reads` the dest module.
+ * 2) check to see if the dest module exports the package (that
+ * dest class belongs to) to the source module.
+ *
+ * For reflective calls, the rules are slightly different as all reflect
+ * reflect accesses implicitly have read access.  Set the
+ *  J9_LOOK_REFLECT_CALL flag in the lookup options for reflective
+ * checks.
+ *
+ * The unnamedModules export all the packages they own and have read access to all modules
+ * they require access to.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] vm the javaVM
+ * @param[in] srcRomClass the accessing class
+ * @param[in] srcModule the module of the src class
+ * @param[in] destRomClass the accessing class
+ * @param[in] destModule the module of the dest class
+ * @param[in] destPackageID packageID of the dest class
+ * @param[in] lookupOptions J9_LOOK* options
+ *
+ * @return 	J9_VISIBILITY_ALLOWED if the access is allowed,
+ * 			J9_VISIBILITY_MODULE_READ_ACCESS_ERROR if module read access error occurred,
+ * 			J9_VISIBILITY_MODULE_PACKAGE_EXPORT_ERROR if module package access error
+ */
+VMINLINE IDATA
+checkModuleAccess(J9VMThread *currentThread, J9JavaVM* vm, J9ROMClass* srcRomClass, J9Module* srcModule, J9ROMClass* destRomClass, J9Module* destModule, UDATA destPackageID, UDATA lookupOptions)
+{
+	UDATA result = J9_VISIBILITY_ALLOWED;
+	if (srcModule != destModule) {
+		UDATA rc = ERRCODE_GENERAL_FAILURE;
+		if (!J9_ARE_ALL_BITS_SET(lookupOptions, J9_LOOK_REFLECT_CALL)) {
+			if (!isAllowedReadAccessToModule(currentThread, srcModule, destModule, &rc)) {
+				Trc_VM_checkVisibility_failed_with_errortype_romclass(currentThread,
+						srcRomClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(srcRomClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(srcRomClass)), srcModule,
+						destRomClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destRomClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destRomClass)), destModule, rc, "read access not allowed");
+				result = J9_VISIBILITY_MODULE_READ_ACCESS_ERROR;
+			}
+		}
+
+		if (J9_VISIBILITY_ALLOWED == result) {
+			const U_8* packageName = NULL;
+			UDATA packageNameLength = 0;
+			J9PackageIDTableEntry entry = {0};
+
+			entry.taggedROMClass = destPackageID;
+			packageName = getPackageName(&entry, &packageNameLength);
+
+			omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
+			if (!isPackageExportedToModuleWithName(currentThread, destModule, (U_8*) packageName, (U_16) packageNameLength, srcModule, J9_IS_J9MODULE_UNNAMED(vm, srcModule), &rc)) {
+				Trc_VM_checkVisibility_failed_with_errortype_romclass(currentThread,
+						srcRomClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(srcRomClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(srcRomClass)), srcModule,
+						destRomClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destRomClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destRomClass)), destModule, rc, "package not exported");
+				result = J9_VISIBILITY_MODULE_PACKAGE_EXPORT_ERROR;
+			}
+			omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
+		}
+
+	}
+	return result;
+}
+
+
 /**
  * Check visibility from sourceClass to destClass with modifiers specified
  *
@@ -48,7 +117,7 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 {
 	UDATA result = J9_VISIBILITY_ALLOWED;
 	J9JavaVM * const vm = currentThread->javaVM;
-	
+
 	Trc_VM_checkVisibility_Entry(currentThread, sourceClass, destClass, modifiers);
 	sourceClass = J9_CURRENT_CLASS(sourceClass);
 	destClass = J9_CURRENT_CLASS(destClass);
@@ -60,43 +129,15 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 	if (J9ROMCLASS_IS_UNSAFE(sourceClass->romClass) == 0) {
 		if ( modifiers & J9AccPublic ) {
 			/* Public */
-			if ((sourceClass != destClass) 
+			if ((sourceClass != destClass)
 				&& (J2SE_VERSION(vm) >= J2SE_19) 
 				&& J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)
 				&& !J9ROMCLASS_IS_PRIMITIVE_TYPE(destClass->romClass)
 			) {
 				J9Module *srcModule = sourceClass->module;
 				J9Module *destModule = destClass->module;
-				if (srcModule != destModule) {
-					UDATA rc = ERRCODE_GENERAL_FAILURE;
-					if (!J9_ARE_ALL_BITS_SET(lookupOptions, J9_LOOK_REFLECT_CALL)) {
-						if (!isAllowedReadAccessToModule(currentThread, srcModule, destModule, &rc)) {
-							Trc_VM_checkVisibility_failed_with_errortype(currentThread,
-									sourceClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(sourceClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(sourceClass->romClass)),
-									destClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destClass->romClass)), "read access not allowed");
-							result = J9_VISIBILITY_MODULE_READ_ACCESS_ERROR;
-						}
-					}
 
-					if (J9_VISIBILITY_ALLOWED == result) {
-						const U_8* packageName = NULL;
-						UDATA packageNameLength = 0;
-						J9PackageIDTableEntry entry = {0};
-
-						entry.taggedROMClass = destClass->packageID;
-						packageName = getPackageName(&entry, &packageNameLength);
-
-						omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-						if (!isPackageExportedToModuleWithName(currentThread, destModule, (U_8*) packageName, (U_16) packageNameLength, srcModule, J9_IS_J9MODULE_UNNAMED(vm, srcModule), &rc)) {
-							Trc_VM_checkVisibility_failed_with_errortype(currentThread,
-									sourceClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(sourceClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(sourceClass->romClass)),
-									destClass, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(destClass->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(destClass->romClass)), "package not exported");
-							result = J9_VISIBILITY_MODULE_PACKAGE_EXPORT_ERROR;
-						}
-						omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-					}
-
-				}
+				result = checkModuleAccess(currentThread, vm, sourceClass->romClass, srcModule, destClass->romClass, destModule, destClass->packageID, lookupOptions );
 			}
 		} else if (modifiers & J9AccPrivate) {
 			/* Private */
