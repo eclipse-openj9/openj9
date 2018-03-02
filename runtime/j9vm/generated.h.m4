@@ -31,14 +31,13 @@ extern "C" {
 /** WARNING: Automatically Generated File
  *
  * This file contains automatically generated function prototypes
- * for Sun VM Interface (i.e. JVM_) functions. It is created during
- * makefile generation.
+ * for Sun VM Interface (i.e. JVM_) functions.
  *
  * DO NOT ADD PROTOTYPES MANUALLY, instead modify the table in:
- * VM_Redirector\redirector\forwarders.ftl
+ * VM_Redirector/redirector/forwarders.m4
  *
  * Generated prototypes for all forwarded functions, see
- * redirector/forwarders.ftl for source data.
+ * redirector/forwarders.m4 for source data.
  */
 
 include([helpers.m4])
