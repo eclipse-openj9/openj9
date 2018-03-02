@@ -24,7 +24,10 @@
 #include "j9port.h"
 #include "j9.h"
 #include "vmi.h"
-#ifndef WIN32
+#ifdef WIN32
+#include <stdlib.h>
+#include <malloc.h>
+#else
 #include <pthread.h>
 #include <stdlib.h>
 #endif
