@@ -722,10 +722,11 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 	} else if (J2SE_19 <= j2seReleaseValue) {
 		dllName = J9_JAVA_SE_9_DLL_NAME;
 		dllNameLength = sizeof(J9_JAVA_SE_9_DLL_NAME);
-	} else if (J2SE_17 <= j2seReleaseValue) {
+	} else if (J2SE_18 <= j2seReleaseValue) {
+		/* Java 8 uses DLL name for Java 7 */
 		dllName = J9_JAVA_SE_7_BASIC_DLL_NAME;
 		dllNameLength = sizeof(J9_JAVA_SE_7_BASIC_DLL_NAME);
-	} else { /* Java 6 */
+	} else { /* Java 6, 7 */
 		Assert_Util_unreachable();
 	}
 

@@ -2929,11 +2929,7 @@ done:
 			walkState->userData1 = (void*)2; /* skip newInstanceImpl and newInstance */
 			walkState->userData2 = NULL;
 			walkState->userData3 = (void *) FALSE;
-			walkState->frameWalkFunction = cInterpGetStackClassIterator;
-
-			if ((J2SE_VERSION(_vm) & J2SE_VERSION_MASK) >= J2SE_18) {
-				walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
-			}
+			walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
 
 			walkState->skipCount = 0;
 			walkState->walkThread = _currentThread;
@@ -3920,11 +3916,7 @@ done:
 		walkState->userData1 = (void*)(UDATA)(depth + 1); /* Skip the local INL frame */
 		walkState->userData2 = NULL;
 		walkState->userData3 = (void *) FALSE;
-		walkState->frameWalkFunction = cInterpGetStackClassIterator;
-
-		if ((J2SE_VERSION(_vm) & J2SE_VERSION_MASK) >= J2SE_18) {
-			walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
-		}
+		walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
 
 		walkState->skipCount = 0;
 		walkState->walkThread = _currentThread;
@@ -4281,11 +4273,7 @@ done:
 		walkState->userData1 = (void*)(UDATA)(depth + 1); /* Skip the local INL frame */
 		walkState->userData2 = NULL;
 		walkState->userData3 = (void *) FALSE;
-		walkState->frameWalkFunction = cInterpGetStackClassIterator;
-
-		if ((J2SE_VERSION(_vm) & J2SE_VERSION_MASK) >= J2SE_18) {
-			walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
-		}
+		walkState->frameWalkFunction = cInterpGetStackClassJEP176Iterator;
 
 		walkState->skipCount = 0;
 		walkState->walkThread = _currentThread;

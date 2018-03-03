@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -579,8 +579,8 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 	}
 	newNativeLibrary->linkMode = J9NATIVELIB_LINK_MODE_UNINITIALIZED;
 
-	/* Try linking statically for J2SE versions 1.8 and above. */
-	if ((J2SE_VERSION(javaVM) >= J2SE_18) && (J9NATIVELIB_LOAD_OK == rc) && !loadWasIntercepted) {
+	/* Try linking statically */
+	if ((J9NATIVELIB_LOAD_OK == rc) && !loadWasIntercepted) {
 		/* Open a handle to the executable that launched this jvm instance.
 		 * Certain platforms require executable name for opening a handle to it. If this cannot
 		 * be found, fall back to plain old dynamic linking.

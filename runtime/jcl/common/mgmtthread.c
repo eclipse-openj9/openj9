@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1119,12 +1119,6 @@ initIDCache(JNIEnv *env)
 	jclass gcls;
 	jmethodID mid;
 	jint err = JNI_OK;
-	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
-	jboolean use_java6_jcl = JNI_FALSE;
-	
-	if ((J2SE_VERSION(vm) & J2SE_VERSION_MASK) >= J2SE_16) {
-		use_java6_jcl = JNI_TRUE;
-	}
 	
 	/* isNativeMethod is the last cache member to be set */
 	if (JCL_CACHE_GET(env, MID_java_lang_StackTraceElement_isNativeMethod) != NULL) 
@@ -1149,79 +1143,68 @@ initIDCache(JNIEnv *env)
 	(*env)->DeleteLocalRef(env, cls);
 	JCL_CACHE_SET(env, CLS_java_lang_management_ThreadInfo, gcls);
 
-	if (JNI_TRUE == use_java6_jcl) {
-		mid = (*env)->GetMethodID(env, gcls, "<init>", 
-			"(Ljava/lang/Thread;JIZZJJJJ[Ljava/lang/StackTraceElement;Ljava/lang/Object;Ljava/lang/Thread;[Ljava/lang/management/MonitorInfo;[Ljava/lang/management/LockInfo;)V");
-		if (mid) {
-			JCL_CACHE_SET(env, MID_java_lang_management_ThreadInfo_init, mid);
-			JCL_CACHE_SET(env, MID_java_lang_management_ThreadInfo_init_nolocks, NULL);
-		}
-	} else {
-		mid = (*env)->GetMethodID(env, gcls, "<init>", 
-			"(Ljava/lang/Thread;JIZZJJJJ[Ljava/lang/StackTraceElement;Ljava/lang/Object;Ljava/lang/Thread;)V");
-		if (mid) {
-			JCL_CACHE_SET(env, MID_java_lang_management_ThreadInfo_init, NULL);
-			JCL_CACHE_SET(env, MID_java_lang_management_ThreadInfo_init_nolocks, mid);
-		}
+	mid = (*env)->GetMethodID(env, gcls, "<init>", 
+		"(Ljava/lang/Thread;JIZZJJJJ[Ljava/lang/StackTraceElement;Ljava/lang/Object;Ljava/lang/Thread;[Ljava/lang/management/MonitorInfo;[Ljava/lang/management/LockInfo;)V");
+	if (mid) {
+		JCL_CACHE_SET(env, MID_java_lang_management_ThreadInfo_init, mid);
+		JCL_CACHE_SET(env, MID_java_lang_management_ThreadInfo_init_nolocks, NULL);
 	}
 	if (!mid) {
 		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 
-	if (JNI_TRUE == use_java6_jcl) {
-		cls = (*env)->FindClass(env, "java/lang/management/MonitorInfo");
-		if (!cls) {
-			err = JNI_ERR;
-			goto initIDCache_fail;
-		}
-		if (!(gcls = (*env)->NewGlobalRef(env, cls))) {
-			err = JNI_ENOMEM;
-			goto initIDCache_fail;
-		}
-		(*env)->DeleteLocalRef(env, cls);
-		JCL_CACHE_SET(env, CLS_java_lang_management_MonitorInfo, gcls);
-	
-		mid = (*env)->GetMethodID(env, gcls, "<init>",
-				"(Ljava/lang/String;IILjava/lang/StackTraceElement;)V");
-		if (!mid) {
-			err = JNI_ERR;
-			goto initIDCache_fail;
-		}
-		JCL_CACHE_SET(env, MID_java_lang_management_MonitorInfo_init, mid);
+	cls = (*env)->FindClass(env, "java/lang/management/MonitorInfo");
+	if (!cls) {
+		err = JNI_ERR;
+		goto initIDCache_fail;
+	}
+	if (!(gcls = (*env)->NewGlobalRef(env, cls))) {
+		err = JNI_ENOMEM;
+		goto initIDCache_fail;
+	}
+	(*env)->DeleteLocalRef(env, cls);
+	JCL_CACHE_SET(env, CLS_java_lang_management_MonitorInfo, gcls);
 
-		cls = (*env)->FindClass(env, "java/lang/Class");
-		if (!cls) {
-			err = JNI_ERR;
-			goto initIDCache_fail;
-		}
-		mid = (*env)->GetMethodID(env, cls, "getName", "()Ljava/lang/String;");		
-		if (!mid) {
-			err = JNI_ERR;
-			goto initIDCache_fail;
-		}
-		(*env)->DeleteLocalRef(env, cls);
-		JCL_CACHE_SET(env, MID_java_lang_Class_getName, mid);
+	mid = (*env)->GetMethodID(env, gcls, "<init>",
+			"(Ljava/lang/String;IILjava/lang/StackTraceElement;)V");
+	if (!mid) {
+		err = JNI_ERR;
+		goto initIDCache_fail;
+	}
+	JCL_CACHE_SET(env, MID_java_lang_management_MonitorInfo_init, mid);
 
-		cls = (*env)->FindClass(env, "java/lang/management/LockInfo");
-		if (!cls) {
-			err = JNI_ERR;
-			goto initIDCache_fail;
-		}
-		if (!(gcls = (*env)->NewGlobalRef(env, cls))) {
-			err = JNI_ENOMEM;
-			goto initIDCache_fail;
-		}
-		(*env)->DeleteLocalRef(env, cls);
-		JCL_CACHE_SET(env, CLS_java_lang_management_LockInfo, gcls);
+	cls = (*env)->FindClass(env, "java/lang/Class");
+	if (!cls) {
+		err = JNI_ERR;
+		goto initIDCache_fail;
+	}
+	mid = (*env)->GetMethodID(env, cls, "getName", "()Ljava/lang/String;");		
+	if (!mid) {
+		err = JNI_ERR;
+		goto initIDCache_fail;
+	}
+	(*env)->DeleteLocalRef(env, cls);
+	JCL_CACHE_SET(env, MID_java_lang_Class_getName, mid);
 
-		mid = (*env)->GetMethodID(env, gcls, "<init>", "(Ljava/lang/Object;)V");
-		if (!mid) {
-			err = JNI_ERR;
-			goto initIDCache_fail;
-		}
-		JCL_CACHE_SET(env, MID_java_lang_management_LockInfo_init, mid);
-	} /* use_java6_jcl */
+	cls = (*env)->FindClass(env, "java/lang/management/LockInfo");
+	if (!cls) {
+		err = JNI_ERR;
+		goto initIDCache_fail;
+	}
+	if (!(gcls = (*env)->NewGlobalRef(env, cls))) {
+		err = JNI_ENOMEM;
+		goto initIDCache_fail;
+	}
+	(*env)->DeleteLocalRef(env, cls);
+	JCL_CACHE_SET(env, CLS_java_lang_management_LockInfo, gcls);
+
+	mid = (*env)->GetMethodID(env, gcls, "<init>", "(Ljava/lang/Object;)V");
+	if (!mid) {
+		err = JNI_ERR;
+		goto initIDCache_fail;
+	}
+	JCL_CACHE_SET(env, MID_java_lang_management_LockInfo_init, mid);
 
 	cls = (*env)->FindClass(env, "java/lang/StackTraceElement");
 	if (!cls) {

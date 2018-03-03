@@ -1338,8 +1338,6 @@ VersionSetting SHAPE_SETTINGS[] = {
  * Table to map textual props file entries to numeric constants.
  */
 VersionSetting VERSION_SETTINGS[] = {
-		{"1.6", J2SE_16},
-		{"1.7", J2SE_17},
 		{"1.8", J2SE_18},
 		{"1.9", J2SE_19}
 };
@@ -2055,7 +2053,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 	j9portLibrary.omrPortLibrary.port_control(&j9portLibrary.omrPortLibrary, J9PORT_CTLDATA_MEM_CATEGORIES_SET, (UDATA)&j9MasterMemCategorySet);
 
 	j2seVersion = getVersionFromPropertiesFile();
-	if (J2SE_17 > j2seVersion) {
+	if (J2SE_18 > j2seVersion) {
 		fprintf(stderr, "Invalid version 0x%" J9PRIz "x detected in classlib.properties!\n", j2seVersion);
 		result = JNI_ERR;
 		goto exit;

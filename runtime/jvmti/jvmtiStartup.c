@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -589,25 +589,23 @@ loadAgentLibraryOnAttach(struct J9JavaVM * vm, const char * library, const char 
 		if (JNI_OK != rc) {
 			goto exit;
 		}
-		if (J2SE_VERSION(vm) >= J2SE_18) {
-			loadFunctionNameLength = j9str_printf(
-											PORTLIB,
-											loadFunctionName,
-											(J9JVMTI_BUFFER_LENGTH + 1),
-											"%s_%s",
-											J9JVMTI_AGENT_ONATTACH,
-											agentLibrary->nativeLib.name);
-			if (loadFunctionNameLength >= J9JVMTI_BUFFER_LENGTH) {
-				rc = JNI_ERR;
-				goto exit;
-			}
-			rc = loadAgentLibraryGeneric(vm, 
-										 agentLibrary, 
-										 loadFunctionName, 
-										 TRUE, /* link statically. */
-										 &found,
-										 &errorMessage);
+		loadFunctionNameLength = j9str_printf(
+			PORTLIB,
+			loadFunctionName,
+			(J9JVMTI_BUFFER_LENGTH + 1),
+			"%s_%s",
+			J9JVMTI_AGENT_ONATTACH,
+			agentLibrary->nativeLib.name);
+		if (loadFunctionNameLength >= J9JVMTI_BUFFER_LENGTH) {
+			rc = JNI_ERR;
+			goto exit;
 		}
+		rc = loadAgentLibraryGeneric(vm,
+			agentLibrary,
+			loadFunctionName,
+			TRUE, /* link statically. */
+			&found,
+			&errorMessage);
 		if (found) {
 			/* Agent being linked statically. */
 			Trc_JVMTI_loadAgentLibraryOnAttach_attachingAgentStatically(agentLibrary->nativeLib.name);
@@ -662,33 +660,31 @@ loadAgentLibrary(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary)
 
 	Trc_JVMTI_loadAgentLibrary_Entry(agentLibrary->nativeLib.name);
 
-	/* For java 1.8 and above attempt linking the agent statically, looking for Agent_OnLoad_L.  
+	/* Attempt linking the agent statically, looking for Agent_OnLoad_L.  
 	 * If this is not found, fall back on the regular, dynamic linking way.
 	 */
-	if (J2SE_VERSION(vm) >= J2SE_18) {
-		char nameBuffer[J9JVMTI_BUFFER_LENGTH + 1] = {0};
-		UDATA nameBufferLengh = 0;
-		nameBufferLengh = j9str_printf(
-								PORTLIB,
-								nameBuffer,
-								(J9JVMTI_BUFFER_LENGTH + 1),
-								"%s_%s",
-								J9JVMTI_AGENT_ONLOAD,
-								agentLibrary->nativeLib.name);
-		if (nameBufferLengh >= J9JVMTI_BUFFER_LENGTH) {
-			result = JNI_ERR;
-			goto exit;
-		}
-	
-		result = loadAgentLibraryGeneric(vm, agentLibrary, nameBuffer, TRUE, &found, &errorMessage);
-
-		/* Set this TRUE; if it wasn't actually found, the next check will set this FALSE, 
-		 * or else this indicates to Agent_OnUnload that the agent was loaded via static linking.
-		 */
-		omrthread_monitor_enter(jvmtiData->mutex);
-		agentLibrary->nativeLib.linkMode = J9NATIVELIB_LINK_MODE_STATIC;
-		omrthread_monitor_exit(jvmtiData->mutex);
+	char nameBuffer[J9JVMTI_BUFFER_LENGTH + 1] = {0};
+	UDATA nameBufferLengh = 0;
+	nameBufferLengh = j9str_printf(
+							PORTLIB,
+							nameBuffer,
+							(J9JVMTI_BUFFER_LENGTH + 1),
+							"%s_%s",
+							J9JVMTI_AGENT_ONLOAD,
+							agentLibrary->nativeLib.name);
+	if (nameBufferLengh >= J9JVMTI_BUFFER_LENGTH) {
+		result = JNI_ERR;
+		goto exit;
 	}
+
+	result = loadAgentLibraryGeneric(vm, agentLibrary, nameBuffer, TRUE, &found, &errorMessage);
+
+	/* Set this TRUE; if it wasn't actually found, the next check will set this FALSE, 
+	 * or else this indicates to Agent_OnUnload that the agent was loaded via static linking.
+	 */
+	omrthread_monitor_enter(jvmtiData->mutex);
+	agentLibrary->nativeLib.linkMode = J9NATIVELIB_LINK_MODE_STATIC;
+	omrthread_monitor_exit(jvmtiData->mutex);
  
 	/* If the initializer "Agent_OnLoad_L" was /not/ found (either not defined OR running
 	 * running j2se version less than 1.8), fallback on dynamic linking, with "Agent_OnLoad".
