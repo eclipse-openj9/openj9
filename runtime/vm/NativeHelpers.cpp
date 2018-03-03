@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,39 +79,6 @@ getInterfacesHelper(J9VMThread *currentThread, j9object_t clazz)
 	}
 done:
 	return array;
-}
-
-UDATA
-cInterpGetStackClassIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
-{
-	J9JavaVM * vm = currentThread->javaVM;
-
-
-	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) == J9_JAVA_METHOD_FRAME_ITERATOR_SKIP) {
-		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
-		return J9_STACKWALK_KEEP_ITERATING;
-	}
-
-	if ((walkState->method != vm->jlrMethodInvoke) && (walkState->method != vm->jliMethodHandleInvokeWithArgs) && (walkState->method != vm->jliMethodHandleInvokeWithArgsList)) {
-		J9Class * currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
-
-		Assert_VM_mustHaveVMAccess(currentThread);
-		if ( (vm->jliArgumentHelper && VM_VMHelpers::inlineCheckCast(currentClass, J9VM_J9CLASS_FROM_JCLASS(currentThread, vm->jliArgumentHelper)))
-#ifdef J9VM_OPT_SIDECAR
-			|| (vm->srMethodAccessor && VM_VMHelpers::isSameOrSuperclass(J9VM_J9CLASS_FROM_JCLASS(currentThread, vm->srMethodAccessor), currentClass))
-			|| (vm->srConstructorAccessor && VM_VMHelpers::isSameOrSuperclass(J9VM_J9CLASS_FROM_JCLASS(currentThread, vm->srConstructorAccessor), currentClass))
-#endif
-		) {
-			/* skip reflection classes */
-		} else {
-			if (!walkState->userData1) {
-				walkState->userData2 = J9VM_J9CLASS_TO_HEAPCLASS(currentClass);
-				return J9_STACKWALK_STOP_ITERATING;
-			}
-			walkState->userData1 = (void *) (((UDATA) walkState->userData1) - 1);
-		}
-	}
-	return J9_STACKWALK_KEEP_ITERATING;
 }
 
 UDATA

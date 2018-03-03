@@ -287,9 +287,6 @@ fixBadUtf8(const U_8 * original, U_8 *corrected, size_t length);
 j9object_t   
 getInterfacesHelper(J9VMThread *currentThread, j9object_t clazz);
 
-UDATA
-cInterpGetStackClassIterator(J9VMThread * currentThread, J9StackWalkState * walkState);
-
 /**
  * Iterate on stack to obtain the immediate caller class of the native method invoking
  * inlVMGetStackClassLoader(), inlVMGetStackClass() or newInstanceImpl().
