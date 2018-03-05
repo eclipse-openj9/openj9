@@ -34,7 +34,7 @@ def fetch_artifacts(){
             cleanWs()
             step([$class: 'CopyArtifact',
                 fingerprintArtifacts: true,
-                projectName: "$UPSTREAM_JOB_NAME",
+                projectName: "${params.UPSTREAM_JOB_NAME}",
                 selector: [$class: 'SpecificBuildSelector',
                             buildNumber: "${params.UPSTREAM_JOB_NUMBER}"]])
             sh 'for filename in *.tar.gz; do tar zxf $filename; done'
