@@ -53,13 +53,13 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
-/*[IF Sidecar19-SE-B175]
+/*[IF Sidecar19-SE-OpenJ9]
 import java.lang.Module;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.JavaLangAccess;
 import java.security.ProtectionDomain;
 import jdk.internal.org.objectweb.asm.ClassReader;
-/*[ENDIF] Sidecar19-SE-B175*/
+/*[ENDIF] Sidecar19-SE-OpenJ9*/
 /*[ELSE]*/
 import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
@@ -147,11 +147,11 @@ public class MethodHandles {
 		
 		static final int INTERNAL_PRIVILEGED = 0x40;
 
-		/*[IF Sidecar19-SE-B175]
+		/*[IF Sidecar19-SE-OpenJ9]
 		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE | MODULE;
 		/*[ELSE]*/
 		private static final int FULL_ACCESS_MASK = PUBLIC | PRIVATE | PROTECTED | PACKAGE;
-		/*[ENDIF] Sidecar19-SE-B175*/
+		/*[ENDIF] Sidecar19-SE-OpenJ9*/
 		
 		private static final int NO_ACCESS = 0;
 		
@@ -160,11 +160,11 @@ public class MethodHandles {
 		static final int VARARGS = 0x80;
 		
 		/* single cached value of public Lookup object */
-		/*[IF Sidecar19-SE-B175]
+		/*[IF Sidecar19-SE-OpenJ9]
 		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, Lookup.PUBLIC | Lookup.UNCONDITIONAL);
 		/*[ELSE]*/
 		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, Lookup.PUBLIC);
-		/*[ENDIF] Sidecar19-SE-B175*/
+		/*[ENDIF] Sidecar19-SE-OpenJ9*/
 		
 		/* single cached internal privileged lookup */
 		static Lookup internalPrivilegedLookup = new Lookup(MethodHandle.class, Lookup.INTERNAL_PRIVILEGED);
@@ -937,7 +937,7 @@ public class MethodHandles {
 			/*[IF ]*/
 			/* If the new lookup class differs from the old one, protected members will not be accessible by virtue of inheritance. (Protected members may continue to be accessible because of package sharing.) */
 			/*[ENDIF]*/
-			/*[IF !Sidecar19-SE-B175]
+			/*[IF !Sidecar19-SE-OpenJ9]
 			int newAccessMode = accessMode & ~PROTECTED;
 			/*[ELSE]*/
 			/* The UNCONDITIONAL bit is discarded if the new lookup class differs from the old one in Java 9 */
@@ -969,7 +969,7 @@ public class MethodHandles {
 					newAccessMode &= ~MODULE;
 				}
 			}
-			/*[ENDIF] Sidecar19-SE-B175*/
+			/*[ENDIF] Sidecar19-SE-OpenJ9*/
 			
 			/*[IF ]*/
 			/* If the new lookup class is in a different package than the old one, protected and default (package) members will not be accessible. */
@@ -982,13 +982,13 @@ public class MethodHandles {
 				Class<?> a = getUltimateEnclosingClassOrSelf(accessClass);
 				Class<?> l = getUltimateEnclosingClassOrSelf(lookupClass);
 				if (a != l) {
-				/*[IF Sidecar19-SE-B175]
+				/*[IF Sidecar19-SE-OpenJ9]
 				/* If the new lookup class is not within the same package member as the old one, private and protected members will not be accessible. */
 					newAccessMode &= ~(PRIVATE | PROTECTED);
 				/*[ELSE]*/
 				/* If the new lookup class is not within the same package member as the old one, private members will not be accessible. */
 					newAccessMode &= ~PRIVATE;
-				/*[ENDIF] Sidecar19-SE-B175*/
+				/*[ENDIF] Sidecar19-SE-OpenJ9*/
 				}
 			}
 			
@@ -1417,7 +1417,7 @@ public class MethodHandles {
 			case PUBLIC:
 				toString += "/public"; //$NON-NLS-1$
 				break;
-			/*[IF Sidecar19-SE-B175]
+			/*[IF Sidecar19-SE-OpenJ9]
 			case PUBLIC | UNCONDITIONAL:
 				toString += "/publicLookup"; //$NON-NLS-1$
 				break;
@@ -1437,7 +1437,7 @@ public class MethodHandles {
 			case PUBLIC | PACKAGE | PRIVATE:
 				toString += "/private"; //$NON-NLS-1$
 				break;
-			/*[ENDIF] Sidecar19-SE-B175*/
+			/*[ENDIF] Sidecar19-SE-OpenJ9*/
 			}
 			return toString;
 		}
@@ -1648,7 +1648,7 @@ public class MethodHandles {
 			return targetClass;
 		}
 		
-		/*[IF Sidecar19-SE-B175]*/
+		/*[IF Sidecar19-SE-OpenJ9]*/
 		/**
 		 * Return a class object with the same class loader, the same package and
 		 * the same protection domain as the lookup's lookup class.
@@ -1709,7 +1709,7 @@ public class MethodHandles {
 			
 			return targetClass;
 		}
-		/*[ENDIF] Sidecar19-SE-B175*/
+		/*[ENDIF] Sidecar19-SE-OpenJ9*/
 		
 		/**
 		 * Return a MethodHandles.Lookup object without the requested lookup mode.
@@ -1801,7 +1801,7 @@ public class MethodHandles {
 		return Lookup.PUBLIC_LOOKUP;
 	}
 	
-	/*[IF Sidecar19-SE-B175]*/
+	/*[IF Sidecar19-SE-OpenJ9]*/
 	/**
 	 * Return a MethodHandles.Lookup object with full capabilities including the access 
 	 * to the <code>private</code> members in the requested class
@@ -1858,7 +1858,7 @@ public class MethodHandles {
 		
 		return new Lookup(targetClass);
 	}
-	/*[ENDIF] Sidecar19-SE-B175*/
+	/*[ENDIF] Sidecar19-SE-OpenJ9*/
 	
 	/**
 	 * Gets the underlying Member of the provided <code>target</code> MethodHandle. This is done through an unchecked crack of the MethodHandle.

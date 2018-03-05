@@ -42,6 +42,7 @@
 #include "jnicheck.h"
 #include "jnichk_internal.h"
 #include "ut_j9jni.h"
+#include "vendor_version.h"
 
 static void jniCallIn (J9VMThread * vmThread);
 static void methodExitHook (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);

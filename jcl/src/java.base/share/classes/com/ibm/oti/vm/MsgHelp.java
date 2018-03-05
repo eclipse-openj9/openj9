@@ -3,7 +3,7 @@
 package com.ibm.oti.vm;
 
 /*******************************************************************************
- * Copyright (c) 2003, 2017 IBM Corp. and others
+ * Copyright (c) 2003, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /*[IF Sidecar19-SE]
-/*[IF Sidecar19-SE-B165]
+/*[IF Sidecar19-SE-OpenJ9]
 import java.lang.Module;
 /*[ELSE]
 import java.lang.reflect.Module;

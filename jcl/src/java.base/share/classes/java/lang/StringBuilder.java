@@ -502,7 +502,7 @@ public StringBuilder append (float value) {
 public StringBuilder append(int value) {
 	/*[PR JAZZ103 69835] This implementation is optimized for the JIT */
 	/*[IF Sidecar19-SE]*/
-	/*[IF Sidecar19-SE-B174]*/
+	/*[IF Sidecar19-SE-OpenJ9]*/
 	int currentLength = lengthInternal();
 	int currentCapacity = capacityInternal();
 
@@ -580,7 +580,7 @@ public StringBuilder append(int value) {
 public StringBuilder append(long value) {
 	/*[PR JAZZ103 69835] This implementation is optimized for the JIT */
 	/*[IF Sidecar19-SE]*/
-	/*[IF Sidecar19-SE-B174]*/
+	/*[IF Sidecar19-SE-OpenJ9]*/
 	int currentLength = lengthInternal();
 	int currentCapacity = capacityInternal();
 
