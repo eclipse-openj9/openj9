@@ -44,7 +44,7 @@ import sun.nio.ch.Interruptible;
 import sun.reflect.annotation.AnnotationType;
 
 /*[IF Sidecar19-SE]
-/*[IF Sidecar19-SE-B165]
+/*[IF Sidecar19-SE-OpenJ9]
 import java.lang.Module;
 import java.util.Iterator;
 import java.util.List;
@@ -215,7 +215,7 @@ final class Access implements JavaLangAccess {
 	 }
 	
 	public 
-/*[IF Sidecar19-SE-B165]	
+/*[IF Sidecar19-SE-OpenJ9]	
 	java.lang.ModuleLayer
 /*[ELSE]*/
 	java.lang.reflect.Layer
@@ -284,7 +284,7 @@ final class Access implements JavaLangAccess {
 		return targetClassLoader.defineClass(className, classRep, 0, classRep.length, protectionDomain);
 	}
 
-/*[IF Sidecar19-SE-B165]*/	
+/*[IF Sidecar19-SE-OpenJ9]*/	
 	public Stream<ModuleLayer> layers(ModuleLayer ml) {
 		return ml.layers();
 	}
@@ -323,13 +323,13 @@ final class Access implements JavaLangAccess {
 		return ml.getServicesCatalog();
 	}
 
-/*[IF Sidecar19-SE-B169]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 	public void addNonExportedPackages(ModuleLayer ml) {
 		SecurityManager.addNonExportedPackages(ml);
 	}
 /*[ENDIF]*/
 	 
-/*[IF Sidecar19-SE-B175]*/
+/*[IF Sidecar19-SE-OpenJ9]*/
 	public List<Method> getDeclaredPublicMethods(Class<?> clz, String name, Class<?>... types) {
 		return clz.getDeclaredPublicMethods(name, types);
 	}
@@ -347,7 +347,7 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF]*/	
 	 
-/*[ENDIF] Sidecar19-SE-B165 */
+/*[ENDIF] Sidecar19-SE-OpenJ9 */
 
 /*[IF Java10]*/
 	public String newStringUTF8NoRepl(byte[] bytes, int offset, int length) {

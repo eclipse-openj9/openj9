@@ -42,7 +42,7 @@ import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -399,7 +399,7 @@ protected ClassLoader(ClassLoader parentLoader) {
 			com.ibm.oti.vm.VM.initializeClassLoader(this, false, isParallelCapable);
 		}
 /*[IF Sidecar19-SE]*/
-/*[IF Sidecar19-SE-B165]
+/*[IF Sidecar19-SE-OpenJ9]
 		unnamedModule = new Module(this);
 /*[ELSE]*/
 		unnamedModule = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(this);
