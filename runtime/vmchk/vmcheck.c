@@ -32,6 +32,7 @@
 #include "mmomrhook.h"
 #include "vmcheck.h"
 #include "ut_j9vmchk.h"
+#include "vendor_version.h"
 
 #include <stdarg.h>
 

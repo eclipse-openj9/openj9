@@ -23,6 +23,7 @@
 
 #include <string.h>
 
+#include "vendor_version.h"
 #include "CheckCycle.hpp"
 #include "CheckClassHeap.hpp"
 #include "CheckClassLoaders.hpp"
