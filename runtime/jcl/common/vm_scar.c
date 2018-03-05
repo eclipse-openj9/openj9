@@ -34,9 +34,6 @@
 #include "jni.h"
 #include "j9protos.h"
 #include "jvminit.h"
-/* Avoid renaming malloc/free */
-#define LAUNCHERS
-#include "../../j9vm/jvm.h"
 #include "jclprots.h"
 #include "omrlinkedlist.h"
 #include "ut_j9jcl.h"
