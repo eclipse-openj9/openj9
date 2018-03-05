@@ -418,6 +418,9 @@ enum INIT_STAGE {
 #define VMOPT_XXENABLEHCR "-XX:+EnableHCR"
 #define VMOPT_XXNOENABLEHCR "-XX:-EnableHCR"
 
+#define VMOPT_XXUSECONTAINERSUPPORT "-XX:+UseContainerSupport"
+#define VMOPT_XXNOUSECONTAINERSUPPORT "-XX:-UseContainerSupport"
+
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 
 #define MAPOPT_XCOMP "-Xcomp"
