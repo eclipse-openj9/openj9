@@ -763,3 +763,5 @@ TraceException=Trc_VM_CreateRAMClassFromROMClass_nestHostNotVerified Overhead=1 
 TraceEntry=Trc_VM_sendResolveMethodTypeRefInto_Entry Overhead=1 Level=5 Template="sendResolveMethodTypeRefInto ramCP=%p cpIndex=%zu resolveFlags=%zu"
 TraceException=Trc_VM_sendResolveMethodTypeRefInto_Exception Overhead=1 Level=1 Template="Sender class=%p cannot access receiver class=%p, errorCode=%zi."
 TraceExit=Trc_VM_sendResolveMethodTypeRefInto_Exit Overhead=1 Level=5 Template="sendResolveMethodTypeRefInto methodType=%p."
+
+TraceException=Trc_VM_CgroupSubsystemsNotEnabled Overhead=1 Level=1 Template="Cgroup subsystems available: 0x%llx, enabled: 0x%llx"
