@@ -358,6 +358,11 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] Java10 */
 
+/*[IF Java11]*/
+	public void blockedOn(Interruptible interruptible) {
+		Thread.blockedOn(interruptible);
+	}
+/*[ENDIF]*/
 	
 /*[ENDIF] Sidecar19-SE */
 }
