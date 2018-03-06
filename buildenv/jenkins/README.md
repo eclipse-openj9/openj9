@@ -28,13 +28,16 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 
 - You can request a PR build to do compile or compile & test
 - Current supported test levels are functional sanity and functional extended
-- Current available platforms are Linux s390x (zLinux) and Linux PPCLE (pLinux)
+- Current available platforms are 
+    - Linux s390x (zLinux)
+    - Linux PPCLE (pLinux)
+    - AIX PPC (aix)
 - Current supported Java verisons are Java8 and Java9
 - OpenJ9 committers can request builds by commenting in a pull request
     - Format: `Jenkins <build type> <level> <platform(s)> <java version(s)>`
     - Build Types: compile,test
     - Levels: sanity,extended (only if Build Type is test)
-    - Platforms: zlinux,plinux
+    - Platforms: zlinux,plinux,aix
     - Java Versions: jdk8,jdk9
 - Note: You can use keyword `all` for level, platform or version
 
@@ -86,6 +89,22 @@ You can also request a "Compile & Sanity" build from the extensions repos or ope
 ### Overview of Builds
 
 #### Build
+
+- Build-JDK8-aix_ppc-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Build-JDK8-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Build-JDK8-aix_ppc-64_cmprssptrs)
+    - Description:
+        - Compiles java8 on aix_ppc-64_cmprssptrs
+        - Archives the SDK and test material for use in downstream jobs
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
+
+- Build-JDK9-aix_ppc-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Build-JDK9-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Build-JDK9-aix_ppc-64_cmprssptrs)
+    - Description:
+        - Compiles java9 on aix_ppc-64_cmprssptrs
+        - Archives the SDK and test material for use in downstream jobs
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
 
 - Build-JDK8-linux_390-64_cmprssptrs
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Build-JDK8-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Build-JDK8-linux_390-64_cmprssptrs)
@@ -145,6 +164,30 @@ You can also request a "Compile & Sanity" build from the extensions repos or ope
         - Poll Github repo for changes
  
 #### Pipelines
+
+- Pipeline-Build-Test-JDK8-aix_ppc-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Pipeline-Build-Test-JDK8-aix_ppc-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Pipeline-Build-Test-JDK8-aix_ppc-64_cmprssptrs)
+    - Description:
+        - Compile and Test java8 Sanity & Extended
+        - Triggers
+            - `Build-JDK8-aix_ppc-64_cmprssptrs`
+            - `Test-Sanity-JDK8-aix_ppc-64_cmprssptrs`
+            - `Test-Extended-JDK8-aix_ppc-64_cmprssptrs`
+
+    - Trigger:
+        - build periodically, @midnight
+
+- Pipeline-Build-Test-JDK9-aix_ppc-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Pipeline-Build-Test-JDK9-aix_ppc-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Pipeline-Build-Test-JDK9-aix_ppc-64_cmprssptrs)
+    - Description:
+        - Compile and Test java9 Sanity & Extended
+        - Triggers
+            - `Build-JDK9-aix_ppc-64_cmprssptrs`
+            - `Test-Sanity-JDK9-aix_ppc-64_cmprssptrs`
+            - `Test-Extended-JDK9-aix_ppc-64_cmprssptrs`
+
+    - Trigger:
+        - build periodically, @midnight
 
 - Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Pipeline-Build-Test-JDK8-linux_390-64_cmprssptrs)
@@ -206,6 +249,20 @@ You can also request a "Compile & Sanity" build from the extensions repos or ope
 
 #### Pull Requests
 
+- PullRequest-Compile-JDK8-aix_ppc-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)
+    - Description:
+        - Compile on java8 aix_ppc-64_cmprssptrs
+    - Trigger:
+        - Github PR comment `Jenkins compile aix jdk8`
+
+- PullRequest-Compile-JDK9-aix_ppc-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)
+    - Description:
+        - Compile on java9 aix_ppc-64_cmprssptrs
+    - Trigger:
+        - Github PR comment `Jenkins compile aix jdk9`
+
 - PullRequest-Compile-JDK8-linux_390-64_cmprssptrs-OpenJ9
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK8-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK8-linux_390-64_cmprssptrs-OpenJ9)
     - Description:
@@ -234,6 +291,20 @@ You can also request a "Compile & Sanity" build from the extensions repos or ope
     - Trigger:
         - Github PR comment `Jenkins compile plinux jdk9`
 
+- PullRequest-JDK8-Extended-aix_ppc-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)
+    - Description:
+        - Compile and Extended tests on java8 aix_ppc-64_cmprssptrs
+    - Trigger:
+        - Github PR comment `Jenkins test extended aix jdk8`
+
+- PullRequest-JDK9-Extended-aix_ppc-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)
+    - Description:
+        - Compile and Extended tests on java9 aix_ppc-64_cmprssptrs
+    - Trigger:
+        - Github PR comment `Jenkins test extended aix jdk9`
+
 - PullRequest-JDK8-Extended-linux_390-64_cmprssptrs-OpenJ9
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK8-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK8-linux_390-64_cmprssptrs-OpenJ9)
     - Description:
@@ -261,6 +332,20 @@ You can also request a "Compile & Sanity" build from the extensions repos or ope
         - Compile and Extended tests on java9 linux_ppc-64_cmprssptrs_le
     - Trigger:
         - Github PR comment `Jenkins test extended plinux jdk9`
+
+- PullRequest-Sanity-JDK8-aix_ppc-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)
+    - Description:
+        - Compile and Sanity tests on java8 aix_ppc-64_cmprssptrs
+    - Trigger:
+        - Github PR comment `Jenkins test sanity aix jdk8`
+
+- PullRequest-Sanity-JDK9-aix_ppc-64_cmprssptrs-OpenJ9
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)
+    - Description:
+        - Compile and Sanity tests on java9 aix_ppc-64_cmprssptrs
+    - Trigger:
+        - Github PR comment `Jenkins test sanity aix jdk9`
 
 - PullRequest-Sanity-JDK8-linux_390-64_cmprssptrs-OpenJ9
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK8-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK8-linux_390-64_cmprssptrs-OpenJ9)
@@ -308,6 +393,20 @@ You can also request a "Compile & Sanity" build from the extensions repos or ope
 
 #### Test
 
+- Test-Extended-JDK8-aix_ppc-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Extended-JDK8-aix_ppc-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Test-Extended-JDK8-aix_ppc-64_cmprssptrs)
+    - Description:
+        - Runs extended test suite against the SDK and test material that is passed as parameters
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
+
+- Test-Extended-JDK9-aix_ppc-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Extended-JDK9-aix_ppc-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Test-Extended-JDK9-aix_ppc-64_cmprssptrs)
+    - Description:
+        - Runs extended test suite against the SDK and test material that is passed as parameters
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
+
 - Test-Extended-JDK8-linux_390-64_cmprssptrs
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Extended-JDK8-linux_390-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Test-Extended-JDK8-linux_390-64_cmprssptrs)
     - Description:
@@ -333,6 +432,20 @@ You can also request a "Compile & Sanity" build from the extensions repos or ope
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Extended-JDK9-linux_ppc-64_cmprssptrs_le)](https://ci.eclipse.org/openj9/job/Test-Extended-JDK9-linux_ppc-64_cmprssptrs_le)
     - Description:
         - Runs extended test suite against the SDK and test material that is passed as parameters
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
+
+- Test-Sanity-JDK8-aix_ppc-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Sanity-JDK8-aix_ppc-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Test-Sanity-JDK8-aix_ppc-64_cmprssptrs)
+    - Description:
+        - Runs sanity test suite against the SDK and test material that is passed as parameters
+    - Trigger:
+        - This job is used in other pipelines but can be launched manually
+
+- Test-Sanity-JDK9-aix_ppc-64_cmprssptrs
+    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Test-Sanity-JDK9-aix_ppc-64_cmprssptrs)](https://ci.eclipse.org/openj9/job/Test-Sanity-JDK9-aix_ppc-64_cmprssptrs)
+    - Description:
+        - Runs sanity test suite against the SDK and test material that is passed as parameters
     - Trigger:
         - This job is used in other pipelines but can be launched manually
 

@@ -161,6 +161,18 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
+	
+	<test id="Test 4: Test classes are being found in the shared cache when running an application module" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verboseIO --module-path $UTILSJAR$ -m utils/$PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Found class java/.* in shared cache for class-loader id 0</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Found class org/openj9/test/ivj/.* in shared cache for class-loader id [2-9] with URL .*[\\/]utils.jar</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
 
 	<test id="At end destroy cache for cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>

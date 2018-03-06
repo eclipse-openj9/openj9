@@ -62,3 +62,20 @@ linux_390-64_cmprssptrs:
   node_labels:
     build: '390'
     test: '390'
+#========================================#
+# AIX PPC 64bits Compressed Pointers
+#========================================#
+aix_ppc-64_cmprssptrs:
+  boot_jdk:
+    8: '/usr/java7'
+    9: '/usr/java8_64'
+  release:
+    8: 'aix-ppc64-normal-server-release'
+    9: 'aix-ppc64-normal-server-release'
+  freemarker: '${HOME}/freemarker.jar'
+  node_labels:
+    build: 'aix'
+    test: 'aix'
+  extra_configure_options:
+    8: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-ccache --with-jobs=8'
+    9: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
