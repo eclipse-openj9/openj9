@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 def SDK_VERSIONS = ['8', '9']
-def SPECS = ['linux_ppc-64_cmprssptrs_le', 'linux_390-64_cmprssptrs']
+def SPECS = ['linux_ppc-64_cmprssptrs_le', 'linux_390-64_cmprssptrs', 'aix_ppc-64_cmprssptrs']
 
 def OPENJDK_REPOS = ['8': 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git',
                      '9': 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git']
