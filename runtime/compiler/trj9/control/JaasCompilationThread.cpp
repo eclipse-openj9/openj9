@@ -1809,7 +1809,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
                client->write(std::string());
                }
             if (auto callGraphEntry = entry->asIPBCDataCallGraph())
-               if (callGraphEntry->isLocked())
+               if (canPersist != IPBC_ENTRY_PERSIST_LOCK && callGraphEntry->isLocked())
                   callGraphEntry->releaseEntry();
             }
          else
