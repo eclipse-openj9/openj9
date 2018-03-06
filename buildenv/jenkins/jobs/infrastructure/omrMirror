@@ -77,4 +77,9 @@ pipeline {
             }
         }
     }
+    post {
+        failure {
+            slackSend channel: '#jenkins', color: 'danger', message: "Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+    }
 }
