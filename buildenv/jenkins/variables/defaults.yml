@@ -33,6 +33,7 @@ jdk_image_dir:
   8: 'j2sdk-image'
   9: 'jdk'
 test_dependencies_job_name: 'test.getDependency'
+slack_channel: '#jenkins'
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#

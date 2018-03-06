@@ -78,15 +78,57 @@ def get_sha(REPO, BRANCH) {
 
 def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE) {
     stage ('Build') {
-        JOB = build job: BUILD_JOB_NAME, parameters: [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO), string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH), string(name: 'OPENJDK_SHA', value: OPENJDK_SHA), string(name: 'OPENJ9_REPO', value: OPENJ9_REPO), string(name: 'OPENJ9_BRANCH', value: OPENJ9_BRANCH), string(name: 'OPENJ9_SHA', value: OPENJ9_SHA), string(name: 'OMR_REPO', value: OMR_REPO), string(name: 'OMR_BRANCH', value: OMR_BRANCH), string(name: 'OMR_SHA', value: OMR_SHA), string(name: 'VARIABLE_FILE', value: VARIABLE_FILE)]
-        return JOB
+        return build_with_slack(BUILD_JOB_NAME,
+            [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
+            string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH),
+            string(name: 'OPENJDK_SHA', value: OPENJDK_SHA),
+            string(name: 'OPENJ9_REPO', value: OPENJ9_REPO),
+            string(name: 'OPENJ9_BRANCH', value: OPENJ9_BRANCH),
+            string(name: 'OPENJ9_SHA', value: OPENJ9_SHA),
+            string(name: 'OMR_REPO', value: OMR_REPO),
+            string(name: 'OMR_BRANCH', value: OMR_BRANCH),
+            string(name: 'OMR_SHA', value: OMR_SHA),
+            string(name: 'VARIABLE_FILE', value: VARIABLE_FILE)])
     }
 }
 
 def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE) {
     stage ("${JOB_NAME}") {
-        JOB = build job: JOB_NAME, parameters: [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME), string(name: 'UPSTREAM_JOB_NUMBER', value: "${UPSTREAM_JOB_NUMBER}"), string(name: 'VARIABLE_FILE', value: VARIABLE_FILE)]
-        return JOB
+        return build_with_slack(JOB_NAME,
+            [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME),
+            string(name: 'UPSTREAM_JOB_NUMBER', value: "${UPSTREAM_JOB_NUMBER}"),
+            string(name: 'VARIABLE_FILE', value: VARIABLE_FILE)])
+    }
+}
+
+def build_with_slack(JOB_NAME, PARAMETERS) {
+    def JOB
+    def DOWNSTREAM_JOB_NUMBER = ''
+    def DOWNSTREAM_JOB_URL = ''
+    def MESSAGE = ''
+    try {
+        JOB = build job: JOB_NAME, parameters: PARAMETERS, propagate: false
+
+        if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
+            try {
+                DOWNSTREAM_JOB_NUMBER = JOB.getNumber()
+            } catch (er) {
+                echo "Couldn't retrieve downstream failed job number"
+            }
+            try {
+                DOWNSTREAM_JOB_URL = JOB.getAbsoluteUrl()
+            } catch (err) {
+                echo "Couldn't retrieve downstream failed job url"
+            }
+            MESSAGE = "Downstream job ${JOB_NAME} did not pass. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+            error MESSAGE
+
+        } else {
+            return JOB
+        }
+    } catch(error) {
+        slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
+        error MESSAGE
     }
 }
 
