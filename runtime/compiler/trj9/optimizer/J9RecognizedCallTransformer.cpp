@@ -42,6 +42,98 @@
 #include "codegen/CodeGenerator.hpp"                      // for CodeGenerator
 #include "optimizer/TransformUtil.hpp"
 
+/*
+ * \brief transform the arguments of case conversion methods to make the call node friendly to code generator
+ *
+ * \details
+ *    The original case conversion method call has 2 children: the src string obj and the dst string obj which will be 
+ *    the converted string obj.
+ *    After the transformation, the 2 children are replaced with 3 new children: the src string array address, the dst string 
+ *    array address and the string length. The code generator can then focus on converting the actual content of the array and
+ *    doesn't need to calculate the various offsets on different platforms.
+ *
+ *    Before the transformation:
+ *    icall
+ *       =>aload src string obj
+ *       =>aload dst string obj
+ *
+ *    After the transformation:
+ *    icall
+ *       =>aladd
+ *          =>aloadi String.value 
+ *             =>aload src string obj
+ *          lonst arrayheaderoffset  
+ *       =>aladd
+ *          =>aloadi String.value 
+ *             =>aload dst string obj
+ *          lonst arrayheaderoffset  
+ *       =>aloadi String.count
+ *          =>aload src string obj
+ */
+void J9::RecognizedCallTransformer::processCaseConversion(TR::Node* node)
+   {
+   TR::Node *srcStringObject = node->getFirstChild();
+   TR::Node *dstStringObject = node->getSecondChild();
+
+   /* Offset of java/lang/String.value */
+   uint32_t stringValueFieldOffset = 0;
+   char *valueFieldString = NULL;
+   TR_OpaqueClassBlock *stringClass = comp()->fej9()->getClassFromSignature("Ljava/lang/String;", strlen("Ljava/lang/String;"), comp()->getCurrentMethod(), true);
+
+   if (comp()->fej9()->getInstanceFieldOffset(stringClass, "value", "[B") != ~0)
+      {
+      stringValueFieldOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/String;", "value", "[B", comp()->getCurrentMethod());
+      valueFieldString = "java/lang/String.value [B";
+      }
+   else
+      {
+      TR_ASSERT(comp()->fej9()->getInstanceFieldOffset(stringClass, "value", "[C") != ~0, "can't find java/lang/String.value field");
+      stringValueFieldOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/String;", "value", "[C", comp()->getCurrentMethod());
+      valueFieldString = "java/lang/String.value [C";
+      }
+
+   TR::SymbolReference *stringValueFieldSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(), 
+                                                 TR::Symbol::Java_lang_String_value, 
+                                                 TR::Address, 
+                                                 stringValueFieldOffset, 
+                                                 false /* isVolatile */, 
+                                                 true  /* isPrivate */,
+                                                 true  /* isFinal */,
+                                                 valueFieldString);
+
+   TR::Node* srcArrayObject = TR::Node::createWithSymRef(node, TR::aloadi, 1, srcStringObject, stringValueFieldSymRef); 
+   TR::Node* dstArrayObject = TR::Node::createWithSymRef(node, TR::aloadi, 1, dstStringObject, stringValueFieldSymRef); 
+
+   TR::Node *srcArray = TR::Compiler->target.is64Bit() ?
+      TR::Node::create(node, TR::aladd, 2, srcArrayObject, TR::Node::lconst(srcArrayObject, TR::Compiler->om.contiguousArrayHeaderSizeInBytes())): 
+      TR::Node::create(node, TR::aiadd, 2, srcArrayObject, TR::Node::iconst(srcArrayObject, TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
+ 
+   TR::Node *dstArray = TR::Compiler->target.is64Bit() ?
+      TR::Node::create(node, TR::aladd, 2, dstArrayObject, TR::Node::lconst(dstArrayObject, TR::Compiler->om.contiguousArrayHeaderSizeInBytes())): 
+      TR::Node::create(node, TR::aiadd, 2, dstArrayObject, TR::Node::iconst(dstArrayObject, TR::Compiler->om.contiguousArrayHeaderSizeInBytes()));
+
+   node->setAndIncChild(0, srcArray);
+   srcStringObject->recursivelyDecReferenceCount();
+   node->setAndIncChild(1, dstArray);
+   dstStringObject->recursivelyDecReferenceCount();
+
+   /* Offset of java/lang/String.count */
+   uint32_t stringCountFieldOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/String;", "count", "I", comp()->getCurrentMethod());
+   TR::SymbolReference *stringCountFieldSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(), 
+                                                 TR::Symbol::Java_lang_String_count, 
+                                                 TR::Int32, 
+                                                 stringCountFieldOffset, 
+                                                 false /* isVolatile */, 
+                                                 true  /* isPrivate */,
+                                                 true  /* isFinal */,
+                                                 "java/lang/String.count I");
+
+   TR::Node *stringLength = TR::Node::createWithSymRef(node, TR::iloadi, 1, srcStringObject, stringCountFieldSymRef); 
+   TR::Node *newChildren[1];
+   newChildren[0] = stringLength;
+   node->addChildren(newChildren, 1);
+   }
+
 void J9::RecognizedCallTransformer::processSimpleMath(TR::Node* node, TR::ILOpCodes opcode)
    {
    TR::Node::recreate(node, opcode);
@@ -63,6 +155,14 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       case TR::java_lang_Math_max_L:
       case TR::java_lang_Math_min_L:
          return TR::Compiler->target.cpu.isX86() && !comp()->getOption(TR_DisableMaxMinOptimization);
+
+      case TR::java_lang_String_toLowerHWOptimized:
+      case TR::java_lang_String_toLowerHWOptimizedDecompressed:
+      case TR::java_lang_String_toLowerHWOptimizedCompressed:
+      case TR::java_lang_String_toUpperHWOptimized:
+      case TR::java_lang_String_toUpperHWOptimizedDecompressed:
+      case TR::java_lang_String_toUpperHWOptimizedCompressed:
+         return comp()->cg()->getSupportsInlineStringCaseConversion() && TR::Compiler->target.cpu.isX86();
       default:
          return false;
       }
@@ -99,6 +199,14 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
          break;
       case TR::java_lang_Math_min_L:
          processSimpleMath(node, TR::lmin);
+         break;
+      case TR::java_lang_String_toLowerHWOptimized:
+      case TR::java_lang_String_toLowerHWOptimizedDecompressed:
+      case TR::java_lang_String_toUpperHWOptimized:
+      case TR::java_lang_String_toUpperHWOptimizedDecompressed:
+      case TR::java_lang_String_toLowerHWOptimizedCompressed:
+      case TR::java_lang_String_toUpperHWOptimizedCompressed:
+         processCaseConversion(node);
          break;
       default:
          break;
