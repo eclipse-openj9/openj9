@@ -50,100 +50,144 @@ def get_source() {
     }
 }
 
-def get_sources() {
-    checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: "${OPENJDK_BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 30]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: "${USER_CREDENTIALS_ID}", url: "${OPENJDK_REPO}"]]]
-    sh "git checkout ${OPENJDK_SHA}"
-    sh "bash ./get_source.sh ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
-}
-
 def get_sources_with_authentication() {
     sshagent(credentials:["${USER_CREDENTIALS_ID}"]) {
         get_sources()
     }
 }
 
+def get_sources() {
+    checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: "${OPENJDK_BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 30]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: "${USER_CREDENTIALS_ID}", url: "${OPENJDK_REPO}"]]]
+
+    // Check if this build is a PR
+    if (params.ghprbGhRepository) {
+        // Look for dependent changes and checkout PR(s)
+        checkout_pullrequest()
+    } else {
+        sh "git checkout ${OPENJDK_SHA}"
+        sh "bash ./get_source.sh ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION}"
+    }
+}
+
 def checkout_pullrequest() {
-    stage('Checkout Pull Request') {
-        timestamps {
-            echo 'Look for Dependent Changes'
-            script {
-                def KEYWORD = "depends"
-                def COMMENT = ghprbCommentBody.toLowerCase(Locale.US);
-                def OJDK_PR
-                def OMR_PR
-                omr_bool = false
-                omr_upstream = false
-                openjdk_bool = false
+    echo 'Look for Dependent Changes'
 
-                if (COMMENT.contains(KEYWORD)) {
+    def KEYWORD = "depends"
+    def COMMENT = ghprbCommentBody.toLowerCase(Locale.US);
+    def OPENJDK_PR
+    def OMR_PR
+    def OPENJ9_PR
+    def omr_bool = false
+    def omr_upstream = false
+    def openjdk_bool = false
+    def openj9_bool = false
 
-                    // Gather everything after KEYWORD. Assumes a whitespace after KEYWORD, hence +1
-                    def DEPENDS_BLOB  = COMMENT.substring(COMMENT.indexOf(KEYWORD) + KEYWORD.length() + 1 , COMMENT.length())
-                    def DEPENDS_ARRAY = DEPENDS_BLOB.tokenize(' ')
+    // Determine source repo of PR
+    // Cannot depend on a change from the same repo as the source repo
+    def SOURCE_REPO_MESSAGE
+    switch (params.ghprbGhRepository) {
+        case "eclipse/openj9-omr":
+            omr_bool = true
+            OMR_PR = params.ghprbPullId
+            SOURCE_REPO_MESSAGE = "PullRequest source repo appears to be OpenJ9-OMR"
+            break
+        case "eclipse/openj9":
+            openj9_bool = true
+            OPENJ9_PR = params.ghprbPullId
+            SOURCE_REPO_MESSAGE = "PullRequest source repo appears to be OpenJ9"
+            break
+        case ~/ibmruntimes(.*)/:
+            openjdk_bool = true
+            OPENJDK_PR = params.ghprbPullId
+            SOURCE_REPO_MESSAGE = "PullRequest source repo appears to be OpenJDK"
+            break
+        default:
+            error "Unable to determine source repo for PullRequest"
+    }
+    echo SOURCE_REPO_MESSAGE
 
+    if (!COMMENT.contains(KEYWORD)) {
+        echo "No dependent changes found"
+    } else {
+        // Gather everything after KEYWORD. Assumes a whitespace after KEYWORD, hence +1
+        def DEPENDS_BLOB = COMMENT.substring(COMMENT.indexOf(KEYWORD) + KEYWORD.length() + 1 , COMMENT.length())
+        def DEPENDS_ARRAY = DEPENDS_BLOB.tokenize(' ')
 
-                    for (DEPEND in DEPENDS_ARRAY) {
-                        String REPO  = DEPEND.substring(DEPEND.indexOf("/") + 1, DEPEND.indexOf("#"));
-                        String PR_ID = DEPEND.substring(DEPEND.indexOf("#") + 1, DEPEND.length());
-                        switch(REPO) {
-                            case "omr":
-                                if (!omr_bool) {
-                                    omr_bool = true
-                                    omr_upstream = true
-                                    OMR_PR="${PR_ID}"
-                                    echo "Dependent OMR change found: #${PR_ID}"
-                                } else {
-                                    echo "error: Cannot specify 2 OMR Repos"
-                                    error()
-                                }
-                                break
-                            case "openj9-omr":
-                                if (!omr_bool) {
-                                    omr_bool = true
-                                    OMR_PR="${PR_ID}"
-                                    echo "Dependent OMR change found: #${PR_ID}"
-                                } else {
-                                    echo "error: Cannot specify 2 OMR Repos"
-                                    error()
-                                }
-                                break
-                            case "openj9-openjdk-jdk9":
-                                if (!openjdk_bool) {
-                                    openjdk_bool = true
-                                    OJDK_PR="${PR_ID}"
-                                    echo "Dependent OopenJDK change found: #${PR_ID}"
-                                } else {
-                                    echo "error: Cannot specify 2 OpenJDK Repos"
-                                    error()
-                                }
-                                break
-                            default:
-                                echo "error: Bad Depends Repo: '${REPO}' in '${DEPEND}'"
-                                error()
-                        }
+        // Setup PR_IDs for dependent changes
+        for (DEPEND in DEPENDS_ARRAY) {
+            String REPO = DEPEND.substring(DEPEND.indexOf("/") + 1, DEPEND.indexOf("#"));
+            String PR_ID = DEPEND.substring(DEPEND.indexOf("#") + 1, DEPEND.length());
+            switch(REPO) {
+                case "omr":
+                case "openj9-omr":
+                    if (omr_bool) {
+                        error "Cannot specify 2 OMR Repos"
                     }
-                }
-                if (openjdk_bool) {
-                    sh "git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*"
-                    sh "git checkout refs/remotes/origin/pr/${OJDK_PR}/merge"
-                }
-                sh 'bash ./get_source.sh'
-                dir ('openj9') {
-                    sh "git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*"
-                    sh "git checkout ${sha1}"
-                }
-                if (omr_bool) {
-                    dir ('omr') {
-                        if (omr_upstream) {
-                            sh "git config remote.origin.url https://github.com/eclipse/omr.git"
-                        }
-                        sh "git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*"
-                        sh "git checkout refs/remotes/origin/pr/${OMR_PR}/merge"
+                    omr_bool = true
+                    if (REPO == 'omr') {
+                        omr_upstream = true
                     }
-                }
+                    OMR_PR = "${PR_ID}"
+                    echo "Dependent OMR change found: #${PR_ID}"
+                    break
+                case "openj9":
+                    if (openj9_bool) {
+                        error "Cannot specify 2 OpenJ9 Repos"
+                    }
+                    openj9_bool = true
+                    OPENJ9_PR = "${PR_ID}"
+                    echo "Dependent OpenJ9 change found: #${PR_ID}"
+                    break
+                case ~/openj9-openjdk(.*)/:
+                    if (openjdk_bool) {
+                        error "Cannot specify 2 OpenJDK Repos"
+                    }
+                    openjdk_bool = true
+                    OPENJDK_PR = "${PR_ID}"
+                    echo "Dependent OpenJDK change found: #${PR_ID}"
+
+                    // Verify OpenJDK Repo matches SDK Version of build.
+                    // eg. Cannot checkout a JDK8 PR for a JDK9 build
+                    echo "SDK: ${SDK_VERSION}"
+                    echo "REPO: ${REPO}"
+
+                    // For SDK 8/9/10, the Repo has the SDK version in the name
+                    if (REPO != "openj9-openjdk-jdk${SDK_VERSION}") {
+                        error "Trying to build SDK${SDK_VERSION} with a dependent change from repo '${REPO}' is not possible"
+                    }
+                    break
+                default:
+                    error "Bad Depends Repo: '${REPO}' in '${DEPEND}'"
             }
         }
     }
+
+    if (openjdk_bool) {
+        checkout_pullrequest(OPENJDK_PR)
+    }
+
+    sh "bash ./get_source.sh"
+
+    // Checkout dependent PRs, if any were specified
+    if (openj9_bool) {
+        dir ('openj9') {
+            checkout_pullrequest(OPENJ9_PR)
+        }
+    }
+
+    if (omr_bool) {
+        dir ('omr') {
+            if (omr_upstream) {
+                sh "git config remote.origin.url https://github.com/eclipse/omr.git"
+            }
+            checkout_pullrequest(OMR_PR)
+        }
+    }
+}
+
+def checkout_pullrequest(ID) {
+    sh "git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*"
+    sh "git checkout refs/remotes/origin/pr/${ID}/merge"
 }
 
 def build() {
@@ -178,7 +222,7 @@ def archive() {
 
 def build_all() {
 
-    // Typically called by Build jobs
+    // Typically called by Build jobs and Compile only PRs
 
     get_source()
     build()
@@ -188,21 +232,11 @@ def build_all() {
 
 def build_pr() {
 
-    // Called by PR Compile and Test jobs
+    // Called by PR Compile & Test jobs
     // Does not cleanup as it is expected testing will occur, followed by cleanup
 
     get_source()
-    checkout_pullrequest()
     build()
 }
 
-def build_pr_compile_only() {
-
-    // Called by Compile only PRs.
-    // Archive and cleanup after build.
-
-    build_pr()
-    archive()
-    git_clean()
-}
 return this
