@@ -680,6 +680,7 @@ public static void runFinalization() {
 	RUNTIME.runFinalization();
 }
 
+/*[IF !Java11]*/
 /**
  * Ensure that, when the virtual machine is about to exit,
  * all objects are finalized. Note that all finalization
@@ -698,6 +699,7 @@ public static void runFinalization() {
 public static void runFinalizersOnExit(boolean flag) {
 	Runtime.runFinalizersOnExit(flag);
 }
+/*[ENDIF]*/
 
 /**
  * Answers the system properties. Note that the object
