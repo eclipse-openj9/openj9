@@ -132,11 +132,7 @@ public:
    void setClazz(int index, uintptrj_t clazzPtr);
 
 private:
-#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
-   uint32_t _clazz[NUM_CS_SLOTS]; // store them in 32bits
-#else
    uintptrj_t _clazz[NUM_CS_SLOTS]; // store them in either 64 or 32 bits
-#endif //J9VM_GC_COMPRESSED_POINTERS
    };
 
 #define TR_IPBCD_FOUR_BYTES  1

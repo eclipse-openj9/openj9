@@ -92,3 +92,48 @@ TR_JaasIProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucke
    return deserializeMethodEntry(serialEntry);
    }
 
+// This method is used to search only the hash table
+TR_IPBytecodeHashTableEntry*
+TR_JaasIProfiler::profilingSample(uintptrj_t pc, uintptrj_t data, bool addIt, bool isRIData, uint32_t freq)
+   {
+   if (addIt)
+      return nullptr; // Server should not create any samples
+
+   TR_ASSERT(false, "not implemented for JaaS");
+   return nullptr;
+   }
+
+// This method is used to search the hash table first, then the shared cache
+TR_IPBytecodeHashTableEntry*
+TR_JaasIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex,
+                                                 TR::Compilation *comp, uintptrj_t data, bool addIt)
+   {
+   if (addIt)
+      return nullptr; // Server should not create any samples
+   auto stream = TR::CompilationInfo::getStream();
+   stream->write(JAAS::J9ServerMessageType::IProfiler_profilingSample, method, byteCodeIndex, data);
+   std::string recv = std::get<0>(stream->read<std::string>());
+   if (recv.empty())
+      return nullptr;
+   TR_IPBCDataStorageHeader *storage = (TR_IPBCDataStorageHeader*) &recv[0];
+
+   // TODO: cache entries
+   TR_IPBytecodeHashTableEntry *entry;
+   uintptrj_t pc = getSearchPC(method, byteCodeIndex, comp);
+   U_8 byteCode =  *(U_8 *)pc;
+   if (isCompact(byteCode))
+      entry = new TR_IPBCDataFourBytes(pc);
+   else
+      {
+      if (isSwitch(byteCode))
+         entry = new TR_IPBCDataEightWords(pc);
+      else
+         entry = new TR_IPBCDataCallGraph(pc);
+      }
+   if (entry)
+      entry->loadFromPersistentCopy(storage, comp, 0);
+
+   fprintf(stderr, "iProfiler got sample %p\n", entry);
+   return entry;
+   }
+

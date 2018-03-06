@@ -35,10 +35,10 @@ public:
    //virtual TR_IPBytecodeHashTableEntry *searchForSample(uintptrj_t pc, int32_t bucket) override;
 
    // This method is used to search only the hash table
-   //virtual TR_IPBytecodeHashTableEntry *profilingSample (uintptrj_t pc, uintptrj_t data, bool addIt, bool isRIData = false, uint32_t freq  = 1) override;
+   virtual TR_IPBytecodeHashTableEntry *profilingSample (uintptrj_t pc, uintptrj_t data, bool addIt, bool isRIData = false, uint32_t freq  = 1) override;
    // This method is used to search the hash table first, then the shared cache
-   //virtual TR_IPBytecodeHashTableEntry *profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex,
-                                                         //TR::Compilation *comp, uintptrj_t data = 0xDEADF00D, bool addIt = false) override;
+   virtual TR_IPBytecodeHashTableEntry *profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex,
+                                                         TR::Compilation *comp, uintptrj_t data = 0xDEADF00D, bool addIt = false) override;
    //virtual uintptrj_t getProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *) override;
    //virtual uintptrj_t getProfilingData(TR::Node *node, TR::Compilation *comp) override;
    };

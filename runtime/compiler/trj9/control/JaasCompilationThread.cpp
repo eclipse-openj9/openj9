@@ -1764,26 +1764,63 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(encoded.first, encoded.second);
          }
          break;
-     case J9ServerMessageType::IProfiler_searchForMethodSample:
-        {
-        auto recv = client->getRecvData<TR_OpaqueMethodBlock*, int32_t>();
-        auto method = std::get<0>(recv);
-        auto bucket = std::get<1>(recv);
-        TR_IProfiler *iProfiler = fe->getIProfiler();
-        auto entry = iProfiler->searchForMethodSample(method, bucket);
-        if (entry)
-           {
-           auto serialEntry = TR_ContiguousIPMethodHashTableEntry::serialize(entry);
-           std::string entryStr((char *) &serialEntry, sizeof(TR_ContiguousIPMethodHashTableEntry));
-           client->write(entryStr);
-           }
-        else
-           {
-           client->write(std::string());
-           }
-        }
-        break;
+      case J9ServerMessageType::IProfiler_searchForMethodSample:
+         {
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock*, int32_t>();
+         auto method = std::get<0>(recv);
+         auto bucket = std::get<1>(recv);
+         TR_IProfiler *iProfiler = fe->getIProfiler();
+         auto entry = iProfiler->searchForMethodSample(method, bucket);
+         if (entry)
+            {
+            auto serialEntry = TR_ContiguousIPMethodHashTableEntry::serialize(entry);
+            std::string entryStr((char *) &serialEntry, sizeof(TR_ContiguousIPMethodHashTableEntry));
+            client->write(entryStr);
+            }
+         else
+            {
+            client->write(std::string());
+            }
+         }
+         break;
+      case J9ServerMessageType::IProfiler_profilingSample:
+         {
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock*, uint32_t, uintptrj_t>();
+         auto method = std::get<0>(recv);
+         auto bcIndex = std::get<1>(recv);
+         auto data = std::get<2>(recv);
+         TR_IProfiler *iProfiler = fe->getIProfiler();
+         auto entry = iProfiler->profilingSample(method, bcIndex, TR::comp(), data, false);
+         if (entry)
+            {
+            uint32_t canPersist = entry->canBePersisted(0, 0xffffffffffffffff, TR::comp()->getPersistentInfo());
+            if (canPersist == IPBC_ENTRY_CAN_PERSIST)
+               {
+               uint32_t bytes = entry->getBytesFootprint();
+               std::string entryBytes(bytes, '\0');
+               auto storage = (TR_IPBCDataStorageHeader*) &entryBytes[0];
+               entry->createPersistentCopy(0, storage, TR::comp()->getPersistentInfo());
+
+               client->write(entryBytes);
+               }
+            else
+               {
+               fprintf(stderr, "IProfiler can't persist %p for reason %d\n", method, canPersist);
+               client->write(std::string());
+               }
+            if (auto callGraphEntry = entry->asIPBCDataCallGraph())
+               if (callGraphEntry->isLocked())
+                  callGraphEntry->releaseEntry();
+            }
+         else
+            {
+            client->write(std::string());
+            }
+         }
+         break;
+
       default:
+         TR_ASSERT(false, "JAAS: handleServerMessage received an unknown message type");
          // JAAS TODO more specific exception here
          throw JAAS::StreamFailure("JAAS: handleServerMessage received an unknown message type");
       }
