@@ -149,7 +149,7 @@ def checkout_pullrequest() {
 def build() {
     stage('Compile') {
         timestamps {
-            sh "bash ./configure --with-freemarker-jar=$FREEMARKER --with-boot-jdk=$BOOT_JDK"
+            sh "bash ./configure --with-freemarker-jar=$FREEMARKER --with-boot-jdk=$BOOT_JDK $EXTRA_CONFIGURE_OPTIONS"
             sh "make all"
         }
     }
