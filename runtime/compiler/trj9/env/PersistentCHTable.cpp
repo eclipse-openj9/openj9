@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -290,7 +290,10 @@ TR_PersistentCHTable::findSingleJittedImplementer(
    return resolvedMethod;
    }
 
-
+/**
+ * Find persistent JIT class information for a given class.
+ * The caller must insure that class table lock is obtained
+ */
 TR_PersistentClassInfo *
 TR_PersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
@@ -301,7 +304,10 @@ TR_PersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    return cl;
    }
 
-
+/**
+ * Find persistent JIT class information for a given class.
+ * The class table lock is used to synchronize use of this method
+ */
 TR_PersistentClassInfo *
 TR_PersistentCHTable::findClassInfoAfterLocking(
       TR_OpaqueClassBlock *classId,
@@ -313,17 +319,22 @@ TR_PersistentCHTable::findClassInfoAfterLocking(
 
    if (comp->getOption(TR_DisableCHOpts))
       return NULL;
-
-   TR_PersistentClassInfo * cl = NULL;
-
-      {
-      TR::ClassTableCriticalSection findClassInfoAfterLocking(comp->fe());
-      cl = findClassInfo(classId);
-      }
-
-   return cl;
+   return findClassInfoAfterLocking(classId, comp->fe(), returnClassInfoForAOT);
    }
 
+/**
+ * Find persistent JIT class information for a given class.
+ * The class table lock is used to synchronize use of this method
+ */
+TR_PersistentClassInfo *
+TR_PersistentCHTable::findClassInfoAfterLocking(
+      TR_OpaqueClassBlock *classId,
+      TR_FrontEnd *fe,
+      bool returnClassInfoForAOT)
+   {
+   TR::ClassTableCriticalSection findClassInfoAfterLocking(fe);
+   return findClassInfo(classId);
+   }
 
 bool
 TR_PersistentCHTable::isOverriddenInThisHierarchy(

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2147,7 +2147,7 @@ bool TR_StringPeepholes::classRedefined(TR_OpaqueClassBlock *clazz)
    {
    if (!clazz)
       return true;
-   TR_PersistentClassInfo *clazzInfo = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfo(clazz);
+   TR_PersistentClassInfo *clazzInfo = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, fe());
    return !clazzInfo || clazzInfo->classHasBeenRedefined();
    }
 
