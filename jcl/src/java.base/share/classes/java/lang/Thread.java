@@ -1246,9 +1246,18 @@ public static native void yield();
  */
 public static native boolean holdsLock(Object object);
 
+/*[IF Java11]*/
+static
+/*[ENDIF]*/
 void blockedOn(sun.nio.ch.Interruptible interruptible) {
-	synchronized(lock) {
-		blockOn = interruptible;
+	Thread currentThread;
+	/*[IF Java11]*/
+	currentThread = currentThread();
+	/*[ELSE]
+	currentThread = this;
+	/*[ENDIF]*/
+	synchronized(currentThread.lock) {
+		currentThread.blockOn = interruptible;
 	}
 }
 

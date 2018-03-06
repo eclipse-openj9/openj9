@@ -68,6 +68,11 @@ public abstract class Reference<T> extends Object {
 			public boolean waitForReferenceProcessing() throws InterruptedException {
 				return waitForReferenceProcessingImpl();
 			}
+			/*[IF Java11]*/
+			public void runFinalization() {
+				throw new InternalError("Compile stub invoked! Apart from deliberate reflective access, this should not happen. Please report this to the project so it can be addressed");	//$NON-NLS-1$
+			}
+			/*[ENDIF]*/
 		});
 	}
 	
