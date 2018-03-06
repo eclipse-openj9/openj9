@@ -77,17 +77,14 @@ TR_JaasIProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucke
    auto stream = TR::CompilationInfo::getStream();
    if (!stream)
       {
-      fprintf(stderr, "searchForMethodSample no stream\n");
       return nullptr;
       }
    stream->write(JAAS::J9ServerMessageType::IProfiler_searchForMethodSample, omb, bucket);
    const std::string &entryStr = std::get<0>(stream->read<std::string>());
    if (entryStr.empty())
       {
-      fprintf(stderr, "searchForMethodSample no sample for %p %p\n", omb, bucket);
       return nullptr;
       }
-   fprintf(stderr, "searchForMethodSample found sample for %p %p\n", omb, bucket);
    const auto serialEntry = (TR_ContiguousIPMethodHashTableEntry*) &entryStr[0];
    return deserializeMethodEntry(serialEntry);
    }
@@ -133,7 +130,6 @@ TR_JaasIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCod
    if (entry)
       entry->loadFromPersistentCopy(storage, comp, 0);
 
-   fprintf(stderr, "iProfiler got sample %p\n", entry);
    return entry;
    }
 
