@@ -1209,7 +1209,7 @@ J9::PersistentInfo::isObsoleteClass(void *v, TR_FrontEnd *fe)
       return true;
    else if (!getPersistentCHTable())
       return false; // HCR TODO: Support fixed opt levels
-   else if (!getPersistentCHTable()->findClassInfo((TR_OpaqueClassBlock*)v))
+   else if (!getPersistentCHTable()->findClassInfoAfterLocking((TR_OpaqueClassBlock*)v, fe))
       return false; // It's not a class, so it can't be a replaced class
    else
       return fe->classHasBeenReplaced((TR_OpaqueClassBlock*)v);

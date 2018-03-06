@@ -2009,8 +2009,8 @@ static bool doResolveAtRuntime(J9Method *method, I_32 cpIndex, TR::Compilation *
       return false;
    else if (fej9->getJ9JITConfig()->runtimeFlags & J9JIT_RUNTIME_RESOLVE)
       return performTransformation(comp, "Setting as unresolved static call cpIndex=%d\n", cpIndex);
-   else
-      return false;
+
+   return false;
    }
 
 
@@ -4605,7 +4605,11 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
       TR_OpaqueClassBlock *clazz = fej9()->getClassOfMethod(getPersistentIdentifier());
       J9JITConfig * jitConfig = fej9()->getJ9JITConfig();
       TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
-      TR_PersistentClassInfo *clazzInfo = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfo(clazz);
+      TR_PersistentClassInfo *clazzInfo = NULL;
+      if (compInfo->getPersistentInfo()->getPersistentCHTable())
+         {
+         clazzInfo = compInfo->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, fej9());
+         }
 
       if (!clazzInfo)
          {
