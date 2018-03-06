@@ -102,34 +102,29 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VA
 }
 
 def build_with_slack(JOB_NAME, PARAMETERS) {
-    def JOB
     def DOWNSTREAM_JOB_NUMBER = ''
     def DOWNSTREAM_JOB_URL = ''
     def MESSAGE = ''
-    try {
-        JOB = build job: JOB_NAME, parameters: PARAMETERS, propagate: false
+    def JOB = build job: JOB_NAME, parameters: PARAMETERS, propagate: false
 
-        if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
-            try {
-                DOWNSTREAM_JOB_NUMBER = JOB.getNumber()
-            } catch (er) {
-                echo "Couldn't retrieve downstream failed job number"
-            }
-            try {
-                DOWNSTREAM_JOB_URL = JOB.getAbsoluteUrl()
-            } catch (err) {
-                echo "Couldn't retrieve downstream failed job url"
-            }
-            MESSAGE = "Downstream job ${JOB_NAME} did not pass. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
-            error MESSAGE
-
-        } else {
-            return JOB
+    if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
+        try {
+            DOWNSTREAM_JOB_NUMBER = JOB.getNumber()
+        } catch (er) {
+            echo "Couldn't retrieve downstream failed job number"
         }
-    } catch(error) {
-        slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
+        try {
+            DOWNSTREAM_JOB_URL = JOB.getAbsoluteUrl()
+        } catch (err) {
+            echo "Couldn't retrieve downstream failed job url"
+        }
+        MESSAGE = "Downstream job ${JOB_NAME} did not pass. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+        if (SLACK_CHANNEL) {
+            slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
+        }
         error MESSAGE
-    }
+    } 
+    return JOB
 }
 
 def workflow() {

@@ -2470,18 +2470,10 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	classfile->accessFlags &= CFR_CLASS_ACCESS_MASK;
 	classfile->j9Flags = 0;
 
-	/* Certain versions of the Java compiler forget to tag interfaces as abstract. Fix it. */
-	/* See 1GCC5T2: J9VM:ALL - JDK accepts non-abstract interfaces */
-	if( (classfile->accessFlags & (CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT)) == CFR_ACC_INTERFACE ) {
-
-		/* Only enforce the check if -Xfuture is specified */
-		if (flags & CFR_Xfuture) { 
-			errorCode = J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT__ID;
-			offset = index - data - 2;
-			goto _errorFound;
-		}
-
-		classfile->accessFlags |= CFR_ACC_ABSTRACT;
+	if ((classfile->accessFlags & (CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT)) == CFR_ACC_INTERFACE) {
+		errorCode = J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT__ID;
+		offset = index - data - 2;
+		goto _errorFound;
 	}
 
 	NEXT_U16(classfile->thisClass, index);
