@@ -227,6 +227,10 @@ def set_test_targets() {
     }
 }
 
+def set_slack_channel() {
+    SLACK_CHANNEL = VARIABLES.slack_channel
+}
+
 /*
 * Initializes all of the required variables for a Jenkins job by given job type.
 */
@@ -261,6 +265,7 @@ def set_job_variables(job_type) {
             // set variables for a pipeline job
             set_repos_variables()
             set_test_targets()
+            set_slack_channel()
             break
         default:
             error("Unknown Jenkins job type!")
