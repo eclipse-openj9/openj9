@@ -1820,9 +1820,8 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
 
       default:
+         // It is vital that this remains a hard error during dev!
          TR_ASSERT(false, "JAAS: handleServerMessage received an unknown message type");
-         // JAAS TODO more specific exception here
-         throw JAAS::StreamFailure("JAAS: handleServerMessage received an unknown message type");
       }
    return done;
    }
