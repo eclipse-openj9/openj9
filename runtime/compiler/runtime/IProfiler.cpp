@@ -1210,11 +1210,11 @@ TR_IProfiler::invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry)
    {
    if (_compInfo->getPersistentInfo()->getGlobalClassUnloadID() != entry->getLastSeenClassUnloadID())
       {
-   if (_compInfo->getPersistentInfo()->isInUnloadedMethod(entry->getPC()))
-      {
-      entry->setInvalid();
-      return true;
-      }
+      if (_compInfo->getPersistentInfo()->isInUnloadedMethod(entry->getPC()))
+         {
+         entry->setInvalid();
+         return true;
+         }
       else
          {
          entry->setLastSeenClassUnloadID(_compInfo->getPersistentInfo()->getGlobalClassUnloadID());

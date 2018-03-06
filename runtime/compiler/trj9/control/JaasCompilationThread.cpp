@@ -1791,7 +1791,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto data = std::get<2>(recv);
          TR_IProfiler *iProfiler = fe->getIProfiler();
          auto entry = iProfiler->profilingSample(method, bcIndex, TR::comp(), data, false);
-         if (entry)
+         if (entry && !entry->isInvalid())
             {
             uint32_t canPersist = entry->canBePersisted(0, 0xffffffffffffffff, TR::comp()->getPersistentInfo());
             if (canPersist == IPBC_ENTRY_CAN_PERSIST)

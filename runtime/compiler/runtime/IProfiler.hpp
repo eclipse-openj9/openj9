@@ -375,11 +375,7 @@ public:
    void * operator new (size_t size) throw();
    void * operator new (size_t size, void * placement) {return placement;}
 
-#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
-   static const uint32_t IPROFILING_INVALID = ~0; //only take up the bottom 32, class compression issue
-#else
    static const uintptrj_t IPROFILING_INVALID = ~0;
-#endif //J9VM_GC_COMPRESSED_POINTERS
 
    virtual uintptrj_t getData(TR::Compilation *comp = NULL);
    virtual CallSiteProfileInfo* getCGData() { return &_csInfo; } // overloaded
