@@ -1818,6 +1818,13 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
             }
          }
          break;
+      case J9ServerMessageType::IProfiler_getMaxCallCount:
+         {
+         TR_IProfiler *iProfiler = fe->getIProfiler();
+         client->write(iProfiler->getMaxCallCount());
+         }
+         break;
+
 
       default:
          // It is vital that this remains a hard error during dev!

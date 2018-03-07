@@ -133,3 +133,10 @@ TR_JaasIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCod
    return entry;
    }
 
+int32_t
+TR_JaasIProfiler::getMaxCallCount()
+   {
+   auto stream = TR::CompilationInfo::getStream();
+   stream->write(JAAS::J9ServerMessageType::IProfiler_getMaxCallCount, JAAS::Void());
+   return std::get<0>(stream->read<int32_t>());
+   }

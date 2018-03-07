@@ -229,9 +229,8 @@ enum J9ServerMessageType
 
    // for JaasIProfiler
    IProfiler_profilingSample = 800;
-   IProfiler_getProfilingData = 801;
-   IProfiler_searchForSample = 802;
-   IProfiler_searchForMethodSample = 803;
+   IProfiler_searchForMethodSample = 801;
+   IProfiler_getMaxCallCount = 802;
    }
 
 message J9ServerMessage

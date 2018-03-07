@@ -521,7 +521,7 @@ public:
 
    void checkMethodHashTable();
 
-   int32_t getMaxCallCount();
+   virtual int32_t getMaxCallCount();
 
    //VMJ9.cpp
    void getNumberofCallersAndTotalWeight(TR_OpaqueMethodBlock *calleeMethod,uint32_t *count, uint32_t *weight);
