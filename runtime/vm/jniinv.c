@@ -1257,14 +1257,20 @@ jint JNICALL ResetJavaVM(JavaVM *vm)
 /* run the shutdown method in java.lang.Shutdown */
 void 
 sidecarExit(J9VMThread* shutdownThread) {
-	UDATA args[] = {130};	/* The exit code */
-	J9NameAndSignature nas;
+	/* static void java.lang.Shutdown.exit(int status)
+	 *
+	 * The exit code is 130. Store ints in the low-memory half
+	 * of the stack slot on 64-bit platforms. Otherwise, input
+	 * argument will always be zero on big-endian platforms.
+	 */
+	I_32 args[] = {130};
+	J9NameAndSignature nas = {0};
 
-	nas.name = (J9UTF8*)&j9_exit;
-	nas.signature = (J9UTF8*)&j9_int_void;
+	nas.name = (J9UTF8 *)&j9_exit;
+	nas.signature = (J9UTF8 *)&j9_int_void;
 
 	enterVMFromJNI(shutdownThread);
-	runStaticMethod(shutdownThread, (U_8*)"java/lang/Shutdown", &nas, 1, args);
+	runStaticMethod(shutdownThread, (U_8 *)"java/lang/Shutdown", &nas, 1, (UDATA *)args);
 	internalExceptionDescribe(shutdownThread);
 	releaseVMAccess(shutdownThread);
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -649,12 +649,15 @@ runJavaThread(J9VMThread *currentThread, UDATA reserved1, UDATA reserved2, UDATA
 }
 
 void JNICALL
-runStaticMethod(J9VMThread *currentThread, U_8* className, J9NameAndSignature* selector, UDATA argCount, UDATA* arguments)
+runStaticMethod(J9VMThread *currentThread, U_8 *className, J9NameAndSignature *selector, UDATA argCount, UDATA *arguments)
 {
 	/* Assumes that the called method returns void and that className is a canonical UTF.
 	 * Also, the arguments must be in stack shape (ints in the low-memory half of the stack slot on 64-bit)
 	 * and contain no object pointers, as there are GC points in here before the arguments are copied to
 	 * the stack.
+	 *
+	 * Storing ints in the low-memory half of the stack slot on 64-bit.
+	 * Example: *(I_32 *)arguments = (I_32)value
 	 */
 	Trc_VM_runStaticMethod_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
