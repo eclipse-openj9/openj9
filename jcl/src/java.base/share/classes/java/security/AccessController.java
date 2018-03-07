@@ -882,7 +882,8 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedAction<T> action,
 {
 	checkPermsNPE(perms);
 	ProtectionDomain domain = getCallerPD(1);
-	return doPrivileged(action, new AccessControlContext(context, new ProtectionDomain[] { domain }, getNewAuthorizedState(context, domain)), perms);
+	ProtectionDomain[] pdArray = (domain == null) ? null : new ProtectionDomain[] { domain };
+	return doPrivileged(action, new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain)), perms);
 }
 
 /**
@@ -958,7 +959,8 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedExceptionAction<T> action
 {
 	checkPermsNPE(perms);
 	ProtectionDomain domain = getCallerPD(1);
-	return doPrivileged(action, new AccessControlContext(context, new ProtectionDomain[] {domain}, getNewAuthorizedState(context, domain)), perms);
+	ProtectionDomain[] pdArray = (domain == null) ? null : new ProtectionDomain[] { domain };
+	return doPrivileged(action, new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain)), perms);
 }
 
 }

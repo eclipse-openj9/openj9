@@ -333,7 +333,9 @@ final class J9VMInternals {
 	private static void checkPackageAccess(final Class clazz, ProtectionDomain pd) {
 		final SecurityManager sm = System.getSecurityManager();
 		if (sm != null) {
-			AccessController.doPrivileged(new PrivilegedAction() {
+			ProtectionDomain[] pdArray = (pd == null) ? new ProtectionDomain[]{} : new ProtectionDomain[]{pd};
+			AccessController.doPrivileged(new PrivilegedAction<Object>() {
+				@Override
 				public Object run() {
 					String packageName = clazz.getPackageName();
 					if (packageName != null) {
@@ -346,7 +348,7 @@ final class J9VMInternals {
 					}					
 					return null;
 				}
-			}, new AccessControlContext(new ProtectionDomain[]{pd}));
+			}, new AccessControlContext(pdArray));
 		}
 	}
 
