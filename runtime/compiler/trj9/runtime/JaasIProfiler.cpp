@@ -128,7 +128,7 @@ TR_JaasIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCod
          entry = new TR_IPBCDataCallGraph(pc);
       }
    if (entry)
-      entry->loadFromPersistentCopy(storage, comp, 0);
+      entry->deserialize(storage);
 
    return entry;
    }

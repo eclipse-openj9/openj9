@@ -1793,13 +1793,13 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto entry = iProfiler->profilingSample(method, bcIndex, TR::comp(), data, false);
          if (entry && !entry->isInvalid())
             {
-            uint32_t canPersist = entry->canBePersisted(0, 0xffffffffffffffff, TR::comp()->getPersistentInfo());
+            uint32_t canPersist = entry->canBeSerialized(TR::comp()->getPersistentInfo());
             if (canPersist == IPBC_ENTRY_CAN_PERSIST)
                {
                uint32_t bytes = entry->getBytesFootprint();
                std::string entryBytes(bytes, '\0');
                auto storage = (TR_IPBCDataStorageHeader*) &entryBytes[0];
-               entry->createPersistentCopy(0, storage, TR::comp()->getPersistentInfo());
+               entry->serialize(storage, TR::comp()->getPersistentInfo());
 
                client->write(entryBytes);
                }

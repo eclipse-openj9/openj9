@@ -132,7 +132,11 @@ public:
    void setClazz(int index, uintptrj_t clazzPtr);
 
 private:
+#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
+   uint32_t _clazz[NUM_CS_SLOTS]; // store them in 32bits
+#else
    uintptrj_t _clazz[NUM_CS_SLOTS]; // store them in either 64 or 32 bits
+#endif //J9VM_GC_COMPRESSED_POINTERS
    };
 
 #define TR_IPBCD_FOUR_BYTES  1
@@ -204,6 +208,12 @@ public:
    virtual TR_IPBCDataAllocation     *asIPBCDataAllocation()     { return NULL; }
    // returns the number of bytes the equivalent storage structure needs
    virtual uint32_t                   getBytesFootprint() = 0; 
+
+   // Serialization used for JaaS
+   // not sufficient for persisting to the shared cache
+   virtual uint32_t canBeSerialized(TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
+   virtual void serialize(TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) = 0;
+   virtual void deserialize(TR_IPBCDataStorageHeader *storage) = 0;
 
    virtual uint32_t canBePersisted(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
    virtual void createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)  = 0;
@@ -298,6 +308,9 @@ public:
    virtual TR_IPBCDataFourBytes  *asIPBCDataFourBytes() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataFourBytesStorage);}
 
+   virtual void serialize(TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) { createPersistentCopy(0, storage, info); }
+   virtual void deserialize(TR_IPBCDataStorageHeader *storage) { loadFromPersistentCopy(storage, nullptr, 0); }
+
    virtual void createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage, TR::Compilation *comp, uintptrj_t cacheStartAddress);
    int16_t getSumBranchCount();
@@ -353,6 +366,9 @@ public:
    virtual TR_IPBCDataEightWords  *asIPBCDataEightWords() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof(TR_IPBCDataEightWordsStorage);}
 
+   virtual void serialize(TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) { createPersistentCopy(0, storage, info); }
+   virtual void deserialize(TR_IPBCDataStorageHeader *storage) { loadFromPersistentCopy(storage, nullptr, 0); }
+
    virtual void createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage, TR::Compilation *comp, uintptrj_t cacheStartAddress);
    virtual int32_t getSumSwitchCount();
@@ -375,7 +391,11 @@ public:
    void * operator new (size_t size) throw();
    void * operator new (size_t size, void * placement) {return placement;}
 
+#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
+   static const uint32_t IPROFILING_INVALID = ~0; //only take up the bottom 32, class compression issue
+#else
    static const uintptrj_t IPROFILING_INVALID = ~0;
+#endif //J9VM_GC_COMPRESSED_POINTERS
 
    virtual uintptrj_t getData(TR::Compilation *comp = NULL);
    virtual CallSiteProfileInfo* getCGData() { return &_csInfo; } // overloaded
@@ -395,6 +415,10 @@ public:
    virtual bool isInvalid() { if (_csInfo.getClazz(0) == IPROFILING_INVALID) return true; return false; }
    virtual void setInvalid() { _csInfo.setClazz(0, IPROFILING_INVALID); }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataCallGraphStorage);}
+
+   virtual uint32_t canBeSerialized(TR::PersistentInfo *info);
+   virtual void serialize(TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
+   virtual void deserialize(TR_IPBCDataStorageHeader *storage);
 
    virtual uint32_t canBePersisted(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR::PersistentInfo *info);
    virtual void createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);

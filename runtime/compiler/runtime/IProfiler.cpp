@@ -2954,6 +2954,80 @@ TR_IPBCDataCallGraph::isLocked()
    }
 
 uint32_t
+TR_IPBCDataCallGraph::canBeSerialized(TR::PersistentInfo *info)
+   {
+   if (!getCanPersistEntryFlag())
+      return IPBC_ENTRY_CANNOT_PERSIST;
+
+   if (!lockEntry()) // Try to lock the entry; if entry is already locked, abort
+      return IPBC_ENTRY_PERSIST_LOCK;
+
+   for (int32_t i = 0; i < NUM_CS_SLOTS && _csInfo.getClazz(i);i++) // scan all classes profiled in this entry
+      {
+      J9Class *clazz = (J9Class *) _csInfo.getClazz(i);
+      if (clazz)
+         {
+         if (info->isUnloadedClass(clazz, true))
+            {
+            releaseEntry();  // release the lock on the entry
+            return IPBC_ENTRY_PERSIST_UNLOADED;
+            }
+         TR_ASSERT(_csInfo.getClazz(i), "Race condition detected: cached value=%p, pc=%p", clazz, _pc);
+         }
+      }
+   return IPBC_ENTRY_CAN_PERSIST;
+   }
+void
+TR_IPBCDataCallGraph::serialize(TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
+   {
+   TR_IPBCDataCallGraphStorage * store = (TR_IPBCDataCallGraphStorage *) storage;
+   storage->pc = 0;
+   storage->ID = TR_IPBCD_CALL_GRAPH;
+   storage->left = 0;
+   storage->right = 0;
+   for (int32_t i=0; i < NUM_CS_SLOTS;i++)
+      {
+      J9Class *clazz = (J9Class *) _csInfo.getClazz(i);
+      if (clazz)
+         {
+         TR_ASSERT(!info->isUnloadedClass(clazz, true), "cannot store unloaded class");
+         store->_csInfo.setClazz(i, (uintptrj_t)clazz);
+         TR_ASSERT(_csInfo.getClazz(i), "Race condition detected: cached value=%p, pc=%p", clazz, _pc);
+         }
+      else
+         {
+         store->_csInfo.setClazz(i, 0);
+         }
+      store->_csInfo._weight[i] = _csInfo._weight[i];
+      }
+   store->_csInfo._residueWeight = _csInfo._residueWeight;
+   store->_csInfo._tooBigToBeInlined = _csInfo._tooBigToBeInlined;
+
+   }
+void
+TR_IPBCDataCallGraph::deserialize(TR_IPBCDataStorageHeader *storage)
+   {
+   TR_IPBCDataCallGraphStorage * store = (TR_IPBCDataCallGraphStorage *) storage;
+   TR_ASSERT(storage->ID == TR_IPBCD_CALL_GRAPH, "Incompatible types between storage and loading of iprofile persistent data");
+   for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
+      {
+      J9Class * ramClass = (J9Class*) store->_csInfo.getClazz(i);
+      if (ramClass)
+         {
+         _csInfo.setClazz(i, (uintptrj_t)ramClass);
+         _csInfo._weight[i] = store->_csInfo._weight[i];
+         }
+      else
+         {
+         _csInfo.setClazz(i, 0);
+         _csInfo._weight[i] = 0;
+         }
+      }
+   _csInfo._residueWeight = store->_csInfo._residueWeight;
+   _csInfo._tooBigToBeInlined = store->_csInfo._tooBigToBeInlined;
+   }
+
+uint32_t
 TR_IPBCDataCallGraph::canBePersisted(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR::PersistentInfo *info)
    {
    if (!getCanPersistEntryFlag())
@@ -4292,13 +4366,26 @@ TR_IPHashedCallSite::operator new (size_t size) throw()
 inline
 uintptrj_t CallSiteProfileInfo::getClazz(int index)
    {
-   return (uintptrj_t)_clazz[index];
+#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
+   //support for convert code, when it is implemented, "uncompress"
+   return (uintptrj_t)TR::Compiler->cls.convertClassOffsetToClassPtr((TR_OpaqueClassBlock *)_clazz[index]);
+#else
+   return (uintptrj_t)_clazz[index]; //things are just stored as regular pointers otherwise
+#endif //J9VM_GC_COMPRESSED_POINTERS
    }
 
 inline
 void CallSiteProfileInfo::setClazz(int index, uintptrj_t clazzPointer)
    {
+#if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
+   //support for convert code, when it is implemented, do compression
+   TR_OpaqueClassBlock * compressedOffset = J9JitMemory::convertClassPtrToClassOffset((J9Class *)clazzPointer); //compressed 32bit pointer
+   //if we end up with something in the top 32bits, our compression is no good...
+   TR_ASSERT((!(0xFFFFFFFF00000000 & (uintptrj_t)compressedOffset)), "Class pointer contains bits in the top word. Pointer given: %p Compressed: %p", clazzPointer, compressedOffset);
+   _clazz[index] = (uint32_t)((uintptrj_t)compressedOffset); //ditch the top zeros
+#else
    _clazz[index] = (uintptrj_t)clazzPointer;
+#endif //J9VM_GC_COMPRESSED_POINTERS
    }
 
 
