@@ -322,7 +322,7 @@ OpenJ9 uses the mingw/GCC compiler during the build process. In the `Archive` ca
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
 
 ```
-set INCLUDE =C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
+set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
 set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%;
 ```
 
