@@ -123,6 +123,8 @@ corresponding to the tagged level.  The release should link to the Eclipse Relea
 document, the release issue, and the AdoptOpenJDK download links.
 1. Open an Eclipse Bugzilla requesting the branch be marked `protected` to prevent 
 commits after the release is complete.
+1. Remove the `doc:releasenote` tag from items that were included in the release 
+notes.
 
 For a milestone release, the tag will be of the form: `openj9-0.8.0-m1`.
 
