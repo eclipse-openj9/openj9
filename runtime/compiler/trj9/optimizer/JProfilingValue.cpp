@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -264,10 +264,10 @@ void
 TR_JProfilingValue::lowerCalls()
    {
    TR::TreeTop *cursor = comp()->getStartTree();
+   TR_BitVector *backwardAnalyzedAddressNodesToCheck = new (comp()->trStackMemory()) TR_BitVector();
    while (cursor)
       {
       TR::Node * node = cursor->getNode();
-
       if (node->isProfilingCode() &&
           node->getOpCodeValue() == TR::treetop &&
           node->getFirstChild()->getOpCode().isCall() &&
@@ -275,12 +275,35 @@ TR_JProfilingValue::lowerCalls()
            node->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_jProfile64BitValue) &&
           node->getFirstChild()->getNumChildren() == 3)
          {
-         TR::TreeTop *nextTree = cursor->getNextTreeTop();
-         TR::Node *child = node->getFirstChild();
+         // Backward Analysis in the extended basic block to get list of address nodes 
+         for (TR::TreeTop *iter = cursor->getPrevTreeTop();
+            iter && (iter->getNode()->getOpCodeValue() != TR::BBStart || iter->getNode()->getBlock()->isExtensionOfPreviousBlock());
+            iter = iter->getPrevTreeTop())
+            {
+            TR::Node *currentTreeTopNode = iter->getNode();
+            if (currentTreeTopNode->getNumChildren() >= 1 && currentTreeTopNode->getFirstChild()->getType() == TR::Address)
+               backwardAnalyzedAddressNodesToCheck->set(currentTreeTopNode->getFirstChild()->getGlobalIndex());
+            }
+         // Forward walk to check for compressedref anchors of any evaluated address nodes identified above
+         for (TR::TreeTop *iter = cursor->getNextTreeTop();
+            iter && (iter->getNode()->getOpCodeValue() != TR::BBStart || iter->getNode()->getBlock()->isExtensionOfPreviousBlock());
+            iter = iter->getNextTreeTop())
+            {
+            TR::Node *currentTreeTopNode = iter->getNode();
+            if (currentTreeTopNode->getOpCodeValue() == TR::compressedRefs
+               && backwardAnalyzedAddressNodesToCheck->isSet(currentTreeTopNode->getFirstChild()->getGlobalIndex()))
+               {
+               dumpOptDetails(comp(), "%s Moving treetop node n%dn above the profiling call to avoid uncommoning\n",
+                  optDetailString(), iter->getNode()->getGlobalIndex());
+               iter->unlink(false);
+               cursor->insertBefore(iter);
+               }
+            }
 
+         backwardAnalyzedAddressNodesToCheck->empty();
+         TR::Node *child = node->getFirstChild();
          dumpOptDetails(comp(), "%s Replacing profiling placeholder n%dn with value profiling trees\n",
             optDetailString(), child->getGlobalIndex());
-
          // Extract the arguments and add the profiling trees
          TR::Node *value = child->getFirstChild();
          TR_AbstractHashTableProfilerInfo *table = (TR_AbstractHashTableProfilerInfo*) child->getSecondChild()->getAddress();
@@ -288,10 +311,8 @@ TR_JProfilingValue::lowerCalls()
 
          // Remove the original trees and continue from the tree after the profiling
          TR::TransformUtil::removeTree(comp(), cursor);
-         cursor = nextTree;
          }
-      else
-         cursor = cursor->getNextTreeTop();
+      cursor = cursor->getNextTreeTop();
       }
    }
 

@@ -565,9 +565,7 @@ protected final Class<?> defineClass (
 		}
 	}
 	/*[IF Sidecar19-SE]*/
-	synchronized(packages) {
-		packages.computeIfAbsent(answer.getPackageName(), pkgName->new NamedPackage(pkgName, answer.getModule()));
-	}
+	addPackageToList(answer);
 	/*[ENDIF] Sidecar19-SE */
 
 	/*[PR CMVC 89001] Verbose output when loading non-bootstrap classes */
@@ -578,6 +576,18 @@ protected final Class<?> defineClass (
 	}
 	return answer;
 }
+
+/*[IF Sidecar19-SE]*/
+ /**
+  * Add a class's package name to this classloader's list of packages, if not already present.
+ * @param newClass
+ */
+void addPackageToList(Class<?> newClass) {
+	synchronized(packages) {
+		packages.computeIfAbsent(newClass.getPackageName(), pkgName->new NamedPackage(pkgName, newClass.getModule()));
+	}
+}
+/*[ENDIF] Sidecar19-SE */
 
 /*[PR CMVC 89001] Verbose output when loading non-bootstrap classes */ 
 private native boolean isVerboseImpl();
