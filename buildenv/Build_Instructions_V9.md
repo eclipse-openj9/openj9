@@ -34,7 +34,6 @@ A more complete set of build instructions are included here for multiple platfor
 - [MacOS :apple:](#macos)
 - [ARM :iphone:](#arm)
 
-
 ----------------------------------
 
 ## Linux
@@ -45,7 +44,6 @@ machine, or in a Docker container :whale:.
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
 If you want to build a binary for Linux on a different architecture, such as Power Systems&trade; or z Systems&trade;, the process is very similar and any additional information for those architectures are included as Notes :pencil: as we go along.
-
 
 ### 1. Prepare your system
 :penguin:
@@ -103,14 +101,12 @@ that must be installed on the system, plus a few configuration steps.
 :pencil:
 Not on x86? We also have Dockerfiles for the following Linux architectures: [Linux on Power systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk9/ppc64le/ubuntu16/Dockerfile) and [Linux on z Systems](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk9/s390x/ubuntu16/Dockerfile).
 
-
 1. Install the list of dependencies that can be obtained with the `apt-get` command from the following section of the Dockerfile:
 ```
 apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     autoconf \
     ca-certificates \
-    ...
     ...
 ```
 
@@ -139,7 +135,7 @@ rm -f freemarker.tgz
 :penguin:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk9
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk9.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
@@ -147,14 +143,14 @@ cd openj9-openjdk-jdk9
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 ```
-bash ./get_source.sh
+bash get_source.sh
 ```
 
 ### 3. Configure
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash ./configure --with-freemarker-jar=/root/freemarker.jar
+bash configure --with-freemarker-jar=/root/freemarker.jar
 ```
 :warning: You must give an absolute path to freemarker.jar
 
@@ -231,8 +227,8 @@ Download and setup freemarker.jar into your home directory by running the follow
 
 ```
 cd /<my_home_dir>
-wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz \
-tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
+wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
+tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 rm -f freemarker.tgz
 ```
 
@@ -240,7 +236,7 @@ rm -f freemarker.tgz
 :blue_book:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk9
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk9.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
@@ -249,15 +245,15 @@ cd openj9-openjdk-jdk9
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
 ```
-bash ./get_source.sh
+bash get_source.sh
 ```
 ### 3. Configure
 :blue_book:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash ./configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar /
-                 --with-cups-include=<cups_include_path> /
-                 --disable-warnings-as-errors
+bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
+               --with-cups-include=<cups_include_path> \
+               --disable-warnings-as-errors
 ```
 where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<cups_include_path>` is the absolute path to CUPS. For example `/opt/freeware/include`.
 
@@ -274,7 +270,6 @@ Two Java builds are produced: a full developer kit (jdk) and a runtime environme
 - **build/aix-ppc64-normal-server-release/images/jre**
 
     :pencil: A JRE binary is not currently generated due to an OpenJDK bug.
-
 
 ### 5. Test
 :blue_book:
@@ -311,12 +306,11 @@ The following instructions guide you through the process of building a Windows O
 :ledger:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
-- [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. Included in this package is mingw, a minimalist subset of GNU tools for Microsoft Windows.  OpenJ9 uses the mingw/GCC compiler and is tested with version 6.4.0 of same.  Other versions are expected to work also.  In the `Archive` category, install the packages `zip` and `unzip`. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html). 
+- [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. Included in this package is mingw, a minimalist subset of GNU tools for Microsoft Windows.  OpenJ9 uses the mingw/GCC compiler and is tested with version 6.4.0 of same.  Other versions are expected to work also.  In the `Archive` category, install the packages `zip` and `unzip`. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 8](https://adoptopenjdk.net/releases.html#x64_win), which is used as the boot JDK.
 - [Microsoft Visual Studio 2013]( https://go.microsoft.com/fwlink/?LinkId=532495), which is the same compiler level used by OpenJDK. Later levels of this compiler are not supported.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
-- [Freetype2 V2.3](https://www.freetype.org/download.html)
-
+- [Freetype2 V2.3 or newer](https://www.freetype.org/)
 
    You can download Visual Studio, Freemarker, and Freetype manually or obtain them using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
 
@@ -346,7 +340,7 @@ First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repo
 
 Run the following command in the Cygwin terminal:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk9
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk9.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
@@ -355,13 +349,16 @@ cd openj9-openjdk-jdk9
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
 ```
-bash ./get_source.sh
+bash get_source.sh
 ```
 ### 3. Configure
 :ledger:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --disable-warnings-as-errors --with-toolchain-version=2013 --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar --with-freetype-src=/cygdrive/c/temp/freetype
+bash configure --disable-warnings-as-errors \
+               --with-toolchain-version=2013 \
+               --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
+               --with-freetype-src=/cygdrive/c/temp/freetype
 ```
 
 :pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories. If Java 8 is not available on the path, add the `--with-boot-jdk=<path_to_jdk8>` configuration option.
