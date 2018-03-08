@@ -73,7 +73,7 @@
 	-outputLimit 1000 -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) \
 	-xlist $(Q)$(TEST_RESROOT)$(D)dbgextddrtests_excludes.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<platformRequirements>^os.zos,^os.zos</platformRequirements>
+		<platformRequirements>^os.zos</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>

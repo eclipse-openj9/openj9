@@ -29,7 +29,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
   * javassist-3.20.0-GA.jar
   * jcommander-1.48.jar
   * junit-4.10.jar
-  * testng-6.10.jar
+  * testng-6.14.2.jar
 
 These libs will be downloaded automatically as part of `make compile` 
 process.

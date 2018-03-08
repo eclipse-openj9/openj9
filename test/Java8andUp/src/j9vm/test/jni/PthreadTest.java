@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,9 +36,10 @@ public class PthreadTest {
 
 	private static boolean worked = false;
 
-
+	@Test
 	public void test_destructor() {
 		worked = attachAndDetach();
+		AssertJUnit.assertTrue("Thread successfully detached", worked);
 	}
 
 	@BeforeMethod
@@ -50,7 +51,6 @@ public class PthreadTest {
 
 	@AfterMethod
 	protected void tearDown() throws Exception {
-		AssertJUnit.assertTrue("Thread successfully detached", worked);
 		logger.debug("---------------------------------------------------------");
 	}
 

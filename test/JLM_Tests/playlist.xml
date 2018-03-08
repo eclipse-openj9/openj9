@@ -34,7 +34,15 @@
 	-XX:SharedCacheHardLimit=16m -Xscmx1m -Xshareclasses:name=testJLM,reset \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-	-testnames JLM_Tests_interface \
+	-testnames TestCompilationMXBean,\
+	TestGarbageCollectorMXBean,\
+	TestMemoryManagerMXBean,\
+	TestMemoryMXBean,\
+	TestOperatingSystemMXBean,\
+	TestRuntimeMXBean,\
+	TestThreadMXBean,\
+	TestClassLoadingMXBean,\
+	TestMemoryPoolMXBean \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS); \
@@ -61,7 +69,15 @@
 	-XX:SharedCacheHardLimit=16m -Xscmx1m -Xshareclasses:name=testJLM,reset \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-	-testnames JLM_Tests_interface \
+	-testnames TestCompilationMXBean,\
+	TestGarbageCollectorMXBean,\
+	TestMemoryManagerMXBean,\
+	TestMemoryMXBean,\
+	TestOperatingSystemMXBean,\
+	TestRuntimeMXBean,\
+	TestThreadMXBean,\
+	TestClassLoadingMXBean,\
+	TestMemoryPoolMXBean \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS); \
@@ -422,6 +438,7 @@
 			<subset>SE80</subset>
 			<subset>SE90</subset>
 		</subsets>
+		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
 
 	<test>
@@ -452,6 +469,7 @@
 			<subset>SE80</subset>
 			<subset>SE90</subset>
 		</subsets>
+		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
 
 	<test>
@@ -482,6 +500,7 @@
 			<subset>SE80</subset>
 			<subset>SE90</subset>
 		</subsets>
+		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
 
 	<test>
@@ -512,6 +531,7 @@
 			<subset>SE80</subset>
 			<subset>SE90</subset>
 		</subsets>
+		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
 
 	<test>
@@ -545,6 +565,7 @@
 			<subset>SE80</subset>
 			<subset>SE90</subset>
 		</subsets>
+		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
 
 	<test>

@@ -25,8 +25,6 @@
 org.openj9.test.vm.Test_MsgHelp:test_loadMessages_EN												                    AN-https://github.ibm.com/runtimes/test/issues/46 generic-all
 org.openj9.test.java.lang.Test_Class:test_getModifiers_classTypes														JTC-JAT-133182 generic-all
 org.openj9.test.java.lang.Test_Class:test_hideUnsafe																	BPW-https://github.ibm.com/runtimes/test/issues/109 generic-all
-org.openj9.test.java.security.Test_AccessController:test_doPrivilegedWithCombiner4										124199 generic-all
-org.openj9.test.java.security.Test_AccessController:test_doPrivileged_createAccessControlContext						124199 generic-all
 org.openj9.test.java.lang.Test_ClassLoader																				134754 generic-all
 org.openj9.test.java.lang.Test_Thread:test_getContextClassLoader														125908 generic-all
 org.openj9.test.attachAPI.TestAttachAPI:test_agntld01																	238 generic-all
