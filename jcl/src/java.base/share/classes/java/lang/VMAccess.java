@@ -2,7 +2,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,7 @@ package java.lang;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+import java.util.Objects;
 import java.util.Properties;
 
 /*[IF Sidecar19-SE]*/
@@ -203,4 +204,16 @@ final class VMAccess implements VMLangAccess {
 	public ConstantPool getConstantPool(Object internalRamClass) {
 		return Access.getConstantPool(internalRamClass);
 	}
+	
+	/*[IF Sidecar19-SE]*/
+	@Override
+	public void addPackageToList(java.lang.Class<?> newClass, ClassLoader loader) {
+		java.lang.ClassLoader packageLoader = loader;
+		if (Objects.isNull(packageLoader)) {
+			packageLoader = ClassLoader.getSystemClassLoader();
+		}
+		packageLoader.addPackageToList(newClass);
+	}
+	/*[ENDIF] Sidecar19-SE */
+
 }

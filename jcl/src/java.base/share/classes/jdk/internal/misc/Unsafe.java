@@ -23,6 +23,7 @@
 package jdk.internal.misc;
 
 import com.ibm.oti.vm.VM;
+import com.ibm.oti.vm.VMLangAccess;
 
 import java.lang.Class;
 import java.lang.ClassLoader;
@@ -1503,7 +1504,10 @@ public final class Unsafe {
 			throw new ArrayIndexOutOfBoundsException();
 		}
 
-		return defineClass0(name, b, offset, bLength, cl, pd);
+		Class<?> result = defineClass0(name, b, offset, bLength, cl, pd);
+		VMLangAccess access = VM.getVMLangAccess();
+		access.addPackageToList(result, cl);
+		return result;
 	}
 
 	/**
