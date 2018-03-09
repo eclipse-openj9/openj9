@@ -1,0 +1,415 @@
+###############################################################################
+# Copyright (c) 2017, 2018 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+###############################################################################
+
+# formats:
+# opaquetype=TypeName
+# fieldoverride.TypeName.FieldName=NewFieldName
+# typeoverride.TypeName.FieldName=NewFieldType
+
+# Opaque types
+opaquetype=J9SRP
+opaquetype=J9WSRP
+opaquetype=fj9object_t
+opaquetype=iconv_t
+opaquetype=j9objectclass_t
+opaquetype=j9objectmonitor_t
+opaquetype=UDATA
+
+# Rename constants in J9BuildFlags for backwards compatibility.
+
+fieldoverride.J9BuildFlags.J9VM_ARCH_ARM=arch_arm
+fieldoverride.J9BuildFlags.J9VM_ARCH_POWER=arch_power
+fieldoverride.J9BuildFlags.J9VM_ARCH_S390=arch_s390
+fieldoverride.J9BuildFlags.J9VM_ARCH_X86=arch_x86
+fieldoverride.J9BuildFlags.J9VM_BUILD_AUTOBUILD=build_autobuild
+fieldoverride.J9BuildFlags.J9VM_BUILD_DROP_TO_HURSLEY=build_dropToHursley
+fieldoverride.J9BuildFlags.J9VM_BUILD_DROP_TO_PHOENIX=build_dropToPhoenix
+fieldoverride.J9BuildFlags.J9VM_BUILD_DROP_TO_TORONTO=build_dropToToronto
+fieldoverride.J9BuildFlags.J9VM_BUILD_FIPS=build_fips
+fieldoverride.J9BuildFlags.J9VM_BUILD_GC_CONTINUOUS=build_gcContinuous
+fieldoverride.J9BuildFlags.J9VM_BUILD_J2ME=build_j2me
+fieldoverride.J9BuildFlags.J9VM_BUILD_J2SE=build_j2se
+fieldoverride.J9BuildFlags.J9VM_BUILD_J9VM_DOC=build_j9vmDoc
+fieldoverride.J9BuildFlags.J9VM_BUILD_JAVA5=build_java5
+fieldoverride.J9BuildFlags.J9VM_BUILD_JAVA60_26=build_java60_26
+fieldoverride.J9BuildFlags.J9VM_BUILD_JAVA6=build_java6
+fieldoverride.J9BuildFlags.J9VM_BUILD_JAVA6PROXY=build_java6proxy
+fieldoverride.J9BuildFlags.J9VM_BUILD_JAVA70_27=build_java70_27
+fieldoverride.J9BuildFlags.J9VM_BUILD_JAVA7BASIC=build_java7basic
+fieldoverride.J9BuildFlags.J9VM_BUILD_JAVA7=build_java7
+fieldoverride.J9BuildFlags.J9VM_BUILD_JAVA7RAW=build_java7raw
+fieldoverride.J9BuildFlags.J9VM_BUILD_JAVA8=build_java8
+fieldoverride.J9BuildFlags.J9VM_BUILD_JAVA8RAW=build_java8raw
+fieldoverride.J9BuildFlags.J9VM_BUILD_JAVA9=build_java9
+fieldoverride.J9BuildFlags.J9VM_BUILD_NEW_COMPILER=build_newCompiler
+fieldoverride.J9BuildFlags.J9VM_BUILD_OPENJ9=build_openj9
+fieldoverride.J9BuildFlags.J9VM_BUILD_OUNCEMAKE=build_ouncemake
+fieldoverride.J9BuildFlags.J9VM_BUILD_PRODUCT=build_product
+fieldoverride.J9BuildFlags.J9VM_BUILD_REALTIME=build_realtime
+fieldoverride.J9BuildFlags.J9VM_BUILD__SE6_PACKAGE=build_SE6_package
+fieldoverride.J9BuildFlags.J9VM_BUILD_STAGE_OTTAWA_VMLAB=build_stage_ottawa_vmlab
+fieldoverride.J9BuildFlags.J9VM_BUILD_STAGE_TORONTO_LAB=build_stage_toronto_lab
+fieldoverride.J9BuildFlags.J9VM_BUILD_UMA=build_uma
+fieldoverride.J9BuildFlags.J9VM_BUILD_VM_CONTINUOUS=build_vmContinuous
+fieldoverride.J9BuildFlags.J9VM_BUILD__VS12_AND_HIGHER=build_VS12AndHigher
+fieldoverride.J9BuildFlags.J9VM_COMPILER_PROMOTION=compiler_promotion
+fieldoverride.J9BuildFlags.J9VM_DANGER_MEMLEAKS_BROKEN=danger_memleaksBroken
+fieldoverride.J9BuildFlags.J9VM_ENV_ADVANCE_TOOLCHAIN=env_advanceToolchain
+fieldoverride.J9BuildFlags.J9VM_ENV_CALL_VIA_TABLE=env_callViaTable
+fieldoverride.J9BuildFlags.J9VM_ENV_DATA64=env_data64
+fieldoverride.J9BuildFlags.J9VM_ENV_DLPAR=env_dlpar
+fieldoverride.J9BuildFlags.J9VM_ENV_GCC=env_gcc
+fieldoverride.J9BuildFlags.J9VM_ENV_HAS_FPU=env_hasFPU
+fieldoverride.J9BuildFlags.J9VM_ENV_LITTLE_ENDIAN=env_littleEndian
+fieldoverride.J9BuildFlags.J9VM_ENV_SHARED_LIBS_CALLEE_GLOBAL_TABLE_SETUP=env_sharedLibsCalleeGlobalTableSetup
+fieldoverride.J9BuildFlags.J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE=env_sharedLibsUseGlobalTable
+fieldoverride.J9BuildFlags.J9VM_ENV_SSE2_SUPPORT_DETECTION=env_sse2SupportDetection
+fieldoverride.J9BuildFlags.J9VM_ENV_Z_TPF=env_zTPF
+fieldoverride.J9BuildFlags.J9VM_GC_ADAPTIVE_TENURING=gc_adaptiveTenuring
+fieldoverride.J9BuildFlags.J9VM_GC_ALIGN_OBJECTS=gc_alignObjects
+fieldoverride.J9BuildFlags.J9VM_GC_ALLOCATION_TAX=gc_allocationTax
+fieldoverride.J9BuildFlags.J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER=gc_alwaysCallObjectAccessBarrier
+fieldoverride.J9BuildFlags.J9VM_GC_ALWAYS_CALL_WRITE_BARRIER=gc_alwaysCallWriteBarrier
+fieldoverride.J9BuildFlags.J9VM_GC_ARRAYLETS=gc_arraylets
+fieldoverride.J9BuildFlags.J9VM_GC_BATCH_CLEAR_TLH=gc_batchClearTLH
+fieldoverride.J9BuildFlags.J9VM_GC_CLASSES_ON_HEAP=gc_classesOnHeap
+fieldoverride.J9BuildFlags.J9VM_GC_COMBINATION_SPEC=gc_combinationSpec
+fieldoverride.J9BuildFlags.J9VM_GC_COMPRESSED_POINTER_BARRIER=gc_compressedPointerBarrier
+fieldoverride.J9BuildFlags.J9VM_GC_COMPRESSED_POINTERS=gc_compressedPointers
+fieldoverride.J9BuildFlags.J9VM_GC_CONCURRENT_SWEEP=gc_concurrentSweep
+fieldoverride.J9BuildFlags.J9VM_GC_DEBUG_ASSERTS=gc_debugAsserts
+fieldoverride.J9BuildFlags.J9VM_GC_DYNAMIC_CLASS_UNLOADING=gc_dynamicClassUnloading
+fieldoverride.J9BuildFlags.J9VM_GC_DYNAMIC_NEW_SPACE_SIZING=gc_dynamicNewSpaceSizing
+fieldoverride.J9BuildFlags.J9VM_GC_FINALIZATION=gc_finalization
+fieldoverride.J9BuildFlags.J9VM_GC_FRAGMENTED_HEAP=gc_fragmentedHeap
+fieldoverride.J9BuildFlags.J9VM_GC_GENERATIONAL=gc_generational
+fieldoverride.J9BuildFlags.J9VM_GC_HEAP_CARD_TABLE=gc_heapCardTable
+fieldoverride.J9BuildFlags.J9VM_GC_HYBRID_ARRAYLETS=gc_hybridArraylets
+fieldoverride.J9BuildFlags.J9VM_GC_IDLE_HEAP_MANAGER=gc_idleHeapManager
+fieldoverride.J9BuildFlags.J9VM_GC_INLINED_ALLOC_FIELDS=gc_inlinedAllocFields
+fieldoverride.J9BuildFlags.J9VM_GC_JNI_ARRAY_CACHE=gc_jniArrayCache
+fieldoverride.J9BuildFlags.J9VM_GC_LARGE_OBJECT_AREA=gc_largeObjectArea
+fieldoverride.J9BuildFlags.J9VM_GC_LEAF_BITS=gc_leafBits
+fieldoverride.J9BuildFlags.J9VM_GC_MINIMUM_OBJECT_SIZE=gc_minimumObjectSize
+fieldoverride.J9BuildFlags.J9VM_GC_MODRON_COMPACTION=gc_modronCompaction
+fieldoverride.J9BuildFlags.J9VM_GC_MODRON_CONCURRENT_MARK=gc_modronConcurrentMark
+fieldoverride.J9BuildFlags.J9VM_GC_MODRON_GC=gc_modronGC
+fieldoverride.J9BuildFlags.J9VM_GC_MODRON_SCAVENGER=gc_modronScavenger
+fieldoverride.J9BuildFlags.J9VM_GC_MODRON_STANDARD=gc_modronStandard
+fieldoverride.J9BuildFlags.J9VM_GC_MODRON_TRACE=gc_modronTrace
+fieldoverride.J9BuildFlags.J9VM_GC_MODRON_VERBOSE=gc_modronVerbose
+fieldoverride.J9BuildFlags.J9VM_GC_NEW_SPINLOCK_SUPPORT=gc_newSpinlockSupport
+fieldoverride.J9BuildFlags.J9VM_GC_NON_ZERO_TLH=gc_nonZeroTLH
+fieldoverride.J9BuildFlags.J9VM_GC_OBJECT_ACCESS_BARRIER=gc_objectAccessBarrier
+fieldoverride.J9BuildFlags.J9VM_GC_REALTIME=gc_realtime
+fieldoverride.J9BuildFlags.J9VM_GC_SEGREGATED_HEAP=gc_segregatedHeap
+fieldoverride.J9BuildFlags.J9VM_GC_STACCATO=gc_staccato
+fieldoverride.J9BuildFlags.J9VM_GC_STRICT_OMR=gc_strictOmr
+fieldoverride.J9BuildFlags.J9VM_GC_SUBPOOLS_ALIAS=gc_subpoolsAlias
+fieldoverride.J9BuildFlags.J9VM_GC_SUBPOOLS=gc_subpools
+fieldoverride.J9BuildFlags.J9VM_GC_THREAD_LOCAL_HEAP=gc_threadLocalHeap
+fieldoverride.J9BuildFlags.J9VM_GC_TILTED_NEW_SPACE=gc_tiltedNewSpace
+fieldoverride.J9BuildFlags.J9VM_GC_TLH_PREFETCH_FTA=gc_tlhPrefetchFTA
+fieldoverride.J9BuildFlags.J9VM_GC_USE_INLINE_ALLOCATE=gc_useInlineAllocate
+fieldoverride.J9BuildFlags.J9VM_GC_VERIFY_ACCESS_BARRIER=gc_verifyAccessBarrier
+fieldoverride.J9BuildFlags.J9VM_GC_VLHGC=gc_vlhgc
+fieldoverride.J9BuildFlags.J9VM_INTERP_AOT_COMPILE_SUPPORT=interp_aotCompileSupport
+fieldoverride.J9BuildFlags.J9VM_INTERP_AOT_RUNTIME_SUPPORT=interp_aotRuntimeSupport
+fieldoverride.J9BuildFlags.J9VM_INTERP_ATOMIC_FREE_JNI=interp_atomicFreeJni
+fieldoverride.J9BuildFlags.J9VM_INTERP_BYTECODE_PREVERIFICATION=interp_bytecodePreverification
+fieldoverride.J9BuildFlags.J9VM_INTERP_BYTECODE_VERIFICATION=interp_bytecodeVerification
+fieldoverride.J9BuildFlags.J9VM_INTERP_COMPRESSED_OBJECT_HEADER=interp_compressedObjectHeader
+fieldoverride.J9BuildFlags.J9VM_INTERP_CUSTOM_SPIN_OPTIONS=interp_customSpinOptions
+fieldoverride.J9BuildFlags.J9VM_INTERP_DEBUG_SUPPORT=interp_debugSupport
+fieldoverride.J9BuildFlags.J9VM_INTERP_ENABLE_JIT_ON_DESKTOP=interp_enableJitOnDesktop
+fieldoverride.J9BuildFlags.J9VM_INTERP_FLAGS_IN_CLASS_SLOT=interp_flagsInClassSlot
+fieldoverride.J9BuildFlags.J9VM_INTERP_FLOATMATHLIB_TRACING=interp_floatmathlibTracing
+fieldoverride.J9BuildFlags.J9VM_INTERP_FLOATMATH_TRACING=interp_floatmathTracing
+fieldoverride.J9BuildFlags.J9VM_INTERP_FLOAT_SUPPORT=interp_floatSupport
+fieldoverride.J9BuildFlags.J9VM_INTERP_GP_HANDLER=interp_gpHandler
+fieldoverride.J9BuildFlags.J9VM_INTERP_GROWABLE_STACKS=interp_growableStacks
+fieldoverride.J9BuildFlags.J9VM_INTERP_HOT_CODE_REPLACEMENT=interp_hotCodeReplacement
+fieldoverride.J9BuildFlags.J9VM_INTERP_JIT_ON_BY_DEFAULT=interp_jitOnByDefault
+fieldoverride.J9BuildFlags.J9VM_INTERP_JNI_SUPPORT=interp_jniSupport
+fieldoverride.J9BuildFlags.J9VM_INTERP_MINIMAL_JCL=interp_minimalJCL
+fieldoverride.J9BuildFlags.J9VM_INTERP_MINIMAL_JNI=interp_minimalJNI
+fieldoverride.J9BuildFlags.J9VM_INTERP_NATIVE_SUPPORT=interp_nativeSupport
+fieldoverride.J9BuildFlags.J9VM_INTERP_NEW_HEADER_SHAPE=interp_newHeaderShape
+fieldoverride.J9BuildFlags.J9VM_INTERP_PROFILING_BYTECODES=interp_profilingBytecodes
+fieldoverride.J9BuildFlags.J9VM_INTERP_ROMABLE_AOT_SUPPORT=interp_romableAotSupport
+fieldoverride.J9BuildFlags.J9VM_INTERP_SIG_QUIT_THREAD=interp_sigQuitThread
+fieldoverride.J9BuildFlags.J9VM_INTERP_SIG_QUIT_THREAD_USES_SEMAPHORES=interp_sigQuitThreadUsesSemaphores
+fieldoverride.J9BuildFlags.J9VM_INTERP_SMALL_MONITOR_SLOT=interp_smallMonitorSlot
+fieldoverride.J9BuildFlags.J9VM_INTERP_TRACING=interp_tracing
+fieldoverride.J9BuildFlags.J9VM_INTERP_UPDATE_VMCTRACING=interp_updateVMCTracing
+fieldoverride.J9BuildFlags.J9VM_INTERP_USE_SPLIT_SIDE_TABLES=interp_useSplitSideTables
+fieldoverride.J9BuildFlags.J9VM_INTERP_USE_UNSAFE_HELPER=interp_useUnsafeHelper
+fieldoverride.J9BuildFlags.J9VM_INTERP_VERBOSE=interp_verbose
+fieldoverride.J9BuildFlags.J9VM_IVE_JXE_FILE_RELOCATOR=ive_jxeFileRelocator
+fieldoverride.J9BuildFlags.J9VM_IVE_JXE_IN_PLACE_RELOCATOR=ive_jxeInPlaceRelocator
+fieldoverride.J9BuildFlags.J9VM_IVE_JXE_NATIVES=ive_jxeNatives
+fieldoverride.J9BuildFlags.J9VM_IVE_JXE_OERELOCATOR=ive_jxeOERelocator
+fieldoverride.J9BuildFlags.J9VM_IVE_JXE_STREAMING_RELOCATOR=ive_jxeStreamingRelocator
+fieldoverride.J9BuildFlags.J9VM_IVE_MEMORY_SPACE_HELPERS=ive_memorySpaceHelpers
+fieldoverride.J9BuildFlags.J9VM_IVE_ROM_IMAGE_HELPERS=ive_romImageHelpers
+fieldoverride.J9BuildFlags.J9VM_JIT_32BIT_USES64BIT_REGISTERS=jit_32bitUses64bitRegisters
+fieldoverride.J9BuildFlags.J9VM_JIT_C_HELPERS=jit_cHelpers
+fieldoverride.J9BuildFlags.J9VM_JIT_CLASS_UNLOAD_RWMONITOR=jit_classUnloadRwmonitor
+fieldoverride.J9BuildFlags.J9VM_JIT_DYNAMIC_LOOP_TRANSFER=jit_dynamicLoopTransfer
+fieldoverride.J9BuildFlags.J9VM_JIT_FREE_SYSTEM_STACK_POINTER=jit_freeSystemStackPointer
+fieldoverride.J9BuildFlags.J9VM_JIT_FULL_SPEED_DEBUG=jit_fullSpeedDebug
+fieldoverride.J9BuildFlags.J9VM_JIT_GC_ON_RESOLVE_SUPPORT=jit_gcOnResolveSupport
+fieldoverride.J9BuildFlags.J9VM_JIT_HIGH_WORD_REGISTERS=jit_highWordRegisters
+fieldoverride.J9BuildFlags.J9VM_JIT_IA32_FIXED_FRAME=jit_ia32FixedFrame
+fieldoverride.J9BuildFlags.J9VM_JIT_MICRO_JIT=jit_microJit
+fieldoverride.J9BuildFlags.J9VM_JIT_NATHELP_USES_CLASS_OBJECTS=jit_nathelpUsesClassObjects
+fieldoverride.J9BuildFlags.J9VM_JIT_NEEDS_TRAMPOLINES=jit_needsTrampolines
+fieldoverride.J9BuildFlags.J9VM_JIT_NEW_DUAL_HELPERS=jit_newDualHelpers
+fieldoverride.J9BuildFlags.J9VM_JIT_NEW_INSTANCE_PROTOTYPE=jit_newInstancePrototype
+fieldoverride.J9BuildFlags.J9VM_JIT_ON_STACK_REPLACEMENT=jit_onStackReplacement
+fieldoverride.J9BuildFlags.J9VM_JIT_REQUIRES_TRAP_HANDLER=jit_requiresTrapHandler
+fieldoverride.J9BuildFlags.J9VM_JIT_RUNTIME_INSTRUMENTATION=jit_runtimeInstrumentation
+fieldoverride.J9BuildFlags.J9VM_JIT_SMALL=jit_small
+fieldoverride.J9BuildFlags.J9VM_JIT_SUPPORTS_DIRECT_JNI=jit_supportsDirectJNI
+fieldoverride.J9BuildFlags.J9VM_JIT_TRANSACTION_DIAGNOSTIC_THREAD_BLOCK=jit_transactionDiagnosticThreadBlock
+fieldoverride.J9BuildFlags.J9VM_MATH_DIRECT_HELPERS=math_directHelpers
+fieldoverride.J9BuildFlags.J9VM_MATH_USE_DIV_REM=math_useDivRem
+fieldoverride.J9BuildFlags.J9VM_MATH_USE_FDLIBM_MATH_LIBRARY=math_useFdlibmMathLibrary
+fieldoverride.J9BuildFlags.J9VM_MATH_USE_FDLIBM_SCALING=math_useFdlibmScaling
+fieldoverride.J9BuildFlags.J9VM_OPT_ANNOTATIONS=opt_annotations
+fieldoverride.J9BuildFlags.J9VM_OPT_BIG_INTEGER=opt_bigInteger
+fieldoverride.J9BuildFlags.J9VM_OPT_CUDA=opt_cuda
+fieldoverride.J9BuildFlags.J9VM_OPT_DEBUG_INFO_SERVER=opt_debugInfoServer
+fieldoverride.J9BuildFlags.J9VM_OPT_DEBUG_JSR45_SUPPORT=opt_debugJsr45Support
+fieldoverride.J9BuildFlags.J9VM_OPT_DEPRECATED_METHODS=opt_deprecatedMethods
+fieldoverride.J9BuildFlags.J9VM_OPT_DMA_NATIVES=opt_dmaNatives
+fieldoverride.J9BuildFlags.J9VM_OPT_DYNAMIC_LOAD_SUPPORT=opt_dynamicLoadSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_FIPS=opt_fips
+fieldoverride.J9BuildFlags.J9VM_OPT_FRAGMENT_RAM_CLASSES=opt_fragmentRamClasses
+fieldoverride.J9BuildFlags.J9VM_OPT_HARMONY=opt_harmony
+fieldoverride.J9BuildFlags.J9VM_OPT_ICBUILDER_SUPPORT=opt_icbuilderSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_INFO_SERVER=opt_infoServer
+fieldoverride.J9BuildFlags.J9VM_OPT_INLINE_JSRS=opt_inlineJsrs
+fieldoverride.J9BuildFlags.J9VM_OPT_INVARIANT_INTERNING=opt_invariantInterning
+fieldoverride.J9BuildFlags.J9VM_OPT_JAVA_OFFLOAD_SUPPORT=opt_javaOffloadSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_JVMTI=opt_jvmti
+fieldoverride.J9BuildFlags.J9VM_OPT_JXE_LOAD_SUPPORT=opt_jxeLoadSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_MEMORY_CHECK_SUPPORT=opt_memoryCheckSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_METHOD_HANDLE=opt_methodHandle
+fieldoverride.J9BuildFlags.J9VM_OPT_MODULE=opt_module
+fieldoverride.J9BuildFlags.J9VM_OPT_MULTI_VM=opt_multiVm
+fieldoverride.J9BuildFlags.J9VM_OPT_NATIVE_CHARACTER_CONVERTER=opt_nativeCharacterConverter
+fieldoverride.J9BuildFlags.J9VM_OPT_NATIVE_LOCALE_SUPPORT=opt_nativeLocaleSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_NEW_OBJECT_HASH=opt_newObjectHash
+fieldoverride.J9BuildFlags.J9VM_OPT_NEW_ROM_CLASS_BUILDER=opt_newRomClassBuilder
+fieldoverride.J9BuildFlags.J9VM_OPT_NO_CLASSLOADERS=opt_noClassloaders
+fieldoverride.J9BuildFlags.J9VM_OPT_NRR=opt_nrr
+fieldoverride.J9BuildFlags.J9VM_OPT_PAAS=opt_paas
+fieldoverride.J9BuildFlags.J9VM_OPT_PACKED=opt_packed
+fieldoverride.J9BuildFlags.J9VM_OPT_PANAMA=opt_panama
+fieldoverride.J9BuildFlags.J9VM_OPT_PHP_SUPPORT=opt_phpSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_REFLECT=opt_reflect
+fieldoverride.J9BuildFlags.J9VM_OPT_REMOTE_CONSOLE_SUPPORT=opt_remoteConsoleSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_RESOURCE_MANAGED=opt_resourceManaged
+fieldoverride.J9BuildFlags.J9VM_OPT_ROM_IMAGE_SUPPORT=opt_romImageSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_SHARED_CLASSES=opt_sharedClasses
+fieldoverride.J9BuildFlags.J9VM_OPT_SIDECAR=opt_sidecar
+fieldoverride.J9BuildFlags.J9VM_OPT_SRP_AVL_TREE_SUPPORT=opt_srpAvlTreeSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_STRING_COMPRESSION=opt_stringCompression
+fieldoverride.J9BuildFlags.J9VM_OPT_SWITCH_STACKS_FOR_SIGNAL_HANDLER=opt_switchStacksForSignalHandler
+fieldoverride.J9BuildFlags.J9VM_OPT_TEMP_NEW_INTERFACE_INVOCATION=opt_tempNewInterfaceInvocation
+fieldoverride.J9BuildFlags.J9VM_OPT_USE_FFI_ONLY=opt_useFfiOnly
+fieldoverride.J9BuildFlags.J9VM_OPT_USE_FFI=opt_useFfi
+fieldoverride.J9BuildFlags.J9VM_OPT_VALHALLA_MVT=opt_valhallaMvt
+fieldoverride.J9BuildFlags.J9VM_OPT_VALHALLA_NESTMATES=opt_valhallaNestmates
+fieldoverride.J9BuildFlags.J9VM_OPT_VEE_SUPPORT=opt_veeSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_VM_LOCAL_STORAGE=opt_vmLocalStorage
+fieldoverride.J9BuildFlags.J9VM_OPT_ZERO=opt_zero
+fieldoverride.J9BuildFlags.J9VM_OPT_ZIP_SUPPORT=opt_zipSupport
+fieldoverride.J9BuildFlags.J9VM_OPT_ZLIB_COMPRESSION=opt_zlibCompression
+fieldoverride.J9BuildFlags.J9VM_OPT_ZLIB_SUPPORT=opt_zlibSupport
+fieldoverride.J9BuildFlags.J9VM_PORT_OMRSIG_SUPPORT=port_omrsigSupport
+fieldoverride.J9BuildFlags.J9VM_PORT_RUNTIME_INSTRUMENTATION=port_runtimeInstrumentation
+fieldoverride.J9BuildFlags.J9VM_PORT_SIGNAL_SUPPORT=port_signalSupport
+fieldoverride.J9BuildFlags.J9VM_PORT_ZOS_CEEHDLRSUPPORT=port_zosCEEHDLRSupport
+fieldoverride.J9BuildFlags.J9VM_PROF_COUNT_ARGS_TEMPS=prof_countArgsTemps
+fieldoverride.J9BuildFlags.J9VM_PROF_EVENT_REPORTING=prof_eventReporting
+fieldoverride.J9BuildFlags.J9VM_PROF_JVMTI=prof_jvmti
+fieldoverride.J9BuildFlags.J9VM_RAS_DUMP_AGENTS=ras_dumpAgents
+fieldoverride.J9BuildFlags.J9VM_RAS_EYECATCHERS=ras_eyecatchers
+fieldoverride.J9BuildFlags.J9VM_RAS_FATAL_ASSERT=ras_fatalAssert
+fieldoverride.J9BuildFlags.J9VM_SIZE_OPTIMIZE_SEND_TARGETS=size_optimizeSendTargets
+fieldoverride.J9BuildFlags.J9VM_SIZE_SMALL_CODE=size_smallCode
+fieldoverride.J9BuildFlags.J9VM_SIZE_SMALL_OS_STACK=size_smallOsStack
+fieldoverride.J9BuildFlags.J9VM_SIZE_SMALL_RAM=size_smallRAM
+fieldoverride.J9BuildFlags.J9VM_TEMP_ALIGN_CLASS_SLOT=temp_alignClassSlot
+fieldoverride.J9BuildFlags.J9VM_TEMP_KEEP_FLAGS_SLOT=temp_keepFlagsSlot
+fieldoverride.J9BuildFlags.J9VM_THR_ASYNC_NAME_UPDATE=thr_asyncNameUpdate
+fieldoverride.J9BuildFlags.J9VM_THR_EXTRA_CHECKS=thr_extraChecks
+fieldoverride.J9BuildFlags.J9VM_THR_JLM_HST=thr_jlmHst
+fieldoverride.J9BuildFlags.J9VM_THR_LOCK_NURSERY_FAT_ARRAYS=thr_lockNurseryFatArrays
+fieldoverride.J9BuildFlags.J9VM_THR_LOCK_NURSERY=thr_lockNursery
+fieldoverride.J9BuildFlags.J9VM_THR_LOCK_RESERVATION=thr_lockReservation
+fieldoverride.J9BuildFlags.J9VM_THR_PREEMPTIVE=thr_preemptive
+fieldoverride.J9BuildFlags.J9VM_THR_SMART_DEFLATION=thr_smartDeflation
+
+# Type overrides - mostly adding data to SRPs
+typeoverride.J9AnnotationInfo.defaultValues=J9SRP(struct J9AnnotationInfoEntry)
+typeoverride.J9AnnotationInfo.firstAnnotation=J9SRP(struct J9AnnotationInfoEntry)
+typeoverride.J9AnnotationInfo.firstClass=J9SRP(struct J9AnnotationInfoEntry)
+typeoverride.J9AnnotationInfo.firstField=J9SRP(struct J9AnnotationInfoEntry)
+typeoverride.J9AnnotationInfo.firstMethod=J9SRP(struct J9AnnotationInfoEntry)
+typeoverride.J9AnnotationInfo.firstParameter=J9SRP(struct J9AnnotationInfoEntry)
+
+typeoverride.J9AnnotationInfoEntry.annotationData=J9SRP(UDATA)
+typeoverride.J9AnnotationInfoEntry.annotationType=J9SRP(struct J9UTF8)
+typeoverride.J9AnnotationInfoEntry.memberName=J9SRP(struct J9UTF8)
+typeoverride.J9AnnotationInfoEntry.memberSignature=J9SRP(struct J9UTF8)
+
+typeoverride.J9EnclosingObject.nameAndSignature=J9SRP(struct J9ROMNameAndSignature)
+
+typeoverride.J9ROMClass.className=J9SRP(struct J9UTF8)
+typeoverride.J9ROMClass.cpShapeDescription=J9SRP(U32)
+typeoverride.J9ROMClass.innerClasses=J9SRP(J9SRP(struct J9UTF8))
+typeoverride.J9ROMClass.interfaces=J9SRP(J9SRP(struct J9UTF8))
+typeoverride.J9ROMClass.intermediateClassData=J9WSRP(U_8)
+typeoverride.J9ROMClass.optionalInfo=J9SRP(U32)
+typeoverride.J9ROMClass.outerClassName=J9SRP(struct J9UTF8)
+typeoverride.J9ROMClass.romFields=J9SRP(struct J9ROMFieldShape)
+typeoverride.J9ROMClass.romMethods=J9SRP(struct J9ROMMethod)
+typeoverride.J9ROMClass.specialSplitMethodRefIndexes=J9SRP(U16)
+typeoverride.J9ROMClass.staticSplitMethodRefIndexes=J9SRP(U16)
+typeoverride.J9ROMClass.superclassName=J9SRP(struct J9UTF8)
+
+typeoverride.J9ROMArrayClass.className=J9SRP(struct J9UTF8)
+typeoverride.J9ROMArrayClass.cpShapeDescription=J9SRP(U32)
+typeoverride.J9ROMArrayClass.innerClasses=J9SRP(J9SRP(struct J9UTF8))
+typeoverride.J9ROMArrayClass.interfaces=J9SRP(J9SRP(struct J9UTF8))
+typeoverride.J9ROMArrayClass.intermediateClassData=J9WSRP(U_8)
+typeoverride.J9ROMArrayClass.optionalInfo=J9SRP(U32)
+typeoverride.J9ROMArrayClass.outerClassName=J9SRP(struct J9UTF8)
+typeoverride.J9ROMArrayClass.romFields=J9SRP(struct J9ROMFieldShape)
+typeoverride.J9ROMArrayClass.romMethods=J9SRP(struct J9ROMMethod)
+typeoverride.J9ROMArrayClass.superclassName=J9SRP(struct J9UTF8)
+
+typeoverride.J9ROMClassCfrConstantPoolInfo.bytes=J9SRP(U_8)
+
+typeoverride.J9ROMStringRef.utf8Data=J9SRP(struct J9UTF8)
+
+typeoverride.J9ROMStaticDoubleFieldShape.initialValuePointer=J9SRP(void)
+
+typeoverride.J9ROMClassCfrError.constantPool=J9SRP(struct J9ROMClassCfrConstantPoolInfo)
+typeoverride.J9ROMClassCfrError.errorMember=J9SRP(struct J9ROMClassCfrMember)
+
+typeoverride.J9SharedCacheHeader.corruptFlagPtr=J9WSRP(U_8)
+typeoverride.J9SharedCacheHeader.lockedPtr=J9WSRP(U_32)
+typeoverride.J9SharedCacheHeader.sharedStringHead=J9SRP(struct J9SharedInternSRPHashTableEntry)
+typeoverride.J9SharedCacheHeader.sharedStringRoot=J9SRP(void)
+typeoverride.J9SharedCacheHeader.sharedStringTail=J9SRP(struct J9SharedInternSRPHashTableEntry)
+typeoverride.J9SharedCacheHeader.updateCountPtr=J9WSRP(UDATA)
+
+typeoverride.J9ROMClassRef.name=J9SRP(struct J9UTF8)
+
+typeoverride.J9ROMClassTOCEntry.className=J9SRP(struct J9UTF8)
+typeoverride.J9ROMClassTOCEntry.romClass=J9SRP(struct J9ROMClass)
+
+typeoverride.J9ROMFieldRef.nameAndSignature=J9SRP(struct J9ROMNameAndSignature)
+
+typeoverride.J9ROMImageHeader.aotPointer=J9SRP(void)
+typeoverride.J9ROMImageHeader.firstClass=J9SRP(struct J9ROMClass)
+typeoverride.J9ROMImageHeader.jxePointer=J9SRP(UDATA)
+typeoverride.J9ROMImageHeader.tableOfContents=J9SRP(struct J9ROMClassTOCEntry)
+
+typeoverride.J9ROMMethodRef.nameAndSignature=J9SRP(struct J9ROMNameAndSignature)
+
+typeoverride.J9PoolPuddleList.nextAvailablePuddle=J9WSRP(struct J9PoolPuddle)
+typeoverride.J9PoolPuddleList.nextPuddle=J9WSRP(struct J9PoolPuddle)
+
+typeoverride.J9PoolPuddle.firstElementAddress=J9SRP(void)
+typeoverride.J9PoolPuddle.firstFreeSlot=J9SRP(UDATA)
+typeoverride.J9PoolPuddle.nextAvailablePuddle=J9WSRP(struct J9PoolPuddle)
+typeoverride.J9PoolPuddle.nextPuddle=J9WSRP(struct J9PoolPuddle)
+typeoverride.J9PoolPuddle.prevAvailablePuddle=J9WSRP(struct J9PoolPuddle)
+typeoverride.J9PoolPuddle.prevPuddle=J9WSRP(struct J9PoolPuddle)
+
+typeoverride.J9Pool.puddleList=J9WSRP(struct J9PoolPuddleList)
+
+typeoverride.J9ROMNameAndSignature.name=J9SRP(struct J9UTF8)
+typeoverride.J9ROMNameAndSignature.signature=J9SRP(struct J9UTF8)
+
+typeoverride.J9ROMMethodTypeRef.signature=J9SRP(struct J9UTF8)
+
+# AVL leftChild and rightChild pointers aren't regular wide pointers.
+# They have AVL balance data encoded in them - so treat
+# them as IDATAs and handle them in the DDR AVL code.
+typeoverride.J9AVLTreeNode.leftChild=IDATA
+typeoverride.J9AVLTreeNode.rightChild=IDATA
+
+typeoverride.J9MEMAVLTreeNode.leftChild=IDATA
+typeoverride.J9MEMAVLTreeNode.rightChild=IDATA
+
+typeoverride.J9MemorySegment.leftChild=IDATA
+typeoverride.J9MemorySegment.rightChild=IDATA
+
+typeoverride.J9JITHashTable.leftChild=IDATA
+typeoverride.J9JITHashTable.rightChild=IDATA
+
+typeoverride.J9ObjectMemorySegment.leftChild=IDATA
+typeoverride.J9ObjectMemorySegment.rightChild=IDATA
+
+# The shared classes J9SRPs aren't regular J9SRPs.
+# They are relative to the start of the structure, not the field
+typeoverride.ByteDataWrapper.externalBlockOffset=I_32
+typeoverride.ByteDataWrapper.tokenOffset=I_32
+typeoverride.CacheletWrapper.dataStart=I_32
+typeoverride.CompiledMethodWrapper.romMethodOffset=I_32
+typeoverride.OrphanWrapper.romClassOffset=I_32
+typeoverride.ROMClassWrapper.romClassOffset=I_32
+typeoverride.ROMClassWrapper.theCpOffset=I_32
+typeoverride.ScopedROMClassWrapper.modContextOffset=I_32
+typeoverride.ScopedROMClassWrapper.partitionOffset=I_32
+typeoverride.ScopedROMClassWrapper.romClassOffset=I_32
+typeoverride.ScopedROMClassWrapper.theCpOffset=I_32
+
+typeoverride.J9MethodDebugInfo.srpToVarInfo=J9SRP(U_8)
+
+# Type override for SRPs in shared string intern table
+typeoverride.J9SharedInternSRPHashTableEntry.nextNode=J9SRP(struct J9SharedInternSRPHashTableEntry)
+typeoverride.J9SharedInternSRPHashTableEntry.prevNode=J9SRP(struct J9SharedInternSRPHashTableEntry)
+typeoverride.J9SharedInternSRPHashTableEntry.utf8SRP=J9SRP(struct J9UTF8)
+typeoverride.J9SRPHashTableInternal.nodePool=J9SRP(struct J9SimplePool)
+typeoverride.J9SRPHashTableInternal.nodes=J9SRP(J9SRP(void))
+
+# Type override for SRPs in J9SimplePoolFreeList
+typeoverride.J9SimplePoolFreeList.next=J9SRP(struct J9SimplePoolFreeList)
+typeoverride.J9SimplePoolFreeList.simplePool=J9SRP(struct J9SimplePool)
+
+# Type override for SRPs in J9SimplePool
+typeoverride.J9SimplePool.blockEnd=J9SRP(U_8)
+typeoverride.J9SimplePool.firstFreeSlot=J9SRP(U_8)
+typeoverride.J9SimplePool.freeList=J9SRP(struct J9SimplePoolFreeList)
+
+# Type override for SharedClassCache (SH_CacheMap)
+typeoverride.J9SharedClassConfig.sharedClassCache=SH_CacheMap*
+
+# The compiler folds the type of this field to U32[] (or U64[]): reverse that.
+typeoverride.J9VMThread.objectMonitorLookupCache=j9objectmonitor_t[]

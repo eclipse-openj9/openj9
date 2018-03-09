@@ -53,12 +53,12 @@ linux_ppc-64_cmprssptrs_le:
 #========================================#
 linux_390-64_cmprssptrs:
   boot_jdk:
-    8: '/usr/lib/jvm/java-7-openjdk-s390x'
-    9: '${HOME}/openj9/ibm-java-s390x-80'
+    8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
+    9: '/usr/lib/jvm/adoptojdk-java-s390x-80'
   release:
     8: 'linux-s390x-normal-server-release'
     9: 'linux-s390x-normal-server-release'
-  freemarker: '${HOME}/openj9/freemarker.jar'
+  freemarker: '${HOME}/freemarker.jar'
   node_labels:
     build: '390'
     test: '390'

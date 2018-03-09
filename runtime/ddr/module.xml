@@ -1,37 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-   Copyright (c) 2010, 2017 IBM Corp. and others
+Copyright (c) 2010, 2018 IBM Corp. and others
 
-   This program and the accompanying materials are made available under
-   the terms of the Eclipse Public License 2.0 which accompanies this
-   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-   or the Apache License, Version 2.0 which accompanies this distribution and
-   is available at https://www.apache.org/licenses/LICENSE-2.0.
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-   This Source Code may also be made available under the following
-   Secondary Licenses when the conditions for such availability set
-   forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-   General Public License, version 2 with the GNU Classpath
-   Exception [1] and GNU General Public License, version 2 with the
-   OpenJDK Assembly Exception [2].
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
 
-   [1] https://www.gnu.org/software/classpath/license.html
-   [2] http://openjdk.java.net/legal/assembly-exception.html
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
 
-   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module>
 
 	<objects group="j9ddrgenapp">
-		<object name="ddrmain"/>
 		<object name="copyright"/>
+		<object name="ddrmain"/>
 		<object name="ddrtable"/>
 		<object name="j9ddr"/>
 		<object name="sizeofBool"/>
 	</objects>
 
 	<artifact type="static" name="j9ddrautoblob">
-		<include-if condition="spec.flags.module_ddr" />
+		<include-if condition="spec.flags.module_ddr"/>
+		<exclude-if condition="spec.flags.opt_useOmrDdr"/>
 		<phase>core j2se</phase>
 		<flags>
 			<flag name="UT_TRACE_OVERHEAD=0"/>
@@ -96,12 +97,11 @@
 			<include path="$(OMR_DIR)/compiler/env" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-
 			<include path="$(OMR_DIR)/port" type="relativepath"/>
 			<include path="j9prt"/>
 			<include path="j9shr_include"/>
 			<include path="j9bcv"/>
-			<include path="j9vm" />
+			<include path="j9vm"/>
 		</includes>
 		<makefilestubs>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
@@ -114,19 +114,20 @@
 			<vpath pattern="%" path="../bcutil" augmentIncludes="true" type="relativepath"/>
 		</vpaths>
 		<objects>
-			<object name="omrddrblob"/>
-			<object name="vmddrblob"/>
-			<object name="stackwalkddrblob"/>
+			<object name="algorithm_versions"/>
+			<object name="ddrcppsupportblob"/>
 			<object name="hyportddrblob"/>
 			<object name="jitddrblob"/>
 			<object name="jitflagsddr"/>
-			<object name="algorithm_versions"/>
-			<object name="ddrcppsupportblob"/>
+			<object name="omrddrblob"/>
+			<object name="stackwalkddrblob"/>
+			<object name="vmddrblob"/>
 		</objects>
 	</artifact>
 
 	<artifact type="static" name="j9portautoblob">
-		<include-if condition="spec.flags.module_ddr" />
+		<include-if condition="spec.flags.module_ddr"/>
+		<exclude-if condition="spec.flags.opt_useOmrDdr"/>
 		<phase>core j2se</phase>
 		<flags>
 			<flag name="$(TR_HOST)"/>
@@ -174,7 +175,7 @@
 			<vpath pattern="%" path="../port/zos390" augmentIncludes="true" type="relativepath">
 				<include-if condition="spec.zos_390.*"/>
 			</vpath>
-			
+
 			<vpath pattern="%" path="$(OMR_DIR)/port/ztpf" augmentIncludes="true" type="relativepath">
 				<include-if condition="spec.linux_ztpf.*"/>
 			</vpath>
@@ -259,7 +260,8 @@
 	</artifact>
 
 	<artifact type="executable" name="j9ddrgen">
-		<include-if condition="spec.flags.module_ddr" />
+		<include-if condition="spec.flags.module_ddr"/>
+		<exclude-if condition="spec.flags.opt_useOmrDdr"/>
 		<options>
 			<option name="isCPlusPlus">
 				<exclude-if condition="spec.linux_ppc.*"/>
@@ -276,7 +278,7 @@
 		</includes>
 		<makefilestubs>
 			<makefilestub data="UMA_EXE_POSTFIX_FLAGS+=-static">
-				<include-if condition="spec.linux_arm.*" />
+				<include-if condition="spec.linux_arm.*"/>
 			</makefilestub>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
 			<makefilestub data="include ddr_cpp_headers.mk"/>
@@ -286,17 +288,17 @@
 		</objects>
 		<libraries>
 			<!--
-			Link the static omr port library, without jsig.
+			Link the static OMR port library, without jsig.
 			This is needed to run j9ddrgen using the Linux ARM emulator,
 			but works for other platforms as well.
 			-->
-			<library name="j9prtstatic" type="external" />
+			<library name="j9prtstatic" type="external"/>
 
 			<library name="j9thrstatic" type="external">
-				<include-if condition="spec.linux_arm.*" />
+				<include-if condition="spec.linux_arm.*"/>
 			</library>
 			<library name="j9thr">
-				<exclude-if condition="spec.linux_arm.*" />
+				<exclude-if condition="spec.linux_arm.*"/>
 			</library>
 			<library name="j9portautoblob"/>
 			<library name="j9ddr_cppewautoblob"/>
@@ -308,7 +310,7 @@
 			<library name="j9ddrautoblob"/>
 			<library name="j9gcautoblob"/>
 
-			<!-- The following libs are needed to statically link the port library -->
+			<!-- The following libs are needed to statically link the port library. -->
 			<library name="omrglue" type="external"/>
 			<library name="socket" type="macro"/>
 			<library name="iconv" type="system">
@@ -333,7 +335,9 @@
 	</artifact>
 
 	<artifact type="target" name="run_j9ddrgen">
-		<include-if condition="spec.flags.module_ddr and not spec.linux_ztpf.*" />
+		<include-if condition="spec.flags.module_ddr"/>
+		<exclude-if condition="spec.flags.opt_useOmrDdr"/>
+		<exclude-if condition="spec.linux_ztpf.*"/>
 		<phase>core j2se</phase>
 		<dependencies>
 			<dependency name="j9ddrgen"/>
@@ -345,6 +349,80 @@
 			<command line="cd $(UMA_PATH_TO_ROOT) &amp;&amp; qemu-arm -r '9' ./j9ddrgen" type="all">
 				<include-if condition="spec.linux_arm.*"/>
 			</command>
+		</commands>
+	</artifact>
+
+	<artifact type="shared" name="j9ddr_misc">
+		<include-if condition="spec.flags.module_ddr and spec.flags.opt_useOmrDdr"/>
+		<includes>
+			<include path="j9include"/>
+			<include path="j9oti"/>
+			<include path="j9gcbase"/>
+			<include path="$(OMR_DIR)/gc/base" type="relativepath"/>
+			<include path="$(OMR_DIR)/gc/base/segregated" type="relativepath"/>
+			<include path="j9modronstandard"/>
+			<include path="$(OMR_DIR)/gc/base/standard" type="relativepath"/>
+			<include path="j9gcstructs"/>
+			<include path="$(OMR_DIR)/gc/structs" type="relativepath"/>
+			<include path="j9gcstats"/>
+			<include path="$(OMR_DIR)/gc/stats" type="relativepath"/>
+			<include path="j9gcinclude"/>
+			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
+			<include path="j9modronstartup"/>
+			<include path="$(OMR_DIR)/gc/startup" type="relativepath"/>
+			<include path="j9gcgluejava"/>
+			<include path="j9realtime">
+				<include-if condition="spec.flags.J9VM_GC_REALTIME"/>
+			</include>
+			<include path="j9gcvlhgc"/>
+			<include path="$(OMR_DIR)/include_core" type="relativepath"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="CFLAGS += -femit-class-debug-always">
+				<include-if condition="spec.linux_390.*"/>
+				<include-if condition="spec.linux_ppc.*_gcc"/>
+				<include-if condition="spec.linux_x86.*"/>
+			</makefilestub>
+			<makefilestub data="CXXFLAGS += -femit-class-debug-always">
+				<include-if condition="spec.linux_390.*"/>
+				<include-if condition="spec.linux_ppc.*_gcc"/>
+				<include-if condition="spec.linux_x86.*"/>
+			</makefilestub>
+		</makefilestubs>
+		<objects>
+			<object name="algorithm_versions"/>
+			<object name="gcddr"/>
+			<object name="jitflagsddr"/>
+			<object name="omrddr"/>
+			<object name="vmddr"/>
+		</objects>
+	</artifact>
+
+	<artifact type="target" name="omrddrgen">
+		<include-if condition="spec.flags.module_ddr and spec.flags.opt_useOmrDdr"/>
+		<dependencies>
+			<dependency name="generate_j9vm"/>
+			<dependency name="j9ddr_misc"/>
+			<dependency name="j9gc"/>
+			<dependency name="j9jvmti"/>
+			<dependency name="j9prt"/>
+			<dependency name="j9shr"/>
+			<dependency name="j9thr"/>
+			<dependency name="j9trc"/>
+			<dependency name="j9vm"/>
+			<!--
+			We actually only need one of the following, but
+			the version we're building doesn't appear to be
+			available to UMA, so we'll require them all.
+			-->
+			<dependency name="jclse7b_"/>
+			<dependency name="jclse9_"/>
+			<dependency name="jclse10_"/>
+			<dependency name="jclse11_"/>
+		</dependencies>
+		<commands>
+			<command line="$(MAKE) -C ddr -f run_omrddrgen.mk" type="all"/>
+			<command line="$(MAKE) -C ddr -f run_omrddrgen.mk clean" type="clean"/>
 		</commands>
 	</artifact>
 
