@@ -54,12 +54,8 @@ def clone_branch_push(REPO, TAG_NAME, TAG_ANNOTATION, TAG_POINT, POINT_TYPE) {
         sh "git show ${TAG_NAME}"
 
         withCredentials([usernamePassword(credentialsId: 'b6987280-6402-458f-bdd6-7affc2e360d4', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-            sh "git config remote.origin.url ${HTTP}${USERNAME}:${PASSWORD}@${REPO}"
-            sh "git push origin 'refs/tags/${TAG_NAME}'"
+            sh "git push ${HTTP}${USERNAME}:${PASSWORD}@${REPO} 'refs/tags/${TAG_NAME}'"
         }
-        // Remove the bot account username/password from the git config
-        sh "git config remote.origin.url ${HTTP}${REPO}"
-
         cleanWs()
     }
 }
