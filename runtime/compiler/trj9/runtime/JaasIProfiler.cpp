@@ -125,13 +125,22 @@ TR_JaasIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCod
    uintptrj_t pc = getSearchPC(method, byteCodeIndex, comp);
    U_8 byteCode =  *(U_8 *)pc;
    if (isCompact(byteCode))
-      entry = new TR_IPBCDataFourBytes(pc);
+      {
+      entry = (TR_IPBytecodeHashTableEntry*)TR::comp()->trMemory()->allocateHeapMemory(sizeof(TR_IPBCDataFourBytes));
+      entry = new (entry) TR_IPBCDataFourBytes(pc);
+      }
    else
       {
       if (isSwitch(byteCode))
-         entry = new TR_IPBCDataEightWords(pc);
+         {
+         entry = (TR_IPBytecodeHashTableEntry*)TR::comp()->trMemory()->allocateHeapMemory(sizeof(TR_IPBCDataEightWords));
+         entry = new (entry) TR_IPBCDataEightWords(pc);
+         }
       else
-         entry = new TR_IPBCDataCallGraph(pc);
+         {
+         entry = (TR_IPBytecodeHashTableEntry*)TR::comp()->trMemory()->allocateHeapMemory(sizeof(TR_IPBCDataCallGraph));
+         entry = new (entry) TR_IPBCDataCallGraph(pc);
+         }
       }
    if (entry)
       entry->deserialize(storage);
