@@ -181,6 +181,8 @@ TR_JProfilingValue::perform()
       return 0;
       }
 
+   // Scan and remove duplicate value profiling calls before lowering calls
+   removeRedundantProfilingValueCalls(); 
    // Lower all existing calls
    lowerCalls();
 
@@ -203,6 +205,44 @@ TR_JProfilingValue::perform()
    return 1;
    }
 
+void
+TR_JProfilingValue::removeRedundantProfilingValueCalls()
+   {
+   TR::TreeTop *cursor = comp()->getStartTree();
+   TR_BitVector *alreadyProfiledValues = new (comp()->trStackMemory()) TR_BitVector();
+   while (cursor)
+      {
+      TR::Node * node = cursor->getNode();
+      if (node->isProfilingCode() &&
+         node->getOpCodeValue() == TR::treetop &&
+         node->getFirstChild()->getOpCode().isCall() &&
+         (node->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_jProfile32BitValue ||
+         node->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_jProfile64BitValue) &&
+         node->getFirstChild()->getNumChildren() == 3)
+         {
+         TR::Node *value = node->getFirstChild()->getFirstChild();
+         
+         if (alreadyProfiledValues->isSet(value->getGlobalIndex()) &&
+               performTransformation(comp(), "%s Removing profiling treetop, node n%dn is already profiled\n",
+                  optDetailString(), value->getGlobalIndex()))
+            /* Found that second and third child were having more than one ref counts. 
+            TR_ASSERT_FATAL(node->getFirstChild()->getSecondChild()->getReferenceCount() == 1 &&
+               node->getFirstChild()->getThirdChild()->getReferenceCount() == 1,
+               "Second and Third Child of the value calls should be referenced only once");
+            */
+            TR::TransformUtil::removeTree(comp(), cursor);
+         else
+            alreadyProfiledValues->set(value->getGlobalIndex());
+         
+         }
+      // Emptying a bit vector after scanning whole extended basic blocks will keep number of bits set in bit vector low.
+      else if (cursor->getNode()->getOpCodeValue() == TR::BBStart && !cursor->getNode()->getBlock()->isExtensionOfPreviousBlock())
+         {
+         alreadyProfiledValues->empty();
+         }
+      cursor = cursor->getNextTreeTop();
+      }    
+   }
 void
 TR_JProfilingValue::performOnNode(TR::Node *node, TR::TreeTop *tt, TR::NodeChecklist *checklist)
    {
