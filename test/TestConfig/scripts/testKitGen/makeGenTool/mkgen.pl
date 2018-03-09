@@ -150,24 +150,26 @@ sub generateMk {
 	}
 
 	my $rt = 0;
-	if (@{$subdirsHavePlaylist}) {
+	if ($playlistXML || @{$subdirsHavePlaylist}) {
 		writeVars($makeFile, $subdirsHavePlaylist, $currentdirs);
-		$rt = 1;
-	} elsif ($playlistXML) {
-		$rt = xml2mk($makeFile, $playlistXML, $currentdirs, $subdirsHavePlaylist);
+		if (@{$subdirsHavePlaylist}) {
+			$rt = 1;
+		}
+		if ($playlistXML) {
+			$rt |= xml2mk($makeFile, $playlistXML, $currentdirs, $subdirsHavePlaylist);
+		}
 	}
-
 	return $rt;
 }
 
 sub xml2mk {
-	my ($makeFile, $playlistXML, $currentdirs, $subdirsHavePlaylist) = @_;
+	my ($makeFile, $playlistXML, $currentdirs) = @_;
 	my $result = parseXML($playlistXML);
 	if (!%{$result}) {
 		return 0;
 	}
-	writeVars($makeFile, $subdirsHavePlaylist, $currentdirs);
-	writeTargets($makeFile, $result, $currentdirs, $subdirsHavePlaylist);
+	writeTargets($makeFile, $result, $currentdirs);
+	return 1;
 }
 
 sub writeVars {
@@ -303,7 +305,7 @@ sub getElementsByTag {
 }
 
 sub writeTargets {
-	my ( $makeFile, $result, $currentdirs, $subdirsHavePlaylist ) = @_;
+	my ( $makeFile, $result, $currentdirs ) = @_;
 	open( my $fhOut, '>>', $makeFile ) or die "Cannot create make file $makeFile";
 	my %project = ();
 	my %groupTargets = ();
