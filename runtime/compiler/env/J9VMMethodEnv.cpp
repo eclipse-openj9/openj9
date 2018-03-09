@@ -72,7 +72,9 @@ J9ROMMethod *romMethodOfRamMethod(J9Method* method)
       {
       OMR::CriticalSection romCache(clientData->getROMMapMonitor());
       auto &map = clientData->getROMMethodMap();
-      romMethod = map[(J9Method*) method];
+      auto it = map.find((J9Method*) method);
+      if (it != map.end())
+         romMethod = it->second;
       }
 
    // if not, go cache the associated ROM class and get the ROM method from it
