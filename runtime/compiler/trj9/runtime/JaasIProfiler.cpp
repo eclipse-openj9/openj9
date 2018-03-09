@@ -25,27 +25,33 @@ deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *serialEntry)
       entry->_method = serialEntry->_method;
       entry->_otherBucket = serialEntry->_otherBucket;
 
-      TR_IPMethodData *caller = &entry->_caller;
-      for (size_t i = 0; i < TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS; i++)
-         {
-         auto &serialCaller = serialEntry->_callers[i];
-         if (serialCaller._method == nullptr)
+      size_t callerCount = 0;
+      for (; callerCount < TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS; callerCount++)
+         if (serialEntry->_callers[callerCount]._method == nullptr)
             break;
 
-         if (i != 0)
+      // TODO when caching don't use heap mem
+      TR_IPMethodData *callerStore = (TR_IPMethodData*)TR::comp()->trMemory()->allocateHeapMemory(callerCount * sizeof(TR_IPMethodData));
+      if (callerStore)
+         {
+         TR_IPMethodData *caller = &entry->_caller;
+         for (size_t i = 0; i < callerCount; i++)
             {
-            // TODO when caching don't use heap mem
-            TR_IPMethodData* newCaller = (TR_IPMethodData*)TR::comp()->trMemory()->allocateHeapMemory(sizeof(TR_IPMethodData));
-            if (!newCaller)
-               break; // couldn't alloc, end table early
-            caller->next = newCaller;
-            caller = newCaller;
-            }
+            auto &serialCaller = serialEntry->_callers[i];
+            TR_ASSERT(serialCaller._method, "callerCount was computed incorrectly");
 
-         caller->setMethod(serialCaller._method);
-         caller->setPCIndex(serialCaller._pcIndex);
-         caller->setWeight(serialCaller._weight);
-         caller->next = nullptr;
+            if (i != 0)
+               {
+               TR_IPMethodData* newCaller = &callerStore[i];
+               caller->next = newCaller;
+               caller = newCaller;
+               }
+
+            caller->setMethod(serialCaller._method);
+            caller->setPCIndex(serialCaller._pcIndex);
+            caller->setWeight(serialCaller._weight);
+            caller->next = nullptr;
+            }
          }
       }
    return entry;
