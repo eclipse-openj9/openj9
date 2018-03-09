@@ -34,44 +34,41 @@ pipeline {
             steps {
                 timestamps {
                     script {
-                        withCredentials([usernamePassword(credentialsId: 'b6987280-6402-458f-bdd6-7affc2e360d4', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                            if (!fileExists('omr/HEAD')) {
-                                sh "git clone --mirror ${HTTP}${SRC_REPO} omr"
-                            } else {
-                                dir('omr') {
-                                    sh 'git remote update --prune'
-                                }
-                            }
+                        if (!fileExists('omr/HEAD')) {
+                            sh "git clone --mirror ${HTTP}${SRC_REPO} omr"
+                        } else {
                             dir('omr') {
-                                sh "git config remote.target.url ${HTTP}${USERNAME}:${PASSWORD}@${TARGET_REPO}"
-                                sh 'git push target --all'
-                                sh 'git push target --tags'
-                                // Remove the bot account username/password from the config
-                                sh "git config remote.target.url ${HTTP}${TARGET_REPO}"
-
-                                // Set the build description
-                                LAST_COMMIT = sh (
-                                        script: 'git log --oneline -1',
-                                        returnStdout: true
-                                    ).trim()
-                                currentBuild.description = "${LAST_COMMIT}"
-
-                                current_sha = sh (
-                                        script: 'git rev-parse --short HEAD',
-                                        returnStdout: true
-                                    ).trim()
+                                sh 'git remote update --prune'
+                            }
+                        }
+                        dir('omr') {
+                            withCredentials([usernamePassword(credentialsId: 'b6987280-6402-458f-bdd6-7affc2e360d4', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                                sh 'git push ${HTTP}${USERNAME}:${PASSWORD}@${TARGET_REPO} --all'
+                                sh 'git push ${HTTP}${USERNAME}:${PASSWORD}@${TARGET_REPO} --tags'
                             }
 
-                            // if there were changes, launch an acceptance build
-                            step([$class: 'CopyArtifact', optional: true, fingerprintArtifacts: true, projectName: 'Mirror-OMR-to-OpenJ9-OMR'])
-                            def default_sha = [omr_sha: 'Default']
-                            def previous = readProperties defaults: default_sha, file: "${ARCHIVE_FILE}"
-                            if ( previous.omr_sha != current_sha ) {
-                                build job: 'Pipeline-OMR-Acceptance', propagate: false, wait: false
-                                writeFile file: "${ARCHIVE_FILE}", text: "omr_sha=${current_sha}"
-                            }                            
-                            archiveArtifacts "${ARCHIVE_FILE}"
+                            // Set the build description
+                            LAST_COMMIT = sh (
+                                    script: 'git log --oneline -1',
+                                    returnStdout: true
+                                ).trim()
+                            currentBuild.description = "${LAST_COMMIT}"
+
+                            current_sha = sh (
+                                    script: 'git rev-parse --short HEAD',
+                                    returnStdout: true
+                                ).trim()
                         }
+
+                        // if there were changes, launch an acceptance build
+                        step([$class: 'CopyArtifact', optional: true, fingerprintArtifacts: true, projectName: 'Mirror-OMR-to-OpenJ9-OMR'])
+                        def default_sha = [omr_sha: 'Default']
+                        def previous = readProperties defaults: default_sha, file: "${ARCHIVE_FILE}"
+                        if ( previous.omr_sha != current_sha ) {
+                            build job: 'Pipeline-OMR-Acceptance', propagate: false, wait: false
+                            writeFile file: "${ARCHIVE_FILE}", text: "omr_sha=${current_sha}"
+                        }
+                        archiveArtifacts "${ARCHIVE_FILE}"
                     }
                 }
             }
