@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,7 @@ public:
 	I_64 timestamp;
 	UDATA flags;
 	UDATA pathLen;
+	UDATA locationPathLen;
 
 	/* 
 	 * Construct new ClasspathEntryItem
@@ -81,6 +82,20 @@ public:
 	 *   pathLen			Path length of the path returned
 	 */
 	const char* getPath(U_16* pathLen) const;
+	
+	/*
+	 * Returns the same string path as getPath() except for a nested jar.
+	 * If the ClasspathEntryItem is a nested jar, getPath() returns a path string including the entry inside the external jar,
+	 * while getLocation() returns a path string including the external jar only.
+	 * e.g. For /path/A.jar!/lib/B.jar, getPath() returns "/path/A.jar!/lib/B.jar", getLocation() returns "/path/A.jar"
+	 *
+	 * If object in memory, returns private path field.
+	 * If object in cache, returns path in cache.
+	 *
+	 * Parameters:
+	 *   locationPathLen	Path length of the path returned
+	 */
+	const char* getLocation(U_16* locationPathLen) const;
 
 	/*
 	 * Get a hashcode for this cpei.
