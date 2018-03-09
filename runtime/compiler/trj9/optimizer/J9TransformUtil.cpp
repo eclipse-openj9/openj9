@@ -800,12 +800,12 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
                   // We can simplify this into a const.
                   //
                   bool loadFailed = false;
-                  uintptrj_t fieldAddress = (*baseObjectRefLocation) + firstDereference->getSymbolReference()->getOffset();
                   uint8_t *structure;
 
                      {
                      // First dereference with VM access to dig a pointer out of an object
                      TR::VMAccessCriticalSection digPointerOutOfObject(comp->fej9());
+                     uintptrj_t fieldAddress = (*baseObjectRefLocation) + firstDereference->getSymbolReference()->getOffset();
                      switch (firstDereference->getDataType())
                         {
                         case TR::Int32:
@@ -837,18 +837,22 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
                   if (secondDereference)
                      structure = (uint8_t*)dereferenceStructPointerChain(structure, firstDereference, node->getFirstChild(), comp);
 
-                  if (verifyFieldAccess(structure, node->getSymbolReference(), comp)) switch (loadType)
+                  if (verifyFieldAccess(structure, node->getSymbolReference(), comp))
                      {
-                     case TR::Int32:
-                        node = TR::Node::iconst(node, *(int32_t*)(structure + node->getSymbolReference()->getOffset()));
-                        break;
-                     case TR::Int64:
-                        node = TR::Node::lconst(node, *(int64_t*)(structure + node->getSymbolReference()->getOffset()));
-                        break;
-                     default:
-                        TR_ASSERT(0, "Unexpected native field type %s", node->getDataType().toString());
-                        break;
+                     switch (loadType)
+                        {
+                        case TR::Int32:
+                           node = TR::Node::iconst(node, *(int32_t*)(structure + node->getSymbolReference()->getOffset()));
+                           break;
+                        case TR::Int64:
+                           node = TR::Node::lconst(node, *(int64_t*)(structure + node->getSymbolReference()->getOffset()));
+                           break;
+                        default:
+                           TR_ASSERT(0, "Unexpected native field type %s", node->getDataType().toString());
+                           break;
+                        }
                      }
+
                   return node;
                   }
                }
