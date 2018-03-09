@@ -2471,9 +2471,15 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	classfile->j9Flags = 0;
 
 	if ((classfile->accessFlags & (CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT)) == CFR_ACC_INTERFACE) {
-		errorCode = J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT__ID;
-		offset = index - data - 2;
-		goto _errorFound;
+		if ((flags & BCT_MajorClassFileVersionMask) >= BCT_Java6MajorVersionShifted) {
+			/* error out for Java 6 and newer versions */
+			errorCode = J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT__ID;
+			offset = index - data - 2;
+			goto _errorFound;
+		} else {
+			/* Just fix old classfiles */
+			classfile->accessFlags |= CFR_ACC_ABSTRACT;
+		}
 	}
 
 	NEXT_U16(classfile->thisClass, index);
