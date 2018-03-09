@@ -72,7 +72,7 @@ aix_ppc-64_cmprssptrs:
   release:
     8: 'aix-ppc64-normal-server-release'
     9: 'aix-ppc64-normal-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
+  freemarker: '/home/u0020236/freemarker.jar'
   node_labels:
     build: 'aix'
     test: 'aix'
