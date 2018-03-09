@@ -48,11 +48,8 @@ def clone_branch_push(REPO, NEW_BRANCH, SPLIT_SHA) {
         sh "git checkout -b '${NEW_BRANCH}' '${SPLIT_SHA}'"
 
         withCredentials([usernamePassword(credentialsId: 'b6987280-6402-458f-bdd6-7affc2e360d4', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-            sh "git config remote.origin.url ${HTTP}${USERNAME}:${PASSWORD}@${REPO}"
-            sh "git push origin '${NEW_BRANCH}'"
+            sh "git push ${HTTP}${USERNAME}:${PASSWORD}@${REPO} '${NEW_BRANCH}'"
         }
-        // Remove the bot account username/password from the git config
-        sh "git config remote.origin.url ${HTTP}${REPO}"
 
         // Set the build description
         currentBuild.description += "<br/>${REPO_NAME}: ${SPLIT_SHA}"
