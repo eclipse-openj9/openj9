@@ -40,11 +40,11 @@ slack_channel: '#jenkins'
 linux_ppc-64_cmprssptrs_le:
   boot_jdk:
     8: '/usr/lib/jvm/java-7-openjdk-ppc64el'
-    9: '${HOME}/openj9/ibm-java-ppc64le-80'
+    9: '/home/jenkins/openj9/ibm-java-ppc64le-80'
   release:
     8: 'linux-ppc64-normal-server-release'
     9: 'linux-ppc64le-normal-server-release'
-  freemarker: '${HOME}/openj9/freemarker.jar'
+  freemarker: '/home/jenkins/freemarker.jar'
   node_labels:
     build: 'ppcle'
     test: 'ppcle'
@@ -58,7 +58,7 @@ linux_390-64_cmprssptrs:
   release:
     8: 'linux-s390x-normal-server-release'
     9: 'linux-s390x-normal-server-release'
-  freemarker: '${HOME}/freemarker.jar'
+  freemarker: '/home/jenkins/freemarker.jar'
   node_labels:
     build: '390'
     test: '390'
@@ -72,7 +72,7 @@ aix_ppc-64_cmprssptrs:
   release:
     8: 'aix-ppc64-normal-server-release'
     9: 'aix-ppc64-normal-server-release'
-  freemarker: '${HOME}/freemarker.jar'
+  freemarker: '/home/jenkins/freemarker.jar'
   node_labels:
     build: 'aix'
     test: 'aix'
