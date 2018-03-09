@@ -87,10 +87,6 @@
 		<reason>Test is run from playlist other than sanity.</reason>
 	</exclude>
 
-	<exclude id="j9vm.test.jarfileupdate.JarFileUpdateTest" platform="all">
-		<reason>134164: shared classes failed to check the time stamp JarFileUpdateTestRunnerResource1 as patch about JVM_ZipHook() is missing in Java9</reason>
-	</exclude>
-
 	<exclude id="j9vm.test.romclasscreation.NewROMCreationAfterModifyingExistingClassTest" platform="all">
 		<reason>134161: Java 9 j9vm test: Error: Agent library jvmtitest could not be opened (libjvmtitest.so: cannot open shared object file: No such file or directory)</reason>
 	</exclude>
