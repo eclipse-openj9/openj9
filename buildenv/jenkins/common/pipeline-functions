@@ -78,8 +78,22 @@ def get_sha(REPO, BRANCH) {
         ).trim()
 }
 
+def git_push_auth(REPO, OPTION, CRED_ID) {
+    withCredentials([usernamePassword(credentialsId: "${CRED_ID}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+        sh "git push https://${USERNAME}:${PASSWORD}@${REPO} ${OPTION}"
+    }
+}
+
+def get_date() {
+    //Returns a string for the current date YYYYMMDD_HHMMSS
+    return sh (
+        script: 'date +%Y%m%d_%H%M%S',
+        returnStdout: true
+    ).trim()
+}
+
 def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID) {
-    stage ('Build') {
+    stage ("${BUILD_JOB_NAME}") {
         return build_with_slack(BUILD_JOB_NAME,
             [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
             string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH),
@@ -135,14 +149,16 @@ def build_with_slack(JOB_NAME, PARAMETERS) {
     return JOB
 }
 
-def workflow() {
+def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS) {
     def jobs = [:]
 
     // compile the source and build the SDK
-    BUILD_JOB_NAME = "Build-JDK${SDK_VERSION}-${SPEC}"
+    def BUILD_JOB_NAME = "Build-JDK${SDK_VERSION}-${SPEC}"
     jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID)
+    echo "JOB: ${BUILD_JOB_NAME} PASSED in: ${jobs['build'].getDurationString()}"
 
     if (TESTS_TARGETS.trim() != "none") {
+        def TEST_JOB_NAME
         levels = TESTS_TARGETS.split(",")
         levels.each { level ->
             switch (level.trim().toLowerCase()) {
@@ -158,6 +174,7 @@ def workflow() {
 
             // run tests against the SDK build in the upstream job: Build-JDK${SDK_VERSION}-${SPEC}
             jobs["${level}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID)
+            echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[level].getDurationString()}"
         }
     }
 
