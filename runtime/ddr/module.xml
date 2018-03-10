@@ -402,6 +402,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<include-if condition="spec.flags.module_ddr and spec.flags.opt_useOmrDdr"/>
 		<dependencies>
 			<dependency name="generate_j9vm"/>
+			<dependency name="generate_redirector"/>
 			<dependency name="j9ddr_misc"/>
 			<dependency name="j9gc"/>
 			<dependency name="j9jvmti"/>
