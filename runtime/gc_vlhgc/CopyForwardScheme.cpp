@@ -46,6 +46,7 @@
 #include "CardListFlushTask.hpp"
 #include "CardTable.hpp"
 #include "ClassHeapIterator.hpp"
+#include "ClassIterator.hpp"
 #include "ClassLoaderClassesIterator.hpp"
 #include "ClassLoaderIterator.hpp"
 #include "ClassLoaderRememberedSet.hpp"
@@ -2654,37 +2655,15 @@ MM_CopyForwardScheme::scanClassObjectSlots(MM_EnvironmentVLHGC *env, MM_Allocati
 
 		do {
 			/*
-			 * scan static fields
+			 * Scan J9Class internals using general iterator
+			 * - scan statics fields
+			 * - scan call sites
+			 * - scan MethodTypes
+			 * - scan VarHandle MethodTypes
+			 * - scan constants pool objects
 			 */
-			GC_ClassStaticsIterator classStaticsIterator(env, classPtr);
-			while(success && (NULL != (slotPtr = classStaticsIterator.nextSlot()))) {
-				/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
-				success = copyAndForward(env, reservingContext, classObject, slotPtr);
-			}
-
-			/*
-			 * scan call sites
-			 */
-			GC_CallSitesIterator callSitesIterator(classPtr);
-			while(success && (NULL != (slotPtr = callSitesIterator.nextSlot()))) {
-				/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
-				success = copyAndForward(env, reservingContext, classObject, slotPtr);
-			}
-
-			/*
-			 * scan MethodTypes
-			 */
-			GC_MethodTypesIterator methodTypesIterator(classPtr->romClass->methodTypeCount, classPtr->methodTypes);
-			while(success && (NULL != (slotPtr = methodTypesIterator.nextSlot()))) {
-				/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
-				success = copyAndForward(env, reservingContext, classObject, slotPtr);
-			}
-
-			/*
-			 * scan VarHandle MethodTypes
-			 */
-			GC_MethodTypesIterator varHandleMethodTypesIterator(classPtr->romClass->varHandleMethodTypeCount, classPtr->varHandleMethodTypes);
-			while(success && (NULL != (slotPtr = varHandleMethodTypesIterator.nextSlot()))) {
+			GC_ClassIterator classIterator(env, classPtr, false);
+			while (success && (NULL != (slotPtr = classIterator.nextSlot()))) {
 				/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
 				success = copyAndForward(env, reservingContext, classObject, slotPtr);
 			}
@@ -2696,7 +2675,7 @@ MM_CopyForwardScheme::scanClassObjectSlots(MM_EnvironmentVLHGC *env, MM_Allocati
 			if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(classPtr), J9ClassIsAnonymous)) {
 				GC_ClassIteratorClassSlots classSlotIterator(classPtr);
 				J9Class **classSlotPtr;
-				while(success && (NULL != (classSlotPtr = classSlotIterator.nextSlot()))) {
+				while (success && (NULL != (classSlotPtr = classSlotIterator.nextSlot()))) {
 					/* GC_ClassIteratorClassSlots can return NULL in *classSlotPtr so it should to be filtered out */
 					if (NULL != *classSlotPtr) {
 						slotPtr = &((*classSlotPtr)->classObject);
@@ -2707,9 +2686,6 @@ MM_CopyForwardScheme::scanClassObjectSlots(MM_EnvironmentVLHGC *env, MM_Allocati
 			}
 
 			if (success) {
-				/*
-				 * scan constant pool objects
-				 */
 				/* we can safely ignore any classes referenced by the constant pool, since
 				 * these are guaranteed to be referenced by our class loader
 				 * except anonymous case handled above
@@ -2719,12 +2695,6 @@ MM_CopyForwardScheme::scanClassObjectSlots(MM_EnvironmentVLHGC *env, MM_Allocati
 				 */
 				classPtr->classObject = (j9object_t)updateForwardedPointer((J9Object *)classPtr->classObject);
 				Assert_MM_true(isLiveObject((J9Object *)classPtr->classObject));
-
-				GC_ConstantPoolObjectSlotIterator constantPoolIterator(classPtr);
-				while(success && (NULL != (slotPtr = constantPoolIterator.nextSlot()))) {
-					/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
-					success = copyAndForward(env, reservingContext, classObject, slotPtr);
-				}
 			}
 			classPtr = classPtr->replacedClass;
 		} while (success && (NULL != classPtr));
