@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 #include "trj9/env/j9method.h"
 #include "trj9/runtime/HWProfiler.hpp"
 #include "env/VMJ9.h"
+#include "env/J9CPU.hpp" // for TR_ProcessorFeatureFlags
 
 namespace TR { class CompilationInfo; }
 class TR_RelocationRecord;
@@ -60,7 +61,7 @@ extern "C" {
  */
 
 #define TR_AOTHeaderMajorVersion 5
-#define TR_AOTHeaderMinorVersion 0
+#define TR_AOTHeaderMinorVersion 1
 #define TR_AOTHeaderEyeCatcher   0xA0757A27
 
 /* AOT Header Flags */
@@ -103,11 +104,7 @@ typedef struct TR_AOTHeader {
     uintptr_t compressedPointerShift;
     uint32_t lockwordOptionHashValue;
     int32_t   arrayLetLeafSize;
-#if defined(TR_TARGET_X86)
-    uint32_t x86FeatureFlags;
-    uint32_t x86FeatureFlags2;
-    uint32_t x86FeatureFlags8;
-#endif
+    TR_ProcessorFeatureFlags processorFeatureFlags;
 } TR_AOTHeader;
 
 typedef struct TR_AOTRuntimeInfo {

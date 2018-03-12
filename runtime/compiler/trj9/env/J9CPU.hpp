@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,6 @@ namespace J9 { typedef CPU CPUConnector; }
 #include "env/OMRCPU.hpp"
 #include "j9port.h"
 
-
 namespace J9
 {
 class CPU : public OMR::CPUConnector
@@ -44,11 +43,7 @@ protected:
    CPU() : OMR::CPUConnector() {}
 
 public:
-   bool getPPCSupportsVMX();
-   bool getPPCSupportsVSX();
-   bool getPPCSupportsAES();
-   bool getPPCSupportsTM();
-   bool getPPCSupportsLM();
+
    J9ProcessorDesc *TO_PORTLIB_getJ9ProcessorDesc();
    };
 }
