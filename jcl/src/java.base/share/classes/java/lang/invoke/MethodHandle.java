@@ -777,10 +777,10 @@ public abstract class MethodHandle {
 	MethodHandle insertArguments(MethodHandle equivalent, MethodHandle unboxingHandle, int location, Object... values) {
 		MethodHandle result = equivalent;
 
-		// Wrap result in an ArgumentMoverHandle
+		// Wrap result in an BruteArgumentMoverHandle
 		int numValues = values.length;
 		MethodType mtype = equivalent.type();
-		int[] permute = ArgumentMoverHandle.insertPermute(ArgumentMoverHandle.identityPermute(mtype), location, numValues, -1);
+		int[] permute = BruteArgumentMoverHandle.insertPermute(BruteArgumentMoverHandle.identityPermute(mtype), location, numValues, -1);
 		if (true) {
 			result = new BruteArgumentMoverHandle(mtype, unboxingHandle, permute, values, result);
 		}

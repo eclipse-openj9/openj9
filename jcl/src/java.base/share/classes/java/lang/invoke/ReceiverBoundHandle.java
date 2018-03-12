@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2009 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,7 +86,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 	/* We don't want to have the receiver object buried deep in the
 	 * MethodHandle chain, necessitating a long dereference chain to load it.
 	 * Thus, we want permuteArguments and insertArguments to return
-	 * ArgumentMoverHandles that have the receiver in them.
+	 * BruteArgumentMoverHandles that have the receiver in them.
 	 */
 	/*[ENDIF]*/
 	MethodHandle permuteArguments(MethodType permuteType, int... permute) throws NullPointerException, IllegalArgumentException {
