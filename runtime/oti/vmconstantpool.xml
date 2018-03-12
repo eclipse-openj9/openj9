@@ -358,6 +358,10 @@
 	<!-- Security manager check -->
 	<staticfieldref class="java/lang/System" name="security" signature="Ljava/lang/SecurityManager;"/>
 
+	<!-- Access to Direct Byte Buffer native memory allocation data -->
+	<staticfieldref class="java/nio/Bits" name="count" signature="Ljava/util/concurrent/atomic/AtomicLong;"/>
+	<staticfieldref class="java/nio/Bits" name="reservedMemory" signature="Ljava/util/concurrent/atomic/AtomicLong;"/>
+
 	<!-- VM constants in java -->
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_WRITE_BARRIER_TYPE_NONE" signature="I"/>
