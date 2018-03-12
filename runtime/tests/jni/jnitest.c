@@ -24,6 +24,11 @@
 #include "j9port.h"
 #include "j9.h"
 #include "vmi.h"
+/*
+ * jvm.h is required by MemoryAllocator_allocateMemory:
+ * https://github.com/eclipse/openj9/issues/1377
+ */
+#include "../j9vm/jvm.h"
 #ifdef WIN32
 #include <stdlib.h>
 #include <malloc.h>
