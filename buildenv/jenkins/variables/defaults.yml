@@ -40,7 +40,7 @@ slack_channel: '#jenkins'
 linux_ppc-64_cmprssptrs_le:
   boot_jdk:
     8: '/usr/lib/jvm/java-7-openjdk-ppc64el'
-    9: '/home/jenkins/openj9/ibm-java-ppc64le-80'
+    9: '/usr/lib/jvm/adoptojdk-java-ppc64le-80'
   release:
     8: 'linux-ppc64-normal-server-release'
     9: 'linux-ppc64le-normal-server-release'
@@ -53,7 +53,7 @@ linux_ppc-64_cmprssptrs_le:
 #========================================#
 linux_390-64_cmprssptrs:
   boot_jdk:
-    8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
+    8: '/usr/lib/jvm/ibm-java-s390x-70'
     9: '/usr/lib/jvm/adoptojdk-java-s390x-80'
   release:
     8: 'linux-s390x-normal-server-release'
