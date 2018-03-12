@@ -241,6 +241,7 @@
 
 /* Constants from J9DescriptionBits */
 #define J9DescriptionCpTypeClass 0x2
+#define J9DescriptionCpTypeConstantDynamic 0x5
 #define J9DescriptionCpTypeMask 0xF
 #define J9DescriptionCpTypeMethodHandle 0x4
 #define J9DescriptionCpTypeMethodType 0x3
@@ -2017,11 +2018,9 @@ typedef struct J9BCTranslationData {
 #define BCT_InitNOP  0
 #define BCT_InitCopyFloatsW  16
 #define BCT_InitStatics  1
-#define BCT_J9DescriptionCpTypeMethodHandle  4
 #define BCT_ErrFlagsInvalid  7
 #define BCT_LittleEndianOutput  0
 #define BCT_PcFlagUnnecessaryGeneric  0x8000000
-#define BCT_J9DescriptionCpTypeClass  2
 #define BCT_ErrNoPathToPC  2
 #define BCT_ErrReservedLiteralsInvalid  8
 #define BCT_ErrLocalAccessOutOfRange  15
@@ -2029,11 +2028,9 @@ typedef struct J9BCTranslationData {
 #define BCT_ObjectSlotAllocated  1
 #define BCT_PcFlagStackMapNeeded  0x100000
 #define BCT_InitCopyFloats  15
-#define BCT_J9DescriptionCpTypeMask  15
 #define BCT_ErrTempsShapeTooSmall  18
 #define BCT_DumpMaps  0x40000000
 #define BCT_ActionTable  5
-#define BCT_J9DescriptionCpTypeObject  1
 #define BCT_ErrPopOnEmptyStack  3
 #define BCT_InitCopyDoublesW  6
 #define BCT_IntermediateDataIsClassfile  0x2000
@@ -2041,6 +2038,14 @@ typedef struct J9BCTranslationData {
 #define BCT_InitInstanceFields  19
 #define BCT_ErrConstantPoolMapTooSmall  14
 #define BCT_InitCopyDoubles  5
+#define BCT_J9DescriptionCpTypeScalar  0
+#define BCT_J9DescriptionCpTypeObject  1
+#define BCT_J9DescriptionCpTypeClass  2
+#define BCT_J9DescriptionCpTypeMethodType  3
+#define BCT_J9DescriptionCpTypeMethodHandle  4
+#define BCT_J9DescriptionCpTypeConstantDynamic 5
+#define BCT_J9DescriptionCpTypeShift  4
+#define BCT_J9DescriptionCpTypeMask  15
 
 /* When adding a new major version update BCT_JavaMaxMajorVersionShifted to
  * the maximum allowed value.
@@ -2055,12 +2060,9 @@ typedef struct J9BCTranslationData {
 #define BCT_ErrFallOffLastInstruction  8
 #define BCT_ActionNone  0
 #define BCT_StripSourceDebugExtension  0x40000
-#define BCT_J9DescriptionCpTypeScalar  0
 #define BCT_ErrTempsShapeInvalid  17
 #define BCT_ErrArgSizeInSlotsInvalid  13
 #define BCT_DoubleSlotAllocated  2
-#define BCT_J9DescriptionCpTypeMethodType  3
-#define BCT_J9DescriptionCpTypeShift  4
 #define BCT_ErrPCMapInvalid  5
 #define BCT_ErrPCMapTooSmall  6
 #define BCT_Java6MajorVersionShifted  0x32000000
@@ -2124,14 +2126,15 @@ typedef struct J9ConstantPool {
 #define J9CPTYPE_METHOD_TYPE  13
 #define J9CPTYPE_METHODHANDLE  14
 #define J9CPTYPE_ANNOTATION_UTF8  15
-
+#define J9CPTYPE_CONSTANT_DYNAMIC 17
 /* 
- * INTERFACE_STATIC and INTERFACE_INSTANT cpType are used to track the classfile tag of a methodref [CFR_CONSTANT_InterfaceMethodref]
+ * INTERFACE_STATIC and INTERFACE_INSTANCE cpType are used to track the classfile tag of a methodref [CFR_CONSTANT_InterfaceMethodref]
  * These types are need to support correct initializer for constantpool due to how cp entries are pre-initialized
  * These will be used to check for cp consistency during resolve time
  */
-#define J9CPTYPE_INTERFACE_STATIC_METHOD 16
-#define J9CPTYPE_INTERFACE_INSTANCE_METHOD 17 
+#define J9CPTYPE_INTERFACE_STATIC_METHOD 18
+#define J9CPTYPE_INTERFACE_INSTANCE_METHOD 19
+
 
 #define J9_CP_BITS_PER_DESCRIPTION  8
 #define J9_CP_DESCRIPTIONS_PER_U32  4
@@ -2164,6 +2167,11 @@ typedef struct J9RAMStringRef {
 	j9object_t stringObject;
 	UDATA unused;
 } J9RAMStringRef;
+
+typedef struct J9RAMConstantDynamicRef {
+	j9object_t value;
+	j9object_t exception;
+} J9RAMConstantDynamicRef;
 
 typedef struct J9RAMFieldRef {
 	UDATA volatile valueOffset;
@@ -2238,6 +2246,11 @@ typedef struct J9ROMStringRef {
 } J9ROMStringRef;
 
 #define J9ROMSTRINGREF_UTF8DATA(base) NNSRP_GET((base)->utf8Data, struct J9UTF8*)
+
+typedef struct J9ROMConstantDynamicRef {
+	J9SRP nameAndSignature;
+	U_32 bsmIndexAndCpType;
+} J9ROMConstantDynamicRef;
 
 typedef struct J9ROMFieldRef {
 	U_32 classRefCPIndex;

@@ -508,6 +508,13 @@ public:
 		_cursor->writeU32((cfrKind << BCT_J9DescriptionCpTypeShift) | BCT_J9DescriptionCpTypeMethodHandle, Cursor::GENERIC);
 	}
 
+	void visitConstantDynamic(U_16 bsmIndex, U_16 cfrCPIndex)
+	{
+		/* assumes format: { SRP to NameAndSignature, (bsmIndex << 4) || cpType } */
+		_cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(cfrCPIndex), Cursor::SRP_TO_NAME_AND_SIGNATURE);
+		_cursor->writeU32((bsmIndex << BCT_J9DescriptionCpTypeShift) | BCT_J9DescriptionCpTypeConstantDynamic, Cursor::GENERIC);
+	}
+
 	void visitSingleSlotConstant(U_32 slot1)
 	{
 		_cursor->writeU32(slot1, Cursor::GENERIC);

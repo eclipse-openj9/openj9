@@ -30,8 +30,6 @@
 #include "ROMClassVerbosePhase.hpp"
 
 
-#include "bcnames.h"
-#include "cfreader.h"
 #include "j9port.h"
 #include "jbcmap.h"
 #include "ut_j9bcu.h"
@@ -1525,12 +1523,17 @@ ClassFileOracle::walkMethodCodeAttributeCode(U_16 methodIndex)
 
 		case CFR_BC_ldc2_w:
 			cpIndex = PARAM_U16();
-			markConstantAsUsedByLDC2W(cpIndex);
 			addBytecodeFixupEntry(entry++, codeIndex + 1, cpIndex, ConstantPoolMap::LDC2W);
+
 			if (isConstantLong(cpIndex)) {
 				code[codeIndex + 0] = JBldc2lw;
+				markConstantAsUsedByLDC2W(cpIndex);
 			} else if (isConstantDouble(cpIndex)) {
 				code[codeIndex + 0] = JBldc2dw;
+				markConstantAsUsedByLDC2W(cpIndex);
+			} else if (isConstantDynamic(cpIndex)) {
+				code[codeIndex + 0] = constantDynamicType(cpIndex);
+				markConstantDynamicAsReferenced(cpIndex);
 			} else {
 				Trc_BCU_Assert_ShouldNeverHappen();
 			}
@@ -2324,6 +2327,15 @@ ClassFileOracle::markConstantNameAndTypeAsReferenced(U_16 cpIndex)
 }
 
 void
+ClassFileOracle::markConstantDynamicAsReferenced(U_16 cpIndex)
+{
+	markNameAndDescriptorAsReferenced(_classFile->constantPool[cpIndex].slot2);
+	if (0 != cpIndex) { /* Never, never, never mark constantPool[0] referenced */
+		_constantPoolMap->markConstantAsReferenced(cpIndex);
+	}
+}
+
+void
 ClassFileOracle::markConstantAsUsedByAnnotation(U_16 cpIndex)
 {
 	UDATA cpTag = getCPTag(cpIndex);
@@ -2498,6 +2510,9 @@ ClassFileOracle::markConstantBasedOnCpType(U_16 cpIndex, bool assertNotDoubleOrL
 			break;
 		}
 		_constantPoolMap->markConstantAsReferencedDoubleSlot(cpIndex);
+		break;
+	case CFR_CONSTANT_Dynamic:
+		markConstantDynamicAsReferenced(cpIndex);
 		break;
 	default:
 		Trc_BCU_Assert_ShouldNeverHappen();
