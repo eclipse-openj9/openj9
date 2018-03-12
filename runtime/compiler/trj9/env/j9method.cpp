@@ -2966,7 +2966,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {x(TR::java_lang_String_toLowerCaseCore,     "toLowerCaseCore",     "(Ljava/lang/String;)Ljava/lang/String;")},
       {x(TR::java_lang_String_toUpperCase,         "toUpperCase",         "(Ljava/util/Locale;)Ljava/lang/String;")},
       {x(TR::java_lang_String_toUpperCaseCore,     "toUpperCaseCore",     "(Ljava/lang/String;)Ljava/lang/String;")},
-      {x(TR::java_lang_String_toCharArray,         "toCharArray",         "(Ljava/util/Locale;)Ljava/lang/String;")},
+      {x(TR::java_lang_String_toCharArray,         "toCharArray",         "()[C")},
       {x(TR::java_lang_String_regionMatches,       "regionMatches",       "(ILjava/lang/String;II)Z")},
       {x(TR::java_lang_String_regionMatches_bool,  "regionMatches",       "(ZILjava/lang/String;II)Z")},
       {  TR::java_lang_String_regionMatchesInternal, 21, "regionMatchesInternal", (int16_t)-1, "*"},
