@@ -5575,8 +5575,8 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                uintptrj_t mask;
                if (TR::Compiler->target.is64Bit())
                   {
-                  mask = CONSTANT64(0xFFFFFFFFFFFFFFFF) << (27 - leadingZeroes(maxSafeSize));
-                  iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr_r, node, temp2Reg, enumReg, condReg, 0, mask, iCursor);
+                  mask = 0xFFFFFFFF << (27 - leadingZeroes(maxSafeSize));
+                  iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm_r, node, temp2Reg, enumReg, condReg, 0, mask, iCursor);
                   }
                else
                   {
@@ -5735,36 +5735,24 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                //will have multiples of wordsize to work with. For now leaving this code as is, but
                //check if its worthwhile to remove these extra instuctions added here for padding as
                //zero init will be removed now.
-               if (elementSize >= 4)
+               if (elementSize >= 2)
                   {
                   if (TR::Compiler->target.is64Bit())
-                     iCursor = generateShiftLeftImmediateLong(cg, node, dataSizeReg, enumReg, trailingZeroes(elementSize), iCursor);
+                     iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, dataSizeReg, enumReg, trailingZeroes(elementSize), CONSTANT64(0x00000000FFFFFFFF) << trailingZeroes(elementSize)); 
                   else
                      iCursor = generateShiftLeftImmediate(cg, node, dataSizeReg, enumReg, trailingZeroes(elementSize), iCursor);
 
                   }
-               else if (elementSize == 2)
+               if (needZeroInit && elementSize <= 2)
                   {
-                  // RS64 processors prefer adds to shifts
-                  iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, dataSizeReg, enumReg, enumReg, iCursor);
-                  if (needZeroInit)
-                     {
-                     // the zero initialization code uses a loop of stwu's, and
-                     // so dataSizeReg must be rounded up to a multiple of 4
+                  // the zero initialization code uses a loop of stwu's, and
+                  // so dataSizeReg must be rounded up to a multiple of 4
+                  if (elementSize == 2) 
                      iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, dataSizeReg, dataSizeReg, 3, iCursor);
-                     if (TR::Compiler->target.is64Bit())
-                        iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, dataSizeReg, dataSizeReg, 0, int64_t(-4), iCursor);
-                     else
-                        iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, dataSizeReg, dataSizeReg, 0, -4, iCursor);
-                     }
-                  }
-               else if (needZeroInit) // elementSize == 1
-                  {
-                  // dataSizeReg must be set in this case for use by the zero
-                  // initializing code, and it must be rounded up to a multiple
-                  // of 4 (for the loop of stwu's)
-                  iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, dataSizeReg, enumReg, 3, iCursor);
-                  if (TR::Compiler->target.is64Bit())
+                  else  //elementSize == 1
+                     iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, dataSizeReg, enumReg, 3, iCursor);
+
+                  if (TR::Compiler->target.is64Bit() && elementSize != 1)
                      iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, dataSizeReg, dataSizeReg, 0, int64_t(-4), iCursor);
                   else
                      iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, dataSizeReg, dataSizeReg, 0, -4, iCursor);
@@ -5777,7 +5765,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                      iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, sizeReg, enumReg, allocSize + round - 1, iCursor);
                   else
                      iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, sizeReg, dataSizeReg, allocSize + round - 1, iCursor);
-                  if (TR::Compiler->target.is64Bit())
+                  if (TR::Compiler->target.is64Bit() && elementSize != 1)
                      iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, sizeReg, sizeReg, 0, int64_t(-round), iCursor);
                   else
                      iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, sizeReg, sizeReg, 0, -round, iCursor);
