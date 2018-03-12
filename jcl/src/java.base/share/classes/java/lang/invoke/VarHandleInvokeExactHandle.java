@@ -25,41 +25,51 @@ package java.lang.invoke;
 import java.lang.invoke.VarHandle.AccessMode;
 
 /**
- * Base class for VarHandleInvokers.
- * 
- * Invokers are the MethodHandle-subclasses required to implement
- * the invokeExact and invoke MethodHandle combinators.
+ * Implementation for the invokeExact varhandle combinator.
  */
-@VMCONSTANTPOOL_CLASS
-abstract class VarHandleInvokeHandle extends PrimitiveHandle {
-	@VMCONSTANTPOOL_FIELD
-	final int operation;
-	@VMCONSTANTPOOL_FIELD
-	final MethodType accessModeType;
-
-	VarHandleInvokeHandle(AccessMode accessMode, MethodType accessModeType, byte kind) {
-		// Prepend a VarHandle receiver argument to match the how this MethodHandle will be invoked
-		super(accessModeType.insertParameterTypes(0, VarHandle.class), null, null, kind, null);
-		this.operation = accessMode.ordinal();
-		// Append a VarHandle argument to match the VarHandle's internal method signature
-		this.accessModeType = accessModeType.appendParameterTypes(VarHandle.class);
+final class VarHandleInvokeExactHandle extends VarHandleInvokeHandle {
+	VarHandleInvokeExactHandle(AccessMode accessMode, MethodType accessModeType) {
+		super(accessMode, accessModeType, KIND_VARHANDLEINVOKEEXACT);
 	}
 
-	VarHandleInvokeHandle(VarHandleInvokeHandle originalHandle, MethodType newType) {
+	VarHandleInvokeExactHandle(VarHandleInvokeExactHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
-		operation = originalHandle.operation;
-		accessModeType = originalHandle.accessModeType;
 	}
 
-	final void compareWithVarHandleInvoke(VarHandleInvokeHandle left, Comparator c) {
-		c.compareStructuralParameter(left.operation, this.operation);
-		c.compareStructuralParameter(left.accessModeType, this.accessModeType);
+	@Override
+	MethodHandle cloneWithNewType(MethodType newType) {
+		return new VarHandleInvokeExactHandle(this, newType);
+	}
+
+	@Override
+	final void compareWith(MethodHandle right, Comparator c) {
+		if (right instanceof VarHandleInvokeExactHandle) {
+			((VarHandleInvokeExactHandle)right).compareWithVarHandleInvoke(this, c);
+		} else {
+			c.fail();
+		}
 	}
 
 	// {{{ JIT support
+	private static final ThunkTable _thunkTable = new ThunkTable();
+
 	@Override
-	protected final ThunkTuple computeThunks(Object arg) {
-		return thunkTable().get(new ThunkKey(ThunkKey.computeThunkableType(type(), 0, 1)));
+	protected final ThunkTable thunkTable() {
+		return _thunkTable;
+	}
+
+	@FrameIteratorSkip
+	private final int invokeExact_thunkArchetype_X(VarHandle varHandle, int argPlaceholder) {
+		MethodHandle next = varHandle.getFromHandleTable(operation);
+		if (ILGenMacros.isShareableThunk()) {
+			undoCustomizationLogic(next);
+		}
+		if (!ILGenMacros.isCustomThunk()) {
+			doCustomizationLogic();
+		}
+
+		ILGenMacros.typeCheck(next, accessModeType);
+		return ILGenMacros.invokeExact_X(next, ILGenMacros.placeholder(argPlaceholder, varHandle));
 	}
 	// }}} JIT support
 }
