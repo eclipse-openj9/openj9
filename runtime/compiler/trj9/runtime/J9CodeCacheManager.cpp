@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -304,8 +304,12 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
 
    if (preferredStartAddress)
       {
+   // J9PORT_VMEM_ADDRESS_HINT is only supported for default pages and linux
 #if defined(LINUX)
-      vmemParams.options |= J9PORT_VMEM_ADDRESS_HINT;
+      if (largeCodePageSize == 0)
+         {
+         vmemParams.options |= J9PORT_VMEM_ADDRESS_HINT;
+         }
 #endif
       vmemParams.options |= J9PORT_VMEM_STRICT_ADDRESS; // if we cannot allocate a block whose start is between preferredStartAddress and endAddress, return NULL
       vmemParams.startAddress = preferredStartAddress;
@@ -344,29 +348,31 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
                                                                       segmentType,
                                                                       &vmemParams);
 
+   uintptr_t someJitLibraryAddress = getSomeJitLibraryAddress();
+   // isInRange() checks whether the allocated codeCacheSegment baseAddress is in range of JitLibrary to avoid trampoline
    if (codeCacheSegment &&
        (vmemParams.options & J9PORT_VMEM_ADDRESS_HINT) &&
-       !isInRangeToAvoidTrampoline((uintptr_t)(codeCacheSegment->baseAddress)))
+       !isInRange((uintptr_t)(codeCacheSegment->baseAddress), someJitLibraryAddress, MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE))
       {
       // allocated code cache is not in range to avoid trampoline 
       // try with full address range that avoids trampoline
       // free old segment
       javaVM->internalVMFunctions->freeMemorySegment(javaVM, codeCacheSegment, 1);
-      uintptr_t someJitLibraryAddress = getSomeJitLibraryAddress();
       size_t alignment = 2 * 1024 * 1024;
-      // if jit library address is greater than UPPER_BOUND_DISTANCE, then we search in the addresses before the jit library address
-      // if jit library address is less than UPPER_BOUND_DISTANCE, which means we do not have the full UPPER_BOUND_DISTANCE(2GB-24MB) range before the jit library
+
+      // if jit library address is greater than MAX_DISTANCE, then we search in the addresses before the jit library address
+      // if jit library address is less than MAX_DISTANCE, which means we do not have the full MAX_DISTANCE(2GB-24MB) range before the jit library
       // in this case we search in the addresses after the jit library address
-      if (someJitLibraryAddress > UPPER_BOUND_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE)
+      if (someJitLibraryAddress > MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE)
          {
-         // align the startAddress to 2MB page boundary
-         vmemParams.startAddress = (void *)align((uint8_t *)(someJitLibraryAddress - UPPER_BOUND_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE), alignment - 1);
+         // align the startAddress to page boundary
+         vmemParams.startAddress = (void *)align((uint8_t *)(someJitLibraryAddress - MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE), alignment - 1);
          vmemParams.endAddress = preferredStartAddress;
          }
       else
          {
          vmemParams.startAddress = (void *)align((uint8_t *)(someJitLibraryAddress + SAFE_DISTANCE_REPOSITORY_JITLIBRARY), alignment -1);
-         vmemParams.endAddress = (void *)(someJitLibraryAddress + UPPER_BOUND_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE);
+         vmemParams.endAddress = (void *)(someJitLibraryAddress + MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE);
          }
       // unset STRICT_ADDRESS and ADDRESS_HINT 
       vmemParams.options &= ~(J9PORT_VMEM_STRICT_ADDRESS);
@@ -420,7 +426,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
       if (config.verboseCodeCache())
          {
          char * verboseLogString = "The code cache repository was allocated between addresses %p and %p";
-         if (preferredStartAddress && isInRangeToAvoidTrampoline((uintptr_t)(codeCacheSegment->baseAddress)))
+         if (preferredStartAddress && isInRange((uintptr_t)(codeCacheSegment->baseAddress), someJitLibraryAddress, MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE))
             {
             verboseLogString = "The code cache repository was allocated between addresses %p and %p to be near the VM/JIT modules to avoid trampolines";
             }
@@ -515,7 +521,7 @@ J9::CodeCacheManager::chooseCacheStartAddress(size_t repositorySize)
       if (largeCodePageSize > alignment)
          alignment = largeCodePageSize;
 
-      size_t safeDistance = repositorySize + TR::CodeCacheManager::SAFE_DISTANCE_REPOSITORY_JITLIBRARY;
+      size_t safeDistance = repositorySize + SAFE_DISTANCE_REPOSITORY_JITLIBRARY;
       uintptr_t someFunctionPointer = getSomeJitLibraryAddress();
 
       mcc_printf("addCodeCache() function address is %p\n", someFunctionPointer);
@@ -526,9 +532,9 @@ J9::CodeCacheManager::chooseCacheStartAddress(size_t repositorySize)
          if (someFunctionPointer > largeCodePageSize * 2)
             {
             // round down to the nearest GB first
-            startAddress = (void *)(((size_t)someFunctionPointer) & ~(largeCodePageSize-1));
+            startAddress = (void *)(((uintptr_t)someFunctionPointer - SAFE_DISTANCE_REPOSITORY_JITLIBRARY) & ~(largeCodePageSize-1));
             // then move down 1GB to allocate the code cache
-            startAddress = (void *)(((uint8_t *)startAddress) - largeCodePageSize);
+            startAddress = (void *)(((uintptr_t)startAddress) - largeCodePageSize);
             }
          }
       else
@@ -597,23 +603,14 @@ J9::CodeCacheManager::getSomeJitLibraryAddress()
    return (uintptr_t) ((void *&) pFunc);
    }
 
-// Determine whether the allocated code cache is in range to avoid trampoline or not
+// Determine whether address1 and address2 are in range
 //
 bool
-J9::CodeCacheManager::isInRangeToAvoidTrampoline(uintptr_t codeCacheBaseAddress)
+J9::CodeCacheManager::isInRange(uintptr_t address1, uintptr_t address2, uintptr_t range)
    {
-   // first compute distance between code cache and jit library
-   uintptr_t distance = 0;
-   uintptr_t someJitLibraryAddress = getSomeJitLibraryAddress();
-   if (codeCacheBaseAddress > someJitLibraryAddress)
-      {
-      distance = codeCacheBaseAddress - someJitLibraryAddress;
-      }
+   if (address1 > address2)
+      return (address1 - address2) <= range;
    else
-      {
-      distance = someJitLibraryAddress - codeCacheBaseAddress;
-      }
-   // return true if within 2GB - 24MB
-   return distance <= UPPER_BOUND_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE;
+      return (address2 - address1) <= range;
    }
 
