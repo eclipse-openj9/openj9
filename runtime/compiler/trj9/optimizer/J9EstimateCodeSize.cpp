@@ -85,7 +85,7 @@ class NeedsPeekingHeuristic
             if (i >= argInfo->getNumArgs() ||            //not enough slots in argInfo
                *sig != 'L' ||                            //primitive arg
                !argInfo->get(i) ||                       //no arg at the i-th slot
-               !argInfo->get(i)->getFixedClass()         //no classInfo at the i-th slot
+               !argInfo->get(i)->getClass()         //no classInfo at the i-th slot
                )
                {
                continue;
@@ -97,7 +97,7 @@ class NeedsPeekingHeuristic
                continue;
                }
 
-            TR_OpaqueClassBlock* argClass = argInfo->get(i)->getFixedClass();
+            TR_OpaqueClassBlock* argClass = argInfo->get(i)->getClass();
             //findCallSiteTarget and validateAndPropagateArgsFromCalleeSymbol
             //should take care of incompatible receivers
             //this assertion only checks if the receiver is of the right type
