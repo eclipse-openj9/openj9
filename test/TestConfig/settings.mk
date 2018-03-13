@@ -184,7 +184,7 @@ REPORTDIR = $(Q)$(TESTOUTPUT)$(D)$@$(Q)
 #######################################
 # TEST_STATUS
 #######################################
-TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); else $(ECHO) -e $(Q)\n$@$(Q)$(Q)_FAILED\n$(Q); fi
+TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); $(ECHO) $(Q)$(Q); else $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); $(ECHO) $(Q)$(Q); fi
 ifneq ($(DEBUG),)
 $(info TEST_STATUS is $(TEST_STATUS))
 endif
