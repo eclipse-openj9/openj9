@@ -2149,6 +2149,54 @@ flushClassLoaderReflectCache(J9VMThread * currentThread, J9HashTable * classPair
 }
 
 
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+/**
+ * \brief  Fix any resolved nest members
+ * \ingroup
+ *
+ * @param[in] currentThread
+ * @param[in] classPairs
+ * @return
+ *
+ *	Within Project Valhalla nestmates, a nest member class will resolve a link
+ *	to its nest host class when necessary to verify private access to another
+ *	class within its next class. In order for these access checks to be accurate
+ *	post nest host resolution, any classes that point to the original class def
+ *	as their nest host must be updated to point do the replaced class def instead.
+ *
+ */
+void
+fixNestMembers(J9VMThread * currentThread, J9HashTable * classPairs)
+{
+	J9HashTableState hashTableState = {0};
+	J9JVMTIClassPair *classPair = hashTableStartDo(classPairs, &hashTableState);
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+
+	while (NULL != classPair) {
+		J9Class *originalRAMClass = classPair->originalRAMClass;
+		J9Class *replacementRAMClass = classPair->replacementClass.ramClass;
+
+		if ((NULL != originalRAMClass) && (NULL != replacementRAMClass)) {
+			J9ClassLoader *classLoader = originalRAMClass->classLoader;
+			J9SRP *nestMembers = J9ROMCLASS_NESTMEMBERS(originalRAMClass->romClass);
+			U_16 nestMemberCount = originalRAMClass->romClass->nestMemberCount;
+			U_16 i = 0;
+
+			for (i = 0; i < nestMemberCount; i++) {
+				J9UTF8 *nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8*);
+				J9Class *nestMember = vmFuncs->hashClassTableAt(classLoader, J9UTF8_DATA(nestMemberName), J9UTF8_LENGTH(nestMemberName));
+				if (NULL != nestMember) {
+					if (nestMember->nestHost == originalRAMClass) {
+						nestMember->nestHost = replacementRAMClass;
+					}
+				}
+			}
+		}
+		classPair = hashTableNextDo(&hashTableState);
+	}
+}
+#endif /* J9VM_OPT_VALHALLA_NESTMATES */
+
 static void
 swapClassesForFastHCR(J9Class *originalClass, J9Class *obsoleteClass)
 {
@@ -3045,6 +3093,40 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 		if (rc != JVMTI_ERROR_NONE) {
 			return rc;
 		}
+
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+		/* Verify that the nestmates attributes - nest host & nest members - are the same */
+		{
+			J9UTF8 *originalNestHostName = J9ROMCLASS_NESTHOSTNAME(originalROMClass);
+			J9UTF8 *replacementNestHostName = J9ROMCLASS_NESTHOSTNAME(replacementROMClass);
+			U_16 nestMemberCount = originalROMClass->nestMemberCount;
+
+			/* Nest hosts must both be null or must both contain the same string */
+			if ((NULL != originalNestHostName) || (NULL != replacementNestHostName) {
+				if ((NULL == originalNestHostName) || (NULL == replacementNestHostName) {
+					return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+				} else if (!J9UTF8_EQUALS(originalNestHostName, replacementNestHostName)) {
+					return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+				}
+			}
+
+			if (nestMemberCount != replacementROMClass->nestMemberCount) {
+				return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+			} else if (0 != nestMemberCount) {
+				J9SRP *originalNestMembers = J9ROMCLASS_NESTMEMBERS(originalROMClass);
+				J9SRP *replacementNestMembers = J9ROMCLASS_NESTMEMBERS(replacementROMClass);
+				U_16 i = 0;
+
+				for (i = 0; i < nestMemberCount; i++) {
+					J9UTF8 *originalNestMemberName = NNSRP_GET(originalNestMembers[i], J9UTF8*);
+					J9UTF8 *replacementNestMemberName = NNSRP_GET(replacementNestMembers[i], J9UTF8*);
+					if (!J9UTF8_EQUALS(originalNestMemberName, replacementNestMemberName)) {
+						return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+					}
+				}
+			}
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 
 		if (0 != classUsesExtensions) {
 			classPairs[i].flags |= J9JVMTI_CLASS_PAIR_FLAG_USES_EXTENSIONS;

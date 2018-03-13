@@ -1186,6 +1186,7 @@
 		<testCaseName>memoryCategories</testCaseName>
 		<command>$(MKDIR) -p $(REPORTDIR); \
 		cd $(REPORTDIR); \
+		$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 		$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -340,6 +340,9 @@ typedef enum jvmtiError {
 	JVMTI_ERROR_NAMES_DONT_MATCH = 69,
 	JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_MODIFIERS_CHANGED = 70,
 	JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_MODIFIERS_CHANGED = 71,
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+	JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED = 72,
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 	JVMTI_ERROR_UNMODIFIABLE_CLASS = 79,
 	JVMTI_ERROR_UNMODIFIABLE_MODULE = 80,
 	JVMTI_ERROR_NOT_AVAILABLE = 98,
