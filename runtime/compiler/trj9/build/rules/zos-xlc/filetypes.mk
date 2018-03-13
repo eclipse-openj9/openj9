@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,9 +91,9 @@ RULE.s=$(eval $(DEF_RULE.s))
 #
 define DEF_RULE.m4
 $(1).s: $(2) | jit_createdirs
-	$$(PERL_PATH) $$(JIT_SCRIPT_DIR)/s390m4check.pl $$<
+	$$(PERL) $$(JIT_SCRIPT_DIR)/s390m4check.pl $$<
 	$$(M4_CMD) $$(M4_FLAGS) $$(patsubst %,-I'%',$$(M4_INCLUDES)) $$(patsubst %,-D%,$$(M4_DEFINES)) $$< > $$@
-	$$(PERL_PATH) $$(JIT_SCRIPT_DIR)/s390m4check.pl $$@
+	$$(PERL) $$(JIT_SCRIPT_DIR)/s390m4check.pl $$@
 
 JIT_DIR_LIST+=$(dir $(1))
 

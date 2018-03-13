@@ -93,14 +93,24 @@ endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
-CONFIGURE_ARGS += 'AS=c89'
-CONFIGURE_ARGS += 'CC=c89'
-CONFIGURE_ARGS += 'CXX=cxx'
+ifeq (default,$(origin AS))
+	AS=c89
+endif
+ifeq (default,$(origin CC))
+	CC=c89
+endif
+ifeq (default,$(origin CXX))
+	CXX=cxx
+endif
+
+CONFIGURE_ARGS += 'AS=$(AS)'
+CONFIGURE_ARGS += 'CC=$(CC)'
+CONFIGURE_ARGS += 'CXX=$(CXX)'
 CONFIGURE_ARGS += 'CCLINKEXE=$$(CC)'
 CONFIGURE_ARGS += 'CCLINKSHARED=cc'
-CONFIGURE_ARGS += 'CXXLINKEXE=cxx' # plus additional flags set by makefile
-CONFIGURE_ARGS += 'CXXLINKSHARED=cxx' # plus additional flags set by makefile
-CONFIGURE_ARGS += 'AR=ar'
+CONFIGURE_ARGS += 'CXXLINKEXE=$$(CXX)' # plus additional flags set by makefile
+CONFIGURE_ARGS += 'CXXLINKSHARED=$$(CXX)' # plus additional flags set by makefile
+CONFIGURE_ARGS += 'AR=$(AR)'
 
 CONFIGURE_ARGS += 'OMR_HOST_OS=zos'
 CONFIGURE_ARGS += 'OMR_HOST_ARCH=s390'

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2017 IBM Corp. and others
+# Copyright (c) 2016, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,12 +21,6 @@
 ###############################################################################
 
 include $(CONFIG_INCL_DIR)/configure_common.mk
-
-ifeq (64,$(TEMP_TARGET_DATASIZE))
-  TEMP_AS:=ml64
-else
-  TEMP_AS:=ml
-endif
 
 CONFIGURE_ARGS += \
 	--enable-debug \
@@ -105,12 +99,29 @@ endif
 
 CONFIGURE_ARGS += libprefix= exeext=.exe solibext=.dll arlibext=.lib objext=.obj
 
-CONFIGURE_ARGS += 'AS=$(TEMP_AS)'
-CONFIGURE_ARGS += 'CC=cl'
-CONFIGURE_ARGS += 'CXX=$$(CC)'
+ifeq (default,$(origin AS))
+	ifeq (64,$(TEMP_TARGET_DATASIZE))
+		AS=ml64
+	else
+		AS=ml
+	endif
+endif
+ifeq (default,$(origin CC))
+	CC=cl
+endif
+ifeq (default,$(origin CXX))
+	CXX=$(CC)
+endif
+ifeq (default,$(origin AR))
+	AR=lib
+endif
+
+CONFIGURE_ARGS += 'AS=$(AS)'
+CONFIGURE_ARGS += 'CC=$(CC)'
+CONFIGURE_ARGS += 'CXX=$(CXX)'
 CONFIGURE_ARGS += 'CCLINK=link'
 CONFIGURE_ARGS += 'CXXLINK=link'
-CONFIGURE_ARGS += 'AR=lib'
+CONFIGURE_ARGS += 'AR=$(AR)'
 
 CONFIGURE_ARGS += 'OMR_HOST_OS=win'
 CONFIGURE_ARGS += 'OMR_HOST_ARCH=x86'
