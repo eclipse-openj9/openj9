@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1102,6 +1102,11 @@ redefineClassesCommon(jvmtiEnv* env,
 
 				/* Indicate that a redefine has occurred */
 				vm->hotSwapCount += 1;
+
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+				/* Update nests with redefined nest tops */
+				fixNestMembers(currentThread, classPairs);
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 				/* Notify the JIT about redefined classes */
