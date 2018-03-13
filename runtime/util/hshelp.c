@@ -3094,6 +3094,40 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 			return rc;
 		}
 
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+		/* Verify that the nestmates attributes - nest host & nest members - are the same */
+		{
+			J9UTF8 *originalNestHostName = J9ROMCLASS_NESTHOSTNAME(originalROMClass);
+			J9UTF8 *replacementNestHostName = J9ROMCLASS_NESTHOSTNAME(replacementROMClass);
+			U_16 nestMemberCount = originalROMClass->nestMemberCount;
+
+			/* Nest hosts must both be null or must both contain the same string */
+			if ((NULL != originalNestHostName) || (NULL != replacementNestHostName) {
+				if ((NULL == originalNestHostName) || (NULL == replacementNestHostName) {
+					return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+				} else if (!J9UTF8_EQUALS(originalNestHostName, replacementNestHostName)) {
+					return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+				}
+			}
+
+			if (nestMemberCount != replacementROMClass->nestMemberCount) {
+				return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+			} else if (0 != nestMemberCount) {
+				J9SRP *originalNestMembers = J9ROMCLASS_NESTMEMBERS(originalROMClass);
+				J9SRP *replacementNestMembers = J9ROMCLASS_NESTMEMBERS(replacementROMClass);
+				U_16 i = 0;
+
+				for (i = 0; i < nestMemberCount; i++) {
+					J9UTF8 *originalNestMemberName = NNSRP_GET(originalNestMembers[i], J9UTF8*);
+					J9UTF8 *replacementNestMemberName = NNSRP_GET(replacementNestMembers[i], J9UTF8*);
+					if (!J9UTF8_EQUALS(originalNestMemberName, replacementNestMemberName)) {
+						return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
+					}
+				}
+			}
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+
 		if (0 != classUsesExtensions) {
 			classPairs[i].flags |= J9JVMTI_CLASS_PAIR_FLAG_USES_EXTENSIONS;
 			*extensionsUsed = 1;
