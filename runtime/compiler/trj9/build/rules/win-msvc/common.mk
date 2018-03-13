@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,7 +67,7 @@ $(call RULE.cpp,$(JIT_PRODUCT_BUILDNAME_OBJ),$(JIT_PRODUCT_BUILDNAME_SRC))
 
 .PHONY: $(JIT_PRODUCT_BUILDNAME_SRC)
 $(JIT_PRODUCT_BUILDNAME_SRC): | jit_createdirs
-	$(PERL_PATH) $(call FIXPATH,$(GENERATE_VERSION_SCRIPT)) $(PRODUCT_RELEASE) > $(call FIXPATH,$@)
+	$(PERL) $(call FIXPATH,$(GENERATE_VERSION_SCRIPT)) $(PRODUCT_RELEASE) > $(call FIXPATH,$@)
 
 JIT_DIR_LIST+=$(dir $(JIT_PRODUCT_BUILDNAME_SRC))
 
