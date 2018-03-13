@@ -103,6 +103,7 @@
 #define J9AccEmptyMethod 0x4000
 #define J9AccEnum 0x4000
 #define J9AccFinal 0x10
+#define J9AccFlattenable 0x100
 #define J9AccForwarderMethod 0x2000
 #define J9AccGetterMethod 0x200
 #define J9AccInterface 0x200
