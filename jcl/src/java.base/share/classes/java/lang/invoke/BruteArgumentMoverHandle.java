@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2013 IBM Corp. and others
+ * Copyright (c) 2013, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,42 +62,6 @@ abstract class ArgumentMoverHandle extends PassThroughHandle {
 		this.permute = originalHandle.permute;
 	}
 
-	static int[] identityPermute(MethodType type) {
-		int[] result = new int[type.parameterCount()];
-		for (int i = 0; i < result.length; i++) {
-			result[i] = i;
-		}
-		return result;
-	}
-
-	static int[] composePermute(int[] inner, int[] outer, int outerExtraIndexOffset) {
-		int innerLength = inner.length;
-		int[] result = new int[innerLength];
-		for (int i = 0; i < innerLength; i++) {
-			int index = inner[i];
-			if ((0 <= index) && (index < outer.length)) {
-				result[i] = outer[inner[i]];
-			} else {
-				result[i] = index + outerExtraIndexOffset;
-			}
-		}
-		return result;
-	}
-
-	static int[] insertPermute(int[] originalPermute, int insertLocation, int numValues, int startingIndex) {
-		// TODO: A variant that takes a MethodType instead of originalPermute so we don't have to bother with identityPermute
-		int[] result = new int[originalPermute.length + numValues];
-		for (int i = 0; i < insertLocation; i++) {
-			result[i] = originalPermute[i];
-		}
-		for (int i = 0; i < numValues; i++) {
-			result[insertLocation + i] = startingIndex - i;
-		}
-		for (int i = insertLocation; i < originalPermute.length; i++) {
-			result[i + numValues] = originalPermute[i];
-		}
-		return result;
-	}
 
 	// {{{ JIT support
 
@@ -276,42 +240,71 @@ final class BruteArgumentMoverHandle extends ArgumentMoverHandle {
 		return new BruteArgumentMoverHandle(this, newType);
 	}
 
-	final MethodHandle permuteArguments(MethodType permuteType, int... outerPermute) throws NullPointerException, IllegalArgumentException {
-		if (true) {
-			return new BruteArgumentMoverHandle(
-				permuteType,
-				next,
-				composePermute(this.permute, outerPermute, 0),
-				extra,
-				new PermuteHandle(permuteType, this.equivalent, outerPermute)
-				);
-		} else {
-			return super.permuteArguments(permuteType, outerPermute);
+	static int[] identityPermute(MethodType type) {
+		int[] result = new int[type.parameterCount()];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = i;
 		}
+		return result;
+	}
+
+	static int[] composePermute(int[] inner, int[] outer, int outerExtraIndexOffset) {
+		int innerLength = inner.length;
+		int[] result = new int[innerLength];
+		for (int i = 0; i < innerLength; i++) {
+			int index = inner[i];
+			if ((0 <= index) && (index < outer.length)) {
+				result[i] = outer[inner[i]];
+			} else {
+				result[i] = index + outerExtraIndexOffset;
+			}
+		}
+		return result;
+	}
+
+	static int[] insertPermute(int[] originalPermute, int insertLocation, int numValues, int startingIndex) {
+		// TODO: A variant that takes a MethodType instead of originalPermute so we don't have to bother with identityPermute
+		int[] result = new int[originalPermute.length + numValues];
+		for (int i = 0; i < insertLocation; i++) {
+			result[i] = originalPermute[i];
+		}
+		for (int i = 0; i < numValues; i++) {
+			result[insertLocation + i] = startingIndex - i;
+		}
+		for (int i = insertLocation; i < originalPermute.length; i++) {
+			result[i + numValues] = originalPermute[i];
+		}
+		return result;
+	}
+
+	final MethodHandle permuteArguments(MethodType permuteType, int... outerPermute) throws NullPointerException, IllegalArgumentException {
+		return new BruteArgumentMoverHandle(
+			permuteType,
+			next,
+			composePermute(this.permute, outerPermute, 0),
+			extra,
+			new PermuteHandle(permuteType, this.equivalent, outerPermute)
+			);
 	}
 
 	final MethodHandle insertArguments(MethodHandle equivalent, MethodHandle unboxingHandle, int location, Object... outerValues) {
 		MethodHandle result;
-		if (true) {
-			int[] insertPermute = ArgumentMoverHandle.insertPermute(ArgumentMoverHandle.identityPermute(equivalent.type), location, outerValues.length, -1);
-			int[] combinedPermute = composePermute(this.permute, insertPermute, -outerValues.length);
-			Object[] combinedExtra;
-			if (this.extra.length >= 1) {
-				combinedExtra = java.util.Arrays.copyOf(outerValues, outerValues.length + this.extra.length);
-				System.arraycopy(this.extra, 0, combinedExtra, outerValues.length, this.extra.length);
-			} else {
-				combinedExtra = outerValues;
-			}
-			result = new BruteArgumentMoverHandle(
-				equivalent.type(),
-				next,
-				combinedPermute,
-				combinedExtra,
-				equivalent
-				);
+		int[] insertPermute = insertPermute(identityPermute(equivalent.type), location, outerValues.length, -1);
+		int[] combinedPermute = composePermute(this.permute, insertPermute, -outerValues.length);
+		Object[] combinedExtra;
+		if (this.extra.length >= 1) {
+			combinedExtra = java.util.Arrays.copyOf(outerValues, outerValues.length + this.extra.length);
+			System.arraycopy(this.extra, 0, combinedExtra, outerValues.length, this.extra.length);
 		} else {
-			result = super.insertArguments(equivalent, unboxingHandle, location, outerValues);
+			combinedExtra = outerValues;
 		}
+		result = new BruteArgumentMoverHandle(
+			equivalent.type(),
+			next,
+			combinedPermute,
+			combinedExtra,
+			equivalent
+			);
 		return result;
 	}
 
