@@ -35,13 +35,14 @@
 #include "control/Recompilation.hpp"              // for TR_Recompilation, etc
 #include "control/RecompilationInfo.hpp"              // for TR_Recompilation, etc
 #include "optimizer/TransformUtil.hpp"
+#include "optimizer/Structure.hpp"
 
 // Global thresholds for the number of method enters required to trip
 // method recompilation - these are adjusted in the JIT hook control logic
 int32_t TR_JProfilingBlock::nestedLoopRecompileThreshold = 10;
 int32_t TR_JProfilingBlock::loopRecompileThreshold = 250;
 int32_t TR_JProfilingBlock::recompileThreshold = 500;
-int32_t TR_JProfilingBlock::profilingCompileThreshold = 2;
+int32_t TR_JProfilingBlock::profilingCompileThreshold = 5000;
 
 /**
  * Prim's algorithm to compute a Minimum Spanning Tree traverses the edges of the tree
@@ -825,6 +826,76 @@ void TR_JProfilingBlock::dumpCounterDependencies(TR_BitVector **componentCounter
       traceMsg(comp(), "\n");
       }
    }
+/**   \brief Creates a node that calculates the raw count of passed block from the stored static block frequency counters
+ *    \param comp Current compilation object
+ *    \param blockNumber Number of a block for which we need to generate frequency calculation node
+ *    \param bfi TR_BlockFrequencyInfo containing all counter data
+ *    \param componentCounters Array of BitVectors containing data to calculate block frequency for each block
+ *    \return root A node that loads/adds/subtracts the static block counter to calculate raw frequency of corresponding block
+ */
+TR::Node*
+TR_JProfilingBlock::generateBlockRawCountCalculationNode(TR::Compilation *comp, int32_t blockNumber, TR::Node *node, TR_BlockFrequencyInfo *bfi, TR_BitVector **componentCounters)
+   {
+   if (componentCounters == NULL)
+      componentCounters = bfi->getCounterDerivativeInfo();
+   TR::Node *root = NULL;
+   if (blockNumber > -1 && (componentCounters[blockNumber * 2]
+      && ((((uintptr_t)componentCounters[blockNumber * 2]) & 0x1 == 1)
+      || !componentCounters[blockNumber * 2]->isEmpty())))
+      {
+      TR::Node *addRoot = NULL;
+      if (((uintptr_t)componentCounters[blockNumber * 2]) & 0x1 == 1)
+         {
+         TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getFrequencyForBlock(((uintptr_t)componentCounters[blockNumber * 2]) >> 1), TR::Int32);
+         addRoot = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
+         }
+      else
+         {
+         TR_BitVectorIterator addBVI(*(componentCounters[blockNumber * 2]));
+         while (addBVI.hasMoreElements())
+            {
+            TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getFrequencyForBlock(addBVI.getNextElement()), TR::Int32);
+            TR::Node *counterLoad = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
+            if (addRoot)
+               addRoot = TR::Node::create(node, TR::iadd, 2, addRoot, counterLoad);
+            else
+               addRoot = counterLoad;
+            }
+         }
+      TR::Node *subRoot = NULL;
+      if (componentCounters[blockNumber * 2 +1] != NULL)
+         {
+         if (((uintptr_t)componentCounters[blockNumber *2 + 1]) & 0x1 == 1)
+            {
+            TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getFrequencyForBlock(((uintptr_t)componentCounters[blockNumber * 2 + 1]) >> 1), TR::Int32);
+            subRoot = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
+            }
+         else
+            {
+            TR_BitVectorIterator subBVI(*(componentCounters[blockNumber * 2 + 1]));
+            while (subBVI.hasMoreElements())
+               {
+               TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getFrequencyForBlock(subBVI.getNextElement()), TR::Int32);
+               TR::Node *counterLoad = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
+               if (subRoot)
+                  {
+                  subRoot = TR::Node::create(node, TR::isub, 2, subRoot, counterLoad);
+                  }
+               else
+                  {
+                  subRoot = counterLoad;
+                  }
+               }
+            }
+         }
+      root = addRoot;
+      if (subRoot)
+         {
+         root = TR::Node::create(node, TR::isub, 2, root, subRoot);
+         }
+      }
+   return root;
+   }
 
 /**
  * Add runtime tests to the start of the method to trigger method reccompilation once the
@@ -851,63 +922,9 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
    blockFrequencyInfo->setEntryBlockNumber(startBlockNumber);
 
    TR::Node *node = comp()->getMethodSymbol()->getFirstTreeTop()->getNode();
-
-   if (componentCounters[startBlockNumber * 2] && (((uintptr_t)componentCounters[startBlockNumber * 2]) & 0x1 == 1 || !componentCounters[startBlockNumber * 2]->isEmpty()))
+   TR::Node *root = generateBlockRawCountCalculationNode(comp(), startBlockNumber, node, blockFrequencyInfo, componentCounters);
+   if (root != NULL)
       {
-      TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "jprofiling.instrument/success/(%s)", comp()->signature()));
-      comp()->getFlowGraph()->setStructure(NULL);
-      // add the positive counters
-      TR::Node *addRoot = NULL;
-      if (((uintptr_t)componentCounters[startBlockNumber * 2]) & 0x1 == 1)
-         {
-         TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getFrequencyForBlock(((uintptr_t)componentCounters[startBlockNumber * 2]) >> 1), TR::Int32);
-         addRoot = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
-         }
-      else
-         {
-         TR_BitVectorIterator addBVI(*(componentCounters[startBlockNumber * 2]));
-         while (addBVI.hasMoreElements())
-            {
-            TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getFrequencyForBlock(addBVI.getNextElement()), TR::Int32);
-            TR::Node *counterLoad = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
-            if (addRoot)
-               addRoot = TR::Node::create(node, TR::iadd, 2, addRoot, counterLoad);
-            else
-               addRoot = counterLoad;
-            }
-         }
-      TR::Node *subRoot = NULL;
-      if (componentCounters[startBlockNumber * 2 + 1] != NULL)
-         {
-         if (((uintptr_t)componentCounters[startBlockNumber * 2 + 1]) & 0x1 == 1)
-            {
-            TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getFrequencyForBlock(((uintptr_t)componentCounters[startBlockNumber * 2 + 1]) >> 1), TR::Int32);
-            subRoot = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
-            }
-         else
-            {
-            TR_BitVectorIterator subBVI(*(componentCounters[startBlockNumber * 2 + 1]));
-            while (subBVI.hasMoreElements())
-               {
-               TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getFrequencyForBlock(subBVI.getNextElement()), TR::Int32);
-               TR::Node *counterLoad = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
-               if (subRoot)
-                  {
-                  subRoot = TR::Node::create(node, TR::isub, 2, subRoot, counterLoad);
-                  }
-               else
-                  {
-                  subRoot = counterLoad;
-                  }
-               }
-            }
-         }
-      TR::Node *root = addRoot;
-      if (subRoot)
-         {
-         root = TR::Node::create(node, TR::isub, 2, root, subRoot);
-         }
-
       TR::Block * originalFirstBlock = comp()->getStartBlock();
 
       TR::Block *guardBlock1 = TR::Block::createEmptyBlock(node, comp(), originalFirstBlock->getFrequency());
@@ -1156,8 +1173,7 @@ int32_t TR_JProfilingBlock::perform()
       
    // dump counter dependency information
    if (trace())
-      dumpCounterDependencies(componentCounters);
-
+      dumpCounterDependencies(componentCounters); 
    // modify the method to add tests to trigger recompilation at runtime
    addRecompilationTests(blockFrequencyInfo, componentCounters);
    return 1;

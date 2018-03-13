@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -633,6 +633,7 @@ class TR_BlockFrequencyInfo
    int32_t getFrequencyInfo(TR::Block *block, TR::Compilation *comp);
    int32_t getFrequencyInfo(TR_ByteCodeInfo &bci, TR::Compilation *comp, bool normalizeForCallers = true, bool trace = true);
    void    setCounterDerivationInfo(TR_BitVector **counterDerivationInfo) { _counterDerivationInfo = counterDerivationInfo; }
+   TR_BitVector ** getCounterDerivativeInfo() { return _counterDerivationInfo; }
    void    setEntryBlockNumber(int32_t number) { _entryBlockNumber = number; }
    bool    isJProfilingData() { return _counterDerivationInfo != NULL; }
    static int32_t *getEnableJProfilingRecompilation() { return &_enableJProfilingRecompilation; }
@@ -643,7 +644,7 @@ class TR_BlockFrequencyInfo
    int32_t getCallCount();
    int32_t getMaxRawCount(int32_t callerIndex);
    int32_t getMaxRawCount();
-
+   int32_t getOriginalBlockNumberToGetRawCount(TR_ByteCodeInfo &bci, TR::Compilation *comp);
    private:
    int32_t getRawCount(TR::ResolvedMethodSymbol *resolvedMethod, TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSiteInfo, int64_t maxCount, TR::Compilation *comp);
    int32_t getRawCount(TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSiteInfo, int64_t maxCount, TR::Compilation *comp);

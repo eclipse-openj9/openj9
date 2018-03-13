@@ -12311,6 +12311,8 @@ TR_J9VMBase::generateBinaryEncodingPrologue(
 
    data->jitTojitStart = data->preProcInstruction->getNext();
 
+   if (comp->isProfilingCompilation())
+      cg->generateDebugCounter(data->jitTojitStart, TR::DebugCounter::debugCounterName(comp, "profiledMethodCall/(%s)/", comp->signature()));
    // Generate code to setup argument registers for interpreter to JIT transfer
    // This piece of code is right before JIT-JIT entry point
    //

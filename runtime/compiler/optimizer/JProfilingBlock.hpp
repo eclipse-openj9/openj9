@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@ class TR_JProfilingBlock : public TR::Optimization
 
    virtual int32_t perform();
    virtual const char * optDetailString() const throw();
-
+   static TR::Node *generateBlockRawCountCalculationNode(TR::Compilation *comp, int32_t blockNumber, TR::Node *node, TR_BlockFrequencyInfo *bfi, TR_BitVector **componentCounters = NULL);
    protected:
    void computeMinimumSpanningTree(BlockParents &parents, BlockPriorityQueue &Q, TR::StackMemoryRegion &stackMemoryRegion);
    int32_t processCFGForCounting(BlockParents &parent, TR::BlockChecklist &countedBlocks, TR::CFGEdge &loopBack);

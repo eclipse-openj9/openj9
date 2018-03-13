@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1929,6 +1929,39 @@ TR_BlockFrequencyInfo::getRawCount(TR::ResolvedMethodSymbol *resolvedMethod, TR_
       frequency = getRawCount(searchBCI, callSiteInfo, maxCount, comp);
       }
    return frequency;
+   }
+
+/**   \brief Returns block number of the original block in which current byteCodeInfo was created.
+ *    \details
+ *          It finds the byte code info of the start of the block in which passed bci was originally
+ *          created and returns the block number of that block from the stored information.
+ *          It is useful when we are trying to associate the profiling information with the node which might
+ *          have moved to different blocks with different bci
+ *    \param bci TR_ByteCodeInfo for which original block number is searched for
+ *    \param comp Current compilation object
+ *    \return block number of the original block bci belongs to.
+ *            WARNING: If consumer of this API uses this to to get the profiled data in later compilation and
+ *            requested BCI was not inlined before, it returns -1.
+ */
+int32_t
+TR_BlockFrequencyInfo::getOriginalBlockNumberToGetRawCount(TR_ByteCodeInfo &bci, TR::Compilation *comp)
+   {
+   int32_t callerIndex = bci.getCallerIndex();
+   TR::ResolvedMethodSymbol *resolvedMethod = callerIndex < 0 ? comp->getMethodSymbol() : comp->getInlinedResolvedMethodSymbol(callerIndex);
+   int32_t byteCodeToSearch = resolvedMethod->getProfilingByteCodeIndex(bci.getByteCodeIndex());
+   TR_ByteCodeInfo searchBCI = bci;
+   searchBCI.setByteCodeIndex(byteCodeToSearch);
+   bool currentCallSiteInfo = TR_CallSiteInfo::getCurrent(comp) == _callSiteInfo; 
+   for (auto i=0; i < _numBlocks; ++i)
+      {
+      if (currentCallSiteInfo && _callSiteInfo->hasSameBytecodeInfo(_blocks[i], searchBCI, comp) ||
+            (!currentCallSiteInfo && _blocks[i].getCallerIndex() == searchBCI.getCallerIndex() && _blocks[i].getByteCodeIndex() == searchBCI.getByteCodeIndex()))
+         {
+         traceMsg(comp, "Get frequency from original block_%d\n", i);
+         return i;
+         }
+      }
+   return -1;
    }
 
 int32_t
