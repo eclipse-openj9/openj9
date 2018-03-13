@@ -36,23 +36,24 @@
 #define MAX_STACK_SLOTS 255
 
 static void checkForDecompile(J9VMThread *currentThread, J9ROMMethodRef *romMethodRef, UDATA jitFlags);
-static bool finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method, J9Class *fieldClass, J9ROMFieldShape *field, UDATA jitFlags);
+static bool finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method, J9Class *fieldClass, J9Class *callerClass, J9ROMFieldShape *field, UDATA jitFlags);
 
 
 /**
 * @brief In class files with version 53 or later, setting of final fields is only allowed from initializer methods.
-* Note that this is called only after verifying that the calling class and declaring class are identical.
+* Note that this is called only after verifying that the calling class and declaring class share private access.
 *
 * @param currentThread the current J9VMThread
 * @param isStatic TRUE for static fields, FALSE for instance
 * @param method the J9Method performing the resolve, NULL for no access check
 * @param fieldClass the J9Class which declares the field
+* @param callerClass the J9Class which tries to access the field
 * @param field J9ROMFieldShape of the final field
 * @param jitFlags 0 for a runtime resolve, non-zero for JIT compilation or AOT resolves
 * @return true if access is legal, false if not
 */
 static bool
-finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method, J9Class *fieldClass, J9ROMFieldShape *field, UDATA jitFlags)
+finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method, J9Class *fieldClass, J9Class *callerClass, J9ROMFieldShape *field, UDATA jitFlags)
 {
 	bool legal = true;
 	/* NULL method means do not do the access check */
@@ -61,7 +62,10 @@ finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method,
 		if (romClass->majorVersion >= 53) {
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 			J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
-			if (('<' != J9UTF8_DATA(name)[0]) || (J9UTF8_LENGTH(name) != strlen(isStatic ? "<clinit>" : "<init>"))) {
+			if (('<' != J9UTF8_DATA(name)[0])
+			|| (J9UTF8_LENGTH(name) != strlen(isStatic ? "<clinit>" : "<init>"))
+			|| ((fieldClass != callerClass) && (!J9ROMCLASS_IS_UNSAFE(callerClass->romClass)))
+			) {
 				if (0 == jitFlags) {
 					setIllegalAccessErrorFinalFieldSet(currentThread, isStatic, romClass, field, romMethod);
 				}
@@ -683,7 +687,7 @@ illegalAccess:
 					}
 					goto done;
 				}
-				if (!finalFieldSetAllowed(vmStruct, true, method, definingClass, field, jitFlags)) {
+				if (!finalFieldSetAllowed(vmStruct, true, method, definingClass, classFromCP, field, jitFlags)) {
 					staticAddress = NULL;
 					goto done;
 				} else { /* finalFieldSetAllowed */
@@ -888,7 +892,7 @@ illegalAccess:
 					}
 					goto done;
 				}
-				if (!finalFieldSetAllowed(vmStruct, false, method, definingClass, field, jitFlags)) {
+				if (!finalFieldSetAllowed(vmStruct, false, method, definingClass, classFromCP, field, jitFlags)) {
 					fieldOffset = -1;
 					goto done;
 				}
