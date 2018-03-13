@@ -43,6 +43,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/JitProfiler.cpp \
     compiler/optimizer/JProfilingBlock.cpp \
     compiler/optimizer/JProfilingValue.cpp \
+    compiler/optimizer/JProfilingRecompLoopTest.cpp \
     compiler/optimizer/LiveVariablesForGC.cpp \
     compiler/optimizer/LoopAliasRefiner.cpp \
     compiler/optimizer/MonitorElimination.cpp \
