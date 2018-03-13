@@ -1613,6 +1613,45 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 	return TRUE;
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+ * Attempts to recursively load classes of fields with the flattenable
+ * access modifier set.
+ *
+ * Caller should not hold the classTableMutex.
+ *
+ * Return TRUE on success. On failure, returns FALSE and sets the
+ * appropriate Java error on the VM.
+ */
+static VMINLINE BOOLEAN
+loadFlattenableFieldValueClasses(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags)
+{
+	struct J9ROMFieldWalkState fieldWalkState;
+	memset(&fieldWalkState, 0, sizeof(fieldWalkState));
+
+	/* iterate over fields and load classes of fields marked flattenable */
+	J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
+	while (NULL != field) {
+		const U_32 modifiers = field->modifiers;
+		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
+
+		if (modifiers & J9AccFlattenable) {
+			if ('[' == J9UTF8_DATA(signature)[0]) {
+				// TODO: array case
+				// fieldClass = internalFindClassUTF8(vmThread, J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), classLoader, classPreloadFlags);
+			} else {
+				Assert_VM_true('L' == J9UTF8_DATA(signature)[0]);
+				/* skip fieldSignature's L and ; to have only CLASSNAME required for internalFindClassUTF8 */
+				internalFindClassUTF8(vmThread, &J9UTF8_DATA(signature)[1], J9UTF8_LENGTH(signature)-2, classLoader, classPreloadFlags);
+			}
+		}
+		field = romFieldsNextDo(&fieldWalkState);
+	}
+
+	return TRUE;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 static J9Class *
 loadNestHost(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *nestHostName, UDATA classPreloadFlags)
@@ -2833,7 +2872,11 @@ retry:
 		}
 	}
 
-	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module)) {
+	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		|| !loadFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, classPreloadFlags)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	) {
 		omrthread_monitor_enter(javaVM->classTableMutex);
 		return internalCreateRAMClassDone(vmThread, classLoader, romClass, options, elementClass, className, &state);
 	}
