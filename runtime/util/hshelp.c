@@ -3102,7 +3102,7 @@ verifyClassesAreCompatible(J9VMThread * currentThread, jint class_count, J9JVMTI
 			U_16 nestMemberCount = originalROMClass->nestMemberCount;
 
 			/* Nest hosts must both be null or must both contain the same string */
-			if ((NULL != originalNestHostName) || (NULL != replacementNestHostName) {
+			if ((NULL != originalNestHostName) || (NULL != replacementNestHostName)) {
 				if ((NULL == originalNestHostName) || (NULL == replacementNestHostName) {
 					return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_ATTRIBUTE_CHANGED;
 				} else if (!J9UTF8_EQUALS(originalNestHostName, replacementNestHostName)) {
