@@ -276,6 +276,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="thr_lockNursery" value="true"/>
 		<flag id="thr_lockReservation" value="true"/>
 		<flag id="thr_smartDeflation" value="true"/>
+		<flag id="uma_gnuDebugSymbols" value="true"/>
 		<flag id="uma_supportsIpv6" value="true"/>
 	</flags>
 </spec>

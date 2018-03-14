@@ -79,3 +79,7 @@ type:SOCKADDR_STORAGE_XP
 type:UINT
 type:ULONG
 type:WSADATA
+
+# problem names on AIX
+type:Enum
+type:signed char

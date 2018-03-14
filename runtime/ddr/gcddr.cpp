@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "AllocateDescription.hpp"
+#include "AllocationCategory.hpp"
 #include "ConcurrentCardTable.hpp"
 #include "CopyScanCacheStandard.hpp"
 #include "FreeHeapRegionList.hpp"
@@ -54,6 +55,7 @@
 
 GC_DdrDebugLink(J9ModronAllocateHint)
 GC_DdrDebugLink(MM_AllocateDescription)
+GC_DdrDebugLink(MM_AllocationCategory)
 GC_DdrDebugLink(MM_ConcurrentCardTable)
 GC_DdrDebugLink(MM_CopyScanCacheStandard)
 GC_DdrDebugLink(MM_FreeHeapRegionList)
