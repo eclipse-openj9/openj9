@@ -399,7 +399,10 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
     * Hence, splitting the dependencies to avoid spill instructions.
     */
    TR::RegisterDependencyConditions* callPreDeps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(deps->getPreConditions(), NULL, deps->getAddCursorForPre(), 0, codeGen);
-   TR::RegisterDependencyConditions* callPostDeps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(NULL, deps->getPostConditions(), 0, deps->getAddCursorForPost(), codeGen);
+   TR::RegisterDependencyConditions* callPostDeps = NULL;
+
+   if (jniCallDataSnippet == NULL)
+       callPostDeps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(NULL, deps->getPostConditions(), 0, deps->getAddCursorForPost(), codeGen);
 
    gcPoint = generateRRInstruction(codeGen, TR::InstOpCode::BASR, callNode, systemReturnAddressRegister, systemEntryPointRegister, callPreDeps);
    if (isJNIGCPoint)
@@ -408,7 +411,11 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
    TR::Instruction * cursor = generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, returnFromJNICallLabel);
 
    cursor = genCallNOPAndDescriptor(cursor, callNode, callNode, TR_XPLinkCallType_BASR);
-   cursor->setDependencyConditions(callPostDeps);
+
+   // Non-JNI calls to native can have the post-deps added here.
+   // JNI dispatch has helper calls immedately after the BASR. The post-deps are appended to helpers.
+   if (jniCallDataSnippet == NULL)
+      cursor->setDependencyConditions(callPostDeps);
 
    if (cg()->supportsJITFreeSystemStackPointer())
       {
@@ -492,10 +499,20 @@ TR::J9S390zOSSystemLinkage::addFECustomizedReturnRegDependency(int64_t killMask,
    return killMask;
    }
 
-
-
 /**
- * General XPLink utility
+ * \details
+ * A NOP padding is needed because returning from XPLINK functions
+ * skips the XPLink eyecatcher and always return to a point that's 2 or 4 bytes after the return address.
+ *
+ * In 64 bit XPLINK, the caller returns with a 'branch relative on condition' instruction with a 2 byte offset:
+ *
+ *
+ *   0x47F07002                    B        2(,r7)
+ *
+ * In 31-bit XPLINK, this offset is 4-byte.
+ *
+ * As a result of this, JIT'ed code needs 2 or 4-byte NOP paddings to ensure entry to valid instruction.
+ *
  */
 TR::Instruction *
 TR::J9S390zOSSystemLinkage::genCallNOPAndDescriptor(TR::Instruction * cursor,

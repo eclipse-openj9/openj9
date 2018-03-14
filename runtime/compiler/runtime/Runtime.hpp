@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,6 +85,12 @@ inline uint32_t getJitEntryOffset(TR_LinkageInfo *linkageInfo)
 #define  OFFSET_SAMPLING_PRESERVED_FROM_STARTPC          (-8)
 #define  START_PC_TO_METHOD_INFO_ADDRESS                  -8 // offset from startpc to jitted body info
 #define  OFFSET_COUNTING_BRANCH_FROM_JITENTRY             36
+#endif
+
+#ifdef J9ZOS390
+#define TRS390_TOC_UNWRAP_ENV(wrappedPointer) (((J9FunctionDescriptor_T *) (wrappedPointer))->ada)
+#else
+#define TRS390_TOC_UNWRAP_ENV(wrappedPointer) (void*)0xdeafbeef
 #endif
 
 /* Functions used by AOT runtime to fixup recompilation info for AOT */
