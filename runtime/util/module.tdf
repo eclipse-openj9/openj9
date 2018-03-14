@@ -1,4 +1,4 @@
-// Copyright (c) 2017, 2017 IBM Corp. and others
+// Copyright (c) 2017, 2018 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,3 +41,4 @@ TraceEvent=Trc_MODULE_add_module_package Overhead=1 Level=5 Test Template="JVM_A
 TraceEvent=Trc_MODULE_setting_package Overhead=1 Level=5 Test Template="internally set package/class: %.*s, loader: %s, module: %s"
 
 TraceException=Trc_VM_checkVisibility_failed_with_errortype Overhead=1 Level=1 Template="checkVisibility from %p (%.*s) to %p (%.*s) failed, error type: %s"
+TraceException=Trc_VM_checkVisibility_failed_with_errortype_romclass Overhead=1 Level=1 Template="checkVisibility from romClass=%p (%.*s) j9mod=%p to romClass=%p (%.*s) j9mod=%p failed, packagedef'n errcode=%zu, error type: %s"

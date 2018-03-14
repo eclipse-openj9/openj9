@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1259,6 +1259,7 @@ extern J9_CFUNC void  dbgDumpStack (J9VMThread *vmThread, IDATA delta);
 #ifndef _J9VMVISIBILITY_
 #define _J9VMVISIBILITY_
 extern J9_CFUNC IDATA  checkVisibility (J9VMThread* currentThread, J9Class* sourceClass, J9Class* destClass, UDATA modifiers, UDATA lookupOptions);
+extern J9_CFUNC IDATA  checkModuleAccess(J9VMThread *currentThread, J9JavaVM* vm, J9ROMClass* srcRomClass, J9Module* srcModule, J9ROMClass* destRomClass, J9Module* destModule, UDATA destPackageID, UDATA lookupOptions);
 #endif /* _J9VMVISIBILITY_ */
 
 /* J9VMVolatileLongFunctions*/
