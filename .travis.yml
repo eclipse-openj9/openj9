@@ -64,8 +64,10 @@ before_script:
   # - ccache -s -z
   # Exit immediately if any unexpected error occurs.
   - set -e
-  - wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-  - tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
+  - if [ ! `wget https://ci.eclipse.org/openj9/userContent/freemarker-2.3.8.jar -O freemarker.jar` ]; then
+      wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz;
+      tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2;
+    fi
   - cd ..
   # Shallow clone of the openj9-openjdk-jdk9 repo to speed up clone / reduce server load.
   - git clone --depth 1 https://github.com/ibmruntimes/openj9-openjdk-jdk9.git
