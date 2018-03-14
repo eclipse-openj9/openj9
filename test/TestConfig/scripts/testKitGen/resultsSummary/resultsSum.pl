@@ -66,48 +66,54 @@ sub resultReporter {
 	if (open($fhIn, '<', $resultFile)) {
 		while ( my $result = <$fhIn> ) {
 			if ($result =~ /===============================================\n/) {
-				my $output = "  ---\n    output:\n      |\n";
+				my $output = "    output:\n      |\n";
 				$output .= '        ' . $result;
 				my $testName = '';
+				my $startTime = 0;
+				my $endTime = 0;
 				while ( $result = <$fhIn> ) {
+					$output .= '        ' . $result;
 					if ($result =~ /Running test (.*) \.\.\.\n/) {
 						$testName = $1;
+					} elsif ($result =~ /Start Time: .* Epoch Time \(ms\): (.*)\n/) {
+						$startTime = $1;
+					} elsif ($result =~ /Finish Time: .* Epoch Time \(ms\): (.*)\n/) {
+						$endTime = $1;
+						$tapString .= "    duration_ms: " . ($endTime - $startTime) . "\n  ...\n";
+						last;
 					} elsif ($result eq ($testName . "_PASSED\n")) {
 						$result =~ s/_PASSED\n$//;
 						push (@passed, $result);
 						$numOfPassed++;
 						$numOfTotal++;
 						$tapString .= "ok " . $numOfTotal . " - " . $result . "\n";
+						$tapString .= "  ---\n";
 						if ($diagnostic eq 'all') {
-							$output .= "  ...\n";
 							$tapString .= $output;
 						}
-						last;
 					} elsif ($result eq ($testName . "_FAILED\n")) {
 						$result =~ s/_FAILED\n$//;
 						push (@failed, $result);
 						$numOfFailed++;
 						$numOfTotal++;
 						$tapString .= "not ok " . $numOfTotal . " - " . $result . "\n";
+						$tapString .= "  ---\n";
 						if (($diagnostic eq 'failure') || ($diagnostic eq 'all')) {
-							$output .= "  ...\n";
 							$tapString .= $output;
 						}
-						last;
 					} elsif ($result =~ /(capabilities \(.*?\))\s*=>\s*${testName}_SKIPPED\n/) {
 						my $capabilities = $1;
 						push (@capSkipped, "$testName - $capabilities");
 						$numOfSkipped++;
 						$numOfTotal++;
 						$tapString .= "ok " . $numOfTotal . " - " . $testName . " # skip\n";
-						last;
+						$tapString .= "  ---\n";
 					} elsif ($result =~ /(jvm options|platform requirements).*=>\s*${testName}_SKIPPED\n/) {
 						$numOfSkipped++;
 						$numOfTotal++;
 						$tapString .= "ok " . $numOfTotal . " - " . $testName . " # skip\n";
-						last;
+						$tapString .= "  ---\n";
 					}
-					$output .= '        ' . $result;
 				}
 			}
 		}

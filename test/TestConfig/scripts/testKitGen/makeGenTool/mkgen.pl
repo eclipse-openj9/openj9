@@ -398,7 +398,7 @@ sub writeTargets {
 				}
 				$levelStr .= "level." . $level;
 			}
-			
+
 			print $fhOut "$name: TEST_GROUP=" . $levelStr . "\n";
 			my $indent .= "\t";
 			print $fhOut "$name:\n";
@@ -407,6 +407,7 @@ sub writeTargets {
 			print $fhOut "$indent\@echo \"===============================================\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			print $fhOut "$indent\@echo \"Running test \$\@ ...\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			print $fhOut "$indent\@echo \"===============================================\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
+			print $fhOut "$indent\@perl \'-MTime::HiRes=gettimeofday\' -e \'print \"Start Time: \" . localtime() . \" Epoch Time (ms): \" . int (gettimeofday * 1000) . \"\\n\"\' | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 			if ($condition_platform) {
 				print $fhOut "ifeq (\$($condition_platform),)\n";
 			}
@@ -426,25 +427,27 @@ sub writeTargets {
 			my $command = $test->{'command'};
 			$command =~ s/^\s+//;
 			$command =~ s/\s+$//;
-			print $fhOut "$indent\{ $command; \} 2>&1 | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q)\n";
+			print $fhOut "$indent\{ $command; \} 2>&1 | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 
 			if (defined($capabilityReqs)) {
 				foreach my $key (keys %capabilityReqs_Hash) {
 					print $fhOut "else\n";
-					print $fhOut "$indent\@echo \"Skipped due to capabilities ($capabilityReqs) => \$(TEST_SKIP_STATUS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q)\n";
+					print $fhOut "$indent\@echo \"Skipped due to capabilities ($capabilityReqs) => \$(TEST_SKIP_STATUS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 					print $fhOut "endif\n";
 				}
 			}
 			if ($condition_platform) {
 				print $fhOut "else\n";
 				if (defined($platformRequirements)) {
-					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) and/or platform requirements ($platformRequirements) => \$(TEST_SKIP_STATUS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q)\n";
+					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) and/or platform requirements ($platformRequirements) => \$(TEST_SKIP_STATUS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 				} else{
-					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) => \$(TEST_SKIP_STATUS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q)\n";
+					print $fhOut "$indent\@echo \"Skipped due to jvm options (\$(JVM_OPTIONS)) => \$(TEST_SKIP_STATUS)\" | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q);\n";
 				}
 				print $fhOut "endif\n";
 			}
-			print $fhOut "\n.PHONY: $name\n\n";
+			print $fhOut "$indent\@perl \'-MTime::HiRes=gettimeofday\' -e \'print \"Finish Time: \" . localtime() . \" Epoch Time (ms): \" . int (gettimeofday * 1000) . \"\\n\"\' | tee -a \$(Q)\$(TESTOUTPUT)\$(D)TestTargetResult\$(Q)\n";
+
+			print $fhOut "\n.PHONY: $name\n\n"; 
 
 			foreach my $eachGroup (@{$test->{'groups'}}) {
 				foreach my $eachLevel (@{$test->{'levels'}}) {
