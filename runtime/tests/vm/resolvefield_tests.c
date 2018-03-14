@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,6 +149,14 @@ createFakeROMClass(U_8 *buffer, UDATA bufferSize, const char *className, testFie
 #undef BUF_ALLOC
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+static J9ClassLoader *
+createFakeClassLoader() {
+	// TODO
+	return NULL;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 static IDATA
 checkForFieldOverlaps(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClass, UDATA *badOffset)
 {
@@ -162,8 +170,13 @@ checkForFieldOverlaps(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClass, U
 		buf[i] = 0xff;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	walkResult = fieldOffsetsStartDo(vm, NULL, romClass, superClass, &walkState,
+			J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	walkResult = fieldOffsetsStartDo(vm, romClass, superClass, &walkState,
 			J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	while (NULL != walkResult->field) {
 
 		fieldSize = calculateFieldSize(walkResult->field->modifiers);
@@ -177,7 +190,7 @@ checkForFieldOverlaps(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClass, U
 #endif
 
 			if (offset > sizeof(buf)) {
-				/* Error - buffer to small? */
+				/* Error - buffer too small? */
 				*badOffset = offset;
 				return -1;
 			}
@@ -209,8 +222,13 @@ checkForPresenceOfField(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClass,
 	J9ROMFieldOffsetWalkResult *walkResult;
 	J9ROMFieldOffsetWalkState walkState;
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	walkResult = fieldOffsetsStartDo(vm, NULL, romClass, superClass, &walkState,
+			J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	walkResult = fieldOffsetsStartDo(vm, romClass, superClass, &walkState,
 			J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	while (NULL != walkResult->field) {
 		J9UTF8 *resultFieldName = SRP_GET(walkResult->field->nameAndSignature.name, J9UTF8*);
 		UDATA resultFieldSize = calculateFieldSize(walkResult->field->modifiers);
@@ -282,7 +300,11 @@ testAddHiddenInstanceFields(J9PortLibrary *portLib, const char *testName,
 		goto _exit_test;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	walkResult = fieldOffsetsStartDo(&javaVM, NULL, fakeROMClass, NULL, &walkState, J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	walkResult = fieldOffsetsStartDo(&javaVM, fakeROMClass, NULL, &walkState, J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	if (NULL == walkResult) {
 		outputErrorMessage(TEST_ERROR_ARGS, "fieldOffsetsStartDo() returned NULL!\n");
 		goto _exit_test;
@@ -312,7 +334,11 @@ testAddHiddenInstanceFields(J9PortLibrary *portLib, const char *testName,
 			goto _exit_test;
 		}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		walkResult = fieldOffsetsStartDo(&javaVM, NULL, fakeROMClass, NULL, &walkState, J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		walkResult = fieldOffsetsStartDo(&javaVM, fakeROMClass, NULL, &walkState, J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		if (NULL == walkResult) {
 			outputErrorMessage(TEST_ERROR_ARGS, "fieldOffsetsStartDo() returned NULL!\n");
 			goto _exit_test;

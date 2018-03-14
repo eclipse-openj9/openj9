@@ -2141,7 +2141,11 @@ instanceFieldOffsetWithSourceClass(J9VMThread *vmStruct, J9Class *clazz, U_8 *fi
 * @return J9ROMFieldOffsetWalkResult *
 */
 J9ROMFieldOffsetWalkResult *
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+fieldOffsetsStartDo(J9JavaVM *vm, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /**
 * @brief Iterate over fields of the specified class in JVMTI order.

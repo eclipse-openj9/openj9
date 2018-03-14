@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,6 +96,22 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 		 */
 		ramClass->totalInstanceSize = walkResult->totalInstanceSize;
 		ramClass->backfillOffset = sizeof(J9Object) + ((walkResult->backfillOffset == -1) ?	walkResult->totalInstanceSize : walkResult->backfillOffset);
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		/* Store the largest field alignment into the J9Class.
+		 *
+		 * This is only meaningful when the class is a value type. TODO: don't
+		 * do this when the class is not a value type.
+		 *
+		 * Note that we do not need to consider the superclass fields, since a
+		 * value class must have j.l.Object as its superclass.
+		 */
+		if (walkState->firstDoubleOffset < walkState->firstObjectOffset) {
+			ramClass->classFlags |= J9ClassLargestAlignmentDouble;
+		} else if (walkState->firstObjectOffset < walkState->firstSingleOffset) {
+			ramClass->classFlags |= J9ClassLargestAlignmentObject;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 #if defined( J9VM_THR_LOCK_NURSERY )
 		/* write lockword offset into ramClass */

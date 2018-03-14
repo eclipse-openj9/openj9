@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,10 @@
 
 class ObjectFieldInfo {
 private:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	J9ClassLoader *_classLoader;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	U_32 _cacheLineSize;
 	bool _useContendedClassLayout; /* check this in constructor. Forced to false if we can't get the line size */
 	J9ROMClass *_romClass;
@@ -46,6 +50,14 @@ private:
 	U_32 _instanceObjectCount;
 	U_32 _instanceSingleCount;
 	U_32 _instanceDoubleCount;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	U_32 _hiddenObjectCount;
+	U_32 _hiddenSingleCount;
+	U_32 _hiddenDoubleCount;
+	U_32 _flatObjectCount;
+	U_32 _flatSingleCount;
+	U_32 _flatDoubleCount;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	U_32 _totalObjectCount;
 	U_32 _totalSingleCount;
 	U_32 _totalDoubleCount;
@@ -84,7 +96,12 @@ public:
 		OBJECT_SIZE_INCREMENT_IN_BYTES = 8
 	};
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	ObjectFieldInfo(J9JavaVM *vm, J9ClassLoader *classLoader, J9ROMClass *romClass):
+		_classLoader(classLoader),
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	ObjectFieldInfo(J9JavaVM *vm, J9ROMClass *romClass):
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		_cacheLineSize(0),
 		_useContendedClassLayout(false),
 		_romClass(romClass),
@@ -93,6 +110,14 @@ public:
 		_instanceObjectCount(0),
 		_instanceSingleCount(0),
 		_instanceDoubleCount(0),
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		_hiddenObjectCount(0),
+		_hiddenSingleCount(0),
+		_hiddenDoubleCount(0),
+		_flatObjectCount(0),
+		_flatSingleCount(0),
+		_flatDoubleCount(0),
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		_totalObjectCount(0),
 		_totalSingleCount(0),
 		_totalDoubleCount(0),
@@ -165,7 +190,7 @@ public:
 	 * 2. instance objects
 	 * 3. hidden singles
 	 * 4. hidden objects
-	 * @return number of object fields (instance and hidden) which do not go  in a backfill slot.
+	 * @return number of object fields (instance, hidden, and flat) which do not go in a backfill slot.
 	 */
 	VMINLINE U_32
 	getNonBackfilledObjectCount(void) const
@@ -190,7 +215,7 @@ public:
 
 	VMINLINE U_32
 	getNonBackfilledInstanceObjectCount(void) const
- {
+	{
 		U_32 nonBackfilledObjects = _instanceObjectCount;
 		if (isBackfillSuitableInstanceObjectAvailable()  && !isBackfillSuitableInstanceSingleAvailable()
 				&& isMyBackfillSlotAvailable()) {
@@ -227,6 +252,44 @@ public:
 		return _instanceSingleCount;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	VMINLINE U_32
+	getHiddenDoubleCount(void) const
+	{
+		return _hiddenDoubleCount;
+	}
+
+	VMINLINE U_32
+	getHiddenObjectCount(void) const
+	{
+		return _hiddenObjectCount;
+	}
+
+	VMINLINE U_32
+	getHiddenSingleCount(void) const
+	{
+		return _hiddenSingleCount;
+	}
+
+	VMINLINE U_32
+	getFlatDoubleCount(void) const
+	{
+		return _flatDoubleCount;
+	}
+
+	VMINLINE U_32
+	getFlatObjectCount(void) const
+	{
+		return _flatObjectCount;
+	}
+
+	VMINLINE U_32
+	getFlatSingleCount(void) const
+	{
+		return _flatSingleCount;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	VMINLINE U_32
 	getHiddenFieldCount(void) const
 	{
@@ -236,13 +299,21 @@ public:
 	VMINLINE bool
 	isBackfillSuitableSingleAvailable(void) const
 	{
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		return (0 != getInstanceSingleCount() || 0 != getHiddenSingleCount());
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		return (0 != getTotalSingleCount());
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 
 	VMINLINE bool
 	isBackfillSuitableObjectAvailable(void) const
 	{
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		return (_objectCanUseBackfill && ((0 != getInstanceObjectCount()) || (0 != getHiddenObjectCount())));
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		return (_objectCanUseBackfill && (0 != getTotalObjectCount()));
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 
 	VMINLINE bool

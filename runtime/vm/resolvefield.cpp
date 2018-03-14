@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -214,7 +214,11 @@ findFieldInClass(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fie
 		}
 
 		/* walk all instance and static fields */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		result = fieldOffsetsStartDo(javaVM, clazz->classLoader, romClass, SUPERCLASS( clazz ), &state, walkFlags);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		result = fieldOffsetsStartDo(javaVM, romClass, SUPERCLASS( clazz ), &state, walkFlags);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		while (!found && (result->field != NULL)) {
 			/* compare name and sig */
 			J9UTF8* thisName = J9ROMFIELDSHAPE_NAME(result->field);
@@ -604,7 +608,11 @@ addHiddenInstanceField(J9JavaVM *vm, const char *className, const char *fieldNam
 
 
 J9ROMFieldOffsetWalkResult *
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+fieldOffsetsStartDo(J9JavaVM *vm, J9ClassLoader *classLoader, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags)
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 {
 
 	Trc_VM_romFieldOffsetsStartDo_Entry( NULL, romClass, superClazz, flags );
@@ -615,7 +623,11 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 	state->romClass = romClass;
 	state->hiddenInstanceFieldWalkIndex = (UDATA)-1;
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	ObjectFieldInfo fieldInfo(vm, classLoader, romClass);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	ObjectFieldInfo fieldInfo(vm, romClass);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	/* Calculate instance size. Skip the following if we  care about only about statics */
 	if (J9_ARE_ANY_BITS_SET(state->walkFlags, (J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN | J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE))) {
 
@@ -998,7 +1010,11 @@ fullTraversalFieldOffsetsStartDo(J9JavaVM *vm, J9Class *clazz, J9ROMFullTraversa
 			}
 		}
 		
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		result = fieldOffsetsStartDo(state->javaVM, clazz->classLoader, state->currentClass->romClass, SUPERCLASS(state->currentClass), &(state->fieldOffsetWalkState), state->walkFlags);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		result = fieldOffsetsStartDo(state->javaVM, state->currentClass->romClass, SUPERCLASS(state->currentClass), &(state->fieldOffsetWalkState), state->walkFlags);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		field = result->field;
 		if (NULL != field) {
 			state->fieldOffset = result->offset;
@@ -1066,7 +1082,11 @@ fullTraversalFieldOffsetsNextDo(J9ROMFullTraversalFieldOffsetWalkState *state)
 			}
 		}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		result = fieldOffsetsStartDo(state->javaVM, state->clazz->classLoader, state->currentClass->romClass, SUPERCLASS(state->currentClass), &(state->fieldOffsetWalkState), state->walkFlags);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		result = fieldOffsetsStartDo(state->javaVM, state->currentClass->romClass, SUPERCLASS(state->currentClass), &(state->fieldOffsetWalkState), state->walkFlags);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		field = result->field;
 		if (NULL != field) {
 			state->fieldOffset = result->offset;
@@ -1237,8 +1257,13 @@ createFieldTable(J9VMThread *vmThread, J9Class *clazz) {
 	fieldList = (J9FieldTableEntry*) j9mem_allocate_memory(romClass->romFieldCount * sizeof(J9FieldTableEntry), OMRMEM_CATEGORY_VM);
 	
 	/* get the field names and put them in the list in unsorted order */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	result = fieldOffsetsStartDo(javaVM, clazz->classLoader, romClass, SUPERCLASS(clazz),
+		&state, J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	result = fieldOffsetsStartDo(javaVM, romClass, SUPERCLASS(clazz),
 		&state, J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	while (result->field != NULL) {
 		/* compare name and sig */
 		fieldList[count].field = result->field;

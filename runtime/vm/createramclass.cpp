@@ -2028,9 +2028,15 @@ fail:
 		/* add in the static and special split tables */
 		classSize += (romClass->staticSplitMethodRefCount + romClass->specialSplitMethodRefCount);
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		romWalkResult = fieldOffsetsStartDo(javaVM, hostClassLoader, romClass, superclass, &romWalkState,
+			(J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE |
+			 J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS));
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		romWalkResult = fieldOffsetsStartDo(javaVM, romClass, superclass, &romWalkState,
 			(J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE | J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE |
 			 J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS));
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		/* inherited from superclass: superclasses array, instance shape and interface slots */
 		if (superclass == NULL) {
 			/* java.lang.Object has a NULL at superclasses[-1] for fast superclass fetch. */
@@ -2474,9 +2480,9 @@ fail:
 			 *                                  + ClassContainsMethodsPresentInMCCHash
 			 *                                 + ClassGCScanned
 			 *                                + ClassIsAnonymous
-			 *                               + Unused
+			 *                               + ClassLargestAlignmentObject
 			 *
-			 *                             + Unused
+			 *                             + ClassLargestAlignmentDouble
 			 *                            + Unused
 			 *                           + Unused
 			 *                          + Unused

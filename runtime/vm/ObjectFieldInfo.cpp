@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,9 @@
 #include "j9modifiers_api.h"
 #include "ObjectFieldInfo.hpp"
 #include "util_api.h"
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#include "vm_api.h"
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /**
  * Calculate the number of various types of fields.
@@ -43,7 +46,43 @@ ObjectFieldInfo::countInstanceFields(void)
 	while (NULL != field) {
 		const U_32 modifiers = field->modifiers;
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic) ) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (modifiers & J9AccFlattenable) {
+				const J9Class *fieldClass = NULL;
+				const J9UTF8 * const fieldSignature = J9ROMFIELDSHAPE_SIGNATURE(field);
+				UDATA fieldsSize = 0;
 
+				if ('[' == J9UTF8_DATA(fieldSignature)[0]) {
+					/* TODO: array case */
+				} else {
+					Assert_VM_true('L' == J9UTF8_DATA(fieldSignature)[0]);
+					/* skip fieldSignature's L and ; to have only CLASSNAME required for internalFindClassUTF8 */
+					fieldClass = hashClassTableAt(_classLoader, &J9UTF8_DATA(fieldSignature)[1], J9UTF8_LENGTH(fieldSignature)-2);
+				}
+
+				if (NULL == fieldClass) {
+					printf("ObjectFieldInfo::countInstanceFields: could not find class %s\n", &J9UTF8_DATA(fieldSignature)[1]);
+				}
+
+				/* subtract size of header and lockword from backfillOffset, NOT totalInstanceSize which includes backfill */
+				Assert_VM_true((UDATA) fieldClass->backfillOffset >= sizeof(J9Object) + LOCKWORD_SIZE);
+				fieldsSize = (UDATA) fieldClass->backfillOffset - sizeof(J9Object) - LOCKWORD_SIZE;
+
+				if (fieldClass->classFlags & J9ClassLargestAlignmentDouble) {
+					const U_32 numSlots = fieldsSize / sizeof(U_64) + (fieldsSize % sizeof(U_64) == 0 ? 0 : 1);
+					_flatDoubleCount += numSlots;
+					_totalDoubleCount += numSlots;
+				} else if (fieldClass->classFlags & J9ClassLargestAlignmentObject) {
+					const U_32 numSlots = fieldsSize / sizeof(fj9object_t) + (fieldsSize % sizeof(fj9object_t) == 0 ? 0 : 1);
+					_flatObjectCount += numSlots;
+					_totalObjectCount += numSlots;
+				} else {
+					const U_32 numSlots = fieldsSize / sizeof(U_32);
+					_flatSingleCount += numSlots;
+					_totalSingleCount += numSlots;
+				}
+			} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			if (modifiers & J9FieldFlagObject) {
 				_instanceObjectCount += 1;
 				_totalObjectCount += 1;
@@ -85,10 +124,19 @@ ObjectFieldInfo::countAndCopyHiddenFields(J9HiddenInstanceField *hiddenFieldList
 
 			_hiddenFieldOffsetResolutionRequired |= thisFieldUnresolved;
 			if (J9_ARE_ANY_BITS_SET(modifiers, J9FieldFlagObject)) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				_hiddenObjectCount += 1;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				_totalObjectCount += 1;
 			} else if (J9_ARE_ANY_BITS_SET(modifiers, J9FieldSizeDouble)) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				_hiddenDoubleCount += 1;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				_totalDoubleCount += 1;
 			} else {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				_hiddenSingleCount += 1;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				_totalSingleCount += 1;
 			}
 			hiddenFieldArray[_hiddenFieldCount] = hiddenField;
