@@ -60,7 +60,7 @@
  * 			J9_VISIBILITY_MODULE_READ_ACCESS_ERROR if module read access error occurred,
  * 			J9_VISIBILITY_MODULE_PACKAGE_EXPORT_ERROR if module package access error
  */
-VMINLINE IDATA
+IDATA
 checkModuleAccess(J9VMThread *currentThread, J9JavaVM* vm, J9ROMClass* srcRomClass, J9Module* srcModule, J9ROMClass* destRomClass, J9Module* destModule, UDATA destPackageID, UDATA lookupOptions)
 {
 	UDATA result = J9_VISIBILITY_ALLOWED;
