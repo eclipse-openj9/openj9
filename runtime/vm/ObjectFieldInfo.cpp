@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2017 IBM Corp. and others
+ * Copyright (c) 2015, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,28 +46,25 @@ ObjectFieldInfo::countInstanceFields(void)
 
 			if (modifiers & J9FieldFlagObject) {
 				_instanceObjectCount += 1;
-				_totalObjectCount += 1;
 			} else if (modifiers & J9FieldSizeDouble) {
 				_instanceDoubleCount += 1;
-				_totalDoubleCount += 1;
 			} else {
 				_instanceSingleCount += 1;
-				_totalSingleCount += 1;
 			}
 		}
 		field = romFieldsNextDo(&fieldWalkState);
 	}
-	if (isContendedClassLayout()) { /* all instance fields are contended. Reassign them and fix the total counts */
+	if (isContendedClassLayout()) { /* all instance fields are contended. */
 		_contendedObjectCount = _instanceObjectCount;
-		_totalObjectCount -= _instanceObjectCount;
 		_instanceObjectCount = 0;
 		_contendedDoubleCount = _instanceDoubleCount;
-		_totalDoubleCount -= _instanceDoubleCount;
 		_instanceDoubleCount = 0;
 		_contendedSingleCount = _instanceSingleCount;
-		_totalSingleCount -= _instanceSingleCount;
 		_instanceSingleCount = 0;
 	} else {
+		_totalObjectCount += _instanceObjectCount;
+		_totalDoubleCount += _instanceDoubleCount;
+		_totalSingleCount += _instanceSingleCount;
 		_instanceFieldBackfillEligible = (_instanceSingleCount > 0) || (_objectCanUseBackfill && (_instanceSingleCount > 0));
 	}
 }
