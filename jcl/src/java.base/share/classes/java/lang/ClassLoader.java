@@ -97,8 +97,6 @@ public abstract class ClassLoader {
 	private long vmRef;
 	ClassLoader parent;
 	
-	private boolean initDone;
-	
 	/*[IF Panama]*/
 	private static String[]	usr_paths = new String[1];
 	/*[ENDIF]*/
@@ -312,10 +310,23 @@ public abstract class ClassLoader {
  *					allow the creation of new ClassLoaders.
  */
 protected ClassLoader() {
-	this(applicationClassLoader);
+	this(checkSecurityPermission(), null, applicationClassLoader);
 }
 
-/*[IF Sidecar19-SE]*/
+/**
+ * This is a static helper method to perform security check earlier such that current ClassLoader object 
+ * can't be resurrected when there is a SecurityException thrown.
+ *
+ * @return Void a unused reference passed to the Constructor
+ */
+private static Void checkSecurityPermission() {
+	SecurityManager security = System.getSecurityManager();
+	if (security != null) {
+		security.checkCreateClassLoader();
+	}
+	return null;
+}
+
 /**
  * Constructs a new instance of this class with the given
  * class loader as its parent.
@@ -326,15 +337,12 @@ protected ClassLoader() {
  * @exception	SecurityException
  *					if a security manager exists and it does not
  *					allow the creation of new ClassLoaders.
- * @exception	NullPointerException
- *					if the parent is null.
  */
 protected ClassLoader(ClassLoader parentLoader) {
-	this(null, parentLoader);
-	// This assumes that DelegatingClassLoader is constructed via ClassLoader(parentLoader)
-	isDelegatingCL = DELEGATING_CL.equals(this.getClass().getName());
+	this(checkSecurityPermission(), null, parentLoader);
 }
 
+/*[IF Sidecar19-SE]*/
 /**
  * Constructs a class loader with the specified name and the given
  * class loader as its parent.
@@ -352,44 +360,26 @@ protected ClassLoader(ClassLoader parentLoader) {
  *@since 9
  */
 protected ClassLoader(String classLoaderName, ClassLoader parentLoader) {
+	this(checkSecurityPermission(), classLoaderName, parentLoader);
+}
+/*[ENDIF]*/
+
+private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader parentLoader) {
+	// This assumes that DelegatingClassLoader is constructed via ClassLoader(parentLoader)
+	isDelegatingCL = DELEGATING_CL.equals(this.getClass().getName());
+
+/*[IF Sidecar19-SE]*/
 	if ((classLoaderName != null) && classLoaderName.isEmpty()) {
 		/*[MSG "K0645", "The given class loader name can't be empty."]*/
 		throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0645")); //$NON-NLS-1$
 	}
-/*[ELSE]*/
-	/**
-	 * Constructs a new instance of this class with the given
-	 * class loader as its parent.
-	 *
-	 * @param		parentLoader ClassLoader
-	 *					the ClassLoader to use as the new class
-	 *					loaders parent.
-	 * @exception	SecurityException
-	 *					if a security manager exists and it does not
-	 *					allow the creation of new ClassLoaders.
-	 * @exception	NullPointerException
-	 *					if the parent is null.
-	 */
-protected ClassLoader(ClassLoader parentLoader) {
-	// This assumes that DelegatingClassLoader is constructed via ClassLoader(parentLoader)
-	isDelegatingCL = DELEGATING_CL.equals(this.getClass().getName());
 /*[ENDIF]*/
-
-	SecurityManager security = System.getSecurityManager();
-	if (security != null)
-		security.checkCreateClassLoader();
 
 	if (parallelCapableCollection.containsKey(this.getClass())) {
 		isParallelCapable = true;
 	}
 	
 	// VM Critical: must set parent before calling initializeInternal()
-	/*[MSG "K0546", "Uninitialized class loader"]*/
-	if (parentLoader != null ) {
-		if (parentLoader.initDone == false) {
-			throw new SecurityException(com.ibm.oti.util.Msg.getString("K0546")); //$NON-NLS-1$
-		} 
-	}
 	parent = parentLoader;
 /*[IF !Sidecar19-SE]*/
 	bootloaderInited = (bootstrapClassLoader != null);
@@ -414,14 +404,12 @@ protected ClassLoader(ClassLoader parentLoader) {
 		bootstrapClassLoader = this;
 		VM.initializeClassLoader(bootstrapClassLoader, true, false);
 	}
-	this.classLoaderName= classLoaderName;
+	this.classLoaderName = classLoaderName;
 /*[ENDIF]*/	
 	
 	if (isAssertOptionFound) {
 		initializeClassLoaderAssertStatus();
 	}
-	
-	initDone = true;
 }
 
 /**
