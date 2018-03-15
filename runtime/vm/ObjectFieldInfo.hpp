@@ -190,7 +190,7 @@ public:
 
 	VMINLINE U_32
 	getNonBackfilledInstanceObjectCount(void) const
- {
+	{
 		U_32 nonBackfilledObjects = _instanceObjectCount;
 		if (isBackfillSuitableInstanceObjectAvailable()  && !isBackfillSuitableInstanceSingleAvailable()
 				&& isMyBackfillSlotAvailable()) {
