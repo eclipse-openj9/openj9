@@ -82,9 +82,9 @@ my %junit4 = (
 	sha1 => 'e4f1766ce7404a08f45d859fb9c226fc9e41a861'
 );
 my %testng = (
-	url => 'http://central.maven.org/maven2/org/testng/testng/6.10/testng-6.10.jar',
+	url => 'http://central.maven.org/maven2/org/testng/testng/6.14.2/testng-6.14.2.jar',
 	fname => 'testng.jar',
-	sha1 => '368d38d0f6906934b572e1a26441b6f47c58b134'
+	sha1 => '10c93c2c0d165e895a7582dfd8b165f108658db5'
 );
 my %jcommander = (
 	url => 'http://central.maven.org/maven2/com/beust/jcommander/1.48/jcommander-1.48.jar',

@@ -209,6 +209,8 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<!-- failed intermittent on Windows, Openj9 issue #1454 -->
+		<platformRequirements>^os.win</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -1338,7 +1340,8 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>^arch.arm</platformRequirements>
+		<!-- OpenJ9 issue 1421, failed on zos -->
+		<platformRequirements>^arch.arm,^os.zos</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -1572,6 +1575,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+	<platformRequirements>^os.win</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>

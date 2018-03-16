@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2017 IBM Corp. and others
+ * Copyright (c) 2013, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -391,12 +391,12 @@ public final class SortTest {
 		}
 	}
 
-	@Test(groups = { "level.sanity" })
+	@Test(groups = { "level.sanity", "level.extended" })
 	public void testBasic() {
 		main(new String[] { "-geometric=10,10000000,31" });
 	}
 
-	@Test(groups = { "level.sanity" })
+	@Test(groups = { "level.sanity", "level.extended" })
 	public void testPowersOf2() {
 		main(new String[] { "-geometric=1,8388608,24" });
 	}
