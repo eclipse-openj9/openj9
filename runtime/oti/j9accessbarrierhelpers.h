@@ -24,11 +24,25 @@
 #define J9ACCESSBARRIERHELPERS_H
 
 /**
- * This helpers could be written as macros (where the body of methods would be wrapped around oval parenthesis, which would mean that the last expression in the block
+ * These helpers could be written as macros (where the body of methods would be wrapped around oval parenthesis, which would mean that the last expression in the block
  * is return value of the block). However, it is not fully supported by ANSI, but only select C compilers, like GNU C: https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html).
- * Therefore, we are using inline methods to impletment the macros (in j9accessbarrier.h). The helpers are in separate file to resolve inter-file dependency (for example J9JavaVM
+ * Therefore, we are using inline methods to implement the macros (in j9accessbarrier.h). The helpers are in separate file to resolve inter-file dependency (for example J9JavaVM
  * is not known type in j9accessbarrier.h).
  */
+
+#if defined(__GNUC__)
+/*
+ * Source files which include (directly or indirectly) this file
+ * but do not use the functions defined below may fail to compile unless the "unused" attribute
+ * is applied.
+ * Note that Microsoft compilers do not allow this attribute.
+ */
+VMINLINE static j9object_t
+j9javaArrayOfObject_load(J9VMThread *vmThread, J9IndexableObject *array, I_32 index)   __attribute__ ((__unused__));
+
+VMINLINE static j9object_t
+j9javaArrayOfObject_load_VM(J9JavaVM *vm, J9IndexableObject *array, I_32 index)  __attribute__ ((__unused__));
+#endif /* __GNUC__ */
 
 VMINLINE static j9object_t
 j9javaArrayOfObject_load(J9VMThread *vmThread, J9IndexableObject *array, I_32 index)
