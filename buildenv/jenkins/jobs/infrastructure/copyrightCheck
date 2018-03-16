@@ -48,7 +48,7 @@ stage('Copyright Check') {
                 
                 // Set a different Copyright regex depending on the Repo the PR is from
                 if (ghprbGhRepository ==~ "eclipse.*") {
-                    REGEX = "\'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR} IBM Corp. and others\'"
+                    REGEX = "\'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR}\'"
                 } else if (ghprbGhRepository ==~ "ibmruntimes.*") {
                     REGEX = "\'\\(c\\) Copyright IBM Corp. ([0-9]{4}), ${DATE_YEAR} All Rights Reserved\'"
                 } else {
