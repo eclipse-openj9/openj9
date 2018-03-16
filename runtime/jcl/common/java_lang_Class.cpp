@@ -60,6 +60,12 @@ static UDATA isPrivilegedFrameIterator(J9VMThread * currentThread, J9StackWalkSt
 static UDATA isPrivilegedFrameIteratorGetAccSnapshot(J9VMThread * currentThread, J9StackWalkState * walkState);
 static UDATA frameIteratorGetAccSnapshotHelper(J9VMThread * currentThread, J9StackWalkState * walkState, j9object_t acc, j9object_t perm);
 static j9object_t storePDobjectsHelper(J9VMThread* vmThread, J9Class* arrayClass, J9StackWalkState* walkState, j9object_t contextObject, U_32 arraySize, UDATA framesWalked, I_32 startPos, BOOLEAN dupCallerPD);
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+static void setNestmatesVerificationError(J9VMThread *vmThread, const char *nlsTemplate, UDATA exceptionNumber, J9UTF8 *nestMemberName, J9UTF8 *nestHostName);
+static J9Class *loadAndCheckNestHost(J9VMThread *vmThread, J9Class *clazz, BOOLEAN canThrow);
+jobject JNICALL Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv);
+jobject JNICALL Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv);
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 
 jobject JNICALL 
 Java_java_lang_Class_getDeclaredAnnotationsData(JNIEnv *env, jobject jlClass)
@@ -1787,21 +1793,14 @@ storePDobjectsHelper(J9VMThread* vmThread, J9Class* arrayClass, J9StackWalkState
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 static void
-setNestmatesIncompatibleClassChangeError(J9VMThread *vmThread, J9Class *nestMember, J9Class *nestHost)
+setNestmatesVerificationError(J9VMThread *vmThread, const char *nlsTemplate, UDATA exceptionNumber, J9UTF8 *nestMemberName, J9UTF8 *nestHostName)
 {
 	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	char *msg = NULL;
+
 	PORT_ACCESS_FROM_VMC(vmThread);
 
-	J9UTF8 *nestMemberName = J9ROMCLASS_CLASSNAME(nestMember->romClass);
-	J9UTF8 *nestHostName = J9ROMCLASS_CLASSNAME(nestHost->romClass);
-
-	const char *nlsTemplate = j9nls_lookup_message(
-			J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-			J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST,
-			"Nest member %2$.*1$s in %4$.*3$s declares a different nest host of %6$.*5$s");
-
-	char *msg = NULL;
 	if (NULL != nlsTemplate) {
 		UDATA msgLen = j9str_printf(PORTLIB, NULL, 0, nlsTemplate,
 				J9UTF8_LENGTH(nestMemberName), J9UTF8_DATA(nestMemberName),
@@ -1814,8 +1813,125 @@ setNestmatesIncompatibleClassChangeError(J9VMThread *vmThread, J9Class *nestMemb
 				J9UTF8_LENGTH(nestMemberName), J9UTF8_DATA(nestMemberName));
 	}
 
-	vmFuncs->setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, msg);
+	vmFuncs->setCurrentExceptionUTF(vmThread, exceptionNumber, msg);
 	j9mem_free_memory(msg);
+}
+
+/**
+ * Loads, sets, verifies, & returns the claimed nest host of a class
+ *
+ * If the claimed nest host of a class is successfully loaded and verified,
+ * then the nest host field of the class is set and the nest host is returned.
+ * Otherwise, the nest host field is not set and the class itself is returned.
+ * If canThrow is true and loading/verifying the nest host fails, then an
+ * exception will be set.
+ *
+ * @param vmthread[in] the current vm thread
+ * @param clazz[in,out] class who's nest host is being acquired
+ * @param canThrow[in] true if a verification error/exception can be set & thrown
+ *
+ * @returns the nest host claimed by the class or the class itself
+ */
+static J9Class *
+loadAndCheckNestHost(J9VMThread *vmThread, J9Class *clazz, BOOLEAN canThrow) {
+	J9Class *nestHost = clazz->nestHost;
+
+	if (NULL == nestHost) {
+		BOOLEAN verified = FALSE;
+		J9ROMClass *romClass = clazz->romClass;
+		J9UTF8 *nestHostName = J9ROMCLASS_NESTHOSTNAME(romClass);
+
+		/* If no nest host is named, class is own nest host */
+		if (NULL == nestHostName) {
+			nestHost = clazz;
+			verified = TRUE;
+		} else {
+			J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+			UDATA classLoadingFlags = 0;
+
+			PORT_ACCESS_FROM_VMC(vmThread);
+
+			if (canThrow) {
+				classLoadingFlags = J9_FINDCLASS_FLAG_THROW_ON_FAIL;
+			} else {
+				classLoadingFlags = J9_FINDCLASS_FLAG_EXISTING_ONLY;
+			}
+			nestHost = vmFuncs->internalFindClassUTF8(vmThread, J9UTF8_DATA(nestHostName), J9UTF8_LENGTH(nestHostName), clazz->classLoader, classLoadingFlags);
+
+			/* If this can throw, then we must check that the nest host is successfully
+			 * loaded by the same classloader in the same package & verifies the nest
+			 * member. Upon successful verification of the nest host class, the nest
+			 * host field is set.
+			 * If this can not throw, then verification occurs in order to determine
+			 * whether a nest host or 'this' is returned.
+			 */
+			if (NULL == nestHost) {
+				if (canThrow) {
+					const char *nlsTemplate = j9nls_lookup_message(
+							J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+							J9NLS_JCL_NESTMATES_CLASS_FAILED_TO_LOAD,
+							NULL);
+					setNestmatesVerificationError(vmThread,
+							nlsTemplate,
+							J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR,
+							className,
+							nestHostName);
+				}
+			} else if (clazz->packageID != nestHost->packageID) {
+				if (canThrow) {
+					const char *nlsTemplate = j9nls_lookup_message(
+							J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+							J9NLS_JCL_NEST_HOST_HAS_DIFFERENT_PACKAGE,
+							NULL);
+					setNestmatesVerificationError(vmThread,
+							nlsTemplate,
+							J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR,
+							className,
+							nestHostName);
+				}
+			} else {
+				/* The nest host must have a nestmembers attribute that claims this class. */
+				J9SRP *nestMembers = J9ROMCLASS_NESTMEMBERS(nestHost->romClass);
+				U_16 nestMemberCount = nestHost->romClass->nestMemberCount;
+				U_16 i = 0;
+				J9UTF8 *nestMemberName = NULL;
+
+				for (i = 0; i < nestMemberCount; i++) {
+					nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8*);
+					if (J9UTF8_EQUALS(className, nestMemberName)) {
+						verified = TRUE;
+					}
+				}
+
+				if (verified) {
+					clazz->nestHost = nestHost;
+				} else if (canThrow) {
+					const char *nlsTemplate = j9nls_lookup_message(
+							J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+							J9NLS_JCL_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST,
+							NULL);
+					setNestmatesVerificationError(vmThread,
+							nlsTemplate,
+							J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR,
+							className,
+							nestHostName);
+				}
+			}
+		}
+
+		/* If a nest host is successfully verified, then setting the nest host
+		 * field prevents the same verification from recurring. If it can not
+		 * be loaded and verified, then the class itself is returned.
+		 */
+		if (verified) {
+			clazz->nestHost = nestHost;
+		} else {
+			nestHost = clazz;
+		}
+	}
+
+	return nestHost;
 }
 
 jobject JNICALL
@@ -1827,6 +1943,20 @@ Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)
 
 	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
 	J9Class *nestHost = clazz->nestHost;
+
+	/* Nest host field is set post-verification, during an access check or during
+	 * a call to relevant java.lang.Class API method via the loadAndCheckNestHost
+	 * function. If loadAndCheckNestHost fails to return a valid nest host, then
+	 * getNestHostImpl returns this.
+	 */
+	if (NULL == nestHost) {
+		/* If loadAndCheckNestHost can not successfully load & verify a class's
+		 * nest host, then it will return the class - as required by the
+		 * getNestHost spec.
+		 */
+		nestHost = loadAndCheckNestHost(currentThread, clazz, FALSE);
+	}
+
 	j9object_t resultObject = J9VM_J9CLASS_TO_HEAPCLASS(nestHost);
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
 
@@ -1849,16 +1979,36 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 	j9object_t resultObject = NULL;
 	jobject result = NULL;
 
-	vmFuncs->internalEnterVMFromJNI(currentThread);
+	/* The Class<?> class will be used for result object size */
+	J9Class *jlClass = NULL;
+	J9Class *arrayClass = NULL;
 
 	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
 	J9Class *nestHost = clazz->nestHost;
-	J9ROMClass *romHostClass = nestHost->romClass;
-	U_16 nestMemberCount = romHostClass->nestMemberCount;
+	J9ROMClass *romHostClass = NULL;
+	U_16 nestMemberCount = 0;
+
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	if (NULL == nestHost) {
+		/* If loadAndCheckNestHost can not successfully load & verify a class's
+		 * nest host and canThrow is true, then it will return the class and
+		 * set an exception.
+		 */
+		nestHost = loadAndCheckNestHost(currentThread, clazz, TRUE);
+	}
+	if (NULL != currentThread->currentException) {
+		goto _done;
+	}
+
+	romHostClass = nestHost->romClass;
+	nestMemberCount = romHostClass->nestMemberCount;
 
 	/*  Grab the Class<?> class for result object size */
-	J9Class *jlClass = J9VMJAVALANGCLASS(vm);
-	J9Class *arrayClass = fetchArrayClass(currentThread, jlClass);
+	jlClass = J9VMJAVALANGCLASS(vm);
+	arrayClass = fetchArrayClass(currentThread, jlClass);
 	if (NULL != currentThread->currentException) {
 		goto _done;
 	}
@@ -1888,9 +2038,31 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 			resultObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 
 			if (NULL == nestMember) {
+				/* If internalFindClassUTF8 fails to find the nest member, it sets
+				 * a NoClassDefFoundError
+				 */
 				goto _done;
-			} else if (nestMember->nestHost != nestHost) {
-				setNestmatesIncompatibleClassChangeError(currentThread, nestMember, nestHost);
+			} else if (NULL == nestMember->nestHost) {
+				/* If loadAndCheckNestHost fails to set the nest member's nest
+				 * host (due to loading or verification error), then it sets an
+				 * ImcompatibleClassChangeError. The return value is not needed.
+				 */
+				loadAndCheckNestHost(currentThread, nestMember, TRUE);
+				if (NULL != currentThread->currentException) {
+					goto _done;
+				}
+			}
+
+			if (nestMember->nestHost != nestHost) {
+				const char *nlsTemplate = j9nls_lookup_message(
+							J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+							J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST,
+							NULL);
+				setNestmatesVerificationError(currentThread,
+						nlsTemplate,
+						J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR,
+						J9ROMCLASS_CLASSNAME(nestMember->romClass),
+						J9ROMCLASS_CLASSNAME(nestHost->romClass));
 				goto _done;
 			} else {
 				J9JAVAARRAYOFOBJECT_STORE(currentThread, resultObject, i + 1, J9VM_J9CLASS_TO_HEAPCLASS(nestMember));
