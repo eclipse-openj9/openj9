@@ -136,7 +136,6 @@
 					<src path="${transformerListener}" />
 					<exclude name="**/Cmvc194280.java" />
 					<exclude name="**/resources/**"/>
-					<exclude name="**/gpu/**"/>
 					<!-- requires special compilation methods -->
 					<exclude name="**/NoSuchMethod/**" />
 					<classpath>
@@ -162,8 +161,6 @@
 					<!-- PR117298-->
 					<exclude name="**/Cmvc194280.java" />
 					<exclude name="**/resources/**"/>
-					<!-- need to be included when OpenJ9 have them. -->
-					<exclude name="**/gpu/**"/>
 					<!-- requires special compilation methods -->
 					<exclude name="**/NoSuchMethod/**" />
 					<classpath>

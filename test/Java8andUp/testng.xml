@@ -29,9 +29,7 @@
 	</listeners>
 	<test name="generalTest">
 		<classes>
-			<!-- RTC WI 124170
 			<class name="org.openj9.test.gpu.SortTest" />
-			-->
 		</classes>
 	</test>
 	<test name="regression">

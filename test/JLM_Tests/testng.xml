@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,17 +27,49 @@
 	<listeners>
 		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer" />
 	</listeners>
-	<test name="JLM_Tests_interface">
+	<test name="TestCompilationMXBean">
 		<classes>
 			<class name="org.openj9.test.java.lang.management.TestCompilationMXBean" />
+		</classes>
+	</test>
+	<test name="TestGarbageCollectorMXBean">
+		<classes>
 			<class name="org.openj9.test.java.lang.management.TestGarbageCollectorMXBean" />
+		</classes>
+	</test>
+	<test name="TestMemoryManagerMXBean">
+		<classes>
 			<class name="org.openj9.test.java.lang.management.TestMemoryManagerMXBean" />
+		</classes>
+	</test>
+	<test name="TestMemoryMXBean">
+		<classes>
 			<class name="org.openj9.test.java.lang.management.TestMemoryMXBean" />
-			<class name="org.openj9.test.java.lang.management.TestMemoryPoolMXBean" />
+		</classes>
+	</test>
+	<test name="TestOperatingSystemMXBean">
+		<classes>
 			<class name="org.openj9.test.java.lang.management.TestOperatingSystemMXBean" />
+		</classes>
+	</test>
+	<test name="TestRuntimeMXBean">
+		<classes>
 			<class name="org.openj9.test.java.lang.management.TestRuntimeMXBean" />
+		</classes>
+	</test>
+	<test name="TestThreadMXBean">
+		<classes>
 			<class name="org.openj9.test.java.lang.management.TestThreadMXBean" />
+		</classes>
+	</test>
+	<test name="TestClassLoadingMXBean">
+		<classes>
 			<class name="org.openj9.test.java.lang.management.TestClassLoadingMXBean" />
+		</classes>
+	</test>
+	<test name="TestMemoryPoolMXBean">
+		<classes>
+			<class name="org.openj9.test.java.lang.management.TestMemoryPoolMXBean" />
 		</classes>
 	</test> <!-- JLM_Tests -->
 	<test name="JLM_Tests_class">

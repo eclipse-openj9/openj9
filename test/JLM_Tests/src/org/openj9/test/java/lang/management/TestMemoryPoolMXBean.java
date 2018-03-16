@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright (c) 2005, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,7 +116,7 @@ public class TestMemoryPoolMXBean {
 		} catch (Exception me) {
 			Assert.fail("Unexpected exception in setting up MemoryMXBeanImpl test: " + me.getMessage());
 		}
-		logger.info("Starting TestMemoryMXBean tests ..." + "Test MemoryPoolMXBean name = " + testBean.getName());
+		logger.info("Starting TestMemoryPoolMXBean tests ..." + "Test MemoryPoolMXBean name = " + testBean.getName());
 	}
 
 	// IBM extension method

@@ -22,5 +22,7 @@ grant {
 	// so we can remove the security manager
 	permission java.lang.RuntimePermission "setSecurityManager";
 	// Allow the test harness to write the log files
-	permission java.io.FilePermission "<<ALL FILES>>", "read,write";
+	permission java.io.FilePermission "<<ALL FILES>>", "read,write,delete";
+	permission java.util.PropertyPermission "testng.*", "read";
+	permission java.util.PropertyPermission "fileStringBuffer", "read";
 };
