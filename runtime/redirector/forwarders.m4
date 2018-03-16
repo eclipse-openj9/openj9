@@ -311,3 +311,5 @@ _X(JVM_GetAndClearReferencePendingList,JNICALL,false,jobject ,JNIEnv *env)
 _X(JVM_HasReferencePendingList,JNICALL,false,jboolean ,JNIEnv *env)
 _X(JVM_WaitForReferencePendingList,JNICALL,false,void ,JNIEnv *env)
 _X(JVM_GetNanoTimeAdjustment,JNICALL,true,jlong ,JNIEnv *env, jclass clazz, jlong offsetSeconds)
+_IF([defined(J9VM_JCL_SE11)],
+	[_X(JVM_BeforeHalt,JNICALL,false,void,void)])
