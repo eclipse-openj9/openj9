@@ -25,7 +25,7 @@
 # fieldoverride.TypeName.FieldName=NewFieldName
 # typeoverride.TypeName.FieldName=NewFieldType
 
-# Opaque types
+# Opaque types.
 opaquetype=J9SRP
 opaquetype=J9WSRP
 opaquetype=fj9object_t
@@ -272,7 +272,7 @@ fieldoverride.J9BuildFlags.J9VM_THR_LOCK_RESERVATION=thr_lockReservation
 fieldoverride.J9BuildFlags.J9VM_THR_PREEMPTIVE=thr_preemptive
 fieldoverride.J9BuildFlags.J9VM_THR_SMART_DEFLATION=thr_smartDeflation
 
-# Type overrides - mostly adding data to SRPs
+# Type overrides - mostly adding data to SRPs.
 typeoverride.J9AnnotationInfo.defaultValues=J9SRP(struct J9AnnotationInfoEntry)
 typeoverride.J9AnnotationInfo.firstAnnotation=J9SRP(struct J9AnnotationInfoEntry)
 typeoverride.J9AnnotationInfo.firstClass=J9SRP(struct J9AnnotationInfoEntry)
@@ -377,7 +377,7 @@ typeoverride.J9ObjectMemorySegment.leftChild=IDATA
 typeoverride.J9ObjectMemorySegment.rightChild=IDATA
 
 # The shared classes J9SRPs aren't regular J9SRPs.
-# They are relative to the start of the structure, not the field
+# They are relative to the start of the structure, not the field.
 typeoverride.ByteDataWrapper.externalBlockOffset=I_32
 typeoverride.ByteDataWrapper.tokenOffset=I_32
 typeoverride.CacheletWrapper.dataStart=I_32
@@ -392,24 +392,21 @@ typeoverride.ScopedROMClassWrapper.theCpOffset=I_32
 
 typeoverride.J9MethodDebugInfo.srpToVarInfo=J9SRP(U_8)
 
-# Type override for SRPs in shared string intern table
+# Type override for SRPs in shared string intern table.
 typeoverride.J9SharedInternSRPHashTableEntry.nextNode=J9SRP(struct J9SharedInternSRPHashTableEntry)
 typeoverride.J9SharedInternSRPHashTableEntry.prevNode=J9SRP(struct J9SharedInternSRPHashTableEntry)
 typeoverride.J9SharedInternSRPHashTableEntry.utf8SRP=J9SRP(struct J9UTF8)
 typeoverride.J9SRPHashTableInternal.nodePool=J9SRP(struct J9SimplePool)
 typeoverride.J9SRPHashTableInternal.nodes=J9SRP(J9SRP(void))
 
-# Type override for SRPs in J9SimplePoolFreeList
+# Type override for SRPs in J9SimplePoolFreeList.
 typeoverride.J9SimplePoolFreeList.next=J9SRP(struct J9SimplePoolFreeList)
 typeoverride.J9SimplePoolFreeList.simplePool=J9SRP(struct J9SimplePool)
 
-# Type override for SRPs in J9SimplePool
+# Type override for SRPs in J9SimplePool.
 typeoverride.J9SimplePool.blockEnd=J9SRP(U_8)
 typeoverride.J9SimplePool.firstFreeSlot=J9SRP(U_8)
 typeoverride.J9SimplePool.freeList=J9SRP(struct J9SimplePoolFreeList)
 
-# Type override for SharedClassCache (SH_CacheMap)
+# Type override for SharedClassCache (SH_CacheMap).
 typeoverride.J9SharedClassConfig.sharedClassCache=SH_CacheMap*
-
-# The compiler folds the type of this field to U32[] (or U64[]): reverse that.
-typeoverride.J9VMThread.objectMonitorLookupCache=j9objectmonitor_t[]
