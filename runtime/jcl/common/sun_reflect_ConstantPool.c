@@ -262,7 +262,8 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 
 		if (NULL != methodID) {
 			if (NULL != jlClass) {
-				returnValue = (*env)->ToReflectedMethod(env, jlClass, methodID, (J9CPTYPE_STATIC_METHOD == cpType || J9CPTYPE_INTERFACE_STATIC_METHOD == cpType));
+				const jboolean isStatic = (J9CPTYPE_STATIC_METHOD == cpType) || (J9CPTYPE_INTERFACE_STATIC_METHOD == cpType);
+				returnValue = (*env)->ToReflectedMethod(env, jlClass, methodID, isStatic);
 			} else {
 				throwNativeOOMError(env, 0, 0);
 			}

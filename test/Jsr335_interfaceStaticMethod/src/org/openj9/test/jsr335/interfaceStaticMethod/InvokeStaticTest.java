@@ -55,7 +55,7 @@ public class InvokeStaticTest {
 		try {
 			String s = org.openj9.test.jsr335.interfaceStaticMethod.GenInvokeStatic.test_B_foo();
 			Assert.fail("incompatibleClassChangeErrorThrown not thrown");
-		} catch (java.lang.IncompatibleClassChangeError e) {
+		} catch (IncompatibleClassChangeError e) {
 			// do nothing
 		}
 	}
@@ -75,7 +75,7 @@ public class InvokeStaticTest {
 		try {
 			String s = org.openj9.test.jsr335.interfaceStaticMethod.GenInvokeStatic.test_A_bar();
 			Assert.fail("IncompatibleClassChangeError not thrown");
-		} catch (java.lang.IncompatibleClassChangeError e) {
+		} catch (IncompatibleClassChangeError e) {
 			// do nothing
 		}
 	}
@@ -87,7 +87,7 @@ public class InvokeStaticTest {
 		try {
 			String s = org.openj9.test.jsr335.interfaceStaticMethod.GenInvokeStatic.test_C_bar();
 			Assert.fail("incompatibleClassChangeErrorThrown not thrown");
-		} catch (java.lang.IncompatibleClassChangeError e) {
+		} catch (IncompatibleClassChangeError e) {
 			// do nothing
 		}
 	}
@@ -98,7 +98,7 @@ public class InvokeStaticTest {
 		try {
 			String s = org.openj9.test.jsr335.interfaceStaticMethod.GenInvokeStatic.test_C_foo();
 			Assert.fail("incompatibleClassChangeErrorThrown not thrown");
-		} catch (java.lang.IncompatibleClassChangeError e) {
+		} catch (IncompatibleClassChangeError e) {
 			// do nothing
 		}
 	}

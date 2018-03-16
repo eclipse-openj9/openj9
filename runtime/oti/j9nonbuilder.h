@@ -2124,8 +2124,14 @@ typedef struct J9ConstantPool {
 #define J9CPTYPE_METHOD_TYPE  13
 #define J9CPTYPE_METHODHANDLE  14
 #define J9CPTYPE_ANNOTATION_UTF8  15
+
+/* 
+ * INTERFACE_STATIC and INTERFACE_INSTANT cpType are used to track the classfile tag of a methodref [CFR_CONSTANT_InterfaceMethodref]
+ * These types are need to support correct initializer for constantpool due to how cp entries are pre-initialized
+ * These will be used to check for cp consistency during resolve time
+ */
 #define J9CPTYPE_INTERFACE_STATIC_METHOD 16
-#define J9CPTYPE_INTERFACE_INSTANCE_METHOD 17
+#define J9CPTYPE_INTERFACE_INSTANCE_METHOD 17 
 
 #define J9_CP_BITS_PER_DESCRIPTION  8
 #define J9_CP_DESCRIPTIONS_PER_U32  4
