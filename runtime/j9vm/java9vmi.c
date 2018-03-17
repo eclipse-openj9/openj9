@@ -1777,3 +1777,11 @@ JVM_GetNanoTimeAdjustment(JNIEnv *env, jclass clazz, jlong offsetSeconds)
 	
 	return result;
 }
+
+#if J9VM_JCL_SE11
+void JNICALL
+JVM_BeforeHalt()
+{
+	/* To be implemented via https://github.com/eclipse/openj9/issues/1459 */
+}
+#endif /* J9VM_JCL_SE11 */
