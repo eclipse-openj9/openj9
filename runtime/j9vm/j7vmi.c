@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1525,6 +1525,12 @@ JVM_IHashCode(JNIEnv *env, jobject obj)
 jobject JNICALL
 JVM_InitProperties(JNIEnv* env, jobject properties)
 {
+	/* This JVM method is invoked by JCL native Java_java_lang_System_initProperties
+	 * only for initialization of platform encoding.
+	 * This is only required by Java 11 raw builds.
+	 * This method is not invoked by other Java levels.
+	 */
+#if !defined(J9VM_JCL_SE11)
 	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
 	jobject syspropsList = (jobject)vm->syspropsListRef;
 	jclass propertiesClass = (*env)->GetObjectClass(env, properties);
@@ -1541,6 +1547,7 @@ JVM_InitProperties(JNIEnv* env, jobject properties)
 		jobject value = (*env)->GetObjectArrayElement(env, syspropsList, index++);
 		(*env)->CallObjectMethod(env, properties, setPropertyMID, key, value);
 	}
+#endif /* J9VM_JCL_SE11 */
 	return properties;
 }
 
