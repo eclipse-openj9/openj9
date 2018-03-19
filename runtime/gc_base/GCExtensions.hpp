@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -182,11 +182,13 @@ public:
 #if defined(J9VM_GC_IDLE_HEAP_MANAGER)
 	MM_IdleGCManager* idleGCManager; /**< Manager which registers for VM Runtime State notification & manages free heap on notification */
 #endif
+
 protected:
 private:
 protected:
 	virtual bool initialize(MM_EnvironmentBase* env);
 	virtual void tearDown(MM_EnvironmentBase* env);
+	virtual void computeDefaultMaxHeap(MM_EnvironmentBase* env);
 
 public:
 	static MM_GCExtensions* newInstance(MM_EnvironmentBase* env);
