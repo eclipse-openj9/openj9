@@ -772,6 +772,13 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
+	if (J2SE_V10 <= j2seVersion) {
+		rc = addSystemProperty(vm, "java.vendor.version", "", 0);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			goto fail;
+		}
+	}
+
 #if defined(J9JDK_EXT_NAME)
 	rc = addSystemProperty(vm, "jdk.extensions.name", J9JDK_EXT_NAME, 0);
 	if (J9SYSPROP_ERROR_NONE != rc) {
