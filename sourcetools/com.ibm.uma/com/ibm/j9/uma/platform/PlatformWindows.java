@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,7 +92,23 @@ public class PlatformWindows extends PlatformImplementation {
 	}
 	
 	protected String getPdbName(Artifact artifact) throws UMAException {
-		return getLibNameStart(artifact) + ".pdb";
+		StringBuilder pdbname = new StringBuilder();
+		switch (artifact.getType()) {
+		case Artifact.TYPE_BUNDLE:
+		case Artifact.TYPE_SHARED:
+		case Artifact.TYPE_STATIC:
+			pdbname.append(UMA.UMA_PATH_TO_ROOT_VAR);
+			pdbname.append(artifact.getTargetPath(this));
+			pdbname.append(artifact.getTargetNameWithScope());
+			if (artifact.appendRelease()) {
+				pdbname.append(getStream());
+			}
+			pdbname.append(".pdb");
+			break;
+		default:
+			break;
+		}
+		return pdbname.toString();
 	}
 	
 	@Override
