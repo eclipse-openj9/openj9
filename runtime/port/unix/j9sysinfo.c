@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -479,20 +479,34 @@ getLinuxPPCDescription(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 
 	/* initialize auxv prior to querying the auxv */
 	if (prefetch_auxv()) {
+_error:
 		desc->processor = PROCESSOR_PPC_UNKNOWN;
 		desc->physicalProcessor = PROCESSOR_PPC_UNKNOWN;
+		desc->features[0] = 0;
+		desc->features[1] = 0;
 		return -1;
 	}
 
 	/* Linux PPC processor */
 	platform = (char *) query_auxv(AT_PLATFORM);
+	if ((NULL == platform) || (((char *) -1) == platform)) {
+		goto _error;
+	}
 	desc->processor = mapPPCProcessor(platform);
 
 	/* Linux PPC physical processor */
 	base_platform = (char *) query_auxv(AT_BASE_PLATFORM);
-	desc->physicalProcessor = mapPPCProcessor(base_platform);
+	if ((NULL == base_platform) || (((char *) -1) == base_platform)) {
+		/* AT_PLATFORM is known from call above.  Default BASE to unknown */
+		desc->physicalProcessor = PROCESSOR_PPC_UNKNOWN;
+	} else {
+		desc->physicalProcessor = mapPPCProcessor(base_platform);
+	}
 
-	/* Linux PPC features */
+	/* Linux PPC features:
+	 * Can't error check these calls as both 0 & -1 are valid
+	 * bit fields that could be returned by this query.
+	 */
 	desc->features[0] = query_auxv(AT_HWCAP);
 	desc->features[1] = query_auxv(AT_HWCAP2);
 

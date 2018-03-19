@@ -1340,7 +1340,10 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<!-- OpenJ9 issue 1421, failed on zos -->
+		<!-- OpenJ9 issue 1421, failed on zos:
+		z/OS documentation indicates the destructor supplied 
+		with pthread_key_create() may not be run on thread exit.
+		-->
 		<platformRequirements>^arch.arm,^os.zos</platformRequirements>
 		<levels>
 			<level>sanity</level>

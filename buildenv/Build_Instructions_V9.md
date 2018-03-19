@@ -312,6 +312,13 @@ You must install a number of software dependencies to create a suitable build en
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
 - [Freetype2 V2.3 or newer](https://www.freetype.org/)
 
+Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
+
+```
+set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\include;%INCLUDE%
+set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%;
+```
+
    You can download Visual Studio, Freemarker, and Freetype manually or obtain them using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
 
 - Open a cygwin terminal and change to the `/temp` directory:
