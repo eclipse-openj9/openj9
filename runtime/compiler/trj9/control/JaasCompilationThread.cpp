@@ -1770,6 +1770,12 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto method = std::get<0>(recv);
          auto bucket = std::get<1>(recv);
          TR_IProfiler *iProfiler = fe->getIProfiler();
+         if (!iProfiler)
+            {
+            // iProfiler is enabled on the server if we got here, but not enabled here on the client
+            client->write(std::string());
+            break;
+            }
          auto entry = iProfiler->searchForMethodSample(method, bucket);
          if (entry)
             {
@@ -1790,6 +1796,12 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto bcIndex = std::get<1>(recv);
          auto data = std::get<2>(recv);
          TR_IProfiler *iProfiler = fe->getIProfiler();
+         if (!iProfiler)
+            {
+            // iProfiler is enabled on the server if we got here, but not enabled here on the client
+            client->write(std::string());
+            break;
+            }
          auto entry = iProfiler->profilingSample(method, bcIndex, TR::comp(), data, false);
          if (entry && !entry->isInvalid())
             {
