@@ -2132,6 +2132,10 @@ Only available on zOS</description>
 		<description>Use the ddrgen tool from OMR in support of DDR.</description>
 		<ifRemoved>If DDR support is enabled, the legacy tools will be used instead.</ifRemoved>
 	</flag>
+	<flag id="opt_valgrindSupport">
+		<description>Enable linking with Valgrind Memcheck APIs.</description>
+		<ifRemoved>Skip linking with Valgrind Memcheck APIs.</ifRemoved>
+	</flag>
 	<flag id="opt_veeSupport">
 		<description>Support for multiple Virtual Execution Environments.</description>
 		<ifRemoved>No support for multiple languages</ifRemoved>

@@ -1181,6 +1181,9 @@ initBackTrace(J9JavaVM *vm)
 	
 	/* Use a local heap so the memory used for the backtrace is freed automatically. */
 	heap = j9heap_create(backingStore, sizeof(backingStore), 0);
+
+	//initialize threadInfo.context for an if condition (omrintrospect_backtrace_thread_raw) called in code below
+	threadInfo.context = NULL;
 	if( j9introspect_backtrace_thread(&threadInfo, heap, NULL) != 0 ) {
 		j9introspect_backtrace_symbols(&threadInfo, heap);
 	}

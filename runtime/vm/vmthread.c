@@ -1392,6 +1392,7 @@ allocateJavaStack(J9JavaVM * vm, UDATA stackSize, J9JavaStack * previousStack)
 		stack->size = stackSize;
 		stack->previous = previousStack;
 		stack->firstReferenceFrame = 0;
+		memset((void*) ( (uintptr_t) stack + sizeof(J9JavaStack)), 0, mallocSize - sizeof(J9JavaStack));
 
 
 		/* If this is a profiling VM, or verbose:stack is enabled, paint the stack with a distinctive pattern so we can

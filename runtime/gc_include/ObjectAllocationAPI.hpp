@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,6 +73,11 @@ public:
 	VMINLINE j9object_t
 	inlineAllocateObject(J9VMThread *currentThread, J9Class *clazz, bool initializeSlots = true, bool memoryBarrier = true)
 	{
+#if defined(J9VM_OPT_VALGRIND_SUPPORT)
+		/* Failing inline allocation here will make openj9 allocate object using OMR where valgrind is linked. */
+		return NULL;
+#endif /* J9VM_OPT_VALGRIND_SUPPORT */
+
 		j9object_t instance = NULL;
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(J9VM_GC_SEGREGATED_HEAP)
 		/* Calculate the size of the object */
@@ -155,6 +160,11 @@ public:
 	VMINLINE j9object_t
 	inlineAllocateIndexableObject(J9VMThread *currentThread, J9Class *arrayClass, U_32 size, bool initializeSlots = true, bool memoryBarrier = true, bool sizeCheck = true)
 	{
+#if defined(J9VM_OPT_VALGRIND_SUPPORT)
+		/* Failing inline allocation here will make openj9 allocate object using OMR where valgrind is linked. */
+		return NULL;
+#endif /* J9VM_OPT_VALGRIND_SUPPORT */
+
 		j9object_t instance = NULL;
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(J9VM_GC_SEGREGATED_HEAP)
