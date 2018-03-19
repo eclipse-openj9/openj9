@@ -343,11 +343,14 @@ LIBCDEFS := $(wildcard /ztpf/$(UMA_ZTPF_ROOT)/base/lib/libCDEFSFORASM.so)
 </#if>
 
 # ddrgen preprocessor targets
+# We use sed in these scripts to retain only those lines that will be interesting
+# to omr/ddr/tools/getmacros; this reduces the total footprint of all *.i files by
+# over 1GB and reduces the workload of getmacros as it reads them.
 %.i : %.c
-	$(CC) $(CFLAGS) -E $< -o $@
+	$(CC) $(CFLAGS) -E $< | sed -n -e '/^@/p' > $@
 
 %.i : %.cpp
-	$(CXX) $(CXXFLAGS) -E $< -o $@
+	$(CXX) $(CXXFLAGS) -E $< | sed -n -e '/^@/p' > $@
 
 # just create empty output files
 %.i : %.asm ; touch $@
