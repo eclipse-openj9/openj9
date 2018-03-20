@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -241,12 +241,12 @@ jobject getPropertyList(JNIEnv *env)
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	OMR_VM *omrVM = javaVM->omrVM;
 
-	/* Change the allocation value PROPERTY_COUNT above as you add/remove properties, * then follow the 
-		propIndex++ convention and consume 2 * slots for each property. 2 * number of property keys is the * correct allocation.
-
-		Also note the call to addSystemProperties below, which may add some configuration-specific properties.  Be sure to leave
-		enough room in the property list for all possibilities.
-	*/
+	/* Change the allocation value PROPERTY_COUNT above as you add/remove properties, 
+	 * then follow the propIndex++ convention and consume 2 * slots for each property. 2 * number of property keys is the 
+	 * correct allocation.
+	 * Also note the call to addSystemProperties below, which may add some configuration-specific properties.  Be sure to leave
+	 * enough room in the property list for all possibilities.
+	 */
 
 	if (J9_GC_POLICY_METRONOME == (omrVM->gcPolicy)) {
 		strings[propIndex++] = "com.ibm.jvm.realtime";
