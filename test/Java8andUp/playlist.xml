@@ -209,8 +209,6 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<!-- failed intermittent on Windows, Openj9 issue #1454 -->
-		<platformRequirements>^os.win</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
