@@ -188,10 +188,6 @@ bool jaasCHTableCommit(
    TR_ResolvedMethod  *currentMethod = comp->getCurrentMethod();
    TR_Hotness hotness                = comp->getMethodHotness();
 
-#ifdef COLLECT_CHTABLE_STATS
-   size_t numAssumptionsBefore = comp->getPersistentInfo()->getRuntimeAssumptionTable()->countRatAssumptions();
-#endif
-
    if (!preXMethods.empty())
       {
       for (TR_ResolvedMethod *method : preXMethods)
@@ -310,10 +306,6 @@ bool jaasCHTableCommit(
    //if (!sideEffectPatchSites.empty())
       //table->commitSideEffectGuards(comp);
 
-#ifdef COLLECT_CHTABLE_STATS
-   size_t numAssumptionsAfter = comp->getPersistentInfo()->getRuntimeAssumptionTable()->countRatAssumptions();
-   table->_numAssumptions += numAssumptionsAfter - numAssumptionsBefore;
-#endif
 
    return true;
    }

@@ -64,13 +64,13 @@ void TR_JaasServerPersistentCHTable::doUpdate(TR::Compilation *comp)
    TR::ClassTableCriticalSection doUpdate(comp->fe());
    commitModifications(comp, modifyStr);
    commitRemoves(comp, removeStr);
-   size_t nBytes = removeStr.size() + modifyStr.size();
 
 #ifdef COLLECT_CHTABLE_STATS
+   uint32_t nBytes = removeStr.size() + modifyStr.size();
    CHTABLE_UPDATE_COUNTER(_updateBytes, nBytes);
    CHTABLE_UPDATE_COUNTER(_numUpdates, 1);
    uint32_t prevMax = _maxUpdateBytes;
-   while (prevMax < nBytes && !_maxUpdateBytes.compare_exchange_weak(prevMax, nBytes, std::memory_order_relaxed));
+   _maxUpdateBytes = std::max(nBytes, _maxUpdateBytes);
 #endif
    //if (modifyStr.size() + removeStr.size() != 0)
       //fprintf(stderr, "CHTable updated with %d bytes\n", modifyStr.size() + removeStr.size());
@@ -212,11 +212,11 @@ std::pair<std::string, std::string> TR_JaasClientPersistentCHTable::serializeUpd
    std::string removes = serializeRemoves(); // must be called first
    std::string mods = serializeModifications();
 #ifdef COLLECT_CHTABLE_STATS
-   size_t nBytes = removes.size() + mods.size();
+   uint32_t nBytes = removes.size() + mods.size();
    CHTABLE_UPDATE_COUNTER(_updateBytes, nBytes);
    CHTABLE_UPDATE_COUNTER(_numUpdates, 1);
    uint32_t prevMax = _maxUpdateBytes;
-   while (prevMax < nBytes && !_maxUpdateBytes.compare_exchange_weak(prevMax, nBytes, std::memory_order_relaxed));
+   _maxUpdateBytes = std::max(nBytes, _maxUpdateBytes);
 #endif
    return {removes, mods};
    }

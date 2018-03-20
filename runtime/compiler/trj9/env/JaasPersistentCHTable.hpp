@@ -6,7 +6,6 @@
 #include "env/CHTable.hpp"
 #include <unordered_map>
 #include <unordered_set>
-#include <atomic>
 
 #define COLLECT_CHTABLE_STATS
 
@@ -32,12 +31,12 @@ public:
 
 #ifdef COLLECT_CHTABLE_STATS
    // Statistical counters
-   std::atomic<std::uint32_t> _numUpdates; // aka numCompilations
-   std::atomic<std::uint32_t> _numClassesUpdated;
-   std::atomic<std::uint32_t> _numClassesRemoved;
-   std::atomic<std::uint32_t> _numQueries;
-   std::atomic<std::uint32_t> _updateBytes;
-   std::atomic<std::uint32_t> _maxUpdateBytes;
+   uint32_t _numUpdates; // aka numCompilations
+   uint32_t _numClassesUpdated;
+   uint32_t _numClassesRemoved;
+   uint32_t _numQueries;
+   uint32_t _updateBytes;
+   uint32_t _maxUpdateBytes;
 #endif
 
 private:
@@ -68,13 +67,12 @@ public:
    virtual void resetVisitedClasses(); // highly time consumming
 
 #ifdef COLLECT_CHTABLE_STATS
-   std::atomic<std::uint32_t> _numUpdates; // aka numCompilations
-   std::atomic<std::uint32_t> _numAssumptions;
-   std::atomic<std::uint32_t> _numCommitFailures;
-   std::atomic<std::uint32_t> _numClassesUpdated;
-   std::atomic<std::uint32_t> _numClassesRemoved;
-   std::atomic<std::uint32_t> _updateBytes;
-   std::atomic<std::uint32_t> _maxUpdateBytes;
+   uint32_t _numUpdates; // aka numCompilations
+   uint32_t _numCommitFailures;
+   uint32_t _numClassesUpdated;
+   uint32_t _numClassesRemoved;
+   uint32_t _updateBytes;
+   uint32_t _maxUpdateBytes;
 #endif
 
 private:
