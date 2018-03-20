@@ -71,7 +71,9 @@ def get_sha(REPO, BRANCH) {
     // Allows Pipelines to kick off multiple builds and have the same SHA built everywhere.
     return sh (
             // "git ls-remote $REPO" will return all refs, adding "$BRANCH" will only return the specific branch we are interested in
-            script: "git ls-remote $REPO refs/heads/$BRANCH | cut -c1-7",
+            // return the full 40 characters sha instead of the short version 
+            // to avoid errors due to short sha ambiguousness due to multiple matches for a short sha
+            script: "git ls-remote $REPO refs/heads/$BRANCH | cut -c1-40",
             returnStdout: true
         ).trim()
 }
