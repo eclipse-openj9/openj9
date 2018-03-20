@@ -281,7 +281,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getMultiThreadInfoIm
 	jlongArray ids, jint maxStackDepth, jboolean lockedMonitors, jboolean lockedSynchronizers);
 extern J9_CFUNC jobjectArray JNICALL
 Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
-	jboolean lockedMonitors, jboolean lockedSynchronizers);
+	jboolean lockedMonitors, jboolean lockedSynchronizers, jint maxDepth);
 
 /* J9SourceJclReflect*/
 extern J9_CFUNC UDATA
