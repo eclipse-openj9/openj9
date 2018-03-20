@@ -39,13 +39,13 @@
 		</dependencies>
 		<commands>
 			<command type="all" line="m4 -I$(UMA_PATH_TO_ROOT)oti -I$(UMA_PATH_TO_ROOT)redirector generated.h.m4 > generated.h"/>
-			<command type="clean" line="rm generated.h"/>
+			<command type="clean" line="$(RM) generated.h"/>
 		</commands>
 	</artifact>
 	<artifact type="target" name="generate_j9vm">
 		<commands>
 			<command type="all" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)j9vm generated.h"/>
-			<command type="clean" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)j9vm generated.h_clean"/>
+			<command type="clean" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)j9vm clean_generated.h"/>
 		</commands>
 	</artifact>
 
