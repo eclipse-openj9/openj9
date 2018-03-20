@@ -26,7 +26,12 @@
 // set_job_variables() is usually called on the master not on the node (where
 // the tests run) and the master's WORKSPACE is different than the node's WORKSPACE
 JRE_FOLDER = (SDK_VERSION == '8') ? '/jre' : ''
-JAVA_BIN = "${WORKSPACE}/build/${RELEASE}/images/${JDK_FOLDER}${JRE_FOLDER}/bin"
+
+BUILD_RELEASE_IMAGES = ''
+if (params.ghprbPullId) {
+    BUILD_RELEASE_IMAGES = "build/${RELEASE}/images/"
+}
+JAVA_BIN = "${WORKSPACE}/${BUILD_RELEASE_IMAGES}${JDK_FOLDER}${JRE_FOLDER}/bin"
 
 def fetch_artifacts(){
     stage('Fetch Artifacts') {
