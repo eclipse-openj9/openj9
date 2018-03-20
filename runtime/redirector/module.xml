@@ -46,13 +46,13 @@
 		</dependencies>
 		<commands>
 			<command type="all" line="m4 -I$(UMA_PATH_TO_ROOT)oti generated.c.m4 > generated.c"/>
-			<command type="clean" line="rm generated.c"/>
+			<command type="clean" line="$(RM) generated.c"/>
 		</commands>
 	</artifact>
 	<artifact type="target" name="generate_redirector">
 		<commands>
 			<command type="all" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)redirector generated.c"/>
-			<command type="clean" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)redirector generated.c_clean"/>
+			<command type="clean" line="$(MAKE) -C $(UMA_PATH_TO_ROOT)redirector clean_generated.c"/>
 		</commands>
 	</artifact>
 
