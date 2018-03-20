@@ -1817,7 +1817,6 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
                }
             else
                {
-               fprintf(stderr, "IProfiler can't persist %p for reason %d\n", method, canPersist);
                client->write(std::string());
                }
             if (auto callGraphEntry = entry->asIPBCDataCallGraph())
