@@ -351,12 +351,27 @@ private static final int PlatformEncoding = 1;
 private static final int FileEncoding = 2;
 private static final int OSEncoding = 3;
 
+/*[IF OpenJ9-RawBuild]*/
+	/* This is a JCL native required only by OpenJ9 raw build.
+	 * OpenJ9 raw build is a combination of OpenJ9 and OpenJDK binaries without JCL patches within extension repo.
+	 * Currently OpenJ9 depends on a JCL patch to initialize platform encoding which is not available to raw build.
+	 * A workaround for raw build is to invoke this JCL native which initializes platform encoding.
+	 * This workaround can be removed if that JCL patch is not required.
+	 */
+private static native Properties initProperties(Properties props);
+/*[ENDIF] OpenJ9-RawBuild */
+
 /**
  * If systemProperties is unset, then create a new one based on the values 
  * provided by the virtual machine.
  */
 @SuppressWarnings("nls")
 private static void ensureProperties() {
+/*[IF OpenJ9-RawBuild]*/
+	// invoke JCL native to initialize platform encoding
+	initProperties(new Properties());
+/*[ENDIF] OpenJ9-RawBuild */
+	
 	systemProperties = new Properties();
 
 	if (osEncoding != null)
