@@ -385,6 +385,19 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 
 		case 1: 		/* platform encoding */
 			encoding = getPlatformFileEncoding(env, property, sizeof(property), encodingType);
+#if defined(J9VM_JCL_SE11)
+			{
+				UDATA handle = 0;
+				PORT_ACCESS_FROM_ENV(env);
+				if (0 == j9sl_open_shared_library("java", &handle, J9PORT_SLOPEN_DECORATE)) {
+					void (*nativeFuncAddrJNU)(JNIEnv *env, const char *str) = NULL;
+					if (0 == j9sl_lookup_name(handle, "JNU_InitializeEncoding", (UDATA*) &nativeFuncAddrJNU, "VLL")) {
+						/* invoke JCL native to initialize platform encoding explicitly */
+						nativeFuncAddrJNU(env, encoding);
+					}
+				}
+			}
+#endif /* J9VM_JCL_SE11 */
 			break;
 
 		case 2:		/* file.encoding */
