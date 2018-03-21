@@ -34,8 +34,8 @@ def parse_variables_file(){
 
     // check if a variable file is passed as a Jenkins build parameter
     // if not use default configuration settings
-    VARIABLE_FILE = params.VARIABLE_FILE
-    if ((VARIABLE_FILE == null) || (VARIABLE_FILE == '')) {
+    VARIABLE_FILE = get_variables_file()
+    if (!VARIABLE_FILE) {
         VARIABLE_FILE = "${DEFAULT_VARIABLE_FILE}"
     }
 
@@ -45,6 +45,37 @@ def parse_variables_file(){
 
     echo "Using variables file: ${VARIABLE_FILE}"
     VARIABLES = readYaml file: "${VARIABLE_FILE}"
+}
+
+/*
+* Fetch the user provided variable file.
+*/
+def get_variables_file() {
+    if (params.VARIABLE_FILE && params.VENDOR_REPO && params.VENDOR_BRANCH) {
+        stage('Get Variables File') {
+            timestamps {
+                if (params.VENDOR_CREDENTIALS_ID) {
+                    sshagent(credentials:["${params.VENDOR_CREDENTIALS_ID}"]) {
+                        checkout_file()
+                    }
+                } else {
+                    checkout_file()
+                }
+             }
+        }
+    }
+
+    return params.VARIABLE_FILE
+}
+
+/*
+* Check out the user variable file.
+*/
+def checkout_file() {
+    sh "git config remote.vendor.url ${params.VENDOR_REPO}"
+    sh "git config remote.vendor.fetch +refs/heads/${params.VENDOR_BRANCH}:refs/remotes/vendor/${params.VENDOR_BRANCH}"
+    sh "git fetch vendor"
+    sh "git checkout vendor/${params.VENDOR_BRANCH} -- ${params.VARIABLE_FILE}"
 }
 
 /*
