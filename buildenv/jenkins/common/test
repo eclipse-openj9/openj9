@@ -94,8 +94,6 @@ def test() {
 def publish() {
     stage('Publish Test Results') {
         timestamps {
-            junit allowEmptyResults: true, keepLongStdio: true, testResults: '**/junitreports/**/*.xml'
-            step([$class: 'Publisher', reportFilenamePattern: '**/testng-results.xml'])
             step([$class: "TapPublisher", testResults: "**/*.tap"])
         }
     }
