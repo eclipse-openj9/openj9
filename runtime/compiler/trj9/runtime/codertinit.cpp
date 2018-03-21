@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -133,8 +133,6 @@ static void codertOnBootstrap(J9HookInterface * * hookInterface, UDATA eventNum,
    }
 
 
-extern "C" int32_t _copyStats[];
-
 static void codertShutdown(J9HookInterface * * hook, UDATA eventNum, void * eventData, void * userData)
    {
    J9VMShutdownEvent * event = (J9VMShutdownEvent *)eventData;
@@ -143,35 +141,6 @@ static void codertShutdown(J9HookInterface * * hook, UDATA eventNum, void * even
 
    J9JavaVM * javaVM = vmThread->javaVM;
    PORT_ACCESS_FROM_JAVAVM(javaVM);
-
-
-#if defined(DEBUG) && defined(TR_HOST_X86)
-
-   if (feGetEnv("TR_ArrayCopyStats"))
-      {
-      j9tty_printf(PORTLIB, "\n\nArrayCopy statistics:\n");
-      int32_t total = 0;
-      int32_t i;
-      for (i = 0; i <= 64; ++i)
-         {
-         if (_copyStats[i])
-            {
-            total += _copyStats[i];
-            j9tty_printf(PORTLIB, "   move length %3d   : %d\n", i, _copyStats[i]);
-            }
-         }
-      total += _copyStats[i];
-      j9tty_printf(PORTLIB, "   moves larger than 64                           : %d\n", _copyStats[i++]);
-      j9tty_printf(PORTLIB, "   forward direction used                         : %d\n", _copyStats[i++]);
-      j9tty_printf(PORTLIB, "   backward direction needed                      : %d\n", _copyStats[i++]);
-      j9tty_printf(PORTLIB, "   Elements copied with array store check         : %d\n", _copyStats[i++]);
-      j9tty_printf(PORTLIB, "   Elements copied with write barrier store check : %d\n", _copyStats[i++]);
-      j9tty_printf(PORTLIB, "   Elements copied with both checks               : %d\n", _copyStats[i++]);
-      j9tty_printf(PORTLIB, "   Total of all moves                             : %d\n\n", total);
-      }
-
-#endif
-
    return;
    }
 

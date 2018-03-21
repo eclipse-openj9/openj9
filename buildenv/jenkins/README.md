@@ -56,14 +56,16 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - `Jenkins test all`
     - `Jenkins test all all all`
 
-You can also request a "Compile & Sanity" build from the extensions repos or openj9-omr
+You can also request a Pull Request build from the extensions repos or openj9-omr
+- [openj9-omr](https://github.com/eclipse/openj9-omr)
 - [openj9-openjdk-jdk8](https://github.com/ibmruntimes/openj9-openjdk-jdk8)
 - [openj9-openjdk-jdk9](https://github.com/ibmruntimes/openj9-openjdk-jdk9)
-- [openj9-omr](https://github.com/eclipse/openj9-omr)
+
+###### Note: When specifying a dependent change in an OpenJDK extensions repo, you can only build the SDK version that matches the repo where the dependent change lives. Eg. You cannot build JDK8 with a PR in openj9-openjdk-jdk9.
 
 ##### Dependent Changes
 
-- If you have dependent change(s) in either eclipse/omr, eclipse/openj9-omr, or ibmruntimes/openj9-openjdk-jdk9, you can build & test with all needed changes
+- If you have dependent change(s) in either eclipse/omr, eclipse/openj9-omr, or ibmruntimes/openj9-openjdk-jdk\*, you can build & test with all needed changes
 - Request a build by including the PR ref in your trigger comment
 - Ex. Dependent change in OMR Pull Request `#123`
     - `Jenkins test sanity depends eclipse/omr#123`
@@ -72,11 +74,9 @@ You can also request a "Compile & Sanity" build from the extensions repos or ope
 - Ex. Dependent change in OpenJDK Pull Request `#789`
     - `Jenkins test sanity depends ibmruntimes/openj9-openjdk-jdk9#789`
 - Ex. Dependent changes in OMR and OpenJDK
-    - `Jenkins test sanity depends eclipse/omr#123 ibmruntimes/openj9-openjdk-jdk9#789`
+    - `Jenkins test sanity all jdk9 depends eclipse/omr#123 ibmruntimes/openj9-openjdk-jdk9#789`
 - Ex. If you have a dependent change and only want one platform, depends comes last
-    - `Jenkins test sanity zlinux depends eclipse/omr#123`
-
-**Note:** Dependent changes can only be requested from an OpenJ9 Pull Request
+    - `Jenkins test sanity zlinux all depends eclipse/omr#123`
 
 ##### Other Pull Requests builds
 
@@ -248,143 +248,36 @@ You can also request a "Compile & Sanity" build from the extensions repos or ope
     - Trigger: Triggered by `Mirror-OMR-to-OpenJ9-OMR`
 
 #### Pull Requests
+###### **REPO** indicates the job is configured for Pull Requests from that repository. Can be one of openj9, openj9-omr, openj9-openjdk-jdk8 etc.
+###### **VERSION** indicates the job is configured for each JDK version. Can be one of 8,9,10 etc.
+###### **SPEC** indicates the job is configured for each platform spec. Can be one of aix_ppc-64_cmprssptrs, linux_ppc-64_cmprssptrs_le, linux_390-64_cmprssptrs etc.
 
-- PullRequest-Compile-JDK8-aix_ppc-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)
+- PullRequest-Compile-JDK**VERSION**-**SPEC**-**REPO**
     - Description:
-        - Compile on java8 aix_ppc-64_cmprssptrs
+        - Compile java **VERSION** on platform **SPEC**
     - Trigger:
-        - Github PR comment `Jenkins compile aix jdk8`
+        - Github PR comment example `Jenkins compile <SPEC> jdk<VERSION>`
 
-- PullRequest-Compile-JDK9-aix_ppc-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)
+- PullRequest-Extended-JDK**VERSION**-**SPEC**-**REPO**
     - Description:
-        - Compile on java9 aix_ppc-64_cmprssptrs
+        - Compile and Extended tests java **VERSION** on platform **SPEC**
     - Trigger:
-        - Github PR comment `Jenkins compile aix jdk9`
+        - Github PR comment `Jenkins test extended <SPEC> jdk<VERSION>`
 
-- PullRequest-Compile-JDK8-linux_390-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK8-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK8-linux_390-64_cmprssptrs-OpenJ9)
+- PullRequest-Sanity-JDK**VERSION**-**SPEC**-**REPO**
     - Description:
-        - Compile on java8 linux_390-64_cmprssptrs
+        - Compile and Sanity tests java **VERSION** on platform **SPEC**
     - Trigger:
-        - Github PR comment `Jenkins compile zlinux jdk8`
+        - Github PR comment `Jenkins test sanity <SPEC> jdk<VERSION>`
 
-- PullRequest-Compile-JDK9-linux_390-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK9-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK9-linux_390-64_cmprssptrs-OpenJ9)
-    - Description:
-        - Compile on java9 linux_390-64_cmprssptrs
-    - Trigger:
-        - Github PR comment `Jenkins compile zlinux jdk9`
-
-- PullRequest-Compile-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)
-    - Description:
-        - Compile on java8 linux_ppc-64_cmprssptrs_le
-    - Trigger:
-        - Github PR comment `Jenkins compile plinux jdk8`
-
-- PullRequest-Compile-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Compile-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Compile-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)
-    - Description:
-        - Compile on java9 linux_ppc-64_cmprssptrs_le
-    - Trigger:
-        - Github PR comment `Jenkins compile plinux jdk9`
-
-- PullRequest-JDK8-Extended-aix_ppc-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)
-    - Description:
-        - Compile and Extended tests on java8 aix_ppc-64_cmprssptrs
-    - Trigger:
-        - Github PR comment `Jenkins test extended aix jdk8`
-
-- PullRequest-JDK9-Extended-aix_ppc-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)
-    - Description:
-        - Compile and Extended tests on java9 aix_ppc-64_cmprssptrs
-    - Trigger:
-        - Github PR comment `Jenkins test extended aix jdk9`
-
-- PullRequest-JDK8-Extended-linux_390-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK8-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK8-linux_390-64_cmprssptrs-OpenJ9)
-    - Description:
-        - Compile and Extended tests on java8 linux_390-64_cmprssptrs
-    - Trigger:
-        - Github PR comment `Jenkins test extended zlinux jdk8`
-
-- PullRequest-JDK9-Extended-linux_390-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK9-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK9-linux_390-64_cmprssptrs-OpenJ9)
-    - Description:
-        - Compile and Extended tests on java9 linux_390-64_cmprssptrs
-    - Trigger:
-        - Github PR comment `Jenkins test extended zlinux jdk9`
-
-- PullRequest-Extended-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)
-    - Description:
-        - Compile and Extended tests on java8 linux_ppc-64_cmprssptrs_le
-    - Trigger:
-        - Github PR comment `Jenkins test extended plinux jdk8`
-
-- PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Extended-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)
-    - Description:
-        - Compile and Extended tests on java9 linux_ppc-64_cmprssptrs_le
-    - Trigger:
-        - Github PR comment `Jenkins test extended plinux jdk9`
-
-- PullRequest-Sanity-JDK8-aix_ppc-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK8-aix_ppc-64_cmprssptrs-OpenJ9)
-    - Description:
-        - Compile and Sanity tests on java8 aix_ppc-64_cmprssptrs
-    - Trigger:
-        - Github PR comment `Jenkins test sanity aix jdk8`
-
-- PullRequest-Sanity-JDK9-aix_ppc-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK9-aix_ppc-64_cmprssptrs-OpenJ9)
-    - Description:
-        - Compile and Sanity tests on java9 aix_ppc-64_cmprssptrs
-    - Trigger:
-        - Github PR comment `Jenkins test sanity aix jdk9`
-
-- PullRequest-Sanity-JDK8-linux_390-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK8-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK8-linux_390-64_cmprssptrs-OpenJ9)
-    - Description:
-        - Compile and Sanity tests on java8 linux_390-64_cmprssptrs
-    - Trigger:
-        - Github PR comment `Jenkins test sanity zlinux jdk8`
-
-- PullRequest-Sanity-JDK9-linux_390-64_cmprssptrs-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK9-linux_390-64_cmprssptrs-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK9-linux_390-64_cmprssptrs-OpenJ9)
-    - Description:
-        - Compile and Sanity tests on java9 linux_390-64_cmprssptrs
-    - Trigger:
-        - Github PR comment `Jenkins test sanity zlinux jdk9`
-
-- PullRequest-Sanity-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK8-linux_ppc-64_cmprssptrs_le-OpenJ9)
-    - Description:
-        - Compile and Sanity tests on java8 linux_ppc-64_cmprssptrs_le
-    - Trigger:
-        - Github PR comment `Jenkins test sanity plinux jdk8`
-
-- PullRequest-Sanity-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-Sanity-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)](https://ci.eclipse.org/openj9/job/PullRequest-Sanity-JDK9-linux_ppc-64_cmprssptrs_le-OpenJ9)
-    - Description:
-        - Compile and Sanity tests on java9 linux_ppc-64_cmprssptrs_le
-    - Trigger:
-        - Github PR comment `Jenkins test sanity plinux jdk9`
-
-- PullRequest-LineEndingsCheck
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-LineEndingsCheck)](https://ci.eclipse.org/openj9/job/PullRequest-LineEndingsCheck)
+- PullRequest-LineEndingsCheck-**REPO**
     - Description:
         - Checks the files modified in a pull request have correct line endings
     - Trigger:
         - Automatically builds on every PR
         - Retrigger with `Jenkins line endings check`
 
-- PullRequest-CopyrightCheck
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=PullRequest-CopyrightCheck)](https://ci.eclipse.org/openj9/job/PullRequest-CopyrightCheck)
+- PullRequest-CopyrightCheck-**REPO**
     - Description:
         - Checks the files modified in a pull request have copyright with current year
     - Trigger:

@@ -35,5 +35,5 @@ node("${NODE}") {
 
     checkout scm
     buildfile = load 'buildenv/jenkins/common/build'
-    buildfile.build_pr_compile_only()
+    buildfile.build_all()
 }
