@@ -173,19 +173,56 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 	{
 		while (walkResult->field) {
 			UDATA slotOffset = walkResult->offset / (objectSlotSize * slotsPerShapeElement);
-			UDATA bit = (UDATA)1 << ((walkResult->offset % (objectSlotSize * slotsPerShapeElement)) / objectSlotSize);
-			shape[slotOffset] |= bit;
-#ifdef J9VM_GC_LEAF_BITS
-			if (isLeafField(walkResult->field)) {
-				leafShape[slotOffset] |= bit;
-			} else if (isString) {
-				J9UTF8 *fieldName = J9ROMFIELDSHAPE_NAME(walkResult->field);
 
-				if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(fieldName), J9UTF8_LENGTH(fieldName), "value")) {
-					leafShape[slotOffset] |= bit;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (walkResult->field->modifiers & J9AccFlattenable) {
+				J9Class *fieldClass = walkResult->flattenableFieldClass;
+				UDATA shift = ((walkResult->offset % (objectSlotSize * slotsPerShapeElement)) / objectSlotSize);
+
+				if ((UDATA)fieldClass->instanceDescription & 1) {
+					/* fieldClass description is tagged and fits in one slot */
+					/* shift right by 2 to remove the tagging bit and the bit for the lockword */
+					UDATA fieldBits = ((UDATA)fieldClass->instanceDescription >> 2);
+
+					shape[slotOffset] |= fieldBits << shift;
+					if ((fieldBits & (~((UDATA)0) << (slotsPerShapeElement - shift))) && (0 != shift)) {
+						shape[slotOffset + 1] |= fieldBits >> (slotsPerShapeElement - shift);
+					}
+				} else {
+					/* fieldClass description is stored indirect */
+					UDATA fieldClassSize, fieldSlots, i;
+					fieldClassSize = fieldClass->totalInstanceSize / sizeof(fj9object_t);
+					fieldSlots = ROUND_UP_TO_POWEROF2(fieldClassSize, slotsPerShapeElement) / slotsPerShapeElement;
+					Assert_VM_true(shift > 0);
+					shift -= 1; /* account for lockword (which should have a description of 0) */
+
+					for (i = 0; i < fieldSlots; ++i, ++slotOffset) {
+						UDATA bits = fieldClass->instanceDescription[i];
+						shape[slotOffset] |= bits << shift;
+						if ((bits & (~((UDATA)0) << (slotsPerShapeElement - shift))) && (0 != shift)) {
+							shape[slotOffset + 1] |= bits >> (slotsPerShapeElement - shift);
+						}
+					}
 				}
-			}
+				// TODO: GC_LEAF_BITS for flattened fields
+			} else {
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				UDATA bit = (UDATA)1 << ((walkResult->offset % (objectSlotSize * slotsPerShapeElement)) / objectSlotSize);
+				shape[slotOffset] |= bit;
+#ifdef J9VM_GC_LEAF_BITS
+				if (isLeafField(walkResult->field)) {
+					leafShape[slotOffset] |= bit;
+				} else if (isString) {
+					J9UTF8 *fieldName = J9ROMFIELDSHAPE_NAME(walkResult->field);
+
+					if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(fieldName), J9UTF8_LENGTH(fieldName), "value")) {
+						leafShape[slotOffset] |= bit;
+					}
+				}
 #endif
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			walkResult = fieldOffsetsNextDo(walkState);
 		}
 	}
