@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2014 IBM Corp. and others
+ * Copyright (c) 2008, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -609,56 +609,3 @@ Java_j9vm_test_softmx_TestNatives_setAggressiveGCPolicy(JNIEnv* env, jclass claz
 }
 
 
-/**
- * static native use to test static initialization for multi-tenancy.  It does not need to do anything we simply
- * need to call it and verify that by having called it the appropriate per tenant static initialization has
- * taken place
- *
- * @param env[in]  The JNIEnv that can be used by the method
- *
- */
-void JNICALL
-Java_com_ibm_tests_tenant_helpers_StaticInitializationTestTargetStaticNativeMethod_runAStaticNativeMethod(JNIEnv* env)
-{
-}
-
-/**
- * static native use to test static initialization for multi-tenancy.  It does not need to do anything we simply
- * need to call it and verify that by having called it the appropriate per tenant static initialization has
- * taken place
- *
- * @param env[in]  The JNIEnv that can be used by the method
- *
- */
-void JNICALL
-Java_com_ibm_tests_tenant_helpers_StaticInitializationTestTargetStaticNativeMethod2_runAStaticNativeMethod(JNIEnv* env)
-{
-}
-
-
-
-/**
- * static native use to test static initialization for multi-tenancy.  It does not need to do anything we simply
- * need to call it and verify that by having called it the appropriate per tenant static initialization has
- * taken place
- *
- * @param env[in]  The JNIEnv that can be used by the method
- *
- */
-void JNICALL
-Java_com_ibm_tests_tenant_helpers_StaticInitializationTestTargetMethodInvokeNative1_trigger(JNIEnv* env)
-{
-}
-
-/**
- * static native use to test static initialization for multi-tenancy.  It does not need to do anything we simply
- * need to call it and verify that by having called it the appropriate per tenant static initialization has
- * taken place
- *
- * @param env[in]  The JNIEnv that can be used by the method
- *
- */
-void JNICALL
-Java_com_ibm_tests_tenant_helpers_StaticInitializationTestTargetMethodInvokeNative2_trigger(JNIEnv* env)
-{
-}
