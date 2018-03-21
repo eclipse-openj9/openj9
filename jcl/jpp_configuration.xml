@@ -342,6 +342,8 @@
 		<source path="src/openj9.dataaccess/share/classes"/>
 		<source path="src/openj9.sharedclasses/share/classes"/>
 		<source path="src/openj9.zosconditionhandling/share/classes"/>
+		<source path="src/openj9.gpu/share/classes"/>
+		<source path="src/openj9.cuda/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
@@ -398,8 +400,7 @@
 
 	<configuration label="CUDA4J" outputpath="CUDA4J/src" flags="CUDA4J" jdkcompliance="1.8">
 		<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-		<source path="src/java.base/share/classes" />
-		<source path="src/openj9.zosconditionhandling/share/classes"/>
+		<source path="src/openj9.cuda/share/classes"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util" />
 		<parameter name="jxerules:outputdir" value="java/lang" />

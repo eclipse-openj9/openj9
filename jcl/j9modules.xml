@@ -51,6 +51,7 @@
 			</case>
 			<case value="java.base">
 				<removeexportsoropens action="exports" package="com.ibm.cuda" />
+				<removeexportsoropens action="exports" package="com.ibm.gpu" />
 				<removeexportsoropens action="exports" package="com.ibm.dataaccess" />
 				<removeexportsoropens action="exports" package="com.ibm.jvm" />
 				<removeexportsoropens action="exports" package="com.ibm.oti.shared" />
@@ -60,11 +61,13 @@
 				<removeexportsoropens action="exports" package="com.ibm.le.conditionhandling" />
 				<replaceexportsoropens action="exports" module.old="com.ibm.dtfj" module.new="" />
 				<replaceexportsoropens action="exports" module.old="com.ibm.dtfjview" module.new="" />
+				<removeprovides interface="com.ibm.gpu.spi.GPUAssist.Provider" />
 
 				<delete verbose="true">
 					<fileset dir="${module.dir}/classes">
 						<include name="com/ibm/cuda/**" />
 						<include name="com/ibm/dataaccess/*" />
+						<include name="com/ibm/gpu/internal/*" />
 						<include name="com/ibm/gpu/*" />
 						<include name="com/ibm/oti/shared/*" />
 						<include name="com/ibm/jvm/*" />
