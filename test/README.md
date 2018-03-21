@@ -140,7 +140,7 @@ typical use case for OpenJ9 developers, there are also many cases
 where developers need to verify features for a specific version or 
 compare behaviour against a particular implementation.
 
-JAVA_VERSION=[SE80|SE90|SE100|Panama|Valhalla] (SE90 default value)
+JAVA_VERSION=[SE80|SE90|SE100|SE110|Panama|Valhalla] (SE90 default value)
 
 JAVA_IMPL=[openj9|hotspot|sap] (openj9 default value)
 
