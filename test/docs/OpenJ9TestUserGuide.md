@@ -47,7 +47,7 @@ tools should be installed on your test machine to run tests.
     ```
     JAVA_BIN=<path to JDK bin directory that you wish to test>
     SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test)
-    JAVA_VERSION=[SE80|SE90|SE100|Panama|Valhalla] (SE90 default value)
+    JAVA_VERSION=[SE80|SE90|SE100|SE110|Panama|Valhalla] (SE90 default value)
     JAVA_IMPL=[openj9|hotspot|sap] (openj9 default value)
     ```
 
@@ -94,7 +94,7 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
       - impl:    [openj9|hotspot] (filter test based on exported JAVA_IMPL 
                  value; a test can be tagged with multiple impls at the 
                  same time; default to all impls)
-      - subset:  [SE80|SE90|SE100|Panama|Valhalla] (filter test based on 
+      - subset:  [SE80|SE90|SE100|SE110|Panama|Valhalla] (filter test based on 
                  exported JAVA_VERSION value; a test can be tagged with 
                  multiple subsets at the same time; default to all subsets)
 
