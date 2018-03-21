@@ -68,14 +68,15 @@ endif
 ifndef JVM_VERSION
 ifeq ($(JAVA_VERSION), SE80)
 	JDK_VERSION = openjdk8
-else
-	ifeq ($(JAVA_VERSION), SE90)
-		JDK_VERSION = openjdk9
-	else
-		ifeq ($(JAVA_VERSION), SE100)
-			JDK_VERSION = openjdk10
-		endif
-	endif
+endif
+ifeq ($(JAVA_VERSION), SE90)
+	JDK_VERSION = openjdk9
+endif
+ifeq ($(JAVA_VERSION), SE100)
+	JDK_VERSION = openjdk10
+endif
+ifeq ($(JAVA_VERSION), SE110)
+	JDK_VERSION = openjdk11
 endif
 ifneq (, $(findstring openj9, $(JAVA_IMPL)))
 	JVM_VERSION = $(JDK_VERSION)-openj9
