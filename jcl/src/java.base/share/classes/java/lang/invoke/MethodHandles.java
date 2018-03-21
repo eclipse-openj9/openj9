@@ -2084,7 +2084,7 @@ public class MethodHandles {
 							tryType.returnType.getSimpleName(),
 							finallyType.returnType.getSimpleName(),}));
 		}
-		if (Throwable.class != finallyType.parameterType(0)) {
+		if (!Throwable.class.isAssignableFrom(finallyType.parameterType(0))) {
 			/*[MSG "K063C", "The 1st parameter type of the finally handle: {0} is not {1}"]*/
 			throw new IllegalArgumentException(Msg.getString("K063C", new Object[] { //$NON-NLS-1$
 							finallyType.parameterType(0).getSimpleName(),
