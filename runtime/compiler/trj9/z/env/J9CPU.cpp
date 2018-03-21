@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -518,23 +518,20 @@ CPU::getS390SupportsFPE()
    return _flags.testAny(S390SupportsFPE);
    }
 
-
 bool
 CPU::getS390SupportsTM()
    {
    return (_flags.testAny(S390SupportsTM) &&
-           !(TR::Options::getCmdLineOptions()->getOption(TR_DisableZHelix)));
+           !(TR::Options::getCmdLineOptions()->getOption(TR_DisableZEC12)));
    }
-
 
 bool
 CPU::getS390SupportsRI()
    {
    return ( _flags.testAny(S390SupportsRI) &&
-           !TR::Options::getCmdLineOptions()->getOption(TR_DisableZHelix)  &&
+           !TR::Options::getCmdLineOptions()->getOption(TR_DisableZEC12)  &&
            !TR::Options::getCmdLineOptions()->getOption(TR_DisableZ13));
    }
-
 
 bool
 CPU::getS390SupportsVectorFacility()
