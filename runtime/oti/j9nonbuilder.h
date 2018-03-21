@@ -1586,6 +1586,9 @@ typedef struct J9ROMFieldWalkState {
 
 typedef struct J9ROMFieldOffsetWalkResult {
 	struct J9ROMFieldShape* field;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct J9Class* flattenableFieldClass;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	UDATA offset;
 	UDATA totalInstanceSize;
 	UDATA superTotalInstanceSize;
@@ -1610,10 +1613,20 @@ typedef struct J9ROMFieldOffsetWalkState {
 	UDATA firstSingleOffset;
 	UDATA firstObjectOffset;
 	UDATA firstDoubleOffset;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	UDATA firstFlatSingleOffset;
+	UDATA firstFlatObjectOffset;
+	UDATA firstFlatDoubleOffset;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	IDATA backfillOffsetToUse;
 	U_32 singlesSeen;
 	U_32 objectsSeen;
 	U_32 doublesSeen;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	U_32 flatSinglesSeen;
+	U_32 flatObjectsSeen;
+	U_32 flatDoublesSeen;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	U_32 singleStaticsSeen;
 	U_32 objectStaticsSeen;
 	U_32 doubleStaticsSeen;
@@ -1625,6 +1638,9 @@ typedef struct J9ROMFieldOffsetWalkState {
 	struct J9HiddenInstanceField* hiddenInstanceFields[J9VM_MAX_HIDDEN_FIELDS_PER_CLASS];
 	UDATA hiddenInstanceFieldCount;
 	UDATA hiddenInstanceFieldWalkIndex;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	struct J9ClassLoader* classLoader;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9ROMFieldOffsetWalkState;
 
 #define J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC  1

@@ -622,12 +622,15 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 	state->walkFlags = flags;
 	state->romClass = romClass;
 	state->hiddenInstanceFieldWalkIndex = (UDATA)-1;
-
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	state->classLoader = classLoader;
+
 	ObjectFieldInfo fieldInfo(vm, classLoader, romClass);
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	ObjectFieldInfo fieldInfo(vm, romClass);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	/* Calculate instance size. Skip the following if we  care about only about statics */
 	if (J9_ARE_ANY_BITS_SET(state->walkFlags, (J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_INCLUDE_HIDDEN | J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE))) {
 
@@ -732,6 +735,19 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD;
 			}
 		}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		Assert_VM_true(state->firstObjectOffset >= (fieldInfo.getFlatDoubleCount() * sizeof(U_64)));
+		state->firstFlatDoubleOffset = state->firstObjectOffset - (fieldInfo.getFlatDoubleCount() * sizeof(U_64));
+		Assert_VM_true(state->firstSingleOffset >= (fieldInfo.getFlatObjectCount() * sizeof(fj9object_t)));
+		state->firstFlatObjectOffset = state->firstSingleOffset - (fieldInfo.getFlatObjectCount() * sizeof(fj9object_t));
+		Assert_VM_true(state->result.totalInstanceSize
+			>= ((fieldInfo.getFlatSingleCount() * sizeof(U_32))
+			+ (fieldInfo.getSubclassBackfillOffset() == ObjectFieldInfo::NO_BACKFILL_AVAILABLE ? 0 : ObjectFieldInfo::BACKFILL_SIZE)));
+		state->firstFlatSingleOffset = state->result.totalInstanceSize
+			- (fieldInfo.getFlatSingleCount() * sizeof(U_32))
+			- (fieldInfo.getSubclassBackfillOffset() == ObjectFieldInfo::NO_BACKFILL_AVAILABLE ? 0 : ObjectFieldInfo::BACKFILL_SIZE);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		/*
 		 * Calculate offsets (from the object header) for hidden fields.  Hidden fields follow immediately the instance fields of the same type.
@@ -915,6 +931,36 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 		} else {
 			if( state->walkFlags & J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE ) {
 				{
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+					if (modifiers & J9AccFlattenable) {
+						J9Class *fieldClass = NULL;
+						J9UTF8 *fieldSignature = J9ROMFIELDSHAPE_SIGNATURE(field);
+						UDATA fieldsSize = 0;
+
+						if ('[' == J9UTF8_DATA(fieldSignature)[0]) {
+							// TODO: array case
+							// fieldClass = hashClassTableAt(state->classLoader, J9UTF8_DATA(fieldSignature), J9UTF8_LENGTH(fieldSignature));
+						} else {
+							Assert_VM_true('L' == J9UTF8_DATA(fieldSignature)[0]);
+							/* skip fieldSignature's L and ; to have only CLASSNAME required for internalFindClassUTF8 */
+							fieldClass = hashClassTableAt(state->classLoader, &J9UTF8_DATA(fieldSignature)[1], J9UTF8_LENGTH(fieldSignature)-2);
+						}
+
+						state->result.flattenableFieldClass = fieldClass;
+						fieldsSize = (UDATA) fieldClass->backfillOffset - sizeof(J9Object) - ObjectFieldInfo::LOCKWORD_SIZE;
+						if (fieldClass->classFlags & J9ClassLargestAlignmentDouble) {
+							state->result.offset = state->firstFlatDoubleOffset + state->flatDoublesSeen * sizeof(U_64);
+							state->flatDoublesSeen += fieldsSize / sizeof(U_64) + (fieldsSize % sizeof(U_64) == 0 ? 0 : 1);
+						} else if (fieldClass->classFlags & J9ClassLargestAlignmentObject) {
+							state->result.offset = state->firstFlatObjectOffset + state->flatObjectsSeen * sizeof(fj9object_t);
+							state->flatObjectsSeen += fieldsSize / sizeof(fj9object_t) + (fieldsSize % sizeof(fj9object_t) == 0 ? 0 : 1);
+						} else {
+							state->result.offset = state->firstFlatSingleOffset + state->flatSinglesSeen * sizeof(U_32);
+							state->flatSinglesSeen += fieldsSize / sizeof(U_32);
+						}
+						break;
+					} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 					if( modifiers & J9FieldFlagObject ) {
 						if (state->walkFlags & J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD) {
 							Assert_VM_true(state->backfillOffsetToUse >= 0);
