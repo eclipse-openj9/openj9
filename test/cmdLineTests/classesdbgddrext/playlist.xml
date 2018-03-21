@@ -34,7 +34,7 @@
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1G \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
-	-DJDMPVIEW_EXE="$(JAVA_BIN)$(D)jdmpview" \
+	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)classesddrtests.xml$(Q) \
@@ -68,14 +68,15 @@
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1G \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
-	-DJDMPVIEW_EXE="$(JAVA_BIN)$(D)jdmpview" \
+	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)classesddrtests.xml$(Q) \
 	-outputLimit 1000 -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) \
 	-xlist $(Q)$(TEST_RESROOT)$(D)dbgextddrtests_excludes.xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<platformRequirements>^os.zos</platformRequirements>
+		<!-- j9ddr.jar is not supported in Windows OpenJ9 JDKs, OpenJ9 issue 1511-->
+		<platformRequirements>^os.zos,^os.win,^os.aix</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -101,7 +102,7 @@
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1G \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' \
-	-DJDMPVIEW_EXE="$(JAVA_BIN)$(D)jdmpview" \
+	-DJDMPVIEW_EXE=$(Q)$(JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)classesddrtests.xml$(Q) \
@@ -121,7 +122,6 @@
 			<subset>SE100</subset>
 			<subset>SE110</subset>
 		</subsets>
+		<disabled>github.com/eclipse/openj9/issues/1511</disabled>
 	</test>
-
-
 </playlist>
