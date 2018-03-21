@@ -50,10 +50,12 @@ linux_ppc-64_cmprssptrs_le:
     test: 'ppcle'
 #========================================#
 # Linux S390 64bits Compressed Pointers
+# Note: boot_jdk 8 must use an Adopt JDK8 build rather than an 
+# IBM 7 for the bootJDK or compiling corba will fail to find Object.
 #========================================#
 linux_390-64_cmprssptrs:
   boot_jdk:
-    8: '/usr/lib/jvm/ibm-java-s390x-70'
+    8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     9: '/usr/lib/jvm/adoptojdk-java-s390x-80'
   release:
     8: 'linux-s390x-normal-server-release'
