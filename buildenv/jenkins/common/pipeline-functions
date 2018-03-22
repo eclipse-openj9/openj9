@@ -142,22 +142,23 @@ def workflow() {
     BUILD_JOB_NAME = "Build-JDK${SDK_VERSION}-${SPEC}"
     jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID)
 
-    levels = TESTS_TARGETS.split(",")
-    levels.each { level ->
-        switch (level.trim().toLowerCase()) {
-            case "_sanity":
-                TEST_JOB_NAME = "Test-Sanity-JDK${SDK_VERSION}-${SPEC}"
-                break
-            case "_extended":
-                TEST_JOB_NAME = "Test-Extended-JDK${SDK_VERSION}-${SPEC}"
-                break
-            default:
-                echo "error: Unknown test target: ${level}"
-                error()
-        }
+    if (TESTS_TARGETS.trim() != "none") {
+        levels = TESTS_TARGETS.split(",")
+        levels.each { level ->
+            switch (level.trim().toLowerCase()) {
+                case "_sanity":
+                    TEST_JOB_NAME = "Test-Sanity-JDK${SDK_VERSION}-${SPEC}"
+                    break
+                case "_extended":
+                    TEST_JOB_NAME = "Test-Extended-JDK${SDK_VERSION}-${SPEC}"
+                    break
+                default:
+                    error("Unknown test target: ${level}")
+            }
 
-        // run tests against the SDK build in the upstream job: Build-JDK${SDK_VERSION}-${SPEC}
-        jobs["${level}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID)
+            // run tests against the SDK build in the upstream job: Build-JDK${SDK_VERSION}-${SPEC}
+            jobs["${level}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID)
+        }
     }
 
     // return jobs for further reference
