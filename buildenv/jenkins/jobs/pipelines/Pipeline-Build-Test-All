@@ -20,13 +20,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-def SDK_VERSIONS = ['8', '9']
+def SDK_VERSIONS = ['8', '9', '10']
 def SPECS = ['linux_ppc-64_cmprssptrs_le', 'linux_390-64_cmprssptrs', 'aix_ppc-64_cmprssptrs']
 
 def OPENJDK_REPOS = ['8': 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git',
-                     '9': 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git']
+                     '9': 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git',
+                     '10': 'https://github.com/ibmruntimes/openj9-openjdk-jdk10.git']
 def OPENJDK_BRANCHES = ['8': 'openj9',
-                        '9': 'openj9']
+                        '9': 'openj9',
+                        '10': 'openj9']
 
 def OPENJ9_REPO = 'https://github.com/eclipse/openj9.git'
 def OPENJ9_BRANCH = 'master'
