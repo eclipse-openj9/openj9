@@ -663,7 +663,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	@Override
 	public ThreadInfo[] dumpAllThreads(boolean lockedMonitors,
 			boolean lockedSynchronizers, int maxDepth) {
-		/*[MSG "K0662", maxDepth must not be negative.]*/
+		/*[MSG "K0662", "maxDepth must not be negative."]*/
 		if (maxDepth < 0) {
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0662")); //$NON-NLS-1$
 		}
