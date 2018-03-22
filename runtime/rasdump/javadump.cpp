@@ -1565,6 +1565,29 @@ outerMemCategoryCallBack (U_32 categoryCode, const char * categoryName, UDATA li
 	if (total.liveAllocations > 0) {
 		writer->writeNativeAllocator(categoryName, depth, isRoot, total.liveBytes, total.liveAllocations);
 
+		/* Data on native memory used for DBBs is stored in java class java.nio.Bits. */
+		if (strcmp(categoryName,"sun.misc.Unsafe") == 0) {
+		
+			/* Here we retrieve the amount of native memory allocated to DBBs from the static variables inside the Bits Java class. */
+			J9VMThread* vmThread = _Context->onThread;
+			J9JavaVM *vm = vmThread->javaVM;
+			j9object_t bitsClass = J9VMJAVANIOBITS_OR_NULL(vm);
+			j9object_t countAtomicLongClass = bitsClass ? J9VMJAVANIOBITS_COUNT(vm, bitsClass) : NULL;
+			j9object_t reservedMemoryAtomicLongClass = bitsClass ? J9VMJAVANIOBITS_RESERVEDMEMORY(vm, bitsClass) : NULL;
+			
+			if ((countAtomicLongClass != NULL) && (reservedMemoryAtomicLongClass != NULL)) { 
+				UDATA liveBytesForDBBs = (UDATA)J9VMJAVAUTILCONCURRENTATOMICATOMICLONG_VALUE(vm, reservedMemoryAtomicLongClass);
+				UDATA liveAllocationsForDBBs = (UDATA)J9VMJAVAUTILCONCURRENTATOMICATOMICLONG_VALUE(vm, countAtomicLongClass);
+				
+				writer->writeNativeAllocator("Direct Byte Buffers", depth + 1, (BOOLEAN)0, liveBytesForDBBs, liveAllocationsForDBBs);
+				
+				if (total.liveAllocations > liveAllocationsForDBBs && total.liveAllocations > 0) {
+					writer->writeNativeAllocator("Other", depth + 1, (BOOLEAN)0, total.liveBytes - liveBytesForDBBs, total.liveAllocations - liveAllocationsForDBBs);
+				}
+			}
+		}
+		
+
 		/* Store liveBytes and liveAllocations away to print the "Other" row after the children have been printed (see top of function) */
 		if (total.liveAllocations != liveAllocations && liveAllocations > 0) {
 			writer->_CategoryStack[depth].liveBytes = liveBytes;
