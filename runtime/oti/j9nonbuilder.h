@@ -5415,7 +5415,6 @@ typedef struct J9JavaVM {
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT */
 	void* originalSIGPIPESignalAction;
 	void* finalizeSlaveData;
-	j9object_t* syspropsListRef;
 	j9object_t* heapOOMStringRef;
 	UDATA strCompEnabled;
 	struct J9IdentityHashData* identityHashData;
