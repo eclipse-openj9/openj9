@@ -51,12 +51,14 @@ public class Test_String {
 		// Verify that IllegalArgumentException is thrown for Character.MIN_CODE_POINT - 1.
 		try {
 			method.invoke(null, Character.MIN_CODE_POINT - 1);
+			Assert.fail("Failed to detect invalid Unicode point - Character.MIN_CODE_POINT - 1");
 		} catch (IllegalArgumentException | InvocationTargetException e) {
 			// Expected exception
 		}
 		// Verify that IllegalArgumentException is thrown for Character.MAX_CODE_POINT + 1.
 		try {
 			method.invoke(null, Character.MAX_CODE_POINT + 1);
+			Assert.fail("Failed to detect invalid Unicode point - Character.MAX_CODE_POINT + 1");
 		} catch (IllegalArgumentException | InvocationTargetException e) {
 			// Expected exception
 		}
