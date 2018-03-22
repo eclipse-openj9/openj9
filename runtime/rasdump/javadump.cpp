@@ -1564,7 +1564,19 @@ outerMemCategoryCallBack (U_32 categoryCode, const char * categoryName, UDATA li
 
 	if (total.liveAllocations > 0) {
 		writer->writeNativeAllocator(categoryName, depth, isRoot, total.liveBytes, total.liveAllocations);
-
+		
+		/* Data on native memory used for DBBs is stored in java class java.nio.Bits. */
+		if (strcmp(categoryName,"sun.misc.Unsafe") == 0) {
+			UDATA liveBytesForDBBs = (UDATA)100;
+			UDATA liveAllocationsForDBBs = (UDATA)1;
+			
+			writer->writeNativeAllocator("Direct Byte Buffers", depth + 1, (BOOLEAN)0, liveBytesForDBBs, liveAllocationsForDBBs);
+			
+			if (total.liveAllocations > liveAllocationsForDBBs && total.liveAllocations > 0) {
+				writer->writeNativeAllocator("Other", depth + 1, (BOOLEAN)0, total.liveBytes - liveBytesForDBBs, total.liveAllocations - liveAllocationsForDBBs);
+			}
+		}
+		
 		/* Store liveBytes and liveAllocations away to print the "Other" row after the children have been printed (see top of function) */
 		if (total.liveAllocations != liveAllocations && liveAllocations > 0) {
 			writer->_CategoryStack[depth].liveBytes = liveBytes;
