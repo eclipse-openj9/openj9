@@ -772,3 +772,6 @@ TraceException=Trc_VM_registerPredefinedHandler_invalidPortlibSignalFlag NoEnv O
 TraceEvent=Trc_VM_signalDispatch_signalValue Overhead=1 Level=3 Template="signalDispatch - signal value: %d"
 
 TraceException=Trc_VM_registerOSHandler_invalidPortlibSignalFlag NoEnv Overhead=1 Level=1 Template="registerOSHandler - invalid portlib signal flag: %zu"
+
+TraceEntry=Trc_VM_sendResolveConstantDynamic_Entry Overhead=1 Level=2 Template="sendResolveConstantDynamic"
+TraceExit=Trc_VM_sendResolveConstantDynamic_Exit Overhead=1 Level=2 Template="sendResolveConstantDynamic"

@@ -943,6 +943,53 @@ sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9objec
 }
 
 void JNICALL
+sendResolveConstantDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA cpIndex, J9ROMNameAndSignature *nameAndSig, U_16 *bsmData)
+{
+	Trc_VM_sendResolveConstantDynamic_Entry(currentThread);
+	J9VMEntryLocalStorage newELS;
+	if (buildCallInStackFrame(currentThread, &newELS, true, false)) {
+		/* Convert name and signature to String objects */
+		J9JavaVM *vm = currentThread->javaVM;
+		J9MemoryManagerFunctions const * const mmFuncs = vm->memoryManagerFunctions;
+		J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+		j9object_t nameString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), 0);
+		if (NULL != nameString) {
+			J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, nameString);
+			j9object_t sigString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), 0);
+			nameString = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+			if (NULL != sigString) {
+				/*
+				 * Need to pass the ramClass so that we can get the
+				 * correct ramConstantPool. If we pass the classObject
+				 * we will always get the latest ramClass, which is not always
+				 * the correct one. In cases where we can have an
+				 * old method (caused by class redefinition) on the stack,
+				 * we will need to search the old ramClass to get the correct
+				 * constanPool. It is difficult to do this if we pass the
+				 * classObject.
+				 */
+
+				/* Run the method */
+				/* skip one slot because we are passing a long */
+				currentThread->sp -= 2;
+
+				*(U_64*)currentThread->sp = (U_64)ramCP->ramClass;
+				*--currentThread->sp = (UDATA)nameString;
+				*--currentThread->sp = (UDATA)sigString;
+				currentThread->sp -= 2;
+				*(U_64*)currentThread->sp = (U_64)(UDATA)bsmData;
+				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLE_RESOLVECONSTANTDYNAMIC_METHOD(vm);
+				c_cInterpreter(currentThread);
+			}
+		}
+		restoreCallInFrame(currentThread);
+	}
+	Trc_VM_sendResolveConstantDynamic_Exit(currentThread);
+}
+
+void JNICALL
 sendResolveInvokeDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature *nameAndSig, U_16 *bsmData)
 {
 	Trc_VM_sendResolveInvokeDynamic_Entry(currentThread);

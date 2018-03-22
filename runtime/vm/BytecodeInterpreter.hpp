@@ -4576,11 +4576,39 @@ done:
 	ldc2lw(REGISTER_ARGS_LIST)
 	{
 		U_16 index = *(U_16*)(_pc + 1);
-		J9ROMConstantRef *romConstant = (J9ROMConstantRef*)romConstantPoolItem(_literals, index);
-		_pc += 3;
-		_sp -= 2;
-		((U_32*)_sp)[0] = romConstant->slot1;
-		((U_32*)_sp)[1] = romConstant->slot2;
+
+		if (J9CPTYPE_CONSTANT_DYNAMIC == J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(J9_CLASS_FROM_METHOD(_literals)->romClass), index)) {
+			J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
+			J9RAMConstantDynamicRef *ramConstant = (J9RAMConstantDynamicRef*)ramConstantPool + index;
+			j9object_t resolvedValue = ramConstant->value;
+
+			if (NULL == resolvedValue) {
+				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+				updateVMStruct(REGISTER_ARGS);
+
+				resolvedValue = resolveConstantDynamic(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+		
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				restoreGenericSpecialStackFrame(REGISTER_ARGS);
+
+				if (VM_VMHelpers::exceptionPending(_currentThread)) {
+					return GOTO_THROW_CURRENT_EXCEPTION;
+				}
+			}
+
+			_pc += 3;
+			_sp -= 2;
+			U_64 value = J9VMJAVALANGLONG_VALUE(_currentThread, resolvedValue);
+			*(U_64*)_sp = value;
+
+		} else {
+			J9ROMConstantRef *romConstant = (J9ROMConstantRef*)romConstantPoolItem(_literals, index);
+
+			_pc += 3;
+			_sp -= 2;
+			((U_32*)_sp)[0] = romConstant->slot1;
+			((U_32*)_sp)[1] = romConstant->slot2;
+		}
 		return EXECUTE_BYTECODE;
 	}
 
@@ -6040,6 +6068,12 @@ retry:
 			case J9DescriptionCpTypeMethodHandle:
 				resolveMethodHandleRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_NO_CLASS_INIT);
 				break;
+			case J9DescriptionCpTypeConstantDynamic:
+				resolveConstantDynamic(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+				if (((J9RAMConstantDynamicRef*)ramCPEntry)->exception == _vm->voidReflectClass->classObject) {
+					goto resolved;
+				}
+				break;
 			default:
 				Assert_VM_unreachable();
 				break;
@@ -6055,6 +6089,7 @@ retry:
 			}
 			goto retry;
 		}
+resolved:
 		_pc += (1 + parmSize);
 		_sp -= 1;
 		if (J9DescriptionCpTypeClass == romCPEntry->cpType) {
