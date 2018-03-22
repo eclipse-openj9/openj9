@@ -75,9 +75,9 @@ sub resultReporter {
 					$output .= '        ' . $result;
 					if ($result =~ /Running test (.*) \.\.\.\n/) {
 						$testName = $1;
-					} elsif ($result =~ /Start Time: .* Epoch Time \(ms\): (.*)\n/) {
+					} elsif ($result =~ /^\Q$testName\E start Time: .* Epoch Time \(ms\): (.*)\n/) {
 						$startTime = $1;
-					} elsif ($result =~ /Finish Time: .* Epoch Time \(ms\): (.*)\n/) {
+					} elsif ($result =~ /^\Q$testName\E finish Time: .* Epoch Time \(ms\): (.*)\n/) {
 						$endTime = $1;
 						$tapString .= "    duration_ms: " . ($endTime - $startTime) . "\n  ...\n";
 						last;
