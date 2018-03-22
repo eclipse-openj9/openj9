@@ -880,7 +880,7 @@
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory \
+	-Xdump:none -Xmx1024m -Xsoftmx512m -Xmn1m -XX:+DisclaimVirtualMemory -verbose:gc -Xverbosegclog:$(REPORTDIR)$(D)vgc.log \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testSoftMxDisclaimMemory_GC \
