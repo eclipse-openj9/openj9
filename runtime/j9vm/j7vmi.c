@@ -1531,22 +1531,7 @@ JVM_InitProperties(JNIEnv* env, jobject properties)
 	 * This method is not invoked by other Java levels.
 	 */
 #if !defined(J9VM_JCL_SE11)
-	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
-	jobject syspropsList = (jobject)vm->syspropsListRef;
-	jclass propertiesClass = (*env)->GetObjectClass(env, properties);
-	jmethodID setPropertyMID = (*env)->GetMethodID(env, propertiesClass, "setProperty", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
-	jsize pairCount;
-	jsize index;
-
-	assert(syspropsList != NULL);
-	assert(propertiesClass != NULL);
-	assert(setPropertyMID != NULL);
-	pairCount = (*env)->GetArrayLength(env, syspropsList);
-	for (index = 0; index < pairCount; ) {
-		jobject key = (*env)->GetObjectArrayElement(env, syspropsList, index++);
-		jobject value = (*env)->GetObjectArrayElement(env, syspropsList, index++);
-		(*env)->CallObjectMethod(env, properties, setPropertyMID, key, value);
-	}
+	assert(!"JVM_InitProperties should not be called!");
 #endif /* J9VM_JCL_SE11 */
 	return properties;
 }
