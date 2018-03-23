@@ -273,7 +273,7 @@ public:
    static TR_J9VMBase * get(J9JITConfig *, J9VMThread *, VM_TYPE vmType=DEFAULT_VM);
    static char *getJ9FormattedName(J9JITConfig *, J9PortLibrary *, char *, int32_t, char *, char *, bool suffix=false);
    static TR_Processor getPPCProcessorType();
-   static void initializeX86ProcessorVendorId(J9JITConfig *);
+   static void initializeX86ProcessorInfo(J9JITConfig *);
 
    static bool isBigDecimalClass(J9UTF8 * className);
    bool isCachedBigDecimalClassFieldAddr(){ return cachedStaticDFPAvailField; }
