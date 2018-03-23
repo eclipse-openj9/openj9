@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,8 +70,13 @@ GC_ClassIterator::nextSlot()
 		_state += 1;
 
 	case classiterator_state_slots:
-		if (slotOffsets[_scanIndex] != 0) {
-			return (j9object_t *)((U_8*)_clazzPtr + (UDATA)slotOffsets[_scanIndex++]);	
+		while (slotOffsets[_scanIndex] != 0) {
+			/* shouldScanClassObject is true by default, in the case of balanced GC check if object is ClassObject */
+			if (_shouldScanClassObject || (slotOffsets[_scanIndex] != offsetof(J9Class, classObject))) {
+				return (j9object_t *)((U_8 *)_clazzPtr + (UDATA)slotOffsets[_scanIndex++]);
+			} else {
+				_scanIndex += 1;
+			}
 		}
 		_state += 1;
 
