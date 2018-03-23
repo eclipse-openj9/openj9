@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,10 +93,11 @@ MM_JNICriticalRegion::releaseAccess(J9VMThread* vmThread, UDATA* accessMask)
 		U_64 timeNow = VM_VMAccess::updateExclusiveVMAccessStats(vmThread, vm, PORTLIB);
 
 		if(0 != (currentAccess & J9_PUBLIC_FLAGS_VM_ACCESS)) {
-			--vm->exclusiveAccessResponseCount;
-			if(0 == vm->exclusiveAccessResponseCount) {
-				shouldRespond = TRUE;
-			}
+			if (!J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE))
+				--vm->exclusiveAccessResponseCount;
+				if(0 == vm->exclusiveAccessResponseCount) {
+					shouldRespond = TRUE;
+				}
 		}
 		if(0 != (currentAccess & J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS)) {
 			--vm->jniCriticalResponseCount;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,6 @@ static jint walkLocalMonitorRefs (J9VMThread* currentThread, jobject* locks, J9V
 static jvmtiError resumeThread (J9VMThread * currentThread, jthread thread);
 static UDATA wrappedAgentThreadStart (J9PortLibrary* portLib, void * entryArg);
 static void ownedMonitorIterator (J9VMThread* aThread, J9StackWalkState* walkState, j9object_t* slot, const void * stackLocation);
-static jvmtiError suspendThread (J9VMThread * currentThread, jthread thread, UDATA allowNull, UDATA * currentThreadSuspended);
 
 
 jvmtiError JNICALL
@@ -850,48 +849,6 @@ done:
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetThreadLocalStorage);
-}
-
-
-static jvmtiError
-suspendThread(J9VMThread * currentThread, jthread thread, UDATA allowNull, UDATA * currentThreadSuspended)
-{
-	J9VMThread * targetThread;
-	jvmtiError rc;
-
-#define J9JVMTI_SUSPEND_MASK (J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND | J9_PUBLIC_FLAGS_VM_ACCESS)
-
-	*currentThreadSuspended = FALSE;
-	rc = getVMThread(currentThread, thread, &targetThread, allowNull, TRUE);
-	if (rc == JVMTI_ERROR_NONE) {
-		if (targetThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND) {
-			rc = JVMTI_ERROR_THREAD_SUSPENDED;
-		} else {
-			if (targetThread->publicFlags & J9_PUBLIC_FLAGS_STOPPED) {
-				/* Do not suspend dead threads. Mirrors SUN behaviour. */
-				rc = JVMTI_ERROR_THREAD_NOT_ALIVE;
-			} else {
-				if (currentThread == targetThread) {
-					*currentThreadSuspended = TRUE;
-				} else {
-					currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
-					omrthread_monitor_enter(targetThread->publicFlagsMutex);
-					setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
-					while ((targetThread->publicFlags & J9JVMTI_SUSPEND_MASK) == J9JVMTI_SUSPEND_MASK) {
-						omrthread_monitor_wait(targetThread->publicFlagsMutex);
-					}
-					omrthread_monitor_exit(targetThread->publicFlagsMutex);
-					currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-				}
-				Trc_JVMTI_threadSuspended(targetThread);
-			}
-		}
-		releaseVMThread(currentThread, targetThread);
-	}
-
-#undef J9JVMTI_SUSPEND_MASK
-
-	return rc;
 }
 
 
