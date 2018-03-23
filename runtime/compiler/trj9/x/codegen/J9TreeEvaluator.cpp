@@ -4952,49 +4952,6 @@ TR::Register *J9::X86::TreeEvaluator::VMcheckcastEvaluator(TR::Node          *no
    return NULL;
    }
 
-TR::Register *J9::X86::TreeEvaluator::VMifArrayCmpEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   // Set up the correct sense for the true and false labels
-   //
-
-   TR::LabelSymbol *branchLabel = node->getBranchDestination()->getNode()->getLabel();
-   int32_t  value              = node->getSecondChild()->getInt();
-   bool     branchOnEqaul;
-
-   // only two cases allowed controlled in canBeHandledByIfArraycmpHelper
-   if (value == 0 && node->getOpCodeValue() == TR::ificmpeq)
-      {
-      branchOnEqaul = true;
-      }
-   else if (value == 0 && node->getOpCodeValue() == TR::ificmpne)
-      {
-      branchOnEqaul = false;
-      }
-   else
-      {
-      TR_ASSERT(false, "unexpected case\n");
-      }
-
-   TR::TreeEvaluator::SSE2IfArraycmpEvaluator(node->getFirstChild(), branchLabel, branchOnEqaul, cg);
-
-   cg->decReferenceCount(node->getSecondChild());
-   cg->decReferenceCount(node->getFirstChild());
-
-   if (node->getNumChildren() == 3)
-      {
-      TR::Node *thirdChild = node->getThirdChild();
-      TR_ASSERT(thirdChild->getOpCodeValue() == TR::GlRegDeps, "third child of a compare should be a TR_GlRegDeps");
-      cg->evaluate(thirdChild);
-
-      List<TR::Register> popRegisters(cg->trMemory());
-      TR::RegisterDependencyConditions *thirdChildDeps = generateRegisterDependencyConditions(thirdChild, cg, 0, &popRegisters);
-      cg->decReferenceCount(thirdChild);
-      TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-      generateLabelInstruction(LABEL, node, doneLabel, thirdChildDeps, cg);
-      }
-   return NULL;
-   }
-
 // Comparing instanceof to a constant
 //
 TR::Register *J9::X86::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node          *node,
