@@ -64,8 +64,11 @@ TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_Opaque
 TR_YesNoMaybe
 TR_J9ServerVM::isInstanceOf(TR_OpaqueClassBlock *a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed, bool optimizeForAOT)
    {
-   if (!optimizeForAOT)
-      return TR_maybe;
+   // When the two classes are the same we can avoid a remote message
+   // This optimization cuts 70% of the remote messages
+   if (a == b)
+      return castTypeIsFixed ? TR_yes : TR_maybe;
+
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_isInstanceOf, a, b, objectTypeIsFixed, castTypeIsFixed, optimizeForAOT);
    return std::get<0>(stream->read<TR_YesNoMaybe>());
