@@ -62,7 +62,7 @@ def configure() {
 def get_dependencies() {
     stage('Get Test Dependencies') {
         timestamps {
-            copyArtifacts fingerprintArtifacts: true, projectName: "${TEST_DEPENDENCIES_JOB_NAME}", selector: lastSuccessful(), target: 'openj9/test/TestConfig/lib'
+            copyArtifacts fingerprintArtifacts: true, projectName: "${TEST_DEPENDENCIES_JOB_NAME}", selector: lastSuccessful(), target: 'test/TestConfig/lib'
         }
     }
 }
