@@ -401,7 +401,9 @@ ConstantPoolMap::findVarHandleMethodRefs()
 	U_16 *varHandleMethodTable = NULL;
 
 	for (U_16 i = 1; i < _romConstantPoolCount; i++) {
-		if  ((J9CPTYPE_INSTANCE_METHOD == _romConstantPoolTypes[i]) || (J9CPTYPE_INTERFACE_INSTANCE_METHOD == _romConstantPoolTypes[i])) {
+		if ((J9CPTYPE_INSTANCE_METHOD == _romConstantPoolTypes[i])
+		|| (J9CPTYPE_INTERFACE_INSTANCE_METHOD == _romConstantPoolTypes[i])
+		) {
 			U_16 cfrCPIndex = _romConstantPoolEntries[i];
 			U_32 slot1 = getCPSlot1(cfrCPIndex);
 			U_32 slot2 = getCPSlot2(cfrCPIndex);

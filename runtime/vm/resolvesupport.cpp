@@ -459,17 +459,17 @@ tryAgain:
 		if ((cpClass != NULL) && (cpClass->romClass != NULL)) {
 			UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(cpClass->romClass), cpIndex);
 			if (isResolvedClassAnInterface) {
-				if ((J9CPTYPE_INTERFACE_STATIC_METHOD != cpType) &&
-					(J9CPTYPE_INTERFACE_INSTANCE_METHOD != cpType) &&
-					(J9CPTYPE_INTERFACE_METHOD != cpType)
+				if ((J9CPTYPE_INTERFACE_STATIC_METHOD != cpType)
+				&& (J9CPTYPE_INTERFACE_INSTANCE_METHOD != cpType)
+				&& (J9CPTYPE_INTERFACE_METHOD != cpType)
 				) {
 					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 					goto done;
 				}
 			} else {
-				if ((J9CPTYPE_INTERFACE_STATIC_METHOD == cpType) ||
-					(J9CPTYPE_INTERFACE_INSTANCE_METHOD == cpType) ||
-					(J9CPTYPE_INTERFACE_METHOD == cpType)
+				if ((J9CPTYPE_INTERFACE_STATIC_METHOD == cpType)
+				|| (J9CPTYPE_INTERFACE_INSTANCE_METHOD == cpType)
+				|| (J9CPTYPE_INTERFACE_METHOD == cpType)
 				) {
 					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 					goto done;
@@ -1136,20 +1136,20 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 	}
 
 	if (currentClass != NULL) {
-		if ( (resolvedClass->romClass != NULL) && (currentClass->romClass != NULL) ) {
+		if ((resolvedClass->romClass != NULL) && (currentClass->romClass != NULL)) {
 			UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(currentClass->romClass), cpIndex);
 			if (J9_JAVA_INTERFACE == (resolvedClass->romClass->modifiers & J9_JAVA_INTERFACE)) {
-				if ((J9CPTYPE_INTERFACE_INSTANCE_METHOD != cpType) &&
-					(J9CPTYPE_INTERFACE_STATIC_METHOD != cpType) &&
-					(J9CPTYPE_INTERFACE_METHOD != cpType)
+				if ((J9CPTYPE_INTERFACE_INSTANCE_METHOD != cpType)
+				&& (J9CPTYPE_INTERFACE_STATIC_METHOD != cpType)
+				&& (J9CPTYPE_INTERFACE_METHOD != cpType)
 				) {
 					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 					goto done;
 				}
 			} else {
-				if ((J9CPTYPE_INTERFACE_INSTANCE_METHOD == cpType) ||
-					(J9CPTYPE_INTERFACE_STATIC_METHOD == cpType) ||
-					(J9CPTYPE_INTERFACE_METHOD == cpType)
+				if ((J9CPTYPE_INTERFACE_INSTANCE_METHOD == cpType)
+				|| (J9CPTYPE_INTERFACE_STATIC_METHOD == cpType)
+				|| (J9CPTYPE_INTERFACE_METHOD == cpType)
 				) {
 					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 					goto done;

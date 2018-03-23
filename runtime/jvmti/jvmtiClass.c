@@ -1786,14 +1786,12 @@ jvmtiGetConstantPool_translateCP(J9PortLibrary *privatePortLibrary, jvmtiGcp_tra
 			case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
 			case J9CPTYPE_INTERFACE_STATIC_METHOD:
 				{
-					U_8 cpType;
-					if (((cpItemType == J9CPTYPE_INTERFACE_METHOD) ||
-						(cpItemType == J9CPTYPE_INTERFACE_STATIC_METHOD) ||
-						(cpItemType == J9CPTYPE_INTERFACE_INSTANCE_METHOD))
+					U_8 cpType = (U_8)CFR_CONSTANT_Methodref;
+					if ((cpItemType == J9CPTYPE_INTERFACE_METHOD)
+					|| (cpItemType == J9CPTYPE_INTERFACE_STATIC_METHOD)
+					|| (cpItemType == J9CPTYPE_INTERFACE_INSTANCE_METHOD)
 					) {
 						cpType = (U_8)CFR_CONSTANT_InterfaceMethodref;
-					} else {
-						cpType = (U_8)CFR_CONSTANT_Methodref;
 					}
 					
 					rc = jvmtiGetConstantPool_addReference(translation, cpIndex,
