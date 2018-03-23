@@ -324,6 +324,7 @@ static BOOLEAN librariesLoaded(void);
 #endif /* defined(J9ZTPF) */
 
 #define J9_SIG_ERR -1
+#define J9_SIG_IGNORED 1
 
 #define J9_PRE_DEFINED_HANDLER_CHECK 2
 #define J9_OLDHANDLER_SAME_AS_NEWHANDLER 2
@@ -333,9 +334,9 @@ static BOOLEAN librariesLoaded(void);
 /* Chosen based upon signal names listed in signalMap below. */
 #define J9_SIGNAME_BUFFER_LENGTH 16
 
-static void dummySignalHandler(jint sigNum);
-static BOOLEAN isSignalSpecial(jint sigNum);
+static void defaultSignalHandler(jint sigNum);
 static BOOLEAN isSignalUsedByVM(jint sigNum);
+static BOOLEAN isSignalIgnored(jint sigNum);
 
 typedef struct {
 	const char *signalName;
@@ -4408,33 +4409,6 @@ JVM_NativePath(char* path)
 }
 
 /**
- * Checks if a signal is special.
- *
- * @param sigNum Integer value of the signal
- *
- * @returns TRUE if the signal is special
- *          FALSE if the signal is not special
- */
-static BOOLEAN
-isSignalSpecial(jint sigNum)
-{
-	return
-#if defined(SIGHUP)
-		(SIGHUP == sigNum) ||
-#endif /* defined(SIGHUP) */
-#if defined(SIGINT)
-		(SIGINT == sigNum) ||
-#endif /* defined(SIGINT) */
-#if defined(SIGQUIT)
-		(SIGQUIT == sigNum) ||
-#endif /* defined(SIGQUIT) */
-#if defined(SIGTERM)
-		(SIGTERM == sigNum) ||
-#endif /* defined(SIGTERM) */
-		FALSE;
-}
-
-/**
  * Check if a signal is used by the VM.
  *
  * @param sigNum Integer value of the signal
@@ -4455,7 +4429,37 @@ isSignalUsedByVM(jint sigNum)
 #if defined(SIGSEGV)
 		(SIGSEGV == sigNum) ||
 #endif /* defined(SIGSEGV) */
+#if defined(SIGQUIT)
+		(SIGQUIT == sigNum) ||
+#endif /* defined(SIGQUIT) */
 		FALSE;
+}
+
+/**
+ * Check if a signal is ignored.
+ *
+ * @param sigNum Integer value of the signal
+ *
+ * @returns TRUE if the signal is ignored
+ *          FALSE if the signal is not ignored
+ */
+static BOOLEAN
+isSignalIgnored(jint sigNum) {
+	BOOLEAN signalIgnored = FALSE;
+
+#if !defined(WIN32)
+	struct sigaction oldSignalAction = {{0}};
+	OMRSIG_SIGACTION(sigNum, NULL, &oldSignalAction);
+	void *oldHandler = (void *)oldSignalAction.sa_sigaction;
+	if (NULL == oldHandler) {
+		oldHandler = (void *)oldSignalAction.sa_handler;
+	}
+	if (oldHandler == (void *)SIG_IGN) {
+		signalIgnored = TRUE;
+	}
+#endif /* !defined(WIN32) */
+
+	return signalIgnored;
 }
 
 /**
@@ -4474,11 +4478,18 @@ JVM_RaiseSignal(jint sigNum)
 {
 	jboolean rc = JNI_FALSE;
 	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
+	BOOLEAN isShutdownSignal = javaVM->internalVMFunctions->isSignalUsedForShutdown(sigNum);
 
 	Trc_SC_RaiseSignal_Entry(sigNum);
 
-	if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS)
-			&& isSignalSpecial(sigNum)) {
+	if ((J9_ARE_ANY_BITS_SET(javaVM->sigFlags, J9_SIG_XRS | J9_SIG_XRS_ASYNC)
+			&& isShutdownSignal)
+#if defined(SIGQUIT)
+			|| (SIGQUIT == sigNum)
+#endif /* defined(SIGQUIT) */
+	) {
+		/* Ignore signal */
+	} else if (isShutdownSignal && isSignalIgnored(sigNum)) {
 		/* Ignore signal */
 	} else {
 		raise(sigNum);
@@ -4491,13 +4502,12 @@ JVM_RaiseSignal(jint sigNum)
 }
 
 /**
- * This is a stub for the pre-defined handler. The pre-defined
- * handler is supposed to be used in JVM_RegisterSignal when
- * the special value of J9_PRE_DEFINED_HANDLER_CHECK (2) is specified
- * in the handler. It hasn't been implemented since its functionality
- * is not known.
- *
- * TODO: Implement the pre-defined handler.
+ * The default handler is supposed to be used in JVM_RegisterSignal
+ * when the special value of J9_PRE_DEFINED_HANDLER_CHECK (2) is specified
+ * as the handler. The default handler is supposed to invoke the handler
+ * that is registered with the signal. The handler is invoked by a call to
+ * Signal.dispatch method. Signal -> jdk.internal.misc.Signal in Java 9 and
+ * onwards, and sun.misc.Signal in Java 8.
  *
  * @param sigNum Integer value of the signal to be sent to the
  *               calling process or thread
@@ -4505,8 +4515,17 @@ JVM_RaiseSignal(jint sigNum)
  * @returns void
  */
 static void
-dummySignalHandler(int sigNum) {
+defaultSignalHandler(jint sigNum) {
+	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
+	javaVM->internalVMFunctions->recordAndNotifySignalReceived(javaVM, sigNum);
 
+#if defined(WIN32)
+	/* Handlers get reset on Windows. So, we have to register the handler
+	 * again once a signal is raised. If we use J9_PRE_DEFINED_HANDLER_CHECK,
+	 * then defaultSignalHandler will be set as the handler by JVM_RegisterSignal.
+	 */
+	JVM_RegisterSignal(sigNum, (void *)J9_PRE_DEFINED_HANDLER_CHECK);
+#endif /* defined(WIN32) */
 }
 
 /**
@@ -4517,7 +4536,7 @@ dummySignalHandler(int sigNum) {
  * and SIGTERM are also ignored; thus, we don't register a signal
  * handler for these signals. If handler has the special value of
  * J9_PRE_DEFINED_HANDLER_CHECK (2), then handler is changed to
- * dummySignalHandler before it is registered. If the old handler
+ * defaultSignalHandler before it is registered. If the old handler
  * is same as the new handler, then a special value,
  * J9_OLDHANDLER_SAME_AS_NEWHANDLER (2) is returned.
  *
@@ -4533,6 +4552,7 @@ JVM_RegisterSignal(jint sigNum, void* handler)
 {
 	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
 	void *oldHandler = (void *)J9_SIG_ERR;
+	BOOLEAN isShutdownSignal = javaVM->internalVMFunctions->isSignalUsedForShutdown(sigNum);
 
 #if !defined(WIN32)
 	struct sigaction newSignalAction;
@@ -4548,30 +4568,35 @@ JVM_RegisterSignal(jint sigNum, void* handler)
 		/* Don't allow user to register a native handler since
 		 * the signal is already used by the VM.
 		 */
-	} else if (J9_ARE_NO_BITS_SET(javaVM->sigFlags, J9_SIG_XRS)
-			&& isSignalSpecial(sigNum)) {
+		return (void *)J9_SIG_ERR;
+	} else if (isShutdownSignal && J9_ARE_ANY_BITS_SET(javaVM->sigFlags, J9_SIG_XRS | J9_SIG_XRS_ASYNC)) {
 		/* Don't allow user to register a native handler since
 		 * the signal is already used by the VM.
 		 */
+		return (void *)J9_SIG_ERR;
+	} else if (isShutdownSignal && isSignalIgnored(sigNum)) {
+		return (void *)J9_SIG_IGNORED;
 	} else {
-		/* Register the signal */
+		/* Register the signal. */
 #if defined(WIN32)
 		if ((void *)J9_PRE_DEFINED_HANDLER_CHECK == handler) {
-			handler = (void *)dummySignalHandler;
+			handler = (void *)defaultSignalHandler;
 		}
 		oldHandler = OMRSIG_SIGNAL(sigNum, handler);
 #else /* defined(WIN32) */
-		sigemptyset(&newSignalAction.sa_mask);
-#if !defined(J9ZTPF)
-		newSignalAction.sa_flags = SA_RESTART;
-#else /* !defined(J9ZTPF) */
-		newSignalAction.sa_flags = 0;
-#endif /* !defined(J9ZTPF) */
+		/* Don't block any signals. */
+		if (0 != sigemptyset(&newSignalAction.sa_mask)) {
+			return (void *)J9_SIG_ERR;
+		}
+
+		newSignalAction.sa_flags = SA_RESTART | SA_NODEFER;
+
 		if ((void *)J9_PRE_DEFINED_HANDLER_CHECK == handler) {
-			newSignalAction.sa_handler = dummySignalHandler;
+			newSignalAction.sa_handler = (void (*)(int))defaultSignalHandler;
 		} else {
 			newSignalAction.sa_handler = (void (*)(int))handler;
 		}
+
 		OMRSIG_SIGACTION(sigNum, &newSignalAction, &oldSignalAction);
 #endif /* defined(WIN32) */
 	}

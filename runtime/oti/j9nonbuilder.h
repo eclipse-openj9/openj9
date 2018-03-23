@@ -4793,6 +4793,8 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_RAS_EYECATCHERS)
 	void (*rasSetServiceLevel)(struct J9JavaVM *vm, const char *runtimeVersion);
 #endif /* J9VM_RAS_EYECATCHERS */
+	BOOLEAN (*recordAndNotifySignalReceived)(struct J9JavaVM * vm, UDATA sigNum);
+	BOOLEAN (*isSignalUsedForShutdown)(UDATA sigNum);
 } J9InternalVMFunctions;
 
 
@@ -5079,6 +5081,18 @@ typedef struct J9VMRuntimeStateListener {
 #define J9VM_RUNTIME_STATE_LISTENER_STOP 2
 #define J9VM_RUNTIME_STATE_LISTENER_ABORT 3
 #define J9VM_RUNTIME_STATE_LISTENER_TERMINATED 4
+
+/* @ddr_namespace: map_to_type=J9VMSignalDispatchInfo */
+
+struct J9JavaVM; /* Forward struct declaration */
+struct J9VMThread; /* Forward struct declaration */
+typedef struct J9VMSignalDispatchInfo {
+	U_32 signalDispatchState;
+	struct J9VMThread *signalDispatchVMThread;
+	omrthread_monitor_t monitor;
+	UDATA *unhandledSignals;
+	j9sem_t osSemaphore;
+} J9VMSignalDispatchInfo;
 
 /* @ddr_namespace: map_to_type=J9JavaVM */
 
@@ -5468,6 +5482,7 @@ typedef struct J9JavaVM {
 	UDATA safePointState;
 	UDATA safePointResponseCount;
 	struct J9VMRuntimeStateListener vmRuntimeStateListener;
+	struct J9VMSignalDispatchInfo *signalDispatchInfo;
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

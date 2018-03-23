@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,6 +80,8 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 
 		omrthread_monitor_init_with_name(&vm->vmRuntimeStateListener.runtimeStateListenerMutex, 0, "VM state notification mutex") ||
 
+		!initVMSignalDispatchThreadSynchronizationVariables(vm) ||
+
 		initializeMonitorTable(vm)
 	)
 	{
@@ -157,6 +159,7 @@ void terminateVMThreading(J9JavaVM *vm)
 	if (vm->jlmModulesInitMutex) omrthread_monitor_destroy(vm->jlmModulesInitMutex);
 	if (vm->vmRuntimeStateListener.runtimeStateListenerMutex) omrthread_monitor_destroy(vm->vmRuntimeStateListener.runtimeStateListenerMutex);
 
+	destroyVMSignalDispatchThreadSynchronizationVariables(vm);
+
 	destroyMonitorTable(vm);
 }
-
