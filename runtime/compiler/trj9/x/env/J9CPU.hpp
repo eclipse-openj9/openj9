@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,18 @@ namespace J9 { typedef J9::X86::CPU CPUConnector; }
 
 namespace TR { class Compilation; }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define PROCESSOR_FEATURES_SIZE 3
+typedef struct TR_ProcessorFeatureFlags {
+  uint32_t featureFlags[PROCESSOR_FEATURES_SIZE];
+} TR_ProcessorFeatureFlags;
+
+#ifdef __cplusplus
+}
+#endif
 
 namespace J9
 {
@@ -50,7 +62,10 @@ class CPU : public J9::CPU
 protected:
 
    CPU() :
-         J9::CPU()
+         J9::CPU(),
+         _featureFlags(0),
+         _featureFlags2(0),
+         _featureFlags8(0)
       {}
 
 public:
@@ -61,7 +76,20 @@ public:
    uint32_t getX86ProcessorFeatureFlags2(TR::Compilation *comp);
    uint32_t getX86ProcessorFeatureFlags8(TR::Compilation *comp);
 
+   TR_ProcessorFeatureFlags getProcessorFeatureFlags();
+   bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);
+
    bool testOSForSSESupport(TR::Compilation *comp);
+
+   void setX86ProcessorFeatureFlags(uint32_t flags);
+   void setX86ProcessorFeatureFlags2(uint32_t flags2);
+   void setX86ProcessorFeatureFlags8(uint32_t flags8);
+
+private:
+   uint32_t _featureFlags;
+   uint32_t _featureFlags2;
+   uint32_t _featureFlags8;
+
    };
 
 }

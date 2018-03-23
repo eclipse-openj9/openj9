@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -892,8 +892,8 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_FrontEnd *fe, TR_AOTHead
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    bool defaultMessage = true;
 
-   if (hdrInCache->processorSignature != TR::Compiler->target.cpu.id())
-      defaultMessage = generateError("AOT header validation failed: Processor signature mismatch.");
+   if (!TR::Compiler->target.cpu.isCompatible((TR_Processor)hdrInCache->processorSignature, hdrInCache->processorFeatureFlags))
+      defaultMessage = generateError("AOT header validation failed: Processor incompatible.");
    if ((featureFlags & TR_FeatureFlag_sanityCheckBegin) != (hdrInCache->featureFlags & TR_FeatureFlag_sanityCheckBegin))
       defaultMessage = generateError("AOT header validation failed: Processor feature sanity bit mangled.");
    if ((featureFlags & TR_FeatureFlag_IsSMP) != (hdrInCache->featureFlags & TR_FeatureFlag_IsSMP))
@@ -919,15 +919,6 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_FrontEnd *fe, TR_AOTHead
 
    if ((featureFlags & TR_FeatureFlag_SanityCheckEnd) != (hdrInCache->featureFlags & TR_FeatureFlag_SanityCheckEnd))
       defaultMessage = generateError("AOT header validation failed: Trailing sanity bit mismatch.");
-
-#if defined(TR_HOST_X86)
-   if (hdrInCache->x86FeatureFlags != fej9->getX86ProcessorFeatureFlags())
-      defaultMessage = generateError("AOT header validation failed: Mismatch in first set of X86 processor features.");
-   if (hdrInCache->x86FeatureFlags2 != fej9->getX86ProcessorFeatureFlags2())
-      defaultMessage = generateError("AOT header validation failed: Mismatch in second set of X86 processor features.");
-   if (hdrInCache->x86FeatureFlags8 != fej9->getX86ProcessorFeatureFlags8())
-      defaultMessage = generateError("AOT header validation failed: Mismatch in second set of X86 processor features.");
-#endif
 
    if (defaultMessage)
       generateError("AOT header validation failed: Unkown problem with processor features.");
@@ -992,14 +983,8 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(J9JavaVM *pjavaVM, TR_FrontEn
                            "AOT header validation failed: bad header version or version string");
          }
       else if
-         (
-         hdrInCache->processorSignature != TR::Compiler->target.cpu.id()
-         || hdrInCache->featureFlags != featureFlags
-#if defined(TR_HOST_X86)
-         || hdrInCache->x86FeatureFlags != fej9->getX86ProcessorFeatureFlags()
-         || hdrInCache->x86FeatureFlags2 != fej9->getX86ProcessorFeatureFlags2()
-         || hdrInCache->x86FeatureFlags8 != fej9->getX86ProcessorFeatureFlags8()
-#endif
+         (hdrInCache->featureFlags != featureFlags ||
+          !TR::Compiler->target.cpu.isCompatible((TR_Processor)hdrInCache->processorSignature, hdrInCache->processorFeatureFlags)
          )
          {
          checkAOTHeaderFlags(fe, hdrInCache, featureFlags);
@@ -1080,11 +1065,7 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd 
       aotHeader->compressedPointerShift = 0;
 #endif
 
-#if defined(TR_TARGET_X86)
-      aotHeader->x86FeatureFlags = fej9->getX86ProcessorFeatureFlags();
-      aotHeader->x86FeatureFlags2 = fej9->getX86ProcessorFeatureFlags2();
-      aotHeader->x86FeatureFlags8 = fej9->getX86ProcessorFeatureFlags8();
-#endif
+      aotHeader->processorFeatureFlags = TR::Compiler->target.cpu.getProcessorFeatureFlags();
 
       // Set up other feature flags
       aotHeader->featureFlags = generateFeatureFlags(fe);

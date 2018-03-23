@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -570,7 +570,7 @@ char TR_J9VMBase::x86VendorID[] = {'U','n','k','n','o','w','n','B','r','a','n','
 bool TR_J9VMBase::x86VendorIDInitialized = false;
 
 void
-TR_J9VMBase::initializeX86ProcessorVendorId(J9JITConfig *jitConfig)
+TR_J9VMBase::initializeX86ProcessorInfo(J9JITConfig *jitConfig)
    {
    TR_ASSERT(jitConfig, "jitConfig is not defined!");
    TR_ASSERT(jitConfig->javaVM, "jitConfig->javaVM is not defined!");
@@ -579,9 +579,17 @@ TR_J9VMBase::initializeX86ProcessorVendorId(J9JITConfig *jitConfig)
    //
    strncpy(x86VendorID, queryX86TargetCPUID(jitConfig->javaVM)->_vendorId, 12);
    x86VendorID[12] = '\0';
-
    x86VendorIDInitialized = true;
+
+   // Initialize processorFeatureFlags
+   //
+#if defined(TR_TARGET_X86)
+   TR::Compiler->target.cpu.setX86ProcessorFeatureFlags(queryX86TargetCPUID(jitConfig->javaVM)->_featureFlags);
+   TR::Compiler->target.cpu.setX86ProcessorFeatureFlags2(queryX86TargetCPUID(jitConfig->javaVM)->_featureFlags2);
+   TR::Compiler->target.cpu.setX86ProcessorFeatureFlags8(queryX86TargetCPUID(jitConfig->javaVM)->_featureFlags8);
+#endif // TR_TARGET_X86
    }
+
 
 const char *
 TR_J9VMBase::getX86ProcessorVendorId()
@@ -654,6 +662,7 @@ TR_J9VMBase::getX86SupportsPOPCNT()
       return true;
    else return false;
    }
+
 
 // -----------------------------------------------------------------------------
 

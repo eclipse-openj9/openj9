@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,6 +65,43 @@ bool
 CPU::testOSForSSESupport(TR::Compilation *comp)
    {
    return comp->fej9()->testOSForSSESupport();
+   }
+
+void
+CPU::setX86ProcessorFeatureFlags(uint32_t flags)
+   {
+   _featureFlags = flags;
+   }
+
+void
+CPU::setX86ProcessorFeatureFlags2(uint32_t flags2)
+   {
+   _featureFlags2 = flags2;
+   }
+
+void
+CPU::setX86ProcessorFeatureFlags8(uint32_t flags8)
+   {
+   _featureFlags8 = flags8;
+   }
+
+TR_ProcessorFeatureFlags
+CPU::getProcessorFeatureFlags()
+   {
+   TR_ProcessorFeatureFlags processorFeatureFlags = { {_featureFlags, _featureFlags2, _featureFlags} };
+   return processorFeatureFlags;
+   }
+
+bool
+CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags)
+   {
+   for (int i = 0; i < PROCESSOR_FEATURES_SIZE; i++)
+      {
+      // Check to see if the current processor contains all the features that code cache's processor has
+      if ((processorFeatureFlags.featureFlags[i] & self()->getProcessorFeatureFlags().featureFlags[i]) != processorFeatureFlags.featureFlags[i])
+         return false;
+      }
+   return true;
    }
 
 }

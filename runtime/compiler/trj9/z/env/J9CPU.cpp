@@ -769,6 +769,28 @@ CPU::initializeS390zOSProcessorFeatures()
       }
    }
 
+TR_ProcessorFeatureFlags
+CPU::getProcessorFeatureFlags()
+   {
+   TR_ProcessorFeatureFlags processorFeatureFlags = { {_flags.getValue()} };
+   return processorFeatureFlags;
+   }
+
+bool
+CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags)
+   {
+   if (!self()->isAtLeast(processorSignature))
+      {
+      return false;
+      }
+   for (int i = 0; i < PROCESSOR_FEATURES_SIZE; i++)
+      {
+      // Check to see if the current processor contains all the features that code cache's processor has
+      if ((processorFeatureFlags.featureFlags[i] & self()->getProcessorFeatureFlags().featureFlags[i]) != processorFeatureFlags.featureFlags[i])
+         return false;
+      }
+   return true;
+   }
 
 }
 
