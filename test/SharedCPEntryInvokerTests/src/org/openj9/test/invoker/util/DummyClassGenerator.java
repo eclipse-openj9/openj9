@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -208,17 +208,17 @@ public class DummyClassGenerator extends ClassGenerator {
 				if ((characteristics.get(SHARED_INVOKERS_TARGET)) != null) {
 					target = (String)characteristics.get(SHARED_INVOKERS_TARGET);
 					if (target.equals("SUPER")) {
-						mv.visitMethodInsn(opcode, superName, HELPER_METHOD_NAME, HELPER_METHOD_SIG);
+						mv.visitMethodInsn(opcode, superName, HELPER_METHOD_NAME, HELPER_METHOD_SIG, false);
 					} else if (target.equals("INTERFACE")) {
-						mv.visitMethodInsn(opcode, intfName, INTF_METHOD_NAME, INTF_METHOD_SIG);
+						mv.visitMethodInsn(opcode, intfName, INTF_METHOD_NAME, INTF_METHOD_SIG, true);
 					}
 				} else {
 					if (useHelper) {
-						mv.visitMethodInsn(opcode, helperName, HELPER_METHOD_NAME, HELPER_METHOD_SIG);
+						mv.visitMethodInsn(opcode, helperName, HELPER_METHOD_NAME, HELPER_METHOD_SIG, false);
 					} else if (extendsHelper) {
-						mv.visitMethodInsn(opcode, superName, HELPER_METHOD_NAME, HELPER_METHOD_SIG);
+						mv.visitMethodInsn(opcode, superName, HELPER_METHOD_NAME, HELPER_METHOD_SIG, false);
 					} else if (implementsInterface) {
-						mv.visitMethodInsn(opcode, intfName, INTF_METHOD_NAME, INTF_METHOD_SIG);
+						mv.visitMethodInsn(opcode, intfName, INTF_METHOD_NAME, INTF_METHOD_SIG, true);
 					}
 				}
 				mv.visitInsn(ARETURN);

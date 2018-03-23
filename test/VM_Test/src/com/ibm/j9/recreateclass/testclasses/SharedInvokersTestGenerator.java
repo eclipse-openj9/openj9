@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,14 +123,14 @@ public class SharedInvokersTestGenerator {
 			mv.visitCode();
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitMethodInsn(INVOKESPECIAL, intfInternalName, "foo",
-					"()V");
+					"()V", true);
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitVarInsn(ASTORE, 1);
 			mv.visitVarInsn(ALOAD, 1);
 			mv.visitMethodInsn(INVOKEINTERFACE, intfInternalName, "foo",
-					"()V");
+					"()V", true);
 			mv.visitMethodInsn(INVOKESTATIC, intfInternalName, "foo",
-					"()V");
+					"()V", true);
 			mv.visitInsn(RETURN);
 			mv.visitMaxs(1, 2);
 			mv.visitEnd();

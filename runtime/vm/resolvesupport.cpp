@@ -455,6 +455,27 @@ tryAgain:
 	} else {
 		cpClass = J9_CLASS_FROM_CP(ramCP);
 		lookupOptions |= J9_LOOK_CLCONSTRAINTS;
+
+		if ((cpClass != NULL) && (cpClass->romClass != NULL)) {
+			UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(cpClass->romClass), cpIndex);
+			if (isResolvedClassAnInterface) {
+				if ((J9CPTYPE_INTERFACE_STATIC_METHOD != cpType)
+				&& (J9CPTYPE_INTERFACE_INSTANCE_METHOD != cpType)
+				&& (J9CPTYPE_INTERFACE_METHOD != cpType)
+				) {
+					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
+					goto done;
+				}
+			} else {
+				if ((J9CPTYPE_INTERFACE_STATIC_METHOD == cpType)
+				|| (J9CPTYPE_INTERFACE_INSTANCE_METHOD == cpType)
+				|| (J9CPTYPE_INTERFACE_METHOD == cpType)
+				) {
+					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
+					goto done;
+				}
+			}
+		}
 	}
 	if (jitFlags) {
 		lookupOptions |= J9_LOOK_NO_THROW;
@@ -1113,6 +1134,30 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 	if (jitFlags) {
 		lookupOptions |= J9_LOOK_NO_THROW;
 	}
+
+	if (currentClass != NULL) {
+		if ((resolvedClass->romClass != NULL) && (currentClass->romClass != NULL)) {
+			UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(currentClass->romClass), cpIndex);
+			if (J9_JAVA_INTERFACE == (resolvedClass->romClass->modifiers & J9_JAVA_INTERFACE)) {
+				if ((J9CPTYPE_INTERFACE_INSTANCE_METHOD != cpType)
+				&& (J9CPTYPE_INTERFACE_STATIC_METHOD != cpType)
+				&& (J9CPTYPE_INTERFACE_METHOD != cpType)
+				) {
+					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
+					goto done;
+				}
+			} else {
+				if ((J9CPTYPE_INTERFACE_INSTANCE_METHOD == cpType)
+				|| (J9CPTYPE_INTERFACE_STATIC_METHOD == cpType)
+				|| (J9CPTYPE_INTERFACE_METHOD == cpType)
+				) {
+					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
+					goto done;
+				}
+			}
+		}
+	}
+
 	method = (J9Method *)javaLookupMethod(vmStruct, resolvedClass, nameAndSig, currentClass, lookupOptions);
 	
 	Trc_VM_resolveSpecialMethodRef_lookupMethod(vmStruct, method);
@@ -1238,6 +1283,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		if ((NULL != cpShapeDescription)
 		&& (resolvedClass == J9VMJAVALANGINVOKEMETHODHANDLE(vm))
 		&& (J9CPTYPE_INSTANCE_METHOD != J9_CP_TYPE(cpShapeDescription, cpIndex))
+		&& (J9CPTYPE_INTERFACE_INSTANCE_METHOD != J9_CP_TYPE(cpShapeDescription, cpIndex))
 		) {
 			J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
 			J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);

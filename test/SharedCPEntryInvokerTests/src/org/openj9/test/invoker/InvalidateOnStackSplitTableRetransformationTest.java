@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -280,7 +280,7 @@ public class InvalidateOnStackSplitTableRetransformationTest {
 				mv.visitCode();
 				if (invoker.equals(INVOKE_INTERFACE)) {
 					mv.visitVarInsn(ALOAD, 0);
-					mv.visitMethodInsn(INVOKEINTERFACE, intfName, INTF_METHOD_NAME, INTF_METHOD_SIG);
+					mv.visitMethodInsn(INVOKEINTERFACE, intfName, INTF_METHOD_NAME, INTF_METHOD_SIG, true);
 					mv.visitInsn(POP);
 					mv.visitInsn(RETURN);
 					mv.visitMaxs(1, 1);
@@ -292,13 +292,13 @@ public class InvalidateOnStackSplitTableRetransformationTest {
 						mv.visitVarInsn(ALOAD, 0);
 					}
 					mv.visitVarInsn(ALOAD, 0);
-					mv.visitMethodInsn(opcode, intfName, INTF_METHOD_NAME, INTF_METHOD_SIG);
+					mv.visitMethodInsn(opcode, intfName, INTF_METHOD_NAME, INTF_METHOD_SIG, true);
 					mv.visitFieldInsn(PUTFIELD, className, "before", "Ljava/lang/String;");
 					if (invoker.equals(INVOKE_SPECIAL)) {
 						mv.visitVarInsn(ALOAD, 0);
 					}
 					mv.visitVarInsn(ALOAD, 0);
-					mv.visitMethodInsn(opcode, intfName, INTF_METHOD_NAME, INTF_METHOD_SIG);
+					mv.visitMethodInsn(opcode, intfName, INTF_METHOD_NAME, INTF_METHOD_SIG, true);
 					mv.visitFieldInsn(PUTFIELD, className, "after", "Ljava/lang/String;");
 					mv.visitInsn(RETURN);
 					mv.visitMaxs(2, 1);
