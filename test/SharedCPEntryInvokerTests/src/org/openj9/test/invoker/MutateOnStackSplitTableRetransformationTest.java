@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -318,7 +318,7 @@ public class MutateOnStackSplitTableRetransformationTest {
 					String retValue = DUMMY_CLASS_NAME + "_" + version + "." + INVOKE_INTERFACE;
 					mv.visitVarInsn(ALOAD, 0);
 					mv.visitVarInsn(ILOAD, 1);
-					mv.visitMethodInsn(INVOKEINTERFACE, intfName, INTF_METHOD_NAME, "(Z)V");
+					mv.visitMethodInsn(INVOKEINTERFACE, intfName, INTF_METHOD_NAME, "(Z)V", true);
 					mv.visitLdcInsn(retValue);
 					mv.visitInsn(ARETURN);
 					mv.visitMaxs(2, 2);
@@ -329,7 +329,7 @@ public class MutateOnStackSplitTableRetransformationTest {
 				case INVOKE_STATIC: {
 					String retValue = DUMMY_CLASS_NAME + "_" + version + "." + INVOKE_STATIC;
 					mv.visitVarInsn(ILOAD, 1);
-					mv.visitMethodInsn(INVOKESTATIC, intfName, INTF_METHOD_NAME, "(Z)V");
+					mv.visitMethodInsn(INVOKESTATIC, intfName, INTF_METHOD_NAME, "(Z)V", true);
 					mv.visitLdcInsn(retValue);
 					mv.visitInsn(ARETURN);
 					mv.visitMaxs(1, 2);
@@ -340,7 +340,7 @@ public class MutateOnStackSplitTableRetransformationTest {
 					String retValue = DUMMY_CLASS_NAME + "_" + version + "." + INVOKE_SPECIAL;
 					mv.visitVarInsn(ALOAD, 0);
 					mv.visitVarInsn(ILOAD, 1);
-					mv.visitMethodInsn(INVOKESPECIAL, intfName, INTF_METHOD_NAME, "(Z)V");
+					mv.visitMethodInsn(INVOKESPECIAL, intfName, INTF_METHOD_NAME, "(Z)V", true);
 					mv.visitLdcInsn(retValue);
 					mv.visitInsn(ARETURN);
 					mv.visitMaxs(2, 2);

@@ -1590,6 +1590,7 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 					break;
 
 				case J9CPTYPE_INSTANCE_METHOD:
+				case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
 
 					if (ramConstantPool != (J9ConstantPool *) vm->jclConstantPool) {
 						romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
@@ -1608,6 +1609,7 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 					break;
 
 				case J9CPTYPE_STATIC_METHOD:
+				case J9CPTYPE_INTERFACE_STATIC_METHOD:
 
 					if (ramConstantPool != (J9ConstantPool *) vm->jclConstantPool) {
 						romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
@@ -1675,6 +1677,7 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 	for (cpIndex = 0; cpIndex < ramConstantPoolCount; cpIndex++) {
 		switch (J9_CP_TYPE(cpShapeDescription, cpIndex)) {
 			case J9CPTYPE_INSTANCE_METHOD: /* Fall through */
+			case J9CPTYPE_INTERFACE_INSTANCE_METHOD: /* Fall through */
 			case J9CPTYPE_HANDLE_METHOD: {
 				J9RAMMethodRef *methodRef = (J9RAMMethodRef *) &ramConstantPool[cpIndex];
 
@@ -1685,7 +1688,8 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 				}
 				break;
 			}
-			case J9CPTYPE_STATIC_METHOD: {
+			case J9CPTYPE_STATIC_METHOD: /* Fall through */
+			case J9CPTYPE_INTERFACE_STATIC_METHOD: {
 				J9RAMStaticMethodRef *methodRef = (J9RAMStaticMethodRef *) &ramConstantPool[cpIndex];
 
 				methodPair.oldMethod = methodRef->method;

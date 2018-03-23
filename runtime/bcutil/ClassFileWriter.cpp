@@ -284,6 +284,8 @@ ClassFileWriter::analyzeConstantPool()
 		case J9CPTYPE_INSTANCE_METHOD:
 		case J9CPTYPE_STATIC_METHOD:
 		case J9CPTYPE_INTERFACE_METHOD:
+		case J9CPTYPE_INTERFACE_STATIC_METHOD:
+		case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
 		case J9CPTYPE_HANDLE_METHOD:
 			addNASEntry(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) cpItem));
 			break;
@@ -544,6 +546,8 @@ ClassFileWriter::writeConstantPool()
 			writeU16(indexForNAS(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) cpItem)));
 			break;
 		case J9CPTYPE_INTERFACE_METHOD:
+		case J9CPTYPE_INTERFACE_STATIC_METHOD:
+		case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
 			writeU8(CFR_CONSTANT_InterfaceMethodref);
 			writeU16(U_16(((J9ROMMethodRef *) cpItem)->classRefCPIndex));
 			writeU16(indexForNAS(J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *) cpItem)));
