@@ -19864,9 +19864,8 @@ J9::Z::TreeEvaluator::pdloadVectorEvaluatorHelper(TR::Node *node, TR::CodeGenera
    traceMsg(cg->comp(), "pdload Vector Evaluator, node=%p %d\n", node, __LINE__);
 
    TR::Register* vTargetReg = vTargetReg = cg->allocateRegister(TR_VRF);
-   TR::Node* addressNode = node->getFirstChild();
-   TR::Register* addressReg = cg->evaluate(addressNode);
-   TR::MemoryReference* sourceMR = generateS390MemoryReference(addressReg, NULL, 0, cg);
+   // generate a memory reference with constant displacement folding whenever possible
+   TR::MemoryReference* sourceMR = generateS390MemoryReference(node, cg, false);
 
    // Index of the first byte to load, counting from the right ranging from 0-15.
    uint8_t indexFromTheRight = TR_VECTOR_REGISTER_SIZE - 1;
@@ -19891,7 +19890,7 @@ J9::Z::TreeEvaluator::pdloadVectorEvaluatorHelper(TR::Node *node, TR::CodeGenera
    generateVSIInstruction(cg, TR::InstOpCode::VLRL, node, vTargetReg, sourceMR, indexFromTheRight);
 
    node->setRegister(vTargetReg);
-   cg->decReferenceCount(addressNode);
+   cg->decReferenceCount(node->getFirstChild());
    return vTargetReg;
    }
 
@@ -20895,7 +20894,6 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
    TR::Node* addressNode = node->getChild(0);
    // evalute valueChild (which is assumed by the OMR layer to be the second child) to Vector register.
    // for this "pdStore" we assume if we evaluate value node we get Vector Register
-   TR::Register* addressReg = cg->evaluate(addressNode);
    TR::Register* pdValueReg = cg->evaluate(valueChild);
 
    TR_ASSERT((pdValueReg->getKind() == TR_FPR || pdValueReg->getKind() == TR_VRF),
@@ -20906,7 +20904,7 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
       traceMsg(comp,"generating VSTRL for pdstore node->size = %d.\n", node->getSize());
       }
 
-   TR::MemoryReference * targetMR = generateS390MemoryReference(addressReg, NULL, 0, cg);
+   TR::MemoryReference * targetMR = generateS390MemoryReference(node, cg, false);
 
    // 0 we store 1 byte, 15 we store 16 bytes
    uint8_t lengthToStore = TR_VECTOR_REGISTER_SIZE - 1;
