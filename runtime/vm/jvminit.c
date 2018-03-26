@@ -682,6 +682,10 @@ freeJavaVM(J9JavaVM * vm)
 	}
 #endif
 
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+	shutDownExclusiveAccess(vm);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
+
 	freeNativeMethodBindTable(vm);
 	freeHiddenInstanceFieldsList(vm);
 #ifdef J9VM_THR_LOCK_NURSERY
@@ -2965,6 +2969,11 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			}
 		}
 	}
+
+	/* TODO: remove once safe point implements two pass */
+#if defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
+	vm->extendedRuntimeFlags &= ~(UDATA)(J9_EXTENDED_RUNTIME_OSR_SAFE_POINT| J9_EXTENDED_RUNTIME_OSR_SAFE_POINT_FV);
+#endif /* J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 
 	return JNI_OK;
 }
@@ -5331,6 +5340,11 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	OMRSIG_SIGACTION(SIGPIPE,&newSignalAction,(struct sigaction *)vm->originalSIGPIPESignalAction);
 #endif
 
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+	if (0 != initializeExclusiveAccess(vm)) {
+		goto error;
+	}
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
 #ifdef J9VM_OPT_SIDECAR
 	vm->j2seVersion = initArgs->j2seVersion;

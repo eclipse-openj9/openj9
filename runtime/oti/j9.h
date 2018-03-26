@@ -235,8 +235,6 @@ J9PortLibrary *privatePortLibrary = (*portPrivateVMI)->GetPortLibrary(portPrivat
 #define PORT_ACCESS_FROM_VMI(vmi) J9PortLibrary *privatePortLibrary = (*vmi)->GetPortLibrary(vmi)
 /** @} */
 
-#define JNI_NATIVE_CALLED_FAST(env) (J9_ARE_ANY_BITS_SET(J9VMTHREAD_FROM_JNIENV(env)->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS))
-
 #define J9_DECLARE_CONSTANT_UTF8(instanceName, name) \
 static const struct { \
 	U_16 length; \

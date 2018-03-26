@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -334,7 +334,17 @@ public:
 	inlineEnterVMFromJNI(J9VMThread* const currentThread)
 	{
 		currentThread->inNative = FALSE;
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+#if defined(LINUX)
+#if !defined(TYPESTUBS_H)
+		asm volatile ("" : : : "memory");
+#endif /* !TYPESTUBS_H */
+#else /* LINUX */
+#error compiler barrier unimplemented
+#endif /* LINUX */
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 		VM_AtomicSupport::readWriteBarrier(); // necessary?
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 		if (J9_UNEXPECTED(currentThread->publicFlags != J9_PUBLIC_FLAGS_VM_ACCESS))	{
 			J9_VM_FUNCTION(currentThread, internalEnterVMFromJNI)(currentThread);
 		}
@@ -343,9 +353,20 @@ public:
 	static VMINLINE void
 	inlineExitVMToJNI(J9VMThread* const currentThread)
 	{
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+		currentThread->inNative = TRUE;
+#if defined(LINUX)
+#if !defined(TYPESTUBS_H)
+		asm volatile ("" : : : "memory");
+#endif /* !TYPESTUBS_H */
+#else /* LINUX */
+#error compiler barrier unimplemented
+#endif /* LINUX */
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 		VM_AtomicSupport::writeBarrier();
 		currentThread->inNative = TRUE;
 		VM_AtomicSupport::readWriteBarrier(); // necessary?
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 		if (J9_UNEXPECTED(currentThread->publicFlags != J9_PUBLIC_FLAGS_VM_ACCESS)) {
 			J9_VM_FUNCTION(currentThread, internalExitVMToJNI)(currentThread);
 		}
@@ -385,6 +406,61 @@ public:
 		}
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);
 	}
+
+	/**
+	 * Determine if the VM must wait for the target thread to give up VM
+	 * access before it can be inspected.
+	 *
+	 * Assumes that the target thread publicFlagMutex is owned, and that a halt
+	 * bit has been set in the publicFlags to prevent acquisition of VM access.
+	 *
+	 * @param vmThread[in] the J9VMThread to query
+	 *
+	 * @return true if the VM must wait, false if not
+	 */
+	static VMINLINE bool
+	mustWaitForVMAccessRelease(J9VMThread* const vmThread)
+	{
+		bool mustWait = false;
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		if (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) {
+			VM_AtomicSupport::readBarrier(); // necessary?
+			if (vmThread->inNative) {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS)
+				clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_VM_ACCESS);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS */
+			} else {
+				mustWait = true;
+			}
+		}
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		if (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) {
+			mustWait = true;
+		}
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		return mustWait;
+	}
+
+	/**
+	 * Set halt flags with the intention of forcing the target thread to give up VM access.
+	 * Appropriate barriers are issued based on the kind of VM access rules determined
+	 * by compile-time flags.
+	 *
+	 * @param vmThread[in] the J9VMThread to modify
+	 * @param flags[in] the flags to set
+	 */
+	static VMINLINE void
+	setHaltFlagForVMAccessRelease(J9VMThread* const vmThread, UDATA const flags)
+	{
+		setPublicFlags(vmThread, flags, true);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+		// TODO: flush
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
+		VM_AtomicSupport::readWriteBarrier(); // necessary?
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+	}
+
 };
 
 #endif /* VMACCESS_HPP_ */

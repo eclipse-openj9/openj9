@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2017 IBM Corp. and others
+; Copyright (c) 2000, 2018 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1585,7 +1585,11 @@ jitReleaseVMAccess PROC NEAR
                 push       ebp
                 mov        eax, [ebp+J9TR_VMThread_javaVM]
                 mov        eax, [eax+J9TR_JavaVMInternalFunctionTable]
+ifdef ASM_J9VM_INTERP_ATOMIC_FREE_JNI
+                call       [eax+J9TR_InternalFunctionTableExitVMToJNI]
+else
                 call       [eax+J9TR_InternalFunctionTableReleaseVMAccess]
+endif
                 add        esp,4
                 popa
                 ret
@@ -1655,7 +1659,11 @@ else
 endif
         mov     rax, qword ptr[rbp+J9TR_VMThread_javaVM]
         mov     rax, qword ptr[rax+J9TR_JavaVMInternalFunctionTable]
+ifdef ASM_J9VM_INTERP_ATOMIC_FREE_JNI
+        call    qword ptr [rax+J9TR_InternalFunctionTableExitVMToJNI]
+else
         call    qword ptr [rax+J9TR_InternalFunctionTableReleaseVMAccess]
+endif
 
         ; Restore registers
         ; XMMs
