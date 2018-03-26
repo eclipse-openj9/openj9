@@ -45,7 +45,6 @@ RUN apt-get update \
     libxt-dev \
     libxtst-dev \
     make \
-    openjdk-8-jdk \
     pkg-config \
     qemu \
     realpath \
@@ -67,6 +66,13 @@ RUN cd /root \
   && wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz \
   && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
   && rm -f freemarker.tgz
+
+# Download and install boot JDK from AdoptOpenJDK
+RUN cd /root \
+  && wget -O bootjdk8.tar.gz https://api.adoptopenjdk.net/openjdk8-openj9/releases/x64_linux/latest/binary \
+  && tar -xzf bootjdk8.tar.gz \
+  && rm -f bootjdk8.tar.gz \
+  && ls | grep -i jdk | xargs -I % sh -c 'mv % bootjdk8'
 
 # get the toolchain
 RUN cd /root \
@@ -122,11 +128,15 @@ RUN cd /root/debs \
 # Env vars set here will be visibile in the running container, so can be
 # used to convey configuration information to the build scripts.
 
+# Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH
+ENV JAVA_HOME="/root/bootjdk8"
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
 # Directory containing the cross compilation tool chain
-ENV OPENJ9_CC_DIR /root/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf
+ENV OPENJ9_CC_DIR="/root/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf"
 
 # Prefix for the cross compilation tools (without the trailing '-')
-ENV OPENJ9_CC_PREFIX arm-linux-gnueabihf
+ENV OPENJ9_CC_PREFIX="arm-linux-gnueabihf"
 
 # Add the toolchain bin dir to the PATH for convenience
 ENV PATH="${PATH}:${OPENJ9_CC_DIR}/bin"
