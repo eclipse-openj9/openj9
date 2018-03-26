@@ -34,6 +34,7 @@ namespace J9 { typedef CPU CPUConnector; }
 
 #include "env/OMRCPU.hpp"
 #include "j9port.h"
+#include "infra/Assert.hpp"                         // for TR_ASSERT
 
 namespace J9
 {
@@ -45,6 +46,9 @@ protected:
 public:
 
    J9ProcessorDesc *TO_PORTLIB_getJ9ProcessorDesc();
+
+   const char *getProcessorVendorId() { TR_ASSERT(false, "Vendor ID not defined for this platform!"); return NULL; }
+   uint32_t getProcessorSignature() { TR_ASSERT(false, "Processor Signature not defined for this platform!"); return 0; }
    };
 }
 
