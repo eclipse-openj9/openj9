@@ -83,8 +83,8 @@ RUN cd /root \
 ADD \
     http://ftp.us.debian.org/debian/pool/main/a/alsa-lib/libasound2_1.1.3-5_armhf.deb                \
     http://ftp.us.debian.org/debian/pool/main/a/alsa-lib/libasound2-dev_1.1.3-5_armhf.deb            \
-    http://ftp.us.debian.org/debian/pool/main/c/cups/libcups2-dev_2.2.1-8_armhf.deb                  \
-    http://ftp.us.debian.org/debian/pool/main/c/cups/libcupsimage2-dev_2.2.1-8_armhf.deb             \
+    http://ftp.us.debian.org/debian/pool/main/c/cups/libcups2-dev_2.2.1-8%2bdeb9u1_armhf.deb         \
+    http://ftp.us.debian.org/debian/pool/main/c/cups/libcupsimage2-dev_2.2.1-8%2bdeb9u1_armhf.deb    \
     http://ftp.us.debian.org/debian/pool/main/d/dwarfutils/libdwarf-dev_20161124-1+deb9u1_armhf.deb  \
     http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6_2.6.3-3.2_armhf.deb            \
     http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6-dev_2.6.3-3.2_armhf.deb        \
