@@ -101,7 +101,13 @@ def publish() {
     }
 }
 
+def add_node_to_description() {
+    def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+    currentBuild.description = TMP_DESC + NODE_NAME
+}
+
 def test_all() {
+    add_node_to_description()
     configure()
     get_dependencies()
     compile()
