@@ -22,17 +22,13 @@
 #   docker build -t=openj9 .
 #   docker run -it openj9
 
-FROM ubuntu:16.04
+FROM adoptopenjdk/openjdk8-openj9:latest
 
-# This section:
-# - Gets the prerequisites for the add-apt-repository
-# - Adds the apt-get repository containing openjdk7
-# - Installs the required OS tools.
+# This section installs the required OS tools.
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     software-properties-common \
     python-software-properties \
-  && add-apt-repository ppa:openjdk-r/ppa \
   && apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     autoconf \
@@ -56,7 +52,6 @@ RUN apt-get update \
     libxt-dev \
     libxtst-dev \
     make \
-    openjdk-7-jdk \
     pkg-config \
     realpath \
     ssh \
