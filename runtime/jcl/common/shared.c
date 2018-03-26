@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -561,7 +561,7 @@ getCpeTypeForProtocol(char* protocol, jsize protocolLen, const char* pathChars, 
 	}
 	if (strncmp(protocol, "file", 5)==0) {
 		char* endsWith = (char*)(pathChars + (pathLen-4));
-		if ((strncmp(endsWith, ".jar", 4)==0) || (strncmp(endsWith, ".zip", 4)==0)) {
+		if ((strncmp(endsWith, ".jar", 4)==0) || (strncmp(endsWith, ".zip", 4)==0) || strstr(pathChars,"!/")) {
 			Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitJAR();
 			return CPE_TYPE_JAR;
 		} else {
