@@ -26,11 +26,11 @@ SPEC = 'linux_ppc-64_cmprssptrs_le'
 node('master') {
 
     checkout scm
-    def commonFile = load 'buildenv/jenkins/common/variables-functions'
+    variableFile = load 'buildenv/jenkins/common/variables-functions'
     variableFile.set_job_variables('build')
 }
 
- node("${NODE}") {
+node("${NODE}") {
 
     checkout scm
     def buildfile = load 'buildenv/jenkins/common/build'
