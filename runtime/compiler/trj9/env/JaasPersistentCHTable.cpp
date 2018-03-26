@@ -218,6 +218,7 @@ std::pair<std::string, std::string> TR_JaasClientPersistentCHTable::serializeUpd
    uint32_t prevMax = _maxUpdateBytes;
    _maxUpdateBytes = std::max(nBytes, _maxUpdateBytes);
 #endif
+   TR::compInfoPT->getCompilationInfo()->markCHTableUpdateDone(TR::compInfoPT->getCompThreadId());
    return {removes, mods};
    }
 

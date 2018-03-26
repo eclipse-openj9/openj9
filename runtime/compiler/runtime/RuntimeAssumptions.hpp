@@ -33,7 +33,6 @@
 #include "infra/Link.hpp"                  // for TR_LinkHead0, TR_Link0
 #include "runtime/OMRRuntimeAssumptions.hpp"  // for OMR::RuntimeAssumption
 
-
 class TR_FrontEnd;
 class TR_OpaqueClassBlock;
 class TR_PatchJNICallSite;
@@ -124,7 +123,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    void setReservable(bool v = true)              { _flags.set(_isReservable, v); }
    bool isReservable()                            { return _flags.testAny(_isReservable); }
 
-   void setShouldNotBeNewlyExtended(int32_t ID) { _shouldNotBeNewlyExtended.set(1 << ID); }
+   void setShouldNotBeNewlyExtended(int32_t ID);
    void resetShouldNotBeNewlyExtended(int32_t ID){ _shouldNotBeNewlyExtended.reset(1 << ID); }
    void clearShouldNotBeNewlyExtended()          { _shouldNotBeNewlyExtended.clear(); }
    bool shouldNotBeNewlyExtended()               { return _shouldNotBeNewlyExtended.testAny(0xff); }

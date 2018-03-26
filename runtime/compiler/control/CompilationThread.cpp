@@ -906,6 +906,12 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    _lastTimeThreadWasSuspended = 0;
    _lastTimeThreadWentToSleep = 0;
    _serverVM = nullptr;
+
+   if (compInfo.getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      {
+      _classesThatShouldNotBeNewlyExtended = new (PERSISTENT_NEW) PersistentUnorderedSet<TR_OpaqueClassBlock*>(
+         PersistentUnorderedSet<TR_OpaqueClassBlock*>::allocator_type(TR::Compiler->persistentAllocator()));
+      }
    }
 
 TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :

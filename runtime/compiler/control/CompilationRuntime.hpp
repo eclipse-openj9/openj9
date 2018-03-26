@@ -948,6 +948,19 @@ public:
    void setClientSessionHT(ClientSessionHT *ht) { _clientSessionHT = ht; }
    PersistentVector<TR_OpaqueClassBlock*> *getUnloadedClassesTempList() { return _unloadedClassesTempList; }
    void setUnloadedClassesTempList(PersistentVector<TR_OpaqueClassBlock*> *it) { _unloadedClassesTempList = it; }
+   PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *getNewlyExtendedClasses() { return _newlyExtendedClasses; }
+   void classGotNewlyExtended(TR_OpaqueClassBlock* clazz)
+      {
+      auto &newlyExtendedClasses = *getNewlyExtendedClasses();
+      uint8_t inProgress = getCHTableUpdateDone();
+      if (inProgress)
+         newlyExtendedClasses[clazz] |= inProgress;
+      }
+   void setNewlyExtendedClasses(PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *it) { _newlyExtendedClasses = it; }
+   void markCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags |= 1 << threadId; }
+   void resetCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
+   bool isCHTableUpdateDone(uint8_t threadId) { return!!(_chTableUpdateFlags & 1 << threadId); }
+   uint8_t getCHTableUpdateDone() { return _chTableUpdateFlags; }
 
    static int32_t         VERY_SMALL_QUEUE;
    static int32_t         SMALL_QUEUE;
@@ -1133,6 +1146,9 @@ private:
    ClientSessionHT *_clientSessionHT;
    // JAAS list of classes unloaded 
    PersistentVector<TR_OpaqueClassBlock*> *_unloadedClassesTempList;
+   // JAAS table of newly extended classes
+   PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *_newlyExtendedClasses;
+   uint8_t _chTableUpdateFlags;
    }; // CompilationInfo
 }
 

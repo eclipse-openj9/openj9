@@ -3509,6 +3509,9 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
       superCl->classDepthAndFlags |= J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN;
 
       TR_OpaqueClassBlock *superClazz = ((TR_J9VMBase *)vm)->convertClassPtrToClassOffset(superCl);
+
+      compInfo->classGotNewlyExtended(superClazz);
+
       if (p)
          {
          name = vm->getClassNameChars(superClazz, len);
@@ -3526,6 +3529,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
             {
             superCl->classDepthAndFlags |= J9_JAVA_CLASS_HAS_BEEN_OVERRIDDEN;
             superClazz = ((TR_J9VMBase *)vm)->convertClassPtrToClassOffset(superCl);
+            compInfo->classGotNewlyExtended(superClazz);
             if (p)
                {
                name = vm->getClassNameChars(superClazz, len);

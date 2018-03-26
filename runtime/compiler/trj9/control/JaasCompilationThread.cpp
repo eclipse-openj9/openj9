@@ -1883,6 +1883,7 @@ remoteCompile(
    std::string codeCacheStr;
    std::string dataCacheStr;
    CHTableCommitData chTableData;
+   std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended;
    try
       {
       // release VM access just before sending the compilation request
@@ -1905,11 +1906,12 @@ remoteCompile(
          }
 
       while(!handleServerMessage(&client, compiler->fej9vm()));
-      auto recv = client.getRecvData<uint32_t, std::string, std::string, CHTableCommitData>();
+      auto recv = client.getRecvData<uint32_t, std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>>();
       statusCode = std::get<0>(recv);
       codeCacheStr = std::get<1>(recv);
       dataCacheStr = std::get<2>(recv);
       chTableData = std::get<3>(recv);
+      classesThatShouldNotBeNewlyExtended = std::get<4>(recv);
       if (statusCode >= compilationMaxError)
          throw JAAS::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
       }
@@ -1950,6 +1952,34 @@ remoteCompile(
          if (!TR::comp()->getOption(TR_DisableCHOpts))
             {
             TR::ClassTableCriticalSection commit(compiler->fe());
+
+            // clear bit for this compilation
+            compInfo->resetCHTableUpdateDone(TR::compInfoPT->getCompThreadId());
+            auto newlyExtendedClasses = compInfo->getNewlyExtendedClasses();
+
+            // intersect classesThatShouldNotBeNewlyExtended with newlyExtendedClasses
+            // and abort on overlap
+            for (TR_OpaqueClassBlock* clazz : classesThatShouldNotBeNewlyExtended)
+               {
+               auto it = newlyExtendedClasses->find(clazz);
+               if (it != newlyExtendedClasses->end() && (it->second & (1 << TR::compInfoPT->getCompThreadId())))
+                  {
+                  if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJaas, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Class that should not be newly extended was extended when compiling %s", compiler->signature());
+                  compiler->failCompilation<J9::CHTableCommitFailure>("Class that should not be newly extended was extended");
+                  }
+               }
+
+            // freshen up newlyExtendedClasses
+            for (auto it = newlyExtendedClasses->begin(); it != newlyExtendedClasses->end();)
+               {
+               it->second &= compInfo->getCHTableUpdateDone();
+               if (it->second)
+                  ++it;
+               else
+                  it = newlyExtendedClasses->erase(it);
+               }
+
             if (!jaasCHTableCommit(compiler, metaData, chTableData))
                {
 #ifdef COLLECT_CHTABLE_STATS

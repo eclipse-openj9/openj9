@@ -32,6 +32,7 @@
 #include "infra/Monitor.hpp"
 #include "infra/CriticalSection.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
 #include "env/VMJ9.h"
 
 namespace TR { class Monitor; }
@@ -501,4 +502,13 @@ TR_PersistentCHTable::removeAssumptionFromList(
       prev->setNext(next);
    else
       *list = next;
+   }
+
+void
+TR_PersistentClassInfo::setShouldNotBeNewlyExtended(int32_t ID)
+   {
+   auto classesThatShouldNotBeNewlyExtended = TR::compInfoPT->getClassesThatShouldNotBeNewlyExtended();
+   if (classesThatShouldNotBeNewlyExtended)
+      classesThatShouldNotBeNewlyExtended->insert(_classId);
+   _shouldNotBeNewlyExtended.set(1 << ID);
    }
