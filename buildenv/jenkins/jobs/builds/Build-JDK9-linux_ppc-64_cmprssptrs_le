@@ -30,7 +30,7 @@ node('master') {
     variableFile.set_job_variables('build')
 }
 
- node("${NODE}") {
+node("${NODE}") {
 
     checkout scm
     def buildfile = load 'buildenv/jenkins/common/build'
