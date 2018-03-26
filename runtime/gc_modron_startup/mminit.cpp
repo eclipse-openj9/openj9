@@ -239,6 +239,26 @@ cleanupMutatorModelJava(J9VMThread* vmThread)
 }
 
 /**
+ * Triggers hook for deleting private heap.
+ * @param memorySpace pointer to the list (pool) of memory spaces
+ */
+static void
+reportPrivateHeapDelete(J9JavaVM * javaVM, void * memorySpace)
+{
+	MM_EnvironmentBase env(javaVM->omrVM);
+
+	MM_MemorySpace *modronMemorySpace = (MM_MemorySpace *)memorySpace;
+	if  (modronMemorySpace) {
+		if (!(javaVM->runtimeFlags & J9_RUNTIME_SHUTDOWN)) {
+			TRIGGER_J9HOOK_MM_PRIVATE_HEAP_DELETE(
+				MM_GCExtensions::getExtensions(javaVM)->privateHookInterface,
+				env.getOmrVMThread(),
+				modronMemorySpace);
+		}
+	}
+}
+
+/**
  * Cleanup passive heap structures
  */
 void
@@ -257,10 +277,6 @@ gcCleanupHeapStructures(J9JavaVM * vm)
 	MM_GlobalAllocationManager *gam = extensions->globalAllocationManager;
 	if (NULL != gam) {
 		gam->flushAllocationContextsForShutdown(&env);
-	}
-	
-	if (vm->defaultMemorySpace) {
-		internalFreeMemorySpace(vm, vm->defaultMemorySpace);
 	}
 
 	if (vm->memorySegments) {
@@ -617,11 +633,17 @@ gcCleanupInitializeDefaults(OMR_VM* omrVM)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(omrVM);
 	MM_EnvironmentBase env(omrVM);
+	J9JavaVM *vm = (J9JavaVM*) omrVM->_language_vm;
 
 	if (NULL == extensions) {
 		return;
 	}
 
+	if (vm->defaultMemorySpace) {
+		reportPrivateHeapDelete(vm, vm->defaultMemorySpace);
+	}
+
+	/* defaultMemorySpace is cleared as part of configuration tear down */
 	if (NULL != extensions->configuration) {
 		extensions->configuration->kill(&env);
 	}

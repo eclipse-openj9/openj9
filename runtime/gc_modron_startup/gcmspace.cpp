@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -131,29 +131,6 @@ cleanup:
 
 	/* TODO: Cleanup for the memorySpace class (if necessary) */
 	return NULL;
-}
-
-/**
- * Frees all memory spaces.
- * @param memorySpace pointer to the list (pool) of memory spaces
- */
-void
-internalFreeMemorySpace(J9JavaVM * javaVM, void * memorySpace)
-{
-	MM_EnvironmentBase env(javaVM->omrVM);
-
-	MM_MemorySpace *modronMemorySpace = (MM_MemorySpace *)memorySpace;
-	if  (modronMemorySpace) {
-		if (!(javaVM->runtimeFlags & J9_RUNTIME_SHUTDOWN)) {
-			TRIGGER_J9HOOK_MM_PRIVATE_HEAP_DELETE(
-				MM_GCExtensions::getExtensions(javaVM)->privateHookInterface,
-				env.getOmrVMThread(),
-				modronMemorySpace);
-		}
-
-		modronMemorySpace->kill(&env);
-
-	}
 }
 
 } /* extern "C" */
