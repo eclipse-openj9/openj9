@@ -1729,14 +1729,14 @@ retry:
 		}
 	}
 
+	TRIGGER_J9HOOK_VM_LOOKUP_JNI_ID(vmThread->javaVM->hookInterface,
+			vmThread, classReference, name, signature, (U_8)isStatic, (U_8)isField, id);
+
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 
 	if (id == NULL) {
 		ensurePendingJNIException(env);
 	}
-
-	TRIGGER_J9HOOK_VM_LOOKUP_JNI_ID(vmThread->javaVM->hookInterface,
-		vmThread, classReference, name, signature, (U_8)isStatic, (U_8)isField, id);
 
 	Trc_VM_getMethodOrFieldID_Exit(vmThread, id);
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@
 
 #include "VMHelpers.hpp"
 #include "ObjectMonitor.hpp"
+#include "VMAccess.hpp"
 
 extern "C" {
 
@@ -205,23 +206,26 @@ Java_java_lang_Thread_suspendImpl(JNIEnv *env, jobject rcv)
 	Trc_JCL_threadSuspend(currentThread, targetThread);
 	if (J9VMJAVALANGTHREAD_STARTED(currentThread, receiverObject)) {
 		if (NULL != targetThread) {
-			vmFuncs->setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
-			/* Suspending the current thread will take place upon the VM access reacquire after returning from
-			 * this native.  If suspending another thread, wait for it to become suspended before returning from
-			 * the native.
-			 */
-			if (currentThread != targetThread) {
-				vmFuncs->internalReleaseVMAccess(currentThread);
+			if (currentThread == targetThread) {
+				/* Suspending the current thread will take place upon re-entering the VM after returning from
+				 * this native.
+				 */
+				vmFuncs->setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
+			} else {
+				vmFuncs->internalReleaseVMAccessInJNI(currentThread);
 				omrthread_monitor_enter(targetThread->publicFlagsMutex);
-				while (J9_ARE_ALL_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND | J9_PUBLIC_FLAGS_VM_ACCESS)) {
-					omrthread_monitor_wait(targetThread->publicFlagsMutex);
+				VM_VMAccess::setHaltFlagForVMAccessRelease(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
+				if (VM_VMAccess::mustWaitForVMAccessRelease(targetThread)) {
+					while (J9_ARE_ALL_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND | J9_PUBLIC_FLAGS_VM_ACCESS)) {
+						omrthread_monitor_wait(targetThread->publicFlagsMutex);
+					}
 				}
 				omrthread_monitor_exit(targetThread->publicFlagsMutex);
 				goto vmAccessReleased;
 			}
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 vmAccessReleased: ;
 }
 

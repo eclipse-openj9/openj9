@@ -3043,7 +3043,27 @@ trace(J9VMThread *vmStruct);
 #endif /* J9VM_INTERP_TRACING || INTERP_UPDATE_VMCTRACING */ /* End File Level Build Flags */
 
 
-/* ---------------- vmaccess.c ---------------- */
+/* ---------------- VMAccess.cpp ---------------- */
+
+/**
+* @brief
+* @param currentThread
+* @param vmThread
+* @return void
+*/
+void
+haltThreadForInspection(J9VMThread * currentThread, J9VMThread * vmThread);
+
+
+/**
+* @brief
+* @param currentThread
+* @param vmThread
+* @return void
+*/
+void
+resumeThreadForInspection(J9VMThread * currentThread, J9VMThread * vmThread);
+
 
 /**
 * @brief
@@ -3630,16 +3650,6 @@ findObjectDeadlockedThreads(J9VMThread *currentThread, j9object_t **pDeadlockedT
 
 /**
 * @brief
-* @param currentThread
-* @param vmThread
-* @return void
-*/
-void
-haltThreadForInspection(J9VMThread * currentThread, J9VMThread * vmThread);
-
-
-/**
-* @brief
 * @param *entryarg
 * @return IDATA J9THREAD_PROC
 */
@@ -3658,16 +3668,6 @@ javaThreadProc(void *entryarg);
 void
 printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allThreads);
 #endif /* J9VM_('RAS_DUMP_AGENTS' 'INTERP_SIG_QUIT_THREAD') */
-
-
-/**
-* @brief
-* @param currentThread
-* @param vmThread
-* @return void
-*/
-void
-resumeThreadForInspection(J9VMThread * currentThread, J9VMThread * vmThread);
 
 
 /**

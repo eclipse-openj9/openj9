@@ -239,6 +239,10 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 	/* If an exclusive access request is in progress, mark this thread */
 
 	omrthread_monitor_enter(vm->exclusiveAccessMutex);
+	/* The new thread does not have VM access, so there's no need to set any not_counted
+	 * bits, as the thread will block attempting to acquire VM access, and will not release
+	 * VM access for the duration of the exclusive.
+	 */
 	if (J9_XACCESS_NONE != vm->exclusiveAccessState) {
 		setHaltFlag(newThread, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE);
 	}
@@ -1695,95 +1699,6 @@ static void trace_printf(struct J9PortLibrary *portLib, IDATA tracefd, char * fo
 		j9tty_err_printf(PORTLIB, buffer);
 }
 #endif /* J9VM_('RAS_DUMP_AGENTS' 'INTERP_SIG_QUIT_THREAD') */
-
-
-/*
- * The current thread must have vm access when calling this function.
- *
- * Note: While the current thread has another thread halted, it must not do anything to modify
- * it's own stack, including the creation of JNI local refs, pushObjectInSpecialFrame, or the
- * running of any java code.
- */
-
-void
-haltThreadForInspection(J9VMThread * currentThread, J9VMThread * vmThread)
-{
-
-_tryAgain:
-
-	Assert_VM_mustHaveVMAccess(currentThread);
-
-	/* Inspecting the current thread does not require any halting */
-	if (currentThread != vmThread) {
-		omrthread_monitor_enter(vmThread->publicFlagsMutex);
-
-		/* increment the inspection count but don't try to short circuit -- the thread might not actually be halted yet */
-		vmThread->inspectionSuspendCount += 1;
-
-		/* Now halt the thread for inspection */
-		setHaltFlag(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_INSPECTION);
-
-		/* If the thread doesn't have VM access and it not queued for exclusive we can proceed immediately */
-		if (vmThread->publicFlags & (J9_PUBLIC_FLAGS_VM_ACCESS | J9_PUBLIC_FLAGS_QUEUED_FOR_EXCLUSIVE)) {
-			/* Release VM access while waiting */
-			/* (We must release the other thread's publicFlagsMutex to avoid deadlock here) */
-			omrthread_monitor_exit(vmThread->publicFlagsMutex);
-			internalReleaseVMAccess(currentThread);
-			omrthread_monitor_enter(vmThread->publicFlagsMutex);
-
-			while (vmThread->publicFlags & (J9_PUBLIC_FLAGS_VM_ACCESS | J9_PUBLIC_FLAGS_QUEUED_FOR_EXCLUSIVE)) {
-				omrthread_monitor_wait(vmThread->publicFlagsMutex);
-			}
-			omrthread_monitor_exit(vmThread->publicFlagsMutex);
-
-			/* Thread is halted - reacquire VM access */
-	
-			omrthread_monitor_enter(currentThread->publicFlagsMutex);
-			internalAcquireVMAccessNoMutexWithMask(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_ANY - J9_PUBLIC_FLAGS_HALT_THREAD_INSPECTION);
-			omrthread_monitor_exit(currentThread->publicFlagsMutex);
-
-			/* If currentThread is being halted, cancel vmThread's pending inspection request */
-			if (J9_PUBLIC_FLAGS_HALT_THREAD_INSPECTION == (currentThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_INSPECTION)) {
-				resumeThreadForInspection(currentThread, vmThread);
-				goto _tryAgain;
-			}
-
-		} else {
-			/* the thread doesn't have VM access so we don't need to wait for it */
-			omrthread_monitor_exit(vmThread->publicFlagsMutex);
-		}
-	}
-
-	Assert_VM_mustHaveVMAccess(currentThread);
-}
-
-/* Note that VM access is released and reacquired by this call - direct object pointers must not be held across this call */
-
-void
-resumeThreadForInspection(J9VMThread * currentThread, J9VMThread * vmThread)
-{
-	/* Inspecting the current thread does not require any halting */
-
-	if (currentThread != vmThread) {
-		/* Ignore resumes for threads which have not been suspended for inspection */
-
-		omrthread_monitor_enter(vmThread->publicFlagsMutex);
-		if (vmThread->inspectionSuspendCount != 0) {
-			if (--vmThread->inspectionSuspendCount == 0) {
-				clearHaltFlag(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_INSPECTION);
-			}
-		}
-		omrthread_monitor_exit(vmThread->publicFlagsMutex);
-
-		/* was the current thread running with partial VM access? */
-		/* (It is safe to read the publicFlags without a mutex since we're only really interested if it was set before we acquired VM access) */
-		if (currentThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_INSPECTION) {
-			/* reacquire full VM access */
-			internalReleaseVMAccess(currentThread);
-			internalAcquireVMAccess(currentThread);
-		}
-	}
-}
 
 
 j9object_t

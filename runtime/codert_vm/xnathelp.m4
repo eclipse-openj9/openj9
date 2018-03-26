@@ -492,6 +492,8 @@ dnl currently declared by JIT, but could move here
 	FASTCALL_EXTERN(fast_jitReleaseVMAccess)
 
 dnl Non-standard - _RSP points to C stack when this is called
+dnl Extra JNI arguments may be pushed on the stack, so the code
+dnl below is incorrect.
 BEGIN_HELPER(jitReleaseVMAccess)
 dnl Ensure _rsp is pointing to the C interpreter stack frame
 	pop uword ptr J9TR_VMThread_jitReturnAddress[_rbp]
