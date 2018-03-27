@@ -909,8 +909,12 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
 
    if (compInfo.getPersistentInfo()->getJaasMode() == SERVER_MODE)
       {
-      _classesThatShouldNotBeNewlyExtended = new (PERSISTENT_NEW) PersistentUnorderedSet<TR_OpaqueClassBlock*>(
+      _classesThatShouldNotBeNewlyExtended = new (compInfoPT->getCompilation()->trMemory()->trHeapMemory()) PersistentUnorderedSet<TR_OpaqueClassBlock*>(
          PersistentUnorderedSet<TR_OpaqueClassBlock*>::allocator_type(TR::Compiler->persistentAllocator()));
+      }
+   else
+      {
+      _classesThatShouldNotBeNewlyExtended = nullptr;
       }
    }
 
@@ -1007,6 +1011,8 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _interpSamplTrackingInfo = new (PERSISTENT_NEW) TR_InterpreterSamplingTracking(this);
    _clientSessionHT = nullptr; // This will be set later when options are processed
    _unloadedClassesTempList = nullptr;
+   _newlyExtendedClasses = nullptr;
+   _chTableUpdateFlags = 0;
    }
 
 bool TR::CompilationInfo::initializeCompilationOnApplicationThread()

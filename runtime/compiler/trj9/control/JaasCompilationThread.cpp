@@ -2074,7 +2074,10 @@ remoteCompilationEnd(
       chTableData = chTable->computeDataForCHTableCommit(comp);
       }
 
-   entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr, chTableData);
+   auto classesThatShouldNotBeNewlyExtended = TR::compInfoPT->getClassesThatShouldNotBeNewlyExtended();
+   entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr, chTableData,
+                                     std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()));
+   classesThatShouldNotBeNewlyExtended->clear();
 
    if (TR::Options::getVerboseOption(TR_VerboseJaas))
       {

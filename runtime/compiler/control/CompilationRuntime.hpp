@@ -959,7 +959,6 @@ public:
    void setNewlyExtendedClasses(PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *it) { _newlyExtendedClasses = it; }
    void markCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags |= 1 << threadId; }
    void resetCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
-   bool isCHTableUpdateDone(uint8_t threadId) { return!!(_chTableUpdateFlags & 1 << threadId); }
    uint8_t getCHTableUpdateDone() { return _chTableUpdateFlags; }
 
    static int32_t         VERY_SMALL_QUEUE;

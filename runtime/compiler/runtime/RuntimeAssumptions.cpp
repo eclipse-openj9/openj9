@@ -225,6 +225,9 @@ TR_PersistentCHTable::classGotExtended(
    {
    TR_PersistentClassInfo * cl = findClassInfo(superClassId);
    TR_PersistentClassInfo * subClass = findClassInfo(subClassId); // This is actually the class that got loaded extending the superclass
+
+   TR::CompilationInfo::get()->classGotNewlyExtended(superClassId);
+
    // should have an assume0(cl && subClass) here - but assume does not work rt-code
 
    TR_SubClass *sc = cl->addSubClass(subClass); // Updating the hierarchy
