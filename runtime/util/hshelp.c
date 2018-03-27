@@ -43,6 +43,8 @@
 #include "j9modron.h"
 #include "VM_MethodHandleKinds.h"
 #include "j2sever.h"
+#include "vrfytbl.h"
+#include "bytecodewalk.h"
 
 /* Static J9ITable used as a non-NULL iTable cache value by classes that don't implement any interfaces */
 const J9ITable invalidITable = { (J9Class *) (UDATA) 0xDEADBEEF, 0, (J9ITable *) NULL };
@@ -550,12 +552,12 @@ areMethodsEquivalent(J9ROMMethod * method1, J9ROMClass * romClass1, J9ROMMethod 
 			/* Bytecode numbers/indices in each method must be identical */
 
 			if (bc != bc2) {
-				/* Allow JBgenericReturn to match any return bytecode */
+				/* Treat all return instructions to JBgenericReturn */
 
-				if ( ((bc >= JBreturn0) && (bc <= JBsyncReturn2)) || (bc == JBreturnFromConstructor) ) {
+				if (RTV_RETURN == (J9JavaBytecodeVerificationTable[bc] >> 8)) {
 					bc = JBgenericReturn;
 				}
-				if ( ((bc2 >= JBreturn0) && (bc2 <= JBsyncReturn2)) || (bc == JBreturnFromConstructor) ) {
+				if (RTV_RETURN == (J9JavaBytecodeVerificationTable[bc2] >> 8)) {
 					bc2 = JBgenericReturn;
 				}
 				if (bc != bc2) {
