@@ -156,6 +156,10 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 	}
 	Assert_VM_mustHaveVMAccess(vmThread);
 	Assert_VM_true(0 == vmThread->safePointCount);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	// Current thread must have entered the VM before acquiring exclusive
+	Assert_VM_false(vmThread->inNative);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
 	/* Check the exclusive count on this thread. If it's >1,
 	 * the thread already has exclusive access
@@ -918,7 +922,9 @@ requestExclusiveVMAccessMetronomeTemp(J9JavaVM *vm, UDATA block, UDATA *vmRespon
 				if (thread->inNative) {
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS)
 					VM_VMAccess::clearPublicFlags(thread, J9_PUBLIC_FLAGS_VM_ACCESS);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS */
+#elif !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE) /* J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS */
+					VM_VMAccess::setPublicFlags(thread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
+#endif /* !J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 				} else {
 #if defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
 					VM_VMAccess::clearPublicFlags(thread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
@@ -963,7 +969,7 @@ waitForExclusiveVMAccessMetronomeTemp(J9VMThread * vmThread, UDATA vmResponsesRe
 	 * This patch was needed for some debug scenarios with JVMTI, that would result in a deadlock otherwise.
 	 * TODO: re-examine with latest JDWP
 	 */
-	internalAcquireVMAccessNoMutexWithMask(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_ANY & (~J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND));
+	internalAcquireVMAccessNoMutexWithMask(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_ANY_NO_JAVA_SUSPEND);
 
 	Assert_VM_true(vmThread->omrVMThread->exclusiveCount==0);
 	
@@ -1006,11 +1012,15 @@ internalEnterVMFromJNI(J9VMThread *currentThread)
 {
 	currentThread->inNative = FALSE;
 	VM_AtomicSupport::readWriteBarrier(); // necessary?
-	if (J9_UNEXPECTED(currentThread->publicFlags != J9_PUBLIC_FLAGS_VM_ACCESS))
-	{
+	if (J9_UNEXPECTED(currentThread->publicFlags != J9_PUBLIC_FLAGS_VM_ACCESS)) {
 		omrthread_monitor_t const publicFlagsMutex = currentThread->publicFlagsMutex;
 		omrthread_t const osThread = currentThread->osThread;
 		omrthread_monitor_enter_using_threadId(publicFlagsMutex, osThread);
+		if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_RELEASE_ACCESS_REQUIRED_MASK)) {
+			if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)) {
+				internalReleaseVMAccessNoMutex(currentThread);
+			}
+		}
 		if (!J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)) {
 			internalAcquireVMAccessNoMutex(currentThread);
 		}
@@ -1028,9 +1038,7 @@ internalExitVMToJNI(J9VMThread *currentThread)
 		omrthread_monitor_t const publicFlagsMutex = currentThread->publicFlagsMutex;
 		omrthread_t const osThread = currentThread->osThread;
 		omrthread_monitor_enter_using_threadId(publicFlagsMutex, osThread);
-		if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)) {
-			internalReleaseVMAccessNoMutex(currentThread);
-		}
+		internalReleaseVMAccessNoMutex(currentThread);
 		internalAcquireVMAccessNoMutex(currentThread);
 		omrthread_monitor_exit_using_threadId(publicFlagsMutex, osThread);
 	}
