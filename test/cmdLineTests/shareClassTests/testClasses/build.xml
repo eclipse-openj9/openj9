@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,10 +114,87 @@
 			<fileset dir="${sharedClassTestClasses_srddir}/Vowels"/>
 		</copy>			
 
+		<!-- compile sources -->
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 			<then>
-				<!-- compile sources -->
+				<javac srcdir="${sharedClassTestClasses_srddir}/Alphabet" classpath="${build}:" destdir="${build}/Alphabet" fork="true" executable="${compiler.javac}" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}AlphabetJar" classpath="${build}" destdir="${build}/AlphabetJar" fork="true" executable="${compiler.javac}" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<jar destfile="${build}/AlphabetJar/Alphabet.jar" basedir="${build}/AlphabetJar/" includes="*.class" duplicate="fail"/>
+				<delete dir="${build}/AlphabetJar/" excludes="*.jar,*.java" />
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Animals" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Animals" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}AnimalsJar" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/AnimalsJar" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<jar destfile="${build}/AnimalsJar/Animals.jar" basedir="${build}/AnimalsJar/" includes="*.class" duplicate="fail"/>
+				<delete dir="${build}/AnimalsJar/" excludes="*.jar,*.java" />
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}BallSports" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/BallSports" debug="on">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}DuplicateOrphansTest" excludes="temp/DuplicateOrphan.java" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/DuplicateOrphansTest" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Food" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Food" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}FoodJar" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/FoodJar" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<jar destfile="${build}/FoodJar/Food.jar" basedir="${build}/FoodJar/" includes="*.class" duplicate="fail"/>
+				<delete dir="${build}/FoodJar/" excludes="*.jar,*.java" />
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Pets" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Pets" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Pudding" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Pudding" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Sports" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Sports" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}SportsJar" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/SportsJar" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+				
+				<jar destfile="${build}/SportsJar/Sports.jar" basedir="${build}/SportsJar/" includes="*.class" duplicate="fail"/>
+				<delete dir="${build}/SportsJar/" excludes="*.jar,*.java" />
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}StaleOrphansTest" excludes="**/*.java" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/StaleOrphansTest" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}StaleOrphansTest/temp" excludes="**/*.java" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/StaleOrphansTest/temp" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}StaleOrphansTest1" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/StaleOrphansTest1" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+
+				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Vowels" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Vowels" debug="on" debuglevel="lines,vars,source">
+					<src path="${SharedClassUtils_srddir}"/>
+				</javac>
+			</then>
+			<else>
 				<property name="addExports" value="--add-modules openj9.sharedclasses --add-exports java.base/com.ibm.oti.util=ALL-UNNAMED" />
 
 				<javac srcdir="${sharedClassTestClasses_srddir}/Alphabet" classpath="${build}:" destdir="${build}/Alphabet" fork="true" executable="${compiler.javac}" debug="on" debuglevel="lines,vars,source">
@@ -210,84 +287,6 @@
 				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Vowels" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Vowels" debug="on" debuglevel="lines,vars,source">
 					<src path="${SharedClassUtils_srddir}"/>
 					<compilerarg line='${addExports}' />
-				</javac>
-			</then>
-			<else>
-				<!-- compile sources -->
-				<javac srcdir="${sharedClassTestClasses_srddir}/Alphabet" classpath="${build}:" destdir="${build}/Alphabet" fork="true" executable="${compiler.javac}" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}AlphabetJar" classpath="${build}" destdir="${build}/AlphabetJar" fork="true" executable="${compiler.javac}" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<jar destfile="${build}/AlphabetJar/Alphabet.jar" basedir="${build}/AlphabetJar/" includes="*.class" duplicate="fail"/>
-				<delete dir="${build}/AlphabetJar/" excludes="*.jar,*.java" />
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Animals" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Animals" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}AnimalsJar" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/AnimalsJar" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<jar destfile="${build}/AnimalsJar/Animals.jar" basedir="${build}/AnimalsJar/" includes="*.class" duplicate="fail"/>
-				<delete dir="${build}/AnimalsJar/" excludes="*.jar,*.java" />
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}BallSports" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/BallSports" debug="on">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}DuplicateOrphansTest" excludes="temp/DuplicateOrphan.java" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/DuplicateOrphansTest" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Food" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Food" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}FoodJar" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/FoodJar" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<jar destfile="${build}/FoodJar/Food.jar" basedir="${build}/FoodJar/" includes="*.class" duplicate="fail"/>
-				<delete dir="${build}/FoodJar/" excludes="*.jar,*.java" />
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Pets" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Pets" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Pudding" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Pudding" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Sports" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Sports" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}SportsJar" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/SportsJar" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-				
-				<jar destfile="${build}/SportsJar/Sports.jar" basedir="${build}/SportsJar/" includes="*.class" duplicate="fail"/>
-				<delete dir="${build}/SportsJar/" excludes="*.jar,*.java" />
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}StaleOrphansTest" excludes="**/*.java" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/StaleOrphansTest" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}StaleOrphansTest/temp" excludes="**/*.java" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/StaleOrphansTest/temp" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}StaleOrphansTest1" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/StaleOrphansTest1" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
-				</javac>
-
-				<javac srcdir="${sharedClassTestClasses_srddir}/${sharedClassTestClasses_srddir}Vowels" classpath="${build}" fork="true" executable="${compiler.javac}" destdir="${build}/Vowels" debug="on" debuglevel="lines,vars,source">
-					<src path="${SharedClassUtils_srddir}"/>
 				</javac>
 			</else>
 		</if>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,8 +48,18 @@
 		<echo>===destdir:                      ${build}</echo>
 
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 			<then>
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${src}" />
+					<exclude name="**/modularityTests/**"/>
+					<classpath>
+						<pathelement location="${asm.jar}" />
+						<pathelement location="${JAVA_BIN}/../../lib/tools.jar" />
+					</classpath>
+				</javac>
+			</then>
+			<else>
 				<if>
 					<equals arg1="${JCL_VERSION}" arg2="latest"/>
 					<then>
@@ -64,16 +74,6 @@
 					<compilerarg line='${addExports}' />
 					<classpath>
 						<pathelement location="${asm.jar}" />
-					</classpath>
-				</javac>
-			</then>
-			<else>
-				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<exclude name="**/modularityTests/**"/>
-					<classpath>
-						<pathelement location="${asm.jar}" />
-						<pathelement location="${JAVA_BIN}/../../lib/tools.jar" />
 					</classpath>
 				</javac>
 			</else>
