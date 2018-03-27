@@ -876,19 +876,23 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 			/* TODO: Redo value class check when L-World spec is finalized */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			/* When setting, throw IncompatibleClassChangeError if class is a value class when it should not be and vice versa */
-			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0) {
-				if (((resolveFlags & J9_RESOLVE_FLAG_CHECK_VALUE_CLASS) != 0) != ((resolvedClass->romClass->modifiers & J9AccValueType) != 0)) {
+			if (J9_ARE_ALL_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_FIELD_SETTER)) {
+				if (J9_ARE_ALL_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_CHECK_VALUE_CLASS)
+					!= J9_ARE_ALL_BITS_SET(resolvedClass->romClass->modifiers, J9AccValueType)
+				) {
 					setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, NULL);
 					goto done;
 				}
 			}
 
 			/* Do not check for final when class is a value class */
-			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (resolveFlags & J9_RESOLVE_FLAG_CHECK_VALUE_CLASS) == 0 && (modifiers & J9_JAVA_FINAL) != 0) 
+			if (J9_ARE_ALL_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_FIELD_SETTER)
+				&& J9_ARE_ALL_BITS_SET(modifiers, J9_JAVA_FINAL)
+				&& J9_ARE_NO_BITS_SET(J9_RESOLVE_FLAG_CHECK_VALUE_CLASS)
+			) {
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9_JAVA_FINAL) != 0) 
+			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9_JAVA_FINAL) != 0) {
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-			{
 				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9_JAVA_PRIVATE, resolveFlags);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
 					badMemberModifier = J9_JAVA_PRIVATE;

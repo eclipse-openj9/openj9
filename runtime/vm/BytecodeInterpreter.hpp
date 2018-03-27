@@ -7901,7 +7901,7 @@ retry:
 		 * a field ref as resolved if only one of the two values has been set (by
 		 * another thread that is in the middle of a resolve).
 		 */
-		if (J9_UNEXPECTED((flags <= valueOffset) || (0 == (flags & J9FieldFlagPutResolved)))) {
+		if (J9_UNEXPECTED((flags <= valueOffset) || J9_ARE_NO_BITS_SET(flags, J9FieldFlagPutResolved))) {
 			/* Unresolved */
 			J9Method *method = _literals;
 			updateVMStruct(REGISTER_ARGS);
@@ -7938,7 +7938,7 @@ retry:
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
 
 		{
-			bool isVolatile = (0 != (flags & J9AccVolatile));
+			bool isVolatile = J9_ARE_ALL_BITS_SET(flags, J9AccVolatile);
 			UDATA const newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
 			if (NULL == copy) {
 				rc = THROW_NPE;
