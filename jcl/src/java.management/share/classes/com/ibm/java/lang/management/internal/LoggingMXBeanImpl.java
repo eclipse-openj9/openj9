@@ -34,6 +34,8 @@ import java.lang.reflect.Layer;
 /*[ENDIF]*/
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -83,10 +85,17 @@ public final class LoggingMXBeanImpl
 			Module java_logging = ModuleLayer.boot().findModule("java.logging").get(); //$NON-NLS-1$
 /*[ELSE]
 			Module java_logging = Layer.boot().findModule("java.logging").get(); //$NON-NLS-1$
-/*[ENDIF]*/			
-			Class<?> logManagerClass = Class.forName(java_logging, "java.util.logging.LogManager"); //$NON-NLS-1$
-			Class<?> loggerClass = Class.forName(java_logging, "java.util.logging.Logger"); //$NON-NLS-1$
-			Class<?> levelClass = Class.forName(java_logging, "java.util.logging.Level"); //$NON-NLS-1$
+/*[ENDIF]*/
+			Class<?>[] logClasses = AccessController.doPrivileged((PrivilegedAction<Class<?>[]>)
+				() -> new Class[] {
+					Class.forName(java_logging, "java.util.logging.LogManager"), //$NON-NLS-1$
+					Class.forName(java_logging, "java.util.logging.Logger"), //$NON-NLS-1$
+					Class.forName(java_logging, "java.util.logging.Level") //$NON-NLS-1$
+				});
+			Class<?> logManagerClass = logClasses[0];
+			Class<?> loggerClass = logClasses[1];
+			Class<?> levelClass = logClasses[2];
+			
 			logManager_getLogManager = logManagerClass.getMethod("getLogManager"); //$NON-NLS-1$
 			logManager_getLogger = logManagerClass.getMethod("getLogger", String.class); //$NON-NLS-1$
 			logManager_getLoggerNames = logManagerClass.getMethod("getLoggerNames"); //$NON-NLS-1$
