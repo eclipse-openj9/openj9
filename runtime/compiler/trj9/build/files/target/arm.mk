@@ -61,3 +61,4 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/trj9/arm/codegen/J9CodeGenerator.cpp \
     compiler/trj9/arm/codegen/J9TreeEvaluator.cpp \
     compiler/trj9/arm/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/trj9/arm/env/J9CPU.cpp
