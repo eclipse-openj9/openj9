@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2001, 2017 IBM Corp. and others
+  Copyright (c) 2001, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -341,7 +341,7 @@
   <output regex="no" type="success">version</output>
  </test>
  <test id="-verbose:gc -Xcheck:memory - check for memory corruption">
-  <command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -verbose:gc -Dibm.java9.forceCommonCleanerShutdown=true -Xcheck:memory:ignoreUnfreedCallsite=zip/:dbgwrapper:unknown:wrapper -version</command>
+  <command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -verbose:gc -Dibm.java9.forceCommonCleanerShutdown=true -Xcheck:memory:quick,ignoreUnfreedCallsite=zip/:dbgwrapper:unknown:wrapper -version</command>
   <output regex="no" type="required">&lt;/verbosegc&gt;</output>
   <output regex="no" type="success">All allocated blocks were freed.</output>
   <!-- allow memory leaks since the JIT leaks, unfortunately -->
@@ -350,7 +350,7 @@
  </test>
  <test id="-verbose:gc -Xcheck:memory -Xverbosegclog:foo.log - check for memory corruption">
   <exec command="rm foo.*.log" />
-  <command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -verbose:gc -Xverbosegclog -Dibm.java9.forceCommonCleanerShutdown=true -Xcheck:memory:ignoreUnfreedCallsite=zip/:dbgwrapper:unknown:wrapper -version</command>
+  <command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -verbose:gc -Xverbosegclog -Dibm.java9.forceCommonCleanerShutdown=true -Xcheck:memory:quick,ignoreUnfreedCallsite=zip/:dbgwrapper:unknown:wrapper $CP$ com.ibm.tests.garbagecollector.SpinAllocate 5</command>
   <output regex="no" type="success">All allocated blocks were freed.</output>
   <!-- allow memory leaks since the JIT leaks, unfortunately -->
   <output regex="yes" type="success">[0-9]* allocated blocks totaling [0-9]* bytes were not freed before shutdown!</output>
