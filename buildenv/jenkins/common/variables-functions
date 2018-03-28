@@ -100,7 +100,7 @@ def set_repos_variables() {
 
     OPENJDK_BRANCH = params.OPENJDK_BRANCH
     if ((OPENJDK_BRANCH == null) || (OPENJDK_BRANCH == '')) {
-        OPENJDK_BRANCH = VARIABLES.openjdk_branch
+        OPENJDK_BRANCH = get_value(VARIABLES.openjdk_branch, SDK_VERSION)
     }
 
     if ( OPENJDK_BRANCH == "" ) {
@@ -195,7 +195,7 @@ def get_user_credentials_id(KEY) {
 */
 def set_node(job_type) {
     // fetch labels (space separated string) for given platform/spec
-    labels = get_value(VARIABLES."${SPEC}".node_labels, job_type)
+    labels = get_value(VARIABLES."${SPEC}".node_labels."${job_type}", SDK_VERSION)
     NODE = labels.replaceAll(" ", "&&")
 }
 
