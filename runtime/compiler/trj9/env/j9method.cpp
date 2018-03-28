@@ -5656,10 +5656,18 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
       {
       TR_ASSERT(_j9classForNewInstance, "Must have the class for the newInstance");
       //J9Class *clazz = (J9Class*) ((intptrj_t)_ramMethod->extra & ~J9_STARTPC_NOT_TRANSLATED);
-      cpool = J9_CP_FROM_CLASS(_j9classForNewInstance);
+
+      // Primitives and arrays don't have constant pool, use the constant pool of java/lang/Class
+      if (TR::Compiler->cls.isPrimitiveClass(comp, (TR_OpaqueClassBlock*)_j9classForNewInstance) ||
+          TR::Compiler->cls.isClassArray(comp, (TR_OpaqueClassBlock*)_j9classForNewInstance))
+         cpool = cp();
+      else
+         cpool = J9_CP_FROM_CLASS(_j9classForNewInstance);
       }
    else
       cpool = cp();
+
+   TR_ASSERT(cpool, "Constant pool cannot be null");
 
    // fill in the reserved slots in the newly allocated table
    eTbl->constantPool = cpool;

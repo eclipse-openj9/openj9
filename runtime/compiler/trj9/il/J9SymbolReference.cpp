@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -258,35 +258,38 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
                   !comp->getOption(TR_AOT) &&
                    (type == TR::Address)))
                  {
-                 void * p = symbol->getStaticAddress();
                  TR::VMAccessCriticalSection vmAccessCriticalSection(comp->fej9(),
                                                                       TR::VMAccessCriticalSection::tryToAcquireVMAccess,
                                                                       comp);
-                 if ((*(void **)p != 0) &&
-                     vmAccessCriticalSection.hasVMAccess())
+                 if (vmAccessCriticalSection.hasVMAccess())
                     {
-                    TR_OpaqueClassBlock *classOfObject = comp->fej9()->getClassFromStatic(p);
-                    const char * s = TR::Compiler->cls.classNameChars(comp, classOfObject, len);
-                    if (s && (s[0] != '['))
+                    uintptrj_t objectStaticAddress = (uintptrj_t)symbol->getStaticAddress();
+                    uintptrj_t objectRef = comp->fej9()->getStaticReferenceFieldAtAddress(objectStaticAddress);
+                    if (objectRef != 0)
                        {
-                       s = classNameToSignature(s, len, comp);
-                       }
-                    else
-                       {
-                       int32_t numParens = 0;
-                       while (s && (s[0] == '[') && (s[1] == 'L'))
+                       TR_OpaqueClassBlock *classOfObject = comp->fej9()->getObjectClass(objectRef);
+                       const char * s = TR::Compiler->cls.classNameChars(comp, classOfObject, len);
+                       if (s && (s[0] != '['))
                           {
-                          numParens++;
-                          classOfObject = comp->fe()->getComponentClassFromArrayClass(classOfObject);
-                          s = TR::Compiler->cls.classNameChars(comp, classOfObject, len);
-                           }
-                       s = classNameToSignature(s, len, comp);
-                       s = prependNumParensToSig(s, len, numParens);
-                       }
+                          s = classNameToSignature(s, len, comp);
+                          }
+                       else
+                          {
+                          int32_t numParens = 0;
+                          while (s && (s[0] == '[') && (s[1] == 'L'))
+                             {
+                             numParens++;
+                             classOfObject = comp->fe()->getComponentClassFromArrayClass(classOfObject);
+                             s = TR::Compiler->cls.classNameChars(comp, classOfObject, len);
+                              }
+                          s = classNameToSignature(s, len, comp);
+                          s = prependNumParensToSig(s, len, numParens);
+                          }
 
-                    if (isFixed)
-                       *isFixed = true;
-                    return s;
+                       if (isFixed)
+                          *isFixed = true;
+                       return s;
+                       }
                     }
                  }
                }

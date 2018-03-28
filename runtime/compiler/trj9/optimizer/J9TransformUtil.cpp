@@ -477,7 +477,8 @@ J9::TransformUtil::transformStringIndexOfCall(TR::Compilation * comp, TR::Node *
    if (!transformStringIndexCriticalSection.hasVMAccess())
       return callNode;
 
-   uintptrj_t string = *(uintptrj_t*)needle->getSymbol()->castToStaticSymbol()->getStaticAddress();
+   uintptrj_t stringStaticAddr = (uintptrj_t)needle->getSymbol()->castToStaticSymbol()->getStaticAddress();
+   uintptrj_t string = comp->fej9()->getStaticReferenceFieldAtAddress(stringStaticAddr);
    int32_t len = fej9->getStringLength(string);
    if (len < 3)
       return callNode;
@@ -805,7 +806,12 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
                      {
                      // First dereference with VM access to dig a pointer out of an object
                      TR::VMAccessCriticalSection digPointerOutOfObject(comp->fej9());
-                     uintptrj_t fieldAddress = (*baseObjectRefLocation) + firstDereference->getSymbolReference()->getOffset();
+
+                     uintptrj_t baseObjectRef = baseObject->getSymbol()->isStatic() ?
+                                                comp->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)baseObjectRefLocation) :
+                                                *baseObjectRefLocation;
+                     uintptrj_t fieldAddress = baseObjectRef + firstDereference->getSymbolReference()->getOffset();
+
                      switch (firstDereference->getDataType())
                         {
                         case TR::Int32:
@@ -881,17 +887,21 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
                if (performTransformation(comp, "O^O transformIndirectLoad: [%p] turn final %s %s into load const\n", node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))
                   {
                   TR::VMAccessCriticalSection recreate(comp->fej9());
+                  uintptrj_t baseObjectRef = baseObject->getSymbol()->isStatic() ?
+                                             comp->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)baseObjectRefLocation) :
+                                             *baseObjectRefLocation;
+
                   node->getAndDecChild(0);
                   node->setNumChildren(0);
                   switch (loadType)
                      {
                      case TR::Int32:
                         TR::Node::recreate(node, TR::iconst);
-                        node->setInt(fej9->getInt32FieldAt(*baseObjectRefLocation, fieldOffset));
+                        node->setInt(fej9->getInt32FieldAt(baseObjectRef, fieldOffset));
                         break;
                      case TR::Int64:
                         TR::Node::recreate(node, TR::lconst);
-                        node->setLongInt(fej9->getInt64FieldAt(*baseObjectRefLocation, fieldOffset));
+                        node->setLongInt(fej9->getInt64FieldAt(baseObjectRef, fieldOffset));
                         break;
                      default:
                         TR_ASSERT(0, "Unexpected type %s", node->getDataType().toString());
@@ -907,7 +917,11 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
 
                   {
                   TR::VMAccessCriticalSection getReferenceField(comp->fej9());
-                  targetObjectReference = fej9->getReferenceFieldAt(*baseObjectRefLocation, fieldOffset);
+                  uintptrj_t baseObjectRef = baseObject->getSymbol()->isStatic() ?
+                                             comp->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)baseObjectRefLocation) :
+                                             *baseObjectRefLocation;
+                  targetObjectReference = fej9->getReferenceFieldAt(baseObjectRef, fieldOffset);
+
                   improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), &targetObjectReference);
                   }
 
@@ -1139,7 +1153,16 @@ bool
 J9::TransformUtil::transformIndirectLoadChainAt(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, uintptrj_t *baseReferenceLocation, TR::Node **removedNode)
    {
    TR::VMAccessCriticalSection transformIndirectLoadChainAt(comp->fej9());
-   bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)*baseReferenceLocation, removedNode);
+   uintptrj_t baseAddress;
+   if (baseExpression->getOpCode().hasSymbolReference() && baseExpression->getSymbol()->isStatic())
+      {
+      baseAddress = comp->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)baseReferenceLocation);
+      }
+   else
+      {
+      baseAddress = *baseReferenceLocation;
+      }
+   bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)baseAddress, removedNode);
    return result;
    }
 

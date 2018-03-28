@@ -504,12 +504,13 @@ public:
 
    uint32_t                   getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock * clazz);
 
-   virtual TR_OpaqueClassBlock *getObjectClass(uintptrj_t objectPointer);
-   virtual uintptrj_t           getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
-   virtual uintptrj_t           getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
-   virtual uintptrj_t           getReferenceFieldAtAddress(uintptrj_t fieldAddress);
-   virtual uintptrj_t           getReferenceFieldAtAddress(void *fieldAddress){ return getReferenceFieldAtAddress((uintptrj_t)fieldAddress); }
-   int32_t                      getInt32FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset);
+   TR_OpaqueClassBlock *getObjectClass(uintptrj_t objectPointer);
+   uintptrj_t           getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
+   uintptrj_t           getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
+   uintptrj_t           getReferenceFieldAtAddress(uintptrj_t fieldAddress);
+   uintptrj_t           getReferenceFieldAtAddress(void *fieldAddress){ return getReferenceFieldAtAddress((uintptrj_t)fieldAddress); }
+   uintptrj_t           getStaticReferenceFieldAtAddress(uintptrj_t fieldAddress);
+   int32_t              getInt32FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset);
 
    int32_t getInt32Field(uintptrj_t objectPointer, char *fieldName)
       {
@@ -977,8 +978,6 @@ public:
 
    virtual bool acquireClassTableMutex();
    virtual void releaseClassTableMutex(bool);
-
-   virtual TR_OpaqueClassBlock *getClassFromStatic(void *p);
 
    // --------------------------------------------------------------------------
    // Object model
