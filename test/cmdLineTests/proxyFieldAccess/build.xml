@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,8 +41,13 @@
 		<echo>===debug:				on</echo>
 		<echo>===destdir:			${DEST}</echo>
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 			<then>
+				<javac srcdir="${src.dir}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
+					<src path="${src.dir}" />
+				</javac>
+			</then>
+			<else>
 				<property name="CompileArgs1" value='-Xmodule:java.base --add-modules jdk.unsupported --add-reads java.base=jdk.unsupported' />
 				<property name="CompileArgs2" value='--patch-module java.base=${src.dir} --add-reads java.base=jdk.unsupported' />
 				<javac srcdir="${src.dir}/java" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
@@ -52,11 +57,6 @@
 				<javac srcdir="${src.dir}/defect" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src.dir}/defect" />
 					<compilerarg line='${CompileArgs2}' />
-				</javac>
-			</then>
-			<else>
-				<javac srcdir="${src.dir}" debug="true" fork="true" executable="${compiler.javac}" encoding="ISO-8859-1">
-					<src path="${src.dir}" />
 				</javac>
 			</else>
 		</if>

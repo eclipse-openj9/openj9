@@ -51,22 +51,22 @@
 		<echo>===debug:				on</echo>
 		<echo>===destdir:				${DEST}</echo>
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
 			<then>
-				<property name="addModules" value="--add-modules java.se.ee" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src_90}" />
+					<src path="${src_80}" />
 					<src path="${transformerListener}" />
-					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED' />
 					<classpath>
 						<pathelement location="../TestConfig/lib/testng.jar" />
 					</classpath>
 				</javac>
 			</then>
 			<else>
+				<property name="addModules" value="--add-modules java.se.ee" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src_80}" />
+					<src path="${src_90}" />
 					<src path="${transformerListener}" />
+					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED' />
 					<classpath>
 						<pathelement location="../TestConfig/lib/testng.jar" />
 					</classpath>
