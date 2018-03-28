@@ -2970,10 +2970,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
-	/* TODO: remove once safe point implements two pass */
-#if defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
+	/* TODO: remove once safe point implements a "not counted" flag */
+#if defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE) || (defined(J9VM_INTERP_ATOMIC_FREE_JNI) && !defined(J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS))
 	vm->extendedRuntimeFlags &= ~(UDATA)(J9_EXTENDED_RUNTIME_OSR_SAFE_POINT| J9_EXTENDED_RUNTIME_OSR_SAFE_POINT_FV);
-#endif /* J9VM_INTERP_TWO_PASS_EXCLUSIVE */
+#endif /* J9VM_INTERP_TWO_PASS_EXCLUSIVE || (J9VM_INTERP_ATOMIC_FREE_JNI &!J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS)*/
 
 	return JNI_OK;
 }
