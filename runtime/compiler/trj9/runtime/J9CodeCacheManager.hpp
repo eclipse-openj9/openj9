@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,8 +96,8 @@ public:
 
    void reportCodeLoadEvents();
 
-   static const uint32_t SAFE_DISTANCE_REPOSITORY_JITLIBRARY = 24 * 1024 * 1024;  // 24MB to account for some safe JIT library size
-   static const uintptr_t UPPER_BOUND_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE = 0x80000000 - 24 * 1024 * 1024; // 2GB - 24MB
+   static const uint32_t SAFE_DISTANCE_REPOSITORY_JITLIBRARY = 64 * 1024 * 1024;  // 64MB to account for some safe JIT library size
+   static const uintptr_t MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE = 0x80000000 - 64 * 1024 * 1024; // 2GB - 64MB
 
    void setCodeCacheFull();
 
@@ -105,7 +105,7 @@ public:
    void onClassRedefinition(TR_OpaqueMethodBlock *oldMethod, TR_OpaqueMethodBlock *newMethod);
 
    uintptr_t getSomeJitLibraryAddress();
-   bool isInRangeToAvoidTrampoline(uintptr_t codeCacheBaseAddress);
+   bool isInRange(uintptr_t address1, uintptr_t address2, uintptr_t range);
 
 private :
    TR_FrontEnd *_fe;
