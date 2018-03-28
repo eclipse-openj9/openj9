@@ -1300,7 +1300,7 @@ private native Field[] getFieldsImpl();
  * specified in the receiver classes <code>implements</code>
  * declaration
  *
- * @return		Class<?>[]
+ * @return		{@code Class<?>[]}
  *					the interfaces the receiver claims to implement.
  */
 public Class<?>[] getInterfaces()
@@ -1314,7 +1314,7 @@ public Class<?>[] getInterfaces()
  *
  * @param		name String
  *					the name of the method
- * @param		parameterTypes Class<?>[]
+ * @param		parameterTypes {@code Class<?>[]}
  *					the types of the arguments.
  * @return		Method
  *					the method described by the arguments.
@@ -2820,8 +2820,7 @@ public boolean isAnnotationPresent(Class<? extends Annotation> annotation) {
 
 /**
  * Cast this Class to a subclass of the specified Class. 
- * 
- * @param cls the Class to cast to
+ * @param <U> cls the Class to cast to
  * @return this Class, cast to a subclass of the specified Class
  * 
  * @throws ClassCastException if this Class is not the same or a subclass

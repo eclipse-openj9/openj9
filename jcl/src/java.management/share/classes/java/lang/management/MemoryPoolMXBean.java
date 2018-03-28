@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@ package java.lang.management;
  * </P>
  * <p>
  * Accessing this kind of <code>MXBean</code> can be done in one of three
- * ways. <br/>
+ * ways.
  * <ol>
  * <li>Invoking the static {@link ManagementFactory#getMemoryPoolMXBeans()}
  * method which returns a {@link java.util.List} of all currently instantiated
@@ -44,8 +44,7 @@ package java.lang.management;
  * string &quot;java.lang:type=MemoryPool,name= <i>unique memory pool name
  * </i>&quot; for the value of the second parameter.</li>
  * </ol>
- * </p>
- * 
+ *  
  * @since 1.5
  */
 public interface MemoryPoolMXBean extends PlatformManagedObject {
