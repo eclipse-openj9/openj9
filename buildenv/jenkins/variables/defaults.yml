@@ -26,7 +26,10 @@ openjdk_repo:
   8: 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
   9: 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
   10: 'https://github.com/ibmruntimes/openj9-openjdk-jdk10.git'
-openjdk_branch: 'openj9'
+openjdk_branch:
+  8: 'openj9'
+  9: 'openj9'
+  10: 'openj9'
 #========================================#
 # Miscellaneous settings
 #========================================#
@@ -53,8 +56,14 @@ linux_ppc-64_cmprssptrs_le:
     10: 'linux-ppc64le-normal-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   node_labels:
-    build: 'ppcle'
-    test: 'ppcle'
+    build:
+      8: 'ppcle'
+      9: 'ppcle'
+      10: 'ppcle'
+    test:
+      8: 'ppcle'
+      9: 'ppcle'
+      10: 'ppcle'
 #========================================#
 # Linux S390 64bits Compressed Pointers
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an 
@@ -71,8 +80,14 @@ linux_390-64_cmprssptrs:
     10: 'linux-s390x-normal-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   node_labels:
-    build: '390'
-    test: '390'
+    build:
+      8: '390'
+      9: '390'
+      10: '390'
+    test:
+      8: '390'
+      9: '390'
+      10: '390'
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
@@ -87,8 +102,14 @@ aix_ppc-64_cmprssptrs:
     10: 'aix-ppc64-normal-server-release'
   freemarker: '/home/jenkins/freemarker.jar'
   node_labels:
-    build: 'aix'
-    test: 'aix'
+    build:
+      8: 'aix'
+      9: 'aix'
+      10: 'aix'
+    test:
+      8: 'aix'
+      9: 'aix'
+      10: 'aix'
   extra_configure_options:
     8: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-ccache --with-jobs=8'
     9: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
