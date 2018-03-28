@@ -7876,13 +7876,13 @@ done:
 retry:
 		j9object_t newObject = NULL;
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		U_16 index = *(U_16*)(_pc + 1);
-		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
-		J9RAMClassRef *ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
-		J9Class* volatile resolvedClass = ramCPEntry->value;
+		const U_16 index = *(U_16*)(_pc + 1);
+		J9ConstantPool * const ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9RAMClassRef * const ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
+		J9Class * volatile resolvedClass = ramCPEntry->value;
+		bool doInitializeClass = FALSE;
 
-		if ((NULL != resolvedClass) && (resolvedClass->romClass->modifiers & J9AccValueType)) {
-
+		if ((NULL != resolvedClass) && J9_ARE_ALL_BITS_SET(resolvedClass->romClass->modifiers, J9AccValueType)) {
 			if (!VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
 				j9object_t instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
 				if (NULL == instance) {
@@ -7897,26 +7897,18 @@ retry:
 				newObject = instance;
 				goto done;
 			}
-			/* Class requires initialization */
-			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-			updateVMStruct(REGISTER_ARGS);
-			initializeClass(_currentThread, resolvedClass);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			restoreGenericSpecialStackFrame(REGISTER_ARGS);
-			if (immediateAsyncPending()) {
-				rc = GOTO_ASYNC_CHECK;
-				goto done;
-			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
-			}
-			goto retry;
+			doInitializeClass = TRUE;
 		}
 
-		/* Unresolved */
 		buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 		updateVMStruct(REGISTER_ARGS);
-		resolveClassRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_INIT_CLASS | J9_RESOLVE_FLAG_INSTANTIABLE | J9_RESOLVE_FLAG_CHECK_VALUE_CLASS);
+		if (doInitializeClass) {
+			/* Class requires initialization */
+			initializeClass(_currentThread, resolvedClass);
+		} else {
+			/* Class is unresolved */
+			resolveClassRef(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_INIT_CLASS | J9_RESOLVE_FLAG_INSTANTIABLE | J9_RESOLVE_FLAG_CHECK_VALUE_CLASS);
+		}
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		restoreGenericSpecialStackFrame(REGISTER_ARGS);
 		if (immediateAsyncPending()) {
