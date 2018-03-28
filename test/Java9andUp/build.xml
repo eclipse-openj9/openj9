@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,7 +103,9 @@
 	
 	<target name="build" >
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<not>
+				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			</not>
 			<then>
 				<antcall target="clean" inheritall="true" />
 			</then>
