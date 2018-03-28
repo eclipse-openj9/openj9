@@ -15688,19 +15688,24 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
 
    if(isResultPD)
       {
-      TR::Register* srcBaseReg = cg->evaluate(secondChild);
-
       if(isUseVector)
          {
          TR_ASSERT(bcdOpResultReg && (bcdOpResultReg->getKind() == TR_VRF || bcdOpResultReg->getKind() == TR_FPR),
                    "Vector register expected\n");
 
          int32_t resultSize = TR::DataType::packedDecimalPrecisionToByteLength(pdopNode->getDecimalPrecision());
-         TR::MemoryReference* srcMR = generateS390MemoryReference(srcBaseReg, 0, cg);
+
+         // No need to evalute the address node (secondChild).
+         // generateVSIInstruction() API will call separateIndexRegister() to separate the index
+         // register by emitting an LA instruction. If there's a need for large displacement adjustment,
+         // LAY will be emitted instead.
+         TR::MemoryReference* srcMR = generateS390MemoryReference(secondChild, cg, false);
          generateVSIInstruction(cg, TR::InstOpCode::VLRL, node, bcdOpResultReg, srcMR, resultSize - 1);
          }
       else
          {
+         TR::Register* srcBaseReg = cg->evaluate(secondChild);
+
          int32_t resultSize = TR::DataType::packedDecimalPrecisionToByteLength(pdopNode->getDecimalPrecision());
          TR::MemoryReference* srcMR = generateS390MemoryReference(srcBaseReg, 0, cg);
          TR::MemoryReference* targetMR = generateS390RightAlignedMemoryReference(pdopNode, static_cast<TR_PseudoRegister*>(bcdOpResultReg)->getStorageReference(), cg);
@@ -19865,8 +19870,7 @@ J9::Z::TreeEvaluator::pdloadVectorEvaluatorHelper(TR::Node *node, TR::CodeGenera
 
    TR::Register* vTargetReg = vTargetReg = cg->allocateRegister(TR_VRF);
    TR::Node* addressNode = node->getFirstChild();
-   TR::Register* addressReg = cg->evaluate(addressNode);
-   TR::MemoryReference* sourceMR = generateS390MemoryReference(addressReg, NULL, 0, cg);
+   TR::MemoryReference* sourceMR = generateS390MemoryReference(addressNode, cg, false);
 
    // Index of the first byte to load, counting from the right ranging from 0-15.
    uint8_t indexFromTheRight = TR_VECTOR_REGISTER_SIZE - 1;
@@ -20895,7 +20899,6 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
    TR::Node* addressNode = node->getChild(0);
    // evalute valueChild (which is assumed by the OMR layer to be the second child) to Vector register.
    // for this "pdStore" we assume if we evaluate value node we get Vector Register
-   TR::Register* addressReg = cg->evaluate(addressNode);
    TR::Register* pdValueReg = cg->evaluate(valueChild);
 
    TR_ASSERT((pdValueReg->getKind() == TR_FPR || pdValueReg->getKind() == TR_VRF),
@@ -20906,7 +20909,7 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
       traceMsg(comp,"generating VSTRL for pdstore node->size = %d.\n", node->getSize());
       }
 
-   TR::MemoryReference * targetMR = generateS390MemoryReference(addressReg, NULL, 0, cg);
+   TR::MemoryReference * targetMR = generateS390MemoryReference(addressNode, cg, false);
 
    // 0 we store 1 byte, 15 we store 16 bytes
    uint8_t lengthToStore = TR_VECTOR_REGISTER_SIZE - 1;
