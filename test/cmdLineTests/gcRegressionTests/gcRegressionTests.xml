@@ -350,7 +350,7 @@
  </test>
  <test id="-verbose:gc -Xcheck:memory -Xverbosegclog:foo.log - check for memory corruption">
   <exec command="rm foo.*.log" />
-  <command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -verbose:gc -Xverbosegclog -Dibm.java9.forceCommonCleanerShutdown=true -Xcheck:memory:quick,ignoreUnfreedCallsite=zip/:dbgwrapper:unknown:wrapper $CP$ com.ibm.tests.garbagecollector.SpinAllocate 5</command>
+  <command>$EXE$ $XINT$ $ARGS_FOR_ALL_TESTS$ -verbose:gc -Xverbosegclog -Dibm.java9.forceCommonCleanerShutdown=true -Xcheck:memory:quick,ignoreUnfreedCallsite=zip/:dbgwrapper:unknown:wrapper -version</command>
   <output regex="no" type="success">All allocated blocks were freed.</output>
   <!-- allow memory leaks since the JIT leaks, unfortunately -->
   <output regex="yes" type="success">[0-9]* allocated blocks totaling [0-9]* bytes were not freed before shutdown!</output>
