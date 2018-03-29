@@ -1953,12 +1953,9 @@ remoteCompile(
             {
             TR::ClassTableCriticalSection commit(compiler->fe());
 
-            // clear bit for this compilation
-            compInfo->resetCHTableUpdateDone(TR::compInfoPT->getCompThreadId());
-            auto newlyExtendedClasses = compInfo->getNewlyExtendedClasses();
-
             // intersect classesThatShouldNotBeNewlyExtended with newlyExtendedClasses
             // and abort on overlap
+            auto newlyExtendedClasses = compInfo->getNewlyExtendedClasses();
             for (TR_OpaqueClassBlock* clazz : classesThatShouldNotBeNewlyExtended)
                {
                auto it = newlyExtendedClasses->find(clazz);
@@ -1968,16 +1965,6 @@ remoteCompile(
                      TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Class that should not be newly extended was extended when compiling %s", compiler->signature());
                   compiler->failCompilation<J9::CHTableCommitFailure>("Class that should not be newly extended was extended");
                   }
-               }
-
-            // freshen up newlyExtendedClasses
-            for (auto it = newlyExtendedClasses->begin(); it != newlyExtendedClasses->end();)
-               {
-               it->second &= compInfo->getCHTableUpdateDone();
-               if (it->second)
-                  ++it;
-               else
-                  it = newlyExtendedClasses->erase(it);
                }
 
             if (!jaasCHTableCommit(compiler, metaData, chTableData))
@@ -2077,7 +2064,6 @@ remoteCompilationEnd(
    auto classesThatShouldNotBeNewlyExtended = TR::compInfoPT->getClassesThatShouldNotBeNewlyExtended();
    entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr, chTableData,
                                      std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()));
-   classesThatShouldNotBeNewlyExtended->clear();
 
    if (TR::Options::getVerboseOption(TR_VerboseJaas))
       {

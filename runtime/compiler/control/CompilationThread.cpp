@@ -909,7 +909,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
 
    if (compInfo.getPersistentInfo()->getJaasMode() == SERVER_MODE)
       {
-      _classesThatShouldNotBeNewlyExtended = new (compInfoPT->getCompilation()->trMemory()->trHeapMemory()) PersistentUnorderedSet<TR_OpaqueClassBlock*>(
+      _classesThatShouldNotBeNewlyExtended = new (PERSISTENT_NEW) PersistentUnorderedSet<TR_OpaqueClassBlock*>(
          PersistentUnorderedSet<TR_OpaqueClassBlock*>::allocator_type(TR::Compiler->persistentAllocator()));
       }
    else
@@ -6821,6 +6821,30 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
                                                        bool eligibleForRelocatableCompile,
                                                        TR_RelocationRuntime *reloRuntime)
    {
+   // JAAS cleanup tasks
+   if (_compInfo.getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      {
+      ((TR::CompilationInfoPerThread*)this)->getClassesThatShouldNotBeNewlyExtended()->clear();
+      }
+   else if (_compInfo.getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+      {
+      TR::ClassTableCriticalSection commit(_vm);
+
+      // clear bit for this compilation
+      _compInfo.resetCHTableUpdateDone(getCompThreadId());
+
+      // freshen up newlyExtendedClasses
+      auto newlyExtendedClasses = _compInfo.getNewlyExtendedClasses();
+      for (auto it = newlyExtendedClasses->begin(); it != newlyExtendedClasses->end();)
+         {
+         it->second &= _compInfo.getCHTableUpdateDone();
+         if (it->second)
+            ++it;
+         else
+            it = newlyExtendedClasses->erase(it);
+         }
+      }
+
    void *startPC = NULL;
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableUpdateAOTBytesSize) &&
        metaData &&                                                            // Compilation succeeded
