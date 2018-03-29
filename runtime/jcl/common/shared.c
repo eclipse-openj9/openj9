@@ -561,7 +561,7 @@ getCpeTypeForProtocol(char* protocol, jsize protocolLen, const char* pathChars, 
 	}
 	if (strncmp(protocol, "file", 5)==0) {
 		char* endsWith = (char*)(pathChars + (pathLen-4));
-		if ((strncmp(endsWith, ".jar", 4)==0) || (strncmp(endsWith, ".zip", 4)==0) || strstr(pathChars,"!/")) {
+		if ((strncmp(endsWith, ".jar", 4)==0) || (strncmp(endsWith, ".zip", 4)==0) || strstr(pathChars,"!/") || strstr(pathChars,"!\\")) {
 			Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitJAR();
 			return CPE_TYPE_JAR;
 		} else {
