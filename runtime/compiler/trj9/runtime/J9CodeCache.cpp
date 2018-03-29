@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,6 +51,7 @@
 #include "env/VMJ9.h"
 #include "runtime/ArtifactManager.hpp"
 #include "env/IO.hpp"
+#include "runtime/HookHelpers.hpp"
 
 
 /*
@@ -427,6 +428,9 @@ J9::CodeCache::addFreeBlock(void  *voidMetaData)
             if (!pmi || !pmi->isInDataCache())
                {
                TR_Memory::jitPersistentFree(bi);
+               // If we free bodyInfo, we need to also free metaData->bodyInfo->mapTable by calling freeFastWalkCache()
+               J9VMThread *currentVMThread = _manager->javaVM()->internalVMFunctions->currentVMThread(_manager->javaVM());
+               freeFastWalkCache(currentVMThread, metaData);
                metaData->bodyInfo = NULL;
                }
 
