@@ -401,7 +401,9 @@ public:
 			if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT)) {
 				clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT);
 				setPublicFlags(vmThread, J9_PUBLIC_FLAGS_REQUEST_SAFE_POINT, true);
-				vm->safePointResponseCount += 1;
+				if (J9_ARE_NO_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT)) {
+					vm->safePointResponseCount += 1;
+				}
 			}
 		}
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);

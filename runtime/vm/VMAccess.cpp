@@ -463,9 +463,11 @@ void  internalReleaseVMAccessNoMutex(J9VMThread * vmThread)
 			if (J9_ARE_NO_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT)) {
 				VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_REQUEST_SAFE_POINT);
 				VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT);
-				--vm->safePointResponseCount;
-				if (vm->safePointResponseCount == 0) {
-					omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
+				if (J9_ARE_NO_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT)) {
+					--vm->safePointResponseCount;
+					if (vm->safePointResponseCount == 0) {
+						omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
+					}
 				}
 			}
 		}
@@ -1101,8 +1103,7 @@ acquireSafePointVMAccess(J9VMThread * vmThread)
 		currentThread = vmThread;
 		do {
 			omrthread_monitor_enter(currentThread->publicFlagsMutex);
-			// TODO: new flag to prevent counting
-			VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_REQUEST_SAFE_POINT, true);
+			VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_REQUEST_SAFE_POINT | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT, true);
 			VM_AtomicSupport::writeBarrier(); // necessary?
 			omrthread_monitor_exit(currentThread->publicFlagsMutex);
 		} while ((currentThread = currentThread->linkNext) != vmThread);
@@ -1128,15 +1129,13 @@ acquireSafePointVMAccess(J9VMThread * vmThread)
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS)
 					VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_VM_ACCESS);
 #elif !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE) /* J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS */
-					// TODO: new flag
-					VM_VMAccess::setPublicFlags(currentThread, 0);
+					VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT);
 #endif /* !J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 					VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT, true);				
 					VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_REQUEST_SAFE_POINT, true);
 				} else {
 #if defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
-					// TODO: new flag
-					VM_VMAccess::clearPublicFlags(currentThread, 0);
+					VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT);
 #endif /* J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 					responsesExpected++;
 				}
@@ -1144,13 +1143,15 @@ acquireSafePointVMAccess(J9VMThread * vmThread)
 #else /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT | J9_PUBLIC_FLAGS_VM_ACCESS)) {
 #if defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
-				// TODO: new flag
-				VM_VMAccess::clearPublicFlags(currentThread, 0);
+				VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT);
 #endif /* J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 				responsesExpected++;
 			}
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			else {
+#if defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
+				VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT);
+#endif /* J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 				VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT, true);				
 				VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_REQUEST_SAFE_POINT, true);
 			}
@@ -1176,7 +1177,7 @@ retry:
 		vm->safePointState = J9_XACCESS_EXCLUSIVE;
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);
 		// Not necessary?
-		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT);
+		VM_VMAccess::clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT);
 	}
 	Assert_VM_mustHaveVMAccess(vmThread);
 	Assert_VM_true(J9_XACCESS_EXCLUSIVE == vm->safePointState);
@@ -1198,7 +1199,7 @@ releaseSafePointVMAccess(J9VMThread * vmThread)
 	if (--(vmThread->safePointCount) == 0) {
 		J9VMThread *currentThread = vmThread;
 		do {
-			VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT, true);
+			VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT, true);
 		} while ((currentThread = currentThread->linkNext) != vmThread);
 		omrthread_monitor_enter(vm->exclusiveAccessMutex);
 		vm->safePointState = J9_XACCESS_NONE;
