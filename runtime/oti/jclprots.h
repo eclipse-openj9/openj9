@@ -949,14 +949,34 @@ void JNICALL Java_java_lang_invoke_VarHandle_setOpaque(JNIEnv *env, jobject hand
 jobject JNICALL Java_java_lang_invoke_VarHandle_getAcquire(JNIEnv *env, jobject handle, jobject args);
 void JNICALL Java_java_lang_invoke_VarHandle_setRelease(JNIEnv *env, jobject handle, jobject args);
 jboolean JNICALL Java_java_lang_invoke_VarHandle_compareAndSet(JNIEnv *env, jobject handle, jobject args);
-jboolean JNICALL Java_java_lang_invoke_VarHandle_compareAndExchangeVolatile(JNIEnv *env, jobject handle, jobject args);
+jboolean JNICALL Java_java_lang_invoke_VarHandle_compareAndExchange(JNIEnv *env, jobject handle, jobject args);
 jboolean JNICALL Java_java_lang_invoke_VarHandle_compareAndExchangeAcquire(JNIEnv *env, jobject handle, jobject args);
 jboolean JNICALL Java_java_lang_invoke_VarHandle_compareAndExchangeRelease(JNIEnv *env, jobject handle, jobject args);
 jboolean JNICALL Java_java_lang_invoke_VarHandle_weakCompareAndSet(JNIEnv *env, jobject handle, jobject args);
 jboolean JNICALL Java_java_lang_invoke_VarHandle_weakCompareAndSetAcquire(JNIEnv *env, jobject handle, jobject args);
 jboolean JNICALL Java_java_lang_invoke_VarHandle_weakCompareAndSetRelease(JNIEnv *env, jobject handle, jobject args);
+jboolean JNICALL Java_java_lang_invoke_VarHandle_weakCompareAndSetPlain(JNIEnv *env, jobject handle, jobject args);
+
 jobject JNICALL Java_java_lang_invoke_VarHandle_getAndSet(JNIEnv *env, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndSetAcquire(JNIEnv *env, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndSetRelease(JNIEnv *env, jobject handle, jobject args);
+
 jobject JNICALL Java_java_lang_invoke_VarHandle_getAndAdd(JNIEnv *env, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndAddAcquire(JNIEnv *env, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndAddRelease(JNIEnv *env, jobject handle, jobject args);
+
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndBitwiseAnd(JNIEnv *env, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndBitwiseAndAcquire(JNIEnv *env, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndBitwiseAndRelease(JNIEnv *env, jobject handle, jobject args);
+
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndBitwiseOr(JNIEnv *env, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndBitwiseOrAcquire(JNIEnv *env, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndBitwiseOrRelease(JNIEnv *env, jobject handle, jobject args);
+
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndBitwiseXor(JNIEnv *env, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndBitwiseXorAcquire(JNIEnv *env, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_VarHandle_getAndBitwiseXorRelease(JNIEnv *env, jobject handle, jobject args);
+
 jobject JNICALL Java_java_lang_invoke_VarHandle_addAndGet(JNIEnv *env, jobject handle, jobject args);
 
 /* java_lang_ref_Finalizer.c */

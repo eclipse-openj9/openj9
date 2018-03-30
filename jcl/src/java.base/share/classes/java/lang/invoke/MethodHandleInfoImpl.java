@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2014, 2014 IBM Corp. and others
+ * Copyright (c) 2014, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,6 +77,10 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 		if (mh.directHandleOriginatedInFindVirtual()
 		|| (MethodHandle.KIND_INVOKEEXACT == mh.kind)
 		|| (MethodHandle.KIND_INVOKEGENERIC == mh.kind)
+		/*[IF Sidecar19-SE]*/
+		|| (MethodHandle.KIND_VARHANDLEINVOKEEXACT == mh.kind)
+		|| (MethodHandle.KIND_VARHANDLEINVOKEGENERIC == mh.kind)
+		/*[ENDIF]*/
 		) {
 			return REF_invokeVirtual;
 		}
@@ -97,7 +101,12 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 			throw x;
 		}
 
-		if ((MethodHandle.KIND_INVOKEEXACT == mh.kind) || (MethodHandle.KIND_INVOKEGENERIC == mh.kind)) {
+		/* Access mode methods in VarHandle are signature-polymorphic */
+		if ((MethodHandle.KIND_INVOKEEXACT == mh.kind) || (MethodHandle.KIND_INVOKEGENERIC == mh.kind)
+		/*[IF Sidecar19-SE]*/
+		|| (MethodHandle.KIND_VARHANDLEINVOKEEXACT == mh.kind) || (MethodHandle.KIND_VARHANDLEINVOKEGENERIC == mh.kind)
+		/*[ENDIF]*/
+		) {
 			/*[MSG "K0590", "Can't unreflect @SignaturePolymorphic method: {0}"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0590", this)); //$NON-NLS-1$
 		}
