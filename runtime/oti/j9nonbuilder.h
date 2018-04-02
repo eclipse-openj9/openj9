@@ -2133,6 +2133,8 @@ typedef struct J9ConstantPool {
 #define J9CPTYPE_INTERFACE_STATIC_METHOD 16
 #define J9CPTYPE_INTERFACE_INSTANCE_METHOD 17 
 
+#define J9CPTYPE_CONSTANT_DYNAMIC 18
+
 #define J9_CP_BITS_PER_DESCRIPTION  8
 #define J9_CP_DESCRIPTIONS_PER_U32  4
 #define J9_CP_DESCRIPTION_MASK  255
@@ -2238,6 +2240,8 @@ typedef struct J9ROMStringRef {
 } J9ROMStringRef;
 
 #define J9ROMSTRINGREF_UTF8DATA(base) NNSRP_GET((base)->utf8Data, struct J9UTF8*)
+
+#define J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE(base) NNSRP_GET((base)->nameAndSignature, struct J9UTF8*)
 
 typedef struct J9ROMFieldRef {
 	U_32 classRefCPIndex;

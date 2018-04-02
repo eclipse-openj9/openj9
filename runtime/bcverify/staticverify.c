@@ -217,6 +217,8 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 
 		case CFR_BC_ldc:
 		case CFR_BC_ldc_w:
+			J9CfrConstantPoolInfo *constantDynamicNameAndSignature = NULL;
+
 			if (bc == CFR_BC_ldc) {
 				NEXT_U8(index, bcIndex);
 			} else {
@@ -231,6 +233,10 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			info = &(classfile->constantPool[index]);
 			tag = (UDATA) info->tag;
 
+			if (CFR_CONSTANT_Dynamic == tag) {
+				constantDynamicNameAndSignature = &classFile->constantPool[classFile->constantPool[info].slot2];
+			}
+
 			if (!((tag == CFR_CONSTANT_Integer)
 				  || (tag == CFR_CONSTANT_Float)
 				  || (tag == CFR_CONSTANT_String)
@@ -239,7 +245,13 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 									|| ((flags & BCT_MajorClassFileVersionMask) == 0)))
 				  || (((tag == CFR_CONSTANT_MethodType) || (tag == CFR_CONSTANT_MethodHandle))
 						  && (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java7MajorVersionShifted)
-									|| ((flags & BCT_MajorClassFileVersionMask) == 0)))	)) {
+									|| ((flags & BCT_MajorClassFileVersionMask) == 0)))
+				  || ((tag == CFR_CONSTANT_Dynamic)
+						  && (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java11MajorVersionShifted)
+									|| ((flags & BCT_MajorClassFileVersionMask) == 0))
+						  && ('D' != constantDynamicNameAndSignature->bytes[constantDynamicNameAndSignature->slot1 - 1])
+						  && ('J' != constantDynamicNameAndSignature->bytes[constantDynamicNameAndSignature->slot1 - 1]))
+				)) {
 				errorType = J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT__ID;
 				/* Jazz 82615: Set the constant pool index to show up in the error message framework */
 				errorDataIndex = index;
@@ -248,6 +260,8 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			break;
 
 		case CFR_BC_ldc2_w:
+			J9CfrConstantPoolInfo *constantDynamicNameAndSignature = NULL;
+
 			NEXT_U16(index, bcIndex);
 			if ((!index) || (index >= cpCount - 1)) {
 				errorType = J9NLS_CFR_ERR_BAD_INDEX__ID;
@@ -257,8 +271,18 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			}
 			info = &(classfile->constantPool[index]);
 			tag = (UDATA) info->tag;
+
+			if (CFR_CONSTANT_Dynamic == tag) {
+				constantDynamicNameAndSignature = &classFile->constantPool[classFile->constantPool[info].slot2];
+			}
 			if (!((tag == CFR_CONSTANT_Double)
-				  || (tag == CFR_CONSTANT_Long))) {
+				  || (tag == CFR_CONSTANT_Long)
+				  || ((tag == CFR_CONSTANT_Dynamic)
+						  && (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java11MajorVersionShifted)
+									|| ((flags & BCT_MajorClassFileVersionMask) == 0))
+						  && ('D' != constantDynamicNameAndSignature->bytes[constantDynamicNameAndSignature->slot1 - 1])
+						  && ('J' != constantDynamicNameAndSignature->bytes[constantDynamicNameAndSignature->slot1 - 1]))
+			)) {
 				errorType = J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT__ID;
 				/* Jazz 82615: Set the constant pool index to show up in the error message framework */
 				errorDataIndex = index;

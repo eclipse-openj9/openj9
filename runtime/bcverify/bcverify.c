@@ -1510,7 +1510,7 @@ simulateStack (J9BytecodeVerificationData * verifyData)
 				} else {
 					index = PARAM_16(bcIndex, 1);
 				}
-				stackTop = pushLdcType(romClass, index, stackTop);
+				stackTop = pushLdcType(verifyData, romClass, index, stackTop);
 				break;
 
 			/* Change lookup table to generate constant of correct type */

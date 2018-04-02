@@ -452,7 +452,7 @@ pushFieldType(J9BytecodeVerificationData *verifyData, J9UTF8 * utf8string, UDATA
 * @return UDATA *
 */
 UDATA * 
-pushLdcType(J9ROMClass * romClass, UDATA index, UDATA * stackTop);
+pushLdcType(J9BytecodeVerificationData *verifyData, J9ROMClass * romClass, UDATA index, UDATA * stackTop);
 
 
 /**

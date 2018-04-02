@@ -396,7 +396,7 @@ initializeClassNameList(J9BytecodeVerificationData *verifyData)
 
 
 UDATA * 
-pushLdcType(J9ROMClass * romClass, UDATA index, UDATA * stackTop)
+pushLdcType(J9BytecodeVerificationData *verifyData, J9ROMClass * romClass, UDATA index, UDATA * stackTop)
 {
 	switch(J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClass), index)) {
 		case J9CPTYPE_CLASS:
@@ -416,6 +416,15 @@ pushLdcType(J9ROMClass * romClass, UDATA index, UDATA * stackTop)
 			break;
 		case J9CPTYPE_METHODHANDLE:
 			PUSH(BCV_JAVA_LANG_INVOKE_METHODHANDLE_INDEX << BCV_CLASS_INDEX_SHIFT);
+			break;
+		case J9CPTYPE_CONSTANT_DYNAMIC:
+			J9ROMConstantDynamicRef* romConstantDynamicRef = (J9ROMConstantDynamicRef *)(J9_ROM_CP_FROM_ROM_CLASS(romClass) + index);
+			J9UTF8 *nameAndSignature = J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE(romConstantDynamicRef);
+			U_8* signature = J9UTF8_DATA(nameAndSignature);
+
+			/* The return value of a method follows the first ')' listed in its signature */
+			while (*signature++ != ')');
+			pushType(verifyData, signature, stackTop);
 			break;
 	}
 
