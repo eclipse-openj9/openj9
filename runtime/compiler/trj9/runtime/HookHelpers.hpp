@@ -37,6 +37,7 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
 void jitRemoveAllMetaDataForClassLoader(J9VMThread * vmThread, J9ClassLoader * classLoader);
 void jitReclaimMarkedAssumptions();
 void vlogReclamation(const char *prefix, J9JITExceptionTable *metaData, size_t bytesToSaveAtStart);
+void freeFastWalkCache(J9VMThread *vmThread, J9JITExceptionTable *metaData);
 
 // Defined in Runtime.cpp
 OMR::CodeCacheMethodHeader *getCodeCacheMethodHeader(char *p, int searchLimit, J9JITExceptionTable* metaData = NULL);

@@ -124,20 +124,6 @@ namespace  {
       // expunge any runtime assumptions in the RAT that have previously been marked
       pointer_cast<TR_PersistentMemory *>( jitConfig->scratchSegment )->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimMarkedAssumptionsFromRAT();
       }
-
-   inline void freeFastWalkCache(J9VMThread *vmThread, J9JITExceptionTable *metaData)
-      {
-      if (metaData->bodyInfo)
-         {
-         void * mapTable = ((TR_PersistentJittedBodyInfo *)metaData->bodyInfo)->getMapTable();
-         if (mapTable && mapTable != (void *)-1)
-            {
-            PORT_ACCESS_FROM_VMC(vmThread);
-            j9mem_free_memory(mapTable);
-            }
-         ((TR_PersistentJittedBodyInfo *)metaData->bodyInfo)->setMapTable(NULL);
-         }
-      }
    
    // We need to update the nextMethod and prevMethod pointers of the J9JITExceptionTable that
    // point to the old J9JITExceptionTable to now point to the new (stub) J9JITExceptionTable.
@@ -435,6 +421,20 @@ void jitReclaimMarkedAssumptions()
       reclaimMarkedAssumptionsFromRAT();
       }
    }
+
+void freeFastWalkCache(J9VMThread *vmThread, J9JITExceptionTable *metaData)
+      {
+      if (metaData->bodyInfo)
+         {
+         void * mapTable = ((TR_PersistentJittedBodyInfo *)metaData->bodyInfo)->getMapTable();
+         if (mapTable && mapTable != (void *)-1)
+            {
+            PORT_ACCESS_FROM_VMC(vmThread);
+            j9mem_free_memory(mapTable);
+            }
+         ((TR_PersistentJittedBodyInfo *)metaData->bodyInfo)->setMapTable(NULL);
+         }
+      }
 
 void vlogReclamation(const char * prefix, J9JITExceptionTable *metaData, size_t bytesToSaveAtStart)
    {
