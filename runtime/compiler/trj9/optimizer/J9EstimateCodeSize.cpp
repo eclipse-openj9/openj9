@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1061,7 +1061,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       _recursionDepth, calltarget);
 
       methodSymbol = TR::ResolvedMethodSymbol::create(comp()->trHeapMemory(),calltarget->_calleeMethod,comp());
-      bool ilgenSuccess = (NULL != methodSymbol->getResolvedMethod()->genMethodILForPeeking(methodSymbol, comp(), false, NULL));
+      bool ilgenSuccess = (NULL != methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL));
       if (ilgenSuccess)
          {
          heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- peeking was successfull for calltarget %p", _recursionDepth, calltarget);
