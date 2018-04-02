@@ -1882,13 +1882,13 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 		j9object_t unicodeChars = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
 
 		if (NULL != unicodeChars) {
-			threadName = copyStringToUTF8WithMemAlloc(currentThread, unicodeChars, J9_STR_NULL_TERMINATE_RESULT, "", 0, threadName, 0, NULL);
+			threadName = copyStringToUTF8WithMemAlloc(currentThread, unicodeChars, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
 		}
 	} else {
 		j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
 		threadName = getVMThreadNameFromString(currentThread, nameObject);
 	}
-	if(threadName == NULL) {
+	if (threadName == NULL) {
 		Trc_VM_startJavaThread_failedVMThreadAlloc(currentThread);
 		omrthread_cancel(osThread);
 		return J9_THREAD_START_FAILED_VMTHREAD_ALLOC;

@@ -326,7 +326,7 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 	UDATA stringLen = J9VMJAVALANGSTRING_LENGTH(vmThread, string) * 3;
 	UDATA length = stringLen + prependStrLength;
 
-	if ((stringFlags & J9_STR_NULL_TERMINATE_RESULT) != 0) {
+	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
 		++length;
 	}
 
@@ -344,7 +344,7 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 			memcpy(strUTF, prependStr, prependStrLength);
 		}
 
-		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, (U_8 *)(strUTF + prependStrLength), length);
+		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, (U_8 *)(strUTF + prependStrLength), length - prependStrLength);
 
 		if (NULL != utf8Length) {
 			*utf8Length = computedUtf8Length + prependStrLength;

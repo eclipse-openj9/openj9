@@ -101,7 +101,7 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 			threadGroupObject = *((j9object_t*) group);
 
 			groupName = J9VMJAVALANGTHREADGROUP_NAME(currentThread, threadGroupObject);
-			name = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, groupName, J9_STR_NULL_TERMINATE_RESULT, "", 0, name, 0, NULL);
+			name = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, groupName, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
 
 			if (NULL == name) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
@@ -111,7 +111,7 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 				info_ptr->max_priority = J9VMJAVALANGTHREADGROUP_MAXPRIORITY(currentThread, threadGroupObject);
 				info_ptr->is_daemon = (jboolean)J9VMJAVALANGTHREADGROUP_ISDAEMON(currentThread, threadGroupObject);
 			}
-done:
+
 			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
 		}
 	}
