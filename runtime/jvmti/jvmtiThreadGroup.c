@@ -111,7 +111,7 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 				info_ptr->max_priority = J9VMJAVALANGTHREADGROUP_MAXPRIORITY(currentThread, threadGroupObject);
 				info_ptr->is_daemon = (jboolean)J9VMJAVALANGTHREADGROUP_ISDAEMON(currentThread, threadGroupObject);
 			}
-
+done:
 			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
 		}
 	}
