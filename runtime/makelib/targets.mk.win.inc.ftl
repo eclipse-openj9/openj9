@@ -1,5 +1,5 @@
 <#-- 
-	Copyright (c) 1998, 2017 IBM Corp. and others
+	Copyright (c) 1998, 2018 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,11 +70,6 @@ endif
 ifndef UMA_DO_NOT_OPTIMIZE_CCODE
 	UMA_OPTIMIZATION_FLAGS=/Ox
 endif
-<#if uma.spec.flags.build_newCompiler.enabled>	
-	#	/GS-: disable buffer security check (on by default)
-	#
-	UMA_OPTIMIZATION_FLAGS+=/GS-
-</#if>
 
 CFLAGS+=$(UMA_OPTIMIZATION_FLAGS)
 CXXFLAGS+=$(UMA_OPTIMIZATION_FLAGS)

@@ -531,6 +531,14 @@ cnathelp$(UMA_DOT_O):cnathelp.cpp
 	$(CXX) $(CXXFLAGS) -mstackrealign -c $<
 </#if>
 
+# special handling for cnathelp.cpp to disable buffer security check in windows for JIT helpers
+<#if uma.spec.flags.build_newCompiler.enabled && uma.spec.type.windows>	
+cnathelp$(UMA_DOT_O):cnathelp.cpp
+	$(CXX) $(CXXFLAGS) /GS- -c $<
+SharedService$(UMA_DOT_O):SharedService.c
+	$(CC) $(CFLAGS) /GS- -c $<
+</#if>
+
 <#if uma.spec.processor.ppc>
 ifndef USE_PPC_GCC
 # special handling BytecodeInterpreter.cpp and DebugBytecodeInterpreter.cpp
