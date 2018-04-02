@@ -746,15 +746,21 @@ void
 ClassFileOracle::walkTypeAnnotations(U_16 annotationsCount, J9CfrTypeAnnotation *typeAnnotations) {
 	for (U_16 typeAnnotationIndex = 0; typeAnnotationIndex < annotationsCount; ++ typeAnnotationIndex) {
 		J9CfrAnnotation *annotation = &(typeAnnotations[typeAnnotationIndex].annotation);
-		markConstantAsUsedByAnnotation(annotation->typeIndex);
-		const U_16 elementValuePairsCount = annotation->numberOfElementValuePairs;
-		for (U_16 elementValuePairsIndex = 0; (elementValuePairsIndex < elementValuePairsCount) && (OK == _buildResult); ++elementValuePairsIndex) {
-			markConstantAsUsedByAnnotation(annotation->elementValuePairs[elementValuePairsIndex].elementNameIndex);
-			walkAnnotationElement(annotation->elementValuePairs[elementValuePairsIndex].value);
+		/* type_index in an annotation must refer to a CONSTANT_UTF8_info structure. */
+		if (getCPTag(annotation->typeIndex) == CFR_CONSTANT_Utf8) {
+			markConstantAsUsedByAnnotation(annotation->typeIndex);
+			const U_16 elementValuePairsCount = annotation->numberOfElementValuePairs;
+			for (U_16 elementValuePairsIndex = 0;
+					(elementValuePairsIndex < elementValuePairsCount) && (OK == _buildResult); ++elementValuePairsIndex) {
+				markConstantAsUsedByAnnotation(annotation->elementValuePairs[elementValuePairsIndex].elementNameIndex);
+				walkAnnotationElement(annotation->elementValuePairs[elementValuePairsIndex].value);
+			}
+		} else {
+			/* Mark the annotation as erroneous. */
+			annotation->typeIndex = 0;
 		}
 	}
 }
-
 void
 ClassFileOracle::walkAnnotationElement(J9CfrAnnotationElement * annotationElement)
 {
