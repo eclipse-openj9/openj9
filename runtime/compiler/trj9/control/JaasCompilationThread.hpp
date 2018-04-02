@@ -13,8 +13,11 @@ class ClientSessionData
    public:
    struct ClassInfo
       {
-      J9ROMClass *romClass;
+      J9ROMClass *romClass; // romClass content exists in persistentMemory at the server
       J9Method *methodsOfClass;
+      // Fields meaningful for arrays
+      TR_OpaqueClassBlock *baseComponentClass; 
+      int32_t numDimensions;
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
@@ -94,5 +97,12 @@ void remoteCompilationEnd(TR::IlGeneratorMethodDetails &details, J9JITConfig *ji
 void printJaasMsgStats(J9JITConfig *);
 void printJaasCHTableStats(J9JITConfig *, TR::CompilationInfo *);
 void printJaasCacheStats(J9JITConfig *, TR::CompilationInfo *);
+class JaasHelpers
+   {
+   public:
+   static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass,
+      J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions);
+   static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
+   };
 
 #endif

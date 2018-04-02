@@ -134,7 +134,9 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
    {
    try
       {
-      auto req = stream->read<uint64_t, std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>, J9Method*>();
+      auto req = stream->read<uint64_t, std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, 
+                              J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>, J9Method*,
+                              TR_OpaqueClassBlock *, int32_t>();
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
@@ -153,21 +155,27 @@ void J9CompileDispatcher::compile(JAAS::J9ServerStream *stream)
       auto detailsType = std::get<7>(req);
       TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
       auto &unloadedClasses = std::get<8>(req);
+      J9Method *methodsOfClass = std::get<9>(req);
+      TR_OpaqueClassBlock *baseComponentClass = std::get<10>(req);
+      int32_t numDims = std::get<11>(req);
       // If new classes have been unloaded at the client, 
       // delete relevant entries from the persistent caches we hold per client
-      if (unloadedClasses.size() != 0)
+      //if (unloadedClasses.size() != 0)
          {
          OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
          auto clientSession = compInfo->getClientSessionHT()->findClientSession(clientId); // cannot throw
          if (clientSession)
             {
+            // Cache the ROMClass for the method to be compiled if not already cached
+            if (!JaasHelpers::getRemoteROMClassIfCached(clientSession, clazz))
+               JaasHelpers::cacheRemoteROMClass(clientSession, clazz, romClass, methodsOfClass, baseComponentClass, numDims);
             // This could be an expensive operation and we are holding the compilation monitor
             // Maybe we should create another monitor
-            clientSession->processUnloadedClasses(unloadedClasses);
+            if (unloadedClasses.size() != 0)
+               clientSession->processUnloadedClasses(unloadedClasses);
             clientSession->decInUse();
             }
          }
-      J9Method *methodsOfClass = std::get<9>(req);
 
       doRemoteCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType, methodsOfClass);
       }

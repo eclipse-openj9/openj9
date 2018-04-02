@@ -855,7 +855,9 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
          J9Method *methodsOfClass = (J9Method*) fe->getMethods((TR_OpaqueClassBlock*) clazz);
-         client->write(packROMClass(clazz->romClass, trMemory), methodsOfClass);
+         int32_t numDims = 0;
+         TR_OpaqueClassBlock * baseClass = fe->getBaseComponentClass((TR_OpaqueClassBlock *)clazz, numDims);
+         client->write(packROMClass(clazz->romClass, trMemory), methodsOfClass, baseClass, numDims);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isJNINative:
@@ -1865,6 +1867,7 @@ remoteCompile(
          );
       }
 
+   // Prepare the parameters for the compilation request
    J9Class *clazz = J9_CLASS_FROM_METHOD(method);
    J9ROMClass *romClass = clazz->romClass;
    J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
@@ -1875,6 +1878,8 @@ remoteCompile(
    std::vector<TR_OpaqueClassBlock*> unloadedClasses(compInfo->getUnloadedClassesTempList()->begin(), compInfo->getUnloadedClassesTempList()->end());
    compInfo->getUnloadedClassesTempList()->clear();
    J9Method *methodsOfClass = (J9Method*) compiler->fej9vm()->getMethods((TR_OpaqueClassBlock*) clazz);
+   int32_t numDims = 0;
+   TR_OpaqueClassBlock *baseComponentClass = compiler->fej9vm()->getBaseComponentClass((TR_OpaqueClassBlock *)clazz, numDims);
 
    JAAS::J9ClientStream client(TR::comp()->getPersistentInfo()->getJaasServerConnectionInfo(),
                                TR::comp()->getPersistentInfo()->getJaasTimeout());
@@ -1890,8 +1895,9 @@ remoteCompile(
       // message just in case we block in the wite operation   
       releaseVMAccess(vmThread);
 
-      client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJaasId(), romClassStr, romMethodOffset, method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), unloadedClasses, methodsOfClass);
-
+      client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJaasId(), romClassStr, romMethodOffset, 
+                                 method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), 
+                                 unloadedClasses, methodsOfClass, baseComponentClass, numDims);
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
       if (compInfoPT->compilationShouldBeInterrupted())
@@ -2170,6 +2176,7 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
          continue; // unloaded class was never cached
       J9ROMClass *romClass = it->second.romClass;
       J9Method *methods = it->second.methodsOfClass;
+      // delete all the cached J9Methods belonging to this unloaded class
       for (size_t i = 0; i < romClass->romMethodCount; i++)
          {
          _romMethodMap.erase(&methods[i]);
@@ -2316,4 +2323,28 @@ ClientSessionHT::printStats()
       j9tty_printf(PORTLIB, "Session for id %d:\n", session.first);
       session.second->printStats();
       }
+   }
+
+void 
+JaasHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass,
+                                 J9Method *methods, TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions)
+   {
+   OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
+   clientSessionData->getROMClassMap().insert({ clazz,{ romClass, methods, baseComponentClass, numDimensions } });
+   uint32_t numMethods = romClass->romMethodCount;
+   J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+   for (uint32_t i = 0; i < numMethods; i++)
+      {
+      clientSessionData->getROMMethodMap().insert({ &methods[i], romMethod });
+      romMethod = nextROMMethod(romMethod);
+      }
+   }
+
+
+J9ROMClass *
+JaasHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz)
+   {
+   OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
+   auto it = clientSessionData->getROMClassMap().find(clazz);
+   return (it == clientSessionData->getROMClassMap().end()) ? nullptr : it->second.romClass;
    }

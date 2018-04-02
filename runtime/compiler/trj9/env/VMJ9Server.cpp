@@ -180,6 +180,17 @@ TR_J9ServerVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims)
    {
+   // Check the cache first
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*)clazz);
+      if (it != _compInfoPT->getClientData()->getROMClassMap().end())
+         {
+         numDims = it->second.numDimensions;
+         return it->second.baseComponentClass;
+         }
+      }
+   // If info not present in the cache, ask the client directly
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_getBaseComponentClass, clazz, numDims);
    auto recv = stream->read<TR_OpaqueClassBlock *, int32_t>();
@@ -244,26 +255,15 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_Resolve
          clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
          if (clazz)
             {
-            //static unsigned long misses = 0;
-            //printf("misses=%lu Will cache cl=%p\tclassName=%.*s\n", ++misses, cl, length, sig);
             // Put into the HT for next time
             _compInfoPT->getCustomClassByNameMap()[key] = clazz;
-            }
-         else
-            {
-            //static unsigned long errors = 0;
-            //printf("Error %lu for cl=%p\tclassName=%.*s\n", ++errors, cl, length, sig);
             }
          }
       else
          {
-         //static unsigned long hits = 0;
-         //printf("hits=%lu Found cl=%p\tclassName=%.*s\n", ++hits, cl, length, sig);
          clazz = it->second;
          }
-         
       }
-
    return clazz;
    }
 

@@ -400,7 +400,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    JAAS::J9ServerStream  *getStream();
    J9ROMClass            *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=nullptr);
    J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
-   void                   cacheRemoteROMClass(J9Class *, J9ROMClass *, J9Method *);
+   void                   cacheRemoteROMClass(J9Class *, J9ROMClass *, J9Method *, TR_OpaqueClassBlock *, int32_t);
    void                   addThunkToBeRelocated(void *thunk, std::string signature);
    void                   addInvokeExactThunkToBeRelocated(TR_J2IThunk *thunk);
    void                   relocateThunks();

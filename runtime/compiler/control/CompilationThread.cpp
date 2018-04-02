@@ -625,25 +625,16 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
    }
 
 void
-TR::CompilationInfoPerThread::cacheRemoteROMClass(J9Class *clazz, J9ROMClass *romClass, J9Method *methods)
+TR::CompilationInfoPerThread::cacheRemoteROMClass(J9Class *clazz, J9ROMClass *romClass, J9Method *methods, 
+                                                  TR_OpaqueClassBlock *baseComponentClass, int32_t numDimensions)
    {
-   OMR::CriticalSection cacheRemoteROMClass(getClientData()->getROMMapMonitor());
-   getClientData()->getROMClassMap().insert({clazz, {romClass, methods}});
-   uint32_t numMethods = romClass->romMethodCount;
-   J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
-   for (uint32_t i = 0; i < numMethods; i++)
-      {
-      getClientData()->getROMMethodMap().insert({&methods[i], romMethod});
-      romMethod = nextROMMethod(romMethod);
-      }
+   JaasHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, methods, baseComponentClass, numDimensions);
    }
 
 J9ROMClass *
 TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
    {
-   OMR::CriticalSection getRemoteROMClass(getClientData()->getROMMapMonitor());
-   auto it = getClientData()->getROMClassMap().find(clazz);
-   return (it == getClientData()->getROMClassMap().end()) ? nullptr : it->second.romClass;
+   return JaasHelpers::getRemoteROMClassIfCached(getClientData(), clazz);
    }
 
 J9ROMClass *
@@ -653,8 +644,10 @@ TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memor
    if (romClass == nullptr)
       {
       J9Method *methods;
-      romClass = TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &methods);
-      cacheRemoteROMClass(clazz, romClass, methods);
+      TR_OpaqueClassBlock *baseClass;
+      int32_t numDims;
+      romClass = TR_ResolvedJ9JAASServerMethod::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &methods, &baseClass, &numDims);
+      cacheRemoteROMClass(clazz, romClass, methods, baseClass, numDims);
       }
    return romClass;
    }
@@ -6617,9 +6610,6 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                clientSession, (unsigned long long)clientUID, getCompThreadId());
          // Release the compilationMonitor before calling cacheRemoteClass
          }
-      // Cache the ROMClass for the method to be compiled if not already cached
-      if (!((TR::CompilationInfoPerThread*)this)->getRemoteROMClassIfCached(entry->getMethodDetails().getClass()))
-         ((TR::CompilationInfoPerThread*)this)->cacheRemoteROMClass(entry->getMethodDetails().getClass(), const_cast<J9ROMClass*>(entry->getMethodDetails().getRomClass()), entry->getMethodDetails().getMethodsOfClass());
       }
 
    // Check to see if we find an AOT version in the shared cache
