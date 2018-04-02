@@ -7883,13 +7883,14 @@ done:
 	{
 retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-
-		U_16 index = *(U_16*)(_pc + 1);
-		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
-		J9RAMFieldRef *ramFieldRef = ((J9RAMFieldRef*)ramConstantPool) + index;
-		UDATA const flags = ramFieldRef->flags;
-		UDATA const valueOffset = ramFieldRef->valueOffset;
-		j9object_t original = *(j9object_t *)(_sp + ((flags & J9FieldSizeDouble) ? 2 : 1));
+		const U_16 index = *(U_16 *)(_pc + 1);
+		J9ConstantPool * const ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9RAMFieldRef * const ramFieldRef = ((J9RAMFieldRef *)ramConstantPool) + index;
+		const UDATA flags = ramFieldRef->flags;
+		const bool isVolatile = (0 != (flags & J9AccVolatile));
+		const UDATA valueOffset = ramFieldRef->valueOffset;
+		const UDATA newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
+		j9object_t original = *(j9object_t *)(_sp + (J9_ARE_ALL_BITS_SET(flags, J9FieldSizeDouble) ? 2 : 1));
 		j9object_t copy = NULL;
 		J9Class *objectClass = J9OBJECT_CLAZZ(_currentThread, original);
 
@@ -7902,7 +7903,7 @@ retry:
 		 * another thread that is in the middle of a resolve).
 		 */
 		if (J9_UNEXPECTED((flags <= valueOffset) || J9_ARE_NO_BITS_SET(flags, J9FieldFlagPutResolved))) {
-			/* Unresolved */
+			/* Field is unresolved */
 			J9Method *method = _literals;
 			updateVMStruct(REGISTER_ARGS);
 			resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_VALUE_CLASS, NULL);
@@ -7919,6 +7920,7 @@ retry:
 
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 
+		/* Allocate new object */
 		copy = _objectAllocate.inlineAllocateObject(_currentThread, objectClass, false, false);
 		if (NULL == copy) {
 			pushObjectInSpecialFrame(REGISTER_ARGS, original);
@@ -7932,30 +7934,29 @@ retry:
 			}
 			objectClass = VM_VMHelpers::currentClass(objectClass);
 		}
+
+		/* Clone original object into new object */
 		_objectAccessBarrier.cloneObject(_currentThread, original, copy, objectClass);
 		VM_VMHelpers::checkIfFinalizeObject(_currentThread, copy);
 
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
 
-		{
-			bool isVolatile = J9_ARE_ALL_BITS_SET(flags, J9AccVolatile);
-			UDATA const newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
-			if (NULL == copy) {
-				rc = THROW_NPE;
-				goto done;
-			}
-			if (flags & J9FieldSizeDouble) {
-				_objectAccessBarrier.inlineMixedObjectStoreU64(_currentThread, copy, newValueOffset, *(U_64*)_sp, isVolatile);
-				_sp += 2;
-			} else if (flags & J9FieldFlagObject) {
-				_objectAccessBarrier.inlineMixedObjectStoreObject(_currentThread, copy, newValueOffset, *(j9object_t*)_sp, isVolatile);
-				_sp += 1;
-			} else {
-				_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, copy, newValueOffset, *(U_32*)_sp, isVolatile);
-				_sp += 1;
-			}
-			*(j9object_t *)_sp = copy;
+		if (NULL == copy) {
+			rc = THROW_NPE;
+			goto done;
 		}
+		/* Store new value into field */
+		if (J9_ARE_ALL_BITS_SET(flags, J9FieldSizeDouble)) {
+			_objectAccessBarrier.inlineMixedObjectStoreU64(_currentThread, copy, newValueOffset, *(U_64*)_sp, isVolatile);
+			_sp += 2;
+		} else if (J9_ARE_ALL_BITS_SET(flags, J9FieldFlagObject)) {
+			_objectAccessBarrier.inlineMixedObjectStoreObject(_currentThread, copy, newValueOffset, *(j9object_t*)_sp, isVolatile);
+			_sp += 1;
+		} else {
+			_objectAccessBarrier.inlineMixedObjectStoreU32(_currentThread, copy, newValueOffset, *(U_32*)_sp, isVolatile);
+			_sp += 1;
+		}
+		*(j9object_t *)_sp = copy;
 		_pc += 3;
 done:
 		return rc;
