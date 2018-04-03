@@ -2459,7 +2459,267 @@ TR::Register *J9::X86::TreeEvaluator::newEvaluator(TR::Node *node, TR::CodeGener
 
 TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return TR::TreeEvaluator::performHelperCall(node, NULL, TR::acall, true, cg);
+   static char *useDirectHelperCall = feGetEnv("TR_MultiANewArrayEvaluatorUseDirectCall");
+
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *thirdChild = node->getThirdChild();
+
+   if (useDirectHelperCall || !secondChild->getOpCode().isLoadConst() || secondChild->getInt()!=2)
+      return TR::TreeEvaluator::performHelperCall(node, NULL, TR::acall, true, cg);
+
+   // 2-dimentional MultiANewArray
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+
+   TR::Register *dimsPtrReg       = NULL;
+   TR::Register *dimReg      = NULL;
+   TR::Register *classReg       = NULL;
+   TR::Register *firstDimLenReg         = NULL;
+   TR::Register *secondDimLenReg       = NULL;
+   TR::Register *targetReg       = NULL;
+   TR::Register *temp1Reg       = NULL;
+   TR::Register *temp2Reg       = NULL;
+   TR::Register *temp3Reg       = NULL;
+   TR::Register *componentClassReg       = NULL;
+
+   TR::Register *vmThreadReg = cg->getVMThreadRegister();
+   targetReg = cg->allocateRegister();
+   firstDimLenReg = cg->allocateRegister();
+   secondDimLenReg = cg->allocateRegister();
+   temp1Reg = cg->allocateRegister();
+   temp2Reg = cg->allocateRegister();
+   temp3Reg = cg->allocateRegister();
+   componentClassReg = cg->allocateRegister();
+
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *fallThru = generateLabelSymbol(cg);
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *nonZeroFirstDimLabel = generateLabelSymbol(cg);
+   startLabel->setStartInternalControlFlow();
+   fallThru->setEndInternalControlFlow();
+
+   TR::LabelSymbol *failLabel = generateLabelSymbol(cg);
+
+   generateLabelInstruction(LABEL, node, startLabel, cg);
+
+   // Generate the heap allocation, and the snippet that will handle heap overflow.
+   TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::acall, targetReg, failLabel, fallThru, cg);
+   cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
+
+   dimReg = cg->evaluate(secondChild);
+
+   dimsPtrReg = cg->evaluate(firstChild);
+
+   classReg = cg->evaluate(thirdChild);
+
+   generateRegMemInstruction(L4RegMem, node, secondDimLenReg,
+                             generateX86MemoryReference(dimsPtrReg, 0, cg), cg);
+   generateRegMemInstruction(L4RegMem, node, firstDimLenReg,
+                             generateX86MemoryReference(dimsPtrReg, 4, cg), cg);
+
+   generateRegImmInstruction(CMP4RegImm4, node, secondDimLenReg, 0, cg);
+
+   generateLabelInstruction(JNE4, node, failLabel, cg);
+   // Second Dim length is 0
+
+   generateRegImmInstruction(CMP4RegImm4, node, firstDimLenReg, 0, cg);
+   generateLabelInstruction(JNE4, node, nonZeroFirstDimLabel, cg);
+
+   // First Dim zero, only allocate 1 zero-length object array
+   int32_t zeroArraySize = TR::Compiler->om.discontiguousArrayHeaderSizeInBytes();
+   generateRegMemInstruction(LRegMem(), node, targetReg, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
+   generateRegMemInstruction(LEARegMem(), node, temp1Reg, generateX86MemoryReference(targetReg, zeroArraySize, cg), cg);
+   generateRegMemInstruction(CMPRegMem(), node, temp1Reg, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
+   generateLabelInstruction(JA4, node, failLabel, cg);
+   generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), temp1Reg, cg);
+
+   // Init class
+   bool use64BitClasses = TR::Compiler->target.is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+   generateMemRegInstruction(SMemReg(use64BitClasses), node, generateX86MemoryReference(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg), classReg, cg);
+
+   // Init size and '0' fields to 0
+   generateMemImmInstruction(S4MemImm4, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
+   generateMemImmInstruction(S4MemImm4, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
+
+   generateLabelInstruction(JMP4, node, fallThru, cg);
+
+   //First dim length not 0
+   generateLabelInstruction(LABEL, node, nonZeroFirstDimLabel, cg);
+   
+   generateRegMemInstruction(LRegMem(), node, componentClassReg,
+             generateX86MemoryReference(classReg, offsetof(J9ArrayClass, componentType), cg), cg);
+
+   int32_t elementSize;
+
+   if (comp->useCompressedPointers())
+      elementSize = TR::Compiler->om.sizeofReferenceField();
+   else
+      elementSize = (int32_t)(TR::Compiler->om.sizeofReferenceAddress());
+
+   uintptrj_t maxObjectSize = cg->getMaxObjectSizeGuaranteedNotToOverflow();
+   uintptrj_t maxObjectSizeInElements = maxObjectSize / elementSize;
+
+   if (TR::Compiler->target.is64Bit() && !(maxObjectSizeInElements > 0 && maxObjectSizeInElements <= (uintptrj_t)INT_MAX))
+      {
+      generateRegImm64Instruction(MOV8RegImm64, node, temp1Reg, maxObjectSizeInElements, cg);
+      generateRegRegInstruction(CMP8RegReg, node, firstDimLenReg, temp1Reg, cg);
+      }
+   else
+      {
+      generateRegImmInstruction(CMPRegImm4(), node, firstDimLenReg, (int32_t)maxObjectSizeInElements, cg);
+      }
+
+   // Must be an unsigned comparison on sizes.
+   generateLabelInstruction(JAE4, node, failLabel, cg);
+
+   generateRegRegInstruction(MOVRegReg(), node, temp1Reg, firstDimLenReg, cg);
+
+   int32_t round = (elementSize >= fej9->getObjectAlignmentInBytes())? 0 : fej9->getObjectAlignmentInBytes();
+   int32_t disp32 = round ? (round-1) : 0;
+
+   uint8_t shiftVal = TR::MemoryReference::convertMultiplierToStride(elementSize);
+   generateRegImmInstruction(SHLRegImm1(), node, temp1Reg, shiftVal, cg);
+   generateRegImmInstruction(ADDRegImm4(), node, temp1Reg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes()+disp32, cg);
+
+   if (round)
+      {
+      generateRegImmInstruction(ANDRegImm4(), node, temp1Reg, -round, cg);
+      }
+
+   // temp2Reg = firstDimLenReg * 16 (discontiguousArrayHeaderSizeInBytes)
+   generateRegRegInstruction(MOVRegReg(),  node, temp2Reg, firstDimLenReg, cg);
+   generateRegImmInstruction(SHLRegImm1(), node, temp2Reg, 4, cg);
+
+   // temp2Reg = temp2Reg + temp1Reg
+   generateRegRegInstruction(ADDRegReg(), node, temp2Reg, temp1Reg, cg);
+
+   generateRegMemInstruction(LRegMem(), node, targetReg, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
+   // temp2Reg = temp2Reg + J9VMThread->heapAlloc
+   generateRegRegInstruction(ADDRegReg(), node, temp2Reg, targetReg, cg);
+
+   generateRegMemInstruction(CMPRegMem(), node, temp2Reg, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
+   generateLabelInstruction(JA4, node, failLabel, cg);
+   generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), temp2Reg, cg);
+
+   //init 1st dim array class field
+   generateMemRegInstruction(SMemReg(use64BitClasses), node, generateX86MemoryReference(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg), classReg, cg);
+   // Init 1st dim array size field
+   generateMemRegInstruction(S4MemReg, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg), firstDimLenReg, cg);
+
+   // temp2 point to end of 1st dim array i.e. start of 2nd dim
+   generateRegRegInstruction(MOVRegReg(),  node, temp2Reg, targetReg, cg);
+   generateRegRegInstruction(ADDRegReg(), node, temp2Reg, temp1Reg, cg);
+   // temp1 points to 1st dim array past header
+   generateRegMemInstruction(LEARegMem(), node, temp1Reg, generateX86MemoryReference(targetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+
+
+   uintptrj_t heapBase = TR::Compiler->vm.heapBaseAddress();
+   bool useRegForHeapBase = TR::Compiler->target.is64Bit() && comp->useCompressedPointers() &&
+                           (heapBase != 0) && (!IS_32BIT_SIGNED(heapBase) || TR::Compiler->om.nativeAddressesCanChangeSize());
+   if (useRegForHeapBase)
+      generateRegImm64Instruction(MOV8RegImm64, node, secondDimLenReg, heapBase, cg);
+
+   //loop start
+   generateLabelInstruction(LABEL, node, loopLabel, cg);
+   // Init 2nd dim element's class
+   generateMemRegInstruction(SMemReg(use64BitClasses), node, generateX86MemoryReference(temp2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg), componentClassReg, cg);
+   // Init 2nd dim element's size and '0' fields to 0
+   generateMemImmInstruction(S4MemImm4, node, generateX86MemoryReference(temp2Reg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
+   generateMemImmInstruction(S4MemImm4, node, generateX86MemoryReference(temp2Reg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
+   // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
+   if (TR::Compiler->target.is64Bit() && comp->useCompressedPointers())
+      {
+      int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
+      generateRegRegInstruction(MOVRegReg(), node, temp3Reg, temp2Reg, cg);
+      if (heapBase != 0)
+         {
+         if (useRegForHeapBase)
+            {
+            generateRegRegInstruction(SUBRegReg(), node, temp3Reg, secondDimLenReg, cg);
+            }
+         else
+            {
+            generateRegImmInstruction(SUBRegImm4(), node, temp3Reg, (int32_t)heapBase, cg);
+            }
+         }
+      if (shiftAmount != 0)
+         {
+         generateRegImmInstruction(SHRRegImm1(), node, temp3Reg, shiftAmount, cg);
+         }
+      generateMemRegInstruction(S4MemReg, node, generateX86MemoryReference(temp1Reg, 0, cg), temp3Reg, cg);
+      }
+   else
+      {
+      generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(temp1Reg, 0, cg), temp2Reg, cg);
+      }
+
+   // Advance cursors temp1 and temp2
+   generateRegImmInstruction(ADDRegImms(), node, temp2Reg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg);
+   generateRegImmInstruction(ADDRegImms(), node, temp1Reg, elementSize, cg);
+
+   generateRegInstruction(DEC4Reg, node, firstDimLenReg, cg);
+   generateLabelInstruction(JA4, node, loopLabel, cg);
+
+   TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, 13, cg);
+
+   deps->addPostCondition(dimsPtrReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(dimReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(classReg, TR::RealRegister::NoReg, cg);
+
+   deps->addPostCondition(firstDimLenReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(secondDimLenReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(temp1Reg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(temp2Reg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(temp3Reg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(componentClassReg, TR::RealRegister::NoReg, cg);
+
+   deps->addPostCondition(targetReg, TR::RealRegister::eax, cg);
+   deps->addPostCondition(cg->getVMThreadRegister(), TR::RealRegister::ebp, cg);
+
+   TR::Node *callNode = outlinedHelperCall->getCallNode();
+   TR::Register *reg;
+
+   if (callNode->getFirstChild() == node->getFirstChild())
+      if (reg = callNode->getFirstChild()->getRegister())
+         deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+
+   if (callNode->getSecondChild() == node->getSecondChild())
+      if (reg = callNode->getSecondChild()->getRegister())
+         deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+
+   if (callNode->getThirdChild() == node->getThirdChild())
+      if (reg = callNode->getThirdChild()->getRegister())
+         deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+
+   deps->stopAddingConditions();
+
+   generateLabelInstruction(LABEL, node, fallThru, deps, cg);
+
+   // Copy the newly allocated object into a collected reference register now that it is a valid object.
+   //
+   TR::Register *targetReg2 = cg->allocateCollectedReferenceRegister();
+   TR::RegisterDependencyConditions  *deps2 = generateRegisterDependencyConditions(0, 1, cg);
+   deps2->addPostCondition(targetReg2, TR::RealRegister::eax, cg);
+   generateRegRegInstruction(MOVRegReg(), node, targetReg2, targetReg, deps2, cg);
+   cg->stopUsingRegister(targetReg);
+   targetReg = targetReg2;
+
+   cg->stopUsingRegister(firstDimLenReg);
+   cg->stopUsingRegister(secondDimLenReg);
+   cg->stopUsingRegister(temp1Reg);
+   cg->stopUsingRegister(temp2Reg);
+   cg->stopUsingRegister(temp3Reg);
+   cg->stopUsingRegister(componentClassReg);
+
+   // Decrement use counts on the children
+   //
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   cg->decReferenceCount(node->getThirdChild());
+
+   node->setRegister(targetReg);
+   return targetReg;
    }
 
 TR::Register *J9::X86::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg)
