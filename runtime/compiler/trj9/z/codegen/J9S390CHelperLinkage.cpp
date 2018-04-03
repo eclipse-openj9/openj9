@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -369,7 +369,22 @@ TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, 
    if (isFastPathOnly)
       {
 #if defined(J9ZOS390)
-      // We need following padding as return from C function will skip the XPLink eyecatcher, padding ensures entry to valid instruction 
+      /**
+       * Same as SystemLinkage call builder class, a NOP padding is needed because returning from XPLINK functions
+       * skips the XPLink eyecatcher and always return to a point that's 2 or 4 bytes after the return address.
+       *
+       * In 64 bit XPLINK, the caller returns with a 'branch relative on condition' instruction with a 2 byte offset:
+       *
+       *   0x47F07002                    B        2(,r7)
+       *
+       * In 31-bit XPLINK, this offset is 4-byte.
+       *
+       * As a result of this, JIT'ed code that does XPLINK calls needs 2 or 4-byte NOP paddings to ensure entry to valid instruction.
+       *
+       * The BASR and NOP padding must stick together and can't have reverse spills in the middle.
+       * Hence, splitting the dependencies to avoid spill instructions.
+       */
+
       cursor = new (cg()->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, padding, callNode, cursor, cg());
       // Storing DSA Register back
       cursor = generateRXInstruction(cg(), TR::InstOpCode::getStoreOpCode(), callNode, DSAPointerReg, generateS390MemoryReference(vmThreadRegister, offsetOfSSP, cg()), cursor);
