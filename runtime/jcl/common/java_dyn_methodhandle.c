@@ -95,9 +95,32 @@ lookupInterfaceMethod(J9VMThread *currentThread, J9Class *lookupClass, J9UTF8 *n
 			vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL);
 			method = NULL;
 		} else {
-			*methodIndex = getITableIndexForMethod(method, lookupClass);
-			if (*methodIndex == -1) {
-				method = NULL;
+			if (J9_ARE_ANY_BITS_SET(J9_CLASS_FROM_METHOD(method)->romClass->modifiers, J9_JAVA_INTERFACE)) {
+				*methodIndex = getITableIndexForMethod(method, lookupClass);
+				if (-1  == *methodIndex) {
+					PORT_ACCESS_FROM_VMC(currentThread);
+					J9Class *clazz = J9_CLASS_FROM_METHOD(method);
+					J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);
+					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+					J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
+					J9UTF8 *sig = J9ROMMETHOD_SIGNATURE(romMethod);
+					size_t nameAndSigLength = J9UTF8_LENGTH(className)
+						+ J9UTF8_LENGTH(methodName) + J9UTF8_LENGTH(sig)
+						+ 4 /* period, parentheses, and terminating null */;
+					char *msg = j9mem_allocate_memory(nameAndSigLength, OMRMEM_CATEGORY_VM);
+					if (NULL != msg) {
+						j9str_printf(PORTLIB, msg, nameAndSigLength, "%.*s.%.*s(%.*s)",
+								J9UTF8_LENGTH(className), J9UTF8_DATA(className),
+								J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
+								J9UTF8_LENGTH(sig), J9UTF8_DATA(sig));
+						vmFuncs->setCurrentExceptionUTF(currentThread,
+								J9VMCONSTANTPOOL_JAVALANGNOSUCHMETHODERROR, msg);
+						j9mem_free_memory(msg);
+					} else {
+						vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+					}
+					method = NULL;
+				}
 			}
 		}
 	}
