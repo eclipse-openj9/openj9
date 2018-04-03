@@ -767,3 +767,6 @@ TraceExit=Trc_VM_sendResolveMethodTypeRefInto_Exit Overhead=1 Level=5 Template="
 TraceException=Trc_VM_CgroupSubsystemsNotEnabled Overhead=1 Level=1 Template="Cgroup subsystems available: 0x%llx, enabled: 0x%llx"
 
 TraceException=Trc_VM_failedtoAllocateGuardPage noEnv Overhead=1 Level=1 Template="Failed to allocate exclusive guard page of size %zu"
+
+TraceException=Trc_VM_registerPredefinedHandler_invalidPortlibSignalFlag NoEnv Overhead=1 Level=1 Template="registerPredefinedHandler - invalid portlib signal flag: %zu"
+TraceEvent=Trc_VM_signalDispatch_signalValue Overhead=1 Level=3 Template="signalDispatch - signal value: %d"

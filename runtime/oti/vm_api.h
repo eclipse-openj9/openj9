@@ -1580,6 +1580,18 @@ initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry);
 BOOLEAN
 setBootLoaderModulePatchPaths(J9JavaVM * javaVM, J9Module * j9module, const char * moduleName);
 
+/**
+ * @brief Register jvminit.c::predefinedHandlerWrapper using j9sig_set_*async_signal_handler
+ * for the specified signal
+ *
+ * @param vm pointer to a J9JavaVM
+ * @param signal integer value of the signal
+ * @param oldOSHandler points to the old signal handler function
+ *
+ * @return 0 on success and non-zero on failure
+ */
+IDATA
+registerPredefinedHandler(J9JavaVM *vm, U_32 signal, void **oldOSHandler);
 
 /* ---------------- romutil.c ---------------- */
 
