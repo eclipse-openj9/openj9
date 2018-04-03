@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -296,7 +296,6 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
    TR::Register * systemEnvironmentRegister = javaStackRegister;
    TR::Register * javaLitPoolRegister = privateLinkage->getLitPoolRealRegister();
    bool passLitPoolReg = false;
-   TR_XPLinkCallTypes callType;  // for XPLink calls
 
    if (codeGen->isLiteralPoolOnDemandOn())
       {
@@ -395,23 +394,32 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
          }
       }
 
-   gcPoint = generateRRInstruction(codeGen, TR::InstOpCode::BASR, callNode, systemReturnAddressRegister, systemEntryPointRegister, deps);
+   /**
+    * NOP padding is needed because returning from XPLINK functions skips the XPLink eyecatcher and
+    * always return to a point that's 2 or 4 bytes after the return address.
+    *
+    * In 64 bit XPLINK, the caller returns with a 'branch relative on condition' instruction with a 2 byte offset:
+    *
+    *   0x47F07002                    B        2(,r7)
+    *
+    * In 31-bit XPLINK, this offset is 4-byte.
+    *
+    * As a result of this, JIT'ed code that does XPLINK calls needs 2 or 4-byte NOP paddings to ensure entry to valid instruction.
+    *
+    * The BASR and NOP padding must stick together and can't have reverse spills in the middle.
+    * Hence, splitting the dependencies to avoid spill instructions.
+    */
+   TR::RegisterDependencyConditions* callPreDeps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(deps->getPreConditions(), NULL, deps->getAddCursorForPre(), 0, codeGen);
+   TR::RegisterDependencyConditions* callPostDeps = new (self()->trHeapMemory()) TR::RegisterDependencyConditions(NULL, deps->getPostConditions(), 0, deps->getAddCursorForPost(), codeGen);
+
+   gcPoint = generateRRInstruction(codeGen, TR::InstOpCode::BASR, callNode, systemReturnAddressRegister, systemEntryPointRegister, callPreDeps);
    if (isJNIGCPoint)
          gcPoint->setNeedsGCMap(0x00000000);
 
-   callType = TR_XPLinkCallType_BASR;
+   TR::Instruction * cursor = generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, returnFromJNICallLabel);
 
-   generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, returnFromJNICallLabel);
-
-   if (TR::Compiler->target.is64Bit())
-      {
-      //In 64 bit XPLINK, the caller returns at RetAddr+2, so add 2 byte nop
-      TR::Instruction * cursor = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, callNode, codeGen);
-      }
-   else
-      {
-      genCallNOPAndDescriptor(NULL, callNode, callNode, callType);
-      }
+   cursor = genCallNOPAndDescriptor(cursor, callNode, callNode, TR_XPLinkCallType_BASR);
+   cursor->setDependencyConditions(callPostDeps);
 
    if (cg()->supportsJITFreeSystemStackPointer())
       {
@@ -505,64 +513,38 @@ TR::J9S390zOSSystemLinkage::addFECustomizedReturnRegDependency(int64_t killMask,
  * General XPLink utility
  */
 TR::Instruction *
-TR::J9S390zOSSystemLinkage::genCallNOPAndDescriptor(TR::Instruction * cursor, TR::Node *node, TR::Node *callNode, TR_XPLinkCallTypes callType)
+TR::J9S390zOSSystemLinkage::genCallNOPAndDescriptor(TR::Instruction * cursor,
+                                                    TR::Node *node,
+                                                    TR::Node *callNode,
+                                                    TR_XPLinkCallTypes callType)
    {
    TR::CodeGenerator * codeGen = cg();
-   TR::S390NOPInstruction *nop;
+   // In 64 bit XPLINK, the caller returns at RetAddr+2, so add 2 byte nop
+   // In 31 bit XPLINK, the caller returns at RetAddr+4, so add 4 byte nop with last two bytes
+   // as signed offset in doublewords at or preceding NOP
+   uint32_t padSize = TR::Compiler->target.is64Bit() ? 2 : 4;
 
-   if (TR::Compiler->target.is64Bit())
+   cursor = codeGen->insertPad(node, cursor, padSize, false);
+   TR::S390NOPInstruction *nop = static_cast<TR::S390NOPInstruction *>(cursor);
+
+   if (TR::Compiler->target.is32Bit())
       {
-      //In 64 bit XPLINK, the caller returns at RetAddr+2, so add 2 byte nop
-      cursor = nop = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, node, cursor, codeGen);
-      }
-   else
-      {
-      //In 31 bit XPLINK, the caller returns at RetAddr+4, so add 4 byte nop with last two bytes
-      // as signed offset in doublewords at or preceding NOP
-      TR::S390ConstantDataSnippet *callDescSnippet ;
       uint32_t callDescValues = calculateCallDescriptorFlags(callNode);  // lower 32 bits
 
-      callDescSnippet = createCallDescriptor(node, (uint64_t)callDescValues);
-      if (cursor != NULL) // TBD: this is needed but need to understand  why - problem in else case if remove this and provide NULL cursor to the following constructor
-         cursor = nop = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 4, callDescSnippet, node, cursor, codeGen);
-      else
-         cursor = nop = new (trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 4, callDescSnippet, node, codeGen);
-
-      // Check if we are emitting warm code.  Mark Snippet as warm snippet if necessary.
-
+      TR::S390ConstantDataSnippet * callDescSnippet = cg()->findOrCreate8ByteConstant(node, (int64_t)callDescValues, false);
+      nop->setTargetSnippet(callDescSnippet);
 
       // Create a pseudo instruction that will generate
       //      BRAS 4
       //      DC <Call Descriptor>
       // if the snippet is > 15k bytes away.
-      if (cursor != NULL)
-         {
-         TR::S390PseudoInstruction *pseudoCallDesc = (TR::S390PseudoInstruction *)generateS390PseudoInstruction(codeGen, TR::InstOpCode::XPCALLDESC, node, NULL, cursor);
-         // Assign this pseudoCallDesc to the NOP Instruction.
-         ((TR::S390NOPInstruction *)cursor)->setCallDescInstr(pseudoCallDesc);
-         cursor = pseudoCallDesc;
-         }
-      else
-         {
-         TR::S390PseudoInstruction *pseudoCallDesc = (TR::S390PseudoInstruction *)generateS390PseudoInstruction(codeGen, TR::InstOpCode::XPCALLDESC, node);
-         // Assign this pseudoCallDesc to the NOP Instruction.
-         ((TR::S390NOPInstruction *)cursor)->setCallDescInstr(pseudoCallDesc);
-         }
+
+      TR::S390PseudoInstruction *pseudoCallDesc = static_cast<TR::S390PseudoInstruction *>(generateS390PseudoInstruction(codeGen, TR::InstOpCode::XPCALLDESC, node, NULL, cursor));
+      // Assign this pseudoCallDesc to the NOP Instruction.
+      static_cast<TR::S390NOPInstruction *>(cursor)->setCallDescInstr(pseudoCallDesc);
+      cursor = pseudoCallDesc;
       }
+
    nop->setCallType(callType);
    return cursor;
-   }
-
-/**
- * General XPLink utility
- *
- * Create the XPLink descriptor that is realized in binary as an
- * 8 byte value
- */
-TR::S390ConstantDataSnippet *
-TR::J9S390zOSSystemLinkage::createCallDescriptor(TR::Node *node, uint64_t initialValue)
-   {
-   TR::S390ConstantDataSnippet *desc;
-   desc = (TR::S390ConstantDataSnippet *) cg()->findOrCreate8ByteConstant(node, (int64_t)initialValue, false);
-   return desc;
    }

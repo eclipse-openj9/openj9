@@ -8594,8 +8594,10 @@ static bool genZeroInitObject2(
          case 4:
             generateMemRegInstruction(MOVDMemReg, node, generateX86MemoryReference(targetReg, headerSize + offset, cg), scratchReg, cg);
             break;
+         case 0:
+            break;
          default:
-            TR_ASSERT(false, "residue should only be 4 or 8.");
+            TR_ASSERT(false, "residue size should only be 0, 4 or 8.");
          }
       return false;
       }
