@@ -1888,6 +1888,8 @@ getITableIndexForMethod(J9Method * method, J9Class *targetInterface);
  * Returns the first ROM method following the argument.
  * If this is called on the last ROM method in a ROM class
  * it will return an undefined value.
+ * The defining class of method must be an interface; do not use this
+ * for methods inherited from java.lang.Object.
  *
  * @param[in] romMethod - the current ROM method
  * @return - the ROM method following the current one
