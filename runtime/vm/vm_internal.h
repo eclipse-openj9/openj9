@@ -389,7 +389,7 @@ int32_t
 j9gs_deinitializeThread(struct J9VMThread *vmThread);
 #endif
 
-/* VMAccess.cpp */
+/* FlushProcessWriteBuffers.cpp */
 
 UDATA initializeExclusiveAccess(J9JavaVM *vm);
 void shutDownExclusiveAccess(J9JavaVM *vm);
