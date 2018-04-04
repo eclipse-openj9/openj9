@@ -4793,6 +4793,9 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_RAS_EYECATCHERS)
 	void (*rasSetServiceLevel)(struct J9JavaVM *vm, const char *runtimeVersion);
 #endif /* J9VM_RAS_EYECATCHERS */
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+	void (*flushProcessWriteBuffers)(struct J9JavaVM *vm);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 } J9InternalVMFunctions;
 
 
