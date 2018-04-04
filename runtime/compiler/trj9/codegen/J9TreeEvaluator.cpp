@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -368,22 +368,23 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
             if (TR::Compiler->cls.isReferenceArray(cg->comp(), castClass))
                {
                TR_OpaqueClassBlock *componentClass = fej9->getComponentClassFromArrayClass(castClass);
+               TR_OpaqueClassBlock *leafClass = fej9->getLeafComponentClassFromArrayClass(castClass);
 
-               // Cast class is an array of java/lang/Object, all we need to do is check if the object is an array of non-primitives.
+               // Cast class is a single dim array of java/lang/Object, all we need to do is check if the object is an array of non-primitives.
                //
-               if (cg->comp()->getObjectClassPointer() == componentClass)
+               if (cg->comp()->getObjectClassPointer() == componentClass && componentClass == leafClass)
                   {
                   sequences[i++] = ArrayOfJavaLangObjectTest;
                   sequences[i++] = GoToFalse;
                   }
-               // Cast class is an array of a final class, all we need to do is check if the object is of this type, anything else is false.
+               // Cast class is a single dim array of a final class, all we need to do is check if the object is of this type, anything else is false.
                //
-               else if (fej9->isClassFinal(componentClass))
+               else if (fej9->isClassFinal(componentClass) && componentClass == leafClass)
                   {
                   sequences[i++] = ClassEqualityTest;
                   sequences[i++] = GoToFalse;
                   }
-               // Cast class is an array of some non-final class.
+               // Cast class is an array of some non-final class or multiple dimensions.
                //
                else
                   {
