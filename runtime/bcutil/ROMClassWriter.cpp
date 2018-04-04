@@ -82,14 +82,14 @@ public:
 	virtual void visitConstant(U_16 elementNameIndex, U_16 cpIndex, U_8 elementType)
 	{
 		_cursor->writeU8(elementType, Cursor::GENERIC);
-		_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndexForAnnotation(cpIndex), Cursor::GENERIC);
+		_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndex(cpIndex), Cursor::GENERIC);
 	}
 
 	virtual void visitEnum(U_16 elementNameIndex, U_16 typeNameIndex, U_16 constNameIndex)
 	{
 		_cursor->writeU8('e', Cursor::GENERIC);
-		_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndexForAnnotation(typeNameIndex), Cursor::GENERIC);
-		_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndexForAnnotation(constNameIndex), Cursor::GENERIC);
+		_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndex(typeNameIndex), Cursor::GENERIC);
+		_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndex(constNameIndex), Cursor::GENERIC);
 	}
 
 	virtual void visitClass(U_16 elementNameIndex, U_16 cpIndex)
@@ -180,7 +180,7 @@ public:
 
 	void visitAnnotation(U_16 typeIndex, U_16 elementValuePairCount)
 	{
-		_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndexForReference(typeIndex), Cursor::GENERIC);
+		_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndex(typeIndex), Cursor::GENERIC);
 		_cursor->writeBigEndianU16(elementValuePairCount, Cursor::GENERIC);
 	}
 
@@ -274,7 +274,7 @@ public:
 private:
 	void writeElementName(U_16 elementNameIndex)
 	{
-		_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndexForReference(elementNameIndex), Cursor::GENERIC);
+		_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndex(elementNameIndex), Cursor::GENERIC);
 	}
 
 	void writeAnnotationAttribute(U_32 length)
@@ -499,7 +499,7 @@ public:
 
 	void visitMethodHandle(U_16 cfrKind, U_16 cfrCPIndex)
 	{
-		U_32 cpIndex = _constantPoolMap->getROMClassCPIndex(cfrCPIndex, splitTypeMap[cfrKind]);
+		U_32 cpIndex = _constantPoolMap->getROMClassCPIndex(cfrCPIndex);
 
 		Trc_BCU_Assert_NotEquals(cpIndex, 0);
 
@@ -616,7 +616,7 @@ ROMClassWriter::writeFields(Cursor *cursor, bool markAndCountOnly)
 				cursor->writeU32(iterator.getConstantValueSlot1(), Cursor::GENERIC);
 				cursor->writeU32(iterator.getConstantValueSlot2(), Cursor::GENERIC);
 			} else if (iterator.isConstantString()) {
-				cursor->writeU32(U_32(_constantPoolMap->getROMClassCPIndexForReference(iterator.getConstantValueConstantPoolIndex())), Cursor::GENERIC);
+				cursor->writeU32(U_32(_constantPoolMap->getROMClassCPIndex(iterator.getConstantValueConstantPoolIndex())), Cursor::GENERIC);
 			}
 		}
 
@@ -867,7 +867,7 @@ private:
 		_cursor->writeU32(startPC, Cursor::GENERIC);
 		_cursor->writeU32(endPC, Cursor::GENERIC);
 		_cursor->writeU32(handlerPC, Cursor::GENERIC);
-		_cursor->writeU32(_constantPoolMap->getROMClassCPIndexForReference(exceptionClassCPIndex), Cursor::GENERIC);
+		_cursor->writeU32(_constantPoolMap->getROMClassCPIndex(exceptionClassCPIndex), Cursor::GENERIC);
 	}
 
 	void visitStackMapObject(U_8 slotType, U_16 classCPIndex, U_16 classNameCPIndex)
@@ -912,7 +912,7 @@ private:
 			 *   u2 cpIndex (ROMClass constant pool index)
 			 */
 			_cursor->writeU8(slotType, Cursor::GENERIC);
-			_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndexForReference(classCPIndex), Cursor::GENERIC);
+			_cursor->writeBigEndianU16(_constantPoolMap->getROMClassCPIndex(classCPIndex), Cursor::GENERIC);
 		}
 	}
 
@@ -1028,13 +1028,13 @@ private:
 
 	void visitBootstrapMethod(U_16 cpIndex, U_16 argumentCount)
 	{
-		_cursor->writeU16(_constantPoolMap->getROMClassCPIndexForReference(cpIndex), Cursor::GENERIC);
+		_cursor->writeU16(_constantPoolMap->getROMClassCPIndex(cpIndex), Cursor::GENERIC);
 		_cursor->writeU16(argumentCount, Cursor::GENERIC);
 	}
 
 	void visitBootstrapArgument(U_16 cpIndex)
 	{
-		_cursor->writeU16(_constantPoolMap->getROMClassCPIndexForReference(cpIndex), Cursor::GENERIC);
+		_cursor->writeU16(_constantPoolMap->getROMClassCPIndex(cpIndex), Cursor::GENERIC);
 	}
 
 	void visitCallSite(U_16 nameAndSignatureIndex, U_16 bootstrapMethodIndex)
@@ -1641,7 +1641,7 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	 */
 	if (_classFileOracle->hasEnclosingMethod()) {
 		cursor->mark(_enclosingMethodSRPKey);
-		cursor->writeU32(_constantPoolMap->getROMClassCPIndexForReference(_classFileOracle->getEnclosingMethodClassRefIndex()), Cursor::GENERIC);
+		cursor->writeU32(_constantPoolMap->getROMClassCPIndex(_classFileOracle->getEnclosingMethodClassRefIndex()), Cursor::GENERIC);
 		cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(_classFileOracle->getEnclosingMethodNameAndSignatureIndex()), Cursor::SRP_TO_NAME_AND_SIGNATURE);
 	}
 
@@ -1773,7 +1773,7 @@ ROMClassWriter::writeByteCodes(Cursor* cursor, ClassFileOracle::MethodIterator *
 					code[entry->codeIndex - 1] = JBinvokestaticsplit;
 					*dest = _constantPoolMap->getStaticSplitTableIndex(entry->cpIndex);
 				} else {
-					*dest = _constantPoolMap->getROMClassCPIndex(entry->cpIndex, entry->type);
+					*dest = _constantPoolMap->getROMClassCPIndex(entry->cpIndex);
 				}
 				break;
 
@@ -1782,12 +1782,12 @@ ROMClassWriter::writeByteCodes(Cursor* cursor, ClassFileOracle::MethodIterator *
 					code[entry->codeIndex - 1] = JBinvokespecialsplit;
 					*dest = _constantPoolMap->getSpecialSplitTableIndex(entry->cpIndex);
 				} else {
-					*dest = _constantPoolMap->getROMClassCPIndex(entry->cpIndex, entry->type);
+					*dest = _constantPoolMap->getROMClassCPIndex(entry->cpIndex);
 				}
 				break;
 
 			default:
-				*dest = _constantPoolMap->getROMClassCPIndex(entry->cpIndex, entry->type);
+				*dest = _constantPoolMap->getROMClassCPIndex(entry->cpIndex);
 				break;
 			}
 		}
