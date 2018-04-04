@@ -38,6 +38,7 @@
 		</groups>
 		<subsets>
 			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 </playlist>

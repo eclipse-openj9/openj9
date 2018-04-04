@@ -946,7 +946,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-	<test id="Test 53: Make sure classes are being stored to the shared cache " timeout="600" runPath=".">
+	<test id="Test 53: Make sure classes are being stored to the shared cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,verboseIO $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Stored class java/.* in shared cache for class-loader id 0 with URL .* \(index</output>
@@ -958,7 +958,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-	<test id="Test 54: Make sure classes are being found in the shared cache " timeout="600" runPath=".">
+	<test id="Test 54: Make sure classes are being found in the shared cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,verboseIO $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Found class java/.* in shared cache for class-loader id 0</output>

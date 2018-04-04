@@ -52,6 +52,8 @@
 	$(TEST_STATUS)</command>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 		<levels>
 			<level>sanity</level>
@@ -78,6 +80,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -95,6 +99,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 		<levels>
 			<level>sanity</level>
@@ -118,6 +124,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 		<levels>
 			<level>sanity</level>
@@ -148,6 +156,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -165,6 +175,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 		<levels>
 			<level>sanity</level>
@@ -217,6 +229,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -261,6 +275,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -304,6 +320,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -348,6 +366,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -393,6 +413,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -437,6 +459,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 	<!-- Attach API tests -->
@@ -480,6 +504,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -504,6 +530,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -528,6 +556,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -552,6 +582,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -576,6 +608,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -600,6 +634,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -655,6 +691,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -669,6 +707,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 		<levels>
 			<level>sanity</level>
@@ -729,6 +769,7 @@
 		<subsets>
 			<subset>SE90</subset>
 			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -769,6 +810,7 @@
 		<subsets>
 			<subset>SE90</subset>
 			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -869,6 +911,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -970,6 +1014,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1004,6 +1050,8 @@
 	$(TEST_STATUS)</command>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 		<levels>
 			<level>sanity</level>
@@ -1031,6 +1079,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1064,6 +1114,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1093,6 +1145,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1122,6 +1176,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1151,6 +1207,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1179,6 +1237,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1204,6 +1264,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1226,6 +1288,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1248,6 +1312,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 	
@@ -1270,6 +1336,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1299,6 +1367,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1326,6 +1396,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1352,6 +1424,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1374,6 +1448,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1395,6 +1471,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1416,6 +1494,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1438,6 +1518,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1468,6 +1550,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1495,6 +1579,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1522,6 +1608,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1543,6 +1631,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1564,6 +1654,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1586,6 +1678,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1608,6 +1702,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1629,6 +1725,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1655,6 +1753,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1678,6 +1778,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1701,6 +1803,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 	
@@ -1726,6 +1830,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1748,6 +1854,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1769,6 +1877,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1794,6 +1904,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1820,6 +1932,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1841,6 +1955,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 

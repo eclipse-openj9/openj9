@@ -104,7 +104,7 @@ sub generateOnDir {
 		next if $entry eq '.' or $entry eq '..';
 		my $tempExclude = 0;
 		# tmporary exclusion, remove this block when JCL_VERSION separation is removed
-		if (($javaVersion eq "SE90") || ($javaVersion eq "SE80")) {
+		if (($javaVersion ne "Panama") && ($javaVersion ne "Valhalla")) {
 			my $JCL_VERSION = '';
 			if ( exists $ENV{'JCL_VERSION'} ) {
 				$JCL_VERSION = $ENV{'JCL_VERSION'};
