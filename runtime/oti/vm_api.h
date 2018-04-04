@@ -2770,7 +2770,7 @@ romImageNewSegment(J9JavaVM *vm, J9ROMImageHeader *header, UDATA isBaseType, J9C
  * @param[in] currentThread the current J9VMThread
  * @param[in] string a string object to be copied
  * 				it can't be NULL
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
+ * @param[in] stringFlags the flag to determine performing '.' --> '/' or NULL termination
  * @param[in] prependStr the string to be prepended before the string object to be copied
  * 				it can't be NULL but can be an empty string ""
  * @param[in] prependStrLength The length of prependStr as computed by strlen.
@@ -2781,7 +2781,30 @@ romImageNewSegment(J9JavaVM *vm, J9ROMImageHeader *header, UDATA isBaseType, J9C
  * @return a char pointer to the string
  */
 char*
-copyStringToUTF8WithMemAlloc(J9VMThread *currentThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength, UDATA *utf8Length);
+copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength, UDATA *utf8Length);
+
+
+/**
+* Copy a string object to a J9UTF8 data buffer, and optionally prepend a string before it.
+*
+* @note The caller must free the memory from this pointer if the return value is NOT the buffer argument.
+* @note If the buffer is not large enough to encode the string this function will allocate enough memory to encode
+*       the worst-case UTF8 encoding of the supplied UTF16 string (length of string * 3 bytes).
+*
+* @param[in] currentThread the current J9VMThread
+* @param[in] string a string object to be copied
+* 				it can't be NULL
+* @param[in] stringFlags the flag to determine performing '.' --> '/' or NULL termination
+* @param[in] prependStr the string to be prepended before the string object to be copied
+* 				it can't be NULL but can be an empty string ""
+* @param[in] prependStrLength The length of prependStr as computed by strlen.
+* @param[in] buffer the buffer for the string
+* @param[in] bufferLength the buffer length
+*
+* @return a J9UTF8 pointer to the string
+*/
+J9UTF8*
+copyStringToJ9UTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength);
 
 
 /**

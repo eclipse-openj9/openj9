@@ -192,7 +192,9 @@ Java_java_lang_invoke_PrimitiveHandle_lookupMethod(JNIEnv *env, jobject handle, 
 	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9UTF8 *nameUTF8 = NULL;
+	char nameUTF8Buffer[256];
 	J9UTF8 *signatureUTF8 = NULL;
+	char signatureUTF8Buffer[256];
 	UDATA method;
 	J9Class *j9LookupClass;
 	J9Class *j9SpecialCaller = NULL;
@@ -203,10 +205,17 @@ Java_java_lang_invoke_PrimitiveHandle_lookupMethod(JNIEnv *env, jobject handle, 
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 
-	if ((nameUTF8 = allocateJ9UTF8(env, name)) == NULL) {
+	nameUTF8 = vmFuncs->copyStringToJ9UTF8WithMemAlloc(vmThread, J9_JNI_UNWRAP_REFERENCE(name), J9_STR_NONE, "", 0, nameUTF8Buffer, sizeof(nameUTF8Buffer));
+
+	if (nameUTF8 == NULL) {
+		vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
 		goto _cleanup;
 	}
-	if ((signatureUTF8 = allocateJ9UTF8(env, signature)) == NULL) {
+
+	signatureUTF8 = vmFuncs->copyStringToJ9UTF8WithMemAlloc(vmThread, J9_JNI_UNWRAP_REFERENCE(signature), J9_STR_NONE, "", 0, signatureUTF8Buffer, sizeof(signatureUTF8Buffer));
+
+	if (signatureUTF8 == NULL) {
+		vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
 		goto _cleanup;
 	}
 
@@ -282,8 +291,14 @@ Java_java_lang_invoke_PrimitiveHandle_lookupMethod(JNIEnv *env, jobject handle, 
 _cleanup:
 	vmFuncs->internalReleaseVMAccess(vmThread);
 
-	j9mem_free_memory(signatureUTF8);
-	j9mem_free_memory(nameUTF8);
+	if (signatureUTF8 != (J9UTF8*)signatureUTF8Buffer) {
+		j9mem_free_memory(signatureUTF8);
+	}
+
+	if (nameUTF8 != (J9UTF8*)nameUTF8Buffer) {
+		j9mem_free_memory(nameUTF8);
+	}
+
 	return result;	
 }
 
@@ -454,7 +469,8 @@ releaseMutexAndReturn:
 UDATA
 lookupField(JNIEnv *env, jboolean isStatic, J9Class *j9LookupClass, jstring name, J9UTF8 *sigUTF, J9Class **definingClass, UDATA *romField, jclass accessClass)
 {
-	J9UTF8 *nameUTF = NULL;
+	J9UTF8 *nameUTF8 = NULL;
+	char nameUTF8Buffer[256];
 	J9Class *j9AccessClass = NULL;	/* J9Class for java.lang.Class accessClass */
 	UDATA field = 0;
 	J9VMThread *vmThread = (J9VMThread *) env;
@@ -462,8 +478,10 @@ lookupField(JNIEnv *env, jboolean isStatic, J9Class *j9LookupClass, jstring name
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	PORT_ACCESS_FROM_VMC(vmThread);
 
-	nameUTF = allocateJ9UTF8(env, name);
-	if (NULL == nameUTF) {
+	nameUTF8 = vmFuncs->copyStringToJ9UTF8WithMemAlloc(vmThread, J9_JNI_UNWRAP_REFERENCE(name), J9_STR_NONE, "", 0, nameUTF8Buffer, sizeof(nameUTF8Buffer));
+
+	if (NULL == nameUTF8) {
+		vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
 		Assert_JCL_notNull(vmThread->currentException);
 		goto _cleanup;
 	}
@@ -473,7 +491,7 @@ lookupField(JNIEnv *env, jboolean isStatic, J9Class *j9LookupClass, jstring name
 	}
 
 	if (JNI_TRUE == isStatic) {
-		field = (UDATA) vmFuncs->staticFieldAddress(vmThread, j9LookupClass, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), definingClass, romField, 0, j9AccessClass);
+		field = (UDATA) vmFuncs->staticFieldAddress(vmThread, j9LookupClass, J9UTF8_DATA(nameUTF8), J9UTF8_LENGTH(nameUTF8), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), definingClass, romField, 0, j9AccessClass);
 		if (0 == field) {
 			/* IllegalAccessError / IncompatibleClassChangeError / NoSuchFieldError will be pending */
 			Assert_JCL_notNull(vmThread->currentException);
@@ -485,7 +503,7 @@ lookupField(JNIEnv *env, jboolean isStatic, J9Class *j9LookupClass, jstring name
 		field = (UDATA) field - (UDATA) (*definingClass)->ramStatics;
 		field += J9_SUN_STATIC_FIELD_OFFSET_TAG;
 	} else {
-		field = (UDATA) vmFuncs->instanceFieldOffset(vmThread, j9LookupClass, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), definingClass, romField, 0);
+		field = (UDATA) vmFuncs->instanceFieldOffset(vmThread, j9LookupClass, J9UTF8_DATA(nameUTF8), J9UTF8_LENGTH(nameUTF8), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), definingClass, romField, 0);
 		if (-1 == field) {
 			/* IllegalAccessError / IncompatibleClassChangeError / NoSuchFieldError will be pending */
 			Assert_JCL_notNull(vmThread->currentException);
@@ -500,14 +518,19 @@ lookupField(JNIEnv *env, jboolean isStatic, J9Class *j9LookupClass, jstring name
 	Assert_JCL_notNull((J9ROMFieldShape *)(*romField));
 
 _cleanup:
-	j9mem_free_memory(nameUTF);
+
+	if (nameUTF8 != (J9UTF8*)nameUTF8Buffer) {
+		j9mem_free_memory(nameUTF8);
+	}
+
 	return field;
 }
 
 jclass JNICALL
 Java_java_lang_invoke_PrimitiveHandle_lookupField(JNIEnv *env, jobject handle, jclass lookupClass, jstring name, jstring signature, jboolean isStatic, jclass accessClass)
 {
-	J9UTF8 *sigUTF = NULL;
+	J9UTF8 *signatureUTF8 = NULL;
+	char signatureUTF8Buffer[256];
 	J9Class *j9LookupClass;			/* J9Class for java.lang.Class lookupClass */
 	J9Class *definingClass = NULL;	/* Returned by calls to find field */
 	UDATA field;
@@ -520,22 +543,25 @@ Java_java_lang_invoke_PrimitiveHandle_lookupField(JNIEnv *env, jobject handle, j
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 
-	if ((sigUTF = allocateJ9UTF8(env, signature)) == NULL) {
+	signatureUTF8 = vmFuncs->copyStringToJ9UTF8WithMemAlloc(vmThread, J9_JNI_UNWRAP_REFERENCE(signature), J9_STR_NONE, "", 0, signatureUTF8Buffer, sizeof(signatureUTF8Buffer));
+
+	if (signatureUTF8 == NULL) {
+		vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
 		Assert_JCL_notNull(vmThread->currentException);
 		goto _cleanup;
 	}
 
 	j9LookupClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, lookupClass);
 
-	field = lookupField(env, isStatic, j9LookupClass, name, sigUTF, &definingClass, &romField, accessClass);
+	field = lookupField(env, isStatic, j9LookupClass, name, signatureUTF8, &definingClass, &romField, accessClass);
 
 	if (NULL != vmThread->currentException) {
 		goto _cleanup;
 	}
 
 	/* Check signature for classloader visibility */
-	if (!accessCheckFieldSignature(vmThread, j9LookupClass, romField, J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(vmThread, J9_JNI_UNWRAP_REFERENCE(handle)), sigUTF)) {
-		setClassLoadingConstraintLinkageError(vmThread, definingClass, sigUTF);
+	if (!accessCheckFieldSignature(vmThread, j9LookupClass, romField, J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(vmThread, J9_JNI_UNWRAP_REFERENCE(handle)), signatureUTF8)) {
+		setClassLoadingConstraintLinkageError(vmThread, definingClass, signatureUTF8);
 		goto _cleanup;
 	}
 
@@ -545,7 +571,11 @@ Java_java_lang_invoke_PrimitiveHandle_lookupField(JNIEnv *env, jobject handle, j
 
 _cleanup:
 	vmFuncs->internalExitVMToJNI(vmThread);
-	j9mem_free_memory(sigUTF);
+
+	if (signatureUTF8 != (J9UTF8*)signatureUTF8Buffer) {
+		j9mem_free_memory(signatureUTF8);
+	}
+
 	return result;
 }
 
@@ -906,31 +936,6 @@ static void JNICALL
 vmFinalizeImpl(JNIEnv *env, jclass methodHandleClass, jlong thunkAddress)
 {
 	return;
-}
-
-/*
- * Allocate and fill in a J9UTF8 based on the jstring passed in.
- * Will set NativeOOM if unable to allocate the utf8.
- * MUST hold VM Access when calling this function
- */
-J9UTF8 *
-allocateJ9UTF8(JNIEnv *env, jstring name)
-{
-	J9VMThread *vmThread = (J9VMThread *) env;
-	J9InternalVMFunctions *vmFuncs = vmThread->javaVM->internalVMFunctions;
-	J9UTF8 *utf8 = NULL;
-	j9object_t jlString = J9_JNI_UNWRAP_REFERENCE(name);
-	UDATA utf8Length = 0;
-
-	utf8 = (J9UTF8*)vmFuncs->copyStringToUTF8WithMemAlloc(vmThread, jlString, J9_STR_NONE, "\0\0", sizeof(utf8->length), NULL, 0, &utf8Length);
-
-	if (NULL == utf8) {
-		vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
-	} else {
-		J9UTF8_SET_LENGTH(utf8, (U_16)utf8Length);
-	}
-
-	return utf8;
 }
 
 /**

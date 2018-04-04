@@ -322,9 +322,9 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 	Assert_VM_notNull(prependStr);
 	Assert_VM_notNull(string);
 
-	char *strUTF = NULL;
-	UDATA stringLen = J9VMJAVALANGSTRING_LENGTH(vmThread, string) * 3;
-	UDATA length = stringLen + prependStrLength;
+	U_8* result = NULL;
+	UDATA stringLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string) * 3;
+	UDATA length = stringLength + prependStrLength;
 
 	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
 		++length;
@@ -333,26 +333,64 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 	PORT_ACCESS_FROM_VMC(vmThread);
 
 	if (length > bufferLength) {
-		strUTF = (char *)j9mem_allocate_memory(length, OMRMEM_CATEGORY_VM);
+		result = (U_8*)j9mem_allocate_memory(length, OMRMEM_CATEGORY_VM);
 	} else {
-		strUTF = buffer;
+		result = (U_8*)buffer;
 	}
-	if (NULL != strUTF) {
+
+	if (NULL != result) {
 		UDATA computedUtf8Length = 0;
 
 		if (0 < prependStrLength) {
-			memcpy(strUTF, prependStr, prependStrLength);
+			memcpy(result, prependStr, prependStrLength);
 		}
 
-		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, (U_8 *)(strUTF + prependStrLength), length - prependStrLength);
+		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, result + prependStrLength, length - prependStrLength);
 
 		if (NULL != utf8Length) {
 			*utf8Length = computedUtf8Length + prependStrLength;
 		}
 	}
-	return strUTF;
+
+	return (char*)result;
 }
 
+J9UTF8*
+copyStringToJ9UTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength)
+{
+	Assert_VM_notNull(prependStr);
+	Assert_VM_notNull(string);
+
+	U_8* result = NULL;
+	UDATA stringLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string) * 3;
+	UDATA length = sizeof(((J9UTF8*)0)->length) + prependStrLength + stringLength;
+
+	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
+		++length;
+	}
+
+	PORT_ACCESS_FROM_VMC(vmThread);
+
+	if (length > bufferLength) {
+		result = (U_8*)j9mem_allocate_memory(length, OMRMEM_CATEGORY_VM);
+	} else {
+		result = (U_8*)buffer;
+	}
+
+	if (NULL != result) {
+		UDATA computedUtf8Length = 0;
+
+		if (0 < prependStrLength) {
+			memcpy(result + sizeof(((J9UTF8*)0)->length), prependStr, prependStrLength);
+		}
+
+		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, result + sizeof(((J9UTF8*)0)->length) + prependStrLength, length - sizeof(((J9UTF8*)0)->length) - prependStrLength);
+
+		J9UTF8_SET_LENGTH(result, (U_16)computedUtf8Length + (U_16)prependStrLength);
+	}
+
+	return (J9UTF8*)result;
+}
 
 IDATA
 getStringUTF8Length(J9VMThread *vmThread, j9object_t string)

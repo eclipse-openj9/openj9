@@ -145,17 +145,11 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 	if (NULL == jrtURL) {
 		if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 			/* set jrt URL for the module */
-#define JRT_URL_PROTOCOL "jrt:/"
-			UDATA jrtURLLength = 0;
-
-			jrtURL = (J9UTF8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "\0\0", sizeof(jrtURL->length), NULL, 0, &jrtURLLength);
+			jrtURL = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, module->moduleName, J9_STR_NONE, "jrt:/", 5, NULL, 0);
 
 			if (NULL == jrtURL) {
 				goto _exit;
 			}
-
-			J9UTF8_SET_LENGTH(jrtURL, (U_16)jrtURLLength);
-#undef JRT_URL_PROTOCOL
 		} else {
 			/* its java.base module */
 #define JRT_JAVA_BASE_URL "jrt:/java.base"

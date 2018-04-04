@@ -176,15 +176,14 @@ addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, j9object_t 
 
 	memcpy(J9UTF8_DATA(j9package->packageName), (void *)packageName, packageNameLength);
 	J9UTF8_DATA(j9package->packageName)[packageNameLength] = '\0';
+	J9UTF8_SET_LENGTH(j9package->packageName, (U_16)packageNameLength);
 #else /* J9VM_JAVA9_BUILD >= 156 */
-	j9package->packageName = (J9UTF8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, packageName, J9_STR_NULL_TERMINATE_RESULT, "\0\0", sizeof(j9package->packageName->length), (char*)buf, bufLen, &packageNameLength);
+	j9package->packageName = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, packageName, J9_STR_NULL_TERMINATE_RESULT, "", 0, (char*)buf, bufLen);
 	if (NULL == j9package->packageName) {
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 		return FALSE;
 	}
 #endif /* J9VM_JAVA9_BUILD >= 156 */
-
-	J9UTF8_SET_LENGTH(j9package->packageName, (U_16)packageNameLength);
 
 	return TRUE;
 }

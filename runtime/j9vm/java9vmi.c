@@ -1701,14 +1701,12 @@ JVM_GetModuleByPackageName(JNIEnv *env, jobject classLoader, jstring packageName
 			thisVMClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, thisClassloader);
 		}
 
-		packageUTF8 = (J9UTF8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, packageObj, J9_STR_NULL_TERMINATE_RESULT, "\0\0", sizeof(packageUTF8->length), buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &packageLength);
+		packageUTF8 = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, packageObj, J9_STR_NULL_TERMINATE_RESULT, "", 0, buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
 
 		if (NULL == packageUTF8) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto exit;
 		}
-
-		J9UTF8_SET_LENGTH(packageUTF8, (U_16)packageLength);
 		
 		if (NULL != strchr((const char*)J9UTF8_DATA(packageUTF8), '.')) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "package name contains '.' instead of '/'");
