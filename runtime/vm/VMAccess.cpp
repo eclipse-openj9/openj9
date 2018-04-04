@@ -34,13 +34,6 @@
 
 /* #define J9VM_DBG */
 
-#if defined(WIN32)
-#include <windows.h>
-VOID WINAPI FlushProcessWriteBuffers(void);
-#elif defined(LINUX) /* WIN32 */
-#include <sys/mman.h>
-#endif /* LINUX */
-
 #include <string.h>
 #include "j9.h"
 #include "j9cfg.h"
@@ -66,26 +59,6 @@ static U_64 updateExclusiveVMAccessStats(J9VMThread* currentThread);
 #if (defined(J9VM_DBG))
 static void badness (char *description);
 #endif /* J9VM_DBG */
-
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-
-static void
-flushProcessWriteBuffers(J9JavaVM *vm)
-{
-#if defined(WIN32)
-	FlushProcessWriteBuffers();
-#elif defined(LINUX) /* WIN32 */
-	int mprc = mprotect(vm->exclusiveGuardPage.address, vm->exclusiveGuardPage.pageSize, PROT_READ | PROT_WRITE);
-	Assert_VM_true(0 == mprc);
-	VM_AtomicSupport::add((UDATA*)vm->exclusiveGuardPage.address, 1);
-	mprc = mprotect(vm->exclusiveGuardPage.address, vm->exclusiveGuardPage.pageSize, PROT_NONE);
-	Assert_VM_true(0 == mprc);
-#else /* LINUX */
-#error flushProcessWriteBuffers unimplemented
-#endif /* LINUX */
-}
-
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
 IDATA
 internalTryAcquireVMAccess(J9VMThread *currentThread)
@@ -1080,6 +1053,10 @@ acquireSafePointVMAccess(J9VMThread * vmThread)
 	}
 	Assert_VM_mustHaveVMAccess(vmThread);
 	Assert_VM_false(J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT));
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	// Current thread must have entered the VM before acquiring exclusive
+	Assert_VM_false(vmThread->inNative);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
 	/* Check the exclusive count on this thread. If it's >1,
 	 * the thread already has exclusive access
@@ -1210,54 +1187,6 @@ releaseSafePointVMAccess(J9VMThread * vmThread)
 	Assert_VM_mustHaveVMAccess(vmThread);
 }
 
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-
-UDATA
-initializeExclusiveAccess(J9JavaVM *vm)
-{
-#if defined(LINUX)
-	PORT_ACCESS_FROM_JAVAVM(vm);
-	UDATA rc = 1;
-	UDATA pageSize = j9vmem_supported_page_sizes()[0];
-	void *addr = j9vmem_reserve_memory(
-		NULL,
-		pageSize,
-		&vm->exclusiveGuardPage,
-		J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE | J9PORT_VMEM_MEMORY_MODE_COMMIT,
-		pageSize, OMRMEM_CATEGORY_VM);
-	if (NULL != addr) {
-		if (0 == mlock(addr, pageSize)) {
-			if (0 == mprotect(vm->exclusiveGuardPage.address, vm->exclusiveGuardPage.pageSize, PROT_NONE)) {
-				rc = 0;
-			} else {
-				j9tty_printf(PORTLIB, "mrprotect bad\n");				
-			}
-		} else {
-			j9tty_printf(PORTLIB, "mlock bad\n");
-			/* free mem */
-		}
-	} else {
-		j9tty_printf(PORTLIB, "vmem bad\n");		
-	}
-	return rc;
-#else /* LINUX */
-	return 0;
-#endif /* LINUX */
-}
-
-void
-shutDownExclusiveAccess(J9JavaVM *vm)
-{
-#if defined(LINUX)
-	if (NULL != vm->exclusiveGuardPage.address) {
-		PORT_ACCESS_FROM_JAVAVM(vm);
-		j9vmem_free_memory(vm->exclusiveGuardPage.address, vm->exclusiveGuardPage.pageSize, &vm->exclusiveGuardPage);
-	}
-#endif /* LINUX */
-}
-
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
-
 /*
  * The current thread must have vm access when calling this function.
  *
@@ -1293,7 +1222,7 @@ _tryAgain:
 			omrthread_monitor_enter(vmThread->publicFlagsMutex);
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-			// TODO: flush
+			flushProcessWriteBuffers(vmThread->javaVM);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 			VM_AtomicSupport::readWriteBarrier(); // necessary?
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */

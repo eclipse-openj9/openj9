@@ -277,7 +277,7 @@ static const struct { \
 
 #define J9_ARE_MODULES_ENABLED(vm) (J2SE_VERSION(vm) >= J2SE_19)
 
-/* Macrco for VM internalVMFunctions */
+/* Macro for VM internalVMFunctions */
 #if defined(J9_INTERNAL_TO_VM)
 #define J9_VM_FUNCTION(currentThread, function) function
 #define J9_VM_FUNCTION_VIA_JAVAVM(javaVM, function) function

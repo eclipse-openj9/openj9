@@ -457,7 +457,7 @@ public:
 		setPublicFlags(vmThread, flags, true);
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-		// TODO: flush
+		J9_VM_FUNCTION(vmThread, flushProcessWriteBuffers)(vmThread->javaVM);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 		VM_AtomicSupport::readWriteBarrier(); // necessary?
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */

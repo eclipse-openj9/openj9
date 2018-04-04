@@ -361,4 +361,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 #if defined(J9VM_RAS_EYECATCHERS)
 	j9rasSetServiceLevel,
 #endif /* J9VM_RAS_EYECATCHERS */
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+	flushProcessWriteBuffers,
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 };

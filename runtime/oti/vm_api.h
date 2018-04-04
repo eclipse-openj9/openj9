@@ -4197,6 +4197,11 @@ typedef struct J9ThreadEnv {
 
 } J9ThreadEnv;
 
+
+/* FlushProcessWriteBuffers.cpp */
+
+void flushProcessWriteBuffers(J9JavaVM *vm);
+
 #ifdef __cplusplus
 }
 #endif
