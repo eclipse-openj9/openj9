@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,6 +45,7 @@ class TR_JProfilingValue : public TR::Optimization
    virtual const char *optDetailString() const throw();
 
    void lowerCalls();
+   void removeRedundantProfilingValueCalls();
    void addProfiling(TR::Node *address, TR::TreeTop *tt);
    void addVFTProfiling(TR::Node *address, TR::TreeTop *tt, bool addNullCheck);
    void performOnNode(TR::Node *node, TR::TreeTop *tt, TR::NodeChecklist *checklist);
