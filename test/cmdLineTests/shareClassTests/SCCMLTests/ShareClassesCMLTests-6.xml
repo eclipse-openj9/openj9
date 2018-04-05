@@ -916,7 +916,7 @@
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
 
 		<!-- Check for non-fatal message in ControlFileOpenWithWriteLock() -->
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9prt.700.*ControlFileFDWithWriteLock(Info:</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9prt.700.*ControlFileFDWithWriteLock\(Info:</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
