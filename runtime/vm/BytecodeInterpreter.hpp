@@ -7905,9 +7905,11 @@ retry:
 		if (J9_UNEXPECTED((flags <= valueOffset) || J9_ARE_NO_BITS_SET(flags, J9FieldFlagPutResolved))) {
 			/* Field is unresolved */
 			J9Method *method = _literals;
+			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
 			resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_VALUE_CLASS, NULL);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
+			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
 				rc = GOTO_ASYNC_CHECK;
 				goto done;
