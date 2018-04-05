@@ -1292,9 +1292,6 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
 TR::SymbolReferenceTable *
 TR_ResolvedJ9MethodBase::_genMethodILForPeeking(TR::ResolvedMethodSymbol *methodSymbol, TR::Compilation *c, bool resetVisitCount,  TR_PrexArgInfo* argInfo)
    {
-   if (c->getOption(TR_EnableHCR))
-      return 0; // Methods can change after peeking them, so peeking is not safe
-
    // Check if the size of method being peeked exceeds the limit
    TR_ResolvedJ9Method * j9method = static_cast<TR_ResolvedJ9Method *>(methodSymbol->getResolvedMethod());
    if (_fe->_jitConfig->bcSizeLimit && (j9method->maxBytecodeIndex() > _fe->_jitConfig->bcSizeLimit))
