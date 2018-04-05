@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,6 +43,7 @@ GC_ConstantPoolObjectSlotIterator::nextSlot()
 {
 	U_32 slotType;
 	j9object_t *slotPtr;
+	j9object_t *result = NULL;
 
 	while(_cpEntryCount) {
 		if(0 == _cpDescriptionIndex) {
@@ -62,17 +63,29 @@ GC_ConstantPoolObjectSlotIterator::nextSlot()
 		_cpDescriptionIndex -= 1;
 
 		/* Determine if the slot should be processed */
-		if((slotType == J9CPTYPE_STRING)
-			|| (slotType == J9CPTYPE_ANNOTATION_UTF8)
-		) {
-			return &(((J9RAMStringRef *) slotPtr)->stringObject);
+		switch (slotType) {
+			case J9CPTYPE_STRING: /* fall through */
+			case J9CPTYPE_ANNOTATION_UTF8:
+				result = &(((J9RAMStringRef *) slotPtr)->stringObject);
+				break;
+			case J9CPTYPE_METHOD_TYPE:
+				result = &(((J9RAMMethodTypeRef *) slotPtr)->type);
+				break;
+			case J9CPTYPE_METHODHANDLE:
+				result = &(((J9RAMMethodHandleRef *) slotPtr)->methodHandle);
+				break;
+			case J9CPTYPE_CONSTANT_DYNAMIC:
+				if (NULL != ((J9RAMConstantDynamicRef *) slotPtr)->value) {
+					result = &(((J9RAMConstantDynamicRef *) slotPtr)->value);
+				} else {
+					result = &(((J9RAMConstantDynamicRef *) slotPtr)->exception);
+				}
+				break;
+			default:
+				continue;
 		}
-		if(slotType == J9CPTYPE_METHOD_TYPE) {
-			return &(((J9RAMMethodTypeRef *) slotPtr)->type);
-		}
-		if(slotType == J9CPTYPE_METHODHANDLE) {
-			return &(((J9RAMMethodHandleRef *) slotPtr)->methodHandle);
-		}
+
+		return result;
 	}
 	return NULL;
 }
