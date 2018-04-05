@@ -46,6 +46,7 @@ import com.ibm.oti.util.Msg;
 import com.ibm.oti.lang.ArgumentHelper;
 import com.ibm.oti.vm.VM;
 import com.ibm.oti.vm.VMLangAccess;
+import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
 
 /*[IF Sidecar19-SE]*/
 import java.util.AbstractList;
@@ -1146,27 +1147,6 @@ public class MethodHandles {
 				enclosing = enclosing.getEnclosingClass();
 			}
 			return previous;
-		}
-		
-		/*
-		 * Determine if 'currentClassLoader' is the same or a child of the requestedLoader.  Necessary
-		 * for access checking. 
-		 */
-		private static boolean doesClassLoaderDescendFrom(ClassLoader currentLoader, ClassLoader requestedLoader) {
-			if (requestedLoader == null) {
-				/* Bootstrap loader is parent of everyone */
-				return true;
-			}
-			if (currentLoader != requestedLoader) {
-				while (currentLoader != null) {
-					if (currentLoader == requestedLoader) {
-						return true;
-					}
-					currentLoader = currentLoader.getParent();
-				}
-				return false;
-			}
-			return true;
 		}
 		
 		/**

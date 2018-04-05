@@ -4409,9 +4409,7 @@ public Class<?> getNestHost() throws SecurityException {
 	 */
 	if (nestHost != this) {
 		SecurityManager securityManager = System.getSecurityManager();
-		if (nestHost == null) {
-			nestHost = this;
-		} else if (securityManager != null) {
+		if (securityManager != null) {
 			ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
 			ClassLoader nestHostClassLoader = nestHost.getClassLoader();			
 			if (!doesClassLoaderDescendFrom(nestHostClassLoader, callerClassLoader)) {
@@ -4460,15 +4458,6 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	if (nestMembers == null) {
 		nestMembers = getNestMembersImpl();
 	}
-	/* The specification requires that if:
-	 *    - a returned class is not the current class
-	 *    - a security manager, s, is present
-	 *    - the caller's class loader is not the same or an ancestor of the returned class
-	 *    - s.checkPackageAccess() disallows access to the package of the returned class
-	 * then throw a SecurityException. Since all classes in the same nest
-	 * must be in the same runtime package and thus the same class loader,
-	 * it is sufficient to check classloader ancestry once.
-	 */
 	SecurityManager securityManager = System.getSecurityManager();
 	if (securityManager != null) {
 		/* All classes in a nest must be in the same runtime package and therefore same classloader */
