@@ -22,8 +22,8 @@
  *******************************************************************************/
 package com.ibm.gpu;
 
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Queue;
@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.ibm.cuda.CudaBuffer;
 import com.ibm.cuda.CudaDevice;
-import com.ibm.cuda.CudaError;
 import com.ibm.cuda.CudaException;
 import com.ibm.cuda.CudaGrid;
 import com.ibm.cuda.CudaKernel;
@@ -46,12 +45,130 @@ import com.ibm.cuda.Dim3;
  */
 final class SortNetwork {
 
-	private static final class DelayedException extends RuntimeException {
+	private static final class LoadKey {
 
-		private static final long serialVersionUID = 6735593106826400878L;
+		final int deviceId;
 
-		DelayedException(Exception exception) {
-			super(exception.getLocalizedMessage(), exception);
+		final char type;
+
+		LoadKey(int deviceId, char type) {
+			super();
+			this.deviceId = deviceId;
+			this.type = type;
+		}
+
+		@Override
+		public boolean equals(Object object) {
+			if (object instanceof LoadKey) {
+				LoadKey that = (LoadKey) object;
+
+				if (this.deviceId == that.deviceId && this.type == that.type) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return (deviceId << 4) ^ type;
+		}
+
+	}
+
+	private static final class LoadResult {
+
+		static LoadResult create(LoadKey key) {
+			try {
+				CudaDevice device = new CudaDevice(key.deviceId);
+				int capability = device.getAttribute(CudaDevice.ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR);
+
+				if (capability < 2) {
+					return failure("Unsupported device"); //$NON-NLS-1$
+				}
+
+				// Allocate a sufficiently large buffer up front to avoid the need
+				// for it to grow (all current variants are less than 48kB).
+				ByteArrayOutputStream ptxBuffer = new ByteArrayOutputStream(48 * 1024);
+
+				PtxKernelGenerator.writeTo(key.type, ptxBuffer);
+
+				// PTX code must be NUL-terminated.
+				ptxBuffer.write(0);
+
+				byte[] ptxCode = ptxBuffer.toByteArray();
+
+				PrivilegedAction<LoadResult> loader = () -> load(device, ptxCode);
+
+				// we assert privilege to load a module
+				return AccessController.doPrivileged(loader);
+			} catch (CudaException | IOException e) {
+				return failure(e);
+			}
+		}
+
+		private static LoadResult failure(Exception exception) {
+			return new LoadResult(exception);
+		}
+
+		private static LoadResult failure(String problem) {
+			return new LoadResult(problem);
+		}
+
+		private static LoadResult load(CudaDevice device, byte[] ptxCode) {
+			LoadResult result;
+
+			try {
+				CudaModule module = null;
+
+				try {
+					module = new CudaModule(device, ptxCode);
+					result = success(new SortNetwork(device, module));
+					ShutdownHook.unloadOnShutdown(module);
+					module = null;
+				} finally {
+					if (module != null) {
+						module.unload();
+					}
+				}
+			} catch (CudaException e) {
+				result = failure(e);
+			}
+
+			return result;
+		}
+
+		private static LoadResult success(SortNetwork network) {
+			return new LoadResult(network);
+		}
+
+		private final SortNetwork network;
+
+		private final String problem;
+
+		private LoadResult(Exception exception) {
+			this(exception.getLocalizedMessage());
+		}
+
+		private LoadResult(SortNetwork network) {
+			super();
+			this.network = network;
+			this.problem = null;
+		}
+
+		private LoadResult(String problem) {
+			super();
+			this.network = null;
+			this.problem = problem;
+		}
+
+		SortNetwork get() throws GPUConfigurationException {
+			if (problem != null) {
+				throw new GPUConfigurationException(problem);
+			}
+
+			return network;
 		}
 
 	}
@@ -91,7 +208,7 @@ final class SortNetwork {
 
 				try {
 					module.unload();
-				} catch (Exception e) {
+				} catch (CudaException e) {
 					// ignore
 				}
 			}
@@ -99,110 +216,9 @@ final class SortNetwork {
 
 	}
 
-	private static final class SortKernels {
-
-		static SortKernels create(CudaDevice device) {
-			// we assert privileges to read our resources and load a module
-			PrivilegedAction<SortKernels> action = () -> {
-				try {
-					String code = "SortKernels.fatbin"; //$NON-NLS-1$
-					CudaModule module = null;
-
-					try (InputStream fatbin = CUDAManager.class.getResourceAsStream(code)) {
-						if (fatbin == null) {
-							throw new FileNotFoundException(code);
-						}
-
-						module = new CudaModule(device, fatbin);
-
-						SortKernels kernels = new SortKernels(module);
-
-						ShutdownHook.unloadOnShutdown(module);
-						module = null;
-
-						return kernels;
-					} finally {
-						if (module != null) {
-							module.unload();
-						}
-					}
-				} catch (Exception e) {
-					throw new DelayedException(e);
-				}
-			};
-
-			return AccessController.doPrivileged(action);
-		}
-
-		final CudaKernel doubleSortFirst4;
-		final CudaKernel doubleSortOther1;
-		final CudaKernel doubleSortOther2;
-		final CudaKernel doubleSortOther3;
-		final CudaKernel doubleSortOther4;
-		final CudaKernel doubleSortPhase9;
-		final CudaKernel floatSortFirst4;
-		final CudaKernel floatSortOther1;
-		final CudaKernel floatSortOther2;
-		final CudaKernel floatSortOther3;
-		final CudaKernel floatSortOther4;
-		final CudaKernel floatSortPhase9;
-		final CudaKernel intSortFirst4;
-		final CudaKernel intSortOther1;
-		final CudaKernel intSortOther2;
-		final CudaKernel intSortOther3;
-		final CudaKernel intSortOther4;
-		final CudaKernel intSortPhase9;
-		final CudaKernel longSortFirst4;
-		final CudaKernel longSortOther1;
-		final CudaKernel longSortOther2;
-		final CudaKernel longSortOther3;
-		final CudaKernel longSortOther4;
-		final CudaKernel longSortPhase9;
-
-		/**
-		 * Finds kernels for later use.
-		 *
-		 * @param module  the module expected to contain the sort kernels
-		 * @throws CudaException
-		 */
-		@SuppressWarnings("nls")
-		private SortKernels(CudaModule module) throws Exception {
-			super();
-
-			doubleSortFirst4 = new CudaKernel(module, "DFirst4");
-			doubleSortPhase9 = new CudaKernel(module, "DPhase9");
-			doubleSortOther1 = new CudaKernel(module, "DOther1");
-			doubleSortOther2 = new CudaKernel(module, "DOther2");
-			doubleSortOther3 = new CudaKernel(module, "DOther3");
-			doubleSortOther4 = new CudaKernel(module, "DOther4");
-
-			floatSortFirst4 = new CudaKernel(module, "FFirst4");
-			floatSortPhase9 = new CudaKernel(module, "FPhase9");
-			floatSortOther1 = new CudaKernel(module, "FOther1");
-			floatSortOther2 = new CudaKernel(module, "FOther2");
-			floatSortOther3 = new CudaKernel(module, "FOther3");
-			floatSortOther4 = new CudaKernel(module, "FOther4");
-
-			intSortFirst4 = new CudaKernel(module, "IFirst4");
-			intSortPhase9 = new CudaKernel(module, "IPhase9");
-			intSortOther1 = new CudaKernel(module, "IOther1");
-			intSortOther2 = new CudaKernel(module, "IOther2");
-			intSortOther3 = new CudaKernel(module, "IOther3");
-			intSortOther4 = new CudaKernel(module, "IOther4");
-
-			longSortFirst4 = new CudaKernel(module, "JFirst4");
-			longSortPhase9 = new CudaKernel(module, "JPhase9");
-			longSortOther1 = new CudaKernel(module, "JOther1");
-			longSortOther2 = new CudaKernel(module, "JOther2");
-			longSortOther3 = new CudaKernel(module, "JOther3");
-			longSortOther4 = new CudaKernel(module, "JOther4");
-		}
-
-	}
-
-	private static final ConcurrentHashMap<CudaDevice, SortKernels> deviceMap;
-
 	private static final Integer[] powersOf2;
+
+	private static final ConcurrentHashMap<LoadKey, LoadResult> resultsMap;
 
 	static {
 		final int phaseCount = 31;
@@ -212,8 +228,8 @@ final class SortNetwork {
 			powers[i] = Integer.valueOf(1 << i);
 		}
 
-		deviceMap = new ConcurrentHashMap<>();
 		powersOf2 = powers;
+		resultsMap = new ConcurrentHashMap<>();
 	}
 
 	private static void checkIndices(int length, int fromIndex, int toIndex) {
@@ -228,6 +244,12 @@ final class SortNetwork {
 		if (toIndex > length) {
 			throw new ArrayIndexOutOfBoundsException(toIndex);
 		}
+	}
+
+	private static SortNetwork load(int deviceId, char type) throws GPUConfigurationException {
+		LoadKey key = new LoadKey(deviceId, type);
+
+		return resultsMap.computeIfAbsent(key, LoadResult::create).get();
 	}
 
 	private static int roundUp(int value, int unit) {
@@ -259,7 +281,7 @@ final class SortNetwork {
 		CUDAManager manager = traceStart(deviceId, "double", fromIndex, toIndex); //$NON-NLS-1$
 
 		try {
-			SortNetwork network = new SortNetwork(deviceId);
+			SortNetwork network = load(deviceId, 'D');
 
 			network.sort(array, fromIndex, toIndex);
 		} catch (GPUConfigurationException | GPUSortException e) {
@@ -286,7 +308,7 @@ final class SortNetwork {
 		CUDAManager manager = traceStart(deviceId, "float", fromIndex, toIndex); //$NON-NLS-1$
 
 		try {
-			SortNetwork network = new SortNetwork(deviceId);
+			SortNetwork network = load(deviceId, 'F');
 
 			network.sort(array, fromIndex, toIndex);
 		} catch (GPUConfigurationException | GPUSortException e) {
@@ -313,7 +335,7 @@ final class SortNetwork {
 		CUDAManager manager = traceStart(deviceId, "int", fromIndex, toIndex); //$NON-NLS-1$
 
 		try {
-			SortNetwork network = new SortNetwork(deviceId);
+			SortNetwork network = load(deviceId, 'I');
 
 			network.sort(array, fromIndex, toIndex);
 		} catch (GPUConfigurationException | GPUSortException e) {
@@ -340,7 +362,7 @@ final class SortNetwork {
 		CUDAManager manager = traceStart(deviceId, "long", fromIndex, toIndex); //$NON-NLS-1$
 
 		try {
-			SortNetwork network = new SortNetwork(deviceId);
+			SortNetwork network = load(deviceId, 'J');
 
 			network.sort(array, fromIndex, toIndex);
 		} catch (GPUConfigurationException | GPUSortException e) {
@@ -378,64 +400,35 @@ final class SortNetwork {
 
 	private final int maxGridDimX;
 
-	private CudaKernel sortFirst4;
+	private final CudaKernel sortFirst4;
 
-	private CudaKernel sortOther1;
+	private final CudaKernel sortOther1;
 
-	private CudaKernel sortOther2;
+	private final CudaKernel sortOther2;
 
-	private CudaKernel sortOther3;
+	private final CudaKernel sortOther3;
 
-	private CudaKernel sortOther4;
+	private final CudaKernel sortOther4;
 
-	private CudaKernel sortPhase9;
+	private final CudaKernel sortPhase9;
 
 	/**
 	 * Initialize a new SortNetwork for the specified device.
 	 *
 	 * @param deviceId
-	 * @throws GPUConfigurationException
+	 * @param elementType
+	 * @throws CudaException 
 	 */
-	private SortNetwork(int deviceId) throws GPUConfigurationException {
+	SortNetwork(CudaDevice device, CudaModule module) throws CudaException {
 		super();
-		this.device = new CudaDevice(deviceId);
-
-		try {
-			this.maxGridDimX = device.getAttribute(CudaDevice.ATTRIBUTE_MAX_GRID_DIM_X);
-		} catch (Exception e) {
-			throw new GPUConfigurationException(e.getLocalizedMessage(), e);
-		}
-	}
-
-	/**
-	 * Gets an existing SortKernels object for the current device,
-	 * if none exists, create a new one, store it and return it.
-	 *
-	 * @return SortKernels
-	 * @throws GPUConfigurationException
-	 * @throws GPUSortException
-	 */
-	private SortKernels getKernels() throws GPUConfigurationException, GPUSortException {
-		try {
-			return deviceMap.computeIfAbsent(device, SortKernels::create);
-		} catch (DelayedException e) {
-			Throwable cause = e.getCause();
-
-			/*
-			 * CUDA 9.0 removed support for devices with compute capability 2
-			 * so the fatbin resource won't have code for those devices when
-			 * CUDA 9+ is used to compile the kernel code. We detect that here
-			 * instead of checking compute capability in the constructor as was
-			 * done originally.
-			 */
-			if (cause instanceof CudaException) {
-				if (((CudaException) cause).code == CudaError.NoKernelImageForDevice) {
-					throw new GPUConfigurationException("Unsupported device detected"); //$NON-NLS-1$
-				}
-			}
-
-			throw new GPUSortException(e.getLocalizedMessage(), e);
-		}
+		this.device = device;
+		this.maxGridDimX = device.getAttribute(CudaDevice.ATTRIBUTE_MAX_GRID_DIM_X);
+		this.sortFirst4 = new CudaKernel(module, "first4"); //$NON-NLS-1$
+		this.sortOther1 = new CudaKernel(module, "other1"); //$NON-NLS-1$
+		this.sortOther2 = new CudaKernel(module, "other2"); //$NON-NLS-1$
+		this.sortOther3 = new CudaKernel(module, "other3"); //$NON-NLS-1$
+		this.sortOther4 = new CudaKernel(module, "other4"); //$NON-NLS-1$
+		this.sortPhase9 = new CudaKernel(module, "phase9"); //$NON-NLS-1$
 	}
 
 	private CudaGrid makeGrid(int threadCount, int blockSize, CudaStream stream) {
@@ -464,97 +457,69 @@ final class SortNetwork {
 	}
 
 	private void sort(double[] array, int fromIndex, int toIndex)
-			throws GPUConfigurationException, GPUSortException {
+			throws GPUSortException {
 		final int length = toIndex - fromIndex;
 
 		if (length < 2) {
 			checkIndices(array.length, fromIndex, toIndex);
 			return;
 		}
-
-		SortKernels kernels = getKernels();
-
-		sortFirst4 = kernels.doubleSortFirst4;
-		sortOther1 = kernels.doubleSortOther1;
-		sortOther2 = kernels.doubleSortOther2;
-		sortOther3 = kernels.doubleSortOther3;
-		sortOther4 = kernels.doubleSortOther4;
-		sortPhase9 = kernels.doubleSortPhase9;
 
 		try (CudaBuffer gpuBuffer = new CudaBuffer(device, length * (long) Double.BYTES)) {
 			gpuBuffer.copyFrom(array, fromIndex, toIndex);
 			sortBuffer(gpuBuffer, length);
 			gpuBuffer.copyTo(array, fromIndex, toIndex);
-		} catch (Exception e) {
+		} catch (CudaException e) {
 			throw new GPUSortException(e.getLocalizedMessage(), e);
 		}
 	}
 
 	private void sort(float[] array, int fromIndex, int toIndex)
-			throws GPUConfigurationException, GPUSortException {
+			throws GPUSortException {
 		final int length = toIndex - fromIndex;
 
 		if (length < 2) {
 			checkIndices(array.length, fromIndex, toIndex);
 			return;
 		}
-
-		SortKernels kernels = getKernels();
-
-		sortFirst4 = kernels.floatSortFirst4;
-		sortOther1 = kernels.floatSortOther1;
-		sortOther2 = kernels.floatSortOther2;
-		sortOther3 = kernels.floatSortOther3;
-		sortOther4 = kernels.floatSortOther4;
-		sortPhase9 = kernels.floatSortPhase9;
 
 		try (CudaBuffer gpuBuffer = new CudaBuffer(device, length * (long) Float.BYTES)) {
 			gpuBuffer.copyFrom(array, fromIndex, toIndex);
 			sortBuffer(gpuBuffer, length);
 			gpuBuffer.copyTo(array, fromIndex, toIndex);
-		} catch (Exception e) {
+		} catch (CudaException e) {
 			throw new GPUSortException(e.getLocalizedMessage(), e);
 		}
 	}
 
 	private void sort(int[] array, int fromIndex, int toIndex)
-			throws GPUConfigurationException, GPUSortException {
+			throws GPUSortException {
 		final int length = toIndex - fromIndex;
 
 		if (length < 2) {
 			checkIndices(array.length, fromIndex, toIndex);
 			return;
 		}
-
-		SortKernels kernels = getKernels();
-
-		sortFirst4 = kernels.intSortFirst4;
-		sortOther1 = kernels.intSortOther1;
-		sortOther2 = kernels.intSortOther2;
-		sortOther3 = kernels.intSortOther3;
-		sortOther4 = kernels.intSortOther4;
-		sortPhase9 = kernels.intSortPhase9;
 
 		try (CudaBuffer gpuBuffer = new CudaBuffer(device, length * (long) Integer.BYTES)) {
 			gpuBuffer.copyFrom(array, fromIndex, toIndex);
 			sortBuffer(gpuBuffer, length);
 			gpuBuffer.copyTo(array, fromIndex, toIndex);
-		} catch (Exception e) {
+		} catch (CudaException e) {
 			throw new GPUSortException(e.getLocalizedMessage(), e);
 		}
 	}
 
-	 /**
+	/**
 	 * Sets up and runs the kernels used to sort LONG arrays
 	 *
 	 * @param array  array to be sorted
 	 * @param fromIndex  starting index of sort
 	 * @param toIndex  ending index of sort
-	 * @throws GPUConfigurationException
 	 * @throws GPUSortException
 	 */
 	private void sort(long[] array, int fromIndex, int toIndex)
-			throws GPUConfigurationException, GPUSortException {
+			throws GPUSortException {
 		final int length = toIndex - fromIndex;
 
 		if (length < 2) {
@@ -562,20 +527,11 @@ final class SortNetwork {
 			return;
 		}
 
-		SortKernels kernels = getKernels();
-
-		sortFirst4 = kernels.longSortFirst4;
-		sortOther1 = kernels.longSortOther1;
-		sortOther2 = kernels.longSortOther2;
-		sortOther3 = kernels.longSortOther3;
-		sortOther4 = kernels.longSortOther4;
-		sortPhase9 = kernels.longSortPhase9;
-
 		try (CudaBuffer gpuBuffer = new CudaBuffer(device, length * (long) Long.BYTES)) {
 			gpuBuffer.copyFrom(array, fromIndex, toIndex);
 			sortBuffer(gpuBuffer, length);
 			gpuBuffer.copyTo(array, fromIndex, toIndex);
-		} catch (Exception e) {
+		} catch (CudaException e) {
 			throw new GPUSortException(e.getLocalizedMessage(), e);
 		}
 	}
@@ -589,7 +545,7 @@ final class SortNetwork {
 	 * @param length  the number of elements to be sorted
 	 * @throws CudaException
 	 */
-	private void sortBuffer(CudaBuffer buffer, int length) throws Exception {
+	private void sortBuffer(CudaBuffer buffer, int length) throws CudaException {
 		try (CudaStream stream = new CudaStream(device)) {
 			final Integer boxLength = Integer.valueOf(length);
 
