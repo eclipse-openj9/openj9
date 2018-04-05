@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,6 +85,9 @@ int32_t J9::Options::_smallMethodBytecodeSizeThresholdForCold = -1; // -1 means 
 
 int32_t J9::Options::_countForMethodsCompiledDuringStartup = 10;
 
+int32_t J9::Options::_countForLoopyBootstrapMethods = -1; // -1 means feature disabled
+int32_t J9::Options::_countForLooplessBootstrapMethods = -1; // -1 means feature disabled
+
 TR::SimpleRegex *J9::Options::_jniAccelerator = NULL;
 
 int32_t J9::Options::_classLoadingPhaseInterval = 500; // ms
@@ -146,6 +149,7 @@ int32_t J9::Options::_compPriorityQSZThreshold = 200;
 int32_t J9::Options::_numQueuedInvReqToDowngradeOptLevel = 20; // If more than 20 inv req are queued we compiled them at cold
 int32_t J9::Options::_qszThresholdToDowngradeOptLevel = -1; // not yet set
 int32_t J9::Options::_qsziThresholdToDowngradeDuringCLP = 0; // -1 or 0 disables the feature and reverts to old behavior
+int32_t J9::Options::_qszThresholdToDowngradeOptLevelDuringStartup = 100000; // a large number disables the feature
 int32_t J9::Options::_cpuUtilThresholdForStarvation = 25; // 25%
 
 // If too many GCR are queued we stop counting.
@@ -657,6 +661,9 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_availableCPUPercentage, 0, "F%d", NOT_IN_SUBSET},
    {"bcLimit=",           "C<nnn>\tbytecode size limit",
         TR::Options::setJitConfigNumericValue, offsetof(J9JITConfig, bcSizeLimit), 0, "P%d"},
+   {"bcountForBootstrapMethods=", "M<nnn>\tcount for loopy methods belonging to bootstrap classes. "
+                                   "Used in no AOT cases",
+        TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_countForLoopyBootstrapMethods, 250, "F%d", NOT_IN_SUBSET },
    {"bigAppSampleThresholdAdjust=", "O\tadjust the hot and scorching threshold for certain 'big' apps",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_bigAppSampleThresholdAdjust, 0, " %d", NOT_IN_SUBSET},
    {"catchSamplingSizeThreshold=", "R<nnn>\tThe sample counter will not be decremented in a catch block "
@@ -707,6 +714,9 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_compilationThreadPriorityCode, 0, "F%d", NOT_IN_SUBSET},
    {"conservativeScorchingSampleThreshold=", "R<nnn>\tLower bound for scorchingSamplingThreshold when scaling based on numProc",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_conservativeScorchingSampleThreshold, 0, "F%d", NOT_IN_SUBSET},
+   {"countForBootstrapMethods=", "M<nnn>\tcount for loopless methods belonging to bootstrap classes. "
+                                 "Used in no AOT cases",
+        TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_countForLooplessBootstrapMethods, 1000, "F%d", NOT_IN_SUBSET },
    {"cpuCompTimeExpensiveThreshold=", "M<nnn>\tthreshold for when hot & very-hot compilations occupied enough cpu time to be considered expensive in millisecond",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_cpuCompTimeExpensiveThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"cpuEntitlementForConservativeScorching=", "M<nnn>\tPercentage. 200 means two full cpus",
@@ -888,6 +898,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_qsziThresholdToDowngradeDuringCLP, 0, "F%d", NOT_IN_SUBSET },
    {"queueSizeThresholdToDowngradeOptLevel=", "M<nnn>\tCompilation queue size threshold when opt level is downgraded",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_qszThresholdToDowngradeOptLevel , 0, "F%d", NOT_IN_SUBSET},
+   {"queueSizeThresholdToDowngradeOptLevelDuringStartup=", "M<nnn>\tCompilation queue size threshold when opt level is downgraded during startup phase",
+        TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_qszThresholdToDowngradeOptLevelDuringStartup , 0, "F%d", NOT_IN_SUBSET },
    {"regmap",             0, SET_JITCONFIG_RUNTIME_FLAG(J9JIT_CG_REGISTER_MAPS) },
    {"relaxedCompilationLimitsSampleThreshold=", "R<nnn>\tGlobal samples below this threshold means we can use higher compilation limits",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_relaxedCompilationLimitsSampleThreshold, 0, " %d", NOT_IN_SUBSET },
