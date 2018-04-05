@@ -202,26 +202,6 @@ static const struct J9VMIgnoredOption ignoredOptionTable[] = {
 };
 #define ignoredOptionTableSize (sizeof(ignoredOptionTable) / sizeof(struct J9VMIgnoredOption))
 
-/* RIM atoi hack */
-#ifdef RIM386
-int atoi(char* string)
-{
-	int result = 0, sign = 1;
-	char ch;
-
-	while(ch = *string, (ch == ' ' || ch == '\t')) string++;
-	if(*string == '-') {
-		sign = -1;
-		string++;
-	}
-	while(ch = *string++) {
-		if((ch >= '0') && (ch <= '9')) result = (result * 10) + (ch - '0');
-		else return sign * result;
-	}
-	return sign * result;
-}
-#endif
-
 IDATA VMInitStages (J9JavaVM *vm, IDATA stage, void* reserved);
 IDATA registerCmdLineMapping (J9JavaVM* vm, char* sov_option, char* j9_option, UDATA mapFlags);
 IDATA postInitLoadJ9DLL (J9JavaVM* vm, const char* dllName, void* argData);
