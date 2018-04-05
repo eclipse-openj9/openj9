@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2017 IBM Corp. and others
+Copyright (c) 2017, 2018 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,6 +59,15 @@ To get started, read our [Contribution Guide](CONTRIBUTING.md).
 [coc]: https://eclipse.org/org/documents/Community_Code_of_Conduct.php
 
 
+What repos are part of the project?
+===================================
+- https://github.com/eclipse/openj9 : OpenJ9 main code base
+- https://github.com/eclipse/openj9-omr : Eclipse OMR clone to stage temporary OMR changes.  (None so far!)
+- https://github.com/eclipse/openj9-systemtest : OpenJ9-specific system tests
+- https://github.com/eclipse/openj9-website : OpenJ9 website repo
+- https://github.com/eclipse/openj9-docs : OpenJ9 documentation repo
+
+
 Where can I learn more?
 =======================
 
@@ -72,4 +81,4 @@ Videos and Presentations
 - [JavaOne 2017: Ask the OpenJ9 Architects](https://www.youtube.com/watch?v=qb5ennM_pgc)
 
 
-Copyright (c) 2017, 2017 IBM Corp. and others
+Copyright (c) 2017, 2018 IBM Corp. and others
