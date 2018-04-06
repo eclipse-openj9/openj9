@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -204,7 +204,7 @@ Java_java_lang_invoke_VarHandle_compareAndSet(JNIEnv *env, jobject handle, jobje
 }
 
 jboolean JNICALL
-Java_java_lang_invoke_VarHandle_compareAndExchangeVolatile(JNIEnv *env, jobject handle, jobject args)
+Java_java_lang_invoke_VarHandle_compareAndExchange(JNIEnv *env, jobject handle, jobject args)
 {
 	throwNewUnsupportedOperationException(env);
 	return JNI_FALSE;
@@ -245,8 +245,29 @@ Java_java_lang_invoke_VarHandle_weakCompareAndSetRelease(JNIEnv *env, jobject ha
 	return JNI_FALSE;
 }
 
+jboolean JNICALL
+Java_java_lang_invoke_VarHandle_weakCompareAndSetPlain(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return JNI_FALSE;
+}
+
 jobject JNICALL
 Java_java_lang_invoke_VarHandle_getAndSet(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndSetAcquire(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndSetRelease(JNIEnv *env, jobject handle, jobject args)
 {
 	throwNewUnsupportedOperationException(env);
 	return NULL;
@@ -258,6 +279,84 @@ Java_java_lang_invoke_VarHandle_getAndAdd(JNIEnv *env, jobject handle, jobject a
 	throwNewUnsupportedOperationException(env);
 	return NULL;
 }
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndAddAcquire(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndAddRelease(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndBitwiseAnd(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndBitwiseAndAcquire(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndBitwiseAndRelease(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndBitwiseOr(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndBitwiseOrAcquire(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndBitwiseOrRelease(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndBitwiseXor(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndBitwiseXorAcquire(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_VarHandle_getAndBitwiseXorRelease(JNIEnv *env, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
 
 jobject JNICALL
 Java_java_lang_invoke_VarHandle_addAndGet(JNIEnv *env, jobject handle, jobject args)
