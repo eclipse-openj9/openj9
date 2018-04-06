@@ -722,13 +722,20 @@ void TR::PPCJNILinkage::releaseVMAccessAtomicFree(TR::Node* callNode, TR::Regist
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
 
+#if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
    generateInstruction(cg(), TR::InstOpCode::lwsync, callNode);
+#endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
+   generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, callNode, tempReg1, 1);
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::Op_st, callNode, new (trHeapMemory()) TR::MemoryReference(metaReg, (int32_t)offsetof(struct J9VMThread, inNative), TR::Compiler->om.sizeofReferenceAddress(), cg()), tempReg1);
+#if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+	generateInstruction(cg(), TR::InstOpCode::sync, callNode); // Necessary?
+#endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
    generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, tempReg1, new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetPublicFlagsOffset(), TR::Compiler->om.sizeofReferenceAddress(), cg()));
-   if (J9_PUBLIC_FLAGS_HALT_THREAD_ANY >= LOWER_IMMED && J9_PUBLIC_FLAGS_HALT_THREAD_ANY <= UPPER_IMMED)
-      generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::andi_r, callNode, tempReg2, tempReg1, cr0Reg, J9_PUBLIC_FLAGS_HALT_THREAD_ANY);
+   if (J9_PUBLIC_FLAGS_VM_ACCESS >= LOWER_IMMED && J9_PUBLIC_FLAGS_VM_ACCESS <= UPPER_IMMED)
+      generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::andi_r, callNode, tempReg2, tempReg1, cr0Reg, J9_PUBLIC_FLAGS_VM_ACCESS);
    else
       {
-      loadConstant(cg(), callNode, J9_PUBLIC_FLAGS_HALT_THREAD_ANY, tempReg2);
+      loadConstant(cg(), callNode, J9_PUBLIC_FLAGS_VM_ACCESS, tempReg2);
       // FIXME: Apparently I'm the first one to ever use a Trg1Src2 record-form instruction...
       // ctor for Trg1Src2 + condReg only has the preced form, if you don't pass a preceding instruction the following instruction will end up as the first instruction after the prologue
       generateTrg1Src2Instruction(cg(), TR::InstOpCode::and_r, callNode, tempReg2, tempReg1, tempReg2, cr0Reg, /* FIXME */ cg()->getAppendInstruction());
@@ -746,10 +753,6 @@ void TR::PPCJNILinkage::releaseVMAccessAtomicFree(TR::Node* callNode, TR::Regist
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, PPCOpProp_BranchUnlikely, callNode, releaseVMAcessSnippetLabel, cr0Reg);
    else
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, releaseVMAcessSnippetLabel, cr0Reg);
-
-   generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, callNode, tempReg1, 1);
-   generateMemSrc1Instruction(cg(), TR::InstOpCode::Op_st, callNode, new (trHeapMemory()) TR::MemoryReference(metaReg, (int32_t)offsetof(struct J9VMThread, inNative), TR::Compiler->om.sizeofReferenceAddress(), cg()), tempReg1);
-   generateInstruction(cg(), TR::InstOpCode::lwsync, callNode); // Necessary?
    }
 
 void TR::PPCJNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* cr0Reg, TR::Register* tempReg1, TR::Register* tempReg2)
@@ -758,7 +761,9 @@ void TR::PPCJNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::Regist
 
    generateTrg1ImmInstruction(cg(), TR::InstOpCode::li, callNode, tempReg1, 0);
    generateMemSrc1Instruction(cg(), TR::InstOpCode::Op_st, callNode, new (trHeapMemory()) TR::MemoryReference(metaReg, (int32_t)offsetof(struct J9VMThread, inNative), TR::Compiler->om.sizeofReferenceAddress(), cg()), tempReg1);
+#if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
    generateInstruction(cg(), TR::InstOpCode::sync, callNode); // Necessary?
+#endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
    generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, tempReg1, new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetPublicFlagsOffset(), TR::Compiler->om.sizeofReferenceAddress(), cg()));
    if (J9_PUBLIC_FLAGS_VM_ACCESS >= LOWER_IMMED && J9_PUBLIC_FLAGS_VM_ACCESS <= UPPER_IMMED)
       generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::Op_cmpli, callNode, cr0Reg, tempReg1, J9_PUBLIC_FLAGS_VM_ACCESS);

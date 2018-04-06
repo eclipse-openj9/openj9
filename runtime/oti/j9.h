@@ -235,8 +235,6 @@ J9PortLibrary *privatePortLibrary = (*portPrivateVMI)->GetPortLibrary(portPrivat
 #define PORT_ACCESS_FROM_VMI(vmi) J9PortLibrary *privatePortLibrary = (*vmi)->GetPortLibrary(vmi)
 /** @} */
 
-#define JNI_NATIVE_CALLED_FAST(env) (J9_ARE_ANY_BITS_SET(J9VMTHREAD_FROM_JNIENV(env)->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS))
-
 #define J9_DECLARE_CONSTANT_UTF8(instanceName, name) \
 static const struct { \
 	U_16 length; \
@@ -279,7 +277,7 @@ static const struct { \
 
 #define J9_ARE_MODULES_ENABLED(vm) (J2SE_VERSION(vm) >= J2SE_19)
 
-/* Macrco for VM internalVMFunctions */
+/* Macro for VM internalVMFunctions */
 #if defined(J9_INTERNAL_TO_VM)
 #define J9_VM_FUNCTION(currentThread, function) function
 #define J9_VM_FUNCTION_VIA_JAVAVM(javaVM, function) function

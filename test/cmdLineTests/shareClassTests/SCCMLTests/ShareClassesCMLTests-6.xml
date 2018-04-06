@@ -507,7 +507,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-	<test id="Test 205-e: Verify the class loaded from the classpath in previous test is present in cache as ORPHAN only and the classpath is not stored in the cache." timout="600" runPath=".">
+	<test id="Test 205-e: Verify the class loaded from the classpath in previous test is present in cache as ORPHAN only and the classpath is not stored in the cache." timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printAllStats=orphan+romclass</command>
 		<output type="success" caseSensitive="yes" regex="no">ORPHAN: org/openj9/test/ivj/Hanoi</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Restrict Classpaths[\s]*= true</output>
@@ -530,7 +530,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-	<test id="Test 205-g: Verify the class loaded from the classpath in previous test is now present in cache as ROMCLASS and the classpath exists in the cache" timout="600" runPath=".">
+	<test id="Test 205-g: Verify the class loaded from the classpath in previous test is now present in cache as ROMCLASS and the classpath exists in the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printAllStats=romclass+classpath</command>
 		<output type="success" caseSensitive="yes" regex="no">ROMCLASS: org/openj9/test/ivj/Hanoi</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" platforms="$NON_WINDOWS_PLATFORMS$">utils/utils.jar</output>
@@ -553,7 +553,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-	<test id="Test 205-i: Verify the class loaded from the classpath in previous test is present in cache as ORPHAN and the classpath does not exist in the cache" timout="600" runPath=".">
+	<test id="Test 205-i: Verify the class loaded from the classpath in previous test is present in cache as ORPHAN and the classpath does not exist in the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printAllStats=orphan+romclass+classpath</command>
 		<output type="success" caseSensitive="yes" regex="no">ORPHAN: VMBench/FibBench</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Restrict Classpaths[\s]*= true</output>
@@ -916,7 +916,7 @@
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
 
 		<!-- Check for non-fatal message in ControlFileOpenWithWriteLock() -->
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9prt.700.*ControlFileFDWithWriteLock(Info:</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9prt.700.*ControlFileFDWithWriteLock\(Info:</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>

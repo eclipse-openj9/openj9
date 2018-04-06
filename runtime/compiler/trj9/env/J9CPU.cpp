@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,69 +49,3 @@ J9::CPU::TO_PORTLIB_getJ9ProcessorDesc()
    return &processorDesc;
    }
 
-
-bool
-J9::CPU::getPPCSupportsVMX()
-   {
-#if defined(J9OS_I5) && defined(J9OS_I5_V5R4)
-   return FALSE;
-#else
-   J9ProcessorDesc   *processorDesc       = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   J9PortLibrary     *privatePortLibrary  = TR::Compiler->portLib;
-   BOOLEAN feature = j9sysinfo_processor_has_feature(processorDesc, J9PORT_PPC_FEATURE_HAS_ALTIVEC);
-   return (TRUE == feature);
-#endif
-   }
-
-bool
-J9::CPU::getPPCSupportsVSX()
-   {
-#if defined(J9OS_I5) && defined(J9OS_I5_V5R4)
-   return FALSE;
-#else
-   J9ProcessorDesc   *processorDesc       = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   J9PortLibrary     *privatePortLibrary  = TR::Compiler->portLib;
-   BOOLEAN feature = j9sysinfo_processor_has_feature(processorDesc, J9PORT_PPC_FEATURE_HAS_VSX);
-   return (TRUE == feature);
-#endif
-   }
-
-bool
-J9::CPU::getPPCSupportsAES()
-   {
-#if defined(J9OS_I5) && defined(J9OS_I5_V5R4)
-   return FALSE;
-#else
-   J9ProcessorDesc   *processorDesc       = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   J9PortLibrary     *privatePortLibrary  = TR::Compiler->portLib;
-   BOOLEAN hasVMX  = j9sysinfo_processor_has_feature(processorDesc, J9PORT_PPC_FEATURE_HAS_ALTIVEC);
-   BOOLEAN hasVSX  = j9sysinfo_processor_has_feature(processorDesc, J9PORT_PPC_FEATURE_HAS_VSX);
-   BOOLEAN isP8    = (processorDesc->processor >= PROCESSOR_PPC_P8);
-   return (isP8 && hasVMX && hasVSX);
-#endif
-   }
-
-bool
-J9::CPU::getPPCSupportsTM()
-   {
-#if defined(J9OS_I5) && defined(J9OS_I5_V5R4)
-   return FALSE;
-#else
-   J9ProcessorDesc   *processorDesc       = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   J9PortLibrary     *privatePortLibrary  = TR::Compiler->portLib;
-   BOOLEAN feature = j9sysinfo_processor_has_feature(processorDesc, J9PORT_PPC_FEATURE_HTM);
-   return (TRUE == feature);
-#endif
-   }
-   
-bool
-J9::CPU::getPPCSupportsLM()
-  {
-#if defined(J9OS_I5) && defined(J9OS_I5_V5R4)
-  return FALSE;
-#else
-  J9ProcessorDesc   *processorDesc       = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-  BOOLEAN isP9    = (processorDesc->processor >= PROCESSOR_PPC_P9);
-  return FALSE;
-#endif
-   }

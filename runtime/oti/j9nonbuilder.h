@@ -2125,6 +2125,14 @@ typedef struct J9ConstantPool {
 #define J9CPTYPE_METHODHANDLE  14
 #define J9CPTYPE_ANNOTATION_UTF8  15
 
+/* 
+ * INTERFACE_STATIC and INTERFACE_INSTANT cpType are used to track the classfile tag of a methodref [CFR_CONSTANT_InterfaceMethodref]
+ * These types are need to support correct initializer for constantpool due to how cp entries are pre-initialized
+ * These will be used to check for cp consistency during resolve time
+ */
+#define J9CPTYPE_INTERFACE_STATIC_METHOD 16
+#define J9CPTYPE_INTERFACE_INSTANCE_METHOD 17 
+
 #define J9_CP_BITS_PER_DESCRIPTION  8
 #define J9_CP_DESCRIPTIONS_PER_U32  4
 #define J9_CP_DESCRIPTION_MASK  255
@@ -4485,8 +4493,8 @@ typedef struct J9InternalVMFunctions {
 	void  ( *deallocateVMThread)(struct J9VMThread * vmThread, UDATA decrementZombieCount, UDATA sendThreadDestroyEvent) ;
 	struct J9MemorySegment*  ( *allocateMemorySegment)(struct J9JavaVM *javaVM, UDATA size, UDATA type, U_32 memoryCategory) ;
 	IDATA  ( *javaThreadProc)(void *entryarg) ;
-	UDATA  ( *copyFromStringIntoUTF8)(struct J9VMThread * vmThread, j9object_t string, char * dest) ;
-	char*  ( *copyStringToUTF8WithMemAlloc)(struct J9VMThread *currentThread, j9object_t string, UDATA stringFlags, const char *prependStr, char *buffer, UDATA bufferLength) ;
+	char*  ( *copyStringToUTF8WithMemAlloc)(struct J9VMThread *currentThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength, UDATA *utf8Length) ;
+	J9UTF8* ( *copyStringToJ9UTF8WithMemAlloc)(struct J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength) ;
 	void  ( *internalAcquireVMAccess)(struct J9VMThread * currentThread) ;
 	void  ( *internalAcquireVMAccessWithMask)(struct J9VMThread * currentThread, UDATA haltFlags) ;
 	void  ( *internalAcquireVMAccessNoMutexWithMask)(struct J9VMThread * vmThread, UDATA haltFlags) ;
@@ -4662,9 +4670,7 @@ typedef struct J9InternalVMFunctions {
 	void  ( *prepareForExceptionThrow)(struct J9VMThread * currentThread) ;
 	void  ( *copyUTF8ToUnicode)(struct J9VMThread * vmThread, U_8 * data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex) ;
 	UDATA  ( *verifyQualifiedName)(struct J9VMThread *vmThread, j9object_t string) ;
-	UDATA  ( *copyCharsIntoUTF8Helper)(struct J9VMThread *vmThread, BOOLEAN compressed, BOOLEAN nullTermination, UDATA stringFlags, j9object_t unicodeBytes, UDATA unicodeOffset, UDATA unicodeLength, U_8 *utf8Data, UDATA utf8Length) ;
-	UDATA  ( *copyStringToUTF8)(struct J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, UDATA utf8Length) ;
-	UDATA  ( *copyStringToUTF8Helper)(struct J9VMThread *vmThread, j9object_t string, BOOLEAN nullTermination, UDATA stringFlags, U_8 *utf8Data, UDATA utf8Length) ;
+	UDATA ( *copyStringToUTF8Helper)(struct J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, UDATA utf8DataLength);
 	void  (JNICALL *sendCompleteInitialization)(struct J9VMThread *vmContext, UDATA reserved1, UDATA reserved2, UDATA reserved3, UDATA reserved4) ;
 	IDATA  ( *J9RegisterAsyncEvent)(struct J9JavaVM * vm, J9AsyncEventHandler eventHandler, void * userData) ;
 	IDATA  ( *J9UnregisterAsyncEvent)(struct J9JavaVM * vm, IDATA handlerKey) ;
@@ -4785,6 +4791,9 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_RAS_EYECATCHERS)
 	void (*rasSetServiceLevel)(struct J9JavaVM *vm, const char *runtimeVersion);
 #endif /* J9VM_RAS_EYECATCHERS */
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+	void (*flushProcessWriteBuffers)(struct J9JavaVM *vm);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 } J9InternalVMFunctions;
 
 
@@ -5415,7 +5424,6 @@ typedef struct J9JavaVM {
 #endif /* J9VM_PORT_ZOS_CEEHDLRSUPPORT */
 	void* originalSIGPIPESignalAction;
 	void* finalizeSlaveData;
-	j9object_t* syspropsListRef;
 	j9object_t* heapOOMStringRef;
 	UDATA strCompEnabled;
 	struct J9IdentityHashData* identityHashData;
@@ -5461,6 +5469,9 @@ typedef struct J9JavaVM {
 	UDATA safePointState;
 	UDATA safePointResponseCount;
 	struct J9VMRuntimeStateListener vmRuntimeStateListener;
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+	J9PortVmemIdentifier exclusiveGuardPage;
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

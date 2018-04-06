@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -390,7 +390,7 @@ SH_ClasspathManagerImpl2::hasTimestampChanged(J9VMThread* currentThread, Classpa
 		if (knownLLH) {
 			header = knownLLH;		/* Optimization: Don't need to get mutex and do lookup if header is provided */
 		} else {
-			itemPath = itemToCheck->getPath(&pathLen);
+			itemPath = itemToCheck->getLocation(&pathLen);
 			header = cpeTableLookup(currentThread, itemPath, pathLen, 0);			/* 0 = isToken. Certainly won't be a token. */
 			if (header == NULL) {
 				/* CMVC 131285: This is not expected to happen, but has been seen with concurrent writing 
@@ -743,7 +743,7 @@ SH_ClasspathManagerImpl2::localUpdate_CheckManually(J9VMThread* currentThread, C
 
 	Trc_SHR_CMI_localUpdate_CheckManually_Entry(currentThread, cp);
 
-	path = cp->itemAt(0)->getPath(&pathLen);
+	path = cp->itemAt(0)->getLocation(&pathLen);
 	known = cpeTableLookup(currentThread, path, pathLen, (cp->getType()==CP_TYPE_TOKEN));
 	if (known && known->_list) {
 		CpLinkedListImpl* cpInCache = NULL;
@@ -1229,7 +1229,7 @@ SH_ClasspathManagerImpl2::storeNew(J9VMThread* currentThread, const ShcItem* ite
 	for (I_16 i=0; i<cpi->getItemsAdded(); i++) {
 		bool isLastItem = (i==(cpi->getItemsAdded()-1));
 		U_16 pathLen = 0;
-		const char* path = cpi->itemAt(i)->getPath(&pathLen);
+		const char* path = cpi->itemAt(i)->getLocation(&pathLen);
 		U_8 isToken = (cpi->getType()==CP_TYPE_TOKEN);
 
 		if (!cpeTableUpdate(currentThread, path, pathLen, i, itemInCache, isToken, isLastItem, cachelet)) {
@@ -1272,7 +1272,7 @@ SH_ClasspathManagerImpl2::markClasspathsStale(J9VMThread* currentThread, Classpa
 	const char* path = NULL;
 	CpLinkedListHdr* header = NULL;
 
-	path = cpei->getPath(&pathLen);
+	path = cpei->getLocation(&pathLen);
 	Trc_SHR_CMI_markClasspathsStale_Entry(currentThread, pathLen, path);
 
 	header = cpeTableLookup(currentThread, path, pathLen, 0);		/* 0 == isToken. We will never mark token cpei stale */
@@ -1282,7 +1282,7 @@ SH_ClasspathManagerImpl2::markClasspathsStale(J9VMThread* currentThread, Classpa
 		Trc_SHR_Assert_ShouldNeverHappen();
 		return;
 	}
-	
+
 	if (cpToMark) {
 		walk = cpToMark;
 		do {

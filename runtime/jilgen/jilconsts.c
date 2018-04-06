@@ -333,6 +333,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 	jint rc = JNI_OK;
 	UDATA err =
 			/* Build flags */
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_INTERP_ATOMIC_FREE_JNI", 1) |
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 #if defined(J9VM_JIT_NEW_DUAL_HELPERS)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_JIT_NEW_DUAL_HELPERS", 1) |
 #endif /* J9VM_JIT_NEW_DUAL_HELPERS */
@@ -691,6 +694,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 	err |=
 			/* J9InternalVMFunctions */
 			writeConstant(OMRPORTLIB, fd, "J9TR_InternalFunctionTableReleaseVMAccess", offsetof(J9InternalVMFunctions, internalReleaseVMAccess)) |
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+			writeConstant(OMRPORTLIB, fd, "J9TR_InternalFunctionTableExitVMToJNI", offsetof(J9InternalVMFunctions, internalExitVMToJNI)) |
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
 			/* Object headers */
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9Object_class", offsetof(J9Object, clazz)) |

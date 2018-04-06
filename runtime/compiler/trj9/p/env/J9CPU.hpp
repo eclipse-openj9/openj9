@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,19 @@ namespace J9 { typedef J9::Power::CPU CPUConnector; }
 #include "infra/Assert.hpp"
 #include "infra/Flags.hpp"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define PROCESSOR_FEATURES_SIZE 1
+typedef struct TR_ProcessorFeatureFlags {
+  uint32_t featureFlags[PROCESSOR_FEATURES_SIZE];
+} TR_ProcessorFeatureFlags;
+
+#ifdef __cplusplus
+}
+#endif
+
 namespace J9
 {
 
@@ -54,9 +67,17 @@ protected:
       {}
 
 public:
+   bool getPPCSupportsVMX();
+   bool getPPCSupportsVSX();
+   bool getPPCSupportsAES();
+   bool getPPCSupportsTM();
+   bool getPPCSupportsLM();
 
    bool hasPopulationCountInstruction();
    bool supportsDecimalFloatingPoint();
+
+   TR_ProcessorFeatureFlags getProcessorFeatureFlags();
+   bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);
 
    };
 

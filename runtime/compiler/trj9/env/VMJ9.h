@@ -273,7 +273,7 @@ public:
    static TR_J9VMBase * get(J9JITConfig *, J9VMThread *, VM_TYPE vmType=DEFAULT_VM);
    static char *getJ9FormattedName(J9JITConfig *, J9PortLibrary *, char *, int32_t, char *, char *, bool suffix=false);
    static TR_Processor getPPCProcessorType();
-   static void initializeX86ProcessorVendorId(J9JITConfig *);
+   static void initializeX86ProcessorInfo(J9JITConfig *);
 
    static bool isBigDecimalClass(J9UTF8 * className);
    bool isCachedBigDecimalClassFieldAddr(){ return cachedStaticDFPAvailField; }
@@ -504,12 +504,13 @@ public:
 
    uint32_t                   getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock * clazz);
 
-   virtual TR_OpaqueClassBlock *getObjectClass(uintptrj_t objectPointer);
-   virtual uintptrj_t           getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
-   virtual uintptrj_t           getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
-   virtual uintptrj_t           getReferenceFieldAtAddress(uintptrj_t fieldAddress);
-   virtual uintptrj_t           getReferenceFieldAtAddress(void *fieldAddress){ return getReferenceFieldAtAddress((uintptrj_t)fieldAddress); }
-   int32_t                      getInt32FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset);
+   TR_OpaqueClassBlock *getObjectClass(uintptrj_t objectPointer);
+   uintptrj_t           getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
+   uintptrj_t           getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t offsetFromHeader);
+   uintptrj_t           getReferenceFieldAtAddress(uintptrj_t fieldAddress);
+   uintptrj_t           getReferenceFieldAtAddress(void *fieldAddress){ return getReferenceFieldAtAddress((uintptrj_t)fieldAddress); }
+   uintptrj_t           getStaticReferenceFieldAtAddress(uintptrj_t fieldAddress);
+   int32_t              getInt32FieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset);
 
    int32_t getInt32Field(uintptrj_t objectPointer, char *fieldName)
       {
@@ -977,8 +978,6 @@ public:
 
    virtual bool acquireClassTableMutex();
    virtual void releaseClassTableMutex(bool);
-
-   virtual TR_OpaqueClassBlock *getClassFromStatic(void *p);
 
    // --------------------------------------------------------------------------
    // Object model

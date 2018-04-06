@@ -43,6 +43,8 @@
 #include "j9modron.h"
 #include "VM_MethodHandleKinds.h"
 #include "j2sever.h"
+#include "vrfytbl.h"
+#include "bytecodewalk.h"
 
 /* Static J9ITable used as a non-NULL iTable cache value by classes that don't implement any interfaces */
 const J9ITable invalidITable = { (J9Class *) (UDATA) 0xDEADBEEF, 0, (J9ITable *) NULL };
@@ -550,12 +552,12 @@ areMethodsEquivalent(J9ROMMethod * method1, J9ROMClass * romClass1, J9ROMMethod 
 			/* Bytecode numbers/indices in each method must be identical */
 
 			if (bc != bc2) {
-				/* Allow JBgenericReturn to match any return bytecode */
+				/* Treat all return instructions to JBgenericReturn */
 
-				if ( ((bc >= JBreturn0) && (bc <= JBsyncReturn2)) || (bc == JBreturnFromConstructor) ) {
+				if (RTV_RETURN == (J9JavaBytecodeVerificationTable[bc] >> 8)) {
 					bc = JBgenericReturn;
 				}
-				if ( ((bc2 >= JBreturn0) && (bc2 <= JBsyncReturn2)) || (bc == JBreturnFromConstructor) ) {
+				if (RTV_RETURN == (J9JavaBytecodeVerificationTable[bc2] >> 8)) {
 					bc2 = JBgenericReturn;
 				}
 				if (bc != bc2) {
@@ -1590,6 +1592,7 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 					break;
 
 				case J9CPTYPE_INSTANCE_METHOD:
+				case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
 
 					if (ramConstantPool != (J9ConstantPool *) vm->jclConstantPool) {
 						romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
@@ -1608,6 +1611,7 @@ reresolveHotSwappedConstantPool(J9ConstantPool * ramConstantPool, J9VMThread * c
 					break;
 
 				case J9CPTYPE_STATIC_METHOD:
+				case J9CPTYPE_INTERFACE_STATIC_METHOD:
 
 					if (ramConstantPool != (J9ConstantPool *) vm->jclConstantPool) {
 						romMethodRef = ((J9ROMMethodRef *) romConstantPool) + i;
@@ -1675,6 +1679,7 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 	for (cpIndex = 0; cpIndex < ramConstantPoolCount; cpIndex++) {
 		switch (J9_CP_TYPE(cpShapeDescription, cpIndex)) {
 			case J9CPTYPE_INSTANCE_METHOD: /* Fall through */
+			case J9CPTYPE_INTERFACE_INSTANCE_METHOD: /* Fall through */
 			case J9CPTYPE_HANDLE_METHOD: {
 				J9RAMMethodRef *methodRef = (J9RAMMethodRef *) &ramConstantPool[cpIndex];
 
@@ -1685,7 +1690,8 @@ fixRAMConstantPoolForFastHCR(J9ConstantPool *ramConstantPool, J9HashTable *class
 				}
 				break;
 			}
-			case J9CPTYPE_STATIC_METHOD: {
+			case J9CPTYPE_STATIC_METHOD: /* Fall through */
+			case J9CPTYPE_INTERFACE_STATIC_METHOD: {
 				J9RAMStaticMethodRef *methodRef = (J9RAMStaticMethodRef *) &ramConstantPool[cpIndex];
 
 				methodPair.oldMethod = methodRef->method;

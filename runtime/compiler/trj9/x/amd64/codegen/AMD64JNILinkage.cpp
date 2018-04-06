@@ -1101,9 +1101,25 @@ void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
    {
    TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
    TR::Register *scratchReg1 = cg()->allocateRegister();
-   TR::Register *scratchReg2 = NULL;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+
+   generateMemImmInstruction(S8MemImm4,
+           callNode,
+           generateX86MemoryReference(vmThreadReg, offsetof(struct J9VMThread, inNative), cg()),
+           1,
+           cg());
+
+#if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+   TR::RealRegister *stackReg = cg()->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::MemoryReference *mr = generateX86MemoryReference(stackReg, intptrj_t(0), cg());
+
+   // TODO: Other places in the JIT use OR4MemImms.  OR8MemImms is used here for complete consistency
+   // with the interpreter implementation.  Perhaps both should change.
+   mr->setRequiresLockPrefix();
+   generateMemImmInstruction(OR8MemImms, callNode, mr, 0, cg());
+   cg()->stopUsingRegister(stackReg);
+#endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
    generateRegMemInstruction(LRegMem(),
                              callNode,
@@ -1114,18 +1130,7 @@ void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
    TR::LabelSymbol *longReleaseSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longReleaseRestartLabel = generateLabelSymbol(cg());
 
-   if (J9_PUBLIC_FLAGS_HALT_THREAD_ANY > 0x7fffffff && TR::Compiler->target.is64Bit())
-      {
-      if (!scratchReg2)
-         scratchReg2 = cg()->allocateRegister();
-      generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg2, J9_PUBLIC_FLAGS_HALT_THREAD_ANY, cg());
-      generateRegRegInstruction(TEST8RegReg, callNode, scratchReg1, scratchReg2, cg());
-      }
-   else
-      {
-      TR_X86OpCodes op = (J9_PUBLIC_FLAGS_HALT_THREAD_ANY <= 255) ? TEST1RegImm1 : TEST4RegImm4;
-      generateRegImmInstruction(op, callNode, scratchReg1, J9_PUBLIC_FLAGS_HALT_THREAD_ANY, cg());
-      }
+   generateRegImmInstruction(CMP4RegImm4, callNode, scratchReg1, J9_PUBLIC_FLAGS_VM_ACCESS, cg());
    generateLabelInstruction(JNE4, callNode, longReleaseSnippetLabel, cg());
 
    cg()->addSnippet(
@@ -1136,26 +1141,14 @@ void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
          longReleaseSnippetLabel,
          comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol())));
 
-   int32_t numDeps = scratchReg2 ? 2 : 1;
+   int32_t numDeps = 1;
    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(numDeps, numDeps, cg());
    deps->addPreCondition(scratchReg1, TR::RealRegister::eax, cg());
    deps->addPostCondition(scratchReg1, TR::RealRegister::eax, cg());
    cg()->stopUsingRegister(scratchReg1);
-   if (scratchReg2)
-      {
-      deps->addPreCondition(scratchReg2, TR::RealRegister::NoReg, cg());
-      deps->addPostCondition(scratchReg2, TR::RealRegister::NoReg, cg());
-      cg()->stopUsingRegister(scratchReg2);
-      }
    deps->stopAddingConditions();
 
    generateLabelInstruction(LABEL, callNode, longReleaseRestartLabel, deps, cg());
-
-   generateMemImmInstruction(S8MemImm4,
-                             callNode,
-                             generateX86MemoryReference(vmThreadReg, offsetof(struct J9VMThread, inNative), cg()),
-                             1,
-                             cg());
    }
 
 
@@ -1163,7 +1156,6 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
    {
    TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
    TR::Register *scratchReg1 = cg()->allocateRegister();
-   TR::Register *scratchReg2 = NULL;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
 
@@ -1172,6 +1164,17 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
                              generateX86MemoryReference(vmThreadReg, offsetof(struct J9VMThread, inNative), cg()),
                              0,
                              cg());
+
+#if !defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+   TR::RealRegister *stackReg = cg()->machine()->getX86RealRegister(TR::RealRegister::esp);
+   TR::MemoryReference *mr = generateX86MemoryReference(stackReg, intptrj_t(0), cg());
+
+   // TODO: Other places in the JIT use OR4MemImms.  OR8MemImms is used here for complete consistency
+   // with the interpreter implementation.  Perhaps both should change.
+   mr->setRequiresLockPrefix();
+   generateMemImmInstruction(OR8MemImms, callNode, mr, 0, cg());
+   cg()->stopUsingRegister(stackReg);
+#endif /* !J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
    generateRegMemInstruction(LRegMem(),
                              callNode,
@@ -1182,18 +1185,7 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
    TR::LabelSymbol *longAcquireSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longAcquireRestartLabel = generateLabelSymbol(cg());
 
-   if (J9_PUBLIC_FLAGS_VM_ACCESS > 0x7fffffff && TR::Compiler->target.is64Bit())
-      {
-      if (!scratchReg2)
-         scratchReg2 = cg()->allocateRegister();
-      generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg2, J9_PUBLIC_FLAGS_VM_ACCESS, cg());
-      generateRegRegInstruction(CMP8RegReg, callNode, scratchReg1, scratchReg2, cg());
-      }
-   else
-      {
-      TR_X86OpCodes op = (J9_PUBLIC_FLAGS_VM_ACCESS <= 255) ? CMP1RegImm1 : CMP4RegImm4;
-      generateRegImmInstruction(op, callNode, scratchReg1, J9_PUBLIC_FLAGS_VM_ACCESS, cg());
-      }
+   generateRegImmInstruction(CMP4RegImm4, callNode, scratchReg1, J9_PUBLIC_FLAGS_VM_ACCESS, cg());
    generateLabelInstruction(JNE4, callNode, longAcquireSnippetLabel, cg());
 
    cg()->addSnippet(
@@ -1204,17 +1196,11 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
          longAcquireSnippetLabel,
          comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol())));
 
-   int32_t numDeps = scratchReg2 ? 2 : 1;
+   int32_t numDeps = 1;
    TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(numDeps, numDeps, cg());
    deps->addPreCondition(scratchReg1, TR::RealRegister::eax, cg());
    deps->addPostCondition(scratchReg1, TR::RealRegister::eax, cg());
    cg()->stopUsingRegister(scratchReg1);
-   if (scratchReg2)
-      {
-      deps->addPreCondition(scratchReg2, TR::RealRegister::NoReg, cg());
-      deps->addPostCondition(scratchReg2, TR::RealRegister::NoReg, cg());
-      cg()->stopUsingRegister(scratchReg2);
-      }
    deps->stopAddingConditions();
 
    generateLabelInstruction(LABEL, callNode, longAcquireRestartLabel, deps, cg());

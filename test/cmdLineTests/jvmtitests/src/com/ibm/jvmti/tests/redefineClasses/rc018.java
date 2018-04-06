@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2013 IBM Corp. and others
+ * Copyright (c) 2013, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,10 +27,10 @@ public class rc018 {
 	public static native boolean redefineClass(Class name, int classBytesSize,
 			byte[] classBytes);
 
-	class RefelctThread extends Thread {
+	class ReflectThread extends Thread {
 		long patience = 20000000000L; /* 20 seconds in nanoseconds */
 
-		RefelctThread() {
+		ReflectThread() {
 			super("Reflecting Thread");
 		}
 
@@ -66,21 +66,21 @@ public class rc018 {
 	public boolean testReflectRedefineAtSameTime() {
 		long patience = 20000000000L; /* 20 seconds in nanoseconds */
 
-		RefelctThread worker1 = new RefelctThread();
-		RefelctThread worker2 = new RefelctThread();
-		RefelctThread worker3 = new RefelctThread();
-		RefelctThread worker4 = new RefelctThread();
-		RefelctThread worker5 = new RefelctThread();
+		ReflectThread worker1 = new ReflectThread();
+		ReflectThread worker2 = new ReflectThread();
+		ReflectThread worker3 = new ReflectThread();
+		ReflectThread worker4 = new ReflectThread();
+		ReflectThread worker5 = new ReflectThread();
 		populate garbage = new populate();
 
-		System.out.println("starting reflect worker thread");
+		System.out.println("starting reflect worker threads");
 		worker1.start();
 		worker2.start();
 		worker3.start();
 		worker4.start();
 		worker5.start();
 
-		System.out.println("staring to pupulate java heap");
+		System.out.println("starting to populate java heap");
 		garbage.start();
 
 		long startTime = System.nanoTime();

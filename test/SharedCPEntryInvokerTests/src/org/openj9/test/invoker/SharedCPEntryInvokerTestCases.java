@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -275,55 +275,6 @@ public class SharedCPEntryInvokerTestCases {
 		}
 
 		expected = "Default " + ClassGenerator.INTERFACE_NAME + "." + ClassGenerator.INTF_METHOD_NAME;
-		logger.debug("Calling invokeSpecial(). Expected to return: " + expected);
-		method = dummyClass.getMethod("invokeSpecial", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			AssertJUnit.assertEquals("Did not get expected value", expected, rc);
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assert.fail("Did not expect exception to be thrown", e);
-		}
-	}
-
-	public void testSpecialInterfaceV3() throws Exception {
-		String rc = null;
-		String expected = null;
-		String testName = "testSpecialInterfaceV3";
-		Class<?> dummyClass = null;
-		Method method = null;
-		Hashtable<String, Object> characteristics = new Hashtable<String, Object>();
-		GeneratedClassLoader classLoader = new GeneratedClassLoader();
-		ClassGenerator helperClassGenerator = new HelperClassGenerator(testName, PKG_NAME);
-		ClassGenerator dummyClassGenerator = new DummyClassGenerator(testName, PKG_NAME);
-
-		characteristics.put(ClassGenerator.HELPER_METHOD_TYPE, MethodType.VIRTUAL);
-		helperClassGenerator.setCharacteristics(characteristics);
-		classLoader.setClassData(helperClassGenerator.getClassData());
-		Class.forName(helperClassName.replace('/', '.'), true, classLoader);
-
-		characteristics.clear();
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
-		characteristics.put(ClassGenerator.SHARED_INVOKERS,
-				new String[] { DummyClassGenerator.INVOKE_INTERFACE, DummyClassGenerator.INVOKE_SPECIAL });
-
-		dummyClassGenerator.setCharacteristics(characteristics);
-		classLoader.setClassData(dummyClassGenerator.getClassData());
-		dummyClass = Class.forName(dummyClassName.replace('/', '.'), true, classLoader);
-
-		logger.debug("Calling invokeInterface(). Expected to throw exception.");
-		method = dummyClass.getMethod("invokeInterface", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			Assert.fail("Expected to throw exception but returned: " + rc);
-		} catch (Exception e) {
-			/* exception is expected */
-			logger.debug("Expected exception caught.");
-		}
-
-		expected = "Virtual " + ClassGenerator.HELPER_CLASS_NAME + "." + ClassGenerator.HELPER_METHOD_NAME;
 		logger.debug("Calling invokeSpecial(). Expected to return: " + expected);
 		method = dummyClass.getMethod("invokeSpecial", (Class[])null);
 		try {
@@ -768,69 +719,6 @@ public class SharedCPEntryInvokerTestCases {
 		} catch (Exception e) {
 			/* exception is expected */
 			logger.debug("Expected exception caught.");
-		}
-	}
-
-	public void testStaticSpecialInterfaceV4() throws Exception {
-		String rc = null;
-		String expected = null;
-		String testName = "testStaticSpecialInterfaceV2";
-		Class<?> dummyClass = null;
-		Method method = null;
-		Hashtable<String, Object> characteristics = new Hashtable<String, Object>();
-		GeneratedClassLoader classLoader = new GeneratedClassLoader();
-		ClassGenerator helperClassGenerator = new HelperClassGenerator(testName, PKG_NAME);
-		ClassGenerator dummyClassGenerator = new DummyClassGenerator(testName, PKG_NAME);
-
-		characteristics.put(ClassGenerator.HELPER_METHOD_TYPE, MethodType.VIRTUAL);
-		helperClassGenerator.setCharacteristics(characteristics);
-		classLoader.setClassData(helperClassGenerator.getClassData());
-		Class.forName(helperClassName.replace('/', '.'), true, classLoader);
-
-		characteristics.clear();
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
-		characteristics.put(ClassGenerator.SHARED_INVOKERS,
-				new String[] {
-						DummyClassGenerator.INVOKE_INTERFACE,
-						DummyClassGenerator.INVOKE_STATIC,
-						DummyClassGenerator.INVOKE_SPECIAL });
-
-		dummyClassGenerator.setCharacteristics(characteristics);
-		classLoader.setClassData(dummyClassGenerator.getClassData());
-		dummyClass = Class.forName(dummyClassName.replace('/', '.'), true, classLoader);
-
-		logger.debug("Calling invokeInterface(). Expected to throw exception.");
-		method = dummyClass.getMethod("invokeInterface", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			Assert.fail("Expected to throw exception but returned: " + rc);
-		} catch (Exception e) {
-			/* exception is expected */
-			logger.debug("Expected exception caught.");
-		}
-
-		logger.debug("Calling invokeStatic(). Expected to throw exception.");
-		method = dummyClass.getMethod("invokeStatic", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			Assert.fail("Expected to throw exception but returned: " + rc);
-		} catch (Exception e) {
-			/* exception is expected */
-			logger.debug("Expected exception caught.");
-		}
-
-		expected = "Virtual " + ClassGenerator.HELPER_CLASS_NAME + "." + ClassGenerator.HELPER_METHOD_NAME;
-		logger.debug("Calling invokeSpecial(). Expected to return: " + expected);
-		method = dummyClass.getMethod("invokeSpecial", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			AssertJUnit.assertEquals("Did not get expected value", expected, rc);
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assert.fail("Did not expect exception to be thrown", e);
 		}
 	}
 }

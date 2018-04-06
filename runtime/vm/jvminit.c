@@ -202,26 +202,6 @@ static const struct J9VMIgnoredOption ignoredOptionTable[] = {
 };
 #define ignoredOptionTableSize (sizeof(ignoredOptionTable) / sizeof(struct J9VMIgnoredOption))
 
-/* RIM atoi hack */
-#ifdef RIM386
-int atoi(char* string)
-{
-	int result = 0, sign = 1;
-	char ch;
-
-	while(ch = *string, (ch == ' ' || ch == '\t')) string++;
-	if(*string == '-') {
-		sign = -1;
-		string++;
-	}
-	while(ch = *string++) {
-		if((ch >= '0') && (ch <= '9')) result = (result * 10) + (ch - '0');
-		else return sign * result;
-	}
-	return sign * result;
-}
-#endif
-
 IDATA VMInitStages (J9JavaVM *vm, IDATA stage, void* reserved);
 IDATA registerCmdLineMapping (J9JavaVM* vm, char* sov_option, char* j9_option, UDATA mapFlags);
 IDATA postInitLoadJ9DLL (J9JavaVM* vm, const char* dllName, void* argData);
@@ -681,6 +661,10 @@ freeJavaVM(J9JavaVM * vm)
 		vm->zipCachePool = NULL;
 	}
 #endif
+
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+	shutDownExclusiveAccess(vm);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
 	freeNativeMethodBindTable(vm);
 	freeHiddenInstanceFieldsList(vm);
@@ -5331,6 +5315,11 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	OMRSIG_SIGACTION(SIGPIPE,&newSignalAction,(struct sigaction *)vm->originalSIGPIPESignalAction);
 #endif
 
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+	if (0 != initializeExclusiveAccess(vm)) {
+		goto error;
+	}
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
 #ifdef J9VM_OPT_SIDECAR
 	vm->j2seVersion = initArgs->j2seVersion;

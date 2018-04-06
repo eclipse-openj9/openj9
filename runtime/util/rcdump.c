@@ -230,7 +230,7 @@ static I_32 dumpCPShapeDescription( J9PortLibrary *portLib, J9ROMClass *romClass
 	U_32 *cpDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
 	U_32 descriptionLong;
 	U_32 i, j, k, numberOfLongs;
-	char symbols[] = ".CSIFJDi.vxyzTHA";
+	char symbols[] = ".CSIFJDi.vxyzTHAxv";
 
 	PORT_ACCESS_FROM_PORT( portLib );
 
@@ -523,6 +523,8 @@ dumpCallSiteData(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 					case J9CPTYPE_INSTANCE_METHOD:
 					case J9CPTYPE_STATIC_METHOD:
 					case J9CPTYPE_INTERFACE_METHOD:
+					case J9CPTYPE_INTERFACE_INSTANCE_METHOD:
+					case J9CPTYPE_INTERFACE_STATIC_METHOD:
 						j9tty_printf(PORTLIB, "      Method: ");
 						classRef = (J9ROMClassRef *) &constantPool[((J9ROMMethodRef *)item)->classRefCPIndex];
 						nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE((J9ROMMethodRef *)item);

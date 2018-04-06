@@ -124,32 +124,39 @@ namespace  {
       // expunge any runtime assumptions in the RAT that have previously been marked
       pointer_cast<TR_PersistentMemory *>( jitConfig->scratchSegment )->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimMarkedAssumptionsFromRAT();
       }
-
-   inline void freeFastWalkCache(J9VMThread *vmThread, J9JITExceptionTable *metaData)
-      {
-      if (metaData->bodyInfo)
-         {
-         void * mapTable = ((TR_PersistentJittedBodyInfo *)metaData->bodyInfo)->getMapTable();
-         if (mapTable && mapTable != (void *)-1)
-            {
-            PORT_ACCESS_FROM_VMC(vmThread);
-            j9mem_free_memory(mapTable);
-            }
-         ((TR_PersistentJittedBodyInfo *)metaData->bodyInfo)->setMapTable(NULL);
-         }
-      }
    
    // We need to update the nextMethod and prevMethod pointers of the J9JITExceptionTable that
    // point to the old J9JITExceptionTable to now point to the new (stub) J9JITExceptionTable.
-   inline void updateExceptionTableLinkedList(J9JITExceptionTable *stubMetadata)
+   inline void updateExceptionTableLinkedList(J9VMThread *vmThread, J9JITExceptionTable *oldMetadata, J9JITExceptionTable *newMetadata)
       {
-      J9JITExceptionTable *prev = stubMetadata->prevMethod;
-      J9JITExceptionTable *next = stubMetadata->nextMethod;
-      
+      // newMetaData's prevMethod and nextMethod should be the
+      // same as oldMetaData's due to the memcpy
+      J9JITExceptionTable *prev = oldMetadata->prevMethod;
+      J9JITExceptionTable *next = oldMetadata->nextMethod;
+
       if (prev)
-         prev->nextMethod = stubMetadata;
+         {
+         prev->nextMethod = newMetadata;
+         }
+      else
+         {
+         J9Class *j9class = J9_CLASS_FROM_METHOD(oldMetadata->ramMethod);
+         TR_J9VMBase *fe = TR_J9VMBase::get(vmThread->javaVM->jitConfig, NULL);
+
+         if (fe->isAnonymousClass((TR_OpaqueClassBlock *)j9class))
+            {
+            if (j9class->jitMetaDataList == oldMetadata)
+               j9class->jitMetaDataList = newMetadata;
+            }
+         else
+            {
+            if (j9class->classLoader->jitMetaDataList == oldMetadata)
+               j9class->classLoader->jitMetaDataList = newMetadata;
+            }
+         }
+
       if (next)
-         next->prevMethod = stubMetadata;
+         next->prevMethod = newMetadata;
       }
    
    inline J9JITExceptionTable * createStubExceptionTable(J9VMThread *vmThread, J9JITExceptionTable *metaData)
@@ -180,7 +187,7 @@ namespace  {
             freeFastWalkCache(vmThread, stubMetadata);
             
             // Update J9JITExceptionTable Linked List
-            updateExceptionTableLinkedList(stubMetadata);
+            updateExceptionTableLinkedList(vmThread, metaData, stubMetadata);
             
             // Set the IS_STUB flag
             stubMetadata->flags |= JIT_METADATA_IS_STUB;
@@ -357,8 +364,28 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
       // We currently don't need this because when we delete the list of J9JITExceptionTables,
       // we always delete from the head and never from the middle. However, this comment exists
       // as a reminder that if that changes, this code should be uncommented.
+
       if (metaData->prevMethod)
+         {
          metaData->prevMethod->nextMethod = metaData->nextMethod;
+         }
+      else
+         {
+         J9Class *j9class = J9_CLASS_FROM_METHOD(metaData->ramMethod);
+         TR_J9VMBase *fe = TR_J9VMBase::get(vmThread->javaVM->jitConfig, NULL);
+
+         if (fe->isAnonymousClass((TR_OpaqueClassBlock *)j9class))
+            {
+            if (j9class->jitMetaDataList == metaData)
+               j9class->jitMetaDataList = metaData->nextMethod;
+            }
+         else
+            {
+            if (j9class->classLoader->jitMetaDataList == metaData)
+               j9class->classLoader->jitMetaDataList = metaData->nextMethod;
+            }
+         }
+
       if (metaData->nextMethod)
          metaData->nextMethod->prevMethod = metaData->prevMethod;
       */
@@ -394,6 +421,20 @@ void jitReclaimMarkedAssumptions()
       reclaimMarkedAssumptionsFromRAT();
       }
    }
+
+void freeFastWalkCache(J9VMThread *vmThread, J9JITExceptionTable *metaData)
+      {
+      if (metaData->bodyInfo)
+         {
+         void * mapTable = ((TR_PersistentJittedBodyInfo *)metaData->bodyInfo)->getMapTable();
+         if (mapTable && mapTable != (void *)-1)
+            {
+            PORT_ACCESS_FROM_VMC(vmThread);
+            j9mem_free_memory(mapTable);
+            }
+         ((TR_PersistentJittedBodyInfo *)metaData->bodyInfo)->setMapTable(NULL);
+         }
+      }
 
 void vlogReclamation(const char * prefix, J9JITExceptionTable *metaData, size_t bytesToSaveAtStart)
    {

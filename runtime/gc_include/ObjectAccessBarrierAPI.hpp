@@ -485,6 +485,7 @@ public:
 		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
 			return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndSwapObject(vmThread, destObject, (J9Object **)destAddress, compareObject, swapObject));
 		} else {
+			preMixedObjectReadObject(vmThread, destObject, destAddress);
 			preMixedObjectStoreObject(vmThread, destObject, destAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);
@@ -526,6 +527,7 @@ public:
 		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
 			return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndExchangeObject(vmThread, destObject, (J9Object **)destAddress, compareObject, swapObject);
 		} else {
+			preMixedObjectReadObject(vmThread, destObject, destAddress);
 			preMixedObjectStoreObject(vmThread, destObject, destAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);
@@ -1887,6 +1889,7 @@ public:
 		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
 			return (1 == vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndSwapObject(vmThread, destArray, (J9Object **)actualAddress, compareObject, swapObject));
 		} else {
+			preIndexableObjectReadObject(vmThread, destArray, actualAddress);
 			preIndexableObjectStoreObject(vmThread, destArray, actualAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);
@@ -1928,6 +1931,7 @@ public:
 		if (j9gc_modron_wrtbar_always == _writeBarrierType) {
 			return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_compareAndExchangeObject(vmThread, destArray, (J9Object **)actualAddress, compareObject, swapObject);
 		} else {
+			preIndexableObjectReadObject(vmThread, destArray, actualAddress);
 			preIndexableObjectStoreObject(vmThread, destArray, actualAddress, swapObject);
 
 			protectIfVolatileBefore(isVolatile, false);

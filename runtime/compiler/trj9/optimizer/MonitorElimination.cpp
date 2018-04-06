@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1463,6 +1463,24 @@ void TR::MonitorElimination::transformMonitorsIntoTMRegions()
 
       TR::CFG *cfg = comp()->getFlowGraph();
       cfg->setStructure(NULL);        // voiding out structure
+
+      if (monitor->getTreeTopNode()->getOpCodeValue() == TR::NULLCHK)
+         {
+         // A SEGV in a transaction on X & Z will abort the transaction, on p it will core, therefore an explicit
+         // NullChk is required on P and is better then allowing a number of SEGVs on X & Z when locking a NULL ref.
+         // Rip out the NULLCHK from the monent tree and put it on it's own TT above the tstart
+         debugTrace(tracer(),"monent TT node is NULLCHK!\n\tMoving NULLCHK to a new TT");
+         TR::Node *nullChkNode = monitor->getTreeTopNode();
+         TR::Node *monentNode = nullChkNode->getFirstChild();
+         TR::Node *passThroughNode = TR::Node::create(nullChkNode, TR::PassThrough, 1, monentNode->getFirstChild());
+         TR::TreeTop *nullchkTree = TR::TreeTop::create(comp(), nullChkNode);
+         nullChkNode->setFirst(passThroughNode);
+         monitor->getMonitorTree()->insertBefore(nullchkTree);
+         debugTrace(tracer(), "\tMoving monent to TT and dec ref count", nullchkTree, nullchkTree->getNode());
+         monitor->getMonitorTree()->setNode(monentNode);
+         TR_ASSERT(monentNode->getReferenceCount() == 1, "monent ref count is not 1");
+         monentNode->decReferenceCount();
+         }
 
       //Part 1: Create Temporary
       TR::SymbolReference *tempSymRef = createAndInsertTMRetryCounter(monitor);

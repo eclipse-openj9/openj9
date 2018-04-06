@@ -2391,7 +2391,8 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 
 	ALLOC(classfile, J9CfrClassFile);
 
-	CHECK_EOF(10);
+	/* Verify the class version before any other checks. */
+	CHECK_EOF(8); /* magic, minor version, master version */
 	NEXT_U32(classfile->magic, index);
 	if (classfile->magic != (U_32) CFR_MAGIC) {
 		errorCode = J9NLS_CFR_ERR_MAGIC__ID;
@@ -2402,12 +2403,19 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	NEXT_U16(classfile->minorVersion, index);
 	NEXT_U16(classfile->majorVersion, index);
 
+	/* Ensure that this is a supported class file version. */
+	if (checkClassVersion(classfile, segment, vmVersionShifted)) {
+		Trc_BCU_j9bcutil_readClassFileBytes_Exit(-1);
+		return -1;
+	}
+
 	/* Make sure the structure and static verification below uses the class file version
 	 * number. VM version is maintained in vmVersionShifted.
 	 */
 	flags &= ~BCT_MajorClassFileVersionMask;
 	flags |= ((UDATA) classfile->majorVersion) << BCT_MajorClassFileVersionMaskShift;
 
+	CHECK_EOF(2); /* constantPoolCount */
 	NEXT_U16(classfile->constantPoolCount, index);
 
 	constantPoolAllocationSize = classfile->constantPoolCount;
@@ -2574,12 +2582,6 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 
 	classfile->classFileSize = (U_32) dataLength;
 
-	/* Ensure that this is a supported class file version. */
-	if(checkClassVersion(classfile, segment, vmVersionShifted)) {
-		Trc_BCU_j9bcutil_readClassFileBytes_Exit(-1);
-		return -1;
-	}
-	
 	/* Structure verification. This is "Pass 1". */
 	if (0 != (flags & CFR_StaticVerification)) {
 		if(checkClass(portLib, classfile, segment, (U_32) (endOfConstantPool - data), vmVersionShifted, flags)) {

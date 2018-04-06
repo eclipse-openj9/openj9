@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,6 @@
 module openj9.gpu {
 	requires java.base;
 	requires openj9.cuda;
-	// TODO exports com.ibm.gpu;
-	// TODO provides com.ibm.gpu.spi.GPUAssist.Provider with com.ibm.gpu.internal.CudaGPUAssistProvider;
+	exports com.ibm.gpu;
+	provides com.ibm.gpu.spi.GPUAssist.Provider with com.ibm.gpu.internal.CudaGPUAssistProvider;
 }

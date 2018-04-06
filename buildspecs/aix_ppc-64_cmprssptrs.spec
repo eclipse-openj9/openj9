@@ -128,6 +128,8 @@
 		<flag id="build_java9" value="true"/>
 		<flag id="build_product" value="true"/>
 		<flag id="build_stage_toronto_lab" value="true"/>
+		<flag id="build_openj9" value="true"/>
+		<flag id="build_openj9JDK8" value="true"/>
 		<flag id="env_dlpar" value="true"/>
 		<flag id="env_hasFPU" value="true"/>
 		<flag id="env_sharedLibsUseGlobalTable" value="true"/>

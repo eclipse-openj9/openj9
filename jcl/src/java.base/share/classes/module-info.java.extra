@@ -34,8 +34,4 @@ module java.base {
   uses com.ibm.sharedclasses.spi.SharedClassProvider;
   uses com.ibm.gpu.spi.GPUAssist.Provider;
   exports com.ibm.gpu.spi to openj9.gpu;
-  // TODO remove the following after they move to their new modules
-  exports com.ibm.cuda;
-  exports com.ibm.gpu;
-  provides com.ibm.gpu.spi.GPUAssist.Provider with com.ibm.gpu.internal.CudaGPUAssistProvider;
 }

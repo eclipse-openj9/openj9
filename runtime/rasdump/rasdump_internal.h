@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,7 +93,8 @@ typedef enum J9RASdumpRequestState
 	J9RAS_DUMP_THREADS_HALTED              = 32,
 	J9RAS_DUMP_ATTACHED_THREAD             = 64,
 	J9RAS_DUMP_PREEMPT_THREADS             = 128,
-	J9RAS_DUMP_TRACE_DISABLED              = 256
+	J9RAS_DUMP_TRACE_DISABLED              = 256,
+	J9RAS_DUMP_GOT_JNI_VM_ACCESS           = 512, 
 } J9RASdumpRequestState;
 
 /* Internal function prototypes for rasdump module */ 

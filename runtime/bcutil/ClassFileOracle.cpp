@@ -746,11 +746,28 @@ void
 ClassFileOracle::walkTypeAnnotations(U_16 annotationsCount, J9CfrTypeAnnotation *typeAnnotations) {
 	for (U_16 typeAnnotationIndex = 0; typeAnnotationIndex < annotationsCount; ++ typeAnnotationIndex) {
 		J9CfrAnnotation *annotation = &(typeAnnotations[typeAnnotationIndex].annotation);
-		markConstantAsUsedByAnnotation(annotation->typeIndex);
-		const U_16 elementValuePairsCount = annotation->numberOfElementValuePairs;
-		for (U_16 elementValuePairsIndex = 0; (elementValuePairsIndex < elementValuePairsCount) && (OK == _buildResult); ++elementValuePairsIndex) {
-			markConstantAsUsedByAnnotation(annotation->elementValuePairs[elementValuePairsIndex].elementNameIndex);
-			walkAnnotationElement(annotation->elementValuePairs[elementValuePairsIndex].value);
+		/* type_index in an annotation must refer to a CONSTANT_UTF8_info structure. */
+		if (getCPTag(annotation->typeIndex) == CFR_CONSTANT_Utf8) {
+			markConstantAsUsedByAnnotation(annotation->typeIndex);
+			const U_16 elementValuePairsCount = annotation->numberOfElementValuePairs;
+			for (U_16 elementValuePairsIndex = 0;
+					(elementValuePairsIndex < elementValuePairsCount) && (OK == _buildResult); ++elementValuePairsIndex) {
+				markConstantAsUsedByAnnotation(annotation->elementValuePairs[elementValuePairsIndex].elementNameIndex);
+				walkAnnotationElement(annotation->elementValuePairs[elementValuePairsIndex].value);
+			}
+		} else {
+			/*
+			 * UTF-8 entries and method entries use the same set of marking labels when
+			 * preparing to build the ROM class, but
+			 * the label value meanings differ depending on the type of the entry.
+			 * Thus we cannot mark a non-UTF-8 entry with a label used for UTF-8 as that label
+			 * value will be (mis)interpreted according to the type of the entry.
+			 *
+			 * In this case, force the typeIndex to a null value.
+			 * This will cause the parser to throw
+			 * an error if the the VM or application tries to retrieve the annotation.
+			 */
+			annotation->typeIndex = 0;
 		}
 	}
 }

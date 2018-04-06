@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -193,6 +193,7 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 					} else {
 							*exception = J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR;
 							*exceptionClass = methodClass;
+							*errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 							return NULL;
 					}
 				}
@@ -217,6 +218,7 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 	{
 		*exception = J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR;
 		*exceptionClass = methodClass;
+		*errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 		return NULL;
 	}
 
@@ -244,6 +246,7 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 				if (j9bcv_checkClassLoadingConstraintsForSignature(currentThread, cl1, cl2, lookupSig, methodSig) != 0) {
 					*exception = J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR; /* was VerifyError; but Sun throws Linkage */
 					*exceptionClass = methodClass;
+					*errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 					Trc_VM_processMethod_ClassLoaderConstraintFailure(currentThread, method, cl1, cl2);
 					return NULL;
 				}
@@ -424,6 +427,7 @@ javaResolveInterfaceMethods(J9VMThread *currentThread, J9Class *targetClass, J9R
 						J9Method **newArray = j9mem_allocate_memory(sizeof(J9Method*) * newArrayLength, OMRMEM_CATEGORY_VM);
 						if (NULL == newArray) {
 							data->exception = J9VMCONSTANTPOOL_JAVALANGOUTOFMEMORYERROR;
+							data->errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 							return NULL;
 						}
 						/* Only memset the upper (new) portion of the array */
@@ -506,6 +510,7 @@ doneItableSearch:
 
 			resultMethod = NULL;
 			data->exception = J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR;
+			data->errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 
 			/* Iterate across workingArray and compacting it into one contiguous array */
 			for (i = 0; i <= maxUsedSlotIndex; i++) {
@@ -526,6 +531,7 @@ doneItableSearch:
 				J9Method **newArray = j9mem_allocate_memory(sizeof(J9Method*) * numElements, OMRMEM_CATEGORY_VM);
 				if (NULL == newArray) {
 					data->exception = J9VMCONSTANTPOOL_JAVALANGOUTOFMEMORYERROR;
+					data->errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 					return NULL;
 				}
 				memcpy(newArray, workingArray, sizeof(J9Method*) * numElements);
@@ -696,6 +702,7 @@ retry:
 							/* Reset exception state to initial values and move up the hierarchy */
 							exception = J9VMCONSTANTPOOL_JAVALANGNOSUCHMETHODERROR;
 							exceptionClass = targetClass;
+							errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 							goto nextClass;
 						}
 					}
@@ -743,6 +750,7 @@ nextClass:
 			
 			exception = data.exception;
 			exceptionClass = data.exceptionClass;
+			errorType = data.errorType;
 
 			if ((NULL == resultMethod) && data.elements > 1) {
 				if (NULL != foundDefaultConflicts) {
@@ -797,6 +805,7 @@ done:
 			if (lookupOptions & J9_LOOK_JNI) {
 				exception = J9VMCONSTANTPOOL_JAVALANGNOSUCHMETHODERROR;
 				exceptionClass = targetClass;
+				errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 			}
 
 			/* If this lookup is for the <init> in Class.newInstance(), translate IllegalAccessError
@@ -819,7 +828,7 @@ done:
 					
 					PORT_ACCESS_FROM_VMC(currentThread);
 					
-					buf = illegalAccessMessage(currentThread, badRomMethod->modifiers, senderClass, targetClass, J9_VISIBILITY_NON_MODULE_ACCESS_ERROR);
+					buf = illegalAccessMessage(currentThread, badRomMethod->modifiers, senderClass, targetClass, errorType);
 
 					setCurrentExceptionUTF(currentThread, exception, buf);
 					
@@ -995,7 +1004,7 @@ getModuleNameUTF(J9VMThread *currentThread, j9object_t	moduleObject, char *buffe
 	} else {
 #define NAMED_MODULE   "module "
 		nameBuffer = copyStringToUTF8WithMemAlloc(
-			currentThread, module->moduleName, J9_STR_NONE, NAMED_MODULE, buffer, bufferLength);
+			currentThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, NAMED_MODULE, strlen(NAMED_MODULE), buffer, bufferLength, NULL);
 #undef	NAMED_MODULE
 	}
 	return nameBuffer;

@@ -8492,9 +8492,120 @@ static bool genZeroInitObject2(
       TR::Register *targetReg,
       TR::Register *tempReg,
       TR::Register *segmentReg,
-      TR::Register *&repzScratchReg,
+      TR::Register *&scratchReg,
       TR::CodeGenerator *cg)
    {
+   static bool UseOldGenZeroInitObject2 = feGetEnv("TR_UseOldGenZeroInitObject2");
+   if (!UseOldGenZeroInitObject2)
+   {
+   // set up clazz value here
+   TR_OpaqueClassBlock *clazz = NULL;
+   cg->comp()->canAllocateInline(node, clazz);
+   auto headerSize = node->getOpCodeValue() != TR::New ? sizeof(J9IndexableObjectContiguous) : sizeof(J9Object);
+   TR_ASSERT(headerSize >= 4, "Object/Array header must be >= 4.");
+   objectSize -= headerSize;
+
+   if (!minRepstosdWords)
+      {
+      static char *p= feGetEnv("TR_MinRepstosdWords");
+      if (p)
+         minRepstosdWords = atoi(p);
+      else
+         minRepstosdWords = MIN_REPSTOSD_WORDS; // Use default value
+      }
+
+   if (sizeReg || objectSize >= minRepstosdWords)
+      {
+      // Zero-initialize by using REP STOSB.
+      //
+      if (sizeReg)
+         {
+         // -------------
+         //
+         // VARIABLE SIZE
+         //
+         // -------------
+         // Subtract off the header size and initialize the remaining slots.
+         //
+         generateRegImmInstruction(SUBRegImms(), node, tempReg, headerSize, cg);
+         }
+      else
+         {
+         // ----------
+         // FIXED SIZE
+         // ----------
+         if (TR::Compiler->target.is64Bit() && !IS_32BIT_SIGNED(objectSize))
+            {
+            generateRegImm64Instruction(MOV8RegImm64, node, tempReg, objectSize, cg);
+            }
+         else
+            {
+            generateRegImmInstruction(MOVRegImm4(), node, tempReg, objectSize, cg);
+            }
+         }
+
+      // -----------
+      // Destination
+      // -----------
+      generateRegMemInstruction(LEARegMem(), node, segmentReg, generateX86MemoryReference(targetReg, headerSize, cg), cg);
+      if (TR::Compiler->target.is64Bit())
+         {
+         scratchReg = cg->allocateRegister();
+         generateRegRegInstruction(MOVRegReg(), node, scratchReg, targetReg, cg);
+         }
+      else
+         {
+         generateRegInstruction(PUSHReg, node, targetReg, cg);
+         }
+      generateRegRegInstruction(XORRegReg(), node, targetReg, targetReg, cg);
+      generateInstruction(REPSTOSB, node, cg);
+      if (TR::Compiler->target.is64Bit())
+         {
+         generateRegRegInstruction(MOVRegReg(), node, targetReg, scratchReg, cg);
+         }
+      else
+         {
+         generateRegInstruction(POPReg, node, targetReg, cg);
+         }
+      return true;
+      }
+   else if (objectSize > 0)
+      {
+      if (objectSize % 16 == 12)
+         {
+         // Zero-out header to avoid a 12-byte residue
+         objectSize += 4;
+         headerSize -= 4;
+         }
+      scratchReg = cg->allocateRegister(TR_FPR);
+      generateRegRegInstruction(PXORRegReg, node, scratchReg, scratchReg, cg);
+      int32_t offset = 0;
+      while (objectSize >= 16)
+         {
+         generateMemRegInstruction(MOVDQUMemReg, node, generateX86MemoryReference(targetReg, headerSize + offset, cg), scratchReg, cg);
+         objectSize -= 16;
+         offset += 16;
+         }
+      switch (objectSize)
+         {
+         case 8:
+            generateMemRegInstruction(MOVQMemReg, node, generateX86MemoryReference(targetReg, headerSize + offset, cg), scratchReg, cg);
+            break;
+         case 4:
+            generateMemRegInstruction(MOVDMemReg, node, generateX86MemoryReference(targetReg, headerSize + offset, cg), scratchReg, cg);
+            break;
+         case 0:
+            break;
+         default:
+            TR_ASSERT(false, "residue size should only be 0, 4 or 8.");
+         }
+      return false;
+      }
+   else
+      {
+      return false;
+      }
+   }
 
    bool isArrayNew = (node->getOpCodeValue() != TR::New);
 
@@ -8586,8 +8697,8 @@ static bool genZeroInitObject2(
 
       if (TR::Compiler->target.is64Bit())
          {
-         repzScratchReg = cg->allocateRegister();
-         generateRegRegInstruction(MOVRegReg(), node, repzScratchReg, targetReg, cg);
+         scratchReg = cg->allocateRegister();
+         generateRegRegInstruction(MOVRegReg(), node, scratchReg, targetReg, cg);
          }
       else
          {
@@ -8615,7 +8726,7 @@ static bool genZeroInitObject2(
 
       if (TR::Compiler->target.is64Bit())
          {
-         generateRegRegInstruction(MOVRegReg(), node, targetReg, repzScratchReg, cg);
+         generateRegRegInstruction(MOVRegReg(), node, targetReg, scratchReg, cg);
          }
       else
          {
@@ -8729,7 +8840,7 @@ static bool genZeroInitObject(
       TR::Register *targetReg,
       TR::Register *tempReg,
       TR::Register *segmentReg,
-      TR::Register *&repzScratchReg,
+      TR::Register *&scratchReg,
       TR::CodeGenerator *cg)
    {
    // object header flags now occupy 4bytes on 64-bit
@@ -8912,8 +9023,8 @@ static bool genZeroInitObject(
 
       if (TR::Compiler->target.is64Bit())
          {
-         repzScratchReg = cg->allocateRegister();
-         generateRegRegInstruction(MOVRegReg(), node, repzScratchReg, targetReg, cg);
+         scratchReg = cg->allocateRegister();
+         generateRegRegInstruction(MOVRegReg(), node, scratchReg, targetReg, cg);
          }
       else
          {
@@ -8941,7 +9052,7 @@ static bool genZeroInitObject(
 
       if (TR::Compiler->target.is64Bit())
          {
-         generateRegRegInstruction(MOVRegReg(), node, targetReg, repzScratchReg, cg);
+         generateRegRegInstruction(MOVRegReg(), node, targetReg, scratchReg, cg);
          }
       else
          {
@@ -9437,7 +9548,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    //
    // --------------------------------------------------------------------------------
 
-   TR::Register *repzScratchReg = NULL;
+   TR::Register *scratchReg = NULL;
 
 #ifdef J9VM_GC_NON_ZERO_TLH
    if (comp->getOption(TR_DisableDualTLH) || comp->getOptions()->realTimeGC())
@@ -9502,11 +9613,11 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          //
          if (canUseFastInlineAllocation)
             {
-            useRepInstruction = genZeroInitObject2(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, repzScratchReg, cg);
+            useRepInstruction = genZeroInitObject2(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, scratchReg, cg);
             }
          else
             {
-            useRepInstruction = genZeroInitObject(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, repzScratchReg, cg);
+            useRepInstruction = genZeroInitObject(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, scratchReg, cg);
             }
 
          J9JavaVM * jvm = fej9->getJ9JITConfig()->javaVM;
@@ -9623,7 +9734,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    if (sizeReg)
       numDeps += 2;
 
-   if (repzScratchReg)
+   if (scratchReg)
       numDeps++;
 
    if (outlinedHelperCall)
@@ -9666,10 +9777,10 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          deps->addPostCondition(segmentReg, TR::RealRegister::NoReg, cg);
       }
 
-   if (repzScratchReg)
+   if (scratchReg)
       {
-      deps->addPostCondition(repzScratchReg, TR::RealRegister::NoReg, cg);
-      cg->stopUsingRegister(repzScratchReg);
+      deps->addPostCondition(scratchReg, TR::RealRegister::NoReg, cg);
+      cg->stopUsingRegister(scratchReg);
       }
 
    if (outlineNew)

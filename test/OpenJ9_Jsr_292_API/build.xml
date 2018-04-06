@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-   Copyright (c) 2017, 2017 IBM Corp. and others
+   Copyright (c) 2017, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,7 +67,9 @@
 		<echo>===debug:				on</echo>
 		<echo>===destdir:				${DEST}</echo>
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<not>
+				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			</not>
 			<then>
 				<property name="modulec_path" value="--module-path ${mods_dir} -d ${modulec_bin}" />
 				<javac srcdir="${modulec_src}" destdir="${modulec_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
@@ -88,7 +90,9 @@
 		<echo>===debug:				on</echo>
 		<echo>===destdir:				${DEST}</echo>
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<not>
+				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			</not>
 			<then>
 				<property name="moduleb_path" value="--module-path ${mods_dir} -d ${moduleb_bin}" />
 				<javac srcdir="${moduleb_src}" destdir="${moduleb_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
@@ -109,7 +113,9 @@
 		<echo>===debug:				on</echo>
 		<echo>===destdir:				${DEST}</echo>
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<not>
+				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			</not>
 			<then>
 				<property name="modulea_path" value="--module-path ${mods_dir} -d ${modulea_bin}" />
 				<javac srcdir="${modulea_src}" destdir="${modulea_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
@@ -129,7 +135,9 @@
 		<echo>===debug:				on</echo>
 		<echo>===destdir:				${DEST}</echo>
 		<if>
-			<equals arg1="${JAVA_VERSION}" arg2="SE90"/>
+			<not>
+				<equals arg1="${JAVA_VERSION}" arg2="SE80"/>
+			</not>
 			<then>
 				<property name="addModules" value="--add-modules ${modulea_name},${moduleb_name},${modulec_name}  --module-path ${mods_dir}" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
@@ -164,6 +172,16 @@
 	</target>
 
 	<target name="build" >
-		<antcall target="clean" inheritall="true" />
+		<if>
+			<not>
+				<and>
+					<matches string="${JAVA_VERSION}" pattern="^SE(9|10)0$$" />
+					<equals arg1="${JCL_VERSION}" arg2="current"/>
+				</and>
+			</not>
+			<then>
+				<antcall target="clean" inheritall="true" />
+			</then>
+		</if>
 	</target>
 </project>

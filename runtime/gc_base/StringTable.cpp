@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -644,6 +644,10 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 
 		if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
 			if (isCompressable) {
+				if (J2SE_VERSION(vm) >= J2SE_V10) {
+					J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 0);
+				}
+
 				J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32) unicodeLength);
 			} else {
 				if (J9VMJAVALANGSTRING_COMPRESSIONFLAG(vmThread, stringClass) == 0) {
@@ -664,6 +668,10 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 
 						J9VMJAVALANGSTRING_SET_COMPRESSIONFLAG(vmThread, stringClass, flag);
 					}
+				}
+
+				if (J2SE_VERSION(vm) >= J2SE_V10) {
+					J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 1);
 				}
 
 				J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32) unicodeLength | (I_32) 0x80000000);
@@ -763,11 +771,23 @@ setupCharArray(J9VMThread *vmThread, j9object_t sourceString, j9object_t newStri
 			
 			if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
 				if (isCompressed) {
+					if (J2SE_VERSION(vm) >= J2SE_V10) {
+						J9VMJAVALANGSTRING_SET_CODER(vmThread, newString, 0);
+					}
+
 					J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, (I_32) length);
 				} else {
+					if (J2SE_VERSION(vm) >= J2SE_V10) {
+						J9VMJAVALANGSTRING_SET_CODER(vmThread, newString, 1);
+					}
+
 					J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, (I_32) length | (I_32) 0x80000000);
 				}
 			} else {
+				if (J2SE_VERSION(vm) >= J2SE_V10) {
+					J9VMJAVALANGSTRING_SET_CODER(vmThread, newString, 1);
+				}
+
 				J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, length);
 			}
 
@@ -778,11 +798,23 @@ setupCharArray(J9VMThread *vmThread, j9object_t sourceString, j9object_t newStri
 
 		if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
 			if (isCompressed) {
+				if (J2SE_VERSION(vm) >= J2SE_V10) {
+					J9VMJAVALANGSTRING_SET_CODER(vmThread, newString, 0);
+				}
+
 				J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, (I_32) length);
 			} else {
+				if (J2SE_VERSION(vm) >= J2SE_V10) {
+					J9VMJAVALANGSTRING_SET_CODER(vmThread, newString, 1);
+				}
+
 				J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, (I_32) length | (I_32) 0x80000000);
 			}
 		} else {
+			if (J2SE_VERSION(vm) >= J2SE_V10) {
+				J9VMJAVALANGSTRING_SET_CODER(vmThread, newString, 1);
+			}
+
 			J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, (I_32) length);
 		}
 		
@@ -932,6 +964,9 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 
 	if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
 		if (isCompressable) {
+			if (J2SE_VERSION(vm) >= J2SE_V10) {
+				J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 0);
+			}
 			J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32) unicodeLength);
 		} else {
 		 	if (J9VMJAVALANGSTRING_COMPRESSIONFLAG(vmThread, stringClass) == 0) {
@@ -954,9 +989,17 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 				}
 			}
 
+			if (J2SE_VERSION(vm) >= J2SE_V10) {
+				J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 1);
+			}
+
 			J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32) unicodeLength | (I_32) 0x80000000);
 		}
 	} else {
+		if (J2SE_VERSION(vm) >= J2SE_V10) {
+			J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 1);
+		}
+
 		J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32) unicodeLength);
 	}
 

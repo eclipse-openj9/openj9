@@ -5354,4 +5354,41 @@ written authorization of the copyright holder.
 		return value;
 	}
 /*[ENDIF] Java10 */	
+
+/*[IF Java11]*/
+	/**
+	 * Returns a string object containing the character (Unicode code point)
+	 * specified.
+	 * 
+	 * @param codePoint
+	 *            a Unicode code point.
+	 * @return a string containing the character (Unicode code point) supplied.
+	 * @throws IllegalArgumentException
+	 *             if the codePoint is not a valid Unicode code point.
+	 * @since 11
+	 */
+	static String valueOfCodePoint(int codePoint) {
+		String string;
+		if ((codePoint < Character.MIN_CODE_POINT) || (codePoint > Character.MAX_CODE_POINT)) {
+			/*[MSG "K0800", "Invalid Unicode code point - {0}"]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0800", Integer.toString(codePoint)));	//$NON-NLS-1$
+		} else if (codePoint <= 255) {
+			if (enableCompression) {
+				string = new String(compressedAsciiTable[codePoint], LATIN1);
+			} else {
+				string = new String(decompressedAsciiTable[codePoint], UTF16);
+			}
+		} else if (codePoint < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
+			byte[] buffer = new byte[2];
+			helpers.putCharInArrayByIndex(buffer, 0, (char) codePoint);
+			string = new String(buffer, UTF16);
+		} else {
+			byte[] buffer = new byte[4];
+			helpers.putCharInArrayByIndex(buffer, 0, Character.highSurrogate(codePoint));
+			helpers.putCharInArrayByIndex(buffer, 1, Character.lowSurrogate(codePoint));
+			string = new String(buffer, UTF16);
+		}
+		return string;
+	}
+/*[ENDIF] Java11 */
 }

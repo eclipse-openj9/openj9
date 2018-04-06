@@ -2906,7 +2906,7 @@ TR_MultipleCallTargetInliner::walkCallSite(
       dumpOptDetails(comp(), "O^O INLINER: Peeking into the IL from walkCallSites as part of the inlining heuristic for [%p]\n", calleeSymbol);
 
       //comp()->setVisitCount(1);
-      genILSucceeded = (NULL != calleeSymbol->getResolvedMethod()->genMethodILForPeeking(calleeSymbol, comp()));
+      genILSucceeded = (NULL != calleeSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(calleeSymbol, comp()));
       //comp()->setVisitCount(visitCount);
       }
 

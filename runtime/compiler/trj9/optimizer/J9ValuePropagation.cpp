@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -406,7 +406,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                                                         TR::VMAccessCriticalSection::tryToAcquireVMAccess);
             if (!getStringlength.hasVMAccess())
                break;
-            len = comp()->fej9()->getStringLength(*stringLocation);
+            uintptrj_t stringObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)stringLocation);
+            len = comp()->fej9()->getStringLength(stringObject);
             }
             // java/lang/String.lengthInternal is used internally and HCR guards can be skipped for calls to it.
             transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, len, receiverChildGlobal, transformNonnativeMethodInPlace || rm == TR::java_lang_String_lengthInternal);

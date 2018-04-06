@@ -61,8 +61,8 @@ J9InternalVMFunctions J9InternalFunctions = {
 	deallocateVMThread,
 	allocateMemorySegment,
 	javaThreadProc,
-	copyFromStringIntoUTF8,
 	copyStringToUTF8WithMemAlloc,
+	copyStringToJ9UTF8WithMemAlloc,
 	internalAcquireVMAccess,
 	internalAcquireVMAccessWithMask,
 	internalAcquireVMAccessNoMutexWithMask,
@@ -238,8 +238,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	prepareForExceptionThrow,
 	copyUTF8ToUnicode,
 	verifyQualifiedName,
-	copyCharsIntoUTF8Helper,
-	copyStringToUTF8,
 	copyStringToUTF8Helper,
 	sendCompleteInitialization,
 	J9RegisterAsyncEvent,
@@ -361,4 +359,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 #if defined(J9VM_RAS_EYECATCHERS)
 	j9rasSetServiceLevel,
 #endif /* J9VM_RAS_EYECATCHERS */
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+	flushProcessWriteBuffers,
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 };

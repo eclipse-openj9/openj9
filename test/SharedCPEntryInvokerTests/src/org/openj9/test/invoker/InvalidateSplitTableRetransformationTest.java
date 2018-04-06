@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -305,72 +305,11 @@ public class InvalidateSplitTableRetransformationTest {
 				new String[] { DummyClassGenerator.INVOKE_INTERFACE, DummyClassGenerator.INVOKE_SPECIAL });
 		characteristics.put(ClassGenerator.SHARED_INVOKERS_TARGET, "SUPER");
 		if (!redefineDummyClass(dummyClass, testName, characteristics)) {
-			Assert.fail("Failed to redefine dummy class");
+			logger.debug("Expected failure in redefining to dummy class V2");
+		} else {
+			Assert.fail("Did not expect to be able to redefined to dummy class V2");
 		}
 
-		logger.debug("Calling invokeInterface(). Expected to throw exception.");
-		method = dummyClass.getMethod("invokeInterface", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			Assert.fail("Expected to throw exception but returned: " + rc);
-		} catch (Exception e) {
-			/* exception is expected */
-			logger.debug("Expected exception caught");
-		}
-
-		expected = "Virtual " + ClassGenerator.HELPER_CLASS_NAME + "_V1." + ClassGenerator.HELPER_METHOD_NAME;
-		logger.debug("Calling invokeSpecial(). Expected to return: " + expected);
-		method = dummyClass.getMethod("invokeSpecial", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned " + rc);
-			AssertJUnit.assertEquals("Did not get expected value: ", expected, rc);
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assert.fail("Did not expect exception to be thrown");
-		}
-
-		logger.debug("Redefining Interface to V1");
-		characteristics.clear();
-		characteristics.put(ClassGenerator.VERSION, "V1");
-		if (!redefineInterface(intfClass, testName, characteristics)) {
-			Assert.fail("Failed to redefine interface");
-		}
-
-		logger.debug("Redefining Dummy class to V1");
-		characteristics.clear();
-		characteristics.put(ClassGenerator.VERSION, "V1");
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
-		characteristics.put(ClassGenerator.SHARED_INVOKERS,
-				new String[] { DummyClassGenerator.INVOKE_INTERFACE, DummyClassGenerator.INVOKE_SPECIAL });
-		characteristics.put(ClassGenerator.SHARED_INVOKERS_TARGET, "INTERFACE");
-		if (!redefineDummyClass(dummyClass, testName, characteristics)) {
-			Assert.fail("Failed to redefine dummy class");
-		}
-
-		expected = ClassGenerator.DUMMY_CLASS_NAME + "_V1." + ClassGenerator.INTF_METHOD_NAME;
-		logger.debug("Calling invokeInterface(). Expected to return: " + expected);
-		method = dummyClass.getMethod("invokeInterface", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			AssertJUnit.assertEquals("Did not get expected value: ", expected, rc);
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assert.fail("Did not expect exception to be thrown");
-		}
-		logger.debug("Calling invokeSpecial(). Expected to throw exception.");
-		method = dummyClass.getMethod("invokeSpecial", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			Assert.fail("Expected to throw exception but returned: " + rc);
-		} catch (Exception e) {
-			/* exception is expected */
-			logger.debug("Expected exception caught");
-		}
 	}
 
 	public void testInvokestaticInvokespecial() throws Exception {
@@ -651,94 +590,9 @@ public class InvalidateSplitTableRetransformationTest {
 						DummyClassGenerator.INVOKE_STATIC });
 		characteristics.put(ClassGenerator.SHARED_INVOKERS_TARGET, "SUPER");
 		if (!redefineDummyClass(dummyClass, testName, characteristics)) {
-			Assert.fail("Failed to redefine dummy class");
-		}
-
-		logger.debug("Calling invokeInterface(). Expected to throw exception.");
-		method = dummyClass.getMethod("invokeInterface", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			Assert.fail("Expected to throw exception but returned: " + rc);
-		} catch (Exception e) {
-			/* exception is expected */
-			logger.debug("Expected exception caught");
-		}
-		logger.debug("Calling invokeStatic(). Expected to throw exception.");
-		method = dummyClass.getMethod("invokeStatic", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			Assert.fail("Expected to throw exception but returned: " + rc);
-		} catch (Exception e) {
-			/* exception is expected */
-			logger.debug("Expected exception caught");
-		}
-
-		expected = "Virtual " + ClassGenerator.HELPER_CLASS_NAME + "_V1." + ClassGenerator.HELPER_METHOD_NAME;
-		logger.debug("Calling invokeSpecial(). Expected to return: " + expected);
-		method = dummyClass.getMethod("invokeSpecial", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			AssertJUnit.assertEquals("Did not get expected value: ", expected, rc);
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assert.fail("Did not expect exception to be thrown");
-		}
-
-		logger.debug("Redefining Interface to V1");
-		characteristics.clear();
-		characteristics.put(ClassGenerator.VERSION, "V1");
-		if (!redefineInterface(intfClass, testName, characteristics)) {
-			Assert.fail("Failed to redefine interface");
-		}
-
-		logger.debug("Redefining Dummy class to V1");
-		characteristics.clear();
-		characteristics.put(ClassGenerator.VERSION, "V1");
-		characteristics.put(ClassGenerator.IMPLEMENTS_INTERFACE, new Boolean(true));
-		characteristics.put(ClassGenerator.EXTENDS_HELPER_CLASS, new Boolean(true));
-		characteristics.put(ClassGenerator.SHARED_INVOKERS,
-				new String[] {
-						DummyClassGenerator.INVOKE_INTERFACE,
-						DummyClassGenerator.INVOKE_SPECIAL,
-						DummyClassGenerator.INVOKE_STATIC });
-		characteristics.put(ClassGenerator.SHARED_INVOKERS_TARGET, "INTERFACE");
-		if (!redefineDummyClass(dummyClass, testName, characteristics)) {
-			Assert.fail("Failed to redefine dummy class");
-		}
-
-		expected = ClassGenerator.DUMMY_CLASS_NAME + "_V1." + ClassGenerator.INTF_METHOD_NAME;
-		logger.debug("Calling invokeInterface(). Expected to return: " + "Dummy_V1.foo");
-		method = dummyClass.getMethod("invokeInterface", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			AssertJUnit.assertEquals("Did not get expected value: ", "Dummy_V1.foo", rc);
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assert.fail("Did not expect exception to be thrown");
-		}
-		logger.debug("Calling invokeStatic(). Expected to throw exception.");
-		method = dummyClass.getMethod("invokeStatic", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			Assert.fail("Expected to throw exception but returned: " + rc);
-		} catch (Exception e) {
-			/* exception is expected */
-			logger.debug("Expected exception caught");
-		}
-		logger.debug("Calling invokeSpecial(). Expected to throw exception.");
-		method = dummyClass.getMethod("invokeSpecial", (Class[])null);
-		try {
-			rc = (String)method.invoke(dummyClass.newInstance(), (Object[])null);
-			logger.debug("Returned: " + rc);
-			Assert.fail("Expected to throw exception but returned: " + rc);
-		} catch (Exception e) {
-			/* exception is expected */
-			logger.debug("Expected exception caught");
+			logger.debug("Expected failure in redefining to dummy class V2");
+		} else {
+			Assert.fail("Did not expect to be able to redefined to dummy class V2");
 		}
 	}
 }

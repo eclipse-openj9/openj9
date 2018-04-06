@@ -868,6 +868,30 @@ done:
 		return length;
 	}
 
+	/**
+	 * Encode the Unicode character.
+	 *
+	 * Encodes the input Unicode character and stores it into utfChars.
+	 *
+	 * @param[in] unicode The unicode character
+	 * @param[in,out] utfChars buffer for UTF8 character
+	 *
+	 * @return Size of encoding (1,2,3) on success, 0 on failure
+	 */
+	static VMINLINE UDATA
+	encodeUTF8CharI8(I_8 unicode, U_8 *utfChars)
+	{
+		UDATA length = 1;
+		if ((unicode >= 0x01) && (unicode <= 0x7F)) {
+			utfChars[0] = (U_8)unicode;
+		} else {
+			utfChars[0] = (U_8)(((unicode >>6 ) & 0x1F) | 0xC0);
+			utfChars[1] = (U_8)((unicode & 0x3F) | 0x80);
+			length = 2;
+		}
+		return length;
+	}
+
 	 /**
 	 * Encode the Unicode character.
 	 *
