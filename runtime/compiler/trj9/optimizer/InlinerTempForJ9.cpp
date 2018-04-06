@@ -4210,7 +4210,7 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
        && bytecodeSize > polymorphicCalleeSizeThreshold
        && outterMethodSize > polymorphicRootSizeThreshold
        && ((bytecodeSize * 100) / outterMethodSize) < 6
-       && (!callSite->_ecsPrexArgInfo || !callSite->_ecsPrexArgInfo->get(0) || !callSite->_ecsPrexArgInfo->get(0)->getFixedClass())
+       && (!callSite->_ecsPrexArgInfo || !callSite->_ecsPrexArgInfo->get(0) || !callSite->_ecsPrexArgInfo->get(0)->getClass())
        && comp()->fej9()->maybeHighlyPolymorphic(comp(), callSite->_callerResolvedMethod, callSite->_cpIndex, callSite->_interfaceMethod, callSite->_receiverClass)
        && (!trustedInterfaceRegex || !TR::SimpleRegex::match(trustedInterfaceRegex, callSite->_interfaceMethod->signature(trMemory()), false)))
       {
@@ -5070,7 +5070,7 @@ TR_PrexArgInfo* TR_PrexArgInfo::buildPrexArgInfoForMethodSymbol(TR::ResolvedMeth
          if (clazz)
             {
             argInfo->set(index, new (tracer->trHeapMemory()) TR_PrexArgument(TR_PrexArgument::ClassIsPreexistent, clazz));
-            heuristicTrace(tracer, "PREX-CSI:  Parm %d class %p in %p is %.*s\n", index, argInfo->get(index)->getFixedClass(), argInfo->get(index), len, sig);
+            heuristicTrace(tracer, "PREX-CSI:  Parm %d class %p in %p is %.*s\n", index, argInfo->get(index)->getClass(), argInfo->get(index), len, sig);
             }
          }
       }
@@ -5084,7 +5084,7 @@ static TR_PrexArgument *stronger(TR_PrexArgument *left, TR_PrexArgument *right, 
       return left;
    else if (left && right
          && TR_PrexArgument::knowledgeLevel(left) == TR_PrexArgument::knowledgeLevel(right)
-         && comp->fe()->isInstanceOf(left->getFixedClass(), right->getFixedClass(), true, true, true))
+         && comp->fe()->isInstanceOf(left->getClass(), right->getClass(), true, true, true))
       return left;
    else
       return right;
@@ -5257,10 +5257,10 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
    int32_t numArgsToEnhance = std::min(argsFromTarget->getNumArgs(), argsFromSymbol->getNumArgs());
    for (int32_t i = 0; i < numArgsToEnhance; i++)
       {
-      if (!argsFromTarget->get(i) || !argsFromTarget->get(i)->getFixedClass()) //no incoming class info
+      if (!argsFromTarget->get(i) || !argsFromTarget->get(i)->getClass()) //no incoming class info
          continue;
 
-      if (!argsFromSymbol->get(i) || !argsFromSymbol->get(i)->getFixedClass())
+      if (!argsFromSymbol->get(i) || !argsFromSymbol->get(i)->getClass())
          {
          heuristicTrace(tracer, "ARGS PROPAGATION: No class info for arg %d from symbol. ", i);
          return false; //TODO: This can be relaxed
@@ -5272,8 +5272,8 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
       At this point class types from argsFromSymbol and argsFromTarget MUST be compatible
       Incompatibility might mean that we are inlining dead code
       */
-      if (fe->isInstanceOf(argsFromSymbol->get(i)->getFixedClass(), argsFromTarget->get(i)->getFixedClass(), true, true, true) != TR_yes  &&
-         fe->isInstanceOf(argsFromTarget->get(i)->getFixedClass(), argsFromSymbol->get(i)->getFixedClass(), true, true, true) != TR_yes)
+      if (fe->isInstanceOf(argsFromSymbol->get(i)->getClass(), argsFromTarget->get(i)->getClass(), true, true, true) != TR_yes  &&
+         fe->isInstanceOf(argsFromTarget->get(i)->getClass(), argsFromSymbol->get(i)->getClass(), true, true, true) != TR_yes)
          {
          return false;
          }
