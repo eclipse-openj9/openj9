@@ -5266,10 +5266,10 @@ TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRe
    TR::StaticSymbol* fieldSym = fieldRef->getSymbol()->castToStaticSymbol();
    j9object_t fieldString = (j9object_t)getStaticReferenceFieldAtAddress((uintptrj_t)fieldSym->getStaticAddress());
 
-   int32_t len, res;
-   len = (int32_t)jitConfig->javaVM->internalVMFunctions->getStringUTF8Length(vmThread(), classString);
+   int32_t len = (int32_t)jitConfig->javaVM->internalVMFunctions->getStringUTF8Length(vmThread(), classString);
    U_8* u8ClassString = (U_8*)comp->trMemory()->allocateStackMemory(len + 1);
-   res = (int32_t)jitConfig->javaVM->internalVMFunctions->copyStringToUTF8(vmThread(), classString, J9_STR_XLAT, u8ClassString, len+1);
+
+   jitConfig->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread(), classString, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, u8ClassString, len + 1);
 
    /**
    //fprintf(stderr,"name is (res is %d) classString is %p\n",res, classString); fflush(stderr);
@@ -5280,7 +5280,6 @@ TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRe
    fprintf(stderr,"  (len is %d)\n",len);fflush(stderr);
    **/
 
-   if (res) return 0;
    char* classSignature = classNameToSignature((char*)u8ClassString, len, comp);
 
    /**
@@ -5300,7 +5299,8 @@ TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRe
 
    len = (int32_t)jitConfig->javaVM->internalVMFunctions->getStringUTF8Length(vmThread(), fieldString);
    U_8* u8FieldString = (U_8*)comp->trMemory()->allocateStackMemory(len + 1);
-   res = (int32_t)jitConfig->javaVM->internalVMFunctions->copyStringToUTF8(vmThread(), fieldString, 0, u8FieldString, len+1);
+
+   jitConfig->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread(), fieldString, J9_STR_NULL_TERMINATE_RESULT, u8FieldString, len + 1);
 
    ListIterator<TR_VMField> itr(fields.getFields()) ;
    TR_VMField* field;
@@ -5425,10 +5425,9 @@ char *
 TR_J9VMBase::getStringUTF8(uintptrj_t objectPointer, char *buffer, intptrj_t bufferSize)
    {
    TR_ASSERT(haveAccess(), "Must have VM access to call getStringAscii");
-   TR_ASSERT(objectPointer && buffer, "assertion failure");
-   TR_ASSERT(bufferSize >= 1+getStringUTF8Length(objectPointer), "getStringUTF8 buffer must be large enough");
-   UDATA end = vmThread()->javaVM->internalVMFunctions->copyFromStringIntoUTF8(vmThread(), (j9object_t)objectPointer, buffer);
-   buffer[end] = 0;
+
+   vmThread()->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread(), (j9object_t)objectPointer, J9_STR_NULL_TERMINATE_RESULT, (U_8*)buffer, (UDATA)bufferSize);
+
    return buffer;
    }
 

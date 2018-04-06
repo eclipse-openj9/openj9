@@ -183,21 +183,15 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	if ((walkState->flags & (J9_STACKWALK_MAINTAIN_REGISTER_MAP | J9_STACKWALK_INCLUDE_CALL_IN_FRAMES)) == (J9_STACKWALK_MAINTAIN_REGISTER_MAP | J9_STACKWALK_INCLUDE_CALL_IN_FRAMES)) {
 		PORT_ACCESS_FROM_WALKSTATE(walkState);
 		J9UTF8 * className = J9ROMCLASS_CLASSNAME(((J9Class *) walkState->userData4)->romClass);
+		char detailStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 		char * detail = NULL;
-		J9JavaVM *javaVM = walkState->walkThread->javaVM;
 		j9object_t detailMessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(currentThread, walkState->restartException);
 
-		if (detailMessage) {
-			UDATA buffLen = (J9VMJAVALANGSTRING_LENGTH(currentThread, detailMessage) * 3) + 3;
-			detail = j9mem_allocate_memory(buffLen, OMRMEM_CATEGORY_VM);
-			if (NULL != detail) {
-				detail[0] = ':';
-				detail[1] = ' ';
-				javaVM->internalVMFunctions->copyStringToUTF8Helper(currentThread, detailMessage, TRUE, J9_STR_NONE, (U_8*)detail + 2, buffLen - 2);
-			}
+		if (NULL != detailMessage) {
+			detail = walkState->walkThread->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, detailMessage, J9_STR_NULL_TERMINATE_RESULT, ": ", 2, detailStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 		}
 		swPrintf(walkState, 2, "\tThrowing exception: %.*s%s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className), detail ? detail : "");
-		if (detail) {
+		if (detailStackBuffer != detail) {
 			j9mem_free_memory(detail);
 		}
 	}

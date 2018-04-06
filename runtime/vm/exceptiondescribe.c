@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ printExceptionInThread(J9VMThread* vmThread)
 /* assumes VM access */
 static void
 printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
-	char stackBuffer[64];
+	char stackBuffer[256];
 	char* buf = stackBuffer;
 	UDATA length = 0;
 	const char* separator = "";
@@ -76,21 +76,11 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 	J9UTF8* exceptionClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
 	j9object_t detailMessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, exception);
 
-	if (detailMessage) {
-		/* length is in jchars. 3x is enough for worst case UTF8 encoding */
-		length = J9VMJAVALANGSTRING_LENGTH(vmThread, detailMessage) * 3;
-		if (length > sizeof(stackBuffer)) {
-			buf = j9mem_allocate_memory(length, OMRMEM_CATEGORY_VM);
-		}
-		if (buf) {
-			length = copyStringToUTF8Helper(vmThread, detailMessage, FALSE, J9_STR_NONE, (U_8 *)buf, length);
-			if (UDATA_MAX == length) {
-				length = 0;
-			}
+	if (NULL != detailMessage) {
+		buf = copyStringToUTF8WithMemAlloc(vmThread, detailMessage, J9_STR_NULL_TERMINATE_RESULT, "", 0, stackBuffer, 256, &length);
+
+		if (NULL != buf) {
 			separator = ": ";
-		} else {
-			buf = stackBuffer;
-			length = 0;
 		}
 	}
 
@@ -149,13 +139,13 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, J9ROMClass *rom
 
 				if ((NULL != module) && (module != vm->javaBaseModule)) {
 					moduleNameUTF = copyStringToUTF8WithMemAlloc(
-						vmThread, module->moduleName, J9_STR_NONE, "", nameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+						vmThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, nameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 					if (nameBuf != moduleNameUTF) {
 						freeModuleName = TRUE;
 					}
 					if (NULL != moduleNameUTF) {
 						moduleVersionUTF = copyStringToUTF8WithMemAlloc(
-							vmThread, module->version, J9_STR_NONE, "", versionBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+							vmThread, module->version, J9_STR_NULL_TERMINATE_RESULT, "", 0, versionBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 						if (versionBuf != moduleVersionUTF) {
 							freeModuleVersion = TRUE;
 						}
