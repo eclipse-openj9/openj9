@@ -2761,89 +2761,65 @@ romImageNewSegment(J9JavaVM *vm, J9ROMImageHeader *header, UDATA isBaseType, J9C
 
 
 /**
- * Copy a string object to a UTF8 data buffer, optionally to prepend a string before it
+ * Copy a string object to a UTF8 data buffer, and optionally prepend a string before it.
  *
- * ***The caller must free the memory from this pointer if the return value is NOT the buffer argument ***
+ * @note The caller must free the memory from this pointer if the return value is NOT the buffer argument.
+ * @note If the buffer is not large enough to encode the string this function will allocate enough memory to encode
+ *       the worst-case UTF8 encoding of the supplied UTF16 string (length of string * 3 bytes).
  *
  * @param[in] currentThread the current J9VMThread
  * @param[in] string a string object to be copied
  * 				it can't be NULL
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
+ * @param[in] stringFlags the flag to determine performing '.' --> '/' or NULL termination
  * @param[in] prependStr the string to be prepended before the string object to be copied
  * 				it can't be NULL but can be an empty string ""
+ * @param[in] prependStrLength The length of prependStr as computed by strlen.
  * @param[in] buffer the buffer for the string
  * @param[in] bufferLength the buffer length
+ * @param[out] utf8Length If not NULL returns the computed length (in bytes) of the copied UTF8 string in the buffer excluding the NULL terminator.
  *
  * @return a char pointer to the string
  */
 char*
-copyStringToUTF8WithMemAlloc(J9VMThread *currentThread, j9object_t string, UDATA stringFlags, const char *prependStr, char *buffer, UDATA bufferLength);
+copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength, UDATA *utf8Length);
 
 
 /**
- * Copy certain number of Unicode characters from an offset into a Unicode character array to a UTF8 data buffer.
- *
- * @param[in] vmThread the current J9VMThread
- * @param[in] compressed if the Unicode character array is compressed
- * @param[in] nullTermination if the utf8 data is going to be NULL terminated
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
- * @param[in] unicodeBytes a Unicode character array
- * @param[in] unicodeOffset an offset into the Unicode character array
- * @param[in] unicodeLength the number of Unicode characters to be copied
- * @param[in] utf8Data a utf8 data buffer
- * @param[in] utf8Length the size of the utf8 data buffer
- *
- * @return UDATA_MAX if a failure occurred, otherwise the number of utf8 data copied excluding null termination
- */
-UDATA
-copyCharsIntoUTF8Helper(
-	J9VMThread *vmThread, BOOLEAN compressed, BOOLEAN nullTermination, UDATA stringFlags, j9object_t unicodeBytes, UDATA unicodeOffset, UDATA unicodeLength, U_8 *utf8Data, UDATA utf8Length);
+* Copy a string object to a J9UTF8 data buffer, and optionally prepend a string before it.
+*
+* @note The caller must free the memory from this pointer if the return value is NOT the buffer argument.
+* @note If the buffer is not large enough to encode the string this function will allocate enough memory to encode
+*       the worst-case UTF8 encoding of the supplied UTF16 string (length of string * 3 bytes).
+*
+* @param[in] currentThread the current J9VMThread
+* @param[in] string a string object to be copied
+* 				it can't be NULL
+* @param[in] stringFlags the flag to determine performing '.' --> '/' or NULL termination
+* @param[in] prependStr the string to be prepended before the string object to be copied
+* 				it can't be NULL but can be an empty string ""
+* @param[in] prependStrLength The length of prependStr as computed by strlen.
+* @param[in] buffer the buffer for the string
+* @param[in] bufferLength the buffer length
+*
+* @return a J9UTF8 pointer to the string
+*/
+J9UTF8*
+copyStringToJ9UTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength);
 
 
 /**
- * Copy a Unicode String to a UTF8 data buffer with NULL termination.
- *
- * @param[in] vmThread the current J9VMThread
- * @param[in] nullTermination if the utf8 data is going to be NULL terminated
- * @param[in] stringFlags the flag to determine performing '.' --> '/'
- * @param[in] utf8Data a utf8 data buffer
- * @param[in] utf8Length the size of the utf8 data buffer
- *
- * @return UDATA_MAX if a failure occurred, otherwise the number of utf8 data copied including null termination
- */
-UDATA
-copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, BOOLEAN nullTermination, UDATA stringFlags, U_8 *utf8Data, UDATA utf8Length);
-
-
-/**
- * !!! this method is for backwards compatibility with JIT usage !!!
- * Copy a Unicode String to a UTF8 data buffer with NULL termination.
+ * Copy a Unicode String to a UTF8 data buffer.
  *
  * @param[in] vmThread the current J9VMThread
  * @param[in] string a string object to be copied, it can't be NULL
  * @param[in] stringFlags the flag to determine performing '.' --> '/'
  * @param[in] utf8Data a utf8 data buffer
- * @param[in] utf8Length the size of the utf8 data buffer
+ * @param[in] utf8DataLength the length of utf8Data in number of bytes
  *
- * @return 1 if a failure occurred, otherwise 0 for success
+ * @return The computed length (in bytes) of the copied UTF8 string in the buffer excluding any NULL terminator.
  */
 UDATA
-copyStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, UDATA utf8Length);
-
-
-/**
- * !!! this method is for backwards compatibility with JIT usage !!!
- * Copy a Unicode String to a UTF8 data buffer without NULL termination.
- * dest is assumed to have enough length - the easiest way to ensure this is to pass a buffer with 1.5 * string length in it
- *
- * @param[in] vmThread the current J9VMThread
- * @param[in] string a string object to be copied, it can't be NULL
- * @param[in] dest a utf8 data buffer
- *
- * @return UDATA_MAX if a failure occurred, otherwise the number of utf8 data copied excluding null termination
- */
-UDATA
-copyFromStringIntoUTF8(J9VMThread *vmThread, j9object_t string, char * dest);
+copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, UDATA utf8DataLength);
 
 
 /**

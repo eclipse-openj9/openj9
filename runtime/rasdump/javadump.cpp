@@ -3225,22 +3225,11 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 
 	if (exceptionRef && *exceptionRef) {
 		j9object_t message = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, *exceptionRef);
-		if (message) {
-			/* length is in jchars. 3x is enough for worst case UTF8 encoding */
-			len = J9VMJAVALANGSTRING_LENGTH(vmThread, message) * 3;
-			if (len > sizeof(stackBuffer)) {
-				buf = (char *)j9mem_allocate_memory(len, OMRMEM_CATEGORY_VM);
-			}
-
-			if (buf) {
-				len = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, FALSE, J9_STR_NONE, (U_8*)buf, len);
-			} else {
-				buf = stackBuffer;
-				len = 0;
-			}
+		if (NULL != message) {
+			buf = _VirtualMachine->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, message, J9_STR_NULL_TERMINATE_RESULT, "", 0, stackBuffer, _MaximumExceptionNameLength, &len);
 		}
 
-		if (len) {
+		if (0 != len) {
 			_OutputStream.writeCharacters(" \"");
 			_OutputStream.writeCharacters(buf, len);
 			_OutputStream.writeCharacters("\"");
@@ -3254,8 +3243,9 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 		eiieClass = _VirtualMachine->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGEXCEPTIONININITIALIZERERROR, J9_FINDKNOWNCLASS_FLAG_EXISTING_ONLY);
 
 		if (J9OBJECT_CLAZZ(vmThread, *exceptionRef) == eiieClass) {
+			char detailMessageStackBuffer[_MaximumExceptionNameLength];
 			char*                  nestedBuf = NULL;
-			IDATA                  nestedLen = 0;
+			UDATA                  nestedLen = 0;
 			j9object_t             nestedException = NULL;
 			J9UTF8*                nestedExceptionClassName = NULL;
 
@@ -3270,15 +3260,18 @@ JavaCoreDumpWriter::writeExceptionDetail(j9object_t* exceptionRef)
 				}
 
 				message = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(vmThread, nestedException);
-				/* length is in jchars. 3x is enough for worst case UTF8 encoding */
-				nestedLen = J9VMJAVALANGSTRING_LENGTH(vmThread, message) * 3;
-				nestedBuf = (char *)j9mem_allocate_memory(nestedLen, OMRMEM_CATEGORY_VM);
-				if (nestedBuf) {
-					nestedLen = _VirtualMachine->internalVMFunctions->copyStringToUTF8Helper(vmThread, message, FALSE, J9_STR_NONE, (U_8*)nestedBuf, nestedLen);
+				if (NULL != message) {
+					nestedBuf = _VirtualMachine->internalVMFunctions->copyStringToUTF8WithMemAlloc(vmThread, message, J9_STR_NULL_TERMINATE_RESULT, "", 0, detailMessageStackBuffer, _MaximumExceptionNameLength, &nestedLen);
+				}
+				
+				if (0 != nestedLen) {
 					_OutputStream.writeCharacters(" Detail:  \"");
 					_OutputStream.writeCharacters(nestedBuf, nestedLen);
 					_OutputStream.writeCharacters("\"");
-					j9mem_free_memory( nestedBuf );
+				}
+
+				if (nestedBuf != detailMessageStackBuffer) {
+					j9mem_free_memory(nestedBuf);
 				}
 			}
 		}	

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -160,31 +160,31 @@ addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, j9object_t 
 {
 	J9JavaVM * const vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
-	U_16 length = 0;
+	UDATA packageNameLength = 0;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	j9package->packageName = (J9UTF8*)buf;
 #if J9VM_JAVA9_BUILD >= 156
-	length = (U_16) strlen(packageName);
-#else /* J9VM_JAVA9_BUILD >= 156 */
-	length = (U_16)vmFuncs->getStringUTF8Length(currentThread, packageName);
-#endif /* J9VM_JAVA9_BUILD >= 156 */
-	if ((NULL == j9package->packageName)
-		|| ((length + sizeof(j9package->packageName->length) + 1) > bufLen)
-	) {
-		j9package->packageName = j9mem_allocate_memory(sizeof(j9package->packageName->length) + length + 1, OMRMEM_CATEGORY_VM);
+	j9package->packageName = (J9UTF8*)buf;
+	packageNameLength = (UDATA) strlen(packageName);
+	if ((NULL == j9package->packageName) || ((packageNameLength + sizeof(j9package->packageName->length) + 1) > bufLen)) {
+		j9package->packageName = j9mem_allocate_memory(packageNameLength + sizeof(j9package->packageName->length) + 1, OMRMEM_CATEGORY_VM);
 		if (NULL == j9package->packageName) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			return FALSE;
 		}
 	}
-#if J9VM_JAVA9_BUILD >= 156
-	memcpy(J9UTF8_DATA(j9package->packageName), (void *)packageName, length);
-	J9UTF8_DATA(j9package->packageName)[length] = '\0';
+
+	memcpy(J9UTF8_DATA(j9package->packageName), (void *)packageName, packageNameLength);
+	J9UTF8_DATA(j9package->packageName)[packageNameLength] = '\0';
+	J9UTF8_SET_LENGTH(j9package->packageName, (U_16)packageNameLength);
 #else /* J9VM_JAVA9_BUILD >= 156 */
-	vmFuncs->copyStringToUTF8Helper(currentThread, packageName, TRUE, J9_STR_NONE, J9UTF8_DATA(j9package->packageName), length + 1);
+	j9package->packageName = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, packageName, J9_STR_NULL_TERMINATE_RESULT, "", 0, (char*)buf, bufLen);
+	if (NULL == j9package->packageName) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		return FALSE;
+	}
 #endif /* J9VM_JAVA9_BUILD >= 156 */
-	J9UTF8_SET_LENGTH(j9package->packageName, length);
+
 	return TRUE;
 }
 

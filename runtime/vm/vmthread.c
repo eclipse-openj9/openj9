@@ -1834,7 +1834,7 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 	omrthread_t osThread;
 	j9object_t cachedOutOfMemoryError;
 	j9object_t threadObject;
-	char *threadName;
+	char *threadName = NULL;
 	
 	/* Fork the OS thread */
 
@@ -1879,24 +1879,16 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 		
 	threadObject = PEEK_OBJECT_IN_SPECIAL_FRAME(currentThread, 3);
 	if (J2SE_SHAPE(vm) == J2SE_SHAPE_RAW) {
-		PORT_ACCESS_FROM_JAVAVM(vm);
 		j9object_t unicodeChars = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
-		UDATA unicodeLength = getStringUTF8Length(currentThread, unicodeChars) * 2 + 1;
-		threadName = (char*)j9mem_allocate_memory(unicodeLength, OMRMEM_CATEGORY_THREADS);
-		if (NULL != threadName) {
-			memset(threadName, 0, unicodeLength);
-			if (UDATA_MAX == copyStringToUTF8Helper(
-				currentThread, unicodeChars, TRUE, J9_STR_NONE, (U_8 *)threadName, unicodeLength)
-			) {
-				j9mem_free_memory(threadName);
-				threadName = NULL;
-			}
+
+		if (NULL != unicodeChars) {
+			threadName = copyStringToUTF8WithMemAlloc(currentThread, unicodeChars, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
 		}
 	} else {
 		j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(currentThread, threadObject);
 		threadName = getVMThreadNameFromString(currentThread, nameObject);
 	}
-	if(threadName == NULL) {
+	if (threadName == NULL) {
 		Trc_VM_startJavaThread_failedVMThreadAlloc(currentThread);
 		omrthread_cancel(osThread);
 		return J9_THREAD_START_FAILED_VMTHREAD_ALLOC;

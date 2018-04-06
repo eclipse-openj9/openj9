@@ -911,25 +911,27 @@ Java_java_lang_Class_getMethodImpl(JNIEnv *env, jobject recv, jobject name, jobj
 
 			J9JNINameAndSignature nameAndSig;
 			char nameBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+			UDATA nameBufferLength = 0;
 			char signatureBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+			UDATA signatureLength = 0;
 			nameAndSig.name = nameBuffer;
 			nameAndSig.nameLength = 0;
 			nameAndSig.signature = signatureBuffer;
 			nameAndSig.signatureLength = 0;
 
 			nameAndSig.name = vmFuncs->copyStringToUTF8WithMemAlloc(
-				currentThread, nameObject, J9_STR_NONE, "", nameBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+				currentThread, nameObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, nameBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &nameBufferLength);
 			if (NULL == nameAndSig.name) {
 				goto _done;
 			}
-			nameAndSig.nameLength = (U_32) vmFuncs->getStringUTF8Length(currentThread, nameObject);
+			nameAndSig.nameLength = (U_32)nameBufferLength;
 
 			nameAndSig.signature = vmFuncs->copyStringToUTF8WithMemAlloc(
-				currentThread, signatureObject, J9_STR_XLAT, "", signatureBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
+				currentThread, signatureObject, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, signatureBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &signatureLength);
 			if (NULL == nameAndSig.signature) {
 				goto _done;
 			}
-			nameAndSig.signatureLength = (U_32) vmFuncs->getStringUTF8Length(currentThread, signatureObject);
+			nameAndSig.signatureLength = (U_32)signatureLength;
 
 			currentMethod = (J9Method *) vmFuncs->javaLookupMethodImpl(currentThread, clazz, ((J9ROMNameAndSignature *) &nameAndSig), NULL, lookupFLags, NULL);
 			if (NULL == currentMethod) { /* by default we look for virtual methods.  Try static methods. */

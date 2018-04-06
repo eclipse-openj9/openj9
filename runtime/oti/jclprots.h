@@ -927,7 +927,6 @@ void JNICALL Java_java_lang_invoke_ThunkTuple_registerNatives(JNIEnv *env, jclas
 void JNICALL Java_java_lang_invoke_InterfaceHandle_registerNatives(JNIEnv *env, jclass nativeClass);
 jlong JNICALL Java_java_lang_invoke_MethodHandle_vtableOffset(JNIEnv *env, jclass ignored);
 void JNICALL Java_java_lang_invoke_MutableCallSite_freeGlobalRef(JNIEnv *env, jclass mutableCallSite, jlong bypassOffset);
-J9UTF8 *allocateJ9UTF8(JNIEnv *env, jstring name);
 void setClassLoadingConstraintLinkageError(J9VMThread *vmThread, J9Class *methodOrFieldClass, J9UTF8 *signatureUTF8);
 #ifdef J9VM_OPT_PANAMA
 extern J9_CFUNC jlong JNICALL
