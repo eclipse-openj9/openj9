@@ -360,6 +360,7 @@
 
 	<!-- Access to Direct Byte Buffer native memory allocation data -->
 	<classref name="java/nio/Bits"/> 
+	<classref name="java/util/concurrent/atomic/AtomicLong"/> 
 	<staticfieldref class="java/nio/Bits" name="count" signature="Ljava/util/concurrent/atomic/AtomicLong;"/>
 	<staticfieldref class="java/nio/Bits" name="reservedMemory" signature="Ljava/util/concurrent/atomic/AtomicLong;"/>
 	<fieldref class="java/util/concurrent/atomic/AtomicLong" name="value" signature="J"/>

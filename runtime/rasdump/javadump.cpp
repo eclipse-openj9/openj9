@@ -1567,18 +1567,10 @@ outerMemCategoryCallBack (U_32 categoryCode, const char * categoryName, UDATA li
 
 		/* Data on native memory used for DBBs is stored in java class java.nio.Bits. */
 		if (strcmp(categoryName,"sun.misc.Unsafe") == 0) {
-		
-			/* Here we retrieve the amount of native memory allocated to DBBs from the static variables inside the Bits Java class. */
-			J9VMThread* vmThread = _Context->onThread;
-			J9JavaVM *vm = vmThread->javaVM;
-			j9object_t bitsClass = J9VMJAVANIOBITS_OR_NULL(vm);
-			j9object_t countAtomicLongClass = bitsClass ? J9VMJAVANIOBITS_COUNT(vm, bitsClass) : NULL;
-			j9object_t reservedMemoryAtomicLongClass = bitsClass ? J9VMJAVANIOBITS_RESERVEDMEMORY(vm, bitsClass) : NULL;
-			
-			if ((countAtomicLongClass != NULL) && (reservedMemoryAtomicLongClass != NULL)) { 
-				UDATA liveBytesForDBBs = (UDATA)J9VMJAVAUTILCONCURRENTATOMICATOMICLONG_VALUE(vm, reservedMemoryAtomicLongClass);
-				UDATA liveAllocationsForDBBs = (UDATA)J9VMJAVAUTILCONCURRENTATOMICATOMICLONG_VALUE(vm, countAtomicLongClass);
-				
+			UDATA *dbbMemoryUsageAndAllocationsCount = (UDATA*)state->userData2;
+			UDATA liveBytesForDBBs = *(dbbMemoryUsageAndAllocationsCount);
+			UDATA liveAllocationsForDBBs = *(dbbMemoryUsageAndAllocationsCount + 1);
+			if (liveAllocationsForDBBs != 0) { 
 				writer->writeNativeAllocator("Direct Byte Buffers", depth + 1, (BOOLEAN)0, liveBytesForDBBs, liveAllocationsForDBBs);
 				
 				if (total.liveAllocations > liveAllocationsForDBBs && total.liveAllocations > 0) {
@@ -1623,13 +1615,29 @@ JavaCoreDumpWriter::writeMemoryCountersSection(void)
 
 	_CategoryStack = (memcategory_data_frame*) alloca(_TotalCategories * sizeof(memcategory_data_frame*));
 
-	memset(&walkState, 0, sizeof(OMRMemCategoryWalkState));
-	walkState.walkFunction = &outerMemCategoryCallBack;
-	walkState.userData1 = this;
-
 	/* Category walk is done in two pieces. The outer walk prints the lines in the javacore and calls
 	 * the inner walk, used for totalling up the values of the categories beneath that value.
 	 */
+
+	/* Here we gather Direct Byte Buffer data needed for the walk */
+	J9VMThread* vmThread = _Context->onThread;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9Class *bitsClass = J9VMJAVANIOBITS_OR_NULL(vm);
+	j9object_t countAtomicLongClass = bitsClass ? J9VMJAVANIOBITS_COUNT(vmThread, bitsClass) : NULL;
+	j9object_t reservedMemoryAtomicLongClass = bitsClass ? J9VMJAVANIOBITS_RESERVEDMEMORY(vmThread, bitsClass) : NULL;
+	UDATA dbbMemoryUse = reservedMemoryAtomicLongClass ? (UDATA)J9VMJAVAUTILCONCURRENTATOMICATOMICLONG_VALUE(vm, reservedMemoryAtomicLongClass) : (UDATA)0;
+	UDATA dbbMemoryAllocs = countAtomicLongClass ? (UDATA)J9VMJAVAUTILCONCURRENTATOMICATOMICLONG_VALUE(vm, countAtomicLongClass) : (UDATA)0;
+	UDATA arrayOfDbbData[2] = {dbbMemoryUse,dbbMemoryAllocs};
+	UDATA *pointerToDbbArray;
+	pointerToDbbArray = arrayOfDbbData;
+
+	/* Here we prepare the walk */
+	memset(&walkState, 0, sizeof(OMRMemCategoryWalkState));
+	walkState.walkFunction = &outerMemCategoryCallBack;
+	walkState.userData1 = this;
+	walkState.userData2 = pointerToDbbArray;
+	
+	/* Here we execute the walk */
 	j9mem_walk_categories(&walkState);
 
 	/* Print any final "Other" categories */
