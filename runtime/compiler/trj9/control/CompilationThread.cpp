@@ -486,7 +486,10 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
                  // Downgrade if compilation queue is too large
                 (TR::Options::getCmdLineOptions()->getOption(TR_EnableDowngradeOnHugeQSZ) &&
                  getMethodQueueSize() >= TR::Options::_qszThresholdToDowngradeOptLevel) ||
-                 // Downgrade if AOT and startup
+                 // Downgrade if compilation queue grows too much during startup
+                (_jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
+                 getMethodQueueSize() >= TR::Options::_qszThresholdToDowngradeOptLevelDuringStartup) ||
+                 // Downgrade if AOT and startup, 
                 (TR::Options::getCmdLineOptions()->sharedClassCache() &&
                  _jitConfig->javaVM->phase == J9VM_PHASE_STARTUP &&
                  !TR::Options::getCmdLineOptions()->getOption(TR_DisableDowngradeToColdOnVMPhaseStartup))

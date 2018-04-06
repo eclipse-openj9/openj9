@@ -564,7 +564,11 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
          } // if (TR::Options::sharedClassCache())
       if (count == -1) // count didn't change yet
          {
-         count = getCount(romMethod, optionsJIT, optionsAOT);
+         if (!TR::Options::getCountsAreProvidedByUser() &&
+            fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method))
+            count = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR::Options::getCountForLoopyBootstrapMethods() : TR::Options::getCountForLooplessBootstrapMethods();
+         if (count == -1)
+            count = getCount(romMethod, optionsJIT, optionsAOT);
 
          // If add-spreading-invocation mode is enabled, add a hash value (hashed from method name) to count
          if (optionsAOT->getOption(TR_EnableCompilationSpreading) || optionsJIT->getOption(TR_EnableCompilationSpreading))
@@ -578,7 +582,6 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                count = count * TR::Options::_countPercentageForEarlyCompilation / 100;
             // TODO: disable this mechanism after an hour or so to conserve idle time
             }
-
          }
       }
 

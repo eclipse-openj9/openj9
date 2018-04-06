@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,6 +113,11 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _countForMethodsCompiledDuringStartup;
    static int32_t getCountForMethodsCompiledDuringStartup() { return _countForMethodsCompiledDuringStartup; }
 
+   static int32_t _countForLoopyBootstrapMethods;
+   static int32_t _countForLooplessBootstrapMethods;
+   static int32_t getCountForLoopyBootstrapMethods() { return _countForLoopyBootstrapMethods; }
+   static int32_t getCountForLooplessBootstrapMethods() { return _countForLooplessBootstrapMethods; }
+
    // fast JNI option
    static TR::SimpleRegex *_jniAccelerator;
    static TR::SimpleRegex * getJniAccelerator() { return _jniAccelerator; }
@@ -210,6 +215,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _numQueuedInvReqToDowngradeOptLevel;
    static int32_t _qszThresholdToDowngradeOptLevel;
    static int32_t _qsziThresholdToDowngradeDuringCLP;
+   static int32_t _qszThresholdToDowngradeOptLevelDuringStartup;
    static int32_t _cpuUtilThresholdForStarvation;
    static int32_t _compPriorityQSZThreshold;
    static int32_t _GCRQueuedThresholdForCounting; // if too many GCR are queued we stop counting
