@@ -158,7 +158,7 @@ public:
 					PORT_ACCESS_FROM_JAVAVM(vm);
 					U_64 const timeNow = VM_VMAccess::updateExclusiveVMAccessStats(vmThread, vm, PORTLIB);
 					if (--vm->jniCriticalResponseCount == 0) {
-						VM_VMAccess::respondToExclusiveRequest(vmThread, vm, PORTLIB, timeNow);
+						VM_VMAccess::respondToExclusiveRequest(vmThread, vm, PORTLIB, timeNow, J9_EXCLUSIVE_SLOW_REASON_JNICRITICAL);
 					}
 					omrthread_monitor_exit_using_threadId(exclusiveAccessMutex, osThread);
 				}
