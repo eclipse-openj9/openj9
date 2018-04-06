@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017, 2017 IBM Corp. and others
+* Copyright (c) 2017, 2018 IBM Corp. and others
 *
 * This program and the accompanying materials are made available under
 * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,6 @@
 #include "codegen/CodeGenerator.hpp"                      // for CodeGenerator
 #include "optimizer/TransformUtil.hpp"
 
-
 void J9::RecognizedCallTransformer::processSimpleMath(TR::Node* node, TR::ILOpCodes opcode)
    {
    TR::Node::recreate(node, opcode);
@@ -54,6 +53,10 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
       case TR::java_lang_Integer_rotateLeft:
+      case TR::java_lang_Math_abs_I:
+      case TR::java_lang_Math_abs_L:
+      case TR::java_lang_Math_abs_F:
+      case TR::java_lang_Math_abs_D:
          return TR::Compiler->target.cpu.isX86();
       case TR::java_lang_Math_max_I:
       case TR::java_lang_Math_min_I:
@@ -72,6 +75,18 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
       {
       case TR::java_lang_Integer_rotateLeft:
          processSimpleMath(node, TR::irol);
+         break;
+      case TR::java_lang_Math_abs_I:
+         processSimpleMath(node, TR::iabs);
+         break;
+      case TR::java_lang_Math_abs_L:
+         processSimpleMath(node, TR::labs);
+         break;
+      case TR::java_lang_Math_abs_D:
+         processSimpleMath(node, TR::dabs);
+         break;
+      case TR::java_lang_Math_abs_F:
+         processSimpleMath(node, TR::fabs);
          break;
       case TR::java_lang_Math_max_I:
          processSimpleMath(node, TR::imax);
