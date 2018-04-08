@@ -93,6 +93,7 @@ ADD \
     http://ftp.us.debian.org/debian/pool/main/c/cups/libcups2-dev_2.2.1-8%2bdeb9u1_armhf.deb         \
     http://ftp.us.debian.org/debian/pool/main/c/cups/libcupsimage2-dev_2.2.1-8%2bdeb9u1_armhf.deb    \
     http://ftp.us.debian.org/debian/pool/main/d/dwarfutils/libdwarf-dev_20161124-1+deb9u1_armhf.deb  \
+    http://ftp.us.debian.org/debian/pool/main/f/fontconfig/libfontconfig1-dev_2.11.0-6.7+b1_armhf.deb \
     http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6_2.6.3-3.2_armhf.deb            \
     http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6-dev_2.6.3-3.2_armhf.deb        \
     http://ftp.us.debian.org/debian/pool/main/libi/libice/libice-dev_1.0.9-2_armhf.deb               \
