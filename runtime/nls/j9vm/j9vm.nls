@@ -1729,7 +1729,7 @@ J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.user_response=Load class and nest host 
 # Second argument is class name
 # Third argument is nest host name length
 # Fourth argument is nest host name
-J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST=Class %2$.*1$s must be claimed by its nest host %4$.*1$s.
+J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST=Class %2$.*1$s must be claimed by its nest host %4$.*3$s
 # START NON-TRANSLATABLE
 J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.explanation=Class was not claimed by its nest host class.
 J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.system_action=The JVM will throw a java/lang/VerifyError
@@ -1781,4 +1781,15 @@ J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.sample_input_18=Main
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.explanation=A class loading constraint has been violated.  The two class loader's have different classes for one of the class names in the signature.
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.system_action=A java/lang/LinkageError will be thrown
 J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.user_response=Examine the use of ClassLoaders to determine why a class of the same name is loaded in two different loaders
+# END NON-TRANSLATABLE
+
+# First argument is class name length
+# Second argument is class name
+# Third argument is nest host name length
+# Fourth argument is nest host name
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD=Class %2$.*1$s must be able to load its nest host %4$.*3$s.
+# START NON-TRANSLATABLE
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.explanation=Class and nest host class were loaded with different class loaders.
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.system_action=The JVM will throw a java/lang/IllegalAccessError
+J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
 # END NON-TRANSLATABLE

@@ -28,6 +28,11 @@
 #include "ut_j9vm.h"
 #include "util_api.h"
 #include "vm_internal.h"
+#include "j9protos.h"
+
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+static UDATA loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options);
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 
 
 
@@ -141,12 +146,39 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 			}
 		} else if (modifiers & J9AccPrivate) {
 			/* Private */
-			if ((sourceClass != destClass)
+			if (sourceClass != destClass) {
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-					&& (sourceClass->nestHost != destClass->nestHost)
+				/* loadAndVerifyNestHost returns an error code if setting the
+				 * nest host field fails.
+				 *
+				 * Note that the specification asserts an order for nest host
+				 * loading during access checking. The accessing class's nest
+				 * host is loaded first and the class being accessed loads its
+				 * nest host after.
+				 */
+				if (NULL == sourceClass->nestHost) {
+					result = loadAndVerifyNestHost(currentThread, sourceClass, lookupOptions);
+					if (J9_VISIBILITY_ALLOWED != result) {
+						goto _exit;
+					}
+					sourceClass = J9_CURRENT_CLASS(sourceClass);
+					destClass = J9_CURRENT_CLASS(destClass);
+				}
+				if (NULL == destClass->nestHost) {
+					result = loadAndVerifyNestHost(currentThread, destClass, lookupOptions);
+					if (J9_VISIBILITY_ALLOWED != result) {
+						goto _exit;
+					}
+					sourceClass = J9_CURRENT_CLASS(sourceClass);
+					destClass = J9_CURRENT_CLASS(destClass);
+				}
+
+				if (sourceClass->nestHost != destClass->nestHost) {
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
-			) {
-				result = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
+					result = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 			}
 		} else if (modifiers & J9AccProtected) {
 			/* Protected */
@@ -171,6 +203,9 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 		}
 	}
 
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+_exit:
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 	if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == result) {
 		/* "checkVisibility from %p (%.*s) to %p (%.*s) modifiers=%zx failed" */
 		Trc_VM_checkVisibility_Failed(currentThread,
@@ -183,3 +218,54 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 
 	return result;
 }
+
+#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+static UDATA
+loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
+{
+	J9Class *nestHost = NULL;
+	UDATA result = J9_VISIBILITY_ALLOWED;
+	J9ROMClass *romClass = clazz->romClass;
+	J9UTF8 *nestHostName = J9ROMCLASS_NESTHOSTNAME(romClass);
+
+	/* If no nest host is named, class is own nest host */
+	if (NULL == nestHostName) {
+		nestHost = clazz;
+	} else {
+		UDATA classLoadingFlags = 0;
+		if (J9_ARE_NO_BITS_SET(options, J9_LOOK_NO_THROW)) {
+			classLoadingFlags = J9_FINDCLASS_FLAG_THROW_ON_FAIL;
+		}
+
+		nestHost = internalFindClassUTF8(vmThread, J9UTF8_DATA(nestHostName), J9UTF8_LENGTH(nestHostName), clazz->classLoader, classLoadingFlags);
+
+		/* Nest host must be successfully loaded by the same classloader in the same package & verify the nest member */
+		if (NULL == nestHost) {
+			result = J9_VISIBILITY_NEST_HOST_LOADING_FAILURE_ERROR;
+		} else if (clazz->packageID != nestHost->packageID) {
+			result = J9_VISIBILITY_NEST_HOST_DIFFERENT_PACKAGE_ERROR;
+		} else {
+			/* The nest host must have a nestmembers attribute that claims this class. */
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+			J9SRP *nestMembers = J9ROMCLASS_NESTMEMBERS(nestHost->romClass);
+			U_16 nestMemberCount = nestHost->romClass->nestMemberCount;
+			U_16 i = 0;
+
+			result = J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR;
+			for (i = 0; i < nestMemberCount; i++) {
+				J9UTF8 *nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8*);
+				if (J9UTF8_EQUALS(className, nestMemberName)) {
+					result = J9_VISIBILITY_ALLOWED;
+					break;
+				}
+			}
+		}
+	}
+
+	/* If a problem occurred in nest host verification then the nest host value is invalid */
+	if  ((J9_VISIBILITY_ALLOWED == result) && (nestHost != NULL)) {
+		clazz->nestHost = nestHost;
+	}
+	return result;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
