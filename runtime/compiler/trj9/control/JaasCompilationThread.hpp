@@ -7,6 +7,9 @@
 #include "env/PersistentCollections.hpp"
 
 class TR_PersistentClassInfo;
+class TR_IPBytecodeHashTableEntry;
+
+using IPTable_t = PersistentUnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
 
 class ClientSessionData
    {
@@ -20,6 +23,14 @@ class ClientSessionData
       int32_t numDimensions;
       };
 
+   struct J9MethodInfo
+      {
+      J9ROMMethod *_romMethod; // pointer to local/server cache
+      // The following is a hashtable that maps a bcIndex to IProfiler data
+      // The hashtable is created on demand (nullptr means it is missing)
+      IPTable_t *_IPData;
+      };
+
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
    ClientSessionData(uint64_t clientUID);
    ~ClientSessionData();
@@ -30,10 +41,12 @@ class ClientSessionData
    void   setSystemClassLoader(void * cl) { _systemClassLoader = cl; }
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> & getCHTableClassMap() { return _chTableClassMap; }
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
-   PersistentUnorderedMap<J9Method*, J9ROMMethod*> & getROMMethodMap() { return _romMethodMap; }
+   PersistentUnorderedMap<J9Method*, J9MethodInfo> & getJ9MethodMap() { return _J9MethodMap; }
    PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & getSystemClassByNameMap() { return _systemClassByNameMap; }
    void processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
+   TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *found);
+   bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
 
    void incInUse() { _inUse++; }
    void decInUse() { _inUse--; TR_ASSERT(_inUse >= 0, "_inUse=%d must be positive\n", _inUse); }
@@ -51,7 +64,8 @@ class ClientSessionData
    void *              _systemClassLoader; // declared as void* so that we don't try to dereference it
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _chTableClassMap; // cache of persistent CHTable
    PersistentUnorderedMap<J9Class*, ClassInfo> _romClassMap;
-   PersistentUnorderedMap<J9Method*, J9ROMMethod*> _romMethodMap;
+   // Hashtable for information related to one J9Method
+   PersistentUnorderedMap<J9Method*, J9MethodInfo> _J9MethodMap;
    // The following hashtable caches <classname> --> <J9Class> mappings
    // All classes in here are loaded by the systemClassLoader so we know they cannot be unloaded
    PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> _systemClassByNameMap;

@@ -77,6 +77,7 @@
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "control/JaasCompilationThread.hpp"
+#include "runtime/JaasIProfiler.hpp"
 
 extern "C" {
 struct J9JavaVM;
@@ -1965,8 +1966,15 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
          if (feGetEnv("TR_PrintJaasCHTableStats"))
             printJaasCHTableStats(jitConfig, compInfo);
 
-         if (feGetEnv("TR_PrintJaasCacheStats"))
-            printJaasCacheStats(jitConfig, compInfo);
+         if (feGetEnv("TR_PrintJaasIPMsgStats"))
+            {
+            if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+               {
+               TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(context->javaVM->jitConfig, 0));
+               TR_JaasIProfiler *jaasIProfiler = (TR_JaasIProfiler *)vmj9->getIProfiler();
+               jaasIProfiler->printStats();
+               }
+            }
          }
       }
 

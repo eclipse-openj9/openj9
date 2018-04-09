@@ -61,20 +61,20 @@ J9::VMMethodEnv::startPC(TR_OpaqueMethodBlock *method)
 
 J9ROMMethod *romMethodOfRamMethod(J9Method* method)
    {
-   if (!TR::CompilationInfo::getStream()) // If not jaas server
+   if (!TR::CompilationInfo::getStream()) // If not JAAS server
       return J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
 
-   // else, jaas
+   // else, JAAS
    auto clientData = TR::compInfoPT->getClientData();
    J9ROMMethod *romMethod;
 
    // check if the method is already cached
       {
       OMR::CriticalSection romCache(clientData->getROMMapMonitor());
-      auto &map = clientData->getROMMethodMap();
+      auto &map = clientData->getJ9MethodMap();
       auto it = map.find((J9Method*) method);
       if (it != map.end())
-         romMethod = it->second;
+         romMethod = it->second._romMethod;
       }
 
    // if not, go cache the associated ROM class and get the ROM method from it
@@ -86,8 +86,8 @@ J9ROMMethod *romMethodOfRamMethod(J9Method* method)
       TR::compInfoPT->getAndCacheRemoteROMClass(clazz);
          {
          OMR::CriticalSection romCache(clientData->getROMMapMonitor());
-         auto &map = clientData->getROMMethodMap();
-         romMethod = map[(J9Method*) method];
+         auto &map = clientData->getJ9MethodMap();
+         romMethod = map[(J9Method*) method]._romMethod;
          }
       }
    TR_ASSERT(romMethod, "Should have acquired romMethod");

@@ -102,6 +102,7 @@
 #include "trj9/env/j9methodServer.hpp"
 #include "control/JaasCompilationThread.hpp"
 #include "env/JaasPersistentCHTable.hpp"
+#include "runtime/JaasIProfiler.hpp"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -3052,6 +3053,16 @@ void TR::CompilationInfo::stopCompilationThreads()
       fprintf(stderr, "NumDowngradeInterpretedMethod=%u\n", _statNumDowngradeInterpretedMethod);
       fprintf(stderr, "NumUpgradeJittedMethod=%u\n", _statNumUpgradeJittedMethod);
       fprintf(stderr, "NumQueuePromotions=%u\n", _statNumQueuePromotions);
+      }
+
+   if (feGetEnv("TR_PrintJaasIPMsgStats"))
+      {
+      if (getPersistentInfo()->getJaasMode() == SERVER_MODE)
+         {
+         TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(_jitConfig, 0));
+         TR_JaasIProfiler *jaasIProfiler = (TR_JaasIProfiler *)vmj9->getIProfiler();
+         jaasIProfiler->printStats();
+         }
       }
 
 #ifdef STATS

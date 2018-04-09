@@ -1798,10 +1798,14 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto bcIndex = std::get<1>(recv);
          auto data = std::get<2>(recv);
          TR_IProfiler *iProfiler = fe->getIProfiler();
+
+         // Send to the server not only the IP data, but also whether the method is compiled 
+         bool isCompiled = TR::CompilationInfo::isCompiled((J9Method*)method);
+
          if (!iProfiler)
             {
             // iProfiler is enabled on the server if we got here, but not enabled here on the client
-            client->write(std::string());
+            client->write(std::string(), isCompiled);
             break;
             }
          auto entry = iProfiler->profilingSample(method, bcIndex, TR::comp(), data, false);
@@ -1814,12 +1818,11 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
                std::string entryBytes(bytes, '\0');
                auto storage = (TR_IPBCDataStorageHeader*) &entryBytes[0];
                entry->serialize(storage, TR::comp()->getPersistentInfo());
-
-               client->write(entryBytes);
+               client->write(entryBytes, isCompiled);
                }
             else
                {
-               client->write(std::string());
+               client->write(std::string(), isCompiled);
                }
             if (auto callGraphEntry = entry->asIPBCDataCallGraph())
                if (canPersist != IPBC_ENTRY_PERSIST_LOCK && callGraphEntry->isLocked())
@@ -1827,7 +1830,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
             }
          else
             {
-            client->write(std::string());
+            client->write(std::string(), isCompiled);
             }
          }
          break;
@@ -2144,7 +2147,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID) :
    _clientUID(clientUID),
    _chTableClassMap(decltype(_chTableClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _romClassMap(decltype(_romClassMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _romMethodMap(decltype(_romMethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _J9MethodMap(decltype(_J9MethodMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _systemClassByNameMap(decltype(_systemClassByNameMap)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    updateTimeOfLastAccess();
@@ -2157,6 +2160,24 @@ ClientSessionData::ClientSessionData(uint64_t clientUID) :
 ClientSessionData::~ClientSessionData()
    {
    _romMapMonitor->destroy();
+   // Free memory for all hashtables with IProfiler info
+   for (auto it : _J9MethodMap)
+      {
+      IPTable_t *ipDataHT = it.second._IPData;
+      // It it exists, walk the collection of <pc, TR_IPBytecodeHashTableEntry*> mappings
+      if (ipDataHT) 
+         {
+         for (auto entryIt : *ipDataHT)
+            {
+            auto entryPtr = entryIt.second;
+            if (entryPtr)
+               jitPersistentFree(entryPtr);
+            }
+         ipDataHT->~IPTable_t();
+         jitPersistentFree(ipDataHT);
+         it.second._IPData = nullptr;
+         }
+      }
    for (auto it : _romClassMap)
       {
       TR_Memory::jitPersistentFree(it.second.romClass);
@@ -2179,11 +2200,102 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
       // delete all the cached J9Methods belonging to this unloaded class
       for (size_t i = 0; i < romClass->romMethodCount; i++)
          {
-         _romMethodMap.erase(&methods[i]);
+         J9Method *j9method = methods + i;
+         auto iter = _J9MethodMap.find(j9method);
+         if (iter != _J9MethodMap.end())
+            {
+            IPTable_t *ipDataHT = iter->second._IPData;
+            if (ipDataHT)
+               {
+               for (auto entryIt : *ipDataHT)
+                  {
+                  auto entryPtr = entryIt.second;
+                  if (entryPtr)
+                     jitPersistentFree(entryPtr);
+                  }
+               ipDataHT->~IPTable_t();
+               jitPersistentFree(ipDataHT);
+               iter->second._IPData = nullptr;
+               }
+            _J9MethodMap.erase(j9method);
+            }
+         else
+            {
+            // This must never happen
+            }
+         
          }
       TR_Memory::jitPersistentFree(romClass);
       _romClassMap.erase(it);
       }
+   }
+
+TR_IPBytecodeHashTableEntry*
+ClientSessionData::getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *found)
+   {
+   *found = false;
+   TR_IPBytecodeHashTableEntry *ipEntry = nullptr;
+   OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
+   // check whether info about j9method is cached
+   auto & j9methodMap = getJ9MethodMap();
+   auto it = j9methodMap.find((J9Method*)method);
+   if (it != j9methodMap.end())
+      {
+      // check whether j9method data has any IP information
+      auto iProfilerMap = it->second._IPData;
+      if (iProfilerMap)
+         {
+         // check whether desired bcindex is cached
+         auto ipData = iProfilerMap->find(byteCodeIndex);
+         if (ipData != iProfilerMap->end())
+            {
+            *found = true;
+            ipEntry = ipData->second;
+            }
+         }
+      }
+   else
+      {
+      // Very ulikely scenario because the optimizer will have created  ResolvedJ9Method
+      // whose constructor would have fetched and cached the j9method info
+      TR_ASSERT(false, "profilingSample: asking about j9method=%p but this is not present in the J9MethodMap", method);
+      }
+   return ipEntry;
+   }
+
+bool 
+ClientSessionData::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry)
+   {
+   OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
+   // check whether info about j9method exists
+   auto & j9methodMap = getJ9MethodMap();
+   auto it = j9methodMap.find((J9Method*)method);
+   if (it != j9methodMap.end())
+      {
+      IPTable_t *iProfilerMap = it->second._IPData;
+      if (!iProfilerMap)
+         {
+         // allocate a new iProfiler map
+         iProfilerMap = new (PERSISTENT_NEW) IPTable_t(IPTable_t::allocator_type(TR::Compiler->persistentAllocator()));
+         if (iProfilerMap)
+            {
+            it->second._IPData = iProfilerMap;
+            iProfilerMap->insert({ byteCodeIndex, entry });
+            return true;
+            }
+         }
+      else
+         {
+         iProfilerMap->insert({ byteCodeIndex, entry });
+         return true;
+         }
+      }
+   else
+      {
+      // JASS TODO: count how many times we cannot cache
+      // There should be very few instances if at all
+      }
+   return false; // false means that cachinng attempt failed
    }
 
 void
@@ -2191,7 +2303,7 @@ ClientSessionData::printStats()
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    j9tty_printf(PORTLIB, "\tNum cached ROM classes: %d\n", _romClassMap.size());
-   j9tty_printf(PORTLIB, "\tNum cached ROM methods: %d\n", _romMethodMap.size());
+   j9tty_printf(PORTLIB, "\tNum cached ROM methods: %d\n", _J9MethodMap.size());
    size_t total = 0;
    for (auto it : _romClassMap)
       {
@@ -2335,7 +2447,7 @@ JaasHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
       {
-      clientSessionData->getROMMethodMap().insert({ &methods[i], romMethod });
+      clientSessionData->getJ9MethodMap().insert({ &methods[i], {romMethod, nullptr} });
       romMethod = nextROMMethod(romMethod);
       }
    }

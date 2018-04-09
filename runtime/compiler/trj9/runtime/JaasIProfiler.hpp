@@ -39,6 +39,18 @@ public:
                                                          TR::Compilation *comp, uintptrj_t data = 0xDEADF00D, bool addIt = false) override;
 
    virtual int32_t getMaxCallCount();
+
+   TR_IPBytecodeHashTableEntry* ipBytecodeHashTableEntryFactory(uintptrj_t pc, TR_Memory* mem, TR_AllocationKind allocKind);
+   void printStats();
+
+private:
+   bool _useCaching;
+   // Statistics
+   uint32_t _statsIProfilerInfoFromCache;  // IP cache answered the query
+   uint32_t _statsIProfilerInfoMsgToClient; // queries sent to client
+   uint32_t _statsIProfilerInfoReqNotCacheable; // info returned from client should not be cached
+   uint32_t _statsIProfilerInfoIsEmpty; // client has no IP info for indicated PC
+   uint32_t _statsIProfilerInfoCachingFailures;
    };
 
 #endif
