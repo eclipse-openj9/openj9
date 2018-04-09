@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1134,10 +1134,23 @@ mapEventType(J9JVMTIHeapData * data, IDATA type, jint index, j9object_t referrer
 			break;
 				
 		case J9GC_REFERENCE_TYPE_CLASS:
-            event->type = J9JVMTI_HEAP_EVENT_OBJECT;
+			event->type = J9JVMTI_HEAP_EVENT_OBJECT;
 			event->refKind = JVMTI_HEAP_REFERENCE_CLASS;
 
-			if (referrer) {
+			if (NULL != referrer) {
+				clazz = J9OBJECT_CLAZZ(data->currentThread, referrer);
+				if (J9VMJAVALANGCLASS_OR_NULL(vm) == clazz) {
+					/*
+					 * Do not report class references from Class objects,
+					 * per JVMTI specification:
+					 * "* 	Classes report a reference to the superclass and
+					 * 		directly implemented/extended interfaces.
+					 *  * 	Classes report a reference to the class loader,
+					 * 		protection domain, signers, and resolved entries in the constant pool."
+					 */
+					event->type = J9JVMTI_HEAP_EVENT_NONE_NOFOLLOW;
+					break;
+				}
 				if (!J9VM_IS_INITIALIZED_HEAPCLASS(data->currentThread, referrer)) {
 					/* referrer is an instance object, report its class reference but do not follow it.
 					 * Its odd but follows the SUN behaviour. */
