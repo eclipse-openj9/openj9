@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2359,6 +2359,40 @@ public class LookupAPITests_Find {
 		}
 	    AssertJUnit.assertTrue(NoSuchMethodExceptionThrown);
 	}
+	
+	/**
+	 * Test getVirtual on a concrete method inherited from Object returns a valid method handle.
+	 * @throws Throwable
+	 */
+	@Test(groups = { "level.extended" })
+	public void test_findVirtual_on_interface_concreteMethods() throws Throwable {
+		MethodHandle mh = MethodHandles.lookup().findVirtual(TestInterface.class,
+				"hashCode", MethodType.methodType(int.class));
+		TestInterface receiver = new TestInterface() {
+			@Override
+			public void test() throws Throwable {
+				// empty
+			}
+		};
+		@SuppressWarnings("unused")
+		int result = (int)mh.invokeExact(receiver);
+	}
+
+	/**
+	 * Test getVirtual on a default method returns a valid method handle.
+	 * @throws Throwable
+	 */
+	@Test(groups = { "level.extended" })
+	public void test_findVirtual_on_interface_defaultMethods() throws Throwable {
+		MethodHandle mh = 
+				MethodHandles.lookup().findVirtual(TestInterfaceWithDefaultMethod.class,
+				"test", MethodType.methodType(Integer.class));
+		TestInterfaceWithDefaultMethod receiver = new TestInterfaceWithDefaultMethod() {};
+		Integer result = (Integer) mh.invokeExact(receiver);
+		AssertJUnit.assertEquals("Wrong result from default method",
+				TestInterfaceWithDefaultMethod.FORTY_TWO, result);
+	}
+
 }
 
 class Find_StaticMethodHelper {
