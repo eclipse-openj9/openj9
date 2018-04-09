@@ -155,14 +155,19 @@ public class APITestJava10 extends ThreadMXBeanTestCase {
 		for (int maxDepth = 0; maxDepth < MAXDEPTH; maxDepth++) {
 			logger.debug("maxDepth = "+maxDepth);
 			for (ThreadInfo ti: myBean.dumpAllThreads(false, false, maxDepth)) {
-				StackTraceElement[] trace = ti.getStackTrace();
-				Assert.assertTrue(trace.length <= maxDepth, "dumpAllThreads: Wrong stack size when maxDepth = "+maxDepth);
 				long id = ti.getThreadId();
 				Integer requestedDepthTemp = expectedDepths.get(id);
 				if (Objects.isNull(requestedDepthTemp)) {
 					/* non-test thread */
 					continue;
 				}
+				StackTraceElement[] trace = ti.getStackTrace();
+				int traceLength = trace.length;
+				Assert.assertTrue(traceLength <= maxDepth, 
+						"dumpAllThreads: Wrong stack size ("
+								+ traceLength + ") for thread "+
+								ti.getThreadName()
+								+ " when maxDepth = "+maxDepth);
 				int requestedDepth = requestedDepthTemp.intValue();
 				checkDepth(requestedDepth, maxDepth, trace, "dumpAllThreads");
 			}
@@ -235,8 +240,8 @@ public class APITestJava10 extends ThreadMXBeanTestCase {
 		if (requestedDepth >= maxDepth) {
 			Assert.assertEquals(trace.length, maxDepth, msg+": Wrong stack size when requested depth > maxDepth = "+maxDepth);
 		} else {
-			Assert.assertTrue(trace.length >= maxDepth, msg+": Stack exceeds maxDepth = "+maxDepth);
-			Assert.assertTrue(trace.length <= requestedDepth, msg+": Stack less than minimum expected");
+			Assert.assertTrue(trace.length <= maxDepth, msg+": Stack exceeds maxDepth = "+maxDepth);
+			Assert.assertTrue(trace.length >= requestedDepth, msg+": Stack less than minimum expected");
 		}
 	}
 }
