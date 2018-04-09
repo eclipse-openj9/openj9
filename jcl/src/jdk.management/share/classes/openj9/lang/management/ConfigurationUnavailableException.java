@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,9 +20,22 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-module jdk.management {
-	exports com.ibm.lang.management;
-	exports openj9.lang.management;
-	exports com.ibm.virtualization.management;
-	provides sun.management.spi.PlatformMBeanProvider with com.ibm.lang.management.internal.PlatformMBeanProvider;
+
+package openj9.lang.management;
+
+/**
+ * This exception is thrown when the dump configuration cannot be
+ * updated through the methods in OpenJ9DiagnosticMXBean because it is
+ * in use. This is usually because a dump is in progress and the
+ * configuration is locked. A dump may take some time to complete
+ * so this exception is thrown instead of blocking the calling
+ * thread indefinitely.
+ */
+
+public class ConfigurationUnavailableException extends Exception {
+	private static final long serialVersionUID = -7269229433331610188L;
+
+	public ConfigurationUnavailableException(String message, Throwable cause) {
+		super(message, cause);
+	}	
 }

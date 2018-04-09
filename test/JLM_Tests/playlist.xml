@@ -1062,6 +1062,35 @@
 	</test>
 
 	<test>
+		<testCaseName>testOpenJ9DiagnosticsMXBean</testCaseName>
+		<variations>
+			<variation>Mode100</variation>
+			<variation>Mode101</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(MKTREE) $(REPORTDIR); \
+	cd $(REPORTDIR); \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-Xdump:dynamic \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames testOpenJ9DiagnosticsMXBean \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>SE80</subset>
+			<subset>SE90</subset>
+		</subsets>
+	</test>
+
+	<test>
 		<testCaseName>testGuestOSMXBeanLocal</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
