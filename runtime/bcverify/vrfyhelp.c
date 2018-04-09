@@ -419,9 +419,9 @@ pushLdcType(J9BytecodeVerificationData *verifyData, J9ROMClass * romClass, UDATA
 			break;
 		case J9CPTYPE_CONSTANT_DYNAMIC:
 			J9ROMConstantDynamicRef* romConstantDynamicRef = (J9ROMConstantDynamicRef *)(J9_ROM_CP_FROM_ROM_CLASS(romClass) + index);
-			J9UTF8 *nameAndSignature = J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE(romConstantDynamicRef);
+			J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE(romConstantDynamicRef));
 			/* The signature referenced by a ConstantDynamic entry is a field descriptor */
-			pushType(verifyData, J9UTF8_DATA(nameAndSignature), stackTop);
+			pushType(verifyData, J9UTF8_DATA(signature), stackTop);
 			break;
 	}
 

@@ -2239,15 +2239,12 @@ typedef struct J9ROMStringRef {
 
 #define J9ROMSTRINGREF_UTF8DATA(base) NNSRP_GET((base)->utf8Data, struct J9UTF8*)
 
-#define J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE(base) NNSRP_GET((base)->nameAndSignature, struct J9UTF8*)
-
 typedef struct J9ROMFieldRef {
 	U_32 classRefCPIndex;
 	J9SRP nameAndSignature;
 } J9ROMFieldRef;
 
-#define J9ROMFIELDREF_NAMEANDSIGNATURE(base) NNSRP_GET((base)->nameAndSignature, struct J9ROMNameAndSignature*)
-
+#define J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE(base) NNSRP_GET((base)->nameAndSignature, struct J9ROMNameAndSignature*)
 /* @ddr_namespace: map_to_type=J9ROMMethodHandleRef */
 
 typedef struct J9ROMMethodHandleRef {

@@ -228,53 +228,51 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				errorDataIndex = index;
 				goto _verifyError;
 			}
+
 			info = &(classfile->constantPool[index]);
 			tag = (UDATA) info->tag;
-
-			switch (tag) {
-			case CFR_CONSTANT_Integer:
-			case CFR_CONSTANT_Float:
-			case CFR_CONSTANT_String:
-				break;
-			case CFR_CONSTANT_Class:
-				if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java5MajorVersionShifted)
-						|| ((flags & BCT_MajorClassFileVersionMask) == 0)
-				) {
-					errorType = J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V49__ID;
+			{
+				UDATA ldcErrorType = 0;
+				switch (tag) {
+				case CFR_CONSTANT_Integer:
+				case CFR_CONSTANT_Float:
+				case CFR_CONSTANT_String:
+					break;
+				case CFR_CONSTANT_Class:
+					if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java5MajorVersionShifted)
+							|| ((flags & BCT_MajorClassFileVersionMask) == 0)
+					) {
+						ldcErrorType = J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V49__ID;
+					}
+					break;
+				case CFR_CONSTANT_MethodType:
+				case CFR_CONSTANT_MethodHandle:
+					if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java7MajorVersionShifted)
+							|| ((flags & BCT_MajorClassFileVersionMask) == 0)
+					) {
+						ldcErrorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51__ID;
+					}
+					break;
+				case CFR_CONSTANT_Dynamic:
+					J9CfrConstantPoolInfo *constantDynamicSignature = &classfile->constantPool[classFile->constantPool[info->slot2].slot2];
+					if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java11MajorVersionShifted)
+							|| ((flags & BCT_MajorClassFileVersionMask) == 0)
+					) {
+						ldcErrorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55__ID;
+					} else if (('D' == constantDynamicSignature->bytes[0])
+							|| ('J' == constantDynamicSignature->bytes[0])
+					) {
+						ldcErrorType = J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE;
+					}
+					break;
+				default:
+					ldcErrorType = J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC__ID;
+				}
+				if (0 != ldcErrorType) {
+					errorType = ldcErrorType;
 					errorDataIndex = index;
 					goto _verifyError;
 				}
-				break;
-			case CFR_CONSTANT_MethodType:
-			case CFR_CONSTANT_MethodHandle:
-				if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java7MajorVersionShifted)
-						|| ((flags & BCT_MajorClassFileVersionMask) == 0)
-				) {
-					errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51__ID;
-					errorDataIndex = index;
-					goto _verifyError;
-				}
-				break;
-			case CFR_CONSTANT_Dynamic:
-				J9CfrConstantPoolInfo *constantDynamicSignature = &classfile->constantPool[classFile->constantPool[info->slot2].slot2];
-				if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java11MajorVersionShifted)
-						|| ((flags & BCT_MajorClassFileVersionMask) == 0)
-				) {
-					errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55__ID;
-					errorDataIndex = index;
-					goto _verifyError;
-				} else if (('D' == constantDynamicSignature->bytes[constantDynamicSignature->slot1 - 1])
-						|| ('J' == constantDynamicSignature->bytes[constantDynamicSignature->slot1 - 1])
-				) {
-					errorType = J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE;
-					errorDataIndex = index;
-					goto _verifyError;
-				}
-				break;
-			default:
-				errorType = J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC__ID;
-				errorDataIndex = index;
-				goto _verifyError;
 			}
 			break;
 
@@ -297,8 +295,8 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 					errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55;
 					errorDataIndex = index;
 					goto _verifyError;
-				} else if (('D' != constantDynamicSignature->bytes[constantDynamicSignature->slot1 - 1])
-						&& ('J' != constantDynamicSignature->bytes[constantDynamicSignature->slot1 - 1])
+				} else if (('D' != constantDynamicSignature->bytes[0])
+						&& ('J' != constantDynamicSignature->bytes[0])
 				) {
 					errorType = J9NLS_CFR_ERR_BC_LDC2_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE;
 					errorDataIndex = index;
