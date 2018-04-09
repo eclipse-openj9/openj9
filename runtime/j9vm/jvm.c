@@ -324,6 +324,7 @@ static BOOLEAN librariesLoaded(void);
 #endif /* defined(J9ZTPF) */
 
 #define J9_SIG_ERR -1
+#define J9_SIG_IGNORED 1
 
 #define J9_PRE_DEFINED_HANDLER_CHECK 2
 #define J9_OLDHANDLER_SAME_AS_NEWHANDLER 2
@@ -334,8 +335,9 @@ static BOOLEAN librariesLoaded(void);
 #define J9_SIGNAME_BUFFER_LENGTH 16
 
 static void dummySignalHandler(jint sigNum);
-static BOOLEAN isSignalSpecial(jint sigNum);
-static BOOLEAN isSignalUsedByVM(jint sigNum);
+static BOOLEAN isSignalUsedForShutdown(jint sigNum);
+static BOOLEAN isSignalReservedByJVM(jint sigNum);
+static BOOLEAN isSignalIgnoredByOS(jint sigNum);
 
 typedef struct {
 	const char *signalName;
@@ -484,6 +486,9 @@ static const J9SignalMapping signalMap[] = {
 #if defined(SIGXFSZ)
 	J9_SIGNAL_MAP_ENTRY("XFSZ", SIGXFSZ),
 #endif /* defined(SIGXFSZ) */
+#if defined(SIGRECONFIG)
+	J9_SIGNAL_MAP_ENTRY("RECONFIG", SIGRECONFIG),
+#endif /* defined(SIGRECONFIG) */
 	{NULL, J9_SIG_ERR}
 };
 
@@ -4408,15 +4413,18 @@ JVM_NativePath(char* path)
 }
 
 /**
- * Checks if a signal is special.
+ * Check if a signal is used for shutdown. SIGHUP,
+ * SIGINT and SIGTERM are characterized as shutdown signals.
+ * Terminator.setup() registers handlers for these signals
+ * during startup.
  *
  * @param sigNum Integer value of the signal
  *
- * @returns TRUE if the signal is special
- *          FALSE if the signal is not special
+ * @returns TRUE if the signal is used for shutdown
+ *          FALSE if the signal is not used for shutdown
  */
 static BOOLEAN
-isSignalSpecial(jint sigNum)
+isSignalUsedForShutdown(jint sigNum)
 {
 	return
 #if defined(SIGHUP)
@@ -4425,9 +4433,6 @@ isSignalSpecial(jint sigNum)
 #if defined(SIGINT)
 		(SIGINT == sigNum) ||
 #endif /* defined(SIGINT) */
-#if defined(SIGQUIT)
-		(SIGQUIT == sigNum) ||
-#endif /* defined(SIGQUIT) */
 #if defined(SIGTERM)
 		(SIGTERM == sigNum) ||
 #endif /* defined(SIGTERM) */
@@ -4435,15 +4440,29 @@ isSignalSpecial(jint sigNum)
 }
 
 /**
- * Check if a signal is used by the VM.
+ * Check if a signal is reserved by the VM. This function is invoked from
+ * JVM_*Signal functions. This function only includes signals which
+ * are listed in jvm.c::signalMap. If the signal is not listed in
+ * jvm.c::signalMap, then a sun.misc.Signal instance can't be created
+ * for a signal value. The native JVM_*Signal functions can't be invoked
+ * in the absence of a sun.misc.Signal instance.
+ *
+ * Synchronous signals are handled by the VM via omrsig_protect: SIGFPE,
+ * SIGILL, SIGSEGV, SIGBUS and SIGTRAP. On Windows, SIGBREAK is reserved
+ * by the VM to trigger dumps. On Unix/Linux platforms, SIGQUIT is
+ * reserved by the VM to trigger dumps. SIGABRT is reserved by the JVM
+ * for abnormal termination. SIGCHLD is reserved for internal control.
+ * On zOS, SIGUSR1 is reserved by the JVM. SIGRECONFIG is reserved to
+ * detect any change in the number of CPUs, processing capacity, or
+ * physical memory.
  *
  * @param sigNum Integer value of the signal
  *
- * @returns TRUE if the signal is used by the VM
- *          FALSE if the signal is not used by the VM
+ * @returns TRUE if the signal is reserved by the VM
+ *          FALSE if the signal is not reserved by the VM
  */
 static BOOLEAN
-isSignalUsedByVM(jint sigNum)
+isSignalReservedByJVM(jint sigNum)
 {
 	return
 #if defined(SIGFPE)
@@ -4455,13 +4474,77 @@ isSignalUsedByVM(jint sigNum)
 #if defined(SIGSEGV)
 		(SIGSEGV == sigNum) ||
 #endif /* defined(SIGSEGV) */
+#if defined(SIGBUS)
+		(SIGBUS == sigNum) ||
+#endif /* defined(SIGBUS) */
+#if defined(SIGTRAP)
+		(SIGTRAP == sigNum) ||
+#endif /* defined(SIGTRAP) */
+#if defined(SIGQUIT)
+		(SIGQUIT == sigNum) ||
+#endif /* defined(SIGQUIT) */
+#if defined(SIGBREAK)
+		(SIGBREAK == sigNum) ||
+#endif /* defined(SIGBREAK) */
+#if defined(SIGABRT)
+		(SIGABRT == sigNum) ||
+#endif /* defined(SIGABRT) */
+#if defined(SIGCHLD)
+		(SIGCHLD == sigNum) ||
+#endif /* defined(SIGCHLD) */
+#if defined(SIGRECONFIG)
+		(SIGRECONFIG == sigNum) ||
+#endif /* defined(SIGRECONFIG) */
+#if defined(J9ZOS390) && defined(SIGUSR1)
+		(SIGUSR1 == sigNum) ||
+#endif /* defined(J9ZOS390) && defined(SIGUSR1) */
 		FALSE;
 }
 
 /**
- * Send a signal to the calling process or thread. If "-Xrs"
- * commandline option is specified, then signals such as SIGQUIT,
- * SIGHUP, SIGINT and SIGTERM are ignored.
+ * Check if a signal is ignored by using sigaction.
+ *
+ * @param sigNum Integer value of the signal
+ *
+ * @returns TRUE if the signal is ignored
+ *          FALSE if the signal is not ignored
+ */
+static BOOLEAN
+isSignalIgnoredByOS(jint sigNum) {
+	BOOLEAN signalIgnored = FALSE;
+
+#if !defined(WIN32)
+	void *oldHandler = NULL;
+
+	struct sigaction oldSignalAction;
+	memset(&oldSignalAction, 0, sizeof(struct sigaction));
+
+	OMRSIG_SIGACTION(sigNum, NULL, &oldSignalAction);
+	oldHandler = (void *)oldSignalAction.sa_sigaction;
+	if (NULL == oldHandler) {
+		oldHandler = (void *)oldSignalAction.sa_handler;
+	}
+
+	if (oldHandler == (void *)SIG_IGN) {
+		signalIgnored = TRUE;
+	}
+#endif /* !defined(WIN32) */
+
+	return signalIgnored;
+}
+
+/**
+ * Raise a signal to the calling process or thread.
+ *
+ * isSignalReservedByJVM function lists the signals reserved by the JVM.
+ * Do not raise a signal if it is reserved by the JVM and not registered
+ * via JVM_RegisterSignal.
+ *
+ * isSignalUsedForShutdown lists all signals characterized as shutdown signals.
+ * Do not raise a shutdown signal if the -Xrs or the -Xrs:async cmdnline option
+ * is specified. If a shutdown signal is ignored by the OS, do not raise that
+ * shutdown signal. Only raise a shutdown signal if the previous two conditions
+ * are false.
  *
  * @param sigNum Integer value of the signal to be sent to the
  *               calling process or thread
@@ -4474,12 +4557,20 @@ JVM_RaiseSignal(jint sigNum)
 {
 	jboolean rc = JNI_FALSE;
 	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
+	BOOLEAN isShutdownSignal = isSignalUsedForShutdown(sigNum);
 
 	Trc_SC_RaiseSignal_Entry(sigNum);
 
-	if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_SYNC)
-			&& isSignalSpecial(sigNum)) {
-		/* Ignore signal */
+	if (isSignalReservedByJVM(sigNum)) {
+		/* Don't raise a signal if it is reserved by the JVM, and not
+		 * registered via JVM_RegisterSignal.
+		 */
+	} else if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_ASYNC) && isShutdownSignal) {
+		/* Ignore shutdown signals if -Xrs or -Xrs:async is specified.
+		 * If -Xrs:sync is specified, then raise shutdown signals.
+		 */
+	} else if (isShutdownSignal && isSignalIgnoredByOS(sigNum)) {
+		/* Ignore shutdown signal if it is ignored. */
 	} else {
 		raise(sigNum);
 		rc = JNI_TRUE;
@@ -4491,34 +4582,24 @@ JVM_RaiseSignal(jint sigNum)
 }
 
 /**
- * This is a stub for the pre-defined handler. The pre-defined
- * handler is supposed to be used in JVM_RegisterSignal when
- * the special value of J9_PRE_DEFINED_HANDLER_CHECK (2) is specified
- * in the handler. It hasn't been implemented since its functionality
- * is not known.
+ * Register a Java SignalHandler for a signal.
  *
- * TODO: Implement the pre-defined handler.
+ * isSignalReservedByJVM function lists the signals reserved by the JVM.
+ * This function shouldn't override handlers for signals that are reserved
+ * by the JVM. A user is allowed to register a native handler for the
+ * reserved signals if -Xrs cmdline option is specified. This function
+ * shouldn't register a Java SignalHandler for the reserved signals.
  *
- * @param sigNum Integer value of the signal to be sent to the
- *               calling process or thread
+ * isSignalUsedForShutdown lists all signals characterized as shutdown signals.
+ * This function shouldn't register a handler for shutdown signals if
+ * the -Xrs or the -Xrs:async cmdnline option is specified. If a shutdown
+ * signal is ignored by the OS, this function shouldn't register a handler
+ * for that shutdown signal. Only register a handler for shutdown signals if
+ * the previous two conditions are false.
  *
- * @returns void
- */
-static void
-dummySignalHandler(int sigNum) {
-
-}
-
-/**
- * Register a signal handler for a signal. Signals such as SIGFPE,
- * SIGILL and SIGSEGV are used by the VM; so, we don't register
- * a signal handler for these signals. If "-Xrs" commandline option
- * is specified, then signals such as SIGQUIT, SIGHUP, SIGINT
- * and SIGTERM are also ignored; thus, we don't register a signal
- * handler for these signals. If handler has the special value of
- * J9_PRE_DEFINED_HANDLER_CHECK (2), then handler is changed to
- * dummySignalHandler before it is registered. If the old handler
- * is same as the new handler, then a special value,
+ * If handler has the special value of J9_PRE_DEFINED_HANDLER_CHECK (2),
+ * then the predefinedHandlerWrapper is registered with asynchSignalReporterThread
+ * in OMR. If the old handler is same as the new handler, then a special value,
  * J9_OLDHANDLER_SAME_AS_NEWHANDLER (2) is returned.
  *
  * @param sigNum Integer value of the signal to be sent to the
@@ -4529,10 +4610,13 @@ dummySignalHandler(int sigNum) {
  *          J9_SIG_ERR (-1) in case of error
  */
 void* JNICALL
-JVM_RegisterSignal(jint sigNum, void* handler)
+JVM_RegisterSignal(jint sigNum, void *handler)
 {
-	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
 	void *oldHandler = (void *)J9_SIG_ERR;
+	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
+	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
+	J9VMThread *currentThread = vmFuncs->currentVMThread(javaVM);
+	BOOLEAN isShutdownSignal = isSignalUsedForShutdown(sigNum);
 
 #if !defined(WIN32)
 	struct sigaction newSignalAction;
@@ -4542,55 +4626,70 @@ JVM_RegisterSignal(jint sigNum, void* handler)
 	memset(&oldSignalAction, 0, sizeof(struct sigaction));
 #endif /* !defined(WIN32) */
 
-	Trc_SC_RegisterSignal();
+	Trc_SC_RegisterSignal_Entry(currentThread, sigNum, handler);
 
-	if (isSignalUsedByVM(sigNum)) {
-		/* Don't allow user to register a native handler since
-		 * the signal is already used by the VM.
+	if (isSignalReservedByJVM(sigNum)) {
+		/* Return error if signal is reserved by the JVM. oldHandler is initialized to
+		 * J9_SIG_ERR.
 		 */
-	} else if (J9_ARE_NO_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_SYNC)
-			&& isSignalSpecial(sigNum)) {
-		/* Don't allow user to register a native handler since
-		 * the signal is already used by the VM.
+		goto exit;
+	} else if (J9_ARE_ANY_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_ASYNC) && isShutdownSignal) {
+		/* Don't register a handler for shutdown signals if -Xrs or -Xrs:async is specified.
+		 * If -Xrs:sync is specified, then register a handler for shutdown signals. oldHandler
+		 * is initialized to J9_SIG_ERR.
 		 */
+		goto exit;
+	} else if (isShutdownSignal && isSignalIgnoredByOS(sigNum)) {
+		/* Ignore shutdown signal if it is ignored. */
+		oldHandler = (void *)J9_SIG_IGNORED;
+		goto exit;
 	} else {
-		/* Register the signal */
-#if defined(WIN32)
+		/* Register the signal. */
 		if ((void *)J9_PRE_DEFINED_HANDLER_CHECK == handler) {
-			handler = (void *)dummySignalHandler;
-		}
-		oldHandler = OMRSIG_SIGNAL(sigNum, handler);
-#else /* defined(WIN32) */
-		sigemptyset(&newSignalAction.sa_mask);
-#if !defined(J9ZTPF)
-		newSignalAction.sa_flags = SA_RESTART;
-#else /* !defined(J9ZTPF) */
-		newSignalAction.sa_flags = 0;
-#endif /* !defined(J9ZTPF) */
-		if ((void *)J9_PRE_DEFINED_HANDLER_CHECK == handler) {
-			newSignalAction.sa_handler = dummySignalHandler;
+			if (0 != vmFuncs->registerPredefinedHandler(javaVM, sigNum, &oldHandler)) {
+				Trc_SC_RegisterSignal_FailedToRegisterHandler(currentThread, sigNum, handler, oldHandler);
+			}
 		} else {
-			newSignalAction.sa_handler = (void (*)(int))handler;
-		}
-		OMRSIG_SIGACTION(sigNum, &newSignalAction, &oldSignalAction);
-#endif /* defined(WIN32) */
-	}
-
 #if defined(WIN32)
-	if (((void *)J9_SIG_ERR != oldHandler) && (handler == oldHandler)) {
-		oldHandler = (void *)J9_OLDHANDLER_SAME_AS_NEWHANDLER;
-	} else {
-		oldHandler = (void *)oldHandler;
-	}
+			oldHandler = (void *)OMRSIG_SIGNAL(sigNum, handler);
 #else /* defined(WIN32) */
-	if ((NULL == oldSignalAction.sa_handler)
-			|| (newSignalAction.sa_handler != oldSignalAction.sa_handler)) {
-		oldHandler = (void *)oldSignalAction.sa_handler;
-	} else {
+			/* Don't block any signals. */
+			if (0 != sigemptyset(&newSignalAction.sa_mask)) {
+				/* oldHandler is already initialized to J9_SIG_ERR. */
+				goto exit;
+			}
+
+			/* SA_RESTART - make certain system calls restartable across signals.
+			 * SA_NODEFER - do not prevent the signal from being received from
+			 * within its own signal handler.
+			 * SA_SIGINFO - sa_sigaction specifies the signal handling function.
+			 */
+			newSignalAction.sa_flags = SA_RESTART | SA_SIGINFO | SA_NODEFER;
+
+#if defined(S390) && defined(LINUX)
+			newSignalAction.sa_sigaction = (void *)handler;
+#else /* defined(S390) && defined(LINUX) */
+			newSignalAction.sa_sigaction = (void (*)(int, siginfo_t *, void *))handler;
+#endif /* defined(S390) && defined(LINUX) */
+
+			if (0 == OMRSIG_SIGACTION(sigNum, &newSignalAction, &oldSignalAction)) {
+				oldHandler = (void *)oldSignalAction.sa_sigaction;
+			} else {
+				Trc_SC_RegisterSignal_FailedToRegisterHandler(currentThread, sigNum, handler, oldHandler);
+			}
+#endif /* defined(WIN32) */
+		}
+	}
+
+	if ((NULL != oldHandler)
+		&& ((void *)J9_SIG_ERR != oldHandler)
+		&& (handler == oldHandler)
+	) {
 		oldHandler = (void *)J9_OLDHANDLER_SAME_AS_NEWHANDLER;
 	}
-#endif /* defined(WIN32) */
 
+exit:
+	Trc_SC_RegisterSignal_Exit(currentThread, oldHandler);
 	return oldHandler;
 }
 
