@@ -112,17 +112,20 @@ public:
 
 		*typeFFI = NULL;
 		UDATA structSize = UDATA_MAX;
-		char bufOnStackLocal[J9VM_LAYOUT_STRING_ON_STACK_LIMIT];
-		char *layout = copyStringToUTF8WithMemAlloc(_currentThread, layoutStringObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, bufOnStackLocal, J9VM_LAYOUT_STRING_ON_STACK_LIMIT, NULL);
+		char layoutBuffer[J9VM_LAYOUT_STRING_ON_STACK_LIMIT];
+		char* layout = copyStringToUTF8WithMemAlloc(_currentThread, layoutStringObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, layoutBuffer, sizeof(layoutBuffer), NULL);
+
+		/* Subsequent calls will modify the contents of this pointer, so preserve the original pointer for j9mem_free_memory */
+		char* layoutTemp = layout;
 
 		if (NULL == layout) {
 			goto doneGetCustomFFIType;
 		}
 
-		structSize = getIntFromLayout(&layout);
-		*typeFFI = getStructFFIType(&layout, false);
+		structSize = getIntFromLayout(&layoutTemp);
+		*typeFFI = getStructFFIType(&layoutTemp, false);
 doneGetCustomFFIType:
-		if (layout != bufOnStackLocal) {
+		if (layout != layoutBuffer) {
 			j9mem_free_memory(layout);
 		}
 		return structSize;
