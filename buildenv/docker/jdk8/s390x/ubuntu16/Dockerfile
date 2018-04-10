@@ -24,15 +24,11 @@
 
 FROM ubuntu:16.04
 
-# This section:
-# - Gets the prerequisites for the add-apt-repository
-# - Adds the apt-get repository containing openjdk7
-# - Installs the required OS tools.
+# This section installs the required OS tools.
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     software-properties-common \
     python-software-properties \
-  && add-apt-repository ppa:openjdk-r/ppa \
   && apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     autoconf \
@@ -56,7 +52,6 @@ RUN apt-get update \
     libxt-dev \
     libxtst-dev \
     make \
-    openjdk-7-jdk \
     pkg-config \
     realpath \
     ssh \
@@ -82,5 +77,16 @@ RUN cd /root \
   && wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz \
   && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
   && rm -f freemarker.tgz
+
+# Download and install boot JDK from AdoptOpenJDK
+RUN cd /root \
+  && wget -O bootjdk8.tar.gz https://api.adoptopenjdk.net/openjdk8-openj9/releases/s390x_linux/latest/binary \
+  && tar -xzf bootjdk8.tar.gz \
+  && rm -f bootjdk8.tar.gz \
+  && ls | grep -i jdk | xargs -I % sh -c 'mv % bootjdk8'
+
+# Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH
+ENV JAVA_HOME="/root/bootjdk8"
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 WORKDIR /root
