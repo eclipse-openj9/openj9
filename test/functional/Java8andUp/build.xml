@@ -40,7 +40,18 @@
 	<property name="build_resource" location="./resource" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 	<property name="TestUtilities" location="../TestUtilities/src"/>
-
+	<if>
+		<equals arg1="${JCL_VERSION}" arg2="current"/>
+		<then>
+			<property name="src_90_jcl" location="./src_90_current" />
+			<property name="addExports_90_jcl" value="--add-exports java.management/sun.management=ALL-UNNAMED" />
+		</then>
+		<else>
+			<property name="src_90_jcl" location="./src_90_latest" />
+			<property name="addExports_90_jcl" value="--add-exports jdk.management.agent/jdk.internal.agent=ALL-UNNAMED" />
+		</else>
+	</if>	
+		
 	<target name="init">
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
@@ -154,9 +165,11 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<src path="${src_90}" />
+					<src path="${src_90_jcl}" />
 					<src path="${TestUtilities}" />
 					<src path="${transformerListener}" />
 					<compilerarg line='${addExports}' />
+					<compilerarg line='${addExports_90_jcl}' />
 					<compilerarg line='${addModules}' />
 					<!-- PR117298-->
 					<exclude name="**/Cmvc194280.java" />

@@ -387,5 +387,10 @@
 			<class name="org.openj9.test.floatsanity.TestFactory" />
 		</classes>
 	</test>
+	<test name="FileSystem-isAccessUserOnlyTests">
+		<classes>
+			<class name="org.openj9.test.jdk.internal.agent.Test_FileSystem"/>
+		</classes>
+	</test>
 </suite>
 <!-- Suite -->
