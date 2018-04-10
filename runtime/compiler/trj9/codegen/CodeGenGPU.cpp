@@ -1270,7 +1270,6 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::pdclearSetSign
    NULL,          // TR::pdSetSign
    NULL,          // TR::pddivrem
-   NULL,          // TR::pddivSelect
    NULL,          // TR::pdremSelect
    NULL,          // TR::pdModifyPrecision
    NULL,          // TR::pd2df

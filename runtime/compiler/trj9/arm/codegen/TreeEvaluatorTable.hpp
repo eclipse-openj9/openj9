@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -458,7 +458,6 @@
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::pdSetSign
 
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::pddivrem
-   TR::TreeEvaluator::unImpOpEvaluator,          // TR::pddivSelect
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::pdremSelect
 
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::pdModifyPrecision
