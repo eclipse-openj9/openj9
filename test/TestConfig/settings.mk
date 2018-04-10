@@ -46,7 +46,7 @@ include $(TEST_ROOT)$(D)TestConfig$(D)utils.mk
 ifndef JAVA_BIN
 $(error Please provide JAVA_BIN value.)
 else
-export JAVA_BIN:=$(JAVA_BIN)
+export JAVA_BIN:=$(subst \,/,$(JAVA_BIN))
 endif
 
 ifndef SPEC
