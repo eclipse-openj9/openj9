@@ -927,13 +927,17 @@ class NameAndTypeIterator
 	{
 		J9CfrConstantPoolInfo* nas = &_classFile->constantPool[_classFile->constantPool[cpIndex].slot2];
 		J9CfrConstantPoolInfo* signature = &_classFile->constantPool[nas->slot2];
+		U_8 result = 0;
+
 		if ('D' == signature->bytes[0]) {
-			return JBldc2dw;
+			result = JBldc2dw;
 		} else if ('J' == signature->bytes[0]) {
-			return JBldc2lw;
+			result = JBldc2lw;
 		} else {
 			Trc_BCU_Assert_ShouldNeverHappen();
 		}
+
+		return result;
 	}
 
 private:
