@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2005, 2017 IBM Corp. and others
+  Copyright (c) 2005, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,6 @@
 <suite id="URLHelper Excluded Test Case List">
 <!-- PR 117232 Java 9 modularity share class test failures-->
 	<platform id="all"/>
-	<exclude id="APITests.URLGetDifferentHelperTest" platform="SE90"><reason>A classloader can have more than 1 helpers in Java 9</reason></exclude>
+	<exclude id="APITests.URLGetDifferentHelperTest" platform="SE[^8]\d+"><reason>A classloader can have more than 1 helpers in Java 9 and up</reason></exclude>
 	<exclude id="URLStaleClassPathEntryTest 4" platform="SE80"><reason>Shouldn't find class B and E from shared cache as Alphabet.jar is updated. Should be re-enabled when openj9-openjdk8 is enabled in the builds</reason></exclude>
 </suite>

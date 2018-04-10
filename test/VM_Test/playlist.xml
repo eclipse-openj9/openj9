@@ -48,6 +48,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -73,6 +75,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -92,6 +96,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 </playlist>

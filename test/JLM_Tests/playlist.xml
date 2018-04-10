@@ -90,6 +90,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -143,6 +145,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -196,6 +200,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -226,6 +232,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -256,6 +264,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -286,6 +296,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -315,6 +327,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -344,6 +358,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -374,6 +390,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -407,6 +425,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -437,6 +457,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
@@ -468,6 +490,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
@@ -499,6 +523,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
@@ -530,6 +556,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
@@ -564,6 +592,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
 	</test>
@@ -595,6 +625,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -625,6 +657,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -655,6 +689,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -685,6 +721,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -718,6 +756,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -748,6 +788,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -778,6 +820,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -808,6 +852,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -838,6 +884,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 	<test>
@@ -867,6 +915,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -897,6 +947,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -924,6 +976,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -952,6 +1006,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1004,6 +1060,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1058,6 +1116,8 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1114,6 +1174,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1142,6 +1204,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1167,6 +1231,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1192,6 +1258,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
@@ -1221,6 +1289,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
