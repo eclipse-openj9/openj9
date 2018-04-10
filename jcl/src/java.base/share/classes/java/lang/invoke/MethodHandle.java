@@ -821,6 +821,12 @@ public abstract class MethodHandle {
 	 * equivalent for MethodHandle.
 	 */
 	private static final native MethodHandle getCPMethodHandleAt(Object internalRamClass, int index);
+
+	/*
+	 * sun.reflect.ConstantPool doesn't have a getConstantDynamicAt method.  This is the 
+	 * equivalent for ConstantDynamic.
+	 */
+	private static final native Object getCPConstantDynamicAt(Object internalRamClass, int index);
 	
 	/**
 	 * Get the class name from a constant pool class element, which is located
