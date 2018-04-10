@@ -264,9 +264,7 @@ acquireExclusiveVMAccess(J9VMThread * vmThread)
 				if (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) {
 					VM_AtomicSupport::readBarrier(); // necessary?
 					if (currentThread->inNative) {
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS)
-						VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_VM_ACCESS);
-#elif !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE) /* J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS */
+#if !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
 						VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
 #endif /* !J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 					} else {
@@ -741,9 +739,7 @@ acquireExclusiveVMAccessFromExternalThread(J9JavaVM * vm)
 		if (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) {
 			VM_AtomicSupport::readBarrier(); // necessary?
 			if (currentThread->inNative) {
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS)
-				VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_VM_ACCESS);
-#elif !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE) /* J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS */
+#if !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
 				VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
 #endif /* !J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 			} else {
@@ -895,9 +891,7 @@ requestExclusiveVMAccessMetronomeTemp(J9JavaVM *vm, UDATA block, UDATA *vmRespon
 		 	if (thread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) {
 				VM_AtomicSupport::readBarrier(); // necessary?
 				if (thread->inNative) {
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS)
-					VM_VMAccess::clearPublicFlags(thread, J9_PUBLIC_FLAGS_VM_ACCESS);
-#elif !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE) /* J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS */
+#if !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
 					VM_VMAccess::setPublicFlags(thread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
 #endif /* !J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 				} else {
@@ -1103,9 +1097,7 @@ acquireSafePointVMAccess(J9VMThread * vmThread)
 				VM_AtomicSupport::readBarrier(); // necessary?
 				if (currentThread->inNative) {
 					Assert_VM_false(J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT));
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS)
-					VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_VM_ACCESS);
-#elif !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE) /* J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS */
+#if !defined(J9VM_INTERP_TWO_PASS_EXCLUSIVE)
 					VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_COUNTED_BY_SAFE_POINT);
 #endif /* !J9VM_INTERP_TWO_PASS_EXCLUSIVE */
 					VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALTED_AT_SAFE_POINT, true);				
