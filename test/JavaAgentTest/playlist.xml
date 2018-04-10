@@ -24,7 +24,7 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<testCaseName>TestFlushReflectionCache_SE90</testCaseName>
+		<testCaseName>TestFlushReflectionCache</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode100</variation>
@@ -53,7 +53,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI_SE90</testCaseName>
+		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode100</variation>
@@ -81,7 +81,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI_JIT_ON_SE90</testCaseName>
+		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI_JIT_ON</testCaseName>
 		<variations>
 			<variation>Mode107</variation>
 		</variations>
@@ -108,7 +108,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_FAST_HCR_SE90</testCaseName>
+		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_FAST_HCR</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode100</variation>
@@ -137,7 +137,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_EXTENDED_HCR_SE90</testCaseName>
+		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_EXTENDED_HCR</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
 			<variation>Mode107</variation>
@@ -165,7 +165,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestGCClassWithStaticRetransformInGencon_SE90</testCaseName>
+		<testCaseName>TestGCClassWithStaticRetransformInGencon</testCaseName>
 		<variations>
 			<variation>Mode109</variation>
 		</variations>
@@ -192,7 +192,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestGCClassWithStaticRetransformInBalanced_SE90</testCaseName>
+		<testCaseName>TestGCClassWithStaticRetransformInBalanced</testCaseName>
 		<variations>
 			<variation>Mode550</variation>
 		</variations>

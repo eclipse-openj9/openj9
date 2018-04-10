@@ -24,7 +24,7 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../TestConfig/playlist.xsd">
 	<test>
-		<testCaseName>openj9_jsr292Test_SE90</testCaseName>
+		<testCaseName>openj9_jsr292Test</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-modules mods.modulea,mods.moduleb,mods.modulec --module-path $(Q)$(TEST_RESROOT)$(D)mods$(Q) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
@@ -48,7 +48,7 @@
 	</test>
 	
 	<test>
-		<testCaseName>openj9_jsr292Test_JitCount0_SE90</testCaseName>
+		<testCaseName>openj9_jsr292Test_JitCount0</testCaseName>
 		<variations>
 			<variation>-Xjit:count=0</variation>
 		</variations>

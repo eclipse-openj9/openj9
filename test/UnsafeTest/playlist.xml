@@ -48,7 +48,7 @@
 	</test>
 
 	<test>
-		<testCaseName>UnsafeTests_SE90</testCaseName>
+		<testCaseName>UnsafeTests</testCaseName>
 		<variations>
 			<variation>-DScenario=Regular</variation>
 			<variation>-DScenario=Compiled</variation>

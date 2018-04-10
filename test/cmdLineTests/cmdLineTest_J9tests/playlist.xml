@@ -44,7 +44,7 @@
 	</test>
 	
 	<test>
-		<testCaseName>cmdLineTest_J9test_SE90</testCaseName>
+		<testCaseName>cmdLineTest_J9test</testCaseName>
 		<command>$(JAVA_COMMAND) -Xdump $(JVM_OPTIONS) -DFIBJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE='$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump' \
 	-Xint -jar $(CMDLINETESTER_JAR) \

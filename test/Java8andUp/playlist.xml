@@ -43,7 +43,7 @@
 	</test>
 
 	<test>
-		<testCaseName>generalSanityTest_SE90</testCaseName>
+		<testCaseName>generalSanityTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames generalTest \
@@ -209,7 +209,7 @@
 	</test>
 
 	<test>
-		<testCaseName>AttachAPISanity_SE90</testCaseName>
+		<testCaseName>AttachAPISanity</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -256,7 +256,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestAttachAPI_SE90</testCaseName>
+		<testCaseName>TestAttachAPI</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -300,7 +300,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestAttachAPIEnabling_SE90</testCaseName>
+		<testCaseName>TestAttachAPIEnabling</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -347,7 +347,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestAttachErrorHandling_SE90</testCaseName>
+		<testCaseName>TestAttachErrorHandling</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -393,7 +393,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestSunAttachClasses_SE90</testCaseName>
+		<testCaseName>TestSunAttachClasses</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -440,7 +440,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestManagementAgent_SE90</testCaseName>
+		<testCaseName>TestManagementAgent</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -486,7 +486,7 @@
 	</test>
 
 	<test>
-		<testCaseName>TestFileLocking_SE90</testCaseName>
+		<testCaseName>TestFileLocking</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-exports=java.base/com.ibm.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -719,7 +719,7 @@
 	</test>
 
 	<test>
-		<testCaseName>JCL_Test_SE90+</testCaseName>
+		<testCaseName>JCL_Test</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
@@ -774,7 +774,7 @@
 	</test>
 
 	<test>
-		<testCaseName>JCL_Test_OutOfMemoryError_SE90+</testCaseName>
+		<testCaseName>JCL_Test_OutOfMemoryError</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
@@ -887,7 +887,7 @@
 	</test>
 
 	<test>
-		<testCaseName>J9VMInternals_Test_SE90</testCaseName>
+		<testCaseName>J9VMInternals_Test</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -1040,7 +1040,7 @@
 	</test>
 
 	<test>
-		<testCaseName>JCL_Test_JIT_Helper_SE90</testCaseName>
+		<testCaseName>JCL_Test_JIT_Helper</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --add-exports=java.base/com.ibm.jit=ALL-UNNAMED \
 	-Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
