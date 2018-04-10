@@ -12078,11 +12078,11 @@ inlineStringHashCode(
                                 generateX86MemoryReference(valueReg, indexReg, 1, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
                                 cg);
       // xmm1 = xmm1 * xmm0
-      generateRegRegInstruction(PMULLD, node, xmm1, xmm0, cg);
+      generateRegRegInstruction(PMULLDRegReg, node, xmm1, xmm0, cg);
       // movzxwd xmm2, xmm2
-      generateRegRegInstruction(PMOVZXWD, node, xmm2, xmm2, cg);
+      generateRegRegInstruction(PMOVZXWDRegReg, node, xmm2, xmm2, cg);
       // xmm1 = xmm1 + xmm2
-      generateRegRegInstruction(PADDD, node, xmm1, xmm2, cg);
+      generateRegRegInstruction(PADDDRegReg, node, xmm1, xmm2, cg);
 
       //    i = i + 4;
       //    cmp i, end -3
@@ -12106,13 +12106,13 @@ inlineStringHashCode(
       TR::IA32ConstantDataSnippet *vector2Snippet   = cg->findOrCreate16ByteConstant(node, vector2);
       TR::MemoryReference       *vector2MR = generateX86MemoryReference(vector2Snippet, cg);
       generateRegMemInstruction(MOVAPSRegMem, node, xmm0, vector2MR, cg);
-      generateRegRegInstruction(PMULLD, node, xmm1, xmm0, cg);
+      generateRegRegInstruction(PMULLDRegReg, node, xmm1, xmm0, cg);
       generateRegRegInstruction(MOVAPDRegReg, node, xmm0, xmm1, cg);
       generateRegImmInstruction(PSRLDQRegImm1, node, xmm0, 0x8, cg);
-      generateRegRegInstruction(PADDD, node, xmm1, xmm0, cg);
+      generateRegRegInstruction(PADDDRegReg, node, xmm1, xmm0, cg);
       generateRegRegInstruction(MOVAPDRegReg, node, xmm0, xmm1, cg);
       generateRegImmInstruction(PSRLDQRegImm1, node, xmm0, 0x4, cg);
-      generateRegRegInstruction(PADDD, node, xmm1, xmm0, cg);
+      generateRegRegInstruction(PADDDRegReg, node, xmm1, xmm0, cg);
       generateRegRegInstruction(MOVDReg4Reg, node, hashReg, xmm1, cg);
       generateRegImmInstruction(ADDRegImms(), node, endReg, 3, cg);
 
