@@ -105,7 +105,7 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 		J9CPTYPE_UNUSED, /* 14 */
 		J9CPTYPE_METHODHANDLE, /* CFR_CONSTANT_MethodHandle */
 		J9CPTYPE_METHOD_TYPE, /* CFR_CONSTANT_MethodType */
-		J9CPTYPE_UNUSED, /* 17 */
+		J9CPTYPE_CONSTANT_DYNAMIC, /* CFR_CONSTANT_Dynamic */
 		J9CPTYPE_UNUSED, /* CFR_CONSTANT_InvokeDynamic */
 	};
 
@@ -143,6 +143,15 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 				case CFR_CONSTANT_MethodHandle: /* fall through */
 				case CFR_CONSTANT_MethodType:
 					singleSlotCount += 1;
+					break;
+				case CFR_CONSTANT_Dynamic:
+					if (isMarked(cfrCPIndex)) {
+						/*
+						 * All Constant Dynamic entries [ldc, ldc_w, ldc2w] are treated as single slot
+						 * to always have a RAM constantpool entry created
+						 */
+						singleSlotCount += 1;
+					}
 					break;
 				case CFR_CONSTANT_Utf8:
 					if (isMarked(cfrCPIndex, ANNOTATION)) {
@@ -263,7 +272,8 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 				case CFR_CONSTANT_Integer: /* fall through */
 				case CFR_CONSTANT_Float: /* fall through */
 				case CFR_CONSTANT_MethodHandle: /* fall through */
-				case CFR_CONSTANT_MethodType:
+				case CFR_CONSTANT_MethodType: /* fall through */
+				case CFR_CONSTANT_Dynamic:
 					_romConstantPoolEntries[romCPIndex] = cfrCPIndex;
 					_romConstantPoolTypes[romCPIndex] = cpTypeMap[cpTag];
 					SET_ROM_CP_INDEX(cfrCPIndex, 0, romCPIndex++);
@@ -491,6 +501,9 @@ ConstantPoolMap::constantPoolDo(ConstantPoolVisitor *visitor)
 				break;
 			case J9CPTYPE_METHODHANDLE:
 				visitor->visitMethodHandle(slot1, slot2);
+				break;
+			case J9CPTYPE_CONSTANT_DYNAMIC:
+				visitor->visitConstantDynamic(slot1, slot2);
 				break;
 			default:
 				Trc_BCU_Assert_ShouldNeverHappen();

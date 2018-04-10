@@ -230,7 +230,7 @@ static I_32 dumpCPShapeDescription( J9PortLibrary *portLib, J9ROMClass *romClass
 	U_32 *cpDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
 	U_32 descriptionLong;
 	U_32 i, j, k, numberOfLongs;
-	char symbols[] = ".CSIFJDi.vxyzTHAxv";
+	char symbols[] = ".CSIFJDi.vxyzTHA.cxv";
 
 	PORT_ACCESS_FROM_PORT( portLib );
 

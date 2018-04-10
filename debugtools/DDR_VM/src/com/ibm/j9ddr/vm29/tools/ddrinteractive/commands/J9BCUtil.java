@@ -652,7 +652,7 @@ public class J9BCUtil {
 		U32Pointer cpDescription = romClass.cpShapeDescription();
 		long descriptionLong;
 		long i, j, k, numberOfLongs;
-		char symbols[] = new char[] { '.', 'C', 'S', 'I', 'F', 'J', 'D', 'i', 's', 'v', 'x', 'y', 'z', 'T', 'H', 'A', 'x', 'v' };
+		char symbols[] = new char[] { '.', 'C', 'S', 'I', 'F', 'J', 'D', 'i', 's', 'v', 'x', 'y', 'z', 'T', 'H', 'A', '.', 'c', 'x', 'v' };
 		
 		symbols[(int)J9CPTYPE_UNUSED8] = '.';
 
