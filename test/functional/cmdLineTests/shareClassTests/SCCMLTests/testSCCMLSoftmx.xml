@@ -370,7 +370,7 @@
 	<test id="Test 11-a: Test create a cache with -Xscmx12m" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xscmx12m -verbose:sizes -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xscmx12M\s+shared class cache size</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">XX:SharedCacheHardLimit=12M\s+shared class cache size</output>
 
 		<output type="failure" caseSensitive="no" regex="no">error</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>

@@ -1728,13 +1728,13 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 							parseErrorOption = VMOPT_XSCMX;
 							goto _memParseError;
 						}
-						if (OPTION_OK != (parseError = setMemoryOptionToOptElse(vm, &(piConfig->sharedClassCacheSize), VMOPT_XXSHARED_CACHE_HARD_LIMIT_EQUALS, J9_SHARED_CLASS_CACHE_DEFAULT_SIZE, FALSE))) {
+						if (OPTION_OK != (parseError = setMemoryOptionToOptElse(vm, &(piConfig->sharedClassCacheSize), VMOPT_XXSHARED_CACHE_HARD_LIMIT_EQUALS, 0, FALSE))) {
 							parseErrorOption = VMOPT_XXSHARED_CACHE_HARD_LIMIT_EQUALS;
 							goto _memParseError;
 						}
 					} else {
 						piConfig->sharedClassSoftMaxBytes = -1;
-						if (OPTION_OK != (parseError = setMemoryOptionToOptElse(vm, &(piConfig->sharedClassCacheSize), VMOPT_XSCMX, J9_SHARED_CLASS_CACHE_DEFAULT_SIZE, FALSE))) {
+						if (OPTION_OK != (parseError = setMemoryOptionToOptElse(vm, &(piConfig->sharedClassCacheSize), VMOPT_XSCMX, 0, FALSE))) {
 							parseErrorOption = VMOPT_XSCMX;
 							goto _memParseError;
 						}
