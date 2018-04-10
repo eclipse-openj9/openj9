@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,6 +121,7 @@ static jvmtiTest jvmtiTestList[] =
 	{ "aln001",    aln001,    "com.ibm.jvmti.tests.agentLibraryNatives.aln001",               "Test natives in agent libraries" },
 	{ "rbc001",   rbc001,   "com.ibm.jvmti.tests.redefineBreakpointCombo.rbc001", "Test Redefine-breakpoint combination"},
 	{ "mt001",   mt001,   "com.ibm.jvmti.tests.modularityTests.mt001", "Test Modularity functions"},
+	{ "nmr001",     nmr001,    "com.ibm.jvmti.tests.nestMatesRedefinition.nmr001", "Test nestmates redefinition"},
 	{ NULL, NULL, NULL, NULL }
 };
 
