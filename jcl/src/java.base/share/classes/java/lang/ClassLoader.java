@@ -145,7 +145,7 @@ public abstract class ClassLoader {
 /*[ELSE]	
 	private static boolean lazyClassLoaderInit = false;
 /*[ENDIF]*/	
-	private static boolean bootloaderInited = false;
+	private static boolean specialLoaderInited = false;
 	private static InternalAnonymousClassLoader internalAnonClassLoader;
 	private static native void initAnonClassLoader(InternalAnonymousClassLoader anonClassLoader);	
 	
@@ -382,11 +382,11 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 	// VM Critical: must set parent before calling initializeInternal()
 	parent = parentLoader;
 /*[IF !Sidecar19-SE]*/
-	bootloaderInited = (bootstrapClassLoader != null);
+	specialLoaderInited = (bootstrapClassLoader != null);
 /*[ENDIF]*/
-	if (bootloaderInited) {
+	if (specialLoaderInited) {
 		if (!lazyClassLoaderInit) {
-			com.ibm.oti.vm.VM.initializeClassLoader(this, false, isParallelCapable);
+			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_OTHERS, isParallelCapable);
 		}
 /*[IF Sidecar19-SE]*/
 /*[IF Sidecar19-SE-OpenJ9]
@@ -398,11 +398,21 @@ private ClassLoader(Void staticMethodHolder, String classLoaderName, ClassLoader
 	} 
 /*[IF Sidecar19-SE]*/	
 	else {
-		//bootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule
-		unnamedModule = null;
-		bootloaderInited = true;
-		bootstrapClassLoader = this;
-		VM.initializeClassLoader(bootstrapClassLoader, true, false);
+		if (bootstrapClassLoader == null) {
+			// BootstrapClassLoader.unnamedModule is set by JVM_SetBootLoaderUnnamedModule
+			unnamedModule = null;
+			bootstrapClassLoader = this;
+			VM.initializeClassLoader(bootstrapClassLoader, VM.J9_CLASSLOADER_TYPE_BOOT, false);
+		} else {
+			// Assuming the second classloader initialized is platform classloader
+			VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_PLATFORM, false);
+			specialLoaderInited = true;
+/*[IF Sidecar19-SE-OpenJ9]
+			unnamedModule = new Module(this);
+/*[ELSE]*/
+			unnamedModule = SharedSecrets.getJavaLangReflectModuleAccess().defineUnnamedModule(this);
+/*[ENDIF]*/
+		}
 	}
 	this.classLoaderName = classLoaderName;
 /*[ENDIF]*/	

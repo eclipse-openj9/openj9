@@ -948,6 +948,25 @@ JVM_DefineModule(JNIEnv * env, jobject module, jstring version, jstring location
 		J9ClassLoader * const classLoader = getModuleObjectClassLoader(currentThread, modObj);
 		j9object_t moduleName = getModuleObjectName(currentThread, modObj);
 
+#if J9VM_JAVA9_BUILD >= 156
+		if ((classLoader != vm->systemClassLoader) && (classLoader != vm->platformClassLoader)) {
+			U_32 pkgIndex = 0;
+			for (pkgIndex = 0; pkgIndex < numPackages; pkgIndex++) {
+				const char *packageName = packages[pkgIndex];
+#define JAVADOT "java."
+#define JAVASLASH "java/"
+				if ((0 == strcmp(packageName, "java")) 
+					|| (0 == strncmp(packageName, JAVADOT, sizeof(JAVADOT) - 1))
+					|| (0 == strncmp(packageName, JAVASLASH, sizeof(JAVASLASH) - 1))
+				) {
+					vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA);
+				}
+#undef JAVASLASH
+#undef JAVADOT
+			}
+		}
+#endif /* J9VM_JAVA9_BUILD >= 156 */
+
 		if (NULL == moduleName) {
 			vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, J9NLS_VM_MODULE_IS_UNNAMED);
 		} else if (!isModuleNameValid(moduleName)) {
