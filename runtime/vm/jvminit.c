@@ -5904,10 +5904,10 @@ setSignalOptions(J9JavaVM* vm)
 
 		GET_OPTION_VALUE(argIndex, ':', &optionValue);
 
-		if (optionValue && 0 == strcmp(optionValue, "sync")) {
+		if ((NULL != optionValue) && (0 == strcmp(optionValue, "sync"))) {
 			vm->sigFlags |= J9_SIG_XRS_SYNC;
 			sigOptions |= J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS;
-		} else if (optionValue && 0 == strcmp(optionValue, "async")) {
+		} else if ((NULL != optionValue) && (0 == strcmp(optionValue, "async"))) {
 			vm->sigFlags |= (J9_SIG_XRS_ASYNC | J9_SIG_NO_SIG_QUIT);
 			sigOptions |= J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS;
 		} else {

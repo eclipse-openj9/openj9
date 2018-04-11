@@ -2230,13 +2230,17 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       doAOT = false;
       }
 
-   // If the VM -Xrs option has been specified the user is requesting that
-   // we remove signals. Set the noResumableTrapHandler option to note this
+   // If the VM -Xrs or -Xrs:sync option has been specified the user is requesting
+   // that we remove signals. Set the noResumableTrapHandler option to note this
    // request.
    // Also disable the packed decimal part of DAA because some PD instructions
-   // trigger hardward exceptions. A new option has been added to disable traps
+   // trigger hardware exceptions. A new option has been added to disable traps
    // Which allows the disabling of DAA and traps to be decoupled from the handler
-   if (javaVM->sigFlags & J9_SIG_XRS)
+   // Multiple variants of -Xrs option are available now:
+   // -Xrs Ignore all signals (J9_SIG_XRS_SYNC, J9_SIG_XRS_ASYNC)
+   // -Xrs:sync Ignore synchronous signals (J9_SIG_XRS_SYNC)
+   // -Xrs:async Ignore asynchronous signals (J9_SIG_XRS_ASYNC)
+   if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_SYNC))
       {
       self()->setOption(TR_NoResumableTrapHandler);
       self()->setOption(TR_DisablePackedDecimalIntrinsics);
