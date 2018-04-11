@@ -1,0 +1,50 @@
+# Copyright (c) 2018, 2018 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+
+# This file installs package dependencies for building OpenJDK V10 with OpenJ9 on AIX 64-bit systems
+# To use this file, specify `yum shell yum_install_aix-ppc64.txt`
+
+install autoconf-2.69-1.noarch 
+install git-2.8.1-1.ppc 
+install unzip-6.0-3.ppc  
+install wget-1.17.1-1.ppc  
+install zip-3.0-2.ppc  
+install zsh-4.0.4-3.ppc  
+install gcc-6.3.0-1.ppc 
+install bc-1.06-2.ppc  
+install bison-1.875-3.ppc  
+update bzip2.ppc 
+install cpio-2.12-2.ppc  
+update  glib2.ppc 
+install pkg-config-0.19-6.ppc  
+install freetype2-2.6.3-1.ppc 
+install gawk-3.1.3-1.ppc  
+install popt-1.16-3.ppc  
+update curl.ppc 
+install pcre-8.33-1.ppc  
+install wget-1.17.1-1.ppc  
+install sed-4.1.1-1.ppc  
+install make-4.1-2.ppc  
+install libXrender-devel-0.9.8-1waixX11.ppc 
+install libXft-2.3.2-2waixX11.ppc 
+install libffi-devel-3.0.12-1.ppc  
+install cups-devel-2.0.2-2.ppc 
+install freetype2-devel-2.6.3-1.ppc
+run
