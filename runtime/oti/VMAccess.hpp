@@ -427,11 +427,7 @@ public:
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 		if (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) {
 			VM_AtomicSupport::readBarrier(); // necessary?
-			if (vmThread->inNative) {
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS)
-				clearPublicFlags(vmThread, J9_PUBLIC_FLAGS_VM_ACCESS);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI_CLEARS_VM_ACCESS */
-			} else {
+			if (!vmThread->inNative) {
 				mustWait = true;
 			}
 		}
