@@ -5127,6 +5127,7 @@ typedef struct J9JavaVM {
 	U_32 extendedRuntimeFlags;
 	UDATA zeroOptions;
 	struct J9ClassLoader* systemClassLoader;
+	struct J9ClassLoader *platformClassLoader;
 	UDATA sigFlags;
 	void* vmLocalStorageFunctions;
 	omrthread_monitor_t unsafeMemoryTrackingMutex;
