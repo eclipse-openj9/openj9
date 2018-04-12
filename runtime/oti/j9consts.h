@@ -619,7 +619,6 @@ extern "C" {
 #define J9_SIG_NO_SIG_QUIT 0x1
 #define J9_SIG_NO_SIG_CHAIN 0x4
 #define J9_SIG_NO_SIG_INT 0x8
-#define J9_SIG_XRS 0x10
 #define J9_SIG_XRS_SYNC 0x10
 #define J9_SIG_XRS_ASYNC 0x20
 #define J9_SIG_ZOS_CEEHDLR 0x40
