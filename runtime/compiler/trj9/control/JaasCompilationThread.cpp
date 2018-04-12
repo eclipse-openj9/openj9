@@ -817,6 +817,14 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->instanceOfOrCheckCast(clazz1, clazz2));
          }
          break;
+      case J9ServerMessageType::VM_transformJlrMethodInvoke:
+         {
+         auto recv = client->getRecvData<J9Method*, J9Class*>();
+         auto method = std::get<0>(recv);
+         auto clazz = std::get<1>(recv);
+         client->write(fe->transformJlrMethodInvoke(method, clazz));
+         }
+         break;
       case J9ServerMessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedRelocatableJ9Method on the heap, to be used as a mirror for performing actions which are only

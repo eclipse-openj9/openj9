@@ -1034,7 +1034,8 @@ public:
 
    virtual bool               classHasBeenExtended(TR_OpaqueClassBlock *);
    virtual bool               classHasBeenReplaced(TR_OpaqueClassBlock *);
-   virtual TR::Node *          inlineNativeCall( TR::Compilation *,  TR::TreeTop *, TR::Node *);
+   virtual TR::Node *         inlineNativeCall( TR::Compilation *,  TR::TreeTop *, TR::Node *);
+   virtual bool               transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass);
    virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method);
    virtual int32_t            getObjectAlignmentInBytes();
 

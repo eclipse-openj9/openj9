@@ -7573,7 +7573,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                      }
                   else
                      {
-                     callerClass = J9_CLASS_FROM_METHOD(callerMethod);
+                     callerClass = (J9Class*) getClassOfMethod((TR_OpaqueMethodBlock*) callerMethod);
                      }
                   }
                else
@@ -7583,34 +7583,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                   callerClass = (J9Class*) callerMethodSymbol->getResolvedMethod()->classOfMethod();
                   }
 
-                  {
-                  TR::VMAccessCriticalSection jlrMethodInvoke(this);
-
-                  if (vmThread()->javaVM->jlrMethodInvoke == NULL)
-                     return 0;
-
-                  skipFrame = false;
-                  skipFrame = (vmThread()->javaVM->jlrMethodInvoke == callerMethod);
-                  if (!skipFrame)
-                     skipFrame = (vmThread()->javaVM->jlrAccessibleObject != NULL) &&
-                                  isInstanceOf((TR_OpaqueClassBlock*) callerClass,
-                                               (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->jlrAccessibleObject),
-                                               false);
-#if defined(J9VM_OPT_SIDECAR)
-                  if (!skipFrame)
-                     skipFrame = (vmThread()->javaVM->srMethodAccessor != NULL) &&
-                                  isInstanceOf((TR_OpaqueClassBlock*) callerClass,
-                                               (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srMethodAccessor),
-                                               false);
-                  if (!skipFrame)
-                     skipFrame = (vmThread()->javaVM->srConstructorAccessor != NULL) &&
-                                  isInstanceOf((TR_OpaqueClassBlock*) callerClass,
-                                               (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srConstructorAccessor),
-                                               false);
-#endif // J9VM_OPT_SIDECAR
-
-                  }
-
+               skipFrame = transformJlrMethodInvoke(callerMethod, callerClass);
 
                if (!skipFrame && inlineDepth == stackDepth)
                   break;
@@ -8207,6 +8180,35 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
 #endif
 
    return 0;
+   }
+
+bool TR_J9VM::transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass)
+   {
+   TR::VMAccessCriticalSection jlrMethodInvoke(this);
+
+   if (vmThread()->javaVM->jlrMethodInvoke == NULL)
+      return 0;
+
+   bool skipFrame = (vmThread()->javaVM->jlrMethodInvoke == callerMethod);
+   if (!skipFrame)
+      skipFrame = (vmThread()->javaVM->jlrAccessibleObject != NULL) &&
+         isInstanceOf((TR_OpaqueClassBlock*) callerClass,
+                      (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->jlrAccessibleObject),
+                      false);
+#if defined(J9VM_OPT_SIDECAR)
+   if (!skipFrame)
+      skipFrame = (vmThread()->javaVM->srMethodAccessor != NULL) &&
+         isInstanceOf((TR_OpaqueClassBlock*) callerClass,
+                      (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srMethodAccessor),
+                      false);
+   if (!skipFrame)
+      skipFrame = (vmThread()->javaVM->srConstructorAccessor != NULL) &&
+         isInstanceOf((TR_OpaqueClassBlock*) callerClass,
+                      (TR_OpaqueClassBlock*) J9VM_J9CLASS_FROM_JCLASS(vmThread(), vmThread()->javaVM->srConstructorAccessor),
+                      false);
+#endif // J9VM_OPT_SIDECAR
+
+   return skipFrame;
    }
 
 int32_t
