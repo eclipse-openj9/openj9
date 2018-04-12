@@ -101,29 +101,28 @@ TR_J9ServerVM::isAbstractClass(TR_OpaqueClassBlock *clazzPointer)
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT)
    {
-   TR_OpaqueClassBlock * clazz = nullptr;
    // check the cache first
    std::string className(name, length);
    PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & systemClassByNameMap = _compInfoPT->getClientData()->getSystemClassByNameMap();
+   {
+   OMR::CriticalSection getSystemClassCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
    auto it = systemClassByNameMap.find(className);
    if (it != systemClassByNameMap.end())
+      return it->second;
+   }
+   // classname not found; ask the client and cache the answer
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getSystemClassFromClassName, className, isVettedForAOT);
+   TR_OpaqueClassBlock * clazz = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   if (clazz)
       {
-      clazz = it->second;
+      OMR::CriticalSection getSystemClassCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
+      systemClassByNameMap.insert(std::make_pair(className, clazz));
       }
-   else // classname not found; ask the client and cache the answer
+   else
       {
-      JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-      stream->write(JAAS::J9ServerMessageType::VM_getSystemClassFromClassName, className, isVettedForAOT);
-      clazz = std::get<0>(stream->read<TR_OpaqueClassBlock *>());
-      if (clazz)
-         {
-         systemClassByNameMap.insert(std::make_pair(className, clazz));
-         }
-      else
-         {
-         // Class with given name does not exist yet, but it could be
-         // loaded in the future, thus we should not cache NULL pointers.
-         }
+      // Class with given name does not exist yet, but it could be
+      // loaded in the future, thus we should not cache NULL pointers.
       }
    return clazz;
    }
@@ -207,7 +206,6 @@ TR_J9ServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayCl
    }
 
 
-
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT)
    {
@@ -219,29 +217,29 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_Resolve
    if (cl == (J9ClassLoader*)systemClassLoader)
       {
       PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & systemClassByNameMap = _compInfoPT->getClientData()->getSystemClassByNameMap();
+      {
+      OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
       auto it = systemClassByNameMap.find(std::string(sig, length));
       if (it != systemClassByNameMap.end())
+         return it->second;
+      }
+      // classname not found; ask the client and cache the answer  
+      clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
+      if (clazz)
          {
-         clazz = it->second;
+         OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getSystemClassMapMonitor());
+         systemClassByNameMap.insert(std::make_pair(std::string(sig, length), clazz));
          }
-      else // classname not found; ask the client and cache the answer
+      else
          {
-         clazz = getClassFromSignature(sig, length, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
-         if (clazz)
-            {
-            systemClassByNameMap.insert(std::make_pair(std::string(sig, length), clazz));
-            }
-         else
-            {
-            // Class with given name does not exist yet, but it could be
-            // loaded in the future, thus we should not cache NULL pointers.
-            // Note: many times we get in here due to Ljava/lang/String$StringCompressionFlag;
-            // In theory we could consider this a special case and watch the CHTable updates
-            // for a class load event for Ljava/lang/String$StringCompressionFlag, but it may not
-            // be worth the trouble.
-            //static unsigned long errorsSystem = 0;
-            //printf("ErrorSystem %lu for cl=%p\tclassName=%.*s\n", ++errorsSystem, cl, length, sig);
-            }
+         // Class with given name does not exist yet, but it could be
+         // loaded in the future, thus we should not cache NULL pointers.
+         // Note: many times we get in here due to Ljava/lang/String$StringCompressionFlag;
+         // In theory we could consider this a special case and watch the CHTable updates
+         // for a class load event for Ljava/lang/String$StringCompressionFlag, but it may not
+         // be worth the trouble.
+         //static unsigned long errorsSystem = 0;
+         //printf("ErrorSystem %lu for cl=%p\tclassName=%.*s\n", ++errorsSystem, cl, length, sig);
          }
       }
    else // look into the 'per compilation' cache

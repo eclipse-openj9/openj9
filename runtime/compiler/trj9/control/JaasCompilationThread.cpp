@@ -2155,11 +2155,13 @@ ClientSessionData::ClientSessionData(uint64_t clientUID) :
    _systemClassLoader = nullptr;
    _inUse = 1;
    _romMapMonitor = TR::Monitor::create("JIT-JaaSROMMapMonitor");
+   _systemClassMapMonitor = TR::Monitor::create("JIT-JaaSystemClassMapMonitor");
    }
 
 ClientSessionData::~ClientSessionData()
    {
    _romMapMonitor->destroy();
+   _systemClassMapMonitor->destroy();
    // Free memory for all hashtables with IProfiler info
    for (auto it : _J9MethodMap)
       {

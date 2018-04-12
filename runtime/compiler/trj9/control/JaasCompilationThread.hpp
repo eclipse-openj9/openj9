@@ -45,6 +45,7 @@ class ClientSessionData
    PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> & getSystemClassByNameMap() { return _systemClassByNameMap; }
    void processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
+   TR::Monitor *getSystemClassMapMonitor() { return _systemClassMapMonitor; }
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *found);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
 
@@ -71,6 +72,7 @@ class ClientSessionData
    PersistentUnorderedMap<std::string, TR_OpaqueClassBlock*> _systemClassByNameMap;
  
    TR::Monitor *_romMapMonitor;
+   TR::Monitor *_systemClassMapMonitor;
    int8_t  _inUse;  // Number of concurrent compilations from the same client 
                     // Accessed with compilation monitor in hand
    }; // ClientSessionData
