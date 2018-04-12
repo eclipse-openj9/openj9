@@ -4477,7 +4477,7 @@ JVM_RaiseSignal(jint sigNum)
 
 	Trc_SC_RaiseSignal_Entry(sigNum);
 
-	if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS)
+	if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_SYNC)
 			&& isSignalSpecial(sigNum)) {
 		/* Ignore signal */
 	} else {
@@ -4548,7 +4548,7 @@ JVM_RegisterSignal(jint sigNum, void* handler)
 		/* Don't allow user to register a native handler since
 		 * the signal is already used by the VM.
 		 */
-	} else if (J9_ARE_NO_BITS_SET(javaVM->sigFlags, J9_SIG_XRS)
+	} else if (J9_ARE_NO_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_SYNC)
 			&& isSignalSpecial(sigNum)) {
 		/* Don't allow user to register a native handler since
 		 * the signal is already used by the VM.

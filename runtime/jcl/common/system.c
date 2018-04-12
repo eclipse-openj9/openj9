@@ -280,7 +280,7 @@ jobject getPropertyList(JNIEnv *env)
 	 * 	we consider to be asynchronous signals.
 	 * The JCLs do not install handlers for any synchronous signals */
 	strings[propIndex++] = "ibm.signalhandling.rs";
-	if (javaVM->sigFlags & J9_SIG_XRS_ASYNC) {
+	if (J9_ARE_ALL_BITS_SET(javaVM->sigFlags, J9_SIG_XRS_ASYNC)) {
 		strings[propIndex++] = "true";
 	} else {
 		strings[propIndex++] = "false";
