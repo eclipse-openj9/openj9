@@ -29,15 +29,6 @@
 	<platform id="none"/>
 	<platform id="all"/>
 	
-	<exclude id="Test 1: Test --patch-module for Bootstrap ClassLoader and Builtin ClassLoader. Patched classes should not be stored to the cache. Other classes from the patched module should still be stored" platform="SE100">
-		<reason>JDK10 testSCCMLModularity_1 FAILED #1625</reason>
-	</exclude>
-	<exclude id="Test 3: Jimage and module path should be stored into the cache. Patch paths should not be stored" platform="SE100">
-		<reason>JDK10 testSCCMLModularity_1 FAILED #1625</reason>
-	</exclude>
-	<exclude id="Test 4: Test classes are being found in the shared cache when running an application module" platform="SE100">
-		<reason>JDK10 testSCCMLModularity_1 FAILED #1625</reason>
-	</exclude>
 	<exclude id="Test 4s: Setup for test 4 and test 5, create a Java 6 cache" platform="zos_390-31.*" shouldFix="yes">
 		<reason>Java 6 SDK is missing for the platform</reason>
 	</exclude>
@@ -89,12 +80,6 @@
 	</exclude>
 	<exclude id="Test 17: JAZZ 31726 test 7 ensure -Xzero -Xzero:describe shows sharebootzip" platform="SE[^8]\d+">
 		<reason>Java 9 removed option -Xzero</reason>
-	</exclude>
-	<exclude id="Test 53: Make sure classes are being stored to the shared cache" platform="SE100">
-		<reason>JDK10 testSCCMLTests1_1 FAILED #1624</reason>
-	</exclude>
-	<exclude id="Test 54: Make sure classes are being found in the shared cache" platform="SE100">
-		<reason>JDK10 testSCCMLTests1_1 FAILED #1624</reason>
 	</exclude>
 	<exclude id="Test 133: Test -Xshareclasses:printallstats=zipcache" platform="SE[^8]\d+" shouldFix="yes">
 		<reason>JCL team has not yet added JVM_ZipHook() in Java 9</reason>
