@@ -57,7 +57,7 @@ def get_sources_with_authentication() {
 }
 
 def get_sources() {
-    checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: "${OPENJDK_BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 30]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: "${USER_CREDENTIALS_ID}", url: "${OPENJDK_REPO}"]]]
+    checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: "${OPENJDK_BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CheckoutOption', timeout: 30],[$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 30]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: "${USER_CREDENTIALS_ID}", url: "${OPENJDK_REPO}"]]]
 
     // Check if this build is a PR
     if (params.ghprbGhRepository) {

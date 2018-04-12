@@ -42,7 +42,7 @@
 		</subsets>
 	</test>
 		<test>
-		<testCaseName>cmdLineTester_lockWordAlignment_Object_Standard_SE90</testCaseName>
+		<testCaseName>cmdLineTester_lockWordAlignment_Object_Standard</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>

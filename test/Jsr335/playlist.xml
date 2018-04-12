@@ -52,7 +52,7 @@
 	</test>
 
 	<test>
-		<testCaseName>jsr335tests_SE90</testCaseName>
+		<testCaseName>jsr335tests</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
 			<variation>Mode101</variation>
@@ -102,7 +102,7 @@
 	</test>
 
 	<test>
-		<testCaseName>jsr335tests_defendersupersends_SE90</testCaseName>
+		<testCaseName>jsr335tests_defendersupersends</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
 		</variations>

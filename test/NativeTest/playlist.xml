@@ -176,7 +176,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>shrtest_linux_SE90</testCaseName>
+		<testCaseName>shrtest_linux</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -199,7 +199,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>shrtest_zos_SE90</testCaseName>
+		<testCaseName>shrtest_zos</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -222,7 +222,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>shrtest_aix_SE90</testCaseName>
+		<testCaseName>shrtest_aix</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -245,7 +245,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>shrtest_win_SE90</testCaseName>
+		<testCaseName>shrtest_win</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>

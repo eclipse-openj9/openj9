@@ -8495,9 +8495,6 @@ static bool genZeroInitObject2(
       TR::Register *&scratchReg,
       TR::CodeGenerator *cg)
    {
-   static bool UseOldGenZeroInitObject2 = feGetEnv("TR_UseOldGenZeroInitObject2");
-   if (!UseOldGenZeroInitObject2)
-   {
    // set up clazz value here
    TR_OpaqueClassBlock *clazz = NULL;
    cg->comp()->canAllocateInline(node, clazz);
@@ -8606,224 +8603,6 @@ static bool genZeroInitObject2(
       return false;
       }
    }
-
-   bool isArrayNew = (node->getOpCodeValue() != TR::New);
-
-   TR_OpaqueClassBlock *clazz = NULL;
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-
-   // set up clazz value here
-   comp->canAllocateInline(node, clazz);
-
-   int32_t numSlots = 0;
-   int32_t startOfZeroInits = -1;
-
-   startOfZeroInits = isArrayNew ? sizeof(J9IndexableObjectContiguous) : sizeof(J9Object);
-
-   if (TR::Compiler->target.is64Bit())
-      {
-      // round down to the nearest word size
-      TR_ASSERT(startOfZeroInits < 0xF8, "expecting start of zero inits to be the size of the header");
-      startOfZeroInits &= 0xF8;
-      }
-
-   numSlots = (int32_t)((objectSize - startOfZeroInits)/TR::Compiler->om.sizeofReferenceAddress());
-
-   bool generateArraylets = comp->generateArraylets();
-
-   int32_t i;
-
-   if (!minRepstosdWords)
-      {
-      static char *p= feGetEnv("TR_MinRepstosdWords");
-      if (p)
-         minRepstosdWords = atoi(p);
-      else
-         minRepstosdWords = MIN_REPSTOSD_WORDS; // Use default value
-      }
-
-   int32_t alignmentDelta = 0; // for aligning properly to get best performance from REP STOSD/STOSQ
-
-   if (sizeReg || (numSlots + alignmentDelta) >= minRepstosdWords)
-      {
-      // Zero-initialize by using REP STOSD/STOSQ.
-      //
-
-      if (sizeReg)
-         {
-         // -------------
-         //
-         // VARIABLE SIZE
-         //
-         // -------------
-
-         int32_t additionalSlots = 0;
-
-         if (generateArraylets)
-            {
-            additionalSlots++;
-            if (elementSize > sizeof(UDATA))
-               additionalSlots++;
-            }
-
-         // Subtract off the header size and initialize the remaining slots.
-         //
-         generateRegImmInstruction(SUBRegImm4(), node, tempReg, startOfZeroInits, cg);
-         generateRegImmInstruction(SHRRegImm1(), node, tempReg, TR::Compiler->target.is64Bit()? 3 : 2, cg);
-
-         }
-      else
-         {
-         // ----------
-         // FIXED SIZE
-         // ----------
-
-         generateRegImmInstruction(MOVRegImm4(), node, tempReg, numSlots + alignmentDelta, cg);
-         if (TR::Compiler->target.is64Bit())
-            {
-            // TODO AMD64: replace both instructions with a LEA tempReg, [disp32]
-            //
-            generateRegRegInstruction(MOVSXReg8Reg4, node, tempReg, tempReg, cg);
-            }
-         }
-
-
-      // -----------
-      // Destination
-      // -----------
-
-      generateRegMemInstruction(LEARegMem(), node, segmentReg, generateX86MemoryReference(targetReg, startOfZeroInits, cg), cg);
-
-      if (TR::Compiler->target.is64Bit())
-         {
-         scratchReg = cg->allocateRegister();
-         generateRegRegInstruction(MOVRegReg(), node, scratchReg, targetReg, cg);
-         }
-      else
-         {
-         generateRegInstruction(PUSHReg, node, targetReg, cg);
-         }
-
-      generateRegRegInstruction(XORRegReg(), node, targetReg, targetReg, cg);
-
-      // We just pushed targetReg on the stack and zeroed it out. targetReg contained the address of the
-      // beginning of the header. We want to use the 0-reg to initialize the monitor slot, so we use
-      // segmentReg, which points to to targetReg+startOfZeroInits and subtract the extra offset.
-      //
-      bool initLw = (node->getOpCodeValue() != TR::New);
-      int lwOffset = fej9->getByteOffsetToLockword(clazz);
-      initLw = false;
-
-      if (initLw)
-         {
-         TR_X86OpCodes op = (TR::Compiler->target.is64Bit() && fej9->generateCompressedLockWord()) ? S4MemReg : SMemReg();
-         generateMemRegInstruction(op, node, generateX86MemoryReference(segmentReg, lwOffset-startOfZeroInits, cg), targetReg, cg);
-         }
-
-      TR_X86OpCodes op = TR::Compiler->target.is64Bit() ? REPSTOSQ : REPSTOSD;
-      generateInstruction(op, node, cg);
-
-      if (TR::Compiler->target.is64Bit())
-         {
-         generateRegRegInstruction(MOVRegReg(), node, targetReg, scratchReg, cg);
-         }
-      else
-         {
-         generateRegInstruction(POPReg, node, targetReg, cg);
-         }
-
-      return true;
-      }
-
-   if (numSlots > 0)
-      {
-      generateRegRegInstruction(XORRegReg(), node, tempReg, tempReg, cg);
-
-      bool initLw = (node->getOpCodeValue() != TR::New);
-      int lwOffset = fej9->getByteOffsetToLockword(clazz);
-      initLw = false;
-
-      if (initLw)
-         {
-         TR_X86OpCodes op = (TR::Compiler->target.is64Bit() && fej9->generateCompressedLockWord()) ? S4MemReg : SMemReg();
-         generateMemRegInstruction(op, node, generateX86MemoryReference(targetReg, lwOffset, cg), tempReg, cg);
-         }
-      }
-   else
-      {
-      bool initLw = (node->getOpCodeValue() != TR::New);
-      int lwOffset = fej9->getByteOffsetToLockword(clazz);
-      initLw = false;
-
-      if (initLw)
-         {
-         TR_X86OpCodes op = (TR::Compiler->target.is64Bit() && fej9->generateCompressedLockWord()) ? S4MemImm4 : SMemImm4();
-         generateMemImmInstruction(op, node, generateX86MemoryReference(targetReg, lwOffset, cg), 0, cg);
-         }
-      return false;
-      }
-
-   int32_t numIterations = numSlots/maxZeroInitWordsPerIteration;
-   if (numIterations > 1)
-      {
-      // Generate the initializations in a loop
-      //
-      int32_t numLoopSlots = numIterations*maxZeroInitWordsPerIteration;
-      int32_t endOffset;
-
-      endOffset = (int32_t)(numLoopSlots*TR::Compiler->om.sizeofReferenceAddress() + startOfZeroInits);
-
-      generateRegImmInstruction(MOVRegImm4(), node, segmentReg, -((numIterations-1)*maxZeroInitWordsPerIteration), cg);
-
-      if (TR::Compiler->target.is64Bit())
-         generateRegRegInstruction(MOVSXReg8Reg4, node, segmentReg, segmentReg, cg);
-
-      TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
-      generateLabelInstruction(LABEL, node, loopLabel, cg);
-      for (i = maxZeroInitWordsPerIteration; i > 0; i--)
-         {
-         generateMemRegInstruction(SMemReg(), node,
-                                   generateX86MemoryReference(targetReg,
-                                                           segmentReg,
-                                                           TR::MemoryReference::convertMultiplierToStride((int32_t)TR::Compiler->om.sizeofReferenceAddress()),
-                                                           endOffset - TR::Compiler->om.sizeofReferenceAddress()*i, cg),
-                                   tempReg, cg);
-         }
-      generateRegImmInstruction(ADDRegImms(), node, segmentReg, maxZeroInitWordsPerIteration, cg);
-      generateLabelInstruction(JLE4, node, loopLabel, cg);
-
-      // Generate the left-over initializations
-      //
-      for (i = 0; i < numSlots % maxZeroInitWordsPerIteration; i++)
-         {
-         generateMemRegInstruction(SMemReg(), node,
-                                   generateX86MemoryReference(targetReg,
-                                                           endOffset+TR::Compiler->om.sizeofReferenceAddress()*i, cg),
-                                   tempReg, cg);
-         }
-      }
-   else
-      {
-      // Generate the initializations inline
-      //
-      for (i = 0; i < numSlots; i++)
-         {
-         // Don't bother initializing the array-size slot
-         //
-         generateMemRegInstruction(SMemReg(), node,
-                                   generateX86MemoryReference(targetReg,
-                                   i*TR::Compiler->om.sizeofReferenceAddress() + startOfZeroInits, cg),
-                                   tempReg, cg);
-         }
-      }
-
-   return false;
-   }
-
-
-
-
 
 
 // Generate the code to initialize the data portion of an allocated object.
@@ -9579,25 +9358,76 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          //
          // Zero-initialize the monitor slot in the header at the same time.
          //
-         generateRegRegInstruction(XORRegReg(), node, tempReg, tempReg, cg);
-         bool gen64BitInstr = TR::Compiler->target.is64Bit() && !fej9->generateCompressedLockWord();
-
-         bool initLw = (node->getOpCodeValue() != TR::New);
-         int32_t lwOffset = fej9->getByteOffsetToLockword(clazz);
-         initLw = false;
-
-         if (initLw)
-            generateMemRegInstruction(SMemReg(gen64BitInstr), node,
-                                      generateX86MemoryReference(targetReg, lwOffset, cg),
-                                      tempReg, cg);
-
          TR_BitVectorIterator bvi(*initInfo->zeroInitSlots);
-         while (bvi.hasMoreElements())
+         static bool UseOldBVI = feGetEnv("TR_UseOldBVI");
+         if (UseOldBVI)
             {
-            generateMemRegInstruction(S4MemReg, node,
-                                      generateX86MemoryReference(targetReg, bvi.getNextElement()*4 +dataOffset, cg),
-                                      tempReg, cg);
+            generateRegRegInstruction(XORRegReg(), node, tempReg, tempReg, cg);
+            while (bvi.hasMoreElements())
+               {
+               generateMemRegInstruction(S4MemReg, node,
+                                         generateX86MemoryReference(targetReg, bvi.getNextElement()*4 +dataOffset, cg),
+                                         tempReg, cg);
+               }
             }
+         else
+            {
+            int32_t lastElementIndex = -1;
+            int32_t nextE = -2;
+            int32_t span = 0;
+            int32_t lastSpan = -1;
+            scratchReg = cg->allocateRegister(TR_FPR);
+            generateRegRegInstruction(PXORRegReg, node, scratchReg, scratchReg, cg);
+            while (bvi.hasMoreElements())
+               {
+               nextE = bvi.getNextElement();
+               if (-1 == lastElementIndex) lastElementIndex = nextE;
+               span = nextE - lastElementIndex;
+               TR_ASSERT(span>=0, "SPAN < 0");
+               if (span < 3)
+                  {
+                  lastSpan = span;
+                  continue;
+                  }
+               else if (span == 3)
+                  {
+                  generateMemRegInstruction(MOVDQUMemReg, node, generateX86MemoryReference(targetReg, lastElementIndex*4 +dataOffset, cg), scratchReg, cg);
+                  lastSpan = -1;
+                  lastElementIndex = -1;
+                  }
+               else if (span > 3)
+                  {
+                  if (lastSpan == 0)
+                     {
+                     generateMemRegInstruction(MOVDMemReg, node, generateX86MemoryReference(targetReg, lastElementIndex*4 +dataOffset, cg), scratchReg, cg);
+                     }
+                  else if (lastSpan == 1)
+                     {
+                     generateMemRegInstruction(MOVQMemReg, node,generateX86MemoryReference(targetReg, lastElementIndex*4 +dataOffset, cg), scratchReg, cg);
+                     }
+                  else
+                     {
+                     generateMemRegInstruction(MOVDQUMemReg, node, generateX86MemoryReference(targetReg, lastElementIndex*4 +dataOffset, cg), scratchReg, cg);
+                     }
+                  lastElementIndex = nextE;
+                  lastSpan = 0;
+                  }
+               }
+            if (lastSpan == 0)
+               {
+               generateMemRegInstruction(MOVDMemReg, node, generateX86MemoryReference(targetReg, lastElementIndex*4 +dataOffset, cg), scratchReg, cg);
+               }
+            else if (lastSpan == 1)
+               {
+               generateMemRegInstruction(MOVQMemReg, node,generateX86MemoryReference(targetReg, lastElementIndex*4 +dataOffset, cg), scratchReg, cg);
+               }
+            else if (lastSpan == 2)
+               {
+               TR_ASSERT(dataOffset >= 4, "dataOffset must be >= 4.");
+               generateMemRegInstruction(MOVDQUMemReg, node, generateX86MemoryReference(targetReg, lastElementIndex*4 +dataOffset - 4, cg), scratchReg, cg);
+               }
+            }
+
          useRepInstruction = false;
 
          J9JavaVM * jvm = fej9->getJ9JITConfig()->javaVM;

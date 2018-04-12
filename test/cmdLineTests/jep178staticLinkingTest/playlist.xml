@@ -54,7 +54,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_jep178_staticLinking_SE90</testCaseName>
+		<testCaseName>cmdLineTester_jep178_staticLinking</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
 	-DJAVATEST_ROOT="$(JAVATEST_ROOT)" \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
