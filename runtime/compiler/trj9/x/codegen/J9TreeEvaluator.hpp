@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,7 +114,13 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *compressStringEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool japaneseMethod);
    static TR::Register *compressStringNoCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool japaneseMethod);
    static TR::Register *andORStringEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *decompressedStringToUpperCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *decompressedStringToLowerCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *compressedStringToUpperCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *compressedStringToLowerCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg);
 
+   class CaseConversionManager;
+   static TR::Register *stringCaseConversionHelper(TR::Node *node, TR::CodeGenerator *cg, CaseConversionManager& manager);
    };
 
 }

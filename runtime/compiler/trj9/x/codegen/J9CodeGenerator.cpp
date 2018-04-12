@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,6 +79,10 @@ J9::X86::CodeGenerator::CodeGenerator() :
    cg->setSupportsPartialInlineOfMethodHooks();
    cg->setSupportsInliningOfTypeCoersionMethods();
    cg->setSupportsNewInstanceImplOpt();
+   if (cg->getX86ProcessorInfo().supportsSSE4_1() && 
+       !comp->getOption(TR_DisableSIMDStringCaseConv) && 
+       !TR::Compiler->om.canGenerateArraylets())
+      cg->setSupportsInlineStringCaseConversion();
 
    if (comp->generateArraylets() && !comp->getOptions()->realTimeGC())
       {
