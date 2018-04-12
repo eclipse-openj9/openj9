@@ -24,20 +24,21 @@
 
 /**
  * Constants for supported J2SE versions.
- * note: J2SE_15 needed for shared classes cache introspection but not supported by JVM.
  */
 /*
  * Note: J2SE_LATEST is the highest Java version supported by VM for a JCL level.
  *       This allows JVM operates with latest version when neither classlib.properties
  *       nor release file presents.
  */
-#define J2SE_15   0x1500
-#define J2SE_16   0x1600
-#define J2SE_17   0x1700
-#define J2SE_18   0x1800
-#define J2SE_19   0x1900
-#define J2SE_V10  0x1A00            /* This refers Java 10 */
-#define J2SE_V11  0x1B00            /* This refers Java 11 */
+#define J2SE_18   0x0800
+#define J2SE_19   0x0900
+#define J2SE_V10  0x0A00            /* This refers Java 10 */
+#define J2SE_V11  0x0B00            /* This refers Java 11 */
+/* Shared class cache is using JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion) to get the Java version.
+ * So bits 9 to 16 of the J2SE constant should match the java version number.
+ */
+
+
 #if JAVA_SPEC_VERSION == 8
 	#define J2SE_LATEST  J2SE_18
 #elif JAVA_SPEC_VERSION == 9
@@ -84,6 +85,7 @@
 #define J2SE_SHAPE_RAW	 		0x90000
 #define J2SE_SHAPE_MASK 		0xF0000
 #define J2SE_SHAPE_SHIFT		16
+#define J2SE_JAVA_SPEC_VERSION_SHIFT 8
 
 /**
  * Masks and constants for describing J2SE shapes.
@@ -111,6 +113,11 @@
  * Macro to extract J2SE shape given a JNIEnv.
  */ 
 #define J2SE_SHAPE_FROM_ENV(env) J2SE_SHAPE(((J9VMThread*)env)->javaVM)
+
+/**
+ * Macro to extract java spec version from J2SE version.
+ */
+#define JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion) 	((j2seVersion) >> J2SE_JAVA_SPEC_VERSION_SHIFT)
 
 #endif     /* j2sever_h */
 

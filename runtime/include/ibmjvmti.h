@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -105,6 +105,10 @@
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA7 3
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA8 4
 #define COM_IBM_SHARED_CACHE_MODLEVEL_JAVA9 5
+/* 
+ * No macro is defined for shared cache modLevel starting from Java 10. The value of modLevel equals to the java version number
+ * on which the shared cache is created.
+ */
 
 #define COM_IBM_SHARED_CACHE_ADDRMODE_32 32
 #define COM_IBM_SHARED_CACHE_ADDRMODE_64 64

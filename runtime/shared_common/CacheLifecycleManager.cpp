@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -237,7 +237,6 @@ printSharedCache(void* element, void* param)
 	SH_OSCache_Info* currentItem = (SH_OSCache_Info*) element;
 	if (((state->printCompatibleCache == true) && (currentItem->isCompatible))
 			|| ((state->printIncompatibleCache == true) && (!currentItem->isCompatible))) {
-		char jclLevelStr[10];
 		char addrmodeStr[10];
 
 		PORT_ACCESS_FROM_JAVAVM(state->vm);
@@ -286,9 +285,10 @@ printSharedCache(void* element, void* param)
 			j9tty_printf(PORTLIB, "\nIncompatible shared caches\n");
 			state->printIncompatibleHeader = 2;
 		}
-
 		j9tty_printf(PORTLIB, "%-16s\t", currentItem->name);
-		getStringForShcModlevel(PORTLIB, currentItem->versionData.modlevel, (char*)&jclLevelStr);
+		char jclLevelStr[10];
+		memset(jclLevelStr, 0, sizeof(jclLevelStr));
+		getStringForShcModlevel(PORTLIB, currentItem->versionData.modlevel, (char*)&jclLevelStr, sizeof(jclLevelStr));
 		getStringForShcAddrmode(PORTLIB, currentItem->versionData.addrmode, (char*)&addrmodeStr);
 		j9tty_printf(PORTLIB, "%s %s  ", jclLevelStr, addrmodeStr);
 		if (J9PORT_SHR_CACHE_TYPE_PERSISTENT == currentItem->versionData.cacheType) {
