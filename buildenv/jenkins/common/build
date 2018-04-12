@@ -21,10 +21,11 @@
  *******************************************************************************/
 
 def git_clean() {
-    script {
-        if (fileExists('.git')) {
+    if (fileExists('.git')) {
             sh "git clean -ffxd"
-        }
+    }
+    if (fileExists('.git/index.lock')) {
+            sh "rm -f .git/index.lock"
     }
 }
 
