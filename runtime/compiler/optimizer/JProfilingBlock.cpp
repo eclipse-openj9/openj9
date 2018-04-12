@@ -42,7 +42,6 @@
 int32_t TR_JProfilingBlock::nestedLoopRecompileThreshold = 10;
 int32_t TR_JProfilingBlock::loopRecompileThreshold = 250;
 int32_t TR_JProfilingBlock::recompileThreshold = 500;
-int32_t TR_JProfilingBlock::profilingCompileThreshold = 5000;
 
 /**
  * Prim's algorithm to compute a Minimum Spanning Tree traverses the edges of the tree
@@ -913,10 +912,6 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
    else
       thresholdLocation = &recompileThreshold;
 
-   // Profiling compilations have a lower threshold, so that less time is
-   // spent running the high overhead implementation
-   if (comp()->isProfilingCompilation())
-      thresholdLocation = &profilingCompileThreshold;
 
    int32_t startBlockNumber = comp()->getStartBlock()->getNumber();
    blockFrequencyInfo->setEntryBlockNumber(startBlockNumber);
@@ -929,27 +924,33 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
 
       TR::Block *guardBlock1 = TR::Block::createEmptyBlock(node, comp(), originalFirstBlock->getFrequency());
          {
-         TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getEnableJProfilingRecompilation(), TR::Int32);
-         TR::Node *enableLoad = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
-         TR::Node *enableTest = TR::Node::createif(TR::ificmpeq, enableLoad, TR::Node::iconst(node, 0), originalFirstBlock->getEntry());
+         //TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getEnableJProfilingRecompilation(), TR::Int32);
+         TR::Node *enableLoad = TR::Node::createWithSymRef(node, TR::iload, 0, blockFrequencyInfo->getOrCreateSymRefForIsQueuedForRecompilation(comp()));
+         TR::Node *enableTest = TR::Node::createif(TR::ificmpeq, enableLoad, TR::Node::iconst(node, -1), originalFirstBlock->getEntry());
          TR::TreeTop *enableTree = TR::TreeTop::create(comp(), enableTest);
          enableTest->setIsProfilingCode();
          guardBlock1->append(enableTree);
          }
 
+      int32_t profilingCompileThreshold2 = comp()->getOptions()->getJProfilingMethodRecompThreshold();
+
+      traceMsg(comp(),"Profiling Compile Threshold for method = %d\n", profilingCompileThreshold2);
       TR::Block *guardBlock2 = TR::Block::createEmptyBlock(node, comp(), originalFirstBlock->getFrequency());
-      TR::Node *recompThreshold = TR::Node::createWithSymRef(node, TR::iload, 0, comp()->getSymRefTab()->createKnownStaticDataSymbolRef(thresholdLocation, TR::Int32));
+      TR::Node *recompThreshold = TR::Node::iconst(node, profilingCompileThreshold2);
       TR::Node *cmpFlagNode = TR::Node::createif(TR::ificmplt, root, recompThreshold, originalFirstBlock->getEntry());
       TR::TreeTop *cmpFlag = TR::TreeTop::create(comp(), cmpFlagNode);
       cmpFlagNode->setIsProfilingCode();
       guardBlock2->append(cmpFlag);
 
       // construct call block
+      const char * const dc1 = TR::DebugCounter::debugCounterName(comp(),
+         "methodRecomp/(%s)", comp()->signature());
       TR::Block *callRecompileBlock = TR::Block::createEmptyBlock(node, comp(), UNKNOWN_COLD_BLOCK_COUNT);
       callRecompileBlock->setIsCold(true);
       TR::TreeTop *callTree = TR::TransformUtil::generateRetranslateCallerWithPrepTrees(node, TR_PersistentMethodInfo::RecompDueToJProfiling, comp());
       callTree->getNode()->setIsProfilingCode();
       callRecompileBlock->append(callTree);
+      TR::DebugCounter::prependDebugCounter(comp(), dc1, callTree);
       
       comp()->getRecompilationInfo()->getJittedBodyInfo()->setUsesJProfiling();
       TR::CFG *cfg = comp()->getFlowGraph();

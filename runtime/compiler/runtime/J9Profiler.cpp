@@ -1643,7 +1643,9 @@ TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(TR_CallSiteInfo *callSiteInfo, int3
    _blocks(blocks),
    _frequencies(frequencies),
    _counterDerivationInfo(NULL),
-   _entryBlockNumber(-1)
+   _entryBlockNumber(-1),
+   _isQueuedForRecompilation(0),
+   _isQueuedForRecompilationSymRef(NULL)
    {
    }
 
@@ -1668,7 +1670,9 @@ TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(
       NULL
       ),
    _counterDerivationInfo(NULL),
-   _entryBlockNumber(-1)
+   _entryBlockNumber(-1),
+   _isQueuedForRecompilation(0),
+   _isQueuedForRecompilationSymRef(NULL)
    {
    for (size_t i = 0; i < _numBlocks; ++i)
       {
@@ -1697,6 +1701,14 @@ TR_BlockFrequencyInfo::TR_BlockFrequencyInfo(
             );
          }
       }
+   }
+
+TR::SymbolReference *
+TR_BlockFrequencyInfo::getOrCreateSymRefForIsQueuedForRecompilation(TR::Compilation *comp)
+   {
+   if (_isQueuedForRecompilationSymRef == NULL)
+      _isQueuedForRecompilationSymRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(&_isQueuedForRecompilation, TR::Int32);
+   return _isQueuedForRecompilationSymRef;
    }
 
 TR_BlockFrequencyInfo::~TR_BlockFrequencyInfo()

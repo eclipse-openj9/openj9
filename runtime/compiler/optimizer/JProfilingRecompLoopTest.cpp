@@ -143,9 +143,17 @@ TR_JProfilingRecompLoopTest::perform()
  *             |...                                         |  <--- originalBlock
  *             |testLocationTT                              |
  *             |ifcmple goto remainingCodeBlock             |---------------------------------------
- *             |  rawFrequencyOfLoopContainingTestLocation  |                                      |
- *             |  recompilationThreshold                    |                                      |
+ *             |  iload isMethodQueuedForRecompilation      |                                      |
+ *             |  iconst -1                                 |                                      |
  *             ----------------------------------------------                                      |
+ *                                  |                                                              |
+ *                                  |                                                              |
+ *                                  V                                                              |
+ *             -----------------------------------------------                                     |
+ *             |ifcmple goto remainingCodeBlock              | <---- CalculateCheckLoopFreqBlock   |
+ *             |   rawFrequencyOfTheLoop                     |                                     |
+ *             |   AdjustedLoopRecompilationThreshold        |                                     |
+ *             -----------------------------------------------                                     |
  *                                  |                                                              |
  *                                  |                                                              |
  *                                  V                                                              |
@@ -179,8 +187,8 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
    // This base recompile threshold in conjunction with the depth in loop is compared with the raw count of the
    // loop to decide if we have run this loop enough time to trip method recompilation. 
    // TODO: Currently set base recompilation threshold needs some tuning. 
-   static char *p = feGetEnv("TR_LoopRecompilationThresholdBase");
-   static int32_t recompileThreshold = p ? atoi(p) : 4096;
+   int32_t recompileThreshold = comp->getOptions()->getJProfilingLoopRecompThreshold();
+   traceMsg(comp, "Loop Recompilation Base Threshold = %d\n",recompileThreshold);
    // Iterating backwards to avoid losing original block associated with the test location tree tops in case we have found multiple
    // recompilation test location in same block.
    for (auto testLocationIter = testLocations.rbegin(), testLocationEnd = testLocations.rend(); testLocationIter != testLocationEnd; ++testLocationIter)
@@ -208,6 +216,7 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
       TR::Block *callRecompileBlock = TR::Block::createEmptyBlock(node, comp, UNKNOWN_COLD_BLOCK_COUNT);
       callRecompileBlock->setIsCold(true);
       
+      // jitRetranslateCallerWithPrep Helper call
       TR::Node *callNode = TR::Node::createWithSymRef(node, TR::icall, 2, comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_jitRetranslateCallerWithPrep, false, false, true));
       callNode->setAndIncChild(0, TR::Node::createWithSymRef(node, TR::loadaddr, 0, comp->getSymRefTab()->findOrCreateStartPCSymbolRef()));
       callNode->setAndIncChild(1, TR::Node::createWithSymRef(node, TR::loadaddr, 0, comp->getSymRefTab()->findOrCreateCompiledMethodSymbolRef()));
@@ -215,18 +224,39 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
       callTree->getNode()->setIsProfilingCode();
       callRecompileBlock->append(callTree);
       cfg->addNode(callRecompileBlock);
+      const char * const name = TR::DebugCounter::debugCounterName(comp,
+      "recompilationHelper/(%s)/%d",
+      comp->signature(),depth);
+      TR::DebugCounter::prependDebugCounter(comp, name, callTree);
       
-      TR::Node *loadBaseThreshold = TR::Node::createWithSymRef(node, TR::iload, 0, comp->getSymRefTab()->createKnownStaticDataSymbolRef(&recompileThreshold, TR::Int32));
-      //TR::Node *adjustThreshold = TR::Node::create(node, TR::ishl, 2, loadBaseThreshold, TR::Node::iconst(node, (depth-1)*3));
+      // Code to calculate the raw frequency of loop from block counters and comparing with the adjusted recompilation threshold.
       // threshold for this particular test location is calculated from the base recompile threshold and the nesting depth of the loop
       // If threshold becomes larger than the maximum signed 32-Bit int then it will use the max value allowed as threshold.
       int32_t threshold = recompileThreshold << ((depth-1)*1);  
       TR::Node *cmpNode = TR::Node::createif(TR::ificmple, root, TR::Node::iconst(node, threshold > 0 ? threshold : TR::getMaxSigned<TR::Int32>()-1), remainingCodeBlock->getEntry());
-      
-      TR::TreeTop *cmpFlag = TR::TreeTop::create(comp, asyncCheckTreeTop, cmpNode);
+      TR::TreeTop *cmpFlag = TR::TreeTop::create(comp, cmpNode);
+      cmpFlag->getNode()->setIsProfilingCode();
       remainingCodeBlock->getEntry()->insertTreeTopsBeforeMe(callRecompileBlock->getEntry(), callRecompileBlock->getExit());
+      static bool disableSkipRecompilationTestCode = (feGetEnv("TR_DisableJProfilingSkipRecompCode") != NULL);
+      if (!disableSkipRecompilationTestCode)
+         {
+         TR::Block *calculateLoopRawFreq  = TR::Block::createEmptyBlock(node, comp, remainingCodeBlock->getFrequency());
+         TR::Node *loadIsQueuedForRecompilation = TR::Node::createWithSymRef(node, TR::iload, 0, bfi->getOrCreateSymRefForIsQueuedForRecompilation(comp));
+         TR::Node *checkIfQueueForRecompilation = TR::Node::createif(TR::ificmpeq, loadIsQueuedForRecompilation, TR::Node::iconst(node, -1), remainingCodeBlock->getEntry());
+         TR::TreeTop *checkIfNeededRecompilationTestTT = TR::TreeTop::create(comp, asyncCheckTreeTop, checkIfQueueForRecompilation);
+         calculateLoopRawFreq->append(cmpFlag);
+         cfg->addNode(calculateLoopRawFreq);
+         callRecompileBlock->getEntry()->insertTreeTopsBeforeMe(calculateLoopRawFreq->getEntry(), calculateLoopRawFreq->getExit());
+         cfg->addEdge(TR::CFGEdge::createEdge(originalBlock, calculateLoopRawFreq, comp->trMemory()));
+         cfg->addEdge(TR::CFGEdge::createEdge(calculateLoopRawFreq, callRecompileBlock, comp->trMemory()));
+         cfg->addEdge(TR::CFGEdge::createEdge(calculateLoopRawFreq, remainingCodeBlock, comp->trMemory()));
+         }
+      else
+         {
+         originalBlock->append(cmpFlag);
+         cfg->addEdge(TR::CFGEdge::createEdge(originalBlock, callRecompileBlock, comp->trMemory()));
+         }
       cfg->addEdge(TR::CFGEdge::createEdge(callRecompileBlock, remainingCodeBlock, comp->trMemory()));
-      cfg->addEdge(TR::CFGEdge::createEdge(originalBlock, callRecompileBlock, comp->trMemory()));
       if (trace())
          traceMsg(comp,"\t\t Newly created recompilation Test : n%dn in block_%d\n\t\tRecompilation Call in block_%d\n",
             callNode->getGlobalIndex(), originalBlock->getNumber(), callRecompileBlock->getNumber());

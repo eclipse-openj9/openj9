@@ -46,7 +46,6 @@ class TR_JProfilingBlock : public TR::Optimization
    static int32_t nestedLoopRecompileThreshold;
    static int32_t loopRecompileThreshold;
    static int32_t recompileThreshold;
-   static int32_t profilingCompileThreshold;
    TR_JProfilingBlock(TR::OptimizationManager *manager)
       : TR::Optimization(manager)
       {}
