@@ -27,16 +27,6 @@
 <suite id="URLClassLoader Excluded Test Case List">
 	<platform id="none"/>
 	<platform id="all"/>
-	<exclude id="Sanity.verifySuccess" platform="SE100"><reason>JDK10 cmdLineTester_SCURLClassLoaderTests FAILED #1623</reason></exclude>
-	<exclude id="FindStore.FindExplicit" platform="SE100"><reason>JDK10 cmdLineTester_SCURLClassLoaderTests FAILED #1623</reason></exclude>
-	<exclude id="FindStore.FindRelative" platform="SE100"><reason>JDK10 cmdLineTester_SCURLClassLoaderTests FAILED #1623</reason></exclude>
-	<exclude id="FindStore.FindNetUse" platform="SE100"><reason>JDK10 cmdLineTester_SCURLClassLoaderTests FAILED #1623</reason></exclude>
-	<exclude id="FindStore.FindClassfile" platform="SE100"><reason>JDK10 cmdLineTester_SCURLClassLoaderTests FAILED #1623</reason></exclude>
-	<exclude id="FindStore.FindDiffcpClassfile" platform="SE100"><reason>JDK10 cmdLineTester_SCURLClassLoaderTests FAILED #1623</reason></exclude>
-	<exclude id="JarExtensionsTests.SingleJarInManifest.Verify1" platform="SE100"><reason>JDK10 cmdLineTester_SCURLClassLoaderTests FAILED #1623</reason></exclude>
-	<exclude id="JarExtensionsTests.MultipleJarsInManifests.Verify1" platform="SE100"><reason>JDK10 cmdLineTester_SCURLClassLoaderTests FAILED #1623</reason></exclude>
-	<exclude id="JarExtensionsTests.SingleJarInManifestWithIndex.Verify1" platform="SE100"><reason>JDK10 cmdLineTester_SCURLClassLoaderTests FAILED #1623</reason></exclude>
-	<exclude id="JarExtensionsTests.MultipleJarsInManifestsWithIndex.Verify1" platform="SE100"><reason>JDK10 cmdLineTester_SCURLClassLoaderTests FAILED #1623</reason></exclude>
 	<exclude id="FindStore.FindDiffcpExplicit" platform="all"><reason>noTimestampChecks does not work properly</reason></exclude>
 	<exclude id="FindStore.FindDiffcpRelative" platform="all"><reason>noTimestampChecks does not work properly</reason></exclude>
 	<exclude id="FindStore.FindDiffcpNetUse" platform="all"><reason>noTimestampChecks does not work properly</reason></exclude>
