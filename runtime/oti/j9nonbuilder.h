@@ -5488,7 +5488,11 @@ typedef struct J9JavaVM {
 	UDATA safePointResponseCount;
 	struct J9VMRuntimeStateListener vmRuntimeStateListener;
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+#if defined(LINUX)
 	J9PortVmemIdentifier exclusiveGuardPage;
+#elif defined(WIN32) /* LINUX */
+	void *flushFunction;
+#endif /* WIN32 */
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 } J9JavaVM;
 

@@ -22,7 +22,6 @@
 
 #if defined(WIN32)
 #include <windows.h>
-VOID WINAPI FlushProcessWriteBuffers(void);
 #elif defined(LINUX) /* WIN32 */
 #include <sys/mman.h>
 #endif /* LINUX */
@@ -39,7 +38,7 @@ void
 flushProcessWriteBuffers(J9JavaVM *vm)
 {
 #if defined(WIN32)
-	FlushProcessWriteBuffers();
+	((VOID (WINAPI*)(void))vm->flushFunction)();
 #elif defined(LINUX) /* WIN32 */
 	int mprc = mprotect(vm->exclusiveGuardPage.address, vm->exclusiveGuardPage.pageSize, PROT_READ | PROT_WRITE);
 	Assert_VM_true(0 == mprc);
@@ -54,9 +53,9 @@ flushProcessWriteBuffers(J9JavaVM *vm)
 UDATA
 initializeExclusiveAccess(J9JavaVM *vm)
 {
+	UDATA rc = 1;
 #if defined(LINUX)
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	UDATA rc = 1;
 	UDATA pageSize = j9vmem_supported_page_sizes()[0];
 	void *addr = j9vmem_reserve_memory(
 		NULL,
@@ -78,10 +77,19 @@ initializeExclusiveAccess(J9JavaVM *vm)
 	} else {
 		j9tty_printf(PORTLIB, "vmem bad\n");		
 	}
-	return rc;
-#else /* LINUX */
-	return 0;
+#elif defined(WIN32)
+	HMODULE h_kernel32 = GetModuleHandle("kernel32");
+	if (NULL != h_kernel32) {
+		void *func = (void*)GetProcAddress(h_kernel32, "FlushProcessWriteBuffers");
+		if (NULL != func) {
+			vm->flushFunction = func;
+			rc = 0;
+		}
+	}
+#else /* WIN32 */
+	rc = 0;
 #endif /* LINUX */
+	return rc;
 }
 
 void
@@ -95,7 +103,6 @@ shutDownExclusiveAccess(J9JavaVM *vm)
 	}
 #endif /* LINUX */
 }
-
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
 } /* extern "C" */
