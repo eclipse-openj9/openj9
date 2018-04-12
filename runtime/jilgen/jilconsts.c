@@ -622,6 +622,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveMethodType", offsetof(J9JITConfig, old_slow_jitResolveMethodType)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveMethodHandle", offsetof(J9JITConfig, old_slow_jitResolveMethodHandle)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveInvokeDynamic", offsetof(J9JITConfig, old_slow_jitResolveInvokeDynamic)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveConstantDynamic", offsetof(J9JITConfig, old_slow_jitResolveConstantDynamic)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitResolveHandleMethod", offsetof(J9JITConfig, old_slow_jitResolveHandleMethod)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitRetranslateCaller", offsetof(J9JITConfig, old_slow_jitRetranslateCaller)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitRetranslateCallerWithPreparation", offsetof(J9JITConfig, old_slow_jitRetranslateCallerWithPreparation)) |

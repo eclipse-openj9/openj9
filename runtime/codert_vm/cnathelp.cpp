@@ -1746,6 +1746,36 @@ done:
 }
 
 void* J9FASTCALL
+old_slow_jitResolveConstantDynamic(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
+	DECLARE_JIT_PARM(J9ConstantPool*, ramConstantPool, 1);
+	DECLARE_JIT_INT_PARM(cpIndex, 2);
+	DECLARE_JIT_PARM(void*, jitEIP, 3);
+	void *addr = NULL;
+	J9JavaVM *vm = currentThread->javaVM;
+retry:
+	J9RAMConstantDynamicRef *ramCPEntry = (J9RAMConstantDynamicRef*)ramConstantPool + cpIndex;
+	j9object_t *constantDynamicValue = &ramCPEntry->value;
+
+	/* Check if the value is resolved, Void.Class exception represents a valid null reference */
+	if ((NULL == *constantDynamicValue) && (ramCPEntry->exception != vm->voidReflectClass->classObject)) {
+		/* If entry resolved to an exception previously, same exception will be set by resolution code */
+		buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_DATA, parmCount, true, 0, jitEIP);
+		vm->internalVMFunctions->resolveConstantDynamic(currentThread, ramConstantPool, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+		addr = restoreJITResolveFrame(currentThread, jitEIP);
+		if (NULL != addr) {
+			goto done;
+		}
+		goto retry;
+	}
+	JIT_RETURN_UDATA(constantDynamicValue);
+done:
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
+void* J9FASTCALL
 old_slow_jitResolveHandleMethod(J9VMThread *currentThread)
 {
 	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
@@ -3018,6 +3048,7 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_slow_jitResolveMethodType = (void*)old_slow_jitResolveMethodType;
 	jitConfig->old_slow_jitResolveMethodHandle = (void*)old_slow_jitResolveMethodHandle;
 	jitConfig->old_slow_jitResolveInvokeDynamic = (void*)old_slow_jitResolveInvokeDynamic;
+	jitConfig->old_slow_jitResolveConstantDynamic = (void*)old_slow_jitResolveConstantDynamic;
 	jitConfig->old_slow_jitResolveHandleMethod = (void*)old_slow_jitResolveHandleMethod;
 	jitConfig->old_slow_jitRetranslateCaller = (void*)old_slow_jitRetranslateCaller;
 	jitConfig->old_slow_jitRetranslateCallerWithPreparation = (void*)old_slow_jitRetranslateCallerWithPreparation;
