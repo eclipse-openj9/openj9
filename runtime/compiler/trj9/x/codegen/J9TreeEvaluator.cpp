@@ -15779,6 +15779,16 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::java_lang_String_andOR:
          return TR::TreeEvaluator::andORStringEvaluator(node, cg);
 
+      case TR::java_lang_String_toUpperHWOptimized:
+      case TR::java_lang_String_toUpperHWOptimizedDecompressed:
+         return TR::TreeEvaluator::decompressedStringToUpperCaseEvalutor(node, cg);
+      case TR::java_lang_String_toUpperHWOptimizedCompressed:
+         return TR::TreeEvaluator::compressedStringToUpperCaseEvalutor(node, cg);
+      case TR::java_lang_String_toLowerHWOptimized:
+      case TR::java_lang_String_toLowerHWOptimizedDecompressed:
+         return TR::TreeEvaluator::decompressedStringToLowerCaseEvalutor(node, cg);
+      case TR::java_lang_String_toLowerHWOptimizedCompressed:
+         return TR::TreeEvaluator::compressedStringToUpperCaseEvalutor(node, cg);
       default:
          break;
       }
@@ -15959,6 +15969,393 @@ J9::X86::TreeEvaluator::compressStringEvaluator(
    return resultReg;
    }
 
+/*
+ * The CaseConversionManager is used to store info about the conversion. It defines the lower bound and upper bound value depending on 
+ * whether it's a toLower or toUpper case conversion. It also chooses byte or word data type depending on whether it's compressed string or not.
+ * The stringCaseConversionHelper queries the manager for those info when generating the actual instructions.
+ */
+class J9::X86::TreeEvaluator::CaseConversionManager {
+   public:
+   CaseConversionManager(bool isCompressedString, bool toLowerCase):_isCompressedString(isCompressedString), _toLowerCase(toLowerCase)
+      { 
+      if (isCompressedString)
+         {
+         static uint8_t UPPERCASE_A_ASCII_MINUS1_bytes[] =
+            {
+            'A'-1, 'A'-1, 'A'-1, 'A'-1,
+            'A'-1, 'A'-1, 'A'-1, 'A'-1,
+            'A'-1, 'A'-1, 'A'-1, 'A'-1,
+            'A'-1, 'A'-1, 'A'-1, 'A'-1
+            };
+
+         static uint8_t UPPERCASE_Z_ASCII_bytes[] =
+            {
+            'Z', 'Z', 'Z', 'Z',
+            'Z', 'Z', 'Z', 'Z',
+            'Z', 'Z', 'Z', 'Z',
+            'Z', 'Z', 'Z', 'Z'
+            };
+
+         static uint8_t LOWERCASE_A_ASCII_MINUS1_bytes[] =
+            {
+            'a'-1, 'a'-1, 'a'-1, 'a'-1,
+            'a'-1, 'a'-1, 'a'-1, 'a'-1,
+            'a'-1, 'a'-1, 'a'-1, 'a'-1,
+            'a'-1, 'a'-1, 'a'-1, 'a'-1
+            };
+
+         static uint8_t LOWERCASE_Z_ASCII_bytes[] =
+            {
+            'z', 'z', 'z', 'z',
+            'z', 'z', 'z', 'z',
+            'z', 'z', 'z', 'z',
+            'z', 'z', 'z', 'z',
+            };
+
+         static uint8_t CONVERSION_DIFF_bytes[] =
+            {
+            0x20, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x20, 0x20,
+            };
+
+         static uint16_t ASCII_UPPERBND_bytes[] =
+            {
+            0x7f, 0x7f, 0x7f, 0x7f,
+            0x7f, 0x7f, 0x7f, 0x7f,
+            0x7f, 0x7f, 0x7f, 0x7f,
+            0x7f, 0x7f, 0x7f, 0x7f,
+            };
+
+         if (toLowerCase)
+            {
+            _lowerBndMinus1 = UPPERCASE_A_ASCII_MINUS1_bytes;
+            _upperBnd = UPPERCASE_Z_ASCII_bytes;
+            }
+         else
+            {
+            _lowerBndMinus1 = LOWERCASE_A_ASCII_MINUS1_bytes;
+            _upperBnd = LOWERCASE_Z_ASCII_bytes;
+            }
+         _conversionDiff = CONVERSION_DIFF_bytes;
+         _asciiMax = ASCII_UPPERBND_bytes;
+         }
+      else
+         {
+         static uint16_t UPPERCASE_A_ASCII_MINUS1_words[] =
+            {
+            'A'-1, 'A'-1, 'A'-1, 'A'-1,
+            'A'-1, 'A'-1, 'A'-1, 'A'-1
+            };
+
+         static uint16_t LOWERCASE_A_ASCII_MINUS1_words[] =
+            {
+            'a'-1, 'a'-1, 'a'-1, 'a'-1,
+            'a'-1, 'a'-1, 'a'-1, 'a'-1
+            };
+
+         static uint16_t UPPERCASE_Z_ASCII_words[] =
+            {
+            'Z', 'Z', 'Z', 'Z',
+            'Z', 'Z', 'Z', 'Z'
+            };
+
+         static uint16_t LOWERCASE_Z_ASCII_words[] =
+            {
+            'z', 'z', 'z', 'z',
+            'z', 'z', 'z', 'z'
+            };
+
+         static uint16_t CONVERSION_DIFF_words[] =
+            {
+            0x20, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x20, 0x20
+            };
+         static uint16_t ASCII_UPPERBND_words[] =
+            {
+            0x7f, 0x7f, 0x7f, 0x7f,
+            0x7f, 0x7f, 0x7f, 0x7f
+            };
+
+         if (toLowerCase)
+            {
+            _lowerBndMinus1 = UPPERCASE_A_ASCII_MINUS1_words;
+            _upperBnd = UPPERCASE_Z_ASCII_words;
+            }
+         else
+            {
+            _lowerBndMinus1 = LOWERCASE_A_ASCII_MINUS1_words;
+            _upperBnd = LOWERCASE_Z_ASCII_words;
+            }
+         _conversionDiff = CONVERSION_DIFF_words;
+         _asciiMax = ASCII_UPPERBND_words;
+         }
+      };
+
+   inline bool isCompressedString(){return _isCompressedString;};
+   inline bool toLowerCase(){return _toLowerCase;};
+   inline void * getLowerBndMinus1(){ return _lowerBndMinus1; };
+   inline void * getUpperBnd(){ return _upperBnd; };
+   inline void * getConversionDiff(){ return _conversionDiff; };
+   inline void * getAsciiMax(){ return _asciiMax; };
+
+   private:
+   void * _lowerBndMinus1;
+   void * _upperBnd;
+   void * _asciiMax;
+   void * _conversionDiff;
+   bool _isCompressedString;
+   bool _toLowerCase;
+};
+
+TR::Register *
+J9::X86::TreeEvaluator::compressedStringToUpperCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   CaseConversionManager manager(true /* isCompressedString */, false /* toLowerCase */);
+   return TR::TreeEvaluator::stringCaseConversionHelper(node, cg, manager);
+   }
+
+
+TR::Register *
+J9::X86::TreeEvaluator::compressedStringToLowerCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   CaseConversionManager manager(true/* isCompressedString */, true /* toLowerCase */);
+   return TR::TreeEvaluator::stringCaseConversionHelper(node, cg, manager);
+   }
+
+TR::Register *
+J9::X86::TreeEvaluator::decompressedStringToUpperCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   CaseConversionManager manager(false /* isCompressedString */, false /* toLowerCase */);
+   return TR::TreeEvaluator::stringCaseConversionHelper(node, cg, manager);
+   }
+
+TR::Register *
+J9::X86::TreeEvaluator::decompressedStringToLowerCaseEvalutor(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   CaseConversionManager manager(false /* isCompressedString */, true /* toLowerCase */);
+   return TR::TreeEvaluator::stringCaseConversionHelper(node, cg, manager);
+   }
+
+static TR::Register* allocateRegAndAddCondition(TR::CodeGenerator *cg, TR::RegisterDependencyConditions * deps, TR_RegisterKinds rk=TR_GPR)
+   {
+   TR::Register* reg = cg->allocateRegister(rk);
+   deps->addPostCondition(reg, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(reg, TR::RealRegister::NoReg, cg);
+   return reg;
+   }
+
+
+/**
+ * \brief This evaluator is used to perform string toUpper and toLower conversion.
+ *
+ * This JIT HW optimized conversion helper is designed to convert strings that contains only ascii characters.
+ * If a string contains non ascii characters, HW optimized routine will return NULL and fall back to the software implementation, which is able to convert a broader range of characters.
+ *
+ * There are the following steps in the generated assembly code:
+ *   1. preparation (load value into register, calculate length etc)
+ *   2. vectorized case conversion loop
+ *   3. handle residue with non vectorized case conversion loop
+ *   4. handle invalid case
+ * 
+ * \param node
+ * \param cg
+ * \param manager Contains info about the conversion: whether it's toUpper or toLower conversion, the valid range of characters, etc
+ *
+ * This version does not support discontiguous arrays
+ */
+TR::Register *
+J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGenerator *cg, CaseConversionManager &manager)
+   {
+   #define iComment(str) if (debug) debug->addInstructionComment(cursor, (const_cast<char*>(str)));
+   TR_ASSERT(node->getNumChildren() == 3, "node has incorrect number of children");
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)14, (uint8_t)14, cg);
+   TR::Register *srcArray = cg->evaluate(node->getFirstChild());
+   deps->addPostCondition(srcArray, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(srcArray, TR::RealRegister::NoReg, cg);
+
+   TR::Register *dstArray = cg->evaluate(node->getSecondChild());
+   deps->addPostCondition(dstArray, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(dstArray, TR::RealRegister::NoReg, cg);
+
+   TR::Register *length = cg->intClobberEvaluate(node->getThirdChild());
+   deps->addPostCondition(length, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(length, TR::RealRegister::NoReg, cg);
+
+   TR::Register* counter = allocateRegAndAddCondition(cg, deps);
+   TR::Register* residueStartLength = allocateRegAndAddCondition(cg, deps);
+   TR::Register *singleChar = residueStartLength; // residueStartLength and singleChar do not overlap and can share the same register
+   TR::Register *result = allocateRegAndAddCondition(cg, deps);
+
+   TR::Register* xmmRegLowerBndMinus1 = allocateRegAndAddCondition(cg, deps, TR_FPR); // 'A-1' for toLowerCase, 'a-1' for toUpperCase
+   TR::Register* xmmRegUpperBnd = allocateRegAndAddCondition(cg, deps, TR_FPR);// 'Z-1' for toLowerCase, 'z-1' for toUpperCase
+   TR::Register* xmmRegConversionDiff = allocateRegAndAddCondition(cg, deps, TR_FPR);
+   TR::Register* xmmRegMinus1 = allocateRegAndAddCondition(cg, deps, TR_FPR);
+   TR::Register* xmmRegAsciiUpperBnd = allocateRegAndAddCondition(cg, deps, TR_FPR);
+   TR::Register* xmmRegArrayContentCopy0 = allocateRegAndAddCondition(cg, deps, TR_FPR);
+   TR::Register* xmmRegArrayContentCopy1 = allocateRegAndAddCondition(cg, deps, TR_FPR);
+   TR::Register* xmmRegArrayContentCopy2 = allocateRegAndAddCondition(cg, deps, TR_FPR);
+   TR_Debug *debug = cg->getDebug();
+   TR::Instruction * cursor = NULL;
+
+   uint32_t strideSize = 16; 
+
+   static uint16_t MINUS1[] =
+      {
+      0xffff, 0xffff, 0xffff, 0xffff,
+      0xffff, 0xffff, 0xffff, 0xffff,
+      };
+
+   TR::LabelSymbol *failLabel = generateLabelSymbol(cg);
+   // Under decompressed string case for 32bits platforms, bail out if string is larger than INT_MAX32/2 since # charater to # byte 
+   // conversion will cause overflow.
+   if (!TR::Compiler->target.is64Bit() && !manager.isCompressedString())
+      {
+      generateRegImmInstruction(CMPRegImm4(), node, length, (uint16_t) 0x8000, cg);
+      generateLabelInstruction(JGE4, node, failLabel, cg); 
+      }
+
+   // 1. preparation (load value into registers, calculate length etc)
+   auto lowerBndMinus1 = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, manager.getLowerBndMinus1()), cg);
+   cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegLowerBndMinus1, lowerBndMinus1, cg); iComment("lower bound ascii value minus one");
+ 
+   auto upperBnd = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, manager.getUpperBnd()), cg);
+   cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegUpperBnd, upperBnd, cg); iComment("upper bound ascii value");
+
+   auto conversionDiff = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, manager.getConversionDiff()), cg);
+   cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegConversionDiff, conversionDiff, cg); iComment("case conversion diff value");
+
+   auto minus1 = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, MINUS1), cg);
+   cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegMinus1, minus1, cg); iComment("-1");
+
+   auto ascciUpperBnd = generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, manager.getAsciiMax()), cg);
+   cursor = generateRegMemInstruction(MOVDQURegMem, node, xmmRegAsciiUpperBnd, ascciUpperBnd, cg); iComment("maximum ascii value ");
+
+   generateRegRegInstruction(MOVRegReg(), node, result, dstArray, cg);
+
+   // # charater to # byte conversion
+   if (!manager.isCompressedString()) // non compressedString using char[] which is 2 bytes per charactor
+      cursor = generateRegImmInstruction(SHLRegImm1(), node, length, 1, cg); iComment("# character to # byte conversion");
+
+   // initialize the loop counter 
+   cursor = generateRegRegInstruction(XORRegReg(), node, counter, counter, cg); iComment("initialize loop counter");
+
+   //calculate the residueStartLength. Later instructions compare the counter with this length and decide when to jump to the residue handling sequence 
+   generateRegRegInstruction(MOVRegReg(), node, residueStartLength, length, cg);
+   generateRegImmInstruction(SUBRegImms(), node, residueStartLength, strideSize-1, cg);
+
+   // 2. vectorized case conversion loop
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *residueStartLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *storeToArrayLabel = generateLabelSymbol(cg);
+
+   startLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+   generateLabelInstruction(LABEL, node, startLabel, cg);
+
+   TR::LabelSymbol *caseConversionMainLoopLabel = generateLabelSymbol(cg);
+   generateLabelInstruction(LABEL, node, caseConversionMainLoopLabel, cg);
+   generateRegRegInstruction(CMPRegReg(), node, counter, residueStartLength, cg);
+   generateLabelInstruction(JGE4, node, residueStartLabel, cg);
+
+   auto srcArrayMemRef = generateX86MemoryReference(srcArray, counter, 0, 0, cg);
+   generateRegMemInstruction(MOVDQURegMem, node, xmmRegArrayContentCopy0, srcArrayMemRef, cg);
+
+   //detect invalid charactors
+   generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
+   generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy0, cg);
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+                             xmmRegArrayContentCopy1, xmmRegMinus1, cg); iComment(" > -1");
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+                             xmmRegArrayContentCopy2, xmmRegAsciiUpperBnd, cg); iComment(" > maximum ascii value");
+   cursor = generateRegRegInstruction(PANDNRegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg); iComment(" >-1 && !(> maximum ascii value) valid when all bits are set");
+   cursor = generateRegRegInstruction(PXORRegReg, node, xmmRegArrayContentCopy2, xmmRegMinus1, cg); iComment("reverse all bits");
+   generateRegRegInstruction(PTESTRegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy2, cg);
+   generateLabelInstruction(JNE4, node, failLabel, cg); iComment("jump out if invalid chars are detected");
+
+   //calculate case conversion with vector registers
+   generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);
+   generateRegRegInstruction(MOVDQURegReg, node, xmmRegArrayContentCopy2, xmmRegArrayContentCopy0, cg);
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+                             xmmRegArrayContentCopy0, xmmRegLowerBndMinus1, cg);  iComment(manager.toLowerCase() ? " > 'A-1'" : "> 'a-1'");
+   cursor = generateRegRegInstruction(manager.isCompressedString()? PCMPGTBRegReg: PCMPGTWRegReg, node, 
+                             xmmRegArrayContentCopy1, xmmRegUpperBnd, cg);  iComment(manager.toLowerCase()? " > 'Z'" : " > 'z'");
+   cursor = generateRegRegInstruction(PANDNRegReg, node, xmmRegArrayContentCopy1, xmmRegArrayContentCopy0, cg);  iComment(const_cast<char*> (manager.toLowerCase()? " >='A' && !( >'Z')": " >='a' && !( >'z')"));
+   generateRegRegInstruction(PANDRegReg, node, xmmRegArrayContentCopy1, xmmRegConversionDiff, cg);
+
+   if (manager.toLowerCase())
+      generateRegRegInstruction(manager.isCompressedString()? PADDBRegReg: PADDWRegReg, node, 
+                                xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg);
+   else 
+      generateRegRegInstruction(manager.isCompressedString()? PSUBBRegReg: PSUBWRegReg, node, 
+                                xmmRegArrayContentCopy2, xmmRegArrayContentCopy1, cg);
+
+   auto dstArrayMemRef = generateX86MemoryReference(dstArray, counter, 0, 0, cg);
+   generateMemRegInstruction(MOVDQUMemReg, node, dstArrayMemRef, xmmRegArrayContentCopy2, cg);
+   generateRegImmInstruction(ADDRegImms(), node, counter, strideSize, cg);
+   generateLabelInstruction(JMP4, node, caseConversionMainLoopLabel, cg);
+   
+   // 3. handle residue with non vectorized case conversion loop
+   generateLabelInstruction(LABEL, node, residueStartLabel, cg);
+   generateRegRegInstruction(CMPRegReg(), node, counter, length, cg);
+   generateLabelInstruction(JGE4, node, endLabel, cg);
+   srcArrayMemRef = generateX86MemoryReference(srcArray, counter, 0, 0, cg);
+   generateRegMemInstruction( manager.isCompressedString()? MOVZXReg4Mem1: MOVZXReg4Mem2, node, singleChar, srcArrayMemRef, cg);
+
+   // use unsigned compare to detect invalid range
+   generateRegImmInstruction(CMP4RegImms, node, singleChar, 0x7F, cg);
+   generateLabelInstruction(JA4, node, failLabel, cg);
+
+   generateRegImmInstruction(CMP4RegImms, node, singleChar, manager.toLowerCase()? 'A': 'a', cg);
+   generateLabelInstruction(JB4, node, storeToArrayLabel, cg);
+
+   generateRegImmInstruction(CMP4RegImms, node, singleChar, manager.toLowerCase()? 'Z': 'z', cg);
+   generateLabelInstruction(JA4, node, storeToArrayLabel, cg);
+
+   if (manager.toLowerCase())
+      generateRegMemInstruction(LEARegMem(), 
+                                node, 
+                                singleChar,
+                                generateX86MemoryReference(singleChar, 0x20, cg),
+                                cg);
+
+   else generateRegImmInstruction(SUB4RegImms, node, singleChar, 0x20, cg);
+
+   generateLabelInstruction(LABEL, node, storeToArrayLabel, cg);
+
+   dstArrayMemRef = generateX86MemoryReference(dstArray, counter, 0, 0, cg);
+   generateMemRegInstruction(manager.isCompressedString()? S1MemReg: S2MemReg, node, dstArrayMemRef, singleChar, cg);
+   generateRegImmInstruction(ADDRegImms(), node, counter, manager.isCompressedString()? 1: 2, cg);
+   generateLabelInstruction(JMP4, node, residueStartLabel, cg);
+
+   // 4. handle invalid case
+   generateLabelInstruction(LABEL, node, failLabel, cg);
+   generateRegRegInstruction(XORRegReg(), node, result, result, cg);
+
+   generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+   node->setRegister(result);
+
+   cg->stopUsingRegister(length);
+   cg->stopUsingRegister(counter);
+   cg->stopUsingRegister(residueStartLength);
+
+   cg->stopUsingRegister(xmmRegLowerBndMinus1);
+   cg->stopUsingRegister(xmmRegUpperBnd);
+   cg->stopUsingRegister(xmmRegConversionDiff);
+   cg->stopUsingRegister(xmmRegMinus1);
+   cg->stopUsingRegister(xmmRegAsciiUpperBnd);
+   cg->stopUsingRegister(xmmRegArrayContentCopy0);
+   cg->stopUsingRegister(xmmRegArrayContentCopy1);
+   cg->stopUsingRegister(xmmRegArrayContentCopy2);
+
+
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   cg->decReferenceCount(node->getThirdChild());
+   return result;
+   }
 
 TR::Register *
 J9::X86::TreeEvaluator::compressStringNoCheckEvaluator(
