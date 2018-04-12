@@ -41,7 +41,7 @@
 		</subsets>
 	</test>
 		<test>
-		<testCaseName>cmdLineTester_ProxyFieldAccess_SE90</testCaseName>
+		<testCaseName>cmdLineTester_ProxyFieldAccess</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>

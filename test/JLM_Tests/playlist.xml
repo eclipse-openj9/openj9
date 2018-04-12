@@ -59,7 +59,7 @@
 	</test>
 
 	<test>
-		<testCaseName>JLM_Tests_interface_SE90</testCaseName>
+		<testCaseName>JLM_Tests_interface</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:+HeapManagementMXBeanCompatibility</variation>
@@ -122,7 +122,7 @@
 	</test>
 
 	<test>
-		<testCaseName>JLM_Tests_class_SE90</testCaseName>
+		<testCaseName>JLM_Tests_class</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:+HeapManagementMXBeanCompatibility</variation>
@@ -177,7 +177,7 @@
 	</test>
 
 	<test>
-		<testCaseName>JLM_Tests_IBMinternal_SE90</testCaseName>
+		<testCaseName>JLM_Tests_IBMinternal</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:+HeapManagementMXBeanCompatibility</variation>
@@ -1038,7 +1038,7 @@
 	</test>
 
 	<test>
-		<testCaseName>testJCMMXBeanLocal_SE90</testCaseName>
+		<testCaseName>testJCMMXBeanLocal</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
 			<variation>Mode101</variation>
@@ -1093,7 +1093,7 @@
 	</test>
 
 	<test>
-		<testCaseName>testJCMMXBeanRemote_SE90</testCaseName>
+		<testCaseName>testJCMMXBeanRemote</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
 			<variation>Mode101</variation>

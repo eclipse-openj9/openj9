@@ -51,7 +51,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_SCURLClassLoaderTests_SE90</testCaseName>
+		<testCaseName>cmdLineTester_SCURLClassLoaderTests</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
@@ -107,7 +107,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_SCURLClassLoaderNPTests_SE90</testCaseName>
+		<testCaseName>cmdLineTester_SCURLClassLoaderNPTests</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>

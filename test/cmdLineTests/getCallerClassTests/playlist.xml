@@ -42,7 +42,7 @@
 		</subsets>
 	</test>
 		<test>
-		<testCaseName>cmdLineTester_getCallerClassTests_SE90</testCaseName>
+		<testCaseName>cmdLineTester_getCallerClassTests</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>

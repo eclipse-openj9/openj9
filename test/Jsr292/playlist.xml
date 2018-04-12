@@ -49,7 +49,7 @@
 	</test>
 
 	<test>
-		<testCaseName>jsr292Test_SE90</testCaseName>
+		<testCaseName>jsr292Test</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode195</variation>
@@ -102,7 +102,7 @@
 	</test>
 
 	<test>
-		<testCaseName>jsr292Test_JitCount0_SE90</testCaseName>
+		<testCaseName>jsr292Test_JitCount0</testCaseName>
 		<variations>
 			<variation>-Xjit:count=0</variation>
 		</variations>
@@ -155,7 +155,7 @@
 	</test>
 
 	<test>
-		<testCaseName>jsr292BootstrapTest_SE90</testCaseName>
+		<testCaseName>jsr292BootstrapTest</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode195</variation>

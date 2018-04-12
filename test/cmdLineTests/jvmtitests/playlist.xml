@@ -98,7 +98,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_jvmtitests_hcr_SE90</testCaseName>
+		<testCaseName>cmdLineTester_jvmtitests_hcr</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
 			<variation>Mode101</variation>
@@ -249,7 +249,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_jvmtitests_hcr_nongold_SE90</testCaseName>
+		<testCaseName>cmdLineTester_jvmtitests_hcr_nongold</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
 			<variation>Mode101</variation>
@@ -318,7 +318,7 @@
 		</subsets>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_jvmtitests_hcr_OSRG_nongold_SE90</testCaseName>
+		<testCaseName>cmdLineTester_jvmtitests_hcr_OSRG_nongold</testCaseName>
 		<variations>
 			<variation>Mode107-OSRG</variation>
 			<variation>Mode110-OSRG</variation>
