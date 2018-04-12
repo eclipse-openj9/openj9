@@ -44,8 +44,8 @@ import java.security.PrivilegedAction;
 import com.ibm.jvm.Dump;
 import com.ibm.jvm.InvalidDumpOptionException;
 import com.ibm.jvm.DumpConfigurationUnavailableException;
-import com.ibm.java.lang.management.internal.ManagementPermissionHelper;
 /*[ENDIF]*/
+import com.ibm.java.lang.management.internal.ManagementPermissionHelper;
 
 import openj9.lang.management.OpenJ9DiagnosticsMXBean;
 import openj9.lang.management.InvalidOptionException;
@@ -72,7 +72,6 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	private static final Method dump_heapDumpToFile;
 	private static final Method dump_systemDumpToFile;
 	private static final Method dump_snapDumpToFile;
-	private static final Field managementPermission;
 	private static final Class<?> invalidDumpOptionExClass;
 	private static final Class<?> dumpConfigurationUnavailableExClass;
 /*[ENDIF]*/
@@ -82,26 +81,20 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 		try {
 /*[IF Sidecar19-SE-OpenJ9]*/
 			Module openj9_jvm = ModuleLayer.boot().findModule("openj9.jvm").get(); //$NON-NLS-1$
-			Module java_management = ModuleLayer.boot().findModule("java.management").get(); //$NON-NLS-1$
 /*[ELSE]
 			Module openj9_jvm = Layer.boot().findModule("openj9.jvm").get(); //$NON-NLS-1$
-			Module java_management = Layer.boot().findModule("java.management").get(); //$NON-NLS-1$
 /*[ENDIF]*/
 			Class<?>[] classes = AccessController.doPrivileged((PrivilegedAction<Class<?>[]>)
 				() -> new Class[] {
 					Class.forName(openj9_jvm, "com.ibm.jvm.Dump"), //$NON-NLS-1$
 					Class.forName(openj9_jvm, "com.ibm.jvm.InvalidDumpOptionException"), //$NON-NLS-1$
 					Class.forName(openj9_jvm, "com.ibm.jvm.DumpConfigurationUnavailableException"), //$NON-NLS-1$
-					Class.forName(java_management, "com.ibm.java.lang.management.internal.ManagementPermissionHelper") //$NON-NLS-1$
 				});
 
 
 			Class<?> dumpClass = classes[0];
 			invalidDumpOptionExClass = classes[1];
 			dumpConfigurationUnavailableExClass = classes[2];
-			Class<?> managementPermissionHelperClass = classes[3];
-
-			managementPermission= managementPermissionHelperClass.getField("MPCONTROL"); //$NON-NLS-1$
 
 			dump_setDumpOptions = dumpClass.getMethod("setDumpOptions", String.class); //$NON-NLS-1$
 			dump_resetDumpOptions = dumpClass.getMethod("resetDumpOptions"); //$NON-NLS-1$
@@ -323,17 +316,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 		/* Check the caller has Management Permission. */
 		SecurityManager manager = System.getSecurityManager();
 		if( manager != null ) {
-/*[IF Sidecar19-SE]*/
-			Object controlPermission = null;
-			try {
-				controlPermission = managementPermission.get(null);
-			} catch (Exception e) {
-				throw handleError(e);
-			}
-			manager.checkPermission((java.security.Permission)controlPermission);
-/*[ELSE]
 			manager.checkPermission(ManagementPermissionHelper.MPCONTROL);
-/*[ENDIF]*/
 		}
 	}
 
