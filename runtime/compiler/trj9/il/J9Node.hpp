@@ -196,12 +196,6 @@ public:
    void    setSourcePrecision(int32_t prec);
    int32_t getSourcePrecision();
 
-   // Dividend/Divisor Tracking on pdremSelect nodes
-   void    setSelectDivisorPrecision(int32_t p);
-   int32_t getSelectDivisorPrecision();
-   void    setSelectDividendPrecision(int32_t p);
-   int32_t getSelectDividendPrecision();
-
    int32_t getDecimalAdjustOrFractionOrDivisor();
    int32_t getDecimalRoundOrDividend();
 
@@ -231,7 +225,6 @@ public:
    bool hasAssumedPreferredSign();
    void setHasAssumedPreferredSign(bool v);
    bool hasKnownOrAssumedPreferredSign();
-   void setHasKnownAndAssumedPreferredSign(bool v);
 
    bool              hasKnownSignCode();
    TR_RawBCDSignCode getKnownSignCode();

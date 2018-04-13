@@ -458,7 +458,6 @@
    pdSetSignSimplifier,         // TR::pdSetSign
 
    dftSimplifier,               // TR::pddivrem
-   dftSimplifier,               // TR::pdremSelect
 
    pdshlSimplifier,             // TR::pdModifyPrecision
 

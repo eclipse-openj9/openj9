@@ -6193,22 +6193,6 @@
    },
 
    {
-   /* .opcode               = */ TR::pdremSelect,
-   /* .name                 = */ "pdremSelect",
-   /* .properties1          = */ 0,
-   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE,
-   /* .properties3          = */ 0,
-   /* .properties4          = */ ILProp4::BinaryCodedDecimalOp | ILProp4::PackedArithmeticSelect | ILProp4::CanHaveStorageReferenceHint,
-   /* .dataType             = */ TR::PackedDecimal,
-   /* .typeProperties       = */ ILTypeProp::PackedDecimal,
-   /* .childProperties      = */ ONE_CHILD(ILChildProp::UnspecifiedChildType),
-   /* .swapChildrenOpCode   = */ TR::BadILOp,
-   /* .reverseBranchOpCode  = */ TR::BadILOp,
-   /* .booleanCompareOpCode = */ TR::BadILOp,
-   /* .ifCompareOpCode      = */ TR::BadILOp,
-   },
-
-   {
    /* .opcode               = */ TR::pdModifyPrecision,
    /* .name                 = */ "pdModifyPrecision",
    /* .properties1          = */ 0,

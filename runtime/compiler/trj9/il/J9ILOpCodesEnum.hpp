@@ -460,7 +460,6 @@
    pdSetSign,      // packed decimal forced sign code setting
 
    pddivrem,            // packed decimal fused divide and remainder
-   pdremSelect,         // packed decimal select remainder from pddivrem
 
    pdModifyPrecision,      // packed decimal modify precision
 

@@ -449,7 +449,6 @@
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::pdclearSetSign
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::pdSetSign
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::pddivrem
-   TR::TreeEvaluator::unImpOpEvaluator,          // TR::pdremSelect
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::pdModifyPrecision
    TR::TreeEvaluator::badILOpEvaluator,          // TR::countDigits
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::pd2df

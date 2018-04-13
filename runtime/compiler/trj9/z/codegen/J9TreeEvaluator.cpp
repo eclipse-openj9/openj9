@@ -19484,7 +19484,7 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
       if (node->getOpCode().isBasicOrSpecialPackedArithmetic())
          {
          // The special case of mul/add/sub/div = op1*op1 does not need a clobber evaluate as there are no uses beyond the current node's operation
-         if (node->getNumChildren() > 1 &&   // might be a pdremSelect node (only one child)
+         if (node->getNumChildren() > 1 &&
              node->getFirstChild() == node->getSecondChild() &&
              node->getFirstChild()->getReferenceCount() == 2 &&
              firstStorageReference->getOwningRegisterCount() == 1)
@@ -21854,60 +21854,6 @@ J9::Z::TreeEvaluator::pdmulEvaluatorHelper(TR::Node * node, TR::CodeGenerator * 
       }
 
    cg->decReferenceCount(secondChild);
-   return targetReg;
-   }
-
-TR::Register *
-J9::Z::TreeEvaluator::pdremSelectEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   cg->traceBCDEntry("pdremSelect",node);
-   cg->generateDebugCounter("PD-Op/pdremSel", 1, TR::DebugCounter::Cheap);
-
-   TR::Node *child = node->getFirstChild();
-   TR::Compilation *comp = cg->comp();
-   TR_ASSERT(child->getOpCodeValue() == TR::pddivrem ||
-             (child->getOpCode().isLoadVar() && child->getDataType() == TR::PackedDecimal),
-             "pdremSelect child should be a pddivrem or a pdload and not op %d\n",child->getOpCodeValue());
-
-   int32_t computedRemainderPrecision = std::min<int32_t>(node->getSelectDivisorPrecision(), node->getDecimalPrecision());
-
-   if (cg->traceBCDCodeGen())
-      {
-      traceMsg(comp,"\tsetting targetRegPrec to computedRemainderPrecision = min(node->getSelectDivisorPrecision(), node->getDecimalPrecision()) = min(%d,%d) = %d\n",
-         node->getSelectDivisorPrecision(),node->getDecimalPrecision(),computedRemainderPrecision);
-      }
-
-   TR_PseudoRegister *targetReg = NULL;
-   if (!node->canSkipPadByteClearing() &&
-       ((computedRemainderPrecision&0x1) == 0))
-      {
-      TR::Node *src = node->getFirstChild();
-      TR_PseudoRegister *srcReg = cg->evaluateBCDNode(src);
-      TR::MemoryReference *sourceMR = generateS390RightAlignedMemoryReference(src, srcReg->getStorageReference(), cg);
-      targetReg = evaluateBCDValueModifyingOperand(node, false /* initTarget */, sourceMR, cg);
-      targetReg->setLeftAlignedZeroDigits(0);
-      targetReg->setDecimalPrecision(computedRemainderPrecision);
-      TR::MemoryReference *destMR = generateS390RightAlignedMemoryReference(node, targetReg->getStorageReference(), cg);
-      if (!targetReg->isInitialized())
-         {
-         if (cg->traceBCDCodeGen())
-            traceMsg(comp,"\tisInit=false case: gen MVC of size %d to init remainder before top nibble clearing\n",targetReg->getSize());
-         int32_t mvcSize = targetReg->getSize();
-         generateSS1Instruction(cg, TR::InstOpCode::MVC, node,
-                                mvcSize-1,
-                                generateS390RightAlignedMemoryReference(*destMR, node, 0, cg),
-                                generateS390RightAlignedMemoryReference(*sourceMR, node, 0, cg));
-         }
-      cg->genZeroLeftMostPackedDigits(node, targetReg, targetReg->getSize(), 1, generateS390RightAlignedMemoryReference(*destMR, node, 0, cg));
-      }
-   else
-      {
-      targetReg = evaluateBCDSignModifyingOperand(node, true /*isEffectiveNop*/, false /*isNondestructiveNop*/, false /* !initTarget*/, NULL, cg);
-      targetReg->setLeftAlignedZeroDigits(0);
-      targetReg->setDecimalPrecision(computedRemainderPrecision);
-      }
-   cg->decReferenceCount(child);
-   cg->traceBCDExit("pdremSelect",node);
    return targetReg;
    }
 
