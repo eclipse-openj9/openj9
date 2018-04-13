@@ -335,13 +335,7 @@ public:
 	{
 		currentThread->inNative = FALSE;
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-#if defined(LINUX)
-#if !defined(TYPESTUBS_H)
-		asm volatile ("" : : : "memory");
-#endif /* !TYPESTUBS_H */
-#else /* LINUX */
-#error compiler barrier unimplemented
-#endif /* LINUX */
+		VM_AtomicSupport::compilerReorderingBarrier();
 #else /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 		VM_AtomicSupport::readWriteBarrier(); // necessary?
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
@@ -354,14 +348,9 @@ public:
 	inlineExitVMToJNI(J9VMThread* const currentThread)
 	{
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
+		VM_AtomicSupport::compilerReorderingBarrier();
 		currentThread->inNative = TRUE;
-#if defined(LINUX)
-#if !defined(TYPESTUBS_H)
-		asm volatile ("" : : : "memory");
-#endif /* !TYPESTUBS_H */
-#else /* LINUX */
-#error compiler barrier unimplemented
-#endif /* LINUX */
+		VM_AtomicSupport::compilerReorderingBarrier();
 #else /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 		VM_AtomicSupport::writeBarrier();
 		currentThread->inNative = TRUE;
