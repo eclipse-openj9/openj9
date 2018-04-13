@@ -348,11 +348,11 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
                                                                       segmentType,
                                                                       &vmemParams);
 
-   uintptr_t someJitLibraryAddress = getSomeJitLibraryAddress();
+   uintptr_t someJitLibraryAddress = self()->getSomeJitLibraryAddress();
    // isInRange() checks whether the allocated codeCacheSegment baseAddress is in range of JitLibrary to avoid trampoline
    if (codeCacheSegment &&
        (vmemParams.options & J9PORT_VMEM_ADDRESS_HINT) &&
-       !isInRange((uintptr_t)(codeCacheSegment->baseAddress), someJitLibraryAddress, MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE))
+       !(self()->isInRange((uintptr_t)(codeCacheSegment->baseAddress), someJitLibraryAddress, MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE)))
       {
       // allocated code cache is not in range to avoid trampoline 
       // try with full address range that avoids trampoline
@@ -426,7 +426,7 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
       if (config.verboseCodeCache())
          {
          char * verboseLogString = "The code cache repository was allocated between addresses %p and %p";
-         if (preferredStartAddress && isInRange((uintptr_t)(codeCacheSegment->baseAddress), someJitLibraryAddress, MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE))
+         if (preferredStartAddress && self()->isInRange((uintptr_t)(codeCacheSegment->baseAddress), someJitLibraryAddress, MAX_DISTANCE_NEAR_JITLIBRARY_TO_AVOID_TRAMPOLINE))
             {
             verboseLogString = "The code cache repository was allocated between addresses %p and %p to be near the VM/JIT modules to avoid trampolines";
             }
@@ -522,7 +522,7 @@ J9::CodeCacheManager::chooseCacheStartAddress(size_t repositorySize)
          alignment = largeCodePageSize;
 
       size_t safeDistance = repositorySize + SAFE_DISTANCE_REPOSITORY_JITLIBRARY;
-      uintptr_t someFunctionPointer = getSomeJitLibraryAddress();
+      uintptr_t someFunctionPointer = self()->getSomeJitLibraryAddress();
 
       mcc_printf("addCodeCache() function address is %p\n", someFunctionPointer);
 
