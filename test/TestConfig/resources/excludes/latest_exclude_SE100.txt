@@ -27,3 +27,10 @@ org.openj9.test.java.lang.Test_Class:test_getModifiers_classTypes														1
 org.openj9.test.java.lang.Test_Class:test_hideUnsafe																	1583 generic-all
 org.openj9.test.java.lang.management.TestRuntimeMXBean:testGetMBeanInfo													1626 generic-all
 org.openj9.test.java.lang.management.TestThreadMXBean:testGetMBeanInfo													1626 generic-all
+org.openj9.test.attachAPI.TestAttachAPI:test_agntld01																	238 generic-all
+org.openj9.test.attachAPI.TestAttachAPI:test_agntld02																	238 generic-all
+org.openj9.test.attachAPI.TestAttachAPI:test_agntld03																	238 generic-all
+org.openj9.test.attachAPI.TestSunAttachClasses:testAgentLoading															238 generic-all
+org.openj9.test.vmArguments.VmArgumentTests:testCrNocr																	244 generic-all
+org.openj9.test.vmArguments.VmArgumentTests:testExecutableJarArguments													1659 generic-all
+org.openj9.test.vmArguments.VmArgumentTests:testJarArguments															1659 generic-all
