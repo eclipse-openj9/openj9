@@ -81,6 +81,30 @@
 	<exclude id="Test 17: JAZZ 31726 test 7 ensure -Xzero -Xzero:describe shows sharebootzip" platform="SE[^8]\d+">
 		<reason>Java 9 removed option -Xzero</reason>
 	</exclude>
+	<exclude id="Test 86: utilities test: iterate and destroy cache" platform="SE100">
+		<reason>SharedClassCacheInfo is missing constants for Java 10 &amp; 11 #1288</reason>
+	</exclude>
+	<exclude id="Test 87: utilities test: validate that the cache is destroyed" platform="SE100">
+		<reason>SharedClassCacheInfo is missing constants for Java 10 &amp; 11 #1288</reason>
+	</exclude>
+	<exclude id="Test 91: utilities test: iterate and destroy cache with multiple -Xshareclasses option" platform="SE100">
+		<reason>SharedClassCacheInfo is missing constants for Java 10 &amp; 11 #1288</reason>
+	</exclude>
+	<exclude id="Test 92: utilities test: validate that cache is destroyed" platform="SE100">
+		<reason>SharedClassCacheInfo is missing constants for Java 10 &amp; 11 #1288</reason>
+	</exclude>
+	<exclude id="Test 116: utilities test: iterate and destroy cache when running with different cacheDir option" platform="SE100">
+		<reason>SharedClassCacheInfo is missing constants for Java 10 &amp; 11 #1288</reason>
+	</exclude>
+	<exclude id="Test 117: utilities test: validate that the cache is destroyed" platform="SE100">
+		<reason>SharedClassCacheInfo is missing constants for Java 10 &amp; 11 #1288</reason>
+	</exclude>
+	<exclude id="Test 118: utilities test: validate that previous tests created a cache" platform="SE100">
+		<reason>SharedClassCacheInfo is missing constants for Java 10 &amp; 11 #1288</reason>
+	</exclude>
+	<exclude id="Test 119: utilities test: delete the cache created in previous test" platform="SE100">
+		<reason>SharedClassCacheInfo is missing constants for Java 10 &amp; 11 #1288</reason>
+	</exclude>
 	<exclude id="Test 133: Test -Xshareclasses:printallstats=zipcache" platform="SE[^8]\d+" shouldFix="yes">
 		<reason>JCL team has not yet added JVM_ZipHook() in Java 9</reason>
 	</exclude>
