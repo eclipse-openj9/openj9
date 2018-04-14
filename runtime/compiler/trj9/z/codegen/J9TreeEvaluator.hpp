@@ -154,7 +154,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    static TR::Register *pdremSelectEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pdnegEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *pddivSelectEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static void clearAndSetSign(TR::Node *node,
                                TR_PseudoRegister *targetReg,
