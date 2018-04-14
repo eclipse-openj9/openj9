@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2454,36 +2454,6 @@ TR::Node *pddivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
    if (newNode != NULL)
       return newNode;
 
-   return node;
-   }
-
-TR::Node *pddivSelectSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
-   {
-   simplifyChildren(node, block, s);
-   TR::Node *firstChild = node->getFirstChild();
-#ifdef TR_TARGET_S390
-   // a pddivSelect with a single use pddivrem child is equivalent to a pddiv
-   if (firstChild->getOpCodeValue() == TR::pddivrem &&
-       firstChild->getReferenceCount() == 1 &&
-       NUM_DEFAULT_CHILDREN >= 2 &&
-       firstChild->getDecimalPrecision() >= s->cg()->getPDDivEncodedPrecision(firstChild) &&   // make sure pddivrem doesn't truncate
-       performTransformation(s->comp(),"%sModify pddivSelect [" POINTER_PRINTF_FORMAT "] with child %s [" POINTER_PRINTF_FORMAT "] to ",s->optDetailString(),node,firstChild->getOpCode().getName(),firstChild))
-      {
-      TR::Node *dividend = firstChild->getFirstChild();
-      TR::Node *divisor = firstChild->getSecondChild();
-      dividend->incReferenceCount();  // retaining the dividend
-      divisor->incReferenceCount(); // retaining the divisor
-      node->setSelectDividendPrecision(0);
-      node->setSelectDivisorPrecision(0);
-      s->prepareToReplaceNode(node, TR::pddiv);
-      node->setNumChildren(2);
-      node->setChild(0, dividend);
-      node->setChild(1, divisor);
-      dumpOptDetails(s->comp(),"%s [" POINTER_PRINTF_FORMAT "] : child1 %s [" POINTER_PRINTF_FORMAT "], child2 %s [" POINTER_PRINTF_FORMAT "]\n",
-         node->getOpCode().getName(),node,dividend->getOpCode().getName(),dividend,divisor->getOpCode().getName(),divisor);
-      return node;
-      }
-#endif
    return node;
    }
 

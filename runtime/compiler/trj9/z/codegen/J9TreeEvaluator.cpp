@@ -19484,7 +19484,7 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
       if (node->getOpCode().isBasicOrSpecialPackedArithmetic())
          {
          // The special case of mul/add/sub/div = op1*op1 does not need a clobber evaluate as there are no uses beyond the current node's operation
-         if (node->getNumChildren() > 1 &&   // might be a pddivSelect or pdremSelect node (only one child)
+         if (node->getNumChildren() > 1 &&   // might be a pdremSelect node (only one child)
              node->getFirstChild() == node->getSecondChild() &&
              node->getFirstChild()->getReferenceCount() == 2 &&
              firstStorageReference->getOwningRegisterCount() == 1)
@@ -21858,91 +21858,6 @@ J9::Z::TreeEvaluator::pdmulEvaluatorHelper(TR::Node * node, TR::CodeGenerator * 
    }
 
 TR::Register *
-J9::Z::TreeEvaluator::pddivSelectEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   cg->traceBCDEntry("pddivSelect",node);
-   cg->generateDebugCounter("PD-Op/pddivSel", 1, TR::DebugCounter::Cheap);
-
-   TR::Compilation *comp = cg->comp();
-   TR::Node *child = node->getFirstChild();
-   TR_ASSERT(child->getOpCodeValue() == TR::pddivrem || (child->getOpCode().isLoadVar() && child->getDataType() == TR::PackedDecimal),
-      "pddivSelect child should be a pddivrem or a pdload and not op %d\n",child->getOpCodeValue());
-
-   int32_t divisorPrecision = node->getSelectDivisorPrecision();
-   int32_t computedDivisorPrecision = divisorPrecision;
-   int32_t computedDivisorSize = TR::DataType::packedDecimalPrecisionToByteLength(divisorPrecision);
-   int32_t deadBytes = computedDivisorSize;
-
-   int32_t dividendPrecision = node->getSelectDividendPrecision();
-   // the dividend precision used in the DP instruction must be large enough to contain the operands,two sign codes and a possible pad digit
-   int32_t computedDividendPrecision = cg->getPDDivEncodedPrecisionCommon(node, dividendPrecision, divisorPrecision, (divisorPrecision&0x1)==0);
-   int32_t computedDividendSize = TR::DataType::packedDecimalPrecisionToByteLength(computedDividendPrecision);
-
-   int32_t computedQuotientPrecision = TR::DataType::byteLengthToPackedDecimalPrecisionCeiling(computedDividendSize - computedDivisorSize);
-
-   if (cg->traceBCDCodeGen())
-      traceMsg(comp,"\tdividendPrecision=%d,computedDividendPrecision=%d,divisorPrecision=%d,deadBytes=%d,computedQuotientPrecision=%d\n",
-         dividendPrecision,computedDividendPrecision,divisorPrecision,deadBytes,computedQuotientPrecision);
-
-   if ((dividendPrecision&0x1)==0)
-      {
-      if (cg->traceBCDCodeGen())
-         traceMsg(comp,"\t\tdividendPrecision (%d) isEven=true so reduce computedQuotientPrecision %d->%d\n",dividendPrecision,computedQuotientPrecision,computedQuotientPrecision-1);
-      computedQuotientPrecision--;
-      }
-
-   int32_t resultQuotientPrecision = std::min<int32_t>(computedQuotientPrecision, node->getDecimalPrecision());
-
-   if (cg->traceBCDCodeGen())
-      traceMsg(comp,"\tsetting targetRegPrec to min(computedQuotientPrecision, nodePrec) = min(%d,%d) = %d and deadBytes to %d\n",
-         computedQuotientPrecision,node->getDecimalPrecision(),resultQuotientPrecision,deadBytes);
-
-   TR_PseudoRegister *targetReg = NULL;
-   if (!node->canSkipPadByteClearing() &&
-       ((resultQuotientPrecision&0x1) == 0))
-      {
-      TR::Node *src = node->getFirstChild();
-      TR_PseudoRegister *srcReg = cg->evaluateBCDNode(src);
-      TR::MemoryReference *sourceMR = generateS390RightAlignedMemoryReference(src, srcReg->getStorageReference(), cg);
-      targetReg = evaluateBCDValueModifyingOperand(node, false /* initTarget */, sourceMR, cg);
-      targetReg->setDecimalPrecision(resultQuotientPrecision);
-      TR::MemoryReference *destMR = generateS390RightAlignedMemoryReference(node, targetReg->getStorageReference(), cg);
-      if (targetReg->isInitialized())
-         {
-         destMR->addToTemporaryNegativeOffset(node, -deadBytes, cg);
-         targetReg->addToRightAlignedDeadBytes(deadBytes);
-         if (cg->traceBCDCodeGen())
-            traceMsg(comp,"\tisInitialized=true (pddivSelect) : increment targetReg %s deadBytes %d -> %d (by the computedDivisorSize)\n",
-               cg->getDebug()->getName(targetReg),targetReg->getRightAlignedDeadBytes()-deadBytes,targetReg->getRightAlignedDeadBytes());
-         }
-      else
-         {
-         if (cg->traceBCDCodeGen())
-            traceMsg(comp,"\tisInit=false case: gen MVC of size %d to init quotient before top nibble clearing (sourceMR offset=-deadBytes=%d\n",targetReg->getSize(),-deadBytes);
-         int32_t mvcSize = targetReg->getSize();
-         generateSS1Instruction(cg, TR::InstOpCode::MVC, node,
-                                mvcSize-1,
-                                generateS390RightAlignedMemoryReference(*destMR, node, 0, cg),
-                                generateS390RightAlignedMemoryReference(*sourceMR, node, -deadBytes, cg));
-         }
-      cg->genZeroLeftMostPackedDigits(node, targetReg, targetReg->getSize(), 1, generateS390RightAlignedMemoryReference(*destMR, node, 0, cg));
-      }
-   else
-      {
-      targetReg = evaluateBCDSignModifyingOperand(node, true, false, false, NULL, cg); // isEffectiveNop=true, isNondestructiveNop=false,initTarget=false
-      targetReg->setDecimalPrecision(resultQuotientPrecision);
-      targetReg->addToRightAlignedDeadBytes(deadBytes);
-      if (cg->traceBCDCodeGen())
-         traceMsg(comp,"\tisEffectiveNop=true (pddivSelect) : increment targetReg %s deadBytes %d -> %d (by the computedDivisorSize)\n",
-            cg->getDebug()->getName(targetReg),targetReg->getRightAlignedDeadBytes()-deadBytes,targetReg->getRightAlignedDeadBytes());
-      }
-
-   cg->decReferenceCount(child);
-   cg->traceBCDExit("pddivSelect",node);
-   return targetReg;
-   }
-
-TR::Register *
 J9::Z::TreeEvaluator::pdremSelectEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    cg->traceBCDEntry("pdremSelect",node);
@@ -21952,7 +21867,7 @@ J9::Z::TreeEvaluator::pdremSelectEvaluator(TR::Node * node, TR::CodeGenerator * 
    TR::Compilation *comp = cg->comp();
    TR_ASSERT(child->getOpCodeValue() == TR::pddivrem ||
              (child->getOpCode().isLoadVar() && child->getDataType() == TR::PackedDecimal),
-             "pddivSelect child should be a pddivrem or a pdload and not op %d\n",child->getOpCodeValue());
+             "pdremSelect child should be a pddivrem or a pdload and not op %d\n",child->getOpCodeValue());
 
    int32_t computedRemainderPrecision = std::min<int32_t>(node->getSelectDivisorPrecision(), node->getDecimalPrecision());
 

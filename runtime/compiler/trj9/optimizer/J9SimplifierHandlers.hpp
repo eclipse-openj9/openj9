@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,6 @@ TR::Node * pdaddSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * 
 TR::Node * pdsubSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * pdmulSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * pddivSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
-TR::Node * pddivSelectSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * pdshrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * pdloadSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
 TR::Node * pdSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s);
