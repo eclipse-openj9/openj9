@@ -235,7 +235,6 @@ MM_GCExtensions::computeDefaultMaxHeap(MM_EnvironmentBase *env)
 
 	MM_GCExtensionsBase::computeDefaultMaxHeap(env);
 
-	uint64_t usableMemory = omrsysinfo_get_addressable_physical_memory();
 	int32_t rc = omrsysinfo_cgroup_get_memlimit(&cgroupMemory);
 
 /* A very rough estimate of the minimum amount of memory required by the JVM excluding
@@ -254,6 +253,8 @@ MM_GCExtensions::computeDefaultMaxHeap(MM_EnvironmentBase *env)
 
 #if defined(OMR_ENV_DATA64)
 	if (J2SE_VERSION((J9JavaVM *)getOmrVM()->_language_vm) >= J2SE_19) {
+		uint64_t usableMemory = omrsysinfo_get_addressable_physical_memory();
+
 		/* extend java default max memory to 25% of physical RAM */
 		memoryMax = OMR_MAX(memoryMax, usableMemory / 4);
 	}
