@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,6 +127,9 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
    *flagsCursor = modifier;
    uint32_t *wordAfterHeader = (uint32_t*)cursor;
 
+   // gcc 4.9.4 will combine multiple writes to *cursor into a stm instruction
+   // which will cause sigbus when running under a 64 bit OS. The probablem can
+   // be avoided by using inline assembly.
    switch (relocation->getTargetKind())
       {
       case TR_HelperAddress:
@@ -160,13 +163,21 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), comp, recordInfo->data2);
          uint8_t flags = (uint8_t) recordInfo->data3;//Sequence ID
          //TODO
-         *(uintptrj_t *)cursor = inlinedSiteIndex;
-         cursor += SIZEPOINTER;
+
          // next word is the address of the constant pool to
          // which the index refers
-         *(uintptrj_t *)cursor =
-            (uintptr_t)tempSR->getOwningMethod(TR::comp())->constantPool();
-         cursor += SIZEPOINTER;
+         uint8_t constantPool = (uintptr_t)tempSR->getOwningMethod(TR::comp())->constantPool();
+
+         asm volatile(
+            "str %[inlinedSiteIndex], [%[cursor], #0]\n\t"
+            "str %[constantPool], [%[cursor], #4]\n\t"
+            :            // No outputs
+            :[cursor]            "r" (cursor),
+             [inlinedSiteIndex]  "r" (inlinedSiteIndex),
+             [constantPool]      "r" (constantPool)
+         );
+         cursor += 2*SIZEPOINTER;
+
          }
          break;
       case TR_JNIStaticTargetAddress:
@@ -178,18 +189,25 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
          uintptr_t inlinedSiteIndex = (uintptr_t)relocation->getTargetAddress2();
-
          inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), comp, inlinedSiteIndex);
 
-         *(uintptrj_t *)cursor = inlinedSiteIndex;  // inlinedSiteIndex
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *)cursor = (uintptrj_t)tempSR->getOwningMethod(comp)->constantPool(); // constantPool
-         cursor += SIZEPOINTER;
+         uintptrj_t constantPool = (uintptrj_t)tempSR->getOwningMethod(comp)->constantPool();
 
          uintptrj_t cpIndex=(uintptrj_t)tempSR->getCPIndex();
-         *(uintptrj_t *)cursor =cpIndex;// cpIndex
-         cursor += SIZEPOINTER;
+
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[constantPool], [%[cursor], #4]\n\t"
+            "str %[cpIndex], [%[cursor], #8]\n\t"
+            :            // No outputs
+            :[cursor]            "r" (cursor),
+             [inlinedSiteIndex]  "r" (inlinedSiteIndex),
+             [constantPool]      "r" (constantPool),
+             [cpIndex]           "r" (cpIndex)
+         );
+
+         cursor += 3*SIZEPOINTER;
+
          }
          break;
       case TR_ClassAddress:
@@ -199,15 +217,22 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          uint8_t flags = (uint8_t) recordInfo->data3;
          uintptr_t inlinedSiteIndex = findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), comp, recordInfo->data2);
 
-         *(uintptrj_t *)cursor = inlinedSiteIndex; // inlinedSiteIndex
+         uintptrj_t tmpConstantPool = (uintptrj_t)tempSR->getOwningMethod(comp)->constantPool(); // constantPool
 
-         cursor += SIZEPOINTER;
+         uintptrj_t cpIndex = tempSR->getCPIndex();
 
-         *(uintptrj_t *)cursor = (uintptrj_t)tempSR->getOwningMethod(comp)->constantPool(); // constantPool
-         cursor += SIZEPOINTER;
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[tmpConstantPool], [%[cursor], #4]\n\t"
+            "str %[cpIndex], [%[cursor], #8]\n\t"
+            :            // No outputs
+            :[cursor]            "r" (cursor),
+             [inlinedSiteIndex]  "r" (inlinedSiteIndex),
+             [tmpConstantPool]   "r" (tmpConstantPool),
+             [cpIndex]           "r" (cpIndex)
+         );
 
-         *(uintptrj_t *)cursor = tempSR->getCPIndex(); // cpIndex
-         cursor += SIZEPOINTER;
+         cursor += 3*SIZEPOINTER;
          }
          break;
       case TR_DataAddress:
@@ -220,18 +245,24 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
 
-         // relocation target
-         *(uintptrj_t *) cursor = inlinedSiteIndex;
-         cursor += SIZEPOINTER;
+         uintptrj_t tmpConstantPool = (uintptrj_t)tempSR->getOwningMethod(comp)->constantPool(); // constantPool
+         uintptrj_t tmpCPIndex = tempSR->getCPIndex(); // cpIndex
+         uintptrj_t offset = tempSR->getOffset();
 
-         *(uintptrj_t *) cursor = (uintptrj_t) tempSR->getOwningMethod(comp)->constantPool(); // constantPool
-         cursor += SIZEPOINTER;
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[tmpConstantPool], [%[cursor], #4]\n\t"
+            "str %[tmpCPIndex], [%[cursor], #8]\n\t"
+            "str %[offset], [%[cursor], #12]\n\t"
+            :            // No outputs
+            :[cursor]            "r" (cursor),
+             [inlinedSiteIndex]  "r" (inlinedSiteIndex),
+             [tmpConstantPool]   "r" (tmpConstantPool),
+             [tmpCPIndex]        "r" (tmpCPIndex),
+             [offset]            "r" (offset)
+         );
 
-         *(uintptrj_t *) cursor = tempSR->getCPIndex(); // cpIndex
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *) cursor = tempSR->getOffset(); // offset
-         cursor += SIZEPOINTER;
+         cursor += 4*SIZEPOINTER;
 
          break;
          }
@@ -264,11 +295,20 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
       case TR_Trampolines:
       case TR_Thunks:
          {
-         *(uintptrj_t *)cursor = (uintptrj_t)relocation->getTargetAddress2(); // inlined site index
-         cursor += SIZEPOINTER;
+         uintptrj_t inlinedSiteIndex = (uintptrj_t)relocation->getTargetAddress2();
+         uintptrj_t constantPool = (uintptrj_t)relocation->getTargetAddress();
 
-         *(uintptrj_t *)cursor = (uintptrj_t)relocation->getTargetAddress(); // constantPool
-         cursor += SIZEPOINTER;
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[constantPool], [%[cursor], #4]\n\t"
+            :            // No outputs
+            :[cursor]            "r" (cursor),
+             [inlinedSiteIndex]  "r" (inlinedSiteIndex),
+             [constantPool]      "r" (constantPool)
+         );
+
+         cursor += 2*SIZEPOINTER;
+
          break;
          }
       case TR_CheckMethodEnter:
@@ -281,19 +321,25 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
       case TR_J2IThunks:
          {
          // Note: thunk relos should only be created for 64 bit
-         // *(uintptrj_t *)cursor = (uintptrj_t)relocation->getTargetAddress2(); // inlined site index
-
          TR::Node *node = (TR::Node*)relocation->getTargetAddress();
          TR::SymbolReference *symRef = node->getSymbolReference();
 
-         *(uintptrj_t *)cursor = (uintptrj_t)node->getInlinedSiteIndex();
-         cursor += SIZEPOINTER;
+         uintptrj_t tmpInlinedSiteIndex = (uintptrj_t)node->getInlinedSiteIndex();
+         uintptrj_t tmpConstantPool = (uintptrj_t)symRef->getOwningMethod(comp)->constantPool(); // cp address
+         uintptrj_t cpIndex = (uintptrj_t)symRef->getCPIndex();
 
-         *(uintptrj_t *)cursor = (uintptrj_t)symRef->getOwningMethod(comp)->constantPool(); // cp address
-         cursor += SIZEPOINTER;
+         asm volatile(
+            "str %[tmpInlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[tmpConstantPool], [%[cursor], #4]\n\t"
+            "str %[cpIndex], [%[cursor], #8]\n\t"
+            :            // No outputs
+            :[cursor]              "r" (cursor),
+             [tmpInlinedSiteIndex] "r" (tmpInlinedSiteIndex),
+             [tmpConstantPool]     "r" (tmpConstantPool),
+             [cpIndex]             "r" (cpIndex)
+         );
 
-         *(uintptrj_t *)cursor = (uintptrj_t)symRef->getCPIndex(); // cp index
-         cursor += SIZEPOINTER;
+         cursor += 3*SIZEPOINTER;
 
          break;
          }
@@ -325,25 +371,31 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          {
          TR::Node *aconstNode = (TR::Node *) relocation->getTargetAddress();
          uintptrj_t inlinedSiteIndex = (uintptrj_t)aconstNode->getInlinedSiteIndex();
-         *(uintptrj_t *)cursor = inlinedSiteIndex;
-         cursor += SIZEPOINTER;
 
          TR_OpaqueMethodBlock *j9method = (TR_OpaqueMethodBlock *) aconstNode->getAddress();
          TR_OpaqueClassBlock *j9class = fej9->getClassFromMethodBlock(j9method);
 
          void *loaderForClazz = fej9->getClassLoader(j9class);
          void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-         //traceMsg(comp(),"classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
+
          uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
-         //traceMsg(comp(),"classChainOffsetInSharedCache %p\n", classChainOffsetInSharedCache);
-         *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
+
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[ccOffset], [%[cursor], #4]\n\t"
+            :            // No outputs
+            :[cursor]           "r" (cursor),
+             [inlinedSiteIndex] "r" (inlinedSiteIndex),
+             [ccOffset]         "r" (classChainOffsetInSharedCache)
+         );
+         cursor += 2*SIZEPOINTER;
 
          cursor = self()->emitClassChainOffset(cursor, j9class);
 
          uintptrj_t vTableOffset = (uintptrj_t) fej9->getInterpreterVTableSlot(j9method, j9class);
          *(uintptrj_t *)cursor = vTableOffset;
          cursor += SIZEPOINTER;
+
          }
          break;
 
@@ -351,20 +403,22 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          {
          TR::Node *aconstNode = (TR::Node *) relocation->getTargetAddress();
          uintptrj_t inlinedSiteIndex = (uintptrj_t)aconstNode->getInlinedSiteIndex();
-         *(uintptrj_t *)cursor = inlinedSiteIndex;
-         cursor += SIZEPOINTER;
 
          TR_OpaqueClassBlock *j9class = (TR_OpaqueClassBlock *) aconstNode->getAddress();
-         //traceMsg(comp(),"j9class %p\n", j9class);
 
          void *loaderForClazz = fej9->getClassLoader(j9class);
-         //traceMsg(comp(),"loaderForClazz %p\n", loaderForClazz);
          void *classChainIdentifyingLoaderForClazz = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-         //traceMsg(comp(),"classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
          uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
-         //traceMsg(comp(),"classChainOffsetInSharedCache %p\n", classChainOffsetInSharedCache);
-         *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
+
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[ccOffset], [%[cursor], #4]\n\t"
+            :            // No outputs
+            :[cursor]           "r" (cursor),
+             [inlinedSiteIndex] "r" (inlinedSiteIndex),
+             [ccOffset]         "r" (classChainOffsetInSharedCache)
+         );
+         cursor += 2*SIZEPOINTER;
 
          cursor = self()->emitClassChainOffset(cursor, j9class);
          }
@@ -395,14 +449,8 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
 
          int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
-         *(uintptrj_t *) cursor = (uintptrj_t) inlinedSiteIndex;
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *) cursor = (uintptrj_t) guard->getSymbolReference()->getOwningMethod(comp)->constantPool(); // record constant pool
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t*) cursor = (uintptrj_t) guard->getSymbolReference()->getCPIndex(); // record cpIndex
-         cursor += SIZEPOINTER;
+         uintptrj_t tmpConstantPool = (uintptrj_t) guard->getSymbolReference()->getOwningMethod(comp)->constantPool(); // record constant pool
+         uintptrj_t tmpCPIndex = (uintptrj_t) guard->getSymbolReference()->getCPIndex(); // record cpIndex
 
          if (relocation->getTargetKind() == TR_InlinedInterfaceMethodWithNopGuard ||
              relocation->getTargetKind() == TR_InlinedInterfaceMethod)
@@ -420,8 +468,19 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass);
          void *romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
 
-         *(uintptrj_t *) cursor = (uintptrj_t) romClassOffsetInSharedCache;
-         cursor += SIZEPOINTER;
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[tmpConstantPool], [%[cursor], #4]\n\t"
+            "str %[tmpCPIndex], [%[cursor], #8]\n\t"
+            "str %[romClassOffsetInSharedCache], [%[cursor], #12]\n\t"
+            :            // No outputs
+            :[cursor]                      "r" (cursor),
+             [inlinedSiteIndex]            "r" (inlinedSiteIndex),
+             [tmpConstantPool]             "r" (tmpConstantPool),
+             [tmpCPIndex]                  "r" (tmpCPIndex),
+             [romClassOffsetInSharedCache] "r" (romClassOffsetInSharedCache)
+         );
+         cursor += 4*SIZEPOINTER;
 
          if (relocation->getTargetKind() != TR_InlinedInterfaceMethod &&
              relocation->getTargetKind() != TR_InlinedVirtualMethod)
@@ -439,27 +498,18 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          guard = (TR_VirtualGuard *) relocation->getTargetAddress2();
 
          int32_t inlinedSiteIndex = guard->getCurrentInlinedSiteIndex();
-         *(uintptrj_t *) cursor = (uintptrj_t) inlinedSiteIndex;
-         cursor += SIZEPOINTER;
 
          TR::SymbolReference *callSymRef = guard->getSymbolReference();
          TR_ResolvedMethod *owningMethod = callSymRef->getOwningMethod(comp);
-         *(uintptrj_t *) cursor = (uintptrj_t) owningMethod->constantPool(); // record constant pool
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t*) cursor = (uintptrj_t) callSymRef->getCPIndex(); // record cpIndex
-         cursor += SIZEPOINTER;
+         uintptrj_t tmpConstantPool = (uintptrj_t) owningMethod->constantPool(); // record constant pool
+         uintptrj_t tmpCPIndex = (uintptrj_t) callSymRef->getCPIndex(); // record cpIndex
 
          TR_OpaqueClassBlock *inlinedCodeClass = guard->getThisClass();
          int32_t len;
          char *className = fej9->getClassNameChars(inlinedCodeClass, len);
-         //traceMsg(comp(), "inlined site index is %d, inlined code class is %.*s\n", inlinedSiteIndex, len, className);
-
          void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass);
          void *romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
          traceMsg(comp, "class is %p, romclass is %p, offset is %p\n", inlinedCodeClass, romClass, romClassOffsetInSharedCache);
-         *(uintptrj_t *) cursor = (uintptrj_t) romClassOffsetInSharedCache;
-         cursor += SIZEPOINTER;
 
          void *loaderForClazz = fej9->getClassLoader(inlinedCodeClass);
          void *classChainIdentifyingLoaderForClazz =
@@ -467,8 +517,22 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          //traceMsg(comp(),"classChainIdentifyingLoaderForClazz %p\n", classChainIdentifyingLoaderForClazz);
          uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
          //traceMsg(comp(),"classChainOffsetInSharedCache %p\n", classChainOffsetInSharedCache);
-         *(uintptrj_t *) cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
+
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[tmpConstantPool], [%[cursor], #4]\n\t"
+            "str %[tmpCPIndex], [%[cursor], #8]\n\t"
+            "str %[romClassOffsetInSharedCache], [%[cursor], #12]\n\t"
+            "str %[classChainOffsetInSharedCache], [%[cursor], #16]\n\t"
+            :            // No outputs
+            :[cursor]                        "r" (cursor),
+             [inlinedSiteIndex]              "r" (inlinedSiteIndex),
+             [tmpConstantPool]               "r" (tmpConstantPool),
+             [tmpCPIndex]                    "r" (tmpCPIndex),
+             [romClassOffsetInSharedCache]   "r" (romClassOffsetInSharedCache),
+             [classChainOffsetInSharedCache] "r" (classChainOffsetInSharedCache)
+         );
+         cursor += 5*SIZEPOINTER;
 
          cursor = self()->emitClassChainOffset(cursor, inlinedCodeClass);
 
@@ -504,21 +568,28 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          TR::LabelSymbol *label = (TR::LabelSymbol *) recordInfo->data3;
          TR::Instruction *instr = (TR::Instruction *) recordInfo->data4;
 
-         *(uintptrj_t *) cursor = (uintptrj_t) recordInfo->data2; // inlined call site index
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *) cursor = (uintptrj_t) classSymRef->getOwningMethod(comp)->constantPool();
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *) cursor = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
-         cursor += SIZEPOINTER;
-
+         uintptrj_t inlinedSiteIndex = (uintptrj_t) recordInfo->data2;
+         uintptrj_t tmpConstantPool = (uintptrj_t) classSymRef->getOwningMethod(comp)->constantPool();
+         uintptrj_t tmpCPIndex = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
          uint32_t branchOffset = (uint32_t) (label->getCodeLocation() - instr->getBinaryEncoding());
-         *(uintptrj_t *) cursor = (uintptrj_t) branchOffset;
-         cursor += SIZEPOINTER;
+         uintptrj_t allocationSize = (uintptrj_t) recordInfo->data1;
 
-         *(uintptrj_t *) cursor = (uintptrj_t) recordInfo->data1; // allocation size.
-         cursor += SIZEPOINTER;
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[tmpConstantPool], [%[cursor], #4]\n\t"
+            "str %[tmpCPIndex], [%[cursor], #8]\n\t"
+            "str %[branchOffset], [%[cursor], #12]\n\t"
+            "str %[allocationSize], [%[cursor], #16]\n\t"
+            :            // No outputs
+            :[cursor]           "r" (cursor),
+             [inlinedSiteIndex] "r" (inlinedSiteIndex),
+             [tmpConstantPool]  "r" (tmpConstantPool),
+             [tmpCPIndex]       "r" (tmpCPIndex),
+             [branchOffset]     "r" (branchOffset),
+             [allocationSize]   "r" (allocationSize)
+         );
+         cursor += 5*SIZEPOINTER;
+
          }
          break;
 
@@ -529,56 +600,77 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          TR::LabelSymbol *label = (TR::LabelSymbol *) recordInfo->data3;
          TR::Instruction *instr = (TR::Instruction *) recordInfo->data4;
 
-         *(uintptrj_t *) cursor = (uintptrj_t) recordInfo->data2; // inlined call site index
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *) cursor = (uintptrj_t) classSymRef->getOwningMethod(comp)->constantPool();
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t *) cursor = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
-         cursor += SIZEPOINTER;
-
+         uintptrj_t inlinedSiteIndex = (uintptrj_t) recordInfo->data2;
+         uintptrj_t tmpConstantPool = (uintptrj_t) classSymRef->getOwningMethod(comp)->constantPool();
+         uintptrj_t tmpCPIndex = (uintptrj_t) classSymRef->getCPIndex(); // cp Index
          uint32_t branchOffset = (uint32_t) (label->getCodeLocation() - instr->getBinaryEncoding());
-         *(uintptrj_t *) cursor = (uintptrj_t) branchOffset;
-         cursor += SIZEPOINTER;
+
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[tmpConstantPool], [%[cursor], #4]\n\t"
+            "str %[tmpCPIndex], [%[cursor], #8]\n\t"
+            "str %[branchOffset], [%[cursor], #12]\n\t"
+            :            // No outputs
+            :[cursor]           "r" (cursor),
+             [inlinedSiteIndex] "r" (inlinedSiteIndex),
+             [tmpConstantPool]  "r" (tmpConstantPool),
+             [tmpCPIndex]       "r" (tmpCPIndex),
+             [branchOffset]     "r" (branchOffset)
+         );
+         cursor += 4*SIZEPOINTER;
+
          }
          break;
 
       case TR_ValidateClass:
       case TR_ValidateInstanceField:
          {
-         *(uintptrj_t*)cursor = (uintptrj_t)relocation->getTargetAddress(); // Inlined site index
-         cursor += SIZEPOINTER;
-
+         uintptrj_t inlinedSiteIndex = (uintptrj_t)relocation->getTargetAddress(); // Inlined site index
          TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*)relocation->getTargetAddress2();
-         *(uintptrj_t*)cursor = (uintptrj_t) aotCI->_constantPool;
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t*)cursor = (uintptrj_t) aotCI->_cpIndex;
-         cursor += SIZEPOINTER;
-
+         uintptrj_t tmpConstantPool = (uintptrj_t) aotCI->_constantPool;
+         uintptrj_t tmpCPIndex = (uintptrj_t) aotCI->_cpIndex;
          void *classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(aotCI->_classChain);
-         *(uintptrj_t *)cursor = (uintptrj_t) classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
+
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[tmpConstantPool], [%[cursor], #4]\n\t"
+            "str %[tmpCPIndex], [%[cursor], #8]\n\t"
+            "str %[classChainOffsetInSharedCache], [%[cursor], #12]\n\t"
+            :            // No outputs
+            :[cursor]                        "r" (cursor),
+             [inlinedSiteIndex]              "r" (inlinedSiteIndex),
+             [tmpConstantPool]               "r" (tmpConstantPool),
+             [tmpCPIndex]                    "r" (tmpCPIndex),
+             [classChainOffsetInSharedCache] "r" (classChainOffsetInSharedCache)
+         );
+         cursor += 4*SIZEPOINTER;
+
          }
          break;
 
-      case TR_ValidateStaticField:
+      case TR_ValidateStaticField: // XXX next for inline assembly
          {
-         *(uintptrj_t*)cursor = (uintptrj_t)relocation->getTargetAddress(); // Inlined site index
-         cursor += SIZEPOINTER;
-
+         uintptrj_t inlinedSiteIndex = (uintptrj_t)relocation->getTargetAddress(); // Inlined site index
          TR::AOTClassInfo *aotCI = (TR::AOTClassInfo*)relocation->getTargetAddress2();
-         *(uintptrj_t*)cursor = (uintptrj_t) aotCI->_constantPool;
-         cursor += SIZEPOINTER;
-
-         *(uintptrj_t*)cursor = (uintptrj_t) aotCI->_cpIndex;
-         cursor += SIZEPOINTER;
-
+         uintptrj_t tmpConstantPool = (uintptrj_t) aotCI->_constantPool;
+         uintptrj_t tmpCPIndex = (uintptrj_t) aotCI->_cpIndex;
          void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(aotCI->_clazz);
          void *romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
-         *(uintptrj_t *)cursor = (uintptrj_t) romClassOffsetInSharedCache;
-         cursor += SIZEPOINTER;
+
+         asm volatile(
+            "str %[inlinedSiteIndex],  [%[cursor], #0]\n\t"
+            "str %[tmpConstantPool], [%[cursor], #4]\n\t"
+            "str %[tmpCPIndex], [%[cursor], #8]\n\t"
+            "str %[romClassOffsetInSharedCache], [%[cursor], #12]\n\t"
+            :            // No outputs
+            :[cursor]                      "r" (cursor),
+             [inlinedSiteIndex]            "r" (inlinedSiteIndex),
+             [tmpConstantPool]             "r" (tmpConstantPool),
+             [tmpCPIndex]                  "r" (tmpCPIndex),
+             [romClassOffsetInSharedCache] "r" (romClassOffsetInSharedCache)
+         );
+         cursor += 4*SIZEPOINTER;
+
          }
          break;
 
@@ -591,15 +683,22 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::Iterated
          void *loaderForClazzToValidate = fej9->getClassLoader(classToValidate);
          void *classChainIdentifyingLoaderForClazzToValidate = sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazzToValidate);
          uintptrj_t classChainOffsetInSharedCacheForCL = (uintptrj_t) sharedCache->offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazzToValidate);
-         *(uintptrj_t *)cursor = classChainOffsetInSharedCacheForCL;
-         cursor += SIZEPOINTER;
 
          //store the classchain's offset for the class that needs to be validated in the second run
          void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(classToValidate);
          uintptrj_t *classChainForClassToValidate = (uintptrj_t *) aotCI->_classChain;
          void* classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForClassToValidate);
-         *(uintptrj_t *)cursor = (uintptrj_t) classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
+
+         asm volatile(
+            "str %[classChainOffsetInSharedCacheForCL],  [%[cursor], #0]\n\t"
+            "str %[classChainOffsetInSharedCache], [%[cursor], #4]\n\t"
+            :            // No outputs
+            :[cursor]                             "r" (cursor),
+             [classChainOffsetInSharedCacheForCL] "r" (classChainOffsetInSharedCacheForCL),
+             [classChainOffsetInSharedCache]      "r" (classChainOffsetInSharedCache)
+         );
+         cursor += 2*SIZEPOINTER;
+
          }
          break;
 
@@ -827,4 +926,3 @@ void J9::ARM::AheadOfTimeCompile::dumpRelocationData()
 
 
 #endif
-
