@@ -371,6 +371,10 @@
    sun_misc_Unsafe_staticFieldBase,
    sun_misc_Unsafe_staticFieldOffset,
    sun_misc_Unsafe_objectFieldOffset,
+   sun_misc_Unsafe_getAndAddInt,
+   sun_misc_Unsafe_getAndSetInt,
+   sun_misc_Unsafe_getAndAddLong,
+   sun_misc_Unsafe_getAndSetLong,
 
    sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V,
    sun_misc_Unsafe_putByteOrdered_jlObjectJB_V,
