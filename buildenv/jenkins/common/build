@@ -186,8 +186,18 @@ def checkout_pullrequest() {
 }
 
 def checkout_pullrequest(ID) {
-    sh "git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*"
-    sh "git checkout refs/remotes/origin/pr/${ID}/merge"
+    // Determine if we are checking out a PR or a branch
+    try {
+        if (ID.isNumber()) {
+            sh "git fetch --progress origin +refs/pull/${ID}/merge:refs/remotes/origin/pr/${ID}/merge"
+            sh "git checkout refs/remotes/origin/pr/${ID}/merge"
+        } else {
+            sh "git fetch --progress origin +refs/heads/${ID}:refs/remotes/origin/${ID}"
+            sh "git checkout refs/remotes/origin/${ID}"
+        }
+    } catch(e) {
+        error("Fatal: Unable to checkout '${ID}'. If checking out a branch, please ensure the branch exists and the spelling is correct. If checking out a PullRequest, please ensure the PR is open, unmerged and has no merge conflicts.")
+    }
 }
 
 def build() {
