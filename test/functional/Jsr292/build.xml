@@ -27,9 +27,10 @@
 	<description>
 		Build J9 JSR 292 Tests 
 	</description>
+	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- set global properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/Jsr292" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/Jsr292" />
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src"/>
@@ -38,7 +39,7 @@
 	<property name="bootstrapSrc_80" location="./bootstrap_src_80"/>
 	<property name="bootstrapSrc_90" location="./bootstrap_src_90"/>
 	<property name="bootstrapBuild" location="./bootstrap_bin"/>
-	<property name="transformerListener" location="../Utils/src"/>
+	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}"/>
@@ -63,8 +64,8 @@
 			<include name="**/indyn/SimpleIndyGenerator.java" />
 			<include name="**/CrossPackageHelper.java"/>
 			<classpath>
-				<pathelement location="../TestConfig/lib/asm-all.jar" />
-				<pathelement location="../TestConfig/lib/junit4.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
 			</classpath>
 		</javac>
 	</target>
@@ -75,7 +76,7 @@
 		<java classname="com.ibm.j9.jsr292.indyn.SimpleIndyGenerator" failonerror="true" fork="true" logError="true" 
 				jvm="${javaexecutable.java}">
 			<classpath>
-				<pathelement location="../TestConfig/lib/asm-all.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
 				<pathelement location="${build}"/>
 			</classpath>
 		</java>
@@ -89,7 +90,7 @@
 		<java classname="com.ibm.j9.jsr292.indyn.ComplexIndyGenerator" failonerror="true" fork="true" logError="true" 
 				jvm="${javaexecutable.java}">
 			<classpath>
-				<pathelement location="../TestConfig/lib/asm-all.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
 				<pathelement location="${build}"/>
 			</classpath>
 		</java>
@@ -176,10 +177,10 @@
 					<exclude name="**/CrossPackageHelper.java"/>
 					<classpath>
 						<pathelement location="${bootstrapBuild}"/>
-						<pathelement location="../TestConfig/lib/asm-all.jar" />
-						<pathelement location="../TestConfig/lib/junit4.jar" />
-						<pathelement location="../TestConfig/lib/testng.jar"/>
-						<pathelement location="../TestConfig/lib/jcommander.jar"/>
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
 					</classpath>
 				</javac>
 			</then>
@@ -195,17 +196,17 @@
 					<exclude name="**/CrossPackageHelper.java"/>
 					<classpath>
 						<pathelement location="${bootstrapBuild}"/>
-						<pathelement location="../TestConfig/lib/asm-all.jar" />
-						<pathelement location="../TestConfig/lib/junit4.jar" />
-						<pathelement location="../TestConfig/lib/testng.jar"/>
-						<pathelement location="../TestConfig/lib/jcommander.jar"/>
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
 					</classpath>
 				</javac>
 			</else>
 		</if>
 	</target>
 
-	<target name="dist" depends="compile" description="generate the distribution" >
+	<target name="dist" depends="compile,dist_functional" description="generate the distribution" >
 		<copy todir="${DEST}">
 			<fileset dir="${src}/../" includes="*.xml,*.policy" />
 			<fileset dir="${src}/../" includes="*.mk" />

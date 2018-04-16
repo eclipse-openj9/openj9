@@ -27,10 +27,10 @@
 	<description>
 		Build NativeTest
 	</description>
+	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- set properties for this build -->
-	<property name="BUILD_ROOT" value="../" />
-	<property name="DEST" value="${BUILD_ROOT}/NativeTest" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/NativeTest" />
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -47,7 +47,7 @@
 		</if>
 	</target>
 
-	<target name="dist" depends="init">
+	<target name="dist" depends="init,dist_functional">
 		<copy todir="${DEST}">
 			<fileset dir="." />
 		</copy>

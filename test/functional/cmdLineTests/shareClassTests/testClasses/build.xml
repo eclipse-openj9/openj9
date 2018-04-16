@@ -34,7 +34,7 @@
 	<property name="sharedClassTestClasses_srddir" value="../testClasses/" />
 	<property name="SharedClassUtils_srddir" value="../utils/src/" />
 	
-	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/shareClassTests/testClasses" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shareClassTests/testClasses" />
 
 	<target name="AddTestClassesToPackage">
 		<!-- create the folders -->

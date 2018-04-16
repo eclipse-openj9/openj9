@@ -27,9 +27,10 @@
 	<description>
 		Build VM_Test
 	</description>
+	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- set global properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/VM_Test" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/VM_Test" />
 	<property name="excludeFiles" location="../J9 Exclude File Support/src"/>
 	<property name="data" location="./data" />
 	<property name="databin" location="./data/bin" />
@@ -38,12 +39,12 @@
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />
 	<property name="build" location="./bin" />
-	<property name="transformerListener" location="../Utils/src"/>
+	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 
 	<path id="build.cp">
-		<fileset  dir="../TestConfig/lib/" includes="junit4.jar" />
-		<fileset dir="../TestConfig/lib/" includes="asm-all.jar"/>
-		<fileset dir="../TestConfig/lib/" includes="javassist.jar"/>
+		<fileset  dir="${TEST_ROOT}/TestConfig/lib/" includes="junit4.jar" />
+		<fileset dir="${TEST_ROOT}/TestConfig/lib/" includes="asm-all.jar"/>
+		<fileset dir="${TEST_ROOT}/TestConfig/lib/" includes="javassist.jar"/>
 	</path>
 
 	<target name="init">
@@ -95,7 +96,7 @@
 		</if>
 	</target>
 
-	<target name="dist" depends="compile" description="generate the distribution">
+	<target name="dist" depends="compile,dist_functional" description="generate the distribution">
 		<jar jarfile="${databin}/InvalidClasspathResource1.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF">
 			<fileset dir="${databin}/InvalidClasspathResource1"/>
 		</jar>

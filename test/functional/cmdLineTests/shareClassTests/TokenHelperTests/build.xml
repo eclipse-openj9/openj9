@@ -27,7 +27,7 @@
 	</description>
 		
 	<!-- set global properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/shareClassTests/TokenHelperTests" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shareClassTests/TokenHelperTests" />
 	<property name="src" location="."/>
 	<property name="build" location="./bin"/>
 

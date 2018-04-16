@@ -152,7 +152,7 @@
 	</test>	
 	
 	<test id="Test 120s-f: Add JCL entry to the current cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$ -classpath $JVM_TEST_ROOT$$PATHSEP$cmdLineTests$PATHSEP$shareClassTests$PATHSEP$DataHelperTests$PATHSEP$DataHelperTests.jar apitesting.datahelper.DataCachingTest02</command>
+		<command>$JAVA_EXE$ $currentMode$ -classpath $JVM_TEST_ROOT$$PATHSEP$functional$PATHSEP$cmdLineTests$PATHSEP$shareClassTests$PATHSEP$DataHelperTests$PATHSEP$DataHelperTests.jar apitesting.datahelper.DataCachingTest02</command>
 		<output type="success" caseSensitive="yes" regex="no">test successful</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="no" regex="no">exception:</output>

@@ -27,10 +27,10 @@
 	<description>
 		Build J9 VM Java8andUp General Bucket
 	</description>
+	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- set global properties for this build -->
-	<property name="BUILD_ROOT" value="../" />
-	<property name="DEST" value="${BUILD_ROOT}/Java8andUp" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/Java8andUp" />
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />
@@ -38,7 +38,7 @@
 	<property name="src_90" location="./src_90" />
 	<property name="build" location="./bin" />
 	<property name="build_resource" location="./resource" />
-	<property name="transformerListener" location="../Utils/src"/>
+	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 	<property name="TestUtilities" location="../TestUtilities/src"/>
 
 	<target name="init">
@@ -70,9 +70,9 @@
 				<javac srcdir="${NoSuchMethod_src}" destdir="${build}" includes="**/String.java,*AppLoaderCaller2.java" fork="true"
 				debug="on" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<classpath>
-						<pathelement location="../TestConfig/lib/asm-all.jar" />
-						<pathelement location="../TestConfig/lib/testng.jar" />
-						<pathelement location="../TestConfig/lib/jcommander.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
 					</classpath>
 				</javac>
 			</then>
@@ -81,9 +81,9 @@
 				debug="on" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<compilerarg line ="${compilerargline}" />
 					<classpath>
-						<pathelement location="../TestConfig/lib/asm-all.jar" />
-						<pathelement location="../TestConfig/lib/testng.jar" />
-						<pathelement location="../TestConfig/lib/jcommander.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
 					</classpath>
 				</javac>
 			</else>
@@ -94,9 +94,9 @@
 		<javac srcdir="${NoSuchMethod_src}" destdir="${build}" excludes="*/java/*,*AppLoaderCaller2.java" fork="true"
 		debug="on" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<classpath>
-				<pathelement location="../TestConfig/lib/asm-all.jar" />
-				<pathelement location="../TestConfig/lib/testng.jar" />
-				<pathelement location="../TestConfig/lib/jcommander.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
 			</classpath>
 		</javac>
 		<!-- un-hide our fake string impl -->
@@ -107,9 +107,9 @@
 		<javac srcdir="${NoSuchMethod_src}" destdir="${build}" includes="*AppLoaderCallee.java" fork="true"
 		debug="on" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<classpath>
-				<pathelement location="../TestConfig/lib/asm-all.jar" />
-				<pathelement location="../TestConfig/lib/testng.jar" />
-				<pathelement location="../TestConfig/lib/jcommander.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
 			</classpath>
 		</javac>
 		<delete file="${NoSuchMethod_src}/AppLoaderCallee.java"/>
@@ -139,12 +139,12 @@
 					<!-- requires special compilation methods -->
 					<exclude name="**/NoSuchMethod/**" />
 					<classpath>
-						<pathelement location="../TestConfig/lib/asm-all.jar" />
-						<pathelement location="../TestConfig/lib/testng.jar" />
-						<pathelement location="../TestConfig/lib/jcommander.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
 						<pathelement location="${JAVA_BIN}/../../lib/tools.jar" />
-						<pathelement location="../TestConfig/lib/commons-cli.jar" />
-						<pathelement location="../TestConfig/lib/javassist.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-cli.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/javassist.jar" />
 					</classpath>
 				</javac>
 			</then>
@@ -164,11 +164,11 @@
 					<!-- requires special compilation methods -->
 					<exclude name="**/NoSuchMethod/**" />
 					<classpath>
-						<pathelement location="../TestConfig/lib/asm-all.jar" />
-						<pathelement location="../TestConfig/lib/testng.jar" />
-						<pathelement location="../TestConfig/lib/jcommander.jar" />
-						<pathelement location="../TestConfig/lib/commons-cli.jar" />
-						<pathelement location="../TestConfig/lib/javassist.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-cli.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/javassist.jar" />
 					</classpath>
 				</javac>
 			</else>
@@ -179,10 +179,10 @@
 		<property name="jasm_class_destination" location="${build}/j9vm/test/invoker" />
 		<mkdir dir="${jasm_class_destination}" />
 		<exec executable="${JAVA_BIN}/java" dir="${jasm_class_destination}">
-			<arg line="-jar ${BUILD_ROOT}/TestConfig/lib/asmtools.jar jasm ${src}/j9vm/test/invoker/NodeClass.jasm"/>
+			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jasm ${src}/j9vm/test/invoker/NodeClass.jasm"/>
 		</exec>
 		<exec executable="${JAVA_BIN}/java" dir="${jasm_class_destination}">
-			<arg line="-jar ${BUILD_ROOT}/TestConfig/lib/asmtools.jar jasm ${src}/j9vm/test/invoker/NodeInterface.jasm"/>
+			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jasm ${src}/j9vm/test/invoker/NodeInterface.jasm"/>
 		</exec>
 	</target>
 
@@ -247,7 +247,7 @@
 		<move file="${build}/sun" todir="${build_resource}"/>
 	</target>
 
-	<target name="dist" depends="pack_resources" description="generate the distribution">
+	<target name="dist" depends="pack_resources,dist_functional" description="generate the distribution">
 		<jar jarfile="${DEST}/GeneralTest.jar" filesonly="true">
 			<fileset dir="${build}" />
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2017, 2017 IBM Corp. and others
+  Copyright (c) 2017, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer"/>
 	</listeners>
 	<test name="NestAttributeTest">
-		<parameter name="path" value="${JVM_TEST_ROOT}/Valhalla/Valhalla"/>
+		<parameter name="path" value="${JVM_TEST_ROOT}/functional/Valhalla/Valhalla"/>
 		<classes>
 			<class name="org.openj9.test.valhalla.NestAttributeTest" />
 		</classes>

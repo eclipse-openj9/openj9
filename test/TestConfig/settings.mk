@@ -169,8 +169,8 @@ RESOURCES_DIR=$(JVM_TEST_ROOT)$(D)TestConfig$(D)resources
 #######################################
 # cmdlinetester jars
 #######################################
-CMDLINETESTER_JAR   =$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_tester$(D)cmdlinetester.jar$(Q)
-CMDLINETESTER_RESJAR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(D)cmdlinetestresources.jar$(Q)
+CMDLINETESTER_JAR   =$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdline_options_tester$(D)cmdlinetester.jar$(Q)
+CMDLINETESTER_RESJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdline_options_testresources$(D)cmdlinetestresources.jar$(Q)
 
 #######################################
 # testng report dir

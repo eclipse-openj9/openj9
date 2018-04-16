@@ -33,7 +33,7 @@
 
 	<!-- Set variables up -->
 	<variable name="UTILITIES_PROGRAM" value="com.ibm.j9.sharedCacheAPI.tests.SharedUtilsTest"/>
-	<variable name="UTILITIES_CP" value="-cp $JVM_TEST_ROOT$$PATHSEP$VM_Test$PATHSEP$VM_Test.jar"/>
+	<variable name="UTILITIES_CP" value="-cp $JVM_TEST_ROOT$$PATHSEP$functional$PATHSEP$VM_Test$PATHSEP$VM_Test.jar"/>
 	<variable name="UTILITIES_CACHE" value="-Xshareclasses:name=ShareClassesUtilities"/>	
 	<variable name="JAVAC_DIR" value="$JAVA_HOME$$PATHSEP$bin"/>
 	<variable name="CACHE_DIR" value="cacheDir=."/>

@@ -29,7 +29,7 @@
 	</description>
 
 	<!-- set properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/proxyFieldAccess" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/proxyFieldAccess" />
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src.dir" location="${PROJECT_ROOT}/src"/>
 

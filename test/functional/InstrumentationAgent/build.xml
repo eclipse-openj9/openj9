@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,8 +29,7 @@
 	</description>
 	
 	<!-- set global properties for this build -->
-	<property name="BUILD_ROOT" value="../" />
-	<property name="DEST" value="${BUILD_ROOT}/InstrumentationAgent" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/InstrumentationAgent" />
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />

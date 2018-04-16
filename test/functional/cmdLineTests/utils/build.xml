@@ -29,7 +29,7 @@
 	</description>
 
 	<!-- set properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/cmdLineTests/utils" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/utils" />
 	<property name="src" location="./src"/>
 	<property name="build" location="./bin"/>
 

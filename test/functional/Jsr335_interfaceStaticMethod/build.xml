@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2017 IBM Corp. and others
+  Copyright (c) 2016, 2018 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,14 +27,15 @@
 	<description>
 		Build JSR335 InterfaceStaticMethod Test
 	</description>
+	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- set global properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/Jsr335_interfaceStaticMethod" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/Jsr335_interfaceStaticMethod" />
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />
 	<property name="build" location="./bin" />
-	<property name="transformerListener" location="../Utils/src"/>
+	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -54,9 +55,9 @@
 			<src path="${src}"/>
 			<src path="${transformerListener}" />
 			<classpath>
-				<pathelement location="../TestConfig/lib/asm-all.jar" />
-				<pathelement location="../TestConfig/lib/testng.jar" />
-				<pathelement location="../TestConfig/lib/jcommander.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
 			</classpath>
 		</javac>
 	</target>
@@ -67,7 +68,7 @@
 		<java classname="org.openj9.test.jsr335.interfaceStaticMethod.SimpleInvokeStaticGenerator" failonerror="true" fork="true" logError="true"
 				jvm="${build.javaexecutable.java}">
 			<classpath>
-				<pathelement location="../TestConfig/lib/asm-all.jar" />
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
 				<pathelement location="${build}" />
 			</classpath>
 		</java>
@@ -90,15 +91,15 @@
 				<src path="${src}"/>
 				<src path="${transformerListener}" />
 				<classpath>
-					<pathelement location="../TestConfig/lib/asm-all.jar" />
-					<pathelement location="../TestConfig/lib/testng.jar" />
-					<pathelement location="../TestConfig/lib/jcommander.jar" />
+					<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+					<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+					<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
 					<pathelement location="${build}" />
 				</classpath>
 		</javac>
 	</target>
 
-	<target name="dist" depends="compile" description="generate the distribution">
+	<target name="dist" depends="compile,dist_functional" description="generate the distribution">
 		<jar jarfile="${DEST}/jsr335test_interfaceStaticMethod.jar" filesonly="true">
 			<fileset dir="${build}" />
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />

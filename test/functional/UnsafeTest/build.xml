@@ -27,16 +27,17 @@
 	<description>
 		Build OpenJ9 Unsafe Tests
 	</description>
+	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- set global properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/UnsafeTest" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/UnsafeTest" />
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />
 	<property name="src_80" location="./src_80" />
 	<property name="src_90" location="./src_90" />
 	<property name="build" location="./bin" />
-	<property name="transformerListener" location="../Utils/src"/>
+	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -57,7 +58,7 @@
 					<src path="${src_80}" />
 					<src path="${transformerListener}" />
 					<classpath>
-						<pathelement location="../TestConfig/lib/testng.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
 					</classpath>
 				</javac>
 			</then>
@@ -68,14 +69,14 @@
 					<src path="${transformerListener}" />
 					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED' />
 					<classpath>
-						<pathelement location="../TestConfig/lib/testng.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
 					</classpath>
 				</javac>
 			</else>
 		</if>
 	</target>
 
-	<target name="dist" depends="compile" description="generate the distribution">
+	<target name="dist" depends="compile,dist_functional" description="generate the distribution">
 		<jar jarfile="${DEST}/OpenJ9Unsafe.jar" filesonly="true">
 			<fileset dir="${build}" />
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />

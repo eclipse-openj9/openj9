@@ -27,17 +27,16 @@
 	<description>
 		Build JLM Tests
 	</description>
+	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- Set global properties for this build. -->
-	<property name="BUILD_ROOT" value="../" />
-	<property name="BUILDINFO_FSROOT" value="${BUILD_ROOT}" />
-	<property name="DEST" value="${BUILD_ROOT}/JLM_Tests" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/JLM_Tests" />
 
 	<property name="src" location="./src" />
 	<property name="src_80" location="./src_80" />
 	<property name="src_90" location="./src_90" />
 	<property name="build" location="./bin" />
-	<property name="transformerListener" location="../Utils/src"/>
+	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 
 	<target name="init">
 		<fail message="BUILD_ROOT must be defined." unless="BUILD_ROOT" />
@@ -60,9 +59,9 @@
 					<src path="${src_80}" />
 					<src path="${transformerListener}" />
 					<classpath>
-						<pathelement location="../TestConfig/lib/testng.jar" />
-						<pathelement location="../TestConfig/lib/jcommander.jar" />
-						<pathelement location="../TestConfig/lib/commons-exec.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-exec.jar" />
 					</classpath>
 				</javac>
 			</then>
@@ -82,16 +81,16 @@
 					<src path="${transformerListener}" />
 					<compilerarg line='${addExports}' />
 					<classpath>
-						<pathelement location="../TestConfig/lib/testng.jar" />
-						<pathelement location="../TestConfig/lib/jcommander.jar" />
-						<pathelement location="../TestConfig/lib/commons-exec.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-exec.jar" />
 					</classpath>
 				</javac>
 			</else>
 		</if>
 	</target>
 
-	<target name="dist" depends="compile" description="generate the distribution">
+	<target name="dist" depends="compile,dist_functional" description="generate the distribution">
 		<!-- Store all class files in jlm-tests.jar file. -->
 		<mkdir dir="${DEST}"/>
 		<jar jarfile="${DEST}/jlm_tests.jar" filesonly="true">
