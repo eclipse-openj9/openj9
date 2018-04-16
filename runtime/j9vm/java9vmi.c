@@ -917,6 +917,7 @@ allowReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J9Mod
  *     - A package already exists in another module for this class loader
  *     - Class loader is not a subclass of java.lang.ClassLoader
  *     - Module is an unnamed module
+ * @throws LayerInstantiationException if a module with name 'java.base' is defined by non-bootstrap classloader.
  *
  * @return If successful, returns a java.lang.reflect.Module object. Otherwise, returns NULL.
  */
@@ -940,7 +941,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jstring version, jstring location
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 	if (NULL == module) {
-		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, "module is null");
+		vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, J9NLS_VM_MODULE_IS_NULL);
 	} else {
 		j9object_t modObj = J9_JNI_UNWRAP_REFERENCE(module);
 
@@ -948,96 +949,91 @@ JVM_DefineModule(JNIEnv * env, jobject module, jstring version, jstring location
 		j9object_t moduleName = getModuleObjectName(currentThread, modObj);
 
 		if (NULL == moduleName) {
-			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "module is unnamed");
+			vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, J9NLS_VM_MODULE_IS_UNNAMED);
 		} else if (!isModuleNameValid(moduleName)) {
-			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "module name is invalid");
-		} else if (NULL != classLoader) {
-			BOOLEAN success = FALSE;
-			J9Module *j9mod = createModule(currentThread, modObj, classLoader, moduleName);
-			UDATA rc = ERRCODE_GENERAL_FAILURE;
+			vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, J9NLS_VM_MODULE_NAME_IS_INVALID);
+		} else if (NULL == classLoader) {
+			/* An exception should be pending if classLoader is null */
+			Assert_SC_true(NULL != currentThread->currentException);
+		} else {
+			char buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+			char *nameUTF = buf;
 
-			if (NULL != j9mod) {
+			PORT_ACCESS_FROM_VMC(currentThread);
+			nameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
+				currentThread, moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+			if (NULL == nameUTF) {
+				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			} else if ((classLoader != vm->systemClassLoader) && (0 == strcmp(nameUTF, JAVA_BASE_MODULE))) {
+				vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGLAYERINSTANTIATIONEXCEPTION, J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE);
+			} else {
+				J9Module *j9mod = createModule(currentThread, modObj, classLoader, moduleName);
+				if (NULL != j9mod) {
+					BOOLEAN success = FALSE;
+					UDATA rc = ERRCODE_GENERAL_FAILURE;
 #if J9VM_JAVA9_BUILD >= 156
-				rc = addModuleDefinition(currentThread, j9mod, packages, (U_32) numPackages, version);
+					rc = addModuleDefinition(currentThread, j9mod, packages, (U_32) numPackages, version);
 #else /* J9VM_JAVA9_BUILD >= 156 */
-				rc = addModuleDefinition(currentThread, j9mod, packages, version);
+					rc = addModuleDefinition(currentThread, j9mod, packages, version);
 #endif /* J9VM_JAVA9_BUILD >= 156 */
-
 #if J9VM_JAVA9_BUILD >= 148
-				j9mod->isOpen = isOpen;
+					j9mod->isOpen = isOpen;
 #else /* J9VM_JAVA9_BUILD >= 148 */
-				j9mod->isOpen = FALSE;
+					j9mod->isOpen = FALSE;
 #endif /* J9VM_JAVA9_BUILD >= 148 */
-
-				success = (ERRCODE_SUCCESS == rc);
-
-				if (!success) {
-					vmFuncs->freeJ9Module(vm, j9mod);
-					throwExceptionHelper(currentThread, rc);
-				} else {
-					PORT_ACCESS_FROM_VMC(currentThread);
-					char buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-					char *nameUTF = buf;
-
-					nameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-						currentThread, moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, buf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
-					if (NULL == nameUTF) {
-						success = FALSE;
-						goto nativeOOM;
-					}
-
-					/* For "java.base" module setting of jrt URL and patch paths is already done during startup. Avoid doing it here. */
-					if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
-						Trc_MODULE_definition(currentThread, nameUTF);
-						if (classLoader == vm->systemClassLoader) {
-							success = vmFuncs->setBootLoaderModulePatchPaths(vm, j9mod, (const char *)nameUTF);
-							if (FALSE == success) {
-								goto nativeOOM;
-							} else {
-								const char* moduleName = "openj9.sharedclasses";
-
-								if (0 == strcmp(nameUTF, moduleName)) {
-									J9VMDllLoadInfo *entry = FIND_DLL_TABLE_ENTRY(J9_SHARED_DLL_NAME);
-
-									if ((NULL == entry)
-										|| (J9_ARE_ALL_BITS_SET(entry->loadFlags, FAILED_TO_LOAD))
-									) {
-										j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL, J9_SHARED_DLL_NAME, moduleName);
+					success = (ERRCODE_SUCCESS == rc);
+					if (success) {
+						/* For "java.base" module setting of jrt URL and patch paths is already done during startup. Avoid doing it here. */
+						if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
+							Trc_MODULE_definition(currentThread, nameUTF);
+							if (classLoader == vm->systemClassLoader) {
+								success = vmFuncs->setBootLoaderModulePatchPaths(vm, j9mod, (const char *)nameUTF);
+								if (FALSE == success) {
+									vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+								} else {
+									const char* moduleName = "openj9.sharedclasses";
+	
+									if (0 == strcmp(nameUTF, moduleName)) {
+										J9VMDllLoadInfo *entry = FIND_DLL_TABLE_ENTRY(J9_SHARED_DLL_NAME);
+	
+										if ((NULL == entry)
+											|| (J9_ARE_ALL_BITS_SET(entry->loadFlags, FAILED_TO_LOAD))
+										) {
+											j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_FAILED_TO_LOAD_MODULE_REQUIRED_DLL, J9_SHARED_DLL_NAME, moduleName);
+										}
 									}
 								}
 							}
+						} else {
+							/* first module; must be "java.base" */
+							J9ClassWalkState classWalkState;
+							J9Class* clazz = NULL;
+	
+							Assert_SC_true(0 == strcmp(nameUTF, JAVA_BASE_MODULE));
+	
+							clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, vm->systemClassLoader);
+							while (NULL != clazz) {
+								Assert_SC_true(clazz->module == vm->javaBaseModule);
+								J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazz->classObject, modObj);
+								clazz = vmFuncs->allClassesNextDo(&classWalkState);
+							}
+							vmFuncs->allClassesEndDo(&classWalkState);
+							vm->runtimeFlags |= J9_RUNTIME_JAVA_BASE_MODULE_CREATED;
+							TRIGGER_J9HOOK_JAVA_BASE_LOADED(vm->hookInterface, currentThread);
+							Trc_MODULE_definition(currentThread, "java.base");
 						}
 					} else {
-						/* first module; must be "java.base" */
-						J9ClassWalkState classWalkState;
-						J9Class* clazz = NULL;
-
-						Assert_SC_true(0 == strcmp(nameUTF, JAVA_BASE_MODULE));
-
-						clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, vm->systemClassLoader);
-						while (NULL != clazz) {
-							Assert_SC_true(clazz->module == vm->javaBaseModule);
-							J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazz->classObject, modObj);
-							clazz = vmFuncs->allClassesNextDo(&classWalkState);
-						}
-						vmFuncs->allClassesEndDo(&classWalkState);
-						vm->runtimeFlags |= J9_RUNTIME_JAVA_BASE_MODULE_CREATED;
-						TRIGGER_J9HOOK_JAVA_BASE_LOADED(vm->hookInterface, currentThread);
-						Trc_MODULE_definition(currentThread, "java.base");
-					}
-nativeOOM:
-					if (nameUTF != buf) {
-						j9mem_free_memory(nameUTF);
+						throwExceptionHelper(currentThread, rc);
 					}
 					if (FALSE == success) {
 						vmFuncs->freeJ9Module(vm, j9mod);
-						vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+						Assert_SC_true(NULL != currentThread->currentException);
 					}
 				}
 			}
-		} else {
-			/* An exception should be pending if classLoader is null */
-			assert(NULL != currentThread->currentException);
+			if (nameUTF != buf) {
+				j9mem_free_memory(nameUTF);
+			}
 		}
 	}
 #if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)

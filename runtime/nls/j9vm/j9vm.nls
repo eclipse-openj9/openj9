@@ -1793,3 +1793,35 @@ J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.explanation=Class and nest host class were loa
 J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.system_action=The JVM will throw a java/lang/IllegalAccessError
 J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
 # END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_IS_NULL=Module is null.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_IS_NULL.explanation=Incoming module can't be NULL.
+J9NLS_VM_MODULE_IS_NULL.system_action=The JVM will throw a java/lang/NullPointerExceptions.
+J9NLS_VM_MODULE_IS_NULL.user_response=Don't pass a NULL module.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_IS_UNNAMED=Module is unnamed.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_IS_UNNAMED.explanation=Incoming module can't be unnamed.
+J9NLS_VM_MODULE_IS_UNNAMED.system_action=The JVM will throw a java/lang/IllegalArgumentExceptions.
+J9NLS_VM_MODULE_IS_UNNAMED.user_response=Don't pass a unnamed module.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_MODULE_NAME_IS_INVALID=Module name is invalid.
+# START NON-TRANSLATABLE
+J9NLS_VM_MODULE_NAME_IS_INVALID.explanation=Incoming module name is invalid.
+J9NLS_VM_MODULE_NAME_IS_INVALID.system_action=The JVM will throw a java/lang/IllegalArgumentExceptions.
+J9NLS_VM_MODULE_NAME_IS_INVALID.user_response=Don't pass a module with invalid name.
+# END NON-TRANSLATABLE
+
+# No arguments
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE=Only bootstrap classloader can define module java.base.
+# START NON-TRANSLATABLE
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.explanation=Non-bootstrap classloader can't define module java.base.
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.system_action=The JVM will throw a java/lang/LayerInstantiationException.
+J9NLS_VM_ONLY_BOOTCLASSLOADER_LOAD_MODULE_JAVABASE.user_response=Don't define module java.base.
+# END NON-TRANSLATABLE

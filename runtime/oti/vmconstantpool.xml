@@ -59,6 +59,7 @@
 	<classref name="java/lang/ThreadDeath"/>
 	<classref name="java/lang/IllegalAccessException"/>
 	<classref name="java/lang/IllegalArgumentException"/>
+	<classref name="java/lang/LayerInstantiationException" jcl="se9,se10,se11" flags="opt_module"/>
 	<classref name="java/lang/reflect/Method" flags="opt_reflect"/>
 	<classref name="java/lang/reflect/Field" flags="opt_reflect"/>
 	<classref name="java/lang/LinkageError"/>
