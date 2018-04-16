@@ -1839,7 +1839,7 @@ setNestmatesVerificationError(J9VMThread *vmThread, const char *nlsTemplate, UDA
  * @param clazz[in,out] class who's nest host is being acquired
  * @param canThrow[in] true if a verification error/exception can be set & thrown
  *
- * @returns the nest host claimed by the class or the class itself
+ * @returns the nest host claimed by the class if successfully loading and verified, and null otherwise
  */
 static J9Class *
 loadAndCheckNestHost(J9VMThread *vmThread, J9Class *clazz, BOOLEAN canThrow) {
@@ -1935,7 +1935,7 @@ loadAndCheckNestHost(J9VMThread *vmThread, J9Class *clazz, BOOLEAN canThrow) {
 		if (verified) {
 			clazz->nestHost = nestHost;
 		} else {
-			nestHost = clazz;
+			nestHost = NULL;
 		}
 	}
 
@@ -1958,11 +1958,10 @@ Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)
 	 * getNestHostImpl returns this.
 	 */
 	if (NULL == nestHost) {
-		/* If loadAndCheckNestHost can not successfully load & verify a class's
-		 * nest host, then it will return the class - as required by the
-		 * getNestHost spec.
-		 */
 		nestHost = loadAndCheckNestHost(currentThread, clazz, FALSE);
+		if (NULL == nestHost) {
+			nestHost = clazz;
+		}
 	}
 
 	j9object_t resultObject = J9VM_J9CLASS_TO_HEAPCLASS(nestHost);
@@ -1990,8 +1989,8 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 
 	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
 	J9Class *nestHost = clazz->nestHost;
-	J9ROMClass *romHostClass = nestHost->romClass;
-	U_16 nestMemberCount = romHostClass->nestMemberCount;
+	J9ROMClass *romHostClass = NULL;
+	U_16 nestMemberCount = 0;
 
 	jobject result = NULL;
 	j9object_t resultObject = NULL;
@@ -2000,14 +1999,16 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 
 	if (NULL == nestHost) {
 		/* If loadAndCheckNestHost can not successfully load & verify a class's
-		 * nest host and canThrow is true, then it will return the class and
-		 * set an exception.
+		 * nest host and canThrow is true, then it will return null and set an
+		 * exception.
 		 */
 		nestHost = loadAndCheckNestHost(currentThread, clazz, TRUE);
+		if (NULL == nestHost) {
+			goto _done;
+		}
 	}
-	if (NULL != currentThread->currentException) {
-		goto _done;
-	}
+	romHostClass = nestHost->romClass;
+	nestMemberCount = romHostClass->nestMemberCount;
 
 	/*  Grab the Class<?> class for result object size */
 	jlClass = J9VMJAVALANGCLASS(vm);
@@ -2048,10 +2049,9 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 			} else if (NULL == nestMember->nestHost) {
 				/* If loadAndCheckNestHost fails to set the nest member's nest
 				 * host (due to loading or verification error), then it sets an
-				 * ImcompatibleClassChangeError. The return value is not needed.
+				 * ImcompatibleClassChangeError and returns null.
 				 */
-				loadAndCheckNestHost(currentThread, nestMember, TRUE);
-				if (NULL != currentThread->currentException) {
+				if (NULL == loadAndCheckNestHost(currentThread, nestMember, TRUE)) {
 					goto _done;
 				}
 			}
