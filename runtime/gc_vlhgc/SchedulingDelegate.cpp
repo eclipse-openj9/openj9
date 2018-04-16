@@ -265,8 +265,8 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 		UDATA nonEdenSurvivorCount = copyForwardStats->_nonEdenSurvivorRegionCount;
 		
 		/* estimate how many more regions we would have needed to avoid abort */
-		Assert_MM_true( (0 == copyForwardStats->_scanBytesEden) || copyForwardStats->_aborted);
-		Assert_MM_true( (0 == copyForwardStats->_scanBytesNonEden) || copyForwardStats->_aborted);
+		Assert_MM_true( (0 == copyForwardStats->_scanBytesEden) || copyForwardStats->_aborted || (0 != copyForwardStats->_nonEvacuateRegionCount));
+		Assert_MM_true( (0 == copyForwardStats->_scanBytesNonEden) || copyForwardStats->_aborted || (0 != copyForwardStats->_nonEvacuateRegionCount));
 		edenSurvivorCount += (copyForwardStats->_scanBytesEden + regionSize - 1) / regionSize;
 		nonEdenSurvivorCount += (copyForwardStats->_scanBytesNonEden + regionSize - 1) / regionSize;
 
