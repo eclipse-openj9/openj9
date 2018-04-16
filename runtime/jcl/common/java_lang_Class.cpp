@@ -1792,6 +1792,15 @@ storePDobjectsHelper(J9VMThread* vmThread, J9Class* arrayClass, J9StackWalkState
 }
 
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
+/**
+ * Sets a nestmates-related verification error
+ *
+ * @param vmthread[in] the current vm thread
+ * @param nlsTemplate[in] nls error message template for the verification failure. Its parameters must be the nest member name and nest host name
+ * @param exceptionNumber[in] error or exception which should be set
+ * @param nestMemberName[in] name of the nest member class which fails to verify
+ * @param nestHostName[in] name of the nest host of the nest member class which fails to verify
+ */
 static void
 setNestmatesVerificationError(J9VMThread *vmThread, const char *nlsTemplate, UDATA exceptionNumber, J9UTF8 *nestMemberName, J9UTF8 *nestHostName)
 {
@@ -1901,12 +1910,11 @@ loadAndCheckNestHost(J9VMThread *vmThread, J9Class *clazz, BOOLEAN canThrow) {
 					nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8*);
 					if (J9UTF8_EQUALS(className, nestMemberName)) {
 						verified = TRUE;
+						break;
 					}
 				}
 
-				if (verified) {
-					clazz->nestHost = nestHost;
-				} else if (canThrow) {
+				if ((!verified) && (canThrow)) {
 					const char *nlsTemplate = j9nls_lookup_message(
 							J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 							J9NLS_JCL_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST,
@@ -1976,21 +1984,19 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
 
-	j9object_t resultObject = NULL;
-	jobject result = NULL;
-
-	/* The Class<?> class will be used for result object size */
-	J9Class *jlClass = NULL;
-	J9Class *arrayClass = NULL;
-
-	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
-	J9Class *nestHost = clazz->nestHost;
-	J9ROMClass *romHostClass = NULL;
-	U_16 nestMemberCount = 0;
-
 	PORT_ACCESS_FROM_VMC(currentThread);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
+	J9Class *nestHost = clazz->nestHost;
+	J9ROMClass *romHostClass = nestHost->romClass;
+	U_16 nestMemberCount = romHostClass->nestMemberCount;
+
+	jobject result = NULL;
+	j9object_t resultObject = NULL;
+	J9Class *jlClass = NULL;
+	J9Class *arrayClass = NULL;
 
 	if (NULL == nestHost) {
 		/* If loadAndCheckNestHost can not successfully load & verify a class's
@@ -2002,9 +2008,6 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 	if (NULL != currentThread->currentException) {
 		goto _done;
 	}
-
-	romHostClass = nestHost->romClass;
-	nestMemberCount = romHostClass->nestMemberCount;
 
 	/*  Grab the Class<?> class for result object size */
 	jlClass = J9VMJAVALANGCLASS(vm);
