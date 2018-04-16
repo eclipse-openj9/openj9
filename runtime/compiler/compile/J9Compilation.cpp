@@ -531,7 +531,7 @@ J9::Compilation::isJProfilingCompilation()
 int32_t
 J9::Compilation::canAllocateInlineOnStack(TR::Node* node, TR_OpaqueClassBlock* &classInfo)
    {
-   if (self()->compileRelocatableCode() || self()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+   if (self()->compileRelocatableCode())
       return -1;
 
    if (node->getOpCodeValue() == TR::New)
