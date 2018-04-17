@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corp. and others
+ * Copyright (c) 2008, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,18 +91,19 @@ public class LockInfo {
 	 * Returns a {@code LockInfo} object represented by the given
 	 * {@code CompositeData}. The given {@code CompositeData} must contain the
 	 * following attributes: <blockquote>
-	 * <table border summary="The attributes and the types the given CompositeData contains">
+	 * <table>
+	 * <caption>The attributes and the types the given CompositeData contains</caption>
 	 * <tr>
-	 * <th align=left>Attribute Name</th>
-	 * <th align=left>Type</th>
+	 * <th style="float:left">Attribute Name</th>
+	 * <th style="float:left">Type</th>
 	 * </tr>
 	 * <tr>
 	 * <td>className</td>
-	 * <td><tt>java.lang.String</tt></td>
+	 * <td><code>java.lang.String</code></td>
 	 * </tr>
 	 * <tr>
 	 * <td>identityHashCode</td>
-	 * <td><tt>java.lang.Integer</tt></td>
+	 * <td><code>java.lang.Integer</code></td>
 	 * </tr>
 	 * </table>
 	 * </blockquote>
@@ -145,7 +146,7 @@ public class LockInfo {
 	 * The string will hold both the name of the lock object's class and it's
 	 * identity hash code expressed as an unsigned hexadecimal. i.e.<br>
 	 * <p>
-	 * {@link #getClassName()}&nbsp;+&nbsp;&commat;&nbsp;+&nbsp;Integer.toHexString({@link #getIdentityHashCode()})
+	 * {@link #getClassName()} &nbsp;+&nbsp;&#64;&nbsp;+&nbsp;Integer.toHexString({@link #getIdentityHashCode()})
 	 * </p>
 	 *
 	 * @return a string containing the key details of the lock

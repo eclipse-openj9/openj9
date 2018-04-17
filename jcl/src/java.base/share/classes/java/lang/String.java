@@ -138,7 +138,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		 *			  an Object to compare
 		 * @param o2
 		 *			  an Object to compare
-		 * @return an int < 0 if object1 is less than object2, 0 if they are equal, and > 0 if object1 is greater
+		 * @return an {@code int < 0} if object1 is less than object2, 0 if they are equal, and {@code > 0} if object1 is greater
 		 *
 		 * @exception ClassCastException
 		 *					when objects are not the correct type
@@ -505,7 +505,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *			  the number of bytes to convert
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when <code>length < 0, start < 0</code> or <code>start + length > data.length</code>
+	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
 	 *				when data is null
 	 *
@@ -585,7 +585,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *			  the number of bytes to convert
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when <code>length < 0, start < 0</code> or <code>start + length > data.length</code>
+	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
 	 *				when data is null
 	 *
@@ -670,7 +670,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *			  the encoding
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when <code>length < 0, start < 0</code> or <code>start + length > data.length</code>
+	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws UnsupportedEncodingException
 	 *				when encoding is not supported
 	 * @throws NullPointerException
@@ -912,7 +912,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *			  the number of characters to use
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when <code>length < 0, start < 0</code> or <code>start + length > data.length</code>
+	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
 	 *				when data is null
 	 */
@@ -1927,7 +1927,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @return the character at the index
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when <code>index < 0</code> or <code>index >= length()</code>
+	 *				when {@code index < 0} or {@code index >= length()}
 	 */
 	/*[IF]*/
 	// TODO : Is it better to throw the AIOOB here implicitly and catch and rethrow?
@@ -2071,7 +2071,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *
 	 * @param string
 	 *			  a String
-	 * @return an int < 0 if this String is less than the specified String, 0 if they are equal, and > 0 if this String is greater
+	 * @return an {@code int < 0} if this String is less than the specified String, 0 if they are equal, and {@code > 0} if this String is greater
 	 */
 	public int compareToIgnoreCase(String string) {
 		String s1 = this;
@@ -2225,7 +2225,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @return the new String
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				if <code>length < 0, start < 0</code> or <code>start + length > data.length</code>
+	 *				if {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
 	 *				if data is null
 	 */
@@ -2505,7 +2505,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @throws NullPointerException
 	 *				when data is null
 	 * @throws IndexOutOfBoundsException
-	 *				when <code>start < 0, end > length(), index < 0, end - start > data.length - index</code>
+	 *				when {@code start < 0, end > length(), index < 0, end - start > data.length - index}
 	 *
 	 * @deprecated Use getBytes() or getBytes(String)
 	 */
@@ -2607,8 +2607,8 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *			  the starting offset in the character array
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when <code>start < 0, end > length(),
-	 * 				start > end, index < 0, end - start > buffer.length - index</code>
+	 *				when {@code start < 0, end > length(),
+	 * 				start > end, index < 0, end - start > buffer.length - index}
 	 * @throws NullPointerException
 	 *				when buffer is null
 	 */
@@ -3449,7 +3449,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @return a new String containing the characters from start to the end of the string
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when <code>start < 0</code> or <code>start > length()</code>
+	 *				when {@code start < 0} or {@code start > length()}
 	 */
 	public String substring(int start) {
 		if (start == 0) {
@@ -3480,7 +3480,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @return a String containing the characters from start to end - 1
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when <code>start < 0, start > end</code> or <code>end > length()</code>
+	 *				when {@code start < 0, start > end} or {@code end > length()}
 	 */
 	public String substring(int start, int end) {
 		int len = lengthInternal();
@@ -4084,7 +4084,7 @@ written authorization of the copyright holder.
 	/**
 	 * Removes white space characters from the beginning and end of the string.
 	 *
-	 * @return a String with characters <code><= \\u0020</code> removed from the beginning and the end
+	 * @return a String with characters {@code <= \\u0020} removed from the beginning and the end
 	 */
 	public String trim() {
 		int start = 0;
@@ -4153,7 +4153,7 @@ written authorization of the copyright holder.
 	 * @return the String
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when <code>length < 0, start < 0</code> or <code>start + length > data.length</code>
+	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
 	 *				when data is null
 	 */
@@ -5129,7 +5129,7 @@ written authorization of the copyright holder.
 	 *			  the Charset to use
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when <code>length < 0, start < 0</code> or <code>start + length > data.length</code>
+	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
 	 *				when data is null
 	 *

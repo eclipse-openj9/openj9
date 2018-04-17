@@ -30,7 +30,7 @@ package java.lang.management;
  * clients.
  * </p>
  * <p>
- * Accessing this <code>MXBean</code> can be done in one of three ways. <br/>
+ * Accessing this <code>MXBean</code> can be done in one of three ways.
  * <ol>
  * <li>Invoking the static {@link ManagementFactory#getThreadMXBean} method.
  * </li>
@@ -40,8 +40,7 @@ package java.lang.management;
  * &quot;java.lang:type=Threading&quot; for the value of the second parameter.
  * </li>
  * </ol>
- * </p>
- * 
+ *  
  * @since 1.5
  */
 public interface ThreadMXBean extends PlatformManagedObject {

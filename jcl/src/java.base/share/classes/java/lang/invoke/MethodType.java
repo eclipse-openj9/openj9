@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -318,7 +318,7 @@ public final class MethodType implements Serializable {
 	 * <li>(II)V - method taking two ints and return void</li>
 	 * <li>(I)Ljava/lang/Integer; - method taking an int and returning an Integer</li>
 	 * <li>([I)I - method taking an array of ints and returning an int</li>
-	 * <ul>
+	 * </ul>
 	 * 
 	 * @param methodDescriptor - the method descriptor string 
 	 * @param loader - the ClassLoader to be used or null for System ClassLoader 
