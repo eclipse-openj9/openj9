@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2004, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="JEP178 static linking tests" timeout="300">
+ <test id="jep178 testing static linking">
+  <command>$TESTJEP178_STATIC$ -jvmpath:$JVMLIBPATH$ -classpath:$STATLNKJAR$ $JVM_OPTIONS$ $JEPTESTCLASS$</command>
+  <output type="required" regex="no">[MSG] Reached OnLoad: JNI_OnLoad_testlibA [statically]</output>
+  <output type="required" regex="no">[MSG] Reached OnLoad: JNI_OnLoad_testlibB [statically]</output>
+  <output type="required" regex="no">[MSG] Reached native fooImpl() [statically]</output>
+  <output type="required" regex="no">[MSG] Reached native barImpl() [statically]</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload: JNI_OnUnload_testlibA [statically]</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload: JNI_OnUnload_testlibB [statically]</output>
+  <output type="failure" regex="no">[ERR]</output>
+  <output type="failure" regex="no">[dynamically]</output>
+  <output type="success" regex="no">[MSG] Test jep178 passed with error code: 0</output>
+ </test>
+
+ <test id="jep178 testing dynamic linking">
+  <command>$TESTJEP178_DYNAMIC$ -jvmpath:$JVMLIBPATH$ -classpath:$STATLNKJAR$ $JVM_OPTIONS$ $JEPTESTCLASS$</command>
+  <output type="required" regex="no">[MSG] Reached OnLoad (testlibA): JNI_OnLoad [dynamically]</output>
+  <output type="required" regex="no">[MSG] Reached OnLoad (testlibB): JNI_OnLoad [dynamically]</output>
+  <output type="required" regex="no">[MSG] Reached native fooImpl() [dynamically]</output>
+  <output type="required" regex="no">[MSG] Reached native barImpl() [dynamically]</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload (testlibA): JNI_OnUnload [dynamically]</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload (testlibB): JNI_OnUnload [dynamically]</output>
+  <output type="failure" regex="no">[ERR]</output>
+  <output type="failure" regex="no">[statically]</output>
+  <output type="success" regex="no">[MSG] Test jep178 passed with error code: 0</output>
+ </test>
+
+ <test id="jep178 native (jvmti) agent testing static linking at startup (OnLoad)">
+  <command>$TESTJEP178_STATIC$ -agentlib:$AGENTLIBA$ -agentlib:$AGENTLIBB$ -jvmpath:$JVMLIBPATH$ -Xbootclasspath/a:$ATTACHTOOLSJAR$ -classpath:$STATLNKJAR$ $JVM_OPTIONS$ $JVMTITESTCLASS$</command>
+  <output type="required" regex="no">[MSG] Reached OnLoad: Agent_OnLoad_testjvmtiA [statically]</output>
+  <output type="required" regex="no">[MSG] Reached OnLoad: Agent_OnLoad_testjvmtiB [statically]</output>
+  <output type="required" regex="no">[MSG] Testing jep178 for native agents at JVM startup (OnLoad)</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload: Agent_OnUnload_testjvmtiB [statically]</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload: Agent_OnUnload_testjvmtiA [statically]</output>
+  <output type="failure" regex="no">[ERR]</output>
+  <output type="failure" regex="no">[dynamically]</output>
+  <output type="success" regex="no">[MSG] Test jep178 passed with error code: 0</output>
+ </test>
+
+ <test id="jep178 native (jvmti) agent testing static linking during live (OnAttach)">
+  <command>$TESTJEP178_STATIC$ -jvmpath:$JVMLIBPATH$ -Xbootclasspath/a:$ATTACHTOOLSJAR$ -classpath:$STATLNKJAR$ $JVM_OPTIONS$ $JVMTITESTCLASS$ --attach</command>
+  <output type="required" regex="no">[MSG] Attaching native agent testjvmtiA</output>
+  <output type="required" regex="no">[MSG] Reached OnAttach: Agent_OnAttach_testjvmtiA [statically]</output>
+  <output type="required" regex="no">[MSG] Attaching native agent testjvmtiB</output>
+  <output type="required" regex="no">[MSG] Reached OnAttach: Agent_OnAttach_testjvmtiB [statically]</output>
+  <output type="required" regex="no">[MSG] Testing jep178 for native agents during Live phase (OnAttach)</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload: Agent_OnUnload_testjvmtiA [statically]</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload: Agent_OnUnload_testjvmtiB [statically]</output>
+  <output type="failure" regex="no">[ERR]</output>
+  <output type="failure" regex="no">[dynamically]</output>
+  <output type="success" regex="no">[MSG] Test jep178 passed with error code: 0</output>
+ </test>
+
+ <test id="jep178 native (jvmti) agent testing dynamic linking at startup (OnLoad)">
+  <command>$TESTJEP178_DYNAMIC$ -agentlib:$AGENTLIBA$ -agentlib:$AGENTLIBB$ -jvmpath:$JVMLIBPATH$ -Xbootclasspath/a:$ATTACHTOOLSJAR$ -classpath:$STATLNKJAR$ $JVM_OPTIONS$ $JVMTITESTCLASS$</command>
+  <output type="required" regex="no">[MSG] Reached OnLoad (testjvmtiA): Agent_OnLoad [dynamically]</output>
+  <output type="required" regex="no">[MSG] Reached OnLoad (testjvmtiB): Agent_OnLoad [dynamically]</output>
+  <output type="required" regex="no">[MSG] Testing jep178 for native agents at JVM startup (OnLoad)</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload (testjvmtiA): Agent_OnUnload [dynamically]</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload (testjvmtiB): Agent_OnUnload [dynamically]</output>
+  <output type="failure" regex="no">[ERR]</output>
+  <output type="failure" regex="no">[statically]</output>
+  <output type="success" regex="no">[MSG] Test jep178 passed with error code: 0</output>
+ </test>
+
+ <test id="jep178 native (jvmti) agent testing dynamic linking during live (OnAttach)">
+  <command>$TESTJEP178_DYNAMIC$ -jvmpath:$JVMLIBPATH$ -Xbootclasspath/a:$ATTACHTOOLSJAR$ -classpath:$STATLNKJAR$ $JVM_OPTIONS$ $JVMTITESTCLASS$ --attach</command>
+  <output type="required" regex="no">[MSG] Attaching native agent testjvmtiA</output>
+  <output type="required" regex="no">[MSG] Reached OnLoad (testjvmtiA): Agent_OnAttach [dynamically]</output>
+  <output type="required" regex="no">[MSG] Attaching native agent testjvmtiB</output>
+  <output type="required" regex="no">[MSG] Reached OnLoad (testjvmtiB): Agent_OnAttach [dynamically]</output>
+  <output type="required" regex="no">[MSG] Testing jep178 for native agents during Live phase (OnAttach)</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload (testjvmtiA): Agent_OnUnload [dynamically]</output>
+  <output type="required" regex="no">[MSG] Reached OnUnload (testjvmtiB): Agent_OnUnload [dynamically]</output>
+  <output type="failure" regex="no">[ERR]</output>
+  <output type="failure" regex="no">[statically]</output>
+  <output type="success" regex="no">[MSG] Test jep178 passed with error code: 0</output>
+ </test>
+</suite>

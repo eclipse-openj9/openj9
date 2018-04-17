@@ -1,0 +1,70 @@
+*******************************************************************************
+*  Copyright (c) 2001, 2018 IBM Corp. and others
+*
+*  This program and the accompanying materials are made available under
+*  the terms of the Eclipse Public License 2.0 which accompanies this
+*  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+*  or the Apache License, Version 2.0 which accompanies this distribution and
+*  is available at https://www.apache.org/licenses/LICENSE-2.0.
+*
+*  This Source Code may also be made available under the following
+*  Secondary Licenses when the conditions for such availability set
+*  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+*  General Public License, version 2 with the GNU Classpath
+*  Exception [1] and GNU General Public License, version 2 with the
+*  OpenJDK Assembly Exception [2].
+*
+*  [1] https://www.gnu.org/software/classpath/license.html
+*  [2] http://openjdk.java.net/legal/assembly-exception.html
+*
+*  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+*******************************************************************************
+
+# This generates alignment test material
+# see CMVC 196510 for more details
+
+# Compile the class file generator
+javac -cp asm-all-4.0.jar *.java
+
+# generate the test class files
+java -cp asm-all-4.0.jar:. IntLongObjectAlignmentTestGenerator
+
+# package
+jar cfe ../alignment.jar ijo_extends_level_2_I.class *.class
+
+--------------------------------------------------------------
+
+# How to create the object_*.jar files
+
+The object_*.jar contains a copy of the Object class that is identical
+to the original one but it has extra private fields. i means one int var,
+ii means 2 int vars, iii means 3 int vars, and d means a double. You can
+create these files using CreateTestObjectJar.java.
+
+e.g.,:
+
+$ javac -cp asm-all-4.0.jar CreateTestObjectJar.java
+$ java -cp asm-all-4.0.jar:. CreateTestObjectJar /tmp/ ii
+$ unzip /tmp/object_ii.jar
+Archive:  /tmp/object_ii.jar
+  inflating: java/lang/Object.class
+$ javap -p java/lang/Object.class
+Compiled from "Object.java"
+public class java.lang.Object {
+  private int i;                 <== extra private field
+  private int ii;                <== extra private field
+  public java.lang.Object();
+  protected java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+  public boolean equals(java.lang.Object);
+  protected void finalize() throws java.lang.Throwable;
+  public final native java.lang.Class<? extends java.lang.Object> getClass();
+  public int hashCode();
+  public final native void notify();
+  public final native void notifyAll();
+  public java.lang.String toString();
+  public final void wait() throws java.lang.InterruptedException;
+  public final void wait(long) throws java.lang.InterruptedException;
+  public final native void wait(long, int) throws java.lang.InterruptedException;
+  private java.lang.Object newInstancePrototype(java.lang.Class);
+}
+

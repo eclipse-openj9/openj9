@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2016, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+<suite id="Shared Classes DataCaching Helper API tests">
+
+    <variable name="TESTCACHENAME" value="testCache"/>
+
+	<!-- Used to set which mode the test cases are run in -->
+	<variable name="currentMode" value="-Xshareclasses:reset,name=$TESTCACHENAME$"/>
+
+	<variable name="mode204" value="-Xshareclasses:reset,name=$TESTCACHENAME$"/>
+	<variable name="mode205" value="-Xshareclasses:reset,name=$TESTCACHENAME$,noClasspathCacheing"/>
+	<variable name="mode208" value="-Xshareclasses:reset,name=$TESTCACHENAME$,noaot"/>
+	<variable name="mode209" value="-Xaot:forceAOT,count=0 -Xshareclasses:reset,name=$TESTCACHENAME$"/>
+	<variable name="mode210" value="-Xits0 -Xshareclasses:reset,name=$TESTCACHENAME$"/>
+	<variable name="mode211" value="-Xits2000 -Xshareclasses:reset,name=$TESTCACHENAME$"/>
+	<variable name="mode212" value="-Xits50000 -Xshareclasses:reset,name=$TESTCACHENAME$"/>
+	<variable name="mode213" value="-Xshareclasses:reset,name=$TESTCACHENAME$,noReduceStoreContention"/>
+	<variable name="mode214" value="-Xshareclasses:reset,name=$TESTCACHENAME$,modified=context1"/>
+	
+	<variable name="currentMode" value="$mode204$"/>
+	
+	<!-- set currentMode variable depending on the value of loopIndex -->
+	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
+	<if testVariable="SCMODE" testValue="205" resultVariable="currentMode" resultValue="$mode205$"/>
+	<if testVariable="SCMODE" testValue="206" resultVariable="currentMode" resultValue="$mode206$"/>
+	<if testVariable="SCMODE" testValue="208" resultVariable="currentMode" resultValue="$mode208$"/>
+	<if testVariable="SCMODE" testValue="209" resultVariable="currentMode" resultValue="$mode209$"/>
+	<if testVariable="SCMODE" testValue="210" resultVariable="currentMode" resultValue="$mode210$"/>
+	<if testVariable="SCMODE" testValue="211" resultVariable="currentMode" resultValue="$mode211$"/>
+	<if testVariable="SCMODE" testValue="212" resultVariable="currentMode" resultValue="$mode212$"/>
+	<if testVariable="SCMODE" testValue="213" resultVariable="currentMode" resultValue="$mode213$"/>
+	<if testVariable="SCMODE" testValue="214" resultVariable="currentMode" resultValue="$mode214$"/>
+
+	<echo value=" "/>
+	<echo value="#######################################################"/>
+	<echo value="Running tests with command line options: $currentMode$"/>
+	<echo value=" "/>
+	<exec command="$JAVA_EXE$ -version" quiet="false"/>
+	
+	<variable name="BOOTCP" value=" "/>
+	<variable name="SECURITY_ON" value="-Djava.security.policy==java.good.policy -Djava.security.manager"/>
+	<variable name="SECURITY_ON_READONLY_BADPOLICY" value="-Djava.security.policy==java.bad.readonly.policy -Djava.security.manager"/>
+	<variable name="SECURITY_ON_WRITEONLY_BADPOLICY" value="-Djava.security.policy==java.bad.writeonly.policy -Djava.security.manager"/>
+	
+	<exec command="$JAVA_EXE$ -Xshareclasses:destroyAll" quiet="false"/>
+	
+	<test id="check the datacaching classloader is ok" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCP$ -classpath . apitesting.datahelper.DataCachingTest01</command>
+		<output type="success" caseSensitive="yes" regex="no">test successful</output>
+		<output type="failure" caseSensitive="no" regex="no">failed</output>
+		<output type="failure" caseSensitive="no" regex="no">exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="simple caching of a resource" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -classpath . apitesting.datahelper.DataCachingTest02</command>
+		<output type="success" caseSensitive="yes" regex="no">test successful</output>
+		<output type="failure" caseSensitive="no" regex="no">failed</output>
+		<output type="failure" caseSensitive="no" regex="no">exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="simple caching of a resource, with security on" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SECURITY_ON$ $BOOTCP$ -classpath . apitesting.datahelper.DataCachingTest02</command>
+		<output type="success" caseSensitive="yes" regex="no">test successful</output>
+		<output type="failure" caseSensitive="no" regex="no">failed</output>
+		<output type="failure" caseSensitive="no" regex="no">exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="simple caching of a resource, with security on but readonly policy" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verboseHelper $BOOTCP$ -classpath . $SECURITY_ON_READONLY_BADPOLICY$ apitesting.datahelper.DataCachingTest02</command>
+		<output type="success" caseSensitive="yes" regex="no">storeSharedData('fileone.txt',...) has failed!</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="simple caching of a resource, with security on but writeonly policy" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verboseHelper $BOOTCP$ -classpath . $SECURITY_ON_WRITEONLY_BADPOLICY$ apitesting.datahelper.DataCachingTest02</command>
+		<output type="success" caseSensitive="yes" regex="no">should have found the resource but no data retrieved</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="caching of multiple resources" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCP$ -classpath . apitesting.datahelper.DataCachingTest03</command>
+		<output type="success" caseSensitive="yes" regex="no">test successful</output>
+		<output type="failure" caseSensitive="no" regex="no">failed</output>
+		<output type="failure" caseSensitive="no" regex="no">exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="caching of multiple resources, security on" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $SECURITY_ON$ $BOOTCP$ -classpath . apitesting.datahelper.DataCachingTest03</command>
+		<output type="success" caseSensitive="yes" regex="no">test successful</output>
+		<output type="failure" caseSensitive="no" regex="no">failed</output>
+		<output type="failure" caseSensitive="no" regex="no">exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="marking cache entries stale for bytedata resources" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCP$ -classpath . apitesting.datahelper.DataCachingTest04</command>
+		<output type="success" caseSensitive="yes" regex="no">test successful</output>
+		<output type="failure" caseSensitive="no" regex="no">failed</output>
+		<output type="failure" caseSensitive="no" regex="no">exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="more stale marking" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCP$ -classpath . apitesting.datahelper.DataCachingTest05</command>
+		<output type="success" caseSensitive="yes" regex="no">test successful</output>
+		<output type="failure" caseSensitive="no" regex="no">failed</output>
+		<output type="failure" caseSensitive="no" regex="no">exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="using same token for multiple resources" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCP$ -classpath . apitesting.datahelper.DataCachingTest06</command>
+		<output type="success" caseSensitive="yes" regex="no">test successful</output>
+		<output type="failure" caseSensitive="no" regex="no">failed</output>
+		<output type="failure" caseSensitive="no" regex="no">exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<exec command="$JAVA_EXE$ -Xshareclasses:destroyAll" quiet="false"/>
+
+</suite>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2016, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="jsr292_Suite_SE80" parallel="none" verbose="2">
+	<listeners>
+		<listener class-name="org.openj9.test.util.IncludeExcludeTestAnnotationTransformer"/>
+	</listeners>
+	<test name="jsr292Test">
+		<classes>
+			<class name="com.ibm.j9.jsr292.AdaptorTests"/>
+			<class name="com.ibm.j9.jsr292.LookupInTests"/>
+			<class name="com.ibm.j9.jsr292.LookupAPITests_Find"/>
+			<class name="com.ibm.j9.jsr292.LookupAPITests_Unreflect"/>
+			<class name="com.ibm.j9.jsr292.Crash"/>
+			<class name="com.ibm.j9.jsr292.Catch"/>
+			<class name="com.ibm.j9.jsr292.MethodTypeTests"/>
+			<class name="com.ibm.j9.jsr292.MethodHandleProxiesTest"/>
+			<class name="com.ibm.j9.jsr292.MethodHandleTest"/>
+			<class name="com.ibm.j9.jsr292.AsTypeTest"/>
+			<class name="com.ibm.j9.jsr292.ConstantCallSiteTest"/>
+			<class name="com.ibm.j9.jsr292.VolatileCallSiteTest"/>
+			<class name="com.ibm.j9.jsr292.MutableCallSiteTest"/>
+			<class name="com.ibm.j9.jsr292.SwitchPointTest"/>
+			<class name="com.ibm.j9.jsr292.JSR292_MultiThreadedTests"/>
+			<class name="com.ibm.j9.jsr292.LookupAPITests_Bind"/>
+			<class name="com.ibm.j9.jsr292.InsertArgumentsTests"/>
+			<class name="com.ibm.j9.jsr292.PermuteTest"/>
+			<class name="com.ibm.j9.jsr292.FoldArgumentsTest"/>
+			<class name="com.ibm.j9.jsr292.GuardTest"/>
+			<class name="com.ibm.j9.jsr292.FilterArgumentsTest"/>
+			<class name="com.ibm.j9.jsr292.RestrictReceiverTest"/>
+		</classes>
+	</test>
+
+<!--
+	The following tests are used to check whether some specific methods are correctly compiled by JIT.
+	If the JIT is not ON or with count=0 parameter, then there is no point to enable these tests.
+-->
+	<test name="jsr292Test_optional">
+		<classes>
+			<class name="com.ibm.j9.jsr292.VirtualHandleTest"/>
+			<class name="com.ibm.j9.jsr292.ConstructorHandleTest"/>
+			<class name="com.ibm.j9.jsr292.ReceiverBoundHandleTest"/>
+			<class name="com.ibm.j9.jsr292.InterfaceHandleTest"/>
+			<class name="com.ibm.j9.jsr292.DirectHandleTest"/>
+		</classes>
+	</test>
+
+	<test name="jsr292BootstrapTest">
+		<classes>
+			<class name="com.ibm.j9.jsr292.bootstrap.Test_CallerSensitive"/>
+		</classes>
+	</test>
+	
+	<test name="jsr292_InDynTest">
+		<classes>
+			<class name="com.ibm.j9.jsr292.indyn.IndyTest"/>
+			<class name="com.ibm.j9.jsr292.indyn.ComplexIndyTest"/>
+		</classes>
+	</test>
+</suite>
