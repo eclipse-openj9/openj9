@@ -33,6 +33,8 @@ openjdk_branch:
 #========================================#
 # Miscellaneous settings
 #========================================#
+specs: 'linux_ppc-64_cmprssptrs_le,linux_390-64_cmprssptrs,aix_ppc-64_cmprssptrs'
+sdks: '8,9'
 jdk_image_dir:
   8: 'j2sdk-image'
   9: 'jdk'

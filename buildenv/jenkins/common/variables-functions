@@ -263,6 +263,34 @@ def set_slack_channel() {
     SLACK_CHANNEL = VARIABLES.slack_channel
 }
 
+def parse_job_name() {
+    SPEC = ''
+    SDK_VERSION = ''
+
+    def SPECS = VARIABLES.specs.tokenize(',')
+
+    for (_SPEC in SPECS) {
+        if (JOB_NAME.contains(_SPEC)) {
+            SPEC = _SPEC
+            echo "SPEC: ${SPEC}"
+            break
+        }
+    }
+
+    def SDKS = VARIABLES.sdks.tokenize(',')
+
+    for (_SDK in SDKS) {
+        if (JOB_NAME.contains("JDK${_SDK}")) {
+            SDK_VERSION = _SDK
+            echo "SDK_VERSION: ${SDK_VERSION}"
+            break
+        }
+    }
+
+    if ((SPEC == '') || (SDK_VERSION == '')) {
+        error "Unable to parse JOB_NAME: '${JOB_NAME}' to determine SPEC: '${SPEC}' and SDK_VERSION: '${SDK_VERSION}'"
+    }
+}
 /*
 * Sets the names of the downstream build & test jobs
 */
@@ -304,6 +332,7 @@ def set_job_variables(job_type) {
             break
         case "pipeline":
             // set variables for a pipeline job
+            parse_job_name()
             set_repos_variables()
             set_test_targets()
             set_slack_channel()
