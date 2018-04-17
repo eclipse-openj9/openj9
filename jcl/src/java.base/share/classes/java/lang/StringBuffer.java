@@ -316,8 +316,8 @@ public synchronized StringBuffer append (char[] chars) {
  * @param		length	the number of characters
  * @return		this StringBuffer
  *
- * @exception	IndexOutOfBoundsException when <code>length < 0, start < 0</code> or
- *				<code>start + length > chars.length</code>
+ * @exception	IndexOutOfBoundsException when {@code length < 0, start < 0} or
+ *				{@code start + length > chars.length}
  * @exception	NullPointerException when chars is null
  */
 public synchronized StringBuffer append (char chars[], int start, int length) {
@@ -774,8 +774,8 @@ int capacityInternal() {
  * @param 		index	the zero-based index in this StringBuffer
  * @return		the character at the index
  *
- * @exception	IndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index >= length()</code>
+ * @exception	IndexOutOfBoundsException
+ *              If {@code index < 0} or {@code index >= length()}
  */
 public synchronized char charAt(int index) {
 	int currentLength = lengthInternalUnsynchronized();
@@ -803,8 +803,8 @@ public synchronized char charAt(int index) {
  * @param		end	the offset one past the last character
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>start < 0, start > end</code> or
- *				<code>end > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code start < 0, start > end} or
+ *				{@code end > length()}
  */
 public synchronized StringBuffer delete(int start, int end) {
 	int currentLength = lengthInternalUnsynchronized();
@@ -901,8 +901,8 @@ public synchronized StringBuffer delete(int start, int end) {
  * @param		location	the offset of the character to delete
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>location < 0</code> or
- *				<code>location >= length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code location < 0} or
+ *				{@code location >= length()}
  */
 public synchronized StringBuffer deleteCharAt(int location) {
 	int currentLength = lengthInternalUnsynchronized();
@@ -974,8 +974,8 @@ private void ensureCapacityImpl(int min) {
  * @param		buffer	the destination character array
  * @param		index	the starting offset in the character array
  *
- * @exception	IndexOutOfBoundsException when <code>start < 0, end > length(),
- *				start > end, index < 0, end - start > buffer.length - index</code>
+ * @exception	IndexOutOfBoundsException when {@code start < 0, end > length(),
+ *				start > end, index < 0, end - start > buffer.length - index}
  * @exception	NullPointerException when buffer is null
  */
 public synchronized void getChars(int start, int end, char[] buffer, int index) {
@@ -1019,8 +1019,8 @@ public synchronized void getChars(int start, int end, char[] buffer, int index) 
  * @param		chars	the character array to insert
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index > length()}
  * @exception	NullPointerException when chars is null
  */
 public synchronized StringBuffer insert(int index, char[] chars) {
@@ -1074,9 +1074,9 @@ public synchronized StringBuffer insert(int index, char[] chars) {
  * @param		length	the number of characters
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>length < 0, start < 0,</code>
- *				<code>start + length > chars.length, index < 0</code> or
- *				<code>index > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code length < 0, start < 0,
+ *				start + length > chars.length, index < 0} or
+ *				{@code index > length()}
  * @exception	NullPointerException when chars is null
  */
 public synchronized StringBuffer insert(int index, char[] chars, int start, int length) {
@@ -1170,8 +1170,8 @@ synchronized StringBuffer insert(int index, char[] chars, int start, int length,
  * @param		ch	the character to insert
  * @return		this StringBuffer
  *
- * @exception	IndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index > length()</code>
+ * @exception	IndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index > length()}
  */
 public synchronized StringBuffer insert(int index, char ch) {
 	int currentLength = lengthInternalUnsynchronized();
@@ -1229,8 +1229,8 @@ public synchronized StringBuffer insert(int index, char ch) {
  * @param		value	the double to insert
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index > length()}
  */
 public StringBuffer insert(int index, double value) {
 	return insert(index, String.valueOf(value));
@@ -1244,8 +1244,8 @@ public StringBuffer insert(int index, double value) {
  * @param		value	the float to insert
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index > length()}
  */
 public StringBuffer insert(int index, float value) {
 	return insert(index, String.valueOf(value));
@@ -1259,8 +1259,8 @@ public StringBuffer insert(int index, float value) {
  * @param		value	the integer to insert
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index > length()}
  */
 public StringBuffer insert(int index, int value) {
 	return insert(index, Integer.toString(value));
@@ -1274,8 +1274,8 @@ public StringBuffer insert(int index, int value) {
  * @param		value	the long to insert
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index > length()}
  */
 public StringBuffer insert(int index, long value) {
 	return insert(index, Long.toString(value));
@@ -1289,8 +1289,8 @@ public StringBuffer insert(int index, long value) {
  * @param		value	the object to insert
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index > length()}
  */
 public StringBuffer insert(int index, Object value) {
 	return insert(index, String.valueOf(value));
@@ -1303,8 +1303,8 @@ public StringBuffer insert(int index, Object value) {
  * @param		string	the string to insert
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index > length()}
  */
 public synchronized StringBuffer insert(int index, String string) {
 	int currentLength = lengthInternalUnsynchronized();
@@ -1360,8 +1360,8 @@ public synchronized StringBuffer insert(int index, String string) {
  * @param		value	the boolean to insert
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index > length()}
  */
 public StringBuffer insert(int index, boolean value) {
 	return insert(index, String.valueOf(value));
@@ -1484,8 +1484,8 @@ private void move(int size, int index) {
  * @param		string	a String
  * @return		this StringBuffer
  *
- * @exception	StringIndexOutOfBoundsException when <code>start < 0</code> or
- *				<code>start > end</code>
+ * @exception	StringIndexOutOfBoundsException when {@code start < 0} or
+ *				{@code start > end}
  */
 public synchronized StringBuffer replace(int start, int end, String string) {
 	int currentLength = lengthInternalUnsynchronized();
@@ -1910,8 +1910,8 @@ public synchronized StringBuffer reverse() {
  * @param 		index	the zero-based index in this StringBuffer
  * @param		ch	the character
  *
- * @exception	IndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index >= length()</code>
+ * @exception	IndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index >= length()}
  */
 public synchronized void setCharAt(int index, char ch) {
 	int currentLength = lengthInternalUnsynchronized();
@@ -1995,7 +1995,7 @@ public synchronized void setCharAt(int index, char ch) {
  *
  * @param		length	the new length of this StringBuffer
  *
- * @exception	IndexOutOfBoundsException when <code>length < 0</code>
+ * @exception	IndexOutOfBoundsException when {@code length < 0}
  *
  * @see			#length
  */
@@ -2099,8 +2099,8 @@ public synchronized void setLength(int length) {
  * @return		a new String containing the characters from start to the end
  *				of the string
  *
- * @exception	StringIndexOutOfBoundsException when <code>start < 0</code> or
- *				<code>start > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code start < 0} or
+ *				{@code start > length()}
  */
 public synchronized String substring(int start) {
 	int currentLength = lengthInternalUnsynchronized();
@@ -2128,8 +2128,8 @@ public synchronized String substring(int start) {
  * @param		end	the offset one past the last character
  * @return		a new String containing the characters from start to end - 1
  *
- * @exception	StringIndexOutOfBoundsException when <code>start < 0, start > end</code> or
- *				<code>end > length()</code>
+ * @exception	StringIndexOutOfBoundsException when {@code start < 0, start > end} or
+ *				{@code end > length()}
  */
 public synchronized String substring(int start, int end) {
 	int currentLength = lengthInternalUnsynchronized();
@@ -2347,8 +2347,8 @@ public synchronized StringBuffer append(StringBuffer buffer) {
  * @param		end	the offset one past the last character
  * @return		a new String containing the characters from start to end - 1
  *
- * @exception	IndexOutOfBoundsException when <code>start < 0, start > end</code> or
- *				<code>end > length()</code>
+ * @exception	IndexOutOfBoundsException when {@code start < 0, start > end} or
+ *				{@code end > length()}
  * 
  * @since 1.4
  */
@@ -2814,8 +2814,8 @@ public synchronized StringBuffer append(CharSequence sequence) {
  * @param		end	the offset one past the last character
  * @return		this StringBuffer
  * 
- * @exception	IndexOutOfBoundsException when <code>start < 0, start > end</code> or
- *				<code>end > length()</code>
+ * @exception	IndexOutOfBoundsException when {@code start < 0, start > end} or
+ *				{@code end > length()}
  * 
  * @since 1.5
  */
@@ -2926,8 +2926,8 @@ public synchronized StringBuffer append(CharSequence sequence, int start, int en
  * @param		sequence	the CharSequence to insert
  * @return		this StringBuffer
  *
- * @exception	IndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index > length()</code>
+ * @exception	IndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index > length()}
  * 
  * @since 1.5
  */
@@ -3038,9 +3038,9 @@ public synchronized StringBuffer insert(int index, CharSequence sequence) {
  * @param		end	the offset one past the last character
  * @return		this StringBuffer
  *
- * @exception	IndexOutOfBoundsException when <code>index < 0</code> or
- *				<code>index > length()</code>, or when <code>start < 0, start > end</code> or
- *				<code>end > length()</code>
+ * @exception	IndexOutOfBoundsException when {@code index < 0} or
+ *				{@code index > length()}, or when {@code start < 0, start > end} or
+ *				{@code end > length()}
  * 
  * @since 1.5
  */

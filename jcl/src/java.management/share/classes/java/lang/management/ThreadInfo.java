@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -278,7 +278,6 @@ public class ThreadInfo {
 	 * <li><code>@</code>
 	 * <li><code>Integer.toHexString(System.identityHashCode(monitor))</code>
 	 * </ul>
-	 * </p>
 	 * @return if blocked or waiting on a monitor, a string representation of
 	 *         the monitor object. Otherwise, <code>null</code>.
 	 * @see Integer#toHexString(int)
@@ -345,7 +344,7 @@ public class ThreadInfo {
 	/**
 	 * If available, returns the stack trace for the thread represented by this
 	 * <code>ThreadInfo</code> instance. The stack trace is returned in an
-	 * array of {@link StackTraceElement} objects with the &quot;top&quot of the
+	 * array of {@link StackTraceElement} objects with the &quot;top&quot; of the
 	 * stack encapsulated in the first array element and the &quot;bottom&quot;
 	 * of the stack in the last array element.
 	 * <p>
@@ -511,7 +510,7 @@ public class ThreadInfo {
 	 *             <code>java.lang.Long</code>)
 	 *             <li><code>blockedTime</code>(<code>java.lang.Long</code>)
 	 *             <li><code>waitedCount</code>(<code>java.lang.Long</code>)
-	 *             <li><code>waitedTime<code> (<code>java.lang.Long</code>)
+	 *             <li><code>waitedTime</code> (<code>java.lang.Long</code>)
 /*[IF Sidecar19-SE]
 	 *             <li><code>daemon</code> (<code>java.lang.Boolean</code>)
 	 *             <li><code>priority</code> (<code>java.lang.Integer</code>)

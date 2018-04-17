@@ -3719,7 +3719,7 @@ public class MethodHandles {
 	}
 	
 	/**
-	 * Produce a loop handle that iterates over a range of values produced by an Iterator<T>
+	 * Produce a loop handle that iterates over a range of values produced by an {@code Iterator<T>}
 	 * Loop variables are updated by the return values of the corresponding step handles 
 	 * (including the loop body) in each iteration.
 	 * 

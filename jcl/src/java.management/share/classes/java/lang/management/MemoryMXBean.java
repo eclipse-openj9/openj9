@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ package java.lang.management;
  * clients.
  * </p>
  * <p>
- * Accessing this <code>MXBean</code> can be done in one of three ways. <br/>
+ * Accessing this <code>MXBean</code> can be done in one of three ways.
  * <ol>
  * <li>Invoking the static {@link ManagementFactory#getMemoryMXBean} method.
  * </li>
@@ -40,7 +40,7 @@ package java.lang.management;
  * string &quot;java.lang:type=ClassLoading&quot; for the value of the second
  * parameter.</li>
  * </ol>
- * </p>
+ * 
  */
 public interface MemoryMXBean extends PlatformManagedObject {
 

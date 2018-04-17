@@ -318,7 +318,7 @@ public final class MethodType implements Serializable {
 	 * <li>(II)V - method taking two ints and return void</li>
 	 * <li>(I)Ljava/lang/Integer; - method taking an int and returning an Integer</li>
 	 * <li>([I)I - method taking an array of ints and returning an int</li>
-	 * <ul>
+	 * </ul>
 	 * 
 	 * @param methodDescriptor - the method descriptor string 
 	 * @param loader - the ClassLoader to be used or null for System ClassLoader 

@@ -71,7 +71,7 @@ public class MutableCallSite extends CallSite {
 	
 	/**
 	 * Create a MutableCallSite permanently set to the same type as the <i>mutableTarget</i> and using
-	 * the mutableTarget</i> as the initial target value.
+	 * the <i>mutableTarget</i> as the initial target value.
 	 * 
 	 * @param mutableTarget - the initial target of the CallSite
 	 * @throws NullPointerException - if the <i>mutableTarget</i> is null.
