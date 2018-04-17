@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2016, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="Verify the functionalities of getCallerClass()/ensureCalledFromBootstrapClass() invoked from the application/bootstrap/extension classloader" timeout="6000">
+
+	<test id="call APIs with/without @CallerSensitive annotation from the application classloader">
+		<command>$EXE$ -cp $RESJAR$ com.ibm.j9.getcallerclass.TestGroup appClassLoader</command>
+		<output type="success" regex="no">All Tests Completed and Passed</output>
+
+		<output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+
+	<test id="call APIs with/without @CallerSensitive annotation from the bootstrap classloader">
+		<command>$EXE$ -Xbootclasspath/a:$RESJAR$ com.ibm.j9.getcallerclass.TestGroup bootClassLoader</command>
+		<output type="success" regex="no">All Tests Completed and Passed</output>
+
+		<output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+
+	<test id="call APIs with/without @CallerSensitive annotation from the extension classloader">
+		<command>$EXE$ -Djava.ext.dirs=$RESDIR$ com.ibm.j9.getcallerclass.TestGroup extClassLoader</command>
+		<output type="success" regex="no">All Tests Completed and Passed</output>
+
+		<output type="failure" caseSensitive="yes" regex="no">FAILED</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+</suite>

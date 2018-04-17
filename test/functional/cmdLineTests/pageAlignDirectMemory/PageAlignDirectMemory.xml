@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2012, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="PageAlignDirectMemory Command-Line Option Tests" timeout="2400">
+
+ <variable name="SUNPROP_TRUE" value="j9jcl.352      - systemPropertyIterator: added VM system property 'sun.nio.PageAlignDirectMemory'='true'" />
+ <variable name="SUNPROP_FALSE" value="j9jcl.352      - systemPropertyIterator: added VM system property 'sun.nio.PageAlignDirectMemory'='false'" />
+ <variable name="CLASS" value="-Xtrace:print={j9jcl.352} -cp $Q$$RESJAR$$Q$ SystemProperties" />
+
+ <variable name="ALIGNED" value="-XX:+PageAlignDirectMemory" />
+ <variable name="UNALIGNED" value="-XX:-PageAlignDirectMemory" />
+ <variable name="INVOPT1" value="-XX:PageAlignDirectMemory" />
+ <variable name="INVOPT2" value="-XX:PageAlignDirectMemory=true" />
+ <variable name="INVOPT3" value="-XX:PageAlignDirectMemory=false" />
+
+ <test id="Direct memory allocation default behavior">
+  <command>$EXE$ $CLASS$</command>
+  <output regex="no" type="success">$SUNPROP_FALSE$</output>
+  <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+  <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+  <output type="failure" caseSensitive="no" regex="no">corrupt</output>
+  <output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+
+ <test id="test -XX:+PageAlignDirectMemory">
+  <command>$EXE$ $ALIGNED$ $CLASS$</command>
+  <output regex="no" type="success">$SUNPROP_TRUE$</output>
+  <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+  <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+  <output type="failure" caseSensitive="no" regex="no">corrupt</output>
+  <output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+
+ <test id="test -XX:-PageAlignDirectMemory">
+  <command>$EXE$ $UNALIGNED$ $CLASS$</command>
+  <output regex="no" type="success">$SUNPROP_FALSE$</output>
+  <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+  <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+  <output type="failure" caseSensitive="no" regex="no">corrupt</output>
+  <output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+
+ <test id="test -XX:+PageAlignDirectMemory -XX:-PageAlignDirectMemory">
+  <command>$EXE$ $ALIGNED$ $UNALIGNED$ $CLASS$</command>
+  <output regex="no" type="success">$SUNPROP_FALSE$</output>
+  <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+  <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+  <output type="failure" caseSensitive="no" regex="no">corrupt</output>
+  <output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+
+ <test id="test -XX:-PageAlignDirectMemory -XX:-PageAlignDirectMemory -XX:+PageAlignDirectMemory">
+  <command>$EXE$ $UNALIGNED$ $UNALIGNED$ $ALIGNED$ $CLASS$</command>
+  <output regex="no" type="success">$SUNPROP_TRUE$</output>
+  <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+  <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+  <output type="failure" caseSensitive="no" regex="no">corrupt</output>
+  <output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+
+ <test id="test -XX:PageAlignDirectMemory -XX:+PageAlignDirectMemory -XX:PageAlignDirectMemory=false">
+  <command>$EXE$ $INVOPT1$ $ALIGNED$ $INVOPT3$ $CLASS$</command>
+  <output regex="no" type="success">$SUNPROP_TRUE$</output>
+  <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+  <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+  <output type="failure" caseSensitive="no" regex="no">corrupt</output>
+  <output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ </test>
+
+</suite>

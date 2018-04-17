@@ -166,9 +166,7 @@ J9::Node::copyValidProperties(TR::Node *fromNode, TR::Node *toNode)
                toNode->setDecimalPrecision(fromNode->getDecimalPrecision());
 
             // _decimalSourcePrecisionOrDividend
-            if (toNode->getOpCode().isPackedArithmeticSelect() && fromNode->getOpCode().isPackedArithmeticSelect())
-               toNode->setSelectDividendPrecision(fromNode->getSelectDividendPrecision());
-            else if (toNode->canHaveSourcePrecision() && fromNode->canHaveSourcePrecision())
+            if (toNode->canHaveSourcePrecision() && fromNode->canHaveSourcePrecision())
                toNode->setSourcePrecision(fromNode->getSourcePrecision());
 
             // _decimalAdjustOrFractionOrDivisor
@@ -176,8 +174,6 @@ J9::Node::copyValidProperties(TR::Node *fromNode, TR::Node *toNode)
                toNode->setDecimalAdjust(fromNode->getDecimalAdjust());
             else if (toNode->hasDecimalFraction() && fromNode->hasDecimalFraction())
                toNode->setDecimalFraction(fromNode->getDecimalFraction());
-            else if (toNode->getOpCode().isPackedArithmeticSelect() && fromNode->getOpCode().isPackedArithmeticSelect())
-               toNode->setSelectDivisorPrecision(fromNode->getSelectDivisorPrecision());
 
             // _round
             if (toNode->hasDecimalRound() && fromNode->hasDecimalRound())
@@ -1274,7 +1270,7 @@ J9::Node::hasDecimalPrecision()
 bool
 J9::Node::hasDecimalAdjust()
    {
-   return !self()->getOpCode().isShift() && !self()->getOpCode().isConversionWithFraction() && !self()->getOpCode().isPackedArithmeticSelect() && self()->getType().isBCD();
+   return !self()->getOpCode().isShift() && !self()->getOpCode().isConversionWithFraction() && self()->getType().isBCD();
    }
 
 bool
@@ -1286,15 +1282,13 @@ J9::Node::hasSetSign()
 bool
 J9::Node::hasDecimalFraction()
    {
-   return self()->getOpCode().isConversionWithFraction()
-      && !self()->getOpCode().isPackedArithmeticSelect();
+   return self()->getOpCode().isConversionWithFraction();
    }
 
 bool
 J9::Node::hasDecimalRound()
    {
-   return self()->getType().isBCD() && !self()->getOpCode().isRightShift()
-      && !self()->getOpCode().isPackedArithmeticSelect();
+   return self()->getType().isBCD() && !self()->getOpCode().isRightShift();
    }
 
 
@@ -1388,7 +1382,6 @@ J9::Node::setDecimalAdjust(int32_t a)
    // conversions should not have an adjust
    TR_ASSERT(!self()->getOpCode().isShift(), "decimalAdjust is the 2nd child on pdshr/pdshl nodes\n");
    TR_ASSERT(!self()->getOpCode().isConversionWithFraction(), "conversions nodes should not use setDecimalAdjust\n");
-   TR_ASSERT(!self()->getOpCode().isPackedArithmeticSelect(), "not valid for packed arithmetic select nodes\n");
    TR_ASSERT(self()->getType().isBCD(), "type not supported for setDecimalAdjust\n");
    TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalAdjustOrFractionOrDivisor field for node %s %p that does not have it", self()->getOpCode().getName(), self());
    _unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor = a;
@@ -1400,7 +1393,6 @@ J9::Node::getDecimalAdjust()
    // conversions should not have an adjust
    TR_ASSERT(!self()->getOpCode().isConversionWithFraction(), "conversions nodes should not use getDecimalAdjust\n");
    TR_ASSERT(self()->getType().isBCD(), "type not supported for getDecimalAdjust\n");
-   TR_ASSERT(!self()->getOpCode().isPackedArithmeticSelect(), "not valid for packed arithmetic select nodes\n");
    int64_t adjust = 0;
    if (self()->getOpCode().isShift() && self()->getSecondChild()->getOpCode().isLoadConst())
       adjust = self()->getOpCode().isRightShift() ? -self()->getSecondChild()->get64bitIntegralValue() : self()->getSecondChild()->get64bitIntegralValue();
@@ -1422,7 +1414,6 @@ J9::Node::setDecimalFraction(int32_t f)
    TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalAdjustOrFractionOrDivisor field for node %s %p that does not have it", self()->getOpCode().getName(), self());
    TR_ASSERT(f >= TR::DataType::getMinDecimalFraction() && f <= TR::DataType::getMaxDecimalFraction(), "unexpected decimal fraction %d\n", f);
    TR_ASSERT(self()->getOpCode().isConversionWithFraction(), "only valid for conversion nodes that have a fraction\n"); // such as f2pd or pd2f
-   TR_ASSERT(!self()->getOpCode().isPackedArithmeticSelect(), "not valid for packed arithmetic select nodes\n");
    _unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor = f;
    }
 
@@ -1433,7 +1424,6 @@ J9::Node::getDecimalFraction()
    TR_ASSERT(_unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor >= TR::DataType::getMinDecimalFraction() && _unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor <= TR::DataType::getMaxDecimalFraction(),
              "unexpected decimal fraction %d\n", _unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor);
    TR_ASSERT(self()->getOpCode().isConversionWithFraction(), "only valid for conversion nodes that have a fraction\n"); // such as f2pd or pd2f
-   TR_ASSERT(!self()->getOpCode().isPackedArithmeticSelect(), "not valid for packed arithmetic select nodes\n");
    return _unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor;
    }
 
@@ -1479,58 +1469,11 @@ J9::Node::getSourcePrecision()
       return _unionPropertyB._decimalInfo._decimalSourcePrecisionOrDividend;
    }
 
-
-
-// Dividend/Divisor Tracking on pdremSelect nodes
-void
-J9::Node::setSelectDivisorPrecision(int32_t p)
-   {
-   TR_ASSERT(p >=0 && p <=TR_MAX_DECIMAL_PRECISION,
-             "unexpected divisor precision %d on node %p\n", p, self());
-   TR_ASSERT(self()->getOpCode().isPackedArithmeticSelect(), "opcode not supported for setSelectDivisorPrecision\n");
-   TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalAdjustOrFractionOrDivisor field for node %s %p that does not have it", self()->getOpCode().getName(), self());
-   _unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor = p;
-   }
-
-int32_t
-J9::Node::getSelectDivisorPrecision()
-   {
-   TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalAdjustOrFractionOrDivisor field for node %s %p that does not have it", self()->getOpCode().getName(), self());
-   TR_ASSERT(_unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor >=0 && _unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor <= TR_MAX_DECIMAL_PRECISION,
-             "unexpected divisor precision %d on node %p\n", _unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor, self());
-   TR_ASSERT(self()->getOpCode().isPackedArithmeticSelect(), "opcode not supported for getSelectDivisorPrecision\n");
-   return _unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor;
-   }
-
-void
-J9::Node::setSelectDividendPrecision(int32_t p)
-   {
-   TR_ASSERT(p >=0 && p <=TR_MAX_DECIMAL_PRECISION,
-             "unexpected dividend precision %d on node %p\n", p, self());
-   TR_ASSERT(self()->getOpCode().isPackedArithmeticSelect(), "opcode not supported for setSelectDividendPrecision\n");
-   TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalSourcePrecisionOrDividend field for node %s %p that does not have it", self()->getOpCode().getName(), self());
-   _unionPropertyB._decimalInfo._decimalSourcePrecisionOrDividend = (uint32_t)p;
-   }
-
-int32_t
-J9::Node::getSelectDividendPrecision()
-   {
-   TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalAdjustOrFractionOrDivisor field for node %s %p that does not have it", self()->getOpCode().getName(), self());
-   TR_ASSERT(_unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor >=0 && _unionPropertyB._decimalInfo._decimalAdjustOrFractionOrDivisor <= TR_MAX_DECIMAL_PRECISION,
-             "unexpected dividend precision %d on node %p\n", _unionPropertyB._decimalInfo._decimalSourcePrecisionOrDividend, self());
-   TR_ASSERT(self()->getOpCode().isPackedArithmeticSelect(), "opcode not supported for getSelectDividendPrecision\n");
-   return (int32_t)_unionPropertyB._decimalInfo._decimalSourcePrecisionOrDividend;
-   }
-
-
-
 int32_t
 J9::Node::getDecimalAdjustOrFractionOrDivisor()
    {
    if (self()->getOpCode().isConversionWithFraction())
       return self()->getDecimalFraction();
-   else if (self()->getOpCode().isPackedArithmeticSelect())
-      return self()->getSelectDivisorPrecision();
    else
       return self()->getDecimalAdjust();
    }
@@ -1538,13 +1481,8 @@ J9::Node::getDecimalAdjustOrFractionOrDivisor()
 int32_t
 J9::Node::getDecimalRoundOrDividend()
    {
-   if (self()->getOpCode().isPackedArithmeticSelect())
-      return self()->getSelectDividendPrecision();
-   else
-      return self()->getDecimalRound();
+   return self()->getDecimalRound();
    }
-
-
 
 bool
 J9::Node::isSetSignValueOnNode()
@@ -1607,7 +1545,6 @@ J9::Node::setDecimalRound(int32_t r)
    TR_ASSERT(r >= 0 && r <= TR::DataType::getMaxDecimalRound(), "unexpected decimal round %d\n", r);
    TR_ASSERT(self()->getType().isBCD(), "type not supported for setDecimalRound\n");
    TR_ASSERT(!self()->getOpCode().isRightShift(), "decimalRound is the 3rd child on pdshr nodes\n");
-   TR_ASSERT(!self()->getOpCode().isPackedArithmeticSelect(), "not valid for packed arithmetic select nodes\n");
    TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalInfo._round field for node %s %p that does not have it", self()->getOpCode().getName(), self());
    _unionPropertyB._decimalInfo._round = (r > 0 ? 1 : 0);
    }
@@ -1616,7 +1553,6 @@ uint8_t
 J9::Node::getDecimalRound()
    {
    TR_ASSERT(self()->getType().isBCD(), "type not supported for getDecimalRound\n");
-   TR_ASSERT(!self()->getOpCode().isPackedArithmeticSelect(), "not valid for packed arithmetic select nodes\n");
    TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalInfo._round field for node %s %p that does not have it", self()->getOpCode().getName(), self());
    int64_t round = 0;
    if (self()->getOpCode().isPackedRightShift() && self()->getChild(2)->getOpCode().isLoadConst())
@@ -1787,15 +1723,6 @@ J9::Node::hasKnownOrAssumedPreferredSign()
    TR_ASSERT(self()->getType().isBCD(), "hasKnownOrAssumedPreferredSign only supported for BCD type nodes\n");
    return self()->hasKnownPreferredSign() || self()->hasAssumedPreferredSign();
    }
-
-void
-J9::Node::setHasKnownAndAssumedPreferredSign(bool v)
-   {
-   self()->setHasKnownPreferredSign(v);
-   self()->setHasAssumedPreferredSign(v);
-   }
-
-
 
 bool
 J9::Node::hasKnownSignCode()

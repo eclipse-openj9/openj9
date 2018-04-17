@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,7 @@ namespace ILProp4
       ModifyPrecision                  = 0x00000008,
       BinaryCodedDecimalOp             = 0x00000010,
       ConversionHasFraction            = 0x00000020,
-      PackedArithmeticSelect           = 0x00000040,
+      // Available                     = 0x00000040,
       PackedArithmeticOverflowMessage  = 0x00000080,
       DFPTestDataClass                 = 0x00000100,
       CanHaveStorageReferenceHint      = 0x00000200,

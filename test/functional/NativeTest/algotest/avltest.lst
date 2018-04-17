@@ -1,0 +1,85 @@
+##############################################################################
+#  Copyright (c) 1991, 2018 IBM Corp. and others
+#
+#  This program and the accompanying materials are made available under
+#  the terms of the Eclipse Public License 2.0 which accompanies this
+#  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+#  or the Apache License, Version 2.0 which accompanies this distribution and
+#  is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+#  This Source Code may also be made available under the following
+#  Secondary Licenses when the conditions for such availability set
+#  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+#  General Public License, version 2 with the GNU Classpath
+#  Exception [1] and GNU General Public License, version 2 with the
+#  OpenJDK Assembly Exception [2].
+#
+#  [1] https://www.gnu.org/software/classpath/license.html
+#  [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+##############################################################################
+
+# format:
+# <testname>, <tree success string>, <operations>, 0
+
+Empty tree, @, 0
+Single element, {=10@@}, 10, 0
+Left heavy, {L10{=5@@}@}, 10, 5, 0
+Right heavy, {R10@{=15@@}}, 10, 15, 0
+Double insert, {=10@@}, 10, 10, 0
+Remove root: root is leaf node, @, 10, -10, 0
+Remove root: adding node after, {=5@@}, 10, -10, 5, 0
+Remove root: root is left branch, {=5@@}, 10, 5, -10, 0
+Remove root: root is right branch, {=15@@}, 10, 15, -10, 0
+Balanced tree: right then left, {=10{=5@@}{=15@@}}, 10, 15, 5, 0
+Balanced tree: left then right, {=10{=5@@}{=15@@}}, 10, 5, 15, 0
+Single rotate: left; including root; no children; via insertion, {=10{=5@@}{=15@@}}, 5, 10, 15, 0
+Single rotate: right; including root; no children; via insertion, {=10{=5@@}{=15@@}}, 15, 10, 5, 0
+Double rotate: left; including root; no children; via insertion, {=10{=5@@}{=15@@}}, 5, 15, 10, 0
+Double rotate: right; including root; no children; via insertion, {=10{=5@@}{=15@@}}, 15, 5, 10, 0
+Remove node: leaf node; right; no children, {=10@@}, 10, 15, -15, 0
+Remove node: leaf node; left; no children, {=10@@}, 10, 5, -5, 0
+Simple tree; height 3; right heavy, {R5{=1@@}{=10{=7@@}{=15@@}}}, 5, 10, 1, 7, 15, 0
+Simple tree; height 3; left heavy, {L20{=10{=7@@}{=15@@}}{=25@@}}, 20, 25, 10, 7, 15, 0
+Single rotate: left; including root; balanced; via deletion, {L10{R5@{=7@@}}{=15@@}}, 5, 10, 1, 7, 15, -1, 0
+Single rotate: right; including root; balanced; via deletion, {R10{=7@@}{L20{=15@@}@}}, 20, 25, 10, 15, 7, -25, 0
+double rotation; height 3; left heavy, {L20{=7{=1@@}{=10@@}}{=25@@}}, 20, 25, 10, 1, 7, 0
+Single rotate: right; not root; no graft, {=30{=5{=1@@}{=10@@}}{L40{=35@@}@}}, 30, 10, 40, 5, 20, 35, 1, -20, 0
+Delete non-existant node, {R10@{=15@@}}, 10, 15, -20, 0
+Delete node twice, {=10@@}, 10, 15, -15, -15, 0
+Delete node; no root , @, -15, 0
+single rotation test1, {L20{=5{=1@@}{=10@@}}{=40@@}}, 20, 10, 40, 5, 1, 0
+single rotation test2, {=20{=5{=1@@}{=10@@}}{R40@{=50@@}}}, 20, 10, 40, 5, 50, 1, 0
+single rotation test3, {L20{R5{=1@@}{L10{=7@@}@}}{R40@{=50@@}}}, 20, 10, 40, 5, 15, 50, 1, 7, -15, 0
+single rotation test4, {=20{R5{=1@@}{L10{=7@@}@}}{R40{=30@@}{R50@{=60@@}}}}, 20, 10, 40, 5, 15, 30, 50, 1, 7, 60, -15, 0
+single rotation test5, {L20{=5{L4{=1@@}@}{=10{=7@@}{=15@@}}}{R40@{=50@@}}}, 20, 10, 40, 5, 15, 50, 4, 7, 1, 0
+single rotation test6, {=20{=5{L4{=1@@}@}{=10{=7@@}{=15@@}}}{R40{=30@@}{R50@{=60@@}}}}, 20, 10, 40, 5, 15, 30, 50, 4, 7, 60, 1, 0
+single rotation test7, {R80{=60@@}{=95{=90@@}{=99@@}}}, 80, 60, 90, 95, 99, 0
+single rotation test8, {=80{L60{=50@@}@}{=95{=90@@}{=99@@}}}, 80, 60, 90, 50, 95, 99, 0
+single rotation test9, {R80{L60{=50@@}@}{L95{R90@{=93@@}}{=99@@}}}, 80, 60, 90, 50, 85, 95, 93, 99, -85, 0
+single rotation test10, {=80{L60{L50{=40@@}@}{=70@@}}{L95{R90@{=93@@}}{=99@@}}}, 80, 60, 90, 50, 70, 85, 95, 40, 93, 99, -85, 0
+single rotation test11, {R80{L60{=50@@}@}{=95{=90{=85@@}{=93@@}}{R96@{=99@@}}}}, 80, 60, 90, 50, 85, 95, 93, 96, 99, 0
+single rotation test12, {=80{L60{L50{=40@@}@}{=70@@}}{=95{=90{=85@@}{=93@@}}{R96@{=99@@}}}}, 80, 60, 90, 50, 70, 85, 95, 40, 93, 96, 99, 0
+remove with immediate leaf predecessor, {R20{=10@@}{R30@{=50@@}}}, 20, 10, 40, 30, 50, -40, 0
+remove with immediate left branch predecessor, {=20{L10{=5@@}@}{=30{=25@@}{=50@@}}}, 20, 10, 40, 5, 30, 50, 25, -40, 0
+remove with leaf predecessor, {R20{L10{=5@@}@}{L35{L30{=25@@}@}{=50@@}}}, 20, 10, 40, 5, 30, 50, 25, 35, -40, 0
+remove with leaf left branch predecessor, {=20{L10{L5{=1@@}@}{=15@@}}{=35{=30{=25@@}{=32@@}}{R50@{=55@@}}}}, 20, 10, 40, 5, 15, 30, 50, 1, 25, 35, 55, 32, -40, 0
+double rotation test1, {L20{=7{=5@@}{=10@@}}{=40@@}}, 20, 10, 40, 5, 7, 0
+double rotation test2, {=20{=7{=5@@}{=10@@}}{R40@{=50@@}}}, 20, 10, 40, 5, 50, 7, 0
+double rotation test3, {L20{=12{=10@@}{=15@@}}{=40@@}}, 20, 10, 40, 15, 12, 0
+double rotation test4, {=20{=12{=10@@}{=15@@}}{R40@{=50@@}}}, 20, 10, 40, 15, 50, 12, 0
+double rotation test5, {L20{=7{L5{=4@@}@}{=10{=8@@}{=15@@}}}{R40@{=50@@}}}, 20, 10, 40, 5, 15, 50, 4, 7, 8, 0
+double rotation test6, {=20{=7{=5{=4@@}{=6@@}}{=10{=8@@}{=15@@}}}{R40{=30@@}{R50@{=60@@}}}}, 20, 10, 40, 5, 15, 30, 50, 4, 7, 17, 60, 6, 8, -17, 0
+double rotation test7, {L20{=13{L10{=5@@}@}{=15{=14@@}{=17@@}}}{R40@{=50@@}}}, 20, 10, 40, 5, 15, 50, 13, 17, 14, 0
+double rotation test8, {=20{=13{=10{=5@@}{=12@@}}{=15{=14@@}{=17@@}}}{R40{=30@@}{R50@{=60@@}}}}, 20, 10, 40, 5, 15, 30, 50, 4, 7, 13, 17, 60, 12, 14, -7, -4, 0
+double rotation test9, {R80{=60@@}{=93{=90@@}{=95@@}}}, 80, 60, 90, 95, 93, 0
+double rotation test10, {=80{L60{=50@@}@}{=93{=90@@}{=95@@}}}, 80, 60, 90, 50, 95, 93, 0
+double rotation test11, {R80{=60@@}{=87{=85@@}{=90@@}}}, 80, 60, 90, 85, 87, 0
+double rotation test12, {=80{L60{=50@@}@}{=87{=85@@}{=90@@}}}, 80, 60, 90, 85, 50, 87, 0
+double rotation test13, {R80{L60{=50@@}@}{=93{=90{=85@@}{=92@@}}{R95@{=96@@}}}}, 80, 60, 90, 50, 85, 95, 93, 96, 92, 0
+double rotation test14, {=80{L60{L50{=40@@}@}{=70@@}}{=93{=90{=85@@}{=92@@}}{=95{=94@@}{=96@@}}}}, 80, 60, 90, 50, 70, 85, 95, 40, 83, 93, 96, 92, 94, -83, 0
+double rotation test15, {R80{L60{=50@@}@}{=87{=85{=83@@}{=86@@}}{R90@{=95@@}}}}, 80, 60, 90, 50, 85, 95, 83, 87, 86, 0
+double rotation test16, {=80{L60{L50{=40@@}@}{=70@@}}{=87{=85{=83@@}{=86@@}}{=90{=88@@}{=95@@}}}}, 80, 60, 90, 50, 70, 85, 95, 40, 83, 87, 93, 86, 88, -93, 0
+
+

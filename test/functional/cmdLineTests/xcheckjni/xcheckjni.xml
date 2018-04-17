@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2009, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 XCheck JNI tests" timeout="120">
+<variable name="CP" value="-cp $Q$$RESJAR$$Q$" />
+
+<variable name="TYPE1" value="boolean" />
+<variable name="TYPE2" value="byte" />
+<variable name="TYPE3" value="char" />
+<variable name="TYPE4" value="double" />
+<variable name="TYPE5" value="int" />
+<variable name="TYPE6" value="long" />
+<variable name="TYPE7" value="short" />
+<variable name="TYPE8" value="float" />
+
+<variable name="ARRAYSIZE1" value="1" />
+<variable name="OFFSET1" value="0" />
+<variable name="ARRAYSIZE2" value="10" />
+<variable name="OFFSET2" value="9" />
+<variable name="ARRAYSIZE3" value="100" />
+<variable name="OFFSET3" value="0" />
+<variable name="ARRAYSIZE4" value="100000" />
+<variable name="OFFSET4" value="99999" />
+
+ <!-- JVMJNCK001I JNI check utility installed. Use -Xcheck:jni:help for usage -->
+ <test id="sanity">
+  <command>$EXE$ $CP$ -Xcheck:jni -Xgcthreads1</command>
+  <output regex="no">JVMJNCK001I</output>
+ </test>
+
+ <test id="help">
+  <command>$EXE$ $CP$ -Xcheck:jni:help -Xgcthreads1</command>
+  <output regex="no">Usage:</output>
+ </test>
+
+ <test id="memorycheck">
+  <command>$EXE$ $CP$ -Xint -Xcheck:jni -Xgcthreads1 -Xcheck:memory j9vm.test.jnichk.BufferOverrun</command>
+  <output regex="no">Memory error(s) discovered</output>
+ </test>
+
+ <!-- JVMJNCK094E JNI error in FindClass: The data pointed at by argument #2 was modified during the execution of FindClass. The data may have been modified by another thread or by a nested call. The result of FindClass may be incorrect and the VM may become unstable -->
+ <test id="modifiedbuffer">
+  <command>$EXE$ $CP$ -Xcheck:jni -Xgcthreads1 j9vm.test.jnichk.ModifiedBuffer</command>
+  <output regex="no">JVMJNCK094E</output>
+ </test>
+
+ <!-- JVMJNCK035E JNI error in DeleteGlobalRef: Argument #2 (0x00188970) is not a global reference. Its type is: unknown -->
+ <test id="deleteglobalreftwice">
+  <command>$EXE$ $CP$ -Xcheck:jni -Dcom.ibm.tools.attach.enable=no -Xgcthreads1 j9vm.test.jnichk.DeleteGlobalRefTwice</command>
+  <output regex="no">JVMJNCK035E</output>
+ </test>
+
+ <loop index="I" from="1" until="9" inc="1">
+
+   <loop index="J" from="1" until="5" inc="1">
+
+     <!-- JVMJNCK054E JNI error in ReleaseBooleanArrayElements: Unrecognized mode option 100 -->
+     <test id="illegalmode$I$.$J$">
+      <command>$EXE$ $CP$ -Xcheck:jni -Xgcthreads1 j9vm.test.jnichk.ModifyArrayData $TYPE{I}$ $ARRAYSIZE{J}$ -1 -1 100</command>
+      <output regex="no">JVMJNCK054E</output>
+     </test>
+
+     <!-- JVMJNCK071W JNI warning: Memory at 0x210AB490 acquired by GetBooleanArrayElements was not released before returning from native. This is probably a memory leak. -->
+     <test id="arrayleak$I$.$J$">
+      <command>$EXE$ $CP$ -Xcheck:jni:warn -Xgcthreads1 j9vm.test.jnichk.ModifyArrayData $TYPE{I}$ $ARRAYSIZE{J}$ -1 -1 1</command>
+      <output regex="no">JVMJNCK071W</output>
+     </test>
+
+     <!-- JVMJNCK074I JNI advice in ReleaseBooleanArrayElements: Buffer appears to be unmodified. Consider using JNI_ABORT instead of mode 0. -->
+     <test id="unmodifiedarray$I$.$J$">
+      <command>$EXE$ $CP$ -Xcheck:jni:advice -Xgcthreads1 j9vm.test.jnichk.ModifyArrayData $TYPE{I}$ $ARRAYSIZE{J}$ -1 -1 0</command>
+      <output regex="no">JVMJNCK074I</output>
+     </test>
+
+     <!-- JVMJNCK070W JNI warning in ReleaseBooleanArrayElements: Original array data was modified between GetBooleanArrayElements and ReleaseBooleanArrayElements.  -->
+     <!-- (Original CRC=0xe38a6876, new CRC=0xf4f17c35). -->
+     <!-- Since GetBooleanArrayElements returned a copy of the array contents, the new contents will be lost. -->
+     <test id="originalarraymodified$I$.$J$">
+      <command>$EXE$ $CP$ -Xcheck:jni:warn -Xgcthreads1 j9vm.test.jnichk.ModifyArrayData $TYPE{I}$ $ARRAYSIZE{J}$ $OFFSET{J}$ $OFFSET{J}$ 0</command>
+      <output regex="no">JVMJNCK070W</output>
+     </test>
+
+     <!-- need to add some tests for non-error conditions here to ensure that nothing is reported for correct code -->
+
+   </loop>
+ </loop>
+
+</suite>
+

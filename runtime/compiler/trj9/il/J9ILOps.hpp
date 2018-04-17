@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,9 +70,8 @@ public:
    bool isBinaryCodedDecimalOp()            const { return properties4().testAny(ILProp4::BinaryCodedDecimalOp); }
    bool isAnyBCDCompareOp()                 const { return isBinaryCodedDecimalOp() && isBooleanCompare(); } // isAnyBCDCompareOp is true for all BCD nodes that do some type of compare e.g. pdcmpxx
    bool isBCDToNonBCDConversion()           const { return isConversion() && isBinaryCodedDecimalOp() && !getType().isBCD(); }
-   bool isPackedArithmeticSelect()          const { return properties4().testAny(ILProp4::PackedArithmeticSelect); }
    bool isPackedArithmeticOverflowMessage() const { return properties4().testAny(ILProp4::PackedArithmeticOverflowMessage); }
-   bool isBasicOrSpecialPackedArithmetic()  const { return isBasicPackedArithmetic() || isPackedArithmeticOverflowMessage() || isPackedArithmeticSelect(); }
+   bool isBasicOrSpecialPackedArithmetic()  const { return isBasicPackedArithmetic() || isPackedArithmeticOverflowMessage(); }
    bool isAnyBCDArithmetic()                const { return isBasicOrSpecialPackedArithmetic(); }
    bool isDFPTestDataClass()                const { return properties4().testAny(ILProp4::DFPTestDataClass); }
    bool trackLineNo()                       const { return properties4().testAny(ILProp4::TrackLineNo); }

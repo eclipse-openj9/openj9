@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2004, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 GP test" timeout="300">
+ <variable name="DUMP" value="-Xdump:system:none" />
+ <variable name="CP" value="-cp $Q$$RESJAR$$Q$ VMBench.GPTests.GPTest" />
+ <variable name="TARGET" value="GPTest" />
+ <variable name="OUTPUT" value="Unhandled exception" />
+ <variable name="THREADED" value=" " />
+ <variable name="FIBOUT" value=".*Fibonacci.*iterations.*" />
+ <variable name="UTILS_JAR" value="$UTILS_DIR$/utils.jar"/>
+
+<!-- Verifies JVM barfs on -XCEEHDLR when not on zos_s390 (31-bit) -->
+ <test id="-XCEEHDLR not supported on non 31-bit zOS">
+  <command>$EXE$ -XCEEHDLR </command>
+  <output type="success" regex="no">Command-line option unrecognised</output>
+</test>
+
+ <test id="reject -Xsignal:posixSignalHandler=cooperativeShutdown on non-zOS">
+  <command>$EXE$ -Xsignal:posixSignalHandler=cooperativeShutdown $CP$ </command>
+  <output type="success" regex="no">Command-line option unrecognised: -Xsignal:posixSignalHandler=cooperativeShutdown</output>
+ </test>
+
+ <loop index="I" from="1" until="3" inc="1">
+
+ <!-- Verifies that the arithmetic condition exception is converted to a Java ConditionException when -XCEEHDLR is present -->
+ <test id="user condition handler: float -XCEEHDLR $THREADED$">
+  <command>$EXE$ -XCEEHDLR $DUMP$ $CP$ $THREADED$ float</command>
+  <output type="required" regex="no">com.ibm.le.conditionhandling.ConditionException</output>
+  <output type="required" regex="no">Java_VMBench_GPTests_GPTest_gpFloat</output>
+  <output type="required" regex="no">facilityID: CEE</output>
+  <output type="required" regex="no">severity: 3</output>
+  <output type="required" regex="no">messageNumber: 3209</output>
+  <output type="required" regex="no">feedback token: 0x0 0x3 0xc 0x89 0x59 0xc3 0xc5 0xc5</output>
+  <output type="required" regex="no">at VMBench.GPTests.GPTest.gpFloat(Native Method)</output>
+  <output type="success" regex="no">Succesfully threw exception 10 times</output>
+  <output type="failure" regex="no">Unhandled exception</output>
+ </test>
+
+ <!-- Verifies that a SEGV is NOT converted to a Java ConditionException when -XCEEHDLR is NOT present -->
+ <test id="user condition handler: read -XCEEHDLR $THREADED$">
+  <command>$EXE$ -XCEEHDLR $DUMP$ $CP$ $THREADED$ read</command>
+  <output type="success" regex="no">Unhandled exception</output>
+  <output type="required" regex="no">Java_VMBench_GPTests_GPTest_gpRead</output>
+  <output type="failure" regex="no">com.ibm.le.conditionhandling.ConditionException</output>
+ </test>
+
+ <!-- Verifies that the arithmetic condition exception is NOT converted to a JavaCondition Exception when -XCEEHDLR is NOT present -->
+ <test id="user condition handler: float without -XCEEHDLR $THREADED$">
+  <command>$EXE$ $DUMP$ $CP$ $THREADED$ float</command>
+  <output type="success" regex="no">Unhandled exception</output>
+  <output type="required" regex="no">Java_VMBench_GPTests_GPTest_gpFloat</output>
+  <output type="failure" regex="no">com.ibm.le.conditionhandling.ConditionException</output>
+ </test>
+
+ <!-- Verifies that the JVM installs its own LE condition handler on VM callin by verifying the one registered by the native does NOT get invoked  -->
+ <test id="user condition handler: callin -XCEEHDLR $THREADED$">
+  <command>$EXE$ -XCEEHDLR $DUMP$ $CP$ $THREADED$ callin</command>
+  <output type="success" regex="no">Unhandled exception</output>
+  <output type="required" regex="no">Java_VMBench_GPTests_GPTest_gpRead</output>
+  <output type="failure" regex="no">gptest_le_condition_handler invoked</output>
+ </test>
+
+ <!-- Verifies that without -XCEEHDLR the JVM does not register a condition handler on vmEntry, by making sure the one registered by the native DOES get invoked -->
+ <test id="user condition handler: callin without -XCEEHDLR $THREADED$">
+  <command>$EXE$ $DUMP$ $CP$ $THREADED$ callin</command>
+  <output type="success" regex="no">gptest_user_condition_handler invoked</output>
+  <output type="required" regex="no">Unhandled exception</output>
+ </test>
+
+ <test id="abort $THREADED$">
+  <command>$EXE$ $DUMP$ $CP$ $THREADED$ abort</command>
+  <output type="success" regex="no">Processing dump event "abort"</output>
+  <output type="required" regex="no">Processed dump event "abort"</output>
+ </test>
+
+ <test id="abort -Xsignal:posixSignalHandler=cooperativeShutdown $THREADED$">
+  <command>$EXE$ -Xsignal:posixSignalHandler=cooperativeShutdown $DUMP$ $CP$ $THREADED$ abort</command>
+  <output type="success" regex="no">Processing dump event "abort"</output>
+  <output type="required" regex="no">Processed dump event "abort"</output>
+  <output type="required" regex="no">CEE3250C The system or user abend U3565</output>
+ </test>
+
+ <test id="softwareFloat $THREADED$">
+  <command>$EXE$ $DUMP$ $CP$ $THREADED$ softwareFloat</command>
+  <output type="success" regex="no">Processing dump event</output>
+  <output type="required" regex="no">Processed dump event</output>
+ </test>
+
+ <test id="softwareFloat  -Xsignal:posixSignalHandler=cooperativeShutdown $THREADED$">
+  <command>$EXE$ -Xsignal:posixSignalHandler=cooperativeShutdown $DUMP$ $CP$ $THREADED$ softwareFloat</command>
+  <output type="success" regex="no">CEE3250C The system or user abend U3565</output>
+ </test>
+
+ <test id="hardwareFloat $THREADED$">
+  <command>$EXE$ $DUMP$ $CP$ $THREADED$ hardwareFloat</command>
+  <output type="success" regex="no">Unhandled exception</output>
+ </test>
+
+ <test id="hardwareFloat -Xsignal:posixSignalHandler=cooperativeShutdown $THREADED$">
+  <command>$EXE$ -Xsignal:posixSignalHandler=cooperativeShutdown $DUMP$ $CP$ $THREADED$ hardwareFloat</command>
+  <output type="success" regex="no">Unhandled exception</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+  <output type="required" regex="no">CEE3209S The system detected a fixed-point divide exception (System Completion Code=0C9)</output>
+ </test>
+
+ <test id="softwareRead $THREADED$">
+  <command>$EXE$ $DUMP$ $CP$ $THREADED$ softwareRead</command>
+  <output type="success" regex="no">Processing dump event</output>
+  <output type="required" regex="no">Processed dump event</output>
+ </test>
+
+ <test id="softwareRead -Xsignal:posixSignalHandler=cooperativeShutdown $THREADED$">
+  <command>$EXE$ -Xsignal:posixSignalHandler=cooperativeShutdown $DUMP$ $CP$ $THREADED$ softwareRead</command>
+  <output type="success" regex="no">Unhandled exception</output>
+  <output type="required" regex="no">CEE3250C The system or user abend U3565</output>
+ </test>
+
+ <test id="hardwareRead $THREADED$">
+  <command>$EXE$ $DUMP$ $CP$ $THREADED$ hardwareRead</command>
+  <output type="success" regex="no">Unhandled exception</output>
+ </test>
+
+ <test id="hardwareRead -Xsignal:posixSignalHandler=cooperativeShutdown $THREADED$">
+  <command>$EXE$ -Xsignal:posixSignalHandler=cooperativeShutdown $DUMP$ $CP$ $THREADED$ hardwareRead</command>
+  <output type="success" regex="no">Unhandled exception</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+  <output type="required" regex="no">CEE3204S The system detected a protection exception (System Completion Code=0C4).</output>
+ </test>
+
+  <!-- Verifies that a hardware float is NOT converted to a Java ConditionException when -Xsignal:userConditionHandler=percolate is present, and:
+  <!-- 	- diagnostics are generated -->
+  <!--	- the condition is percolated -->
+ <test id="hardware float -Xsignal:userConditionHandler=percolate $THREADED$">
+  <command>$EXE$ -Xsignal:userConditionHandler=percolate $DUMP$ $CP$ $THREADED$ hardwareFloat</command>
+  <output type="success" regex="no">Unhandled exception</output>
+  <output type="required" regex="no">Java_VMBench_GPTests_GPTest_gpHardwareFloat</output>
+  <output type="required" regex="no">Java dump written to</output>
+  <output type="required" regex="no">Snap dump written to</output>
+  <output type="required" regex="no">Processed dump event "gpf"</output>
+  <output type="required" regex="no">CEE3209S The system detected a fixed-point divide exception (System Completion Code=0C9)</output>
+  <output type="failure" regex="no">com.ibm.le.conditionhandling.ConditionException</output>
+  <output type="failure" regex="no">JVMJ9VM129E</output>
+ </test>
+
+
+  <!-- Verifies that a software float is NOT converted to a Java ConditionException when -Xsignal:userConditionHandler=percolate is present, and:
+  <!-- 	- diagnostics are generated -->
+  <!--	- the condition is percolated -->
+ <test id="software float -Xsignal:userConditionHandler=percolate $THREADED$">
+  <command>$EXE$ -Xsignal:userConditionHandler=percolate $DUMP$ $CP$ $THREADED$ softwareFloat</command>
+  <output type="success" regex="no">Unhandled exception</output>
+  <output type="required" regex="no">Java_VMBench_GPTests_GPTest_gpSoftwareFloat</output>
+  <output type="required" regex="no">Java dump written to</output>
+  <output type="required" regex="no">Snap dump written to</output>
+  <output type="required" regex="no">Processed dump event "gpf"</output>
+  <output type="required" regex="no">CEE5201S The signal SIGFPE was received</output>
+  <output type="failure" regex="no">com.ibm.le.conditionhandling.ConditionException</output>
+  <output type="failure" regex="no">Application resumed execution after handling an unrecoverable condition and illegally returned to, or called back into, Java</output>
+ </test>
+
+  <!-- Verifies that with -Xsignal:userConditionHandler=percolate if the native user condition handler illegally resumes execution and calls back into the VM after a crash, that the trace assert is thrown -->
+ <test id="callInAndTriggerGPReadThenResumeAndCallInAgain with -Xsignal:userConditionHandler=percolate $THREADED$">
+  <command>$EXE$ -Xsignal:userConditionHandler=percolate $DUMP$ $CP$ $THREADED$ callInAndTriggerGPReadThenResumeAndCallInAgain</command>
+  <output type="success" regex="no">Unhandled exception</output>
+  <output type="success" regex="no">Entry_Name=Java_VMBench_GPTests_GPTest_gpRead</output>
+  <output type="required" regex="no">Java dump written to</output>
+  <output type="required" regex="no">Snap dump written to</output>
+  <output type="required" regex="no">Processed dump event "gpf"</output>
+  <output type="required" regex="no">JVMJ9VM129E</output>
+  <output type="required" regex="no">JVMJ9VM131E Terminating process using CEE3AB2() with abend 3565, reason 17, cleanup 0</output>
+ </test>
+
+  <!-- Verifies that with -Xsignal:userConditionHandler=percolate if the native user condition handler illegally resumes execution and returns back to Java after a crash, that the trace assert is thrown -->
+ <test id="callInAndTriggerGPReadThenResumeAndReturnToJava with -Xsignal:userConditionHandler=percolate $THREADED$">
+  <command>$EXE$ -Xsignal:userConditionHandler=percolate $DUMP$ $CP$ $THREADED$ callInAndTriggerGPReadThenResumeAndReturnToJava</command>
+  <output type="success" regex="no">Unhandled exception</output>
+  <output type="success" regex="no">Entry_Name=Java_VMBench_GPTests_GPTest_gpRead</output>
+  <output type="required" regex="no">Java dump written to</output>
+  <output type="required" regex="no">Snap dump written to</output>
+  <output type="required" regex="no">Processed dump event "gpf"</output>
+  <output type="required" regex="no">JVMJ9VM129E</output>
+  <output type="required" regex="no">JVMJ9VM131E Terminating process using CEE3AB2() with abend 3565, reason 17, cleanup 0</output>
+ </test>
+
+  <!-- Verifies that with -Xsignal:userConditionHandler=percolate if the native user condition handler illegally resumes execution and returns back to the JIT after a crash, that the trace assert is thrown -->
+  <!-- 	- the test is implemented such that the java method returned to by the native is JITed -->
+ <test id="callInAndTriggerGPReadThenResumeAndReturnToJIT with -Xsignal:userConditionHandler=percolate $THREADED$">
+  <command>$EXE$ -Xjit:count=0 -Xsignal:userConditionHandler=percolate $DUMP$ $CP$ $THREADED$ callInAndTriggerGPReadThenResumeAndReturnToJIT</command>
+  <output type="success" regex="no">Unhandled exception</output>
+  <output type="success" regex="no">Entry_Name=Java_VMBench_GPTests_GPTest_gpRead</output>
+  <output type="required" regex="no">Java dump written to</output>
+  <output type="required" regex="no">Snap dump written to</output>
+  <output type="required" regex="no">Processed dump event "gpf"</output>
+  <output type="required" regex="no">JVMJ9VM130E</output>
+  <output type="required" regex="no">JVMJ9VM131E Terminating process using CEE3AB2() with abend 3565, reason 16, cleanup 0.</output>
+ </test>
+
+ <test id="glaunch fib example">
+  <command>$GLAUNCH$ $JVMLIBPATH$ $JVM_OPTIONS$ $DUMP$ -cp $UTILS_JAR$ $FIBTARGET$</command>
+  <output type="success" regex="yes">$FIBOUT$</output>
+ </test>
+
+ <!-- glaunch encounters segmentation fault before JVM is initialized -->
+ <test id="glaunch -Xsignal:userConditionHandler=percolate -GgpfBeforeVMInit" >
+  <command>$GLAUNCH$ $JVMLIBPATH$ $JVM_OPTIONS$ -GgpfBeforeVMInit -Xsignal:userConditionHandler=percolate $DUMP$ -cp $UTILS_JAR$ $FIBTARGET$</command>
+  <output type="failure" regex="no">Processing dump event</output>
+  <output type="failure" regex="no">Unhandled exception</output>
+  <output type="success" regex="no">CEE3204S The system detected a protection exception (System Completion Code=0C4)</output>
+ </test>
+
+ <!-- glaunch encounters segmentation fault after main method is called -->
+ <test id="glaunch -Xsignal:userConditionHandler=percolate -GgpfAfterMain" >
+  <command>$GLAUNCH$ $JVMLIBPATH$ $JVM_OPTIONS$ -GgpfAfterMain -Xsignal:userConditionHandler=percolate $DUMP$ -cp $UTILS_JAR$ $FIBTARGET$</command>
+  <output type="failure" regex="no">Processing dump event</output>
+  <output type="failure" regex="no">Unhandled exception</output>
+  <output type="success" regex="no">CEE3204S The system detected a protection exception (System Completion Code=0C4)</output>
+  <output type="required" regex="yes">$FIBOUT$</output>
+ </test>
+
+ <variable name="THREADED" value="thread" />
+ </loop>
+
+</suite>

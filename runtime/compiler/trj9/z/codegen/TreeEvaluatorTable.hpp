@@ -459,7 +459,6 @@
    TR::TreeEvaluator::pdSetSignEvaluator,    // TR::pdSetSign
 
    TR::TreeEvaluator::pddivremEvaluator,    // TR::pddivrem
-   TR::TreeEvaluator::pdremSelectEvaluator, // TR::pdremSelect
 
    TR::TreeEvaluator::pdModifyPrecisionEvaluator,       // TR::pdModifyPrecision
 

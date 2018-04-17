@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2009, 2018 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="CmdLineTester Test 5" timeout="600">
+
+ <variable name="LOOP3" value="$TEMP11a$" />
+ <variable name="TEMP01a" value="$LOOP3$" />
+ <variable name="TEMP02a" value="$TEMP01a$" />
+ <variable name="TEMP03a" value="$TEMP02a$" />
+ <variable name="TEMP04a" value="$TEMP03a$" />
+ <variable name="TEMP05a" value="$TEMP04a$" />
+ <variable name="TEMP06a" value="$TEMP05a$" />
+ <variable name="TEMP07a" value="$TEMP06a$" />
+ <variable name="TEMP08a" value="$TEMP07a$" />
+ <variable name="TEMP09a" value="$TEMP08a$" />
+ <variable name="TEMP10a" value="$TEMP09a$" />
+ <variable name="TEMP11a" value="$TEMP10a$" />
+
+ <test id="Loop test 3">
+  <command>echo $LOOP3$</command>
+
+  <!-- it doesn't really matter what goes between the <output> tags because it
+       shouldn't be printed anyway (this test is designed to terminate the
+       CmdLineTester with an error); as long as the text is not the same as any
+       of the error strings that CmdLineTester could produce, it should be fine
+  -->
+  <output regex="no" type="success">NO_OUTPUT</output>
+
+ </test>
+
+</suite>
+
