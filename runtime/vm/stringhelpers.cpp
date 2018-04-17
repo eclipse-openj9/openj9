@@ -259,23 +259,22 @@ compareStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA translateDots
 
 #if !defined (J9VM_OUT_OF_PROCESS)
 UDATA
-copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, U_8 *utf8Data, UDATA utf8DataLength)
+copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, UDATA stringOffset, UDATA stringLength, U_8 *utf8Data, UDATA utf8DataLength)
 {
 	Assert_VM_notNull(string);
 
-	UDATA unicodeLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
-	j9object_t unicodeBytes = J9VMJAVALANGSTRING_VALUE(vmThread, string);
+	j9object_t stringValue = J9VMJAVALANGSTRING_VALUE(vmThread, string);
 	U_8 *data = utf8Data;
 
 	if (IS_STRING_COMPRESSED(vmThread, string)) {
 		/* Manually version J9_STR_XLAT flag checking from the loop for performance as the compiler does not do it */
 		if ((stringFlags & J9_STR_XLAT) == 0) {
-			for (UDATA i = 0; i < unicodeLength; i++) {
-				data += VM_VMHelpers::encodeUTF8CharI8(J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i), data);
+			for (UDATA i = stringOffset; i < stringOffset + stringLength; i++) {
+				data += VM_VMHelpers::encodeUTF8CharI8(J9JAVAARRAYOFBYTE_LOAD(vmThread, stringValue, i), data);
 			}
 		} else {
-			for (UDATA i = 0; i < unicodeLength; i++) {
-				UDATA encodedLength = VM_VMHelpers::encodeUTF8CharI8(J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i), data);
+			for (UDATA i = stringOffset; i < stringOffset + stringLength; i++) {
+				UDATA encodedLength = VM_VMHelpers::encodeUTF8CharI8(J9JAVAARRAYOFBYTE_LOAD(vmThread, stringValue, i), data);
 
 				if ('.' == *data) {
 					*data = '/';
@@ -287,12 +286,12 @@ copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlag
 	} else {
 		/* Manually version J9_STR_XLAT flag checking from the loop for performance as the compiler does not do it */
 		if ((stringFlags & J9_STR_XLAT) == 0) {
-			for (UDATA i = 0; i < unicodeLength; i++) {
-				data += VM_VMHelpers::encodeUTF8Char(J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i), data);
+			for (UDATA i = stringOffset; i < stringOffset + stringLength; i++) {
+				data += VM_VMHelpers::encodeUTF8Char(J9JAVAARRAYOFCHAR_LOAD(vmThread, stringValue, i), data);
 			}
 		} else {
-			for (UDATA i = 0; i < unicodeLength; i++) {
-				UDATA encodedLength = VM_VMHelpers::encodeUTF8Char(J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i), data);
+			for (UDATA i = stringOffset; i < stringOffset + stringLength; i++) {
+				UDATA encodedLength = VM_VMHelpers::encodeUTF8Char(J9JAVAARRAYOFCHAR_LOAD(vmThread, stringValue, i), data);
 
 				if ('.' == *data) {
 					*data = '/';
@@ -323,8 +322,8 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 	Assert_VM_notNull(string);
 
 	U_8* result = NULL;
-	UDATA stringLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string) * 3;
-	UDATA length = stringLength + prependStrLength;
+	UDATA stringLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
+	UDATA length = prependStrLength + stringLength * 3;
 
 	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
 		++length;
@@ -345,7 +344,7 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 			memcpy(result, prependStr, prependStrLength);
 		}
 
-		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, result + prependStrLength, length - prependStrLength);
+		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, 0, stringLength, result + prependStrLength, length - prependStrLength);
 
 		if (NULL != utf8Length) {
 			*utf8Length = computedUtf8Length + prependStrLength;
@@ -362,8 +361,8 @@ copyStringToJ9UTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA st
 	Assert_VM_notNull(string);
 
 	U_8* result = NULL;
-	UDATA stringLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string) * 3;
-	UDATA length = sizeof(((J9UTF8*)0)->length) + prependStrLength + stringLength;
+	UDATA stringLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
+	UDATA length = sizeof(((J9UTF8*)0)->length) + prependStrLength + stringLength * 3;
 
 	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
 		++length;
@@ -384,7 +383,7 @@ copyStringToJ9UTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA st
 			memcpy(result + sizeof(((J9UTF8*)0)->length), prependStr, prependStrLength);
 		}
 
-		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, result + sizeof(((J9UTF8*)0)->length) + prependStrLength, length - sizeof(((J9UTF8*)0)->length) - prependStrLength);
+		computedUtf8Length = copyStringToUTF8Helper(vmThread, string, stringFlags, 0, stringLength, result + sizeof(((J9UTF8*)0)->length) + prependStrLength, length - sizeof(((J9UTF8*)0)->length) - prependStrLength);
 
 		J9UTF8_SET_LENGTH(result, (U_16)computedUtf8Length + (U_16)prependStrLength);
 	}
