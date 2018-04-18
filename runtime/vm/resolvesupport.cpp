@@ -888,10 +888,10 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 					goto done;
 			}
 
-			/* Do not check for final when class is a value class */
+			/* Field must be final when class is a value class */
 			if (J9_ARE_ALL_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_FIELD_SETTER)
-				&& J9_ARE_ALL_BITS_SET(modifiers, J9_JAVA_FINAL)
-				&& J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_CHECK_VALUE_CLASS)
+				&& (J9_ARE_ALL_BITS_SET(modifiers, J9_JAVA_FINAL)
+				|| J9_ARE_ALL_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_CHECK_VALUE_CLASS))
 			) {
 #else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			if (J9_ARE_ALL_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_FIELD_SETTER)
@@ -917,6 +917,13 @@ illegalAccess:
 					goto done;
 				}
 				if (!finalFieldSetAllowed(vmStruct, false, method, definingClass, classFromCP, field, jitFlags)) {
+					fieldOffset = -1;
+					goto done;
+				}
+				if (J9_ARE_ALL_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_CHECK_VALUE_CLASS)
+					&& J9_ARE_NO_BITS_SET(modifiers, J9_JAVA_FINAL)) {
+					setCurrentExceptionUTF(vmStruct, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR, NULL);
+					/* TODO: add detail message */
 					fieldOffset = -1;
 					goto done;
 				}
