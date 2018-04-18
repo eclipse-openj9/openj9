@@ -43,12 +43,13 @@ tools should be installed on your test machine to run tests.
 
 1. Configure environment:
 
-  * required environment variables
+  * environment variables
     ```
     JAVA_BIN=<path to JDK bin directory that you wish to test>
     SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test)
     JAVA_VERSION=[SE80|SE90|SE100|SE110|Panama|Valhalla] (SE90 default value)
     JAVA_IMPL=[openj9|hotspot|sap] (openj9 default value)
+    BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)
     ```
 
 Please refer *.spec files in [buildspecs](https://github.com/eclipse/openj9/tree/master/buildspecs)
@@ -67,8 +68,6 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
 
   * only compile but do not run tests
     ```
-    export BUILD_LIST=comma_separated_projects_to_be_compiled 
-    (optional, when not set, defaults to all projects)
     make compile
     ```
 

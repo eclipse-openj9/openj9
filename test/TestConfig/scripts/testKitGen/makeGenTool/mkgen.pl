@@ -50,9 +50,10 @@ my $impl = '';
 my $modes_hs = '';
 my $sp_hs = '';
 my %targetGroup = ();
+my $buildList = '';
 
 sub runmkgen {
-	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $javaVersion, $allImpls, $impl, my $modesxml, my $ottawacsv ) = @_;
+	( $projectRootDir, $allLevels, $allGroups, $allSubsets, $output, $graphSpecs, $javaVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList ) = @_;
 
 	$testRoot = $projectRootDir;
 	if ($output) {
@@ -94,9 +95,27 @@ sub runmkgen {
 sub generateOnDir {
 	my @currentdirs = @_;
 	my $absolutedir = $projectRootDir;
+	my $currentdir = join('/', @currentdirs);
 	if (@currentdirs) {
-		$absolutedir .= '/' . join('/', @currentdirs);
+		$absolutedir .= '/' . $currentdir;
 	}
+	
+	# only generate make files for projects that specificed in the build list, if build list is empty, generate on every project
+	if ( $buildList ne '' ){
+		my $inList = 0;
+		my @buildListArr = split(',', $buildList);
+		foreach my $build (@buildListArr) {
+			$build =~ s/\\+/\//g;
+			if (( index($currentdir, $build) == 0 ) || ( index($build, $currentdir) == 0 )) {
+				$inList = 1;
+				last;
+			}
+		}
+		if ($inList == 0) {
+			return 0;
+		}
+	}
+
 	my $playlistXML;
 	my @subdirsHavePlaylist = ();
 	opendir( my $dir, $absolutedir );

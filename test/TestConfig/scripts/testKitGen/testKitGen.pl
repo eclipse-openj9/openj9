@@ -38,6 +38,7 @@ my $graphSpecs     = '';
 my $javaVersion    = '';
 my $impl           = '';
 my $output         = '';
+my $buildList      = '';
 my @allLevels      = ( "sanity", "extended" );
 my @allGroups      = ( "functional", "openjdk", "external", "perf", "jck", "system" );
 my @allSubsets     = ( "SE80", "SE90", "SE100", "SE110", "Panama", "Valhalla" );
@@ -65,21 +66,30 @@ foreach my $argv (@ARGV) {
 	elsif ( $argv =~ /^\-\-ottawaCsv=/) {
 		($ottawacsv) = $argv =~ /^\-\-ottawaCsv=(.*)/;
 	}
+	elsif ( $argv =~ /^\-\-buildList=/) {
+		($buildList) = $argv =~ /^\-\-buildList=(.*)/;
+	}
 	else {
 		print
 "This program will search projectRootDir provided and find/parse playlist.xml to generate \n"
 		  . "makefile (per project)\n"
 		  . "jvmTest.mk and specToPlat.mk - under TestConfig\n";
-		print "Options:\n"
-		  . "--graphSpecs=<specs>    Comma separated specs that the build will run on.\n"
-		  . "--javaVersion=<version> Java version that the build will run on.\n"
-		  . "--impl=<implementation> Java Implementation, e.g., openj9, hotspot, sap.\n" 
-		  . "--output=<path>         Path to output makefiles.\n"
-		  . "--projectRootDir=<path> Root path for searching playlist.xml.\n"
-		  . "--modesXml=<path>       Path to modes.xml file.\n"
-		  . "                        If the modesXml is not provided, the program will try to find modes.xml under projectRootDir/TestConfig/resources.\n"
-		  . "--ottawaCsv=<path>      Path to ottawa.csv file.\n"
-		  . "                        If the ottawaCsv is not provided, the program will try to find ottawa.csv under projectRootDir/TestConfig/resources.\n";
+		print "Usage:\n"
+		  . "  perl testKitGen.pl --graphSpecs=[linux_x86-64|linux_x86-64_cmprssptrs|...] --javaVersion=[SE80|SE90|...] --impl=[openj9|hotspot|sap] [options]"
+		  . "Options:\n"
+		  . "  --graphSpecs=<specs>      Comma separated specs that the build will run on.\n"
+		  . "  --javaVersion=<version>   Java version that the build will run on.\n"
+		  . "  --impl=<implementation>   Java Implementation, e.g., openj9, hotspot, sap.\n" 
+		  . "  --projectRootDir=<path>   Root path for searching playlist.xml.\n"
+		  . "                            The path defaults to openj9/test.\n"
+		  . "  --output=<path>           Path to output makefiles.\n"
+		  . "                            The path defaults to projectRootDir.\n"
+		  . "  --modesXml=<path>         Path to modes.xml file.\n"
+		  . "                            If the modesXml is not provided, the program will try to find modes.xml under projectRootDir/TestConfig/resources.\n"
+		  . "  --ottawaCsv=<path>        Path to ottawa.csv file.\n"
+		  . "                            If the ottawaCsv is not provided, the program will try to find ottawa.csv under projectRootDir/TestConfig/resources.\n"
+		  . "  --buildList=<paths>       Comma separated project paths to search playlist.xml. The paths are relative to projectRootDir.\n"
+		  . "                            If the buildList is not provided, the program will search all files under projectRootDir.\n";
 		die "Please specify valid options!";
 	}
 }
@@ -109,6 +119,6 @@ if ( !$impl ) {
 }
 
 # run make file generator
-runmkgen( $projectRootDir, \@allLevels, \@allGroups, \@allSubsets, $output, $graphSpecs, $javaVersion, \@allImpls, $impl, $modesxml, $ottawacsv );
+runmkgen( $projectRootDir, \@allLevels, \@allGroups, \@allSubsets, $output, $graphSpecs, $javaVersion, \@allImpls, $impl, $modesxml, $ottawacsv, $buildList );
 
 print "\nTEST AUTO GEN SUCCESSFUL\n";
