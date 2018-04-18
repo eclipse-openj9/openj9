@@ -7892,7 +7892,12 @@ retry:
 		const UDATA newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
 		j9object_t original = *(j9object_t *)(_sp + (J9_ARE_ALL_BITS_SET(flags, J9FieldSizeDouble) ? 2 : 1));
 		j9object_t copy = NULL;
-		J9Class *objectClass = J9OBJECT_CLAZZ(_currentThread, original);
+		J9Class *objectClass = NULL;
+		if (NULL == original) {
+			rc = THROW_NPE;
+			goto done;
+		}
+		objectClass = J9OBJECT_CLAZZ(_currentThread, original);
 
 		/* In a resolved field, flags will have the J9FieldFlagResolved bit set, thus
 		 * having a higher value than any valid valueOffset.
@@ -7939,7 +7944,6 @@ retry:
 
 		/* Clone original object into new object */
 		_objectAccessBarrier.cloneObject(_currentThread, original, copy, objectClass);
-		VM_VMHelpers::checkIfFinalizeObject(_currentThread, copy);
 
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
 
