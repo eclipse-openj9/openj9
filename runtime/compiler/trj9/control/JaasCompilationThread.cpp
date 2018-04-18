@@ -1395,6 +1395,17 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(JAAS::Void());
          }
          break;
+      case J9ServerMessageType::CompInfo_isClassSpecial:
+         {
+         J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
+         bool val = clazz->classDepthAndFlags & (J9_JAVA_CLASS_REFERENCE_WEAK      |
+                                                 J9_JAVA_CLASS_REFERENCE_SOFT      |
+                                                 J9_JAVA_CLASS_FINALIZE            |
+                                                 J9_JAVA_CLASS_OWNABLE_SYNCHRONIZER);
+         client->write(val);
+         }
+         break;
+
       case J9ServerMessageType::ClassEnv_classFlagsValue:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());

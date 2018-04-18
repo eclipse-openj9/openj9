@@ -186,6 +186,7 @@ enum J9ServerMessageType
    CompInfo_getMethodBytecodeSize = 306;
    CompInfo_setJ9MethodExtra = 307;
    CompInfo_setInvocationCountAtomic = 308;
+   CompInfo_isClassSpecial = 309;
 
    // For J9::ClassEnv Methods
    ClassEnv_classFlagsValue = 400;
