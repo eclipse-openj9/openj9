@@ -24,128 +24,60 @@ package org.openj9.test.valhalla;
 import org.objectweb.asm.*;
 
 public class ClassGenerator implements Opcodes {
+	
+	public static byte[] generateClass(String name, Attribute[] attributes) {
+		ClassWriter classWriter = new ClassWriter(0);
+		classWriter.visit(V1_8, ACC_PUBLIC | ACC_SUPER, name, null, "java/lang/Object", null);
+		
+		/* Generate base constructor which just calls super.<init>() */
+		MethodVisitor methodVisitor = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+		methodVisitor.visitCode();
+		methodVisitor.visitVarInsn(ALOAD, 0);
+		methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+		methodVisitor.visitInsn(RETURN);
+		methodVisitor.visitMaxs(1, 1);
+		methodVisitor.visitEnd();
+
+		/* Generate passed in attributes if there are any */
+		if (null != attributes) {
+			for (Attribute attr : attributes) {
+				classWriter.visitAttribute(attr);
+			}
+		}
+
+		classWriter.visitEnd();
+		return classWriter.toByteArray();
+	}
 
 	public static byte[] MultipleNestMembersAttributesdump () throws Exception {
-		ClassWriter cw = new ClassWriter(0);
-		MethodVisitor mv;
-		
-		cw.visit(52, ACC_PUBLIC + ACC_SUPER, "MultipleNestMembersAttributes", null, "java/lang/Object", null);
-		{
-			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-			mv.visitCode();
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-			mv.visitInsn(RETURN);
-			mv.visitMaxs(1, 1);
-			mv.visitEnd();
-		}
-		/* Classwriter will automatically correct the existence of two nest members
-		 * attributes, so they are generated separately  */
-		{
-			String[] nestmems = {};
-			NestMembersAttribute attr = new NestMembersAttribute(nestmems);
-			cw.visitAttribute(attr);
-		}
-		{
-			String[] nestmems = {};
-			NestMembersAttribute attr = new NestMembersAttribute(nestmems);
-			cw.visitAttribute(attr);
-		}
-		cw.visitEnd();
-		return cw.toByteArray();
+		String[] nestMembersList = {};
+		NestMembersAttribute attr1 = new NestMembersAttribute(nestMembersList);
+		NestMembersAttribute attr2 = new NestMembersAttribute(nestMembersList);
+		return generateClass("MultipleNestMembersAttributes", new Attribute[]{ attr1, attr2});
 	}
 
 	public static byte[] MultipleNestHostAttributesdump () throws Exception {
-		ClassWriter cw = new ClassWriter(0);
-		MethodVisitor mv;
-		
-		cw.visit(52, ACC_PUBLIC + ACC_SUPER, "MultipleNestHostAttributes", null, "java/lang/Object", null);
-		{
-			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-			mv.visitCode();
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-			mv.visitInsn(RETURN);
-			mv.visitMaxs(1, 1);
-			mv.visitEnd();
-		}
-		{
-			mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "main", "([Ljava/lang/String;)V", null, new String[] { "java/lang/Exception" });
-			mv.visitCode();
-			mv.visitInsn(RETURN);
-			mv.visitMaxs(0, 1);
-			mv.visitEnd();
-		}
-		/* Classwriter will automatically correct the existence of two nest host
-		 * attributes, so they are generated separately  */
-		{
-			NestHostAttribute attr = new NestHostAttribute("clazzname");
-			cw.visitAttribute(attr);
-		}
-		{
-			NestHostAttribute attr = new NestHostAttribute("clazzname");
-			cw.visitAttribute(attr);
-		}
-		cw.visitEnd();
-		return cw.toByteArray();
+		NestHostAttribute attr1 = new NestHostAttribute("clazzname");
+		NestHostAttribute attr2 = new NestHostAttribute("clazzname");
+		return generateClass("MultipleNestHostAttributes", new Attribute[]{ attr1, attr2 });
 	}
 
 	public static byte[] MultipleNestAttributesdump () throws Exception {
-		ClassWriter cw = new ClassWriter(0);
-		MethodVisitor mv;
-		
-		cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, "MultipleNestAttributes", null, "java/lang/Object", null);
-		cw.visitNestMember("DoesNotExist");
-		cw.visitNestHost("DoesNotExist");
-		{
-			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-			mv.visitCode();
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-			mv.visitInsn(RETURN);
-			mv.visitMaxs(1, 1);
-			mv.visitEnd();
-		}
-		cw.visitEnd();
-		return cw.toByteArray();
+		String[] nestMembersList = { "DoesNotExist" };
+		NestMembersAttribute nestMembersAttribute = new NestMembersAttribute(nestMembersList);
+		NestHostAttribute nestHostAttribute = new NestHostAttribute("DoesNotExist");
+		return generateClass("MultipleNestAttributes", new Attribute[]{ nestMembersAttribute, nestHostAttribute });
 	}
 
 	public static byte[] ClassIsOwnNestHostdump () throws Exception {
-		ClassWriter cw = new ClassWriter(0);
-		MethodVisitor mv;
-		
-		cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, "ClassIsOwnNestHost", null, "java/lang/Object", null);
-		cw.visitNestHost("ClassIsOwnNestHost");
-		{
-			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-			mv.visitCode();
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-			mv.visitInsn(RETURN);
-			mv.visitMaxs(1, 1);
-			mv.visitEnd();
-		}
-		cw.visitEnd();
-		return cw.toByteArray();
+		NestHostAttribute nestHostAttribute = new NestHostAttribute("DoesNotExist");
+		return generateClass("ClassIsOwnNestHost", new Attribute[]{ nestHostAttribute });
 	}
 
 	public static byte[] NestMemberIsItselfdump () throws Exception {
-		ClassWriter cw = new ClassWriter(0);
-		MethodVisitor mv;
-		
-		cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, "NestMemberIsItself", null, "java/lang/Object", null);
-		cw.visitNestMember("NestMemberIsItself");
-		{
-			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-			mv.visitCode();
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-			mv.visitInsn(RETURN);
-			mv.visitMaxs(1, 1);
-			mv.visitEnd();
-		}
-		cw.visitEnd();
-		return cw.toByteArray();
+		String[] nestMembersList = { "NestMemberIsItself" };
+		NestMembersAttribute nestMembersAttribute = new NestMembersAttribute(nestMembersList);
+		return generateClass("NestMemberIsItself", new Attribute[]{ nestMembersAttribute });
 	}	
 
 	public static byte[] fieldAccessDump () throws Exception {
@@ -154,7 +86,10 @@ public class ClassGenerator implements Opcodes {
 		
 		cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, "FieldAccess", null, "java/lang/Object", null);
 		cw.visitInnerClass("FieldAccess$Inner", "FieldAccess", "Inner", ACC_PRIVATE | ACC_STATIC);
-		cw.visitNestMember("FieldAccess$Inner");
+		String[] nestMembersList = { "FieldAccess$Inner" };
+		NestMembersAttribute nestMembersAttribute = new NestMembersAttribute(nestMembersList);
+		cw.visitAttribute(nestMembersAttribute);
+
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
 			mv.visitCode();
@@ -182,7 +117,9 @@ public class ClassGenerator implements Opcodes {
 		MethodVisitor mv;
 		
 		cw.visit(V1_8, ACC_SUPER, "FieldAccess$Inner", null, "java/lang/Object", null);
-		cw.visitNestHost("FieldAccess");
+		NestHostAttribute nestHostAttribute = new NestHostAttribute("FieldAccess");
+		cw.visitAttribute(nestHostAttribute);
+		
 		cw.visitInnerClass("FieldAccess$Inner", "FieldAccess", "Inner", ACC_PRIVATE | ACC_STATIC);
 		{
 			fv = cw.visitField(ACC_PRIVATE | ACC_STATIC, "f", "I", null, null);
@@ -215,7 +152,10 @@ public class ClassGenerator implements Opcodes {
 		MethodVisitor mv;
 		
 		cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, "MethodAccess", null, "java/lang/Object", null);
-		cw.visitNestMember("MethodAccess$Inner");
+		String[] nestMembersList = { "MethodAccess$Inner" };
+		NestMembersAttribute nestMembersAttribute = new NestMembersAttribute(nestMembersList);
+		cw.visitAttribute(nestMembersAttribute);
+		
 		cw.visitInnerClass("MethodAccess$Inner", "MethodAccess", "Inner", ACC_PRIVATE | ACC_STATIC);
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
@@ -243,7 +183,8 @@ public class ClassGenerator implements Opcodes {
 		MethodVisitor mv;
 		
 		cw.visit(V1_8, ACC_SUPER, "MethodAccess$Inner", null, "java/lang/Object", null);
-		cw.visitNestHost("MethodAccess");
+		NestHostAttribute nestHostAttribute = new NestHostAttribute("MethodAccess");
+		cw.visitAttribute(nestHostAttribute);
 		cw.visitInnerClass("MethodAccess$Inner", "MethodAccess", "Inner", ACC_PRIVATE | ACC_STATIC);
 		{
 			mv = cw.visitMethod(ACC_PRIVATE, "<init>", "()V", null, null);
@@ -272,7 +213,10 @@ public class ClassGenerator implements Opcodes {
 		
 		cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, "FieldAccess", null, "java/lang/Object", null);
 		cw.visitInnerClass("pkg/FieldAccess$Inner", "FieldAccess", "Inner", ACC_PRIVATE | ACC_STATIC);
-		cw.visitNestMember("pkg/FieldAccess$Inner");
+		String[] nestMembersList = { "pkg/FieldAccess$Inner" };
+		NestMembersAttribute nestMembersAttribute = new NestMembersAttribute(nestMembersList);
+		cw.visitAttribute(nestMembersAttribute);
+		
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
 			mv.visitCode();
@@ -300,7 +244,8 @@ public class ClassGenerator implements Opcodes {
 		MethodVisitor mv;
 
 		cw.visit(V1_8, ACC_SUPER, "pkg/FieldAccess$Inner", null, "java/lang/Object", null);
-		cw.visitNestHost("FieldAccess");
+		NestHostAttribute nestHostAttribute = new NestHostAttribute("FieldAccess");
+		cw.visitAttribute(nestHostAttribute);
 		cw.visitInnerClass("pkg/FieldAccess$Inner", "FieldAccess", "Inner", ACC_PRIVATE | ACC_STATIC);
 		{
 			fv = cw.visitField(ACC_PRIVATE | ACC_STATIC, "f", "I", null, null);
@@ -361,7 +306,9 @@ public class ClassGenerator implements Opcodes {
 		MethodVisitor mv;
 
 		cw.visit(V1_8, ACC_SUPER, "FieldAccess$Inner", null, "java/lang/Object", null);
-		cw.visitNestHost("FieldAccess");
+		NestHostAttribute nestHostAttribute = new NestHostAttribute("FieldAccess");
+		cw.visitAttribute(nestHostAttribute);
+		
 		cw.visitInnerClass("FieldAccess$Inner", "FieldAccess", "Inner", ACC_PRIVATE | ACC_STATIC);
 		{
 			fv = cw.visitField(ACC_PRIVATE | ACC_STATIC, "f", "I", null, null);
@@ -395,7 +342,10 @@ public class ClassGenerator implements Opcodes {
 
 		cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, "FieldAccess", null, "java/lang/Object", null);
 		cw.visitInnerClass("FieldAccess$Inner", "FieldAccess", "Inner", ACC_PRIVATE | ACC_STATIC);
-		cw.visitNestMember("FieldAccess$Inner");
+		String[] nestMembersList = { "FieldAccess$Inner" };
+		NestMembersAttribute nestMembersAttribute = new NestMembersAttribute(nestMembersList);
+		cw.visitAttribute(nestMembersAttribute);
+		
 		{
 			mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
 			mv.visitCode();

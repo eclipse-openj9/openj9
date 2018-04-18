@@ -25,7 +25,7 @@
 	<test>
 		<testCaseName>NestAttributeTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(LIB_DIR)$(D)asm-7.0.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
+	-cp $(Q)$(LIB_DIR)$(D)asm-all.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestAttributeTest \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \

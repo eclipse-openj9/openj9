@@ -34,9 +34,4 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 These libs will be downloaded automatically as part of `make compile` 
 process.
 
-Valhalla tests currently make use of the nestmates capabilities which 
-are available starting in asm version 7. In order to run the Valhalla 
-nestmates on a local machine, you must manually get the asm-7.0.jar and
-put it in TestConfig/lib/. Avoid using asm 7 in other tests as this is 
-a temporary solution.
 
