@@ -233,7 +233,13 @@ tryAgain:
 	ramClassRefWrapper = (J9RAMClassRef *)&ramCP[cpIndex];
 	resolvedClass = ramClassRefWrapper->value;
 	/* If resolving for "new", check if the class is instantiable */
-	if ((NULL != resolvedClass) && (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_INSTANTIABLE) || J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccAbstract | J9AccInterface))) {
+	if ((NULL != resolvedClass) && (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_INSTANTIABLE)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		|| J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccAbstract | J9AccInterface | J9AccValueType))
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		|| J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccAbstract | J9AccInterface))
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	) {
 		/* ensure that the caller can safely read the modifiers field if it so desires */
 		issueReadBarrier();
 		goto done;
@@ -368,13 +374,29 @@ tryAgain:
 
 	accessModifiers = resolvedClass->romClass->modifiers;
 	if (J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_INSTANTIABLE)) {
-		if (J9_ARE_ANY_BITS_SET(accessModifiers, J9AccAbstract | J9AccInterface)) {
+		if (J9_ARE_ANY_BITS_SET(accessModifiers, J9AccAbstract | J9AccInterface)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			|| (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_CHECK_VALUE_CLASS)
+				&& J9_ARE_ALL_BITS_SET(accessModifiers, J9AccValueType))
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		) {
 			if (canRunJavaCode) {
 				setCurrentException(vmStruct, J9_EX_CTOR_CLASS + J9VMCONSTANTPOOL_JAVALANGINSTANTIATIONERROR,
 						(UDATA *)resolvedClass->classObject);
 			}
 			goto bail;
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_ARE_ALL_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_CHECK_VALUE_CLASS)
+			&& J9_ARE_NO_BITS_SET(accessModifiers, J9AccValueType)
+		) {
+			if (canRunJavaCode) {
+				setCurrentException(vmStruct, J9_EX_CTOR_CLASS + J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR,
+						(UDATA *)resolvedClass->classObject);
+			}
+			goto bail;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	}
 	
 	if (J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_INIT_CLASS)) {

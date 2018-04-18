@@ -7042,7 +7042,11 @@ retry:
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 		J9RAMClassRef *ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
 		J9Class* volatile resolvedClass = ramCPEntry->value;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if ((NULL != resolvedClass) && (resolvedClass->romClass->modifiers & (J9AccAbstract | J9AccInterface | J9AccValueType)) == 0) {
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		if ((NULL != resolvedClass) && (resolvedClass->romClass->modifiers & (J9AccAbstract | J9AccInterface)) == 0) {
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			if (!VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
 				j9object_t instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
 				if (NULL == instance) {
