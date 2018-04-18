@@ -464,7 +464,14 @@ doVerify:
 				break;
 			}
 			case J9ClassInitFailed: {
-				sendInitializationAlreadyFailed(currentThread, clazz, 0, 0, 0);
+				/* J9ClassInitFailed can only be set when unlockedStatus is J9ClassInitNotInitialized, and desiredState is J9_CLASS_INIT_INITIALIZED.
+				 * J9ClassInitFailed can be ignored if desiredState is not J9_CLASS_INIT_INITIALIZED, i.e., J9_CLASS_INIT_VERIFIED or J9_CLASS_INIT_PREPARED.
+				 */
+				if (desiredState < J9_CLASS_INIT_INITIALIZED) {
+					Trc_VM_classInitStateMachine_desiredStateReached(currentThread);
+				} else {
+					sendInitializationAlreadyFailed(currentThread, clazz, 0, 0, 0);
+				}
 				goto done;
 			}
 			case J9ClassInitNotInitialized: {
