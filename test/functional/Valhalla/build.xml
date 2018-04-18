@@ -57,7 +57,7 @@
 			<classpath>
 				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
 				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-7.0.jar"/>
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar"/>
 			</classpath>
 		</javac>
 	</target>
