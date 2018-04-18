@@ -391,7 +391,7 @@ jstring getEncoding(JNIEnv *env, jint encodingType)
 				PORT_ACCESS_FROM_ENV(env);
 				if (0 == j9sl_open_shared_library("java", &handle, J9PORT_SLOPEN_DECORATE)) {
 					void (*nativeFuncAddrJNU)(JNIEnv *env, const char *str) = NULL;
-					if (0 == j9sl_lookup_name(handle, "JNU_InitializeEncoding", (UDATA*) &nativeFuncAddrJNU, "VLL")) {
+					if (0 == j9sl_lookup_name(handle, "InitializeEncoding", (UDATA*) &nativeFuncAddrJNU, "VLL")) {
 						/* invoke JCL native to initialize platform encoding explicitly */
 						nativeFuncAddrJNU(env, encoding);
 					}
