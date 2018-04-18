@@ -1,5 +1,5 @@
-###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+################################################################################
+# Copyright (c) 2017, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,32 +18,52 @@
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-###############################################################################
+################################################################################
 
-# This makefile should be invoked as the default makefile for building J9,
-# instead of the UMA-generated makefile.
 
-# Add the omr dependency to the UMA makefile's "all" target. 
-# Force omr to be built first, and not in parallel with any UMA targets.
-.NOTPARALLEL all: phase_omr
-clean: clean_phase_omr
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/../ut_j9jcl.c PROPERTIES GENERATED TRUE)
+add_library(jclse7b_ SHARED
+	../j9vmconstantpool_se7_basic.c
+)
+target_include_directories(jclse7b_ 
+	PRIVATE
+		${CMAKE_CURRENT_BINARY_DIR}
+		../
+)
 
-phase_omr:
-ifneq ($(ENABLE_CMAKE),true)
-	$(MAKE) $(MFLAGS) -C omr
-endif
+target_compile_definitions(jclse7b_
+	PRIVATE
+		J9VM_JCL_SE7_BASIC
+)
 
-clean_phase_omr:
-	$(MAKE) $(MFLAGS) -C omr clean
+target_link_libraries(jclse7b_
+	PRIVATE
+		j9vm_interface
+		j9vm_gc_includes
+		j9vm_jcl_includes
+		j9vm_jcl_trace
 
-.PHONY: phase_omr clean_phase_omr
+		omrsig
+		j9vm_jcl_se6_vm-side_lifecycle
+		j9vm_jcl_se6_vm-side_natives
+		j9vm_jcl_jithelpers
+		j9vm_jcl_sun_misc_Unsafe
+		j9vm_jcl_attach
+		j9vm_jcl_se7
+		j9vm_jcl_se8
+		j9hookable
+		j9zlib
+		j9util
+		j9utilcore
+		j9avl
+		j9hashtable
+		j9pool
+		j9thr
+		j9vmi
+		sunvmi
+)
 
-# As a convenience, add phase_omr as a prereq to commonly used phases.
-phase_core: phase_omr
-phase_j2se: phase_omr
-phase_jit: phase_omr
-phase_quick: phase_omr
-phase_util: phase_omr
-
-# Include the UMA-generated makefile
-include ./makefile
+install(
+	TARGETS jclse7b_
+	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+)

@@ -1,5 +1,5 @@
-###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+################################################################################
+# Copyright (c) 2017, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,32 +18,51 @@
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-###############################################################################
+################################################################################
 
-# This makefile should be invoked as the default makefile for building J9,
-# instead of the UMA-generated makefile.
+add_executable(pltest
+	j9cudaTest.c
+	j9dumpTest.c
+	j9errorTest.c
+	j9fileTest.c
+	j9heapTest.c
+	j9hypervisorTest.c
+	j9memTest.c
+	j9mmapTest.c
+	j9nlsTest.c
+	j9portTest.c
+	j9processTest.c
+	j9riTest.c
+	j9shsem_deprecatedTest.c
+	j9shsemTest.c
+	j9slTest.c
+	j9sockTest.c
+	j9strTest.c
+	j9timeTest.c
+	j9ttyExtendedTest.c
+	j9ttyTest.c
+	j9vmemTest.c
+	main.c
+	shmem.c
+	si_numcpusTest.c
+	si.c
+	socket.c
+	testHelpers.c
+	testProcessHelpers.c
+)
 
-# Add the omr dependency to the UMA makefile's "all" target. 
-# Force omr to be built first, and not in parallel with any UMA targets.
-.NOTPARALLEL all: phase_omr
-clean: clean_phase_omr
+target_link_libraries(pltest
+	PRIVATE
+		j9vm_main_wrapper
+		j9prt
+		j9pool
+		j9utilcore
+		j9avl
+		j9hashtable
+		j9thr
+)
 
-phase_omr:
-ifneq ($(ENABLE_CMAKE),true)
-	$(MAKE) $(MFLAGS) -C omr
-endif
-
-clean_phase_omr:
-	$(MAKE) $(MFLAGS) -C omr clean
-
-.PHONY: phase_omr clean_phase_omr
-
-# As a convenience, add phase_omr as a prereq to commonly used phases.
-phase_core: phase_omr
-phase_j2se: phase_omr
-phase_jit: phase_omr
-phase_quick: phase_omr
-phase_util: phase_omr
-
-# Include the UMA-generated makefile
-include ./makefile
+install(
+	TARGETS pltest
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
+)
