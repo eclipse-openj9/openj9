@@ -117,7 +117,7 @@ getStringForShcAddrmode(J9PortLibrary* portlib, uint32_t addrmode, char* buffer)
 uintptr_t
 isCacheFileName(J9PortLibrary* portlib, const char* nameToTest, uintptr_t expectPersistent, const char* optionalExtraID);
 
-uintptr_t getModLevelFromName(const char* cacheNameWithVGen);
+intptr_t getModLevelFromName(const char* cacheNameWithVGen);
 
 #ifdef __cplusplus
 } /* extern "C" */

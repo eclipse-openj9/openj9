@@ -288,8 +288,8 @@ printSharedCache(void* element, void* param)
 		j9tty_printf(PORTLIB, "%-16s\t", currentItem->name);
 		char jclLevelStr[10];
 		memset(jclLevelStr, 0, sizeof(jclLevelStr));
-		getStringForShcModlevel(PORTLIB, currentItem->versionData.modlevel, (char*)&jclLevelStr, sizeof(jclLevelStr));
-		getStringForShcAddrmode(PORTLIB, currentItem->versionData.addrmode, (char*)&addrmodeStr);
+		getStringForShcModlevel(PORTLIB, currentItem->versionData.modlevel, jclLevelStr, sizeof(jclLevelStr));
+		getStringForShcAddrmode(PORTLIB, currentItem->versionData.addrmode, addrmodeStr);
 		j9tty_printf(PORTLIB, "%s %s  ", jclLevelStr, addrmodeStr);
 		if (J9PORT_SHR_CACHE_TYPE_PERSISTENT == currentItem->versionData.cacheType) {
 			j9tty_printf(PORTLIB, "%-16s", "persistent");
