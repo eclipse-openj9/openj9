@@ -536,10 +536,6 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 		translationFlags |= BCT_Java9MajorVersionShifted;
 	} else if (J2SE_VERSION(vm) >= J2SE_18) {
 		translationFlags |= BCT_Java8MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_17) {
-		translationFlags |= BCT_Java7MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_16) {
-		translationFlags |= BCT_Java6MajorVersionShifted;
 	}
 #endif
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2008 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@ import java.lang.reflect.Field;
 public class SharedUtilsTest 
 {
     private String cacheName = "ShareClassesUtilities";
+    private int TEMP_JAVA10_SHARED_CACHE_MODLEVEL = 6;
     
     public static void main(String args[]) {
 	SharedUtilsTest obj = new SharedUtilsTest();
@@ -112,7 +113,12 @@ public class SharedUtilsTest
 				}
 			}
 			int level = obj.getCacheJVMLevel();
-			rc = (level >= min && level <= max);
+			if (level >= min && level <= max) {
+				rc = true;
+			} else if (level >= 10 || TEMP_JAVA10_SHARED_CACHE_MODLEVEL == level) {
+				/* mod level equals to java version number from Java 10. There might be an exiting java10 shared cache that has modLevel 6 created before this change */
+				rc = true;
+			}
 		}
 		catch (IllegalAccessException e) {
 		    System.out.println("IllegalStateException by getSharedCacheInfo");

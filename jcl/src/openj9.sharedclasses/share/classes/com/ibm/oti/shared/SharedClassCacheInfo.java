@@ -161,7 +161,10 @@ public class SharedClassCacheInfo {
 	}
 	
 	/**
-	 * Gets the JVM level for the shared class cache. 
+	 * Gets the JVM level for the shared class cache.  
+	/*[IF Java10] 
+	 * Starting from Java 10, the JVM LEVEL equals to the java version number on which the share class cache is created.
+	/*[ENDIF]
 	 *
 	 * @return		A JVMLEVEL constant.
 	 */					
