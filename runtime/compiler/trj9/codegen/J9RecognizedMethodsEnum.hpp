@@ -746,6 +746,7 @@
    com_ibm_jit_JITHelpers_compareAndSwapLongInArray,
    com_ibm_jit_JITHelpers_compareAndSwapObjectInArray,
    com_ibm_jit_JITHelpers_byteToCharUnsigned,
+   com_ibm_jit_JITHelpers_acmplt,
    com_ibm_jit_JITHelpers_jitHelpers,
    com_ibm_jit_JITHelpers_getClassInitializeStatus,
 

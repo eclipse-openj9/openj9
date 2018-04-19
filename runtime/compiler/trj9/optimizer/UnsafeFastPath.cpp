@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -141,6 +141,47 @@ int32_t TR_UnsafeFastPath::perform()
 
                continue;
                }
+            }
+
+         if (symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_acmplt)
+            {
+            if (!performTransformation(comp(),
+                  "%s Found unsafe/JITHelpers calls, turning node "
+                  "[" POINTER_PRINTF_FORMAT "] "
+                  "into an address less-than comparison\n",
+                  optDetailString(),
+                  node))
+               {
+               continue;
+               }
+
+            TR::Node *obj0 = node->getChild(1);
+            TR::Node *obj1 = node->getChild(2);
+            anchorAllChildren(node, tt);
+            prepareToReplaceNode(node);
+            node = TR::Node::recreateWithoutProperties(
+               node, TR::acmplt, 2, obj0, obj1);
+
+            TR::TreeTop *newTree = TR::TreeTop::create(
+               comp(), TR::Node::create(TR::treetop, 1, node));
+
+            tt->insertAfter(newTree);
+            tt->getNode()->removeAllChildren();
+            TR::TransformUtil::removeTree(comp(), tt);
+            tt = newTree;
+
+            if (trace())
+               {
+               traceMsg(comp(),
+                  "Created node [" POINTER_PRINTF_FORMAT "] to compare "
+                  "values [" POINTER_PRINTF_FORMAT "] "
+                  "and [" POINTER_PRINTF_FORMAT "]\n",
+                  node,
+                  obj0,
+                  obj1);
+               }
+
+            continue;
             }
 
          // Unsafes for other recognized methods

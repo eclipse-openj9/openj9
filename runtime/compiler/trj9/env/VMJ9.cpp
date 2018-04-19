@@ -3303,6 +3303,7 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
       case TR::com_ibm_jit_JITHelpers_putObjectInObject:
       case TR::com_ibm_jit_JITHelpers_putObjectInObjectVolatile:
       case TR::com_ibm_jit_JITHelpers_byteToCharUnsigned:
+      case TR::com_ibm_jit_JITHelpers_acmplt:
       case TR::com_ibm_jit_JITHelpers_isArray:
       case TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32:
       case TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64:

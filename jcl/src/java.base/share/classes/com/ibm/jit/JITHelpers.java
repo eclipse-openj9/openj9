@@ -353,6 +353,21 @@ public final class JITHelpers {
 		return (char) ((char) b & (char) 0x00ff);
 	}
 
+	/**
+	 * Determine whether {@code lhs} is at a lower address than {@code rhs}.
+	 *
+	 * Because objects can be moved by the garbage collector, the ordering of
+	 * the addresses of distinct objects is not stable over time. As such, the
+	 * result of this comparison should be used for heuristic purposes only.
+	 *
+	 * A null reference is considered less than any non-null reference.
+	 *
+	 * @param lhs The left hand side of the comparison
+	 * @param rhs The right hand side of the comparison
+	 * @return true if {@code lhs} is at a lower address, false otherwise
+	 */
+	public native boolean acmplt(Object lhs, Object rhs);
+
 	private static long storeBits(long dest, int width, long value, int vwidth, int offset) {
 		int offsetToModify = IS_PLATFORM_LITTLE_ENDIAN ? ((offset * vwidth) % width) : ((width - 1) - ((offset * vwidth) % width));
 
