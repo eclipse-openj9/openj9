@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,11 @@ Java_java_lang_ref_Finalizer_runAllFinalizersImpl(JNIEnv *env, jclass recv)
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
-	vm->internalVMFunctions->internalReleaseVMAccessInJNI(currentThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->internalReleaseVMAccess(currentThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	mmFuncs->j9gc_runFinalizersOnExit(currentThread, TRUE);
 	mmFuncs->j9gc_finalizer_completeFinalizersOnExit(currentThread);
 }
@@ -46,6 +50,10 @@ Java_java_lang_ref_Finalizer_runFinalizationImpl(JNIEnv *env, jclass recv)
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
-	vm->internalVMFunctions->internalReleaseVMAccessInJNI(currentThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->internalReleaseVMAccess(currentThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	mmFuncs->runFinalization(currentThread);
 }

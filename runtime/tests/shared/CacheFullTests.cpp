@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,7 +111,7 @@ testCacheFull(J9JavaVM* vm)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	REPORT_START("testCacheFull");
 
-	vm->internalVMFunctions->internalAcquireVMAccess(currentThread);
+	vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
 	rc |= test1(vm);
 	rc |= test2(vm);
@@ -123,7 +123,7 @@ testCacheFull(J9JavaVM* vm)
 	rc |= test8(vm);
 	rc |= test9(vm);
 
-	vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	REPORT_SUMMARY("testCacheFull", rc);
 	return rc;

@@ -366,20 +366,6 @@ public:
 #define inlineExitVMToJNI inlineReleaseVMAccess
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
-	static VMINLINE void
-	inlineReleaseVMAccessInJNI(J9VMThread* const currentThread)
-	{
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		VM_AtomicSupport::writeBarrier();
-		currentThread->inNative = FALSE;
-		VM_AtomicSupport::readWriteBarrier(); // necessary?
-		if (J9_EXPECTED(J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)))
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-		{
-			J9_VM_FUNCTION(currentThread, internalReleaseVMAccessInJNI)(currentThread);
-		}
-	}
-
 	// assumes PFM is held
 	static VMINLINE void
 	backOffFromSafePoint(J9VMThread* const vmThread)

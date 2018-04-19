@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,7 +102,7 @@ testSCStoreTransaction(J9JavaVM* vm)
 		return TEST_ERROR;
 	}
 
-	vm->internalVMFunctions->internalAcquireVMAccess(vm->mainThread);
+	vm->internalVMFunctions->internalEnterVMFromJNI(vm->mainThread);
 	rc |= test1(vm);
 	rc |= test2(vm);
 	rc |= test3(vm);
@@ -139,7 +139,7 @@ testSCStoreTransaction(J9JavaVM* vm)
 		j9tty_printf(PORTLIB, "%s: Skipping some tests b/c the cache has class debug area size of 0 bytes.\n", testName);
 	}
 	
-	vm->internalVMFunctions->internalReleaseVMAccess(vm->mainThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vm->mainThread);
 
 	j9tty_printf(PORTLIB, "%s: %s\n", testName, TEST_PASS==rc?"PASS":"FAIL");
 	if (rc == TEST_ERROR) {

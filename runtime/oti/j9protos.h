@@ -240,7 +240,6 @@ I_32 numCodeSets (void);
 #define _J9VMACCESSCONTROL_
 extern J9_CFUNC void  internalExitVMToJNI (J9VMThread *currentThread);
 extern J9_CFUNC void  internalEnterVMFromJNI (J9VMThread *currentThread);
-extern J9_CFUNC void  internalReleaseVMAccessInJNI (J9VMThread *vmThread);
 extern J9_CFUNC void  internalReleaseVMAccess (J9VMThread *vmThread);
 extern J9_CFUNC void  internalAcquireVMAccess (J9VMThread *vmThread);
 extern J9_CFUNC IDATA  internalTryAcquireVMAccess (J9VMThread *vmThread);
