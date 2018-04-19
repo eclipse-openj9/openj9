@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.openj9.test.util.StringPrintStream;
+import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
@@ -101,7 +102,6 @@ public class VmArgumentTests {
 	private static final String JAVA_COMPILER_VALUE=System.getProperty("java.compiler");
 	private static final String SYSPROP_DJAVA_COMPILER_EQUALS = "-Djava.compiler="+JAVA_COMPILER_VALUE;
 
-	private static final String JAVA_VERSION;
 	private static final boolean isJava8;
 
 	private static final String IBM_NOSIGHANDLER = "IBM_NOSIGHANDLER";
@@ -145,9 +145,9 @@ public class VmArgumentTests {
 						"-Dsun.java.command",
 						"-Dsun.java.launcher"
 		};	
-		JAVA_VERSION=System.getProperty("java.version");
-		isJava8 = JAVA_VERSION.startsWith("1.8.0");
-		vmargsJarFilename = isJava8? "vmargs_SE80.jar": "vmargs_SE90.jar";
+		int javaMajorVersion = VersionCheck.major();
+		isJava8 = (8 == javaMajorVersion);
+		vmargsJarFilename = "vmargs.jar";
 	}
 
 	/* 
