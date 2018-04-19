@@ -118,6 +118,14 @@ def test_all() {
 def test_all_with_fetch() {
     fetch_artifacts()
     test_all()
-    cleanWs()
+
+    try {
+        cleanWs()
+    } catch(e) {
+        echo e.toString()
+        if (SPEC.startsWith("win_")) {
+            sh "ps -W"
+        }
+    }
 }
 return this
