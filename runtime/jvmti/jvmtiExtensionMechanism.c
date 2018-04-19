@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2066,7 +2066,7 @@ jvmtiRemoveAllTags(jvmtiEnv* jvmti_env, ...)
 /*
  * Struct to insulate trace from jvmti types
  */
-typedef struct userDataWrapper {
+typedef struct UserDataWrapper {
 	J9PortLibrary			*portlib;
 	jvmtiTraceSubscriber	 subscriber;
 	jvmtiTraceAlarm			 alarm;
