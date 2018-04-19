@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 #include "j2sever.h"
 #include "shrinit.h"
 #include "j9version.h"
+#include "shchelp.h"
 
 #include "OSCachesysv.hpp"
 #include "OSCachemmap.hpp"
@@ -69,14 +70,8 @@ SH_OSCache::getCacheVersionAndGen(J9PortLibrary* portlib, J9JavaVM* vm, char* bu
 	if (generation <= J9SH_GENERATION_07) {
 		J9SH_GET_VERSION_G07ANDLOWER_STRING(PORTLIB, versionStr, J9SH_VERSION(versionData->esVersionMajor, versionData->esVersionMinor), versionData->modlevel, versionData->addrmode);
 	} else {
-		J9PortShcVersion currentVersionData;
 		U_64 curVMVersion = 0;
 		U_64 oldVMVersion = 0;
-		
-		/* setCurrentCacheVersion is passed 'J2SE_17' because we don't care
-		 * about this field. Only the major, and minor numbers are needed for the current JVM
-		 */
-		setCurrentCacheVersion(vm, J2SE_17, &currentVersionData);
 		
 		/* CMVC 163957: 
 		 * There is overlap Java 6 cache file generations and Java 7. For example:
@@ -91,9 +86,11 @@ SH_OSCache::getCacheVersionAndGen(J9PortLibrary* portlib, J9JavaVM* vm, char* bu
 		 oldVMVersion = SH_OSCache::getCacheVersionToU64(2, 60);
 		 curVMVersion = SH_OSCache::getCacheVersionToU64(versionData->esVersionMajor, versionData->esVersionMinor);
 		 
-		if ( curVMVersion >=  oldVMVersion) {
+		if ( curVMVersion >= oldVMVersion) {
 			if (generation <= J9SH_GENERATION_29) {
 				J9SH_GET_VERSION_G07TO29_STRING(PORTLIB, versionStr, J9SH_VERSION(versionData->esVersionMajor, versionData->esVersionMinor), versionData->modlevel, versionData->addrmode);
+			} else if (versionData->modlevel < 10) {
+				J9SH_GET_VERSION_STRING_JAVA9ANDLOWER(PORTLIB, versionStr, J9SH_VERSION(versionData->esVersionMajor, versionData->esVersionMinor), versionData->modlevel, versionData->feature, versionData->addrmode);
 			} else {
 				J9SH_GET_VERSION_STRING(PORTLIB, versionStr, J9SH_VERSION(versionData->esVersionMajor, versionData->esVersionMinor), versionData->modlevel, versionData->feature, versionData->addrmode);
 			}
@@ -153,6 +150,10 @@ SH_OSCache::removeCacheVersionAndGen(char* buffer, UDATA bufferSize, UDATA versi
 	 */
 	if (generation <= J9SH_GENERATION_29) {
 		versionLen -= J9SH_VERSTRLEN_INCREASED_SINCEG29;
+	}
+	/* modLevel becomes 2 digits from Java 10 */
+	if (getModLevelFromName(cacheNameWithVGen) < 10) {
+		versionLen -= J9SH_VERSTRLEN_INCREASED_SINCEJAVA10;
 	}
 
 	nameStart = (char*)(cacheNameWithVGen + versionLen);
@@ -519,11 +520,11 @@ SH_OSCache::getCurrentCacheGen(void)
 void
 SH_OSCache::setEnableVerbose(J9PortLibrary* portLib, J9JavaVM* vm, J9PortShcVersion* versionData, char* cacheNameWithVGen)
 {
-	U_32 j2seVersion = getJCLForShcModlevel(versionData->modlevel);
+	U_32 javaVersion = getJCLForShcModlevel(versionData->modlevel);
 
 	/* Disable verbose when only J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT is set for older generation caches belonging to this VM release */
 	if ((J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT ==_verboseFlags) && (_activeGeneration != OSCACHE_CURRENT_CACHE_GEN) &&
-			isCompatibleShcFilePrefix(portLib, j2seVersion, getJVMFeature(vm), cacheNameWithVGen)) {
+			isCompatibleShcFilePrefix(portLib, javaVersion, getJVMFeature(vm), cacheNameWithVGen)) {
 		_verboseFlags = 0;
 	}
 }
@@ -815,7 +816,7 @@ SH_OSCache::getCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, const char
 		return -1;
 	}
 
-	result->isCompatible = (isCurrentGen && isCompatibleShcFilePrefix(portlib, (U_32)j2seVersion, getJVMFeature(vm), cacheNameWithVGen));
+	result->isCompatible = (isCurrentGen && isCompatibleShcFilePrefix(portlib, (U_32)JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion), getJVMFeature(vm), cacheNameWithVGen));
 
 	/* isCorrupt is only valid if SHR_STATS_REASON_ITERATE is specified */
 	result->isCorrupt = 0;

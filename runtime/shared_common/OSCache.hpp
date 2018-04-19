@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,12 +69,16 @@
 											 j9str_printf(portLib, versionStr, J9SH_VERSION_STRING_LEN, J9SH_VERSION_STRING_SPEC,\
 											 version, modlevel, feature, addrmode)
 
+#define J9SH_GET_VERSION_STRING_JAVA9ANDLOWER(portLib, versionStr, version, modlevel, feature, addrmode)\
+											 j9str_printf(portLib, versionStr, J9SH_VERSION_STRING_LEN - J9SH_VERSTRLEN_INCREASED_SINCEJAVA10, J9SH_VERSION_STRING_SPEC,\
+											 version, modlevel, feature, addrmode)
+
 #define J9SH_GET_VERSION_G07TO29_STRING(portLib, versionStr, version, modlevel, addrmode)\
-											 j9str_printf(portLib, versionStr, J9SH_VERSION_STRING_LEN - J9SH_VERSTRLEN_INCREASED_SINCEG29, J9SH_VERSION_STRING_G07TO29_SPEC,\
+											 j9str_printf(portLib, versionStr, J9SH_VERSION_STRING_LEN - J9SH_VERSTRLEN_INCREASED_SINCEG29 - J9SH_VERSTRLEN_INCREASED_SINCEJAVA10, J9SH_VERSION_STRING_G07TO29_SPEC,\
 											 version, modlevel, addrmode)
 
 #define J9SH_GET_VERSION_G07ANDLOWER_STRING(portLib, versionStr, version, modlevel, addrmode)\
-											 j9str_printf(portLib, versionStr, J9SH_VERSION_STRING_LEN - J9SH_VERSTRLEN_INCREASED_SINCEG29, J9SH_VERSION_STRING_G07ANDLOWER_SPEC,\
+											 j9str_printf(portLib, versionStr, J9SH_VERSION_STRING_LEN - J9SH_VERSTRLEN_INCREASED_SINCEG29 - J9SH_VERSTRLEN_INCREASED_SINCEJAVA10, J9SH_VERSION_STRING_G07ANDLOWER_SPEC,\
 											 version, modlevel, addrmode)
 
 #define OSC_TRACE(var) if (_verboseFlags) j9nls_printf(PORTLIB, J9NLS_INFO, var)
