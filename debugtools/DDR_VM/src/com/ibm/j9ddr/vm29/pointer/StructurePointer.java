@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,23 +34,27 @@ import com.ibm.j9ddr.GeneratedPointerClass;
 import com.ibm.j9ddr.StructureReader;
 import com.ibm.j9ddr.util.RuntimeTypeResolutionUtils;
 import com.ibm.j9ddr.vm29.j9.DataType;
+import com.ibm.j9ddr.vm29.types.I8;
+import com.ibm.j9ddr.vm29.types.I16;
 import com.ibm.j9ddr.vm29.types.I32;
+import com.ibm.j9ddr.vm29.types.I64;
 import com.ibm.j9ddr.vm29.types.Scalar;
+import com.ibm.j9ddr.vm29.types.U8;
+import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
-
-
+import com.ibm.j9ddr.vm29.types.U64;
 
 /**
  * Root of the hierarchy for VM C structures.
  */
 public abstract class StructurePointer extends AbstractPointer {
-	
+
 	private final static String nl = System.getProperty("line.separator");
-	
+
 	protected StructurePointer(long address) {
 		super(address);
 	}
-	
+
 	public DataType at(long count) {
 		throw new UnsupportedOperationException("StructurePointers are implicitly dereferenced.  Use add(long count) instead.");
 	}
@@ -58,36 +62,98 @@ public abstract class StructurePointer extends AbstractPointer {
 	public DataType at(Scalar count) {
 		throw new UnsupportedOperationException("StructurePointers are implicitly dereferenced.  Use add(Scalar count) instead.");
 	}
-	
-	protected int getStartingBit(int s, int b) {
+
+	protected U8 getU8Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long byteOffset = getByteOffset(bitOffset, 8);
+		long cell = getByteAtOffset(byteOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 8);
+
+		return new U8(field);
+	}
+
+	protected U16 getU16Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long byteOffset = getByteOffset(bitOffset, 16);
+		long cell = getShortAtOffset(byteOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 16);
+
+		return new U16(field);
+	}
+
+	protected U32 getU32Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long byteOffset = getByteOffset(bitOffset, 32);
+		long cell = getIntAtOffset(byteOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 32);
+
+		return new U32(field);
+	}
+
+	protected U64 getU64Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long byteOffset = getByteOffset(bitOffset, 64);
+		long cell = getLongAtOffset(byteOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 64);
+
+		return new U64(field);
+	}
+
+	protected I8 getI8Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long byteOffset = getByteOffset(bitOffset, 8);
+		long cell = getByteAtOffset(byteOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 8);
+
+		return new I8(field);
+	}
+
+	protected I16 getI16Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long byteOffset = getByteOffset(bitOffset, 16);
+		long cell = getShortAtOffset(byteOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 16);
+
+		return new I16(field);
+	}
+
+	protected I32 getI32Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long byteOffset = getByteOffset(bitOffset, 32);
+		long cell = getIntAtOffset(byteOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 32);
+
+		return new I32(field);
+	}
+
+	protected I64 getI64Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long byteOffset = getByteOffset(bitOffset, 64);
+		long cell = getLongAtOffset(byteOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 64);
+
+		return new I64(field);
+	}
+
+	private static long getByteOffset(int bitOffset, int cellSize) {
+		long cellIndex = bitOffset / cellSize;
+
+		return cellIndex * (cellSize / Byte.SIZE);
+	}
+
+	private static long getBitfield(long cell, int bitOffset, int bitWidth, int cellSize) {
+		int shiftAmount;
+
 		switch (BITFIELD_FORMAT) {
 		case StructureReader.BIT_FIELD_FORMAT_LITTLE_ENDIAN:
-			return b + (s % StructureReader.BIT_FIELD_CELL_SIZE);
+			shiftAmount = bitOffset % cellSize;
+			break;
 		case StructureReader.BIT_FIELD_FORMAT_BIG_ENDIAN:
-			return  32 - (s % StructureReader.BIT_FIELD_CELL_SIZE);
+			// We must ensure shiftAmount is non-negative.
+			shiftAmount = (bitOffset + bitWidth) % cellSize;
+			if (shiftAmount != 0) {
+				shiftAmount = cellSize - shiftAmount;
+			}
+			break;
 		default:
 			throw new IllegalArgumentException("Unsupported bitfield format");
 		}
+
+		return (cell >>> shiftAmount) & ((1L << bitWidth) - 1);
 	}
 
-	protected U32 getU32Bitfield(int s, int b) throws CorruptDataException {
-		int cell = s/StructureReader.BIT_FIELD_CELL_SIZE;
-		U32 cellValue = new U32(getIntAtOffset(cell * StructureReader.BIT_FIELD_CELL_SIZE / 8));
-		int n = getStartingBit(s, b);
-		U32 returnValue = cellValue.leftShift(StructureReader.BIT_FIELD_CELL_SIZE - n);
-		returnValue = returnValue.rightShift(StructureReader.BIT_FIELD_CELL_SIZE - b);
-		return returnValue;
-	}
-	
-	protected I32 getI32Bitfield(int s, int b) throws CorruptDataException {
-		int cell = s/StructureReader.BIT_FIELD_CELL_SIZE;
-		I32 cellValue = new I32(getIntAtOffset(cell * StructureReader.BIT_FIELD_CELL_SIZE / 8));
-		int n = getStartingBit(s, b);
-		I32 returnValue = cellValue.leftShift(StructureReader.BIT_FIELD_CELL_SIZE - n);
-		returnValue = returnValue.rightShift(StructureReader.BIT_FIELD_CELL_SIZE - b);
-		return returnValue;
-	}
-	
 	public StructurePointer getAsRuntimeType()
 	{
 		// Design 42819
