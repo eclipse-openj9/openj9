@@ -67,6 +67,12 @@ public final class StructureReader {
 	public static final Class<?>[] STRUCTURE_CONSTRUCTOR_SIGNATURE = new Class<?>[] { Long.TYPE };
 	public static final byte BIT_FIELD_FORMAT_LITTLE_ENDIAN = 1;
 	public static final byte BIT_FIELD_FORMAT_BIG_ENDIAN = 2;
+
+	/*
+	 * This value is not used in current code (and should not be, because
+	 * bitfields don't necessarily have the same base type size), but is
+	 * retained for use by IBM Java 8 build for backward compatibility.
+	 */
 	public static final int BIT_FIELD_CELL_SIZE = 32;
 
 	private static final Pattern MULTI_LINE_COMMENT_PATTERN = Pattern.compile(Pattern.quote("/*") + ".*?" + Pattern.quote("*/") , Pattern.DOTALL);

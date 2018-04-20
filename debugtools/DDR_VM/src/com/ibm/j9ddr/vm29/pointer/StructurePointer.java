@@ -35,9 +35,15 @@ import com.ibm.j9ddr.NullPointerDereference;
 import com.ibm.j9ddr.StructureReader;
 import com.ibm.j9ddr.util.RuntimeTypeResolutionUtils;
 import com.ibm.j9ddr.vm29.j9.DataType;
+import com.ibm.j9ddr.vm29.types.I8;
+import com.ibm.j9ddr.vm29.types.I16;
 import com.ibm.j9ddr.vm29.types.I32;
+import com.ibm.j9ddr.vm29.types.I64;
 import com.ibm.j9ddr.vm29.types.Scalar;
+import com.ibm.j9ddr.vm29.types.U8;
+import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
+import com.ibm.j9ddr.vm29.types.U64;
 
 /**
  * Root of the hierarchy for VM C structures.
@@ -58,33 +64,101 @@ public abstract class StructurePointer extends AbstractPointer {
 		throw new UnsupportedOperationException("StructurePointers are implicitly dereferenced.  Use add(Scalar count) instead.");
 	}
 
-	protected int getStartingBit(int s, int b) {
+	protected final I8 getI8Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long cellOffset = getCellOffset(bitOffset, 8);
+		long cell = getByteAtOffset(cellOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 8, true);
+
+		return new I8(field);
+	}
+
+	protected final I16 getI16Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long cellOffset = getCellOffset(bitOffset, 16);
+		long cell = getShortAtOffset(cellOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 16, true);
+
+		return new I16(field);
+	}
+
+	protected final I32 getI32Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long cellOffset = getCellOffset(bitOffset, 32);
+		long cell = getIntAtOffset(cellOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 32, true);
+
+		return new I32(field);
+	}
+
+	protected final I64 getI64Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long cellOffset = getCellOffset(bitOffset, 64);
+		long cell = getLongAtOffset(cellOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 64, true);
+
+		return new I64(field);
+	}
+
+	protected final U8 getU8Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long cellOffset = getCellOffset(bitOffset, 8);
+		long cell = getByteAtOffset(cellOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 8, false);
+
+		return new U8(field);
+	}
+
+	protected final U16 getU16Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long cellOffset = getCellOffset(bitOffset, 16);
+		long cell = getShortAtOffset(cellOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 16, false);
+
+		return new U16(field);
+	}
+
+	protected final U32 getU32Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long cellOffset = getCellOffset(bitOffset, 32);
+		long cell = getIntAtOffset(cellOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 32, false);
+
+		return new U32(field);
+	}
+
+	protected final U64 getU64Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
+		long cellOffset = getCellOffset(bitOffset, 64);
+		long cell = getLongAtOffset(cellOffset);
+		long field = getBitfield(cell, bitOffset, bitWidth, 64, false);
+
+		return new U64(field);
+	}
+
+	private static long getCellOffset(int bitOffset, int cellSize) {
+		long cellIndex = bitOffset / cellSize;
+
+		return cellIndex * (cellSize / Byte.SIZE);
+	}
+
+	private static long getBitfield(long cell, int bitOffset, int bitWidth, int cellSize, boolean isSigned) {
+		int leftShift;
+
 		switch (BITFIELD_FORMAT) {
 		case StructureReader.BIT_FIELD_FORMAT_LITTLE_ENDIAN:
-			return b + (s % StructureReader.BIT_FIELD_CELL_SIZE);
+			leftShift = Long.SIZE - bitWidth - (bitOffset % cellSize);
+			break;
 		case StructureReader.BIT_FIELD_FORMAT_BIG_ENDIAN:
-			return  32 - (s % StructureReader.BIT_FIELD_CELL_SIZE);
+			leftShift = Long.SIZE - cellSize + (bitOffset % cellSize);
+			break;
 		default:
 			throw new IllegalArgumentException("Unsupported bitfield format");
 		}
-	}
 
-	protected U32 getU32Bitfield(int s, int b) throws CorruptDataException {
-		int cell = s/StructureReader.BIT_FIELD_CELL_SIZE;
-		U32 cellValue = new U32(getIntAtOffset(cell * StructureReader.BIT_FIELD_CELL_SIZE / 8));
-		int n = getStartingBit(s, b);
-		U32 returnValue = cellValue.leftShift(StructureReader.BIT_FIELD_CELL_SIZE - n);
-		returnValue = returnValue.rightShift(StructureReader.BIT_FIELD_CELL_SIZE - b);
-		return returnValue;
-	}
+		// Shift left so the most significant bit becomes the sign bit.
+		long leftAligned = cell << leftShift;
 
-	protected I32 getI32Bitfield(int s, int b) throws CorruptDataException {
-		int cell = s/StructureReader.BIT_FIELD_CELL_SIZE;
-		I32 cellValue = new I32(getIntAtOffset(cell * StructureReader.BIT_FIELD_CELL_SIZE / 8));
-		int n = getStartingBit(s, b);
-		I32 returnValue = cellValue.leftShift(StructureReader.BIT_FIELD_CELL_SIZE - n);
-		returnValue = returnValue.rightShift(StructureReader.BIT_FIELD_CELL_SIZE - b);
-		return returnValue;
+		// The number of uninteresting bits in leftAligned.
+		int rightShift = Long.SIZE - bitWidth;
+
+		if (isSigned) {
+			return leftAligned >> rightShift;
+		} else {
+			return leftAligned >>> rightShift;
+		}
 	}
 
 	public StructurePointer getAsRuntimeType()
