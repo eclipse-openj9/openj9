@@ -229,21 +229,23 @@ def add_node_to_description() {
 def build_all() {
 
     // Typically called by Build jobs and Compile only PRs
-
-    add_node_to_description()
-    get_source()
-    build()
-    archive()
-    git_clean()
+    timeout(time: 6, unit: 'HOURS') {
+        add_node_to_description()
+        get_source()
+        build()
+        archive()
+        git_clean()
+    }
 }
 
 def build_pr() {
 
     // Called by PR Compile & Test jobs
     // Does not cleanup as it is expected testing will occur, followed by cleanup
-
-    get_source()
-    build()
+    timeout(time: 6, unit: 'HOURS') {
+        get_source()
+        build()
+    }
 }
 
 return this

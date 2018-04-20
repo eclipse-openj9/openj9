@@ -107,12 +107,14 @@ def add_node_to_description() {
 }
 
 def test_all() {
-    add_node_to_description()
-    configure()
-    get_dependencies()
-    compile()
-    test()
-    publish()
+    timeout(time: 8, unit: 'HOURS') {
+        add_node_to_description()
+        configure()
+        get_dependencies()
+        compile()
+        test()
+        publish()
+    }
 }
 
 def test_all_with_fetch() {
