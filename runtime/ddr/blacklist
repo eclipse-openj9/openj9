@@ -48,18 +48,6 @@ type:PDH_FMT_COUNTERVALUE
 type:PPDH_FMT_COUNTERVALUE
 type:_PDH_FMT_COUNTERVALUE
 
-# These types contain bitfields with a base other than U32 (not yet supported by DDR).
-type:PSAPI_WORKING_SET_BLOCK
-type:_PSAPI_WORKING_SET_BLOCK
-type:PSAPI_WORKING_SET_INFORMATION
-type:_PSAPI_WORKING_SET_INFORMATION
-type:UNWIND_CODE
-type:PUNWIND_CODE
-type:_UNWIND_CODE
-type:UNWIND_INFO
-type:PUNWIND_INFO
-type:_UNWIND_INFO
-
 # Ignore one (or all) of sets of types whose names differ only in case
 # (so we don't try to create Java source files whose names differ only
 # in case which isn't possible with case-insensitive file-systems).
