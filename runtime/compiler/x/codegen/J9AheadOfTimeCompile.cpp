@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,14 +76,14 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
       // set up the size for the region
       *(uint64_t *)relocationDataCursor = self()->getSizeOfAOTRelocations() + SIZEPOINTER;
       relocationDataCursor += SIZEPOINTER;
-      // set up pointers for each iterated relocation and initialise header
+      // set up pointers for each iterated relocation and initialize header
       TR::IteratedExternalRelocation *s;
       for (s = self()->getAOTRelocationTargets().getFirst();
            s != 0;
            s = s->getNext())
          {
          s->setRelocationData(relocationDataCursor);
-         s->initialiseRelocation(_cg);
+         s->initializeRelocation(_cg);
          relocationDataCursor += s->getSizeOfRelocationData();
          }
       }
@@ -91,7 +91,7 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
 
 uintptr_t findCorrectInlinedSiteIndex(void *constantPool, TR::Compilation *comp, uintptr_t currentInlinedSiteIndex);
 
-uint8_t *J9::X86::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
+uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
    TR_SharedCache *sharedCache = fej9->sharedCache();

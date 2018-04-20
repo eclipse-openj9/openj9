@@ -168,7 +168,7 @@ typedef struct LastErrorInfo {
 class SH_OSCache
 {
 public:
-	class SH_OSCacheInitialiser
+	class SH_OSCacheInitializer
 	{
 		public:
 		virtual void init(char* data, U_32 len, I_32 minAOT, I_32 maxAOT, I_32 minJIT, I_32 maxJIT, U_32 readWriteLen, U_32 softMaxBytes) = 0;
@@ -206,7 +206,7 @@ public:
 	bool isRunningReadOnly();
 
 	virtual bool startup(J9JavaVM* vm, const char* cacheDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig_, IDATA numLocks,
-			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitialiser* i, UDATA reason) = 0;
+			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitializer* i, UDATA reason) = 0;
 
 	virtual IDATA destroy(bool suppressVerbose, bool isReset = false) = 0;
 

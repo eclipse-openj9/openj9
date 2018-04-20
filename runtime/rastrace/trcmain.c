@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2015 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -223,7 +223,7 @@ moduleLoaded(UtThreadData **thr, UtModuleInfo *modInfo)
 	if (modInfo->intf == NULL) {
 		modInfo->intf = internalUtIntfS.module;
 
-		rc = initialiseComponentData(&compData, modInfo, modInfo->name);
+		rc = initializeComponentData(&compData, modInfo, modInfo->name);
 		if (OMR_ERROR_NONE == rc) {
 			rc = addComponentToList(compData, UT_GLOBAL(componentList));
 		}
@@ -1141,13 +1141,13 @@ initializeTrace(UtThreadData **thr, void **gbl,
 		}
 	}
 
-	rc = initialiseComponentList(&UT_GLOBAL(componentList));
+	rc = initializeComponentList(&UT_GLOBAL(componentList));
 	if (OMR_ERROR_NONE != rc) {
 		UT_DBGOUT(1, ("<UT> Error initializing component list\n"));
 		goto fail;
 	}
 
-	rc = initialiseComponentList(&UT_GLOBAL(unloadedComponentList));
+	rc = initializeComponentList(&UT_GLOBAL(unloadedComponentList));
 	if (OMR_ERROR_NONE != rc) {
 		UT_DBGOUT(1, ("<UT> Error initializing unloaded component list\n"));
 		goto fail;
@@ -1881,7 +1881,7 @@ trcGetTraceMetadata(void **data, int32_t *length)
 {
 	UtTraceFileHdr *traceHeader;
 
-	/* Ensure we have initialised the trace header */
+	/* Ensure we have initialized the trace header */
 	if (initTraceHeader() != OMR_ERROR_NONE) {
 		return OMR_ERROR_INTERNAL;
 	}
@@ -1977,7 +1977,7 @@ trcRegisterTracePointSubscriber(UtThreadData **thr, char *description, utsSubscr
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 	}
 	
-	/* initialise the new subscription data structure */
+	/* initialize the new subscription data structure */
 	newSubscription->subscriber = subscriber;
 	newSubscription->userData = wrapper;
 	newSubscription->alarm = alarm;
@@ -2141,7 +2141,7 @@ fillInUTInterfaces(UtInterface **utIntf, UtServerInterface *utServerIntf, UtModu
 		memcpy(utServerIntf, &utServerIntfS, sizeof(UtServerInterface));
 
 		/*
-		 * Initialise the direct module interface, these are
+		 * Initialize the direct module interface, these are
 		 * wrappers to calls within trace that obtain a UtThreadData
 		 * before calling the real function.
 		 */

@@ -48,7 +48,7 @@
 
 extern "C" {
 extern J9MemoryManagerFunctions MemoryManagerFunctions;
-extern void initialiseVerboseFunctionTableWithDummies(J9MemoryManagerVerboseInterface *table);
+extern void initializeVerboseFunctionTableWithDummies(J9MemoryManagerVerboseInterface *table);
 
 /**
  * sets the mode where TLH pages are zeroed

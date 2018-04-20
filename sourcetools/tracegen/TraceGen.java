@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1058,10 +1058,10 @@ public class TraceGen {
 			this.fileName = fileName;
 			this.printWriter = new PrintWriter(newWriter(new File(fileName)));
 
-			initialiseDATFile();
+			initializeDATFile();
 		}
 
-		private void initialiseDATFile() {
+		private void initializeDATFile() {
 			println(RAS_MAJOR_VERSION + "." + RAS_MINOR_VERSION);
 		}
 

@@ -220,7 +220,7 @@ final public class TraceFormat
 				"  ThreadID         TP id  Type         TraceEntry ");
 		expectedRecords = 0;
 
-		// initialise statics in other classes
+		// initialize statics in other classes
 		Util.initStatics();
 		TraceArgs.initStatics();
 		TraceRecord.initStatics();
@@ -489,7 +489,7 @@ final public class TraceFormat
 
 	private void prime() throws IOException
 	{
-		/* reinitialise class variables to allow reuse */
+		/* reinitialize class variables to allow reuse */
 		globalNumberOfBuffers = 0;
 		tempThreadArray = null;
 		tracedThreads = null;

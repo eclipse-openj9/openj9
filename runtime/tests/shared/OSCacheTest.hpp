@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
 #define CACHE_NAME "OSCacheUnitTest"
 #define CACHE_NAME1 "OSCacheUnitTest1"
 
-class Init : public SH_OSCache::SH_OSCacheInitialiser
+class Init : public SH_OSCache::SH_OSCacheInitializer
 {
 public:
 	void *operator new(size_t t, void* i) { return i; }

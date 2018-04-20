@@ -105,10 +105,10 @@ class SH_OSCachesysv : public SH_OSCache
 {
 public:
 	SH_OSCachesysv(J9PortLibrary* portlib, J9JavaVM* vm, const char* cachedirname, const char* cacheName, J9SharedClassPreinitConfig* piconfig_, IDATA numLocks, UDATA createFlag,
-			UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCache::SH_OSCacheInitialiser* initialiser);
+			UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCache::SH_OSCacheInitializer* initializer);
 
 	virtual bool startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig_, IDATA numLocks, UDATA createFlag,
-			UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCache::SH_OSCacheInitialiser* i, UDATA reason);
+			UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCache::SH_OSCacheInitializer* i, UDATA reason);
 
 	/**
 	 * Override new operator
@@ -168,7 +168,7 @@ public:
 
 	SH_CacheAccess isCacheAccessible(void) const;
 
-	IDATA restoreFromSnapshot(J9JavaVM* vm, const char* snapshotName, UDATA numLocks, SH_OSCache::SH_OSCacheInitialiser* i, bool* cacheExist);
+	IDATA restoreFromSnapshot(J9JavaVM* vm, const char* snapshotName, UDATA numLocks, SH_OSCache::SH_OSCacheInitializer* i, bool* cacheExist);
 
 /* protected: */
 	/*This constructor should only be used by this class and parent*/
@@ -197,7 +197,7 @@ private:
 
 	const J9SharedClassPreinitConfig* config;
 
-	SH_OSCache::SH_OSCacheInitialiser* _initialiser;
+	SH_OSCache::SH_OSCacheInitializer* _initializer;
 	UDATA _groupPerm;
 
 	I_32 _semid;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,12 +88,12 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
          *(uint32_t *) relocationDataCursor = getSizeOfAOTRelocations() + 4;
          relocationDataCursor += 4;
          }
-      // set up pointers for each iterated relocation and initialise header
+      // set up pointers for each iterated relocation and initialize header
       TR::IteratedExternalRelocation *s;
       for (s = getAOTRelocationTargets().getFirst(); s != NULL; s = s->getNext())
          {
          s->setRelocationData(relocationDataCursor);
-         s->initialiseRelocation(_cg);
+         s->initializeRelocation(_cg);
          relocationDataCursor += s->getSizeOfRelocationData();
          }
       }
@@ -101,7 +101,7 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
 
 uintptr_t findCorrectInlinedSiteIndex(void *constantPool, TR::Compilation *comp, uintptr_t currentInlinedSiteIndex);
 
-uint8_t *J9::Power::AheadOfTimeCompile::initialiseAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
+uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation)
    {
    TR::Compilation* comp = TR::comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());

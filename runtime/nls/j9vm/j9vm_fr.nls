@@ -234,7 +234,7 @@ J9NLS_VM_OUT_OF_MEM_FOR_DLL_POOL.user_response=Check the system memory configura
 # END NON-TRANSLATABLE
 
 # Note: %.*s is a class name
-J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS=Erreur irr\u00e9m\u00e9diable : Impossible de trouver et d'initialiser la classe requise %.*s
+J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS=Erreur irr\u00e9m\u00e9diable : Impossible de trouver et d'initializer la classe requise %.*s
 # START NON-TRANSLATABLE
 J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.sample_input_1=9
 J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS.sample_input_2=userClass

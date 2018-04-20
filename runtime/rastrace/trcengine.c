@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -569,7 +569,7 @@ initializeUtInterface(void)
 		javaUtServerIntfS.StartupComplete = trcStartupComplete;
 
 		/*
-		 * Initialise the direct module interface, these
+		 * Initialize the direct module interface, these
 		 * are versions of the trace functions that expect
 		 * a J9VMThread as their env parameter rather than
 		 * an OMRVMThread.
@@ -619,7 +619,7 @@ processTraceOptionString(J9JavaVM *vm, char * opts[], IDATA * optIndex, const ch
 }
 
 /*
- * Initialise the trace options from the defaults for the J9VM and any
+ * Initialize the trace options from the defaults for the J9VM and any
  * options that were passed in on the command line.
  *
  * Returns them as newly allocated string key/value pairs in the even/odd elements of opts.

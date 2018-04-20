@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@ extern omrthread_tls_key_t j9rasTLSKey;
 
 /*******************************************************************************
  * name        - initEvent
- * description - Initialises a monitor. Takes a monitor name that will be copied.
+ * description - Initializes a monitor. Takes a monitor name that will be copied.
  * parameters  - UtEventSem
  * returns     - int32_t
  ******************************************************************************/
@@ -828,7 +828,7 @@ writeBuffer(UtSubscription *subscription)
 		 * Check for file wrap
 		 */
 		if (*wrap != 0 && *fileSize >= *wrap) {
-			/* Trace options may have changed, re-initialise the trace file header data if necessary */
+			/* Trace options may have changed, re-initialize the trace file header data if necessary */
 			initTraceHeader();
 			
 			if ((bufferType == UT_NORMAL_BUFFER) && (UT_GLOBAL(traceGenerations) > 1)) {
@@ -931,7 +931,7 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 				}
 
 				/* Set up nextBuf */
-				/* it's okay to set the global buffers here and initialise later because the entire
+				/* it's okay to set the global buffers here and initialize later because the entire
 				 * function call's under the trace lock so nothing can be written to it until we release.
 				 */
 				if (bufferType == UT_NORMAL_BUFFER) {
@@ -964,7 +964,7 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 
 				oldBuf->lostCount += 1;
 
-				/* it's okay to set the global buffers here and initialise later because the entire
+				/* it's okay to set the global buffers here and initialize later because the entire
 				 * function calls under the trace lock so nothing can be written to it until we release.
 				 */
 				if (bufferType == UT_NORMAL_BUFFER) {
