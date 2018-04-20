@@ -81,6 +81,8 @@ extern "C" {
 #define J9SH_VERSTRLEN_INCREASED_SINCEG29 2
 #define J9SH_VERSTRLEN_INCREASED_SINCEJAVA10 1
 
+#define J9SH_MODLEVEL_PREFIX_CHAR_OFFSET 4
+
 typedef struct J9PortShcVersion {
     uint32_t esVersionMajor;
     uint32_t esVersionMinor;

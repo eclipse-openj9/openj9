@@ -135,24 +135,21 @@ getGenerationFromName(const char* cacheNameWithVGen)
  * @param [in] cacheNameWithVGen  the cache file name
  *
  * @return the modeLevel number,
- * 		   0 if it is an old cache name that does not have modlLevel,
- * 		   -1 if there is an error.
+ * 		   -1 if it is an old cache name that does not have modlLevel, or an error occurred.
  */
 intptr_t
 getModLevelFromName(const char* cacheNameWithVGen)
 {
 	char* cursor = (char*)cacheNameWithVGen;
-	intptr_t modLevel = 0;
-	
-	cursor = strchr(cursor, J9SH_MODLEVEL_PREFIX_CHAR);
-	if (NULL != cursor) {
-		cursor += 1;
+	intptr_t modLevel = -1;
+
+	if ((strlen(cacheNameWithVGen) > (J9SH_MODLEVEL_PREFIX_CHAR_OFFSET + 2))
+		 && (J9SH_MODLEVEL_PREFIX_CHAR == cursor[J9SH_MODLEVEL_PREFIX_CHAR_OFFSET])
+	) {
+		cursor += (J9SH_MODLEVEL_PREFIX_CHAR_OFFSET + 1);
 		if (0 != scan_idata(&cursor, &modLevel)) {
 			modLevel = -1;
 		}
-	} else {
-		/* old cache name that does not have J9SH_MODLEVEL_PREFIX_CHAR */
-		modLevel = 0;
 	}
 	return modLevel;
 }
@@ -350,9 +347,7 @@ isCacheFileName(J9PortLibrary* portlib, const char* nameToTest, uintptr_t expect
 		return 0;
 	}
 	modLevel = getModLevelFromName(nameToTest);
-	if (-1 == modLevel) {
-		return 0;
-	}
+
 	/* modLevel becomes 2 digits from Java 10 */
 	if (modLevel < 10) {
 		expectedVersionLen -= J9SH_VERSTRLEN_INCREASED_SINCEJAVA10;
