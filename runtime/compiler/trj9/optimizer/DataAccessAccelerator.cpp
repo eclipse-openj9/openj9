@@ -1218,9 +1218,54 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
       TR::Node * i2pdNode = TR::Node::create((isI2PD)?TR::i2pd:TR::l2pd, 1, intNode);
       i2pdNode->setDecimalPrecision(precision);
 
-      //create pdstore
-      //TODO: use pdstore or ipdstore? the result is saved inside register.
-      TR::Node * arrayAddressNode = constructAddressNode(callNode, pdNode, offsetNode);
+      /**
+       * Create separate address nodes for BCDCHK and pdstorei because BCDCHK can GC-and-Return like a call.
+       *
+       * Having separate address nodes also allows AddrNode2 and AddrNode3 commoning, which then makes
+       * copy propagations possible.
+       *
+       * AddrNode1 could still be commoned with address nodes before the BCDCHK. Hence, the need for
+       * UncommonBCDCHKAddressNode codegen pass. AddrNode1 is special in that it has to be rematerialized and used
+       * at the end of the BCDCHK OOL path's GC point. No commoning of this node should happen.
+       *
+       * Example:
+       *
+       * BCDCHK
+       *   pdshlOverflow <prec=9 (len=5) adj=0 round=0>
+       *     ....
+       *   aladd (internalPtr sharedMemory )                                    AddrNode1
+       *     ==>newarray
+       *     lconst 8 (highWordZero X!=0 X>=0 )
+       *     ....
+       * pdstorei  <array-shadow>[#490  Shadow] <prec=9 (len=5)>
+       *   aladd (internalPtr sharedMemory )                                    AddrNode2
+       *     ==>newarray
+       *     ==>lconst 8
+       *   ==>pdshlOverflow <prec=9 (len=5)
+       * zdsleStorei  <array-shadow>[#492  Shadow]  <prec=9 (len=9)>
+       *   ....
+       *   zd2zdsle <prec=9 (len=9)>
+       *     pd2zd <prec=9 (len=9)>
+       *       pdloadi <prec=9 (len=5) adj=0 round=0>
+       *         aladd (internalPtr sharedMemory )                              AddrNode3
+       *           ==>newarray
+       *           ==>lconst 8
+       *
+       * In the example above, AddrNode 1 to 3 have the same children.
+       *
+       * AddrNode1, the second child of the BCDCHK node, is meant to be rematerialized for OOL post-call data copy back.
+       * See BCDCHKEvaluatorImpl() for BCDCHK tree structure and intended use of its children.
+       *
+       * 'outOfLineCopyBackAddr' and 'storeAddressNode' correspond to AddrNode1 and AddrNode2, respectively. They
+       * are created as separate nodes so that LocalCSE is able to common up AddrNode2 and AddrNode3. If
+       * AddrNode1 and AddrNode2 were the same node, the LocalCSE would not consider AddrNode1 an alternative replacement
+       * of AddrNode3 because the BCDCHK's symbol canGCAndReturn().
+       *
+       * With AddrNode2 and AddrNode3 commoned up, the LocalCSE is able to copy propagate pdshlOverflow to the the pd2zd
+       * tree and replace its pdloadi.
+       */
+      TR::Node * outOfLineCopyBackAddr = constructAddressNode(callNode, pdNode, offsetNode);
+      TR::Node * storeAddressNode      = constructAddressNode(callNode, pdNode, offsetNode);
 
       TR::TreeTop * nextTT = treeTop->getNextTreeTop();
       TR::TreeTop * prevTT = treeTop->getPrevTreeTop();
@@ -1248,7 +1293,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
          if (isByteBuffer)
             {
             bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 10, 10,
-                                                    pdshlNode, arrayAddressNode,
+                                                    pdshlNode, outOfLineCopyBackAddr,
                                                     callNode->getChild(0), callNode->getChild(1),
                                                     callNode->getChild(2), callNode->getChild(3),
                                                     callNode->getChild(4), callNode->getChild(5),
@@ -1258,7 +1303,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
          else
             {
             bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 7, 7,
-                                                    pdshlNode, arrayAddressNode,
+                                                    pdshlNode, outOfLineCopyBackAddr,
                                                     callNode->getChild(0), callNode->getChild(1),
                                                     callNode->getChild(2), callNode->getChild(3),
                                                     callNode->getChild(4),
@@ -1270,11 +1315,11 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
          else
             bcdchkNode->resetBCDNodeOverflow();
 
-         pdstore = TR::Node::create(op, 2, arrayAddressNode, pdshlNode);
+         pdstore = TR::Node::create(op, 2, storeAddressNode, pdshlNode);
          }
       else
          {
-         pdstore = TR::Node::create(op, 2, arrayAddressNode, i2pdNode);
+         pdstore = TR::Node::create(op, 2, storeAddressNode, i2pdNode);
          }
 
       TR::TreeTop* pdstoreTT = TR::TreeTop::create(comp(), pdstore);
@@ -1304,7 +1349,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
          callBlock->createConditionalBlocksBeforeTree(treeTop, isValidAddrTreeTop, slowPathTreeTop, fastPathTreeTop, cfg, false, true);
          }
 
-      TR::SymbolReference * symRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Int8, arrayAddressNode, 8, fe());
+      TR::SymbolReference * symRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, outOfLineCopyBackAddr, 8, fe());
       pdstore->setSymbolReference(symRef);
       pdstore->setDecimalPrecision(precision);
 
@@ -1938,13 +1983,16 @@ bool TR_DataAccessAccelerator::genArithmeticIntrinsic(TR::TreeTop* treeTop, TR::
        *    call-param-9
        *
        * pdstorei
-       *    => arrayAddressNode
+       *    pdStoreAddressNode
        *    => pdshlOverflow
+       *
+       * Create separate address nodes for BCDCHK and pdstorei. See generateI2PD() for an explanation to this.
       */
-      TR::Node * arrayAddressNodeResult = constructAddressNode(callNode, resultNode, resOffsetNode);
+      TR::Node* outOfLineCopyBackAddr  = constructAddressNode(callNode, resultNode, resOffsetNode);
+      TR::Node* pdStoreAddressNode     = constructAddressNode(callNode, resultNode, resOffsetNode);
 
       TR::ILOpCodes op = comp()->il.opCodeForIndirectStore(TR::PackedDecimal);
-      TR::SymbolReference * symRefPdstore = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, arrayAddressNodeResult, 8, fe());
+      TR::SymbolReference * symRefPdstore = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, outOfLineCopyBackAddr, 8, fe());
       TR::Symbol * symStore =  TR::Symbol::createShadow(comp()->trHeapMemory(), TR::PackedDecimal, TR::DataType::getSizeFromBCDPrecision(TR::PackedDecimal, resPrecNode->getInt()));
       symStore->setArrayShadowSymbol();
       symRefPdstore->setSymbol(symStore);
@@ -1952,11 +2000,11 @@ bool TR_DataAccessAccelerator::genArithmeticIntrinsic(TR::TreeTop* treeTop, TR::
       TR::Node * pdshlNode = TR::Node::create(TR::pdshlOverflow, 2, operationNode,
                                               TR::Node::create(callNode, TR::iconst, 0, 0));
       pdshlNode->setDecimalPrecision(resPrecNode->getInt());
-      TR::Node * pdstore = TR::Node::create(op, 2, arrayAddressNodeResult, pdshlNode);
+      TR::Node * pdstore = TR::Node::create(op, 2, pdStoreAddressNode, pdshlNode);
 
       TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
       TR::Node * bcdchk = TR::Node::createWithSymRef(TR::BCDCHK, 12, 12,
-                                                     pdshlNode, arrayAddressNodeResult,
+                                                     pdshlNode, outOfLineCopyBackAddr,
                                                      callNode->getChild(0), callNode->getChild(1),
                                                      callNode->getChild(2), callNode->getChild(3),
                                                      callNode->getChild(4), callNode->getChild(5),
@@ -2052,7 +2100,9 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
 
    //gen pdshr:
    TR::Node * roundValueNode = TR::Node::create(callNode,  TR::iconst, 0, isRound ? 5 : 0);
-   TR::Node * arrayAddressNodeRes = constructAddressNode(callNode, dstNode, dstOffsetNode);
+   TR::Node * outOfLineCopyBackAddr = constructAddressNode(callNode, dstNode, dstOffsetNode);
+   TR::Node * pdStoreAddressNode    = constructAddressNode(callNode, dstNode, dstOffsetNode);
+
    TR::Node * pdload = TR::Node::create(TR::pdloadi, 1, arrayAddressNode);
    pdload->setSymbolReference(symRef);
    pdload->setDecimalPrecision(srcPrec);
@@ -2062,7 +2112,7 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
 
    TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
    TR::Node* bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 11, 11,
-                                           pdshrNode, arrayAddressNodeRes,
+                                           pdshrNode, outOfLineCopyBackAddr,
                                            callNode->getChild(0), callNode->getChild(1),
                                            callNode->getChild(2), callNode->getChild(3),
                                            callNode->getChild(4), callNode->getChild(5),
@@ -2081,12 +2131,12 @@ bool TR_DataAccessAccelerator::genShiftRightIntrinsic(TR::TreeTop* treeTop, TR::
       bcdchkNode->resetBCDNodeRounding();
 
    TR::ILOpCodes op = comp()->il.opCodeForIndirectStore(TR::PackedDecimal);
-   TR::SymbolReference * symRefPdstore = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, arrayAddressNodeRes, 8, fe());
+   TR::SymbolReference * symRefPdstore = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, outOfLineCopyBackAddr, 8, fe());
    TR::Symbol * symStore =  TR::Symbol::createShadow(comp()->trHeapMemory(), TR::PackedDecimal, TR::DataType::getSizeFromBCDPrecision(TR::PackedDecimal, dstPrec));
    symStore->setArrayShadowSymbol();
    symRefPdstore->setSymbol(symStore);
 
-   TR::Node * pdstore = TR::Node::create(op, 2, arrayAddressNodeRes, pdshrNode);
+   TR::Node * pdstore = TR::Node::create(op, 2, pdStoreAddressNode, pdshrNode);
 
    pdstore->setSymbolReference(symRefPdstore);
    pdstore->setDecimalPrecision(dstPrec);
@@ -2155,12 +2205,13 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop* treeTop, TR::N
                                                                               "DAA/inlined/shl"));
 
    int32_t width = TR::Symbol::convertTypeToSize(TR::Int8);
-   TR::Node * srcAddrNode = calculateArrayElementAddress(callNode, srcNode, srcOffsetNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), width);
-   TR::Node * dstAddrNode = calculateArrayElementAddress(callNode, dstNode, dstOffsetNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), width);
+   TR::Node* srcAddrNode           = calculateArrayElementAddress(callNode, srcNode, srcOffsetNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), width);
+   TR::Node* outOfLineCopyBackAddr = calculateArrayElementAddress(callNode, dstNode, dstOffsetNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), width);
+   TR::Node* pdStoreAddrNode       = calculateArrayElementAddress(callNode, dstNode, dstOffsetNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), width);
 
    //pdload:
    TR::Node * pdload = TR::Node::create(TR::pdloadi, 1, srcAddrNode);
-   TR::SymbolReference * symRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Int8, srcAddrNode, 8, fe());
+   TR::SymbolReference * symRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, srcAddrNode, 8, fe());
    symRef->setOffset(0);
    pdload->setSymbolReference(symRef);
    pdload->setDecimalPrecision(srcPrec);
@@ -2171,7 +2222,7 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop* treeTop, TR::N
 
    TR::SymbolReference* bcdChkSymRef = callNode->getSymbolReference();
    TR::Node* bcdchkNode = TR::Node::createWithSymRef(TR::BCDCHK, 10, 10,
-                                       pdshlNode, dstAddrNode,
+                                       pdshlNode, outOfLineCopyBackAddr,
                                        callNode->getChild(0), callNode->getChild(1),
                                        callNode->getChild(2), callNode->getChild(3),
                                        callNode->getChild(4), callNode->getChild(5),
@@ -2182,12 +2233,12 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop* treeTop, TR::N
 
    //following pdstore
    TR::ILOpCodes op = comp()->il.opCodeForIndirectStore(TR::PackedDecimal);
-   TR::SymbolReference * symRefPdstore = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, dstAddrNode, 8, fe());
+   TR::SymbolReference * symRefPdstore = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, outOfLineCopyBackAddr, 8, fe());
    TR::Symbol * symStore =  TR::Symbol::createShadow(comp()->trHeapMemory(), TR::PackedDecimal, TR::DataType::getSizeFromBCDPrecision(TR::PackedDecimal, dstPrec));
    symStore->setArrayShadowSymbol();
    symRefPdstore->setSymbol(symStore);
 
-   TR::Node * pdstore = TR::Node::create(op, 2, dstAddrNode, pdshlNode);
+   TR::Node * pdstore = TR::Node::create(op, 2, pdStoreAddrNode, pdshlNode);
    pdstore->setSymbolReference(symRefPdstore);
    pdstore->setDecimalPrecision(dstPrec);
 

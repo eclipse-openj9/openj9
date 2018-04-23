@@ -369,14 +369,14 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 {
 	J9JavaVM * vm = vmThread->javaVM;
 
+	enterVMFromJNI(vmThread);
 	/* Inform ThreadGroup about any uncaught exception.  Tiny VMs do not have ThreadGroup, so they just dump the exception. */
 	if (vmThread->currentException) {
-		enterVMFromJNI(vmThread);
 		handleUncaughtException(vmThread, 0, 0, 0, 0);
 		/* Safe to call this whether handleUncaughtException clears the exception or not */
 		internalExceptionDescribe(vmThread);
-		releaseVMAccess(vmThread);
 	}
+	releaseVMAccess(vmThread);
 	
 	/* Mark this thread as dead */
 	setEventFlag(vmThread, J9_PUBLIC_FLAGS_STOPPED);
@@ -402,7 +402,7 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 
 	/* Do the java dance to indicate thread death */
 
-	enterVMFromJNI(vmThread);
+	acquireVMAccess(vmThread);
 	cleanUpAttachedThread(vmThread, 0, 0, 0, 0);
 	releaseVMAccess(vmThread);
 	

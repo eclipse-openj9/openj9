@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -198,9 +198,9 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 			jclass classLoaderClass = NULL;
 			jmethodID mid;
 
-			internalAcquireVMAccess(currentThread);
+			internalEnterVMFromJNI(currentThread);
 			classLoaderRef = j9jni_createLocalRef(env, classLoader->classLoaderObject);
-			internalReleaseVMAccess(currentThread);
+			internalExitVMToJNI(currentThread);
 			if (classLoaderRef == NULL) {
 				rc = CLS_ERROR_OUT_OF_MEMORY;
 				goto cleanup;

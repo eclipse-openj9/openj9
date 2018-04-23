@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1026,7 +1026,7 @@ testCorruptCache(J9JavaVM* vm)
 	REPORT_START("CorruptCacheTest");
 
 	UnitTest::unitTest = UnitTest::CORRUPT_CACHE_TEST;
-	vm->internalVMFunctions->internalAcquireVMAccess(vm->mainThread);
+	vm->internalVMFunctions->internalEnterVMFromJNI(vm->mainThread);
 
 	for(i = 0; i < 6; i++) {
 		CorruptCacheTest corruptCacheTest;
@@ -1375,7 +1375,7 @@ testCorruptCache(J9JavaVM* vm)
 
 	UnitTest::unitTest = UnitTest::NO_TEST;
 
-	vm->internalVMFunctions->internalReleaseVMAccess(vm->mainThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vm->mainThread);
 	REPORT_SUMMARY("CorruptCacheTest", rc);
 	return rc;
 }

@@ -1223,7 +1223,7 @@ jitFillOSRBuffer(struct J9VMThread *currentThread, void *osrBlock, UDATA reserve
 void JNICALL
 initializeAttachedThread(J9VMThread *currentThread, const char *name, j9object_t *group, UDATA daemon, J9VMThread *initializee)
 {
-	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
+	VM_VMAccess::inlineAcquireVMAccess(currentThread);
 	initializeAttachedThreadImpl(currentThread, name, group, daemon, initializee);
 	VM_VMAccess::inlineReleaseVMAccess(currentThread);
 }

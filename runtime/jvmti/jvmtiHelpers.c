@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -777,11 +777,17 @@ getThreadState(J9VMThread *currentThread, j9object_t threadObject)
 		if (vmstate & J9VMTHREAD_STATE_INTERRUPTED) {
 			state |= JVMTI_THREAD_STATE_INTERRUPTED;
 		}
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		if (vmThread->inNative) {
+			state |= JVMTI_THREAD_STATE_IN_NATIVE;
+		}
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		if ( (vmThread->omrVMThread->vmState & J9VMSTATE_MAJOR) == J9VMSTATE_JNI ) {
 			if (!(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
 				state |= JVMTI_THREAD_STATE_IN_NATIVE;
 			}
 		}
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		if (vmstate & J9VMTHREAD_STATE_BLOCKED) {
 			state |= JVMTI_THREAD_STATE_BLOCKED_ON_MONITOR_ENTER;
 		/* Object.wait() */

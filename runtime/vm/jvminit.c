@@ -208,7 +208,6 @@ IDATA postInitLoadJ9DLL (J9JavaVM* vm, const char* dllName, void* argData);
 void freeJavaVM (J9JavaVM * vm);
 IDATA threadInitStages (J9JavaVM* vm, IDATA stage, void* reserved);
 IDATA zeroInitStages (J9JavaVM* vm, IDATA stage, void* reserved);
-void OMRNORETURN exitJavaVM (J9VMThread * vmThread, IDATA rc);
 UDATA runJVMOnLoad (J9JavaVM* vm, J9VMDllLoadInfo* loadInfo, char* options);
 
 #if (defined(J9VM_OPT_JVMTI))
@@ -480,7 +479,10 @@ void OMRNORETURN exitJavaVM(J9VMThread * vmThread, IDATA rc)
 	if (vm != NULL) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
-		releaseVMAccessInJNI(vmThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		enterVMFromJNI(vmThread);
+		releaseVMAccess(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
 		/* we only let the shutdown code run once */
 
@@ -5732,12 +5734,14 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	}
 
 	sidecarInit(env);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	enterVMFromJNI(env);
+	releaseVMAccess(env);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
 	if (0 != vm->memoryManagerFunctions->gcStartupHeapManagement(vm)) {
 		goto error;
 	}
-
-	releaseVMAccessInJNI(env);
 
 	TRIGGER_J9HOOK_VM_STARTED(vm->hookInterface, env);
 
@@ -5775,8 +5779,10 @@ void sidecarInit(J9VMThread *mainThread) {
 	 * This prevents memory allocations that will occur after an OutOfMemoryError or
 	 * a StackOverflowError has occurred.
 	 */
-	mainThread->functions->FindClass((JNIEnv *) mainThread, "java/lang/Shutdown");
-	/* if the class load fails, we simply move on.  This is not a reason to halt startup. */
+	if (NULL == mainThread->functions->FindClass((JNIEnv *) mainThread, "java/lang/Shutdown")) {
+		/* if the class load fails, we simply move on.  This is not a reason to halt startup. */
+		mainThread->functions->ExceptionClear((JNIEnv *) mainThread);
+	}
 }
 #endif /* J9VM_OPT_SIDECAR (autogen) */
 

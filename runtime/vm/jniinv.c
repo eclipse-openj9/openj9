@@ -192,7 +192,10 @@ jint JNICALL J9_CreateJavaVM(JavaVM ** p_vm, void ** p_env, J9CreateJavaVMParams
 	omrthread_monitor_exit(globalMonitor);
 #endif
 
-	releaseVMAccessInJNI(env);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	enterVMFromJNI(env);
+	releaseVMAccess(env);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
 	TRIGGER_J9HOOK_VM_INITIALIZED(vm->hookInterface, env);
 
@@ -205,7 +208,7 @@ jint JNICALL J9_CreateJavaVM(JavaVM ** p_vm, void ** p_env, J9CreateJavaVMParams
 
     enterVMFromJNI(env);
 	jniResetStackReferences((JNIEnv *) env);
-    releaseVMAccessInJNI(env);
+    releaseVMAccess(env);
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if (NULL != vm->javaOffloadSwitchOffWithReasonFunc) {
@@ -534,7 +537,6 @@ protectedDetachCurrentThread(J9PortLibrary* portLibrary, void * userData)
 	/* Note: No need to ever unset this, since the vmThread will be discarded */
 	vmThread->gpProtected = TRUE;
 
-	releaseVMAccessInJNI(vmThread);
 	threadCleanup(vmThread, FALSE);
 
 	return JNI_OK;
@@ -670,6 +672,10 @@ protectedInternalAttachCurrentThread(J9PortLibrary* portLibrary, void * userData
 
 	/* if this is the main thread, the VM hasn't been bootstrapped yet, so we can't do this yet */
 	if ( (threadType & J9_PRIVATE_FLAGS_NO_OBJECT) == 0) {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		internalEnterVMFromJNI(env);
+		internalReleaseVMAccess(env);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		initializeAttachedThread(
 			env, 
 			threadName,

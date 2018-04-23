@@ -347,6 +347,77 @@
 #define J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR -5
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 
+/* Forward struct declarations. */
+struct DgRasInterface;
+struct J9AnnotationInfo;
+struct J9AnnotationInfoEntry;
+struct J9AnnotationState;
+struct J9AOTConfig;
+struct J9BytecodeVerificationData;
+struct J9CfrClassFile;
+struct J9Class;
+struct J9ClassLoader;
+struct J9ClassWalkState;
+struct J9ConstantPool;
+struct J9HashTable;
+struct J9HiddenInstanceField;
+struct J9HookedNative;
+struct J9IdentityHashData;
+struct J9JavaLangManagementData;
+struct J9JavaVM;
+struct J9JavaVMAttachArgs;
+struct J9JImage;
+struct J9JImageIntf;
+struct J9JImageLocation;
+struct J9JITExceptionTable;
+struct J9JVMTIClassPair;
+struct J9JXEDescription;
+struct J9LoadROMClassData;
+struct J9MemorySegment;
+struct J9MemorySegmentList;
+struct J9Method;
+struct J9MM_HeapRootSlotDescriptor;
+struct J9MM_IterateHeapDescriptor;
+struct J9MM_IterateObjectDescriptor;
+struct J9MM_IterateObjectRefDescriptor;
+struct J9MM_IterateRegionDescriptor;
+struct J9MM_IterateSpaceDescriptor;
+struct J9MonitorEnterRecord;
+struct J9MonitorTableListEntry;
+struct J9NativeLibrary;
+struct J9ObjectMonitor;
+struct J9ObjectMonitorInfo;
+struct J9Pool;
+struct J9PortLibrary;
+struct J9RAS;
+struct J9RASdumpContext;
+struct J9RASdumpFunctions;
+struct J9ROMClass;
+struct J9ROMFieldOffsetWalkState;
+struct J9ROMFieldShape;
+struct J9ROMFullTraversalFieldOffsetWalkState;
+struct J9ROMMethod;
+struct J9SharedCacheAPI;
+struct J9SharedClassConfig;
+struct J9SharedClassPreinitConfig;
+struct J9SharedInternSRPHashTableEntry;
+struct J9SharedInvariantInternTable;
+struct J9StackWalkState;
+struct J9Statistic;
+struct J9TranslationBufferSet;
+struct J9UnsafeMemoryBlock;
+struct J9UTF8;
+struct J9VerboseSettings;
+struct J9VerboseStruct;
+struct J9VMDllLoadInfo;
+struct J9VMInitArgs;
+struct J9VMInterface;
+struct J9VMSystemProperty;
+struct J9VMThread;
+struct JNINativeInterface_;
+struct OMR_VM;
+struct VMIZipFile;
+
 /* @ddr_namespace: map_to_type=J9CfrError */
 
 /* Jazz 82615: Both errorPC (current pc value) and errorFrameBCI (bci value in the stack map frame)
@@ -449,7 +520,6 @@ typedef struct J9JSRICodeBlock {
 /* Jazz 82615: we use verboseErrorType in the error message framework to store the specific error type
  * in the case of errorCode = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID.
  */
-struct J9Pool; /* Forward struct declaration */
 typedef struct J9JSRIData {
 	struct J9PortLibrary * portLib;
 	struct J9CfrAttributeCode* codeAttribute;
@@ -672,7 +742,6 @@ typedef struct J9JITRelocationRecordHeader {
 	U_8 unused1;
 } J9JITRelocationRecordHeader;
 
-struct J9AOTConfig; /* Forward struct declaration */
 typedef struct J9AOTCallbackFunctionTable {
 	void* resolverMethodTable;
 	void  ( *initializeResolvedMethod)(struct J9AOTConfig *jitConfig, void *methodCookie, U_8 **bytecodes, I_32 *numParam, I_32 *numTemp) ;
@@ -1050,8 +1119,6 @@ typedef struct J9TokenByID {
 	UDATA tokenHash;
 } J9TokenByID;
 
-struct J9SharedInvariantInternTable ; /* Forward struct declaration */
-struct J9SharedInternSRPHashTableEntry ; /* Forward struct declaration */
 typedef struct J9SharedInvariantInternTable {
 	UDATA  ( *performNodeAction)(struct J9SharedInvariantInternTable *sharedInvariantInternTable, struct J9SharedInternSRPHashTableEntry *node, UDATA action, void* userData) ;
 	UDATA flags;
@@ -1281,9 +1348,6 @@ typedef struct J9SharedCacheAPI {
 	I_32 maxJIT;
 } J9SharedCacheAPI;
 
-struct J9Pool; /* Forward struct declaration */
-struct J9MemorySegment; /* Forward struct declaration */
-struct J9HashTable; /* Forward struct declaration */
 typedef struct J9SharedClassConfig {
 	void* sharedClassCache;
 	struct J9SharedClassCacheDescriptor* cacheDescriptorList;
@@ -1786,7 +1850,6 @@ typedef struct J9DynamicLoadStats {
 	UDATA debugSize;
 } J9DynamicLoadStats;
 
-struct J9JImageIntf; /* Forward struct declaration */
 typedef struct J9JImageIntf {
 	struct J9JavaVM *vm;
 	struct J9PortLibrary *portLib;
@@ -1800,14 +1863,6 @@ typedef struct J9JImageIntf {
 } J9JImageIntf;
 
 /* @ddr_namespace: map_to_type=J9TranslationBufferSet */
-
-struct J9ROMClass; /* Forward struct declaration */
-struct VMIZipFile; /* Forward struct declaration */
-struct J9LoadROMClassData ; /* Forward struct declaration */
-struct J9CfrClassFile; /* Forward struct declaration */
-struct J9JImage; /* Forward struct declaration */
-struct J9JImageLocation;
-struct J9VMInterface;
 
 typedef struct J9TranslationLocalBuffer {
 	IDATA entryIndex;
@@ -1842,15 +1897,6 @@ typedef struct J9TranslationBufferSet {
 #define BCU_ENABLE_INVARIANT_INTERNING  8
 #define BCU_ENABLE_ROMCLASS_RESIZING  0x100
 
-struct J9ROMClass ; /* Forward struct declaration */
-struct J9ClassLoader ; /* Forward struct declaration */
-struct J9Class ; /* Forward struct declaration */
-struct J9VMThread ; /* Forward struct declaration */
-struct J9UTF8 ; /* Forward struct declaration */
-struct J9PortLibrary ; /* Forward struct declaration */
-struct J9Class; /* Forward struct declaration */
-struct J9CfrClassFile; /* Forward struct declaration */
-struct J9JVMTIClassPair; /* Forward struct declaration */
 typedef struct J9BytecodeVerificationData {
 	IDATA  ( *verifyBytecodesFunction)(struct J9PortLibrary *portLib, struct J9Class *ramClass, struct J9ROMClass *romClass, struct J9BytecodeVerificationData *verifyData) ;
 	UDATA  ( *checkClassLoadingConstraintForNameFunction)(struct J9VMThread* vmThread, struct J9ClassLoader* loader1, struct J9ClassLoader* loader2, U_8* name1, U_8* name2, UDATA length, UDATA copyUTFs) ;
@@ -1906,10 +1952,6 @@ typedef struct J9BytecodeVerificationData {
 
 /* @ddr_namespace: map_to_type=J9NativeLibrary */
 
-struct J9HookedNative; /* Forward struct declaration */
-struct J9Pool; /* Forward struct declaration */
-struct J9VMThread; /* Forward struct declaration */
-struct J9Method; /* Forward struct declaration */
 typedef struct J9NativeLibrary {
 	UDATA handle;
 	char* name;
@@ -2424,9 +2466,6 @@ typedef struct J9I2JState {
 
 /* @ddr_namespace: map_to_type=J9StackWalkState */
 
-struct J9VMThread ; /* Forward struct declaration */
-struct J9JITExceptionTable; /* Forward struct declaration */
-struct J9StackWalkState ; /* Forward struct declaration */
 typedef struct J9StackWalkState {
 	struct J9StackWalkState* previous;
 	struct J9VMThread* walkThread;
@@ -2491,7 +2530,6 @@ typedef struct J9StackWalkState {
 #define J9_STACKWALK_SLOT_TYPE_PENDING  3
 #define J9_STACKWALK_SLOT_TYPE_METHOD_LOCAL  1
 
-struct J9MonitorEnterRecord; /* Forward struct declaration */
 typedef struct J9OSRFrame {
 	UDATA flags;
 	struct J9Method* method;
@@ -3423,7 +3461,6 @@ typedef struct J9ClassCastParms {
 
 /* @ddr_namespace: map_to_type=J9JITConfig */
 
-struct J9RASdumpContext; /* Forward struct declaration */
 typedef struct J9JITConfig {
 	IDATA  ( *entryPoint)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
 	void *old_fast_jitNewObject;
@@ -3779,7 +3816,6 @@ typedef struct J9JITConfig {
 #define J9JIT_JVMPI_INLINE_ALLOCATION_OFF  32
 #define J9JIT_J2PROF  0x100
 
-struct J9RASdumpContext; /* Forward struct declaration */
 typedef struct J9AOTConfig {
 	IDATA  ( *entryPoint)(struct J9JITConfig *jitConfig, struct J9VMThread *vmStruct, J9Method *method, void *oldStartPC) ;
 	void *old_fast_jitNewObject;
@@ -4218,13 +4254,6 @@ typedef struct J9InternalVMLabels {
 	void* cInterpreter;
 } J9InternalVMLabels;
 
-struct J9MM_IterateHeapDescriptor ; /* Forward struct declaration */
-struct J9MM_IterateObjectDescriptor ; /* Forward struct declaration */
-struct OMR_VM ; /* Forward struct declaration */
-struct J9MM_IterateSpaceDescriptor ; /* Forward struct declaration */
-struct J9MM_HeapRootSlotDescriptor ; /* Forward struct declaration */
-struct J9MM_IterateRegionDescriptor ; /* Forward struct declaration */
-struct J9MM_IterateObjectRefDescriptor ; /* Forward struct declaration */
 typedef struct J9MemoryManagerFunctions {
 	j9object_t  ( *J9AllocateIndexableObject)(struct J9VMThread *vmContext, J9Class *clazz, U_32 size, UDATA allocateFlags) ;
 	j9object_t  ( *J9AllocateObject)(struct J9VMThread *vmContext, J9Class *clazz, UDATA allocateFlags) ;
@@ -4461,30 +4490,6 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA ( *j9gc_stringHashEqualFn)(void *leftKey, void *rightKey, void *userData);
 } J9MemoryManagerFunctions;
 
-struct J9ClassWalkState; /* Forward struct declaration */
-struct J9JavaVMAttachArgs ; /* Forward struct declaration */
-struct J9PortLibrary ; /* Forward struct declaration */
-struct DgRasInterface ; /* Forward struct declaration */
-struct J9ROMFullTraversalFieldOffsetWalkState ; /* Forward struct declaration */
-struct J9ROMFieldOffsetWalkState ; /* Forward struct declaration */
-struct J9ClassLoader ; /* Forward struct declaration */
-struct J9PortLibrary; /* Forward struct declaration */
-struct J9ClassLoader; /* Forward struct declaration */
-struct J9VMSystemProperty ; /* Forward struct declaration */
-struct J9ObjectMonitorInfo ; /* Forward struct declaration */
-struct J9ROMClass ; /* Forward struct declaration */
-struct J9ObjectMonitor; /* Forward struct declaration */
-struct J9AnnotationInfoEntry ; /* Forward struct declaration */
-struct J9NativeLibrary; /* Forward struct declaration */
-struct J9ROMFieldShape; /* Forward struct declaration */
-struct J9MemorySegmentList ; /* Forward struct declaration */
-struct J9AnnotationState ; /* Forward struct declaration */
-struct J9VMInitArgs; /* Forward struct declaration */
-struct J9MemorySegment ; /* Forward struct declaration */
-struct J9VMDllLoadInfo; /* Forward struct declaration */
-struct J9ROMMethod ; /* Forward struct declaration */
-struct J9ROMFieldShape ; /* Forward struct declaration */
-struct J9AnnotationInfo ; /* Forward struct declaration */
 typedef struct J9InternalVMFunctions {
 	void* reserved0;
 	void* reserved1;
@@ -4786,7 +4791,6 @@ typedef struct J9InternalVMFunctions {
 	void  ( *internalEnterVMFromJNI)(struct J9VMThread * currentThread) ;
 	void  ( *internalExitVMToJNI)(struct J9VMThread * currentThread) ;
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-	void  ( *internalReleaseVMAccessInJNI)(struct J9VMThread * currentThread) ;
 	struct J9HashTable* ( *hashModuleTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;
 	struct J9HashTable* ( *hashPackageTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;
 	struct J9HashTable* ( *hashModuleExtraInfoTableNew)(struct J9JavaVM * vm, U_32 initialSize) ;
@@ -5052,11 +5056,6 @@ typedef struct J9VMThread {
 #define J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, object, value) J9VMTHREAD_JAVAVM(vmThread)->memoryManagerFunctions->j9gc_objaccess_storeObjectToInternalVMSlot((vmThread), (j9object_t*)&((object)->blockingEnterObject), (value))
 #define TMP_J9VMTHREAD_BLOCKINGENTEROBJECT(object) ((object)->blockingEnterObject)
 
-struct J9Class ; /* Forward struct declaration */
-struct J9ROMFieldShape ; /* Forward struct declaration */
-struct J9VMThread ; /* Forward struct declaration */
-struct J9VMThread; /* Forward struct declaration */
-struct J9Method ; /* Forward struct declaration */
 typedef struct J9ReflectFunctionTable {
 	jobject  ( *idToReflectMethod)(struct J9VMThread* vmThread, jmethodID methodID) ;
 	jobject  ( *idToReflectField)(struct J9VMThread* vmThread, jfieldID fieldID) ;
@@ -5074,8 +5073,6 @@ typedef struct J9ReflectFunctionTable {
 
 /* @ddr_namespace: map_to_type=J9VMRuntimeStateListener */
 
-struct J9JavaVM; /* Forward struct declaration */
-struct J9VMThread; /* Forward struct declaration */
 typedef struct J9VMRuntimeStateListener {
 	U_32 vmRuntimeState;
 	U_32 runtimeStateListenerState;
@@ -5101,37 +5098,6 @@ typedef struct J9VMRuntimeStateListener {
 
 /* @ddr_namespace: map_to_type=J9JavaVM */
 
-struct J9TranslationBufferSet; /* Forward struct declaration */
-struct J9SharedInvariantInternTable; /* Forward struct declaration */
-struct J9PortLibrary ; /* Forward struct declaration */
-struct J9Method ; /* Forward struct declaration */
-struct J9HashTable; /* Forward struct declaration */
-struct J9VerboseSettings ; /* Forward struct declaration */
-struct J9HiddenInstanceField; /* Forward struct declaration */
-struct JNINativeInterface_; /* Forward struct declaration */
-struct J9MonitorTableListEntry; /* Forward struct declaration */
-struct J9SharedCacheAPI; /* Forward struct declaration */
-struct J9Pool; /* Forward struct declaration */
-struct J9JXEDescription ; /* Forward struct declaration */
-struct J9SharedClassPreinitConfig; /* Forward struct declaration */
-struct J9ConstantPool ; /* Forward struct declaration */
-struct J9RASdumpFunctions; /* Forward struct declaration */
-struct J9ROMClass ; /* Forward struct declaration */
-struct J9RAS; /* Forward struct declaration */
-struct J9JavaVM ; /* Forward struct declaration */
-struct J9StackWalkState ; /* Forward struct declaration */
-struct J9MemorySegmentList; /* Forward struct declaration */
-struct J9IdentityHashData; /* Forward struct declaration */
-struct J9UnsafeMemoryBlock; /* Forward struct declaration */
-struct J9ROMFieldShape; /* Forward struct declaration */
-struct J9Statistic; /* Forward struct declaration */
-struct J9VMInitArgs; /* Forward struct declaration */
-struct J9VMThread ; /* Forward struct declaration */
-struct J9JavaLangManagementData; /* Forward struct declaration */
-struct J9ROMMethod ; /* Forward struct declaration */
-struct J9BytecodeVerificationData; /* Forward struct declaration */
-struct J9VerboseStruct; /* Forward struct declaration */
-struct J9SharedClassConfig; /* Forward struct declaration */
 typedef struct J9JavaVM {
 	struct J9InternalVMFunctions* internalVMFunctions;
 	struct J9JavaVM* javaVM;
