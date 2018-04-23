@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,7 +128,12 @@ public class PointerGenerator {
 		PointerGenerator app = new PointerGenerator();
 		app.parseArgs(args);
 		app.generateClasses();
-		System.out.println("Processing complete");
+		if (app.errorCount == 0) {
+			System.out.println("Processing complete");
+		} else {
+			System.out.println("Processing failed");
+			System.exit(1);
+		}
 	}
 
 	private void generateClasses() {
@@ -143,6 +148,7 @@ public class PointerGenerator {
 			structureReader = new StructureReader(inputStream);
 			inputStream.close();
 		} catch (IOException e) {
+			errorCount += 1;
 			System.out.println("Problem with file: " + fileName);
 			e.printStackTrace();
 			return;
@@ -164,9 +170,11 @@ public class PointerGenerator {
 					generateClass(structure);
 				}
 			} catch (FileNotFoundException e) {
-				String error = String.format("File Not Found processing: %s: %s", structure.getPointerName(), e.getMessage());
+				errorCount += 1;
+				String error = String.format("File not found processing: %s: %s", structure.getPointerName(), e.getMessage());
 				System.out.println(error);
 			} catch (IOException e) {
+				errorCount += 1;
 				String error = String.format("IOException processing: %s: %s", structure.getPointerName(), e.getMessage());
 				System.out.println(error);
 			}
@@ -263,7 +271,7 @@ public class PointerGenerator {
 		File javaFile = new File(outputDir, structure.getPointerName() + ".java");
 
 		// Do not create Pointer class for Constant only structures (this includes enums)
-		if (structure.getFields().size() == 0 && structure.getConstants().size() > 1 && superClassName.equals("StructurePointer")) {
+		if (structure.getFields().size() == 0 && structure.getConstants().size() != 0 && superClassName.equals("StructurePointer")) {
 			if (javaFile.exists()) {
 				System.out.println("No fields and no superclass.  Deleting: " + structure.getName());
 				javaFile.delete();
@@ -876,12 +884,26 @@ public class PointerGenerator {
 		return type.toUpperCase().substring(0, 1) + type.substring(1) + "Pointer";
 	}
 
+	private int errorCount = 0;
+
 	private void writeArrayMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
-		String returnType = getArrayType(fieldDescriptor.getType());
-		if (returnType.equals("EnumPointer")) {
-			writeEnumEAMethod(writer, returnType, structure, fieldDescriptor);
-		} else {
-			writeEAMethod(writer, returnType, structure, fieldDescriptor);
+		try {
+			String returnType = getArrayType(fieldDescriptor.getType());
+			if (returnType.equals("EnumPointer")) {
+				writeEnumEAMethod(writer, returnType, structure, fieldDescriptor);
+			} else {
+				writeEAMethod(writer, returnType, structure, fieldDescriptor);
+			}
+		} catch (RuntimeException e) {
+			// If there are fewer than 100 errors, print a stacktrace (instead
+			// of terminating the program) to allow more than one problem to be
+			// fixed per iteration.
+			errorCount += 1;
+			if (errorCount < 100) {
+				e.printStackTrace();
+			} else {
+				throw e;
+			}
 		}
 	}
 

@@ -27,10 +27,10 @@ include $(TOP_DIR)makelib/uma_macros.mk
 
 ifeq (8,$(VERSION_MAJOR))
   DDR_JCL_MODULE := jclse7b_
-else ifneq (,$(filter 9 10 11,$(VERSION_MAJOR)))
+else ifneq (,$(findstring $(VERSION_MAJOR),9 10 11))
   DDR_JCL_MODULE := jclse$(VERSION_MAJOR)_
 else
-  $(error Unsupported version: '$(VERSION_MAJOR)')
+  DDR_JCL_MODULE := jclse11_
 endif
 
 DDR_INPUT_MODULES := j9ddr_misc j9gc j9jvmti j9prt j9shr j9thr j9trc j9vm $(DDR_JCL_MODULE)
@@ -73,7 +73,7 @@ all : $(DDR_BLOB)
 clean :
 	rm -f $(DDR_PRODUCTS)
 
-$(DDR_BLOB) : $(TOP_DIR)ddrgen $(DDR_MACRO_LIST)
+$(DDR_BLOB) : $(TOP_DIR)ddrgen$(UMA_DOT_EXE) $(DDR_MACRO_LIST) blacklist $(wildcard overrides*)
 	$(TOP_DIR)ddrgen $(DDR_OPTIONS) \
 		$(DDR_INPUT_FILES)
 

@@ -354,6 +354,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<artifact type="shared" name="j9ddr_misc">
 		<include-if condition="spec.flags.module_ddr and spec.flags.opt_useOmrDdr"/>
+		<phase>core</phase>
+		<!--
+		At least one symbol must be exported, but because this shared library
+		is only used by ddrgen it doesn't matter which name is exported.
+		-->
+		<exports>
+			<export name="getAlgorithmVersionStructTable" />
+		</exports>
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
@@ -401,25 +409,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<artifact type="target" name="omrddrgen">
 		<include-if condition="spec.flags.module_ddr and spec.flags.opt_useOmrDdr"/>
 		<dependencies>
-			<dependency name="generate_j9vm"/>
-			<dependency name="generate_redirector"/>
-			<dependency name="j9ddr_misc"/>
-			<dependency name="j9gc"/>
-			<dependency name="j9jvmti"/>
-			<dependency name="j9prt"/>
-			<dependency name="j9shr"/>
-			<dependency name="j9thr"/>
-			<dependency name="j9trc"/>
-			<dependency name="j9vm"/>
-			<!--
-			We actually only need one of the following, but
-			the version we're building doesn't appear to be
-			available to UMA, so we'll require them all.
-			-->
-			<dependency name="jclse7b_"/>
-			<dependency name="jclse9_"/>
-			<dependency name="jclse10_"/>
-			<dependency name="jclse11_"/>
+			<dependency name="phase_core"/>
+			<dependency name="phase_j2se"/>
+			<dependency name="phase_util"/>
+			<dependency name="win">
+				<include-if condition="spec.flags.module_windbg" />
+			</dependency>
 		</dependencies>
 		<commands>
 			<command line="$(MAKE) -C ddr -f run_omrddrgen.mk" type="all"/>
