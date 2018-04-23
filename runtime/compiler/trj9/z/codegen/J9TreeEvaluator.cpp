@@ -15809,12 +15809,35 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                break;
                }
 
-            default: TR_ASSERT_FATAL(0, "BCDCHKEvaluator: Could not find recognized method for variable precision DAA operation.\n");
+            default:
+               {
+               /**
+                * BCDCHK can have a call node if the PD operation can be simplified to a No-Op.
+                * For example, one can get an integer via a call
+                * perform a i2pd followed by a pd2i. The pd2i (under BCDCHK) can be simplified to the icall.
+                * If this is the case, the lcall/icall must have been evaluated.
+                * We can skip the BCDCHK evaluation and return the call result.
+                */
+               TR_ASSERT_FATAL(resultReg != NULL && resultReg->getKind() == TR_GPR,
+                               "BCDCHKEvaluator: variable precision path encounters an unrecognized and unevaluated long/int call\n");
+               }
             }
          break;
          }
 
-      default: TR_ASSERT_FATAL(0, "Operation Code not supported by BCDCHKEvaluator.\n");
+      default:
+         {
+         /**
+          * Unrecognized opCodes under BCDCHK should come from optimizations such as local CSE and tree simplifications.
+          * They should be commoned nodes that's evaluated previously. Skip these nodes.
+          */
+         TR_ASSERT_FATAL(resultReg != NULL, "BCDCHKEvaluator: BCDCHK has an unevaluated non-PD node %p (non-PD op code %s) \n",
+                         pdopNode,
+                         pdopNode->getOpCode().getName());
+
+         traceMsg(cg->comp(), "BCDCHK node n%dn has non-PD operation %s\n",
+                  node->getGlobalIndex(), pdopNode->getOpCode().getName());
+         }
       }
 
    if (!isVariableParam)
