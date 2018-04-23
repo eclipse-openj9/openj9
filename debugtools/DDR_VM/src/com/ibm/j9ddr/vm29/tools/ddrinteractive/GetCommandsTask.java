@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2017 IBM Corp. and others
+ * Copyright (c) 2010, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ClassForNameCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ClassloadersSummaryCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.CompressedRefMappingCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.CoreInfoCommand;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.CPDescriptionCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllClassloadersCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllRamClassLinearCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllRegionsCommand;
@@ -173,6 +174,7 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		toPassBack.add(new DumpSegregatedStatsCommand());
 		toPassBack.add(new ObjectSizeInfo());
 		toPassBack.add(new DumpContendedLoadTable());
+		toPassBack.add(new CPDescriptionCommand());
 
 		loadPlugins(toPassBack, loader);
 
