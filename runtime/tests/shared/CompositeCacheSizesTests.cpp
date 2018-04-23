@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,7 +103,7 @@ testCompositeCacheSizes(J9JavaVM* vm)
 
 	IDATA rc = TEST_PASS;
 
-	vm->internalVMFunctions->internalAcquireVMAccess(vm->mainThread);
+	vm->internalVMFunctions->internalEnterVMFromJNI(vm->mainThread);
 	UnitTest::unitTest = UnitTest::COMPOSITE_CACHE_SIZES_TEST;
 	rc |= test1(vm);
 	rc |= test2(vm);
@@ -124,7 +124,7 @@ testCompositeCacheSizes(J9JavaVM* vm)
 	rc |= test14(vm);
 	UnitTest::unitTest = UnitTest::NO_TEST;
 
-	vm->internalVMFunctions->internalReleaseVMAccess(vm->mainThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vm->mainThread);
 
 	j9tty_printf(PORTLIB, "%s: %s\n", testName, TEST_PASS==rc?"PASS":"FAIL");
 	if (rc == TEST_ERROR) {

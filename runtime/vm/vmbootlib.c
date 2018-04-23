@@ -607,11 +607,17 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 				 */
 				j9str_printf(PORTLIB, onloadRtnName, nameLength, "%s%s", J9STATIC_ONLOAD, logicalName);
 				RELEASE_CLASS_LOADER_BLOCKS_MUTEX(javaVM);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+				exitVMToJNI(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 				jniVersion = (*newNativeLibrary->send_lifecycle_event)(vmThread,
 																	   newNativeLibrary,
 																	   onloadRtnName,
 																	   (UDATA)-1);
-				releaseVMAccessInJNI(vmThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+				enterVMFromJNI(vmThread);
+				releaseVMAccess(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
 				/* If JNI version returned is 1.8 (or above), JNI_OnLoad_L /was/ found and 
 				 * invoked, successfully. 
@@ -694,11 +700,18 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 		 * already been linked statically (as JNI_OnLoad_L would have been invoked by now). 
 		 */
 		if (J9NATIVELIB_LOAD_OK == rc) {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+			exitVMToJNI(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			jniVersion = (*newNativeLibrary->send_lifecycle_event)(vmThread,
 																   newNativeLibrary,
 																   J9DYNAMIC_ONLOAD,
 																   JNI_VERSION_1_1);
-			releaseVMAccessInJNI(vmThread);
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+			enterVMFromJNI(vmThread);
+			releaseVMAccess(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+
 			if ((FALSE == jniVersionIsValid(jniVersion)) || (NULL != vmThread->currentException)) {
 				char msgBuffer[MAXIMUM_MESSAGE_LENGTH];
 

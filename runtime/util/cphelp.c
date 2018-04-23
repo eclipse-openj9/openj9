@@ -30,7 +30,8 @@ getClassPathEntry(J9VMThread * currentThread, J9ClassLoader * classLoader, IDATA
 	UDATA vmAccess = currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS;
 
 	if (vmAccess == 0) {
-		currentThread->javaVM->internalVMFunctions->internalAcquireVMAccess(currentThread);
+		/* The only callers without VM access are in the JNI context */
+		currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 	}
 	if ((cpIndex < 0) || ((UDATA)cpIndex >= classLoader->classPathEntryCount)) {
 		rc = 1;
@@ -39,7 +40,7 @@ getClassPathEntry(J9VMThread * currentThread, J9ClassLoader * classLoader, IDATA
 		rc = 0;
 	}
 	if (vmAccess == 0) {
-		currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		currentThread->javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 	return rc;
 }

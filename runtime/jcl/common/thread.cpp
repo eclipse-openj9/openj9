@@ -212,7 +212,7 @@ Java_java_lang_Thread_suspendImpl(JNIEnv *env, jobject rcv)
 				 */
 				vmFuncs->setHaltFlag(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 			} else {
-				vmFuncs->internalReleaseVMAccessInJNI(currentThread);
+				vmFuncs->internalExitVMToJNI(currentThread);
 				omrthread_monitor_enter(targetThread->publicFlagsMutex);
 				VM_VMAccess::setHaltFlagForVMAccessRelease(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 				if (VM_VMAccess::mustWaitForVMAccessRelease(targetThread)) {

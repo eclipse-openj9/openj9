@@ -332,6 +332,10 @@ void   internalAcquireVMAccessClearStatus(J9VMThread * vmThread, UDATA flags)
 
 void   internalAcquireVMAccessNoMutexWithMask(J9VMThread * vmThread, UDATA haltMask)
 {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	// Current thread must have entered the VM before acquiring access
+	Assert_VM_false(vmThread->inNative);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	UDATA reacquireJNICriticalAccess = FALSE;
 	J9JavaVM* vm = vmThread->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -405,7 +409,7 @@ void   internalAcquireVMAccessWithMask(J9VMThread * vmThread, UDATA haltMask)
 }
 
 
-void  internalReleaseVMAccessNoMutex(J9VMThread * vmThread)
+static void  internalReleaseVMAccessNoMutexNoCheck(J9VMThread * vmThread)
 {
 	J9JavaVM* vm = vmThread->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -448,6 +452,16 @@ void  internalReleaseVMAccessNoMutex(J9VMThread * vmThread)
 
 	Assert_VM_mustNotHaveVMAccess(vmThread);
 	Trc_VM_internalReleaseVMAccessNoMutex_Exit(vmThread);
+}
+
+
+void  internalReleaseVMAccessNoMutex(J9VMThread * vmThread)
+{
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	// Current thread must have entered the VM before releasing access
+	Assert_VM_false(vmThread->inNative);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+	internalReleaseVMAccessNoMutexNoCheck(vmThread);
 }
 
 
@@ -591,6 +605,10 @@ void releaseExclusiveVMAccess(J9VMThread * vmThread)
 
 IDATA   internalTryAcquireVMAccessNoMutexWithMask(J9VMThread * vmThread, UDATA haltMask)
 {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	// Current thread must have entered the VM before acquiring access
+	Assert_VM_false(vmThread->inNative);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	J9JavaVM* vm = vmThread->javaVM;
 
 	if (vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_DEBUG_VM_ACCESS) {
@@ -985,7 +1003,10 @@ internalEnterVMFromJNI(J9VMThread *currentThread)
 		omrthread_monitor_t const publicFlagsMutex = currentThread->publicFlagsMutex;
 		omrthread_t const osThread = currentThread->osThread;
 		omrthread_monitor_enter_using_threadId(publicFlagsMutex, osThread);
-		if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_RELEASE_ACCESS_REQUIRED_MASK)) {
+		/* If VM access acquire is being forced out-of-line, do the release to force a new
+		 * acquire (e.g. for concurrent scavenger).
+		 */
+		if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_RELEASE_ACCESS_REQUIRED_MASK | J9_PUBLIC_FLAGS_VMACCESS_OUTOFLINE_MASK)) {
 			if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)) {
 				internalReleaseVMAccessNoMutex(currentThread);
 			}
@@ -1007,33 +1028,16 @@ internalExitVMToJNI(J9VMThread *currentThread)
 		omrthread_monitor_t const publicFlagsMutex = currentThread->publicFlagsMutex;
 		omrthread_t const osThread = currentThread->osThread;
 		omrthread_monitor_enter_using_threadId(publicFlagsMutex, osThread);
-		internalReleaseVMAccessNoMutex(currentThread);
-		internalAcquireVMAccessNoMutex(currentThread);
-		omrthread_monitor_exit_using_threadId(publicFlagsMutex, osThread);
-	}
-}
-
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-
-void
-internalReleaseVMAccessInJNI(J9VMThread *currentThread)
-{
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-	VM_AtomicSupport::writeBarrier();
-	currentThread->inNative = FALSE;
-	VM_AtomicSupport::readWriteBarrier(); // necessary?
-	if (J9_EXPECTED(J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)))
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-	{
-		omrthread_monitor_t const publicFlagsMutex = currentThread->publicFlagsMutex;
-		omrthread_t const osThread = currentThread->osThread;
-		omrthread_monitor_enter_using_threadId(publicFlagsMutex, osThread);
-		if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)) {
-			internalReleaseVMAccessNoMutex(currentThread);
+		if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_RELEASE_ACCESS_REQUIRED_MASK | J9_PUBLIC_FLAGS_VMACCESS_OUTOFLINE_MASK)) {
+			if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)) {
+				internalReleaseVMAccessNoMutexNoCheck(currentThread);
+			}
 		}
 		omrthread_monitor_exit_using_threadId(publicFlagsMutex, osThread);
 	}
 }
+
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
 void  
 acquireSafePointVMAccess(J9VMThread * vmThread)

@@ -336,7 +336,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	internalEnterVMFromJNI,
 	internalExitVMToJNI,
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-	internalReleaseVMAccessInJNI,
 	hashModuleTableNew,
 	hashPackageTableNew,
 	hashModuleExtraInfoTableNew,

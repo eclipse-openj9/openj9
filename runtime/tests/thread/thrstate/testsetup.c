@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2008 IBM Corp. and others
+ * Copyright (c) 2008, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -407,7 +407,7 @@ test_setup(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	}
 
 	j9tty_printf(PORTLIB, "acquiring VM access\n");
-	vmFuncs->internalAcquireVMAccess(currentThread); /* prevent the GC from moving objects */
+	vmFuncs->internalEnterVMFromJNI(currentThread); /* prevent the GC from moving objects */
 
 	if (initObject(env, &TESTDATA(blockingObject), TESTDATA(blockingObjectRef), &TESTDATA(objMonitor))) {
 		j9tty_printf(PORTLIB, "test_setup: unable to create object\n");

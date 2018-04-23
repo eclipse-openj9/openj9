@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,7 +110,6 @@ MM_EnvironmentDelegate::attachVMThread(OMR_VM *omrVM, const char  *threadName, u
 	if (JNI_OK != javaVM->internalVMFunctions->attachSystemDaemonThread(javaVM, &vmThread, threadName)) {
 		return NULL;
 	}
-	javaVM->internalVMFunctions->internalReleaseVMAccessInJNI(vmThread);
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if ((MM_EnvironmentBase::ATTACH_THREAD != reason) &&  (NULL != javaVM->javaOffloadSwitchOnWithReasonFunc)) {
