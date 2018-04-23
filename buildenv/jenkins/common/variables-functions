@@ -197,6 +197,9 @@ def set_node(job_type) {
     // fetch labels (space separated string) for given platform/spec
     labels = get_value(VARIABLES."${SPEC}".node_labels."${job_type}", SDK_VERSION)
     NODE = labels.replaceAll(" ", "&&")
+    if (!NODE) {
+        error("Cannot find label value matching JOB_TYPE:'${job_type}' SPEC:'${SPEC}' and SDK_VERSION:'${SDK_VERSION}'")
+    }
 }
 
 /*
