@@ -40,9 +40,10 @@ final class ArrayVarHandle extends VarHandle {
 	static final MethodHandle[] populateMHs(Class<?> arrayType) {
 		Class<? extends ArrayVarHandleOperations> operationsClass = null;
 		final Class<?> initType = arrayType.getComponentType();
+		boolean isPrimitiveType = initType.isPrimitive();
 		Class<?> type = initType;
 		
-		if (!type.isPrimitive()) {
+		if (!isPrimitiveType) {
 			type = Object.class;
 			operationsClass = OpObject.class;
 		} else if (int.class == type) {
@@ -66,17 +67,21 @@ final class ArrayVarHandle extends VarHandle {
 			throw new InternalError(com.ibm.oti.util.Msg.getString("K0626", type)); //$NON-NLS-1$
 		}
 		
-		// Populate the MethodHandle[] using MethodHandles to methods in ArrayVarHandleOperations
-		MethodType getter = methodType(type, Object.class, int.class, VarHandle.class);
-		MethodType setter = methodType(void.class, Object.class, int.class, type, VarHandle.class);
-		MethodType compareAndSet = methodType(boolean.class, Object.class, int.class, type, type, VarHandle.class);
+		/* Populate the MethodHandle[] using MethodHandles to methods in ArrayVarHandleOperations.
+		 * Note: For primitive types, there is no need to clone the MethodHandles with the exact types later
+		 * in populateMHs() as we already know their types here.
+		 */
+		Class<?> actualArrayType = (isPrimitiveType) ? arrayType : Object.class;
+		MethodType getter = methodType(type, actualArrayType, int.class, VarHandle.class);
+		MethodType setter = methodType(void.class, actualArrayType, int.class, type, VarHandle.class);
+		MethodType compareAndSet = methodType(boolean.class, actualArrayType, int.class, type, type, VarHandle.class);
 		MethodType compareAndExchange = compareAndSet.changeReturnType(type);
 		MethodType getAndSet = setter.changeReturnType(type);
-		
-		/* Construct the lookup MethodTypes. References use the type Object, so these MethodTypes need to be specialized to the initial type. */
 		MethodType[] lookupTypes = populateMTs(getter, setter, compareAndSet, compareAndExchange, getAndSet);
+		
+		/* References use the type Object, so these MethodTypes need to be specialized to the initial type. */
 		MethodType[] exactTypes = lookupTypes;
-		if (initType == type) {
+		if (!isPrimitiveType) {
 			MethodType exactGetter = methodType(initType, arrayType, int.class, VarHandle.class);
 			MethodType exactSetter = methodType(void.class, arrayType, int.class, initType, VarHandle.class);
 			MethodType exactCompareAndSet = methodType(boolean.class, arrayType, int.class, initType, initType, VarHandle.class);
@@ -84,7 +89,6 @@ final class ArrayVarHandle extends VarHandle {
 			MethodType exactGetAndSet = exactSetter.changeReturnType(initType);
 			exactTypes = populateMTs(exactGetter, exactSetter, exactCompareAndSet, exactCompareAndExchange, exactGetAndSet);
 		}
-		
 		return populateMHs(operationsClass, lookupTypes, exactTypes);
 	}
 	
@@ -121,14 +125,14 @@ final class ArrayVarHandle extends VarHandle {
 			if (null != value) {
 				Class<?> actualType = value.getClass();
 				if (!fieldType.isAssignableFrom(actualType)) {
-					throw newIllegalArgumentException(fieldType, actualType);
+					throw newArrayStoreException(fieldType, actualType);
 				}
 			}
 		}
 		
-		private static final IllegalArgumentException newIllegalArgumentException(Class<?> actualType, Class<?> fieldType) {
+		private static final ArrayStoreException newArrayStoreException(Class<?> fieldType, Class<?> actualType) {
 			/*[MSG "K0630", "Incorrect type - expected {0}, was {1}."]*/
-			return new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0630", fieldType, actualType)); //$NON-NLS-1$
+			return new ArrayStoreException(com.ibm.oti.util.Msg.getString("K0630", fieldType, actualType)); //$NON-NLS-1$
 		}
 
 		static final class OpObject extends ArrayVarHandleOperations {
@@ -349,57 +353,57 @@ final class ArrayVarHandle extends VarHandle {
 				return computeOffset(index, BASE_OFFSET, INDEX_SCALE);
 			}
 			
-			private static final byte get(Object receiver, int index, VarHandle varHandle) {
+			private static final byte get(byte[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getByte(receiver, computeOffset(index));
 			}
 
-			private static final void set(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final void set(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putByte(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getVolatile(Object receiver, int index, VarHandle varHandle) {
+			private static final byte getVolatile(byte[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getByteVolatile(receiver, computeOffset(index));
 			}
 
-			private static final void setVolatile(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final void setVolatile(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putByteVolatile(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getOpaque(Object receiver, int index, VarHandle varHandle) {
+			private static final byte getOpaque(byte[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getByteOpaque(receiver, computeOffset(index));
 			}
 
-			private static final void setOpaque(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final void setOpaque(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putByteOpaque(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAcquire(Object receiver, int index, VarHandle varHandle) {
+			private static final byte getAcquire(byte[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getByteAcquire(receiver, computeOffset(index));
 			}
 
-			private static final void setRelease(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final void setRelease(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putByteRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean compareAndSet(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
+			private static final boolean compareAndSet(byte[] receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetByte(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -407,9 +411,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/
 			}
 
-			private static final byte compareAndExchange(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
+			private static final byte compareAndExchange(byte[] receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeByte(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -417,21 +421,21 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final byte compareAndExchangeAcquire(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
+			private static final byte compareAndExchangeAcquire(byte[] receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeByteAcquire(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final byte compareAndExchangeRelease(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
+			private static final byte compareAndExchangeRelease(byte[] receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeByteRelease(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSet(byte[] receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBytePlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -439,9 +443,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(byte[] receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetByteAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -449,9 +453,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(byte[] receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetByteRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -459,9 +463,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(Object receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(byte[] receiver, int index, byte testValue, byte newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBytePlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -469,93 +473,93 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final byte getAndSet(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndSet(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetByte(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndSetAcquire(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndSetAcquire(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetByteAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndSetRelease(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndSetRelease(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetByteRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndAdd(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndAdd(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddByte(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndAddAcquire(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndAddAcquire(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddByteAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndAddRelease(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndAddRelease(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddByteRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndBitwiseAnd(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndBitwiseAnd(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndByte(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndBitwiseAndAcquire(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndBitwiseAndAcquire(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndByteAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndBitwiseAndRelease(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndBitwiseAndRelease(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndByteRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndBitwiseOr(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndBitwiseOr(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrByte(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndBitwiseOrAcquire(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndBitwiseOrAcquire(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrByteAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndBitwiseOrRelease(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndBitwiseOrRelease(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrByteRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndBitwiseXor(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndBitwiseXor(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorByte(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndBitwiseXorAcquire(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndBitwiseXorAcquire(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorByteAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final byte getAndBitwiseXorRelease(Object receiver, int index, byte value, VarHandle varHandle) {
+			private static final byte getAndBitwiseXorRelease(byte[] receiver, int index, byte value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((byte[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorByteRelease(receiver, computeOffset(index), value);
 			}
 		}
@@ -568,57 +572,57 @@ final class ArrayVarHandle extends VarHandle {
 				return computeOffset(index, BASE_OFFSET, INDEX_SCALE);
 			}
 			
-			private static final char get(Object receiver, int index, VarHandle varHandle) {
+			private static final char get(char[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getChar(receiver, computeOffset(index));
 			}
 
-			private static final void set(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final void set(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putChar(receiver, computeOffset(index), value);
 			}
 
-			private static final char getVolatile(Object receiver, int index, VarHandle varHandle) {
+			private static final char getVolatile(char[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getCharVolatile(receiver, computeOffset(index));
 			}
 
-			private static final void setVolatile(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final void setVolatile(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putCharVolatile(receiver, computeOffset(index), value);
 			}
 
-			private static final char getOpaque(Object receiver, int index, VarHandle varHandle) {
+			private static final char getOpaque(char[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getCharOpaque(receiver, computeOffset(index));
 			}
 
-			private static final void setOpaque(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final void setOpaque(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putCharOpaque(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAcquire(Object receiver, int index, VarHandle varHandle) {
+			private static final char getAcquire(char[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getCharAcquire(receiver, computeOffset(index));
 			}
 
-			private static final void setRelease(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final void setRelease(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putCharRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean compareAndSet(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
+			private static final boolean compareAndSet(char[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetChar(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -626,9 +630,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/
 			}
 
-			private static final char compareAndExchange(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
+			private static final char compareAndExchange(char[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeChar(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -636,21 +640,21 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final char compareAndExchangeAcquire(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
+			private static final char compareAndExchangeAcquire(char[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeCharAcquire(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final char compareAndExchangeRelease(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
+			private static final char compareAndExchangeRelease(char[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeCharRelease(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSet(char[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetCharPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -658,9 +662,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(char[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetCharAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -668,9 +672,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(char[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetCharRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -678,9 +682,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(Object receiver, int index, char testValue, char newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(char[] receiver, int index, char testValue, char newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetCharPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -688,93 +692,93 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final char getAndSet(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndSet(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetChar(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndSetAcquire(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndSetAcquire(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetCharAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndSetRelease(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndSetRelease(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetCharRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndAdd(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndAdd(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddChar(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndAddAcquire(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndAddAcquire(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddCharAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndAddRelease(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndAddRelease(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddCharRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndBitwiseAnd(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndBitwiseAnd(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndChar(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndBitwiseAndAcquire(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndBitwiseAndAcquire(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndCharAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndBitwiseAndRelease(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndBitwiseAndRelease(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndCharRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndBitwiseOr(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndBitwiseOr(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrChar(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndBitwiseOrAcquire(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndBitwiseOrAcquire(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrCharAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndBitwiseOrRelease(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndBitwiseOrRelease(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrCharRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndBitwiseXor(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndBitwiseXor(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorChar(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndBitwiseXorAcquire(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndBitwiseXorAcquire(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorCharAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final char getAndBitwiseXorRelease(Object receiver, int index, char value, VarHandle varHandle) {
+			private static final char getAndBitwiseXorRelease(char[] receiver, int index, char value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((char[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorCharRelease(receiver, computeOffset(index), value);
 			}
 		}
@@ -787,57 +791,57 @@ final class ArrayVarHandle extends VarHandle {
 				return computeOffset(index, BASE_OFFSET, INDEX_SCALE);
 			}
 			
-			private static final double get(Object receiver, int index, VarHandle varHandle) {
+			private static final double get(double[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getDouble(receiver, computeOffset(index));
 			}
 
-			private static final void set(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final void set(double[] receiver, int index, double value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putDouble(receiver, computeOffset(index), value);
 			}
 
-			private static final double getVolatile(Object receiver, int index, VarHandle varHandle) {
+			private static final double getVolatile(double[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getDoubleVolatile(receiver, computeOffset(index));
 			}
 
-			private static final void setVolatile(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final void setVolatile(double[] receiver, int index, double value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putDoubleVolatile(receiver, computeOffset(index), value);
 			}
 
-			private static final double getOpaque(Object receiver, int index, VarHandle varHandle) {
+			private static final double getOpaque(double[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getDoubleOpaque(receiver, computeOffset(index));
 			}
 
-			private static final void setOpaque(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final void setOpaque(double[] receiver, int index, double value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putDoubleOpaque(receiver, computeOffset(index), value);
 			}
 
-			private static final double getAcquire(Object receiver, int index, VarHandle varHandle) {
+			private static final double getAcquire(double[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getDoubleAcquire(receiver, computeOffset(index));
 			}
 
-			private static final void setRelease(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final void setRelease(double[] receiver, int index, double value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putDoubleRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean compareAndSet(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
+			private static final boolean compareAndSet(double[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetDouble(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -845,9 +849,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final double compareAndExchange(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
+			private static final double compareAndExchange(double[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndExchangeDouble(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -855,21 +859,21 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final double compareAndExchangeAcquire(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
+			private static final double compareAndExchangeAcquire(double[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeDoubleAcquire(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final double compareAndExchangeRelease(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
+			private static final double compareAndExchangeRelease(double[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeDoubleRelease(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSet(double[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -877,9 +881,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(double[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoubleAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -887,9 +891,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(double[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoubleRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -897,9 +901,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(Object receiver, int index, double testValue, double newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(double[] receiver, int index, double testValue, double newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetDoublePlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -907,75 +911,75 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final double getAndSet(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndSet(double[] receiver, int index, double value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetDouble(receiver, computeOffset(index), value);
 			}
 
-			private static final double getAndSetAcquire(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndSetAcquire(double[] receiver, int index, double value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetDoubleAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final double getAndSetRelease(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndSetRelease(double[] receiver, int index, double value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetDoubleRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final double getAndAdd(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndAdd(double[] receiver, int index, double value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddDouble(receiver, computeOffset(index), value);
 			}
 
-			private static final double getAndAddAcquire(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndAddAcquire(double[] receiver, int index, double value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddDoubleAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final double getAndAddRelease(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndAddRelease(double[] receiver, int index, double value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((double[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddDoubleRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final double getAndBitwiseAnd(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndBitwiseAnd(double[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseAndAcquire(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndBitwiseAndAcquire(double[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseAndRelease(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndBitwiseAndRelease(double[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseOr(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndBitwiseOr(double[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseOrAcquire(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndBitwiseOrAcquire(double[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseOrRelease(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndBitwiseOrRelease(double[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseXor(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndBitwiseXor(double[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseXorAcquire(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndBitwiseXorAcquire(double[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final double getAndBitwiseXorRelease(Object receiver, int index, double value, VarHandle varHandle) {
+			private static final double getAndBitwiseXorRelease(double[] receiver, int index, double value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		}
@@ -988,57 +992,57 @@ final class ArrayVarHandle extends VarHandle {
 				return computeOffset(index, BASE_OFFSET, INDEX_SCALE);
 			}
 			
-			private static final float get(Object receiver, int index, VarHandle varHandle) {
+			private static final float get(float[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getFloat(receiver, computeOffset(index));
 			}
 
-			private static final void set(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final void set(float[] receiver, int index, float value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putFloat(receiver, computeOffset(index), value);
 			}
 
-			private static final float getVolatile(Object receiver, int index, VarHandle varHandle) {
+			private static final float getVolatile(float[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getFloatVolatile(receiver, computeOffset(index));
 			}
 
-			private static final void setVolatile(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final void setVolatile(float[] receiver, int index, float value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putFloatVolatile(receiver, computeOffset(index), value);
 			}
 
-			private static final float getOpaque(Object receiver, int index, VarHandle varHandle) {
+			private static final float getOpaque(float[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getFloatOpaque(receiver, computeOffset(index));
 			}
 
-			private static final void setOpaque(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final void setOpaque(float[] receiver, int index, float value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putFloatOpaque(receiver, computeOffset(index), value);
 			}
 
-			private static final float getAcquire(Object receiver, int index, VarHandle varHandle) {
+			private static final float getAcquire(float[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getFloatAcquire(receiver, computeOffset(index));
 			}
 
-			private static final void setRelease(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final void setRelease(float[] receiver, int index, float value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putFloatRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean compareAndSet(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
+			private static final boolean compareAndSet(float[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetFloat(receiver, computeOffset(index), testValue, newValue);				
 /*[ELSE]
@@ -1046,9 +1050,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final float compareAndExchange(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
+			private static final float compareAndExchange(float[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeFloat(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1056,21 +1060,21 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final float compareAndExchangeAcquire(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
+			private static final float compareAndExchangeAcquire(float[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeFloatAcquire(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final float compareAndExchangeRelease(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
+			private static final float compareAndExchangeRelease(float[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeFloatRelease(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSet(float[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1078,9 +1082,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(float[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1088,9 +1092,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(float[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1098,9 +1102,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(Object receiver, int index, float testValue, float newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(float[] receiver, int index, float testValue, float newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetFloatPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1108,75 +1112,75 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final float getAndSet(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndSet(float[] receiver, int index, float value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetFloat(receiver, computeOffset(index), value);
 			}
 
-			private static final float getAndSetAcquire(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndSetAcquire(float[] receiver, int index, float value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetFloatAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final float getAndSetRelease(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndSetRelease(float[] receiver, int index, float value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetFloatRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final float getAndAdd(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndAdd(float[] receiver, int index, float value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddFloat(receiver, computeOffset(index), value);
 			}
 
-			private static final float getAndAddAcquire(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndAddAcquire(float[] receiver, int index, float value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddFloatAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final float getAndAddRelease(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndAddRelease(float[] receiver, int index, float value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((float[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddFloatRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final float getAndBitwiseAnd(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndBitwiseAnd(float[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseAndAcquire(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndBitwiseAndAcquire(float[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseAndRelease(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndBitwiseAndRelease(float[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseOr(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndBitwiseOr(float[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseOrAcquire(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndBitwiseOrAcquire(float[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseOrRelease(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndBitwiseOrRelease(float[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseXor(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndBitwiseXor(float[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseXorAcquire(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndBitwiseXorAcquire(float[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final float getAndBitwiseXorRelease(Object receiver, int index, float value, VarHandle varHandle) {
+			private static final float getAndBitwiseXorRelease(float[] receiver, int index, float value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 		}
@@ -1189,57 +1193,57 @@ final class ArrayVarHandle extends VarHandle {
 				return computeOffset(index, BASE_OFFSET, INDEX_SCALE);
 			}
 			
-			private static final int get(Object receiver, int index, VarHandle varHandle) {
+			private static final int get(int[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getInt(receiver, computeOffset(index));
 			}
 
-			private static final void set(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final void set(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putInt(receiver, computeOffset(index), value);
 			}
 
-			private static final int getVolatile(Object receiver, int index, VarHandle varHandle) {
+			private static final int getVolatile(int[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getIntVolatile(receiver, computeOffset(index));
 			}
 
-			private static final void setVolatile(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final void setVolatile(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putIntVolatile(receiver, computeOffset(index), value);
 			}
 
-			private static final int getOpaque(Object receiver, int index, VarHandle varHandle) {
+			private static final int getOpaque(int[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getIntOpaque(receiver, computeOffset(index));
 			}
 
-			private static final void setOpaque(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final void setOpaque(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putIntOpaque(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAcquire(Object receiver, int index, VarHandle varHandle) {
+			private static final int getAcquire(int[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getIntAcquire(receiver, computeOffset(index));
 			}
 
-			private static final void setRelease(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final void setRelease(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putIntRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean compareAndSet(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
+			private static final boolean compareAndSet(int[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetInt(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1247,9 +1251,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final int compareAndExchange(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
+			private static final int compareAndExchange(int[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeInt(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1257,21 +1261,21 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final int compareAndExchangeAcquire(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
+			private static final int compareAndExchangeAcquire(int[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeIntAcquire(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final int compareAndExchangeRelease(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
+			private static final int compareAndExchangeRelease(int[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeIntRelease(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSet(int[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1279,9 +1283,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/
 			}
 
-			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(int[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1289,9 +1293,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(int[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1299,9 +1303,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(Object receiver, int index, int testValue, int newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(int[] receiver, int index, int testValue, int newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetIntPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1309,93 +1313,93 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final int getAndSet(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndSet(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetInt(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndSetAcquire(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndSetAcquire(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetIntAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndSetRelease(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndSetRelease(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetIntRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndAdd(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndAdd(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddInt(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndAddAcquire(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndAddAcquire(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddIntAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndAddRelease(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndAddRelease(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddIntRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndBitwiseAnd(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndBitwiseAnd(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndInt(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndBitwiseAndAcquire(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndBitwiseAndAcquire(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndIntAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndBitwiseAndRelease(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndBitwiseAndRelease(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndIntRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndBitwiseOr(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndBitwiseOr(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrInt(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndBitwiseOrAcquire(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndBitwiseOrAcquire(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrIntAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndBitwiseOrRelease(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndBitwiseOrRelease(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrIntRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndBitwiseXor(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndBitwiseXor(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorInt(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndBitwiseXorAcquire(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndBitwiseXorAcquire(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorIntAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final int getAndBitwiseXorRelease(Object receiver, int index, int value, VarHandle varHandle) {
+			private static final int getAndBitwiseXorRelease(int[] receiver, int index, int value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((int[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorIntRelease(receiver, computeOffset(index), value);
 			}
 		}
@@ -1408,57 +1412,57 @@ final class ArrayVarHandle extends VarHandle {
 				return computeOffset(index, BASE_OFFSET, INDEX_SCALE);
 			}
 			
-			private static final long get(Object receiver, int index, VarHandle varHandle) {
+			private static final long get(long[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getLong(receiver, computeOffset(index));
 			}
 
-			private static final void set(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final void set(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putLong(receiver, computeOffset(index), value);
 			}
 
-			private static final long getVolatile(Object receiver, int index, VarHandle varHandle) {
+			private static final long getVolatile(long[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getLongVolatile(receiver, computeOffset(index));
 			}
 
-			private static final void setVolatile(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final void setVolatile(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putLongVolatile(receiver, computeOffset(index), value);
 			}
 
-			private static final long getOpaque(Object receiver, int index, VarHandle varHandle) {
+			private static final long getOpaque(long[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getLongOpaque(receiver, computeOffset(index));
 			}
 
-			private static final void setOpaque(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final void setOpaque(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putLongOpaque(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAcquire(Object receiver, int index, VarHandle varHandle) {
+			private static final long getAcquire(long[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getLongAcquire(receiver, computeOffset(index));
 			}
 
-			private static final void setRelease(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final void setRelease(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putLongRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean compareAndSet(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
+			private static final boolean compareAndSet(long[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetLong(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1466,9 +1470,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/
 			}
 
-			private static final long compareAndExchange(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
+			private static final long compareAndExchange(long[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeLong(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1476,21 +1480,21 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final long compareAndExchangeAcquire(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
+			private static final long compareAndExchangeAcquire(long[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeLongAcquire(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final long compareAndExchangeRelease(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
+			private static final long compareAndExchangeRelease(long[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeLongRelease(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSet(long[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1498,9 +1502,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(long[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1508,9 +1512,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(long[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1518,9 +1522,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(Object receiver, int index, long testValue, long newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(long[] receiver, int index, long testValue, long newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetLongPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1528,93 +1532,93 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final long getAndSet(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndSet(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetLong(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndSetAcquire(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndSetAcquire(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetLongAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndSetRelease(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndSetRelease(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetLongRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndAdd(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndAdd(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddLong(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndAddAcquire(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndAddAcquire(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddLongAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndAddRelease(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndAddRelease(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddLongRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndBitwiseAnd(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndBitwiseAnd(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndLong(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndBitwiseAndAcquire(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndBitwiseAndAcquire(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndLongAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndBitwiseAndRelease(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndBitwiseAndRelease(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndLongRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndBitwiseOr(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndBitwiseOr(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrLong(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndBitwiseOrAcquire(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndBitwiseOrAcquire(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrLongAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndBitwiseOrRelease(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndBitwiseOrRelease(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrLongRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndBitwiseXor(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndBitwiseXor(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorLong(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndBitwiseXorAcquire(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndBitwiseXorAcquire(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorLongAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final long getAndBitwiseXorRelease(Object receiver, int index, long value, VarHandle varHandle) {
+			private static final long getAndBitwiseXorRelease(long[] receiver, int index, long value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((long[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorLongRelease(receiver, computeOffset(index), value);
 			}
 		}
@@ -1627,57 +1631,57 @@ final class ArrayVarHandle extends VarHandle {
 				return computeOffset(index, BASE_OFFSET, INDEX_SCALE);
 			}
 			
-			private static final short get(Object receiver, int index, VarHandle varHandle) {
+			private static final short get(short[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getShort(receiver, computeOffset(index));
 			}
 
-			private static final void set(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final void set(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putShort(receiver, computeOffset(index), value);
 			}
 
-			private static final short getVolatile(Object receiver, int index, VarHandle varHandle) {
+			private static final short getVolatile(short[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getShortVolatile(receiver, computeOffset(index));
 			}
 
-			private static final void setVolatile(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final void setVolatile(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putShortVolatile(receiver, computeOffset(index), value);
 			}
 
-			private static final short getOpaque(Object receiver, int index, VarHandle varHandle) {
+			private static final short getOpaque(short[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getShortOpaque(receiver, computeOffset(index));
 			}
 
-			private static final void setOpaque(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final void setOpaque(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putShortOpaque(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAcquire(Object receiver, int index, VarHandle varHandle) {
+			private static final short getAcquire(short[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getShortAcquire(receiver, computeOffset(index));
 			}
 
-			private static final void setRelease(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final void setRelease(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putShortRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean compareAndSet(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
+			private static final boolean compareAndSet(short[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndSetShort(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1685,9 +1689,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final short compareAndExchange(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
+			private static final short compareAndExchange(short[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeShort(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1695,21 +1699,21 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final short compareAndExchangeAcquire(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
+			private static final short compareAndExchangeAcquire(short[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeShortAcquire(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final short compareAndExchangeRelease(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
+			private static final short compareAndExchangeRelease(short[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeShortRelease(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSet(short[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.weakCompareAndSetShortPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1717,9 +1721,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(short[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetShortAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1727,9 +1731,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(short[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetShortRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1737,9 +1741,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(Object receiver, int index, short testValue, short newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(short[] receiver, int index, short testValue, short newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetShortPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1747,93 +1751,93 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final short getAndSet(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndSet(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetShort(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndSetAcquire(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndSetAcquire(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetShortAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndSetRelease(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndSetRelease(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetShortRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndAdd(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndAdd(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddShort(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndAddAcquire(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndAddAcquire(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddShortAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndAddRelease(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndAddRelease(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndAddShortRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndBitwiseAnd(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndBitwiseAnd(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndShort(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndBitwiseAndAcquire(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndBitwiseAndAcquire(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndShortAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndBitwiseAndRelease(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndBitwiseAndRelease(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndShortRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndBitwiseOr(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndBitwiseOr(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrShort(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndBitwiseOrAcquire(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndBitwiseOrAcquire(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrShortAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndBitwiseOrRelease(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndBitwiseOrRelease(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrShortRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndBitwiseXor(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndBitwiseXor(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorShort(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndBitwiseXorAcquire(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndBitwiseXorAcquire(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorShortAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final short getAndBitwiseXorRelease(Object receiver, int index, short value, VarHandle varHandle) {
+			private static final short getAndBitwiseXorRelease(short[] receiver, int index, short value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((short[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorShortRelease(receiver, computeOffset(index), value);
 			}
 		}
@@ -1846,67 +1850,67 @@ final class ArrayVarHandle extends VarHandle {
 				return computeOffset(index, BASE_OFFSET, INDEX_SCALE);
 			}
 			
-			private static final boolean get(Object receiver, int index, VarHandle varHandle) {
+			private static final boolean get(boolean[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getBoolean(receiver, computeOffset(index));
 			}
 
-			private static final void set(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final void set(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putBoolean(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getVolatile(Object receiver, int index, VarHandle varHandle) {
+			private static final boolean getVolatile(boolean[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getBooleanVolatile(receiver, computeOffset(index));
 			}
 
-			private static final void setVolatile(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final void setVolatile(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putBooleanVolatile(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getOpaque(Object receiver, int index, VarHandle varHandle) {
+			private static final boolean getOpaque(boolean[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getBooleanOpaque(receiver, computeOffset(index));
 			}
 
-			private static final void setOpaque(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final void setOpaque(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putBooleanOpaque(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAcquire(Object receiver, int index, VarHandle varHandle) {
+			private static final boolean getAcquire(boolean[] receiver, int index, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getBooleanAcquire(receiver, computeOffset(index));
 			}
 
-			private static final void setRelease(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final void setRelease(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				_unsafe.putBooleanRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean compareAndSet(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
+			private static final boolean compareAndSet(boolean[] receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
-/*[IF Sidecar19-SE-OpenJ9]*/				
+				boundsCheck(receiver.length, index);
+/*[IF Sidecar19-SE-OpenJ9]*/
 				return _unsafe.compareAndSetBoolean(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
 				return _unsafe.compareAndSwapBoolean(receiver, computeOffset(index), testValue, newValue);
-/*[ENDIF]*/				
+/*[ENDIF]*/
 			}
 
-			private static final boolean compareAndExchange(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
+			private static final boolean compareAndExchange(boolean[] receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.compareAndExchangeBoolean(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1914,21 +1918,21 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean compareAndExchangeAcquire(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
+			private static final boolean compareAndExchangeAcquire(boolean[] receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeBooleanAcquire(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final boolean compareAndExchangeRelease(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
+			private static final boolean compareAndExchangeRelease(boolean[] receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.compareAndExchangeBooleanRelease(receiver, computeOffset(index), testValue, newValue);
 			}
 
-			private static final boolean weakCompareAndSet(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSet(boolean[] receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBooleanPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1936,9 +1940,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetAcquire(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetAcquire(boolean[] receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBooleanAcquire(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1946,9 +1950,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetRelease(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetRelease(boolean[] receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBooleanRelease(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1956,9 +1960,9 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean weakCompareAndSetPlain(Object receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
+			private static final boolean weakCompareAndSetPlain(boolean[] receiver, int index, boolean testValue, boolean newValue, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 /*[IF Sidecar19-SE-OpenJ9]*/				
 				return _unsafe.weakCompareAndSetBooleanPlain(receiver, computeOffset(index), testValue, newValue);
 /*[ELSE]
@@ -1966,87 +1970,87 @@ final class ArrayVarHandle extends VarHandle {
 /*[ENDIF]*/				
 			}
 
-			private static final boolean getAndSet(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndSet(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetBoolean(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAndSetAcquire(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndSetAcquire(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetBooleanAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAndSetRelease(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndSetRelease(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndSetBooleanRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAndAdd(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndAdd(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean getAndAddAcquire(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndAddAcquire(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean getAndAddRelease(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndAddRelease(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				throw operationNotSupported(varHandle);
 			}
 
-			private static final boolean getAndBitwiseAnd(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndBitwiseAnd(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndBoolean(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAndBitwiseAndAcquire(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndBitwiseAndAcquire(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndBooleanAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAndBitwiseAndRelease(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndBitwiseAndRelease(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseAndBooleanRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAndBitwiseOr(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndBitwiseOr(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrBoolean(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAndBitwiseOrAcquire(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndBitwiseOrAcquire(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrBooleanAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAndBitwiseOrRelease(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndBitwiseOrRelease(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseOrBooleanRelease(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAndBitwiseXor(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndBitwiseXor(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorBoolean(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAndBitwiseXorAcquire(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndBitwiseXorAcquire(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorBooleanAcquire(receiver, computeOffset(index), value);
 			}
 
-			private static final boolean getAndBitwiseXorRelease(Object receiver, int index, boolean value, VarHandle varHandle) {
+			private static final boolean getAndBitwiseXorRelease(boolean[] receiver, int index, boolean value, VarHandle varHandle) {
 				receiver.getClass();
-				boundsCheck(((boolean[])receiver).length, index);
+				boundsCheck(receiver.length, index);
 				return _unsafe.getAndBitwiseXorBooleanRelease(receiver, computeOffset(index), value);
 			}
 		}

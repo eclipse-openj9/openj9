@@ -35,6 +35,12 @@ final class VarHandleInvokeGenericHandle extends VarHandleInvokeHandle {
 	VarHandleInvokeGenericHandle(VarHandleInvokeGenericHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 	}
+	
+	@Override
+	boolean canRevealDirect() {
+		/* This is invokevirtual of VarHandle.invoke() */
+		return true;
+	}
 
 	@Override
 	MethodHandle cloneWithNewType(MethodType newType) {

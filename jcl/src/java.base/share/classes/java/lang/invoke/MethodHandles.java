@@ -53,6 +53,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
+import java.lang.invoke.VarHandle.AccessMode;
 /*[IF Sidecar19-SE-OpenJ9]
 import java.lang.Module;
 import jdk.internal.misc.SharedSecrets;
@@ -778,7 +779,8 @@ public class MethodHandles {
 		}
 
 		/*
-		 * Check for methods MethodHandle.invokeExact or MethodHandle.invoke.  
+		 * Check for methods MethodHandle.invokeExact, MethodHandle.invoke,
+		 * or MethodHandles.varHandleInvoker.  
 		 * Access checks are not required as these methods are public and therefore
 		 * accessible to everyone.
 		 */
@@ -790,6 +792,18 @@ public class MethodHandles {
 					return new InvokeGenericHandle(type);
 				}
 			}
+			/*[IF Sidecar19-SE]*/
+			/* If the requested method is a signature-polymorphic access mode method in VarHandle, 
+			 * the resulting method handle should be equivalent to one produced by varHandleInvoker().
+			 */
+			if (VarHandle.class.isAssignableFrom(clazz)) {
+				for (AccessMode m : AccessMode.values()) {
+					if (m.methodName().equals(methodName)) {
+						return new VarHandleInvokeGenericHandle(m, type);
+					}
+				}
+			}
+			/*[ENDIF]*/
 			return null;
 		}
 
