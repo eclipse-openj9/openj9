@@ -1484,11 +1484,13 @@ static void jniCheckValidClass(JNIEnv* env, const char* function, UDATA argNum, 
 		}
 	}
 
-	enterVM(vmThread);
-	clazz = J9VM_J9CLASS_FROM_JCLASS((J9VMThread *)env, obj);
-	classDepthAndFlags = J9CLASS_FLAGS(clazz);
-	romClass = clazz->romClass;
-	exitVM(vmThread);
+	{
+		enterVM(vmThread);
+		clazz = J9VM_J9CLASS_FROM_JCLASS((J9VMThread *)env, obj);
+		classDepthAndFlags = J9CLASS_FLAGS(clazz);
+		romClass = clazz->romClass;
+		exitVM(vmThread);
+	}
 
 	if (classDepthAndFlags & J9_JAVA_CLASS_HOT_SWAPPED_OUT) {
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
