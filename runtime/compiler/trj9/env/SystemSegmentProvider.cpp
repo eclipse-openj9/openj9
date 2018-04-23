@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -152,7 +152,9 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
 void
 J9::SystemSegmentProvider::release(TR::MemorySegment & segment) throw()
    {
-   if (segment.size() == defaultSegmentSize())
+   size_t const segmentSize = segment.size();
+
+   if (segmentSize == defaultSegmentSize())
       {
       try
          {
@@ -163,7 +165,7 @@ J9::SystemSegmentProvider::release(TR::MemorySegment & segment) throw()
          /* not much we can do here except leak */
          }
       }
-   else if (isLargeSegment(segment.size()))
+   else if (isLargeSegment(segmentSize))
       {
       // System segments larger than _systemSegmentSize is used to create only one segment,
       // release the corresponding system segment when releasing `segment`
@@ -171,13 +173,14 @@ J9::SystemSegmentProvider::release(TR::MemorySegment & segment) throw()
          {
          if (i->get().heapBase == segment.base())
             {
-            // Removing segment from _segments
-            //
+            _regionBytesAllocated -= segmentSize;
+            _systemBytesAllocated -= segmentSize;
+
+            /* Removing segment from _segments */
             auto it = _segments.find(segment);
             _segments.erase(it);
 
-            _regionBytesAllocated -= segment.size();
-            _systemBytesAllocated -= segment.size();
+
             J9MemorySegment &customSystemSegment = i->get();
             _systemSegments.erase(i);
             _systemSegmentAllocator.release(customSystemSegment);
@@ -187,9 +190,11 @@ J9::SystemSegmentProvider::release(TR::MemorySegment & segment) throw()
       }
    else
       {
-      auto it = _segments.find(segment);
-      size_t const oldSegmentSize = segment.size();
+      size_t const oldSegmentSize = segmentSize;
       void * const oldSegmentArea = segment.base();
+
+      /* Removing segment from _segments */
+      auto it = _segments.find(segment);
       _segments.erase(it);
 
       TR_ASSERT(oldSegmentSize % defaultSegmentSize() == 0, "misaligned segment");
