@@ -1132,6 +1132,7 @@
 	cd $(REPORTDIR); \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-Xdump:dynamic \
+	-Dremote.server.option=$(Q)$(JVM_OPTIONS) -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jlm_tests.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testOpenJ9DiagnosticsMXBean \
@@ -1147,6 +1148,8 @@
 		<subsets>
 			<subset>SE80</subset>
 			<subset>SE90</subset>
+			<subset>SE100</subset>
+			<subset>SE110</subset>
 		</subsets>
 	</test>
 
