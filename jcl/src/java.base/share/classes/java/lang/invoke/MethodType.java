@@ -1148,8 +1148,14 @@ public final class MethodType implements Serializable {
 					}
 				}
 			);
-			fReturnType.set(this, in.readObject());
-			fArguments.set(this, in.readObject());
+			try {
+				fReturnType.set(this, in.readObject());
+				fArguments.set(this, in.readObject());
+			} catch(Exception e) {
+				fReturnType.set(this, void.class);
+				fArguments.set(this, EMTPY_PARAMS);
+				throw e;
+			}
 		} catch (IllegalAccessException e) {
 		} catch (NoSuchFieldException e) {
 		}
