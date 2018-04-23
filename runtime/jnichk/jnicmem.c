@@ -383,11 +383,11 @@ jniCheckIsSameObject(JNIEnv * env, jobject ref1, jobject ref2)
 		return JNI_TRUE;
 	}
 
-	enterVM(vmThread);
-
-	same = *(j9object_t*)ref1 == *(j9object_t*)ref2;
-
-	exitVM(vmThread);
+	{
+		enterVM(vmThread);
+		same = *(j9object_t*)ref1 == *(j9object_t*)ref2;
+		exitVM(vmThread);
+	}
 
 	return same;
 }
