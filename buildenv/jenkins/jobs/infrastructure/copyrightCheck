@@ -25,60 +25,62 @@ String SRC_REPO = 'https://github.com/${ghprbGhRepository}.git'
 def BAD_FILES = []
 String HASHES = '###################################'
 
-stage('Copyright Check') {
-    node ('worker') {
-        timestamps {
-            git url: SRC_REPO
-            sh "git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*"
-            sh "git checkout --detach ${sha1}"
-            sh 'git fetch origin'
-            FILES = sh (
-                script: "git diff -C --diff-filter=ACM --name-only origin/${ghprbTargetBranch} HEAD",
-                returnStdout: true
-            ).trim()
-            echo FILES
-            if (FILES == "") {
-                echo "There are no files to check for copyrights"
-            } else {
-                def FILES_LIST = FILES.split("\\r?\\n")
-                DATE_YEAR = sh (
-                    script: "date +%Y",
+timeout(time: 6, unit: 'HOURS') {
+    stage('Copyright Check') {
+        node ('worker') {
+            timestamps {
+                git url: SRC_REPO
+                sh "git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*"
+                sh "git checkout --detach ${sha1}"
+                sh 'git fetch origin'
+                FILES = sh (
+                    script: "git diff -C --diff-filter=ACM --name-only origin/${ghprbTargetBranch} HEAD",
                     returnStdout: true
                 ).trim()
-                
-                // Set a different Copyright regex depending on the Repo the PR is from
-                if (ghprbGhRepository ==~ "eclipse.*") {
-                    REGEX = "\'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR}\'"
-                } else if (ghprbGhRepository ==~ "ibmruntimes.*") {
-                    REGEX = "\'\\(c\\) Copyright IBM Corp. ([0-9]{4}), ${DATE_YEAR} All Rights Reserved\'"
+                echo FILES
+                if (FILES == "") {
+                    echo "There are no files to check for copyrights"
                 } else {
-                    echo "ERROR: Unrecognized repository. Unable to determine correct Copyright regex"
-                    sh 'exit 1'
-                }
-
-                FILES_LIST.each() {
-                    println "Checking file: '${it}'"
-                    RESULT = sh (
-                        script: "grep -qE ${REGEX} '${it}'",
-                        returnStatus: true)
-                    if(RESULT != 0) {
-                        echo "FAILURE - Copyright date in file: '${it}' appears to be incorrect"
-                        FAIL = true
-                        BAD_FILES << "${it}"
+                    def FILES_LIST = FILES.split("\\r?\\n")
+                    DATE_YEAR = sh (
+                        script: "date +%Y",
+                        returnStdout: true
+                    ).trim()
+                    
+                    // Set a different Copyright regex depending on the Repo the PR is from
+                    if (ghprbGhRepository ==~ "eclipse.*") {
+                        REGEX = "\'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR}\'"
+                    } else if (ghprbGhRepository ==~ "ibmruntimes.*") {
+                        REGEX = "\'\\(c\\) Copyright IBM Corp. ([0-9]{4}), ${DATE_YEAR} All Rights Reserved\'"
                     } else {
-                        echo "Copyright date in file: appears to be correct"
+                        echo "ERROR: Unrecognized repository. Unable to determine correct Copyright regex"
+                        sh 'exit 1'
                     }
-                }
-                if (FAIL) {
-                    echo "${HASHES}"
-                    echo "The following files were modified and have incorrect copyrights"
-                    BAD_FILES.each() {
-                        echo "${it}"
+
+                    FILES_LIST.each() {
+                        println "Checking file: '${it}'"
+                        RESULT = sh (
+                            script: "grep -qE ${REGEX} '${it}'",
+                            returnStatus: true)
+                        if(RESULT != 0) {
+                            echo "FAILURE - Copyright date in file: '${it}' appears to be incorrect"
+                            FAIL = true
+                            BAD_FILES << "${it}"
+                        } else {
+                            echo "Copyright date in file: appears to be correct"
+                        }
                     }
-                    echo "${HASHES}"
-                    sh 'exit 1'
-                } else {
-                    echo "All modified files appear to have correct copyrights"
+                    if (FAIL) {
+                        echo "${HASHES}"
+                        echo "The following files were modified and have incorrect copyrights"
+                        BAD_FILES.each() {
+                            echo "${it}"
+                        }
+                        echo "${HASHES}"
+                        sh 'exit 1'
+                    } else {
+                        echo "All modified files appear to have correct copyrights"
+                    }
                 }
             }
         }
