@@ -58,7 +58,7 @@ way to shortcut the compilation process to reduce compilation time. If
 names that match within `BUILD_LIST`.
 
 ```
-    export BUILD_LIST=TestUtilities,Java8andUp
+    export BUILD_LIST=functional/TestUtilities,functional/Java8andUp
     make compile
 ```
 
@@ -120,11 +120,11 @@ The example below executes all of the sanity tests found within the
 JIT_Test directory
 
 ```
-    make -C ../JIT_Test -f autoGen.mk _sanity
+    make -C ../functional/JIT_Test -f autoGen.mk _sanity
 ```
 or 
 ```
-    cd ../JIT_Test; make -f autoGen.mk _sanity
+    cd ../functional/JIT_Test; make -f autoGen.mk _sanity
 ```
 
 

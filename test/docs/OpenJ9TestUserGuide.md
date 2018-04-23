@@ -77,7 +77,7 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
   * for Java8/Java9 functionality
 
     - If you have added new features to OpenJ9, you will likely
-    need to add new tests. Check out openj9/test/TestExample for
+    need to add new tests. Check out openj9/test/functional/TestExample for
     the format to use.
 
     - If you have many new test cases to add and special build 
@@ -149,7 +149,7 @@ target
     or make -C path/to/directory -f autoGen.mk testTarget <br />
     e.g., 
     ```
-    cd test/TestExample
+    cd test/functional/TestExample
     make -f autoGen.mk _sanity
     ```
 
