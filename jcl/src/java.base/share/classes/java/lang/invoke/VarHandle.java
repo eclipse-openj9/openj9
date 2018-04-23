@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -406,6 +406,10 @@ public abstract class VarHandle extends VarHandleInternal {
 				error.initCause(e);
 				throw error;
 			}
+			/* The resulting method handle must come with the same signature as the requested access mode method
+			 * so as to throw out UnsupportedOperationException from that method.
+			 */
+			mh = mh.asType(MethodType.methodType(mt.returnType));
 			mh = MethodHandles.dropArguments(mh, 0, mt.arguments);
 		}
 		
