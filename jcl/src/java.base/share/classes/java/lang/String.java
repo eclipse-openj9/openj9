@@ -2019,74 +2019,42 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #lastIndexOf(String, int)
 	 */
 	public int indexOf(String subString, int start) {
-		if (start < 0) {
-			start = 0;
+		return indexOf(value, coder, lengthInternal(), subString, start);
+	}
+
+	static int indexOf(byte[] value, byte coder, int count, String str, int fromIndex) {
+		int s1Length = count;
+		int s2Length = str.lengthInternal();
+
+		if (fromIndex < 0) {
+			fromIndex = 0;
+		} else if (fromIndex >= s1Length) {
+			// Handle the case where the substring is of zero length, in which case we have an indexOf hit at the end
+			// of this string
+			return s2Length == 0 ? s1Length : -1;
+		}
+		
+		if (s2Length == 0) {
+			// At this point we know fromIndex < s1Length so there is a hit at fromIndex
+			return fromIndex;
 		}
 
-		String s1 = this;
-		String s2 = subString;
+		byte[] s1Value = value;
+		byte[] s2Value = str.value;
 
-		int s1len = s1.lengthInternal();
-		int s2len = s2.lengthInternal();
-
-		if (s2len > 0) {
-			if (s2len + start > s1len) {
-				return -1;
-			}
-
-			byte[] s1Value = s1.value;
-			byte[] s2Value = s2.value;
-
-			if (enableCompression && (null == compressionFlag || (s1.coder | s2.coder) == LATIN1)) {
-				char firstChar = helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s2Value, 0));
-
-				while (true) {
-					int i = indexOf(firstChar, start);
-
-					if (i == -1 || s2len + i > s1len) {
-						return -1;
-					}
-
-					int o1 = i;
-					int o2 = 0;
-
-					while (++o2 < s2len && helpers.getByteFromArrayByIndex(s1Value, ++o1) == helpers.getByteFromArrayByIndex(s2Value, o2)) {
-						// Void
-					}
-
-					if (o2 == s2len) {
-						return i;
-					}
-
-					start = i + 1;
-				}
+		if (coder == str.coder) {
+			if (coder == LATIN1) {
+				return StringLatin1.indexOf(s1Value, s1Length, s2Value, s2Length, fromIndex);
 			} else {
-				char firstChar = s2.charAtInternal(0, s2Value);
-
-				while (true) {
-					int i = indexOf(firstChar, start);
-
-					if (i == -1 || s2len + i > s1len) {
-						return -1;
-					}
-
-					int o1 = i;
-					int o2 = 0;
-
-					while (++o2 < s2len && s1.charAtInternal(++o1, s1Value) == s2.charAtInternal(o2, s2Value)) {
-						// Void
-					}
-
-					if (o2 == s2len) {
-						return i;
-					}
-
-					start = i + 1;
-				}
+				return StringUTF16.indexOf(s1Value, s1Length, s2Value, s2Length, fromIndex);
 			}
-		} else {
-			return start < s1len ? start : s1len;
 		}
+
+		if (coder == UTF16) {
+			return StringUTF16.indexOfLatin1(s1Value, s1Length, s2Value, s2Length, fromIndex);
+		}
+
+		return -1;
 	}
 
 	/**
@@ -2217,77 +2185,69 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #lastIndexOf(String, int)
 	 */
 	public int lastIndexOf(String subString, int start) {
-		String s1 = this;
-		String s2 = subString;
+		return lastIndexOf(value, coder, lengthInternal(), subString, start);
+	}
 
-		int s1len = s1.lengthInternal();
-		int s2len = s2.lengthInternal();
+	static int lastIndexOf(byte[] value, byte coder, int count, String str, int fromIndex) {
+		int s1Length = count;
+		int s2Length = str.lengthInternal();
 
-		if (s2len <= s1len && start >= 0) {
-			if (s2len > 0) {
-				if (start > s1len - s2len) {
-					start = s1len - s2len; // s1len and s2len are both >= 1
-				}
+		if (fromIndex > s1Length - s2Length) {
+			fromIndex = s1Length - s2Length;
+		}
 
-				byte[] s1Value = s1.value;
-				byte[] s2Value = s2.value;
-
-				s1Value.getClass(); // Implicit null check
-				s2Value.getClass(); // Implicit null check
-
-				if (enableCompression && (null == compressionFlag || (s1.coder | s2.coder) == LATIN1)) {
-					char firstChar = helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s2Value, 0));
-
-					while (true) {
-						int i = lastIndexOf(firstChar, start);
-
-						if (i == -1) {
-							return -1;
-						}
-
-						int o1 = i;
-						int o2 = 0;
-
-						while (++o2 < s2len && helpers.getByteFromArrayByIndex(s1Value, ++o1) == helpers.getByteFromArrayByIndex(s2Value, o2)) {
-							// Void
-						}
-
-						if (o2 == s2len) {
-							return i;
-						}
-
-						start = i - 1;
-					}
-				} else {
-					char firstChar = s2.charAtInternal(0, s2Value);
-
-					while (true) {
-						int i = lastIndexOf(firstChar, start);
-
-						if (i == -1) {
-							return -1;
-						}
-
-						int o1 = i;
-						int o2 = 0;
-
-						while (++o2 < s2len && s1.charAtInternal(++o1, s1Value) == s2.charAtInternal(o2, s2Value)) {
-							// Void
-						}
-
-						if (o2 == s2len) {
-							return i;
-						}
-
-						start = i - 1;
-					}
-				}
-			} else {
-				return start < s1len ? start : s1len;
-			}
-		} else {
+		if (fromIndex < 0) {
 			return -1;
 		}
+		
+		if (s2Length == 0) {
+			return fromIndex;
+		}
+
+		byte[] s1Value = value;
+		byte[] s2Value = str.value;
+
+		if (coder == str.coder) {
+			if (coder == LATIN1) {
+				return StringLatin1.lastIndexOf(s1Value, s1Length, s2Value, s2Length, fromIndex);
+			} else {
+				return StringUTF16.lastIndexOf(s1Value, s1Length, s2Value, s2Length, fromIndex);
+			}
+		}
+
+		if (coder == UTF16) {
+			/*[IF Sidecar19-SE-OpenJ9]*/
+			return StringUTF16.lastIndexOfLatin1(s1Value, s1Length, s2Value, s2Length, fromIndex);
+			/*[ELSE]*/
+			// jdk9-b148 does not support the StringUTF16.lastIndexOfLatin1 API so we reimplement it here for compatibility
+			String s1 = new String(value, coder);
+			String s2 = str;
+
+			char firstChar = s2.charAtInternal(0, s2Value);
+
+			while (true) {
+				int i = s1.lastIndexOf(firstChar, fromIndex);
+
+				if (i == -1) {
+					return -1;
+				}
+
+				int o1 = i;
+				int o2 = 0;
+
+				while (++o2 < s2Length && s1.charAtInternal(++o1, s1Value) == s2.charAtInternal(o2, s2Value))
+					;
+
+				if (o2 == s2Length) {
+					return i;
+				}
+
+				fromIndex = i - 1;
+			}
+			/*[ENDIF]*/
+		}
+
+		return -1;
 	}
 
 	/**
@@ -2750,217 +2710,11 @@ written authorization of the copyright holder.
 				return output;
 		}
 
-		return toLowerCaseCore(language);
-	}
-
-	/**
-	 * The core of lower case conversion. This is the old, not-as-fast path.
-	 *
-	 * @param language
-	 *			  a string representing the Locale
-	 * @return a new string object
-	 */
-	private String toLowerCaseCore(String language) {
-		boolean turkishAzeri = false;
-		boolean lithuanian = false;
-
-		StringBuilder builder = null;
-
-		value.getClass(); // Implicit null check
-
-		int len = lengthInternal();
-
-		for (int i = 0; i < len; i++) {
-			int codePoint = charAtInternal(i);
-
-			if (codePoint >= Character.MIN_HIGH_SURROGATE && codePoint <= Character.MAX_HIGH_SURROGATE) {
-				codePoint = codePointAt(i);
-			}
-
-			int lowerCase = toLowerCase(codePoint);
-
-			if (codePoint != lowerCase) {
-				if (builder == null) {
-					turkishAzeri = language == "tr" || language == "az"; //$NON-NLS-1$ //$NON-NLS-2$
-					lithuanian = language == "lt"; //$NON-NLS-1$
-
-					builder = new StringBuilder(len);
-					
-					// Check if the String is compressed
-					if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
-						builder.append(value, 0, i, true);
-					} else {
-						builder.append(value, 0, i, false);
-					}
-				}
-
-				if (codePoint == 0x3A3) {
-					builder.append(convertSigma(i));
-
-					continue;
-				}
-				
-				if (!turkishAzeri && (0x0130 == codePoint)) {
-					builder.append("i\u0307"); //$NON-NLS-1$
-					
-					continue;
-				}
-
-				if (turkishAzeri) {
-					if (codePoint == 0x49) {
-						// Special case mappings. Latin Capital Letter I becomes Latin Small Letter Dotless i, unless followed by Combining Dot Above
-						boolean combiningDotAbove = (i + 1) < len && charAtInternal(i + 1) == '\u0307';
-
-						builder.append(combiningDotAbove ? 'i' : '\u0131');
-
-						if (combiningDotAbove) {
-							++i;
-						}
-					} else {
-						builder.appendCodePoint(lowerCase);
-					}
-				} else if (lithuanian) {
-					// Latin Capital Letter I, Latin Capital Letter J, Latin Capital Letter I with Ogonek
-					if (codePoint == 0x49 || codePoint == 0x4A || codePoint == 0x12E) {
-						builder.append(codePoint == 0x12E ? '\u012F' : (char) (codePoint + 0x20));
-
-						if ((i + 1) < len) {
-							int nextPoint = codePointAt(i + 1);
-
-							if (isCombiningAbove(nextPoint)) {
-								builder.append('\u0307');
-							}
-						}
-						// Latin Capital Letter I with Grave
-					} else if (codePoint == 0xCC) {
-						builder.append("i\u0307\u0300"); //$NON-NLS-1$
-						// Latin Capital Letter I with Acute
-					} else if (codePoint == 0xCD) {
-						builder.append("i\u0307\u0301"); //$NON-NLS-1$
-						// Latin Capital Letter I with Tilde
-					} else if (codePoint == 0x128) {
-						builder.append("i\u0307\u0303"); //$NON-NLS-1$
-					} else {
-						builder.appendCodePoint(lowerCase);
-					}
-				} else {
-					builder.appendCodePoint(lowerCase);
-
-				}
-			} else if (builder != null) {
-				builder.appendCodePoint(codePoint);
-			}
-
-			if (codePoint >= Character.MIN_SUPPLEMENTARY_CODE_POINT) {
-				++i;
-			}
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			return StringLatin1.toLowerCase(this, value, locale);
+		} else {
+			return StringUTF16.toLowerCase(this, value, locale);
 		}
-
-		if (builder == null) {
-			return this;
-		}
-
-		return builder.toString();
-	}
-
-	private static int binarySearchRange(char[] data, char c) {
-		char value = 0;
-
-		int low = 0;
-		int mid = -1;
-		int high = data.length - 1;
-
-		while (low <= high) {
-			mid = (low + high) >> 1;
-
-			value = data[mid];
-
-			if (c > value) {
-				low = mid + 1;
-			} else if (c == value) {
-				return mid;
-			} else {
-				high = mid - 1;
-			}
-		}
-
-		return mid - (c < value ? 1 : 0);
-	}
-
-	private static char[] startCombiningAbove = { '\u0300', '\u033D', '\u0346', '\u034A', '\u0350', '\u0357', '\u0363', '\u0483', '\u0592', '\u0597',
-			'\u059C', '\u05A8', '\u05AB', '\u05AF', '\u05C4', '\u0610', '\u0653', '\u0657', '\u06D6', '\u06DF', '\u06E4', '\u06E7', '\u06EB', '\u0730',
-			'\u0732', '\u0735', '\u073A', '\u073D', '\u073F', '\u0743', '\u0745', '\u0747', '\u0749', '\u0951', '\u0953', '\u0F82', '\u0F86', '\u17DD',
-			'\u193A', '\u20D0', '\u20D4', '\u20DB', '\u20E1', '\u20E7', '\u20E9', '\uFE20' };
-	private static char[] endCombiningAbove = { '\u0314', '\u0344', '\u0346', '\u034C', '\u0352', '\u0357', '\u036F', '\u0486', '\u0595', '\u0599',
-			'\u05A1', '\u05A9', '\u05AC', '\u05AF', '\u05C4', '\u0615', '\u0654', '\u0658', '\u06DC', '\u06E2', '\u06E4', '\u06E8', '\u06EC', '\u0730',
-			'\u0733', '\u0736', '\u073A', '\u073D', '\u0741', '\u0743', '\u0745', '\u0747', '\u074A', '\u0951', '\u0954', '\u0F83', '\u0F87', '\u17DD',
-			'\u193A', '\u20D1', '\u20D7', '\u20DC', '\u20E1', '\u20E7', '\u20E9', '\uFE23' };
-	private static char[] upperValues = { '\u0053', '\u0053', '\u0000', '\u02BC', '\u004E', '\u0000', '\u004A', '\u030C', '\u0000', '\u0399',
-			'\u0308', '\u0301', '\u03A5', '\u0308', '\u0301', '\u0535', '\u0552', '\u0000', '\u0048', '\u0331', '\u0000', '\u0054', '\u0308', '\u0000',
-			'\u0057', '\u030A', '\u0000', '\u0059', '\u030A', '\u0000', '\u0041', '\u02BE', '\u0000', '\u03A5', '\u0313', '\u0000', '\u03A5', '\u0313',
-			'\u0300', '\u03A5', '\u0313', '\u0301', '\u03A5', '\u0313', '\u0342', '\u1F08', '\u0399', '\u0000', '\u1F09', '\u0399', '\u0000', '\u1F0A',
-			'\u0399', '\u0000', '\u1F0B', '\u0399', '\u0000', '\u1F0C', '\u0399', '\u0000', '\u1F0D', '\u0399', '\u0000', '\u1F0E', '\u0399', '\u0000',
-			'\u1F0F', '\u0399', '\u0000', '\u1F08', '\u0399', '\u0000', '\u1F09', '\u0399', '\u0000', '\u1F0A', '\u0399', '\u0000', '\u1F0B', '\u0399',
-			'\u0000', '\u1F0C', '\u0399', '\u0000', '\u1F0D', '\u0399', '\u0000', '\u1F0E', '\u0399', '\u0000', '\u1F0F', '\u0399', '\u0000', '\u1F28',
-			'\u0399', '\u0000', '\u1F29', '\u0399', '\u0000', '\u1F2A', '\u0399', '\u0000', '\u1F2B', '\u0399', '\u0000', '\u1F2C', '\u0399', '\u0000',
-			'\u1F2D', '\u0399', '\u0000', '\u1F2E', '\u0399', '\u0000', '\u1F2F', '\u0399', '\u0000', '\u1F28', '\u0399', '\u0000', '\u1F29', '\u0399',
-			'\u0000', '\u1F2A', '\u0399', '\u0000', '\u1F2B', '\u0399', '\u0000', '\u1F2C', '\u0399', '\u0000', '\u1F2D', '\u0399', '\u0000', '\u1F2E',
-			'\u0399', '\u0000', '\u1F2F', '\u0399', '\u0000', '\u1F68', '\u0399', '\u0000', '\u1F69', '\u0399', '\u0000', '\u1F6A', '\u0399', '\u0000',
-			'\u1F6B', '\u0399', '\u0000', '\u1F6C', '\u0399', '\u0000', '\u1F6D', '\u0399', '\u0000', '\u1F6E', '\u0399', '\u0000', '\u1F6F', '\u0399',
-			'\u0000', '\u1F68', '\u0399', '\u0000', '\u1F69', '\u0399', '\u0000', '\u1F6A', '\u0399', '\u0000', '\u1F6B', '\u0399', '\u0000', '\u1F6C',
-			'\u0399', '\u0000', '\u1F6D', '\u0399', '\u0000', '\u1F6E', '\u0399', '\u0000', '\u1F6F', '\u0399', '\u0000', '\u1FBA', '\u0399', '\u0000',
-			'\u0391', '\u0399', '\u0000', '\u0386', '\u0399', '\u0000', '\u0391', '\u0342', '\u0000', '\u0391', '\u0342', '\u0399', '\u0391', '\u0399',
-			'\u0000', '\u1FCA', '\u0399', '\u0000', '\u0397', '\u0399', '\u0000', '\u0389', '\u0399', '\u0000', '\u0397', '\u0342', '\u0000', '\u0397',
-			'\u0342', '\u0399', '\u0397', '\u0399', '\u0000', '\u0399', '\u0308', '\u0300', '\u0399', '\u0308', '\u0301', '\u0399', '\u0342', '\u0000',
-			'\u0399', '\u0308', '\u0342', '\u03A5', '\u0308', '\u0300', '\u03A5', '\u0308', '\u0301', '\u03A1', '\u0313', '\u0000', '\u03A5', '\u0342',
-			'\u0000', '\u03A5', '\u0308', '\u0342', '\u1FFA', '\u0399', '\u0000', '\u03A9', '\u0399', '\u0000', '\u038F', '\u0399', '\u0000', '\u03A9',
-			'\u0342', '\u0000', '\u03A9', '\u0342', '\u0399', '\u03A9', '\u0399', '\u0000', '\u0046', '\u0046', '\u0000', '\u0046', '\u0049', '\u0000',
-			'\u0046', '\u004C', '\u0000', '\u0046', '\u0046', '\u0049', '\u0046', '\u0046', '\u004C', '\u0053', '\u0054', '\u0000', '\u0053', '\u0054',
-			'\u0000', '\u0544', '\u0546', '\u0000', '\u0544', '\u0535', '\u0000', '\u0544', '\u053B', '\u0000', '\u054E', '\u0546', '\u0000', '\u0544',
-			'\u053D', '\u0000' };
-	private static char[] upperIndexs = { '\u000B', '\u0000', '\f', '\u0000', '\r', '\u0000', '\u000E', '\u0000', '\u0000', '\u0000', '\u0000',
-			'\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000',
-			'\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000',
-			'\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u000F', '\u0010', '\u0011', '\u0012', '\u0013',
-			'\u0014', '\u0015', '\u0016', '\u0017', '\u0018', '\u0019', '\u001A', '\u001B', '\u001C', '\u001D', '\u001E', '\u001F', '\u0020', '\u0021',
-			'\u0022', '\u0023', '\u0024', '\u0025', '\u0026', '\'', '\u0028', '\u0029', '\u002A', '\u002B', '\u002C', '\u002D', '\u002E', '\u002F',
-			'\u0030', '\u0031', '\u0032', '\u0033', '\u0034', '\u0035', '\u0036', '\u0037', '\u0038', '\u0039', '\u003A', '\u003B', '\u003C', '\u003D',
-			'\u003E', '\u0000', '\u0000', '\u003F', '\u0040', '\u0041', '\u0000', '\u0042', '\u0043', '\u0000', '\u0000', '\u0000', '\u0000', '\u0044',
-			'\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0045', '\u0046', '\u0047', '\u0000', '\u0048', '\u0049', '\u0000', '\u0000', '\u0000',
-			'\u0000', '\u004A', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u004B', '\u004C', '\u0000', '\u0000', '\u004D', '\u004E', '\u0000',
-			'\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u004F', '\u0050', '\u0051', '\u0000', '\u0052',
-			'\u0053', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0000', '\u0054', '\u0055', '\u0056',
-			'\u0000', '\u0057', '\u0058', '\u0000', '\u0000', '\u0000', '\u0000', '\u0059' };
-
-	private static boolean isCombiningAbove(int codePoint) {
-		if (codePoint < 0xFFFF) {
-			int index = binarySearchRange(startCombiningAbove, (char) codePoint);
-
-			return index >= 0 && endCombiningAbove[index] >= codePoint;
-		} else if ((codePoint >= 0x1D185 && codePoint <= 0x1D189) || (codePoint >= 0x1D1AA && codePoint <= 0x1D1AD)) {
-			return true;
-		}
-
-		return false;
-	}
-
-	private boolean isWordPart(int codePoint) {
-		return codePoint == 0x345 || isWordStart(codePoint);
-	}
-
-	private boolean isWordStart(int codePoint) {
-		int type = Character.getType(codePoint);
-
-		return (type >= Character.UPPERCASE_LETTER && type <= Character.TITLECASE_LETTER) || (codePoint >= 0x2B0 && codePoint <= 0x2B8)
-				|| (codePoint >= 0x2C0 && codePoint <= 0x2C1) || (codePoint >= 0x2E0 && codePoint <= 0x2E4) || codePoint == 0x37A
-				|| (codePoint >= 0x2160 && codePoint <= 0x217F) || (codePoint >= 0x1D2C && codePoint <= 0x1D61);
-	}
-
-	private char convertSigma(int pos) {
-		if (pos == 0 || !isWordStart(codePointBefore(pos)) || ((pos + 1) < lengthInternal() && isWordPart(codePointAt(pos + 1)))) {
-			return '\u03C3';
-		}
-		return '\u03C2';
 	}
 
 	/**
@@ -2983,63 +2737,6 @@ written authorization of the copyright holder.
 	}
 
 	/**
-	 * Return the index of the specified character into the upperValues table. The upperValues table contains three entries at each position. These
-	 * three characters are the upper case conversion. If only two characters are used, the third character in the table is \u0000.
-	 *
-	 * @param ch
-	 *			  the char being converted to upper case
-	 *
-	 * @return the index into the upperValues table, or -1
-	 */
-	private int upperIndex(int ch) {
-		int index = -1;
-
-		if (ch <= 0x587) {
-			if (ch == 0xDF) {
-				index = 0;
-			} else if (ch <= 0x149) {
-				if (ch == 0x149) {
-					index = 1;
-				}
-			} else if (ch <= 0x1F0) {
-				if (ch == 0x1F0) {
-					index = 2;
-				}
-			} else if (ch <= 0x390) {
-				if (ch == 0x390) {
-					index = 3;
-				}
-			} else if (ch <= 0x3B0) {
-				if (ch == 0x3B0) {
-					index = 4;
-				}
-			} else if (ch <= 0x587) {
-				if (ch == 0x587) {
-					index = 5;
-				}
-			}
-		} else if (ch >= 0x1E96) {
-			if (ch <= 0x1E9A) {
-				index = 6 + ch - 0x1E96;
-			} else if (ch >= 0x1F50 && ch <= 0x1FFC) {
-				index = upperIndexs[ch - 0x1F50];
-
-				if (index == 0) {
-					index = -1;
-				}
-			} else if (ch >= 0xFB00) {
-				if (ch <= 0xFB06) {
-					index = 90 + ch - 0xFB00;
-				} else if (ch >= 0xFB13 && ch <= 0xFB17) {
-					index = 97 + ch - 0xFB13;
-				}
-			}
-		}
-
-		return index;
-	}
-
-	/**
 	 * Converts the characters in this String to uppercase, using the specified Locale.
 	 *
 	 * @param locale
@@ -3059,92 +2756,11 @@ written authorization of the copyright holder.
 				return output;
 		}
 
-		return toUpperCaseCore(language);
-	}
-
-	/**
-	 * The core of upper case conversion. This is the old, not-as-fast path.
-	 *
-	 * @param language
-	 *			  the string representing the locale
-	 * @return the upper case string
-	 */
-	private String toUpperCaseCore(String language) {
-
-		boolean turkishAzeri = language == "tr" || language == "az"; //$NON-NLS-1$ //$NON-NLS-2$
-		boolean lithuanian = language == "lt"; //$NON-NLS-1$
-
-		StringBuilder builder = null;
-
-		value.getClass(); // Implicit null check
-
-		int len = lengthInternal();
-
-		for (int i = 0; i < len; i++) {
-			int codePoint = charAtInternal(i);
-
-			if (codePoint >= Character.MIN_HIGH_SURROGATE && codePoint <= Character.MAX_HIGH_SURROGATE) {
-				codePoint = codePointAt(i);
-			}
-
-			int index = -1;
-
-			if (codePoint >= 0xDF && codePoint <= 0xFB17) {
-				index = upperIndex(codePoint);
-			}
-
-			if (index == -1) {
-				int upper = (!turkishAzeri || codePoint != 0x69) ? toUpperCase(codePoint) : 0x130;
-
-				if (codePoint != upper) {
-					if (builder == null) {
-						builder = new StringBuilder(len);
-						
-						// Check if the String is compressed
-						if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
-							builder.append(value, 0, i, true);
-						} else {
-							builder.append(value, 0, i, false);
-						}
-					}
-
-					builder.appendCodePoint(upper);
-				} else if (builder != null) {
-					builder.appendCodePoint(codePoint);
-				}
-
-				if (lithuanian && codePoint <= 0x1ECB && (i + 1) < len && charAt(i + 1) == '\u0307'
-						&& "ij\u012F\u0268\u0456\u0458\u1E2D\u1ECB".indexOf(codePoint, 0) != -1) //$NON-NLS-1$
-				{
-					++i;
-				}
-			} else {
-				if (builder == null) {
-					builder = new StringBuilder(len + (len / 6) + 2).append(this, 0, i);
-				}
-
-				int target = index * 3;
-
-				builder.append(upperValues[target]);
-				builder.append(upperValues[target + 1]);
-
-				char val = upperValues[target + 2];
-
-				if (val != 0) {
-					builder.append(val);
-				}
-			}
-
-			if (codePoint >= Character.MIN_SUPPLEMENTARY_CODE_POINT) {
-				++i;
-			}
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			return StringLatin1.toUpperCase(this, value, locale);
+		} else {
+			return StringUTF16.toUpperCase(this, value, locale);
 		}
-
-		if (builder == null) {
-			return this;
-		}
-
-		return builder.toString();
 	}
 
 	/**
@@ -3336,17 +2952,45 @@ written authorization of the copyright holder.
 	 */
 	public boolean contentEquals(StringBuffer buffer) {
 		synchronized (buffer) {
-			int size = buffer.length();
+			/*[IF Sidecar19-SE-OpenJ9]*/
+			int s1Length = lengthInternal();
+			int sbLength = buffer.length();
 
-			if (lengthInternal() != size) {
+			if (s1Length != sbLength) {
 				return false;
 			}
 			
-			if (enableCompression && buffer.isCompressed()) {
-				return regionMatches(0, new String(buffer.getValue(), 0, size, true), 0, size);
-			} else {
-				return regionMatches(0, new String(buffer.getValue(), 0, size, false), 0, size);
+			byte[] s1Value = value;
+			byte[] sbValue = buffer.getValue();
+
+			if (coder == buffer.getCoder()) {
+				for (int i = 0; i < s1Length; ++i) {
+					if (s1Value[i] != sbValue[i]) {
+						return false;
+					}
+				}
+
+				return true;
 			}
+
+			// String objects are always compressed if compression is possible, thus if the buffer is compressed and the
+			// String object is not it is impossible for their contents to equal
+			if (coder == UTF16) {
+				return false;
+			}
+
+			// Otherwise we have a LATIN1 String and a UTF16 StringBuffer
+			return StringUTF16.contentEquals(s1Value, sbValue, s1Length);
+			/*[ELSE]*/
+            // jdk9-b148 builds cannot handle the new StringBuffer / StringBuilder so reimplement this API in a naive way
+			int sbLength = buffer.length();
+
+			if (lengthInternal() != sbLength) {
+				return false;
+			}
+			
+            return regionMatches(0, new String(buffer), 0, sbLength);
+			/*[ENDIF]*/
 		}
 	}
 
