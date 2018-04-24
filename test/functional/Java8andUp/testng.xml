@@ -387,5 +387,10 @@
 			<class name="org.openj9.test.floatsanity.TestFactory" />
 		</classes>
 	</test>
+	<test name="reflect_getDeclaredFields">
+                <classes>
+                        <class name="org.openj9.test.reflect.GetDeclaredFieldsTests" />
+                </classes>
+        </test>
 </suite>
 <!-- Suite -->
