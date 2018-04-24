@@ -1254,7 +1254,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 		 *  - J9ROMNameAndSignature
 		 *  - Modified method name
 		 *      - U_16 for J9UTF8 length
-		 *      - 26 bytes for the original method name ("compareAndExchangeVolatile" is the longest)
+		 *      - 26 bytes for the original method name ("compareAndExchange" is the longest)
 		 *      - 5 bytes for "_impl".
 		 *  - J9UTF8 for empty signature
 		 */
