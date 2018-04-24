@@ -54,7 +54,7 @@ autoconfig:
 
 autogen: autoconfig
 	cd $(CURRENT_DIR)$(D)scripts$(D)testKitGen; \
-	perl testKitGen.pl --graphSpecs=$(SPEC) --javaVersion=$(JAVA_VERSION) --impl=$(JAVA_IMPL) $(OPTS); \
+	perl testKitGen.pl --graphSpecs=$(SPEC) --javaVersion=$(JAVA_VERSION) --impl=$(JAVA_IMPL) --buildList=${BUILD_LIST} $(OPTS); \
 	cd $(CURRENT_DIR);
 
 AUTOGEN_FILES = $(wildcard $(CURRENT_DIR)$(D)jvmTest.mk)
