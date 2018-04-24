@@ -543,7 +543,7 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 	}
 
 	if (criticalSafe != CRITICAL_SAFE) {
-		if ((vmThread->jniVMAccessCount != 0) || (vmThread->jniCriticalCopyCount != 0) || (vmThread->jniCriticalDirectCount != 0)) {
+		if ((vmThread->jniCriticalCopyCount != 0) || (vmThread->jniCriticalDirectCount != 0)) {
 			if (criticalSafe == CRITICAL_WARN) {
 				if (warn) {
 					j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JNICHK_CRITICAL_UNSAFE_WARN, function);
@@ -1732,7 +1732,7 @@ methodExitHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 	/* check for unreleased memory (a warning) before checking the critical section count */
 	jniCheckForUnreleasedMemory( (JNIEnv*)vmThread );
 
-	if (vmThread->jniVMAccessCount > 0) {
+	if ((vmThread->jniCriticalCopyCount != 0) || (vmThread->jniCriticalDirectCount != 0)) {
 		jniCheckFatalErrorNLS((JNIEnv*)vmThread, J9NLS_JNICHK_UNRELEASED_CRITICAL_SECTION);
 	}
 
