@@ -34,6 +34,7 @@ node('master') {
 
 node("${NODE}") {
 
+    cleanWs()
     checkout scm
     def buildfile = load 'buildenv/jenkins/common/test'
     buildfile.test_all_with_fetch()
