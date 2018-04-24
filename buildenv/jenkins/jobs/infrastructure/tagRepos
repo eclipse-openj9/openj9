@@ -27,36 +27,39 @@ HTTP = 'https://'
 OMR_REPO = 'github.com/eclipse/openj9-omr.git'
 OPENJ9_REPO = 'github.com/eclipse/openj9.git'
 
+
 def clone_branch_push(REPO, TAG_NAME, TAG_ANNOTATION, TAG_POINT, POINT_TYPE) {
-    node ('worker') {
-        git "${HTTP}${REPO}"
+    timeout(time: 3, unit: 'HOURS') {
+        node ('worker') {
+            git "${HTTP}${REPO}"
 
-        def REPO_NAME = REPO.substring(REPO.lastIndexOf('/') +1, REPO.lastIndexOf('.git'))
-        echo "REPO_NAME: ${REPO_NAME}"
+            def REPO_NAME = REPO.substring(REPO.lastIndexOf('/') +1, REPO.lastIndexOf('.git'))
+            echo "REPO_NAME: ${REPO_NAME}"
 
-        // Prefix branch names with ref remote since we don't create local refs for branches
-        def POINT_TYPE_PREFIX = ''
-        if (POINT_TYPE == 'BRANCH') {
-            POINT_TYPE_PREFIX = 'refs/remotes/origin/'
+            // Prefix branch names with ref remote since we don't create local refs for branches
+            def POINT_TYPE_PREFIX = ''
+            if (POINT_TYPE == 'BRANCH') {
+                POINT_TYPE_PREFIX = 'refs/remotes/origin/'
+            }
+
+            def SHA = sh (
+                script: "git rev-parse --short ${POINT_TYPE_PREFIX}${TAG_POINT}",
+                returnStdout: true
+            )
+            echo "${REPO} SHA: ${SHA}"
+
+            // Set the build description
+            currentBuild.description += "<br/>${REPO_NAME}: ${SHA}"
+
+            // Tag SHA
+            sh "git tag -a '${TAG_NAME}' -m '${TAG_ANNOTATION}' ${POINT_TYPE_PREFIX}${TAG_POINT}"
+            sh "git show ${TAG_NAME}"
+
+            withCredentials([usernamePassword(credentialsId: 'b6987280-6402-458f-bdd6-7affc2e360d4', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                sh "git push ${HTTP}${USERNAME}:${PASSWORD}@${REPO} 'refs/tags/${TAG_NAME}'"
+            }
+            cleanWs()
         }
-
-        def SHA = sh (
-            script: "git rev-parse --short ${POINT_TYPE_PREFIX}${TAG_POINT}",
-            returnStdout: true
-        )
-        echo "${REPO} SHA: ${SHA}"
-
-        // Set the build description
-        currentBuild.description += "<br/>${REPO_NAME}: ${SHA}"
-
-        // Tag SHA
-        sh "git tag -a '${TAG_NAME}' -m '${TAG_ANNOTATION}' ${POINT_TYPE_PREFIX}${TAG_POINT}"
-        sh "git show ${TAG_NAME}"
-
-        withCredentials([usernamePassword(credentialsId: 'b6987280-6402-458f-bdd6-7affc2e360d4', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-            sh "git push ${HTTP}${USERNAME}:${PASSWORD}@${REPO} 'refs/tags/${TAG_NAME}'"
-        }
-        cleanWs()
     }
 }
 
