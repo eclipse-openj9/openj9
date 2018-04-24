@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2018 IBM Corp. and others
+  Copyright (c) 2018, 2018 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 	<defaultSizes>desktop (256M + big OS stack)</defaultSizes>
 	<priority>150</priority>
 	<owners>
-		<owner>peter_burka@ca.ibm.com</owner>
+		<owner>Talia.McCormick@ibm.com</owner>
 	</owners>
 	<properties>
 		<property name="SE6_extension" value="tar.gz"/>
