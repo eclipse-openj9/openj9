@@ -130,6 +130,7 @@ public:
 
    uintptrj_t getClazz(int index);
    void setClazz(int index, uintptrj_t clazzPtr);
+   uintptrj_t getDominantClass(int32_t &sumW, int32_t &maxW);
 
 private:
 #if defined(J9VM_GC_COMPRESSED_POINTERS) //compressed references
@@ -212,7 +213,7 @@ public:
    // Serialization used for JaaS
    // not sufficient for persisting to the shared cache
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
-   virtual void serialize(TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) = 0;
+   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) = 0;
    virtual void deserialize(TR_IPBCDataStorageHeader *storage) = 0;
 
    virtual uint32_t canBePersisted(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
@@ -308,7 +309,7 @@ public:
    virtual TR_IPBCDataFourBytes  *asIPBCDataFourBytes() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataFourBytesStorage);}
 
-   virtual void serialize(TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) { createPersistentCopy(0, storage, info); }
+   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) { createPersistentCopy(methodStartAddress, storage, info); }
    virtual void deserialize(TR_IPBCDataStorageHeader *storage) { loadFromPersistentCopy(storage, nullptr, 0); }
 
    virtual void createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
@@ -366,7 +367,7 @@ public:
    virtual TR_IPBCDataEightWords  *asIPBCDataEightWords() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof(TR_IPBCDataEightWordsStorage);}
 
-   virtual void serialize(TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) { createPersistentCopy(0, storage, info); }
+   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) { createPersistentCopy(methodStartAddress, storage, info); }
    virtual void deserialize(TR_IPBCDataStorageHeader *storage) { loadFromPersistentCopy(storage, nullptr, 0); }
 
    virtual void createPersistentCopy(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
@@ -417,7 +418,7 @@ public:
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataCallGraphStorage);}
 
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info);
-   virtual void serialize(TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
+   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void deserialize(TR_IPBCDataStorageHeader *storage);
 
    virtual uint32_t canBePersisted(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR::PersistentInfo *info);
@@ -583,6 +584,8 @@ public:
    virtual uintptrj_t getProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *);
    virtual uintptrj_t getProfilingData(TR::Node *node, TR::Compilation *comp);
    uintptrj_t getSearchPC (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *);
+   static uintptrj_t getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex);
+   static uintptrj_t getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation * comp);
    virtual TR_IPBytecodeHashTableEntry *searchForSample(uintptrj_t pc, int32_t bucket);
    virtual TR_IPMethodHashTableEntry *searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket);
 
@@ -590,6 +593,8 @@ protected:
    bool isCompact(U_8 byteCode);
    bool isSwitch(U_8 byteCode);
    bool isNewOpCode(U_8 byteCode);
+   bool invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry);
+   TR::CompilationInfo *getCompInfo() { return _compInfo; }
 
 private:
 #ifdef J9VM_INTERP_PROFILING_BYTECODES
@@ -645,7 +650,6 @@ private:
    bool branchHasSameDirection(TR::ILOpCodes nodeOpCode, TR::Node *node, TR::Compilation *comp);
    bool branchHasOppositeDirection(TR::ILOpCodes nodeOpCode, TR::Node *node, TR::Compilation *comp);
    uint8_t getBytecodeOpCode(TR::Node *node, TR::Compilation *comp);
-   bool invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry);
    bool isNewOpCode(uintptrj_t pc);
    bool isSwitch(uintptrj_t pc);
    int32_t getOrSetSwitchData(TR_IPBCDataEightWords *entry, uint32_t data, bool isSet, bool isLookup);

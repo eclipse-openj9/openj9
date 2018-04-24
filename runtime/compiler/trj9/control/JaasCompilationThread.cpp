@@ -77,12 +77,68 @@ std::string packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
    return romClassStr;
    }
 
+void handler_IProfiler_profilingSample(JAAS::J9ClientStream *client, TR_J9VM *fe, TR::Compilation *comp)
+   {
+   auto recv = client->getRecvData<TR_OpaqueMethodBlock*, uint32_t, uintptrj_t>();
+   auto method = std::get<0>(recv);
+   auto bcIndex = std::get<1>(recv);
+   auto data = std::get<2>(recv); // data==1 means 'send info for 1 bytecode'; data==0 means 'send info for entire method if possible'
+
+   TR_JaasClientIProfiler *iProfiler = (TR_JaasClientIProfiler *)fe->getIProfiler();
+
+   bool isCompiled = TR::CompilationInfo::isCompiled((J9Method*)method);
+   bool isInProgress = comp->methodToBeCompiled()->getPersistentIdentifier() == method;
+   bool wholeMethodInfo = (isCompiled || isInProgress) && (data == 0);
+
+   if (!iProfiler)
+      {
+      // iProfiler is enabled on the server if we got here, but not enabled here on the client
+      client->write(std::string(), wholeMethodInfo);
+      return;
+      }
+   if (wholeMethodInfo)
+      {
+      // Serialize all the information related to this method
+      iProfiler->serializeAndSendIProfileInfoForMethod(method, comp, client);
+      }
+   else  // Send information just for this entry
+      {
+      auto entry = iProfiler->profilingSample(method, bcIndex, comp, data, false);
+      if (entry && !entry->isInvalid())
+         {
+         uint32_t canPersist = entry->canBeSerialized(comp->getPersistentInfo()); // this may lock the entry
+         if (canPersist == IPBC_ENTRY_CAN_PERSIST)
+            {
+            uint32_t bytes = entry->getBytesFootprint();
+            std::string entryBytes(bytes, '\0');
+            auto storage = (TR_IPBCDataStorageHeader*)&entryBytes[0];
+            uintptrj_t methodStartAddress = (uintptrj_t)TR::Compiler->mtd.bytecodeStart(method);
+            entry->serialize(methodStartAddress, storage, comp->getPersistentInfo());
+            client->write(entryBytes, wholeMethodInfo);
+            }
+         else
+            {
+            client->write(std::string(), wholeMethodInfo);
+            }
+         // unlock the entry
+         if (auto callGraphEntry = entry->asIPBCDataCallGraph())
+            if (canPersist != IPBC_ENTRY_PERSIST_LOCK && callGraphEntry->isLocked())
+               callGraphEntry->releaseEntry();
+         }
+      else // no valid info for specified bytecode index
+         {
+         client->write(std::string(), wholeMethodInfo);
+         }
+      }
+   }
+
 bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
    {
    using JAAS::J9ServerMessageType;
    TR::CompilationInfoPerThread *compInfoPT = fe->_compInfoPT;
    J9VMThread *vmThread = compInfoPT->getCompilationThread();
    TR_Memory  *trMemory = compInfoPT->getCompilation()->trMemory();
+   TR::Compilation *comp = compInfoPT->getCompilation();
 
    // release VM access before doing a potentially long wait
    TR_ASSERT(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS, "Must have VM access");
@@ -102,7 +158,6 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       if (response != J9ServerMessageType::compilationCode)
          client->writeError(); // inform the server if compilation is not yet complete
 
-      auto comp = compInfoPT->getCompilation();
       if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
          TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
             "Interrupting remote compilation of %s @ %s", comp->signature(), comp->getHotnessName());
@@ -1812,45 +1867,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          break;
       case J9ServerMessageType::IProfiler_profilingSample:
          {
-         auto recv = client->getRecvData<TR_OpaqueMethodBlock*, uint32_t, uintptrj_t>();
-         auto method = std::get<0>(recv);
-         auto bcIndex = std::get<1>(recv);
-         auto data = std::get<2>(recv);
-         TR_IProfiler *iProfiler = fe->getIProfiler();
-
-         // Send to the server not only the IP data, but also whether the method is compiled 
-         bool isCompiled = TR::CompilationInfo::isCompiled((J9Method*)method);
-
-         if (!iProfiler)
-            {
-            // iProfiler is enabled on the server if we got here, but not enabled here on the client
-            client->write(std::string(), isCompiled);
-            break;
-            }
-         auto entry = iProfiler->profilingSample(method, bcIndex, TR::comp(), data, false);
-         if (entry && !entry->isInvalid())
-            {
-            uint32_t canPersist = entry->canBeSerialized(TR::comp()->getPersistentInfo());
-            if (canPersist == IPBC_ENTRY_CAN_PERSIST)
-               {
-               uint32_t bytes = entry->getBytesFootprint();
-               std::string entryBytes(bytes, '\0');
-               auto storage = (TR_IPBCDataStorageHeader*) &entryBytes[0];
-               entry->serialize(storage, TR::comp()->getPersistentInfo());
-               client->write(entryBytes, isCompiled);
-               }
-            else
-               {
-               client->write(std::string(), isCompiled);
-               }
-            if (auto callGraphEntry = entry->asIPBCDataCallGraph())
-               if (canPersist != IPBC_ENTRY_PERSIST_LOCK && callGraphEntry->isLocked())
-                  callGraphEntry->releaseEntry();
-            }
-         else
-            {
-            client->write(std::string(), isCompiled);
-            }
+         handler_IProfiler_profilingSample(client, fe, comp);
          }
          break;
       case J9ServerMessageType::IProfiler_getMaxCallCount:
@@ -2252,9 +2269,9 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
    }
 
 TR_IPBytecodeHashTableEntry*
-ClientSessionData::getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *found)
+ClientSessionData::getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent)
    {
-   *found = false;
+   *methodInfoPresent = false;
    TR_IPBytecodeHashTableEntry *ipEntry = nullptr;
    OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
    // check whether info about j9method is cached
@@ -2266,18 +2283,18 @@ ClientSessionData::getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t
       auto iProfilerMap = it->second._IPData;
       if (iProfilerMap)
          {
+         *methodInfoPresent = true;
          // check whether desired bcindex is cached
          auto ipData = iProfilerMap->find(byteCodeIndex);
          if (ipData != iProfilerMap->end())
             {
-            *found = true;
             ipEntry = ipData->second;
             }
          }
       }
    else
       {
-      // Very ulikely scenario because the optimizer will have created  ResolvedJ9Method
+      // Very unlikely scenario because the optimizer will have created  ResolvedJ9Method
       // whose constructor would have fetched and cached the j9method info
       TR_ASSERT(false, "profilingSample: asking about j9method=%p but this is not present in the J9MethodMap", method);
       }
@@ -2301,13 +2318,16 @@ ClientSessionData::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byt
          if (iProfilerMap)
             {
             it->second._IPData = iProfilerMap;
-            iProfilerMap->insert({ byteCodeIndex, entry });
+            // entry could be null; this means that the method has no IProfiler info
+            if (entry)
+               iProfilerMap->insert({ byteCodeIndex, entry });
             return true;
             }
          }
       else
          {
-         iProfilerMap->insert({ byteCodeIndex, entry });
+         if (entry)
+            iProfilerMap->insert({ byteCodeIndex, entry });
          return true;
          }
       }
@@ -2316,7 +2336,7 @@ ClientSessionData::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byt
       // JASS TODO: count how many times we cannot cache
       // There should be very few instances if at all
       }
-   return false; // false means that cachinng attempt failed
+   return false; // false means that caching attempt failed
    }
 
 void
@@ -2481,3 +2501,5 @@ JaasHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9C
    auto it = clientSessionData->getROMClassMap().find(clazz);
    return (it == clientSessionData->getROMClassMap().end()) ? nullptr : it->second.romClass;
    }
+
+

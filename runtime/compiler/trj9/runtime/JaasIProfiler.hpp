@@ -4,6 +4,11 @@
 #include "runtime/J9Profiler.hpp"
 #include "runtime/IProfiler.hpp"
 
+namespace JAAS
+{
+class J9ClientStream;
+}
+
 struct TR_ContiguousIPMethodData
    {
    TR_OpaqueMethodBlock *_method;
@@ -40,10 +45,11 @@ public:
 
    virtual int32_t getMaxCallCount();
 
-   TR_IPBytecodeHashTableEntry* ipBytecodeHashTableEntryFactory(uintptrj_t pc, TR_Memory* mem, TR_AllocationKind allocKind);
+   TR_IPBytecodeHashTableEntry* ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptrj_t pc, TR_Memory* mem, TR_AllocationKind allocKind);
    void printStats();
 
 private:
+   void validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR_IPBCDataStorageHeader *clientData, uintptrj_t methodStart, bool isMethodBeingCompiled, TR_OpaqueMethodBlock *method);
    bool _useCaching;
    // Statistics
    uint32_t _statsIProfilerInfoFromCache;  // IP cache answered the query
@@ -51,6 +57,21 @@ private:
    uint32_t _statsIProfilerInfoReqNotCacheable; // info returned from client should not be cached
    uint32_t _statsIProfilerInfoIsEmpty; // client has no IP info for indicated PC
    uint32_t _statsIProfilerInfoCachingFailures;
+   };
+
+class TR_JaasClientIProfiler : public TR_IProfiler
+   {
+   public:
+
+      TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
+      static TR_JaasClientIProfiler * allocate(J9JITConfig *jitConfig);
+      TR_JaasClientIProfiler(J9JITConfig *);
+
+    
+      uint32_t walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
+                                              TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort);
+      uintptr_t serializeIProfilerMethodEntries(uintptrj_t *pcEntries, uint32_t numEntries, uintptr_t memChunk, uintptrj_t methodStartAddress);
+      void serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JAAS::J9ClientStream *client);
    };
 
 #endif

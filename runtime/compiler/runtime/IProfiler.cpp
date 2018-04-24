@@ -1396,7 +1396,6 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
    // When we just search in the hashtable we don't need to lock,
    // It should work even if someone else is modifying the hashtable bucket entry
    //
-
    if (!addIt) // read request
       {
       _STATS_IPEntryRead++;
@@ -1898,51 +1897,34 @@ TR_IProfiler::getMethodFromNode(TR::Node *node, TR::Compilation *comp)
       return node->getMethod();
    }
 
+
 uintptrj_t
-getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_FrontEnd *vm, TR::Compilation * comp)
+TR_IProfiler::getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex)
 
    {
+   uintptrj_t searchedPC = 0;
    uint32_t methodSize = TR::Compiler->mtd.bytecodeSize(method);
-   uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
-   uintptrj_t searchedPC = (uintptrj_t)(methodStart + byteCodeIndex);
-
-   if (byteCodeIndex >= methodSize)
+ 
+   if (byteCodeIndex < methodSize)
       {
+      uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
+      searchedPC = (uintptrj_t)(methodStart + byteCodeIndex);
 
-      if (comp->getOutFile())
+      // interfaces are weird
+      // [   1],     1, JBinvokeinterface2      <- we get sample for this index
+      // [   2],     2, JBnop
+      // [   3],     3, JBinvokeinterface         21 <- we ask on this one
+
+      if (isInterfaceBytecode(*(U_8*)searchedPC) &&
+         byteCodeIndex >= 2 &&
+         isInterface2Bytecode(*(U_8 *)(searchedPC - 2)))
          {
-
-         TR_Stack<int32_t> & stack = comp->getInlinedCallStack();
-         int len = comp->getInlinedCallStack().size();
-         traceMsg(comp, "CSI : INLINER STACK :\n");
-         for (int i = 0; i < len; i++)
-            {
-            TR_IPHashedCallSite hcs;
-            TR_InlinedCallSite& callsite = comp->getInlinedCallSite (stack[len - i - 1]);
-            hcs._method = (J9Method*) callsite._methodInfo;
-            hcs._offset = callsite._byteCodeInfo.getByteCodeIndex();
-            printHashedCallSite(&hcs, comp->getOutFile()->_stream, comp);
-            }
-         comp->dumpMethodTrees("CSI Trees : byteCodeIndex < methodSize");
+         searchedPC -= 2;
          }
       }
-
-   TR_ASSERT(byteCodeIndex < methodSize, "Bytecode index can't be higher than the methodSize");
-
-
-   // interfaces are weird
-   // [   1],     1, JBinvokeinterface2      <- we get sample for this index
-   // [   2],     2, JBnop
-   // [   3],     3, JBinvokeinterface         21 <- we ask on this one
-
-   static bool traceIProfiling = ((debug("traceIProfiling") != NULL) );
-   if (isInterfaceBytecode(*(U_8*)searchedPC) &&
-       byteCodeIndex >= 2 &&
-       isInterface2Bytecode(*(U_8 *)(searchedPC - 2)))
+   else
       {
-      searchedPC -= 2;
-      if (traceIProfiling)
-         traceMsg(comp, "Adjusted PC=%p by 2 because it's interfaceinvoke\n", searchedPC);
+      TR_ASSERT(false, "Bytecode index can't be higher than the methodSize: bci=%u methdSize=%u", byteCodeIndex, methodSize);
       }
 
    return searchedPC;
@@ -1950,16 +1932,34 @@ getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeI
 
 
 
+
 uintptrj_t
-getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation * comp)
+TR_IProfiler::getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation * comp)
    {
-   return getSearchPCFromMethodAndBCIndex(method, byteCodeIndex, comp->fej9(), comp);
+   uintptrj_t pc = getSearchPCFromMethodAndBCIndex(method, byteCodeIndex);
+   // Diagnostic in case of error
+   if (pc == 0 && comp->getOutFile())
+      {
+      TR_Stack<int32_t> & stack = comp->getInlinedCallStack();
+      int len = comp->getInlinedCallStack().size();
+      traceMsg(comp, "CSI : INLINER STACK :\n");
+      for (int i = 0; i < len; i++)
+         {
+         TR_IPHashedCallSite hcs;
+         TR_InlinedCallSite& callsite = comp->getInlinedCallSite(stack[len - i - 1]);
+         hcs._method = (J9Method*)callsite._methodInfo;
+         hcs._offset = callsite._byteCodeInfo.getByteCodeIndex();
+         printHashedCallSite(&hcs, comp->getOutFile()->_stream, comp);
+         }
+      comp->dumpMethodTrees("CSI Trees : byteCodeIndex < methodSize");
+      }
+   return pc;
    }
 
 uintptrj_t
 TR_IProfiler::getSearchPC(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation * comp)
    {
-   return getSearchPCFromMethodAndBCIndex(method, byteCodeIndex, _vm, comp);
+   return getSearchPCFromMethodAndBCIndex(method, byteCodeIndex, comp);
    }
 
 
@@ -2045,7 +2045,6 @@ TR_IProfiler::getProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
       return entry->getData();
       }
 
-   uintptrj_t searchedPC = getSearchPC (method, byteCodeIndex, comp);
    return 0;
    }
 
@@ -2819,23 +2818,9 @@ TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp, bool)
 uintptrj_t
 TR_IPBCDataCallGraph::getData(TR::Compilation *comp)
    {
-   int32_t sumWeight = _csInfo._residueWeight;
-   int32_t maxWeight = 0;
-   uintptrj_t data = 0;
-
-   for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
-      {
-      if (!_csInfo.getClazz(i))
-         continue;
-
-      if (_csInfo._weight[i] > maxWeight)
-         {
-         maxWeight = _csInfo._weight[i];
-         data = _csInfo.getClazz(i);
-         }
-
-      sumWeight += _csInfo._weight[i];
-      }
+   int32_t sumWeight;
+   int32_t maxWeight;
+   uintptrj_t data = _csInfo.getDominantClass(sumWeight, maxWeight);
 
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
    if (traceIProfiling && comp)
@@ -2977,11 +2962,14 @@ TR_IPBCDataCallGraph::canBeSerialized(TR::PersistentInfo *info)
       }
    return IPBC_ENTRY_CAN_PERSIST;
    }
+
+
 void
-TR_IPBCDataCallGraph::serialize(TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
+TR_IPBCDataCallGraph::serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
    TR_IPBCDataCallGraphStorage * store = (TR_IPBCDataCallGraphStorage *) storage;
-   storage->pc = 0;
+   TR_ASSERT(_pc >= methodStartAddress, "_pc=%p should be larger than methodStartAddress=%p\n", (void*)_pc, (void*)methodStartAddress);
+   storage->pc = _pc - methodStartAddress;
    storage->ID = TR_IPBCD_CALL_GRAPH;
    storage->left = 0;
    storage->right = 0;
@@ -3588,7 +3576,7 @@ bool TR_IProfiler::getCallerWeight(TR_OpaqueMethodBlock *calleeMethod,TR_OpaqueM
    //adjust pcIndex for interface calls (see getSearchPCFromMethodAndBCIndex)
    //otherwise we won't be able to locate a caller-callee-bcIndex triplet
    //even if it is in a TR_IPMethodHashTableEntry
-   uintptrj_t pcAddress = getSearchPCFromMethodAndBCIndex(callerMethod, pcIndex, TR::comp());
+   uintptrj_t pcAddress = getSearchPCFromMethodAndBCIndex(callerMethod, pcIndex, comp);
 
    TR_IPMethodHashTableEntry *entry = searchForMethodSample((TR_OpaqueMethodBlock*)calleeMethod, bucket);
 
@@ -4388,6 +4376,30 @@ void CallSiteProfileInfo::setClazz(int index, uintptrj_t clazzPointer)
 #endif //J9VM_GC_COMPRESSED_POINTERS
    }
 
+uintptrj_t
+CallSiteProfileInfo::getDominantClass(int32_t &sumW, int32_t &maxW)
+   {
+   int32_t sumWeight = _residueWeight;
+   int32_t maxWeight = 0;
+   uintptrj_t data = 0;
+
+   for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
+      {
+      if (!getClazz(i))
+         continue;
+
+      if (_weight[i] > maxWeight)
+         {
+         maxWeight = _weight[i];
+         data = getClazz(i);
+         }
+
+      sumWeight += _weight[i];
+      }
+   sumW = sumWeight;
+   maxW = maxWeight;
+   return data;
+   }
 
 // Supporting code for dumping IProfiler data to stderr to track possible 
 // performance issues due to insuficient or wrong IProfiler info

@@ -1490,6 +1490,10 @@ onLoadInternal(
          {
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_JaasIProfiler::allocate(jitConfig);
          }
+      else if (persistentMemory->getPersistentInfo()->getJaasMode() == CLIENT_MODE)
+         {
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_JaasClientIProfiler::allocate(jitConfig);
+         }
       else
          {
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_IProfiler::allocate(jitConfig);
