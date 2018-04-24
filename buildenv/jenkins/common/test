@@ -36,7 +36,6 @@ JAVA_BIN = "${WORKSPACE}/${BUILD_RELEASE_IMAGES}${JDK_FOLDER}${JRE_FOLDER}/bin"
 def fetch_artifacts(){
     stage('Fetch Artifacts') {
         timestamps {
-            cleanWs()
             step([$class: 'CopyArtifact',
                 fingerprintArtifacts: true,
                 projectName: "${params.UPSTREAM_JOB_NAME}",
