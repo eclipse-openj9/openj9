@@ -2298,7 +2298,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			}
 
 			if (com.ibm.oti.vm.VM.J9_JIT_STRING_DEDUP_POLICY != com.ibm.oti.vm.VM.J9_JIT_STRING_DEDUP_POLICY_DISABLED) {
-				deduplicateStrings(s1, s2);
+				deduplicateStrings(s1, s1Value, s2, s2Value);
 			}
 			
 			return true;
@@ -2307,37 +2307,51 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return false;
 	}
 
-	private static final void deduplicateStrings(String s1, String s2) {
-		if ((s1.count ^ s2.count) >= 0) {
+	/**
+	 * Deduplicate the backing buffers of the given strings.
+	 *
+	 * This updates the {@link #value} of one of the two given strings so that
+	 * they both share a single backing buffer. The strings must have identical
+	 * contents.
+	 *
+	 * Deduplication helps save space, and lets {@link #equals(Object)} exit
+	 * early more often.
+	 *
+	 * The strings' corresponding backing buffers are accepted as parameters
+	 * because the caller likely already has them.
+	 *
+	 * @param s1 The first string
+	 * @param value1 {@code s1.value}
+	 * @param s2 The second string
+	 * @param value2 {@code s2.value}
+	 */
+	private static final void deduplicateStrings(String s1, Object value1, String s2, Object value2) {
+		/* This test ensures that we only deduplicate strings that are both
+		 * compressed or both uncompressed.
+		 *
+		 * When one string is compressed and the other isn't, we can't
+		 * deduplicate because doing so would require updating both value and
+		 * count, and other threads could see an inconsistent state.
+		 *
+		 * If (!enableCompression), then both strings are always uncompressed.
+		 * If OTOH (enableCompression) but (null == compressionFlag), then both
+		 * strings must be compressed. So it's only necessary to check the
+		 * compression bits when (enableCompression && null != compressionFlag).
+		 */
+		if (!enableCompression || null == compressionFlag || (s1.count ^ s2.count) >= 0) {
 			long valueFieldOffset = UnsafeHelpers.valueFieldOffset;
 
 			if (com.ibm.oti.vm.VM.J9_JIT_STRING_DEDUP_POLICY == com.ibm.oti.vm.VM.J9_JIT_STRING_DEDUP_POLICY_FAVOUR_LOWER) {
-				if (com.ibm.oti.vm.VM.FJ9OBJECT_SIZE == 4) {
-					if (helpers.getIntFromObject(s1, valueFieldOffset) < helpers.getIntFromObject(s2, valueFieldOffset)) {
-						helpers.putObjectInObject(s2, valueFieldOffset, s1.value);
-					} else {
-						helpers.putObjectInObject(s1, valueFieldOffset, s2.value);
-					}
+				if (helpers.acmplt(value1, value2)) {
+					helpers.putObjectInObject(s2, valueFieldOffset, value1);
 				} else {
-					if (helpers.getLongFromObject(s1, valueFieldOffset) < helpers.getLongFromObject(s2, valueFieldOffset)) {
-						helpers.putObjectInObject(s2, valueFieldOffset, s1.value);
-					} else {
-						helpers.putObjectInObject(s1, valueFieldOffset, s2.value);
-					}
+					helpers.putObjectInObject(s1, valueFieldOffset, value2);
 				}
 			} else {
-				if (com.ibm.oti.vm.VM.FJ9OBJECT_SIZE == 4) {
-					if (helpers.getIntFromObject(s1, valueFieldOffset) > helpers.getIntFromObject(s2, valueFieldOffset)) {
-						helpers.putObjectInObject(s2, valueFieldOffset, s1.value);
-					} else {
-						helpers.putObjectInObject(s1, valueFieldOffset, s2.value);
-					}
+				if (helpers.acmplt(value2, value1)) {
+					helpers.putObjectInObject(s2, valueFieldOffset, value1);
 				} else {
-					if (helpers.getLongFromObject(s1, valueFieldOffset) > helpers.getLongFromObject(s2, valueFieldOffset)) {
-						helpers.putObjectInObject(s2, valueFieldOffset, s1.value);
-					} else {
-						helpers.putObjectInObject(s1, valueFieldOffset, s2.value);
-					}
+					helpers.putObjectInObject(s1, valueFieldOffset, value2);
 				}
 			}
 		}
