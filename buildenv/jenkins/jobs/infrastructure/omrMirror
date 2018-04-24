@@ -29,6 +29,9 @@ pipeline {
         TARGET_REPO  = 'github.com/eclipse/openj9-omr.git'
         ARCHIVE_FILE = "OMR_COMMIT"
     }
+
+    options { timeout(time: 3, unit: 'HOURS') }
+
     stages {
         stage('Mirror') {
             steps {

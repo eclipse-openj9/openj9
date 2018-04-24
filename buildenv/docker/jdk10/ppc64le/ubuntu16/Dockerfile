@@ -31,6 +31,7 @@ RUN apt-get update \
     ca-certificates \
     ccache \
     cpio \
+    cmake \
     file \
     g++-4.8 \
     gcc-4.8 \

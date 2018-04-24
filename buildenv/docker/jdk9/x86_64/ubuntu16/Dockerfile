@@ -30,6 +30,7 @@ RUN apt-get update \
     autoconf \
     ca-certificates \
     ccache \
+    cmake \
     cpio \
     file \
     g++-4.8 \

@@ -364,7 +364,6 @@ Java_java_lang_invoke_VarHandle_getAndBitwiseXorRelease(JNIEnv *env, jobject han
 	return NULL;
 }
 
-
 jobject JNICALL
 Java_java_lang_invoke_VarHandle_addAndGet(JNIEnv *env, jobject handle, jobject args)
 {
