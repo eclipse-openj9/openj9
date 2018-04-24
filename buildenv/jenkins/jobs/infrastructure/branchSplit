@@ -38,23 +38,25 @@ if (OMR_SHA == '') {
 }
 
 def clone_branch_push(REPO, NEW_BRANCH, SPLIT_SHA) {
-    node ('worker') {
-        git "${HTTP}${REPO}"
+    timeout(time: 3, unit: 'HOURS') {
+        node ('worker') {
+            git "${HTTP}${REPO}"
 
-        REPO_NAME = REPO.substring(REPO.lastIndexOf('/') +1, REPO.lastIndexOf('.git'))
-        echo "REPO_NAME = '${REPO_NAME}'"
+            REPO_NAME = REPO.substring(REPO.lastIndexOf('/') +1, REPO.lastIndexOf('.git'))
+            echo "REPO_NAME = '${REPO_NAME}'"
 
-        // branch from sha/tag/branch
-        sh "git checkout -b '${NEW_BRANCH}' '${SPLIT_SHA}'"
+            // branch from sha/tag/branch
+            sh "git checkout -b '${NEW_BRANCH}' '${SPLIT_SHA}'"
 
-        withCredentials([usernamePassword(credentialsId: 'b6987280-6402-458f-bdd6-7affc2e360d4', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-            sh "git push ${HTTP}${USERNAME}:${PASSWORD}@${REPO} '${NEW_BRANCH}'"
+            withCredentials([usernamePassword(credentialsId: 'b6987280-6402-458f-bdd6-7affc2e360d4', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                sh "git push ${HTTP}${USERNAME}:${PASSWORD}@${REPO} '${NEW_BRANCH}'"
+            }
+
+            // Set the build description
+            currentBuild.description += "<br/>${REPO_NAME}: ${SPLIT_SHA}"
+
+            cleanWs()
         }
-
-        // Set the build description
-        currentBuild.description += "<br/>${REPO_NAME}: ${SPLIT_SHA}"
-
-        cleanWs()
     }
 }
 
