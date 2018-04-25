@@ -6302,6 +6302,29 @@ retry:
 		{
 			bool isVolatile = (0 != (flags & J9AccVolatile));
 			UDATA const newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (flags & J9AccFlattenable) {
+				j9object_t objectref = *(j9object_t*)(_sp + 1);
+				j9object_t valueref = *(j9object_t*)_sp;
+				/* A field declared with ACC_FLATTENABLE cannot be made null */
+				if (NULL == objectref || NULL == valueref) {
+					rc = THROW_NPE;
+					goto done;
+				}
+
+				/* TODO: store and get J9Class from the J9RAMFieldRef */
+				J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&ramConstantPool->romConstantPool[index];
+				const J9UTF8 * const fieldSignature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef));
+				/* could get parent class from objectref's header as well, but this code was slow anyway */
+				J9Class *parentClass = resolveClassRef(_currentThread, ramConstantPool, romFieldRef->classRefCPIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+				Assert_VM_true('L' == J9UTF8_DATA(fieldSignature)[0]);
+				/* skip fieldSignature's L and ; to have only CLASSNAME required for internalFindClassUTF8 */
+				J9Class *valueClass = internalFindClassUTF8(_currentThread, &J9UTF8_DATA(fieldSignature)[1], J9UTF8_LENGTH(fieldSignature)-2, parentClass->classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
+
+				_objectAccessBarrier.copyValue(_currentThread, valueClass, valueref, J9_OBJECT_HEADER_SIZE + sizeof(j9objectmonitor_t), objectref, newValueOffset);
+				_sp += 2;
+			} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			if (flags & J9FieldSizeDouble) {
 				j9object_t objectref = *(j9object_t*)(_sp + 2);
 				if (NULL == objectref) {
