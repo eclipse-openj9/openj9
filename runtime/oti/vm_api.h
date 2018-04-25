@@ -1584,9 +1584,9 @@ setBootLoaderModulePatchPaths(J9JavaVM * javaVM, J9Module * j9module, const char
  * @brief Register jvminit.c::predefinedHandlerWrapper using j9sig_set_*async_signal_handler
  * for the specified signal
  *
- * @param vm pointer to a J9JavaVM
- * @param signal integer value of the signal
- * @param oldOSHandler points to the old signal handler function
+ * @param[in] vm pointer to a J9JavaVM
+ * @param[in] signal integer value of the signal
+ * @param[out] oldOSHandler points to the old signal handler function
  *
  * @return 0 on success and non-zero on failure
  */
