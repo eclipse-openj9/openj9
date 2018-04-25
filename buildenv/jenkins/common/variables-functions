@@ -243,6 +243,7 @@ def set_build_variables() {
 
 /*
 * Sets variables for a test job on a given platform.
+* Note that JAVA_BIN is set separately within buildenv/jenkins/common/test
 */
 def set_test_variables() {
     set_release()
