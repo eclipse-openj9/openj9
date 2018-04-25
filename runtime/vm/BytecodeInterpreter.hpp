@@ -6216,6 +6216,33 @@ retry:
 
 				{
 					UDATA const newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+					if (flags & J9AccFlattenable) {
+						/* TODO: store and get J9Class from the J9RAMFieldRef */
+						J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&ramConstantPool->romConstantPool[index];
+						const J9UTF8 * const fieldSignature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef));
+						/* could get parent class from objectref's header as well, but this code was slow anyway */
+						J9Class *parentClass = resolveClassRef(_currentThread, ramConstantPool, romFieldRef->classRefCPIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+						Assert_VM_true('L' == J9UTF8_DATA(fieldSignature)[0]);
+						/* skip fieldSignature's L and ; to have only CLASSNAME required for internalFindClassUTF8 */
+						J9Class *valueClass = internalFindClassUTF8(_currentThread, &J9UTF8_DATA(fieldSignature)[1], J9UTF8_LENGTH(fieldSignature)-2, parentClass->classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
+
+						j9object_t newValue = _objectAllocate.inlineAllocateObject(_currentThread, valueClass);
+						if (NULL == newValue) {
+							updateVMStruct(REGISTER_ARGS);
+							newValue = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, valueClass, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
+							VMStructHasBeenUpdated(REGISTER_ARGS);
+							if (J9_UNEXPECTED(NULL == newValue)) {
+								rc = THROW_HEAP_OOM;
+								goto done;
+							}
+						}
+
+						_objectAccessBarrier.copyValue(_currentThread, valueClass, objectref, newValueOffset, newValue, J9_OBJECT_HEADER_SIZE + sizeof(j9objectmonitor_t));
+						_sp += (slotsToPop - 1);
+						*(j9object_t*)_sp = newValue;
+					} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 					if (flags & J9FieldSizeDouble) {
 						_sp += (slotsToPop - 2);
 						*(U_64*)_sp = _objectAccessBarrier.inlineMixedObjectReadU64(_currentThread, objectref, newValueOffset, isVolatile);
