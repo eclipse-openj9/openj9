@@ -3,7 +3,7 @@
 package com.ibm.oti.vm;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,7 +67,7 @@ private BootstrapClassLoader() {
 	types = new int[count];
 	cache = new Object[count];
 	parsedPath = new String[count];
-	VM.initializeClassLoader(this, true, false);
+	VM.initializeClassLoader(this, VM.J9_CLASSLOADER_TYPE_BOOT, false);
 }
 
 /**

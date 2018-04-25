@@ -110,6 +110,10 @@ public final class VM {
 	
 	public static final boolean IS_BIG_ENDIAN;
 	
+	public static final int J9_CLASSLOADER_TYPE_OTHERS;
+	public static final int J9_CLASSLOADER_TYPE_BOOT;
+	public static final int J9_CLASSLOADER_TYPE_PLATFORM;
+	
 	private static String[] cachedVMArgs;
 	/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
 	/*[PR CMVC 191554] Provide access to ClassLoader methods to improve performance */
@@ -174,6 +178,10 @@ public final class VM {
 		OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS = 0;
 		
 		IS_BIG_ENDIAN = false;
+
+		J9_CLASSLOADER_TYPE_OTHERS = 0;
+		J9_CLASSLOADER_TYPE_BOOT = 0;
+		J9_CLASSLOADER_TYPE_PLATFORM = 0;
 }
 /**
  * Prevents this class from being instantiated.
@@ -220,13 +228,16 @@ static final native ClassLoader getStackClassLoader(int depth);
 /**
  * Initialize the classloader.
  *
- * @param 		loader ClassLoader
- *					the ClassLoader instance
- * @param 		bootLoader boolean 
- *					true for the bootstrap class loader
- * @param parallelCapable true if the loader has registered as parallel capable
+ * @param loader
+ *            ClassLoader the ClassLoader instance
+ * @param loaderType
+ *            J9_CLASSLOADER_TYPE_BOOT     - bootstrap classloader 
+ *            J9_CLASSLOADER_TYPE_PLATFORM - platform classloader 
+ *            J9_CLASSLOADER_TYPE_OTHERS   - other classlader
+ * @param parallelCapable
+ *            true if the loader has registered as parallel capable
  */
-public final static native void initializeClassLoader(ClassLoader loader, boolean bootLoader, boolean parallelCapable);
+public final static native void initializeClassLoader(ClassLoader loader, int loaderType, boolean parallelCapable);
 
 public final static native long getProcessId(); 
 public final static native long getUid(); 
