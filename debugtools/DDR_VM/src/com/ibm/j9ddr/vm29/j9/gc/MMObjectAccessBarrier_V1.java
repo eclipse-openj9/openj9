@@ -36,6 +36,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.UDATA;
+import java.lang.reflect.InvocationTargetException;
 
 class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 {
@@ -49,9 +50,16 @@ class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 		if(J9BuildFlags.gc_compressedPointers) {
 			try {
 				J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
-				shift = vm.compressedPointersShift().intValue();
+
+				/* use reflection to access compressedPointersShift which will not exist if build is default */
+				UDATA shiftUdata = (UDATA)J9JavaVMPointer.class.getMethod("compressedPointersShift").invoke(vm); //$NON-NLS-1$
+				shift = shiftUdata.intValue();
 			} catch (CorruptDataException cde) {
 				raiseCorruptDataEvent("Error initializing the object access barrier", cde, true);
+			} catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException re) {
+				/* error caused by reflection */
+				CorruptDataException rcde = new CorruptDataException(re.toString(), re);
+				raiseCorruptDataEvent("Error retrieving compressedPointersShift", rcde, true);
 			}
 		}
 	}
