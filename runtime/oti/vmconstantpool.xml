@@ -379,6 +379,7 @@
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_POLICY_GENCON" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_POLICY_BALANCED" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_POLICY_METRONOME" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_GC_POLICY_NOGC" signature="I"/>
 
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9_JAVA_CLASS_RAM_SHAPE_SHIFT" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="OBJECT_HEADER_SHAPE_MASK" signature="I"/>
