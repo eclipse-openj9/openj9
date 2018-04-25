@@ -421,6 +421,17 @@ TR_JaasClientPersistentCHTable::classGotLoaded(
    return TR_PersistentCHTable::classGotLoaded(fe, classId);
    }
 
+bool
+TR_JaasClientPersistentCHTable::classGotExtended(
+      TR_FrontEnd *fe,
+      TR_PersistentMemory *persistentMemory,
+      TR_OpaqueClassBlock *superClassId,
+      TR_OpaqueClassBlock *subClassId)
+   {
+   markDirty(superClassId);
+   return TR_PersistentCHTable::classGotExtended(fe, persistentMemory, superClassId, subClassId);
+   }
+
 void
 TR_JaasClientPersistentCHTable::resetVisitedClasses() // highly time consumming
    {
