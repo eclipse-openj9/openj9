@@ -396,6 +396,18 @@ public:
 #endif /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* TODO: implement copyValue without barriers */
+	VMINLINE void
+	copyValue(J9VMThread *vmThread, J9Class *valueClass, j9object_t srcObject, UDATA srcOffset, j9object_t destObject, UDATA destOffset)
+	{
+/* #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyValue(vmThread, valueClass, srcObject, srcOffset, destObject, destOffset);
+/* #else defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
+/* #endif defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	/**
 	 * Read an object field: perform any pre-use barriers, calculate an effective address
 	 * and perform the work.

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,6 +85,19 @@ public:
 		return getSizeInBytesWithoutHeader(objectPtr) + sizeof(J9Object);
 	}
 	
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/**
+	 * Returns the size of a class' fields in bytes.
+	 * @param clazz Pointer to the class whose fields size is required
+	 * @return Size of class' fields in bytes
+	 */
+	MMINLINE UDATA
+	getFieldsSizeInBytes(J9Class *clazz)
+	{
+		return clazz->backfillOffset - sizeof(J9Object) - sizeof(j9objectmonitor_t);
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	/**
 	 * Returns the header size of a given  object.
 	 * @param arrayPtr Ptr to an array for which header size will be returned

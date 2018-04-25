@@ -178,6 +178,9 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_objaccess_getLockwordAddress,
 	j9gc_objaccess_cloneObject,
 	j9gc_objaccess_cloneIndexableObject,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	j9gc_objaccess_copyValue,
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	j9gc_objaccess_asConstantPoolObject,
 #if defined(J9VM_GC_REALTIME)
 	j9gc_objaccess_referenceGet,

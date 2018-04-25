@@ -1389,7 +1389,7 @@ MM_ObjectAccessBarrier::cloneObject(J9VMThread *vmThread, J9Object *srcObject, J
 		UDATA hashcodeOffset = _extensions->mixedObjectModel.getHashcodeOffset(destObject);
 		if (hashcodeOffset <= limit) {
 			I_32 *hashcodePointer = (I_32*)((U_8*)destObject + hashcodeOffset);
-			*hashcodePointer = hashCode;		
+			*hashcodePointer = hashCode;
 		}
 	}
 
@@ -1441,6 +1441,75 @@ MM_ObjectAccessBarrier::cloneIndexableObject(J9VMThread *vmThread, J9IndexableOb
 	return;
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+ * Copy all of the fields of a value class instance to another value class instance.
+ * The source or destination may be a flattened value within another object, meaning
+ * srcOffset and destOffset need not be equal.
+ * @TODO This does not currently check if the fields that it is reading are volatile.
+ *
+ * @oaram valueClass The value class.
+ * @param srcObject The object containing the value class instance fields being copied.
+ * @param srcOffset The offset of the value class instance fields in srcObject.
+ * @param destValue The object containing the value class instance fields being copied to.
+ * @param destOffset The offset of the value class instance fields in destObject.
+ */
+void
+MM_ObjectAccessBarrier::copyValue(
+							J9VMThread *vmThread, J9Class *valueClass,
+							J9Object *srcObject, UDATA srcOffset,
+							J9Object *destObject, UDATA destOffset
+) {
+	/* subtract size of lockword */
+	const UDATA fieldsSize = _extensions->mixedObjectModel.getSizeInBytesWithoutHeader(valueClass) - sizeof(j9objectmonitor_t);
+	if (srcOffset & (sizeof(fj9object_t) - 1) || destOffset & (sizeof(fj9object_t) - 1)) {
+		/* Check whether the source or destination is not sizeof(ftj9object_t)-aligned.
+
+		 * In practice, this check fails only when sizeof(fj9object_t) is 8 and either
+		 * srcOffset or destOffset is 4-byte aligned. Since 8-byte fields come before
+		 * 4-byte fields in the object field layout and will never be unaligned, the
+		 * value type must have only 4-byte fields and no object references. There is no
+		 * need to perform barrier checks if there are no object references.
+		 */
+
+		U_32 *srcAddress = J9OAB_MIXEDOBJECT_EA(srcObject, srcOffset, U_32);
+		U_32 *destAddress = J9OAB_MIXEDOBJECT_EA(destObject, destOffset, U_32);
+		memcpy(destAddress, srcAddress, fieldsSize);
+		/* TODO: is memcpy too slow when there are few fields? */
+	} else {
+		const UDATA *descriptionPtr = (UDATA *)valueClass->instanceDescription;
+		UDATA descriptionBits;
+		if(((UDATA)descriptionPtr) & 1) {
+			descriptionBits = ((UDATA)descriptionPtr) >> 1;
+		} else {
+			descriptionBits = *descriptionPtr++;
+		}
+		descriptionBits >>= 1; /* ignore lockword */
+		UDATA descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 2;
+
+		UDATA offset = 0;
+		UDATA limit = _extensions->mixedObjectModel.getFieldsSizeInBytes(valueClass);
+		while (offset < limit) {
+			/* Determine if the slot contains an object pointer or not */
+			if(descriptionBits & 1) {
+				J9Object *objectPtr = mixedObjectReadObject(vmThread, srcObject, srcOffset + offset, false);
+				mixedObjectStoreObject(vmThread, destObject, destOffset + offset, objectPtr, false);
+			} else {
+				/* TODO: For non-object fields, just copy the memory directly. To be correct,
+				* maybe this should do a type-specific copy
+				*/
+				*(fj9object_t *)((UDATA)destObject + destOffset + offset) = *(fj9object_t *)((UDATA)srcObject + srcOffset + offset);
+			}
+			descriptionBits >>= 1;
+			if(descriptionIndex-- == 0) {
+				descriptionBits = *descriptionPtr++;
+				descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
+			}
+			offset += sizeof(fj9object_t);
+		}
+	}
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /* Return an j9object_t that can be stored in the constantpool.
  *

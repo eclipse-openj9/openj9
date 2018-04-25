@@ -4362,6 +4362,9 @@ typedef struct J9MemoryManagerFunctions {
 	j9objectmonitor_t*  ( *j9gc_objaccess_getLockwordAddress)(struct J9VMThread *vmThread, j9object_t object) ;
 	void  ( *j9gc_objaccess_cloneObject)(struct J9VMThread *vmThread, j9object_t srcObject, j9object_t destObject) ;
 	void  ( *j9gc_objaccess_cloneIndexableObject)(struct J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject) ;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	void ( *j9gc_objaccess_copyValue)(struct J9VMThread *vmThread, struct J9Class *valueClass, j9object_t srcObject, UDATA srcOffset, j9object_t destObject, UDATA destOffset) ;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	j9object_t  ( *j9gc_objaccess_asConstantPoolObject)(struct J9VMThread *vmThread, j9object_t toConvert, UDATA allocationFlags) ;
 #if defined(J9VM_GC_REALTIME)
 	j9object_t  ( *j9gc_objaccess_referenceGet)(struct J9VMThread *vmThread, j9object_t refObject) ;

@@ -618,6 +618,18 @@ j9gc_objaccess_cloneIndexableObject(J9VMThread *vmThread, J9IndexableObject *src
 	return barrier->cloneIndexableObject(vmThread, srcObject, destObject);
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+void
+j9gc_objaccess_copyValue(
+		J9VMThread *vmThread, J9Class *valueClass,
+		J9Object *srcObject, UDATA srcOffset, J9Object *destObject, UDATA destOffset
+) {
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	return barrier->copyValue(vmThread, valueClass, srcObject, srcOffset, destObject, destOffset);
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+
 /**
  * Helper function to clone an object to tenure if required so that it can be saved in the constantpool.
  */
