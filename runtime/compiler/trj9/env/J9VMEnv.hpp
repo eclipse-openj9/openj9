@@ -53,8 +53,6 @@ public:
 
    uintptrj_t heapBaseAddress();
 
-   uintptrj_t getHeapTailPaddingSizeInBytes();
-
    uintptrj_t thisThreadGetPendingExceptionOffset();
 
    bool hasResumableTrapHandler(TR::Compilation *comp);

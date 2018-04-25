@@ -907,15 +907,6 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
-		/* Temporary option. See Jazz 31620: Reserve unused space at end of heap for JIT */
-		if (try_scan(&scan_start, "heapTailPadding=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &extensions->heapTailPadding, "heapTailPadding=")) {
-				returnValue = JNI_EINVAL;
-				break;
-			}
-			continue;
-		}
-
 #if defined (J9VM_GC_VLHGC)
 		if (try_scan(&scan_start, "fvtest_tarokSimulateNUMA=")) {
 			UDATA simulatedNodeCount = 0;
