@@ -950,7 +950,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jstring version, jstring location
 
 #if J9VM_JAVA9_BUILD >= 156
 		if ((classLoader != vm->systemClassLoader) && (classLoader != vm->platformClassLoader)) {
-			U_32 pkgIndex = 0;
+			jsize pkgIndex = 0;
 			for (pkgIndex = 0; pkgIndex < numPackages; pkgIndex++) {
 				const char *packageName = packages[pkgIndex];
 #define JAVADOT "java."
