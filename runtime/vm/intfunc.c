@@ -362,4 +362,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	flushProcessWriteBuffers,
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 	registerPredefinedHandler,
+	registerOSHandler,
 };

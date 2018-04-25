@@ -6339,6 +6339,24 @@ registerPredefinedHandler(J9JavaVM *vm, U_32 signal, void **oldOSHandler) {
 	return rc;
 }
 
+IDATA
+registerOSHandler(J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHandler)
+{
+	IDATA rc = 0;
+	U_32 portlibSignalFlag = 0;
+
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	portlibSignalFlag = j9sig_map_os_signal_to_portlib_signal(signal);
+	if (0 != portlibSignalFlag) {
+		rc = j9sig_register_os_handler(portlibSignalFlag, newOSHandler, oldOSHandler);
+	} else {
+		Trc_VM_registerOSHandler_invalidPortlibSignalFlag(portlibSignalFlag);
+	}
+
+	return rc;
+}
+
 static jint
 initializeDDR(J9JavaVM * vm)
 {
