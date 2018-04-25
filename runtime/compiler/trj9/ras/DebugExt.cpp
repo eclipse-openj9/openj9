@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2775,12 +2775,12 @@ TR_DebugExt::dxPrintCodeCacheInfo(TR::CodeCache *cacheInfo)
    _dbgPrintf("  ->trampolineBase = (U_8*)0x%p\n", localCacheInfo->_trampolineBase);
    _dbgPrintf("  ->resolvedMethodHT = (OMR::CodeCacheHashTable*)0x%p\n", localCacheInfo->_resolvedMethodHT);
    _dbgPrintf("  ->unresolvedMethodHT = (OMR::CodeCacheHashTable*)0x%p\n", localCacheInfo->_unresolvedMethodHT);
-   _dbgPrintf("  ->hashEntrySlab = (OMR::CodeCacheHashEntrySlab*)0x%p\n", localCacheInfo->_hashEntrySlab);
-   _dbgPrintf("  ->hashEntryFreeList = (OMR::CodeCacheHashEntry*)0x%p\n", localCacheInfo->_hashEntryFreeList);
+   _dbgPrintf("  ->hashEntrySlab = (OMR::CodeCacheHashEntrySlab*)0x%p\n", localCacheInfo->hashEntrySlab());
+   _dbgPrintf("  ->hashEntryFreeList = (OMR::CodeCacheHashEntry*)0x%p\n", localCacheInfo->hashEntryFreeList());
    _dbgPrintf("  ->tempTrampolinesMax = (U_32)%u\n", localCacheInfo->_tempTrampolinesMax);
    _dbgPrintf("  ->flags = (U_32)0x%x\n", localCacheInfo->_flags);
-   _dbgPrintf("  ->trampolineSyncList = (OMR::CodeCacheTempTrampolineSyncBlock*)0x%p\n", localCacheInfo->_trampolineSyncList);
-   _dbgPrintf("  ->freeBlockList = (OMR::CodeCacheFreeCacheBlock*)0x%p\n", localCacheInfo->_freeBlockList);
+   _dbgPrintf("  ->trampolineSyncList = (OMR::CodeCacheTempTrampolineSyncBlock*)0x%p\n", localCacheInfo->trampolineSyncList());
+   _dbgPrintf("  ->freeBlockList = (OMR::CodeCacheFreeCacheBlock*)0x%p\n", localCacheInfo->freeBlockList());
    _dbgPrintf("  ->mutex = (TR::Monitor*)0x%p\n", localCacheInfo->_mutex);
 #if defined(TR_TARGET_X86)
    _dbgPrintf("  ->prefetchCodeSnippetAddress = (uintptrj_t)0x%p\n", localCacheInfo->_CCPreLoadedCode[TR_AllocPrefetch]);
@@ -2822,8 +2822,8 @@ TR_DebugExt::dxPrintFreeCodeCacheBlockList(TR::CodeCache *cacheInfo)
       return;
       }
    TR::CodeCache *localCacheInfo = (TR::CodeCache*) dxMallocAndRead(sizeof(TR::CodeCache), cacheInfo);
-   _dbgPrintf("  List of free block starting at:(OMR::CodeCacheFreeCacheBlock*)0x%p\n", localCacheInfo->_freeBlockList);
-   OMR::CodeCacheFreeCacheBlock *freeBlock = localCacheInfo->_freeBlockList;
+   _dbgPrintf("  List of free block starting at:(OMR::CodeCacheFreeCacheBlock*)0x%p\n", localCacheInfo->freeBlockList());
+   OMR::CodeCacheFreeCacheBlock *freeBlock = localCacheInfo->freeBlockList();
    while (freeBlock)
       {
       freeBlock = dxPrintFreeCodeCacheBlock(freeBlock);
