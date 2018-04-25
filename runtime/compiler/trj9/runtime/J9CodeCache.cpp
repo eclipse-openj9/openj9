@@ -638,7 +638,7 @@ J9::CodeCache::onFSDDecompile()
       return;
 
    _flags &= ~OMR::CODECACHE_FULL_SYNC_REQUIRED;
-   for (syncBlock = _trampolineSyncList; syncBlock; syncBlock = syncBlock->_next)
+   for (syncBlock = self()->trampolineSyncList(); syncBlock; syncBlock = syncBlock->_next)
       syncBlock->_entryCount = 0;
 
    _tempTrampolineNext = _tempTrampolineBase;
@@ -654,16 +654,16 @@ int32_t
 J9::CodeCache::reserveUnresolvedTrampoline(void *cp, int32_t cpIndex)
    {
    int32_t retValue = OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS; // assume success
-   
+
    // If the platform does not need trampolines, return success
    TR::CodeCacheConfig &config = _manager->codeCacheConfig();
    if (!config.needsMethodTrampolines())
       return OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS;
-   
+
    // scope for cache critical section
       {
       CacheCriticalSection reserveTrampoline(self());
-      
+
       // check if we already have a reservation for this name/classLoader key
       OMR::CodeCacheHashEntry *entry = _unresolvedMethodHT->findUnresolvedMethod(cp, cpIndex);
       if (!entry)
@@ -674,7 +674,7 @@ J9::CodeCache::reserveUnresolvedTrampoline(void *cp, int32_t cpIndex)
             {
             if (!self()->addUnresolvedMethod(cp, cpIndex))
                retValue = OMR::CodeCacheErrorCode::ERRORCODE_FATALERROR; // couldn't allocate memory from VM
-            } 
+            }
          else // no space in this code cache; must allocate a new one
             {
             _almostFull = TR_yes;
@@ -686,7 +686,7 @@ J9::CodeCache::reserveUnresolvedTrampoline(void *cp, int32_t cpIndex)
             }
          }
       }
-   
+
    return retValue;
    }
 
