@@ -2624,71 +2624,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 	}
 
-// Some of the data below originated from the Unicode Character Database file
-// www.unicode.org/Public/4.0-Update/SpecialCasing-4.0.0.txt. Data from this
-// file was extracted, used in the code and/or converted to an array
-// representation for performance and size.
-
-/*
-UNICODE, INC. LICENSE AGREEMENT - DATA FILES AND SOFTWARE
-
-Unicode Data Files include all data files under the directories
-http://www.unicode.org/Public/, http://www.unicode.org/reports/,
-http://www.unicode.org/cldr/data/, http://source.icu-project.org/repos/icu/, and
-http://www.unicode.org/utility/trac/browser/.
-
-Unicode Data Files do not include PDF online code charts under the
-directory http://www.unicode.org/Public/.
-
-Software includes any source code published in the Unicode Standard
-or under the directories
-http://www.unicode.org/Public/, http://www.unicode.org/reports/,
-http://www.unicode.org/cldr/data/, http://source.icu-project.org/repos/icu/, and
-http://www.unicode.org/utility/trac/browser/.
-
-NOTICE TO USER: Carefully read the following legal agreement.
-BY DOWNLOADING, INSTALLING, COPYING OR OTHERWISE USING UNICODE INC.'S
-DATA FILES ("DATA FILES"), AND/OR SOFTWARE ("SOFTWARE"),
-YOU UNEQUIVOCALLY ACCEPT, AND AGREE TO BE BOUND BY, ALL OF THE
-TERMS AND CONDITIONS OF THIS AGREEMENT.
-IF YOU DO NOT AGREE, DO NOT DOWNLOAD, INSTALL, COPY, DISTRIBUTE OR USE
-THE DATA FILES OR SOFTWARE.
-
-COPYRIGHT AND PERMISSION NOTICE
-
-Copyright (c) 1991-2017 Unicode, Inc. All rights reserved.
-Distributed under the Terms of Use in http://www.unicode.org/copyright.html.
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of the Unicode data files and any associated documentation
-(the "Data Files") or Unicode software and any associated documentation
-(the "Software") to deal in the Data Files or Software
-without restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, and/or sell copies of
-the Data Files or Software, and to permit persons to whom the Data Files
-or Software are furnished to do so, provided that either
-(a) this copyright and permission notice appear with all copies
-of the Data Files or Software, or
-(b) this copyright and permission notice appear in associated
-Documentation.
-
-THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF
-ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT OF THIRD PARTY RIGHTS.
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS
-NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL
-DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
-DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
-TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THE DATA FILES OR SOFTWARE.
-
-Except as contained in this notice, the name of a copyright holder
-shall not be used in advertising or otherwise to promote the sale,
-use or other dealings in these Data Files or Software without prior
-written authorization of the copyright holder.
-*/
-
 	/**
 	 * Converts the characters in this String to lowercase, using the specified Locale.
 	 *
@@ -6873,14 +6808,23 @@ written authorization of the copyright holder.
 		return mid - (c < value ? 1 : 0);
 	}
 
-	private static char[] startCombiningAbove = { '\u0300', '\u033D', '\u0346', '\u034A', '\u0350', '\u0357', '\u0363', '\u0483', '\u0592', '\u0597',
-			'\u059C', '\u05A8', '\u05AB', '\u05AF', '\u05C4', '\u0610', '\u0653', '\u0657', '\u06D6', '\u06DF', '\u06E4', '\u06E7', '\u06EB', '\u0730',
-			'\u0732', '\u0735', '\u073A', '\u073D', '\u073F', '\u0743', '\u0745', '\u0747', '\u0749', '\u0951', '\u0953', '\u0F82', '\u0F86', '\u17DD',
-			'\u193A', '\u20D0', '\u20D4', '\u20DB', '\u20E1', '\u20E7', '\u20E9', '\uFE20' };
-	private static char[] endCombiningAbove = { '\u0314', '\u0344', '\u0346', '\u034C', '\u0352', '\u0357', '\u036F', '\u0486', '\u0595', '\u0599',
-			'\u05A1', '\u05A9', '\u05AC', '\u05AF', '\u05C4', '\u0615', '\u0654', '\u0658', '\u06DC', '\u06E2', '\u06E4', '\u06E8', '\u06EC', '\u0730',
-			'\u0733', '\u0736', '\u073A', '\u073D', '\u0741', '\u0743', '\u0745', '\u0747', '\u074A', '\u0951', '\u0954', '\u0F83', '\u0F87', '\u17DD',
-			'\u193A', '\u20D1', '\u20D7', '\u20DC', '\u20E1', '\u20E7', '\u20E9', '\uFE23' };
+	/* The following code points are extracted from the Canonical_Combining_Class=Above table found in:
+	 * https://www.unicode.org/Public/6.2.0/ucd/extracted/DerivedCombiningClass.txt
+	 */
+	private static char[] startCombiningAbove = { '\u0300', '\u033D', '\u0346', '\u034A', '\u0350', '\u0357', '\u035B', '\u0363', '\u0483', '\u0592', 
+			'\u0597', '\u059C', '\u05A8', '\u05AB', '\u05AF', '\u05C4', '\u0610', '\u0653', '\u0657', '\u065D', '\u06D6', '\u06DF', '\u06E4', '\u06E7', 
+			'\u06EB', '\u0730', '\u0732', '\u0735', '\u073A', '\u073D', '\u073F', '\u0743', '\u0745', '\u0747', '\u0749', '\u07EB', '\u07F3', '\u0816', 
+			'\u081B', '\u0825', '\u0829', '\u08E4', '\u08E7', '\u08EA', '\u08F3', '\u08F7', '\u08FB', '\u0951', '\u0953', '\u0F82', '\u0F86', '\u135D', 
+			'\u17DD', '\u193A', '\u1A17', '\u1A75', '\u1B6B', '\u1B6D', '\u1CD0', '\u1CDA', '\u1CE0', '\u1CF4', '\u1DC0', '\u1DC3', '\u1DCB', '\u1DD1', 
+			'\u1DFE', '\u20D0', '\u20D4', '\u20DB', '\u20E1', '\u20E7', '\u20E9', '\u20F0', '\u2CEF', '\u2DE0', '\uA66F', '\uA674', '\uA69F', '\uA6F0', 
+			'\uA8E0', '\uAAB0', '\uAAB2', '\uAAB7', '\uAABE', '\uAAC1', '\uFE20' };
+	private static char[] endCombiningAbove = { '\u0314', '\u0344', '\u0346', '\u034C', '\u0352', '\u0357', '\u035B', '\u036F', '\u0487', '\u0595', 
+			'\u0599', '\u05A1', '\u05A9', '\u05AC', '\u05AF', '\u05C4', '\u0617', '\u0654', '\u065B', '\u065E', '\u06DC', '\u06E2', '\u06E4', '\u06E8', 
+			'\u06EC', '\u0730', '\u0733', '\u0736', '\u073A', '\u073D', '\u0741', '\u0743', '\u0745', '\u0747', '\u074A', '\u07F1', '\u07F3', '\u0819', 
+			'\u0823', '\u0827', '\u082D', '\u08E5', '\u08E8', '\u08EC', '\u08F5', '\u08F8', '\u08FE', '\u0951', '\u0954', '\u0F83', '\u0F87', '\u135F', 
+			'\u17DD', '\u193A', '\u1A17', '\u1A7C', '\u1B6B', '\u1B73', '\u1CD2', '\u1CDB', '\u1CE0', '\u1CF4', '\u1DC1', '\u1DC9', '\u1DCC', '\u1DE6', 
+			'\u1DFE', '\u20D1', '\u20D7', '\u20DC', '\u20E1', '\u20E7', '\u20E9', '\u20F0', '\u2CF1', '\u2DFF', '\uA66F', '\uA67D', '\uA69F', '\uA6F1', 
+			'\uA8F1', '\uAAB0', '\uAAB3', '\uAAB8', '\uAABF', '\uAAC1', '\uFE26' };
 	private static char[] upperValues = { '\u0053', '\u0053', '\u0000', '\u02BC', '\u004E', '\u0000', '\u004A', '\u030C', '\u0000', '\u0399',
 			'\u0308', '\u0301', '\u03A5', '\u0308', '\u0301', '\u0535', '\u0552', '\u0000', '\u0048', '\u0331', '\u0000', '\u0054', '\u0308', '\u0000',
 			'\u0057', '\u030A', '\u0000', '\u0059', '\u030A', '\u0000', '\u0041', '\u02BE', '\u0000', '\u03A5', '\u0313', '\u0000', '\u03A5', '\u0313',
@@ -6923,7 +6867,14 @@ written authorization of the copyright holder.
 			int index = binarySearchRange(startCombiningAbove, (char) codePoint);
 
 			return index >= 0 && endCombiningAbove[index] >= codePoint;
-		} else if ((codePoint >= 0x1D185 && codePoint <= 0x1D189) || (codePoint >= 0x1D1AA && codePoint <= 0x1D1AD)) {
+		/* The following code points are extracted from the Canonical_Combining_Class=Above table found in:
+		 * https://www.unicode.org/Public/6.2.0/ucd/extracted/DerivedCombiningClass.txt
+		 */
+		} else if (codePoint == 0x10A0F || codePoint == 0x10A38 ||
+			(codePoint >= 0x11100 && codePoint <= 0x11102) || 
+			(codePoint >= 0x1D185 && codePoint <= 0x1D189) || 
+			(codePoint >= 0x1D1AA && codePoint <= 0x1D1AD) ||
+			(codePoint >= 0x1D242 && codePoint <= 0x1D244)) {
 			return true;
 		}
 
