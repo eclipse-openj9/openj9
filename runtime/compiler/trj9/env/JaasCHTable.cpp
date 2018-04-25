@@ -129,16 +129,15 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
       }
 
    TR::list<TR_VirtualGuardSite*> &sideEffectPatchSites = *comp->getSideEffectGuardPatchSites();
+   std::vector<TR_VirtualGuardSite> sideEffectPatchSitesVec;
    for (TR_VirtualGuardSite *site : sideEffectPatchSites)
       {
-      TR_ASSERT(false, "sideEffectPathSites are unimplemented for JITaaS");
-      fprintf(stderr, "code cache %p\n", comp->cg()->getBinaryBufferStart());
-      fprintf(stderr, "site %p %p %p\n", site->getLocation(), site->getLocation2(), site->getDestination());
+      sideEffectPatchSitesVec.push_back(*site);
       }
 
    uint8_t *startPC = comp->cg()->getCodeStart();
 
-   return std::make_tuple(classes, classesThatShouldNotBeNewlyExtended, preXMethods, std::vector<TR_VirtualGuardSite>(), serialVGuards, startPC);
+   return std::make_tuple(classes, classesThatShouldNotBeNewlyExtended, preXMethods, sideEffectPatchSitesVec, serialVGuards, startPC);
    }
 
 // Must hold classTableMonitor when calling this method
@@ -303,8 +302,19 @@ bool jaasCHTableCommit(
          }
       }
 
-   //if (!sideEffectPatchSites.empty())
-      //table->commitSideEffectGuards(comp);
+   if (!sideEffectPatchSites.empty())
+      {
+      TR::list<TR_VirtualGuardSite*> *sites = comp->getSideEffectGuardPatchSites();
+      sites->clear();
+      for (auto site : sideEffectPatchSites)
+         {
+         TR_VirtualGuardSite *newSite = new /* (PERSISTENT_NEW)*/ (comp->trHeapMemory()) TR_VirtualGuardSite;
+         newSite->setDestination(site.getDestination() - serverStartPC + startPC);
+         newSite->setLocation(site.getLocation() - serverStartPC + startPC);
+         sites->push_front(newSite);
+         }
+      table->commitSideEffectGuards(comp);
+      }
 
 
    return true;
