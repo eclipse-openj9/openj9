@@ -336,6 +336,41 @@ convertCStringToByteArray(J9VMThread *currentThread, const char *byteArray);
 void
 initializeROMClasses(J9JavaVM *vm);
 
+/* ------------------- visible.c ----------------- */
+
+/**
+ * Check module access from srcModule to destModule.
+ *
+ * The algorithm for validating module access is:
+ * 1) check to see if the source module `reads` the dest module.
+ * 2) check to see if the dest module exports the package (that
+ * dest class belongs to) to the source module.
+ *
+ * For reflective calls, the rules are slightly different as all reflect
+ * reflect accesses implicitly have read access.  Set the
+ *  J9_LOOK_REFLECT_CALL flag in the lookup options for reflective
+ * checks.
+ *
+ * The unnamedModules export all the packages they own and have read access to all modules
+ * they require access to.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] vm the javaVM
+ * @param[in] srcRomClass the accessing class
+ * @param[in] srcModule the module of the src class
+ * @param[in] destRomClass the accessing class
+ * @param[in] destModule the module of the dest class
+ * @param[in] destPackageID packageID of the dest class
+ * @param[in] lookupOptions J9_LOOK* options
+ *
+ * @return 	J9_VISIBILITY_ALLOWED if the access is allowed,
+ * 			J9_VISIBILITY_MODULE_READ_ACCESS_ERROR if module read access error occurred,
+ * 			J9_VISIBILITY_MODULE_PACKAGE_EXPORT_ERROR if module package access error
+ */
+
+IDATA
+checkModuleAccess(J9VMThread *currentThread, J9JavaVM* vm, J9ROMClass* srcRomClass, J9Module* srcModule, J9ROMClass* destRomClass, J9Module* destModule, UDATA destPackageID, UDATA lookupOptions);
+
 /* ------------------- guardedstorage.c ----------------- */
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)

@@ -35,6 +35,7 @@
 #include "ut_j9vm.h"
 #include "j9bcvnls.h"
 #include "j2sever.h"
+#include "vm_internal.h"
 
 #include "VMHelpers.hpp"
 
@@ -1552,7 +1553,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 				 */
 				bool superClassIsPublic = J9_ARE_ALL_BITS_SET(superclass->romClass->modifiers, J9_JAVA_PUBLIC);
 				if ((!superClassIsPublic && (packageID != superclass->packageID))
-				|| (superClassIsPublic && !checkModuleAccess(vmThread, vm, romClass, module, superclass->romClass, superclass->module, superclass->packageID, 0))
+					|| (superClassIsPublic && (J9_VISIBILITY_ALLOWED != checkModuleAccess(vmThread, vm, romClass, module, superclass->romClass, superclass->module, superclass->packageID, 0)))
 				) {
 					Trc_VM_CreateRAMClassFromROMClass_superclassNotVisible(vmThread, superclass, superclass->classLoader, classLoader);
 					setCurrentExceptionForBadClass(vmThread, superclassName, J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR);
@@ -1595,7 +1596,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 						 */
 						bool interfaceIsPublic = J9_ARE_ALL_BITS_SET(interfaceClass->romClass->modifiers, J9_JAVA_PUBLIC);
 						if ((!interfaceIsPublic && (packageID != interfaceClass->packageID))
-						|| (interfaceIsPublic && !checkModuleAccess(vmThread, vm, romClass, module, interfaceClass->romClass, interfaceClass->module, interfaceClass->packageID, 0))
+							|| (interfaceIsPublic && (J9_VISIBILITY_ALLOWED != checkModuleAccess(vmThread, vm, romClass, module, interfaceClass->romClass, interfaceClass->module, interfaceClass->packageID, 0)))
 						) {
 							Trc_VM_CreateRAMClassFromROMClass_interfaceNotVisible(vmThread, interfaceClass, interfaceClass->classLoader, classLoader);
 							setCurrentExceptionForBadClass(vmThread, J9ROMCLASS_CLASSNAME(interfaceClass->romClass), J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR);
