@@ -97,6 +97,8 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
       preXMethods[i] = jaasMethod->getRemoteMirror();
       }
 
+   cleanupNewlyExtendedInfo(comp);
+
    // collect virtual guard info
    TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
    std::vector<VirtualGuardForCHTable> serialVGuards;
