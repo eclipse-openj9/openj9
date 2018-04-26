@@ -99,6 +99,7 @@ package com.ibm.jvm;
  * configuration.
  */
 public class Dump {
+	private static final String SystemRequestPrefix = "z/OS".equalsIgnoreCase(System.getProperty("os.name")) ? "system:dsn=" : "system:file=";
   
 	/**
 	 * Trigger a java dump. A java dump is in a human-readable format, and
@@ -372,7 +373,7 @@ public class Dump {
     	if( fileNamePattern != null ) {
     		// Check no-one has tried to sneak options onto the end.
     		checkForExtraOptions(fileNamePattern);
-    		request = "system:file=" + fileNamePattern; //$NON-NLS-1$
+    		request = SystemRequestPrefix + fileNamePattern; //$NON-NLS-1$
     	} else {
     		// This is equivalent the to SystemDump() call.
     		request = "system"; //$NON-NLS-1$
