@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,9 +74,9 @@ public:
 
    IlGeneratorMethodDetails(const TR::IlGeneratorMethodDetails & other);
 
-   TR::IlGeneratorMethodDetails & operator=(const TR::IlGeneratorMethodDetails & other);
-
    static TR::IlGeneratorMethodDetails & create(TR::IlGeneratorMethodDetails & target, TR_ResolvedMethod *method);
+
+   static TR::IlGeneratorMethodDetails * clone(TR::IlGeneratorMethodDetails & storage, const TR::IlGeneratorMethodDetails & source);
 
    virtual const char * name() const { return "OrdinaryMethod"; }
 

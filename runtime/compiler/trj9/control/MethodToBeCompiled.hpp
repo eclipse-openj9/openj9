@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ struct TR_MethodToBeCompiled
    void initialize(TR::IlGeneratorMethodDetails & details, void *oldStartPC, CompilationPriority p, TR_OptimizationPlan *optimizationPlan);
 
    TR::Monitor *getMonitor() { return _monitor; }
-   TR::IlGeneratorMethodDetails & getMethodDetails(){ return _methodDetails; }
+   TR::IlGeneratorMethodDetails & getMethodDetails(){ return *_methodDetails; }
    bool isDLTCompile()   { return getMethodDetails().isMethodInProgress(); }
    bool isCompiled();
    bool isJNINative();
@@ -62,7 +62,8 @@ struct TR_MethodToBeCompiled
 
 
    TR_MethodToBeCompiled *_next;
-   TR::IlGeneratorMethodDetails _methodDetails;
+   TR::IlGeneratorMethodDetails _methodDetailsStorage;
+   TR::IlGeneratorMethodDetails *_methodDetails;
    void                  *_oldStartPC;
    void                  *_newStartPC;
    TR::Monitor *_monitor;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,6 +70,8 @@ extern "C" void ASM_CALL _patchVirtualGuard(uint8_t*, uint8_t*, uint32_t);
 // These *BinaryTemplate structs describe the shape of the binary relocation records.
 struct TR_RelocationRecordBinaryTemplate
    {
+   uint8_t type(TR_RelocationTarget *reloTarget) { return reloTarget->loadUnsigned8b(&_type); }
+
    uint16_t _size;
    uint8_t _type;
    uint8_t _flags;
@@ -256,12 +258,15 @@ TR_RelocationRecordGroup::applyRelocations(TR_RelocationRuntime *reloRuntime,
 
    while (recordPointer < endOfRecords)
       {
-      TR_RelocationRecord reloRecord(reloTarget, recordPointer, reloRuntime);
-      int32_t rc = handleRelocation(reloRuntime, reloTarget, &reloRecord, reloOrigin);
+      TR_RelocationRecord storage;
+      // Create a specific type of relocation record based on the information
+      // in the binary record pointed to by `recordPointer`
+      TR_RelocationRecord *reloRecord = TR_RelocationRecord::create(&storage, reloRuntime, reloTarget, recordPointer);
+      int32_t rc = handleRelocation(reloRuntime, reloTarget, reloRecord, reloOrigin);
       if (rc != 0)
          return rc;
 
-      recordPointer = reloRecord.nextBinaryRecord(reloTarget);
+      recordPointer = reloRecord->nextBinaryRecord(reloTarget);
       }
 
    return 0;
@@ -293,155 +298,156 @@ TR_RelocationRecordGroup::handleRelocation(TR_RelocationRuntime *reloRuntime,
 #define FLAGS_RELOCATION_FLAG_MASK      ((uint8_t) (FLAGS_RELOCATION_WIDE_OFFSETS | FLAGS_RELOCATION_EIP_OFFSET))
 
 
-void
-TR_RelocationRecord::decode(TR_RelocationTarget *reloTarget)
+TR_RelocationRecord *
+TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_RelocationRecordBinaryTemplate *record)
    {
-   // based on the type of the relocation record, re-initialize this object as a particular variety of TR_RelocationRecord object
-   uint8_t reloType = type(reloTarget);
+   TR_RelocationRecord *reloRecord = NULL;
+   // based on the type of the relocation record, create an object of a particular variety of TR_RelocationRecord object
+   uint8_t reloType = record->type(reloTarget);
    switch (reloType)
       {
       case TR_HelperAddress:
-         new (this) TR_RelocationRecordHelperAddress();
+         reloRecord = new (storage) TR_RelocationRecordHelperAddress(reloRuntime, record);
          break;
       case TR_ConstantPool:
       case TR_ConstantPoolOrderedPair:
-         new (this) TR_RelocationRecordConstantPool();
+         reloRecord = new (storage) TR_RelocationRecordConstantPool(reloRuntime, record);
          break;
       case TR_BodyInfoAddress:
-         new (this) TR_RelocationRecordBodyInfo();
+         reloRecord = new (storage) TR_RelocationRecordBodyInfo(reloRuntime, record);
          break;
       case TR_VerifyRefArrayForAlloc:
-         new (this) TR_RelocationRecordVerifyRefArrayForAlloc();
+         reloRecord = new (storage) TR_RelocationRecordVerifyRefArrayForAlloc(reloRuntime, record);
          break;
       case TR_VerifyClassObjectForAlloc:
-         new (this) TR_RelocationRecordVerifyClassObjectForAlloc();
+         reloRecord = new (storage) TR_RelocationRecordVerifyClassObjectForAlloc(reloRuntime, record);
          break;
       case TR_InlinedStaticMethodWithNopGuard:
-         new (this) TR_RelocationRecordInlinedStaticMethodWithNopGuard();
+         reloRecord = new (storage) TR_RelocationRecordInlinedStaticMethodWithNopGuard(reloRuntime, record);
          break;
       case TR_InlinedSpecialMethodWithNopGuard:
-         new (this) TR_RelocationRecordInlinedSpecialMethodWithNopGuard();
+         reloRecord = new (storage) TR_RelocationRecordInlinedSpecialMethodWithNopGuard(reloRuntime, record);
          break;
       case TR_InlinedVirtualMethodWithNopGuard:
-         new (this) TR_RelocationRecordInlinedVirtualMethodWithNopGuard();
+         reloRecord = new (storage) TR_RelocationRecordInlinedVirtualMethodWithNopGuard(reloRuntime, record);
          break;
       case TR_InlinedVirtualMethod:
-         new (this) TR_RelocationRecordInlinedVirtualMethod();
+         reloRecord = new (storage) TR_RelocationRecordInlinedVirtualMethod(reloRuntime, record);
          break;
       case TR_InlinedInterfaceMethodWithNopGuard:
-         new (this) TR_RelocationRecordInlinedInterfaceMethodWithNopGuard();
+         reloRecord = new (storage) TR_RelocationRecordInlinedInterfaceMethodWithNopGuard(reloRuntime, record);
          break;
       case TR_InlinedInterfaceMethod:
-         new (this) TR_RelocationRecordInlinedInterfaceMethod();
+         reloRecord = new (storage) TR_RelocationRecordInlinedInterfaceMethod(reloRuntime, record);
          break;
       case TR_InlinedHCRMethod:
-         new (this) TR_RelocationRecordInlinedMethod();
+         reloRecord = new (storage) TR_RelocationRecordInlinedMethod(reloRuntime, record);
          break;
       case TR_ProfiledInlinedMethodRelocation:
-         new (this) TR_RelocationRecordProfiledInlinedMethod();
+         reloRecord = new (storage) TR_RelocationRecordProfiledInlinedMethod(reloRuntime, record);
          break;
       case TR_ProfiledClassGuardRelocation:
-         new (this) TR_RelocationRecordProfiledClassGuard();
+         reloRecord = new (storage) TR_RelocationRecordProfiledClassGuard(reloRuntime, record);
          break;
       case TR_ProfiledMethodGuardRelocation:
-         new (this) TR_RelocationRecordProfiledMethodGuard();
+         reloRecord = new (storage) TR_RelocationRecordProfiledMethodGuard(reloRuntime, record);
          break;
       case TR_ValidateClass:
-         new (this) TR_RelocationRecordValidateClass();
+         reloRecord = new (storage) TR_RelocationRecordValidateClass(reloRuntime, record);
          break;
       case TR_ValidateInstanceField:
-         new (this) TR_RelocationRecordValidateInstanceField();
+         reloRecord = new (storage) TR_RelocationRecordValidateInstanceField(reloRuntime, record);
          break;
       case TR_ValidateStaticField:
-         new (this) TR_RelocationRecordValidateStaticField();
+         reloRecord = new (storage) TR_RelocationRecordValidateStaticField(reloRuntime, record);
          break;
       case TR_ValidateArbitraryClass:
-         new (this) TR_RelocationRecordValidateArbitraryClass();
+         reloRecord = new (storage) TR_RelocationRecordValidateArbitraryClass(reloRuntime, record);
          break;
       case TR_RamMethod:
-         new (this) TR_RelocationRecordRamMethod();
+         reloRecord = new (storage) TR_RelocationRecordRamMethod(reloRuntime, record);
          break;
       case TR_CheckMethodEnter:
-         new (this) TR_RelocationRecordMethodEnterCheck();
+         reloRecord = new (storage) TR_RelocationRecordMethodEnterCheck(reloRuntime, record);
          break;
       case TR_CheckMethodExit:
-         new (this) TR_RelocationRecordMethodExitCheck();
+         reloRecord = new (storage) TR_RelocationRecordMethodExitCheck(reloRuntime, record);
          break;
       case TR_AbsoluteHelperAddress:
-         new (this) TR_RelocationRecordAbsoluteHelperAddress();
+         reloRecord = new (storage) TR_RelocationRecordAbsoluteHelperAddress(reloRuntime, record);
          break;
       case TR_RelativeMethodAddress:
       case TR_AbsoluteMethodAddress:
       case TR_AbsoluteMethodAddressOrderedPair:
-         new (this) TR_RelocationRecordMethodAddress();
+         reloRecord = new (storage) TR_RelocationRecordMethodAddress(reloRuntime, record);
          break;
       case TR_DataAddress:
-         new (this) TR_RelocationRecordDataAddress();
+         reloRecord = new (storage) TR_RelocationRecordDataAddress(reloRuntime, record);
          break;
       case TR_StaticRamMethodConst:
-         new (this) TR_RelocationRecordStaticRamMethodConst();
+         reloRecord = new (storage) TR_RelocationRecordStaticRamMethodConst(reloRuntime, record);
          break;
       case TR_VirtualRamMethodConst:
-         new (this) TR_RelocationRecordVirtualRamMethodConst();
+         reloRecord = new (storage) TR_RelocationRecordVirtualRamMethodConst(reloRuntime, record);
          break;
       case TR_SpecialRamMethodConst:
-         new (this) TR_RelocationRecordSpecialRamMethodConst();
+         reloRecord = new (storage) TR_RelocationRecordSpecialRamMethodConst(reloRuntime, record);
          break;
       case TR_JNIStaticTargetAddress:
-         new (this) TR_RelocationRecordDirectJNIStaticMethodCall();
+         reloRecord = new (storage) TR_RelocationRecordDirectJNIStaticMethodCall(reloRuntime, record);
          break;
       case TR_JNIVirtualTargetAddress:
-         new (this) TR_RelocationRecordDirectJNIVirtualMethodCall();
+         reloRecord = new (storage) TR_RelocationRecordDirectJNIVirtualMethodCall(reloRuntime, record);
          break;
       case TR_JNISpecialTargetAddress:
-         new (this) TR_RelocationRecordDirectJNISpecialMethodCall();
+         reloRecord = new (storage) TR_RelocationRecordDirectJNISpecialMethodCall(reloRuntime, record);
          break;
       case TR_ClassAddress:
-         new (this) TR_RelocationRecordClassObject();
+         reloRecord = new (storage) TR_RelocationRecordClassObject(reloRuntime, record);
          break;
       case TR_MethodObject:
-         new (this) TR_RelocationRecordMethodObject();
+         reloRecord = new (storage) TR_RelocationRecordMethodObject(reloRuntime, record);
          break;
       case TR_PicTrampolines:
-         new (this) TR_RelocationRecordPicTrampolines();
+         reloRecord = new (storage) TR_RelocationRecordPicTrampolines(reloRuntime, record);
          break;
       case TR_Trampolines:
-         new (this) TR_RelocationRecordTrampolines();
+         reloRecord = new (storage) TR_RelocationRecordTrampolines(reloRuntime, record);
          break;
       case TR_Thunks:
-         new (this) TR_RelocationRecordThunks();
+         reloRecord = new (storage) TR_RelocationRecordThunks(reloRuntime, record);
          break;
       case TR_GlobalValue:
-         new (this) TR_RelocationRecordGlobalValue();
+         reloRecord = new (storage) TR_RelocationRecordGlobalValue(reloRuntime, record);
          break;
       case TR_BodyInfoAddressLoad:
-         new (this) TR_RelocationRecordBodyInfoLoad();
+         reloRecord = new (storage) TR_RelocationRecordBodyInfoLoad(reloRuntime, record);
          break;
       case TR_ArrayCopyHelper:
-         new (this) TR_RelocationRecordArrayCopyHelper();
+         reloRecord = new (storage) TR_RelocationRecordArrayCopyHelper(reloRuntime, record);
          break;
       case TR_ArrayCopyToc:
-         new (this) TR_RelocationRecordArrayCopyToc();
+         reloRecord = new (storage) TR_RelocationRecordArrayCopyToc(reloRuntime, record);
          break;
       case TR_RamMethodSequence:
       case TR_RamMethodSequenceReg:
-         new (this) TR_RelocationRecordRamSequence();
+         reloRecord = new (storage) TR_RelocationRecordRamSequence(reloRuntime, record);
          break;
       case TR_FixedSequenceAddress:
       case TR_FixedSequenceAddress2:
-         new (this) TR_RelocationRecordWithOffset();
+         reloRecord = new (storage) TR_RelocationRecordWithOffset(reloRuntime, record);
          break;
       case TR_HCR:
-         new (this) TR_RelocationRecordHCR();
+         reloRecord = new (storage) TR_RelocationRecordHCR(reloRuntime, record);
          break;
       case TR_ClassPointer:
-         new (this) TR_RelocationRecordClassPointer();
+         reloRecord = new (storage) TR_RelocationRecordClassPointer(reloRuntime, record);
          break;
       case TR_MethodPointer:
-         new (this) TR_RelocationRecordMethodPointer();
+         reloRecord = new (storage) TR_RelocationRecordMethodPointer(reloRuntime, record);
          break;
       case TR_EmitClass:
-         new (this) TR_RelocationRecordEmitClass();
+         reloRecord = new (storage) TR_RelocationRecordEmitClass(reloRuntime, record);
          break;
       default:
          // TODO: error condition
@@ -449,6 +455,7 @@ TR_RelocationRecord::decode(TR_RelocationTarget *reloTarget)
          TR_ASSERT(0, "Unexpected relocation record type found");
          exit(0);
       }
+      return reloRecord;
    }
 
 void
@@ -507,7 +514,7 @@ TR_RelocationRecord::setType(TR_RelocationTarget *reloTarget, TR_RelocationRecor
 TR_RelocationRecordType
 TR_RelocationRecord::type(TR_RelocationTarget *reloTarget)
    {
-   return (TR_RelocationRecordType)(reloTarget->loadUnsigned8b((uint8_t *) &_record->_type));
+   return (TR_RelocationRecordType)_record->type(reloTarget);
    }
 
 
