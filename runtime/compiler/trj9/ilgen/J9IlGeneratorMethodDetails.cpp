@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,47 +35,35 @@
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "trj9/env/VMJ9.h"
 
-namespace TR
-{
-
-IlGeneratorMethodDetails & IlGeneratorMethodDetails::operator=(const TR::IlGeneratorMethodDetails & other)
-   {
-   return self()->J9::IlGeneratorMethodDetailsConnector::operator=(other);
-   }
-
-}
-
 
 
 namespace J9
 {
 
-TR::IlGeneratorMethodDetails &
-IlGeneratorMethodDetails::operator=(const TR::IlGeneratorMethodDetails & other)
+TR::IlGeneratorMethodDetails *
+IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR::IlGeneratorMethodDetails & other)
    {
-   // The purpose of this function is to transmute the receiver object (*this) to make it identical to "other"
-   // Placement new is used to get the vft updated, and constructors on each of the classes identified here
-   //  take care of copying the appropriate data fields. The if nest below covers every concrete subclass of
-   //  IlGeneratorMethodDetails.  If other is not one of these classes, then it will assert.
+   // The if nest below covers every concrete subclass of IlGeneratorMethodDetails.
+   // If other is not one of these classes, then it will assert.
 
    if (other.isOrdinaryMethod())
-      return * new (self()) TR::IlGeneratorMethodDetails(static_cast<const TR::IlGeneratorMethodDetails &>(other));
+      return new (&storage) TR::IlGeneratorMethodDetails(static_cast<const TR::IlGeneratorMethodDetails &>(other));
    else if (other.isDumpMethod())
-      return * new (self()) DumpMethodDetails(static_cast<const DumpMethodDetails &>(other));
+      return new (&storage) DumpMethodDetails(static_cast<const DumpMethodDetails &>(other));
    else if (other.isNewInstanceThunk())
-      return * new (self()) NewInstanceThunkDetails(static_cast<const NewInstanceThunkDetails &>(other));
+      return new (&storage) NewInstanceThunkDetails(static_cast<const NewInstanceThunkDetails &>(other));
    else if (other.isMethodInProgress())
-      return * new (self()) MethodInProgressDetails(static_cast<const MethodInProgressDetails &>(other));
+      return new (&storage) MethodInProgressDetails(static_cast<const MethodInProgressDetails &>(other));
    else if (other.isMethodHandleThunk())
       {
       if (static_cast<const MethodHandleThunkDetails &>(other).isShareable())
-         return * new (self()) ShareableInvokeExactThunkDetails(static_cast<const ShareableInvokeExactThunkDetails &>(other));
+         return new (&storage) ShareableInvokeExactThunkDetails(static_cast<const ShareableInvokeExactThunkDetails &>(other));
       else if (static_cast<const MethodHandleThunkDetails &>(other).isCustom())
-         return * new (self()) CustomInvokeExactThunkDetails(static_cast<const CustomInvokeExactThunkDetails &>(other));
+         return new (&storage) CustomInvokeExactThunkDetails(static_cast<const CustomInvokeExactThunkDetails &>(other));
       }
 
    TR_ASSERT(0, "Unexpected IlGeneratorMethodDetails object\n");
-   return *(self());
+   return NULL; // error case
    }
 
 
