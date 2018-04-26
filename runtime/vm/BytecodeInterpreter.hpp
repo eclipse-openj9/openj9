@@ -5935,6 +5935,34 @@ done:
 		return returnSlotsImpl(REGISTER_ARGS, 0);
 	}
 
+	VMINLINE VM_BytecodeAction
+	returnC(REGISTER_ARGS_LIST)
+	{
+		*(I_32*)_sp = (U_16)*(I_32*)_sp;
+		return returnSlots(REGISTER_ARGS, 1);
+	}
+
+	VMINLINE VM_BytecodeAction
+	returnS(REGISTER_ARGS_LIST)
+	{
+		*(I_32*)_sp = (I_16)*(I_32*)_sp;
+		return returnSlots(REGISTER_ARGS, 1);
+	}
+
+	VMINLINE VM_BytecodeAction
+	returnB(REGISTER_ARGS_LIST)
+	{
+		*(I_32*)_sp = (I_8)*(I_32*)_sp;
+		return returnSlots(REGISTER_ARGS, 1);
+	}
+
+	VMINLINE VM_BytecodeAction
+	returnZ(REGISTER_ARGS_LIST)
+	{
+		*(U_32*)_sp = 1 & *(U_32*)_sp;
+		return returnSlots(REGISTER_ARGS, 1);
+	}
+
 	/* ... => ..., value */
 	VMINLINE VM_BytecodeAction
 	ldc(REGISTER_ARGS_LIST, UDATA parmSize)
@@ -7483,23 +7511,46 @@ done:
 		sig = J9ROMMETHOD_SIGNATURE(romMethod);
 		sigLength = sig->length;
 		sigData = sig->data;
-		switch(sigData[sigLength - 1]) {
-		case 'V': {
-			/* Is this a constructor? */
-			J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
-			if ((strlen("<init>") == name->length) && ('<' == name->data[0])) {
-				isConstructor = TRUE;
-				VM_AtomicSupport::writeBarrier();
-			}
-			break;
-		}
-		case 'J':
-		case 'D':
-			returnSlots = ('[' == sigData[sigLength - 2]) ? 1 : 2;
-			break;
-		default:
+		/* are we returning an array? */
+		if ('[' == sigData[sigLength - 2]) {
 			returnSlots = 1;
-			break;
+		} else {
+			switch(sigData[sigLength - 1]) {
+			case 'V': {
+				/* Is this a constructor? */
+				J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
+				if ((strlen("<init>") == name->length) && ('<' == name->data[0])) {
+					isConstructor = TRUE;
+					VM_AtomicSupport::writeBarrier();
+				}
+				break;
+			}
+			case 'J':
+			case 'D':
+				returnSlots = 2;
+				break;
+
+			/* For byte, char, short, and bool returns we need to perform appropriate truncation */
+			case 'B':
+				returnSlots = 1;
+				*(I_32*)_sp = (I_8)*(I_32*)_sp;
+				break;
+			case 'C':
+				returnSlots = 1;
+				*(I_32*)_sp = (U_16)*(I_32*)_sp;
+				break;
+			case 'S':
+				returnSlots = 1;
+				*(I_32*)_sp = (I_16)*(I_32*)_sp;
+				break;
+			case 'Z':
+				returnSlots = 1;
+				*(U_32*)_sp = 1 & *(U_32*)_sp;
+				break;
+			default:
+				returnSlots = 1;
+				break;
+			}
 		}
 		if (J9ROMMETHOD_IS_OBJECT_CONSTRUCTOR(romMethod)) {
 			j9object_t finalizeObject = ((j9object_t*)bp)[1];
@@ -8222,10 +8273,10 @@ public:
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
 		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
-		JUMP_TABLE_ENTRY(JBunimplemented),
+		JUMP_TABLE_ENTRY(JBreturnC),
+		JUMP_TABLE_ENTRY(JBreturnS),
+		JUMP_TABLE_ENTRY(JBreturnB),
+		JUMP_TABLE_ENTRY(JBreturnZ),
 		JUMP_TABLE_ENTRY(JBretFromNative0),
 		JUMP_TABLE_ENTRY(JBretFromNative1),
 		JUMP_TABLE_ENTRY(JBretFromNativeF),
@@ -9698,6 +9749,18 @@ executeBytecodeFromLocal:
 		JUMP_TARGET(JBinvokespecialsplit):
 			SINGLE_STEP();
 			PERFORM_ACTION(invokespecialsplit(REGISTER_ARGS));
+		JUMP_TARGET(JBreturnC):
+			SINGLE_STEP();
+			PERFORM_ACTION(returnC(REGISTER_ARGS));
+		JUMP_TARGET(JBreturnS):
+			SINGLE_STEP();
+			PERFORM_ACTION(returnS(REGISTER_ARGS));
+		JUMP_TARGET(JBreturnB):
+			SINGLE_STEP();
+			PERFORM_ACTION(returnB(REGISTER_ARGS));
+		JUMP_TARGET(JBreturnZ):
+			SINGLE_STEP();
+			PERFORM_ACTION(returnZ(REGISTER_ARGS));
 		JUMP_TARGET(JBretFromNative0):
 			/* No single step for this bytecode */
 			PERFORM_ACTION(retFromNative0(REGISTER_ARGS));

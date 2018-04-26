@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -631,6 +631,10 @@ readdWide:
 				case JBreturn0:
 				case JBreturn1:
 				case JBreturn2:
+				case JBreturnB:
+				case JBreturnC:
+				case JBreturnS:
+				case JBreturnZ:
 				case JBsyncReturn0:
 				case JBsyncReturn1:
 				case JBsyncReturn2: {
