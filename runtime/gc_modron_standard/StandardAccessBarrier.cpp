@@ -279,18 +279,12 @@ MM_StandardAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
 		// acquire access and return a direct pointer
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
 		J9IndexableObject *arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
 		data = (void *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
 		if(NULL != isCopy) {
 			*isCopy = JNI_FALSE;
 		}
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		VM_VMAccess::inlineExitVMToJNI(vmThread);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	}
 	return data;
 }
@@ -330,10 +324,6 @@ MM_StandardAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-	
 		/*
 		 * Objects can not be moved if critical section is active
 		 * This trace point will be generated if object has been moved or passed value of elems is corrupted
@@ -345,10 +335,6 @@ MM_StandardAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 		}
 
 		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
-
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		VM_VMAccess::inlineExitVMToJNI(vmThread);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	}
 }
 
@@ -413,12 +399,6 @@ MM_StandardAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 		vmThread->jniCriticalCopyCount += 1;
 	} else {
 		// acquire access and return a direct pointer
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		if (!hasVMAccess) {
-			VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-			hasVMAccess = true;
-		}
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
 		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
 		J9IndexableObject *valueObject = (J9IndexableObject*)J9VMJAVALANGSTRING_VALUE(vmThread, stringObject);
@@ -469,12 +449,6 @@ MM_StandardAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring
 		 * because of complexity of required code
 		 */
 		// direct pointer, just drop access
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		if (!hasVMAccess) {
-			VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-			hasVMAccess = true;		
-		}
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
 	}
 
