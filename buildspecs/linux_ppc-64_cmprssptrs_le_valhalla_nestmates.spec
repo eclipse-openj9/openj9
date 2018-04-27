@@ -84,7 +84,7 @@
 		<property name="jitTestingOptLevel" value="optlevel=warm"/>
 		<property name="localRootPath" value="$(J9_UNIX_ROOT)"/>
 		<property name="longLimitCmd" value=""/>
-		<property name="main_shortname" value="xl64"/>
+		<property name="main_shortname" value="xl64_valhalla_nestmates"/>
 		<property name="os.lineDelimiter" value="unix"/>
 		<property name="platform_arch" value="ppc64le"/>
 		<property name="svn_stream" value=""/>
@@ -123,11 +123,11 @@
 		<flag id="build_autobuild" value="true"/>
 		<flag id="build_dropToHursley" value="true"/>
 		<flag id="build_dropToToronto" value="true"/>
-		<flag id="build_j2se" value="true"/>
+		<flag id="build_j2se" value="false"/>
 		<flag id="build_java6proxy" value="true"/>
-		<flag id="build_java8" value="true"/>
-		<flag id="build_java9" value="true"/>
-		<flag id="build_product" value="true"/>
+		<flag id="build_java8" value="false"/>
+		<flag id="build_java9" value="false"/>
+		<flag id="build_product" value="false"/>
 		<flag id="build_stage_toronto_lab" value="true"/>
 		<flag id="env_hasFPU" value="true"/>
 		<flag id="env_littleEndian" value="true"/>
@@ -145,7 +145,7 @@
 		<flag id="graph_enableTesting_Java8" value="true"/>
 		<flag id="graph_j2seSanity" value="true"/>
 		<flag id="graph_jgrinder" value="true"/>
-		<flag id="graph_mirrorToPoughkeepsie" value="true"/>
+		<flag id="graph_mirrorToPoughkeepsie" value="false"/>
 		<flag id="graph_plumhall" value="true"/>
 		<flag id="graph_useJTCTestingPlaylist" value="true"/>
 		<flag id="graph_verification" value="true"/>
