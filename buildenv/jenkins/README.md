@@ -299,11 +299,8 @@ You can also request a Pull Request build from the extensions repos or openj9-om
     - Description:
         - Compile and Test Sanity against new OMR content
         - Triggers
-            - `Build-linux_390-64_cmprssptrs`
-            - `Build-linux_ppc-64_cmprssptrs_le`
-            - `Test-Sanity-linux_390-64_cmprssptrs`
-            - `Test-Sanity-linux_ppc-64_cmprssptrs_le`
-            - `Promote-OpenJ9-OMR-master-to-openj9`
+            - Build and Sanity across all Specs and JDK versions 8,10
+            - `Promote-OpenJ9-OMR-master-to-openj9` once all testing is passed
     - Trigger: Triggered by `Mirror-OMR-to-OpenJ9-OMR`
 
 #### Pull Requests
