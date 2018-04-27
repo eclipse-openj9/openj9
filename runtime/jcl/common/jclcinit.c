@@ -134,15 +134,15 @@ jint computeFullVersionString(J9JavaVM* vm)
 
 #ifdef J9VM_ENV_DATA64
 	#ifdef J9VM_GC_COMPRESSED_POINTERS
-		#define MEM_INFO "-64 Compressed References "
+		#define MEM_INFO "-64-Bit Compressed References "
 	#else
-		#define MEM_INFO "-64 "
+		#define MEM_INFO "-64-Bit "
 	#endif
 #else
 	#if defined(J9ZOS390) || defined(S390)
-		#define MEM_INFO "-31 "
+		#define MEM_INFO "-31-Bit "
 	#else
-		#define MEM_INFO "-32 "
+		#define MEM_INFO "-32-Bit "
 	#endif
 #endif
 

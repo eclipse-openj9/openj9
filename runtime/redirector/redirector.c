@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -703,6 +703,14 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 			fprintf(stdout, "by option %s ", optionUsed);
 		}
 		fprintf(stdout, "does not exist.\n");
+
+		/* direct user to OpenJ9 build configurations to properly generate the requested build. */
+		if (DEFAULT_DIR == basePointer) {
+			fprintf(stdout, "Compile with configuration option --with-noncompressedrefs to generate a non-compressedrefs build.\n");
+		}
+		if (COMPRESSEDREFS_DIR == basePointer) {
+			fprintf(stdout, "Compile without configuration option --with-noncompressedrefs to generate a compressedrefs build.\n");
+		}
 		exit(-1);
 	}
 }

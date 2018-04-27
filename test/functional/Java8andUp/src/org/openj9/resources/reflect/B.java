@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2018 Felipe Pontes
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,23 +19,10 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package org.openj9.resources.reflect;
 
-SDK_VERSION = '10'
-SPEC = 'aix_ppc-64_cmprssptrs'
+public class B {
 
-timeout(time: 10, unit: 'HOURS') {
-    node('master') {
-        timestamps {
-            checkout scm
-            variableFile = load 'buildenv/jenkins/common/variables-functions'
-            variableFile.set_job_variables('build')
-            buildfile = load 'buildenv/jenkins/common/build'
-            cleanWs()
-        }
-    }
+	public int x;
 
-    node("${NODE}") {
-
-        buildfile.build_all()
-    }
 }
