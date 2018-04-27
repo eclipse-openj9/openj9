@@ -8,6 +8,6 @@
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.ibm.j9ddr.tools.PointerGenerator"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-o &quot;${workspace_loc:DDR_VM}/src&quot; -p com.ibm.j9ddr.vm29.pointer.generated -f &quot;${workspace_loc:DDR_Artifacts}/supersets/29&quot; -v 29 -s &quot;superset.ibuild.dat&quot;"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-o &quot;${workspace_loc:DDR_VM}/src&quot; -p com.ibm.j9ddr.vm29.pointer.generated -f &quot;${workspace_loc:DDR_Artifacts}/supersets/29&quot; -v 29 -s &quot;superset.ibuild.dat&quot; -l true"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="DDR_VM"/>
 </launchConfiguration>
