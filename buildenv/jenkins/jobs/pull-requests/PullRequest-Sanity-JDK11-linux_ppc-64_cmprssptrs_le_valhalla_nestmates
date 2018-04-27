@@ -19,23 +19,34 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
+// The SDK version and repository must be updated once the openj9-openjdk-jdk11
+// is available 
 SDK_VERSION = '10'
-SPEC = 'aix_ppc-64_cmprssptrs'
+SPEC = 'linux_ppc-64_cmprssptrs_le_valhalla_nestmates'
+TEST_TARGET = '_sanity'
 
 timeout(time: 10, unit: 'HOURS') {
     node('master') {
-        timestamps {
-            checkout scm
-            variableFile = load 'buildenv/jenkins/common/variables-functions'
-            variableFile.set_job_variables('build')
-            buildfile = load 'buildenv/jenkins/common/build'
-            cleanWs()
-        }
+        checkout scm
+        variableFile = load 'buildenv/jenkins/common/variables-functions'
+        variableFile.set_job_variables('pullRequest')
+        cleanWs()
     }
 
     node("${NODE}") {
+        checkout scm
+        buildfile = load 'buildenv/jenkins/common/build'
+        testfile = load 'buildenv/jenkins/common/test'
 
-        buildfile.build_all()
+        // Build
+        buildfile.build_pr()
+
+        // Test
+        archive_test = [:]
+        archive_test['Archive'] = { buildfile.archive() }
+        archive_test['Test'] = { testfile.test_all() }
+        parallel archive_test
+        
+        buildfile.git_clean()
     }
 }

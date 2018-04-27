@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -404,10 +403,8 @@ MM_RealtimeAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 		// acquire access and return a direct pointer
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-	  	vmThread->jniCriticalDirectCount += 1;
-#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
-		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
 		data = (void *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
 		if(NULL != isCopy) {
 			*isCopy = JNI_FALSE;
@@ -472,11 +469,10 @@ MM_RealtimeAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 			Trc_MM_JNIReleasePrimitiveArrayCritical_invalid(vmThread, arrayObject, elems, data);
 		}
 
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-	  	vmThread->jniCriticalDirectCount -= 1;
-		VM_VMAccess::inlineExitVMToJNI(vmThread);
-#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
 		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
+
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		VM_VMAccess::inlineExitVMToJNI(vmThread);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	}
 }
@@ -549,12 +545,12 @@ MM_RealtimeAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 	} else {
 		// acquire access and return a direct pointer
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-	  	vmThread->jniCriticalDirectCount += 1;
-		hasVMAccess = true;
-#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
-		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
+		if (!hasVMAccess) {
+			VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+			hasVMAccess = true;
+		}
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
 		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
 		J9IndexableObject *valueObject = (J9IndexableObject*)J9VMJAVALANGSTRING_VALUE(vmThread, stringObject);
 
@@ -606,12 +602,12 @@ MM_RealtimeAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring
 	} else {
 		// direct pointer, just drop access
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-	  	vmThread->jniCriticalDirectCount -= 1;
-		hasVMAccess = true;
-#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
-		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
+		if (!hasVMAccess) {
+			VM_VMAccess::inlineEnterVMFromJNI(vmThread);
+			hasVMAccess = true;
+		}
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
 	}
 
 	if (hasVMAccess) {

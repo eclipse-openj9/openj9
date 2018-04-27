@@ -4030,13 +4030,13 @@ done:
 		return rc;
 	}
 
-	/* com.ibm.oti.vm.VM: public static final native void initializeClassLoader(ClassLoader classLoader, boolean bootLoader, boolean parallelCapable); */
+	/* com.ibm.oti.vm.VM: public static final native void initializeClassLoader(ClassLoader classLoader, int loaderType, boolean parallelCapable); */
 	VMINLINE VM_BytecodeAction
 	inlVMInitializeClassLoader(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		I_32 parallelCapable = *(I_32*)_sp;
-		I_32 bootLoader = *(I_32*)(_sp + 1);
+		I_32 loaderType = *(I_32*)(_sp + 1);
 		j9object_t classLoaderObject = *(j9object_t*)(_sp + 2);
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 		if (NULL != J9VMJAVALANGCLASSLOADER_VMREF(_currentThread, classLoaderObject)) {
@@ -4047,8 +4047,8 @@ internalError:
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 			goto done;
 		}
-		/* if called with bootLoader, assign the system one to this instance */
-		if (bootLoader) {
+		if (J9_CLASSLOADER_TYPE_BOOT == loaderType) {
+			/* if called with bootLoader, assign the system one to this instance */
 			J9ClassLoader *classLoaderStruct = _vm->systemClassLoader;
 			j9object_t loaderObject = J9CLASSLOADER_CLASSLOADEROBJECT(_currentThread, classLoaderStruct);
 			if (NULL != loaderObject) {
@@ -4076,6 +4076,9 @@ internalError:
 			if (NULL == result) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 				goto done;
+			}
+			if (J9_CLASSLOADER_TYPE_PLATFORM == loaderType) {
+				_vm->platformClassLoader = result;
 			}
 		}
 		restoreInternalNativeStackFrame(REGISTER_ARGS);

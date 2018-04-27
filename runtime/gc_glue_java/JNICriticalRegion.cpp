@@ -36,6 +36,10 @@
 void
 MM_JNICriticalRegion::reacquireAccess(J9VMThread* vmThread, UDATA accessMask)
 {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	// Current thread must have entered the VM before acquiring exclusive
+	Assert_MM_false(vmThread->inNative);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_DEBUG_VM_ACCESS)) {
 		Assert_MM_true(J9_VM_FUNCTION(vmThread, currentVMThread)(vmThread->javaVM) == vmThread);
 	}
@@ -73,6 +77,10 @@ MM_JNICriticalRegion::reacquireAccess(J9VMThread* vmThread, UDATA accessMask)
 void
 MM_JNICriticalRegion::releaseAccess(J9VMThread* vmThread, UDATA* accessMask)
 {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	// Current thread must have entered the VM before acquiring exclusive
+	Assert_MM_false(vmThread->inNative);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	if (J9_ARE_ANY_BITS_SET(vmThread->publicFlags, J9_PUBLIC_FLAGS_DEBUG_VM_ACCESS)) {
 		Assert_MM_true(J9_VM_FUNCTION(vmThread, currentVMThread)(vmThread->javaVM) == vmThread);
 	}

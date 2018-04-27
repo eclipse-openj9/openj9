@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ TR_MethodToBeCompiled *TR_MethodToBeCompiled::allocate(J9JITConfig *jitConfig)
 
 void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, void *oldStartPC, CompilationPriority p, TR_OptimizationPlan *optimizationPlan)
    {
-   _methodDetails = details;
+   _methodDetails = TR::IlGeneratorMethodDetails::clone(_methodDetailsStorage, details);
    _optimizationPlan = optimizationPlan;
    _next = NULL;
    _oldStartPC = oldStartPC;
