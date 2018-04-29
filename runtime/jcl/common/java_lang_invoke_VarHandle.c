@@ -147,7 +147,7 @@ Java_java_lang_invoke_FieldVarHandle_unreflectField(JNIEnv *env, jobject handle,
 
 	J9VMJAVALANGINVOKEVARHANDLE_SET_MODIFIERS(vmThread, J9_JNI_UNWRAP_REFERENCE(handle), fieldID->field->modifiers);
 
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 	return fieldOffset;
 }
 

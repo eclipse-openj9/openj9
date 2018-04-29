@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ Java_com_ibm_jit_JITHelpers_javaLangClassJ9ClassOffset(JNIEnv *env, jclass ignor
 
 	vmThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	offset = (jint) J9VMJAVALANGCLASS_VMREF_OFFSET(vmThread);
-	vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 	return offset;
 }
@@ -252,7 +252,7 @@ Java_com_ibm_jit_JITHelpers_getJ9ClassFromClass64(JNIEnv *env, jobject rcv, jcla
 
 	vmThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9_JNI_UNWRAP_REFERENCE(c));
-	vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
 	return (jlong)(UDATA)clazz;
 }
 
@@ -268,7 +268,7 @@ Java_com_ibm_jit_JITHelpers_getClassFromJ9Class64(JNIEnv *env, jobject rcv, jlon
 	if (NULL == classRef) {
 		vmfns->setNativeOutOfMemoryError(vmThread, 0, 0);
 	}
-	vmfns->internalReleaseVMAccess(vmThread);
+	vmfns->internalExitVMToJNI(vmThread);
 	return classRef;
 }
 
@@ -358,7 +358,7 @@ Java_com_ibm_jit_JITHelpers_getJ9ClassFromClass32(JNIEnv *env, jobject rcv, jcla
 
 	vmThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9_JNI_UNWRAP_REFERENCE(c));
-	vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
 	return (jint)(UDATA)clazz;
 }
 
@@ -374,7 +374,7 @@ Java_com_ibm_jit_JITHelpers_getClassFromJ9Class32(JNIEnv *env, jobject rcv, jint
 	if (NULL == classRef) {
 		vmfns->setNativeOutOfMemoryError(vmThread, 0, 0);
 	}
-	vmfns->internalReleaseVMAccess(vmThread);
+	vmfns->internalExitVMToJNI(vmThread);
 	return classRef;
 }
 

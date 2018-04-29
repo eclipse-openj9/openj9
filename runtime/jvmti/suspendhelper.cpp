@@ -45,7 +45,7 @@ suspendThread(J9VMThread *currentThread, jthread thread, UDATA allowNull, UDATA 
 				if (currentThread == targetThread) {
 					*currentThreadSuspended = TRUE;
 				} else {
-					currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+					currentThread->javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 					omrthread_monitor_enter(targetThread->publicFlagsMutex);
 					VM_VMAccess::setHaltFlagForVMAccessRelease(targetThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
 					if (VM_VMAccess::mustWaitForVMAccessRelease(targetThread)) {

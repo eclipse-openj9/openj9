@@ -69,7 +69,7 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	isContiguousClassBytes = J9ISCONTIGUOUSARRAY(vm, *(J9IndexableObject **)classRep);
 	if (!isContiguousClassBytes) {
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 		/* Make a "flat" copy of classRep */
 		if (length < 0) {
 			throwNewIndexOutOfBoundsException(env, NULL);
@@ -209,7 +209,7 @@ done:
 			
 	result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	if ((U_8*)utf8NameStackBuffer != utf8Name) {
 		j9mem_free_memory(utf8Name);

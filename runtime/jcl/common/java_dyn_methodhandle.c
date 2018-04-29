@@ -205,7 +205,7 @@ Java_java_lang_invoke_MethodHandle_requestCustomThunkFromJit(JNIEnv* env, jobjec
 		J9_JNI_UNWRAP_REFERENCE(handle), 
 		J9_JNI_UNWRAP_REFERENCE(thunk), 
 		J9_METHOD_HANDLE_COMPILE_CUSTOM);
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 }
 
 jclass JNICALL
@@ -312,7 +312,7 @@ Java_java_lang_invoke_PrimitiveHandle_lookupMethod(JNIEnv *env, jobject handle, 
 	}
 
 _cleanup:
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	if (signatureUTF8 != (J9UTF8*)signatureUTF8Buffer) {
 		j9mem_free_memory(signatureUTF8);
@@ -631,7 +631,7 @@ Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromField(JNIEnv *
 	J9VMJAVALANGINVOKEPRIMITIVEHANDLE_SET_RAWMODIFIERS(vmThread, J9_JNI_UNWRAP_REFERENCE(handle), fieldID->field->modifiers);
 	result = JNI_TRUE;
 
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 	return result;
 }
 
@@ -693,7 +693,7 @@ Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromMethod(JNIEnv 
 	result = JNI_TRUE;
 
 _cleanup:
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	return result;
 }
@@ -719,7 +719,7 @@ Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromConstructor(JN
 
 	result = JNI_TRUE;
 
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 	return result;
 }
 
@@ -761,7 +761,7 @@ Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromSpecialHandle(
 	}
 
 _done:
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 	return result;
 }
 
@@ -783,7 +783,7 @@ Java_java_lang_invoke_MethodHandles_00024Lookup_setAccessClassForSecuritCheck(JN
 		toInstall = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9_JNI_UNWRAP_REFERENCE(accessClass));
 	}
 	vmThread->methodHandlesLookupAccessClass = toInstall;
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 }
 
 /* Return the field offset of the 'vmRef' field in j.l.Class.
@@ -843,7 +843,7 @@ Java_java_lang_invoke_MutableCallSite_freeGlobalRef(JNIEnv *env, jclass mutableC
 		vmFuncs->internalEnterVMFromJNI(vmThread);
 		globalRef = (jobject)((UDATA)J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9_JNI_UNWRAP_REFERENCE(mutableCallSite))->ramStatics + ((UDATA)bypassOffset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
 		vmFuncs->j9jni_deleteGlobalRef(env, globalRef, FALSE);
-		vmFuncs->internalReleaseVMAccess(vmThread);
+		vmFuncs->internalExitVMToJNI(vmThread);
 	}
 	return;
 }
@@ -1051,6 +1051,6 @@ clearNonZAAPEligibleBit(JNIEnv *env, jclass nativeClass, const JNINativeMethod *
 		count -= 1;
 		nativeMethod +=1;
 	}
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 }
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */

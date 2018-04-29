@@ -139,7 +139,7 @@ JVM_LatestUserDefinedLoader_Impl(JNIEnv *env)
 	vm->walkStackFrames(vmThread, &walkState);
 
 	result = vmFuncs->j9jni_createLocalRef(env, walkState.userData1);
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	Trc_SunVMI_LatestUserDefinedLoader_Exit(env, result);
 
@@ -296,7 +296,7 @@ JVM_GetCallerClass_Impl(JNIEnv *env, jint depth)
 		result = vmFuncs->j9jni_createLocalRef(env, walkState.userData2);
 	}
 
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	Trc_SunVMI_GetCallerClass_Exit(env, result);
 
@@ -324,7 +324,7 @@ JVM_NewInstanceFromConstructor_Impl(JNIEnv * env, jobject c, jobjectArray args)
 	methodID = vm->reflectFunctions.idFromConstructorObject(vmThread, J9_JNI_UNWRAP_REFERENCE(c));
 	classObj = J9VM_J9CLASS_TO_HEAPCLASS(J9_CURRENT_CLASS(J9_CLASS_FROM_METHOD(methodID->method)));
 	classRef = vmFuncs->j9jni_createLocalRef(env, classObj);
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	obj = (*env)->AllocObject(env, classRef);
 	if (obj) {
@@ -387,7 +387,7 @@ JVM_GetClassAccessFlags_Impl(JNIEnv * env, jclass clazzRef)
 			modifiers = romClass->modifiers & 0xFFFF;
 		}
 	}	
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	Trc_SunVMI_GetClassAccessFlags_Exit(env, modifiers);
 
@@ -493,7 +493,7 @@ JVM_GetClassContext_Impl(JNIEnv *env)
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 	vm->walkStackFrames(vmThread, &walkState);
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	classCtx = (*env)->NewObjectArray(env, (jsize)(UDATA) walkState.userData1, VM.jlClass, 0);
 	if (classCtx) {
@@ -503,7 +503,7 @@ JVM_GetClassContext_Impl(JNIEnv *env)
 		vmFuncs->internalEnterVMFromJNI(vmThread);
 		walkState.userData2 = *((j9object_t*) classCtx);
 		vm->walkStackFrames(vmThread, &walkState);
-		vmFuncs->internalReleaseVMAccess(vmThread);
+		vmFuncs->internalExitVMToJNI(vmThread);
 	}
 
 	Trc_SunVMI_GetClassContext_Exit(env, classCtx);
@@ -539,7 +539,7 @@ JVM_GCNoCompact_Impl(void)
 
 	VM.javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 	VM.javaVM->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_NOT_AGGRESSIVE);
-	VM.javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	VM.javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	Trc_SunVMI_GCNoCompact_Exit(currentThread);
 }
@@ -624,7 +624,7 @@ JVM_GC_Impl(void)
 
 	VM.javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 	VM.javaVM->memoryManagerFunctions->j9gc_modron_global_collect(currentThread);
-	VM.javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	VM.javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	Trc_SunVMI_GC_Exit(currentThread);
 }
@@ -713,7 +713,7 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 		VM.monitorExit(vm->classTableMutex);
 	}
 
-	funcs->internalReleaseVMAccess(vmThread);
+	funcs->internalExitVMToJNI(vmThread);
 
 	/* push local frame with room for the 3 elements: jlsClass, result, packageStringRef */
 	if (NULL != packageIDList) {
@@ -743,7 +743,7 @@ JVM_GetSystemPackages_Impl(JNIEnv* env)
 						if (packageString) {
 							packageStringRef = funcs->j9jni_createLocalRef(env, packageString);
 						}
-						funcs->internalReleaseVMAccess(vmThread);
+						funcs->internalExitVMToJNI(vmThread);
 
 						if (packageStringRef) {
 							(*env)->SetObjectArrayElement(env, result, (jsize) i, packageStringRef);
@@ -876,7 +876,7 @@ JVM_GetSystemPackage_Impl(JNIEnv* env, jstring pkgName)
 	}
 
 done:
-	funcs->internalReleaseVMAccess(vmThread);
+	funcs->internalExitVMToJNI(vmThread);
 
 	(*env)->ReleaseStringUTFChars(env, pkgName, utfPkgName);
 
@@ -945,7 +945,7 @@ JVM_AllocateNewArray_Impl(JNIEnv *env, jclass caller, jclass current, jint lengt
 		currentClass = (J9ArrayClass *)J9VM_J9CLASS_FROM_JCLASS(currentThread, current);
 		elementType = currentThread->javaVM->internalVMFunctions->j9jni_createLocalRef(
 			env, J9VM_J9CLASS_TO_HEAPCLASS(currentClass->componentType));
-		currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		currentThread->javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 		result = (*env)->NewObjectArray(env, length, elementType, 0);
 		(*env)->DeleteLocalRef(env, elementType);
@@ -989,7 +989,7 @@ JVM_GetClassLoader_Impl(JNIEnv *env, jobject obj)
 
 	cloader = vmFuncs->j9jni_createLocalRef(env, j9ClassLoader);
 
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	Trc_SunVMI_GetClassLoader_Exit(env, cloader);
 
@@ -1073,7 +1073,7 @@ internalFindClassFromClassLoader(JNIEnv* env, char* className, jboolean init, jo
 		if (NULL == loader) {
 			loader = vmFuncs->internalAllocateClassLoader(vm, J9_JNI_UNWRAP_REFERENCE(classLoader));
 			if (NULL == loader) {
-				vmFuncs->internalReleaseVMAccess((J9VMThread *)env);
+				vmFuncs->internalExitVMToJNI((J9VMThread *)env);
 				if (throwError == JNI_FALSE) {
 					(*env)->ExceptionClear(env);
 				}
@@ -1110,7 +1110,7 @@ internalFindClassFromClassLoader(JNIEnv* env, char* className, jboolean init, jo
 		classRef = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 	}
 
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	if (initializeSent == TRUE) {
 

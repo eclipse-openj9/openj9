@@ -180,7 +180,7 @@ jvmtiGetLoadedClasses(jvmtiEnv* env,
 		omrthread_monitor_exit(vm->classTableMutex);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetLoadedClasses);
@@ -264,7 +264,7 @@ jvmtiGetClassLoaderClasses(jvmtiEnv* env,
 		omrthread_monitor_exit(vm->classTableMutex);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetClassLoaderClasses);
@@ -379,7 +379,7 @@ jvmtiGetClassSignature(jvmtiEnv* env,
 		}
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	if (rc != JVMTI_ERROR_NONE) {
@@ -416,7 +416,7 @@ jvmtiGetClassStatus(jvmtiEnv* env,
 		*status_ptr = getClassStatus(clazz);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetClassStatus);
@@ -457,7 +457,7 @@ jvmtiGetSourceFileName(jvmtiEnv* env,
 			releaseOptInfoBuffer(vm, clazz->romClass);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetSourceFileName);
@@ -516,7 +516,7 @@ jvmtiGetClassModifiers(jvmtiEnv* env,
 		*modifiers_ptr = (jint) (modifiers & 0xFFFF);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetClassModifiers);
@@ -578,7 +578,7 @@ jvmtiGetClassMethods(jvmtiEnv* env,
 			*methods_ptr = methodIDs;
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetClassMethods);
@@ -649,7 +649,7 @@ jvmtiGetClassFields(jvmtiEnv* env,
 			*fields_ptr = fieldIDs;
 		}
 done:
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetClassFields);
@@ -722,7 +722,7 @@ jvmtiGetImplementedInterfaces(jvmtiEnv* env,
 		*interface_count_ptr = interfaceCount;
 		*interfaces_ptr = interfaces;
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetImplementedInterfaces);
@@ -755,7 +755,7 @@ jvmtiIsInterface(jvmtiEnv* env,
 		*is_interface_ptr = (clazz->romClass->modifiers & J9AccInterface) ? JNI_TRUE : JNI_FALSE;
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiIsInterface);
@@ -788,7 +788,7 @@ jvmtiIsArrayClass(jvmtiEnv* env,
 		*is_array_class_ptr = (J9ROMCLASS_IS_ARRAY(clazz->romClass)) ? JNI_TRUE : JNI_FALSE;
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiIsArrayClass);
@@ -826,7 +826,7 @@ jvmtiGetClassLoader(jvmtiEnv* env,
 			*classloader_ptr = vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, J9CLASSLOADER_CLASSLOADEROBJECT(currentThread, classLoader));
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetClassLoader);
@@ -873,7 +873,7 @@ jvmtiGetSourceDebugExtension(jvmtiEnv* env,
 			releaseOptInfoBuffer(vm, clazz->romClass);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 #else
 	Trc_JVMTI_jvmtiGetSourceDebugExtension_Entry(env);
@@ -910,7 +910,7 @@ jvmtiRedefineClasses(jvmtiEnv* env,
 
 		rc = redefineClassesCommon(env, class_count, class_definitions, currentThread, J9_FINDCLASS_FLAG_REDEFINING);
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	omrthread_monitor_exit(jvmtiData->redefineMutex);
@@ -1405,7 +1405,7 @@ jvmtiRetransformClasses(jvmtiEnv* env,
 			j9mem_free_memory(class_definitions);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	omrthread_monitor_exit(jvmtiData->redefineMutex);
@@ -1454,7 +1454,7 @@ jvmtiIsModifiableClass(jvmtiEnv* env,
 		}
 		*is_modifiable_class_ptr = modifiable;
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiIsModifiableClass);
@@ -1497,7 +1497,7 @@ jvmtiGetClassVersionNumbers(jvmtiEnv* env,
 		}
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetClassVersionNumbers);
@@ -1640,7 +1640,7 @@ jvmtiGetConstantPool(jvmtiEnv* env,
 		*constant_pool_bytes_ptr = constantPoolBuf;
 		
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 		jvmtiGetConstantPool_free(PORTLIB, &translation);
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,7 @@ Java_j9vm_test_monitor_Helpers_monitorReserve(JNIEnv * env, jclass clazz, jobjec
 	lockEA = J9OBJECT_MONITOR_EA(vmThread, obj);
 
 	if (lockEA == NULL) {
-		vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);		
+		vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);		
 		errorClazz = (*env)->FindClass(env, "java/lang/Error");
 		if (errorClazz != NULL) {
 			(*env)->ThrowNew(env, errorClazz, "Object has no lock word");
@@ -84,7 +84,7 @@ Java_j9vm_test_monitor_Helpers_monitorReserve(JNIEnv * env, jclass clazz, jobjec
 	lock = *lockEA;
 
 	if (lock != 0) {
-		vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);		
+		vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);		
 		errorClazz = (*env)->FindClass(env, "java/lang/Error");
 		if (errorClazz != NULL) {
 			(*env)->ThrowNew(env, errorClazz, "Object's lock word is not 0");
@@ -94,7 +94,7 @@ Java_j9vm_test_monitor_Helpers_monitorReserve(JNIEnv * env, jclass clazz, jobjec
 
 	*lockEA = (j9objectmonitor_t)(UDATA)vmThread | OBJECT_HEADER_LOCK_RESERVED;
 
-	vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 #endif
 }
