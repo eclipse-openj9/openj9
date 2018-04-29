@@ -100,10 +100,18 @@ public:
 					/* Set the count to 1 */
 					vmThread->jniCriticalDirectCount = 1;
 				} else {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+					J9_VM_FUNCTION(vmThread, internalEnterVMFromJNI)(vmThread);
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
 					J9_VM_FUNCTION(vmThread, internalAcquireVMAccessNoMutex)(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 					VM_VMAccess::setPublicFlags(vmThread, J9_PUBLIC_FLAGS_JNI_CRITICAL_REGION | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS);
 					vmThread->jniCriticalDirectCount = 1;
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+					J9_VM_FUNCTION(vmThread, internalExitVMToJNI)(vmThread);
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
 					J9_VM_FUNCTION(vmThread, internalReleaseVMAccessNoMutex)(vmThread);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 				}
 			}
 			omrthread_monitor_exit_using_threadId(publicFlagsMutex, osThread);
