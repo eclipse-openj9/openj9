@@ -56,7 +56,19 @@ class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 				shift = shiftUdata.intValue();
 			} catch (CorruptDataException cde) {
 				raiseCorruptDataEvent("Error initializing the object access barrier", cde, true);
-			} catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException re) {
+			} catch (IllegalAccessException re) {
+				/* error caused by reflection */
+				CorruptDataException rcde = new CorruptDataException(re.toString(), re);
+				raiseCorruptDataEvent("Error retrieving compressedPointersShift", rcde, true);
+			} catch (InvocationTargetException re) {
+				/* error caused by reflection */
+				CorruptDataException rcde = new CorruptDataException(re.toString(), re);
+				raiseCorruptDataEvent("Error retrieving compressedPointersShift", rcde, true);
+			} catch (NoSuchMethodException re) {
+				/* error caused by reflection */
+				CorruptDataException rcde = new CorruptDataException(re.toString(), re);
+				raiseCorruptDataEvent("Error retrieving compressedPointersShift", rcde, true);
+			} catch (SecurityException re) {
 				/* error caused by reflection */
 				CorruptDataException rcde = new CorruptDataException(re.toString(), re);
 				raiseCorruptDataEvent("Error retrieving compressedPointersShift", rcde, true);

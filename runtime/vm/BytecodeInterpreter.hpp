@@ -294,11 +294,29 @@ retry:
 	{
 		U_8 *profilingCursor = startProfilingRecord(REGISTER_ARGS, sizeof(J9Class*) + 2*sizeof(J9Method*));
 		if (NULL != profilingCursor) {
+#if defined(J9VM_ARCH_ARM) && !defined(J9VM_ENV_DATA64)
+			/* ARMv8 does not support store multiple to unaligned addresses, and unfortunately GCC
+			 * generates a store multiple for the normal version of these three assignments.
+			 * To avoid the store multiple instructions, we can replace the assignments with
+			 * inline assembly code.
+			 */
+			asm (
+				"str %[clazz],  [%[cursor], #0]\n\t"
+				"str %[method], [%[cursor], #4]\n\t"
+				"str %[target], [%[cursor], #8]\n\t"
+				:            // No outputs
+				:[cursor] "r" (profilingCursor),
+				 [clazz]  "r" (clazz),
+				 [method] "r" (callingMethod),
+				 [target] "r" (targetMethod)
+			 );
+#else /* defined(J9VM_ARCH_ARM) && !defined(J9VM_ENV_DATA64) */
 			*(J9Class**)profilingCursor = clazz;
 			profilingCursor += sizeof(J9Class*);
 			*(J9Method**)profilingCursor = callingMethod;
 			profilingCursor += sizeof(J9Method*);
 			*(J9Method**)profilingCursor = targetMethod;
+#endif /* defined(J9VM_ARCH_ARM) && !defined(J9VM_ENV_DATA64) */
 		}
 	}
 
