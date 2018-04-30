@@ -221,7 +221,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getAllThreadIdsImpl(
 	threadIDs = j9mem_allocate_memory(javaVM->totalThreadCount * sizeof(jlong), J9MEM_CATEGORY_VM_JCL);
 	if (NULL == threadIDs) {
 		omrthread_monitor_exit(javaVM->vmThreadListMutex);
-		releaseVMAccess((J9VMThread *) env);
+		exitVMToJNI((J9VMThread *) env);
 		return NULL;
 	}
 
@@ -243,7 +243,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getAllThreadIdsImpl(
 
 	omrthread_monitor_exit(javaVM->vmThreadListMutex);
 
-	releaseVMAccess((J9VMThread *) env);
+	exitVMToJNI((J9VMThread *) env);
 
 	resultArray = (*env)->NewLongArray(env, (jsize)threadCount);
 	if (resultArray != NULL) {
@@ -270,7 +270,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getThreadCpuTimeImpl
 	
 	/* shortcut for the current thread */
 	if (getThreadID(currentThread, (j9object_t)currentThread->threadObject) == threadID) {
-		vmfns->internalReleaseVMAccess(currentThread);
+		vmfns->internalExitVMToJNI(currentThread);
 		return omrthread_get_self_cpu_time(currentThread->osThread);
 	}
 
@@ -294,7 +294,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getThreadCpuTimeImpl
 		}
 	}
 	omrthread_monitor_exit(javaVM->vmThreadListMutex);
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 
 	return cpuTime;
 }
@@ -315,7 +315,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getThreadUserTimeImp
 	
 	/* shortcut for the current thread */
 	if (getThreadID(currentThread, (j9object_t)currentThread->threadObject) == threadID) {
-		vmfns->internalReleaseVMAccess(currentThread);
+		vmfns->internalExitVMToJNI(currentThread);
 		return getCurrentThreadUserTime(currentThread->osThread);
 	}
 	
@@ -339,7 +339,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getThreadUserTimeImp
 		}
 	}
 	omrthread_monitor_exit(javaVM->vmThreadListMutex);
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 	
 	return userTime;
 }
@@ -744,11 +744,11 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl(J
 		allinfo[i].stackTrace = createStackTrace(currentThread, &allinfo[i]);
 		if (!allinfo[i].stackTrace) {
 			freeThreadInfos(currentThread, allinfo, numThreads);
-			vmfns->internalReleaseVMAccess(currentThread);
+			vmfns->internalExitVMToJNI(currentThread);
 			return NULL;
 		}
 	}
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 
 	result = createThreadInfoArray(env, allinfo, numThreads, (jsize)J9_THREADINFO_MAX_STACK_DEPTH);
 	j9mem_free_memory(allinfo);
@@ -761,7 +761,7 @@ dumpAll_failWithExclusive:
 	if (exc > 0) {
 		throwError(currentThread, exc);
 	}
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 	return NULL;
 }
 
@@ -879,12 +879,12 @@ getArrayOfThreadInfo(JNIEnv *env,
 			allinfo[i].stackTrace = createStackTrace(currentThread, &allinfo[i]);
 			if (!allinfo[i].stackTrace) {
 				freeThreadInfos(currentThread, allinfo, numThreads);
-				vmfns->internalReleaseVMAccess(currentThread);
+				vmfns->internalExitVMToJNI(currentThread);
 				return NULL;
 			}
 		}
 	}
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 
 	return allinfo;
 
@@ -893,7 +893,7 @@ getArray_failWithExclusive:
 	if (exc > 0) {
 		throwError(currentThread, exc);
 	}
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 	return NULL;
 }
 
@@ -2125,7 +2125,7 @@ findDeadlockedThreads(JNIEnv *env, UDATA findFlags)
 		if (deadCount < 0) {
 			javaVM->internalVMFunctions->setNativeOutOfMemoryError(currentThread, 0, 0);
 		}
-		javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 		return NULL;
 	}
 		
@@ -2133,7 +2133,7 @@ findDeadlockedThreads(JNIEnv *env, UDATA findFlags)
 	deadIDs = (jlong *)j9mem_allocate_memory(deadCount * sizeof(jlong), J9MEM_CATEGORY_VM_JCL);
 	if (!deadIDs) {
 		j9mem_free_memory(threads);
-		javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 		return NULL;
 	}
 	{
@@ -2144,7 +2144,7 @@ findDeadlockedThreads(JNIEnv *env, UDATA findFlags)
 
 
 	j9mem_free_memory(threads);
-	javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+	javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	resultArray = (*env)->NewLongArray(env, (jsize)deadCount);
 	if (!resultArray) {
@@ -2425,7 +2425,7 @@ err_exit:
 	if (t_osThread != currentThread->osThread) {
 		omrthread_monitor_exit(javaVM->vmThreadListMutex);
 	}
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 	if (NULL != err_msg) {
 		throwNewIllegalArgumentException(env, (char *) err_msg);
 	}
@@ -2458,7 +2458,7 @@ Java_com_ibm_lang_management_internal_JvmCpuMonitor_getThreadCategoryImpl(JNIEnv
 		t_osThread = get_thread_from_id(currentThread, threadID);
 		if (NULL == t_osThread) {
 			omrthread_monitor_exit(javaVM->vmThreadListMutex);
-			vmfns->internalReleaseVMAccess(currentThread);
+			vmfns->internalExitVMToJNI(currentThread);
 			return THREAD_CATEGORY_INVALID;
 		}
 	}
@@ -2468,7 +2468,7 @@ Java_com_ibm_lang_management_internal_JvmCpuMonitor_getThreadCategoryImpl(JNIEnv
 	if (t_osThread != currentThread->osThread) {
 		omrthread_monitor_exit(javaVM->vmThreadListMutex);
 	}
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 
 	switch (category) {
 	case J9THREAD_CATEGORY_SYSTEM_THREAD:
@@ -2572,7 +2572,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_findNativeThreadIDIm
 	omrthread_monitor_enter(javaVM->vmThreadListMutex);
 	nativeTID = findNativeThreadId(currentThread, threadID);
 	omrthread_monitor_exit(javaVM->vmThreadListMutex);
-	vmfns->internalReleaseVMAccess(currentThread);
+	vmfns->internalExitVMToJNI(currentThread);
 
 	Trc_JCL_threadmxbean_findNativeThreadIDImpl_Exit(env, nativeTID);
 	return nativeTID;
@@ -2635,7 +2635,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getNativeThreadIdsIm
 	}
 	/* Release mutexes.  If thread counts go up or down from this point on, its acceptable as per the API. */
 	omrthread_monitor_exit(javaVM->vmThreadListMutex);
-	releaseVMAccess((J9VMThread *) env);
+	exitVMToJNI((J9VMThread *) env);
 	(*env)->SetLongArrayRegion(env, resultArray, 0, (jsize) arrLen, nativeIds);
 
 _exit:

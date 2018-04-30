@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -318,7 +318,7 @@ jvmtiHookMethodEnter(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 			jmethodID methodID;
 
 			methodID = getCurrentMethodID(currentThread, method);
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			if (methodID != NULL) {
 				if (callback != NULL) {
 					callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID);
@@ -665,7 +665,7 @@ jvmtiHookClassLoad(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 				j9object_t * classRef = (j9object_t*) currentThread->arg0EA;
 
 				*classRef = J9VM_J9CLASS_TO_HEAPCLASS(data->clazz);
-				currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+				currentThread->javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, (jclass) classRef);
 				finishedEvent(currentThread, JVMTI_EVENT_CLASS_LOAD, hadVMAccess, javaOffloadOldState);
 			}
@@ -847,7 +847,7 @@ jvmtiHookClassPrepare(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 			j9object_t * classRef = (j9object_t*) currentThread->arg0EA;
 
 			*classRef = J9VM_J9CLASS_TO_HEAPCLASS(data->clazz);
-			currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			currentThread->javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, (jclass) classRef);
 			finishedEvent(currentThread, JVMTI_EVENT_CLASS_PREPARE, hadVMAccess, javaOffloadOldState);
 		}
@@ -880,7 +880,7 @@ jvmtiHookSingleStep(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 			jmethodID methodID;
 
 			methodID = getCurrentMethodID(currentThread, data->method);
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			if (methodID != NULL) {
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jlocation) data->location);
 			}
@@ -960,7 +960,7 @@ jvmtiHookFieldAccess(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 				clazz = getCurrentClass(((J9JNIFieldID *) fieldID)->declaringClass);
 				*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 				methodID = getCurrentMethodID(currentThread, method);
-				vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 				if (methodID != NULL) {
 					callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jlocation) location, (jclass) classRef, (jobject) objectRef, fieldID);
 				}
@@ -1060,7 +1060,7 @@ jvmtiHookFieldModification(J9HookInterface** hook, UDATA eventNum, void* eventDa
 				clazz = getCurrentClass(((J9JNIFieldID *) fieldID)->declaringClass);
 				*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 				methodID = getCurrentMethodID(currentThread, method);
-				vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 				if (methodID != NULL) {
 					callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jlocation) location, (jclass) classRef, (jobject) objectRef, fieldID, signatureType, newValue);
 				}
@@ -1205,7 +1205,7 @@ jvmtiHookBreakpoint(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 			if (prepareForEvent(j9env, currentThread, currentThread, JVMTI_EVENT_BREAKPOINT, &threadRef, &hadVMAccess, TRUE, 0, &javaOffloadOldState)) {
 				jmethodID methodID = agentBreakpoint->method;
 
-				currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+				currentThread->javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jlocation) location);
 				finishedEvent(currentThread, JVMTI_EVENT_BREAKPOINT, hadVMAccess, javaOffloadOldState);
 			}
@@ -1295,7 +1295,7 @@ jvmtiHookExceptionThrow(J9HookInterface** hook, UDATA eventNum, void* eventData,
 					throwMethodID = NULL;
 				}
 			}
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			if (throwMethodID != NULL) {
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef,
 					throwMethodID, (jlocation) throwLocation, (jobject) exceptionRef,
@@ -1372,7 +1372,7 @@ jvmtiHookMethodExit(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 				fillInJValue(signatureType, &returnValue, valueAddress,  (j9object_t*) currentThread->arg0EA);
 			}
 			methodID = getCurrentMethodID(currentThread, method);
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			if (methodID != NULL) {
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jboolean) poppedByException, returnValue);
 			}
@@ -1647,7 +1647,7 @@ jvmtiHookMonitorContendedEnter(J9HookInterface** hook, UDATA eventNum, void* eve
 				objectRef = (jobject) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t)lock->userData);
 			}
 
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, objectRef);
 			finishedEvent(currentThread, JVMTI_EVENT_MONITOR_CONTENDED_ENTER, hadVMAccess, javaOffloadOldState);
 		}
@@ -1685,7 +1685,7 @@ jvmtiHookMonitorContendedEntered(J9HookInterface** hook, UDATA eventNum, void* e
 				objectRef = (jobject) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t)lock->userData);
 			}
 
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, objectRef);
 			finishedEvent(currentThread, JVMTI_EVENT_MONITOR_CONTENDED_ENTERED, hadVMAccess, javaOffloadOldState);
 		}
@@ -1724,7 +1724,7 @@ jvmtiHookMonitorWait(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 				objectRef = (jobject) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t)lock->userData);
 			}
 
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, objectRef, timeout);
 			finishedEvent(currentThread, JVMTI_EVENT_MONITOR_WAIT, hadVMAccess, javaOffloadOldState);
 		}
@@ -1763,7 +1763,7 @@ jvmtiHookMonitorWaited(J9HookInterface** hook, UDATA eventNum, void* eventData, 
 				objectRef = (jobject) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *) currentThread, (j9object_t)lock->userData);
 			}
 
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, objectRef, timed_out);
 			finishedEvent(currentThread, JVMTI_EVENT_MONITOR_WAITED, hadVMAccess, javaOffloadOldState);
 		}
@@ -1798,7 +1798,7 @@ jvmtiHookFramePop(J9HookInterface** hook, UDATA eventNum, void* eventData, void*
 			jmethodID methodID;
 
 			methodID = getCurrentMethodID(currentThread, method);
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			if (methodID != NULL) {
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jboolean) data->poppedByException);
 			}
@@ -1852,7 +1852,7 @@ jvmtiHookExceptionCatch(J9HookInterface** hook, UDATA eventNum, void* eventData,
 				*exceptionRef = exception;
 			}
 			catchMethodID = getCurrentMethodID(currentThread, catchMethod);
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			if (catchMethodID != NULL) {
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, catchMethodID, (jlocation) catchLocation, (jobject) exceptionRef);
 			}
@@ -1923,7 +1923,7 @@ jvmtiHookResourceExhausted(J9HookInterface** hook, UDATA eventNum, void* eventDa
 				}
 			}
 
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, flags, NULL, messageSelect);
 
 			finishedEvent(currentThread, JVMTI_EVENT_RESOURCE_EXHAUSTED, hadVMAccess, javaOffloadOldState);
@@ -2255,7 +2255,7 @@ jvmtiHookClassFileLoadHook(J9HookInterface** hook, UDATA eventNum, void* eventDa
 				*classRef = J9VM_J9CLASS_TO_HEAPCLASS(oldClass);
 			}
 
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 			callback(
 				(jvmtiEnv *) j9env,
@@ -2661,7 +2661,7 @@ jvmtiHookCompilingStart(J9HookInterface** hook, UDATA eventNum, void* eventData,
 		jmethodID methodID;
 
 		methodID = getCurrentMethodID(currentThread, method);
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 		if (methodID != NULL) {
 			if (callback != NULL) {
 				callback((jvmtiEnv *) j9env, methodID);
@@ -2698,7 +2698,7 @@ jvmtiHookCompilingEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 		jmethodID methodID;
 
 		methodID = getCurrentMethodID(currentThread, method);
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 		if (methodID != NULL) {
 			if (callback != NULL) {
 				callback((jvmtiEnv *) j9env, methodID);
@@ -2743,7 +2743,7 @@ jvmtiHookObjectAllocate(J9HookInterface** hook, UDATA eventNum, void* eventData,
 				*objectRef = data->object;
 				clazz = J9OBJECT_CLAZZ(currentThread, data->object);
 				*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
-				vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, (jobject) objectRef, (jclass) classRef, (jlong) data->size);
 				currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 				data->object = J9_JNI_UNWRAP_REDIRECTED_REFERENCE(objectRef);
@@ -2769,7 +2769,7 @@ jvmtiHookObjectAllocate(J9HookInterface** hook, UDATA eventNum, void* eventData,
 				*objectRef = data->object;
 				clazz = J9OBJECT_CLAZZ(currentThread, data->object);
 				*classRef = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
-				vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, (jobject) objectRef, (jclass) classRef, (jlong) data->size);
 				currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 				data->object = J9_JNI_UNWRAP_REDIRECTED_REFERENCE(objectRef);
@@ -2808,7 +2808,7 @@ jvmtiHookJNINativeBind(J9HookInterface** hook, UDATA eventNum, void* eventData, 
 			jmethodID methodID;
 
 			methodID = getCurrentMethodID(currentThread, data->nativeMethod);
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, data->nativeMethodAddress, &(data->nativeMethodAddress));
 			finishedEvent(currentThread, JVMTI_EVENT_NATIVE_METHOD_BIND, hadVMAccess, javaOffloadOldState);
 		}
@@ -3242,7 +3242,7 @@ jvmtiHookVmDumpStart(J9HookInterface** hook, UDATA eventNum, void* eventData, vo
 	if (prepareForEvent(j9env, currentThread, currentThread, J9JVMTI_EVENT_COM_IBM_VM_DUMP_START, NULL, &hadVMAccess, TRUE, 0, &javaOffloadOldState)) {
 		J9JavaVM * vm = currentThread->javaVM;
 
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 		if (callback != NULL) {
 			callback((jvmtiEnv *) j9env, data->label, COM_IBM_VM_DUMP_START, data->detail);
 		}
@@ -3272,7 +3272,7 @@ jvmtiHookVmDumpEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 	if (prepareForEvent(j9env, currentThread, currentThread, J9JVMTI_EVENT_COM_IBM_VM_DUMP_END, NULL, &hadVMAccess, TRUE, 0, &javaOffloadOldState)) {
 		J9JavaVM * vm = currentThread->javaVM;
 
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 		if (callback != NULL) {
 			callback((jvmtiEnv *) j9env, data->label, COM_IBM_VM_DUMP_END, data->detail);
 		}

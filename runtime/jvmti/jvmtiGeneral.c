@@ -126,7 +126,7 @@ jvmtiDisposeEnvironment(jvmtiEnv* env)
 
 		omrthread_monitor_exit(jvmtiData->mutex);
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiDisposeEnvironment);

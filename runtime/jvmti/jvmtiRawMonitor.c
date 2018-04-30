@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,7 +106,7 @@ jvmtiRawMonitorEnter(jvmtiEnv* env,
 					if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
 block:
 						vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-						vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+						vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 					}
 				}
 			}
@@ -136,7 +136,7 @@ block:
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			{
 				vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-				vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+				vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 			}
 			rc = JVMTI_ERROR_INTERNAL;
 		}
@@ -176,7 +176,7 @@ jvmtiRawMonitorExit(jvmtiEnv* env,
 					/* Acquire VM access if the current thread does not already have it */
 					if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
 						vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-						vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+						vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 					}
 					/* There is still a timing hole here, since the thread may be suspended at this point */
 				}
@@ -242,7 +242,7 @@ jvmtiRawMonitorWait(jvmtiEnv* env,
 					/* Acquire VM access if the current thread does not already have it */
 					if (0 == (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
 						vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
-						vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+						vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 					}
 
 					/* There is still a timing hole here, since the thread may be suspended at this point */

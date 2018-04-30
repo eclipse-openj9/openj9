@@ -1016,13 +1016,13 @@ Java_com_ibm_oti_shared_SharedClassAbstractHelper_initializeShareableClassloader
 	if (NULL == nativeClassloader) {
 		nativeClassloader = vm->internalVMFunctions->internalAllocateClassLoader(vm, J9_JNI_UNWRAP_REFERENCE(classloader));
 		if (NULL == nativeClassloader) {
-			vm->internalVMFunctions->internalReleaseVMAccess((J9VMThread *)env);
+			vm->internalVMFunctions->internalExitVMToJNI((J9VMThread *)env);
 			return 0;
 		}
 	}
 
 	nativeClassloader->flags |= J9CLASSLOADER_SHARED_CLASSES_ENABLED;
-	vm->internalVMFunctions->internalReleaseVMAccess((J9VMThread *)env);
+	vm->internalVMFunctions->internalExitVMToJNI((J9VMThread *)env);
 
 	result = sizeof(J9ROMClassCookieSharedClass);
 
@@ -1064,7 +1064,7 @@ Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_findSharedClassImpl2(JNIEnv* 
 
 	vm->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	classloader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(loaderObj));
-	vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 	if (!getStringPair(env, &nameChars, &nameLen, &tokenChars, &tokenLen, classNameObj, tokenObj)) {
 		goto _errorPostNameToken;
@@ -1149,7 +1149,7 @@ Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_storeSharedClassImpl2(JNIEnv*
 	vm->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	classloader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(loaderObj));
 	romClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, clazzObj)->romClass;
-	vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 	if (!getStringChars(env, &tokenChars, &tokenLen, tokenObj)) {
 		goto _error;
@@ -1246,7 +1246,7 @@ Java_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl3(JNIEnv* en
 
 	vm->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	classloader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(loaderObj));
-	vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 	urlGetPathID = JCL_CACHE_GET(env, MID_java_net_URL_getPath);
 	if (NULL == urlGetPathID) {
@@ -1358,7 +1358,7 @@ Java_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl3(JNIEnv* e
 	vm->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	classloader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(loaderObj));
 	romClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, clazzObj)->romClass;
-	vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 	urlGetPathID = JCL_CACHE_GET(env, MID_java_net_URL_getPath);
 	if (NULL == urlGetPathID) {
@@ -1482,7 +1482,7 @@ Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_storeSharedClassImpl2(
 	vm->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	classloader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(loaderObj));
 	romClass = J9VM_J9CLASS_FROM_JCLASS(vmThread, clazzObj)->romClass;
-	vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 	if (!getStringChars(env, &partitionChars, &partitionLen, partitionObj)) {
 		goto _error;
@@ -1631,7 +1631,7 @@ Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl2(J
 
 	vm->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	classloader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(loaderObj));
-	vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 	if (!getStringPair(env, &nameChars, &nameLen, &partitionChars, &partitionLen, classNameObj, partitionObj)) {
 		Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_ExitError2_Event(env, helperID);
@@ -1904,7 +1904,7 @@ Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange2
 
 	vm->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	classloader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(classLoaderObj));
-	vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 	omrthread_monitor_enter(vm->sharedClassConfig->jclCacheMutex);
 
@@ -2030,7 +2030,7 @@ Java_com_ibm_oti_shared_SharedDataHelperImpl_storeSharedDataImpl(JNIEnv* env, jo
 
 	vm->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	classloader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(loaderObj));
-	vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
+	vm->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 	if (!getStringChars(env, &tokenChars, &tokenLen, tokenObj)) {
 		goto _error;

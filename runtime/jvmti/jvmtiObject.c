@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,7 +60,7 @@ jvmtiGetObjectSize(jvmtiEnv* env,
 		*size_ptr = getObjectSize(vm, *(j9object_t*)object);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_ONE_JVMTI_RETURN(jvmtiGetObjectSize2, *size_ptr);
@@ -92,7 +92,7 @@ jvmtiGetObjectHashCode(jvmtiEnv* env,
 		obj = *((j9object_t*) object);
 		*hash_code_ptr = (jint)objectHashCode(vm, obj);
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_ONE_JVMTI_RETURN(jvmtiGetObjectHashCode2, *hash_code_ptr);
@@ -183,7 +183,7 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv* env,
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_FOUR_JVMTI_RETURN(jvmtiGetObjectMonitorUsage2, info_ptr->owner, info_ptr->entry_count, info_ptr->notify_waiter_count, info_ptr->waiter_count);

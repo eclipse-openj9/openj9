@@ -76,7 +76,7 @@ Java_java_lang_Class_getDeclaredAnnotationsData(JNIEnv *env, jobject jlClass)
 			result = vmThread->javaVM->internalVMFunctions->j9jni_createLocalRef(env, annotationsData);
 		}
 	}
-	releaseVMAccess(vmThread);
+	exitVMToJNI(vmThread);
 	return result;
 }
 
@@ -228,7 +228,7 @@ Java_java_lang_Class_getStackClasses(JNIEnv *env, jclass jlHeapClass, jint maxDe
 	result = vmFuncs->j9jni_createLocalRef(env, arrayObject);
 
 _throwException:
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	return result;
 }
@@ -265,7 +265,7 @@ Java_java_lang_Class_isClassADeclaredClass(JNIEnv *env, jobject jlClass, jobject
 		srpCursor ++;
 	}
 
-	releaseVMAccess(vmThread);
+	exitVMToJNI(vmThread);
 	return result;
 }
 
@@ -356,7 +356,7 @@ Java_com_ibm_oti_vm_VM_getClassNameImpl(JNIEnv *env, jclass recv, jclass jlClass
 		}
 	}
 
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return classNameRef;
 }
 
@@ -388,7 +388,7 @@ Java_java_lang_Class_getGenericSignature(JNIEnv *env, jobject recv)
 		result = vmFuncs->j9jni_createLocalRef(env, stringObject);
 		releaseOptInfoBuffer(vm, romClass);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -500,7 +500,7 @@ retry:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -557,7 +557,7 @@ retry:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -590,7 +590,7 @@ oom:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -650,7 +650,7 @@ retry:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -718,7 +718,7 @@ retry:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -782,7 +782,7 @@ retry:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -802,7 +802,7 @@ Java_java_lang_Class_getDeclaringClassImpl(JNIEnv *env, jobject recv)
 		resultObject = J9VM_J9CLASS_TO_HEAPCLASS(outerClass);
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -841,7 +841,7 @@ Java_java_lang_Class_getEnclosingObject(JNIEnv *env, jobject recv)
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -865,7 +865,7 @@ Java_java_lang_Class_getEnclosingObjectClass(JNIEnv *env, jobject recv)
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -962,7 +962,7 @@ _done:
 		}
 	}
 	jobject result = vmFuncs->j9jni_createLocalRef(env, resultObject);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -988,7 +988,7 @@ Java_java_lang_Class_getStaticMethodCountImpl(JNIEnv *env, jobject recv)
 		}
 		clazz = VM_VMHelpers::getSuperclass(clazz);
 	} while (NULL != clazz);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -1037,7 +1037,7 @@ Java_java_lang_Class_getStaticMethodsImpl(JNIEnv *env, jobject recv, jobject arr
 		result = JNI_FALSE;
 	}
 done:
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -1077,7 +1077,7 @@ Java_java_lang_Class_getVirtualMethodCountImpl(JNIEnv *env, jobject recv)
 		}
 skip: ;
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -1170,7 +1170,7 @@ skip: ;
 		}
 	}
 done:
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -1644,7 +1644,7 @@ _clearAllocation:
 _throwException:
 	vmFuncs->freeStackWalkCaches(vmThread, &walkState);
 _walkStateUninitialized:
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 	/* Trc_JCL_java_security_AccessController_getAccSnapshot_Exit(vmThread, result); */
 	return result;
 }
@@ -1720,7 +1720,7 @@ Java_java_security_AccessController_getCallerPD(JNIEnv* env, jclass jsAccessCont
 
 _throwException:
 	vmFuncs->freeStackWalkCaches(vmThread, &walkState);
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	return result;
 }
@@ -1836,7 +1836,7 @@ Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 	}
 
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -1903,7 +1903,7 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 	result = vmFuncs->j9jni_createLocalRef(env, resultObject);
 
 _done:
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */

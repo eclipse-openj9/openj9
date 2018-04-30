@@ -5725,6 +5725,12 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		*BFUjavaVM = vm;
 	}
 
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	/* Ensure we are in the VM without VM access */
+	enterVMFromJNI(env);
+	releaseVMAccess(env);
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+
 	if (JNI_OK != (stageRC = runInitializationStage(vm, JCL_INITIALIZED))) {
 		goto error;
 	}
