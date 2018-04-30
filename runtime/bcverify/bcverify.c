@@ -2414,7 +2414,7 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 		UDATA createStackMaps;
 		
 		verifyData->ignoreStackMaps = (verifyData->verificationFlags & J9_VERIFY_IGNORE_STACK_MAPS) != 0;
-		
+		verifyData->createdStackMap = FALSE;
 		verifyData->romMethod = romMethod;
 
 		Trc_BCV_j9bcv_verifyBytecodes_VerifyMethod(verifyData->vmStruct,
@@ -2480,6 +2480,8 @@ _fallBack:
 		
 			if (createStackMaps && verifyData->stackMapsCount) {
 				UDATA mapIndex = 0;
+				/* Non-empty internal stackMap created */
+				verifyData->createdStackMap = TRUE;
 	
 				liveStack = BCV_FIRST_STACK ();
 				/* Initialize stackMaps */
