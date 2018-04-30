@@ -42,42 +42,44 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 		String line = null;
 		String excludeFile = System.getenv("EXCLUDE_FILE");
 		logger.info("exclude file is " + excludeFile);
-		try {
-			FileReader fileReader = new FileReader(excludeFile);
-			BufferedReader bufferedReader = new BufferedReader(fileReader);
-			while ((line = bufferedReader.readLine()) != null) {
-				if (line.startsWith("#") || line.matches("\\s") || line.isEmpty()) {
-					// comment to ignore - as the problems list from OpenJDK
-				} else {
-					// parse the line and populate the array lists
-					String[] lineParts = line.split("\\s+");
-					// expect to exclude all methods with the name that follows : at the start of a line
-					if (-1 != line.indexOf("*")) {
-						// TODO exclude all Test classes under the package?
+		if (!excludeFile.equals(null)) {
+			try {
+				FileReader fileReader = new FileReader(excludeFile);
+				BufferedReader bufferedReader = new BufferedReader(fileReader);
+				while ((line = bufferedReader.readLine()) != null) {
+					if (line.startsWith("#") || line.matches("\\s") || line.isEmpty()) {
+						// comment to ignore - as the problems list from OpenJDK
 					} else {
-						String[] tests = lineParts[0].split(":");
-						String fileName = tests[0];
-						String methodsToExclude = "";
-						if (tests.length > 1) {
-							methodsToExclude = tests[1];
-						} else { //exclude class level
-							methodsToExclude = "ALL";
+						// parse the line and populate the array lists
+						String[] lineParts = line.split("\\s+");
+						// expect to exclude all methods with the name that follows : at the start of a line
+						if (-1 != line.indexOf("*")) {
+						// TODO exclude all Test classes under the package?
+						} else {
+							String[] tests = lineParts[0].split(":");
+							String fileName = tests[0];
+							String methodsToExclude = "";
+							if (tests.length > 1) {
+								methodsToExclude = tests[1];
+							} else { //exclude class level
+								methodsToExclude = "ALL";
+							}
+							String defectNumber = lineParts[1];
+							String[] excludeGroups = lineParts[2].split(";");
+							for (int i = 0; i < excludeGroups.length; i++) {
+								excludeGroups[i] = "disabled." + excludeGroups[i];
+							}
+							ArrayList<String> excludeGroupNames = new ArrayList<String> (Arrays.asList(excludeGroups));
+							excludeDatas.add(new ExcludeData(methodsToExclude, fileName, defectNumber, excludeGroupNames));
 						}
-						String defectNumber = lineParts[1];
-						String[] excludeGroups = lineParts[2].split(";");
-						for (int i = 0; i < excludeGroups.length; i++) {
-							excludeGroups[i] = "disabled." + excludeGroups[i];
-						}
-						ArrayList<String> excludeGroupNames = new ArrayList<String> (Arrays.asList(excludeGroups));
-						excludeDatas.add(new ExcludeData(methodsToExclude, fileName, defectNumber, excludeGroupNames));
 					}
 				}
+				bufferedReader.close();
+			} catch(FileNotFoundException ex) {
+				logger.info("Unable to find file " + excludeFile, ex);
+			} catch(IOException ex) {
+				logger.info("Error reading file " + excludeFile, ex);
 			}
-			bufferedReader.close();
-		} catch(FileNotFoundException ex) {
-			logger.info("Unable to open file " + excludeFile, ex);
-		} catch(IOException ex) {
-			logger.info("Error reading file " + excludeFile, ex);
 		}
 	}
 
