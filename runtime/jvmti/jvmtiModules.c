@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2017 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -293,7 +293,7 @@ jvmtiGetAllModules(jvmtiEnv* jvmtiEnv, jint* module_count_ptr, jobject** modules
 		omrthread_monitor_exit(vm->classLoaderBlocksMutex);
 #endif
 done:
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 	return rc;
 }
@@ -372,7 +372,7 @@ jvmtiGetNamedModule(jvmtiEnv* jvmtiEnv, jobject class_loader, const char* packag
 			j9mem_free_memory(packageName);
 		}
 done:
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 	return rc;
 }

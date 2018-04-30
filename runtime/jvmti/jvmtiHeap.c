@@ -210,7 +210,7 @@ jvmtiGetTag(jvmtiEnv* env,
 		}
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetTag);
@@ -275,7 +275,7 @@ jvmtiSetTag(jvmtiEnv* env,
 			rc = JVMTI_ERROR_INVALID_OBJECT;
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiSetTag);
@@ -302,7 +302,7 @@ jvmtiForceGarbageCollection(jvmtiEnv* env)
 		vm->memoryManagerFunctions->j9gc_modron_global_collect(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiForceGarbageCollection);
@@ -405,7 +405,7 @@ jvmtiGetObjectsWithTags(jvmtiEnv* env,
 		omrthread_monitor_exit(((J9JVMTIEnv *)env)->mutex);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetObjectsWithTags);
@@ -548,7 +548,7 @@ jvmtiFollowReferences(jvmtiEnv* env, jint heap_filter, jclass klass, jobject ini
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiFollowReferences);
@@ -1344,7 +1344,7 @@ jvmtiError JNICALL jvmtiIterateThroughHeap(jvmtiEnv* env,
 		vmFuncs->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiIterateThroughHeap);

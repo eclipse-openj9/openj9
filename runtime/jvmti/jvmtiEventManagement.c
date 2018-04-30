@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -190,7 +190,7 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 		rc = setEventNotificationMode(j9env, currentThread, mode, event_type, event_thread, J9JVMTI_LOWEST_EVENT, J9JVMTI_HIGHEST_EVENT);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiSetEventNotificationMode);
@@ -254,7 +254,7 @@ jvmtiGenerateEvents(jvmtiEnv* env,
 			}
 
 			vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 			/* Wait for the events to be reported */
 

@@ -59,7 +59,7 @@ jvmtiGetTopThreadGroups(jvmtiEnv* env,
 				*groups_ptr = groups;
 			}
 done:
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 		}
 	} else {
@@ -112,7 +112,7 @@ jvmtiGetThreadGroupInfo(jvmtiEnv* env,
 				info_ptr->is_daemon = (jboolean)J9VMJAVALANGTHREADGROUP_ISDAEMON(currentThread, threadGroupObject);
 			}
 done:
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 		}
 	}
 
@@ -233,7 +233,7 @@ jvmtiGetThreadGroupChildren(jvmtiEnv* env,
 			currentThread->javaVM->internalVMFunctions->objectMonitorExit(currentThread, childrenThreadsLock);
 
 done:
-			vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+			vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 		}
 	}
 

@@ -159,7 +159,7 @@ getStringAt(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpI
 				returnValue = vmFunctions->j9jni_createLocalRef(env, stringObject);
 			}
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 	}
 
 	checkResult(env, result);
@@ -182,7 +182,7 @@ getClassAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFlag
 		if (NULL != clazz) {
 			returnValue = vmFunctions->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 	}
 
 	checkResult(env, result);
@@ -258,7 +258,7 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 			}
 		}
 
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 
 		if (NULL != methodID) {
 			if (NULL != jlClass) {
@@ -335,7 +335,7 @@ retry:
 			}
 		}
 
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 
 		if (NULL != fieldID) {
 			if (NULL != jlClass) {
@@ -367,7 +367,7 @@ getSingleSlotConstant(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA 
 		if (OK == result) {
 			returnValue = cpEntry->data;
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 	}
 
 	checkResult(env, result);
@@ -394,7 +394,7 @@ getDoubleSlotConstant(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA 
 			returnValue = (((U_64)(cpEntry->slot1)) << 32) | ((U_64)(cpEntry->slot2));
 #endif
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 	}
 
 	checkResult(env, result);
@@ -420,7 +420,7 @@ Java_sun_reflect_ConstantPool_getSize0(JNIEnv *env, jobject unusedObject, jobjec
 				result = OK;
 			}
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 	}
 
 	checkResult(env, result);
@@ -506,7 +506,7 @@ Java_java_lang_invoke_MethodHandle_getCPClassNameAt(JNIEnv *env, jobject unusedO
 				break;
 			}
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 	}
 
 	checkResult(env, result);
@@ -573,7 +573,7 @@ Java_sun_reflect_ConstantPool_getMemberRefInfoAt0(JNIEnv *env, jobject unusedObj
 				}
 			}
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 	}
 
 	if ((NULL != classNameObject) && (NULL != nameObject) && (NULL != signatureObject)) {
@@ -660,7 +660,7 @@ Java_java_lang_invoke_MethodHandle_getCPTypeAt(JNIEnv *env, jclass unusedClass, 
 			cpType = J9_CP_TYPE(cpShapeDescription, cpIndex);
 			result = OK;
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 	}
 
 	checkResult(env, result);
@@ -695,7 +695,7 @@ Java_java_lang_invoke_MethodHandle_getCPMethodTypeAt(JNIEnv *env, jclass unusedC
 				returnValue = vmFunctions->j9jni_createLocalRef(env, methodTypeObject);
 			}
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 	}
 
 	checkResult(env, result);
@@ -730,7 +730,7 @@ Java_java_lang_invoke_MethodHandle_getCPMethodHandleAt(JNIEnv *env, jclass unuse
 				returnValue = vmFunctions->j9jni_createLocalRef(env, methodHandleObject);
 			}
 		}
-		vmFunctions->internalReleaseVMAccess(vmThread);
+		vmFunctions->internalExitVMToJNI(vmThread);
 	}
 
 	checkResult(env, result);

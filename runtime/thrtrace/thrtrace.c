@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +45,7 @@ Java_com_ibm_oti_vm_thread_Tracing_reset(JNIEnv *env, jobject recv)
 	omrthread_reset_tracing();
 
 	vmstruct->javaVM->internalVMFunctions->releaseExclusiveVMAccess(vmstruct);
-	vmstruct->javaVM->internalVMFunctions->internalReleaseVMAccess(vmstruct);
+	vmstruct->javaVM->internalVMFunctions->internalExitVMToJNI(vmstruct);
 #endif /* OMR_THR_TRACING */
 	return ;
 }

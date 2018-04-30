@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ static jclass proxyDefineClass(
 	walkState.flags = J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_COUNT_SPECIFIED;
 	vm->walkStackFrames(currentThread, &walkState);
 	if (walkState.framesWalked == 0) {
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 		throwNewInternalError(env, NULL);
 		return NULL;
 	}
@@ -66,7 +66,7 @@ static jclass proxyDefineClass(
 		pd = vmFuncs->j9jni_createLocalRef(env, protectionDomainDirectReference);
 	}
 
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return defineClassCommon(env, classLoader, className, classBytes, offset, length, pd, 0, NULL);
 }

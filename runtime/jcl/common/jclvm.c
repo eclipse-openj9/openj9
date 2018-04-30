@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,7 +65,7 @@ Java_com_ibm_oti_vm_VM_localGC(JNIEnv *env, jclass clazz)
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vm->memoryManagerFunctions->j9gc_modron_local_collect(currentThread);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -77,7 +77,7 @@ Java_com_ibm_oti_vm_VM_globalGC(JNIEnv *env, jclass clazz)
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vm->memoryManagerFunctions->j9gc_modron_global_collect(currentThread);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -132,8 +132,7 @@ Java_com_ibm_oti_vm_VM_allInstances(JNIEnv * env, jclass unused, jclass clazz, j
 	 	count = (jint)allInstances(env, clazz, target);
 
 		javaVM->internalVMFunctions->releaseExclusiveVMAccess(vmThread);
-		/* releaseVMAccess(vmThread); */
-		javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
+		javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
 	}
 
 	return count;
@@ -182,7 +181,7 @@ Java_com_ibm_oti_vm_VM_setCommonData(JNIEnv * env, jclass unused, jobject string
 				J9VMJAVALANGSTRING_SET_VALUE(vmThread, unwrappedString2, stringBytes1);
 			}
 
-			javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
+			javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
 		}
 	}
 

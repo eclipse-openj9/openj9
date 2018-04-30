@@ -56,7 +56,7 @@ Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader
 
 		classLoaderObject = J9CLASSLOADER_CLASSLOADEROBJECT(currentThread, vm->systemClassLoader);
 		classLoader = vmFuncs->j9jni_createLocalRef(env, classLoaderObject);
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
 	result = defineClassCommon(env, classLoader, className, classRep, offset, length, protectionDomain, J9_FINDCLASS_FLAG_UNSAFE, NULL);
@@ -64,7 +64,7 @@ Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader
 	if (result != NULL) {
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 		vm->internalVMFunctions->fixUnsafeMethods(currentThread, result);
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	return result;
@@ -83,12 +83,12 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	if (NULL == bytecodes) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 		return NULL;
 	}
 	if (NULL == hostClass) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
-		vmFuncs->internalReleaseVMAccess(currentThread);
+		vmFuncs->internalExitVMToJNI(currentThread);
 		return NULL;
 	}
 
@@ -104,7 +104,7 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 		hostClassLoader = vm->systemClassLoader->classLoaderObject;
 	}
 	jobject hostClassLoaderLocalRef = vmFuncs->j9jni_createLocalRef(env, hostClassLoader);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	jsize length = env->GetArrayLength(bytecodes);
 
@@ -119,7 +119,7 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->fixUnsafeMethods(currentThread, anonClass);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return anonClass;
 }
@@ -179,7 +179,7 @@ Java_sun_misc_Unsafe_allocateMemory(JNIEnv *env, jobject receiver, jlong size)
 	} else {
 		result = (jlong)(UDATA)unsafeAllocateMemory(currentThread, actualSize, TRUE);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -198,7 +198,7 @@ Java_sun_misc_Unsafe_allocateDBBMemory(JNIEnv *env, jobject receiver, jlong size
 	} else {
 		result = (jlong)(UDATA)unsafeAllocateDBBMemory(currentThread, actualSize, TRUE);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -222,7 +222,7 @@ Java_sun_misc_Unsafe_allocateMemoryNoException(JNIEnv *env, jobject receiver, jl
 	} else {
 		result = (jlong)(UDATA)unsafeAllocateMemory(currentThread, actualSize, FALSE);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -262,7 +262,7 @@ Java_sun_misc_Unsafe_reallocateMemory(JNIEnv *env, jobject receiver, jlong addre
 	} else {
 		result = (jlong)(UDATA)unsafeReallocateMemory(currentThread, (void*)(UDATA)address, actualSize);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -281,7 +281,7 @@ Java_sun_misc_Unsafe_reallocateDBBMemory(JNIEnv *env, jobject receiver, jlong ad
 	} else {
 		result = (jlong)(UDATA)unsafeReallocateDBBMemory(currentThread, (void*)(UDATA)address, actualSize);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
 }
 
@@ -307,7 +307,7 @@ Java_sun_misc_Unsafe_ensureClassInitialized(JNIEnv *env, jobject receiver, jclas
 			vmFuncs->initializeClass(currentThread, j9clazz);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -319,7 +319,7 @@ Java_sun_misc_Unsafe_park(JNIEnv *env, jobject receiver, jboolean isAbsolute, jl
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->threadParkImpl(currentThread, (IDATA)isAbsolute, (I_64)time);
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -331,7 +331,7 @@ Java_sun_misc_Unsafe_unpark(JNIEnv *env, jobject receiver, jthread thread)
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->threadUnparkImpl(currentThread, J9_JNI_UNWRAP_REFERENCE(thread));
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -347,7 +347,7 @@ Java_sun_misc_Unsafe_throwException(JNIEnv *env, jobject receiver, jthrowable ex
 	} else {
 		currentThread->currentException = J9_JNI_UNWRAP_REFERENCE(exception);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -370,7 +370,7 @@ oom:
 			goto oom;
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -392,7 +392,7 @@ Java_sun_misc_Unsafe_monitorExit(JNIEnv *env, jobject receiver, jobject obj)
 			VM_ObjectMonitor::recordJNIMonitorExit(currentThread, object);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -417,7 +417,7 @@ Java_sun_misc_Unsafe_tryMonitorEnter(JNIEnv *env, jobject receiver, jobject obj)
 			VM_ObjectMonitor::recordJNIMonitorEnter(currentThread, object);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return entered;
 }
 
@@ -527,7 +527,7 @@ illegal:
 			VM_ArrayCopyHelpers::primitiveArrayCopy(currentThread, sourceObject, sourceIndex, destObject, destIndex, elementCount, logElementSize);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -552,7 +552,7 @@ Java_sun_misc_Unsafe_objectFieldOffset(JNIEnv *env, jobject receiver, jobject fi
 			offset = (jlong)fieldID->offset + J9_OBJECT_HEADER_SIZE;
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return offset;
 }
 
@@ -583,7 +583,7 @@ illegal:
 		offset -= sizeof(J9IndexableObjectContiguous);
 		VM_ArrayCopyHelpers::primitiveArrayFill(currentThread, object, (UDATA)offset, actualSize, (U_8)value);
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -608,7 +608,7 @@ Java_sun_misc_Unsafe_staticFieldBase__Ljava_lang_reflect_Field_2(JNIEnv *env, jo
 			base = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(fieldID->declaringClass));
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return base;
 }
 
@@ -638,7 +638,7 @@ Java_sun_misc_Unsafe_staticFieldOffset(JNIEnv *env, jobject receiver, jobject fi
 			}
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	return offset;
 }
 
@@ -700,7 +700,7 @@ Java_jdk_internal_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver,
 			result = JNI_TRUE;
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return result;
 }
@@ -730,7 +730,7 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 			offset = (jlong)fieldID->offset + J9_OBJECT_HEADER_SIZE;
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 	
 	return offset;
 }

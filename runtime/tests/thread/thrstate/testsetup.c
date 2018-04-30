@@ -450,7 +450,7 @@ test_cleanup(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	cleanupMonitor(env, TESTDATA(rawMonitor));
 
 	j9tty_printf(PORTLIB, "releasing VM access\n");
-	vmFuncs->internalReleaseVMAccess(currentThread); /* release access so we can use JNI */
+	vmFuncs->internalExitVMToJNI(currentThread); /* release access so we can use JNI */
 	cleanupObject(env, &TESTDATA(blockingObject), &TESTDATA(blockingObjectRef));
 
 	cleanupObject(env, &TESTDATA(objectNoMonitor), &TESTDATA(objectNoMonitorRef));

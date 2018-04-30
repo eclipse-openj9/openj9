@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ jvmtiGetStackTrace(jvmtiEnv* env,
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetStackTrace);
@@ -143,7 +143,7 @@ fail:
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetAllStackTraces);
@@ -235,7 +235,7 @@ fail:
 		vm->internalVMFunctions->releaseExclusiveVMAccess(currentThread);
 
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetThreadListStackTraces);
@@ -279,7 +279,7 @@ jvmtiGetFrameCount(jvmtiEnv* env,
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetFrameCount);
@@ -338,7 +338,7 @@ jvmtiPopFrame(jvmtiEnv* env,
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiPopFrame);
@@ -399,7 +399,7 @@ jvmtiGetFrameLocation(jvmtiEnv* env,
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiGetFrameLocation);
@@ -460,7 +460,7 @@ jvmtiNotifyFramePop(jvmtiEnv* env,
 			releaseVMThread(currentThread, targetThread);
 		}
 done:
-		vm->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	TRACE_JVMTI_RETURN(jvmtiNotifyFramePop);

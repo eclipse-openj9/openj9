@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -137,7 +137,7 @@ getClassTypeAnnotationsAsByteArray(JNIEnv *env, jclass jlClass) {
     		}
     	}
     }
-    releaseVMAccess(vmThread);
+    exitVMToJNI(vmThread);
     return result;
 }
 
@@ -170,7 +170,7 @@ getFieldTypeAnnotationsAsByteArray(JNIEnv *env, jobject jlrField) {
     		}
     	}
     }
-    releaseVMAccess(vmThread);
+    exitVMToJNI(vmThread);
     return result;
 }
 
@@ -296,7 +296,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 	executableID = (J9JNIMethodID *)reflectMethodToID(vmThread, jlrExecutable);
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 
 	Trc_JCL_getMethodParametersAsArray_Event3(env, executableID);
 
@@ -349,7 +349,7 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 							if (NULL == nameCharArray) {
 								vmFuncs->internalEnterVMFromJNI(vmThread);
 								vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
-								vmFuncs->internalReleaseVMAccess(vmThread);
+								vmFuncs->internalExitVMToJNI(vmThread);
 								Trc_JCL_getMethodParametersAsArray_Failed_To_Allocate_Memory_For_NameCharArray(env, utf8Length + 1);
 								goto error;
 							}
@@ -1030,7 +1030,7 @@ idToReflectField(J9VMThread* vmThread, jfieldID fieldID)
 			}
 		}
 	}
-	releaseVMAccess(vmThread);
+	exitVMToJNI(vmThread);
 	return result;
 }
 
@@ -1057,7 +1057,7 @@ idToReflectMethod(J9VMThread* vmThread, jmethodID methodID)
 			}
 		}
 	}
-	releaseVMAccess(vmThread);
+	exitVMToJNI(vmThread);
 	return result;
 }
 
@@ -1158,7 +1158,7 @@ preloadReflectWrapperClasses(J9JavaVM *javaVM)
 		(void) javaVM->internalVMFunctions->internalFindKnownClass(javaVM->mainThread, i, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
 	}
 	(void) javaVM->internalVMFunctions->internalFindKnownClass(javaVM->mainThread, J9VMCONSTANTPOOL_JAVALANGREFLECTINVOCATIONTARGETEXCEPTION, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
-	releaseVMAccess(javaVM->mainThread);
+	exitVMToJNI(javaVM->mainThread);
 }
 
 void
@@ -1201,7 +1201,7 @@ Java_java_lang_reflect_Array_multiNewArrayImpl(JNIEnv *env, jclass unusedClass, 
 
 		if (J9ROMCLASS_IS_ARRAY(componentTypeClass->romClass) && ((((J9ArrayClass *)componentTypeClass)->arity + dimensions) > J9_ARRAY_DIMENSION_LIMIT)) {
 			/* The spec says to throw IllegalArgumentException if the number of dimensions is greater than J9_ARRAY_DIMENSION_LIMIT */
-			releaseVMAccess(vmThread);
+			exitVMToJNI(vmThread);
 			throwNewIllegalArgumentException(env, NULL);
 			goto exit;
 		}
@@ -1231,7 +1231,7 @@ Java_java_lang_reflect_Array_multiNewArrayImpl(JNIEnv *env, jclass unusedClass, 
 			}
 		}
 	}
-	releaseVMAccess(vmThread);
+	exitVMToJNI(vmThread);
 exit:
 	return result;
 }
@@ -1333,7 +1333,7 @@ getDeclaredFieldHelper(JNIEnv *env, jobject declaringClass, jstring fieldName)
 			vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
 		}
 	}
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 	return result;
 }
 
@@ -1448,7 +1448,7 @@ heapoutofmemory:
 	goto done;
 
 done:
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 	return result;
 }
 
@@ -1562,7 +1562,7 @@ heapoutofmemory:
 	goto done;
 
 done:
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 	return result;
 }
 
@@ -1712,6 +1712,6 @@ heapoutofmemory:
 	goto done;
 
 done:
-	vmFuncs->internalReleaseVMAccess(vmThread);
+	vmFuncs->internalExitVMToJNI(vmThread);
 	return result;
 }

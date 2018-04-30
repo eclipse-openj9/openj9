@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,7 +106,7 @@ pushEventFrame(J9VMThread * currentThread, UDATA wantVMAccess, UDATA jniRefSlots
 
 	if (!wantVMAccess) {
 		Assert_VMUtil_true(0 == jniRefSlots);
-		currentThread->javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
+		currentThread->javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 	}
 
 	/* Return the state of VM access upon entry to this function */

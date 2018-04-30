@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2016 IBM Corp. and others
+ * Copyright (c) 2014, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,7 +108,7 @@ Java_com_ibm_gpu_Kernel_launch(JNIEnv *env,
 						blockDimX, blockDimY, blockDimZ,
 						args);
 
-		jvm->internalVMFunctions->internalReleaseVMAccess(vmThread);
+		jvm->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 		if (NULL != args) {
 			j9mem_free_memory(args);
@@ -131,7 +131,7 @@ Java_java_util_stream_IntPipeline_promoteGPUCompile(JNIEnv *env, jclass clazz)
 
 		vmFuncs->internalEnterVMFromJNI(vmThread);
 		vm->jitConfig->promoteGPUCompile(vmThread);
-		vmFuncs->internalReleaseVMAccess(vmThread);
+		vmFuncs->internalExitVMToJNI(vmThread);
 	}
 }
 
