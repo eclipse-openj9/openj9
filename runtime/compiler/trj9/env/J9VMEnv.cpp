@@ -39,11 +39,6 @@
 #include "jilconsts.h"
 #include "vmaccess.h"
 
-#ifndef J9JIT_HEAP_TAIL_PADDING
-#define J9JIT_HEAP_TAIL_PADDING 0
-#endif
-
-
 int64_t
 J9::VMEnv::maxHeapSizeInBytes()
    {
@@ -61,13 +56,6 @@ UDATA
 J9::VMEnv::heapBaseAddress()
    {
    return 0;
-   }
-
-
-UDATA
-J9::VMEnv::getHeapTailPaddingSizeInBytes()
-   {
-   return J9JIT_HEAP_TAIL_PADDING;
    }
 
 
