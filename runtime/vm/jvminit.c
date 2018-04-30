@@ -480,6 +480,7 @@ void OMRNORETURN exitJavaVM(J9VMThread * vmThread, IDATA rc)
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		/* exitJavaVM is always called from a JNI context */
 		enterVMFromJNI(vmThread);
 		releaseVMAccess(vmThread);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
@@ -2960,6 +2961,22 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 
 static jint runInitializationStage(J9JavaVM* vm, IDATA stage) {
 	RunDllMainData userData;
+	J9VMThread *mainThread = vm->mainThread;
+
+	/* Once the main J9VMThread has been cretaed, each init stage expects the thread
+	 * to have entered the VM and released VM access.
+	 */
+	if (NULL != mainThread) {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		if (mainThread->inNative) {
+			enterVMFromJNI(mainThread);
+			releaseVMAccess(mainThread);
+		} else
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		if (J9_ARE_ANY_BITS_SET(mainThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)) {
+			releaseVMAccess(mainThread);
+		}
+	}
 
 	userData.vm = vm;
 	userData.stage = stage;
@@ -5725,12 +5742,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		*BFUjavaVM = vm;
 	}
 
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-	/* Ensure we are in the VM without VM access */
-	enterVMFromJNI(env);
-	releaseVMAccess(env);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-
 	if (JNI_OK != (stageRC = runInitializationStage(vm, JCL_INITIALIZED))) {
 		goto error;
 	}
@@ -5741,6 +5752,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	sidecarInit(env);
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	/* sidecarInit leaves the thread in a JNI context */
 	enterVMFromJNI(env);
 	releaseVMAccess(env);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
