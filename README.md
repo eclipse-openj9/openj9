@@ -58,6 +58,7 @@ To get started, read our [Contribution Guide](CONTRIBUTING.md).
 
 [coc]: https://eclipse.org/org/documents/Community_Code_of_Conduct.php
 
+If you think you want to contribute but you're not ready to sign the Eclipse Contributor Agreement, why not come along to our weekly *Ask the OpenJ9 community* calls to find out more about how we work. We talk about new ideas, answer any questions that get raised, and discuss project plans and status. We also do lightning talks on features and functions of the VM. Visit the *#planning* channel in our [Slack workspace](https://openj9.slack.com/) for information about upcoming community calls and minutes from previous meetings (Join [here](https://www.eclipse.org/openj9/oj9_joinslack.html)). 
 
 What repos are part of the project?
 ===================================
@@ -80,5 +81,6 @@ Videos and Presentations
 - [JavaOne 2017: Eclipse OpenJ9 Under the hood of the next open source JVM](https://www.slideshare.net/DanHeidinga/javaone-2017-eclipse-openj9-under-the-hood-of-the-jvm)
 - [JavaOne 2017: Ask the OpenJ9 Architects](https://www.youtube.com/watch?v=qb5ennM_pgc)
 
+Also check out the [Resources](https://www.eclipse.org/openj9/oj9_resources.html) page on our website.
 
 Copyright (c) 2017, 2018 IBM Corp. and others
