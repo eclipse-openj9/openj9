@@ -47,23 +47,25 @@ import com.ibm.oti.lang.ArgumentHelper;
 import com.ibm.oti.vm.VM;
 import com.ibm.oti.vm.VMLangAccess;
 
-/*[IF Sidecar19-SE]
+/*[IF Sidecar19-SE]*/
 import java.util.AbstractList;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
 import java.lang.invoke.VarHandle.AccessMode;
-/*[IF Sidecar19-SE-OpenJ9]
+/*[IF Sidecar19-SE-OpenJ9]*/
 import java.lang.Module;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.JavaLangAccess;
 import java.security.ProtectionDomain;
 import jdk.internal.org.objectweb.asm.ClassReader;
+/*[ELSE] Sidecar19-SE-OpenJ9
+import java.lang.reflect.Module;
 /*[ENDIF] Sidecar19-SE-OpenJ9*/
-/*[ELSE]*/
+/*[ELSE] Sidecar19-SE*/
 import sun.reflect.CallerSensitive;
-/*[ENDIF]*/
+/*[ENDIF] Sidecar19-SE*/
 
 /**
  * Factory class for creating and adapting MethodHandles.
@@ -388,10 +390,28 @@ public class MethodHandles {
 		 * 				 to avoid extra type checking, the parameter is {@link MethodHandle}. If we need to
 		 * 				 handle {@link VarHandle} in the future, the type can be {@link Object}.
 		 * @throws IllegalAccessException If the member is not accessible.
+		 * @throws IllegalAccessError If a handle argument or return type is not accessible.
 		 */
 		private void checkAccess(Class<?> targetClass, String name, int memberModifiers, MethodHandle handle) throws IllegalAccessException {
 			checkClassAccess(targetClass);
 
+			/*[IF Sidecar19-SE]*/
+			if (null != handle) {
+				MethodType type = handle.type();
+				Module accessModule = accessClass.getModule();
+
+				try {
+					checkClassModuleVisibility(accessMode, accessModule, type.returnType);
+					for (Class<?> c: type.arguments) {
+						checkClassModuleVisibility(accessMode, accessModule, c);
+					}
+				} catch (IllegalAccessException exc) {
+					IllegalAccessError err = new IllegalAccessError(exc.getMessage());
+					err.initCause(exc);
+					throw err;
+				}
+			}
+			/*[ENDIF]*/
 			if (Modifier.isPublic(memberModifiers)) {
 				/* checkClassAccess already determined that we have more than "no access" (public access) */
 				return;
@@ -482,6 +502,9 @@ public class MethodHandles {
 		 * @throws IllegalAccessException If the {@link Class} is not accessible from {@link #accessClass}. 
 		 */
 		private void checkClassAccess(Class<?> targetClass) throws IllegalAccessException {
+			/*[IF Sidecar19-SE]*/
+			checkClassModuleVisibility(accessMode, accessClass.getModule(), targetClass);
+			/*[ENDIF]*/
 			if (NO_ACCESS != accessMode) {
 				/* target class should always be accessible to the lookup class when they are the same class */
 				if (accessClass == targetClass) {
@@ -625,6 +648,23 @@ public class MethodHandles {
 			return handle;
 		}
 		
+		/*[IF Sidecar19-SE]*/
+		/**
+		 * Return a MethodHandle to a virtual method.  The method will be looked up in the first argument 
+		 * (aka receiver) prior to dispatch.  The type of the MethodHandle will be that of the method
+		 * with the receiver type prepended.
+		 * 
+		 * @param clazz - the class defining the method
+		 * @param methodName - the name of the method
+		 * @param type - the type of the method
+		 * @return a MethodHandle that will do virtual dispatch on the first argument
+		 * @throws IllegalAccessException - if method is static or access is refused or clazz's package is not exported to the current module 
+		 * @throws IllegalAccessError - if the type's packages are not exported to the current module 
+		 * @throws NullPointerException - if clazz, methodName or type is null
+		 * @throws NoSuchMethodException - if clazz has no virtual method named methodName with signature matching type
+		 * @throws SecurityException - if any installed SecurityManager denies access to the method
+		 */
+		 /*[ELSE]
 		/**
 		 * Return a MethodHandle to a virtual method.  The method will be looked up in the first argument 
 		 * (aka receiver) prior to dispatch.  The type of the MethodHandle will be that of the method
@@ -639,6 +679,7 @@ public class MethodHandles {
 		 * @throws NoSuchMethodException - if clazz has no virtual method named methodName with signature matching type
 		 * @throws SecurityException - if any installed SecurityManager denies access to the method
 		 */
+		/*[ENDIF]*/
 		public MethodHandle findVirtual(Class<?> clazz, String methodName, MethodType type) throws IllegalAccessException, NoSuchMethodException {
 			nullCheck(clazz, methodName, type);
 			
@@ -681,6 +722,37 @@ public class MethodHandles {
 			handle = SecurityFrameInjector.wrapHandleWithInjectedSecurityFrameIfRequired(this, handle);
 			return handle;
 		}
+
+		/*[IF Sidecar19-SE]*/
+		/**
+		 * Check if targetClass is in a package visible from the accessModule
+		 * @param accessMode access mode of the lookup object
+		 * @param accessModule module of the referring class
+		 * @param targetClass Class which the referring class is accessing
+		 * @throws IllegalAccessException if the targetClass is not visible
+		 */
+		static void checkClassModuleVisibility(int accessMode, Module accessModule, Class<?> targetClass) throws IllegalAccessException {
+
+			if (INTERNAL_PRIVILEGED != accessMode) {
+				Module targetModule = targetClass.getModule();
+				String targetClassPackageName = targetClass.getPackageName();
+				if ((UNCONDITIONAL & accessMode) == UNCONDITIONAL) {
+					/* publicLookup objects can see all unconditionally exported packages. */
+					if (!targetModule.isExported(targetClassPackageName)) {
+						/*[MSG "K0587", "'{0}' no access to: '{1}'"]*/
+						throw new IllegalAccessException(Msg.getString("K0587", accessModule.getName(), targetClassPackageName)); //$NON-NLS-1$
+					}
+				} else if (!(
+						Objects.equals(accessModule, targetModule)
+						|| (targetModule.isExported(targetClassPackageName, accessModule) && accessModule.canRead(targetModule)))
+						) {
+					/*[MSG "K0587", "'{0}' no access to: '{1}'"]*/
+					String message = Msg.getString("K0587", accessModule.getName(), targetClassPackageName); //$NON-NLS-1$
+					throw new IllegalAccessException(message);
+				}
+			}
+		}
+		/*[ENDIF]*/
 		
 		/*[IF Panama]*/
 		/**
