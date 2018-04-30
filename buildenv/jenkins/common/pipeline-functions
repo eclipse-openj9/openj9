@@ -92,7 +92,7 @@ def get_date() {
     ).trim()
 }
 
-def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID) {
+def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE) {
     stage ("${BUILD_JOB_NAME}") {
         return build_with_slack(BUILD_JOB_NAME,
             [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
@@ -107,11 +107,12 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
             string(name: 'VARIABLE_FILE', value: VARIABLE_FILE),
             string(name: 'VENDOR_REPO', value: VENDOR_REPO),
             string(name: 'VENDOR_BRANCH', value: VENDOR_BRANCH),
-            string(name: 'VENDOR_CREDENTIALS_ID', value: VENDOR_CREDENTIALS_ID)])
+            string(name: 'VENDOR_CREDENTIALS_ID', value: VENDOR_CREDENTIALS_ID),
+            string(name: 'NODE', value: NODE)])
     }
 }
 
-def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID) {
+def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE) {
     stage ("${JOB_NAME}") {
         return build_with_slack(JOB_NAME,
             [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME),
@@ -119,7 +120,8 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VA
             string(name: 'VARIABLE_FILE', value: VARIABLE_FILE),
             string(name: 'VENDOR_REPO', value: VENDOR_REPO),
             string(name: 'VENDOR_BRANCH', value: VENDOR_BRANCH),
-            string(name: 'VENDOR_CREDENTIALS_ID', value: VENDOR_CREDENTIALS_ID)])
+            string(name: 'VENDOR_CREDENTIALS_ID', value: VENDOR_CREDENTIALS_ID),
+            string(name: 'NODE', value: NODE)])
     }
 }
 
@@ -154,7 +156,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
     // compile the source and build the SDK
     def BUILD_JOB_NAME = "Build-JDK${SDK_VERSION}-${SPEC}"
-    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID)
+    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.BUILD_NODE)
     echo "JOB: ${BUILD_JOB_NAME} PASSED in: ${jobs['build'].getDurationString()}"
 
     if (TESTS_TARGETS.trim() != "none") {
@@ -173,7 +175,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             }
 
             // run tests against the SDK build in the upstream job: Build-JDK${SDK_VERSION}-${SPEC}
-            jobs["${level}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID)
+            jobs["${level}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE)
             echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[level].getDurationString()}"
         }
     }
