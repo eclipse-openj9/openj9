@@ -1,5 +1,5 @@
-###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+################################################################################
+# Copyright (c) 2017, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,32 +18,37 @@
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-###############################################################################
+################################################################################
 
-# This makefile should be invoked as the default makefile for building J9,
-# instead of the UMA-generated makefile.
+add_subdirectory(testjvmtiA)
+add_subdirectory(testjvmtiB)
+add_subdirectory(testlibA)
+add_subdirectory(testlibB)
 
-# Add the omr dependency to the UMA makefile's "all" target. 
-# Force omr to be built first, and not in parallel with any UMA targets.
-.NOTPARALLEL all: phase_omr
-clean: clean_phase_omr
+#TODO this is platform specific stuff
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -rdynamic")
 
-phase_omr:
-ifneq ($(ENABLE_CMAKE),true)
-	$(MAKE) $(MFLAGS) -C omr
-endif
+add_executable(testjep178_static
+    static_agents.c
+    static_libraries.c
+    testjep178.c
+)
 
-clean_phase_omr:
-	$(MAKE) $(MFLAGS) -C omr clean
+target_link_libraries(testjep178_static
+    PRIVATE
+        j9vm_interface
 
-.PHONY: phase_omr clean_phase_omr
+        #TODO platform specific
+        dl
+)
 
-# As a convenience, add phase_omr as a prereq to commonly used phases.
-phase_core: phase_omr
-phase_j2se: phase_omr
-phase_jit: phase_omr
-phase_quick: phase_omr
-phase_util: phase_omr
+add_executable(testjep178_dynamic
+    testjep178.c
+)
+target_link_libraries(testjep178_dynamic
+    PRIVATE
+        j9vm_interface
 
-# Include the UMA-generated makefile
-include ./makefile
+        #TODO platform specific
+        dl
+)

@@ -1,5 +1,5 @@
-###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+################################################################################
+# Copyright (c) 2017, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,32 +18,19 @@
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-###############################################################################
+################################################################################
 
-# This makefile should be invoked as the default makefile for building J9,
-# instead of the UMA-generated makefile.
+# Set up some default version variables.
+# Note as cache varaiables these can be overridden on the command line when invoking cmake
+# Using the syntax `-D<VAR_NAME>=<VALUE>`
 
-# Add the omr dependency to the UMA makefile's "all" target. 
-# Force omr to be built first, and not in parallel with any UMA targets.
-.NOTPARALLEL all: phase_omr
-clean: clean_phase_omr
 
-phase_omr:
-ifneq ($(ENABLE_CMAKE),true)
-	$(MAKE) $(MFLAGS) -C omr
-endif
+set(J9VM_JAVA_VERSION "9" CACHE STRING "Version of Java to build")
+# Limit `J9VM_JAVA_VERSION` to values of 8 or 9
+# TODO: this is only a gui thing. It doesnt actually do proper enforcement
+# TODO: need to add support for 10 and 11
+set_property(CACHE J9VM_JAVA_VERSION PROPERTY STRINGS "8" "9")
 
-clean_phase_omr:
-	$(MAKE) $(MFLAGS) -C omr clean
-
-.PHONY: phase_omr clean_phase_omr
-
-# As a convenience, add phase_omr as a prereq to commonly used phases.
-phase_core: phase_omr
-phase_j2se: phase_omr
-phase_jit: phase_omr
-phase_quick: phase_omr
-phase_util: phase_omr
-
-# Include the UMA-generated makefile
-include ./makefile
+set(J9VM_VERSION_MAJOR 2 CACHE STRING "")
+set(J9VM_VERSION_MINOR ${J9VM_JAVA_VERSION} CACHE INERNAL "")
+set(J9VM_VERSION ${J9VM_VERSION_MAJOR}.${J9VM_VERSION_MINOR})

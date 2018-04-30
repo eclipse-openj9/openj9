@@ -1,5 +1,5 @@
-###############################################################################
-# Copyright (c) 2016, 2018 IBM Corp. and others
+################################################################################
+# Copyright (c) 2017, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,32 +18,32 @@
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-###############################################################################
+################################################################################
 
-# This makefile should be invoked as the default makefile for building J9,
-# instead of the UMA-generated makefile.
+# Dont append version suffix
+set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
 
-# Add the omr dependency to the UMA makefile's "all" target. 
-# Force omr to be built first, and not in parallel with any UMA targets.
-.NOTPARALLEL all: phase_omr
-clean: clean_phase_omr
+add_library(harmony_jvm SHARED
+	harmony_vm.c
+)
+target_include_directories(harmony_jvm
+	PRIVATE
+		${j9vm_SOURCE_DIR}/harmony/include
+)
 
-phase_omr:
-ifneq ($(ENABLE_CMAKE),true)
-	$(MAKE) $(MFLAGS) -C omr
-endif
+target_link_libraries(harmony_jvm
+	PRIVATE
+		j9vm_interface
 
-clean_phase_omr:
-	$(MAKE) $(MFLAGS) -C omr clean
+		omrsig
+		hyprt
+		hyprtshim
+)
 
-.PHONY: phase_omr clean_phase_omr
+# We actually want the library to be named "jvm.{so|dll}"
+set_target_properties(harmony_jvm PROPERTIES LIBRARY_OUTPUT_NAME "jvm")
 
-# As a convenience, add phase_omr as a prereq to commonly used phases.
-phase_core: phase_omr
-phase_j2se: phase_omr
-phase_jit: phase_omr
-phase_quick: phase_omr
-phase_util: phase_omr
-
-# Include the UMA-generated makefile
-include ./makefile
+install(
+	TARGETS harmony_jvm
+	LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+)
