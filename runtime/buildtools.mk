@@ -54,7 +54,8 @@ else
 endif
 
 default : all
-tools : copya2e configure tracing nls hooktool constantpool
+# Note: CMake builds dont need tracing, or hooktool
+tools : copya2e configure nls constantpool $(if $(findstring true,$(ENABLE_CMAKE)),, tracing hooktool)
 all : tools ddr
 
 # OMRTODO
@@ -143,8 +144,14 @@ OMRGLUE_INCLUDES = \
   ../gc_trace \
   ../gc_vlhgc
 
-configure : uma
+# if we are doing a cmake build, configure wont depend on uma
+# However we need to run constantpool and nls tools before invoking cmake
+configure : $(if $(findstring true,$(ENABLE_CMAKE)),constantpool nls, uma)
+ifndef ENABLE_CMAKE
 	$(MAKE) -C omr -f run_configure.mk 'SPEC=$(SPEC)' 'OMRGLUE=$(OMRGLUE)' 'CONFIG_INCL_DIR=$(CONFIG_INCL_DIR)' 'OMRGLUE_INCLUDES=$(OMRGLUE_INCLUDES)' 'EXTRA_CONFIGURE_ARGS=$(EXTRA_CONFIGURE_ARGS)'
+else
+	mkdir -p build && cd build && $(CMAKE) -C ../cmake/caches/$(SPEC).cmake $(EXTRA_CMAKE_ARGS) ..
+endif
 
 # run UMA to generate makefile
 J9VM_GIT_DIR := $(firstword $(wildcard $(J9_ROOT)/.git) $(wildcard $(J9_ROOT)/workspace/.git))
