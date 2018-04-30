@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,10 +78,6 @@ extern "C" {
 
 #define J9JIT_REVERT_METHOD_TO_INTERPRETED(javaVM, method) \
 	(javaVM)->internalVMFunctions->initializeMethodRunAddressNoHook((javaVM), (method))
-
-#if defined(J9_GC_OBJECT_HEAP_TAIL_PADDING) && (J9_GC_OBJECT_HEAP_TAIL_PADDING > 0)
-#define J9JIT_HEAP_TAIL_PADDING J9_GC_OBJECT_HEAP_TAIL_PADDING
-#endif
 
 #if defined(J9ZOS390) && !defined(J9VM_ENV_DATA64)
 /* CAA is r12 - r4-r15 are saved in the C stack frame (must also add the 2048 stack bias) */
