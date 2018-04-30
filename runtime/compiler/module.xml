@@ -58,7 +58,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 		<commands>
 			<command line="$(MAKE) -C compiler clean" type="clean"/>
-			<command line="$(MAKE) -C compiler" type="all"/>
+			<command line="$(MAKE) -C compiler $(if $(filter-out undefined,$(origin UMA_CCACHE)), 'CC=$(CC)' 'CXX=$(CXX)')" type="all"/>
 		</commands>
 	</artifact>
 </module>

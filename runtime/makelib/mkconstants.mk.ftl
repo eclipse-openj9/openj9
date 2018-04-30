@@ -163,6 +163,15 @@ ifdef UMA_CLANG
   endif
 endif
 
+ifndef CCACHE
+  CCACHE:=ccache
+endif
+
+ifdef UMA_CCACHE
+  CC:=$(CCACHE) $(CC)
+  CXX:=$(CCACHE) $(CXX)
+endif
+
 # Define the JIT HOST type.
 <#if uma.spec.processor.x86 || uma.spec.processor.amd64>
 TR_HOST=TR_HOST_X86
