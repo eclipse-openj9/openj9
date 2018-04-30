@@ -31,6 +31,11 @@ target_link_libraries(j9vmtest
 		jvm
 )
 
+target_include_directories(j9vmtest
+	PRIVATE
+		"${j9vm_BINARY_DIR}/j9vm"
+)
+
 install(
 	TARGETS j9vmtest
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

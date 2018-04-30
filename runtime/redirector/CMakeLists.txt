@@ -23,44 +23,14 @@
 # Dont append version suffix
 set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
 
+set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/generated.c" PROPERTIES GENERATED TRUE)
 
-add_custom_command(OUTPUT generated.c
-	DEPENDS  ${CMAKE_CURRENT_SOURCE_DIR}/../oti/helpers.m4 generated.c.m4
-	COMMAND m4 -I ${CMAKE_CURRENT_SOURCE_DIR}/../oti -I ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/generated.c.m4 > generated.c
-)
 
-add_library(jvm_b150_redirect SHARED
-	generated.c
-	redirector.c
-)
-target_link_libraries(jvm_b150_redirect
-	PRIVATE
-		j9vm_interface
-		dl
-)
-target_include_directories(jvm_b150_redirect
-	PRIVATE
-		${j9vm_SOURCE_DIR}/j9vm
-)
-set_target_properties(jvm_b150_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_b150)
-
-add_library(jvm_b156_redirect SHARED
-	generated.c
-	redirector.c
-)
-target_link_libraries(jvm_b156_redirect
-	PRIVATE
-		j9vm_interface
-		dl
-)
-target_include_directories(jvm_b156_redirect
-	PRIVATE
-		${j9vm_SOURCE_DIR}/j9vm
-)
-set_target_properties(jvm_b156_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_b156)
-
+################################################################################
+# Redirector
+################################################################################
 add_library(jvm_redirect SHARED
-	generated.c
+	"${CMAKE_CURRENT_BINARY_DIR}/generated.c"
 	redirector.c
 )
 target_link_libraries(jvm_redirect
@@ -70,12 +40,52 @@ target_link_libraries(jvm_redirect
 )
 target_include_directories(jvm_redirect
 	PRIVATE
-		${j9vm_SOURCE_DIR}/j9vm
+		"${j9vm_SOURCE_DIR}/j9vm"
+		"${j9vm_BINARY_DIR}/j9vm"
 )
 set_target_properties(jvm_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm)
+
+################################################################################
+# Redirector b150
+################################################################################
+add_library(jvm_b150_redirect SHARED
+	"${CMAKE_CURRENT_BINARY_DIR}/generated.c"
+	redirector.c
+)
+target_link_libraries(jvm_b150_redirect
+	PRIVATE
+		j9vm_interface
+		dl
+)
+target_include_directories(jvm_b150_redirect
+	PRIVATE
+		"${j9vm_SOURCE_DIR}/j9vm"
+		"${j9vm_BINARY_DIR}/j9vm"
+)
+set_target_properties(jvm_b150_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_b150)
+
+################################################################################
+# Redirector b156
+################################################################################
+add_library(jvm_b156_redirect SHARED
+	"${CMAKE_CURRENT_BINARY_DIR}/generated.c"
+	redirector.c
+)
+target_link_libraries(jvm_b156_redirect
+	PRIVATE
+		j9vm_interface
+		dl
+)
+target_include_directories(jvm_b156_redirect
+	PRIVATE
+		"${j9vm_SOURCE_DIR}/j9vm"
+		"${j9vm_BINARY_DIR}/j9vm"
+)
+set_target_properties(jvm_b156_redirect PROPERTIES LIBRARY_OUTPUT_NAME jvm_b156)
+
+
 
 install(
 	TARGETS jvm_b150_redirect jvm_b156_redirect jvm_redirect
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}/redirector
 )
-
