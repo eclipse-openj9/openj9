@@ -413,7 +413,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<dependency name="phase_j2se"/>
 			<dependency name="phase_util"/>
 			<dependency name="win">
-				<include-if condition="spec.flags.module_windbg" />
+				<include-if condition="spec.flags.module_windbg and not spec.flags.J9VM_ENV_DATA64" />
+			</dependency>
+			<dependency name="win_64">
+				<include-if condition="spec.flags.module_windbg and spec.flags.J9VM_ENV_DATA64" />
 			</dependency>
 		</dependencies>
 		<commands>
