@@ -232,44 +232,46 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			info = &(classfile->constantPool[index]);
 			tag = (UDATA) info->tag;
 			{
-				UDATA ldcErrorType = 0;
 				switch (tag) {
 				case CFR_CONSTANT_Integer:
 				case CFR_CONSTANT_Float:
 				case CFR_CONSTANT_String:
 					break;
 				case CFR_CONSTANT_Class:
-					if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java5MajorVersionShifted)
-							|| ((flags & BCT_MajorClassFileVersionMask) == 0)
+					if (((flags & BCT_MajorClassFileVersionMask) < BCT_Java5MajorVersionShifted)
+					&& (J9_ARE_ANY_BITS_SET(flags, BCT_MajorClassFileVersionMask))
 					) {
-						ldcErrorType = J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V49__ID;
+						errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49__ID;
+						errorDataIndex = index;
+						goto _verifyError;
 					}
 					break;
 				case CFR_CONSTANT_MethodType:
 				case CFR_CONSTANT_MethodHandle:
-					if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java7MajorVersionShifted)
-							|| ((flags & BCT_MajorClassFileVersionMask) == 0)
+					if (((flags & BCT_MajorClassFileVersionMask) < BCT_Java7MajorVersionShifted)
+					&& (J9_ARE_ANY_BITS_SET(flags, BCT_MajorClassFileVersionMask))
 					) {
-						ldcErrorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51__ID;
+						errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51__ID;
+						errorDataIndex = index;
+						goto _verifyError;
 					}
 					break;
 				case CFR_CONSTANT_Dynamic:
-					J9CfrConstantPoolInfo *constantDynamicSignature = &classfile->constantPool[classFile->constantPool[info->slot2].slot2];
-					if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java11MajorVersionShifted)
-							|| ((flags & BCT_MajorClassFileVersionMask) == 0)
-					) {
-						ldcErrorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55__ID;
-					} else if (('D' == constantDynamicSignature->bytes[0])
-							|| ('J' == constantDynamicSignature->bytes[0])
-					) {
-						ldcErrorType = J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE;
+					{
+						J9CfrConstantPoolInfo *constantDynamicSignature = &classfile->constantPool[classfile->constantPool[info->slot2].slot2];
+						if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java11MajorVersionShifted) {
+							errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55__ID;
+							errorDataIndex = index;
+							goto _verifyError;
+						} else if (('D' == constantDynamicSignature->bytes[0]) || ('J' == constantDynamicSignature->bytes[0])) {
+							errorType = J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE__ID;
+							errorDataIndex = index;
+							goto _verifyError;
+						}
 					}
 					break;
 				default:
-					ldcErrorType = J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC__ID;
-				}
-				if (0 != ldcErrorType) {
-					errorType = ldcErrorType;
+					errorType = J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC__ID;
 					errorDataIndex = index;
 					goto _verifyError;
 				}
@@ -289,21 +291,18 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			tag = (UDATA) info->tag;
 
 			if (CFR_CONSTANT_Dynamic == tag) {
-				J9CfrConstantPoolInfo *constantDynamicSignature = &classfile->constantPool[classFile->constantPool[info->slot2].slot2];
-				if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java11MajorVersionShifted)
-						|| ((flags & BCT_MajorClassFileVersionMask) == 0)) {
-					errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55;
+				J9CfrConstantPoolInfo *constantDynamicSignature = &classfile->constantPool[classfile->constantPool[info->slot2].slot2];
+				if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java11MajorVersionShifted) {
+					errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55__ID;
 					errorDataIndex = index;
 					goto _verifyError;
-				} else if (('D' != constantDynamicSignature->bytes[0])
-						&& ('J' != constantDynamicSignature->bytes[0])
-				) {
-					errorType = J9NLS_CFR_ERR_BC_LDC2_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE;
+				} else if (('D' != constantDynamicSignature->bytes[0]) && ('J' != constantDynamicSignature->bytes[0])) {
+					errorType = J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE__ID;
 					errorDataIndex = index;
 					goto _verifyError;
 				}
 			} else if ((CFR_CONSTANT_Double != tag) && (CFR_CONSTANT_Long != tag)) {
-				errorType = J9NLS_CFR_ERR_BC_LDC2_NOT_CONSTANT_OR_CONSTANT_DYNAMIC__ID;
+				errorType = J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC__ID;
 				errorDataIndex = index;
 				goto _verifyError;
 			}

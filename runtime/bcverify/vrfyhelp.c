@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 8IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -418,10 +418,12 @@ pushLdcType(J9BytecodeVerificationData *verifyData, J9ROMClass * romClass, UDATA
 			PUSH(BCV_JAVA_LANG_INVOKE_METHODHANDLE_INDEX << BCV_CLASS_INDEX_SHIFT);
 			break;
 		case J9CPTYPE_CONSTANT_DYNAMIC:
-			J9ROMConstantDynamicRef* romConstantDynamicRef = (J9ROMConstantDynamicRef *)(J9_ROM_CP_FROM_ROM_CLASS(romClass) + index);
-			J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE(romConstantDynamicRef));
-			/* The signature referenced by a ConstantDynamic entry is a field descriptor */
-			pushType(verifyData, J9UTF8_DATA(signature), stackTop);
+			{
+				J9ROMConstantDynamicRef* romConstantDynamicRef = (J9ROMConstantDynamicRef *)(J9_ROM_CP_FROM_ROM_CLASS(romClass) + index);
+				J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMCONSTANTDYNAMICREF_NAMEANDSIGNATURE(romConstantDynamicRef));
+				/* The signature referenced by a ConstantDynamic entry is a field descriptor */
+				stackTop = pushType(verifyData, J9UTF8_DATA(signature), stackTop);
+			}
 			break;
 	}
 
