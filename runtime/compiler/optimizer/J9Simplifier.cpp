@@ -219,27 +219,6 @@ J9::Simplifier::unaryCancelOutWithChild(TR::Node *node, TR::Node *firstChild, TR
    return grandChild;
    }
 
-bool
-J9::Simplifier::isRecognizedPowMethod(TR::Node *node)
-   {
-   TR::Symbol *symbol = node->getSymbol();
-   TR::MethodSymbol *methodSymbol = symbol ? symbol->castToMethodSymbol() : NULL;
-   return (methodSymbol &&
-           (methodSymbol->getRecognizedMethod() == TR::java_lang_Math_pow ||
-            methodSymbol->getRecognizedMethod() == TR::java_lang_StrictMath_pow));
-   }
-
-bool
-J9::Simplifier::isRecognizedAbsMethod(TR::Node * node)
-   {
-   TR::Symbol *symbol = node->getSymbol();
-   TR::MethodSymbol *methodSymbol = symbol ? symbol->castToMethodSymbol() : NULL;
-   return  (methodSymbol &&
-            (methodSymbol->getRecognizedMethod() == TR::java_lang_Math_abs_D ||
-             methodSymbol->getRecognizedMethod() == TR::java_lang_Math_abs_F ||
-             methodSymbol->getRecognizedMethod() == TR::java_lang_Math_abs_I));
-   }
-
 TR::Node *
 J9::Simplifier::foldAbs(TR::Node *node)
    {
@@ -266,41 +245,120 @@ J9::Simplifier::foldAbs(TR::Node *node)
    return node;
    }
 
+template<typename T> struct BSWAP
+   {
+   inline static T run(T value) { TR_ASSERT(false, "Unsupported byte-swap type!"); }
+   };
+template<> struct BSWAP<int64_t>
+   {
+   inline static int64_t run(int64_t value)
+      {
+      value = (value & 0x00ff00ff00ff00ffULL) << 8 | (value >> 8) & 0x00ff00ff00ff00ffULL;
+      value = (value << 48) | ((value & 0xffff0000ULL) << 16) | ((value >> 16) & 0xffff0000ULL) | ((value >> 48) & 0xffULL);
+      return value;
+      }
+   };
+template<> struct BSWAP<int32_t>
+   {
+   inline static int32_t run(int32_t value)
+      {
+      return ((value >> 24) & 0xff) | ((value >> 8) & 0xff00) | ((value << 8) & 0xff0000) | ((value << 24));
+      }
+   };
+template<> struct BSWAP<int16_t>
+   {
+   inline static int16_t run(int16_t value)
+      {
+      return value << 8 | ((value >> 8) & 0xff);
+      }
+   };
+
+template<typename T> inline TR::Node* foldReverseBytes(TR::Node* node, TR::Block* block, TR::Simplifier* s, TR::RecognizedMethod rm)
+   {
+   if (node->getNumChildren() == 1)
+      {
+      auto child = node->getFirstChild();
+      if (child->getOpCodeValue() == node->getOpCodeValue())
+         {
+         auto symbol = child->getSymbol();
+         auto methodSymbol = symbol ? symbol->castToMethodSymbol() : NULL;
+         if (methodSymbol)
+            {
+            if (methodSymbol->getRecognizedMethod() == rm) // two reverse-bytes cancel each other
+               {
+               if (performTransformation(s->comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] ReverseBytes(ReverseBytes(A)) -> A\n", s->optDetailString(), node))
+                  {
+                  node = s->replaceNode(node, child->getFirstChild(), s->_curTree);
+                  }
+               }
+            }
+         }
+      else if (child->getOpCode().isLoadConst())
+         {
+         auto value = BSWAP<T>::run(child->getConstValue());
+         if (sizeof(T) < sizeof(int64_t))
+            {
+            foldIntConstant(node, value, s, false);
+            }
+         else
+            {
+            foldLongIntConstant(node, value, s, false);
+            }
+         }
+      }
+   return node;
+   }
+
 TR::Node *
 J9::Simplifier::simplifyiCallMethods(TR::Node * node, TR::Block * block)
    {
-   if (isRecognizedAbsMethod(node))
+   static auto skipit = (bool)feGetEnv("TR_NOMATHRECOG");
+   auto symbol = node->getSymbol();
+   auto methodSymbol = symbol ? symbol->castToMethodSymbol() : NULL;
+   if (methodSymbol)
       {
-      node = foldAbs(node);
-      }
-   else if (isRecognizedPowMethod(node))
-      {
-      static char *skipit = feGetEnv("TR_NOMATHRECOG");
-      if (skipit != NULL) return node;
-
-      int32_t numChildren = node->getNumChildren();
-      // call can have 2 or 3 args.  In both cases, the last two are
-      // the parameters of interest.
-      TR::Node *expNode = node->getChild(numChildren-1);
-      TR::Node *valueNode = node->getChild(numChildren-2);
-
-      // In Java strictmath.pow(), if both arguments are integers,
-      // then the result is exactly equal to the mathematical result
-      // of raising the first argument to the power of the second argument
-      // if that result can in fact be represented exactly as a double value.
-      //(In the foregoing descriptions, a floating-point value is considered
-      // to be an integer if and only if it is finite and a fixed point of
-      // the method ceil or, equivalently, a fixed point of the method floor.
-      // A value is a fixed point of a one-argument method if and only if
-      // the result of applying the method to the value is equal to the value.)
-      if (valueNode->getOpCodeValue() == TR::dconst &&
-          expNode->getOpCodeValue() == TR::dconst &&
-          valueNode->getDouble() == 10.0 && expNode->getDouble() == 4.0)
+      switch(methodSymbol->getRecognizedMethod())
          {
-         foldDoubleConstant(node, 10000.0, (TR::Simplifier *) this);
+         case TR::java_lang_Math_abs_I:
+         case TR::java_lang_Math_abs_F:
+         case TR::java_lang_Math_abs_D:
+            node = foldAbs(node);
+            break;
+         case TR::java_lang_Integer_reverseBytes:
+            node = foldReverseBytes<int32_t>(node, block, (TR::Simplifier*)this, methodSymbol->getRecognizedMethod());
+            break;
+         case TR::java_lang_Short_reverseBytes:
+            node = foldReverseBytes<int16_t>(node, block, (TR::Simplifier*)this, methodSymbol->getRecognizedMethod());
+            break;
+         case TR::java_lang_Math_pow:
+         case TR::java_lang_StrictMath_pow:
+            if (!skipit)
+               {
+               int32_t numChildren = node->getNumChildren();
+               // call can have 2 or 3 args.  In both cases, the last two are
+               // the parameters of interest.
+               TR::Node *expNode = node->getChild(numChildren - 1);
+               TR::Node *valueNode = node->getChild(numChildren - 2);
+               // In Java strictmath.pow(), if both arguments are integers,
+               // then the result is exactly equal to the mathematical result
+               // of raising the first argument to the power of the second argument
+               // if that result can in fact be represented exactly as a double value.
+               //(In the foregoing descriptions, a floating-point value is considered
+               // to be an integer if and only if it is finite and a fixed point of
+               // the method ceil or, equivalently, a fixed point of the method floor.
+               // A value is a fixed point of a one-argument method if and only if
+               // the result of applying the method to the value is equal to the value.)
+               if (valueNode->getOpCodeValue() == TR::dconst &&
+                   expNode->getOpCodeValue() == TR::dconst &&
+                   valueNode->getDouble() == 10.0 && expNode->getDouble() == 4.0)
+                  {
+                  foldDoubleConstant(node, 10000.0, (TR::Simplifier *) this);
+                  }
+               }
+         default:
+            break;
          }
       }
-
    return node;
    }
 
@@ -310,45 +368,44 @@ J9::Simplifier::simplifyiCallMethods(TR::Node * node, TR::Block * block)
 TR::Node *
 J9::Simplifier::simplifylCallMethods(TR::Node * node, TR::Block * block)
    {
-   if (comp()->cg()->getSupportsCurrentTimeMaxPrecision())
+   auto symbol = node->getSymbol();
+   auto methodSymbol = symbol ? symbol->castToMethodSymbol() : NULL;
+   if (methodSymbol)
       {
-      TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
-      if (methodSymbol)
+      switch(methodSymbol->getRecognizedMethod())
          {
-         if (comp()->cg()->getSupportsMaxPrecisionMilliTime() &&
-             (methodSymbol->getRecognizedMethod() == TR::java_lang_System_currentTimeMillis) &&
-             (methodSymbol->isJNI() || methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative()))
-            {
-            node = convertCurrentTimeMillis(node, block);
-            }
-         else if (methodSymbol->getRecognizedMethod() == TR::java_lang_System_nanoTime &&
-               (methodSymbol->isJNI() || methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative()))
-            {
-            node = convertNanoTime(node, block);
-            }
+         case TR::java_lang_Math_abs_L:
+            node = foldAbs(node);
+            break;
+         case TR::java_lang_Long_reverseBytes:
+            node = foldReverseBytes<int64_t>(node, block, (TR::Simplifier*)this, methodSymbol->getRecognizedMethod());
+            break;
+         case TR::java_lang_System_currentTimeMillis:
+            if (comp()->cg()->getSupportsCurrentTimeMaxPrecision() &&
+                comp()->cg()->getSupportsMaxPrecisionMilliTime()   &&
+                (methodSymbol->isJNI() || methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative()))
+               {
+               node = convertCurrentTimeMillis(node, block);
+               }
+            else if (comp()->cg()->getSupportsFastCTM() &&
+                     node->getNumChildren() == 0        &&
+                     node->getReferenceCount() == 2     &&
+                     (methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative()))
+               {
+               node = foldLongStoreOfCurrentTimeMillis(node, block);
+               }
+            break;
+         case TR::java_lang_System_nanoTime:
+            if (comp()->cg()->getSupportsCurrentTimeMaxPrecision() &&
+                (methodSymbol->isJNI() || methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative()))
+               {
+               node = convertNanoTime(node, block);
+               }
+            break;
+         default:
+            break;
          }
       }
-   else if (comp()->cg()->getSupportsFastCTM() && node->getNumChildren() == 0 && node->getReferenceCount() == 2)
-      {
-      TR::ResolvedMethodSymbol * methodSymbol = node->getSymbol()->getResolvedMethodSymbol();
-      if (methodSymbol &&
-          (methodSymbol->getRecognizedMethod() == TR::java_lang_System_currentTimeMillis) &&
-           (methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative()))
-         {
-         node = foldLongStoreOfCurrentTimeMillis(node, block);
-         }
-      }
-   else
-      {
-      TR::MethodSymbol * symbol = node->getSymbol()->castToMethodSymbol();
-
-      if (symbol &&
-          (symbol->getRecognizedMethod()==TR::java_lang_Math_abs_L))
-         {
-         node = foldAbs(node);
-         }
-      }
-
    return node;
    }
 

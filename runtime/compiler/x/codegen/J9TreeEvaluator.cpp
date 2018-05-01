@@ -12452,15 +12452,45 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             {
             return inlineSimpleMathFunction(TR_Abs_L, node, cg);
             }
-
          case TR::java_lang_Long_reverseBytes:
+            {
+            auto value = cg->longClobberEvaluate(node->getChild(0));
+            if (TR::Compiler->target.is32Bit())
+               {
+               auto pair = value->getRegisterPair();
+               auto hi = pair->getLowOrder();
+               auto lo = pair->getHighOrder();
+               pair->setLowOrder(lo, cg);
+               pair->setHighOrder(hi, cg);
+               generateRegInstruction(BSWAP4Reg, node, hi, cg);
+               generateRegInstruction(BSWAP4Reg, node, lo, cg);
+               }
+            else
+               {
+               generateRegInstruction(BSWAP8Reg, node, value, cg);
+               }
+            node->setRegister(value);
+            cg->decReferenceCount(node->getChild(0));
+            return true;
+            }
+
          case TR::java_lang_Integer_reverseBytes:
+            {
+            auto value = cg->intClobberEvaluate(node->getChild(0));
+            generateRegInstruction(BSWAP4Reg, node, value, cg);
+            node->setRegister(value);
+            cg->decReferenceCount(node->getChild(0));
+            return true;
+            }
+
          case TR::java_lang_Short_reverseBytes:
             {
-            if(comp->getOption(TR_EnableJCLInline)
-               && performTransformation(comp, "O^O Enable JCL Integer/Long methods inline for: %s\n", cg->getDebug()->getName(node)) )
-               return TR::TreeEvaluator::sbyteswapEvaluator(node, cg) != NULL;
-            break;
+            auto value = cg->gprClobberEvaluate(node->getChild(0), MOV4RegReg);
+            generateRegImmInstruction(ROR2RegImm1, node, value, 8, cg);
+            generateRegRegInstruction(MOVSXReg4Reg2, node, value, value, cg);
+            node->setRegister(value);
+            cg->decReferenceCount(node->getChild(0));
+            return true;
             }
 
          case TR::java_util_concurrent_atomic_Fences_reachabilityFence:

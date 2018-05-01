@@ -3103,6 +3103,14 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
                dontInlineRecognizedMethod = true;
                break;
                }
+         case TR::java_lang_Long_reverseBytes:
+         case TR::java_lang_Integer_reverseBytes:
+         case TR::java_lang_Short_reverseBytes:
+            if (!TR::Compiler->target.cpu.isARM())
+               {
+               dontInlineRecognizedMethod = true;
+               break;
+               }
          case TR::java_lang_String_hashCodeImplDecompressed:
          case TR::java_lang_String_hashCodeImplCompressed:
             if (!TR::Compiler->om.canGenerateArraylets()){

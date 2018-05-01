@@ -114,16 +114,10 @@ J9::MethodSymbol::isPureFunction()
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_StrictMath_tan:
       case TR::java_lang_StrictMath_tanh:
-         /*
-      case TR::java_math_BigDecimal_valueOf:
-      case TR::java_math_BigDecimal_add:
-      case TR::java_math_BigDecimal_subtract:
-      case TR::java_math_BigDecimal_multiply:
-      case TR::java_math_BigInteger_add:
-      case TR::java_math_BigInteger_subtract:
-      case TR::java_math_BigInteger_multiply:
-         */
-      return true;
+      case TR::java_lang_Long_reverseBytes:
+      case TR::java_lang_Integer_reverseBytes:
+      case TR::java_lang_Short_reverseBytes:
+         return true;
       default:
          return false;
       }
