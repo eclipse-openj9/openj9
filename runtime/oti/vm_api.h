@@ -1580,6 +1580,18 @@ initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry);
 BOOLEAN
 setBootLoaderModulePatchPaths(J9JavaVM * javaVM, J9Module * j9module, const char * moduleName);
 
+/**
+ * @brief Register jvminit.c::predefinedHandlerWrapper using j9sig_set_*async_signal_handler
+ * for the specified signal
+ *
+ * @param vm pointer to a J9JavaVM
+ * @param signal integer value of the signal
+ * @param oldOSHandler points to the old signal handler function
+ *
+ * @return 0 on success and non-zero on failure
+ */
+IDATA
+registerPredefinedHandler(J9JavaVM *vm, U_32 signal, void **oldOSHandler);
 
 /* ---------------- romutil.c ---------------- */
 
@@ -3178,26 +3190,6 @@ releaseSafePointVMAccess(J9VMThread * vmThread);
 */
 void
 releaseExclusiveVMAccessFromExternalThread(J9JavaVM * vm);
-
-/**
- * Enter a JNI critical region (i.e. GetPrimitiveArrayCritical or GetStringCritical).
- * Once a thread has successfully entered a critical region, it has privileges similar
- * to holding VM access. No object can move while any thread is in a critical region.
- *
- * @param vmThread  the J9VMThread requesting to enter a critical region
- */
-void  
-enterCriticalRegion(J9VMThread* vmThread);
-
-/**
- * Enter a JNI critical region (i.e. GetPrimitiveArrayCritical or GetStringCritical).
- * Once a thread has successfully entered a critical region, it has privileges similar
- * to holding VM access. No object can move while any thread is in a critical region.
- *
- * @param vmThread  the J9VMThread requesting to exit a critical region
- */
-void  
-exitCriticalRegion(J9VMThread* vmThread);
 
 
 #if (defined(J9VM_GC_REALTIME))

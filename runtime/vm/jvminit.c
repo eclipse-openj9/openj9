@@ -317,6 +317,12 @@ static BOOLEAN isSSE2SupportedOnX86();
 static BOOLEAN isPPC64bit(void);
 #endif /* (AIXPPC || LINUXPPC) & !J9OS_I5 */
 
+static UDATA predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *userData);
+static void signalDispatch(J9VMThread *vmThread, I_32 sigNum);
+
+J9_DECLARE_CONSTANT_UTF8(j9_int_void, "(I)V");
+J9_DECLARE_CONSTANT_UTF8(j9_dispatch, "dispatch");
+
 #if defined(COUNT_BYTECODE_PAIRS)
 static jint
 initializeBytecodePairs(J9JavaVM *vm)
@@ -480,6 +486,7 @@ void OMRNORETURN exitJavaVM(J9VMThread * vmThread, IDATA rc)
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		/* exitJavaVM is always called from a JNI context */
 		enterVMFromJNI(vmThread);
 		releaseVMAccess(vmThread);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
@@ -602,9 +609,11 @@ freeJavaVM(J9JavaVM * vm)
 	j9sig_set_async_signal_handler(sigxfszHandler, NULL, 0);
 #endif
 
+	/* Remove the predefinedHandlerWrapper. */
+	j9sig_set_async_signal_handler(predefinedHandlerWrapper, vm, 0);
+
 	/* Unload before trace engine exits */
 	UT_MODULE_UNLOADED(J9_UTINTERFACE_FROM_VM(vm));
-
 
 	if (0 != vm->vmRuntimeStateListener.minIdleWaitTime) {
 		stopVMRuntimeStateListener(vm);
@@ -2960,6 +2969,22 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 
 static jint runInitializationStage(J9JavaVM* vm, IDATA stage) {
 	RunDllMainData userData;
+	J9VMThread *mainThread = vm->mainThread;
+
+	/* Once the main J9VMThread has been cretaed, each init stage expects the thread
+	 * to have entered the VM and released VM access.
+	 */
+	if (NULL != mainThread) {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		if (mainThread->inNative) {
+			enterVMFromJNI(mainThread);
+			releaseVMAccess(mainThread);
+		} else
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		if (J9_ARE_ANY_BITS_SET(mainThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)) {
+			releaseVMAccess(mainThread);
+		}
+	}
 
 	userData.vm = vm;
 	userData.stage = stage;
@@ -5725,12 +5750,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		*BFUjavaVM = vm;
 	}
 
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-	/* Ensure we are in the VM without VM access */
-	enterVMFromJNI(env);
-	releaseVMAccess(env);
-#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-
 	if (JNI_OK != (stageRC = runInitializationStage(vm, JCL_INITIALIZED))) {
 		goto error;
 	}
@@ -5741,6 +5760,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	sidecarInit(env);
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+	/* sidecarInit leaves the thread in a JNI context */
 	enterVMFromJNI(env);
 	releaseVMAccess(env);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
@@ -6202,6 +6222,118 @@ shutDownHookWrapper(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo
 
 }
 #endif
+
+/**
+ * Invoke jdk.internal.misc.Signal.dispatch(int number) in Java 9 and
+ * onwards. Invoke sun.misc.Signal.dispatch(int number) in Java 8.
+ *
+ * @param vmThread pointer to a J9VMThread
+ * @param signal integer value of the signal
+ *
+ * @return void
+ */
+static void
+signalDispatch(J9VMThread *vmThread, I_32 signal) {
+	J9JavaVM *vm = vmThread->javaVM;
+	J9NameAndSignature nas = {0};
+	I_32 args[] = {signal};
+
+	Trc_VM_signalDispatch_signalValue(vmThread, signal);
+
+	nas.name = (J9UTF8 *)&j9_dispatch;
+	nas.signature = (J9UTF8 *)&j9_int_void;
+
+	enterVMFromJNI(vmThread);
+
+	if (J2SE_VERSION(vm) >= J2SE_19) {
+		runStaticMethod(vmThread, (U_8 *)"jdk/internal/misc/Signal", &nas, 1, (UDATA *)args);
+	} else {
+		runStaticMethod(vmThread, (U_8 *)"sun/misc/Signal", &nas, 1, (UDATA *)args);
+	}
+
+	/* An exception shouldn't happen over here. */
+	Assert_VM_true(NULL == vmThread->currentException);
+
+	releaseVMAccess(vmThread);
+}
+
+/* @brief This handler will be invoked by the asynchSignalReporterThread
+ * in omrsignal.c once registered using j9sig_set_*async_signal_handler
+ * for a specific signal.
+ *
+ * @param portLibrary the port library
+ * @param gpType port library signal flag
+ * @param gpInfo GPF information (will be NULL in this case)
+ * @param userData user data (will be a pointer to J9JavaVM in this case)
+ *
+ * @return 0 on success and non-zero on failure
+ *
+ */
+static UDATA
+predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *userData) {
+	J9JavaVM *vm = (J9JavaVM *)userData;
+	J9JavaVMAttachArgs attachArgs = {0};
+	J9VMThread *vmThread = NULL;
+	IDATA result = JNI_ERR;
+	BOOLEAN shutdownStarted = FALSE;
+	I_32 signal = 0;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	signal = j9sig_map_portlib_signal_to_os_signal(gpType);
+	/* Don't invoke handler if signal is 0 or negative, or if -Xrs or -Xrs:async is specified */
+	if ((signal <= 0) || J9_ARE_ANY_BITS_SET(vm->sigFlags, J9_SIG_XRS_ASYNC)) {
+		return 1;
+	}
+
+	/* Don't invoke handler if JVM exit or shutdown has started. */
+	omrthread_monitor_enter(vm->runtimeFlagsMutex);
+	if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_EXIT_STARTED | J9_RUNTIME_SHUTDOWN_STARTED)) {
+		shutdownStarted = TRUE;
+	}
+	omrthread_monitor_exit(vm->runtimeFlagsMutex);
+
+	if (shutdownStarted) {
+		return 1;
+	}
+
+	attachArgs.version = JNI_VERSION_1_8;
+	attachArgs.name = "JVM Signal Thread";
+	attachArgs.group = vm->systemThreadGroupRef;
+
+	/* Attach current thread as a daemon thread */
+	result = internalAttachCurrentThread(vm, &vmThread, &attachArgs,
+				J9_PRIVATE_FLAGS_DAEMON_THREAD | J9_PRIVATE_FLAGS_SYSTEM_THREAD | J9_PRIVATE_FLAGS_ATTACHED_THREAD,
+				omrthread_self());
+
+	if (JNI_OK != result) {
+		/* Thread couldn't be attached. So, we can't run Java code. */
+		return 1;
+	}
+
+	/* Run handler (Java code). */
+	signalDispatch(vmThread, signal);
+
+	DetachCurrentThread((JavaVM *)vm);
+
+	return 0;
+}
+
+IDATA
+registerPredefinedHandler(J9JavaVM *vm, U_32 signal, void **oldOSHandler) {
+	IDATA rc = 0;
+	U_32 portlibSignalFlag = 0;
+
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	portlibSignalFlag = j9sig_map_os_signal_to_portlib_signal(signal);
+	if (0 != portlibSignalFlag) {
+		rc = j9sig_set_single_async_signal_handler(predefinedHandlerWrapper, vm, portlibSignalFlag, oldOSHandler);
+	} else {
+		Trc_VM_registerPredefinedHandler_invalidPortlibSignalFlag(portlibSignalFlag);
+	}
+
+	return rc;
+}
 
 static jint
 initializeDDR(J9JavaVM * vm)

@@ -4811,11 +4811,12 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN ( *updateVMRuntimeState)(struct J9JavaVM *vm, U_32 newState);
 	U_32 ( *getVMMinIdleWaitTime)(struct J9JavaVM *vm);
 #if defined(J9VM_RAS_EYECATCHERS)
-	void (*rasSetServiceLevel)(struct J9JavaVM *vm, const char *runtimeVersion);
+	void ( *rasSetServiceLevel)(struct J9JavaVM *vm, const char *runtimeVersion);
 #endif /* J9VM_RAS_EYECATCHERS */
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
-	void (*flushProcessWriteBuffers)(struct J9JavaVM *vm);
+	void ( *flushProcessWriteBuffers)(struct J9JavaVM *vm);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
+	IDATA ( *registerPredefinedHandler)(struct J9JavaVM *vm, U_32 signal, void **oldOSHandler);
 } J9InternalVMFunctions;
 
 
