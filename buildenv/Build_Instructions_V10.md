@@ -313,7 +313,7 @@ The following instructions guide you through the process of building a Windows *
 :ledger:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
-- [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. Included in this package is mingw, a minimalist subset of GNU tools for Microsoft Windows.  OpenJ9 uses the mingw/GCC compiler and is tested with version 6.4.0 of same.  Other versions are expected to work also.  In the `Archive` category, install the packages `zip` and `unzip`. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
+- [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. Included in this package is mingw, a minimalist subset of GNU tools for Microsoft Windows. OpenJ9 uses the mingw/GCC compiler and is tested with version 6.4.0 of same. Other versions are expected to work also. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 9](https://adoptopenjdk.net/releases.html?variant=openjdk9#x64_win), which is used as the boot JDK.
 - [Microsoft Visual Studio 2013]( https://go.microsoft.com/fwlink/?LinkId=532495), which is the same compiler level used by OpenJDK. Later levels of this compiler are not supported.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
@@ -322,8 +322,8 @@ You must install a number of software dependencies to create a suitable build en
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
 
 ```
-set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\include;%INCLUDE%
-set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%;
+set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
+set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%
 ```
 
    You can download Visual Studio, Freemarker, and Freetype manually or obtain them using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:

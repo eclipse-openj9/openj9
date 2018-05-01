@@ -306,7 +306,7 @@ The following instructions guide you through the process of building a Windows 6
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Cygwin for 64-bit versions of Windows](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category, which includes `mingw`, a minimalist subset of GNU tools for Microsoft Windows.
-OpenJ9 uses the mingw/GCC compiler during the build process. In the `Archive` category, install the packages `zip`, `unzip`, and `cpio`. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
+OpenJ9 uses the mingw/GCC compiler during the build process. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 7](http://www.oracle.com/technetwork/java/javase/downloads/java-archive-downloads-javase7-521261.html), which is used as the boot JDK.
 - [Windows SDK 7 Debugging tools](https://www.microsoft.com/download/confirmation.aspx?id=8279).
 - [Microsoft Visual Studio 2010 Professional](https://www.visualstudio.com/vs/older-downloads/).
@@ -317,8 +317,8 @@ OpenJ9 uses the mingw/GCC compiler during the build process. In the `Archive` ca
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
 
 ```
-set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;C:\Program Files (x86)\Microsoft Visual Studio 10.0\DIA SDK\include;%INCLUDE%
-set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%;
+set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
+set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%
 ```
 
 You can download Freemarker and Freetype manually or obtain them using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
