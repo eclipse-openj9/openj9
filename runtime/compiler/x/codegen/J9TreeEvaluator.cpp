@@ -11379,28 +11379,11 @@ inlineNanoTime(
    }
 #endif
 
-
 enum TR_InlinedMathFunctions
    {
-   TR_Max_I    = 0,
-   TR_Min_I    = 1,
-   TR_Abs_I    = 2,
-   TR_Max_L    = 3,
-   TR_Min_L    = 4,
-   TR_Abs_L    = 5,
-   TR_Abs_F    = 6,
-   TR_Abs_D    = 7
+   TR_Abs_I = 0,
+   TR_Abs_L = 1,
    };
-
-
-
-#if !defined(_LONG_LONG) && !defined(LINUX)
-#define DOUBLE_NEGATIVE_ZERO 0x8000000000000000L
-#define FLOAT_NEGATIVE_ZERO  0x80000000
-#else
-#define DOUBLE_NEGATIVE_ZERO 0x8000000000000000LL
-#define FLOAT_NEGATIVE_ZERO  0x80000000
-#endif
 
 static bool
 inlineSimpleMathFunction(
@@ -11410,67 +11393,6 @@ inlineSimpleMathFunction(
    {
    switch(func)
       {
-      case TR_Max_I:
-      case TR_Min_I:
-         {
-         if (!cg->supportsCMOV())
-            return false;
-
-         TR::Node *firstChild = node->getFirstChild();
-         TR::Node *secondChild = node->getSecondChild();
-         TR::Register *resultReg = cg->allocateRegister(), *firstReg, *secondReg;
-
-         firstReg = cg->evaluate(firstChild);
-         secondReg = cg->evaluate(secondChild);
-
-         TR_ASSERT(firstReg && secondReg, "We should've had both operands in registers by now.");
-
-         generateRegRegInstruction(MOV4RegReg, node, resultReg, firstReg, cg);
-         generateRegRegInstruction(CMP4RegReg, node, resultReg, secondReg, cg);
-         if (func == TR_Min_I)
-            generateRegRegInstruction(CMOVG4RegReg, node, resultReg, secondReg, cg);
-         else
-            generateRegRegInstruction(CMOVL4RegReg, node, resultReg, secondReg, cg);
-
-         node->setRegister(resultReg);
-         cg->decReferenceCount(firstChild);
-         cg->decReferenceCount(secondChild);
-
-         return true;
-         }
-
-      case TR_Max_L:
-      case TR_Min_L:
-         {
-         if (TR::Compiler->target.is32Bit())
-            return false;
-
-         if (!cg->supportsCMOV())
-            return false;
-
-         TR::Node *firstChild = node->getFirstChild();
-         TR::Node *secondChild = node->getSecondChild();
-         TR::Register *resultReg = cg->allocateRegister(), *firstReg, *secondReg;
-
-         firstReg = cg->evaluate(firstChild);
-         secondReg = cg->evaluate(secondChild);
-
-         TR_ASSERT(firstReg && secondReg, "We should've had both operands in registers by now.");
-
-         generateRegRegInstruction(MOV8RegReg, node, resultReg, firstReg, cg);
-         generateRegRegInstruction(CMP8RegReg, node, resultReg, secondReg, cg);
-         if (func == TR_Min_L)
-            generateRegRegInstruction(CMOVG8RegReg, node, resultReg, secondReg, cg);
-         else
-            generateRegRegInstruction(CMOVL8RegReg, node, resultReg, secondReg, cg);
-
-         node->setRegister(resultReg);
-         cg->decReferenceCount(firstChild);
-         cg->decReferenceCount(secondChild);
-
-         return true;
-         }
-
       case TR_Abs_I:
          {
          TR::Node *firstChild = node->getFirstChild();
@@ -11533,61 +11455,6 @@ inlineSimpleMathFunction(
          return true;
          }
 
-      case TR_Abs_F:
-      case TR_Abs_D:
-         {
-         if (TR::Compiler->target.is32Bit())
-            return false;
-
-         TR::Node     *operand        = NULL;
-         TR::Node     *firstChild     = NULL;
-
-         if (node->getNumChildren() == 1)
-            {
-            operand = node->getFirstChild();
-            }
-         else
-            {
-            firstChild = node->getFirstChild();
-            operand    = node->getSecondChild();
-            }
-
-         TR::Register *targetRegister = NULL;
-         TR::Register *opRegister     = cg->evaluate(operand);
-
-         TR_ASSERT(opRegister->getKind() == TR_FPR, "floating point ABS is only supported for SSE instructions");
-
-         TR::IA32ConstantDataSnippet *cds = NULL;
-         TR_X86OpCodes andOpCode, movOpCode;
-         targetRegister = cg->allocateRegister(TR_FPR);
-
-         if (func == TR_Abs_F)
-            {
-            cds = cg->findOrCreate4ByteConstant(node, FLOAT_NEGATIVE_ZERO);
-            movOpCode = MOVSSRegMem;
-            andOpCode = ANDNPSRegReg;
-            targetRegister->setIsSinglePrecision();
-            }
-         else
-            {
-            cds = cg->findOrCreate8ByteConstant(node, DOUBLE_NEGATIVE_ZERO);
-            movOpCode = MOVSDRegMem;
-            andOpCode = ANDNPDRegReg;
-            }
-
-         TR::MemoryReference *constMR = generateX86MemoryReference(cds, cg);
-
-         generateRegMemInstruction(movOpCode, node, targetRegister, constMR, cg);
-         generateRegRegInstruction(andOpCode, node, targetRegister, opRegister, cg);
-
-         node->setRegister(targetRegister);
-         if (firstChild)
-            cg->recursivelyDecReferenceCount(firstChild);
-
-         cg->decReferenceCount(operand);
-
-         return true;
-         }
       default:
          {
          TR_ASSERT(0,"Undefined simple math function");
@@ -11596,46 +11463,6 @@ inlineSimpleMathFunction(
       }
    return false;
    }
-
-
-static bool inlineMathLog(TR::Node *node, TR::CodeGenerator *cg)
-   {
-
-   // The base 'e' logarithm can be implemented with a faster X87
-   // instruction sequence:
-   //
-   //    fldln2
-   //    movsd [tempMR], xmm0
-   //    fld [tempMR]
-   //    fyl2x
-   //    fstp [tempMR]
-   //    movsd xmm0, [tempMR]
-   //
-
-   TR::Register *firstChildReg = cg->evaluate(node->getFirstChild());
-
-   generateInstruction(FLDLN2, node, cg);
-
-   TR::MemoryReference *tempMR = cg->machine()->getDummyLocalMR(TR::Double);
-   generateMemRegInstruction(MOVSDMemReg, node, tempMR, firstChildReg, cg);
-
-   tempMR = cg->machine()->getDummyLocalMR(TR::Double);
-   generateMemInstruction(DLDMem, node, tempMR, cg);
-   generateInstruction(FYL2X, node, cg);
-
-   tempMR = cg->machine()->getDummyLocalMR(TR::Double);
-   generateMemInstruction(DSTPMemReg, node, tempMR, cg);
-
-   tempMR = cg->machine()->getDummyLocalMR(TR::Double);
-   TR::Register *targetReg = cg->allocateRegister(TR_FPR);
-   generateRegMemInstruction(MOVSDRegMem, node, targetReg, tempMR, cg);
-
-   node->setRegister(targetReg);
-   cg->decReferenceCount(node->getFirstChild());
-
-   return true;
-   }
-
 
 static bool
 inlineMathSQRT(
@@ -12263,361 +12090,6 @@ inlineCompareAndSwapNative(
    return true;
    }
 
-static TR::MemoryReference* obtainfieldRM(TR::Node* node, TR::MethodSymbol* method, TR::Register* receiver, TR::Register* index, TR::CodeGenerator* cg)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   char* className = NULL;
-   char* fieldSig = NULL;
-   uint8_t indexShift = 0;
-
-   switch (method->getRecognizedMethod())
-      {
-      case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
-         className = "Ljava/util/concurrent/atomic/AtomicBoolean;";
-         fieldSig = "I";  // not a typo, the field is int
-         break;
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
-         className = "Ljava/util/concurrent/atomic/AtomicInteger;";
-         fieldSig = "I";
-         break;
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         className = "Ljava/util/concurrent/atomic/AtomicLong;";
-         fieldSig = "J";
-         break;
-      case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
-         className = "Ljava/util/concurrent/atomic/AtomicReference;";
-         fieldSig = "Ljava/lang/Object;";
-         break;
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-         className = "Ljava/util/concurrent/atomic/AtomicIntegerArray;";
-         fieldSig = "[I";
-         indexShift = 4;
-         break;
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-         className = "Ljava/util/concurrent/atomic/AtomicLongArray;";
-         fieldSig = "[J";
-         indexShift = 8;
-         break;
-      case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-         className = "Ljava/util/concurrent/atomic/AtomicReferenceArray;";
-         fieldSig = "Ljava/lang/Object;";
-         indexShift = TR::Compiler->target.is64Bit() ? 8 : 4;
-         break;
-      default:
-         TR_ASSERT(0, "Unknown atomic operation method\n");
-         return NULL;
-      }
-
-   // obtain object address
-   TR_ResolvedMethod* owningMethod = node->getSymbolReference()->getOwningMethod(cg->comp());
-   if(indexShift) // array
-      {
-      // get the address of array, and load the address to receiver; the original receiver address is not needed anymore
-      intptrj_t fieldOffset = fej9->getInstanceFieldOffsetIncludingHeader(className, "array", fieldSig, owningMethod);
-      generateRegMemInstruction(LRegMem(), node, receiver, generateX86MemoryReference(receiver, fieldOffset, cg), cg);
-      // then find the actual element, note that at this point, the receiver register holds the address to the array
-      return generateX86MemoryReference(receiver, index, indexShift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
-      }
-   else // not array
-      {
-      intptrj_t fieldOffset = fej9->getInstanceFieldOffsetIncludingHeader(className, "value", fieldSig, owningMethod);
-      return generateX86MemoryReference(receiver, fieldOffset, cg);
-      }
-   }
-
-static bool generateAtomicMemRegOps(TR::Node* node, TR::MethodSymbol* method, TR_X86OpCodes op, bool returnNewValue, bool isArray, bool isConstantParam, int32_t immi, TR::CodeGenerator* cg)
-   {
-   // FIVE steps to generate atomic code
-   // 1. Obtain field address           => fieldRM
-   // 2. Obtain value                   => value = evaluate(child) OR 1 OR -1
-   // 3. Copy value if needed           => copy = value
-   // 4. lock xadd / xchg               => lock add /xchg [fieldRM] value
-   // 5. add to return valual if needed => lea value, [value+copy]
-
-   // Step 1
-   TR::Register* receiver = cg->evaluate(node->getFirstChild());
-   TR::Register* index = NULL;
-   if (isArray)
-      {
-      index = cg->evaluate(node->getChild(1)); // first param is the array index
-      }
-   TR::MemoryReference* fieldRM = obtainfieldRM(node, method, receiver, index, cg);
-
-   // Step 2
-   TR::Register* value = NULL;
-   if (isConstantParam) // value to be added not a immidiate
-      {
-      value = TR::TreeEvaluator::loadConstant(node, immi, TR_RematerializableInt, cg);
-      }
-   else
-      {
-      value = intOrLongClobberEvaluate(node->getLastChild(), getNodeIs64Bit(node, cg), cg);
-      }
-
-   // Step 3
-   TR::Register* tmp = NULL;
-   if (returnNewValue && !isConstantParam)
-      {
-      tmp = cg->allocateRegister();
-      generateRegRegInstruction(MOVRegReg(), node, tmp, value, cg);
-      }
-
-   // Step 4
-   generateMemRegInstruction(op, node, fieldRM, value, cg);
-
-   // Step 5
-   if (returnNewValue)
-      {
-      if (isConstantParam)
-         {
-         generateRegMemInstruction(LEARegMem(), node, value, generateX86MemoryReference(value, immi, cg), cg);
-         }
-      else
-         {
-         generateRegMemInstruction(LEARegMem(), node, value, generateX86MemoryReference(value, tmp, 0, cg), cg);
-         cg->stopUsingRegister(tmp);
-         }
-      }
-
-   // Return result
-   node->setRegister(value);
-
-   // Clean up children nodes
-   for (uint16_t i = 0; i < node->getNumChildren(); i++)
-      {
-      cg->decReferenceCount(node->getChild(i));
-      }
-   return true;
-   }
-static bool inlineAtomicOps(TR::Node* node, TR::MethodSymbol* method, TR::CodeGenerator* cg)
-   {
-   if (cg->comp()->getOption(TR_TraceCG))
-      {
-      traceMsg(cg->comp(),
-               "O^O: Inlining recognized atomic primitive 0x%08x: %s.%s%s\n",
-               method->getRecognizedMethod(),
-               method->getMethod()->classNameChars(),
-               method->getMethod()->nameChars(),
-               method->getMethod()->signatureChars());
-      }
-
-   if(TR::Compiler->om.canGenerateArraylets())
-      {
-      // arraylet accesses are not done properly in the fast path for Atomic*Array below
-      switch (method->getRecognizedMethod())
-         {
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-            if (cg->comp()->getOption(TR_TraceCG))
-              {
-              traceMsg(cg->comp(), "Inlining aborted since OM can generate arraylets\n");
-              }
-            return false;
-         default:
-            break;
-         }
-      }
-
-   if (TR::Compiler->target.is32Bit())
-      {
-      switch (method->getRecognizedMethod())
-         {
-         case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-            if (cg->comp()->getOption(TR_TraceCG))
-               {
-               traceMsg(cg->comp(), "Inlining aborted since inlining 64-bit primitive on 32-bit platform is not supported\n");
-               }
-            return false;
-         default:
-            break;
-         }
-      }
-
-   switch (method->getRecognizedMethod())
-      {
-      // no optimization for now since instanceof checks for the updaters make it non trivial to simply reduce to an instruction; maybe a tagged field updater (non null and no type check read)
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndDecrement:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_addAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_decrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndAdd:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndDecrement:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndIncrement:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndSet:
-      case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_incrementAndGet:
-      case TR::java_util_concurrent_atomic_AtomicReferenceFieldUpdater_getAndSet:
-         if (cg->comp()->getOption(TR_TraceCG))
-            {
-            traceMsg(cg->comp(), "Inlining aborted since inlining field updater is not supported\n");
-            }
-         return false;
-      default:
-         break;
-      }
-
-   switch (method->getRecognizedMethod())
-      {
-      case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
-         // Note that boolean is represented by int
-         return generateAtomicMemRegOps(node, method, XCHG4MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, false, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, false, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
-         return generateAtomicMemRegOps(node, method, XCHG4MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, false, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, false, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, false, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, false, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, false, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-         return generateAtomicMemRegOps(node, method, XCHG8MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, false, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicReference_getAndSet:
-         return generateAtomicMemRegOps(node, method, TR::Compiler->target.is64Bit() ? XCHG8MemReg : XCHG4MemReg, false, false, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, true, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, false, true, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-         return generateAtomicMemRegOps(node, method, XCHG4MemReg, false, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, true, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD4MemReg, true, true, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, true, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, true, true, -1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, false, true, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-         return generateAtomicMemRegOps(node, method, XCHG8MemReg, false, true, false, 0, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-         return generateAtomicMemRegOps(node, method, LXADD8MemReg, true, true, true, 1, cg);
-
-      case TR::java_util_concurrent_atomic_AtomicReferenceArray_getAndSet:
-         return generateAtomicMemRegOps(node, method, TR::Compiler->target.is64Bit() ? XCHG8MemReg : XCHG4MemReg, false, true, false, 0, cg);
-
-      default:
-         if (cg->comp()->getOption(TR_TraceCG))
-            {
-            traceMsg(cg->comp(), "WARNING: Trying to inline an unsupported method (0x%08x), abort.\n", method->getRecognizedMethod());
-            }
-         TR_ASSERT(0, "Trying to inline an unsupported method, abort.");
-         return false;
-      }
-   }
-
-
 static bool
 inlineIsAssignableFrom(
       TR::Node *node,
@@ -12935,40 +12407,11 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
                return inlineCompareAndSwapNative(node, (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers()) ? 8 : 4, true, cg);
             }
             break;
-         case TR::java_lang_Integer_rotateLeft:
-            {
-            TR::TreeEvaluator::integerRolEvaluator(node, cg);
-            return true;
-            }
-         case TR::java_lang_Math_log:
-            {
-            return inlineMathLog(node, cg);
-            }
 
          case TR::java_lang_Math_sqrt:
          case TR::java_lang_StrictMath_sqrt:
             {
             return inlineMathSQRT(node, cg);
-            }
-
-         case TR::java_lang_Math_max_I:
-            {
-            return inlineSimpleMathFunction(TR_Max_I, node, cg);
-            }
-
-         case TR::java_lang_Math_min_I:
-            {
-            return inlineSimpleMathFunction(TR_Min_I, node, cg);
-            }
-
-         case TR::java_lang_Math_max_L:
-            {
-            return inlineSimpleMathFunction(TR_Max_L, node, cg);
-            }
-
-         case TR::java_lang_Math_min_L:
-            {
-            return inlineSimpleMathFunction(TR_Min_L, node, cg);
             }
 
          case TR::java_lang_Math_abs_I:
@@ -12981,15 +12424,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             return inlineSimpleMathFunction(TR_Abs_L, node, cg);
             }
 
-         case TR::java_lang_Math_abs_F:
-            {
-            return inlineSimpleMathFunction(TR_Abs_F, node, cg);
-            }
-
-         case TR::java_lang_Math_abs_D:
-            {
-            return inlineSimpleMathFunction(TR_Abs_D, node, cg);
-            }
          case TR::java_lang_Long_reverseBytes:
          case TR::java_lang_Integer_reverseBytes:
          case TR::java_lang_Short_reverseBytes:
@@ -13046,53 +12480,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             break;
             }
 
-         case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLongArray_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLongFieldUpdater_incrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLong_addAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndAdd:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
-         case TR::java_util_concurrent_atomic_AtomicLong_getAndSet:
-         case TR::java_util_concurrent_atomic_AtomicLong_incrementAndGet:
-            {
-            return inlineAtomicOps(node, methodSymbol, cg);
-            break;
-            }
         case TR::java_lang_Object_clone:
            {
            return (objectCloneEvaluator(node, cg) != NULL);
@@ -14720,16 +14107,9 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
          break;
 
-      case TR::java_lang_Integer_rotateLeft:
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
-      case TR::java_lang_Math_max_I:
-      case TR::java_lang_Math_min_I:
-      case TR::java_lang_Math_max_L:
-      case TR::java_lang_Math_min_L:
       case TR::java_lang_Math_abs_L:
-      case TR::java_lang_Math_abs_D:
-      case TR::java_lang_Math_abs_F:
       case TR::java_lang_Math_abs_I:
       case TR::java_lang_Long_reverseBytes:
       case TR::java_lang_Integer_reverseBytes:
