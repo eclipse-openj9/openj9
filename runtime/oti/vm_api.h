@@ -3179,26 +3179,6 @@ releaseSafePointVMAccess(J9VMThread * vmThread);
 void
 releaseExclusiveVMAccessFromExternalThread(J9JavaVM * vm);
 
-/**
- * Enter a JNI critical region (i.e. GetPrimitiveArrayCritical or GetStringCritical).
- * Once a thread has successfully entered a critical region, it has privileges similar
- * to holding VM access. No object can move while any thread is in a critical region.
- *
- * @param vmThread  the J9VMThread requesting to enter a critical region
- */
-void  
-enterCriticalRegion(J9VMThread* vmThread);
-
-/**
- * Enter a JNI critical region (i.e. GetPrimitiveArrayCritical or GetStringCritical).
- * Once a thread has successfully entered a critical region, it has privileges similar
- * to holding VM access. No object can move while any thread is in a critical region.
- *
- * @param vmThread  the J9VMThread requesting to exit a critical region
- */
-void  
-exitCriticalRegion(J9VMThread* vmThread);
-
 
 #if (defined(J9VM_GC_REALTIME))
 /**

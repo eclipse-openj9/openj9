@@ -401,7 +401,7 @@ MM_RealtimeAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
 		// acquire access and return a direct pointer
-		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread, false);
 		data = (void *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
 		if(NULL != isCopy) {
 			*isCopy = JNI_FALSE;
@@ -459,7 +459,7 @@ MM_RealtimeAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 			Trc_MM_JNIReleasePrimitiveArrayCritical_invalid(vmThread, arrayObject, elems, data);
 		}
 
-		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread, false);
 	}
 }
 
@@ -530,7 +530,7 @@ MM_RealtimeAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 		vmThread->jniCriticalCopyCount += 1;
 	} else {
 		// acquire access and return a direct pointer
-		MM_JNICriticalRegion::enterCriticalRegion(vmThread);
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread, hasVMAccess);
 		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
 		J9IndexableObject *valueObject = (J9IndexableObject*)J9VMJAVALANGSTRING_VALUE(vmThread, stringObject);
 
@@ -581,7 +581,7 @@ MM_RealtimeAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring
 		}
 	} else {
 		// direct pointer, just drop access
-		MM_JNICriticalRegion::exitCriticalRegion(vmThread);
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread, hasVMAccess);
 	}
 
 	if (hasVMAccess) {
