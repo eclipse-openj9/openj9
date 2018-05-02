@@ -430,7 +430,7 @@ jaasCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_Vi
       // both the HCR site and the guard
       if (!info->_mergedWithHCRGuard)
          return;
-      if (!info->_kind != TR_ProfiledGuard) // isNopable
+      if (info->_kind == TR_ProfiledGuard) // !isNopable
          return;
       }
 
