@@ -44,11 +44,11 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 		logger.info("exclude file is " + excludeFile);
 		
 			try {
-				if (excludeFile.equals(null)) {
+				if (excludeFile == null || excludeFile.length() == 0) {
 					File temp = File.createTempFile("exclude", ".txt");
 					temp.deleteOnExit();
 					excludeFile = temp.getAbsolutePath();
-				} 
+				}
 				FileReader fileReader = new FileReader(excludeFile);
 				
 				BufferedReader bufferedReader = new BufferedReader(fileReader);
@@ -85,8 +85,7 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 				logger.info("Unable to find file " + excludeFile, ex);
 			} catch(IOException ex) {
 				logger.info("Error reading file " + excludeFile, ex);
-			}
-		
+			}		
 	}
 
 	@Override
