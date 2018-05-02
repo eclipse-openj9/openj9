@@ -254,6 +254,10 @@ extern J9_CDATA char * const sunJavaBCNames[];
 #define JBinvokehandlegeneric 233
 #define JBinvokestaticsplit 234
 #define JBinvokespecialsplit 235
+#define JBreturnC 236
+#define JBreturnS 237
+#define JBreturnB 238
+#define JBreturnZ 239
 #define JBretFromNative0 244
 #define JBretFromNative1 245
 #define JBretFromNativeF 246
