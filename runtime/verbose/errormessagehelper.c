@@ -411,14 +411,15 @@ exit:
 U_8*
 decodeStackmapFrameData(StackMapFrame* stackMapFrame, U_8* nextStackmapFrame, I_32 stackmapFrameIndex, MethodContextInfo* methodInfo, J9BytecodeVerificationData* verifyData)
 {
-	/* Decode the specified 'Stackmap Frame' data from compressed the stackmap table in the class file */
-	if (NULL != methodInfo->stackMapData) {
-		nextStackmapFrame = decodeStackFrameDataFromStackMapTable(stackMapFrame, nextStackmapFrame, methodInfo);
-	} else {
+	if (verifyData->createdStackMap) {
 		/* Decode the specified 'Stackmap frame' data from verifyData->stackMaps (the decompessed stackmap table)
-		 * as the stackmap table doesn't exist in the class file.
+		 * as the stackmap table doesn't exist in the class file or currently in fallback verification
+		 * so the frame is pointing to internal created stackMap
 		 */
 		nextStackmapFrame = decodeConstuctedStackMapFrameData(stackMapFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
+	} else {
+		/* Decode the specified 'Stackmap Frame' data from the compressed stackmap table in the class file */
+		nextStackmapFrame = decodeStackFrameDataFromStackMapTable(stackMapFrame, nextStackmapFrame, methodInfo);
 	}
 
 	return nextStackmapFrame;
