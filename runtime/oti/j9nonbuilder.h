@@ -1948,6 +1948,7 @@ typedef struct J9BytecodeVerificationData {
 	UDATA redefinedClassesCount;
 	struct J9PortLibrary * portLib;
 	struct J9JavaVM* javaVM;
+	BOOLEAN createdStackMap;
 } J9BytecodeVerificationData;
 
 /* @ddr_namespace: map_to_type=J9NativeLibrary */
