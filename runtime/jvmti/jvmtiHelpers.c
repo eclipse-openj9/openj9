@@ -705,7 +705,9 @@ finishedEvent(J9VMThread * currentThread, UDATA eventNumber, UDATA hadVMAccess, 
 	/* Acquire VM access if the current thread does not already have it */
 
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-	currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+	if (currentThread->inNative) {
+		currentThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+	}
 #else /* J9VM_INTERP_ATOMIC_FREE_JNI */
 	if (!(currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)) {
 		currentThread->javaVM->internalVMFunctions->internalAcquireVMAccess(currentThread);

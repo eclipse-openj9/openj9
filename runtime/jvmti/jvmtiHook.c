@@ -1376,7 +1376,6 @@ jvmtiHookMethodExit(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 			if (methodID != NULL) {
 				callback((jvmtiEnv *) j9env, (JNIEnv *) currentThread, threadRef, methodID, (jboolean) poppedByException, returnValue);
 			}
-			vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 			finishedEvent(currentThread, JVMTI_EVENT_METHOD_EXIT, hadVMAccess, javaOffloadOldState);
 		}
 	}
