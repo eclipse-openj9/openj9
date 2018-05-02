@@ -631,6 +631,10 @@ readdWide:
 				case JBreturn0:
 				case JBreturn1:
 				case JBreturn2:
+				case JBreturnB:
+				case JBreturnC:
+				case JBreturnS:
+				case JBreturnZ:
 				case JBsyncReturn0:
 				case JBsyncReturn1:
 				case JBsyncReturn2: {
