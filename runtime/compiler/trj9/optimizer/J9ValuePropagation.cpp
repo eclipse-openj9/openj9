@@ -522,7 +522,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                {
                TR_OpaqueClassBlock *arrayComponentClass = comp()->fej9()->getComponentClassFromArrayClass(thisClass);
                // J9Class pointer introduced by the opt has to be remembered under AOT
-               if (!((TR_ResolvedJ9Method*)comp()->getCurrentMethod())->validateArbitraryClass(comp(), (J9Class *) arrayComponentClass))
+               if (!arrayComponentClass)
                   {
                   if (trace())
                      traceMsg(comp(), "Array component class cannot be remembered, quit transforming Class.getComponentType on node %p\n", node);
@@ -603,14 +603,6 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                }
             else
                {
-               // J9Class pointer introduced by the opt has to be remembered under AOT
-               if (!((TR_ResolvedJ9Method*)comp()->getCurrentMethod())->validateArbitraryClass(comp(), (J9Class *) superClass))
-                 {
-                 if (trace())
-                    traceMsg(comp(), "Super class cannot be remembered, quit transforming getSuperclass on node %p\n", node);
-                 break;
-                 }
-
                if (!performTransformation(comp(), "%sTransforming %s on node %p into an aloadi\n", OPT_DETAILS, signature, node))
                   break;
 
