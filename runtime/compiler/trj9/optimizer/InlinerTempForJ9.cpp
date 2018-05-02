@@ -284,14 +284,6 @@ void TR_MultipleCallTargetInliner::generateNodeEstimate::operator ()(TR_CallTarg
    }
 
 bool
-TR_J9InlinerUtil::validateInterfaceImplementation(TR_ResolvedMethod *interfaceMethod)
-   {
-   if (comp()->compileRelocatableCode())
-      return ((TR_J9InlinerPolicy*)inliner()->getPolicy())->isMethodInSharedCache(interfaceMethod);
-   return true;
-   }
-
-bool
 TR_J9InlinerPolicy::isMethodInSharedCache(TR_ResolvedMethod *interfaceMethod)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
