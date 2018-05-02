@@ -235,21 +235,24 @@ MM_GCExtensions::computeDefaultMaxHeap(MM_EnvironmentBase *env)
 
 	MM_GCExtensionsBase::computeDefaultMaxHeap(env);
 
-	int32_t rc = omrsysinfo_cgroup_get_memlimit(&cgroupMemory);
-
+	if (OMR_CGROUP_SUBSYSTEM_MEMORY == omrsysinfo_cgroup_are_subsystems_enabled(OMR_CGROUP_SUBSYSTEM_MEMORY)) {
 /* A very rough estimate of the minimum amount of memory required by the JVM excluding
  * the heap. The size is a conservative estimate, attempting to leave room for the JVM's
  * internal requirements given that one compilation thread can use up to 256M.
  */
 #define OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP ((U_64)512 * 1024 * 1024)
-	if (0 == rc) {
-		/* If running in a cgroup with memory limit > 1G, reserve at-least 512M for JVM's internal requirements
-		 * like JIT compilation etc, and extend default max heap memory to at-most 75% of cgroup limit.
-		 */
-		memoryMax = (uintptr_t)OMR_MAX((int64_t)(cgroupMemory / 2), (int64_t)(cgroupMemory - OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP));
-		memoryMax = (uintptr_t)OMR_MIN(memoryMax, (cgroupMemory / 4) * 3);
+
+		int32_t rc = omrsysinfo_cgroup_get_memlimit(&cgroupMemory);
+		if (0 == rc) {
+			/* If running in a cgroup with memory limit > 1G, reserve at-least 512M for JVM's internal requirements
+			 * like JIT compilation etc, and extend default max heap memory to at-most 75% of cgroup limit.
+			 */
+			memoryMax = (uintptr_t)OMR_MAX((int64_t)(cgroupMemory / 2), (int64_t)(cgroupMemory - OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP));
+			memoryMax = (uintptr_t)OMR_MIN(memoryMax, (cgroupMemory / 4) * 3);
+		}
+
+#undef OPENJ9_IN_CGROUP_NATIVE_FOOTPRINT_EXCLUDING_HEAP
 	}
-#undef J9_NATIVE_FOOTPRINT_EXCLUDING_HEAP
 
 #if defined(OMR_ENV_DATA64)
 	if (J2SE_VERSION((J9JavaVM *)getOmrVM()->_language_vm) >= J2SE_19) {
