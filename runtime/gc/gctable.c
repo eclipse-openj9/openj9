@@ -54,7 +54,6 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	gcShutdownHeapManagement,
 	initializeMutatorModelJava,
 	cleanupMutatorModelJava,
-	internalFreeMemorySpace,
 #if defined(J9VM_GC_FINALIZATION)
 	j9gc_finalizer_startup,
 	j9gc_finalizer_shutdown,

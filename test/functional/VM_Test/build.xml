@@ -131,7 +131,9 @@
 	<target name="clean" depends="dist" description="clean up">
 		<!-- Delete the ${build} directory trees -->
 		<delete dir="${build}" />
-		<delete dir="${data}/*.class" />
+		<delete>
+			<fileset dir="${data}" includes="**/*.class" />
+		</delete>
 		<delete dir="${databin}" />
 	</target>
 

@@ -4286,7 +4286,6 @@ typedef struct J9MemoryManagerFunctions {
 	void  ( *gcShutdownHeapManagement)(struct J9JavaVM * vm) ;
 	IDATA  ( *initializeMutatorModelJava)(struct J9VMThread* vmThread) ;
 	void  ( *cleanupMutatorModelJava)(struct J9VMThread* vmThread) ;
-	void  ( *internalFreeMemorySpace)(struct J9JavaVM * javaVM, void * memorySpace) ;
 #if defined(J9VM_GC_FINALIZATION)
 	int  ( *j9gc_finalizer_startup)(struct J9JavaVM * vm) ;
 	void  ( *j9gc_finalizer_shutdown)(struct J9JavaVM * vm) ;

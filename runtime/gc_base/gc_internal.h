@@ -209,7 +209,6 @@ extern J9_CFUNC struct J9HookInterface** j9gc_get_omr_hook_interface(OMR_VM *omr
 extern J9_CFUNC void j9gc_objaccess_staticStoreU32(J9VMThread *vmThread, J9Class *clazz, U_32 *destSlot, U_32 value, UDATA isVolatile);
 extern J9_CFUNC IDATA initializeMutatorModelJava(J9VMThread* vmThread);
 extern J9_CFUNC void j9gc_objaccess_mixedObjectStoreU64Split(J9VMThread *vmThread, j9object_t destObject, UDATA offset, U_32 valueSlot0, U_32 valueSlot1, UDATA isVolatile);
-extern J9_CFUNC void internalFreeMemorySpace(J9JavaVM * javaVM, void * memorySpace);
 extern J9_CFUNC IDATA j9gc_objaccess_staticReadI32(J9VMThread *vmThread, J9Class *clazz, I_32 *srcSlot, UDATA isVolatile);
 extern J9_CFUNC void j9gc_objaccess_indexableStoreObject(J9VMThread *vmThread, J9IndexableObject *destObject, I_32 index, j9object_t value, UDATA isVolatile);
 extern J9_CFUNC UDATA j9gc_objaccess_staticReadU32(J9VMThread *vmThread, J9Class *clazz, U_32 *srcSlot, UDATA isVolatile);
