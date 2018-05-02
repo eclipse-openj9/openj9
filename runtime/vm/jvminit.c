@@ -5468,8 +5468,12 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	 * 			This applies to Windows only for now. Since we don't have Hursley JCLs for this, we will need to provide our own support for all other cases/platforms.
 	 */
 	if (J9_ARE_NO_BITS_SET(vm->sigFlags, J9_SIG_XRS_ASYNC)) {
-		/* only register the handler if -Xrs is not present */
-		if (0 != j9sig_set_async_signal_handler(shutDownHookWrapper, vm, J9PORT_SIG_FLAG_SIGTERM)) {
+		/* Only register the handler if -Xrs is not present. This is a temporary hack,
+		 * which will be removed once the required OMR signal API has been implemented.
+		 * The following OMR issue needs to be closed before removing this hack:
+		 * https://github.com/eclipse/omr/issues/2332.
+		 */
+		if (0 != j9sig_set_async_signal_handler(shutDownHookWrapper, vm, J9PORT_SIG_FLAG_SIGTERM | J9PORT_SIG_FLAG_SIGINT)) {
 			goto error;
 		}
 	}
