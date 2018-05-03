@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -138,7 +138,6 @@ class TR_J9InlinerUtil: public OMR_InlinerUtil
       static void checkForConstClass(TR_CallTarget *target, TR_InlinerTracer *tracer);
       virtual bool needTargetedInlining(TR::ResolvedMethodSymbol *callee);
    protected:
-      virtual bool validateInterfaceImplementation(TR_ResolvedMethod *interfaceMethod);
       virtual void refineColdness (TR::Node* node, bool& isCold);
       virtual void computeMethodBranchProfileInfo (TR::Block * cfgBlock, TR_CallTarget* calltarget, TR::ResolvedMethodSymbol* callerSymbol);
       virtual int32_t getCallCount(TR::Node *callNode);
