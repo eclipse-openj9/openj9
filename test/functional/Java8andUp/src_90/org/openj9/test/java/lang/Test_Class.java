@@ -118,32 +118,6 @@ public static class SubClassTest extends ClassTest{
 	}
 
 /**
- * @tests java.lang.Class - protecting access to sun.misc.Unsafe
- */
-@Test
-public void test_hideUnsafe() {
-	try {
-		jdk.internal.misc.Unsafe.class.getDeclaredMethod("getUnsafe");
-		AssertJUnit.assertTrue("Found getUnsafe via getDeclaredMethod", false);
-	} catch (NoSuchMethodException e) {
-	}
-
-	try {
-		jdk.internal.misc.Unsafe.class.getMethod("getUnsafe");
-		AssertJUnit.assertTrue("Found getUnsafe via getMethod", false);
-	} catch (NoSuchMethodException e) {
-	}
-
-	for (Method method : jdk.internal.misc.Unsafe.class.getDeclaredMethods()) {
-		AssertJUnit.assertFalse("Found getUnsafe via getDeclaredMethods", method.getName().equals("getUnsafe"));
-	}
-
-	for (Method method : jdk.internal.misc.Unsafe.class.getMethods()) {
-		AssertJUnit.assertFalse("Found getUnsafe via getMethods", method.getName().equals("getUnsafe"));
-	}
-}
-
-/**
  * @tests java.lang.Class#forName(java.lang.String)
  */
 @Test
