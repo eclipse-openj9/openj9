@@ -42,12 +42,8 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 		String line = null;
 		String excludeFile = System.getenv("EXCLUDE_FILE");
 		logger.info("exclude file is " + excludeFile);
+		if (excludeFile != null) {
 		try {
-			if (excludeFile == null || excludeFile.length() == 0) {
-				File temp = File.createTempFile("exclude", ".txt");
-				temp.deleteOnExit();
-				excludeFile = temp.getAbsolutePath();
-			}
 			FileReader fileReader = new FileReader(excludeFile);
 			BufferedReader bufferedReader = new BufferedReader(fileReader);
 			while ((line = bufferedReader.readLine()) != null) {
@@ -83,6 +79,7 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 			logger.info("Unable to open file " + excludeFile, ex);
 		} catch(IOException ex) {
 			logger.info("Error reading file " + excludeFile, ex);
+		}
 		}
 	}
 
