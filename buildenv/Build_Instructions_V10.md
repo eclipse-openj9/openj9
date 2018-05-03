@@ -342,6 +342,14 @@ wget http://download.savannah.gnu.org/releases/freetype/freetype-2.5.3.tar.gz
 - Before installing Visual Studio, change the permissions on the installation file by running `chmod u+x vs2013.exe`.
 - Install Visual Studio by running the file `vs2013.exe`.
 
+Not all of the shared libraries that are included with Visual Studio are registered during installation.
+In particular, the `msdia120.dll` libraries must be registered manually.
+To do so, execute the following from a command prompt:
+```
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\msdia120.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\amd64\msdia120.dll"
+```
+
 - To unpack the Freemarker and Freetype compressed files, run:
 ```
 tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
