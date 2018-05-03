@@ -4618,14 +4618,6 @@ JVM_RegisterSignal(jint sigNum, void *handler)
 	J9VMThread *currentThread = vmFuncs->currentVMThread(javaVM);
 	BOOLEAN isShutdownSignal = isSignalUsedForShutdown(sigNum);
 
-#if !defined(WIN32)
-	struct sigaction newSignalAction;
-	struct sigaction oldSignalAction;
-
-	memset(&newSignalAction, 0, sizeof(struct sigaction));
-	memset(&oldSignalAction, 0, sizeof(struct sigaction));
-#endif /* !defined(WIN32) */
-
 	Trc_SC_RegisterSignal_Entry(currentThread, sigNum, handler);
 
 	if (isSignalReservedByJVM(sigNum)) {
@@ -4645,39 +4637,14 @@ JVM_RegisterSignal(jint sigNum, void *handler)
 		goto exit;
 	} else {
 		/* Register the signal. */
+		IDATA isHandlerRegistered = 0;
 		if ((void *)J9_PRE_DEFINED_HANDLER_CHECK == handler) {
-			if (0 != vmFuncs->registerPredefinedHandler(javaVM, sigNum, &oldHandler)) {
-				Trc_SC_RegisterSignal_FailedToRegisterHandler(currentThread, sigNum, handler, oldHandler);
-			}
+			isHandlerRegistered = vmFuncs->registerPredefinedHandler(javaVM, sigNum, &oldHandler);
 		} else {
-#if defined(WIN32)
-			oldHandler = (void *)OMRSIG_SIGNAL(sigNum, handler);
-#else /* defined(WIN32) */
-			/* Don't block any signals. */
-			if (0 != sigemptyset(&newSignalAction.sa_mask)) {
-				/* oldHandler is already initialized to J9_SIG_ERR. */
-				goto exit;
-			}
-
-			/* SA_RESTART - make certain system calls restartable across signals.
-			 * SA_NODEFER - do not prevent the signal from being received from
-			 * within its own signal handler.
-			 * SA_SIGINFO - sa_sigaction specifies the signal handling function.
-			 */
-			newSignalAction.sa_flags = SA_RESTART | SA_SIGINFO | SA_NODEFER;
-
-#if defined(S390) && defined(LINUX)
-			newSignalAction.sa_sigaction = (void *)handler;
-#else /* defined(S390) && defined(LINUX) */
-			newSignalAction.sa_sigaction = (void (*)(int, siginfo_t *, void *))handler;
-#endif /* defined(S390) && defined(LINUX) */
-
-			if (0 == OMRSIG_SIGACTION(sigNum, &newSignalAction, &oldSignalAction)) {
-				oldHandler = (void *)oldSignalAction.sa_sigaction;
-			} else {
-				Trc_SC_RegisterSignal_FailedToRegisterHandler(currentThread, sigNum, handler, oldHandler);
-			}
-#endif /* defined(WIN32) */
+			isHandlerRegistered = vmFuncs->registerOSHandler(javaVM, sigNum, handler, &oldHandler);
+		}
+		if (0 != isHandlerRegistered) {
+			Trc_SC_RegisterSignal_FailedToRegisterHandler(currentThread, sigNum, handler, oldHandler);
 		}
 	}
 
