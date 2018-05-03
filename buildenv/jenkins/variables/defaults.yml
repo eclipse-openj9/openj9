@@ -130,3 +130,25 @@ aix_ppc-64_cmprssptrs:
     8: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-ccache --with-jobs=8'
     9: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
     10: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
+#========================================#
+# Linux x86 64bits Compressed Pointers
+#========================================#
+linux_x86-64_cmprssptrs:
+  boot_jdk:
+    8: '/usr/lib/jvm/java-7-openjdk-amd64'
+    9: '/usr/lib/jvm/adoptojdk-java-80'
+    10: '/usr/lib/jvm/adoptojdk-java-90'
+  release:
+    8: 'linux-x86_64-normal-server-release'
+    9: 'linux-x86_64-normal-server-release'
+    10: 'linux-x86_64-normal-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  node_labels:
+    build:
+      8: 'hw.arch.x86 && sw.os.ubuntu.16'
+      9: 'hw.arch.x86 && sw.os.ubuntu.16'
+      10: 'hw.arch.x86 && sw.os.ubuntu.16'
+    test:
+      8: 'hw.arch.x86 && sw.os.ubuntu.16'
+      9: 'hw.arch.x86 && sw.os.ubuntu.16'
+      10: 'hw.arch.x86 && sw.os.ubuntu.16'
