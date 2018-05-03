@@ -131,8 +131,36 @@
 		</groups>
 		<subsets>
 			<subset>SE90</subset>
-			<subset>SE100</subset>
 			<subset>SE110</subset>
+		</subsets>
+	</test>
+
+	<!-- Separate SE100 and exclude it on windows for issue https://github.com/eclipse/openj9/issues/1814-->
+	<test>
+		<testCaseName>cmdLineTester_SCURLClassLoaderNPTests_SE100</testCaseName>
+		<variations>
+			<variation>Mode110</variation>
+			<variation>Mode610</variation>
+		</variations>
+		<command>$(MKTREE) $(REPORTDIR); \
+	$(CD) $(REPORTDIR); \
+	cp -r $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.jar$(Q) .; \
+	$(Q)$(JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) -xf URLClassLoaderTests.jar; \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_HOME='$(JDK_HOME)' -DPATHSEP=$(Q)$(D)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DJAVA_EXE='$(JAVA_COMMAND) $(JVM_OPTIONS)' -DCPDL=$(Q)$(P)$(Q) -DSCMODE=211 -DTEST_JVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)URLClassLoaderTests.xml$(Q) -xids all,$(PLATFORM),$(JCL_VERSION),$(JAVA_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-nonZeroExitWhenError \
+	-outputLimit 300; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^os.zos,^os.win</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>SE100</subset>
 		</subsets>
 	</test>	
 </playlist>
