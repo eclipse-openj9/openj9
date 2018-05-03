@@ -4818,6 +4818,8 @@ typedef struct J9InternalVMFunctions {
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 	IDATA ( *registerPredefinedHandler)(struct J9JavaVM *vm, U_32 signal, void **oldOSHandler);
 	IDATA ( *registerOSHandler)(struct J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHandler);
+	void ( *throwNativeOOMError)(JNIEnv *env, U_32 moduleName, U_32 messageNumber);
+	void ( *throwNewJavaIoIOException)(JNIEnv *env, const char *message);
 } J9InternalVMFunctions;
 
 

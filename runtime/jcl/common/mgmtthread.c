@@ -2618,7 +2618,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getNativeThreadIdsIm
 	nativeIds = j9mem_allocate_memory(arrLen * sizeof(jlong), J9MEM_CATEGORY_VM_JCL);
 	if (NULL == nativeIds) {
 		Trc_JCL_threadmxbean_getNativeThreadIdsImpl_outOfMemory(env, arrLen);
-		throwNativeOOMError(env, 0, 0);
+		javaVM->internalVMFunctions->throwNativeOOMError(env, 0, 0);
 		goto _exit;
 	}
 	/* Extract primitive (jlong) array from the jlongArray passed by JNI.  Examine its elements for TIDs. */

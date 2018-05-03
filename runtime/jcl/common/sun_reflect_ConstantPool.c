@@ -265,7 +265,7 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 				const jboolean isStatic = (J9CPTYPE_STATIC_METHOD == cpType) || (J9CPTYPE_INTERFACE_STATIC_METHOD == cpType);
 				returnValue = (*env)->ToReflectedMethod(env, jlClass, methodID, isStatic);
 			} else {
-				throwNativeOOMError(env, 0, 0);
+				vmFunctions->throwNativeOOMError(env, 0, 0);
 			}
 		}
 
@@ -342,7 +342,7 @@ retry:
 				/* The isStatic argument is ignored. */
 				returnValue = (*env)->ToReflectedField(env, jlClass, fieldID, FALSE);
 			} else {
-				throwNativeOOMError(env, 0, 0);
+				vmFunctions->throwNativeOOMError(env, 0, 0);
 			}
 		}
 	}
