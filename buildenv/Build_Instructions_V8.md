@@ -321,6 +321,14 @@ set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
 set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%
 ```
 
+Not all of the shared libraries that are included with Visual Studio 2010 are registered during installation.
+In particular, the `msdia100.dll` libraries must be registered manually.
+To do so, execute the following from a command prompt:
+```
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 10.0\DIA SDK\bin\msdia100.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 10.0\DIA SDK\bin\amd64\msdia100.dll"
+```
+
 You can download Freemarker and Freetype manually or obtain them using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
 
 - Open a cygwin64 terminal and change to the `/temp` directory:
