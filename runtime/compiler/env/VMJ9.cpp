@@ -4346,8 +4346,7 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
          {
          TR_ASSERT(allocationNode->getSecondChild()->getOpCode().isLoadConst(), "Expecting const child \n");
          int32_t arrayClassIndex = allocationNode->getSecondChild()->getInt();
-         struct J9Class ** arrayClasses = &_jitConfig->javaVM->booleanArrayClass;
-         ramClass = (TR_OpaqueClassBlock *)arrayClasses[arrayClassIndex - 4];
+         ramClass = getClassFromNewArrayType(arrayClassIndex);
          }
          break;
 
