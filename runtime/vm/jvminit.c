@@ -610,7 +610,7 @@ freeJavaVM(J9JavaVM * vm)
 #endif
 
 	/* Remove the predefinedHandlerWrapper. */
-	j9sig_set_async_signal_handler(predefinedHandlerWrapper, vm, 0);
+	j9sig_set_single_async_signal_handler(predefinedHandlerWrapper, vm, 0, NULL);
 
 	/* Unload before trace engine exits */
 	UT_MODULE_UNLOADED(J9_UTINTERFACE_FROM_VM(vm));
