@@ -1107,7 +1107,7 @@ public void test_getModifiers_classTypes() {
 		0x0009, // public static
 		0x0011, // public final
 		0x0019, // public final static
-		0x0008, // static
+		0x0000, //
 		0x0410, // static
 		0x0400, // abstract
 		0x1001, // public synthetic
