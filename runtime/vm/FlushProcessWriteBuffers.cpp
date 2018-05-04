@@ -40,6 +40,7 @@ flushProcessWriteBuffers(J9JavaVM *vm)
 #if defined(WIN32)
 	((VOID (WINAPI*)(void))vm->flushFunction)();
 #elif defined(LINUX) /* WIN32 */
+	omrthread_monitor_enter(vm->flushMutex);
 	void *addr = vm->exclusiveGuardPage.address;
 	UDATA pageSize = vm->exclusiveGuardPage.pageSize;
 	int mprotectrc = mprotect(addr, pageSize, PROT_READ | PROT_WRITE);
@@ -47,6 +48,7 @@ flushProcessWriteBuffers(J9JavaVM *vm)
 	VM_AtomicSupport::add((UDATA*)addr, 1);
 	mprotectrc = mprotect(addr, pageSize, PROT_NONE);
 	Assert_VM_true(0 == mprotectrc);
+	omrthread_monitor_exit(vm->flushMutex);
 #else /* LINUX */
 #error flushProcessWriteBuffers unimplemented
 #endif /* LINUX */
@@ -74,6 +76,10 @@ initializeExclusiveAccess(J9JavaVM *vm)
 		int mprotectrc = mprotect(addr, pageSize, PROT_NONE);
 		Assert_VM_true(0 == mprotectrc);
 	}
+	if (0 != omrthread_monitor_init_with_name(&vm->flushMutex, 0, "flushProcessWriteBuffers")) {
+		shutDownExclusiveAccess(vm);
+		rc = 1;
+	}
 #elif defined(WIN32) /* LINUX */
 	HMODULE h_kernel32 = GetModuleHandle("kernel32");
 	Assert_VM_notNull(h_kernel32);
@@ -93,6 +99,10 @@ shutDownExclusiveAccess(J9JavaVM *vm)
 	if (NULL != addr) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		j9vmem_free_memory(addr, guardPage->pageSize, guardPage);
+	}
+	if (NULL != vm->flushMutex) {
+		omrthread_monitor_destroy(vm->flushMutex);
+		vm->flushMutex = NULL;
 	}
 #endif /* LINUX */
 }
