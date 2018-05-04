@@ -1085,33 +1085,39 @@ public abstract class MethodHandle {
 			String name,
 			String typeDescriptor,
 			ClassLoader loader) throws Throwable {
-		MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass, false);
-		MethodType type = null;
-		
-		switch(cpRefKind){
-		case 1: /* getField */
-			return lookup.findGetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
-		case 2: /* getStatic */
-			return lookup.findStaticGetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
-		case 3: /* putField */
-			return lookup.findSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
-		case 4: /* putStatic */
-			return lookup.findStaticSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
-		case 5: /* invokeVirtual */
-			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-			return lookup.findVirtual(referenceClazz, name, type);
-		case 6: /* invokeStatic */
-			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-			return lookup.findStatic(referenceClazz, name, type);
-		case 7: /* invokeSpecial */ 
-			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-			return lookup.findSpecial(referenceClazz, name, type, currentClass);
-		case 8: /* newInvokeSpecial */
-			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-			return lookup.findConstructor(referenceClazz, type);
-		case 9: /* invokeInterface */
-			type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
-			return lookup.findVirtual(referenceClazz, name, type);
+		try {
+			MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass, false);
+			MethodType type = null;
+			
+			switch(cpRefKind){
+			case 1: /* getField */
+				return lookup.findGetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
+			case 2: /* getStatic */
+				return lookup.findStaticGetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
+			case 3: /* putField */
+				return lookup.findSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
+			case 4: /* putStatic */
+				return lookup.findStaticSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, loader));
+			case 5: /* invokeVirtual */
+				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				return lookup.findVirtual(referenceClazz, name, type);
+			case 6: /* invokeStatic */
+				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				return lookup.findStatic(referenceClazz, name, type);
+			case 7: /* invokeSpecial */ 
+				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				return lookup.findSpecial(referenceClazz, name, type, currentClass);
+			case 8: /* newInvokeSpecial */
+				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				return lookup.findConstructor(referenceClazz, type);
+			case 9: /* invokeInterface */
+				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				return lookup.findVirtual(referenceClazz, name, type);
+			}
+		} catch (IllegalAccessException iae) {
+			// Java spec expects an IllegalAccessError instead of IllegalAccessException thrown when an application attempts 
+			// (not reflectively) to access or modify a field, or to invoke a method that it doesn't have access to.
+			throw new IllegalAccessError(iae.getMessage()).initCause(iae);
 		}
 		/* Can never happen */
 		throw new UnsupportedOperationException();
