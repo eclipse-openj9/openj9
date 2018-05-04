@@ -5458,6 +5458,7 @@ typedef struct J9JavaVM {
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
 #if defined(LINUX)
 	J9PortVmemIdentifier exclusiveGuardPage;
+	omrthread_monitor_t flushMutex;
 #elif defined(WIN32) /* LINUX */
 	void *flushFunction;
 #endif /* WIN32 */
