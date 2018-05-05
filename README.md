@@ -51,9 +51,7 @@ The Java community has benefited over its history from having multiple implement
 How do I contribute?
 ====================
 
-Since we are an Eclipse Foundation project, each contributor needs to become a member of the Eclipse Foundation which operates under the [Eclipse Code of Conduct][coc]
-to promote fairness, openness, and inclusion.
-
+Since we are an Eclipse Foundation project, each contributor needs to sign an Eclipse Contributor Agreement. The Eclipse Foundation operates under the [Eclipse Code of Conduct][coc] to promote fairness, openness, and inclusion.
 To get started, read our [Contribution Guide](CONTRIBUTING.md).
 
 [coc]: https://eclipse.org/org/documents/Community_Code_of_Conduct.php
