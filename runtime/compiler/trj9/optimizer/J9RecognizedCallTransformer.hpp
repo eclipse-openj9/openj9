@@ -40,7 +40,7 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
    virtual void transform(TR::TreeTop* treetop);
 
    private:
-   void processSimpleMath(TR::Node* node, TR::ILOpCodes opcode);
+   void processIntrinsicFunction(TR::TreeTop* treetop, TR::Node* node, TR::ILOpCodes opcode);
    void processCaseConversion(TR::Node* node);
    };
 
