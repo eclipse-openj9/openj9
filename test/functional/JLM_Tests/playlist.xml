@@ -955,8 +955,7 @@
 	<test>
 		<testCaseName>testOSMXBeanLocal</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
+			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -984,8 +983,7 @@
 	<test>
 		<testCaseName>testOSMXBeanRemote</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
+			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1014,8 +1012,7 @@
 	<test>
 		<testCaseName>testJCMMXBeanLocal_SE80</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
+			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1040,8 +1037,7 @@
 	<test>
 		<testCaseName>testJCMMXBeanLocal</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
+			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1068,8 +1064,7 @@
 	<test>
 		<testCaseName>testJCMMXBeanRemote_SE80</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
+			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1095,8 +1090,7 @@
 	<test>
 		<testCaseName>testJCMMXBeanRemote</testCaseName>
 		<variations>
-			<variation>Mode100</variation>
-			<variation>Mode101</variation>
+			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
