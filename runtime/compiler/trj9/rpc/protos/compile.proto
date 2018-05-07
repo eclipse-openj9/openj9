@@ -228,6 +228,7 @@ enum J9ServerMessageType
    CHTable_getAllClassInfo = 700;
    CHTable_getClassInfoUpdates = 701;
    CHTable_commit = 702;
+   CHTable_clearReservable = 703;
 
    // for JaasIProfiler
    IProfiler_profilingSample = 800;

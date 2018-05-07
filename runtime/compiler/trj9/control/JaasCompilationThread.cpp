@@ -619,7 +619,9 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          fe->scanClassForReservation(clazz, TR::comp());
-         client->write(JAAS::Void());
+         auto table = (TR_JaasClientPersistentCHTable*)TR::comp()->getPersistentInfo()->getPersistentCHTable();
+         TR_PersistentClassInfo *info = table->findClassInfoAfterLockingConst(clazz, TR::comp());
+         client->write(info->isReservable());
          }
          break;
       case J9ServerMessageType::VM_getInstanceFieldOffset:
@@ -1844,6 +1846,14 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto table = (TR_JaasClientPersistentCHTable*)TR::comp()->getPersistentInfo()->getPersistentCHTable();
          auto encoded = table->serializeUpdates();
          client->write(encoded.first, encoded.second);
+         }
+         break;
+      case J9ServerMessageType::CHTable_clearReservable:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
+         auto table = (TR_JaasClientPersistentCHTable*)TR::comp()->getPersistentInfo()->getPersistentCHTable();
+         auto info = table->findClassInfoAfterLockingConst(clazz, TR::comp());
+         info->setReservable(false);
          }
          break;
       case J9ServerMessageType::IProfiler_searchForMethodSample:

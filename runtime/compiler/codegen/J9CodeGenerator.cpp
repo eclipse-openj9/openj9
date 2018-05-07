@@ -1026,6 +1026,13 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          if (!allowedToReserve)
             {
             persistentClassInfo->setReservable(false);
+            // This is currently the only place where this flag gets cleared. For JaaS, we should propagate it to the client,
+            // to avoid having to call scanForNativeMethodsUntilMonitorNode again.
+            if (auto stream = TR::CompilationInfo::getStream())
+               {
+               stream->write(JAAS::J9ServerMessageType::CHTable_clearReservable, classPointer);
+               // No response necessary - we can continue concurrently
+               }
             }
          }
       }

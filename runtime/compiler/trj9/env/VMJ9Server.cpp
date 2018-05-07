@@ -8,6 +8,7 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
 #include "trj9/control/JaasCompilationThread.hpp"
+#include "env/PersistentCHTable.hpp"
 
 bool
 TR_J9ServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
@@ -793,9 +794,20 @@ TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *clazz, TR_Resolve
 void
 TR_J9ServerVM::scanClassForReservation (TR_OpaqueClassBlock *clazz, TR::Compilation *comp)
    {
+   TR_PersistentCHTable *table = comp->getPersistentInfo()->getPersistentCHTable();
+   TR_PersistentClassInfo *info = table->findClassInfoAfterLocking(clazz, comp);
+
+   // Check if scanning has already been performed
+   if (!info || info->isScannedForReservation())
+      return;
+
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JAAS::J9ServerMessageType::VM_scanClassForReservation, clazz);
-   stream->read<JAAS::Void>();
+   bool isReservable = std::get<0>(stream->read<bool>());
+
+   // Apply changes to server CHTable
+   info->setReservable(isReservable);
+   info->setScannedForReservation(true);
    }
 
 uint32_t
