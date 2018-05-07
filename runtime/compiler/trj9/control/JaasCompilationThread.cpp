@@ -463,7 +463,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::VM_matchRAMclassFromROMclass:
          {
          J9ROMClass *clazz = std::get<0>(client->getRecvData<J9ROMClass *>());
-         client->write(fe->matchRAMclassFromROMclass(clazz, TR::comp()));
+         client->write(fe->matchRAMclassFromROMclass(clazz, comp));
          }
          break;
       case J9ServerMessageType::VM_getReferenceFieldAtAddress:
@@ -564,13 +564,13 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, int32_t>();
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
          int32_t offset = std::get<1>(recv);
-         client->write(fe->scanReferenceSlotsInClassForOffset(TR::comp(), clazz, offset));
+         client->write(fe->scanReferenceSlotsInClassForOffset(comp, clazz, offset));
          }
          break;
       case J9ServerMessageType::VM_findFirstHotFieldTenuredClassOffset:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(fe->findFirstHotFieldTenuredClassOffset(TR::comp(), clazz));
+         client->write(fe->findFirstHotFieldTenuredClassOffset(comp, clazz));
          }
          break;
       case J9ServerMessageType::VM_getResolvedVirtualMethod:
@@ -618,9 +618,9 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::VM_scanClassForReservation:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         fe->scanClassForReservation(clazz, TR::comp());
-         auto table = (TR_JaasClientPersistentCHTable*)TR::comp()->getPersistentInfo()->getPersistentCHTable();
-         TR_PersistentClassInfo *info = table->findClassInfoAfterLockingConst(clazz, TR::comp());
+         fe->scanClassForReservation(clazz, comp);
+         auto table = (TR_JaasClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
+         TR_PersistentClassInfo *info = table->findClassInfoAfterLockingConst(clazz, comp);
          client->write(info->isReservable());
          }
          break;
@@ -639,7 +639,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          bool hashCodeComputed = false;
-         int32_t hashCode = fe->getJavaLangClassHashCode(TR::comp(), clazz, hashCodeComputed);
+         int32_t hashCode = fe->getJavaLangClassHashCode(comp, clazz, hashCodeComputed);
          client->write(hashCode, hashCodeComputed);
          }
          break;
@@ -710,14 +710,14 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, uint32_t>();
          TR_OpaqueClassBlock *clazz = std::get<0>(recv);
          uint32_t alignFromStart = std::get<1>(recv);
-         fe->markClassForTenuredAlignment(TR::comp(), clazz, alignFromStart);
+         fe->markClassForTenuredAlignment(comp, clazz, alignFromStart);
          client->write(JAAS::Void());
          }
          break;
       case J9ServerMessageType::VM_getReferenceSlotsInClass:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         int32_t *start = fe->getReferenceSlotsInClass(TR::comp(), clazz);
+         int32_t *start = fe->getReferenceSlotsInClass(comp, clazz);
          if (!start)
             client->write(std::string(""));
          else
@@ -800,7 +800,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          uintptrj_t *stringLocation1 = std::get<0>(recv);
          uintptrj_t *stringLocation2 = std::get<1>(recv);
          int32_t result;
-         bool isEqual = fe->stringEquals(TR::comp(), stringLocation1, stringLocation2, result);
+         bool isEqual = fe->stringEquals(comp, stringLocation1, stringLocation2, result);
          client->write(result, isEqual);
          }
          break;
@@ -808,7 +808,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          {
          uintptrj_t *stringLocation = std::get<0>(client->getRecvData<uintptrj_t *>());
          int32_t result;
-         bool isGet = fe->getStringHashCode(TR::comp(), stringLocation, result);
+         bool isGet = fe->getStringHashCode(comp, stringLocation, result);
          client->write(result, isGet);
          }
          break;
@@ -947,7 +947,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          void *address;
          TR::DataType type;
          bool volatileP, isFinal, isPrivate, unresolvedInCP;
-         bool result = method->staticAttributes(TR::comp(), cpIndex, &address, &type, &volatileP, &isFinal,
+         bool result = method->staticAttributes(comp, cpIndex, &address, &type, &volatileP, &isFinal,
                &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
          client->write(address, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
          }
@@ -957,7 +957,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
          uint32_t cpIndex = std::get<1>(recv);
-         client->write(method->getClassFromConstantPool(TR::comp(), cpIndex));
+         client->write(method->getClassFromConstantPool(comp, cpIndex));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getDeclaringClassFromFieldOrStatic:
@@ -965,7 +965,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
          TR_ResolvedJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
-         client->write(method->getDeclaringClassFromFieldOrStatic(TR::comp(), cpIndex));
+         client->write(method->getDeclaringClassFromFieldOrStatic(comp, cpIndex));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_classOfStatic:
@@ -987,7 +987,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          U_32 fieldOffset;
          TR::DataType type;
          bool volatileP, isFinal, isPrivate, unresolvedInCP;
-         bool result = method->fieldAttributes(TR::comp(), cpIndex, &fieldOffset, &type, &volatileP, &isFinal,
+         bool result = method->fieldAttributes(comp, cpIndex, &fieldOffset, &type, &volatileP, &isFinal,
                &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
          client->write(fieldOffset, type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result);
          }
@@ -1019,8 +1019,8 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
             unresolved = true;
             }
          if (!((fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
-                           TR::comp()->ilGenRequest().details().isMethodHandleThunk() &&
-                           performTransformation(TR::comp(), "Setting as unresolved special call cpIndex=%d\n",cpIndex)))
+                           comp->ilGenRequest().details().isMethodHandleThunk() &&
+                           performTransformation(comp, "Setting as unresolved special call cpIndex=%d\n",cpIndex)))
             {
             TR::VMAccessCriticalSection resolveSpecialMethodRef(fe);
             ramMethod = jitResolveSpecialMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
@@ -1161,7 +1161,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::ResolvedMethod_startAddressForJNIMethod:
          {
          TR_ResolvedJ9Method *ramMethod = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
-         client->write(ramMethod->startAddressForJNIMethod(TR::comp()));
+         client->write(ramMethod->startAddressForJNIMethod(comp));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_startAddressForInterpreterOfJittedMethod:
@@ -1228,7 +1228,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::ResolvedMethod_isSubjectToPhaseChange:
          {
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
-         client->write(method->isSubjectToPhaseChange(TR::comp()));
+         client->write(method->isSubjectToPhaseChange(comp));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getResolvedHandleMethod:
@@ -1342,7 +1342,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::ResolvedMethod_isInlineable:
          {
          TR_ResolvedJ9Method *mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
-         client->write(mirror->isInlineable(TR::comp()));
+         client->write(mirror->isInlineable(comp));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_isWarmCallGraphTooBig:
@@ -1350,7 +1350,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
          TR_ResolvedJ9Method *mirror = std::get<0>(recv);
          uint32_t bcIndex = std::get<1>(recv);
-         client->write(mirror->isWarmCallGraphTooBig(bcIndex, TR::comp()));
+         client->write(mirror->isWarmCallGraphTooBig(bcIndex, comp));
          }
          break;
       case J9ServerMessageType::ResolvedMethod_setWarmCallGraphTooBig:
@@ -1358,7 +1358,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
          TR_ResolvedJ9Method *mirror = std::get<0>(recv);
          uint32_t bcIndex = std::get<1>(recv);
-         mirror->setWarmCallGraphTooBig(bcIndex, TR::comp());
+         mirror->setWarmCallGraphTooBig(bcIndex, comp);
          client->write(JAAS::Void());
          }
          break;
@@ -1745,7 +1745,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          uintptrj_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
          int32_t numFilters = fe->getArrayLengthInElements(filters);
          std::vector<TR::KnownObjectTable::Index> filterIndexList(numFilters);
-         TR::KnownObjectTable *knot = TR::comp()->getOrCreateKnownObjectTable();
+         TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
          for (int i = 0; i <numFilters; i++)
             {
             filterIndexList[i] = knot->getIndex(fe->getReferenceElement(filters, i));
@@ -1833,9 +1833,9 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::CHTable_getAllClassInfo:
          {
          client->getRecvData<JAAS::Void>();
-         auto table = (TR_JaasClientPersistentCHTable*)TR::comp()->getPersistentInfo()->getPersistentCHTable();
+         auto table = (TR_JaasClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          TR_OpaqueClassBlock *rootClass = fe->getSystemClassFromClassName("java/lang/Object", 16);
-         TR_PersistentClassInfo* result = table->findClassInfoAfterLockingConst(rootClass, TR::comp(), false);
+         TR_PersistentClassInfo* result = table->findClassInfoAfterLockingConst(rootClass, comp, false);
          std::string encoded = FlatPersistentClassInfo::serializeHierarchy(result);
          client->write(encoded);
          }
@@ -1843,7 +1843,7 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::CHTable_getClassInfoUpdates:
          {
          client->getRecvData<JAAS::Void>();
-         auto table = (TR_JaasClientPersistentCHTable*)TR::comp()->getPersistentInfo()->getPersistentCHTable();
+         auto table = (TR_JaasClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          auto encoded = table->serializeUpdates();
          client->write(encoded.first, encoded.second);
          }
@@ -1851,8 +1851,8 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
       case J9ServerMessageType::CHTable_clearReservable:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
-         auto table = (TR_JaasClientPersistentCHTable*)TR::comp()->getPersistentInfo()->getPersistentCHTable();
-         auto info = table->findClassInfoAfterLockingConst(clazz, TR::comp());
+         auto table = (TR_JaasClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
+         auto info = table->findClassInfoAfterLockingConst(clazz, comp);
          info->setReservable(false);
          }
          break;
