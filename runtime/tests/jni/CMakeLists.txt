@@ -41,6 +41,10 @@ target_link_libraries(j9ben
 		j9thr
 		jvm
 )
+target_include_directories(j9ben
+	PRIVATE
+		"${j9vm_BINARY_DIR}/j9vm"
+)
 
 install(
 	TARGETS j9ben
