@@ -1460,6 +1460,12 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(val);
          }
          break;
+      case J9ServerMessageType::CompInfo_getJ9MethodStartPC:
+         {
+         J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
+         client->write(TR::CompilationInfo::getJ9MethodStartPC(method));
+         }
+         break;
 
       case J9ServerMessageType::ClassEnv_classFlagsValue:
          {

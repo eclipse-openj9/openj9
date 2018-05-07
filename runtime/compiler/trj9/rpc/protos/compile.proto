@@ -187,6 +187,7 @@ enum J9ServerMessageType
    CompInfo_setJ9MethodExtra = 307;
    CompInfo_setInvocationCountAtomic = 308;
    CompInfo_isClassSpecial = 309;
+   CompInfo_getJ9MethodStartPC = 310;
 
    // For J9::ClassEnv Methods
    ClassEnv_classFlagsValue = 400;

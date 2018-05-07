@@ -515,9 +515,16 @@ public:
       return (uint32_t)((uintptrj_t)method->extra >> 32);
       }
    static void * getJ9MethodStartPC(J9Method *method) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for jaas server");
-      TR_ASSERT(!((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED), "Method NOT Jitted!");
-      return (void *)method->extra;
+      if (auto stream = getStream())
+         {
+         stream->write(JAAS::J9ServerMessageType::CompInfo_getJ9MethodStartPC, method);
+         return std::get<0>(stream->read<void*>());
+         }
+      else
+         {
+         TR_ASSERT(!((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED), "Method NOT Jitted!");
+         return (void *)method->extra;
+         }
       }
    static void setJ9MethodExtra(J9Method *method, intptrj_t newValue) {
       if (auto stream = getStream())
