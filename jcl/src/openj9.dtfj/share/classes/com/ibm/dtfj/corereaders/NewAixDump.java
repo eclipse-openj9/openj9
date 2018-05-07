@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -457,7 +457,7 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		}
 		long address = coreReadAddress();
 		while (address != 0) {
-			addresses.add(new Long(address));
+			addresses.add(Long.valueOf(address));
 			address = coreReadAddress();
 		}
 

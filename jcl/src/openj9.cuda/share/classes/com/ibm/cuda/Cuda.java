@@ -1,6 +1,6 @@
 /*[INCLUDE-IF CUDA4J | Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2017 IBM Corp. and others
+ * Copyright (c) 2013, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,7 +70,7 @@ public final class Cuda {
 		}
 
 		ByteBuffer insert(ByteBuffer buffer, long address) {
-			inuse.put(new WeakReference<>(buffer, queue), new Long(address));
+			inuse.put(new WeakReference<>(buffer, queue), Long.valueOf(address));
 
 			return buffer;
 		}

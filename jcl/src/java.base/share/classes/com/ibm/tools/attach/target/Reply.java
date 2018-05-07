@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 package com.ibm.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corp. and others
+ * Copyright (c) 2009, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,7 +112,7 @@ public final class Reply {
 			String line = replyStream.readLine();
 			replyStream.close();
 			try {
-				rply.portNumber= new Integer(line);
+				rply.portNumber = Integer.valueOf(line);
 			} catch (NumberFormatException e) {
 				rply.portNumber = Integer.valueOf(-1);
 				throw new IOException(e.getMessage());

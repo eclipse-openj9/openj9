@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,7 +145,7 @@ final public class TraceRecordExternal extends TraceRecord {
                      entry = entry - (longEntryLength + longEntryID*256);
 
                      // push the real TraceID and copy in the special trace entry
-                     longEntryTraceIDs.push(new Integer(Util.constructTraceID(buffer, entry + 1)));
+                     longEntryTraceIDs.push(Integer.valueOf(Util.constructTraceID(buffer, entry + 1)));
                      buffer[entry+1]=0;
                      buffer[entry+2]=0;
                      buffer[entry+3]=(byte)longEntryID;
@@ -270,4 +270,3 @@ final public class TraceRecordExternal extends TraceRecord {
     }
 
 }
-

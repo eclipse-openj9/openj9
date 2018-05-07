@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,7 @@ public final class TotalPhysicalMemoryNotificationInfoUtil {
 		if (info != null) {
 			CompositeType type = getCompositeType();
 			String[] names = { "newTotalPhysicalMemory" }; //$NON-NLS-1$
-			Object[] values = { new Long(info.getNewTotalPhysicalMemory()) };
+			Object[] values = { Long.valueOf(info.getNewTotalPhysicalMemory()) };
 
 			try {
 				result = new CompositeDataSupport(type, names, values);

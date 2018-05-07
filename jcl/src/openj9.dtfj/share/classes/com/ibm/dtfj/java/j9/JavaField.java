@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,6 @@
  *******************************************************************************/
 package com.ibm.dtfj.java.j9;
 
-import java.util.Iterator;
-
 import com.ibm.dtfj.image.CorruptDataException;
 import com.ibm.dtfj.image.MemoryAccessException;
 import com.ibm.dtfj.image.j9.CorruptData;
@@ -32,7 +30,6 @@ import com.ibm.dtfj.java.JavaObject;
 
 /**
  * @author jmdisher
- *
  */
 public abstract class JavaField implements com.ibm.dtfj.java.JavaField
 {
@@ -75,21 +72,21 @@ public abstract class JavaField implements com.ibm.dtfj.java.JavaField
 	public Object get(JavaObject object) throws CorruptDataException, MemoryAccessException
 	{
 		if (getSignature().equals(BOOLEAN_SIGNATURE)) {
-			return new Boolean(getBoolean(object));
+			return Boolean.valueOf(getBoolean(object));
 		} else if (getSignature().equals(BYTE_SIGNATURE)) {
-			return new Byte(getByte(object));
+			return Byte.valueOf(getByte(object));
 		} else if (getSignature().equals(CHAR_SIGNATURE)) {
-			return new Character(getChar(object));
+			return Character.valueOf(getChar(object));
 		} else if (getSignature().equals(SHORT_SIGNATURE)) {
-			return new Short(getShort(object));
+			return Short.valueOf(getShort(object));
 		} else if (getSignature().equals(INTEGER_SIGNATURE)) {
-			return new Integer(getInt(object));
+			return Integer.valueOf(getInt(object));
 		} else if (getSignature().equals(LONG_SIGNATURE)) {
-			return new Long(getLong(object));
+			return Long.valueOf(getLong(object));
 		} else if (getSignature().equals(FLOAT_SIGNATURE)) {
-			return new Float(getFloat(object));
+			return Float.valueOf(getFloat(object));
 		} else if (getSignature().equals(DOUBLE_SIGNATURE)) {
-			return new Double(getDouble(object));
+			return Double.valueOf(getDouble(object));
 		} else if (getSignature().startsWith(OBJECT_PREFIX_SIGNATURE) || getSignature().startsWith(ARRAY_PREFIX_SIGNATURE)) {
 			return getReferenceType(object);
 		} else {

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2006, 2017 IBM Corp. and others
+ * Copyright (c) 2006, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,7 +124,7 @@ public class Caa {
             caaTemplate = new Caa32Template();
             String s = space.getDump().getProductRelease();
             if (s != null) {
-                int release = new Integer(s).intValue();
+                int release = Integer.parseInt(s);
                 if (release >= 11) {
                     caaTemplate = new Caa32_11Template();
                     log.fine("switched to new caa format");
@@ -140,7 +140,7 @@ public class Caa {
             caaTemplate = new Caa64Template();
             String s = space.getDump().getProductRelease();
             if (s != null) {
-                int release = new Integer(s).intValue();
+                int release = Integer.parseInt(s);
                 if (release >= 11) {
                     caaTemplate = new Caa64_11Template();
                     log.fine("switched to new caa format");
@@ -154,7 +154,7 @@ public class Caa {
             caaTemplate = new Caa32Template();
             String s = space.getDump().getProductRelease();
             if (s != null) {
-                int release = new Integer(s).intValue();
+                int release = Integer.parseInt(s);
                 if (release >= 11) {
                     caaTemplate = new Caa32_11Template();
                     log.fine("switched to new caa format");
