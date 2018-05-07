@@ -1604,9 +1604,6 @@ MM_CopyForwardScheme::workerSetupForCopyForward(MM_EnvironmentVLHGC *env)
 	/* Reset the copy caches */
 	Assert_MM_true(NULL == env->_scanCache);
 	Assert_MM_true(NULL == env->_deferredScanCache);
-	
-	/* clear the worker hot field statistics */
-	clearHotFieldStats(env);
 
 	/* install this thread's compact group structures */
 	Assert_MM_true(NULL == env->_copyForwardCompactGroups);
@@ -1693,7 +1690,6 @@ MM_CopyForwardScheme::mergeGCStats(MM_EnvironmentVLHGC *env)
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats.merge(localStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.merge(&env->_workPacketStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._irrsStats.merge(&env->_irrsStats);
-	mergeHotFieldStats(env);
 	omrthread_monitor_exit(_extensions->gcStatsMutex);
 	
 	/* record the thread-specific paralellism stats in the trace buffer. This partially duplicates info in -Xtgc:parallel */ 
@@ -1742,7 +1738,6 @@ MM_CopyForwardScheme::copyForwardCollectionSet(MM_EnvironmentVLHGC *env)
 	MM_ScavengerForwardedHeader::validateAssumptions();
 
 	/* stats management */
-	masterClearHotFieldStats();
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._startTime = j9time_hires_clock();
 	/* Clear the gc statistics */
 	clearGCStats(env);
@@ -1770,9 +1765,7 @@ MM_CopyForwardScheme::copyForwardCollectionSet(MM_EnvironmentVLHGC *env)
 	clearReservedRegionLists(env);
 	_extensions->globalAllocationManager->flushAllocationContexts(env);
 
-	if(copyForwardCompletedSuccessfully(env)) {
-		masterReportHotFieldStats();
-	}
+	copyForwardCompletedSuccessfully(env);
 
 	if(_extensions->tarokEnableExpensiveAssertions) {
 		/* Verify the result of the copy forward operation (heap integrity, etc) */
@@ -1986,103 +1979,6 @@ MM_CopyForwardScheme::addCopyCachesToFreeList(MM_EnvironmentVLHGC *env)
 	}
 }
 
-/**
- * Update hot statistics if tracing hot fields is enabled. Calls out to the ScavavengerHotFieldStats
- * to do the update sets up which subspace (new or old) the parent and child objects are in, which
- * uses isObjectInNurseryMemory and which can only be called from CopyForwardScheme.
- * Assumes that current parent object has already been set, or nulled. If nulled no update occurs.
- * @param childPtr the child object (usually one being copied)
- */
-MMINLINE void
-MM_CopyForwardScheme::updateHotFieldStats(MM_EnvironmentVLHGC *env, J9Object *childPtr)
-{
-	if (NULL != env->_hotFieldStats) {
-		J9Object *objectPtr = env->_hotFieldStats->_objectPtr;
-		if (NULL == objectPtr) {
-			/* don't update statistics */
-			return;
-		}
-		bool isParentInNewSpace = isObjectInNurseryMemory(objectPtr);
-		bool isChildInNewSpace = isObjectInNurseryMemory(childPtr);
-		env->_hotFieldStats->updateStats(isParentInNewSpace, isChildInNewSpace, childPtr);
-	}
-}
-
-/**
- * Sets the hotness for the given field on current object, if tracing hot fields is enabled.
- * Assumes that the current object has been set before this method is called. 
- * @param slotPtr the slot (usually one being copied) used to determine the field of the object
- * @param instanceHotFieldDescription the hot fields descriptor for the object class
- */
-MMINLINE void
-MM_CopyForwardScheme::setFieldHotness(MM_EnvironmentVLHGC *env, fj9object_t *slotPtr, uintptr_t instanceHotFieldDescription)
-{
-	if (NULL != env->_hotFieldStats) {
-		/* record field hotness of the slot for reporting purposes */
-		env->_hotFieldStats->setHotnessOfField((fomrobject_t *)slotPtr, instanceHotFieldDescription);
-	}
-}
-
-/**
- * Sets the current object for hot field statistics, if tracing hot fields is enabled.
- * Passing objectPtr == NULL has the effect of causing any future fields of that object always
- * to be regarded as hot, and for updateHotFieldStats to ignore that field.
- * @param objectPtr the current object (usually one being scanned).
- */
-MMINLINE void
-MM_CopyForwardScheme::setCurrentObjectForHotFieldStats(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
-{
-	if (NULL != env->_hotFieldStats) {
-		env->_hotFieldStats->_objectPtr = (omrobjectptr_t) objectPtr;
-		env->_hotFieldStats->clearHotnessOfField();
-	}
-}
-
-/**
- * Clears Master hot field statistics, if tracing hot fields is enabled.
- */
-void
-MM_CopyForwardScheme::masterClearHotFieldStats()
-{
-	if (NULL != _extensions->scavengerHotFieldStats) {
-		_extensions->scavengerHotFieldStats->clear();
-	}
-}
-
-/**
- * Reports master hot field statistics, if tracing hot fields is enabled.
- * Assumes all the worker thread statistics have been merged.
- */
-void
-MM_CopyForwardScheme::masterReportHotFieldStats()
-{
-	if (NULL != _extensions->scavengerHotFieldStats) {
-		_extensions->scavengerHotFieldStats->reportStats(_extensions->getOmrVM());
-	}
-}
-
-/**
- * Clears hot field statistics for worker, if tracing hot fields is enabled.
- */
-void
-MM_CopyForwardScheme::clearHotFieldStats(MM_EnvironmentVLHGC *env)
-{
-	if (NULL != env->_hotFieldStats) {
-		env->_hotFieldStats->clear();
-	}
-}
-
-/**
- * Merges hot field statistics for worker into master, if tracing hot fields is enabled.
- */
-void
-MM_CopyForwardScheme::mergeHotFieldStats(MM_EnvironmentVLHGC *env)
-{
-	if (NULL != _extensions->scavengerHotFieldStats) {
-		_extensions->scavengerHotFieldStats->mergeStats(env->_hotFieldStats);
-	}
-}
-
 J9Object *
 MM_CopyForwardScheme::updateForwardedPointer(J9Object *objectPtr)
 {
@@ -2204,8 +2100,6 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
 				memcpy((void *)destinationObjectPtr, forwardedHeader->getObject(), objectCopySizeInBytes);
-				/* only update statistics if object was actually copied */
-				updateHotFieldStats(env, destinationObjectPtr);
 
 				forwardedHeader->fixupCopiedObject(destinationObjectPtr);
 
@@ -2469,7 +2363,6 @@ MM_CopyForwardScheme::scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_Allocati
 
 	bool success = copyAndForwardObjectClass(env, reservingContext, objectPtr);
 
-	uintptr_t instanceHotFieldDescription = J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceHotFieldDescription;
 	GC_MixedObjectIterator mixedObjectIterator(_javaVM->omrVM, objectPtr);
 	GC_SlotObject *slotObject = NULL;
 	while (success && (NULL != (slotObject = mixedObjectIterator.nextSlot()))) {
@@ -2477,8 +2370,6 @@ MM_CopyForwardScheme::scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_Allocati
 			PORT_ACCESS_FROM_ENVIRONMENT(env);
 			j9tty_printf(PORTLIB, "   Slot %p value: %p\n", slotObject->readAddressFromSlot(), slotObject->readReferenceFromSlot());
 		}
-
-		setFieldHotness(env, slotObject->readAddressFromSlot(), instanceHotFieldDescription);
 
 		/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
 		success = copyAndForward(env, reservingContext, objectPtr, slotObject);
@@ -2521,14 +2412,10 @@ MM_CopyForwardScheme::scanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_Allo
 	}
 	
 	GC_SlotObject referentPtr(_javaVM->omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr));
-
-	uintptr_t instanceHotFieldDescription = J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceHotFieldDescription;
 	GC_MixedObjectIterator mixedObjectIterator(_javaVM->omrVM, objectPtr);
 	GC_SlotObject *slotObject = NULL;
 	while (success && (NULL != (slotObject = mixedObjectIterator.nextSlot()))) {
 		if ((slotObject->readAddressFromSlot() != referentPtr.readAddressFromSlot()) || referentMustBeMarked) {
-			setFieldHotness(env, slotObject->readAddressFromSlot(), instanceHotFieldDescription);
-
 			/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
 			success = copyAndForward(env, reservingContext, objectPtr, slotObject);
 		}
@@ -3085,12 +2972,10 @@ MM_CopyForwardScheme::completeScanCache(MM_EnvironmentVLHGC *env)
 			/* Scan the chunk for all live objects */
 			J9Object *objectPtr = NULL;
 			while((objectPtr = heapChunkIterator.nextObject()) != NULL) {
-				setCurrentObjectForHotFieldStats(env, objectPtr);
 				scanObject(env, reservingContext, objectPtr, SCAN_REASON_COPYSCANCACHE);
 			}
 		} while(scanCache->isScanWorkAvailable());
 	}
-	setCurrentObjectForHotFieldStats(env, NULL);
 	/* mark cache as no longer in use for scanning */
 	scanCache->clearCurrentlyBeingScanned();
 	/* Done with the cache - build a free list entry in the hole, release the cache to the free list (if not used), and continue */
@@ -3110,13 +2995,9 @@ MM_CopyForwardScheme::incrementalScanMixedObjectSlots(MM_EnvironmentVLHGC *env, 
 		/* retrieve partial scan state of cache */
 		mixedObjectIterator.restore(&(scanCache->_objectIteratorState));
 	}
-
-	uintptr_t instanceHotFieldDescription = J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceHotFieldDescription;
 	GC_SlotObject *slotObject;
 	bool success = true;
 	while (success && ((slotObject = mixedObjectIterator.nextSlot()) != NULL)) {
-		setFieldHotness(env, slotObject->readAddressFromSlot(), instanceHotFieldDescription);
-
 		/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
 		success = copyAndForward(env, reservingContext, objectPtr, slotObject);
 
@@ -3203,13 +3084,10 @@ MM_CopyForwardScheme::incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *e
 		referentMustBeMarked = age < _extensions->getDynamicMaxSoftReferenceAge();
 	}
 	
-	uintptr_t instanceHotFieldDescription = J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceHotFieldDescription;
 	GC_SlotObject *slotObject;
 	bool success = true;
 	while (success && ((slotObject = mixedObjectIterator.nextSlot()) != NULL)) {
 		if (((fj9object_t *)slotObject->readAddressFromSlot() != referentPtr) || referentMustBeMarked) {
-			setFieldHotness(env, slotObject->readAddressFromSlot(), instanceHotFieldDescription);
-
 			/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
 			success = copyAndForward(env, reservingContext, objectPtr, slotObject);
 
@@ -3249,7 +3127,6 @@ MM_CopyForwardScheme::incrementalScanCacheBySlot(MM_EnvironmentVLHGC *env)
 	
 			/* Scan the chunk for live objects, incrementally slot by slot */
 			while ((objectPtr = heapChunkIterator.nextObject()) != NULL) {
-				setCurrentObjectForHotFieldStats(env, objectPtr);
 				/* retrieve scan state of the scan cache */
 				switch(_extensions->objectModel.getScanType(objectPtr)) {
 				case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
@@ -3275,7 +3152,6 @@ MM_CopyForwardScheme::incrementalScanCacheBySlot(MM_EnvironmentVLHGC *env)
 				default:
 					Assert_MM_unreachable();
 				}
-				setCurrentObjectForHotFieldStats(env, NULL);
 						
 				/* object was not completely scanned in order to interrupt scan */
 				if (hasPartiallyScannedObject) {
