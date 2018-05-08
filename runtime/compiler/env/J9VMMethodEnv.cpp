@@ -32,33 +32,6 @@
 #include "jilconsts.h"
 #include "j9protos.h"
 
-bool
-J9::VMMethodEnv::hasBackwardBranches(TR_OpaqueMethodBlock *method)
-   {
-   J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
-   return (romMethod->modifiers & J9AccMethodHasBackwardBranches) != 0;
-   }
-
-
-bool
-J9::VMMethodEnv::isCompiledMethod(TR_OpaqueMethodBlock *method)
-   {
-   if (TR::Compiler->isCodeTossed())
-      {
-      return false;
-      }
-
-   return TR::CompilationInfo::isCompiled((J9Method *)method);
-   }
-
-
-uintptr_t
-J9::VMMethodEnv::startPC(TR_OpaqueMethodBlock *method)
-   {
-   J9Method *j9method = reinterpret_cast<J9Method *>(method);
-   return reinterpret_cast<uintptr_t>(TR::CompilationInfo::getJ9MethodStartPC(j9method));
-   }
-
 J9ROMMethod *romMethodOfRamMethod(J9Method* method)
    {
    if (!TR::CompilationInfo::getStream()) // If not JAAS server
@@ -92,6 +65,34 @@ J9ROMMethod *romMethodOfRamMethod(J9Method* method)
       }
    TR_ASSERT(romMethod, "Should have acquired romMethod");
    return romMethod;
+   }
+
+
+bool
+J9::VMMethodEnv::hasBackwardBranches(TR_OpaqueMethodBlock *method)
+   {
+   J9ROMMethod * romMethod = romMethodOfRamMethod((J9Method *)method);
+   return (romMethod->modifiers & J9AccMethodHasBackwardBranches) != 0;
+   }
+
+
+bool
+J9::VMMethodEnv::isCompiledMethod(TR_OpaqueMethodBlock *method)
+   {
+   if (TR::Compiler->isCodeTossed())
+      {
+      return false;
+      }
+
+   return TR::CompilationInfo::isCompiled((J9Method *)method);
+   }
+
+
+uintptr_t
+J9::VMMethodEnv::startPC(TR_OpaqueMethodBlock *method)
+   {
+   J9Method *j9method = reinterpret_cast<J9Method *>(method);
+   return reinterpret_cast<uintptr_t>(TR::CompilationInfo::getJ9MethodStartPC(j9method));
    }
 
 uintptr_t
