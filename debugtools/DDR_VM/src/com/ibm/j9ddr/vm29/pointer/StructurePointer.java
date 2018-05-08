@@ -66,7 +66,7 @@ public abstract class StructurePointer extends AbstractPointer {
 	protected U8 getU8Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
 		long byteOffset = getByteOffset(bitOffset, 8);
 		long cell = getByteAtOffset(byteOffset);
-		long field = getBitfield(cell, bitOffset, bitWidth, 8);
+		long field = getBitfield(cell, bitOffset, bitWidth, 8, false);
 
 		return new U8(field);
 	}
@@ -74,7 +74,7 @@ public abstract class StructurePointer extends AbstractPointer {
 	protected U16 getU16Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
 		long byteOffset = getByteOffset(bitOffset, 16);
 		long cell = getShortAtOffset(byteOffset);
-		long field = getBitfield(cell, bitOffset, bitWidth, 16);
+		long field = getBitfield(cell, bitOffset, bitWidth, 16, false);
 
 		return new U16(field);
 	}
@@ -82,7 +82,7 @@ public abstract class StructurePointer extends AbstractPointer {
 	protected U32 getU32Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
 		long byteOffset = getByteOffset(bitOffset, 32);
 		long cell = getIntAtOffset(byteOffset);
-		long field = getBitfield(cell, bitOffset, bitWidth, 32);
+		long field = getBitfield(cell, bitOffset, bitWidth, 32, false);
 
 		return new U32(field);
 	}
@@ -90,7 +90,7 @@ public abstract class StructurePointer extends AbstractPointer {
 	protected U64 getU64Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
 		long byteOffset = getByteOffset(bitOffset, 64);
 		long cell = getLongAtOffset(byteOffset);
-		long field = getBitfield(cell, bitOffset, bitWidth, 64);
+		long field = getBitfield(cell, bitOffset, bitWidth, 64, false);
 
 		return new U64(field);
 	}
@@ -98,7 +98,7 @@ public abstract class StructurePointer extends AbstractPointer {
 	protected I8 getI8Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
 		long byteOffset = getByteOffset(bitOffset, 8);
 		long cell = getByteAtOffset(byteOffset);
-		long field = getBitfield(cell, bitOffset, bitWidth, 8);
+		long field = getBitfield(cell, bitOffset, bitWidth, 8, true);
 
 		return new I8(field);
 	}
@@ -106,7 +106,7 @@ public abstract class StructurePointer extends AbstractPointer {
 	protected I16 getI16Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
 		long byteOffset = getByteOffset(bitOffset, 16);
 		long cell = getShortAtOffset(byteOffset);
-		long field = getBitfield(cell, bitOffset, bitWidth, 16);
+		long field = getBitfield(cell, bitOffset, bitWidth, 16, true);
 
 		return new I16(field);
 	}
@@ -114,7 +114,7 @@ public abstract class StructurePointer extends AbstractPointer {
 	protected I32 getI32Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
 		long byteOffset = getByteOffset(bitOffset, 32);
 		long cell = getIntAtOffset(byteOffset);
-		long field = getBitfield(cell, bitOffset, bitWidth, 32);
+		long field = getBitfield(cell, bitOffset, bitWidth, 32, true);
 
 		return new I32(field);
 	}
@@ -122,7 +122,7 @@ public abstract class StructurePointer extends AbstractPointer {
 	protected I64 getI64Bitfield(int bitOffset, int bitWidth) throws CorruptDataException {
 		long byteOffset = getByteOffset(bitOffset, 64);
 		long cell = getLongAtOffset(byteOffset);
-		long field = getBitfield(cell, bitOffset, bitWidth, 64);
+		long field = getBitfield(cell, bitOffset, bitWidth, 64, true);
 
 		return new I64(field);
 	}
@@ -133,25 +133,31 @@ public abstract class StructurePointer extends AbstractPointer {
 		return cellIndex * (cellSize / Byte.SIZE);
 	}
 
-	private static long getBitfield(long cell, int bitOffset, int bitWidth, int cellSize) {
-		int shiftAmount;
+	private static long getBitfield(long cell, int bitOffset, int bitWidth, int cellSize, boolean isSigned) {
+		int leftShift;
 
 		switch (BITFIELD_FORMAT) {
 		case StructureReader.BIT_FIELD_FORMAT_LITTLE_ENDIAN:
-			shiftAmount = bitOffset % cellSize;
+			leftShift = Long.SIZE - bitWidth - (bitOffset % cellSize);
 			break;
 		case StructureReader.BIT_FIELD_FORMAT_BIG_ENDIAN:
-			// We must ensure shiftAmount is non-negative.
-			shiftAmount = (bitOffset + bitWidth) % cellSize;
-			if (shiftAmount != 0) {
-				shiftAmount = cellSize - shiftAmount;
-			}
+			leftShift = Long.SIZE - cellSize + (bitOffset % cellSize);
 			break;
 		default:
 			throw new IllegalArgumentException("Unsupported bitfield format");
 		}
 
-		return (cell >>> shiftAmount) & ((1L << bitWidth) - 1);
+		// Shift left so the most significant bit becomes the sign bit.
+		long leftAligned = cell << leftShift;
+
+		// The number of uninteresting bits in leftAligned.
+		int rightShift = Long.SIZE - bitWidth;
+
+		if (isSigned) {
+			return leftAligned >> rightShift;
+		} else {
+			return leftAligned >>> rightShift;
+		}
 	}
 
 	public StructurePointer getAsRuntimeType()
