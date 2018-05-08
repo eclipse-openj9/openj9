@@ -39,7 +39,6 @@ target_link_libraries(jvm_b156
 add_dependencies(jvm_b156
 	omrgc_hookgen
 	trc_j9scar
-	jvm_generated
 )
 
 target_compile_definitions(jvm_b156

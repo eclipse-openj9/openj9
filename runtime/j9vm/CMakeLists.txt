@@ -23,17 +23,6 @@
 # We dont want to suffix vm version to shared libs
 set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
 
-# Run M4 to create generated.g
-# TODO this should be output in the binary dir, not the source dir
-add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/generated.h
-	DEPENDS  ${CMAKE_CURRENT_SOURCE_DIR}/../oti/helpers.m4  ${CMAKE_CURRENT_SOURCE_DIR}/../redirector/forwarders.m4 generated.h.m4
-	COMMAND m4 -I ${CMAKE_CURRENT_SOURCE_DIR}/../oti -I ${CMAKE_CURRENT_SOURCE_DIR}/../redirector ${CMAKE_CURRENT_SOURCE_DIR}/generated.h.m4 > generated.h
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-# We wrap it up in a custom target so we can depend on the generation across directories
-add_custom_target(jvm_generated DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/generated.h)
-
 add_tracegen(j9scar.tdf)
 
 # Note we add all the actual sources to this interface library.
@@ -50,7 +39,7 @@ target_sources(jvm_common INTERFACE
 	#TODO this is gross
 	${CMAKE_CURRENT_SOURCE_DIR}/../hyvm/harmony_vm.c
 )
-add_dependencies(jvm_common jvm_generated)
+
 target_link_libraries(jvm_common
 	INTERFACE
 		j9vm_interface

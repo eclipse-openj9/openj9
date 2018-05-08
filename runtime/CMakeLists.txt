@@ -105,6 +105,26 @@ add_custom_target(j9vm_hookgen
 		${CMAKE_CURRENT_SOURCE_DIR}/include/mmhook.h
 )
 
+# Note we do this here rather than in the redirector directory to work arround
+# issues in cmake. If we did it there each target which consumed generated.c has
+# its own rule to create it. Which causes a race condition when building in parallel
+add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"
+	DEPENDS  oti/helpers.m4 redirector/generated.c.m4
+	COMMAND m4 -I "${CMAKE_CURRENT_SOURCE_DIR}/oti" -I "${CMAKE_CURRENT_SOURCE_DIR}/redirector" "${CMAKE_CURRENT_SOURCE_DIR}/redirector/generated.c.m4" > generated.c
+	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/redirector"
+)
+add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/j9vm/generated.h"
+	DEPENDS oti/helpers.m4  redirector/forwarders.m4 j9vm/generated.h.m4
+	COMMAND m4 -I "${CMAKE_CURRENT_SOURCE_DIR}/oti" -I "${CMAKE_CURRENT_SOURCE_DIR}/redirector" "${CMAKE_CURRENT_SOURCE_DIR}/j9vm/generated.h.m4" > generated.h
+	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/j9vm"
+)
+
+add_custom_target(j9vm_m4gen
+	DEPENDS
+		"${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"
+		"${CMAKE_CURRENT_BINARY_DIR}/j9vm/generated.h"
+)
+
 
 ###
 ### Helper interface libraries
@@ -122,7 +142,10 @@ target_include_directories(j9vm_interface
 		nls
 		${CMAKE_CURRENT_BINARY_DIR}
 )
-add_dependencies(j9vm_interface j9vm_hookgen)
+add_dependencies(j9vm_interface
+	j9vm_hookgen
+	j9vm_m4gen
+)
 
 # j9vm_gc_includes is used to track the include directories that are consumed by the various gc components
 add_library(j9vm_gc_includes INTERFACE)
