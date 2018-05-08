@@ -1268,6 +1268,14 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
 TR::Node *
 TR_J9InlinerPolicy::createUnsafeMonitorOp(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, bool isEnter)
    {
+   bool isDirectJNI = unsafeCall->isPreparedForDirectJNI();
+   // Expecting directToJNI to have loadaddr children, if not then we had better bail out
+   if (isDirectJNI && unsafeCall->getChild(1)->getOpCodeValue() != TR::loadaddr)
+      {
+      traceMsg(comp(),"Unsafe Inlining: The Unsafe.monitorEnter/Exit() children are not loadaddr's as expected. Not inlining.\n");
+      return unsafeCall;
+      }
+
    TR::Node::recreate(callNodeTreeTop->getNode(), TR::NULLCHK);
    callNodeTreeTop->getNode()->setSymbolReference(comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol()));
 
@@ -1285,6 +1293,12 @@ TR_J9InlinerPolicy::createUnsafeMonitorOp(TR::ResolvedMethodSymbol *calleeSymbol
       }
 
    TR::Node *oldChild = unsafeCall->getChild(0);
+   // Anchor the unused oldChild
+   callNodeTreeTop->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(oldChild, TR::treetop, 1, oldChild)));
+   if (isDirectJNI)
+      {
+      TR::Node::recreate(unsafeCall->getChild(1), TR::aload);
+      }
    unsafeCall->setChild(0, unsafeCall->getChild(1));
    oldChild->recursivelyDecReferenceCount();
    unsafeCall->setChild(1, NULL);
