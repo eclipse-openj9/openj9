@@ -83,9 +83,10 @@ namespace JAAS
       {
       static inline T read(const Any *msg)
          {
-         typename std::remove_const<T>::type val;
+         char data[sizeof(T)];
          const std::string &strVal = msg->bytes_v();
-         memcpy(&val, &strVal[0], sizeof(T));
+         memcpy(data, &strVal[0], sizeof(T));
+         typename std::remove_const<T>::type &val = (typename std::remove_const<T>::type &)data;
          return val;
          }
       static inline void write(Any *msg, const T &val)
