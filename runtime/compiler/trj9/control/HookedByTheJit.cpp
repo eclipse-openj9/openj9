@@ -6530,12 +6530,17 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
          currentThread = vm->mainThread;
 
          do {
-            if (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)
-               {
-               vm->internalVMFunctions->J9SignalAsyncEvent(vm, currentThread, jitConfig->sampleInterruptHandlerKey);
-               currentThread->stackOverflowMark = (UDATA *) J9_EVENT_SOM_VALUE;
-               numActiveThreads++;
-               }
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+            if (!currentThread->inNative)
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+            {
+               if (currentThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)
+                  {
+                  vm->internalVMFunctions->J9SignalAsyncEvent(vm, currentThread, jitConfig->sampleInterruptHandlerKey);
+                  currentThread->stackOverflowMark = (UDATA *) J9_EVENT_SOM_VALUE;
+                  numActiveThreads++;
+                  }
+            }
          } while ((currentThread = currentThread->linkNext) != vm->mainThread);
 
          compInfo->_stats._sampleMessagesSent += numActiveThreads;

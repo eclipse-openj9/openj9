@@ -586,17 +586,15 @@ prepareForDump(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, struct J9RASdu
 			(state & J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS) == 0 ) {
 
 				if (vmThread) {
-					if ((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) == 0) {
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
-						if (vmThread->inNative) {
-							vm->internalVMFunctions->internalEnterVMFromJNI(vmThread);
-							newState |= J9RAS_DUMP_GOT_JNI_VM_ACCESS;
-						} else
+					if (vmThread->inNative) {
+						vm->internalVMFunctions->internalEnterVMFromJNI(vmThread);
+						newState |= J9RAS_DUMP_GOT_JNI_VM_ACCESS;
+					} else
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-						{
-							vm->internalVMFunctions->internalAcquireVMAccess(vmThread);
-							newState |= J9RAS_DUMP_GOT_VM_ACCESS;
-						}
+					if ((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) == 0) {
+						vm->internalVMFunctions->internalAcquireVMAccess(vmThread);
+						newState |= J9RAS_DUMP_GOT_VM_ACCESS;
 					}
 					vm->internalVMFunctions->acquireExclusiveVMAccess(vmThread);
 				} else {
@@ -721,17 +719,16 @@ unwindAfterDump(struct J9JavaVM *vm, struct J9RASdumpContext *context, UDATA sta
 
 		if (vmThread) {
 			vm->internalVMFunctions->releaseExclusiveVMAccess(vmThread);
-			if (state & J9RAS_DUMP_GOT_VM_ACCESS) {
-				vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
-				newState &= ~J9RAS_DUMP_GOT_VM_ACCESS;
-			}
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 			if (state & J9RAS_DUMP_GOT_JNI_VM_ACCESS) {
 				vm->internalVMFunctions->internalExitVMToJNI(vmThread);
 				newState &= ~J9RAS_DUMP_GOT_JNI_VM_ACCESS;
-			}
+			} else
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
-
+			if (state & J9RAS_DUMP_GOT_VM_ACCESS) {
+				vm->internalVMFunctions->internalReleaseVMAccess(vmThread);
+				newState &= ~J9RAS_DUMP_GOT_VM_ACCESS;
+			}
 		} else {
 			vm->internalVMFunctions->releaseExclusiveVMAccessFromExternalThread(vm);
 		}
