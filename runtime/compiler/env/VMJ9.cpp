@@ -2643,14 +2643,13 @@ bool
 TR_J9VMBase::isQueuedForVeryHotOrScorching(TR_ResolvedMethod *calleeMethod, TR::Compilation *comp)
    {
    bool isQueuedForVeryHotOrScorching = false;
-   TR::IlGeneratorMethodDetails details((J9Method *)calleeMethod->getPersistentIdentifier());
 
    _compInfo->acquireCompMonitor(_vmThread);
    //Check again in case another thread has already upgraded this request
 
    for (TR_MethodToBeCompiled *cur = TR::CompilationController::getCompilationInfo()->getMethodQueue(); cur; cur = cur->_next)
       {
-      if (cur->getMethodDetails().sameAs(details, this))
+      if (cur->getMethodDetails().getMethod() == (J9Method*) calleeMethod->getPersistentIdentifier() && cur->getMethodDetails().isOrdinaryMethod())
          {
          isQueuedForVeryHotOrScorching = cur->_optimizationPlan->getOptLevel() >= veryHot;
          break;
