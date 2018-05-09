@@ -20,10 +20,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-Boolean FAIL = false
-String SRC_REPO = 'https://github.com/${ghprbGhRepository}.git'
+def FAIL = false
+def SRC_REPO = 'https://github.com/${ghprbGhRepository}.git'
 def BAD_FILES = []
-String HASHES = '###################################'
+def HASHES = '###################################'
+def REGEXLIST = []
+def FILES = []
+def white = []
+def ignorefile = "${env.WORKSPACE}/.copyrightignore"
 
 timeout(time: 6, unit: 'HOURS') {
     stage('Copyright Check') {
@@ -46,7 +50,7 @@ timeout(time: 6, unit: 'HOURS') {
                         script: "date +%Y",
                         returnStdout: true
                     ).trim()
-                    
+
                     // Set a different Copyright regex depending on the Repo the PR is from
                     if (ghprbGhRepository ==~ "eclipse.*") {
                         REGEX = "\'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR}\'"
@@ -57,24 +61,80 @@ timeout(time: 6, unit: 'HOURS') {
                         sh 'exit 1'
                     }
 
-                    FILES_LIST.each() {
-                        println "Checking file: '${it}'"
-                        RESULT = sh (
-                            script: "grep -qE ${REGEX} '${it}'",
-                            returnStatus: true)
-                        if(RESULT != 0) {
-                            echo "FAILURE - Copyright date in file: '${it}' appears to be incorrect"
-                            FAIL = true
-                            BAD_FILES << "${it}"
-                        } else {
-                            echo "Copyright date in file: appears to be correct"
+                    if (fileExists("${env.WORKSPACE}/.copyrightignore")) {
+                        def readinFiles = readFile("${env.WORKSPACE}/.copyrightignore")
+                        def READLIST = readinFiles.split("\\r?\\n")
+                        for (item in READLIST) {
+                             regexsElm = item
+
+                             if (item.contains("#")) {
+                                 def location = regexsElm.indexOf("#")
+                                 regexsElm = regexsElm.substring(0,location)
+                             }
+
+                             if (regexsElm != "") {
+                                 if (item.contains("*")) {
+                                     regexsElm = regexsElm.replaceAll(/[*]/, /\.\*/)
+                                 }
+
+                                 if (item.startsWith("/") && item.lastIndexOf("/")==0 ) {
+                                     regexsElm = regexsElm.replaceAll("[/]","");
+                                     if (item.contains("*.")) {
+                                         regexsElm = regexsElm.replaceAll("[*]","");
+                                         regexsElm =  "[A-Za-z0-9[^/]+]+" + regexsElm
+                                     }
+
+                                     if (!item.contains(".")){
+                                         regexsElm = regexsElm + ".*"
+                                     }
+
+                                 } else if (!item.startsWith("/") && item.lastIndexOf("/")!=0 && item.contains("/")){
+                                   regexsElm = regexsElm.replaceAll(/\//,/\/+/)
+                                   if (!item.contains(".")){
+                                         regexsElm = regexsElm + ".*"
+                                   }
+                                 } else {
+                                   regexsElm = regexsElm.replaceAll("[/]","");
+                                 }
+                            }
+                            if (regexsElm.contains ("/+.*.*")) {
+                                regexsElm = regexsElm.replace("/+.*.*","/*.*.*");
+                            }
+                            
+
+                            REGEXLIST << regexsElm
+                        }
+                        print REGEXLIST
+                        FILES_LIST.each { fileName ->
+                           for (regex in REGEXLIST) {
+                                if (fileName ==~ /${regex}/) {
+                                    FILES_LIST = FILES_LIST.collect { it.toString() } - "${fileName}"
+                                    echo "Ignoring File: '${fileName}', appears to be in WHITELIST, matching " + /${regex}/
+                                    break
+                                }
+                            }
                         }
                     }
+
+                    FILES_LIST.each { file ->
+                        echo "Checking file: '${file}'"
+                        RESULT = sh (
+                              script: "grep -qE ${REGEX} '${file}'",
+                              returnStatus: true)
+                        if (RESULT != 0) {
+                            BAD_FILES << "${file}"
+                            echo "FAILURE - Copyright date in file: '${file}' appears to be incorrect"
+                            FAIL = true
+                        } else {
+                          echo "Copyright date in file: appears to be correct"
+                        }
+                    }
+
                     if (FAIL) {
                         echo "${HASHES}"
                         echo "The following files were modified and have incorrect copyrights"
-                        BAD_FILES.each() {
-                            echo "${it}"
+                        BAD_FILES.each {file ->
+                            echo "${file}"
                         }
                         echo "${HASHES}"
                         sh 'exit 1'
