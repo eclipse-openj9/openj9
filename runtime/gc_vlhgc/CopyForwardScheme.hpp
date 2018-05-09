@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -635,7 +635,6 @@ private:
  	 */
 	MMINLINE void scanObject(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason);
 
-	MMINLINE void updateHotFieldStats(MM_EnvironmentVLHGC *env, J9Object *childPtr);
 	/**
 	 * Update scan for abort phase (workstack phase)
 	 * @param env[in] the current thread
@@ -643,14 +642,6 @@ private:
 	 * @param reason[in] reason to scan (dirty card, packet, scan cache, overflow)
 	 */
 	MMINLINE void updateScanStats(MM_EnvironmentVLHGC *env, J9Object *objectPtr, ScanReason reason);
-
-	MMINLINE void setFieldHotness(MM_EnvironmentVLHGC *env, fj9object_t* slotPtr, uintptr_t instanceHotFieldDescription);
-
-	MMINLINE void setCurrentObjectForHotFieldStats(MM_EnvironmentVLHGC *env, J9Object *objectPtr);
-	void masterClearHotFieldStats();
-	void masterReportHotFieldStats();
-	void clearHotFieldStats(MM_EnvironmentVLHGC *env);
-	void mergeHotFieldStats(MM_EnvironmentVLHGC *env);
 	
 	MMINLINE UDATA scanToCopyDistance(MM_CopyScanCacheVLHGC* cache);
 	MMINLINE bool bestCacheForScanning(MM_CopyScanCacheVLHGC* copyCache, MM_CopyScanCacheVLHGC** scanCache);
