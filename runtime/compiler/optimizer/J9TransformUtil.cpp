@@ -405,7 +405,7 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
    return NULL;
    }
 
-static bool foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, char *className, int32_t classNameLength, bool isStatic, TR::Compilation *comp)
+bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, char *className, int32_t classNameLength, bool isStatic, TR::Compilation *comp)
    {
    TR::SimpleRegex *classRegex = comp->getOptions()->getClassesWithFoldableFinalFields();
    if (classRegex)
@@ -443,6 +443,17 @@ static bool foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, char *className, int32
          return false;
       return true;
       }
+
+   static char *enableAggressiveFolding = feGetEnv("TR_EnableAggressiveStaticFinalFieldFolding");
+   if (enableAggressiveFolding
+      && isStatic
+      && comp->fej9()->isClassInitialized(clazz))
+      {
+      if (classNameLength == 16 && !strncmp(className, "java/lang/System", 16))
+         return false;
+      return true;
+      }
+
    return false;
    }
 
