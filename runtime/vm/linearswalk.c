@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,19 +49,9 @@ static void lswPrintf(struct J9PortLibrary *portLibrary, const char *format, ...
 
 #ifdef LINUX
 static const char COL_RESET[] = "\x1b[0m";
-static const char RED[]     = "\x1b[31m";
-static const char GREEN[]   = "\x1b[32m";
-static const char YELLOW[]  = "\x1b[33m";
-static const char BLUE[]    = "\x1b[34m";
-static const char MAGENTA[] = "\x1b[35m";
 static const char CYAN[]    = "\x1b[36m";
 #else
 static const char COL_RESET[] = "";
-static const char RED[]     = "";
-static const char GREEN[]   = "";
-static const char YELLOW[]  = "";
-static const char BLUE[]    = "";
-static const char MAGENTA[] = "";
 static const char CYAN[]    = ""; 
 #endif
 
