@@ -101,7 +101,11 @@ timeout(time: 6, unit: 'HOURS') {
                                 regexsElm = regexsElm.replace("/+.*.*","/*.*.*");
                             }
                             
-
+                            if (regexsElm ==~ /.*.[A-Za-z0-9]/){
+                                print regexsElm;
+                                regexsElm = regexsElm.substring(0, regexsElm.lastIndexOf(".")) + /\./ + regexsElm.substring(regexsElm.lastIndexOf(".") + 1);                           
+                            }
+                            
                             REGEXLIST << regexsElm
                         }
                         print REGEXLIST
