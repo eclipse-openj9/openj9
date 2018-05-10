@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,6 @@ import com.ibm.j9ddr.exceptions.JVMNotFoundException;
 import com.ibm.j9ddr.exceptions.MissingDDRStructuresException;
 import com.ibm.j9ddr.logging.LoggerNames;
 import com.ibm.j9ddr.tools.ddrinteractive.commands.ForeachCommand;
-import com.ibm.j9ddr.tools.ddrinteractive.commands.LimitCommand;
 import com.ibm.j9ddr.tools.ddrinteractive.commands.LookupSymbolCommand;
 import com.ibm.j9ddr.tools.ddrinteractive.commands.NativeLibrariesCommand;
 import com.ibm.j9ddr.tools.ddrinteractive.commands.NativeStacksCommand;
@@ -64,7 +63,6 @@ import com.ibm.j9ddr.tools.ddrinteractive.plugins.PluginCommand;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRImage;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRImageAddressSpace;
 import com.ibm.j9ddr.view.dtfj.image.J9DDRImageProcess;
-
 
 public class DDRInteractive implements Runnable
 {
@@ -95,7 +93,6 @@ public class DDRInteractive implements Runnable
 		localCommandList.add(new NativeStacksCommand());
 		localCommandList.add(new ExtractMemoryCommand());
 		localCommandList.add(new TimeCommand());
-		localCommandList.add(new LimitCommand());
 		localCommandList.add(new ForeachCommand());
 
 		nonVMCommands = Collections.unmodifiableList(localCommandList);
