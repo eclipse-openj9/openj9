@@ -2235,7 +2235,6 @@ J9::Options::fePostProcessJIT(void * base)
       self()->setOption(TR_DisableEDO); // JAAS limitation, EDO counters are not relocatable yet
       if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
          {
-         _samplingFrequency = 0; // disable sampling (including samplingThread)
          self()->setOption(TR_DisableKnownObjectTable);
          // The server can compile with VM access in hand because GC is not a factor here
          // For the same reason we don't have to use TR_EnableYieldVMAccess

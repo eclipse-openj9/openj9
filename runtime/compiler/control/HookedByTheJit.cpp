@@ -3496,7 +3496,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
    TR_PersistentCHTable * table = 0;
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJaasMode() != SERVER_MODE)
       table = compInfo->getPersistentInfo()->getPersistentCHTable();
 
    TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
@@ -4049,7 +4049,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    cl->newInstanceCount = options->getInitialCount();
 #endif
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJaasMode() != SERVER_MODE)
       {
       TR_PersistentClassInfo *info = compInfo->getPersistentInfo()->getPersistentCHTable()->classGotLoaded(vm, clazz);
 
@@ -4195,7 +4195,7 @@ static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA e
 
    jitAcquireClassTableMutex(vmThread);
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJaasMode() != SERVER_MODE)
       {
       if (!initFailed && !compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), clazz))
          initFailed = true;
@@ -6959,7 +6959,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    jitConfig->samplerMonitor = NULL; // initialize this field just in case
    TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
    compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_NOT_CREATED); // just in case
-   if (jitConfig->samplingFrequency && !vmj9->isAOT_DEPRECATED_DO_NOT_USE())
+   if (jitConfig->samplingFrequency && !vmj9->isAOT_DEPRECATED_DO_NOT_USE() && compInfo->getPersistentInfo()->getJaasMode() != SERVER_MODE)
       {
       if ((jitConfig->sampleInterruptHandlerKey = javaVM->internalVMFunctions->J9RegisterAsyncEvent(javaVM, jitMethodSampleInterrupt, NULL)) < 0)
          {
