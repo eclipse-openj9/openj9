@@ -27,10 +27,6 @@ FROM ubuntu:16.04
 # This section installs the required OS tools.
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
-    software-properties-common \
-    python-software-properties \
-  && apt-get update \
-  && apt-get install -qq -y --no-install-recommends \
     autoconf \
     ca-certificates \
     ccache \
