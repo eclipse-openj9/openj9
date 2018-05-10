@@ -353,6 +353,72 @@ public void test_getMethods_subtest2() {
 	java.security.AccessController.doPrivileged(action);
 }
 
+static class ParentClass {
+	public static void methodPublicStatic() {}
+	public void methodPublicInstance() {}
+	static void methodPkgPrivateStatic() {}
+	void methodPkgPrivateInstance() {}
+	private static void methodPrivateStatic() {}
+	private void methodPrivateInstance() {}
+}
+
+static class ChildClass extends ParentClass {
+	public static void methodPublicStatic() {}
+	public void methodPublicInstance() {}
+	static void methodPkgPrivateStatic() {}
+	void methodPkgPrivateInstance() {}
+	private static void methodPrivateStatic() {}
+	private void methodPrivateInstance() {}
+}
+
+static interface SuperInterface {
+	void methodPublicInterface(); 
+	public static void methodPublicStatic() {};
+}
+
+static interface SubInterface extends SuperInterface {
+	void methodPublicInterface(); 
+	public static void methodPublicStatic() {};
+	default void defaultMethodPublicInterface() {}
+}
+
+static class ClassImplInterface implements SubInterface {
+	public void methodPublicInterface() {}
+	public static void methodPublicStatic() {};
+	public void defaultMethodPublicInterface() {}
+}
+
+@Test
+public void test_getMethods_subtest3() {
+	final Method[] methods = ChildClass.class.getMethods();
+	for (Method method : methods) {
+		final Class<?> declaringClass = method.getDeclaringClass();
+		if (declaringClass.equals(ParentClass.class)) {
+			Assert.fail("Should not return Method " + method.getName() + " declared in class " + declaringClass.getName());
+		}
+	}
+}
+@Test
+public void test_getMethods_subtest4() {
+	final Method[] methods = SubInterface.class.getMethods();
+	for (Method method : methods) {
+		final Class<?> declaringClass = method.getDeclaringClass();
+		if (declaringClass.equals(SuperInterface.class)) {
+			Assert.fail("Should not return Method " + method.getName() + " declared in class " + declaringClass.getName());
+		}
+	}
+}
+@Test
+public void test_getMethods_subtest5() {
+	final Method[] methods = ClassImplInterface.class.getMethods();
+	for (Method method : methods) {
+		final Class<?> declaringClass = method.getDeclaringClass();
+		if (declaringClass.equals(SuperInterface.class) || declaringClass.equals(SubInterface.class)) {
+			Assert.fail("Should not return Method " + method.getName() + " declared in class " + declaringClass.getName());
+		}
+	}
+}
+
 static String[] concatenateObjectMethods(String methodList[]) {
 	final String[] jlobjectMethods = new String[] {
 			objectClass+".equals(java.lang.Object)boolean",
@@ -536,7 +602,7 @@ public void test_getClasses() {
 	if (classes.length != 15) {
 		for (int i=0; i<classes.length; i++)
 			logger.debug("classes[" + i + "]: " + classes[i]);
-		Assert.fail("Incorrect class array returned");
+		Assert.fail("Incorrect class array returned: expected 15 but returned " + classes.length);
 	}
 }
 
@@ -749,13 +815,13 @@ public void test_getConstructors() {
  */
 @Test
 public void test_getDeclaredClasses() {
-	int len = 60;
+	int len = 65;
 	// Test for method java.lang.Class [] java.lang.Class.getDeclaredClasses()
 	Class[] declaredClasses = Test_Class.class.getDeclaredClasses();
 	if (declaredClasses.length != len) {
 		for (int i=0; i<declaredClasses.length; i++)
 			logger.debug("declared[" + i + "]: " + declaredClasses[i]);
-		Assert.fail("Incorrect class array returned");
+		Assert.fail("Incorrect class array returned: expected 65 but returned " + declaredClasses.length);
 	}
 }
 
