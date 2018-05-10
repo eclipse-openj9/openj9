@@ -568,6 +568,14 @@ TR_J9ServerVM::classInitIsFinished(TR_OpaqueClassBlock *clazz)
    return std::get<0>(stream->read<bool>());
    }
 
+int32_t
+TR_J9ServerVM::getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getNewArrayTypeFromClass, clazz);
+   return std::get<0>(stream->read<int32_t>());
+   }
+
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getClassFromNewArrayType(int32_t arrayType)
    {

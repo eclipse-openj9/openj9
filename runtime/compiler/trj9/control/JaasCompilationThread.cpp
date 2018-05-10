@@ -436,6 +436,12 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->classInitIsFinished(clazz));
          }
          break;
+      case J9ServerMessageType::VM_getNewArrayTypeFromClass:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getNewArrayTypeFromClass(clazz));
+         }
+         break;
       case J9ServerMessageType::VM_getClassFromNewArrayType:
          {
          int32_t index = std::get<0>(client->getRecvData<int32_t>());

@@ -69,6 +69,7 @@ public:
    virtual TR_OpaqueClassBlock * getHostClass(TR_OpaqueClassBlock *clazzOffset) override;
    virtual intptrj_t getStringUTF8Length(uintptrj_t objectPointer) override;
    virtual bool classInitIsFinished(TR_OpaqueClassBlock *) override;
+   virtual int32_t getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock *getClassFromNewArrayType(int32_t arrayType) override;
    virtual bool isCloneable(TR_OpaqueClassBlock *clazzPointer) override;
    virtual bool canAllocateInlineClass(TR_OpaqueClassBlock *clazz) override;
