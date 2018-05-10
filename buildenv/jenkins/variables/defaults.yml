@@ -152,3 +152,30 @@ linux_x86-64_cmprssptrs:
       8: 'hw.arch.x86 && sw.os.ubuntu.16'
       9: 'hw.arch.x86 && sw.os.ubuntu.16'
       10: 'hw.arch.x86 && sw.os.ubuntu.16'
+#========================================#
+# Windows x86 64bits Compressed Pointers
+#========================================#
+win_x86-64_cmprssptrs:
+  boot_jdk:
+    8: '/cygdrive/c/openjdk/jdk7'
+    9: '/cygdrive/c/openjdk/jdk8'
+    10: '/cygdrive/c/openjdk/jdk9'
+  release:
+    8: 'windows-x86_64-normal-server-release'
+    9: 'windows-x86_64-normal-server-release'
+    10: 'windows-x86_64-normal-server-release'
+  freemarker: '/cygdrive/c/openjdk/freemarker.jar'
+  openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
+  extra_configure_options:
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache'
+    9: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
+    10: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
+  node_labels:
+    build:
+      8: 'hw.arch.x86 && sw.os.windows'
+      9: 'hw.arch.x86 && sw.os.windows'
+      10: 'hw.arch.x86 && sw.os.windows'
+    test:
+      8: 'hw.arch.x86 && sw.os.windows'
+      9: 'hw.arch.x86 && sw.os.windows'
+      10: 'hw.arch.x86 && sw.os.windows'
