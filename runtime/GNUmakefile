@@ -29,9 +29,7 @@
 clean: clean_phase_omr
 
 phase_omr:
-ifneq ($(ENABLE_CMAKE),true)
 	$(MAKE) $(MFLAGS) -C omr
-endif
 
 clean_phase_omr:
 	$(MAKE) $(MFLAGS) -C omr clean
