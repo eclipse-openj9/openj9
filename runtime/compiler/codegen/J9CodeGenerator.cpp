@@ -4485,6 +4485,18 @@ J9::CodeGenerator::needRelocationsForStatics()
    return self()->fej9()->needRelocationsForStatics();
    }
 
+bool
+J9::CodeGenerator::needRelocationsForBodyInfoData()
+   {
+   return self()->fej9()->needRelocationsForBodyInfoData();
+   }
+
+bool
+J9::CodeGenerator::needRelocationsForPersistentInfoData()
+   {
+   return self()->fej9()->needRelocationsForPersistentInfoData();
+   }
+
 
 bool
 J9::CodeGenerator::isMethodInAtomicLongGroup(TR::RecognizedMethod rm)

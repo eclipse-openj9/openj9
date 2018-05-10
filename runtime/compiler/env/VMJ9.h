@@ -260,6 +260,8 @@ public:
    virtual bool helpersNeedRelocation() { return false; }
    virtual bool needClassAndMethodPointerRelocations() { return false; }
    virtual bool needRelocationsForStatics() { return false; }
+   virtual bool needRelocationsForBodyInfoData() { return false; }
+   virtual bool needRelocationsForPersistentInfoData() { return false; }
    virtual bool nopsAlsoProcessedByRelocations() { return false; }
 
    bool supportsContextSensitiveInlining () { return true; }
@@ -1113,6 +1115,8 @@ public:
    virtual bool               supportsEmbeddedHeapBounds()                    { return false; }
    virtual bool               supportsFastNanoTime()                          { return false; }
    virtual bool               needRelocationsForStatics()                     { return true; }
+   virtual bool               needRelocationsForBodyInfoData()                { return true; }
+   virtual bool               needRelocationsForPersistentInfoData()          { return true; }
    virtual bool               forceUnresolvedDispatch()                       { return true; }
    virtual bool               nopsAlsoProcessedByRelocations()                { return true; }
    virtual bool               supportsGuardMerging()                          { return false; }
