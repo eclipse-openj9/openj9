@@ -2230,6 +2230,9 @@ J9::Options::fePostProcessJIT(void * base)
       self()->setOption(TR_DisableSharedCacheHints);
       self()->setIsVariableHeapBaseForBarrierRange0(true);
       self()->setOption(TR_DisableOSR);
+      self()->setOption(TR_DisableProfiling); // JAAS limitation, JIT profiling data is not available to remote compiles yet
+      self()->setOption(TR_DisableGuardedCountingRecompilations); // JAAS limitation, GCR counters are not relocatable yet
+      self()->setOption(TR_DisableEDO); // JAAS limitation, EDO counters are not relocatable yet
       if (compInfo->getPersistentInfo()->getJaasMode() == SERVER_MODE)
          {
          _samplingFrequency = 0; // disable sampling (including samplingThread)

@@ -1690,7 +1690,7 @@ TR_RelocationRecordBodyInfo::applyRelocation(TR_RelocationRuntime *reloRuntime, 
    {
    J9JITExceptionTable *exceptionTable = reloRuntime->exceptionTable();
    reloTarget->storeAddress((uint8_t *) exceptionTable->bodyInfo, reloLocation);
-   fixPersistentMethodInfo((void *)exceptionTable);
+   fixPersistentMethodInfo((void *)exceptionTable, reloRuntime->getPersistentInfo()->getJaasMode() == CLIENT_MODE);
    return 0;
    }
 

@@ -87,6 +87,7 @@ class TR_PersistentMethodInfo
    public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentMethodInfo);
 
+   TR_PersistentMethodInfo() {}
    TR_PersistentMethodInfo(TR::Compilation *);
    TR_PersistentMethodInfo(TR_OpaqueMethodBlock *);
 
@@ -323,7 +324,7 @@ class TR_PersistentJittedBodyInfo
    friend class TR_DebugExt;
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || (defined(TR_HOST_ARM))
-   friend void fixPersistentMethodInfo(void *table);
+   friend void fixPersistentMethodInfo(void *table, bool isJAAS);
 #endif
 
    public:

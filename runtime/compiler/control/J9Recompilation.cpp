@@ -31,6 +31,7 @@
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 #include "exceptions/RuntimeFailure.hpp"    // for J9::EnforceProfiling
+#include "env/j9methodServer.hpp"
 
 bool J9::Recompilation::_countingSupported = false;
 
@@ -62,7 +63,20 @@ J9::Recompilation::setupMethodInfo()
    //
    TR_OptimizationPlan * optimizationPlan =  _compilation->getOptimizationPlan();
 
-   if (_firstCompile)
+   if (comp()->getPersistentInfo()->getJaasMode() == SERVER_MODE)
+      {
+      _methodInfo = new (PERSISTENT_NEW) TR_PersistentMethodInfo();
+      if (!_methodInfo)
+         {
+         _compilation->failCompilation<std::bad_alloc>("Unable to allocate method info");
+         }
+      auto curMethodRemoteMirror = static_cast<TR_ResolvedJ9JAASServerMethod *>(_compilation->getCurrentMethod())->getRemoteMirror();
+      auto stream = TR::CompilationInfo::getStream();
+      stream->write(JAAS::J9ServerMessageType::Recompilation_getExistingMethodInfo, JAAS::Void());
+      auto reply = stream->read<TR_PersistentMethodInfo>();
+      *_methodInfo = std::get<0>(reply);
+      }
+   else if (_firstCompile)
       {
       // Create the persistent method information
       // If the previous compiled version of the method is AOTed, then we need to create a new persistent method information

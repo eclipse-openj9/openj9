@@ -67,7 +67,7 @@ VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_Virt
       ? vguard->getThisClass()
       : ((dc = comp->findDevirtualizedCall(vguard->getCallNode()))
          ? dc->_thisType
-         : info._guardedMethod->classOfMethod());
+         : resolvedMethodSymbol->getResolvedMethod()->classOfMethod());
 
    info._thisClass = vguard->getThisClass();
    info._mergedWithHCRGuard = vguard->mergedWithHCRGuard();

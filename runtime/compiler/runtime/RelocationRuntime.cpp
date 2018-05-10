@@ -484,9 +484,6 @@ TR_RelocationRuntime::prepareRelocateJITCodeAndData(J9VMThread* vmThread,
             if (raList == NULL)
                _relocationStatus = RelocationAssumptionCreateError; // signal an error
 
-
-            // XXX: Persistent body info isn't written by the server for JAAS at the moment
-#if 0
             if (_exceptionTable->bodyInfo)
                {
                J9JITDataCacheHeader *persistentInfoCacheEntry = (J9JITDataCacheHeader *)((U_8 *)cacheEntry + _aotMethodHeaderEntry->offsetToPersistentInfo);
@@ -502,7 +499,6 @@ TR_RelocationRuntime::prepareRelocateJITCodeAndData(J9VMThread* vmThread,
                   _relocationStatus = RelocationPersistentCreateError;
                   }
                }
-#endif
 
             // newCodeStart points after a OMR::CodeCacheMethodHeader, but tempCodeStart points at a OMR::CodeCacheMethodHeader
             // to keep alignment consistent, back newCodeStart over the OMR::CodeCacheMethodHeader
@@ -854,7 +850,17 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       {
       TR_PersistentJittedBodyInfo *persistentBodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>( (_newPersistentInfo + sizeof(J9JITDataCacheHeader) ) );
       TR_PersistentMethodInfo *persistentMethodInfo = reinterpret_cast<TR_PersistentMethodInfo *>( (_newPersistentInfo + sizeof(J9JITDataCacheHeader) ) + sizeof(TR_PersistentJittedBodyInfo) );
-      persistentBodyInfo->setMethodInfo(persistentMethodInfo);
+      if (_comp->getPersistentInfo()->getJaasMode() == CLIENT_MODE && !_comp->getCurrentMethod()->isInterpreted())
+         {
+         TR_PersistentMethodInfo *existingPersistentMethodInfo = _comp->getRecompilationInfo()->getExistingMethodInfo(_comp->getCurrentMethod());
+         if (existingPersistentMethodInfo)
+            *existingPersistentMethodInfo = *persistentMethodInfo;
+         else
+            existingPersistentMethodInfo = persistentMethodInfo;
+         persistentBodyInfo->setMethodInfo(existingPersistentMethodInfo);
+         }
+      else
+         persistentBodyInfo->setMethodInfo(persistentMethodInfo);
       _exceptionTable->bodyInfo = (void *)(persistentBodyInfo);
       }
 

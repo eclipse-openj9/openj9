@@ -1892,8 +1892,14 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(iProfiler->getMaxCallCount());
          }
          break;
-
-
+      case J9ServerMessageType::Recompilation_getExistingMethodInfo:
+         {
+         auto comp = compInfoPT->getCompilation();
+         auto recomp = comp->getRecompilationInfo();
+         auto methodInfo = recomp->getMethodInfo();
+         client->write(*methodInfo);
+         }
+         break;
       default:
          // It is vital that this remains a hard error during dev!
          TR_ASSERT(false, "JAAS: handleServerMessage received an unknown message type");

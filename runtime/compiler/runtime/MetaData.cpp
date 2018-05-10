@@ -1114,7 +1114,7 @@ populateBodyInfo(
    //
    if (recompInfo)
       {
-      if (vm->isAOT_DEPRECATED_DO_NOT_USE())
+      if (vm->isAOT_DEPRECATED_DO_NOT_USE() || comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
          {
          // The allocation for the Persistent Method Info and the Persistent Jitted Body Info used to be allocated with the exception table.
          // Exception tables are now being reaped on method recompilation.  As these need to be persistent, we need to allocate them seperately.
@@ -1175,7 +1175,7 @@ populateBodyInfo(
       }
    else
       {
-      if (vm->isAOT_DEPRECATED_DO_NOT_USE())
+      if (vm->isAOT_DEPRECATED_DO_NOT_USE() || comp->getPersistentInfo()->getJaasMode() == SERVER_MODE)
          {
          J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
          TR_AOTMethodHeader *aotMethodHeaderEntry =  (TR_AOTMethodHeader *)(aotMethodHeader + 1);
