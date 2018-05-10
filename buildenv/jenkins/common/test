@@ -96,6 +96,12 @@ def publish() {
             junit allowEmptyResults: true, keepLongStdio: true, testResults: '**/junitreports/**/*.xml'
             step([$class: 'Publisher', reportFilenamePattern: '**/testng-results.xml'])
             step([$class: "TapPublisher", testResults: "**/*.tap"])
+            withEnv(["WORKSPACE=${WORKSPACE}", "currentBuild=${currentBuild}"]) { 
+                if (currentBuild.result == 'UNSTABLE') {
+                    sh "tar -zcf ${test_target}_test_output.tar.gz $WORKSPACE/openj9/test/TestConfig/test_output_*"
+			        archiveArtifacts artifacts: "**/${test_target}_test_output.tar.gz", fingerprint: true, allowEmptyArchive: true
+                }
+            }
         }
     }
 }
