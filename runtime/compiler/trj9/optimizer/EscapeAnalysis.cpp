@@ -6182,7 +6182,10 @@ void TR_EscapeAnalysis::heapifyBeforeColdBlocks(Candidate *candidate)
       return;
 
    if (trace())
-      printf("Found candidate allocated with cold block compensation in %s numBlocks compensated = %d\n", comp()->signature(), candidate->getColdBlockEscapeInfo()->getSize());
+      {
+      traceMsg(comp(),"Found candidate allocated with cold block compensation in %s numBlocks compensated = %d\n", comp()->signature(), candidate->getColdBlockEscapeInfo()->getSize());
+      //printf("Found candidate allocated with cold block compensation in %s numBlocks compensated = %d\n", comp()->signature(), candidate->getColdBlockEscapeInfo()->getSize());
+      }
 
    TR::SymbolReference *heapSymRef = getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address);
 
@@ -7628,12 +7631,12 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                      if (succCandidate)
                         {
                         traceMsg(comp, "Flush for current allocation %d is post dominated by (and moved to) Flush for allocation %d\n", candidate->_index, succCandidate->_index);
-                        printf("Moved flush for allocation %p in block_%d to allocation %p in succ block_%d in method %s\n", candidate->_node, blockNum, succCandidate->_node, nextSucc, comp->signature());
+                        //printf("Moved flush for allocation %p in block_%d to allocation %p in succ block_%d in method %s\n", candidate->_node, blockNum, succCandidate->_node, nextSucc, comp->signature());
                         }
                      else
                         {
                         traceMsg(comp, "Flush for current allocation %d is post dominated by (and moved to) real sync for in succ %d\n", candidate->_index, nextSucc);
-                        printf("Moved flush for allocation %p in block_%d to real sync in succ %d in method %s\n", candidate->_node, blockNum, nextSucc, comp->signature());
+                        //printf("Moved flush for allocation %p in block_%d to real sync in succ %d in method %s\n", candidate->_node, blockNum, nextSucc, comp->signature());
                         }
                      fflush(stdout);
                      }
@@ -7725,7 +7728,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
          if (trace())
             {
             traceMsg(comp, "For edge %d->%d adding Flush in block_%d for candidate %p index %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(), splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
-            printf("For edge %d->%d adding Flush in block_%d for candidate %p index %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(), splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
+            //printf("For edge %d->%d adding Flush in block_%d for candidate %p index %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(), splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
             }
          }
       else
@@ -7734,7 +7737,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
          if (trace())
             {
             traceMsg(comp, "Splitting edge %d->%d with block_%d for candidate %p index %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(), splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
-            printf("Splitting edge %d->%d with block_%d for candidate %p index %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(), splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
+            //printf("Splitting edge %d->%d with block_%d for candidate %p index %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber(), splitBlock->getNumber(), pair->getAllocation(), pair->getAllocation()->_index);
             }
          }
 
@@ -8408,12 +8411,12 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::NodeChecklist& vi
                      if (!nodeHasSync)
                         {
                         traceMsg(comp(), "Flush for current allocation %d is post dominated by (and moved to) Flush for allocation %d\n", reachingCandidate->_index, candidate->_index);
-                        printf("Moved flush for allocation %p to allocation %p locally in method %s\n", reachingCandidate->_node, candidate->_node, comp()->signature());
+                        //printf("Moved flush for allocation %p to allocation %p locally in method %s\n", reachingCandidate->_node, candidate->_node, comp()->signature());
                         }
                      else
                         {
                         traceMsg(comp(), "Flush for current allocation %d is post dominated by (and moved to) sync in the same block\n", reachingCandidate->_index);
-                        printf("Moved flush for allocation %p to real sync node %p locally in method %s\n", reachingCandidate->_node, node, comp()->signature());
+                        //printf("Moved flush for allocation %p to real sync node %p locally in method %s\n", reachingCandidate->_node, node, comp()->signature());
                         }
 
                      fflush(stdout);
