@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,6 +125,11 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    TR_OpaquePseudoRegister * evaluateOPRNode(TR::Node* node);
    TR_PseudoRegister * evaluateBCDNode(TR::Node * node);
 
+   int32_t _accumulatorNodeUsage;
+
+   void setAccumulatorNodeUsage(int32_t n) { _accumulatorNodeUsage = n; }
+   int32_t getAccumulatorNodeUsage()       { return _accumulatorNodeUsage; }
+   void incAccumulatorNodeUsage()          { _accumulatorNodeUsage++; }
 
    // --------------------------------------------------------------------------
    // Storage references

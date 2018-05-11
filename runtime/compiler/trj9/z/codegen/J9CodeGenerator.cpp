@@ -215,6 +215,9 @@ J9::Z::CodeGenerator::CodeGenerator() :
       {
       self()->setHasFixedFrameC_CallingConvention();
       }
+
+   _accumulatorNodeUsage = 0;
+
    }
 
 
