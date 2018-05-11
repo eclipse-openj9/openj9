@@ -25,7 +25,7 @@
 <module>
 
 
-	<artifact type="static" name="jvmti_test_src" all="false">
+	<artifact type="static" name="jvmti_test_src">
 		<include-if condition="spec.flags.test_jvmti" />
 		<phase>jvmti_tests</phase>
 		<includes>

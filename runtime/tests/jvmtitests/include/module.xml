@@ -23,7 +23,7 @@
 -->
 
 <module>
-        <artifact type="reference" name="jvmti_test_include" all="false">
+        <artifact type="reference" name="jvmti_test_include">
                 <include-if condition="spec.flags.test_jvmti" />
         </artifact>
 </module>

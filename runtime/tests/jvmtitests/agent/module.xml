@@ -23,7 +23,7 @@
 -->
 
 <module>
-	<artifact type="static" name="jvmti_test_agent" bundle="jvmti_test" all="false">
+	<artifact type="static" name="jvmti_test_agent" bundle="jvmti_test">
 		<include-if condition="spec.flags.test_jvmti" />
 		<phase>jvmti_tests</phase>
 		<includes>
