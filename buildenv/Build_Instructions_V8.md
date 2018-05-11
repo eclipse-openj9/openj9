@@ -318,7 +318,7 @@ Note:
 For building a 32-bit version, please ensure all required packages are installed via Cygwin as follows:
 1. GNU make 3.81 (unncessary if already installed)
 2. gcc-g++ (unncessary if already installed)
-3. mingw64-i686-gcc-g++
+3. mingw64-i686-gcc-g++ (unncessary if already installed)
 
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
 
