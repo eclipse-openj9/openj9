@@ -20,12 +20,8 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-# Detect 64-bit vs. 32-bit
-ifneq (,$(findstring -64,$(SPEC)))
-  TEMP_TARGET_DATASIZE:=64
-else
-  TEMP_TARGET_DATASIZE:=32
-endif
+# Detect 64-bit vs. 32-bit.
+TEMP_TARGET_DATASIZE := $(if $(findstring -64,$(SPEC)),64,32)
 
 CONFIGURE_ARGS += \
 <#if uma.spec.flags.opt_cuda.enabled>
@@ -67,4 +63,6 @@ CONFIGURE_ARGS += 'GLOBAL_INCLUDES=$$(top_srcdir)/../include'
 
 # This flag indicates that the J9 VMFarm build runs configure on a machine
 # that is not capable of compiling the source code.
+ifeq (yes,$(CALLED_BY_SOURCE_ZIP))
 CONFIGURE_ARGS += 'OMR_CROSS_CONFIGURE=yes'
+endif
