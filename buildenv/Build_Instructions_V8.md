@@ -393,6 +393,7 @@ bash get_source.sh
 ### 3. Configure
 :ledger:
 1) Win 64b-bit
+
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
 bash configure --disable-ccache \
@@ -403,8 +404,9 @@ bash configure --disable-ccache \
 ```
 
 :pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories.
-:ledger:
+
 2) Win 32-bit
+
 [1] Modify the script to support the 32-bit setting
 ```
 openj9-openjdk-jdk8\jdk\make\closed\autoconf\generated-configure.sh
