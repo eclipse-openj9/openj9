@@ -114,11 +114,6 @@ static inline bool utf8Matches(struct J9UTF8 * name1, struct J9UTF8 * name2)
    return false;
    }
 
-static SYS_FLOAT * orderDouble(TR_Memory * m, SYS_FLOAT * result)
-   {
-   return result;
-   }
-
 // takes a J9FieldType and returns the DataTypes associated
 // along with the size.
 //
