@@ -490,7 +490,6 @@ Eclipse OpenJ9 VM (build master-9329b7b9, JRE 1.8.0 Windows 7 amd64-64-Bit Compr
 OpenJ9   - 9329b7b9
 OMR      - 884959f4
 JCL      - 7f27c537a8 based on jdk8u172-b11)
-
 ```
 2) Win 32-bit
 ```
@@ -500,7 +499,6 @@ Eclipse OpenJ9 VM (build master-9f924a1a, JRE 1.8.0 Windows 7 x86-32-Bit 2018051
 OpenJ9   - 9f924a1a
 OMR      - e5db96ba
 JCL      - 7f27c537a8 based on jdk8u172-b11)
-
 ```
 
 :ledger: *Congratulations!* :tada:
