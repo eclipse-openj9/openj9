@@ -113,20 +113,26 @@ def test_all() {
         compile()
         test()
         publish()
+
+        try {
+            cleanWs()
+        } catch(e) {
+            /*
+            *  If clean workspace fails on Windows, show
+            *  the running processes. This has benn added
+            *  in an attempt to help debug what may be
+            *  holding open the file(s).
+            */
+            echo e.toString()
+            if (SPEC.startsWith("win_")) {
+                sh "ps -W"
+            }
+        }
     }
 }
 
 def test_all_with_fetch() {
     fetch_artifacts()
     test_all()
-
-    try {
-        cleanWs()
-    } catch(e) {
-        echo e.toString()
-        if (SPEC.startsWith("win_")) {
-            sh "ps -W"
-        }
-    }
 }
 return this
