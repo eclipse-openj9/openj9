@@ -315,7 +315,7 @@ OpenJ9 uses the mingw/GCC compiler during the build process. In the `Archive` ca
 - [Freetype2 V2.3 or newer](https://www.freetype.org/)
 
 Note:
-For building a 32-bit version, please install 32-bit Cygwin and all required packages must be installed via Cygwin as follows:
+For building a 32-bit version, please ensure all required packages are installed via Cygwin as follows:
 1. GNU make 3.81 (unncessary if already installed)
 2. gcc-g++ (unncessary if already installed)
 3. mingw64-i686-gcc-g++
