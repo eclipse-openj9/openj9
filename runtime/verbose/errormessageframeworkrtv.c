@@ -750,7 +750,7 @@ printReasonForFlagMismatch(MessageBuffer *msgBuf, J9BytecodeVerificationData *ve
 
 	/* Check the stackmap frame for flag only if the stackmap table exists in the class file */
 	if (stackMapCount > 0) {
-		I_32 stackmapFrameIndex = -1;
+		I_32 stackmapFrameIndex = 0;
 		U_8* nextStackmapFrame = NULL;
 
 		if (FALSE == prepareVerificationTypeBuffer(targetFrame, methodInfo)) {
@@ -759,8 +759,8 @@ printReasonForFlagMismatch(MessageBuffer *msgBuf, J9BytecodeVerificationData *ve
 
 		/* Walk through the stackmap table for the specified stackmap frame */
 		while (stackmapFrameIndex < (I_32)stackMapCount) {
-			stackmapFrameIndex += 1;
 			nextStackmapFrame = decodeStackmapFrameData(targetFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
+			stackmapFrameIndex += 1;
 			/* Return FALSE if out-of-memory during allocating verification buffer for data types in the specified stackmape frame */
 			if (NULL == nextStackmapFrame) {
 				goto exit;
