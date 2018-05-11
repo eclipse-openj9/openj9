@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,6 @@ import java.util.*;
  *
  * @author Tim Preece
  */
-
 final public class Merge {
 
     private Vector      threads;
@@ -101,7 +100,7 @@ final public class Merge {
             if (numberOfRecordsProcessed%10 == 0 ||
                 numberOfRecordsProcessed == TraceFormat.expectedRecords)
             {
-                StringBuffer tempBuffer=new StringBuffer(new Integer(numberOfRecordsProcessed).toString());
+                StringBuffer tempBuffer = new StringBuffer(Integer.toString(numberOfRecordsProcessed));
                 Util.padBuffer(tempBuffer, 6, ' ', false);    // right justify - field width 6 (at least)
                 TraceFormat.outStream.print(tempBuffer+" ");
             }

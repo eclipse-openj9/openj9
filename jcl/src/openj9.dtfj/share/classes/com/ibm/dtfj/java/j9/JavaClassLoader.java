@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ package com.ibm.dtfj.java.j9;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 
 import com.ibm.dtfj.image.j9.CorruptData;
 import com.ibm.dtfj.image.CorruptDataException;
@@ -166,7 +165,7 @@ public class JavaClassLoader implements com.ibm.dtfj.java.JavaClassLoader
 	
 	public void addClassID(long id)
 	{
-		_classIDs.add(new Long(id));
+		_classIDs.add(Long.valueOf(id));
 	}
 
 	public boolean equals(Object obj)

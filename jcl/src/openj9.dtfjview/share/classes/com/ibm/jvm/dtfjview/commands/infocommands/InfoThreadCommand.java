@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -570,7 +570,7 @@ public class InfoThreadCommand extends BaseJdmpviewCommand {
 
 		out.print("    Priority:      ");
 		try {
-			Integer pri = new Integer(jt.getPriority());
+			Integer pri = Integer.valueOf(jt.getPriority());
 			out.print(pri.toString());
 		} catch (CorruptDataException e) {
 			out.print(Exceptions.getCorruptDataExceptionString());

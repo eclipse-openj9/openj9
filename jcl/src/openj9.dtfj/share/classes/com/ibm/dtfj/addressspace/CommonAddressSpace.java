@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 	private static final int MEMORY_CHECK_THRESHOLD = 0x100000;
 	
 	private MemoryRange[] _translations;
-	private Integer _lastTranslationUsed = new Integer(0);
+	private Integer _lastTranslationUsed = Integer.valueOf(0);
 	private boolean _isLittleEndian;
 	private boolean _is64Bit;
 	private int lastAsid;
@@ -177,7 +177,7 @@ public abstract class CommonAddressSpace implements IAbstractAddressSpace {
 			}
 		}
 		if (-1 != retI) {
-			lastRange = new Integer(retI);
+			lastRange = Integer.valueOf(retI);
 		}
 		return retI;
 	}

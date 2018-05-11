@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,8 +61,7 @@ public class Symbol {
     static final int STT_HIOS = 12;
     static final int STT_LOPROC = 13;
     static final int STT_HIPROC = 15;
-	
-	
+
 	public Symbol(String name, long address, int extent, int type, int bind) {
 		
 		// check don't already have this name 
@@ -94,7 +93,7 @@ public class Symbol {
 				Comparator c = new Symbol.SymbolComparator();
 				symbolTree = new TreeMap(c);
 			}
-			symbolTree.put(new Long(address),this);
+			symbolTree.put(Long.valueOf(address),this);
 			 
 		}
 		
@@ -112,7 +111,7 @@ public class Symbol {
 	public static String getSymbolForAddress(long address) {
 		String retString = null;
 		 
-		SortedMap head = (SortedMap) symbolTree.headMap(new Long(address));
+		SortedMap head = (SortedMap) symbolTree.headMap(Long.valueOf(address));
 		
 		// So now we look at bottom of tail and hopefully we might have a 
 		// symbol covering this address.... 
@@ -128,10 +127,7 @@ public class Symbol {
 				}
 			}
 		}
-		 
-		 
-		
-		 
+
 		return retString;
 	}
 	
@@ -178,9 +174,6 @@ public class Symbol {
 		
 	}
 
- 
-
- 
 	/**
 	 * @return Returns the symbolEnd.
 	 */

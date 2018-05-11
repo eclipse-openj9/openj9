@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,14 +21,7 @@
  *******************************************************************************/
 package com.ibm.j9.uma.platform;
 
-import java.util.Vector;
-
 import com.ibm.uma.IConfiguration;
-import com.ibm.uma.UMA;
-import com.ibm.uma.UMAException;
-import com.ibm.uma.om.Artifact;
-import com.ibm.uma.om.Export;
-import com.ibm.uma.util.FileAssistant;
 
 public class PlatformOSX extends PlatformImplementation {
 

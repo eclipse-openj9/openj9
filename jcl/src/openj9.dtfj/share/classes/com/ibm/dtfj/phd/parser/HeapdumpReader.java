@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,6 @@ import com.ibm.dtfj.phd.PHDJavaObject;
  *  (see {@link #HeapdumpReader}) passing the file name and then parse it (see {@link #parse})
  *  passing it an object that obeys the {@link com.ibm.dtfj.phd.parser.PortableHeapDumpListener} interface.
  */
-
 public class HeapdumpReader extends Base {
 
 	private static final long MAX_UNSIGNED_INT_AS_LONG = 0xffffffffL;
@@ -655,7 +654,7 @@ public class HeapdumpReader extends Base {
 		}
 
 		public Object nextElement() {
-			return new Long(nextLong());
+			return Long.valueOf(nextLong());
 		}
 
 		public long nextLong() {

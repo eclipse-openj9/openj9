@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -185,11 +185,11 @@ public class PlatformSectionParser extends SectionParser implements IPlatformTyp
 				if (val == null) {
 					n = null;
 				} else if (val.startsWith("0x") && val.length() <= 2+4) {
-					n = new Short((short)results.getIntValue(PL_REGISTER_VALUE));
+					n = Short.valueOf((short)results.getIntValue(PL_REGISTER_VALUE));
 				} else if (val.startsWith("0x") && val.length() <= 2+8) {
-					n = new Integer((int)results.getLongValue(PL_REGISTER_VALUE));
+					n = Integer.valueOf((int)results.getLongValue(PL_REGISTER_VALUE));
 				} else {
-					n = new Long(results.getLongValue(PL_REGISTER_VALUE));
+					n = Long.valueOf(results.getLongValue(PL_REGISTER_VALUE));
 				}
 				m.put(name, n);
 			}

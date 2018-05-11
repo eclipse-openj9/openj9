@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -210,7 +210,7 @@ final public class MessageFile extends File
 				MessageFile.messages = new Hashtable();
 			}
 
-			MessageFile.messages.put(new Integer(id), message);
+			MessageFile.messages.put(Integer.valueOf(id), message);
 		}
 
 	}
@@ -236,7 +236,7 @@ final public class MessageFile extends File
 			messages = new Hashtable();
 		}
 
-		return (Message) messages.get(new Integer(id));
+		return (Message) messages.get(Integer.valueOf(id));
 	}
 
 	/**

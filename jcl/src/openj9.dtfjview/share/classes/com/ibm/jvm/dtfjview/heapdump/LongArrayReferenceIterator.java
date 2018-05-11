@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corp. and others
+ * Copyright (c) 2008, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
  *******************************************************************************/
 package com.ibm.jvm.dtfjview.heapdump;
 
-
 public class LongArrayReferenceIterator implements ReferenceIterator 
 {
 	private final long _fields[];
@@ -43,7 +42,7 @@ public class LongArrayReferenceIterator implements ReferenceIterator
 
 	public Long next()
 	{
-		Long toReturn = new Long(_fields[_index]);
+		Long toReturn = Long.valueOf(_fields[_index]);
 		
 		_index++;
 		

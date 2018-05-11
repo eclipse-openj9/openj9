@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2002, 2017 IBM Corp. and others
+ * Copyright (c) 2002, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,6 @@ import java.io.*;
 /**
  *  This class simply prints the contents of the heap dump.
  */
-
 public class PrintHeapdump extends Base {
 
 	boolean hash;
@@ -201,19 +200,18 @@ class DumpClass {
 	}
 
 	static void put(long address, String name, int instanceSize) {
-		classes.put(new Long(address), new DumpClass(address, name, instanceSize));
+		classes.put(Long.valueOf(address), new DumpClass(address, name, instanceSize));
 	}
 
 	static void foundClass(long address) {
-		DumpClass cl = (DumpClass)classes.get(new Long(address));
+		DumpClass cl = (DumpClass)classes.get(Long.valueOf(address));
 		if (cl == null) {
 			cl = new DumpClass(address, "unknown class 0x" + Long.toHexString(address), 0);
-			classes.put(new Long(address), cl);
+			classes.put(Long.valueOf(address), cl);
 		}
 	}
 
 	static DumpClass get(long address) {
-		return (DumpClass)classes.get(new Long(address));
+		return (DumpClass)classes.get(Long.valueOf(address));
 	}
 }
-
