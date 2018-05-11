@@ -1,6 +1,5 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2008, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,38 +19,23 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package com.ibm.jvm.dtfjview.heapdump;
 
-public class LongArrayReferenceIterator implements ReferenceIterator 
-{
-	private final long _fields[];
-	private int _index = 0;
-	
-	public LongArrayReferenceIterator(long[] fields) {
-		if(fields != null) {
-			_fields = fields;
-		} else {
-			_fields = new long[0];
-		}
-	}
-	
-	public boolean hasNext()
-	{
-		return _index < (_fields.length);
-	}
+SDK_VERSION = '9'
+SPEC = 'win_x86-64_cmprssptrs'
 
-	public Long next()
-	{
-		Long toReturn = Long.valueOf(_fields[_index]);
-		
-		_index++;
-		
-		return toReturn;
-	}
+timeout(time: 10, unit: 'HOURS') {
+    node('master') {
+        timestamps {
+            checkout scm
+            variableFile = load 'buildenv/jenkins/common/variables-functions'
+            variableFile.set_job_variables('build')
+            buildfile = load 'buildenv/jenkins/common/build'
+            cleanWs()
+        }
+    }
 
-	public void reset()
-	{
-		_index = 0;
-	}
-	
+    node("${NODE}") {
+
+        buildfile.build_all()
+    }
 }

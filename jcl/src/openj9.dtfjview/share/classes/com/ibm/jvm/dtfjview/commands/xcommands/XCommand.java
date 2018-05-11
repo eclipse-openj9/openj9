@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,10 +28,10 @@ import java.util.Properties;
 import com.ibm.java.diagnostics.utils.IContext;
 import com.ibm.java.diagnostics.utils.commands.CommandException;
 import com.ibm.jvm.dtfjview.commands.BaseJdmpviewCommand;
+
 /**
  * Abstract superclass for all x/ commands 
  */
-
 public abstract class XCommand extends BaseJdmpviewCommand {
 	protected int argUnitSize = 1;
 	protected int argUnitNumber = 1;
@@ -113,10 +113,10 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 				case 'h':
 				case 'w':
 				case 'g':
-					unitSize = new Character(currChar);
+					unitSize = Character.valueOf(currChar);
 					break;
 				default:
-					displayFormat = new Character(currChar);
+					displayFormat = Character.valueOf(currChar);
 					break;
 				}
 				i++;
@@ -133,7 +133,7 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 				case 'g':
 					if (null == unitSize)
 					{
-						unitSize = new Character(currChar);
+						unitSize = Character.valueOf(currChar);
 					}
 					else
 					{
@@ -146,7 +146,7 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 				default:
 					if (null == displayFormat)
 					{
-						displayFormat = new Character(currChar);
+						displayFormat = Character.valueOf(currChar);
 					}
 					else
 					{
@@ -186,29 +186,27 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 			}
 		}
 		
-		Integer nUnitSize = null;
+		int nUnitSize = 1;
 		char cUnitSize = unitSize.charValue();
 		
 		switch (cUnitSize)
 		{
 		case 'b':
-			nUnitSize = new Integer(1);
+		default:
+			nUnitSize = 1;
 			break;
 		case 'h':
-			nUnitSize = new Integer(2);
+			nUnitSize = 2;
 			break;
 		case 'w':
-			nUnitSize = new Integer(4);
+			nUnitSize = 4;
 			break;
 		case 'g':
-			nUnitSize = new Integer(8);
+			nUnitSize = 8;
 			break;
 		}
-		
-		// we can pretty much guarantee that nUnitSize is not null here because
-		//  unitSize has to be one of the above 4 characters if it isn't null
-		
-		argUnitSize = nUnitSize.intValue();	// add the unit size to the stack
+
+		argUnitSize = nUnitSize;			// add the unit size to the stack
 		argUnitNumber = n;					// add the number of units to print to the stack
 		argDisplayFormat = displayFormat.toString();	// add the display format as a String	
 		
@@ -218,7 +216,7 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 	{
 		Character defaultUnitSize = (Character)properties.get("x_default_unit_size");
 		if (null == defaultUnitSize)
-			return new Character('w');
+			return Character.valueOf('w');
 		else
 			return defaultUnitSize;
 	}
@@ -227,7 +225,7 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 	{
 		Character defaultDisplayFormat = (Character)properties.get("x_default_display_format");
 		if (null == defaultDisplayFormat)
-			return new Character('x');
+			return Character.valueOf('x');
 		else
 			return defaultDisplayFormat;
 	}

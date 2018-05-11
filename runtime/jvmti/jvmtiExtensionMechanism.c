@@ -155,10 +155,6 @@ static const jvmtiParamInfo jvmtiGetOSThreadID_params[] = {
 	{ "threadid_ptr", JVMTI_KIND_OUT, JVMTI_TYPE_JLONG, JNI_FALSE },
 };
 
-static const jvmtiParamInfo jvmtiAsync_params[] = { 
-	{ "thread", JVMTI_KIND_IN, JVMTI_TYPE_JTHREAD, JNI_TRUE },
-};
-
 /* (jvmtiEnv *jvmti_env, jint option) */
 static const jvmtiParamInfo jvmtiTraceSet_params[] = { 
 	{ "option", JVMTI_KIND_IN, JVMTI_TYPE_JINT, JNI_FALSE } 
@@ -177,11 +173,6 @@ static const jvmtiParamInfo jvmtiJlmSet_params[] = {
 /* (jvmtiEnv *jvmti_env, ** JlmDump) */
 static const jvmtiParamInfo jvmtiJlmDump_params[] = { 
 	{ "jlm_dump_ptr", JVMTI_KIND_ALLOC_BUF, JVMTI_TYPE_CVOID, JNI_FALSE } 
-};
-
-/* (jvmtiEnv *jvmti_env,  jint option) */
-static const jvmtiParamInfo jvmtiControlSet_params[] = {
-		{ "option", JVMTI_KIND_IN_PTR, JVMTI_TYPE_JINT, JNI_FALSE }
 };
 
 /* (jvmtiEnv *jvmti_env, const char* option) */
@@ -291,13 +282,6 @@ static const jvmtiParamInfo jvmtiGetMethodAndClassNames_params[] = {
 };
  
 /* (jvmtiEnv *jvmti_env, jobject object, jint buffer_size, void* options_buffer, jint* data_size_ptr) */
-static const jvmtiParamInfo jvmtiQueryVmDump_params[] = {
-	{ "buffer_size", JVMTI_KIND_IN_BUF, JVMTI_TYPE_JINT, JNI_FALSE },
-	{ "options_buffer",  JVMTI_KIND_OUT_BUF, JVMTI_TYPE_CVOID, JNI_FALSE },
-	{ "data_size_ptr", JVMTI_KIND_OUT, JVMTI_TYPE_JINT, JNI_FALSE }
-};
-
-/* (jvmtiEnv *jvmti_env, jobject object, jint buffer_size, void* options_buffer, jint* data_size_ptr) */
 static const jvmtiParamInfo jvmtiQueryVmLogOptions_params[] = {
 	{ "buffer_size", JVMTI_KIND_IN, JVMTI_TYPE_JINT, JNI_FALSE },
 	{ "options_buffer",  JVMTI_KIND_OUT_BUF, JVMTI_TYPE_CVOID, JNI_FALSE },
@@ -374,11 +358,6 @@ static const jvmtiError notAvailable_errors[] = {
 	JVMTI_ERROR_NOT_AVAILABLE
 };
 
-static const jvmtiError nullPointer_notAvailable_errors[] = {
-	JVMTI_ERROR_NULL_POINTER,
-	JVMTI_ERROR_NOT_AVAILABLE
-};
-
 static const jvmtiError ras_errors[] = {
 	JVMTI_ERROR_NULL_POINTER,
 	JVMTI_ERROR_OUT_OF_MEMORY,
@@ -405,36 +384,11 @@ static const jvmtiError jlm_dump_errors[] = {
 	JVMTI_ERROR_ILLEGAL_ARGUMENT
 };
 
-static const jvmtiError control_set_errors[] = {
-		JVMTI_ERROR_WRONG_PHASE,
-		JVMTI_ERROR_ILLEGAL_ARGUMENT,
-		JVMTI_ERROR_NOT_AVAILABLE
-};
-
-static const jvmtiError set_method_selective_errors[] = {
-	JVMTI_ERROR_NULL_POINTER,
-	JVMTI_ERROR_WRONG_PHASE,
-	JVMTI_ERROR_NOT_AVAILABLE
-};
-
-static const jvmtiError set_event_notification_errors[] = {
-	JVMTI_ERROR_INVALID_THREAD,
-	JVMTI_ERROR_THREAD_NOT_ALIVE,
-	JVMTI_ERROR_ILLEGAL_ARGUMENT
-};
-
 static const jvmtiError get_os_thread_id_errors[] = {
 	JVMTI_ERROR_WRONG_PHASE,
 	JVMTI_ERROR_INVALID_THREAD,
 	JVMTI_ERROR_THREAD_NOT_ALIVE,
 	JVMTI_ERROR_NULL_POINTER
-};
-
-static const jvmtiError jvmtiAsync_errors[] = {
-	JVMTI_ERROR_WRONG_PHASE,
-	JVMTI_ERROR_INVALID_THREAD,
-	JVMTI_ERROR_THREAD_NOT_ALIVE,
-	JVMTI_ERROR_ACCESS_DENIED
 };
 
 static const jvmtiError jvmtiGetStack_errors[] = {
@@ -490,12 +444,6 @@ static const jvmtiError jvmtiFlushTraceData_errors[] = {
 
 static const jvmtiError jvmtiGetTraceMetadata_errors[] = {
 	JVMTI_ERROR_NULL_POINTER,		
-	JVMTI_ERROR_WRONG_PHASE,
-	JVMTI_ERROR_INVALID_ENVIRONMENT
-};
-
-static const jvmtiError jvmtiGetMethodAndClassNames_errors[] = {
-	JVMTI_ERROR_OUT_OF_MEMORY,
 	JVMTI_ERROR_WRONG_PHASE,
 	JVMTI_ERROR_INVALID_ENVIRONMENT
 };

@@ -75,8 +75,6 @@ J9_DECLARE_CONSTANT_UTF8(j9_exit, "exit");
 J9_DECLARE_CONSTANT_UTF8(j9_run, "run");
 J9_DECLARE_CONSTANT_UTF8(j9_initCause, "initCause");
 J9_DECLARE_CONSTANT_UTF8(j9_completeInitialization, "completeInitialization");
-J9_DECLARE_CONSTANT_UTF8(j9_cleanup, "cleanup");
-J9_DECLARE_CONSTANT_UTF8(j9_threadCleanup, "threadCleanup");
 J9_DECLARE_CONSTANT_UTF8(j9_void_void, "()V");
 J9_DECLARE_CONSTANT_UTF8(j9_class_void, "(Ljava/lang/Class;)V");
 J9_DECLARE_CONSTANT_UTF8(j9_class_class_void, "(Ljava/lang/Class;Ljava/lang/Class;)V");

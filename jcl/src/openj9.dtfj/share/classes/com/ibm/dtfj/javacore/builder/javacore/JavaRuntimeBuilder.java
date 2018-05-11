@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -209,7 +209,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 			if (j9thread_t != IBuilderData.NOT_AVAILABLE && jniEnv != IBuilderData.NOT_AVAILABLE) {
 				// Save the JNIEnv for later
 				ImagePointer pointer = fAddressSpace.getPointer(jniEnv);
-				j9ThreadToJNIEnv.put(new Long(j9thread_t), pointer);
+				j9ThreadToJNIEnv.put(Long.valueOf(j9thread_t), pointer);
 			}
 			if (!fAddressSpace.isValidAddressID(tid)) {
 				throw new JCInvalidArgumentsException("Must pass a valid thread id");
@@ -225,7 +225,7 @@ public class JavaRuntimeBuilder extends AbstractBuilderComponent implements IJav
 			javaThread.setImageThread((JCImageThread)imageThread);
 			if (jniEnv == IBuilderData.NOT_AVAILABLE) {
 				// Retrieve the JNIEnv
-				ImagePointer pointer = (ImagePointer)j9ThreadToJNIEnv.get(new Long(j9thread_t));
+				ImagePointer pointer = (ImagePointer)j9ThreadToJNIEnv.get(Long.valueOf(j9thread_t));
 				if (pointer != null) {
 					// Set it for 1.4.2
 					javaThread.setJNIEnv(pointer);

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,6 @@ import com.ibm.dtfj.java.JavaField;
 import com.ibm.dtfj.java.JavaMethod;
 import com.ibm.dtfj.java.JavaObject;
 import com.ibm.dtfj.java.JavaRuntime;
-
 
 public class ClassOutput {
 
@@ -229,23 +228,23 @@ public class ClassOutput {
 			{
 				out.print("\t   " + i + ":\t");
 				if (componentType.equals("boolean")) {
-					out.print(Utils.getVal(new Boolean(((boolean[])dst)[i])));
+					out.print(Utils.getVal(Boolean.valueOf(((boolean[]) dst)[i])));
 				} else if (componentType.equals("byte")) {
-					out.print(Utils.getVal(new Byte(((byte[])dst)[i])));
+					out.print(Utils.getVal(Byte.valueOf(((byte[]) dst)[i])));
 				} else if (componentType.equals("char")) {
-					out.print(Utils.getVal(new Character(((char[])dst)[i])));
+					out.print(Utils.getVal(Character.valueOf(((char[]) dst)[i])));
 				} else if (componentType.equals("short")) {
-					out.print(Utils.getVal(new Short(((short[])dst)[i])));
+					out.print(Utils.getVal(Short.valueOf(((short[]) dst)[i])));
 				} else if (componentType.equals("int")) {
-					out.print(Utils.getVal(new Integer(((int[])dst)[i])));
+					out.print(Utils.getVal(Integer.valueOf(((int[]) dst)[i])));
 				} else if (componentType.equals("long")) {
-					out.print(Utils.getVal(new Long(((long[])dst)[i])));
+					out.print(Utils.getVal(Long.valueOf(((long[]) dst)[i])));
 				} else if (componentType.equals("float")) {
-					out.print(Utils.getVal(new Float(((float[])dst)[i])));
+					out.print(Utils.getVal(Float.valueOf(((float[]) dst)[i])));
 				} else if (componentType.equals("double")) {
-					out.print(Utils.getVal(new Double(((double[])dst)[i])));
+					out.print(Utils.getVal(Double.valueOf(((double[]) dst)[i])));
 				} else {
-					out.print(Utils.getVal(((JavaObject[])dst)[i]));
+					out.print(Utils.getVal(((JavaObject[]) dst)[i]));
 				}
 				out.print("\n");
 			}

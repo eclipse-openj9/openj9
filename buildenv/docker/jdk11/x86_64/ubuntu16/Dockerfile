@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,25 +24,31 @@
 
 FROM ubuntu:16.04
 
-# This section installs the required OS tools.
+# Install required OS tools
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
+    software-properties-common \
+    python-software-properties \
+  && add-apt-repository ppa:ubuntu-toolchain-r/test \
+  && apt-get update \
+  && apt-get install -qq -y --no-install-recommends \
+    gcc-7 \
+    g++-7 \
     autoconf \
     ca-certificates \
     ccache \
     cmake \
     cpio \
     file \
-    g++-4.8 \
-    gcc-4.8 \
     git \
     git-core \
     libasound2-dev \
     libcups2-dev \
     libdwarf-dev \
     libelf-dev \
-    libfontconfig \
+    libfontconfig1-dev \
     libfreetype6-dev \
+    libnuma-dev \
     libx11-dev \
     libxext-dev \
     libxrender-dev \
@@ -55,19 +61,14 @@ RUN apt-get update \
     unzip \
     wget \
     zip \
-  && rm -rf /var/lib/apt/lists/*
-
-# Install optional tools
-RUN apt-get update \
-  && apt-get install -qq -y --no-install-recommends \
     vim \
   && rm -rf /var/lib/apt/lists/*
 
 # Create links for c++,g++,cc,gcc
 RUN ln -s g++ /usr/bin/c++ \
-  && ln -s g++-4.8 /usr/bin/g++ \
+  && ln -s g++-7 /usr/bin/g++ \
   && ln -s gcc /usr/bin/cc \
-  && ln -s gcc-4.8 /usr/bin/gcc
+  && ln -s gcc-7 /usr/bin/gcc
 
 # Download and setup freemarker.jar to /root/freemarker.jar
 RUN cd /root \
@@ -76,14 +77,23 @@ RUN cd /root \
   && rm -f freemarker.tgz
 
 # Download and install boot JDK from AdoptOpenJDK
+# Currently, no JDK10 with OpenJ9 releases are available at AdoptOpenJDK. 
+# So, the AdoptOpenJDK API can't be used to download a boot JDK. 
+# A nightly JDK10 OpenJ9 build is currently used as the boot JDK. 
+# Once JDK10 OpenJ9 releases are available, the following link can be used 
+# to download the JDK10 OpenJ9 boot JDK: 
+# https://api.adoptopenjdk.net/openjdk10-openj9/releases/x64_linux/latest/binary
 RUN cd /root \
-  && wget -O bootjdk8.tar.gz https://api.adoptopenjdk.net/openjdk8-openj9/releases/s390x_linux/latest/binary \
-  && tar -xzf bootjdk8.tar.gz \
-  && rm -f bootjdk8.tar.gz \
-  && ls | grep -i jdk | xargs -I % sh -c 'mv % bootjdk8'
+  && wget -O bootjdk10.tar.gz https://github.com/AdoptOpenJDK/openjdk10-openj9-nightly/releases/download/jdk-10%2B46-20180509/OpenJDK10-OPENJ9_x64_Linux_20180509.tar.gz \
+  && tar -xzf bootjdk10.tar.gz \
+  && rm -f bootjdk10.tar.gz \
+  && ls | grep -i jdk | xargs -I % sh -c 'mv % bootjdk10'
 
 # Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH
-ENV JAVA_HOME="/root/bootjdk8"
+ENV JAVA_HOME="/root/bootjdk10"
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+# The below CFLAG prevents "error: inline function ${FUNCTION_NAME} declared but never defined [-Werror]"
+ENV CFLAGS="-fgnu89-inline"
 
 WORKDIR /root

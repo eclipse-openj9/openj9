@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,14 +74,14 @@ public class Aix64Dump extends NewAixDump {
 		coreSeek(threadOffset + sizeofThreadEntry64);
 		Map registers = new TreeMap();
 		for (int i = 0; i < GPR_COUNT; i++)
-			registers.put("gpr" + i, new Long(coreReadLong()));
-		registers.put("msr", new Long(coreReadLong()));
-		registers.put("iar", new Long(coreReadLong()));
-		registers.put("lr", new Long(coreReadLong()));
-		registers.put("ctr", new Long(coreReadLong()));
-		registers.put("cr", new Integer(coreReadInt()));
-		registers.put("xer", new Integer(coreReadInt()));
-		registers.put("fpscr", new Integer(coreReadInt()));
+			registers.put("gpr" + i, Long.valueOf(coreReadLong()));
+		registers.put("msr", Long.valueOf(coreReadLong()));
+		registers.put("iar", Long.valueOf(coreReadLong()));
+		registers.put("lr", Long.valueOf(coreReadLong()));
+		registers.put("ctr", Long.valueOf(coreReadLong()));
+		registers.put("cr", Integer.valueOf(coreReadInt()));
+		registers.put("xer", Integer.valueOf(coreReadInt()));
+		registers.put("fpscr", Integer.valueOf(coreReadInt()));
 		return registers;
 	}
 

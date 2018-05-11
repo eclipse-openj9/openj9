@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,7 +97,7 @@ _end:
 IDATA
 CacheDirPerm::createTempCacheDir(I_32 cacheType, bool useDefaultDir)
 {
-	char actualCacheDir[J9SH_MAXPATH];
+	char actualCacheDir[2*J9SH_MAXPATH];
 	const char *testName = "createTempCacheDir";
 	struct stat statbuf;
 	IDATA rc = PASS;
@@ -132,7 +132,7 @@ IDATA
 CacheDirPerm::getCacheDirPerm(I_32 cacheType, bool isDefaultDir)
 {
 	struct stat statbuf;
-	char actualCacheDir[J9SH_MAXPATH];
+	char actualCacheDir[2*J9SH_MAXPATH];
 	const char *testName = "getCacheDirPerm";
 	PORT_ACCESS_FROM_JAVAVM(vm);
 

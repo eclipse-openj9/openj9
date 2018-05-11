@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -199,7 +199,7 @@ public class NewZosDump implements ICoreFileReader {
 				 Edb edb = ca.getEdb();
 				 // Some EDBs don't have any modules, so ignore them
 				 if (edb.getFirstDll() != null) {
-					 edbs.put(new Long(edb.address()), edb);
+					 edbs.put(Long.valueOf(edb.address()), edb);
 				 }
 			 } catch (CaaNotFound e) {
 			 } catch (IOException e) {
@@ -271,10 +271,10 @@ public class NewZosDump implements ICoreFileReader {
 					pswn = "PSW:64";
 					break;
 				}
-				regs.add(builder.buildRegister("PSW", new Long(psw)));
+				regs.add(builder.buildRegister("PSW", Long.valueOf(psw)));
 				// There isn't an easy way to get the total number of registers, so hard code it
 				for (int i = 0; i < 16; ++i) {
-					regs.add(builder.buildRegister("R"+i, new Long(rs.getRegister(i))));
+					regs.add(builder.buildRegister("R"+i, Long.valueOf(rs.getRegister(i))));
 				}
 				Properties props = new Properties();				
 				props.setProperty("TCB", format(caa.getTcb().address()));
@@ -315,7 +315,7 @@ public class NewZosDump implements ICoreFileReader {
 						for (; dsa != null; dsa = dsa.getParentFrame()) {
 							final Object builderStackFrame = builder.buildStackFrame(imgAdr, dsa.getDsaAddress(), dsa.getEntryPoint()+dsa.getEntryOffset());
 							// Remember the entry point in case it is not exported from a DLL
-							stackSyms.put(new Long(dsa.getEntryPoint()), dsa.getEntryName());
+							stackSyms.put(Long.valueOf(dsa.getEntryPoint()), dsa.getEntryName());
 							stackFrames.add(builderStackFrame);										
 
 							long dsaAddr = dsa.getDsaAddress();
@@ -785,11 +785,11 @@ public class NewZosDump implements ICoreFileReader {
 					ranges.add(range);
 					// Search for Java spaces
 					int asid = range.getAsid();
-					if (!_javaAddressSpaces.containsKey(new Integer(asid))) {
+					if (!_javaAddressSpaces.containsKey(Integer.valueOf(asid))) {
 						stream.seek(range.getFileOffset());				
 						stream.readFully(buf);
 						if (bufferHasJ9RASEyeCatcher(buf)) {
-							_javaAddressSpaces.put(new Integer(asid), new int[] {asid, 0});
+							_javaAddressSpaces.put(Integer.valueOf(asid), new int[] {asid, 0});
 							log.fine("Found Java asid "+format(asid)+" at "+format(range.getVirtualAddress()));
 						}
 					}

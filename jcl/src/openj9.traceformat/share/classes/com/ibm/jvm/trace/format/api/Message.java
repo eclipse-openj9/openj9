@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
  *******************************************************************************/
 package com.ibm.jvm.trace.format.api;
 
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
@@ -571,7 +570,7 @@ final public class Message {
 		}
 
 		Object getValue(ByteStream msg) {
-			return new Long(ptrSize == 4 ? msg.getUnsignedInt() : msg.getLong());
+			return Long.valueOf(ptrSize == 4 ? msg.getUnsignedInt() : msg.getLong());
 		}
 
 		void format(ByteStream msg, StringBuilder out) {
