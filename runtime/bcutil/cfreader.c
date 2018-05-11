@@ -427,7 +427,11 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			}
 
 			result = readAnnotations(classfile, annotations->annotations, annotations->numberOfAnnotations, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags);
-			if ((BCT_ERR_NO_ERROR != result) || (index != end)) {
+
+			if (BCT_ERR_OUT_OF_ROM == result) {
+				/* Return out of memory error code to allocate larger buffer for classfile */
+				return result;
+			} else if ((BCT_ERR_NO_ERROR != result) || (index != end)) {
 				U_32 cursor = 0;
 				Trc_BCU_MalformedAnnotation(address);
 
@@ -528,7 +532,8 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 
 				result = readAnnotations(classfile, parameterAnnotations->annotations,	parameterAnnotations->numberOfAnnotations, data, dataEnd,
 						segment, segmentEnd, &index, &freePointer, flags);
-				if (result != 0) {
+
+				if (BCT_ERR_NO_ERROR != result) {
 					break;
 				}
 			}
@@ -536,7 +541,10 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			 * num_parameters == 0 means there is no parameter for this method and naturally no annotations 
 			 * for these parameters, in which case the code should treat this attribute as bad and ignore it.
 			 */
-			if ((BCT_ERR_NO_ERROR != result) || (index != end) || (0 == annotations->numberOfParameters)) {
+			if (BCT_ERR_OUT_OF_ROM == result) {
+				/* Return out of memory error code to allocate larger buffer for classfile */
+				return result;
+			} else if ((BCT_ERR_NO_ERROR != result) || (index != end) || (0 == annotations->numberOfParameters)) {
 				U_32 cursor = 0;
 				/*
 				 * give up parsing.
@@ -628,11 +636,15 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			 */
 			for (j = 0; j < annotations->numberOfAnnotations; j++, typeAnnotations++) {
 				result = readTypeAnnotation(classfile, typeAnnotations, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags);
-				if (result != 0) {
+				if (BCT_ERR_NO_ERROR != result) {
 					break;
 				}
 			}
-			if ((BCT_ERR_NO_ERROR != result) || (index != end)) {
+
+			if (BCT_ERR_OUT_OF_ROM == result) {
+				/* Return out of memory error code to allocate larger buffer for classfile */
+				return result;
+			} else if ((BCT_ERR_NO_ERROR != result) || (index != end)) {
 				U_32 cursor = 0;
 				/*
 				 * give up parsing.
@@ -3136,7 +3148,7 @@ readAnnotationElement(J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnn
 		annotation = &((J9CfrAnnotationElementAnnotation *)element)->annotationValue;
 
 		result = readAnnotations(classfile, annotation, 1, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags);
-		if (result != 0) {
+		if (BCT_ERR_NO_ERROR != result) {
 			return result;
 		}
 
