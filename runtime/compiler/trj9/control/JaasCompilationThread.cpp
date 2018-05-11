@@ -547,6 +547,12 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(fe->getConstantPoolFromMethod(method));
          }
          break;
+      case J9ServerMessageType::VM_getConstantPoolFromClass:
+         {
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(fe->getConstantPoolFromClass(clazz));
+         }
+         break;
       case J9ServerMessageType::VM_getProcessID:
          {
          client->getRecvData<JAAS::Void>();

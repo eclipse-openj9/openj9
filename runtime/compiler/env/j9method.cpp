@@ -5710,7 +5710,7 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
           TR::Compiler->cls.isClassArray(comp, (TR_OpaqueClassBlock*)_j9classForNewInstance))
          cpool = cp();
       else
-         cpool = J9_CP_FROM_CLASS(_j9classForNewInstance);
+         cpool = (J9ConstantPool *) fej9()->getConstantPoolFromClass((TR_OpaqueClassBlock *) _j9classForNewInstance);
       }
    else
       cpool = cp();

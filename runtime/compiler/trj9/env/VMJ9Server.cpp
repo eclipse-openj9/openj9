@@ -711,6 +711,14 @@ TR_J9ServerVM::getConstantPoolFromMethod(TR_OpaqueMethodBlock *method)
    }
 
 uintptrj_t
+TR_J9ServerVM::getConstantPoolFromClass(TR_OpaqueClassBlock *clazz)
+   {
+   JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JAAS::J9ServerMessageType::VM_getConstantPoolFromClass, clazz);
+   return std::get<0>(stream->read<uintptrj_t>());
+   }
+
+uintptrj_t
 TR_J9ServerVM::getProcessID()
    {
    JAAS::J9ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;

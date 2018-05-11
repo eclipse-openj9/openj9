@@ -176,6 +176,7 @@ enum J9ServerMessageType
    VM_getSystemClassLoader = 296;
    VM_instanceOfOrCheckCast = 297;
    VM_getNewArrayTypeFromClass = 298;
+   VM_getConstantPoolFromClass = 299;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 300;

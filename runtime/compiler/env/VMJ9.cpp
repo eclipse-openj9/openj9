@@ -1152,6 +1152,12 @@ TR_J9VMBase::getConstantPoolFromMethod(TR_OpaqueMethodBlock *method)
    return (uintptrj_t)J9_CP_FROM_METHOD((J9Method *)method);
    }
 
+uintptrj_t
+TR_J9VMBase::getConstantPoolFromClass(TR_OpaqueClassBlock *clazz)
+   {
+   return (uintptrj_t)J9_CP_FROM_CLASS((J9Class *)clazz);
+   }
+
 void TR_J9VMBase::printVerboseLogHeader(TR::Options *cmdLineOptions)
    {
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"Version Information:");

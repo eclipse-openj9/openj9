@@ -572,6 +572,7 @@ public:
    virtual uintptrj_t         getOffsetOfDescriptionWordFromPtrField();
 
    virtual uintptrj_t         getConstantPoolFromMethod(TR_OpaqueMethodBlock *);
+   virtual uintptrj_t         getConstantPoolFromClass(TR_OpaqueClassBlock *);
 
    virtual uintptrj_t         getOffsetOfIsArrayFieldFromRomClass();
    virtual uintptrj_t         getOffsetOfClassAndDepthFlags();
