@@ -2087,8 +2087,13 @@ private String toResourceName(String resName) {
 	// Turn package name into a directory path
 	if (resName.length() > 0 && resName.charAt(0) == '/')
 		return resName.substring(1);
+	
+	Class<?> thisObject = this;
+	while (thisObject.isArray()) {
+		thisObject = thisObject.getComponentType();
+	}
 
-	String qualifiedClassName = getName();
+	String qualifiedClassName = thisObject.getName();
 	int classIndex = qualifiedClassName.lastIndexOf('.');
 	if (classIndex == -1) return resName; // from a default package
 	return qualifiedClassName.substring(0, classIndex + 1).replace('.', '/') + resName;
