@@ -403,7 +403,7 @@ bash configure --disable-ccache \
 ```
 
 :pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories.
-
+:ledger:
 2) Win 32-bit
 [1] Modify the script to support the 32-bit setting
 ```
@@ -441,7 +441,7 @@ openj9-openjdk-jdk8\jdk\make\closed\autoconf\generated-configure.sh
         else
 ```
 
-[3] run configure script as follows:
+[3] run the configure script as follows:
 ```
 bash configure --disable-ccache --with-boot-jdk=/cygdrive/c/temp/jdk7 --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar --with-freetype-include=/cygdrive/c/temp/freetype/include --with-freetype-lib=/cygdrive/c/temp/freetype/lib32  --with-conf-name=windows-x86-normal-release  --target=x86 --with-target-bits=32 --with-noncompressedrefs
 ```
@@ -457,6 +457,7 @@ Two Java builds are produced: a full developer kit (jdk) and a runtime environme
 1) Win 64b-bit
 - **build/windows-x86_64-normal-server-release/images/j2sdk-image**
 - **build/windows-x86_64-normal-server-release/images/j2re-image**
+
 2) Win 32-bit
 - **build/windows-x86-normal-release/images/j2sdk-image**
 - **build/windows-x86-normal-release/images/j2re-image**
