@@ -96,6 +96,10 @@ def publish() {
             junit allowEmptyResults: true, keepLongStdio: true, testResults: '**/junitreports/**/*.xml'
             step([$class: 'Publisher', reportFilenamePattern: '**/testng-results.xml'])
             step([$class: "TapPublisher", testResults: "**/*.tap"])
+            if (currentBuild.result == 'UNSTABLE') {
+                sh "tar -zcf test_output${TEST_TARGET}.tar.gz $WORKSPACE/openj9/test/TestConfig/test_output_*"
+			    archiveArtifacts artifacts: "**/test_output${TEST_TARGET}.tar.gz", fingerprint: true, allowEmptyArchive: true
+            }
         }
     }
 }
@@ -113,26 +117,20 @@ def test_all() {
         compile()
         test()
         publish()
-
-        try {
-            cleanWs()
-        } catch(e) {
-            /*
-            *  If clean workspace fails on Windows, show
-            *  the running processes. This has benn added
-            *  in an attempt to help debug what may be
-            *  holding open the file(s).
-            */
-            echo e.toString()
-            if (SPEC.startsWith("win_")) {
-                sh "ps -W"
-            }
-        }
     }
 }
 
 def test_all_with_fetch() {
     fetch_artifacts()
     test_all()
+
+    try {
+        cleanWs()
+    } catch(e) {
+        echo e.toString()
+        if (SPEC.startsWith("win_")) {
+            sh "ps -W"
+        }
+    }
 }
 return this
