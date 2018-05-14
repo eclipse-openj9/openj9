@@ -34,7 +34,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>os.linux,arch.x86,bits.64</platformRequirements>
+		<platformRequirements>os.linux</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>

@@ -32,6 +32,6 @@ public class MyTest {
 	
 	public void aTestExample() {
 		logger.info("running aTestExample: INFO and above level logging enabled");
-		AssertJUnit.assertEquals(4, 2+2);
+		AssertJUnit.assertEquals(4, 2+3);
 	}
 }
