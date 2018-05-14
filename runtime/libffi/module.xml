@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2014, 2017 IBM Corp. and others
+Copyright (c) 2014, 2018 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,36 +21,8 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module>
-	<exports group="raw_api">
-		<export name="ffi_raw_call" />
-		<export name="ffi_ptrarray_to_raw" />
-	</exports>
-
-	<artifact type="shared" name="ffi" bundle="jvm" loadgroup="">
-		<options>
-			<option name="isRequired" />
-			<option name="prototypeHeaderFileNames" data="ffi.h" />
-			<option name="nonIBMCopyright" data="libFFI foreign function interface library Copyright (C) 2011 Anthony Green" />
-			<option name="dllDescription" data="libFFI" />
-		</options>
+	<artifact type="static" name="ffi" bundle="jvm" loadgroup="">
 		<phase>core</phase>
-		<exports>
-			<group name="raw_api">
-				<exclude-if condition="spec.win_x86-64.*" />
-			</group>
-			<export name="ffi_prep_cif" />
-			<export name="ffi_call" />
-			<export name="ffi_type_void" />
-			<export name="ffi_type_uint8" />
-			<export name="ffi_type_sint8" />
-			<export name="ffi_type_sint16" />
-			<export name="ffi_type_uint16" />
-			<export name="ffi_type_sint32" />
-			<export name="ffi_type_sint64" />
-			<export name="ffi_type_float" />
-			<export name="ffi_type_double" />
-			<export name="ffi_type_pointer" />
-		</exports>
 		<includes>
 			<include path="j9include" />
 		</includes>
@@ -174,6 +146,17 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<makefilestub data="FFI_COPY_template = $(UMA_PATH_TO_ROOT)include/$(notdir $(strip $1)) : $1 ; cp -f $$&lt; $$@" />
 			<makefilestub data="$(foreach H,$(FFI_HEADERS),$(eval $(call FFI_COPY_template,$H)))" />
 			<makefilestub data="UMA_OBJECTS_PREREQS += $(addprefix $(UMA_PATH_TO_ROOT)include/,$(notdir $(FFI_HEADERS)))" />
+			<!-- TODO: Temporary workaround for OpenJ9 JDK9 builds referring directly to the ffi shared library -->
+			<!-- TODO: Remove once the makefiles no longer refer to the ffi shared library -->
+			<makefilestub data="workaround:" />
+			<makefilestub data="&#x9;cp -f $(UMA_PATH_TO_ROOT)libj9thr29.so $(UMA_PATH_TO_ROOT)libffi29.so">
+				<exclude-if condition="spec.win_x86.*" />
+			</makefilestub>
+			<makefilestub data="&#x9;cp -f $(UMA_PATH_TO_ROOT)j9thr29.dll $(UMA_PATH_TO_ROOT)ffi29.dll">
+				<include-if condition="spec.win_x86.*" />
+			</makefilestub>
+			<makefilestub data="TARGETS+=workaround" />
+			<!-- TODO: End of temporary workaround -->
 		</makefilestubs>
 		<vpaths>
 			<!-- vpaths for PPC -->
