@@ -41,6 +41,7 @@
 #endif
 
 class TR_J9VMBase;
+class TR_PersistentJittedBodyInfo;
 
 extern "C" {
 struct J9UTF8;
@@ -489,6 +490,8 @@ public:
 
    virtual bool                  owningMethodDoesntMatter();
    virtual bool isMethodInValidLibrary();
+
+   virtual TR_PersistentJittedBodyInfo *getJittedBodyInfo();
 
 protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }

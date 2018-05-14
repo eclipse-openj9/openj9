@@ -1145,8 +1145,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                methodSymbol->getResolvedMethodSymbol() &&
                methodSymbol->getResolvedMethodSymbol()->getResolvedMethod())
             {
-            void * methodAddress = methodSymbol->getResolvedMethodSymbol()->getResolvedMethod()->startAddressForInterpreterOfJittedMethod();
-            TR_PersistentJittedBodyInfo * bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(methodAddress);
+            TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) methodSymbol->getResolvedMethodSymbol()->getResolvedMethod())->getJittedBodyInfo();
             //printf("Pushing node %p\n", node);
             //fflush(stdout);
             if (bodyInfo &&

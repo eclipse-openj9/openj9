@@ -132,6 +132,9 @@ public:
    static int32_t jitGlobalSampleCount;
    static int32_t jitRecompilationsInduced;
 
+   // used for JaaS
+   static TR_PersistentJittedBodyInfo * persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr);
+
 protected:
    static int32_t limitMethodsCompiled;
    static int32_t hotThresholdMethodsCompiled;

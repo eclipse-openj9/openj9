@@ -863,3 +863,14 @@ TR_ResolvedJ9JAASServerMethod::classOfMethod()
          }
       return _fe->convertClassPtrToClassOffset(_ramClass);
       }
+
+TR_PersistentJittedBodyInfo *
+TR_ResolvedJ9JAASServerMethod::getJittedBodyInfo()
+   {
+   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getJittedBodyInfo, _remoteMirror);
+   auto recv = _stream->read<std::string, std::string>();
+   auto &bodyInfoStr = std::get<0>(recv);
+   auto &methodInfoStr = std::get<1>(recv);
+   return J9::Recompilation::persistentJittedBodyInfoFromString(bodyInfoStr, methodInfoStr);
+   }
+

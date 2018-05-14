@@ -1402,6 +1402,18 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(JAAS::Void());
          }
          break;
+      case J9ServerMessageType::ResolvedMethod_getJittedBodyInfo:
+         {
+         auto mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
+         void *startPC = mirror->startAddressForInterpreterOfJittedMethod();
+         auto bodyInfo = J9::Recompilation::getJittedBodyInfoFromPC(startPC);
+         if (!bodyInfo)
+            client->write(std::string(), std::string());
+         else
+            client->write(std::string((char*) bodyInfo, sizeof(TR_PersistentJittedBodyInfo)),
+                          std::string((char*) bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)));
+         }
+         break;
       case J9ServerMessageType::CompInfo_isCompiled:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
@@ -1904,12 +1916,23 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(iProfiler->getMaxCallCount());
          }
          break;
+
       case J9ServerMessageType::Recompilation_getExistingMethodInfo:
          {
-         auto comp = compInfoPT->getCompilation();
          auto recomp = comp->getRecompilationInfo();
          auto methodInfo = recomp->getMethodInfo();
          client->write(*methodInfo);
+         }
+         break;
+      case J9ServerMessageType::Recompilation_getJittedBodyInfoFromPC:
+         {
+         void *startPC = std::get<0>(client->getRecvData<void *>());
+         auto bodyInfo = J9::Recompilation::getJittedBodyInfoFromPC(startPC);
+         if (!bodyInfo)
+            client->write(std::string(), std::string());
+         else
+            client->write(std::string((char*) bodyInfo, sizeof(TR_PersistentJittedBodyInfo)),
+                          std::string((char*) bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)));
          }
          break;
       default:

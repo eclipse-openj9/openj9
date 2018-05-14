@@ -619,17 +619,11 @@ TR_PersistentMethodInfo::get(TR::Compilation *comp)
 TR_PersistentMethodInfo *
 TR_PersistentMethodInfo::get(TR_ResolvedMethod * feMethod)
    {
-   // XXX: Needs fixing for JAAS, startPC is a client PC, server needs to ask the client for body and/or method info
-#if 0
    if (feMethod->isInterpreted() || feMethod->isJITInternalNative())
       return 0;
 
-   void *startPC = (void *)feMethod->startAddressForInterpreterOfJittedMethod();
-   TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
+   TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*) feMethod)->getJittedBodyInfo();
    return bodyInfo ? bodyInfo->getMethodInfo() : 0;
-#else
-   return NULL;
-#endif
    }
 
 TR_PersistentJittedBodyInfo::TR_PersistentJittedBodyInfo(
@@ -736,4 +730,23 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
    // Now that it can no longer be accessed, dec ref count on old info
    if (oldPtr)
       TR_PersistentProfileInfo::decRefCount((TR_PersistentProfileInfo*)oldPtr);
+   }
+
+// used for JaaS
+TR_PersistentJittedBodyInfo *
+J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr)
+   {
+   auto bodyInfo = (TR_PersistentJittedBodyInfo*) TR::comp()->trMemory()->allocateHeapMemory(sizeof(TR_PersistentJittedBodyInfo), TR_MemoryBase::Recompilation);
+   auto methodInfo = (TR_PersistentMethodInfo*) TR::comp()->trMemory()->allocateHeapMemory(sizeof(TR_PersistentMethodInfo), TR_MemoryBase::Recompilation);
+   memcpy(bodyInfo, &bodyInfoStr[0], sizeof(TR_PersistentJittedBodyInfo));
+   memcpy(methodInfo, &methodInfoStr[0], sizeof(TR_PersistentMethodInfo));
+   bodyInfo->setMethodInfo(methodInfo);
+   bodyInfo->setProfileInfo(nullptr);
+   bodyInfo->setMapTable(nullptr);
+   methodInfo->setOptimizationPlan(nullptr);
+   // cannot use setter because it calls the destructor on the old profile data,
+   // which is a client pointer
+   methodInfo->_recentProfileInfo = nullptr;
+   methodInfo->_bestProfileInfo = nullptr;
+   return bodyInfo;
    }

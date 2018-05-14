@@ -67,6 +67,7 @@ public:
    virtual bool methodIsNotzAAPEligible() override;
    virtual void setClassForNewInstance(J9Class *c) override;
    virtual TR_OpaqueClassBlock * classOfMethod() override;
+   virtual TR_PersistentJittedBodyInfo *getJittedBodyInfo() override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    bool inROMClass(void *address);

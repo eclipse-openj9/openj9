@@ -75,6 +75,7 @@ enum J9ServerMessageType
    ResolvedMethod_addressContainingIsOverriddenBit = 143;
    ResolvedMethod_methodIsNotzAAPEligible = 144;
    ResolvedMethod_setClassForNewInstance = 145;
+   ResolvedMethod_getJittedBodyInfo = 146;
 
    // For TR_J9ServerVM methods
    VM_isClassLibraryClass = 200;
@@ -238,6 +239,7 @@ enum J9ServerMessageType
    IProfiler_getMaxCallCount = 802;
 
    Recompilation_getExistingMethodInfo = 900;
+   Recompilation_getJittedBodyInfoFromPC = 901;
    }
 
 message J9ServerMessage

@@ -5265,6 +5265,13 @@ TR_ResolvedJ9Method::startAddressForJITInternalNativeMethod()
    return startAddressForJittedMethod();
    }
 
+TR_PersistentJittedBodyInfo *
+TR_ResolvedJ9Method::getJittedBodyInfo()
+   {
+   void *methodAddress = startAddressForInterpreterOfJittedMethod();
+   return TR::Recompilation::getJittedBodyInfoFromPC(methodAddress);
+   }
+
 int32_t
 TR_ResolvedJ9Method::virtualCallSelector(U_32 cpIndex)
    {

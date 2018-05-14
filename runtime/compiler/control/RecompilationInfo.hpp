@@ -172,6 +172,7 @@ class TR_PersistentMethodInfo
    uint16_t getTimeStamp() { return _timeStamp; }
 
    TR_OptimizationPlan * getOptimizationPlan() {return _optimizationPlan;}
+   void setOptimizationPlan(TR_OptimizationPlan *optPlan) { _optimizationPlan = optPlan; }
    uint8_t getNumberOfInvalidations() {return _numberOfInvalidations;}
    void incrementNumberOfInvalidations() {_numberOfInvalidations++;}
    uint8_t getNumberOfInlinedMethodRedefinition() {return _numberOfInlinedMethodRedefinition;}

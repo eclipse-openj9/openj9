@@ -831,8 +831,7 @@ bool CollectCompiledImplementors::visitSubclass(TR_PersistentClassInfo *cl)
             }
          else
             {
-            void *methodAddress = (_implArray[_count - 1])->startAddressForInterpreterOfJittedMethod();
-            TR_PersistentJittedBodyInfo * bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(methodAddress);
+            TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) _implArray[_count - 1])->getJittedBodyInfo();
             if (!bodyInfo || bodyInfo->getHotness() < _hotness)
                {
                _count -= 1;
