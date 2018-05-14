@@ -146,17 +146,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<makefilestub data="FFI_COPY_template = $(UMA_PATH_TO_ROOT)include/$(notdir $(strip $1)) : $1 ; cp -f $$&lt; $$@" />
 			<makefilestub data="$(foreach H,$(FFI_HEADERS),$(eval $(call FFI_COPY_template,$H)))" />
 			<makefilestub data="UMA_OBJECTS_PREREQS += $(addprefix $(UMA_PATH_TO_ROOT)include/,$(notdir $(FFI_HEADERS)))" />
-			<!-- TODO: Temporary workaround for OpenJ9 JDK9 builds referring directly to the ffi shared library -->
-			<!-- TODO: Remove once the makefiles no longer refer to the ffi shared library -->
-			<makefilestub data="workaround:" />
-			<makefilestub data="&#x9;cp -f $(UMA_PATH_TO_ROOT)libj9thr29.so $(UMA_PATH_TO_ROOT)libffi29.so">
-				<exclude-if condition="spec.win_x86.*" />
-			</makefilestub>
-			<makefilestub data="&#x9;cp -f $(UMA_PATH_TO_ROOT)j9thr29.dll $(UMA_PATH_TO_ROOT)ffi29.dll">
-				<include-if condition="spec.win_x86.*" />
-			</makefilestub>
-			<makefilestub data="TARGETS+=workaround" />
-			<!-- TODO: End of temporary workaround -->
 		</makefilestubs>
 		<vpaths>
 			<!-- vpaths for PPC -->
