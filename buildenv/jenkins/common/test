@@ -97,8 +97,8 @@ def publish() {
             step([$class: 'Publisher', reportFilenamePattern: '**/testng-results.xml'])
             step([$class: "TapPublisher", testResults: "**/*.tap"])
             if (currentBuild.result == 'UNSTABLE') {
-                sh "tar -zcf ${TEST_TARGET}_test_output.tar.gz $WORKSPACE/openj9/test/TestConfig/test_output_*"
-			    archiveArtifacts artifacts: "**/${TEST_TARGET}_test_output.tar.gz", fingerprint: true, allowEmptyArchive: true
+                sh "tar -zcf test_output${TEST_TARGET}.tar.gz $WORKSPACE/openj9/test/TestConfig/test_output_*"
+			    archiveArtifacts artifacts: "**/test_output${TEST_TARGET}.tar.gz", fingerprint: true, allowEmptyArchive: true
             }
         }
     }
