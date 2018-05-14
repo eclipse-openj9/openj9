@@ -37,6 +37,7 @@ timeout(time: 10, unit: 'HOURS') {
         checkout scm
         buildfile = load 'buildenv/jenkins/common/build'
         testfile = load 'buildenv/jenkins/common/test'
+        cleanWs()
 
         // Build
         buildfile.build_pr()
