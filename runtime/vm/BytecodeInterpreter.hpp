@@ -37,6 +37,7 @@
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 #include "jni.h"
+#define FFI_BUILDING /* Needed on Windows to link libffi statically */ 
 #include "ffi.h"
 #include "jitregmap.h"
 #include "j2sever.h"
