@@ -299,7 +299,7 @@ OpenJDK  - 27f5b8f based on jdk8u152-b03)
 
 ## Windows
 :ledger:
-The following instructions guide you through the process of building a Windows 64-bit OpenJDK V8 binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows 7, 8, and 10.
+The following instructions guide you through the process of building a Windows 32/64-bit OpenJDK V8 binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows 7, 8, and 10.
 
 ### 1. Prepare your system
 :ledger:
@@ -313,6 +313,12 @@ OpenJ9 uses the mingw/GCC compiler during the build process. In the `Archive` ca
 - [Microsoft Visual Studio 2010 Service Pack 1](https://support.microsoft.com/en-us/help/983509/description-of-visual-studio-2010-service-pack-1)
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
 - [Freetype2 V2.3 or newer](https://www.freetype.org/)
+
+Note:
+For building a 32-bit version, please ensure all required packages are installed via Cygwin as follows:
+1. GNU make 3.81 (unncessary if already installed)
+2. gcc-g++ (unncessary if already installed)
+3. mingw64-i686-gcc-g++ (unncessary if already installed)
 
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
 
@@ -348,11 +354,22 @@ tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 tar --one-top-level=/cygdrive/c/temp/freetype --strip-components=1 -xzf freetype-2.5.3.tar.gz
 ```
 
+Note:
+Please enure the freetype version supports win 32-bit application (e.g. freetype-2.4.7 which includes the "win32" folder)
+
 - To build the Freetype dynamic and static libraries, open the Visual Studio Command Prompt (VS2010) (see C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Microsoft Visual Studio 2010\Visual Studio Tools) and run:
+1) Win 64b-bit
 ```
 cd c:\temp
 msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:Platform=x64 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib64/" /p:IntDir="C:/temp/freetype/obj64/" > freetype.log
 msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:Platform=x64 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib64/" /p:IntDir="C:/temp/freetype/obj64/" >> freetype.log
+```
+
+2) Win 32-bit
+```
+cd c:\temp
+msbuild.exe C:/temp/freetype/builds/win32/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" > freetype.log
+msbuild.exe C:/temp/freetype/builds/win32/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" >> freetype.log
 ```
 :pencil: Check the `freetype.log` for errors.
 
@@ -375,6 +392,8 @@ bash get_source.sh
 ```
 ### 3. Configure
 :ledger:
+1) Win 64b-bit
+
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
 bash configure --disable-ccache \
@@ -386,6 +405,49 @@ bash configure --disable-ccache \
 
 :pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories.
 
+2) Win 32-bit
+
+[1] Modify the script to support the 32-bit setting
+```
+openj9-openjdk-jdk8\jdk\make\closed\autoconf\generated-configure.sh
+  if test "x$OPENJ9_CPU" = xx86-64; then
+    if test "x$OPENJDK_BUILD_OS" = xlinux; then
+      OPENJ9_PLATFORM_CODE=xa64
+    elif test "x$OPENJDK_BUILD_OS" = xwindows; then
+      OPENJ9_PLATFORM_CODE=wa64
+      if test "x$OPENJ9_LIBS_SUBDIR" = xdefault; then
+        OPENJ9_BUILDSPEC="win_x86-64"
+      if test "x$OPENJDK_TARGET_CPU_BITS" = x32; then  <----- for 32bit setting
+        OPENJ9_PLATFORM_CODE=wi32
+        OPENJ9_BUILDSPEC="win_x86"
+      fi
+    else
+        OPENJ9_BUILDSPEC="win_x86-64_cmprssptrs"
+    fi
+```
+
+[2] Specify the path to load jvm.dll for java lanncher
+```
+./jdk/make/CopyFiles.gmk
+  $(JVMCFG):
+	$(MKDIR) -p $(@D)
+	$(RM) $(@)
+        # Now check for other permutations
+        ifeq ($(JVM_VARIANT_SERVER), true)
+	  $(PRINTF) "-j9vm KNOWN\n">>$(@)  <-------------
+		$(PRINTF) "-client IGNORE\n">>$(@)
+		$(PRINTF) "-server IGNORE\n">>$(@)
+          ifeq ($(JVM_VARIANT_MINIMAL1), true)
+	    $(PRINTF) "-minimal KNOWN\n">>$(@)
+          endif
+        else
+```
+
+[3] run the configure script as follows:
+```
+bash configure --disable-ccache --with-boot-jdk=/cygdrive/c/temp/jdk7 --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar --with-freetype-include=/cygdrive/c/temp/freetype/include --with-freetype-lib=/cygdrive/c/temp/freetype/lib32  --with-conf-name=windows-x86-normal-release  --target=x86 --with-target-bits=32 --with-noncompressedrefs
+```
+
 ### 4. build
 :ledger:
 Now you're ready to build OpenJDK with OpenJ9:
@@ -394,15 +456,25 @@ make all
 ```
 
 Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre)
+1) Win 64b-bit
 - **build/windows-x86_64-normal-server-release/images/j2sdk-image**
 - **build/windows-x86_64-normal-server-release/images/j2re-image**
+
+2) Win 32-bit
+- **build/windows-x86-normal-release/images/j2sdk-image**
+- **build/windows-x86-normal-release/images/j2re-image**
 
 ### 5. Test
 :ledger:
 For a simple test, try running the `java -version` command.
 Change to the **/j2sdk-image** directory:
+1) Win 64b-bit
 ```
 cd build/windows-x86_64-normal-server-release/images/j2sdk-image
+```
+2) Win 32-bit
+```
+cd build/windows-x86-normal-release/images/j2sdk-image
 ```
 Run:
 ```
@@ -410,13 +482,23 @@ Run:
 ```
 
 Here is some sample output:
-
+1) Win 64b-bit
 ```
-OpenJDK Runtime Environment (build 1.8.0-internal-Administrator_2017_12_14_15_20-b00)
-Eclipse OpenJ9 VM (build 2.9, JRE 1.8.0 Windows 10 amd64-64 Compressed References 20171214_000000 (JIT enabled, AOT enabled)
-OpenJ9   - b8ac7e1747
-OMR      - 101e793f
-OpenJDK  - 2597cd5c6f based on jdk8u152-b16)
+openjdk version "1.8.0_172-internal"
+OpenJDK Runtime Environment (build 1.8.0_172-internal-administrator_2018_05_07_15_35-b00)
+Eclipse OpenJ9 VM (build master-9329b7b9, JRE 1.8.0 Windows 7 amd64-64-Bit Compressed References 20180507_000000 (JIT enabled, AOT enabled)
+OpenJ9   - 9329b7b9
+OMR      - 884959f4
+JCL      - 7f27c537a8 based on jdk8u172-b11)
+```
+2) Win 32-bit
+```
+openjdk version "1.8.0_172-internal"
+OpenJDK Runtime Environment (build 1.8.0_172-internal-administrator_2018_05_11_07_22-b00)
+Eclipse OpenJ9 VM (build master-9f924a1a, JRE 1.8.0 Windows 7 x86-32-Bit 20180511_000000 (JIT enabled, AOT enabled)
+OpenJ9   - 9f924a1a
+OMR      - e5db96ba
+JCL      - 7f27c537a8 based on jdk8u172-b11)
 ```
 
 :ledger: *Congratulations!* :tada:
