@@ -1178,9 +1178,19 @@ public void test_getResource() {
 	try {
 		java.net.URL res = Object.class.getResource("Object.class");
 		AssertJUnit.assertTrue("Object.class should not be found", res == null);
-    } finally {
-        System.setSecurityManager(null);
-    }
+	} finally {
+		System.setSecurityManager(null);
+	}
+	
+	String name = "/org/openj9/resources/openj9tr_Foo.c";
+	
+	// find resource from object
+	AssertJUnit.assertTrue("directory of this class can be found",
+			Test_Class.class.getResource(name) != null);
+	
+	// find resource from array of objects
+	AssertJUnit.assertTrue("directory of array of this class can be found",
+			Test_Class[].class.getResource(name) != null);
 }
 
 /**

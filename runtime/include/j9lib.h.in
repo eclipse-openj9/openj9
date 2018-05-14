@@ -53,7 +53,6 @@ extern"C"{
 #define J9_VERIFIER_TEST_NATIVES_DLL_NAME "bcvwhite"
 #define J9_IFA_DLL_NAME "j9ifa29"
 #define J9_CHECK_JNI_DLL_NAME "j9jnichk29"
-#define J9_LIBFFI_DLL_NAME "ffi29"
 #define J9_CHECK_VM_DLL_NAME "j9vmchk29"
 #define J9_HARMONY_PORT_LIBRARY_SHIM_DLL_NAME "hyprtshim29"
 #define J9_CHECK_GC_DLL_NAME "j9gcchk29"
