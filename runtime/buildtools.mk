@@ -22,10 +22,6 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
 
-# Note: This is a Windows makefile. These tools are intended to be run
-# in a Windows environment before the source is uploaded to a build
-# machine for compilation. It may or may not work on other platforms.
-
 define \n
 
 
@@ -54,9 +50,15 @@ else
 endif
 
 default : all
-# Note: CMake builds dont need tracing, or hooktool
-tools : copya2e configure nls constantpool $(if $(findstring true,$(ENABLE_CMAKE)),, tracing hooktool)
-all : tools ddr
+
+all : ddr tools
+
+tools : configure constantpool copya2e nls
+
+# CMake builds don't need hooktool or tracing.
+ifneq (true,$(OPENJ9_ENABLE_CMAKE))
+tools : hooktool tracing
+endif
 
 # OMRTODO
 # A JIT makefile has a hardcoded path to a2e/headers.
@@ -92,6 +94,7 @@ findAllFiles = \
 
 TRACEGEN_DEFINITION_TDF_FILES := $(strip $(call findAllFiles,.,*.tdf))
 TRACEGEN_DEFINITION_SENTINELS := $(patsubst %.tdf,%.tracesentinel,$(TRACEGEN_DEFINITION_TDF_FILES))
+
 %.tracesentinel : %.tdf
 	./tracegen -treatWarningAsError -generatecfiles -force -threshold $(TRC_THRESHOLD) -file $<
 	touch $@
@@ -104,8 +107,8 @@ trace_merge : buildtrace
 
 tracing : trace_merge
 
-NLS_OPTIONS :=
 NLS_NLSTOOL := $(JAVA) -cp sourcetools/lib/j9nls.jar com.ibm.oti.NLSTool.J9NLS
+NLS_OPTIONS :=
 
 # process NLS files to generate java.properties and NLS header files
 nls : buildtools
@@ -113,8 +116,9 @@ nls : buildtools
 
 HOOK_DEFINITION_FILES := $(strip $(call findAllFiles,.,*.hdf))
 HOOK_DEFINITION_SENTINELS := $(patsubst %.hdf,%.hooksentinel, $(HOOK_DEFINITION_FILES))
+
 # process HDF files to generate hook header files
-%.hooksentinel: %.hdf
+%.hooksentinel : %.hdf
 	./hookgen $<
 	touch $@
 
@@ -144,16 +148,17 @@ OMRGLUE_INCLUDES = \
   ../gc_trace \
   ../gc_vlhgc
 
-# if we are doing a cmake build, configure wont depend on uma
-# However we need to run constantpool and nls tools before invoking cmake
-configure : $(if $(findstring true,$(ENABLE_CMAKE)),constantpool nls, uma)
-ifndef ENABLE_CMAKE
-	$(MAKE) -C omr -f run_configure.mk 'SPEC=$(SPEC)' 'OMRGLUE=$(OMRGLUE)' 'CONFIG_INCL_DIR=$(CONFIG_INCL_DIR)' 'OMRGLUE_INCLUDES=$(OMRGLUE_INCLUDES)' 'EXTRA_CONFIGURE_ARGS=$(EXTRA_CONFIGURE_ARGS)'
-else
+ifeq (true,$(OPENJ9_ENABLE_CMAKE))
+# If we are doing a cmake build, configure won't depend on UMA.
+# However we need to run constantpool and nls tools before invoking cmake.
+configure : constantpool nls
 	mkdir -p build && cd build && $(CMAKE) -C ../cmake/caches/$(SPEC).cmake $(EXTRA_CMAKE_ARGS) ..
+else
+configure : uma
+	$(MAKE) -C omr -f run_configure.mk 'SPEC=$(SPEC)' 'OMRGLUE=$(OMRGLUE)' 'CONFIG_INCL_DIR=$(CONFIG_INCL_DIR)' 'OMRGLUE_INCLUDES=$(OMRGLUE_INCLUDES)' 'EXTRA_CONFIGURE_ARGS=$(EXTRA_CONFIGURE_ARGS)'
 endif
 
-# run UMA to generate makefile
+# run UMA to generate makefiles
 J9VM_GIT_DIR := $(firstword $(wildcard $(J9_ROOT)/.git) $(wildcard $(J9_ROOT)/workspace/.git))
 J9VM_SHA     := $(if $(J9VM_GIT_DIR),$(shell git -C $(dir $(J9VM_GIT_DIR)) rev-parse --short HEAD),developer.compile)
 SPEC_DIR     := buildspecs
@@ -166,6 +171,7 @@ UMA_OPTIONS  += $(UMA_OPTIONS_EXTRA)
 # This is a temporary workaround. It can be removed after UMA is no longer used to generate files for OMR, and the
 # module.xml files in the OMR directories have been deleted. The JVM doesn't require any of these executables.
 UMA_OPTIONS += -ea tracegen,tracemerge
+
 uma : buildtools copya2e
 	@echo J9VM version: $(J9VM_SHA)
 	$(UMA_TOOL) $(UMA_OPTIONS)
@@ -173,34 +179,37 @@ uma : buildtools copya2e
 # process constant pool definition file to generate jcl constant pool definitions and header file
 CONSTANTPOOL_TOOL    := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)sourcetools/lib/j9vmcp.jar" com.ibm.oti.VMCPTool.Main
 CONSTANTPOOL_OPTIONS := -rootDir . -buildSpecId $(SPEC) -configDir $(SPEC_DIR) -jcls se7_basic,se9_before_b165,se9,se10,se11
+
 constantpool : buildtools
 	$(CONSTANTPOOL_TOOL) $(CONSTANTPOOL_OPTIONS)
 
-#Backslashes need replacing on Windows/Cygwin
+# Backslashes need replacing on Windows/Cygwin
 ESCAPED_JAVA := $(subst \,/,$(JAVA))
-PLATFORM	 := $(if $(wildcard buildtools/j9ddr-autoblob.jar),$(shell $(JAVA) -cp buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GetNativeDirectory))
+PLATFORM     := $(if $(wildcard buildtools/j9ddr-autoblob.jar),$(shell $(JAVA) -cp buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GetNativeDirectory))
 SUPERSET     := superset.$(SPEC).dat
 
-#Trigger cross-compilation & use linux_x86 DDR configuration
+# Trigger cross-compilation & use linux_x86 DDR configuration
 ifeq (linux_ztpf_390-64, $(SPEC))
 	PLATFORM := linux_x86
 	OS := ztpf
 endif
 
-#Generate DDR structure blob C files - only functions on module.ddr build specs
-ddr : configure
+# Generate DDR structure blob C files - only functions on module.ddr build specs.
+ddr :
+ifneq (,$(filter linux_x86 win_x86,$(PLATFORM)))
+# On platforms where ddr_buildtools.mk is actually run, generated header files must be produced first.
+ddr : constantpool hooktool nls tracing
 	@echo "Building DDR"
 	@echo "Java     = $(ESCAPED_JAVA)"
 	@echo "Platform = $(PLATFORM)"
 	@echo "OS       = $(OS)"
-ifneq (,$(filter linux_x86 win_x86,$(PLATFORM)))
 	@echo "Building $(PLATFORM)"
 	( \
 	if [ -e ddr/j9ddrgen.mk ] ; then \
 		$(MAKE) -C ddr -f ddr_buildtools.mk JAVA=$(ESCAPED_JAVA) PLATFORM=$(PLATFORM) generate_ddr_blob_c ; \
 		echo "Generating updated superset ready for code generation" ; \
 		$(ESCAPED_JAVA) -cp buildtools/j9ddr-autoblob.jar com.ibm.j9ddr.autoblob.GenerateSpecSuperset -d ddr/superset -s ddr,gc_ddr -f $(SUPERSET) ; \
-	fi ; \
+	fi \
 	)
 endif
 
@@ -208,4 +217,4 @@ endif
 makeLibDir :
 	mkdir -p lib
 
-.PHONY : buildtools checkSpec copya2e uma tracing nls hooktool constantpool makeLibDir ddr configure tools
+.PHONY : buildtools checkSpec configure constantpool copya2e ddr hooktool makeLibDir nls tools tracing uma
