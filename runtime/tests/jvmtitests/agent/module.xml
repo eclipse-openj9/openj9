@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <!--
   Copyright (c) 2001, 2018 IBM Corp. and others
@@ -23,9 +23,13 @@
 -->
 
 <module>
-        <artifact type="reference" name="jvmti_test_include" all="false">
-                <include-if condition="spec.flags.test_jvmti" />
-        </artifact>
+	<artifact type="static" name="jvmti_test_agent" bundle="jvmti_test">
+		<include-if condition="spec.flags.test_jvmti" />
+		<phase>jvmti_tests</phase>
+		<includes>
+			<include path="jvmti_test_include"/>
+			<include path="j9include"/>
+			<include path="j9oti"/>
+		</includes>
+	</artifact>
 </module>
-
-
