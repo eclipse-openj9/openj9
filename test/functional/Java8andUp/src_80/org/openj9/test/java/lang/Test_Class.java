@@ -1258,6 +1258,9 @@ public class Test_Class {
 				clazz.getResourceAsStream(name) == null);
 		AssertJUnit.assertTrue("the file " + name + " can be found in the root directory",
 				clazz.getResourceAsStream("/" + name) != null);
+		// find resource from array of objects
+		AssertJUnit.assertTrue("the file " + name + " can be found in the root directory where the class is an array",
+				Test_Class[].class.getResourceAsStream("/" + name) != null);
 
 		try {
 			clazz = Class.forName("java.lang.Object");
