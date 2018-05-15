@@ -2218,7 +2218,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (coder == UTF16) {
 			/*[IF Sidecar19-SE-OpenJ9]*/
 			return StringUTF16.lastIndexOfLatin1(s1Value, s1Length, s2Value, s2Length, fromIndex);
-			/*[ELSE]*/
+			/*[ELSE] Sidecar19-SE-OpenJ9*/
 			// jdk9-b148 does not support the StringUTF16.lastIndexOfLatin1 API so we reimplement it here for compatibility
 			String s1 = new String(value, coder);
 			String s2 = str;
@@ -2244,7 +2244,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 				fromIndex = i - 1;
 			}
-			/*[ENDIF]*/
+			/*[ENDIF] Sidecar19-SE-OpenJ9*/
 		}
 
 		return -1;
@@ -2916,7 +2916,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Otherwise we have a LATIN1 String and a UTF16 StringBuffer
 			return StringUTF16.contentEquals(s1Value, sbValue, s1Length);
-			/*[ELSE]*/
+			/*[ELSE] Sidecar19-SE-OpenJ9*/
             // jdk9-b148 builds cannot handle the new StringBuffer / StringBuilder so reimplement this API in a naive way
 			int sbLength = buffer.length();
 
@@ -2925,7 +2925,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			}
 			
             return regionMatches(0, new String(buffer), 0, sbLength);
-			/*[ENDIF]*/
+			/*[ENDIF] Sidecar19-SE-OpenJ9*/
 		}
 	}
 
@@ -3827,10 +3827,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 		return string;
 	}
-/*[ENDIF] Java11 */
+	/*[ENDIF] Java11*/
 }
 
-/*[ELSE]*/
+/*[ELSE] Sidecar19-SE*/
 import java.io.Serializable;
 
 import java.util.Locale;
@@ -8217,5 +8217,4 @@ written authorization of the copyright holder.
 	
 
 }
-/*[ENDIF]*/
-
+/*[ENDIF] Sidecar19-SE*/
