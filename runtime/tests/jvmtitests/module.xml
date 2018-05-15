@@ -197,7 +197,7 @@
 		<export name="Java_com_ibm_jvmti_tests_nestMatesRedefinition_nmr001_redefineClass" />
 	</exports>
 
-	<artifact type="shared" name="jvmtitest" bundle="jvmti_test" appendrelease="false" all="false">
+	<artifact type="shared" name="jvmtitest" bundle="jvmti_test" appendrelease="false">
 		<include-if condition="spec.flags.test_jvmti" />
 		<phase>jvmti_tests</phase>
 		<exports>

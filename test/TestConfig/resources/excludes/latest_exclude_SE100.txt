@@ -25,8 +25,4 @@
 org.openj9.test.vm.Test_MsgHelp:test_loadMessages_EN																	AN-https://github.ibm.com/runtimes/test/issues/46 generic-all
 org.openj9.test.java.lang.management.TestRuntimeMXBean:testGetMBeanInfo													1626 generic-all
 org.openj9.test.java.lang.management.TestThreadMXBean:testGetMBeanInfo													1626 generic-all
-org.openj9.test.attachAPI.TestAttachAPI:test_agntld01																	238 generic-all
-org.openj9.test.attachAPI.TestAttachAPI:test_agntld02																	238 generic-all
-org.openj9.test.attachAPI.TestAttachAPI:test_agntld03																	238 generic-all
-org.openj9.test.attachAPI.TestSunAttachClasses:testAgentLoading															238 generic-all
 org.openj9.test.vmArguments.VmArgumentTests:testCrNocr																	244 generic-all
