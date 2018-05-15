@@ -270,7 +270,7 @@ fr002PrimitiveFieldCallback(jvmtiHeapReferenceKind reference_kind,
 		abort();
 	}
 
-	printf("\t\t\t[%08x:%08x] [%d %s] idx=%ld  vt=%d\n",
+	printf("\t\t\t[%08x:%08x] [%d %s] idx=%d  vt=%d\n",
 		   getTag(class_tag), 
 		   getTag(*tag_ptr),
 		   reference_kind, heapReferenceKindString(reference_kind),
