@@ -66,7 +66,7 @@ testFollowReferences_primitiveFieldCallback(jvmtiHeapReferenceKind reference_kin
 		printf("testFollowReferences_primitiveFieldCallback tag %llx:%llx\n", class_tag, *tag_ptr);
 	} else {
 		if (class_tag != 0L) {
-			printf("testFollowReferences_primitiveFieldCallback Class tag %x\n", class_tag);
+			printf("testFollowReferences_primitiveFieldCallback Class tag %llx\n", class_tag);
 		}
 	}
 	
@@ -200,7 +200,7 @@ testFollowReferences_heapRefCallback(jvmtiHeapReferenceKind refKind,
 	}
 	
 	if (refKind == JVMTI_HEAP_REFERENCE_STACK_LOCAL) {
-		printf("\tdepth=0x%x  method=0x%p  location=0x%x slot=0x%x\n",
+		printf("\tdepth=0x%x  method=0x%p  location=0x%llx slot=0x%x\n",
 		       refInfo->stack_local.depth,
 		       refInfo->stack_local.method,
 		       refInfo->stack_local.location,
