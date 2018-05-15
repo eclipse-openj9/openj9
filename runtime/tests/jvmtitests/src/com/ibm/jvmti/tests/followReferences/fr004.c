@@ -81,7 +81,7 @@ testFollowReferences_primitiveFieldCallback(jvmtiHeapReferenceKind reference_kin
 		
 	} else {
 		if (class_tag != 0L) {
-			printf("testFollowReferences_primitiveFieldCallback Class tag %x\n", class_tag);
+			printf("testFollowReferences_primitiveFieldCallback Class tag %llx\n", class_tag);
 		}
 	}
 	
