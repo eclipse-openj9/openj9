@@ -348,11 +348,22 @@ tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 tar --one-top-level=/cygdrive/c/temp/freetype --strip-components=1 -xzf freetype-2.5.3.tar.gz
 ```
 
+Note:
+In order to build Windows 32-bit, Please enure the freetype version supports win 32-bit application (e.g. freetype-2.4.7 which includes the "win32" folder)
+
 - To build the Freetype dynamic and static libraries, open the Visual Studio Command Prompt (VS2010) (see C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Microsoft Visual Studio 2010\Visual Studio Tools) and run:
+1) Win 64-bit
 ```
 cd c:\temp
 msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:Platform=x64 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib64/" /p:IntDir="C:/temp/freetype/obj64/" > freetype.log
 msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:Platform=x64 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib64/" /p:IntDir="C:/temp/freetype/obj64/" >> freetype.log
+```
+
+2) Win 32-bit
+```
+cd c:\temp
+msbuild.exe C:/temp/freetype/builds/win32/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" > freetype.log
+msbuild.exe C:/temp/freetype/builds/win32/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" >> freetype.log
 ```
 :pencil: Check the `freetype.log` for errors.
 
@@ -376,6 +387,7 @@ bash get_source.sh
 ### 3. Configure
 :ledger:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
+1) Win 64-bit
 ```
 bash configure --disable-ccache \
                --with-boot-jdk=/cygdrive/c/temp/jdk7 \
@@ -384,6 +396,15 @@ bash configure --disable-ccache \
                --with-freetype-lib=/cygdrive/c/temp/freetype/lib64
 ```
 
+2) Win 32-bit
+```
+bash configure --disable-ccache \
+               --with-boot-jdk=/cygdrive/c/temp/jdk7 \
+               --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
+               --with-freetype-include=/cygdrive/c/temp/freetype/include \
+               --with-freetype-lib=/cygdrive/c/temp/freetype/lib32  \
+               --target=x86 --with-target-bits=32
+```
 :pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories.
 
 ### 4. build
@@ -394,13 +415,20 @@ make all
 ```
 
 Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre)
+1) Win 64-bit
 - **build/windows-x86_64-normal-server-release/images/j2sdk-image**
 - **build/windows-x86_64-normal-server-release/images/j2re-image**
+
+2) Win 32-bit
+- **build/windows-x86-normal-server-release/images/j2sdk-image**
+- **build/windows-x86-normal-server-release/images/j2re-image**
 
 ### 5. Test
 :ledger:
 For a simple test, try running the `java -version` command.
 Change to the **/j2sdk-image** directory:
+
+1) Win 64-bit
 ```
 cd build/windows-x86_64-normal-server-release/images/j2sdk-image
 ```
@@ -408,15 +436,32 @@ Run:
 ```
 ./bin/java -version
 ```
-
 Here is some sample output:
-
 ```
-OpenJDK Runtime Environment (build 1.8.0-internal-Administrator_2017_12_14_15_20-b00)
-Eclipse OpenJ9 VM (build 2.9, JRE 1.8.0 Windows 10 amd64-64 Compressed References 20171214_000000 (JIT enabled, AOT enabled)
-OpenJ9   - b8ac7e1747
-OMR      - 101e793f
-OpenJDK  - 2597cd5c6f based on jdk8u152-b16)
+openjdk version "1.8.0_172-internal"
+OpenJDK Runtime Environment (build 1.8.0_172-internal-administrator_2018_05_07_15_35-b00)
+Eclipse OpenJ9 VM (build master-9329b7b9, JRE 1.8.0 Windows 7 amd64-64-Bit Compressed References 20180507_000000 (JIT enabled, AOT enabled)
+OpenJ9   - 9329b7b9
+OMR      - 884959f4
+JCL      - 7f27c537a8 based on jdk8u172-b11)
+```
+
+2) Win 32-bit
+```
+cd build/windows-x86-normal-server-release/images/j2sdk-image
+```
+Run:
+```
+./jre/bin/java -version
+```
+Here is some sample output:
+```
+openjdk version "1.8.0_172-internal"
+OpenJDK Runtime Environment (build 1.8.0_172-internal-administrator_2018_05_11_07_22-b00)
+Eclipse OpenJ9 VM (build master-9f924a1a, JRE 1.8.0 Windows 7 x86-32-Bit 20180511_000000 (JIT enabled, AOT enabled)
+OpenJ9   - 9f924a1a
+OMR      - e5db96ba
+JCL      - 7f27c537a8 based on jdk8u172-b11)
 ```
 
 :ledger: *Congratulations!* :tada:
