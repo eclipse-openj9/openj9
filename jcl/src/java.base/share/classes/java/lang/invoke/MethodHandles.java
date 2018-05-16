@@ -779,13 +779,9 @@ public class MethodHandles {
 		}
 
 		/*
-		 * Check for methods MethodHandle.invokeExact, MethodHandle.invoke,
-		 * or MethodHandles.varHandleInvoker.  
-		 * Access checks to these methods are not required as these methods are public and therefore
-		 * accessible to everyone.
-		 * However the access checks to the parameter and return classes are required.
+		 * Check access to the parameter and return classes within incoming MethodType
 		 */
-		MethodHandle handleForMHInvokeMethods(Class<?> clazz, String methodName, MethodType type) throws IllegalAccessException {
+		private void accessCheckArgRetTypes(MethodType type) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED != accessMode) {
 				for (Class<?> para : type.arguments) {
 					if (!para.isPrimitive()) {
@@ -797,10 +793,22 @@ public class MethodHandles {
 					checkClassAccess(rType);
 				}
 			}
+		}
+		
+		/*
+		 * Check for methods MethodHandle.invokeExact, MethodHandle.invoke,
+		 * or MethodHandles.varHandleInvoker.  
+		 * Access checks to these methods are not required as these methods are public and therefore
+		 * accessible to everyone.
+		 * However the access checks to the parameter and return classes are required.
+		 */
+		MethodHandle handleForMHInvokeMethods(Class<?> clazz, String methodName, MethodType type) throws IllegalAccessException {
 			if (MethodHandle.class.isAssignableFrom(clazz)) {
 				if (INVOKE_EXACT.equals(methodName)) {
+					accessCheckArgRetTypes(type);
 					return type.getInvokeExactHandle();
 				} else if (INVOKE.equals(methodName))  {
+					accessCheckArgRetTypes(type);
 					return new InvokeGenericHandle(type);
 				}
 			}
@@ -811,6 +819,7 @@ public class MethodHandles {
 			if (VarHandle.class.isAssignableFrom(clazz)) {
 				for (AccessMode m : AccessMode.values()) {
 					if (m.methodName().equals(methodName)) {
+						accessCheckArgRetTypes(type);
 						return new VarHandleInvokeGenericHandle(m, type);
 					}
 				}
