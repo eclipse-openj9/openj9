@@ -28,6 +28,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Objects;
 
+/**
+ * This class maintains the directory holding the attach API file artifacts.
+ *
+ */
 public abstract class CommonDirectory {
 	private static final String ATTACH_LOCK = "_attachlock"; //$NON-NLS-1$
 	private static final String COM_IBM_TOOLS_ATTACH_DIRECTORY = "com.ibm.tools.attach.directory"; //$NON-NLS-1$
@@ -38,7 +42,7 @@ public abstract class CommonDirectory {
 	static final int SEMAPHORE_OKAY = 0;
 	private static final String TRASH_PREFIX = ".trash_"; //$NON-NLS-1$
 
-	static final class syncObject {}
+	static final class syncObject { /* empty class for synchronization only. */}
 	private static final syncObject accessorMutex = new syncObject();
 	private static FileLock attachLock;
 	private static File commonDirFile; /* file where all IPC files are held */
@@ -293,6 +297,10 @@ public abstract class CommonDirectory {
 		IPC.destroySemaphore();
 	}
 
+	/**
+	 * Count the number of target directories in the common directory
+	 * @return Number of directories
+	 */
 	public static int countTargetDirectories () {
 		File dir= getCommonDirFileObject();
 
@@ -324,7 +332,6 @@ public abstract class CommonDirectory {
 	 * look for leftover files and directories from previous VMs
 	 */
 	/*[PR Jazz 37778 deleteStaleDirectories was always called with checkProcess=true */
-	@SuppressWarnings("synthetic-access")
 	static void deleteStaleDirectories(String myId) {
 		long myUid = IPC.getUid();
 		File[] vmDirs = getCommonDirFileObject().listFiles(new DirectorySampler());
@@ -414,8 +421,7 @@ public abstract class CommonDirectory {
 			TargetDirectory.deleteTargetDirectory(dirMember.getName());
 		}
 		Advertisement advert;
-		try {
-			FileInputStream propStream = new FileInputStream(advertFile);
+		try (FileInputStream propStream = new FileInputStream(advertFile)) {
 			advert = Advertisement.readAdvertisementFile(propStream); /* throws IOException if file cannot be read */
 			propStream.close();
 		} catch (IOException e) {
@@ -466,13 +472,19 @@ public abstract class CommonDirectory {
 		return masterLock;
 	}
 	
+	/**
+	 * Get the UID of a file's owner
+	 * @param path file path
+	 * @return UID of file owner
+	 */
 	public static native long getFileOwner(String path);
 	
-	private static final class DirectorySampler implements FileFilter {
+	static final class DirectorySampler implements FileFilter {
 
 		private int acceptCount = 16;
 		private long skip;
 		private long range = 2;
+		@Override
 		public boolean accept(File candidate) {
 			if (acceptCount > 0) { /* accept the first N files unconditionally */
 				--acceptCount;
