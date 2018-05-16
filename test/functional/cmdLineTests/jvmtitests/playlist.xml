@@ -45,7 +45,7 @@
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests.xml$(Q) \
 	-explainExcludes \
-	-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>^arch.390</platformRequirements>
 		<levels>
@@ -196,7 +196,7 @@
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests.xml$(Q) \
 	-explainExcludes \
-	-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JAVA_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
 		<platformRequirements>arch.390</platformRequirements>
 		<levels>
