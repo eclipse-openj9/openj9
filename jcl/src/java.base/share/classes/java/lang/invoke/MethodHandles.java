@@ -781,22 +781,10 @@ public class MethodHandles {
 		/*
 		 * Check for methods MethodHandle.invokeExact, MethodHandle.invoke,
 		 * or MethodHandles.varHandleInvoker.  
-		 * Access checks to these methods are not required as these methods are public and therefore
+		 * Access checks are not required as these methods are public and therefore
 		 * accessible to everyone.
-		 * However the access checks to the parameter and return classes are required.
 		 */
-		MethodHandle handleForMHInvokeMethods(Class<?> clazz, String methodName, MethodType type) throws IllegalAccessException {
-			if (INTERNAL_PRIVILEGED != accessMode) {
-				for (Class<?> para : type.arguments) {
-					if (!para.isPrimitive()) {
-						checkClassAccess(para);
-					}
-				}
-				Class<?> rType = type.returnType();
-				if (!rType.isPrimitive()) {
-					checkClassAccess(rType);
-				}
-			}
+		static MethodHandle handleForMHInvokeMethods(Class<?> clazz, String methodName, MethodType type) {
 			if (MethodHandle.class.isAssignableFrom(clazz)) {
 				if (INVOKE_EXACT.equals(methodName)) {
 					return type.getInvokeExactHandle();
