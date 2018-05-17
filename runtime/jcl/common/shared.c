@@ -412,7 +412,7 @@ getURLMethodIDs(JNIEnv* env)
 			(*env)->DeleteLocalRef(env, javaNetURLClassLocalRef);
 			if (NULL == javaNetURLClass) {
 				omrthread_monitor_exit(vm->jclCacheMutex);
-				throwNativeOOMError(env, J9NLS_JCL_OOM_NEW_GLOBAL_REF);
+				vm->internalVMFunctions->throwNativeOOMError(env, J9NLS_JCL_OOM_NEW_GLOBAL_REF);
 				goto _exit;
 			}
 			JCL_CACHE_SET(env, CLS_java_net_URL, javaNetURLClass);
@@ -2226,7 +2226,7 @@ Java_com_ibm_oti_shared_SharedClassUtilities_getSharedCacheInfoImpl(JNIEnv *env,
 		dir = (const jbyte *)(*env)->GetStringUTFChars(env, cacheDir, NULL);
 		if (NULL == dir) {
 			(*env)->ExceptionClear(env);
-			throwNativeOOMError(env, 0, 0);
+			vm->internalVMFunctions->throwNativeOOMError(env, 0, 0);
 			result = -1;
 			goto exit;
 		}
@@ -2267,7 +2267,7 @@ Java_com_ibm_oti_shared_SharedClassUtilities_destroySharedCacheImpl(JNIEnv *env,
 			dir = (const jbyte *)(*env)->GetStringUTFChars(env, cacheDir, NULL);
 			if (NULL == dir) {
 				(*env)->ExceptionClear(env);
-				throwNativeOOMError(env, 0, 0);
+				vm->internalVMFunctions->throwNativeOOMError(env, 0, 0);
 				result = -1;
 				goto exit;
 			}
@@ -2277,7 +2277,7 @@ Java_com_ibm_oti_shared_SharedClassUtilities_destroySharedCacheImpl(JNIEnv *env,
 			name = (const jbyte *)(*env)->GetStringUTFChars(env, cacheName, NULL);
 			if (NULL == name) {
 				(*env)->ExceptionClear(env);
-				throwNativeOOMError(env, 0, 0);
+				vm->internalVMFunctions->throwNativeOOMError(env, 0, 0);
 				result = -1;
 				goto exit;
 			}

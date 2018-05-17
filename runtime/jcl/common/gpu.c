@@ -48,7 +48,7 @@ extractArguments(JNIEnv *env, jintArray argSizes, jlongArray argValues) {
 		jsize i = 0;
 
 		if (NULL == args) {
-			throwNativeOOMError(env, 0, 0);
+			((J9VMThread *)env)->javaVM->internalVMFunctions->throwNativeOOMError(env, 0, 0);
 			return NULL;
 		}
 		/* gather addresses of parameters */

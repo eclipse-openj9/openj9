@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,7 +76,7 @@ initializeJavaLangStringIDCache(JNIEnv* env)
 		globalStringRef = (*env)->NewGlobalRef(env, jStringClass);
 		if (globalStringRef == NULL) {
 			/* out of memory exception thrown */
-			throwNativeOOMError(env, 0, 0);
+			javaVM->internalVMFunctions->throwNativeOOMError(env, 0, 0);
 			return FALSE; 
 		}
 		
@@ -148,7 +148,7 @@ initializeSunReflectConstantPoolIDCache(JNIEnv* env)
 		globalClassRef = (*env)->NewGlobalRef(env, sunReflectConstantPool);
 		if (globalClassRef == NULL) {
 			/* out of memory exception thrown */
-			throwNativeOOMError(env, 0, 0);
+			javaVM->internalVMFunctions->throwNativeOOMError(env, 0, 0);
 			return FALSE; 
 		}
 		
