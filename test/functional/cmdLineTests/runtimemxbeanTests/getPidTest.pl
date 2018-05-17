@@ -32,7 +32,7 @@ my ($in, $out, $err);
 
 my $perlPid;
 
-if ($^O eq 'MSWin32') {
+if ($^O eq 'cygwin') {
 	$perlPid = `wmic process where "name='java.exe'" get ProcessID`;
 	$perlPid =~ s/\D//g;
 }
@@ -41,8 +41,6 @@ else {
 }
 
 my $javaPid = <$out>;
-
-print "$^O\n";
 
 if ($perlPid == $javaPid) {
 	print "PASS: RuntimeMXBean.getPid() returned correct PID.";
