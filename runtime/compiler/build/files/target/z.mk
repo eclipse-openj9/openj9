@@ -28,7 +28,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/ControlFlowEvaluator.cpp \
     omr/compiler/z/codegen/FPTreeEvaluator.cpp \
     omr/compiler/z/codegen/InstOpCode.cpp \
-    omr/compiler/z/codegen/InstOpCodeTables.cpp \
     omr/compiler/z/codegen/OMRCodeGenPhase.cpp \
     omr/compiler/z/codegen/OMRCodeGenerator.cpp \
     omr/compiler/z/codegen/OMRInstruction.cpp \

@@ -20412,7 +20412,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
 
             if (cg->traceBCDCodeGen())
                traceMsg(comp,"\tAccumulating a leading sign type: have to restore the sign code for the copy: signSize %d, signCopyOp %s\n",
-                        signSize,  TR::InstOpCode::binaryEncodings[signCopyOp].name);
+                        signSize,  TR::InstOpCode::metadata[signCopyOp].name);
 
 
             generateSS1Instruction(cg, signCopyOp, node,
