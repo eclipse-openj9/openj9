@@ -100,4 +100,45 @@
 			<subset>SE110</subset>
 		</subsets>
 	</test>
+	<test>
+		<testCaseName>recreateClassTest</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-javaagent:$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
+	-cp $(Q)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)javassist.jar$(Q) \
+	junit.textui.TestRunner com.ibm.j9.recreateclass.tests.RecreateClassTestSuite; \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>SE80</subset>
+		</subsets>
+		<disabled>excluded OpenJ9 tests</disabled>
+	</test>
+
+	<test>
+		<testCaseName>CFdumptest</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)junit4.jar$(Q) \
+	junit.textui.TestRunner com.ibm.j9.cfdump.tests.CfdumpTestSuite; \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>SE80</subset>
+		</subsets>
+		
+	<disabled>excluded OpenJ9 tests</disabled>
+	</test>
+
 </playlist>
