@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,7 +123,7 @@ public class J9ObjectHelper
 
 	public static String stringValue(J9ObjectPointer objPointer) throws CorruptDataException 
 	{
-		if(!J9ObjectHelper.getClassName(objPointer).equals("java/lang/String")) {
+		if (!J9ObjectHelper.getClassName(objPointer).equals("java/lang/String")) {
 			throw new IllegalArgumentException();
 		}
 		
@@ -149,44 +149,45 @@ public class J9ObjectHelper
 			return "<Uninitialized String>";
 		}
 		
-		int offset = 0;
-		int count = getIntField(objPointer, getFieldOffset(objPointer, "count","I"));
+		int stringLength = 0;
 		
 		boolean isStringCompressed = false;
-		
-		AlgorithmVersion version = AlgorithmVersion.getVersionOf(AlgorithmVersion.STRING_COMPRESSION_VERSION);
-		
-		switch (version.getAlgorithmVersion()) {
-			case 1:
-				boolean enableCompression = getBooleanField(objPointer, getFieldOffset(objPointer, "enableCompression", "Z"));
-				
-				if (enableCompression) {
-					if (count >= 0) {
-						isStringCompressed = true;
-					} else {
-						count = count & 0x7FFFFFFF;
-					}
-				}
-				break;
-			
-			default:
-				offset = getIntField(objPointer, getFieldOffset(objPointer, "offset", "I"));
-				break;
-		}
-		
-		char[] charValue = new char[count];
-		
+
 		J9IndexableObjectPointer valueArray = J9IndexableObjectPointer.cast(valueObject);
 		
 		if (isStringBackedByByteArray.booleanValue()) {
+			byte coder = getByteField(objPointer, getFieldOffset(objPointer, "coder", "B"));
+
+			isStringCompressed = coder == 0;
+
 			byte[] value = (byte[]) J9IndexableObjectHelper.getData(valueArray);
-			
+
+			stringLength = value.length >> coder;
+		} else {
+			stringLength = getIntField(objPointer, getFieldOffset(objPointer, "count", "I"));
+
+			boolean enableCompression = getBooleanField(objPointer, getFieldOffset(objPointer, "enableCompression", "Z"));
+
+			if (enableCompression) {
+				if (stringLength >= 0) {
+					isStringCompressed = true;
+				} else {
+					stringLength = stringLength & 0x7FFFFFFF;
+				}
+			}
+		}
+
+		char[] charValue = new char[stringLength];
+		
+		if (isStringBackedByByteArray.booleanValue()) {
+			byte[] value = (byte[]) J9IndexableObjectHelper.getData(valueArray);
+
 			if (isStringCompressed) {
-				for (int i = 0; i < count; ++i) {
+				for (int i = 0; i < stringLength; ++i) {
 					charValue[i] = byteToCharUnsigned(getByteFromArrayByIndex(value, i));
 				}
 			} else {
-				for (int i = 0; i < count; ++i) {
+				for (int i = 0; i < stringLength; ++i) {
 					charValue[i] = getCharFromArrayByIndex(value, i);
 				}
 			}
@@ -194,17 +195,17 @@ public class J9ObjectHelper
 			char[] value = (char[]) J9IndexableObjectHelper.getData(valueArray);
 			
 			if (isStringCompressed) {
-				for (int i = 0; i < count; ++i) {
+				for (int i = 0; i < stringLength; ++i) {
 					charValue[i] = byteToCharUnsigned(getByteFromArrayByIndex(value, i));
 				}
 			} else {
-				for (int i = 0; i < count; ++i) {
+				for (int i = 0; i < stringLength; ++i) {
 					charValue[i] = getCharFromArrayByIndex(value, i);
 				}
 			}
 		}
 		
-		return new String(charValue, offset, count);		
+		return new String(charValue);		
 	}
 	
 	/**
