@@ -64,6 +64,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.ibm.j9ddr.CTypeParser;
 import com.ibm.j9ddr.StructureReader;
@@ -122,6 +124,7 @@ public class PointerGenerator {
 		opts.put("-h", null);		// helper class location - optional
 		opts.put("-u", "true");		// flag to control if user code is supported or not, default is true
 		opts.put("-c", "");			// optional value to provide a cache properties file
+		opts.put("-l", "false");	// flag to determine if legacy DDR is used, default is false
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -713,16 +716,19 @@ public class PointerGenerator {
 	 *
 	 * You only have to add methods that would be generated but need to be altered
 	 * by the user to contain a different return type.
+	 * 
+	 * Also removes anonymous fields generated on AIX which start with illegal 
+	 * characters (#)
 	 *
 	 * There is likely a MUCH better way to do this.
 	 *
 	 * @param structure
 	 * @param fieldDescriptor
-	 * @return
+	 * @return boolean indicating if the field should be omitted
 	 */
-	private boolean omitFieldImplementation(StructureDescriptor structure, FieldDescriptor field) {
+	static boolean omitFieldImplementation(StructureDescriptor structure, FieldDescriptor field) {
 		String name = structure.getPointerName() + "." + field.getName();
-		return omitList.contains(name);
+		return omitList.contains(name) || name.contains("#");
 	}
 
 	private void writeMethodSignature(PrintWriter writer, String returnType, String getter, FieldDescriptor field, boolean fieldAccessor) {
@@ -789,18 +795,22 @@ public class PointerGenerator {
 		writeMethodClose(writer);
 	}
 
-	public static String getOffsetConstant(FieldDescriptor fieldDescriptor) {
+	private String getOffsetConstant(FieldDescriptor fieldDescriptor) {
 		String fieldName = fieldDescriptor.getName();
-		int index = fieldName.indexOf("_v");
-		if (index == -1) {
-			return fieldName;
+		if (opts.get("-l").equals("true")) {
+			return getOffsetConstant(fieldName);
 		}
+		return fieldName;
+	}
 
-		if (Character.isDigit(fieldName.charAt(index + 2))) {
-			return fieldName.substring(0, index);
-		} else {
-			return fieldName;
+	private final static Pattern offsetPattern = Pattern.compile("^(.+)_v\\d+$");
+
+	public static String getOffsetConstant(String fieldName) {
+		Matcher matcher = offsetPattern.matcher(fieldName);
+		if (matcher.matches()) {
+			return matcher.group(1);
 		}
+		return fieldName;
 	}
 
 	private void writeSRPEAMethod(PrintWriter writer, String returnType, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
@@ -1608,7 +1618,7 @@ public class PointerGenerator {
 	 * Print usage help to stdout
 	 */
 	private static void printHelp() {
-		System.out.println("Usage :\n\njava PointerGenerator -p <package name> -o <output path> -f <path to structure file> -v <vm version> [-s <superset file name> -h <helper class package> -u <user code support> -c <cache properties>]\n");
+		System.out.println("Usage :\n\njava PointerGenerator -p <package name> -o <output path> -f <path to structure file> -v <vm version> [-s <superset file name> -h <helper class package> -u <user code support> -c <cache properties> -l <legacy mode>]\n");
 		System.out.println("<package name>           : the package name for all the generated classes e.g. com.ibm.j9ddr.vm.pointer.generated");
 		System.out.println("<relative output path>   : where to write out the class files.  Full path to base of package hierarchy e.g. c:\\src\\");
 		System.out.println("<path to structure file> : full path to the J9 structure file");
@@ -1617,6 +1627,7 @@ public class PointerGenerator {
 		System.out.println("<helper class package>   : optional package for pointer helper files to be generated in from user code");
 		System.out.println("<user code support>      : optional set to true or false to enable or disable user code support in the generated pointers, default if not specified is true");
 		System.out.println("<cache properties>       : optional properties file which controls the class and field caching of generated pointers");
+		System.out.println("<legacy mode>            : optional flag set to true or false indicating if legacy DDR is used");
 	}
 
 	/**

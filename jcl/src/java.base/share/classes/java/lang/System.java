@@ -417,8 +417,10 @@ private static void ensureProperties() {
 	sun.misc.Version.init();
 	/*[ENDIF] Sidecar19-SE */
 
+	/*[IF !Sidecar19-SE]*/
 	StringBuffer.initFromSystemProperties(systemProperties);
 	StringBuilder.initFromSystemProperties(systemProperties);
+	/*[ENDIF]*/
 
 	String javaRuntimeVersion = systemProperties.getProperty("java.runtime.version"); //$NON-NLS-1$
 	if (null != javaRuntimeVersion) {

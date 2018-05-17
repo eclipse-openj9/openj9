@@ -2154,7 +2154,7 @@ public String toGenericString() {
 	
 	// Build generic string
 	result.append(Modifier.toString(modifiers));
-	if (result.lengthInternal() > 0) {
+	if (result.length() > 0) {
 		result.append(' ');
 	}
 	result.append(kindOfType);

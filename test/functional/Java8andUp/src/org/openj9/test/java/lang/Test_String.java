@@ -23,6 +23,7 @@ package org.openj9.test.java.lang;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+import org.openj9.test.util.VersionCheck;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 import org.testng.Assert;
@@ -1206,10 +1207,11 @@ public class Test_String {
 	}
 
 	/**
-	 * @tests java.lang.String#toLowerCase(java.util.Locale)
+	 * @tests java.lang.String#toLowerCase(java.util.Locale) using different Unicode standards depending on what Java
+	 *        version we are executing on
 	 */
 	@Test
-	public void test_toLowerCase3() {
+	public void test_toLowerCase_lithuanian() {
 		String lower1 = "\ud801\udc00".toLowerCase(Locale.US);
 		AssertJUnit.assertTrue("Wrong surrogate conversion: " + writeString(lower1), lower1.equals("\ud801\udc28"));
 
@@ -1221,8 +1223,24 @@ public class Test_String {
 		AssertJUnit.assertTrue("Wrong conversion 0xcc", "\u00cc".toLowerCase(Locale.US).equals("\u00ec"));
 		AssertJUnit.assertTrue("Wrong conversion 0xcd", "\u00cd".toLowerCase(Locale.US).equals("\u00ed"));
 		AssertJUnit.assertTrue("Wrong conversion 0x128", "\u0128".toLowerCase(Locale.US).equals("\u0129"));
-		String startCombiningAbove = "\u0300\u033d\u0346\u034a\u0350\u0357\u0363\u0483\u0592\u0597\u059c\u05a8\u05ab\u05af\u05c4\u0610\u0653\u0657\u06d6\u06df\u06e4\u06e7\u06eb\u0730\u0732\u0735\u073a\u073d\u073f\u0743\u0745\u0747\u0749\u0951\u0953\u0f82\u0f86\u17dd\u193a\u20d0\u20d4\u20db\u20e1\u20e7\u20e9\ufe20";
-		String endCombiningAbove = "\u0314\u0344\u0346\u034c\u0352\u0357\u036f\u0486\u0595\u0599\u05a1\u05a9\u05ac\u05af\u05c4\u0615\u0654\u0658\u06dc\u06e2\u06e4\u06e8\u06ec\u0730\u0733\u0736\u073a\u073d\u0741\u0743\u0745\u0747\u074a\u0951\u0954\u0f83\u0f87\u17dd\u193a\u20d1\u20d7\u20dc\u20e1\u20e7\u20e9\ufe23";
+
+		String startCombiningAbove = null;
+		String endCombiningAbove = null;
+
+		int javaMajorVersion = VersionCheck.major();
+
+		switch (javaMajorVersion) {
+			case 8:
+				startCombiningAbove = "\u0300\u033D\u0346\u034A\u0350\u0357\u035B\u0363\u0483\u0592\u0597\u059C\u05A8\u05AB\u05AF\u05C4\u0610\u0653\u0657\u065D\u06D6\u06DF\u06E4\u06E7\u06EB\u0730\u0732\u0735\u073A\u073D\u073F\u0743\u0745\u0747\u0749\u07EB\u07F3\u0816\u081B\u0825\u0829\u08E4\u08E7\u08EA\u08F3\u08F7\u08FB\u0951\u0953\u0F82\u0F86\u135D\u17DD\u193A\u1A17\u1A75\u1B6B\u1B6D\u1CD0\u1CDA\u1CE0\u1CF4\u1DC0\u1DC3\u1DCB\u1DD1\u1DFE\u20D0\u20D4\u20DB\u20E1\u20E7\u20E9\u20F0\u2CEF\u2DE0\uA66F\uA674\uA69F\uA6F0\uA8E0\uAAB0\uAAB2\uAAB7\uAABE\uAAC1\uFE20";
+				endCombiningAbove = "\u0314\u0344\u0346\u034C\u0352\u0357\u035B\u036F\u0487\u0595\u0599\u05A1\u05A9\u05AC\u05AF\u05C4\u0617\u0654\u065B\u065E\u06DC\u06E2\u06E4\u06E8\u06EC\u0730\u0733\u0736\u073A\u073D\u0741\u0743\u0745\u0747\u074A\u07F1\u07F3\u0819\u0823\u0827\u082D\u08E5\u08E8\u08EC\u08F5\u08F8\u08FE\u0951\u0954\u0F83\u0F87\u135F\u17DD\u193A\u1A17\u1A7C\u1B6B\u1B73\u1CD2\u1CDB\u1CE0\u1CF4\u1DC1\u1DC9\u1DCC\u1DE6\u1DFE\u20D1\u20D7\u20DC\u20E1\u20E7\u20E9\u20F0\u2CF1\u2DFF\uA66F\uA67D\uA69F\uA6F1\uA8F1\uAAB0\uAAB3\uAAB8\uAABF\uAAC1\uFE26";
+				break;
+
+			default:
+				startCombiningAbove = "\u0300\u033D\u0346\u034A\u0350\u0357\u035B\u0363\u0483\u0592\u0597\u059C\u05A8\u05AB\u05AF\u05C4\u0610\u0653\u0657\u065D\u06D6\u06DF\u06E4\u06E7\u06EB\u0730\u0732\u0735\u073A\u073D\u073F\u0743\u0745\u0747\u0749\u07EB\u07F3\u0816\u081B\u0825\u0829\u08E4\u08E7\u08EA\u08F3\u08F7\u08FB\u0951\u0953\u0F82\u0F86\u135D\u17DD\u193A\u1A17\u1A75\u1AB0\u1ABB\u1B6B\u1B6D\u1CD0\u1CDA\u1CE0\u1CF4\u1CF8\u1DC0\u1DC3\u1DCB\u1DD1\u1DFE\u20D0\u20D4\u20DB\u20E1\u20E7\u20E9\u20F0\u2CEF\u2DE0\uA66F\uA674\uA69E\uA6F0\uA8E0\uAAB0\uAAB2\uAAB7\uAABE\uAAC1\uFE20\uFE2E";
+				endCombiningAbove = "\u0314\u0344\u0346\u034C\u0352\u0357\u035B\u036F\u0487\u0595\u0599\u05A1\u05A9\u05AC\u05AF\u05C4\u0617\u0654\u065B\u065E\u06DC\u06E2\u06E4\u06E8\u06EC\u0730\u0733\u0736\u073A\u073D\u0741\u0743\u0745\u0747\u074A\u07F1\u07F3\u0819\u0823\u0827\u082D\u08E5\u08E8\u08EC\u08F5\u08F8\u08FF\u0951\u0954\u0F83\u0F87\u135F\u17DD\u193A\u1A17\u1A7C\u1AB4\u1ABC\u1B6B\u1B73\u1CD2\u1CDB\u1CE0\u1CF4\u1CF9\u1DC1\u1DC9\u1DCC\u1DF5\u1DFE\u20D1\u20D7\u20DC\u20E1\u20E7\u20E9\u20F0\u2CF1\u2DFF\uA66F\uA67D\uA69F\uA6F1\uA8F1\uAAB0\uAAB3\uAAB8\uAABF\uAAC1\uFE26\uFE2F";
+				break;
+		}
+
 		boolean[] accents = new boolean[0x10ffff];
 		for (int combining = 0; combining < startCombiningAbove.length(); combining++) {
 			for (int accent = startCombiningAbove.charAt(combining); accent <= endCombiningAbove
@@ -1230,9 +1248,36 @@ public class Test_String {
 				accents[accent] = true;
 			}
 		}
+
+		accents[0x10A0F] = true;
+		accents[0x10A38] = true;
+
+		if (javaMajorVersion >= 9) {
+			accents[0x10AE5] = true;
+		}
+		
+		if (javaMajorVersion >= 9) {
+			for (int i = 0x10376; i <= 0x1037A; i++)
+				accents[i] = true;
+		}
+
+		for (int i = 0x11100; i <= 0x11102; i++)
+			accents[i] = true;
+
+		if (javaMajorVersion >= 9) {
+			for (int i = 0x11366; i <= 0x1136C; i++)
+				accents[i] = true;
+			for (int i = 0x11370; i <= 0x11374; i++)
+				accents[i] = true;
+			for (int i = 0x16B30; i <= 0x16B36; i++)
+				accents[i] = true;
+		}
+
 		for (int i = 0x1d185; i <= 0x1d189; i++)
 			accents[i] = true;
 		for (int i = 0x1d1aa; i <= 0x1d1ad; i++)
+			accents[i] = true;
+		for (int i = 0x1d242; i <= 0x1d244; i++)
 			accents[i] = true;
 		for (int i = 0; i < 0x10ffff; i++) {
 			String testChar;
@@ -1276,7 +1321,6 @@ public class Test_String {
 					result.equals(expected));
 		}
 	}
-
 
 	/**
 	 * @tests java.lang.String#toLowerCase(java.util.Locale)
