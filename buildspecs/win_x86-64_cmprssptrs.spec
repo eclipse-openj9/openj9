@@ -134,7 +134,6 @@
 		<flag id="build_j2se" value="true"/>
 		<flag id="build_java8" value="true"/>
 		<flag id="build_java9" value="true"/>
-		<flag id="build_newCompiler" value="true"/>
 		<flag id="build_openj9" value="true"/>
 		<flag id="build_openj9JDK8" value="true"/>
 		<flag id="build_ouncemake" value="true"/>
