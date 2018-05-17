@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -509,7 +509,7 @@ typedef struct HyPortLibrary
   I_32 (*sig_can_protect) (struct HyPortLibrary * portLibrary,
                                   U_32 flags);
   /** see @ref hysig.c::hysig_set_async_signal_handler "hysig_set_async_signal_handler"*/
-  U_32 (*sig_set_async_signal_handler) (struct HyPortLibrary *
+  I_32 (*sig_set_async_signal_handler) (struct HyPortLibrary *
                                               portLibrary,
                                               hysig_handler_fn handler,
                                               void *handler_arg,

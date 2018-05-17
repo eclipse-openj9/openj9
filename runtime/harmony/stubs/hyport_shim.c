@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -990,7 +990,7 @@ hystub_sig_can_protect(struct HyPortLibrary *portLibrary, U_32 flags)
 	return j9sig_can_protect(flags);
 }
 
-U_32
+I_32
 hystub_sig_set_async_signal_handler(struct HyPortLibrary *portLibrary, hysig_handler_fn handler, void *handler_arg, U_32 flags)
 {
 	PORT_ACCESS_FROM_PORT((J9PortLibrary *)portLibrary->self_handle);

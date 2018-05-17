@@ -531,8 +531,8 @@ cnathelp$(UMA_DOT_O):cnathelp.cpp
 	$(CXX) $(CXXFLAGS) -mstackrealign -c $<
 </#if>
 
-# special handling for cnathelp.cpp to disable buffer security check in windows for JIT helpers
-<#if uma.spec.flags.build_newCompiler.enabled && uma.spec.type.windows>	
+# JIT helper methods require us to disable buffer security checks on Windows
+<#if uma.spec.type.windows>
 cnathelp$(UMA_DOT_O):cnathelp.cpp
 	$(CXX) $(CXXFLAGS) /GS- -c $<
 SharedService$(UMA_DOT_O):SharedService.c

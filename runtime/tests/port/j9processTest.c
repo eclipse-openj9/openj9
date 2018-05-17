@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -290,7 +290,7 @@ setTestProcessGroupSignalHandler(struct J9PortLibrary *portLibrary)
  		rc = 0;
  	}
 #else /* defined(WIN32) */
- 	U_32 setAsyncRC = J9PORT_SIG_ERROR;
+ 	I_32 setAsyncRC = J9PORT_SIG_ERROR;
 	setAsyncRC = j9sig_set_async_signal_handler(processGroupSignalHandler, NULL, J9PORT_SIG_FLAG_SIGQUIT);
 	if (J9PORT_SIG_ERROR == setAsyncRC) {
 		rc = -1;
