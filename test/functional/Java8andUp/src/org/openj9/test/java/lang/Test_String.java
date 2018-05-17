@@ -1869,5 +1869,29 @@ public class Test_String {
 		}
 	}
 
+	/**
+	 * @tests java.lang.String#replaceAll(String, String)
+	 */
+	@Test
+	public void test_replaceAll_last_char_dollarsign() {
+		try {
+			"1a2b3c".replaceAll("[0-9]", "$");
+			Assert.fail("IAE should be thrown if `$` is the last character in replacement string!");
+		} catch (IllegalArgumentException iie) {
+			// expected
+		}
+	}
+	/**
+	 * @tests java.lang.String#replaceAll(String, String)
+	 */
+	@Test
+	public void test_replaceAll_last_char_backslash() {
+		try {
+			"1a2b3c".replaceAll("[0-9]", "\\");
+			Assert.fail("IAE should be thrown if `\\` is the last character in replacement string!");
+		} catch (IllegalArgumentException iie) {
+			// expected
+		}
+	}
 
 }
