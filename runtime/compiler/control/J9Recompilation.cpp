@@ -622,7 +622,7 @@ TR_PersistentMethodInfo::get(TR_ResolvedMethod * feMethod)
    if (feMethod->isInterpreted() || feMethod->isJITInternalNative())
       return 0;
 
-   TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*) feMethod)->getJittedBodyInfo();
+   TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*) feMethod)->getExistingJittedBodyInfo();
    return bodyInfo ? bodyInfo->getMethodInfo() : 0;
    }
 
@@ -734,10 +734,10 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
 
 // used for JaaS
 TR_PersistentJittedBodyInfo *
-J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr)
+J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory *trMemory)
    {
-   auto bodyInfo = (TR_PersistentJittedBodyInfo*) TR::comp()->trMemory()->allocateHeapMemory(sizeof(TR_PersistentJittedBodyInfo), TR_MemoryBase::Recompilation);
-   auto methodInfo = (TR_PersistentMethodInfo*) TR::comp()->trMemory()->allocateHeapMemory(sizeof(TR_PersistentMethodInfo), TR_MemoryBase::Recompilation);
+   auto bodyInfo = (TR_PersistentJittedBodyInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentJittedBodyInfo), TR_MemoryBase::Recompilation);
+   auto methodInfo = (TR_PersistentMethodInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentMethodInfo), TR_MemoryBase::Recompilation);
    memcpy(bodyInfo, &bodyInfoStr[0], sizeof(TR_PersistentJittedBodyInfo));
    memcpy(methodInfo, &methodInfoStr[0], sizeof(TR_PersistentMethodInfo));
    bodyInfo->setMethodInfo(methodInfo);

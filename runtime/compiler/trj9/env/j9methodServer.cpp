@@ -50,7 +50,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    TR_ResolvedJ9Method* owningMethodMirror = owningMethod ? ((TR_ResolvedJ9JAASServerMethod*) owningMethod)->_remoteMirror : nullptr;
    _stream->write(JAAS::J9ServerMessageType::mirrorResolvedJ9Method, aMethod, owningMethodMirror, vTableSlot);
    auto recv = _stream->read<TR_ResolvedJ9Method*, J9RAMConstantPoolItem*, J9Class*, uint64_t, uintptrj_t, void*, bool, bool, 
-      TR::RecognizedMethod, TR::RecognizedMethod, void*, bool, void*, J9ClassLoader*>();
+      TR::RecognizedMethod, TR::RecognizedMethod, void*, bool, void*, J9ClassLoader*, std::string, std::string>();
 
    _remoteMirror = std::get<0>(recv);
 
@@ -78,6 +78,10 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    _virtualMethodIsOverridden = std::get<11>(recv);
    _addressContainingIsOverriddenBit = std::get<12>(recv);
    _classLoader = std::get<13>(recv);
+
+   auto &bodyInfoStr = std::get<14>(recv);
+   auto &methodInfoStr = std::get<15>(recv);
+   _bodyInfo = J9::Recompilation::persistentJittedBodyInfoFromString(bodyInfoStr, methodInfoStr, trMemory);
  
    // initialization from TR_J9Method constructor
    _className = J9ROMCLASS_CLASSNAME(_romClass);
@@ -865,12 +869,8 @@ TR_ResolvedJ9JAASServerMethod::classOfMethod()
       }
 
 TR_PersistentJittedBodyInfo *
-TR_ResolvedJ9JAASServerMethod::getJittedBodyInfo()
+TR_ResolvedJ9JAASServerMethod::getExistingJittedBodyInfo()
    {
-   _stream->write(JAAS::J9ServerMessageType::ResolvedMethod_getJittedBodyInfo, _remoteMirror);
-   auto recv = _stream->read<std::string, std::string>();
-   auto &bodyInfoStr = std::get<0>(recv);
-   auto &methodInfoStr = std::get<1>(recv);
-   return J9::Recompilation::persistentJittedBodyInfoFromString(bodyInfoStr, methodInfoStr);
+   return _bodyInfo; // return cached value
    }
 

@@ -67,7 +67,7 @@ public:
    virtual bool methodIsNotzAAPEligible() override;
    virtual void setClassForNewInstance(J9Class *c) override;
    virtual TR_OpaqueClassBlock * classOfMethod() override;
-   virtual TR_PersistentJittedBodyInfo *getJittedBodyInfo() override;
+   virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo() override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    bool inROMClass(void *address);
@@ -84,7 +84,8 @@ private:
    bool _isInterpreted; // cached information coming from client
    bool _isMethodInValidLibrary;
    bool _virtualMethodIsOverridden; // cached information coming from client
-  
+   TR_PersistentJittedBodyInfo *_bodyInfo; // cached info coming from the client; uses heap memory
+                                           // If method is not yet compiled this is null
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);

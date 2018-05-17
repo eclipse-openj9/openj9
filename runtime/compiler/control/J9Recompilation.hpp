@@ -133,7 +133,7 @@ public:
    static int32_t jitRecompilationsInduced;
 
    // used for JaaS
-   static TR_PersistentJittedBodyInfo * persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr);
+   static TR_PersistentJittedBodyInfo * persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory * trMemory);
 
 protected:
    static int32_t limitMethodsCompiled;

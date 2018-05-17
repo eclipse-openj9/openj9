@@ -5266,7 +5266,7 @@ TR_ResolvedJ9Method::startAddressForJITInternalNativeMethod()
    }
 
 TR_PersistentJittedBodyInfo *
-TR_ResolvedJ9Method::getJittedBodyInfo()
+TR_ResolvedJ9Method::getExistingJittedBodyInfo()
    {
    void *methodAddress = startAddressForInterpreterOfJittedMethod();
    return TR::Recompilation::getJittedBodyInfoFromPC(methodAddress);

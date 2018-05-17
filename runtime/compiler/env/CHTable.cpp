@@ -831,7 +831,7 @@ bool CollectCompiledImplementors::visitSubclass(TR_PersistentClassInfo *cl)
             }
          else
             {
-            TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) _implArray[_count - 1])->getJittedBodyInfo();
+            TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) _implArray[_count - 1])->getExistingJittedBodyInfo();
             if (!bodyInfo || bodyInfo->getHotness() < _hotness)
                {
                _count -= 1;

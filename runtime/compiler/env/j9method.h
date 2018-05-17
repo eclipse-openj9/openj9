@@ -491,7 +491,7 @@ public:
    virtual bool                  owningMethodDoesntMatter();
    virtual bool isMethodInValidLibrary();
 
-   virtual TR_PersistentJittedBodyInfo *getJittedBodyInfo();
+   virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo();
 
 protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }

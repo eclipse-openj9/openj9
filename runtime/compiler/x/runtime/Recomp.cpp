@@ -107,11 +107,12 @@ TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *st
    {
    if (auto stream = TR::CompilationInfo::getStream())
       {
+      TR_ASSERT(TR::comp(), "Must be used during compilation when calling getJittedBodyInfoFromPC on the server");
       stream->write(JAAS::J9ServerMessageType::Recompilation_getJittedBodyInfoFromPC, startPC);
       auto recv = stream->read<std::string, std::string>();
       auto &bodyInfoStr = std::get<0>(recv);
       auto &methodInfoStr = std::get<1>(recv);
-      return J9::Recompilation::persistentJittedBodyInfoFromString(bodyInfoStr, methodInfoStr);
+      return J9::Recompilation::persistentJittedBodyInfoFromString(bodyInfoStr, methodInfoStr, TR::comp()->trMemory());
       }
    // The body info pointer is stored in the pre-prologue of the method. The
    // location of the field depends upon the type of the method header.  Use the

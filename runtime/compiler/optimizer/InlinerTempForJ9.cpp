@@ -3036,7 +3036,7 @@ TR_MultipleCallTargetInliner::walkCallSites(TR::ResolvedMethodSymbol * callerSym
                         {
                         if (TR::Compiler->mtd.isCompiledMethod(callsite->getTarget(i)->_calleeSymbol->getResolvedMethod()->getPersistentIdentifier()))
                            {
-                           TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) callsite->getTarget(i)->_calleeSymbol->getResolvedMethodSymbol()->getResolvedMethod())->getJittedBodyInfo();
+                           TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) callsite->getTarget(i)->_calleeSymbol->getResolvedMethodSymbol()->getResolvedMethod())->getExistingJittedBodyInfo();
                            if (bodyInfo &&
                                bodyInfo->getHotness() < warm &&
                                !bodyInfo->getIsProfilingBody())
@@ -4139,7 +4139,7 @@ bool TR_MultipleCallTargetInliner::isLargeCompiledMethod(TR_ResolvedMethod *call
    TR_OpaqueMethodBlock* methodCallee = calleeResolvedMethod->getPersistentIdentifier();
    if (TR::Compiler->mtd.isCompiledMethod(methodCallee))
       {
-      TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) calleeResolvedMethod)->getJittedBodyInfo();
+      TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) calleeResolvedMethod)->getExistingJittedBodyInfo();
       if ((comp()->getMethodHotness() <= warm))
          {
          if (bodyInfo &&
@@ -4222,7 +4222,7 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
       TR_PersistentJittedBodyInfo *bodyInfo = NULL;
       if (!calleeResolvedMethod->isInterpreted() && !calleeResolvedMethod->isJITInternalNative())
          {
-         bodyInfo = ((TR_ResolvedJ9Method*) calleeResolvedMethod)->getJittedBodyInfo();
+         bodyInfo = ((TR_ResolvedJ9Method*) calleeResolvedMethod)->getExistingJittedBodyInfo();
          }
       if (((!bodyInfo && !calleeResolvedMethod->isInterpreted() && !calleeResolvedMethod->isJITInternalNative()) //jitted method without bodyInfo must be scorching 
          || (bodyInfo && bodyInfo->getHotness() == scorching)

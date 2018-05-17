@@ -923,9 +923,18 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          void *addressContainingIsOverriddenBit = resolvedMethod->addressContainingIsOverriddenBit();
          J9ClassLoader *classLoader = resolvedMethod->getClassLoader();
 
+         TR_PersistentJittedBodyInfo *bodyInfo = nullptr;
+         // Method may not have been compiled
+         if (!resolvedMethod->isInterpreted() && !resolvedMethod->isJITInternalNative())
+            {
+            bodyInfo = resolvedMethod->getExistingJittedBodyInfo();
+            }
+         std::string jbi = bodyInfo ? std::string((char*)bodyInfo, sizeof(TR_PersistentJittedBodyInfo)) : std::string();
+         std::string methodInfo = bodyInfo ? std::string((char*)bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
+         
          client->write(resolvedMethod, literals, cpHdr, methodIndex, jniProps, jniTargetAddr, isInterpreted, isMethodInValidLibrary, 
                        mandatoryRm, rm, startAddressForJittedMethod, virtualMethodIsOverridden, addressContainingIsOverriddenBit,
-                       classLoader);
+                       classLoader, jbi, methodInfo);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods:
