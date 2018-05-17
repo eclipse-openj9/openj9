@@ -150,10 +150,6 @@ endif
 <#if uma.spec.processor.amd64>
   CFLAGS+=-D_AMD64_=1 -DWIN64 -D_WIN64 -DJ9HAMMER
   CXXFLAGS+=-D_AMD64_=1 -DWIN64 -D_WIN64 -DJ9HAMMER
-  <#if !uma.spec.flags.build_newCompiler.enabled>
-    CFLAGS+=/FIPRE64PRA.H -Wp64
-    CXXFLAGS+=/FIPRE64PRA.H -Wp64
-  </#if>
   ifdef USE_MINGW
     MINGW_CXXFLAGS+=-D_AMD64_=1 -DWIN64 -D_WIN64 -DJ9HAMMER
   endif
