@@ -770,3 +770,5 @@ TraceException=Trc_VM_failedtoAllocateGuardPage noEnv Overhead=1 Level=1 Templat
 
 TraceException=Trc_VM_registerPredefinedHandler_invalidPortlibSignalFlag NoEnv Overhead=1 Level=1 Template="registerPredefinedHandler - invalid portlib signal flag: %zu"
 TraceEvent=Trc_VM_signalDispatch_signalValue Overhead=1 Level=3 Template="signalDispatch - signal value: %d"
+
+TraceException=Trc_VM_registerOSHandler_invalidPortlibSignalFlag NoEnv Overhead=1 Level=1 Template="registerOSHandler - invalid portlib signal flag: %zu"

@@ -4817,6 +4817,7 @@ typedef struct J9InternalVMFunctions {
 	void ( *flushProcessWriteBuffers)(struct J9JavaVM *vm);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 	IDATA ( *registerPredefinedHandler)(struct J9JavaVM *vm, U_32 signal, void **oldOSHandler);
+	IDATA ( *registerOSHandler)(struct J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHandler);
 } J9InternalVMFunctions;
 
 

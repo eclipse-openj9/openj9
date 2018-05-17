@@ -610,7 +610,7 @@ freeJavaVM(J9JavaVM * vm)
 #endif
 
 	/* Remove the predefinedHandlerWrapper. */
-	j9sig_set_async_signal_handler(predefinedHandlerWrapper, vm, 0);
+	j9sig_set_single_async_signal_handler(predefinedHandlerWrapper, vm, 0, NULL);
 
 	/* Unload before trace engine exits */
 	UT_MODULE_UNLOADED(J9_UTINTERFACE_FROM_VM(vm));
@@ -6231,13 +6231,14 @@ shutDownHookWrapper(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo
  * Invoke jdk.internal.misc.Signal.dispatch(int number) in Java 9 and
  * onwards. Invoke sun.misc.Signal.dispatch(int number) in Java 8.
  *
- * @param vmThread pointer to a J9VMThread
- * @param signal integer value of the signal
+ * @param[in] vmThread pointer to a J9VMThread
+ * @param[in] signal integer value of the signal
  *
  * @return void
  */
 static void
-signalDispatch(J9VMThread *vmThread, I_32 signal) {
+signalDispatch(J9VMThread *vmThread, I_32 signal)
+{
 	J9JavaVM *vm = vmThread->javaVM;
 	J9NameAndSignature nas = {0};
 	I_32 args[] = {signal};
@@ -6265,16 +6266,17 @@ signalDispatch(J9VMThread *vmThread, I_32 signal) {
  * in omrsignal.c once registered using j9sig_set_*async_signal_handler
  * for a specific signal.
  *
- * @param portLibrary the port library
- * @param gpType port library signal flag
- * @param gpInfo GPF information (will be NULL in this case)
- * @param userData user data (will be a pointer to J9JavaVM in this case)
+ * @param[in] portLibrary the port library
+ * @param[in] gpType port library signal flag
+ * @param[in] gpInfo GPF information (will be NULL in this case)
+ * @param[in] userData user data (will be a pointer to J9JavaVM in this case)
  *
  * @return 0 on success and non-zero on failure
  *
  */
 static UDATA
-predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *userData) {
+predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *userData)
+{
 	J9JavaVM *vm = (J9JavaVM *)userData;
 	J9JavaVMAttachArgs attachArgs = {0};
 	J9VMThread *vmThread = NULL;
@@ -6323,7 +6325,8 @@ predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *g
 }
 
 IDATA
-registerPredefinedHandler(J9JavaVM *vm, U_32 signal, void **oldOSHandler) {
+registerPredefinedHandler(J9JavaVM *vm, U_32 signal, void **oldOSHandler)
+{
 	IDATA rc = 0;
 	U_32 portlibSignalFlag = 0;
 
@@ -6334,6 +6337,24 @@ registerPredefinedHandler(J9JavaVM *vm, U_32 signal, void **oldOSHandler) {
 		rc = j9sig_set_single_async_signal_handler(predefinedHandlerWrapper, vm, portlibSignalFlag, oldOSHandler);
 	} else {
 		Trc_VM_registerPredefinedHandler_invalidPortlibSignalFlag(portlibSignalFlag);
+	}
+
+	return rc;
+}
+
+IDATA
+registerOSHandler(J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHandler)
+{
+	IDATA rc = 0;
+	U_32 portlibSignalFlag = 0;
+
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	portlibSignalFlag = j9sig_map_os_signal_to_portlib_signal(signal);
+	if (0 != portlibSignalFlag) {
+		rc = j9sig_register_os_handler(portlibSignalFlag, newOSHandler, oldOSHandler);
+	} else {
+		Trc_VM_registerOSHandler_invalidPortlibSignalFlag(portlibSignalFlag);
 	}
 
 	return rc;
