@@ -301,8 +301,6 @@ J9SigQuitStartup (J9JavaVM * vm);
 
 /* BBjclNativesCommonExceptionHelpers*/
 void
-throwNativeOOMError (JNIEnv *env, U_32 moduleName, U_32 messageNumber);
-void
 throwNewNullPointerException (JNIEnv *env, char *message);
 void
 throwNewIllegalStateException (JNIEnv *env, char *message);
@@ -312,8 +310,6 @@ void
 throwNewIndexOutOfBoundsException (JNIEnv *env, char *message);
 void
 throwNewInternalError (JNIEnv *env, char *message);
-void
-throwNewJavaIoIOException (JNIEnv *env, const char *message);
 void
 throwNewIllegalArgumentException (JNIEnv *env, char *message);
 void

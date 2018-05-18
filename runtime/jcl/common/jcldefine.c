@@ -77,7 +77,7 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 		}
 		classBytes = j9mem_allocate_memory(length, J9MEM_CATEGORY_CLASSES);
 		if (classBytes == NULL) {
-			throwNativeOOMError(env, 0, 0);
+			vmFuncs->throwNativeOOMError(env, 0, 0);
 			return NULL;
 		}
 		(*env)->GetByteArrayRegion(env, classRep, offset, length, (jbyte *)classBytes);

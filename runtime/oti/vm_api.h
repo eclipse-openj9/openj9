@@ -4185,6 +4185,12 @@ typedef struct J9ThreadEnv {
 
 void flushProcessWriteBuffers(J9JavaVM *vm);
 
+/* throwexception.c */
+void
+throwNativeOOMError(JNIEnv *env, U_32 moduleName, U_32 messageNumber);
+void
+throwNewJavaIoIOException(JNIEnv *env, const char *message);
+
 #ifdef __cplusplus
 }
 #endif
