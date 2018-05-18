@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
  */
 
 #include <string.h>
+#include "j2sever.h"
 #include "j9cfg.h"
 #include "j9port.h"
 #include "pool_api.h"
@@ -162,11 +163,18 @@ SH_OSCachemmap::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 	struct J9FileStat statBuf;
 	IDATA errorCode = J9SH_OSCACHE_FAILURE;
 	LastErrorInfo lastErrorInfo;
+
+	UDATA defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE;
+#if defined(J9VM_ENV_DATA64)
+	if (J2SE_VERSION(vm) >= J2SE_19) {
+		defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
+	}
+#endif /* J9VM_ENV_DATA64 */
 	
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
 	Trc_SHR_OSC_Mmap_startup_Entry(cacheName, ctrlDirName,
-		(piconfig!= NULL)? piconfig->sharedClassCacheSize : J9_SHARED_CLASS_CACHE_DEFAULT_SIZE,
+		(piconfig!= NULL)? piconfig->sharedClassCacheSize : defaultCacheSize,
 		numLocks, createFlag, verboseFlags, openMode);
 	
 	versionData->cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;

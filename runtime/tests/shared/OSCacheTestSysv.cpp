@@ -837,11 +837,17 @@ SH_OSCacheTestSysv::testSize(J9PortLibrary* portLibrary, J9JavaVM *vm)
 		osc = new(osc) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_SIZE_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 
 		if(osc->getError() < 0) {
-			if ((i == 0) && (J9_SHARED_CLASS_CACHE_DEFAULT_SIZE > 1024) && (J9_SHARED_CLASS_CACHE_DEFAULT_SIZE < shmmax)) {
+			UDATA defaultSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE;
+#if defined(J9VM_ENV_DATA64)
+			if (J2SE_VERSION(vm) >= J2SE_19) {
+				defaultSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
+			}
+#endif /* J9VM_ENV_DATA64 */
+			if ((i == 0) && (defaultSize > 1024) && (defaultSize < shmmax)) {
 				/*CMVC 153490: if we fail alloc ulimit the lets retry tests with the default size*/
-				j9tty_printf(PORTLIB, "testSize: shmmax (%lld Bytes) was to big, retrying with J9_SHARED_CLASS_CACHE_DEFAULT_SIZE(%d Bytes).\n", shmmax, J9_SHARED_CLASS_CACHE_DEFAULT_SIZE);
+				j9tty_printf(PORTLIB, "testSize: shmmax (%lld Bytes) was to big, retrying with default size(%d Bytes).\n", shmmax, defaultSize);
 				i = 0;
-				shmmax = (J9_SHARED_CLASS_CACHE_DEFAULT_SIZE - 1024);
+				shmmax = (defaultSize - 1024);
 				/* Set up sizes to use default value */
 				size[0] = shmmax;
 				expectedLength[0] = SHM_CACHEDATASIZE(((UDATA)size[0]));

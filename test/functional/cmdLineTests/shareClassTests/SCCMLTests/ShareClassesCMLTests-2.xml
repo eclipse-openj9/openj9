@@ -244,9 +244,9 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-	<test id="Test 74: -Xshareclasses code coverage : cache sizes : -Xscmaxaot32m" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xscmaxaot32m $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="no">-Xscmaxaot value is greater than the shared cache size, so it has been set to unlimited</output>
+	<test id="Test 74: -Xshareclasses code coverage : cache sizes : -Xscmaxaot70m" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xscmaxaot70m $currentMode$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">The maximum allowed AOT space should not be greater than the softmx limit|-Xscmaxaot value is greater than the shared cache size, so it has been set to unlimited</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
@@ -261,15 +261,6 @@
 	<test id="Test 76: -Xshareclasses code coverage : Invalid -Xitsn value" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xitsn1000000 $currentMode$ -version</command>
 		<output type="success" caseSensitive="yes" regex="no">-Xitsn option is outside of the range of prime number values supported by the VM</output>
-		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
-		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
-	</test>
-	
-	<test id="Test 77: -Xshareclasses code coverage : verbose:sizes runs j9shr_Query_PopulatePreinitConfigDefaults()" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -verbose:sizes $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="no">Xscmx16M</output>
-		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
-		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>

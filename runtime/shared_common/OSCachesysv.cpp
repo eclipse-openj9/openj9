@@ -149,17 +149,22 @@ SH_OSCachesysv::startup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPer
 	IDATA shsemrc = 0;
 	IDATA semLength = 0;
 	LastErrorInfo lastErrorInfo;
-
+	UDATA defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE;
+#if defined(J9VM_ENV_DATA64)
+	if (J2SE_VERSION(vm) >= J2SE_19) {
+		defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
+	}
+#endif /* J9VM_ENV_DATA64 */
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 	
-	Trc_SHR_OSC_startup_Entry(cacheName, (piconfig!= NULL)? piconfig->sharedClassCacheSize : J9_SHARED_CLASS_CACHE_DEFAULT_SIZE, create);
+	Trc_SHR_OSC_startup_Entry(cacheName, (piconfig!= NULL)? piconfig->sharedClassCacheSize : defaultCacheSize, create);
 
 	if (openMode & J9OSCACHE_OPEN_MODE_GROUPACCESS) {
 		_groupPerm = 1;
 	}
 	
 	versionData->cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
-	_cacheSize = (piconfig!= NULL) ? (U_32)piconfig->sharedClassCacheSize : J9_SHARED_CLASS_CACHE_DEFAULT_SIZE;
+	_cacheSize = (piconfig!= NULL) ? (U_32)piconfig->sharedClassCacheSize : (U_32)defaultCacheSize;
 	_initialiser = i;
 	_totalNumSems = numLocks + 1;		/* +1 because of header mutex */
 	_userSemCntr = 0;

@@ -204,4 +204,16 @@
 	<exclude id="Test 182-d: Verify that Intermediate Class Data is present" platform="latest">
 		<reason>This test doesn't work for openj9</reason>
 	</exclude>
+	<exclude id="Test 27: CMVC 168131 : Ensure Java 8 cache size is default (16 MB)" platform="SE[^8]\d+">
+		<reason>The default non-persistent cache size is not 16MB on Java 9 and up</reason>
+	</exclude>
+	<exclude id="Test 29: CMVC 168131 : Ensure Java 8 cache size is default (16 MB)" platform="SE[^8]\d+">
+		<reason>The default non-persistent cache size is not 16MB on Java 9 and up</reason>
+	</exclude>
+	<exclude id="Test 55 Check default cache size on Java 8" platform="SE[^8]\d+">
+		<reason>This test should not be run on Java 9 and up</reason>
+	</exclude>
+	<exclude id="Test 55 Check default cache size on Java 9 and up" platform="SE80">
+		<reason>This test should not be run on Java 8</reason>
+	</exclude>
 </suite>

@@ -61,6 +61,13 @@
 #define J9_INVARIANT_INTERN_TABLE_NODE_COUNT 2345
 #define J9_SHARED_CLASS_CACHE_MIN_SIZE (4 * 1024)
 #define J9_SHARED_CLASS_CACHE_MAX_SIZE I_32_MAX
+/* Default shared class cache size for Java 9 (and up) on 64-bit platforms (if OS allows) */
+#define J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM (300 * 1024 * 1024)
+/* Default shared class soft max size for Java 9 (and up) on 64-bit platforms. This value is only set if the OS allows default cache size to be greater than J9_SHARED_CLASS_CACHE_MIN_DEFAULT_CACHE_SIZE_FOR_SOFTMAX */
+#define J9_SHARED_CLASS_CACHE_DEFAULT_SOFTMAX_SIZE_64BIT_PLATFORM (64 * 1024 * 1024)
+/* The minimum default shared class cache size to set a default soft max. Java 9 (and up) on 64-bit platforms only. */
+#define J9_SHARED_CLASS_CACHE_MIN_DEFAULT_CACHE_SIZE_FOR_SOFTMAX (80 * 1024 *1024)
+/* Default shared class cache size for Java 8 on all platforms, Java 9 (and up) on 32-bit platforms */
 #define J9_SHARED_CLASS_CACHE_DEFAULT_SIZE (16 * 1024 * 1024)
 
 #define J9_FIXED_SPACE_SIZE_NUMERATOR 0
