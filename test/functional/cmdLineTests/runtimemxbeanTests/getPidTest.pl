@@ -33,7 +33,9 @@ my ($in, $out, $err);
 my $perlPid;
 
 if ($^O eq 'cygwin') {
+	open3($in, $out, $err, $javaCmd);
 	$perlPid = `wmic process where "name='java.exe'" get ProcessID`;
+	print "\n${perlPid}\n";
 	$perlPid =~ s/\D//g;
 }
 else {
