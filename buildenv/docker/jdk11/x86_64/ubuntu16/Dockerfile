@@ -93,7 +93,4 @@ RUN cd /root \
 ENV JAVA_HOME="/root/bootjdk10"
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
-# The below CFLAG prevents "error: inline function ${FUNCTION_NAME} declared but never defined [-Werror]"
-ENV CFLAGS="-fgnu89-inline"
-
 WORKDIR /root
