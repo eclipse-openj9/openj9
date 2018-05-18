@@ -1079,6 +1079,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             traceMsg(self()->comp(), "\n ClassUnloadAssumption \n");
             break;
 
+         case TR_ClassUnloadDummyAssumption:
          default:
             traceMsg(self()->comp(), "Unknown Relocation type = %d\n", kind);
             TR_ASSERT(false, "should be unreachable");

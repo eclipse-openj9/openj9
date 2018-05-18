@@ -2721,6 +2721,7 @@ void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, char *generatin
       r->setDebugInfo(genData);
       _externalRelocationList.push_back(r);
       }
+   // fprintf(stderr, "cursor address %p\n", r->getUpdateLocation());
    }
 
 void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, TR::RelocationDebugInfo* info)
@@ -2731,6 +2732,7 @@ void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, TR::RelocationD
       r->setDebugInfo(info);
       _externalRelocationList.push_back(r);
       }
+   // fprintf(stderr, "cursor address: %p\n", r->getUpdateLocation());
    }
 
 void J9::CodeGenerator::addProjectSpecializedRelocation(uint8_t *location, uint8_t *target, uint8_t *target2,

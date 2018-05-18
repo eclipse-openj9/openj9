@@ -695,6 +695,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    56,                                              // TR_DebugCounter                        = 59
    8,                                               // TR_ClassUnloadAssumption               = 60
    32,                                              // TR_J2IVirtualThunkPointer              = 61,
+   16,                                              // TR_ClassUnloadDummyAssumption          = 62 
 #else
 
    12,                                              // TR_ConstantPool                        = 0
@@ -759,6 +760,7 @@ uint32_t J9::X86::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_Nu
    28,                                               // TR_DebugCounter                        = 59
    4,                                               // TR_ClassUnloadAssumption               = 60
    16,                                              // TR_J2IVirtualThunkPointer              = 61,
+   12,                                              // TR_ClassUnloadDummyAssumption          = 62 
 #endif
    };
 

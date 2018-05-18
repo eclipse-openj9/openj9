@@ -230,6 +230,7 @@ struct TR_RelocationRecordDebugCounterBinaryTemplate : public TR_RelocationRecor
 
 
 typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadAssumptionBinaryTemplate;
+typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadDummyAssumptionBinaryTemplate;
 
 // TR_RelocationRecordGroup
 
@@ -470,6 +471,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_ClassUnloadAssumption:
          reloRecord = new (storage) TR_RelocationRecordClassUnloadAssumption(reloRuntime, record);
+         break;
+      case TR_ClassUnloadDummyAssumption:
+         new (this) TR_RelocationRecordClassUnloadDummyAssumption();
          break;
       default:
          // TODO: error condition
@@ -1618,6 +1622,8 @@ TR_RelocationRecordClassObject::applyRelocation(TR_RelocationRuntime *reloRuntim
 
    uintptrj_t newConstantPool = computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
    TR_OpaqueClassBlock *newAddress = computeNewClassObject(reloRuntime, newConstantPool, inlinedSiteIndex(reloTarget), cpIndex(reloTarget));
+
+   // fprintf(stderr, "old addr: %p, reloTarget: %p\n", oldAddress, reloTarget);
 
    if (!newAddress) return compilationAotClassReloFailure;
 
@@ -3610,5 +3616,25 @@ int32_t
 TR_RelocationRecordClassUnloadAssumption::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    reloTarget->addPICtoPatchPtrOnClassUnload((TR_OpaqueClassBlock *) -1, reloLocation);
+   return 0;
+   }
+
+// AssumptionRelocation
+char *
+TR_RelocationRecordClassUnloadDummyAssumption::name()
+   {
+   return "TR_ClassUnloadDummyAssumption";
+   }
+
+int32_t
+TR_RelocationRecordClassUnloadDummyAssumption::bytesInHeaderAndPayload()
+   {
+   return sizeof(TR_RelocationRecordClassUnloadDummyAssumptionBinaryTemplate);
+   }
+
+int32_t
+TR_RelocationRecordClassUnloadDummyAssumption::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   reloTarget->addPICtoPatchPtrOnClassUnload((TR_OpaqueClassBlock *)-1, reloLocation);
    return 0;
    }

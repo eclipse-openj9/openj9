@@ -1137,5 +1137,17 @@ class TR_RelocationRecordClassUnloadAssumption : public TR_RelocationRecord
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
 
+class TR_RelocationRecordClassUnloadDummyAssumption : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordClassUnloadDummyAssumption() {}
+
+      virtual char *name();
+
+      virtual int32_t bytesInHeaderAndPayload();
+
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+   };
+
 #endif   // RELOCATION_RECORD_INCL
 
