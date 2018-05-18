@@ -1,5 +1,5 @@
 <#-- 
-	Copyright (c) 1998, 2017 IBM Corp. and others
+	Copyright (c) 1998, 2018 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -152,6 +152,16 @@ ifdef USE_PPC_GCC
   PPC_GCC_CXXFLAGS+=-O3 -fno-strict-aliasing
 endif
 </#if>
+
+<#-- GCC versions greater than 5 default to GNU11 but OpenJ9 uses
+GNU89 inline semantics. -fgnu89-inline option is appended to CFLAGS
+to allow compilation with GCC versions greater than 5 and GNU89 inline
+semantics. Reference - https://gcc.gnu.org/gcc-5/porting_to.html.
+-->
+GCCVERSIONGTEQ5 := $(shell expr `gcc -dumpversion | cut -f1 -d.` \>= 5)
+ifeq "$(GCCVERSIONGTEQ5)" "1"
+    CFLAGS+=-fgnu89-inline
+endif
 
 <#if !uma.spec.processor.ppc>
 CXXFLAGS+=-fno-exceptions -fno-rtti -fno-threadsafe-statics
