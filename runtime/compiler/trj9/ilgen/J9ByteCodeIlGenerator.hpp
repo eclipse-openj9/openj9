@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,7 +92,34 @@ private:
    //
    int32_t      genGoto(int32_t);
    int32_t      genIf(TR::ILOpCodes, bool singleStackOp = false);
-   int32_t      genReturn(TR::ILOpCodes, bool);
+
+   /** \brief
+    *     Generates IL for a return bytecode.
+    *
+    *  \param nodeop
+    *     The IL opcode to use for the return.
+    *
+    *  \param truncationConversion
+    *     The IL opcode to use to truncate the result before extending it back to the original width. If this argument
+    *     is <c>TR::BadILOp</c> then no truncation or extension is performed.
+    *
+    *  \param extensionConversion
+    *     The IL opcode to use to extend the result back to the original width after truncating it. If this argument is
+    *     <c>TR::BadILOp</c> then no truncation or extension is performed.
+    *
+    *  \param isZConversion
+    *     Determines whether to convert the result to a boolean value which is calculated by extracting the lowest
+    *     order bit from the return result.
+    *
+    *  \param monitorExit
+    *     Determines whether the method which contains this return is synchronized in which case <c>TR::monitorExit</c>
+    *     nodes may need to be generated.
+    *
+    *  \return
+    *     The index of the next bytecode to generate.
+    */
+   int32_t genReturn(TR::ILOpCodes nodeop, TR::ILOpCodes truncationConversion, TR::ILOpCodes extensionConversion, bool isZConversion, bool monitorExit);
+
    int32_t      genLookupSwitch();
    int32_t      genTableSwitch();
 
