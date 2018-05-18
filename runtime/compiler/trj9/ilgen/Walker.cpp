@@ -1552,25 +1552,13 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
             _bcIndex += 3;
             break;
             }
-
+            
          case J9BCgenericReturn:
-            _bcIndex = genReturn(method()->returnOpCode(), TR::BadILOp, TR::BadILOp, false, method()->isSynchronized());
-            break;
-            
          case J9BCReturnC:
-            _bcIndex = genReturn(method()->returnOpCode(), TR::i2s, TR::su2i, false, method()->isSynchronized());
-            break;
-            
          case J9BCReturnS:
-            _bcIndex = genReturn(method()->returnOpCode(), TR::i2s, TR::s2i, false, method()->isSynchronized());
-            break;
-            
          case J9BCReturnB:
-            _bcIndex = genReturn(method()->returnOpCode(), TR::i2b, TR::b2i, false, method()->isSynchronized());
-            break;
-            
          case J9BCReturnZ:
-            _bcIndex = genReturn(method()->returnOpCode(), TR::BadILOp, TR::BadILOp, true, method()->isSynchronized());
+            _bcIndex = genReturn(method()->returnOpCode(), method()->isSynchronized());
             break;
 
          case J9BCunknown:
@@ -7053,7 +7041,7 @@ TR_J9ByteCodeIlGenerator::genMultiANewArray(int32_t dims)
 //----------------------------------------------
 
 int32_t
-TR_J9ByteCodeIlGenerator::genReturn(TR::ILOpCodes nodeop, TR::ILOpCodes truncationConversion, TR::ILOpCodes extensionConversion, bool isZConversion, bool monitorExit)
+TR_J9ByteCodeIlGenerator::genReturn(TR::ILOpCodes nodeop, bool monitorExit)
    {
    if (!comp()->isPeekingMethod() &&
          (_methodSymbol->getMandatoryRecognizedMethod() == TR::java_lang_Object_init))
@@ -7135,13 +7123,26 @@ TR_J9ByteCodeIlGenerator::genReturn(TR::ILOpCodes nodeop, TR::ILOpCodes truncati
       {
       TR::Node* returnChild = pop();
 
-      if (truncationConversion != TR::BadILOp && extensionConversion != TR::BadILOp)
+      switch (current())
          {
-         returnChild = TR::Node::create(extensionConversion, 1, TR::Node::create(truncationConversion, 1, returnChild));
-         }
-      else if (isZConversion)
-         {
-         returnChild = TR::Node::create(TR::iand, 2, returnChild, TR::Node::iconst(1));
+         case J9BCReturnC:
+            returnChild = TR::Node::create(TR::su2i, 1, TR::Node::create(TR::i2s, 1, returnChild));
+            break;
+            
+         case J9BCReturnS:
+            returnChild = TR::Node::create(TR::s2i, 1, TR::Node::create(TR::i2s, 1, returnChild));
+            break;
+            
+         case J9BCReturnB:
+            returnChild = TR::Node::create(TR::b2i, 1, TR::Node::create(TR::i2b, 1, returnChild));
+            break;
+            
+         case J9BCReturnZ:
+            returnChild = TR::Node::create(TR::iand, 2, returnChild, TR::Node::iconst(1));
+            break;
+
+         default:
+            break;
          }
 
       genTreeTop(TR::Node::create(nodeop, 1, returnChild));
