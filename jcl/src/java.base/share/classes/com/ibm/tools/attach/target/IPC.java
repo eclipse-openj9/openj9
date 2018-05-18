@@ -294,14 +294,14 @@ public class IPC {
 	 * @note nothing is printed if logging is disabled
 	 */
 	public synchronized static void logMessage(String msg, Throwable thrown) {
-		@SuppressWarnings("resource")
-		PrintStream log = getLogStream();
-		if (!Objects.isNull(log)) {
-			tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
-			printLogMessageHeader(log);
-			log.println(msg);
-			thrown.printStackTrace(log);
-			log.flush();
+		try (PrintStream log = getLogStream()) {
+			if (!Objects.isNull(log)) {
+				tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
+				printLogMessageHeader(log);
+				log.println(msg);
+				thrown.printStackTrace(log);
+				log.flush();
+			}
 		}
 	}
 
@@ -312,13 +312,13 @@ public class IPC {
 	 * @note no message is printed if logging is disabled
 	 */
 	private synchronized static void printLogMessage(final String msg) {
-		@SuppressWarnings("resource")
-		PrintStream log = getLogStream();
-		if (!Objects.isNull(log)) {
-			tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
-			printLogMessageHeader(log);
-			log.println(msg);
-			log.flush();
+		try (PrintStream log = getLogStream()) {
+			if (!Objects.isNull(log)) {
+				tracepoint(TRACEPOINT_STATUS_LOGGING, msg);
+				printLogMessageHeader(log);
+				log.println(msg);
+				log.flush();
+			}
 		}
 	}
 
