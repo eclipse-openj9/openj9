@@ -102,6 +102,7 @@ target_link_libraries(j9prt
 		j9vm_interface
 
 	PRIVATE
+		omrsig
 		j9utilcore
 		j9pool
 		j9hashtable
