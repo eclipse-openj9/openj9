@@ -266,6 +266,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 		try {
 			dumpFileName = "javacore_unsupported.txt";
 			dumpFilePath = dir + File.separator + dumpFileName;
+			diagBean.resetDumpOptions();
 			diagBean.setDumpOptions("java:events=catch,filter=java/io/UnsupportedEncodingException,range=1..1,file=" + dumpFilePath);
 			new String("hello").getBytes("Unsupported");
 		} catch (UnsupportedEncodingException e) {
