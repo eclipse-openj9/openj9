@@ -1648,7 +1648,7 @@ JVM_IsPrimitiveClass(JNIEnv* env, jclass clazz)
  * This function may not lock, gc or throw exception.
  * @param version
  * @return true if version is JNI_VERSION_1_1, JNI_VERSION_1_2, JNI_VERSION_1_4, JNI_VERSION_1_6, or
- * 		   JNI_VERSION_1_8, JNI_VERSION_9; false if not.
+ * 		   JNI_VERSION_1_8, JNI_VERSION_9, JNI_VERSION_10; false if not.
  * @careful
  */
 jboolean JNICALL
@@ -1661,6 +1661,7 @@ JVM_IsSupportedJNIVersion(jint version)
 	case JNI_VERSION_1_6:
 	case JNI_VERSION_1_8:
 	case JNI_VERSION_9:
+	case JNI_VERSION_10:
 		return JNI_TRUE;
 
 	default:

@@ -411,7 +411,9 @@ getVersion(JNIEnv *env)
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 
-	if (J2SE_VERSION(vm) >= J2SE_19) {
+	if (J2SE_VERSION(vm) >= J2SE_V10) {
+		return JNI_VERSION_10;
+	} else if (J2SE_VERSION(vm) == J2SE_19) {
 		return JNI_VERSION_9;
 	} else {
 		return JNI_VERSION_1_8;
