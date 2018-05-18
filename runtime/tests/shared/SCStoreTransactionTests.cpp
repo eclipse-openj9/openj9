@@ -32,6 +32,8 @@ extern "C"
 
 #define TEST_PASS 0
 #define TEST_ERROR -1
+/* A size greater than the shared cache size (or softmx size if it is set) */
+#define ROMCLASS_LARGE_SIZE (70 * 1024 *1024)
 
 #if defined(J9SHR_CACHELET_SUPPORT)
 IDATA
@@ -1190,7 +1192,7 @@ test16(J9JavaVM* vm)
 	void * romclassmem = NULL;
 	const char * testName = "test16";
 	J9ROMClass * romclass = NULL;
-	U_32 romclassSize = 20971520;
+	U_32 romclassSize = ROMCLASS_LARGE_SIZE;
 	const char * romclassName = "CacheFilledTestClassNonOrphan";
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9RomClassRequirements sizes;
@@ -1283,7 +1285,7 @@ test17(J9JavaVM* vm)
 	void * romclassmem = NULL;
 	const char * testName = "test17";
 	J9ROMClass * romclass = NULL;
-	U_32 romclassSize = 20971520;
+	U_32 romclassSize = ROMCLASS_LARGE_SIZE;
 	const char * romclassName = "CacheFilledTestClassOrphan";
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9RomClassRequirements sizes;
@@ -1377,7 +1379,7 @@ test18(J9JavaVM* vm)
 	const char * testName = "test18";
 	J9ROMClass * romclass = NULL;
 	U_32 romclassSize = 1024;
-	U_32 romclassSizeLarge = 20971520;
+	U_32 romclassSizeLarge = ROMCLASS_LARGE_SIZE;
 	const char * romclassName = "NonOrphanClassCacheFilledTest";
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9RomClassRequirements sizes;
@@ -1498,7 +1500,7 @@ test19(J9JavaVM* vm)
 	const char * testName = "test19";
 	J9ROMClass * romclass = NULL;
 	U_32 romclassSize = 1024;
-	U_32 romclassSizeLarge = 20971520;
+	U_32 romclassSizeLarge = ROMCLASS_LARGE_SIZE;
 	const char * romclassName = "CacheFilledMetadataUpdateClassOrphan";
 	const char * testclassName = "TestROMClass";
 	PORT_ACCESS_FROM_JAVAVM(vm);

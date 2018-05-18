@@ -2698,14 +2698,22 @@ _error:
 
 /* Returns 0 for ok and 1 for error */
 UDATA
-ensureCorrectCacheSizes(J9PortLibrary* portlib, U_64 runtimeFlags, UDATA verboseFlags, J9SharedClassPreinitConfig* piconfig)
+ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags, UDATA verboseFlags, J9SharedClassPreinitConfig* piconfig)
 {
 	UDATA* cacheSize = &piconfig->sharedClassCacheSize;
-	bool softMaxSet = (piconfig->sharedClassSoftMaxBytes >= 0);
 	PORT_ACCESS_FROM_PORT(portlib);
+	UDATA defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE;
+	bool is64BitPlatDefaultSize = false;
+
+#if defined(J9VM_ENV_DATA64)
+	if (J2SE_VERSION(vm) >= J2SE_19) {
+		defaultCacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM;
+	}
+#endif /* J9VM_ENV_DATA64 */
 
 	if (*cacheSize == 0) {
-		*cacheSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE;
+		*cacheSize = defaultCacheSize;
+		is64BitPlatDefaultSize = (J9_SHARED_CLASS_CACHE_DEFAULT_SIZE_64BIT_PLATFORM == defaultCacheSize);
 	} else	if (*cacheSize < J9_SHARED_CLASS_CACHE_MIN_SIZE) {
 		*cacheSize = J9_SHARED_CLASS_CACHE_MIN_SIZE;
 	} else	if (*cacheSize > J9_SHARED_CLASS_CACHE_MAX_SIZE) {
@@ -2721,7 +2729,11 @@ ensureCorrectCacheSizes(J9PortLibrary* portlib, U_64 runtimeFlags, UDATA verbose
 			adjustCacheSizes(portlib, verboseFlags, piconfig, maxSize);
 		}
 	}
-	
+
+	if (is64BitPlatDefaultSize && (piconfig->sharedClassCacheSize > J9_SHARED_CLASS_CACHE_MIN_DEFAULT_CACHE_SIZE_FOR_SOFTMAX)) {
+		piconfig->sharedClassSoftMaxBytes = J9_SHARED_CLASS_CACHE_DEFAULT_SOFTMAX_SIZE_64BIT_PLATFORM;
+	}
+
 	if (piconfig->sharedClassSoftMaxBytes > (IDATA)*cacheSize) {
 		SHRINIT_WARNING_TRACE1(verboseFlags, J9NLS_SHRC_SOFTMAX_TOO_BIG, *cacheSize);
 		piconfig->sharedClassSoftMaxBytes = (IDATA)*cacheSize;
@@ -2735,6 +2747,7 @@ ensureCorrectCacheSizes(J9PortLibrary* portlib, U_64 runtimeFlags, UDATA verbose
 		SHRINIT_ERR_TRACE(verboseFlags, J9NLS_SHRC_SHRINIT_MINJITDATA_GRTHAN_MAXJITDATA);
 		return 1;
 	}
+	bool softMaxSet = (piconfig->sharedClassSoftMaxBytes >= 0);
 
 	if ((piconfig->sharedClassMinAOTSize > 0) && (piconfig->sharedClassMinJITSize > 0)) {
 		if (softMaxSet) {
@@ -3091,7 +3104,7 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 		}
 	}
 
-	if (ensureCorrectCacheSizes(vm->portLibrary, runtimeFlags, verboseFlags, piconfig) != 0) {
+	if (ensureCorrectCacheSizes(vm, vm->portLibrary, runtimeFlags, verboseFlags, piconfig) != 0) {
 		goto _error;
 	}
 	
@@ -4684,6 +4697,7 @@ j9shr_aotMethodOperation(J9JavaVM* vm, char* methodSpecs, UDATA action)
  * @param[in] verboseFlags Flag to control whether to print out NLS messages in stderr/stdout/
  * @param[in] piconfig Pointer to a configuration structure
  * @param[in] newSize The new value to be used as cache size
+ * @param[in] usingDefaultSize Whether the default cache size is being used.
  */
 static void
 adjustCacheSizes(J9PortLibrary* portlib, UDATA verboseFlags, J9SharedClassPreinitConfig* piconfig, U_64 newSize)

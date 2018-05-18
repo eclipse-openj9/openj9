@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -191,12 +191,8 @@ dumpMemorySizes(J9JavaVM *jvm)
 
 		J9SharedClassPreinitConfig updatedWithDefaults = *(jvm->sharedClassPreinitConfig);
 		j9shr_Query_PopulatePreinitConfigDefaults(jvm, &updatedWithDefaults);
-		if (FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, VMOPT_XXSHARED_CACHE_HARD_LIMIT_EQUALS, NULL) >= 0) {
-			dumpQualifiedSize(PORTLIB, updatedWithDefaults.sharedClassCacheSize, "-XX:SharedCacheHardLimit=", J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS);
-			dumpQualifiedSize(PORTLIB, updatedWithDefaults.sharedClassSoftMaxBytes, "-Xscmx", J9NLS_VERB_SIZES_XSCMX_V1);
-		} else {
-			dumpQualifiedSize(PORTLIB, updatedWithDefaults.sharedClassCacheSize, "-Xscmx", J9NLS_VERB_SIZES_XSCMX);
-		}
+		dumpQualifiedSize(PORTLIB, updatedWithDefaults.sharedClassCacheSize, "-XX:SharedCacheHardLimit=", J9NLS_VERB_SIZES_XXSHARED_CACHE_HARD_LIMIT_EQUALS);
+		dumpQualifiedSize(PORTLIB, updatedWithDefaults.sharedClassSoftMaxBytes, "-Xscmx", J9NLS_VERB_SIZES_XSCMX_V1);
 		dumpQualifiedSize(PORTLIB, updatedWithDefaults.sharedClassDebugAreaBytes, "-Xscdmx", J9NLS_VERB_SIZES_XSCDMX);
 		dumpQualifiedSize(PORTLIB, updatedWithDefaults.sharedClassMinAOTSize, "-Xscminaot", J9NLS_VERB_SIZES_XSCMINAOT);
 		dumpQualifiedSize(PORTLIB, updatedWithDefaults.sharedClassMaxAOTSize, "-Xscmaxaot", J9NLS_VERB_SIZES_XSCMAXAOT);

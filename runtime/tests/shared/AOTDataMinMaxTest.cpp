@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -101,7 +101,7 @@ AOTDataMinMaxTest::openTestCache(I_32 cacheSize, I_32 minaot, I_32 maxaot)
 	cacheDetails->sharedClassCacheSize = cacheSize;
 	cacheDetails->sharedClassMinAOTSize = minaot;
 	cacheDetails->sharedClassMaxAOTSize = maxaot;
-	ensureCorrectCacheSizes(vm->portLibrary, 0, (UDATA)0, cacheDetails);
+	ensureCorrectCacheSizes(vm, vm->portLibrary, 0, (UDATA)0, cacheDetails);
 	extraRuntimeFlags = getDefaultRuntimeFlags();
 
 	sharedclassconfig = (J9SharedClassConfig *) j9mem_allocate_memory(sizeof(J9SharedClassConfig) + sizeof(J9SharedClassCacheDescriptor), J9MEM_CATEGORY_CLASSES);

@@ -57,7 +57,7 @@ BOOLEAN j9shr_isAddressInCache(J9JavaVM *vm, void *address, UDATA length);
 void j9shr_populatePreinitConfigDefaults(J9JavaVM *vm, J9SharedClassPreinitConfig *updatedWithDefaults);
 BOOLEAN j9shr_isPlatformDefaultPersistent(struct J9JavaVM* vm);
 UDATA j9shr_isBCIEnabled(J9JavaVM *vm);
-UDATA ensureCorrectCacheSizes(J9PortLibrary* portlib, U_64 runtimeFlags, UDATA verboseFlags, J9SharedClassPreinitConfig* piconfig);
+UDATA ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags, UDATA verboseFlags, J9SharedClassPreinitConfig* piconfig);
 UDATA parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, char** cacheName, char** modContext, char** expireTime, char** ctrlDirName, char** cacheDirPerm, char** methodSpecs, UDATA* printStatsOptions, UDATA* storageKeyTesting);
 UDATA convertPermToDecimal(J9JavaVM *vm, const char *permStr);
 SCAbstractAPI * initializeSharedAPI(J9JavaVM *vm);
