@@ -36,7 +36,6 @@ import com.ibm.oti.vm.VM;
  * public because it is used by java.lang.System
  * 
  */
-@SuppressWarnings("synthetic-access")
 public class AttachHandler extends Thread {
 
 	/*[PR Jazz 3007] remove duplicate definition of SYNC_FILE_PERMISSIONS */
@@ -71,7 +70,7 @@ public class AttachHandler extends Thread {
 	private static AttachStateValues attachState = AttachStateValues.ATTACH_UNINITIALIZED;
 	private static boolean waitingForSemaphore = false;
 
-	private static final class AttachStateSync {
+	static final class AttachStateSync {
 		/**
 		 * Empty class for synchronization objects.
 		 */
@@ -81,7 +80,7 @@ public class AttachHandler extends Thread {
 
 	static int notificationCount;
 
-	private static final class syncObject {
+	static final class syncObject {
 		/**
 		 * Empty class for synchronization objects.
 		 */

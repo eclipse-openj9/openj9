@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,6 +54,7 @@ extern "C" {
 #define JNI_VERSION_1_6 0x00010006
 #define JNI_VERSION_1_8 0x00010008
 #define JNI_VERSION_9   0x00090000
+#define JNI_VERSION_10  0x000A0000
 
 #define JVMEXT_VERSION_1_1 0x7E010001
 

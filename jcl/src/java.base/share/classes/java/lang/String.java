@@ -1,5 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
-
+/*[INCLUDE-IF Sidecar18-SE]*/
 package java.lang;
 
 /*******************************************************************************
@@ -24,22 +23,24 @@ package java.lang;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-/*[IF Sidecar19-SE]*/
 import java.io.Serializable;
 
 import java.util.Locale;
 import java.util.Comparator;
 import java.io.UnsupportedEncodingException;
-
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.Formatter;
 import java.util.StringJoiner;
 import java.util.Iterator;
+import java.nio.charset.Charset;
+
+/*[IF Sidecar19-SE]*/
 import jdk.internal.misc.Unsafe;
 import java.util.stream.IntStream;
-
-import java.nio.charset.Charset;
+/*[ELSE] Sidecar19-SE*/
+import sun.misc.Unsafe;
+/*[ENDIF] Sidecar19-SE*/
 
 /**
  * Strings are objects which represent immutable arrays of characters.
@@ -51,6 +52,23 @@ import java.nio.charset.Charset;
  */
 
 public final class String implements Serializable, Comparable<String>, CharSequence {
+	
+	/*
+	 * Last character of String substitute in String.replaceAll(regex, substitute) can't be \ or $.
+	 * The backslash (\) is used to escape literal characters, and the dollar sign ($) is treated as 
+	 * references to captured subsequences.
+	 */
+	private void checkLastChar(char lastChar) {
+		if (lastChar == '\\') {
+			/*[MSG "K0801", "Last character in replacement string can't be \, character to be escaped is required."]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0801")); //$NON-NLS-1$
+		} else if (lastChar == '$') {
+			/*[MSG "K0802", "Last character in replacement string can't be $, group index is required."]*/
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0802")); //$NON-NLS-1$			
+		}
+	}
+	
+/*[IF Sidecar19-SE]*/
 	// DO NOT CHANGE OR MOVE THIS LINE
 	// IT MUST BE THE FIRST THING IN THE INITIALIZATION
 	private static final boolean STRING_OPT_IN_HW = StrCheckHWAvailable();
@@ -2976,6 +2994,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					byte replacement = (byte)-1;  // assign dummy value that will never be used
 					if (substituteLength == 1) {
 						replacement = helpers.getByteFromArrayByIndex(substitute.value, 0);
+						checkLastChar((char)replacement);
 					}
 					int newCharIndex = 0;
 					for (int i = 0; i < length; ++i) {
@@ -2993,6 +3012,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					char replacement = (char)-1; // assign dummy value that will never be used
 					if (substituteLength == 1) {
 						replacement = substitute.charAtInternal(0);
+						checkLastChar(replacement);
 					}
 					int newCharIndex = 0;
 					for (int i = 0; i < length; ++i) {
@@ -3828,34 +3848,8 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return string;
 	}
 	/*[ENDIF] Java11*/
-}
 
 /*[ELSE] Sidecar19-SE*/
-import java.io.Serializable;
-
-import java.util.Locale;
-import java.util.Comparator;
-import java.io.UnsupportedEncodingException;
-
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-import java.util.Formatter;
-import java.util.StringJoiner;
-import java.util.Iterator;
-import sun.misc.Unsafe;
-
-import java.nio.charset.Charset;
-
-/**
- * Strings are objects which represent immutable arrays of characters.
- *
- * @author OTI
- * @version initial
- *
- * @see StringBuffer
- */
-
-public final class String implements Serializable, Comparable<String>, CharSequence {
 	// DO NOT CHANGE OR MOVE THIS LINE
 	// IT MUST BE THE FIRST THING IN THE INITIALIZATION
 	private static final boolean STRING_OPT_IN_HW = StrCheckHWAvailable();
@@ -7300,7 +7294,7 @@ written authorization of the copyright holder.
 	public boolean matches(String expr) {
 		return Pattern.matches(expr, this);
 	}
-
+	
 	/**
 	 * Replace any substrings within this String that match the supplied regular expression expr, with the String substitute.
 	 *
@@ -7330,6 +7324,7 @@ written authorization of the copyright holder.
 					byte replacement = (byte)-1;  // assign dummy value that will never be used
 					if (substituteLength == 1) {
 						replacement = helpers.getByteFromArrayByIndex(substitute.value, 0);
+						checkLastChar((char)replacement);
 					}
 					int newCharIndex = 0;
 					for (int i = 0; i < length; ++i) {
@@ -7347,6 +7342,7 @@ written authorization of the copyright holder.
 					char replacement = (char)-1; // assign dummy value that will never be used
 					if (substituteLength == 1) {
 						replacement = substitute.charAtInternal(0);
+						checkLastChar(replacement);
 					}
 					int newCharIndex = 0;
 					for (int i = 0; i < length; ++i) {
@@ -8214,7 +8210,6 @@ written authorization of the copyright holder.
 	private final boolean toLowerHWOptimized(String input) {
 		return false;
 	}
-	
 
-}
 /*[ENDIF] Sidecar19-SE*/
+}
