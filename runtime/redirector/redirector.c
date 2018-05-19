@@ -907,6 +907,7 @@ JNI_GetDefaultJavaVMInitArgs(void *vm_args)
 			|| (jniVersion == JNI_VERSION_1_6)
 			|| (jniVersion == JNI_VERSION_1_8)
 			|| (jniVersion == JNI_VERSION_9)
+			|| (jniVersion == JNI_VERSION_10)
 		) {
 			return JNI_OK;
 		} else {
