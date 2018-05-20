@@ -1566,9 +1566,26 @@ private HashMap<MethodInfo, MethodInfo> getMethodSet(
 			/* if we are here, this is the target class, so return static and virtual methods */
 			boolean scanInterfaces = false;
 			for (Method m: methods) {
+				Class<?> mDeclaringClass = m.getDeclaringClass();
 				MethodInfo mi = new MethodInfo(m);
-				myMethods.put(mi, mi);
-				if (m.getDeclaringClass().isInterface()) {
+				MethodInfo prevMI = myMethods.put(mi, mi);
+				if (prevMI != null) {
+					/* As per Java spec:
+					 * For methods with same signature (name, parameter types) and return type,
+					 * only the most specific method should be selected. 
+					 * Method N is more specific than M if:
+					 * N is declared by a class and M is declared by an interface; or
+					 * N and M are both declared by either classes or interfaces and N's
+					 * declaring type is the same as or a subtype of M's declaring type.
+					 */
+					Class<?> prevMIDeclaringClass = prevMI.me.getDeclaringClass();
+					if ((mDeclaringClass.isInterface() && !prevMIDeclaringClass.isInterface())
+						|| (mDeclaringClass.isAssignableFrom(prevMIDeclaringClass))
+					) {
+						myMethods.put(prevMI, prevMI);
+					}
+				}
+				if (mDeclaringClass.isInterface()) {
 					scanInterfaces = true;
 					/* The vTable may contain one declaration of an interface method with multiple declarations. */
 					if (null == methodFilter) {
@@ -1589,7 +1606,7 @@ private HashMap<MethodInfo, MethodInfo> getMethodSet(
 					continue;
 				}
 				MethodInfo mi = new MethodInfo(m);
-				myMethods.put(mi, mi);				
+				myMethods.put(mi, mi);
 			}
 			addInterfaceMethods(infoCache, null, myMethods);
 		}
