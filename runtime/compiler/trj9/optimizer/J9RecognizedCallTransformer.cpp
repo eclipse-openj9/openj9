@@ -134,9 +134,10 @@ void J9::RecognizedCallTransformer::processCaseConversion(TR::Node* node)
    node->addChildren(newChildren, 1);
    }
 
-void J9::RecognizedCallTransformer::processSimpleMath(TR::Node* node, TR::ILOpCodes opcode)
+void J9::RecognizedCallTransformer::processIntrinsicFunction(TR::TreeTop* treetop, TR::Node* node, TR::ILOpCodes opcode)
    {
    TR::Node::recreate(node, opcode);
+   TR::TransformUtil::removeTree(comp(), treetop);
    }
 
 bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
@@ -155,7 +156,6 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       case TR::java_lang_Math_max_L:
       case TR::java_lang_Math_min_L:
          return TR::Compiler->target.cpu.isX86() && !comp()->getOption(TR_DisableMaxMinOptimization);
-
       case TR::java_lang_String_toLowerHWOptimized:
       case TR::java_lang_String_toLowerHWOptimizedDecompressed:
       case TR::java_lang_String_toLowerHWOptimizedCompressed:
@@ -174,31 +174,31 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
       case TR::java_lang_Integer_rotateLeft:
-         processSimpleMath(node, TR::irol);
+         processIntrinsicFunction(treetop, node, TR::irol);
          break;
       case TR::java_lang_Math_abs_I:
-         processSimpleMath(node, TR::iabs);
+         processIntrinsicFunction(treetop, node, TR::iabs);
          break;
       case TR::java_lang_Math_abs_L:
-         processSimpleMath(node, TR::labs);
+         processIntrinsicFunction(treetop, node, TR::labs);
          break;
       case TR::java_lang_Math_abs_D:
-         processSimpleMath(node, TR::dabs);
+         processIntrinsicFunction(treetop, node, TR::dabs);
          break;
       case TR::java_lang_Math_abs_F:
-         processSimpleMath(node, TR::fabs);
+         processIntrinsicFunction(treetop, node, TR::fabs);
          break;
       case TR::java_lang_Math_max_I:
-         processSimpleMath(node, TR::imax);
+         processIntrinsicFunction(treetop, node, TR::imax);
          break;
       case TR::java_lang_Math_min_I:
-         processSimpleMath(node, TR::imin);
+         processIntrinsicFunction(treetop, node, TR::imin);
          break;
       case TR::java_lang_Math_max_L:
-         processSimpleMath(node, TR::lmax);
+         processIntrinsicFunction(treetop, node, TR::lmax);
          break;
       case TR::java_lang_Math_min_L:
-         processSimpleMath(node, TR::lmin);
+         processIntrinsicFunction(treetop, node, TR::lmin);
          break;
       case TR::java_lang_String_toLowerHWOptimized:
       case TR::java_lang_String_toLowerHWOptimizedDecompressed:
