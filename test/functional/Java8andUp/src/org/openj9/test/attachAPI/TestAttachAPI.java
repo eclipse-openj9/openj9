@@ -22,6 +22,7 @@
 package org.openj9.test.attachAPI;
 
 import static org.testng.AssertJUnit.assertTrue;
+import static org.openj9.test.util.FileUtilities.deleteRecursive;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -387,7 +388,7 @@ public class TestAttachAPI extends AttachApiTest {
 	}
 
 	@Test
-	public void test_mkcommondir01() {
+	public void test_mkcommondir01() throws IOException {
 		logger.debug("starting " + testName);
 		String tmpdir = System.getProperty("java.io.tmpdir")
 				+ File.separatorChar + testName;
@@ -421,7 +422,7 @@ public class TestAttachAPI extends AttachApiTest {
 	}
 
 	@Test
-	public void test_mkcommondir01a() {
+	public void test_mkcommondir01a() throws IOException {
 		
 		logger.debug("starting " + testName);
 		String tmpdir = System.getProperty("java.io.tmpdir")
@@ -455,7 +456,7 @@ public class TestAttachAPI extends AttachApiTest {
 	}
 
 	@Test
-	public void test_mkcommondir02() {
+	public void test_mkcommondir02() throws IOException {
 		
 		logger.debug("starting " + testName);
 		if (isWindows()) {

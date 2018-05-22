@@ -21,7 +21,6 @@
  *******************************************************************************/
 package org.openj9.test.attachAPI;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -156,20 +155,4 @@ abstract class AttachApiTest {
 			String testString) {
 		return errOutput.contains(testString);
 	}
-
-	public void deleteRecursive(File root) {
-		if (root.isDirectory()) {
-			File[] children = root.listFiles();
-			if (null != children) {
-				for (File c : children) {
-					deleteRecursive(c);
-				}
-			} else {
-				logger.error("IOError in listFiles from "
-						+ root.getAbsolutePath());
-			}
-		}
-		root.delete();
-	}
-
 }
