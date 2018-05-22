@@ -935,24 +935,6 @@ public InputStream getResourceAsStream (String resName) {
 	return null;
 }
 
-/*[IF Sidecar19-SE]*/
-/**
- * Returns an input stream to a resource in a module defined to this class loader.
- * 
- * @param moduleName Name of the module
- * @param name Name of the resource
- * 
- * @return InputStream
- *			a stream on the resource or null.
- *
- * @throws IOException
- */
-InputStream getResourceAsStream(String moduleName, String name) throws IOException
-{
-	return null;
-}
-/*[ENDIF] Sidecar19-SE */
- 
 static void completeInitialization() {
 	/*[PR JAZZ 57622: Support -Dreflect.cache=boot option] -Dreflect.cache=boot causes deadlock (Details: CMVC 120695). Loading Void class explicitly will prevent possible deadlock during caching reflect classes/methods. */
 	@SuppressWarnings("unused")
