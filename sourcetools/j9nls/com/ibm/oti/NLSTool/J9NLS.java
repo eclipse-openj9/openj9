@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -273,7 +274,7 @@ public class J9NLS implements NLSConstants {
 					String fileName = getNameWithLocale(outFileName, locale);
 					if (propertiesDifferentFromCopyOnDisk(fileName)) {
 						out = new FileOutputStream(fileName);	
-						outputProperties.store(out, null);
+						outputProperties.store(new OutputStreamWriter(out), null);
 						out.flush();
 						dp("** Generated " + fileName + "\n");
 						totalPropertiesFilesCreated++;
