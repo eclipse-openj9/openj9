@@ -169,7 +169,6 @@ static int32_t getJ9InitialBytecodeSize(TR_ResolvedMethod * feMethod, TR::Resolv
 
 static bool insideIntPipelineForEach(TR_ResolvedMethod *method, TR::Compilation *comp)
    {
-#ifdef J9_PROJECT_SPECIFIC
    char *sig = "accept";
    bool returnValue = true; //default is true since if first method is IntPipeline.forEach true is returned
 
@@ -200,7 +199,6 @@ static bool insideIntPipelineForEach(TR_ResolvedMethod *method, TR::Compilation 
          method = method->owningMethod();
          }
       }
-#endif
 
    return false;
    }
@@ -208,7 +206,6 @@ static bool insideIntPipelineForEach(TR_ResolvedMethod *method, TR::Compilation 
 bool
 TR_J9InlinerPolicy::inlineRecognizedMethod(TR::RecognizedMethod method)
    {
-#ifdef J9_PROJECT_SPECIFIC
 //    if (method ==
 //        TR::java_lang_String_init_String_char)
 //       return false;
@@ -238,9 +235,7 @@ TR_J9InlinerPolicy::inlineRecognizedMethod(TR::RecognizedMethod method)
       return false;
 
    return true;
-#else
-   return false;
-#endif
+
    }
 
 int32_t
@@ -1410,7 +1405,6 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
 bool
 TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, TR::DataType type, bool isVolatile, bool needNullCheck)
    {
-#ifdef J9_PROJECT_SPECIFIC
    if (isVolatile && type == TR::Int64 && TR::Compiler->target.is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
    TR_ASSERT(TR::Compiler->cls.classesOnHeap(), "Unsafe inlining code assumes classes are on heap\n");
@@ -1533,9 +1527,7 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
    TR::Node::recreate(unsafeCall, comp()->il.opCodeForDirectLoad(unsafeCall->getDataType()));
    unsafeCall->setSymbolReference(newTemp);
    return true;
-#else
-   return false;
-#endif
+
    }
 
 TR::Node *
@@ -1550,7 +1542,6 @@ TR_J9InlinerPolicy::createUnsafeAddress(TR::Node * unsafeCall)
 bool
 TR_J9InlinerPolicy::createUnsafePut(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, TR::DataType type, bool compress)
    {
-#ifdef J9_PROJECT_SPECIFIC
    if (debug("traceUnsafe"))
       printf("createUnsafePut %s in %s\n", type.toString(), comp()->signature());
 
@@ -1597,15 +1588,12 @@ TR_J9InlinerPolicy::createUnsafePut(TR::ResolvedMethodSymbol *calleeSymbol, TR::
    unsafeCall->recursivelyDecReferenceCount();
 
    return true;
-#else
-   return false;
-#endif
+
    }
 
 bool
 TR_J9InlinerPolicy::createUnsafeGet(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, TR::DataType type, bool compress)
    {
-#ifdef J9_PROJECT_SPECIFIC
    if (debug("traceUnsafe"))
       printf("createUnsafeGet %s in %s\n", type.toString(), comp()->signature());
 
@@ -1720,9 +1708,7 @@ TR_J9InlinerPolicy::createUnsafeGet(TR::ResolvedMethodSymbol *calleeSymbol, TR::
    TR::Node::recreate(callNodeTreeTop->getNode(), TR::treetop);
 
    return true;
-#else
-   return false;
-#endif
+
    }
 
 bool
@@ -1738,7 +1724,6 @@ TR_J9InlinerPolicy::createUnsafeFence(TR::TreeTop *callNodeTreeTop, TR::Node *ca
 TR::Node *
 TR_J9InlinerPolicy::inlineGetClassAccessFlags(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * callNode)
    {
-#ifdef J9_PROJECT_SPECIFIC
    if (
          comp()->getOption(TR_DisableInliningOfNatives) ||
          calleeSymbol->castToMethodSymbol()->getRecognizedMethod() != TR::sun_reflect_Reflection_getClassAccessFlags)
@@ -1815,15 +1800,12 @@ TR_J9InlinerPolicy::inlineGetClassAccessFlags(TR::ResolvedMethodSymbol *calleeSy
    block->createConditionalBlocksBeforeTree(callNodeTreeTop, compareTree, ifTree, elseTree, callerSymbol->getFlowGraph(), false);
 
    return resultNode;
-#else
-   return NULL;
-#endif
+
    }
 
 bool
 TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * callNode)
    {
-#ifdef J9_PROJECT_SPECIFIC
    if(comp()->getOption(TR_TraceUnsafeInlining))
       traceMsg(comp(),"Unsafe Inlining: Trying to inline Unsafe Call at Node %p\n",callNode);
 
@@ -2037,7 +2019,6 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
       default:
          break;
       }
-#endif
 
    return false;
    }
@@ -2046,7 +2027,6 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
 bool
 TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode)
    {
-#ifdef J9_PROJECT_SPECIFIC
    TR::Compilation* comp = TR::comp();
    TR::RecognizedMethod recognizedMethod = method->getRecognizedMethod();
    // Reflection's JNI
@@ -2141,7 +2121,6 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
       case TR::sun_misc_Unsafe_objectFieldOffset:
          return false; // todo
       }
-#endif
 
    return false;
    }
@@ -2864,13 +2843,12 @@ TR_MultipleCallTargetInliner::assignArgumentsToParameters(TR::ResolvedMethodSymb
 
          TR::TreeTop::create(comp(), prevTreeTop, storeNode);
          TR::Node * newArg = TR::Node::createLoad(arg, sr);
-#ifdef J9_PROJECT_SPECIFIC
+
          if (arg->getType().isBCD())
             {
             storeNode->setDecimalPrecision(arg->getDecimalPrecision());
             newArg->setDecimalPrecision(arg->getDecimalPrecision());
             }
-#endif
 
          if (i == 1 && i == callNode->getFirstArgumentIndex() && callNode->getChild(0)->getChild(0) == arg)
             {
@@ -4195,7 +4173,6 @@ bool TR_MultipleCallTargetInliner::isLargeCompiledMethod(TR_ResolvedMethod *call
 bool
 TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int bytecodeSize, TR::Block *block, TR_ByteCodeInfo & bcInfo, int32_t numLocals, TR_ResolvedMethod * callerResolvedMethod, TR_ResolvedMethod * calleeResolvedMethod,TR::Node *callNode, bool allConsts)
    {
-#ifdef J9_PROJECT_SPECIFIC
    if (alwaysWorthInlining(calleeResolvedMethod, callNode))
       return false;
 
@@ -4495,7 +4472,6 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
       }
 
    heuristicTrace(tracer(),"### Did not exceed size threshold, bytecodeSize %d <= inlineThreshold %d",bytecodeSize, _methodInWarmBlockByteCodeSizeThreshold);
-#endif
 
    // Does not exceed size threshold
    return false;
@@ -4642,9 +4618,8 @@ TR_J9InlinerPolicy::doCorrectnessAndSizeChecksForInlineCallTarget(TR_CallStack *
    TR_LinkHead<TR_ParameterMapping> map;
    if (!validateArguments(calltarget, map))
       {
-#ifdef J9_PROJECT_SPECIFIC
       TR_ASSERT(comp()->fej9()->canAllowDifferingNumberOrTypesOfArgsAndParmsInInliner(), "Error, call target has a parameter mapping issue.");
-#endif
+
       return false;
       }
 
@@ -4704,9 +4679,8 @@ TR_J9InlinerPolicy::validateArguments(TR_CallTarget *calltarget, TR_LinkHead<TR_
       heuristicTrace(tracer(), "Number of Parameters %d and Arguments %d Differ.  Removing Call Target for Safety's sake.", numParms, numArgs);
       calltarget->_myCallSite->removecalltarget(calltarget, tracer(), Cant_Match_Parms_to_Args);
 
-#ifdef J9_PROJECT_SPECIFIC
       TR_ASSERT(comp()->fej9()->canAllowDifferingNumberOrTypesOfArgsAndParmsInInliner() , "Can't match args to parms, arg number mismatch");
-#endif
+
       return false;
       }
 
@@ -4730,10 +4704,9 @@ TR_J9InlinerPolicy::validateArguments(TR_CallTarget *calltarget, TR_LinkHead<TR_
          heuristicTrace(tracer(), "For argNodeIndex %d, data type of node %p does not match data type of parameter. Removing Call Target for Safety's sake.", argNodeIndex, arg);
          calltarget->_myCallSite->removecalltarget(calltarget, tracer(), Cant_Match_Parms_to_Args);
 
-#ifdef J9_PROJECT_SPECIFIC
          if (!comp()->fej9()->canAllowDifferingNumberOrTypesOfArgsAndParmsInInliner())
             TR_ASSERT(0, "Can't match args to parms. Data type mismatch.");
-#endif
+
          return false;
          }
       }
@@ -6097,11 +6070,8 @@ TR_J9InnerPreexistenceInfo::getPreexistencePointImpl(int32_t ordinal, TR_CallSta
 
    if (!point)
       {
-#ifdef J9_PROJECT_SPECIFIC
+
       if (_guardKind != TR_ProfiledGuard && (_guardKind != TR_NoGuard || !comp()->hasIntStreamForEach())) // FIXME: this limitation can be removed by doing the tree transformation
-#else
-      if (_guardKind != TR_ProfiledGuard) // FIXME: this limitation can be removed by doing the tree transformation
-#endif
          point = new (trStackMemory()) PreexistencePoint(prevCallStack, ordinal);
       }
 
