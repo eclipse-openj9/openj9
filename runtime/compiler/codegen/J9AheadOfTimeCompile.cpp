@@ -1080,10 +1080,17 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             break;
 
          case TR_ClassUnloadDummyAssumption:
+            cursor++;        // unused field
+            if (is64BitTarget)
+               {
+               cursor +=4; 
+               }
+            traceMsg(self()->comp(), "ClassUnloadDummyAssumption\n");
+            break;
          default:
             traceMsg(self()->comp(), "Unknown Relocation type = %d\n", kind);
             TR_ASSERT(false, "should be unreachable");
-        break;
+            break;
          }
 
       traceMsg(self()->comp(), "\n");

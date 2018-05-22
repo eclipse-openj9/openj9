@@ -1623,8 +1623,6 @@ TR_RelocationRecordClassObject::applyRelocation(TR_RelocationRuntime *reloRuntim
    uintptrj_t newConstantPool = computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
    TR_OpaqueClassBlock *newAddress = computeNewClassObject(reloRuntime, newConstantPool, inlinedSiteIndex(reloTarget), cpIndex(reloTarget));
 
-   // fprintf(stderr, "old addr: %p, reloTarget: %p\n", oldAddress, reloTarget);
-
    if (!newAddress) return compilationAotClassReloFailure;
 
    if (TR::CodeGenerator::wantToPatchClassPointer(reloRuntime->comp(), newAddress, reloLocation))
