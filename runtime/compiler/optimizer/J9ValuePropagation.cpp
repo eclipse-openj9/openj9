@@ -38,10 +38,11 @@
 #include "infra/Cfg.hpp"                       // for CFG
 #include "compile/VirtualGuard.hpp"            // for VirtualGuard::createHCRGuard
 #include "env/CompilerEnv.hpp"
-#include "optimizer/J9TransformUtil.hpp"       // for calculateElementAddress
+#include "optimizer/TransformUtil.hpp"       // for calculateElementAddress
 #include "il/symbol/StaticSymbol.hpp"           // for StaticSymbol
 #include "env/VMAccessCriticalSection.hpp"      // for VMAccessCriticalSection
 #include "runtime/RuntimeAssumptions.hpp"
+#include "env/J9JitMemory.hpp"
 
 #define OPT_DETAILS "O^O VALUE PROPAGATION: "
 
@@ -253,18 +254,18 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
    if (!node->getSymbol()->isResolvedMethod())
       return;
 
-   TR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
-   TR::RecognizedMethod rm = symbol->getRecognizedMethod();
    const static char *disableVPFoldRecognizedMethod = feGetEnv("TR_disableVPFoldRecognizedMethod");
    if (disableVPFoldRecognizedMethod)
       return;
+   TR::ResolvedMethodSymbol* symbol = node->getSymbol()->getResolvedMethodSymbol();
+   TR::RecognizedMethod rm = symbol->getRecognizedMethod();
    if(rm == TR::unknownMethod)
       return;
    // Do not constraint a call node for a guarded inlined call
    if (node->isTheVirtualCallNodeForAGuardedInlinedCall())
       return;
 
-   TR_Method * calledMethod = symbol->getMethod();
+   TR_ResolvedMethod* calledMethod = symbol->getResolvedMethod();
    const char *signature = calledMethod->signature(comp()->trMemory(), stackAlloc);
 
    static const char *disableHCRGuards = feGetEnv("TR_DisableHCRGuards");
@@ -639,6 +640,160 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
       {
       switch (rm)
          {
+         case TR::java_lang_invoke_MethodHandle_asType:
+            {
+            TR::Node* mh = node->getArgument(0);
+            TR::Node* mt = node->getArgument(1);
+            bool mhConstraintGlobal, mtConstraintGlobal;
+            TR::VPConstraint* mhConstraint = getConstraint(mh, mhConstraintGlobal);
+            TR::VPConstraint* mtConstraint = getConstraint(mt, mtConstraintGlobal);
+            J9VMThread* vmThread = comp()->fej9()->vmThread();
+            TR_OpaqueClassBlock* methodHandleClass = J9JitMemory::convertClassPtrToClassOffset(J9VMJAVALANGINVOKEMETHODHANDLE(vmThread->javaVM));
+            TR_OpaqueClassBlock* methodTypeClass = J9JitMemory::convertClassPtrToClassOffset(J9VMJAVALANGINVOKEMETHODTYPE(vmThread->javaVM));
+            if (mhConstraint
+                && mtConstraint
+                && mhConstraint->getKnownObject()
+                && mhConstraint->isNonNullObject()
+                && mtConstraint->getKnownObject()
+                && mtConstraint->isNonNullObject()
+                && mhConstraint->getClass()
+                && mtConstraint->getClass()
+                && comp()->fej9()->isInstanceOf(mhConstraint->getClass(), methodHandleClass, true, true) == TR_yes
+                && comp()->fej9()->isInstanceOf(mtConstraint->getClass(), methodTypeClass, true, true) == TR_yes)
+               {
+               uintptrj_t* mhLocation = getObjectLocationFromConstraint(mhConstraint);
+               uintptrj_t* mtLocation = getObjectLocationFromConstraint(mtConstraint);
+               uint32_t mtOffset = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE_OFFSET(vmThread);
+
+               TR::VMAccessCriticalSection asType(comp(),
+                                                           TR::VMAccessCriticalSection::tryToAcquireVMAccess);
+               if (!asType.hasVMAccess())
+                  break;
+               uintptrj_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)mhLocation);
+               uintptrj_t mtInMh = comp()->fej9()->getReferenceFieldAtAddress(mhObject + mtOffset);
+               uintptrj_t mtObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)mtLocation);
+
+               if (trace())
+                  traceMsg(comp(), "mhLocation %p mtLocation %p mhObject %p mtOffset %d mtInMh %p mtObject %p\n", mhLocation, mtLocation, mhObject, mtOffset, mtInMh, mtObject);
+
+               // AOT doesn't relocate/validate objects, which is why this transformation is disabled under AOT
+               if (mtInMh == mtObject)
+                  {
+                  if (!performTransformation(comp(), "%sTransforming %s on node %p to a PassThrough with child %p\n", OPT_DETAILS, signature, node, mh))
+                     break;
+
+                  TR::TransformUtil::transformCallNodeToPassThrough(this, node, _curTree, mh);
+                  addGlobalConstraint(node, mhConstraint);
+                  TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "constrainCall/(%s)", signature));
+                  return;
+                  }
+               }
+            break;
+            }
+         case TR::java_lang_invoke_PrimitiveHandle_initializeClassIfRequired:
+            {
+            TR::Node* mh = node->getArgument(0);
+            bool mhConstraintGlobal;
+            TR::VPConstraint* mhConstraint = getConstraint(mh, mhConstraintGlobal);
+            J9VMThread* vmThread = comp()->fej9()->vmThread();
+            TR_OpaqueClassBlock* primitiveHandleClass = J9JitMemory::convertClassPtrToClassOffset(J9VMJAVALANGINVOKEPRIMITIVEHANDLE(vmThread->javaVM));
+            bool removeCall = false;
+            if (mhConstraint
+                && mhConstraint->getKnownObject()
+                && mhConstraint->isNonNullObject()
+                && mhConstraint->getClass()
+                && comp()->fej9()->isInstanceOf(mhConstraint->getClass(), primitiveHandleClass, true, true) == TR_yes)
+               {
+               uint32_t defcOffset = J9VMJAVALANGINVOKEPRIMITIVEHANDLE_DEFC_OFFSET(comp()->fej9()->vmThread());
+               uintptrj_t* mhLocation = getObjectLocationFromConstraint(mhConstraint);
+
+               TR::VMAccessCriticalSection initializeClassIfRequired(comp(),
+                                                        TR::VMAccessCriticalSection::tryToAcquireVMAccess);
+               if (!initializeClassIfRequired.hasVMAccess())
+                  break;
+               uintptrj_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)mhLocation);
+               uintptrj_t defc = comp()->fej9()->getReferenceFieldAtAddress(mhObject + defcOffset);
+               J9Class* defcClazz = (J9Class*)TR::Compiler->cls.classFromJavaLangClass(comp(), defc);
+               if (defcClazz->initializeStatus == J9ClassInitSucceeded)
+                  {
+                  removeCall = true;
+                  if (trace())
+                     {
+                     traceMsg(comp(), "defc in MethodHandle %p has been initialized\n", mh);
+                     }
+                  }
+               }
+
+            if (removeCall
+                && performTransformation(comp(), "%sRemoving call node %s [" POINTER_PRINTF_FORMAT "]\n", OPT_DETAILS, node->getOpCode().getName(), node))
+               {
+               TR::Node* receiverChild = node->getArgument(0);
+               TR::TransformUtil::transformCallNodeToPassThrough(this, node, _curTree, receiverChild);
+               TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "constrainCall/(%s)", signature));
+               return;
+               }
+            break;
+            }
+         case TR::java_lang_invoke_DirectHandle_nullCheckIfRequired:
+            {
+            TR::Node* mh = node->getArgument(0);
+            TR::Node* receiver = node->getArgument(1);
+            bool mhConstraintGlobal, receiverConstraintGlobal;
+            TR::VPConstraint* mhConstraint = getConstraint(mh, mhConstraintGlobal);
+            TR::VPConstraint* receiverConstraint = getConstraint(receiver, receiverConstraintGlobal);
+
+            J9VMThread* vmThread = comp()->fej9()->vmThread();
+            TR_OpaqueClassBlock* directHandleClass = calledMethod->classOfMethod();
+            if (!mhConstraint
+                || !mhConstraint->getClass()
+                || comp()->fej9()->isInstanceOf(mhConstraint->getClass(), directHandleClass, true, true) != TR_yes)
+               break;
+
+            bool removeCall = false;
+            if (receiverConstraint
+                && receiverConstraint->isNonNullObject())
+               {
+               removeCall = true;
+               if (trace())
+                  {
+                  traceMsg(comp(), "receiver child %p for DirectHandle.nullCheckIfRequired is non-null\n", receiver);
+                  }
+               }
+            else if (mhConstraint->getKnownObject()
+                     && mhConstraint->isNonNullObject())
+               {
+               TR_OpaqueClassBlock* mhClass = mhConstraint->getClass();
+               int32_t modifierOffset = comp()->fej9()->getInstanceFieldOffset(mhClass, "final_modifiers", 15, "I", 1);
+               if (modifierOffset < 0)
+                  break;
+               uintptrj_t* mhLocation = getObjectLocationFromConstraint(mhConstraint);
+
+               TR::VMAccessCriticalSection nullCheckIfRequired(comp(),
+                                                        TR::VMAccessCriticalSection::tryToAcquireVMAccess);
+               if (!nullCheckIfRequired.hasVMAccess())
+                  break;
+               uintptrj_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)mhLocation);
+               int32_t modifier = comp()->fej9()->getInt32FieldAt(mhObject, modifierOffset);
+               if (modifier & J9AccStatic)
+                  {
+                  removeCall = true;
+                  if (trace())
+                     {
+                     traceMsg(comp(), "Modifier in MethodHandle %p is %d and is static\n", mh, modifier);
+                     }
+                  }
+               }
+
+            if (removeCall
+                && performTransformation(comp(), "%sRemoving call node %s [" POINTER_PRINTF_FORMAT "]\n", OPT_DETAILS, node->getOpCode().getName(), node))
+               {
+               TR::Node* receiverChild = node->getArgument(0);
+               TR::TransformUtil::transformCallNodeToPassThrough(this, node, _curTree, receiverChild);
+               TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "constrainCall/(%s)", signature));
+               return;
+               }
+            break;
+            }
          // Transform java/lang/Object.newInstancePrototype into new and a call to default constructor of the given class
          // AOT class pointer relocation is only supported on aconst nodes. However aconst node cannot be a child work of
          // a TR::New node because it does not have a symref indicating the size of the instance of the class.
