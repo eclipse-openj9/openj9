@@ -808,7 +808,6 @@ TR::FILE *TR::CompilationInfoPerThreadBase::_perfFile = NULL; // used on Linux f
 TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool onSeparateThread) :
    _compInfo(compInfo),
    _jitConfig(jitConfig),
-   _reloRuntime(jitConfig),
    _compThreadId(id),
    _onSeparateThread(onSeparateThread),
    _vm(NULL),
@@ -826,6 +825,14 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _cachedClientDataPtr(nullptr)
    {
    TR_ASSERT(_compThreadId < MAX_TOTAL_COMP_THREADS, "Cannot have a compId greater than MAX_TOTAL_COMP_THREADS");
+   if (compInfo.getPersistentInfo()->getJaasMode() == NONJAAS_MODE)
+      {
+      _reloRuntime = new (PERSISTENT_NEW) TR_SharedCacheRelocationRuntime(jitConfig);
+      }
+   else
+      {
+      _reloRuntime = new (PERSISTENT_NEW) TR_JAASRelocationRuntime(jitConfig);
+      }
    }
 
 TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
