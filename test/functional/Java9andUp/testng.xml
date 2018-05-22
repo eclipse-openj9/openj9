@@ -112,4 +112,9 @@
 			<class name="org.openj9.test.access.staticAccessChecks.DenyAccess" />
 		</classes>
     </test>
+	<test name="TestClassLoaderFindResource">
+		<classes>
+			<class name="org.openj9.test.modularity.TestClassLoaderFindResource" />
+		</classes>
+    </test>
 </suite> <!-- Suite -->
