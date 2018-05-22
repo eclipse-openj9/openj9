@@ -92,7 +92,6 @@ endif
 
 ifneq (,$(findstring win,$(SPEC)))
 P=;
-D=\\
 EXECUTABLE_SUFFIX=.exe
 RUN_SCRIPT="cmd /c" 
 RUN_SCRIPT_STRING=$(RUN_SCRIPT)
