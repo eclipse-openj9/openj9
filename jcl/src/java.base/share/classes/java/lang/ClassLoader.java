@@ -2285,7 +2285,8 @@ ServicesCatalog getServicesCatalog() {
 /**
  * Answers an URL which can be used to access the resource
  * described by resName, using the class loader's resource lookup
- * algorithm. The default behavior is just to return null.
+ * algorithm. By default, return null, unless moduleName is null,
+ * in which case return findResource(resName).
  * This should be implemented by a ClassLoader.
  *
  * @return		URL
@@ -2295,8 +2296,13 @@ ServicesCatalog getServicesCatalog() {
  * @param		resName String
  *					the name of the resource to find.
  */
-protected URL findResource(String moduleName, String name) throws IOException {
-	return null;
+protected URL findResource(String moduleName, String resName) throws IOException {
+	URL result = null;
+	if (null == moduleName) {
+		/* Handle the default case for subclasses which do not implement this method */
+		result = findResource(resName);
+	}
+	return result;
 }
 
 Package definePackage(String name, Module module) {
