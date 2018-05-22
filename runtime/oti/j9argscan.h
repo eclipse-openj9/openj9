@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,6 +84,23 @@ uintptr_t scan_hex(char **scan_start, uintptr_t* result);
 * @return uintptr_t
 */
 uintptr_t scan_hex_caseflag(char **scan_start, BOOLEAN uppercaseAllowed, uintptr_t* result);
+
+/**
+* @brief
+* @param **scan_start
+* @param *result
+* @return uintptr_t
+*/
+uintptr_t scan_hex_u64(char **scan_start, uint64_t* result);
+
+
+/**
+* @brief
+* @param **scan_start
+* @param *result
+* @return uintptr_t
+*/
+uintptr_t scan_hex_caseflag_u64(char **scan_start, BOOLEAN uppercaseAllowed, uint64_t* result);
 
 /**
 * @brief
