@@ -65,7 +65,6 @@ public abstract class Test_FileSystem_Base {
 	}
 	
 	protected void resolveTest(boolean actualResult, boolean expectedResult) {
-		logger.debug("Test passed: " + (expectedResult == actualResult));
 		Assert.assertEquals(expectedResult, actualResult);
 	}
 }
