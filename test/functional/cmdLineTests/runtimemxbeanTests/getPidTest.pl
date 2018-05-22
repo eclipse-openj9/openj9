@@ -32,17 +32,24 @@ my ($in, $out, $err);
 
 my $perlPid;
 
+my $javaPid;
+
 if ($^O eq 'cygwin') {
 	open3($in, $out, $err, $javaCmd);
+	$javaPid = <$out>;
 	$perlPid = `wmic process where "name='java.exe'" get ProcessID`;
-	print "\n${perlPid}\n";
-	$perlPid =~ s/\D//g;
+	$javaPid =~ s/^\s+|\s+$//g;
+	$perlPid =~ s/^\s+|\s+$//g;
+	if (index($perlPid, $javaPid) != -1) {
+	$perlPid = ${javaPid};
+	}
+	else{
+	}
 }
 else {
 	$perlPid = open3($in, $out, $err, $javaCmd);
+	$javaPid = <$out>;
 }
-
-my $javaPid = <$out>;
 
 if ($perlPid == $javaPid) {
 	print "PASS: RuntimeMXBean.getPid() returned correct PID.";

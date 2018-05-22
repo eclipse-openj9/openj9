@@ -33,7 +33,7 @@ class GetPid extends Thread {
                                 RuntimeMXBean mb = ManagementFactory.getRuntimeMXBean();
                                 long id = mb.getPid();
                                 System.out.println(id);
-                                monitor.wait(10000);
+                                monitor.wait(5000);
                         } catch (Exception e) {
                         }
                 }
