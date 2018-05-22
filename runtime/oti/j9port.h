@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -507,11 +507,6 @@ typedef struct J9ProcessorDesc {
 
 /* STFLE bit 57 - Message-security-assist-extension-5 facility */
 #define J9PORT_S390_FEATURE_MSA_EXTENSION_5 57
-
-/* zLinux features
- * Auxiliary Vector Hardware Capability (AT_HWCAP) features for Linux on z.
- */
-#define J9PORT_HWCAP_S390_GS 0x4000
 
 /* x86 features
  * INTEL INSTRUCTION SET REFERENCE, A-M

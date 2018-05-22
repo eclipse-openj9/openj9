@@ -66,10 +66,10 @@
 #include "j9csrsi.h"
 #endif /* defined(J9ZOS390) */
 
-#if (defined(LINUXPPC) || (defined(S390) && defined(LINUX)))
+#if defined(LINUXPPC)
 #include "auxv.h"
 #include <strings.h>
-#endif /* (defined(LINUXPPC) || (defined(S390) && defined(LINUX))) */
+#endif /* defined(LINUXPPC) */
 
 #if defined(AIXPPC)
 #include <fcntl.h>
@@ -772,9 +772,6 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	if (J9_ARE_NO_BITS_SET(*(int*) 200, S390_STFLE_BIT)) {
 		return -1;
 	}
-#else /* LINUX S390*/
-	/* Some s390 features require OS support on Linux, querying auxv for AT_HWCAP bit-mask of processor capabilities. */
-	unsigned long auxvFeatures = query_auxv(AT_HWCAP);
 #endif /* defined(J9ZOS390) */
 
 	/* GS hardwrae support */
@@ -782,8 +779,6 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 #if defined(J9ZOS390)
 		/* GS OS support */
 		if (J9_ARE_ALL_BITS_SET(cvtgsf, 0x1)) /* CVTGSF bit is X'01' bit at byte X'17A' off CVT */
-#else /* LINUX S390*/
-		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_GS))
 #endif /* defined(J9ZOS390) */
 		{
 			setFeature(desc, J9PORT_S390_FEATURE_GUARDED_STORAGE);
