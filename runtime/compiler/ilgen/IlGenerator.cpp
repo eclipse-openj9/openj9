@@ -234,16 +234,6 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
             }
          }
 
-      if ((recognizedMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordCASSupported) ||
-          (recognizedMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordSetSupported))
-         {
-         if (performTransformation(comp(), "O^O IlGenerator: Generate java/util/concurrent/atomic/Atomic*Reference static get/set method\n"))
-            {
-            genDCASOrSetAvailable(recognizedMethod);
-            return true;
-            }
-         }
-
       if (!comp()->getOption(TR_DisableInliningOfNatives))
          {
          // If we're inlining then there are some stack walking routines that can be made faster
@@ -1282,114 +1272,6 @@ TR_J9ByteCodeIlGenerator::genJNIIL()
    prependEntryCode(_block);
 
    return true;
-   }
-
-
-
-void
-TR_J9ByteCodeIlGenerator::genDCASOrSetAvailable(TR::RecognizedMethod recognizedMethod)
-   {
-   // This routine is no longer used since the methods that it would have
-   // been used for fast pathing have been removed from the AMR and ASR classes
-   //
-
-   static int32_t AMRDCASconstToLoad = -1;
-   static int32_t AMRDSetconstToLoad = -1;
-   static int32_t ASRDCASconstToLoad = -1;
-   static int32_t ASRDSetconstToLoad = -1;
-   bool isAMR = false;
-
-   int32_t constToLoad = -1;
-   initialize();
-   int32_t firstIndex = _bcIndex;
-   setIsGenerated(_bcIndex);
-
-   if (recognizedMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordCASSupported)
-      {
-      if (ASRDCASconstToLoad == -1)
-    {
-         if (comp()->cg()->getSupportsDoubleWordCAS())
-       ASRDCASconstToLoad = 1;
-         else
-            ASRDCASconstToLoad = 0;
-    }
-      constToLoad = ASRDCASconstToLoad;
-      }
-   else if (recognizedMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordSetSupported)
-      {
-      if (ASRDSetconstToLoad == -1)
-    {
-         if (comp()->cg()->getSupportsDoubleWordSet())
-       ASRDSetconstToLoad = 1;
-         else
-            ASRDSetconstToLoad = 0;
-    }
-      constToLoad = ASRDSetconstToLoad;
-      }
-
-   if (constToLoad == 1)
-      {
-      //TR_OpaqueClassBlock * classBlock = method()->containingClass();
-
-      TR_OpaqueClassBlock * classBlock = NULL;
-      char *fieldName;
-      int32_t fieldNameLen;
-      char *fieldSig;
-      int32_t fieldSigLen;
-      int32_t intOrBoolOffset;
-
-      
-    {
-         classBlock = fej9()->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference$ReferenceIntegerPair;", 73, method());
-         fieldName = "integer";
-         fieldNameLen = 7;
-         fieldSig = "I";
-         fieldSigLen = 1;
-
-         intOrBoolOffset = fej9()->getObjectHeaderSizeInBytes() + fej9()->getInstanceFieldOffset(classBlock, fieldName, fieldNameLen, fieldSig, fieldSigLen);
-    }
-
-      fieldName = "reference";
-      fieldNameLen = 9;
-      fieldSig = "Ljava/lang/Object;";
-      fieldSigLen = 18;
-
-      int32_t referenceOffset = fej9()->getObjectHeaderSizeInBytes() + fej9()->getInstanceFieldOffset(classBlock, fieldName, fieldNameLen, fieldSig, fieldSigLen);
-
-      //traceMsg(comp(), "class %p reference offset %d bit offset %d\n", classBlock, referenceOffset, bitOffset);
-
-      if ((referenceOffset != intOrBoolOffset + 4) &&
-          (intOrBoolOffset != referenceOffset + TR::Compiler->om.sizeofReferenceField()))
-    constToLoad = 0;
-      else
-    {
-    if (intOrBoolOffset < referenceOffset)
-       {
-       if ((intOrBoolOffset % 2*TR::Compiler->om.sizeofReferenceField()) != 0)
-          constToLoad = 0;
-       }
-         else
-       {
-            if ((referenceOffset % 2*TR::Compiler->om.sizeofReferenceField()) != 0)
-          constToLoad = 0;
-       }
-         }
-      }
-
-   loadConstant(TR::iconst, constToLoad);
-
-   setIsGenerated(++_bcIndex);
-   _bcIndex = genReturn(method()->returnOpCode(), method()->isSynchronized());
-   TR::Block * block = blocks(firstIndex);
-   cfg()->addEdge(cfg()->getStart(), block);
-   block->setVisitCount(_blockAddedVisitCount);
-   block->getExit()->getNode()->copyByteCodeInfo(block->getLastRealTreeTop()->getNode());
-   cfg()->insertBefore(block, 0);
-   _bcIndex = 0;
-   _methodSymbol->setFirstTreeTop(blocks(0)->getEntry());
-   prependEntryCode(blocks(0));
-
-   dumpOptDetails(comp(), "\tOverriding default return value with %d.\n", constToLoad);
    }
 
 void

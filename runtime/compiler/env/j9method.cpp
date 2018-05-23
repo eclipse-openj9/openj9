@@ -3584,20 +3584,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {TR::unknownMethod}
       };
 
-  static X JavaUtilConcurrentAtomicStampedReferenceMethods[] =
-      {
-      {x(TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS,           "doubleWordCAS",          "(Ljava/util/concurrent/atomic/AtomicStampedReference$ReferenceIntegerPair;Ljava/lang/Object;Ljava/lang/Object;II)Z")},
-      {x(TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCASSupported,  "doubleWordCASSupported", "(Ljava/util/concurrent/atomic/AtomicStampedReference$ReferenceIntegerPair;)Z")},
-      {x(TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet,           "doubleWordSet",          "(Ljava/util/concurrent/atomic/AtomicStampedReference$ReferenceIntegerPair;Ljava/lang/Object;I)V")},
-      {x(TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSetSupported,  "doubleWordSetSupported", "(Ljava/util/concurrent/atomic/AtomicStampedReference$ReferenceIntegerPair;)Z")},
-      {x(TR::java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordCASSupported,"setDoubleWordCASSupported", "()Z")},
-      {x(TR::java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordSetSupported,"setDoubleWordSetSupported", "()Z")},
-      {x(TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordCAS,          "tmDoubleWordCAS",          "(Ljava/util/concurrent/atomic/AtomicStampedReference$Pair;Ljava/lang/Object;Ljava/lang/Object;II)I")},
-      {x(TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordSet,          "tmDoubleWordSet",          "(Ljava/util/concurrent/atomic/AtomicStampedReference$Pair;Ljava/lang/Object;I)Z")},
-      {x(TR::java_util_concurrent_atomic_AtomicStampedReference_tmEnabled,                "tmEnabled",  "()Z")},
-      {TR::unknownMethod}
-      };
-
    static X JavaUtilConcurrentAtomicLongMethods[] =
       {
 
@@ -4388,7 +4374,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
 
    static Y class50[] =
       {
-      { "java/util/concurrent/atomic/AtomicStampedReference", JavaUtilConcurrentAtomicStampedReferenceMethods },
       { "java/util/concurrent/atomic/AtomicLongFieldUpdater", JavaUtilConcurrentAtomicLongFieldUpdaterMethods },
       { 0 }
       };
@@ -4804,10 +4789,6 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::java_lang_Object_hashCodeImpl:
             case TR::java_lang_String_hashCodeImplCompressed:
             case TR::java_lang_String_hashCodeImplDecompressed:
-            case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
-            case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet:
-            case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCASSupported:
-            case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSetSupported:
             case TR::sun_nio_ch_NativeThread_current:
             case TR::com_ibm_crypto_provider_AEScryptInHardware_cbcDecrypt:
             case TR::com_ibm_crypto_provider_AEScryptInHardware_cbcEncrypt:
