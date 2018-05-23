@@ -306,6 +306,7 @@ TR_PersistentCHTable::removeClass(
       jitPersistentFree(subcl);
       subcl = nextScl;
       }
+   info->setFirstSubClass(nullptr);
 
    J9Class *clazzPtr;
    J9Class *superCl;
@@ -338,12 +339,9 @@ TR_PersistentCHTable::removeClass(
 
       }
 
-   if (!removeInfo)
-      info->setFirstSubClass(0);
-   else
+   if (removeInfo)
       {
       _classes[hashPos].remove(info);
-      info->removeSubClasses();
       jitPersistentFree(info);
       }
    }

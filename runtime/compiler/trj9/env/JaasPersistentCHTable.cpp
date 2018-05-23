@@ -103,6 +103,7 @@ void TR_JaasServerPersistentCHTable::commitModifications(TR::Compilation *comp, 
       TR_ASSERT(bytesRead < rawData.length(), "Corrupt CHTable!!");
       FlatPersistentClassInfo *info = (FlatPersistentClassInfo*)&rawData[bytesRead];
       TR_OpaqueClassBlock *classId = (TR_OpaqueClassBlock *) (((uintptr_t) info->_classId) & ~(uintptr_t)1);
+      TR_ASSERT(classId, "Class cannot be null (on server)");
       TR_PersistentClassInfo* clazz = findClassInfo(classId);
       if (!clazz)
          {
@@ -119,9 +120,18 @@ void TR_JaasServerPersistentCHTable::commitModifications(TR::Compilation *comp, 
       {
       auto flat = it.second.first;
       auto persist = it.second.second;
+      persist->removeSubClasses();
       for (size_t i = 0; i < flat->_numSubClasses; i++)
          {
-         persist->addSubClass(findClassInfo(flat->_subClasses[i]));
+         auto classInfo = findClassInfo(flat->_subClasses[i]);
+
+         // For some reason the subclass info is still null sometimes. This may be indicative of a larger problem or it could be harmless.
+         // JAAS TODO: figure out why this is happening
+         //TR_ASSERT(classInfo, "subclass info cannot be null: ensure subclasses are loaded before superclass");
+         if (classInfo)
+            persist->addSubClass(classInfo);
+         else
+            fprintf(stderr, "CHTable WARNING: classInfo for subclass %p of %p is null, ignoring\n", flat->_subClasses[i], flat->_classId);
          }
       }
    CHTABLE_UPDATE_COUNTER(_numClassesUpdated, count);
@@ -166,8 +176,6 @@ TR_JaasClientPersistentCHTable::serializeRemoves()
    for (auto clazz : _remove)
       {
       *ptr++ = clazz;
-      // Also remove removes from dirty table so they don't get recreated
-      _dirty.erase(clazz);
       count++;
       }
    _remove.clear();
@@ -242,11 +250,14 @@ size_t FlatPersistentClassInfo::serializeClass(TR_PersistentClassInfo *clazz, Fl
    info->_timeStamp = clazz->_timeStamp;
    info->_nameLength = clazz->_nameLength;
    info->_flags = clazz->_flags;
+   TR_ASSERT(clazz->_flags.getValue() < 0x40, "corrupted flags");
    TR_ASSERT(!clazz->getFieldInfo(), "field info not supported");
    info->_shouldNotBeNewlyExtended = clazz->_shouldNotBeNewlyExtended;
    int idx = 0;
    for (TR_SubClass *c = clazz->getFirstSubclass(); c; c = c->getNext())
       {
+      TR_ASSERT(c->getClassInfo(), "Subclass info cannot be null (on client)");
+      TR_ASSERT(c->getClassInfo()->getClassId(), "Subclass cannot be null (on client)");
       info->_subClasses[idx++] = c->getClassInfo()->getClassId();
       }
    info->_numSubClasses = idx;
@@ -292,6 +303,7 @@ size_t FlatPersistentClassInfo::deserializeClassSimple(TR_PersistentClassInfo *c
    clazz->_nameLength = info->_nameLength;
    clazz->_flags = info->_flags;
    clazz->_shouldNotBeNewlyExtended = info->_shouldNotBeNewlyExtended;
+   clazz->_fieldInfo = nullptr;
    return sizeof(FlatPersistentClassInfo) + info->_numSubClasses * sizeof(TR_OpaqueClassBlock*);
    }
 
@@ -355,10 +367,7 @@ TR_JaasClientPersistentCHTable::findClassInfoAfterLockingConst(
 TR_PersistentClassInfo *
 TR_JaasClientPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
-      //{
-      //TR::ClassTableCriticalSection findClassInfo(TR::comp()->fe());
-      //markDirty(classId);
-      //}
+   markDirty(classId);
    return TR_PersistentCHTable::findClassInfo(classId);
    }
 
@@ -368,11 +377,43 @@ TR_JaasClientPersistentCHTable::findClassInfoAfterLocking(
       TR::Compilation *comp,
       bool returnClassInfoForAOT)
    {
-      {
-      TR::ClassTableCriticalSection findClassInfo(comp->fe());
-      markDirty(classId);
-      }
    return TR_PersistentCHTable::findClassInfoAfterLocking(classId, comp, returnClassInfoForAOT);
+   }
+
+void
+TR_JaasClientPersistentCHTable::classGotUnloaded(
+      TR_FrontEnd *fe,
+      TR_OpaqueClassBlock *classId)
+   {
+   TR_PersistentCHTable::classGotUnloaded(fe, classId);
+   }
+
+void
+TR_JaasClientPersistentCHTable::markSuperClassesAsDirty(
+      TR_FrontEnd *fe,
+      TR_OpaqueClassBlock *classId)
+   {
+   J9Class *clazzPtr;
+   J9Class *superCl;
+   TR_OpaqueClassBlock *superClId;
+   int classDepth = TR::Compiler->cls.classDepthOf(classId) - 1;
+   if (classDepth >= 0)
+      {
+      clazzPtr = TR::Compiler->cls.convertClassOffsetToClassPtr(classId);
+      superCl = clazzPtr->superclasses[classDepth];
+      superClId = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(superCl);
+      markDirty(superClId);
+
+      for (J9ITable * iTableEntry = (J9ITable *)clazzPtr->iTable; iTableEntry; iTableEntry = iTableEntry->next)
+         {
+         superCl = iTableEntry->interfaceClass;
+         if (superCl != clazzPtr)
+            {
+            superClId = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(superCl);
+            markDirty(superClId);
+            }
+         }
+      }
    }
 
 void
@@ -380,8 +421,8 @@ TR_JaasClientPersistentCHTable::classGotUnloadedPost(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
+   markSuperClassesAsDirty(fe, classId);
    TR_PersistentCHTable::classGotUnloadedPost(fe, classId);
-
    markForRemoval(classId);
    }
 
@@ -404,6 +445,7 @@ TR_JaasClientPersistentCHTable::removeClass(
    if (!info)
       return;
 
+   markSuperClassesAsDirty(fe, classId);
    TR_PersistentCHTable::removeClass(fe, classId, info, removeInfo);
 
    if (removeInfo)
@@ -419,6 +461,17 @@ TR_JaasClientPersistentCHTable::classGotLoaded(
    {
    markDirty(classId);
    return TR_PersistentCHTable::classGotLoaded(fe, classId);
+   }
+
+bool
+TR_JaasClientPersistentCHTable::classGotInitialized(
+      TR_FrontEnd *fe,
+      TR_PersistentMemory *persistentMemory,
+      TR_OpaqueClassBlock *classId,
+      TR_PersistentClassInfo *clazz)
+   {
+   markDirty(classId);
+   return TR_PersistentCHTable::classGotInitialized(fe, persistentMemory, classId, clazz);
    }
 
 bool
@@ -439,13 +492,14 @@ TR_JaasClientPersistentCHTable::resetVisitedClasses() // highly time consumming
    }
 
 
+// these two tables should be mutually exclusive - we only keep the most recent entry.
 void TR_JaasClientPersistentCHTable::markForRemoval(TR_OpaqueClassBlock *clazz)
    {
-   //TR::ClassTableCriticalSection markForRemoval(TR::comp()->fe());
    _remove.insert(clazz);
+   _dirty.erase(clazz);
    }
 void TR_JaasClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
    {
-   //TR::ClassTableCriticalSection markDirty(TR::comp()->fe());
    _dirty.insert(clazz);
+   _remove.erase(clazz);
    }
