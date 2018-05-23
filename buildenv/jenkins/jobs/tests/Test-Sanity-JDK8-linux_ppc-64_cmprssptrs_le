@@ -25,8 +25,9 @@ SPEC = 'linux_ppc-64_cmprssptrs_le'
 TEST_TARGET = '_sanity'
 
 node('master') {
-
-    checkout scm
+    retry(5){
+        checkout scm
+    }
     def variableFile = load 'buildenv/jenkins/common/variables-functions'
     variableFile.set_job_variables('test')
     cleanWs()

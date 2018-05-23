@@ -24,8 +24,9 @@ SDK_VERSION = '10'
 SPEC = 'linux_ppc-64_cmprssptrs_le'
 
 node('master') {
-
-    checkout scm
+    retry(5) {
+        checkout scm
+    }
     def commonFile = load 'buildenv/jenkins/common/variables-functions'
     commonFile.set_job_variables('pipeline')
 
