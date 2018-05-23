@@ -7251,6 +7251,19 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_DisableShrinkWrapping);
                }
 
+            if (that->_methodBeingCompiled->_oldStartPC != 0)
+               {
+               TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(that->_methodBeingCompiled->_oldStartPC);
+               if (bodyInfo)
+                  {
+                  TR_PersistentMethodInfo *methodInfo = bodyInfo->getMethodInfo();
+                  if (methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition)
+                     methodInfo->incrementNumberOfInlinedMethodRedefinition();
+                  if (methodInfo->getNumberOfInlinedMethodRedefinition() >= 2)
+                     options->setOption(TR_DisableNextGenHCR);
+                  }
+               }
+
             // Strategy tweaks during STARTUP and IDLE
             //
             if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP ||
@@ -9658,6 +9671,8 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                      recompReason = 'R'; break;
                   case TR_PersistentMethodInfo::RecompDueToJProfiling:
                      recompReason = 'J'; break;
+                  case TR_PersistentMethodInfo::RecompDueToInlinedMethodRedefinition:
+                     recompReason = 'H'; break;
                   case TR_PersistentMethodInfo::RecompDueToGCR:
                      if (compiler->getOption(TR_NoOptServer))
                         recompReason = 'g';// Guarded counting recompilation

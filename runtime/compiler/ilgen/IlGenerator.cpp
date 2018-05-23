@@ -37,6 +37,7 @@
 #include "env/VMJ9.h"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "ras/DebugCounter.hpp"
+#include "optimizer/TransformUtil.hpp"
 
 #define OPT_DETAILS "O^O ILGEN: "
 
@@ -1169,11 +1170,10 @@ TR_J9ByteCodeIlGenerator::prependGuardedCountForRecompilation(TR::Block * origin
       callRecompileBlock->append(TR::TreeTop::create(comp(), TR::Node::createWithSymRef(TR::bstore, 1, 1, constNode,
                              comp()->getSymRefTab()->findOrCreateGCRPatchPointSymbolRef())));
       }
+
 #endif
-   TR::Node *callNode = TR::Node::createWithSymRef(node, TR::icall, 2, comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_jitRetranslateCallerWithPrep, false, false, true));
-   callNode->setAndIncChild(0, TR::Node::createWithSymRef(node, TR::loadaddr, 0, comp()->getSymRefTab()->findOrCreateStartPCSymbolRef()));
-   callNode->setAndIncChild(1, TR::Node::createWithSymRef(node, TR::loadaddr, 0, comp()->getSymRefTab()->findOrCreateCompiledMethodSymbolRef()));
-   callRecompileBlock->append(TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, callNode)));
+   TR::TreeTop *callTree = TR::TransformUtil::generateRetranslateCallerWithPrepTrees(node, TR_PersistentMethodInfo::RecompDueToGCR, comp());
+   callRecompileBlock->append(callTree);
    callRecompileBlock->setIsCold(true);
    callRecompileBlock->setFrequency(UNKNOWN_COLD_BLOCK_COUNT);
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -173,10 +173,12 @@ class TR_PersistentMethodInfo
    TR_OptimizationPlan * getOptimizationPlan() {return _optimizationPlan;}
    uint8_t getNumberOfInvalidations() {return _numberOfInvalidations;}
    void incrementNumberOfInvalidations() {_numberOfInvalidations++;}
+   uint8_t getNumberOfInlinedMethodRedefinition() {return _numberOfInlinedMethodRedefinition;}
+   void incrementNumberOfInlinedMethodRedefinition() {_numberOfInlinedMethodRedefinition++;}
    int16_t getNumPrexAssumptions() {return _numPrexAssumptions;}
    void incNumPrexAssumptions() {_numPrexAssumptions++;}
 
-   enum
+   enum InfoBits
       {
       // Normally set by the previous compilation to indicate that the next
       // compilation should use profiling.  Sometimes we can start out without
@@ -230,6 +232,7 @@ class TR_PersistentMethodInfo
       RecompDueToForcedAOTUpgrade          = 0x00090000,
       RecompDueToRI                        = 0x000A0000,
       RecompDueToJProfiling                = 0x000B0000,
+      RecompDueToInlinedMethodRedefinition = 0x000C0000,
       // NOTE: recompilations due to EDO decrementation cannot be tracked
       // because they are triggered from a snippet (must change the code for snippet)
       // Also, the recompilations after a profiling step cannot be marked as such.
@@ -291,6 +294,7 @@ class TR_PersistentMethodInfo
    int32_t                         _cpoSampleCounter; // TODO remove this field
    uint16_t                        _timeStamp;
    uint8_t                         _numberOfInvalidations; // how many times this method has been invalidated
+   uint8_t                         _numberOfInlinedMethodRedefinition; // how many times this method triggers recompilation because of its inlined callees being redefined
    int16_t                         _numPrexAssumptions;
 
    TR_PersistentProfileInfo       *_bestProfileInfo;

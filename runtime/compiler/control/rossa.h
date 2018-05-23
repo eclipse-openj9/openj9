@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,7 +86,7 @@ extern "C" {
    jint JNICALL JVM_OnUnload(JavaVM * jvm, void* reserved0);
    IDATA j9jit_testarossa(struct J9JITConfig *jitConfig, J9VMThread * context, J9Method * method, void *oldStartPC);
    IDATA j9jit_testarossa_err(struct J9JITConfig *jitConfig, J9VMThread * context, J9Method * method, void * oldStartPC, TR_CompilationErrorCode *compErrCode);
-   IDATA retranslateWithPreparation(struct J9JITConfig * jitConfig, J9VMThread * vmThread, J9Method * method, void * oldStartPC);
+   IDATA retranslateWithPreparation(struct J9JITConfig * jitConfig, J9VMThread * vmThread, J9Method * method, void * oldStartPC, UDATA reason);
    void* old_translateMethodHandle(J9VMThread *currentThread, j9object_t methodHandle);
    void* translateMethodHandle(J9VMThread *currentThread, j9object_t methodHandle, j9object_t arg, U_32 flags);
    void disableJit(J9JITConfig *jitConfig);

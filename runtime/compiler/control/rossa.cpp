@@ -383,13 +383,21 @@ retranslateWithPreparation(
       struct J9JITConfig *jitConfig,
       J9VMThread *vmThread,
       J9Method *method,
-      void *oldStartPC)
+      void *oldStartPC,
+      UDATA reason)
    {
    if (!TR::CompilationInfo::get()->asynchronousCompilation() && !TR_LinkageInfo::get(oldStartPC)->recompilationAttempted())
       {
       TR::Recompilation::fixUpMethodCode(oldStartPC);
       }
 
+   TR_PersistentJittedBodyInfo* jbi = TR::Recompilation::getJittedBodyInfoFromPC(oldStartPC);
+   if (jbi)
+      {
+      TR_PersistentMethodInfo *pmi = jbi->getMethodInfo();
+      if (pmi)
+         pmi->setReasonForRecompilation(reason);
+      }
    return j9jit_testarossa(jitConfig, vmThread, method, oldStartPC);
    }
 
