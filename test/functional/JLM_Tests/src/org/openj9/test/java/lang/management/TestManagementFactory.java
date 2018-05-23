@@ -916,8 +916,10 @@ public class TestManagementFactory {
 			// the committed size should, however, be non-decreasing
 			if (directUsage != null && proxyUsage != null) {
 				AssertJUnit.assertEquals("init should be the same", directUsage.getInit(), proxyUsage.getInit());
+/* it is possible that the committed size of directUsage is smaller than one from proxyUsage, if GC happens between getPeakUsage() calls and GC decides to contrast the memory pool 
 				AssertJUnit.assertTrue("committed should be non-decreasing",
 						directUsage.getCommitted() >= proxyUsage.getCommitted());
+*/
 				AssertJUnit.assertEquals("max should be the same", directUsage.getMax(), proxyUsage.getMax());
 			} else {
 				// if either is null, the other should be also
