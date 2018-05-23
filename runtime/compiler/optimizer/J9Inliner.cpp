@@ -924,6 +924,10 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
       {
       return;
       }
+   TR_OpaqueClassBlock* callSiteClass = _receiverClass ? _receiverClass : getClassFromMethod();
+   if (!callSiteClass)
+      return;
+
    // first let's do sanity test on all profiled targets
    if (comp()->trace(OMR::inlining))
       traceMsg(comp(), "No decisive class profiling info for the virtual method, we'll try to see if more than one class uses the same method implementation.\n");
@@ -945,7 +949,7 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
          {
          TR_SharedCache *sharedCache = fej9->sharedCache();
          if (!sharedCache->canRememberClass(clazz) ||
-             !sharedCache->canRememberClass(_initialCalleeMethod->classOfMethod()))
+             !sharedCache->canRememberClass(callSiteClass))
             {
             classValuesAreSane = false;
             break;
@@ -961,7 +965,7 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
 
    TR_ScratchList<TR_AddressInfo::ProfiledMethod> methodsList(comp()->trMemory());
    // this API doesn't do a sort
-   valueInfo->getMethodsList(comp(), _callerResolvedMethod, calleeClass(), _vftSlot, &methodsList);
+   valueInfo->getMethodsList(comp(), _callerResolvedMethod, callSiteClass, _vftSlot, &methodsList);
 
    int numMethods = methodsList.getSize();
 
@@ -973,16 +977,13 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
    TR_AddressInfo::ProfiledMethod *profiledMethodInfo;
    TR_AddressInfo::ProfiledMethod *bestMethodInfo = methodValuesIt.getFirst();
 
-   TR_AddressInfo::ProfiledMethod* firstBestMethodInfo = NULL;
    float methodProbability = .0f;
 
    if (bestMethodInfo)
       {
-      int i = 0;
-      do {
          for (profiledMethodInfo = methodValuesIt.getNext(); profiledMethodInfo != NULL; profiledMethodInfo = methodValuesIt.getNext())
             {
-            if (profiledMethodInfo->_frequency > bestMethodInfo->_frequency && firstBestMethodInfo != profiledMethodInfo)
+            if (profiledMethodInfo->_frequency > bestMethodInfo->_frequency)
                bestMethodInfo = profiledMethodInfo;
             }
 
@@ -998,52 +999,10 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
             static const char* userMinProfiledCallFreq = feGetEnv("TR_MinProfiledCallFrequency");
             static const float minProfiledCallFrequency = userMinProfiledCallFreq ? atof (userMinProfiledCallFreq) : MIN_PROFILED_CALL_FREQUENCY;
 
-            if (methodProbability >= minProfiledCallFrequency ||
-                  (firstBestMethodInfo && methodProbability >= SECOND_BEST_MIN_CALL_FREQUENCY))
+            if (methodProbability >= minProfiledCallFrequency)
             {
-            // OK, we found our method, let's get a class that matches it for the guard
             TR_ResolvedMethod *targetMethod = (TR_ResolvedMethod *)bestMethodInfo->_value;
-            TR_OpaqueClassBlock *targetClass = NULL;
-
-            for (TR_ExtraAddressInfo * profiledInfo = sortedValuesIt.getFirst(); profiledInfo != NULL; profiledInfo = sortedValuesIt.getNext())
-               {
-               TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) profiledInfo->_value;
-               TR_ResolvedMethod *method = getResolvedMethod (clazz);
-               if (method->isSameMethod(targetMethod))
-                  {
-                  targetClass = clazz;
-                  break;
-                  }
-               }
-
-               TR_OpaqueClassBlock* callSiteClass = getClassFromMethod();
-
-               if (!callSiteClass || (targetClass && fe()->isInstanceOf (targetClass, callSiteClass, true, true, true) != TR_yes))
-                  {
-                  traceMsg(comp(), "No method class or targetClass %p is not instanceOf callSiteClass %p.\n",
-                     targetClass, callSiteClass);
-
-                  if (firstBestMethodInfo)
-                     {
-                     break;
-                     }
-                  else
-                     {
-                     firstBestMethodInfo = bestMethodInfo;
-                     continue;
-                     }
-                  }
-
-               callSiteClass = _receiverClass ? _receiverClass : getClassFromMethod();
-               if (callSiteClass && targetClass && (fe()->isInstanceOf(targetClass, callSiteClass, true, true, true) != TR_yes))
-                  {
-                  inliner->tracer()->insertCounter(Not_Sane,_callNodeTreeTop);
-
-                  if (comp()->trace(OMR::inlining))
-                     traceMsg(comp(), "inliner: profiled class [%p] is not instanceof callSiteClass [%p]\n", targetClass, callSiteClass);
-
-                  return;
-                  }
+            TR_OpaqueClassBlock *targetClass = targetMethod->classOfMethod();
 
             if (targetMethod && targetClass)
                {
@@ -1054,24 +1013,15 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
                   TR_ResolvedMethod *targetMethod = (TR_ResolvedMethod *)bestMethodInfo->_value;
                   traceMsg(comp(), "Added target method %s with probability of %f%%.\n",
                         targetMethod->signature(comp()->trMemory()), methodProbability * 100.0);
+                  char* sig = TR::Compiler->cls.classSignature(comp(), targetClass, comp()->trMemory());
+                  traceMsg(comp(), "target class %s\n", sig);
                   }
                return;
                }
             }
-         else if (comp()->trace(OMR::inlining))
-            {
-            traceMsg(comp(), "Probability of %f%% is not enough to inline this method. The minimum requirement is %f%%.\n",
-               methodProbability * 100.0, minProfiledCallFrequency*100.0);
-
-            break; //not strictly necessary but better than iterating over the rest of the methods if the top one didn't meet the treshold requirement
-            }
-
-         i++;
-         } while (i < numMethods);
       }
    else if (comp()->trace(OMR::inlining))
-      traceMsg(comp(), "Failed to find any methods? This is a bug.\n");
-
+      traceMsg(comp(), "Failed to find any methods compatible with callsite class %p signature %s\n", callSiteClass, TR::Compiler->cls.classSignature(comp(), callSiteClass, comp()->trMemory()));
    }
 
 bool TR_ProfileableCallSite::findProfiledCallTargets (TR_CallStack *callStack, TR_InlinerBase* inliner)

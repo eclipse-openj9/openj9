@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,9 +118,8 @@ TR_AddressInfo::getMethodsList(TR::Compilation *comp, TR_ResolvedMethod *callerM
    // Grab a copy of the profiling information
    _profiler->getList((Vector&) vec);
 
-   auto iterMethodEnd = vec.begin();
-
-   size_t methods = 0;
+   // Remove entries that are not compatible with the callee class
+   // Also replace class with method in _value
    for (auto iterClass = vec.begin(); iterClass != vec.end(); ++iterClass)
       {
       if (!iterClass->_value)
@@ -130,21 +129,29 @@ TR_AddressInfo::getMethodsList(TR::Compilation *comp, TR_ResolvedMethod *callerM
       if (comp->fej9()->isInstanceOf(methodClass, calleeClass, true, true, true))
          {
          TR_ResolvedMethod *method = callerMethod->getResolvedVirtualMethod(comp, methodClass, vftSlot);
+         iterClass->_value = method;
+         }
+      else
+         {
+         iterClass->_value = 0;
+         iterClass->_frequency = 0;
+         }
+      }
 
-         auto iterMethod = vec.begin();
-         for (; iterMethod != iterMethodEnd; ++iterMethod)
-            {
-            if (iterMethod->_value == method)
-               { 
-               iterMethod->_frequency += iterClass->_frequency;
-               break;
-               }
-            }
+   // Add the frequencies of the same method to the first entry containing the method in the vector
+   for (auto iterMethod = vec.begin(); iterMethod != vec.end(); ++iterMethod)
+      {
+      if (!iterMethod->_value)
+         continue;
 
-         if (iterMethod == iterMethodEnd)
+      TR_ResolvedMethod* method = reinterpret_cast<TR_ResolvedMethod *>(iterMethod->_value);
+      for (auto iter = iterMethod + 1; iter != vec.end(); ++iter)
+         {
+         if (iter->_value && method->isSameMethod(reinterpret_cast<TR_ResolvedMethod *>(iter->_value)))
             {
-            iterMethod->_value = method;
-            iterMethodEnd = iterMethod;
+            iterMethod->_frequency += iter->_frequency;
+            iter->_value = 0;
+            iter->_frequency = 0;
             }
          }
       }
@@ -161,7 +168,10 @@ TR_AddressInfo::getMethodsList(TR::Compilation *comp, TR_ResolvedMethod *callerM
 
    for (auto iter = vec->begin(); iter != vec->end(); ++iter)
       {
-	ListElement<ProfiledMethod> *newProfiledValue = new (comp->trStackMemory()) ListElement<ProfiledMethod>(&(*iter));
+      if (!iter->_value)
+         continue;
+
+      ListElement<ProfiledMethod> *newProfiledValue = new (comp->trStackMemory()) ListElement<ProfiledMethod>(&(*iter));
       if (tail)
          tail->setNextElement(newProfiledValue);
       else
