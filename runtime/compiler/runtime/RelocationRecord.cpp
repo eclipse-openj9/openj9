@@ -230,7 +230,7 @@ struct TR_RelocationRecordDebugCounterBinaryTemplate : public TR_RelocationRecor
 
 
 typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadAssumptionBinaryTemplate;
-typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadDummyAssumptionBinaryTemplate;
+typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadBinaryTemplate;
 
 // TR_RelocationRecordGroup
 
@@ -472,8 +472,8 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ClassUnloadAssumption:
          reloRecord = new (storage) TR_RelocationRecordClassUnloadAssumption(reloRuntime, record);
          break;
-      case TR_ClassUnloadDummyAssumption:
-         new (this) TR_RelocationRecordClassUnloadDummyAssumption();
+      case TR_ClassUnload:
+         new (this) TR_RelocationRecordClassUnload();
          break;
       default:
          // TODO: error condition
@@ -3619,19 +3619,19 @@ TR_RelocationRecordClassUnloadAssumption::applyRelocation(TR_RelocationRuntime *
 
 // AssumptionRelocation
 char *
-TR_RelocationRecordClassUnloadDummyAssumption::name()
+TR_RelocationRecordClassUnload::name()
    {
-   return "TR_ClassUnloadDummyAssumption";
+   return "TR_ClassUnload";
    }
 
 int32_t
-TR_RelocationRecordClassUnloadDummyAssumption::bytesInHeaderAndPayload()
+TR_RelocationRecordClassUnload::bytesInHeaderAndPayload()
    {
-   return sizeof(TR_RelocationRecordClassUnloadDummyAssumptionBinaryTemplate);
+   return sizeof(TR_RelocationRecordClassUnloadBinaryTemplate);
    }
 
 int32_t
-TR_RelocationRecordClassUnloadDummyAssumption::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+TR_RelocationRecordClassUnload::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    reloTarget->addPICtoPatchPtrOnClassUnload((TR_OpaqueClassBlock *)-1, reloLocation);
    return 0;

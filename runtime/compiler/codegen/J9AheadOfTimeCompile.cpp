@@ -1079,7 +1079,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             traceMsg(self()->comp(), "\n ClassUnloadAssumption \n");
             break;
 
-         case TR_ClassUnloadDummyAssumption:
+         case TR_ClassUnload:
             cursor++;        // unused field
             if (is64BitTarget)
                {
