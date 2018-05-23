@@ -26,8 +26,9 @@ TEST_TARGET = '_sanity'
 
 timeout(time: 10, unit: 'HOURS') {
     node('master') {
-
-        checkout scm
+        retry(5){
+            checkout scm
+        }
         variableFile = load 'buildenv/jenkins/common/variables-functions'
         variableFile.set_job_variables('pullRequest')
         cleanWs()

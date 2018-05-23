@@ -24,16 +24,17 @@ SDK_VERSION = '8'
 SPEC = 'win_x86-64_cmprssptrs'
 
 node('master') {
-	timestamps {
-	    checkout scm
-	    variableFile = load 'buildenv/jenkins/common/variables-functions'
-	    variableFile.set_job_variables('build')
-	    buildfile = load 'buildenv/jenkins/common/build'
-	    cleanWs()
-	}
+    timestamps {
+        retry(5) {
+            checkout scm
+        }
+        variableFile = load 'buildenv/jenkins/common/variables-functions'
+        variableFile.set_job_variables('build')
+        buildfile = load 'buildenv/jenkins/common/build'
+        cleanWs()
+    }
 }
 
 node("${NODE}") {
-
     buildfile.build_all()
 }

@@ -24,8 +24,9 @@ SDK_VERSION = '8'
 SPEC = 'aix_ppc-64_cmprssptrs'
 
 node('master') {
-
-    checkout scm
+    retry(5) {
+        checkout scm
+    }
     def commonFile = load 'buildenv/jenkins/common/variables-functions'
     commonFile.set_job_variables('pipeline')
 
