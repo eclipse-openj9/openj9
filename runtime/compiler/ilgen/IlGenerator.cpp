@@ -234,9 +234,7 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
             }
          }
 
-      if ((recognizedMethod == TR::java_util_concurrent_atomic_AtomicMarkableReference_setDoubleWordCASSupported) ||
-          (recognizedMethod == TR::java_util_concurrent_atomic_AtomicMarkableReference_setDoubleWordSetSupported) ||
-          (recognizedMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordCASSupported) ||
+      if ((recognizedMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordCASSupported) ||
           (recognizedMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordSetSupported))
          {
          if (performTransformation(comp(), "O^O IlGenerator: Generate java/util/concurrent/atomic/Atomic*Reference static get/set method\n"))
@@ -1306,31 +1304,7 @@ TR_J9ByteCodeIlGenerator::genDCASOrSetAvailable(TR::RecognizedMethod recognizedM
    int32_t firstIndex = _bcIndex;
    setIsGenerated(_bcIndex);
 
-   if (recognizedMethod == TR::java_util_concurrent_atomic_AtomicMarkableReference_setDoubleWordCASSupported)
-      {
-      isAMR = true;
-      if (AMRDCASconstToLoad == -1)
-    {
-    if (comp()->cg()->getSupportsDoubleWordCAS())
-       AMRDCASconstToLoad = 1;
-         else
-            AMRDCASconstToLoad = 0;
-    }
-      constToLoad = AMRDCASconstToLoad;
-      }
-   else if (recognizedMethod == TR::java_util_concurrent_atomic_AtomicMarkableReference_setDoubleWordSetSupported)
-      {
-      isAMR = true;
-      if (AMRDSetconstToLoad == -1)
-    {
-         if (comp()->cg()->getSupportsDoubleWordSet())
-       AMRDSetconstToLoad = 1;
-         else
-            AMRDSetconstToLoad = 0;
-    }
-      constToLoad = AMRDSetconstToLoad;
-      }
-   else if (recognizedMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordCASSupported)
+   if (recognizedMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordCASSupported)
       {
       if (ASRDCASconstToLoad == -1)
     {
@@ -1364,17 +1338,7 @@ TR_J9ByteCodeIlGenerator::genDCASOrSetAvailable(TR::RecognizedMethod recognizedM
       int32_t fieldSigLen;
       int32_t intOrBoolOffset;
 
-      if (isAMR)
-    {
-         classBlock = fej9()->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicMarkableReference$ReferenceBooleanPair;", 74, method());
-         fieldName = "bit";
-         fieldNameLen = 3;
-         fieldSig = "Z";
-         fieldSigLen = 1;
-
-         intOrBoolOffset = fej9()->getObjectHeaderSizeInBytes() + fej9()->getInstanceFieldOffset(classBlock, fieldName, fieldNameLen, fieldSig, fieldSigLen);
-    }
-      else
+      
     {
          classBlock = fej9()->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference$ReferenceIntegerPair;", 73, method());
          fieldName = "integer";

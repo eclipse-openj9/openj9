@@ -12752,81 +12752,6 @@ inlineDoubleWordSetCommon(
    cg->decReferenceCount(newBoolValChild);
    }
 
-static bool inlineAtomicMarkableReference_doubleWordCASSupported(TR::Node *node,
-                                                                 TR::CodeGenerator *cg)
-   {
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-
-   if (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers() &&
-       !cg->getX86ProcessorInfo().supportsCMPXCHG16BInstruction())
-      return false;
-
-   char *classSignature = "Ljava/util/concurrent/atomic/AtomicMarkableReference$ReferenceBooleanPair;";
-   int32_t boolOffset = fej9->getInstanceFieldOffsetIncludingHeader(
-      classSignature, "bit", "Z", comp->getCurrentMethod());
-   int32_t referenceOffset = fej9->getInstanceFieldOffsetIncludingHeader(
-      classSignature, "reference", "Ljava/lang/Object;", comp->getCurrentMethod());
-
-   inlineDoubleWordCASSupportedCommon(node, referenceOffset, boolOffset, cg);
-
-   return true;
-   }
-
-static bool inlineAtomicMarkableReference_doubleWordCAS(TR::Node *node,
-                                                        TR::CodeGenerator *cg)
-   {
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-
-   if (TR::Compiler->target.is32Bit() &&
-       !cg->getX86ProcessorInfo().supportsCMPXCHG8BInstruction())
-      return false;
-
-   if (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers() &&
-       !cg->getX86ProcessorInfo().supportsCMPXCHG16BInstruction())
-      return false;
-
-   char *classSignature = "Ljava/util/concurrent/atomic/AtomicMarkableReference$ReferenceBooleanPair;";
-   int32_t boolOffset = fej9->getInstanceFieldOffsetIncludingHeader(
-      classSignature, "bit", "Z", comp->getCurrentMethod());
-   int32_t referenceOffset = fej9->getInstanceFieldOffsetIncludingHeader(
-      classSignature, "reference", "Ljava/lang/Object;", comp->getCurrentMethod());
-
-   inlineDoubleWordCASCommon(node, referenceOffset, boolOffset, cg);
-
-   return true;
-   }
-
-static bool inlineAtomicMarkableReference_doubleWordSet(TR::Node *node,
-                                                        TR::CodeGenerator *cg)
-   {
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-
-   if (TR::Compiler->target.is32Bit() &&
-       !cg->getX86ProcessorInfo().supportsCMPXCHG8BInstruction())
-      return false;
-
-   if (TR::Compiler->target.is64Bit() && !comp->useCompressedPointers() &&
-       !cg->getX86ProcessorInfo().supportsCMPXCHG16BInstruction())
-      return false;
-
-   char *classSignature = "Ljava/util/concurrent/atomic/AtomicMarkableReference$ReferenceBooleanPair;";
-   int32_t boolOffset = fej9->getInstanceFieldOffsetIncludingHeader(
-      classSignature, "bit", "Z", comp->getCurrentMethod());
-   int32_t referenceOffset = fej9->getInstanceFieldOffsetIncludingHeader(
-      classSignature, "reference", "Ljava/lang/Object;", comp->getCurrentMethod());
-
-   if (TR::Compiler->target.is64Bit() &&
-       comp->useCompressedPointers())
-      inlineDoubleWordSet64CompressedCommon(node, referenceOffset, boolOffset, cg);
-   else
-      inlineDoubleWordSetCommon(node, referenceOffset, boolOffset, cg);
-
-   return true;
-   }
-
 static bool inlineAtomicStampedReference_doubleWordCASSupported(
       TR::Node *node,
       TR::CodeGenerator *cg)
@@ -14055,26 +13980,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             {
             if (!comp->getOption(TR_DisableSIMDStringHashCode) && cg->getX86ProcessorInfo().supportsSSE4_1()&& !TR::Compiler->om.canGenerateArraylets())
                callWasInlined = inlineStringHashCode(node, isIndirect, cg);
-            break;
-            }
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-            {
-            callWasInlined = inlineAtomicMarkableReference_doubleWordCAS(node, cg);
-            break;
-            }
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
-            {
-            callWasInlined = inlineAtomicMarkableReference_doubleWordSet(node, cg);
-            break;
-            }
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCASSupported:
-            {
-            callWasInlined = inlineAtomicMarkableReference_doubleWordCASSupported(node, cg);
-            break;
-            }
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSetSupported:
-            {
-            callWasInlined = inlineAtomicMarkableReference_doubleWordCASSupported(node, cg);
             break;
             }
          case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
@@ -15699,13 +15604,9 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::java_lang_Short_reverseBytes:
       case TR::java_lang_Class_isAssignableFrom:
       case TR::java_lang_System_nanoTime:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
       case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
       case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCASSupported:
       case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCASSupported:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSetSupported:
       case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSetSupported:
       case TR::java_util_concurrent_atomic_Fences_orderAccesses:
       case TR::java_util_concurrent_atomic_Fences_orderReads:

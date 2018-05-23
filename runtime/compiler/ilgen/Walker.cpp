@@ -1171,13 +1171,6 @@ static TR::ILOpCodes getCallOpForType(TR::DataType type)
    return TR::BadILOp;
    }
 
-#define AMRCLASSLEN 51
-#define AMRCLASS "java/util/concurrent/atomic/AtomicMarkableReference"
-#define AMRDCASAVAIL "java/util/concurrent/atomic/AtomicMarkableReference.doubleWordCASSupported()Z"
-#define AMRDCASAVAILLEN 77
-#define AMRDSETAVAIL "java/util/concurrent/atomic/AtomicMarkableReference.doubleWordSetSupported()Z"
-#define AMRDSETAVAILLEN 77
-
 #define ASRCLASSLEN 50
 #define ASRCLASS "java/util/concurrent/atomic/AtomicStampedReference"
 #define ASRDCASAVAIL "java/util/concurrent/atomic/AtomicStampedReference.doubleWordCASSupported()Z"
@@ -4929,8 +4922,7 @@ break
        }
 
     if (comp()->cg()->getSupportsTMDoubleWordCASORSet() &&
-          ((symbol->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmEnabled)
-          || (symbol->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicStampedReference_tmEnabled)))
+          ((symbol->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicStampedReference_tmEnabled)))
        {
        loadConstant(TR::iconst, 1);
        return NULL;
@@ -4947,27 +4939,7 @@ break
     int32_t staticSigLen = -1;
     int32_t constToLoad = 0;
 
-    if ((symbol->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCASSupported) ||
-        (!strncmp(calledMethod->signature(comp()->trMemory(), stackAlloc), AMRDCASAVAIL, AMRDCASAVAILLEN)))
-       {
-       isAMRDCAS = true;
-
-       staticName = DCAS_AVAILABLE_FLAG;
-       staticNameLen = DCAS_AVAILABLE_FLAG_LEN;
-       staticSig = DCAS_AVAILABLE_FLAG_SIG;
-       staticSigLen = DCAS_AVAILABLE_FLAG_SIG_LEN;
-       }
-    else if ((symbol->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSetSupported) ||
-             (!strncmp(calledMethod->signature(comp()->trMemory(), stackAlloc), AMRDSETAVAIL, AMRDSETAVAILLEN)))
-      {
-      isAMRDSet = true;
-
-      staticName = DSET_AVAILABLE_FLAG;
-      staticNameLen = DSET_AVAILABLE_FLAG_LEN;
-      staticSig = DSET_AVAILABLE_FLAG_SIG;
-      staticSigLen = DSET_AVAILABLE_FLAG_SIG_LEN;
-      }
-    else if ((symbol->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCASSupported) ||
+    if ((symbol->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCASSupported) ||
         (!strncmp(calledMethod->signature(comp()->trMemory(), stackAlloc), ASRDCASAVAIL, ASRDCASAVAILLEN)))
        {
        isASRDCAS = true;
@@ -5060,17 +5032,6 @@ break
          int32_t fieldSigLen;
          int32_t intOrBoolOffset;
 
-         if (isAMRDCAS || isAMRDSet)
-            {
-            classBlock = fej9()->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicMarkableReference$ReferenceBooleanPair;", 74, method());
-            fieldName = "bit";
-            fieldNameLen = 3;
-            fieldSig = "Z";
-            fieldSigLen = 1;
-
-            intOrBoolOffset = fej9()->getObjectHeaderSizeInBytes() + fej9()->getInstanceFieldOffset(classBlock, fieldName, fieldNameLen, fieldSig, fieldSigLen);
-            }
-         else
             {
             classBlock = fej9()->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference$ReferenceIntegerPair;", 73, method());
             fieldName = "integer";

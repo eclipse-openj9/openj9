@@ -10523,18 +10523,6 @@ checkFieldOrderForDCASOrSet(
    int32_t booleanOffset = 0;
    int32_t integerOffset = 0;
 
-   if (isAMR)
-      {
-      classBlock = fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicMarkableReference$ReferenceBooleanPair;", 74, comp->getCurrentMethod(), true);
-      fieldName = "bit";
-      fieldNameLen = 3;
-      fieldSig = "Z";
-      fieldSigLen = 1;
-
-      intOrBoolOffset = fej9->getInstanceFieldOffset(classBlock, fieldName, fieldNameLen, fieldSig, fieldSigLen);
-      booleanOffset = intOrBoolOffset;
-      }
-   else
       {
       classBlock = fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference$ReferenceIntegerPair;", 73, comp->getCurrentMethod(), true);
       fieldName = "integer";
@@ -12329,14 +12317,6 @@ J9::Z::CodeGenerator::inlineDirectCall(
          break;
          break;
 
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-         if (cg->getSupportsDoubleWordCAS())
-            {
-            resultReg = inlineDoubleWordCAS(node, cg, true);
-            return true;
-            }
-         break;
-
       case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
          if (cg->getSupportsDoubleWordCAS())
             {
@@ -12345,27 +12325,10 @@ J9::Z::CodeGenerator::inlineDirectCall(
             }
          break;
 
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
-         if (cg->getSupportsDoubleWordSet())
-            {
-            resultReg = inlineDoubleWordSet(node, cg, true);
-            return true;
-            }
-         break;
-
       case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet:
          if (cg->getSupportsDoubleWordSet())
             {
             resultReg = inlineDoubleWordSet(node, cg, false);
-            return true;
-            }
-         break;
-
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCASSupported:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSetSupported:
-         if (cg->getSupportsDoubleWordCAS())
-            {
-            resultReg = inlineDoubleWordCASOrSetSupported(node, cg, true);
             return true;
             }
          break;

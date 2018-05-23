@@ -3036,10 +3036,6 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
             if (comp->cg()->getSupportsBDLLHardwareOverflowCheck())
                dontInlineRecognizedMethod = true;
             break;
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCASSupported:
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSetSupported:
          case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
          case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCASSupported:
          case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet:

@@ -355,10 +355,7 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
           method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled ||
           method == TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordCAS ||
           method == TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordSet ||
-          method == TR::java_util_concurrent_atomic_AtomicStampedReference_tmEnabled ||
-          method == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordCAS ||
-          method == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordSet ||
-          method == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmEnabled)
+          method == TR::java_util_concurrent_atomic_AtomicStampedReference_tmEnabled)
           {
           return true;
           }

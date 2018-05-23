@@ -9229,17 +9229,6 @@ static void checkFieldOrderForDCASOrSet(TR::CodeGenerator *cg, bool isAMR, bool 
    int32_t fieldSigLen;
    int32_t intOrBoolOffset;
 
-   if (isAMR)
-      {
-      classBlock = fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicMarkableReference$ReferenceBooleanPair;", 74, comp->getCurrentMethod(), true);
-      fieldName = "bit";
-      fieldNameLen = 3;
-      fieldSig = "Z";
-      fieldSigLen = 1;
-
-      intOrBoolOffset = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, fieldName, fieldNameLen, fieldSig, fieldSigLen);
-      }
-   else
       {
       classBlock = fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference$ReferenceIntegerPair;", 73, comp->getCurrentMethod(), true);
       fieldName = "integer";
@@ -9371,10 +9360,8 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
 
    switch (currentMethod)
       {
-   case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
    case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet:
       isSetOnly = true;
-   case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
    case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
       isAddOp = false;
       isAMRASR = true;
@@ -9383,7 +9370,6 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
 
    switch (currentMethod)
       {
-   case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
    case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
       isAddOp = false;
       isCAS = true;
@@ -9500,16 +9486,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
 
    if (isAMRASR)
       {
-      switch (currentMethod)
-         {
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
-         checkFieldOrderForDCASOrSet(cg, false, &isRefFirst, &fieldOffset);
-         break;
-      default:
-         checkFieldOrderForDCASOrSet(cg, true, &isRefFirst, &fieldOffset);
-         break;
-         }
+      checkFieldOrderForDCASOrSet(cg, true, &isRefFirst, &fieldOffset);
       }
    else if (isUnsafe)
       {
@@ -10434,10 +10411,8 @@ static TR::Register *inlineTMDoubleWordCASOrSet(TR::Node *node, TR::CodeGenerato
    TR::InstOpCode::Mnemonic loadOpCode = (addressFieldSize == 8) ? TR::InstOpCode::ld : TR::InstOpCode::lwz;
    TR::InstOpCode::Mnemonic storeOpCode = (addressFieldSize == 8) ? TR::InstOpCode::std : TR::InstOpCode::stw;
 
-   bool isAMR = ((currentMethod == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordCAS)
-         || (currentMethod == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordSet));
-   bool isCAS = ((currentMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordCAS)
-         || (currentMethod == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordCAS));
+   bool isAMR = false;
+   bool isCAS = ((currentMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordCAS));
 
    TR::Register *resultReg = cg->allocateRegister();
    TR::Register *pairReg = cg->allocateRegister();
@@ -10447,23 +10422,16 @@ static TR::Register *inlineTMDoubleWordCASOrSet(TR::Node *node, TR::CodeGenerato
    TR::Register *rTmp2 = cg->allocateRegister();
    TR::Register *temp4Reg = cg->allocateRegister();
 
-   TR_OpaqueClassBlock * classBlock =
-         isAMR ? (fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicMarkableReference$Pair;", 58, comp->getCurrentMethod())) :
-               (fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference$Pair;", 57, comp->getCurrentMethod()));
+   TR_OpaqueClassBlock * classBlock = (fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference$Pair;", 57, comp->getCurrentMethod()));
 
    int32_t offsetReference = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, "reference", 9, "Ljava/lang/Object;", 18);
    int32_t offsetBoolOrInt =
          isAMR ? fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, "mark", 4, "Z", 1) :
                fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, "stamp", 5, "I", 1);
 
-   classBlock =
-         isAMR ? (fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicMarkableReference;", 53, comp->getCurrentMethod())) :
-               (fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference;", 52, comp->getCurrentMethod()));
+   classBlock = (fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference;", 52, comp->getCurrentMethod()));
 
-   int32_t offsetPair =
-         isAMR ? fej9->getObjectHeaderSizeInBytes()
-               + fej9->getInstanceFieldOffset(classBlock, "pair", 4, "Ljava/util/concurrent/atomic/AtomicMarkableReference$Pair;", 58) :
-               fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, "pair", 4, "Ljava/util/concurrent/atomic/AtomicStampedReference$Pair;", 57);
+   int32_t offsetPair = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, "pair", 4, "Ljava/util/concurrent/atomic/AtomicStampedReference$Pair;", 57);
 
    TR::Node *newReferenceNode, *expectedReferenceNode;
    TR::Node *newMarkOrStampNode, *expectedMarkOrStampNode;
@@ -10724,11 +10692,6 @@ static TR::Register *inlineDoubleWordCAS(TR::Node *node, TR::CodeGenerator *cg, 
 
    switch (currentMethod)
       {
-   case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
-      isSetOnly = true;
-   case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-      isBoolNotInt = true;
-      break;
    case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet:
       isSetOnly = true;
    case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
@@ -12587,8 +12550,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          break;
          }
 
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordCAS:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordSet:
       case TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordCAS:
       case TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordSet:
          if (cg->getSupportsTM() && cg->getSupportsTMDoubleWordCASORSet())
@@ -12909,8 +12870,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             }
          break;
 
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCASSupported:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSetSupported:
       case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCASSupported:
       case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSetSupported:
          if (!disableDCAS && TR::Compiler->target.is64Bit() && comp->useCompressedPointers())
@@ -12920,8 +12879,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             }
          break;
 
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
       case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
       case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet:
          if (!disableDCAS && TR::Compiler->target.is64Bit() && comp->useCompressedPointers())
