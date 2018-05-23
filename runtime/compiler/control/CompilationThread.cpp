@@ -10594,6 +10594,12 @@ TR::CompilationInfoPerThreadBase::processException(
          }
          Trc_JIT_compilationFailed(vmThread, compiler->signature(), -1);
       }
+   catch (const JAAS::StreamFailure &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJaas))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JAAS, "JAAS StreamFailure: %s", e.what());
+      _methodBeingCompiled->_compErrCode = compilationInterrupted;
+      }
    catch (...)
       {
       _methodBeingCompiled->_compErrCode = compilationFailure;
