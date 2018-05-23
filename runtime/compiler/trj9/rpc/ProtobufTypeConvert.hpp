@@ -86,7 +86,7 @@ namespace JAAS
          char data[sizeof(T)];
          const std::string &strVal = msg->bytes_v();
          memcpy(data, &strVal[0], sizeof(T));
-         typename std::remove_const<T>::type &val = (typename std::remove_const<T>::type &)data;
+         T &val = (T&) data;
          return val;
          }
       static inline void write(Any *msg, const T &val)
