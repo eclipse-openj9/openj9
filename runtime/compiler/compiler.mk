@@ -42,7 +42,7 @@ endif
 # differing opinions on that.
 #
 JIT_SRCBASE?=../..
-JIT_OBJBASE?=../objs/trj9_$(BUILD_CONFIG)
+JIT_OBJBASE?=../objs/compiler_$(BUILD_CONFIG)
 JIT_DLL_DIR?=$(JIT_OBJBASE)
 
 #

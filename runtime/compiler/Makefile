@@ -81,29 +81,29 @@ endif
 #
 # Add J9 to base targets
 #
-all: trj9
-clean: trj9_clean
-cleanobjs: trj9_cleanobjs
-cleandeps: trj9_cleandeps
-cleandll: trj9_cleandll
+all: compiler
+clean: compiler_clean
+cleanobjs: compiler_cleanobjs
+cleandeps: compiler_cleandeps
+cleandll: compiler_cleandll
 
 
 #
 # Add J9 targets
 #
-.PHONY: trj9 trj9_clean trj9_cleanobjs trj9_cleandeps trj9_cleandll
+.PHONY: compiler compiler_clean compiler_cleanobjs compiler_cleandeps compiler_cleandll
 
-trj9:
-	$(MAKE) -f trj9.mk $(SUBMAKE_EXTRAARGS)
+compiler:
+	$(MAKE) -f compiler.mk $(SUBMAKE_EXTRAARGS)
 
-trj9_clean:
-	$(MAKE) -f trj9.mk clean $(SUBMAKE_EXTRAARGS)
+compiler_clean:
+	$(MAKE) -f compiler.mk clean $(SUBMAKE_EXTRAARGS)
 
-trj9_cleanobjs:
-	$(MAKE) -f trj9.mk cleanobjs $(SUBMAKE_EXTRAARGS)
+compiler_cleanobjs:
+	$(MAKE) -f compiler.mk cleanobjs $(SUBMAKE_EXTRAARGS)
 
-trj9_cleandeps:
-	$(MAKE) -f trj9.mk cleandeps $(SUBMAKE_EXTRAARGS)
+compiler_cleandeps:
+	$(MAKE) -f compiler.mk cleandeps $(SUBMAKE_EXTRAARGS)
 
-trj9_cleandll:
-	$(MAKE) -f trj9.mk cleandll $(SUBMAKE_EXTRAARGS)
+compiler_cleandll:
+	$(MAKE) -f compiler.mk cleandll $(SUBMAKE_EXTRAARGS)
