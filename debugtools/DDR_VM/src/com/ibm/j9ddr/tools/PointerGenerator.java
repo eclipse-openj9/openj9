@@ -88,7 +88,7 @@ public class PointerGenerator {
 	private static final String BEGIN_USER_CODE = "[BEGIN USER CODE]";
 	private static final String END_USER_CODE = "[END USER CODE]";
 
-	final Map<String, String> opts = new HashMap<String, String>();
+	private final Map<String, String> opts = new HashMap<String, String>();
 	StructureReader structureReader;
 	File outputDir;
 	File outputDirHelpers;
@@ -97,22 +97,6 @@ public class PointerGenerator {
 	private Properties cacheProperties = null;
 
 	private StructureTypeManager typeManager;
-
-	private static final List<String> omitList = Arrays.asList(new String[] {
-			//TODO do these need to be omitted?
-//			"J9IndexableObjectPointer.clazz",
-//			"J9ArrayClassPointer.romClass",
-//			"J9ROMNameAndSignaturePointer.name",
-//			"J9ROMNameAndSignaturePointer.signature",
-//			"J9ROMClassCfrErrorPointer.constantPool",
-//			"J9ROMClassCfrErrorPointer.errorMember",
-//			"J9JNINameAndSignaturePointer.name",
-//			"J9JNINameAndSignaturePointer.signature",
-//			"J9ROMNameAndSignaturePointer.name",
-//			"J9ROMNameAndSignaturePointer.signature",
-//			"J9JNINameAndSignaturePointer.name",
-//			"J9JNINameAndSignaturePointer.signature",
-	});
 
 	public PointerGenerator() {
 		super();
@@ -266,22 +250,7 @@ public class PointerGenerator {
 	}
 
 	private void generateClass(StructureDescriptor structure) throws IOException {
-		String superClassName = structure.getSuperName() + "Pointer";
-		if (superClassName.equals("Pointer")) {
-			superClassName = "StructurePointer";
-		}
-
 		File javaFile = new File(outputDir, structure.getPointerName() + ".java");
-
-		// Do not create Pointer class for Constant only structures (this includes enums)
-		if (structure.getFields().size() == 0 && structure.getConstants().size() != 0 && superClassName.equals("StructurePointer")) {
-			if (javaFile.exists()) {
-				System.out.println("No fields and no superclass.  Deleting: " + structure.getName());
-				javaFile.delete();
-			}
-			return;
-		}
-
 		List<String> userImports = new ArrayList<String>();
 		List<String> userCode = new ArrayList<String>();
 		if (opts.get("-u").equals("true")) {
@@ -322,7 +291,12 @@ public class PointerGenerator {
 		writeClassComment(writer, structure.getPointerName());
 		writer.format("@com.ibm.j9ddr.GeneratedPointerClass(structureClass=%s.class)", structure.getName());
 		writer.println();
-		writer.format("public class %s extends %s {%n", structure.getPointerName(), superClassName);
+
+		String superName = structure.getSuperName();
+		if (superName.isEmpty()) {
+			superName = "Structure";
+		}
+		writer.format("public class %s extends %sPointer {%n", structure.getPointerName(), superName);
 		writer.println();
 		writer.println("\t// NULL");
 		writer.format("\tpublic static final %s NULL = new %s(0);%n", structure.getPointerName(), structure.getPointerName());
@@ -728,7 +702,7 @@ public class PointerGenerator {
 	 */
 	static boolean omitFieldImplementation(StructureDescriptor structure, FieldDescriptor field) {
 		String name = structure.getPointerName() + "." + field.getName();
-		return omitList.contains(name) || name.contains("#");
+		return name.contains("#");
 	}
 
 	private void writeMethodSignature(PrintWriter writer, String returnType, String getter, FieldDescriptor field, boolean fieldAccessor) {
