@@ -96,6 +96,7 @@ extern "C" {
 #define GET_PRC_VALUE 7
 #define GET_COMPOUND 8
 #define GET_COMPOUND_OPTS 9
+#define GET_DBL_VALUE 10
 
 #define OPTION_OK 0
 #define OPTION_MALFORMED -1
@@ -124,10 +125,11 @@ extern "C" {
 #define GET_OPTION_VALUES(element, delimChar, sepChar, buffer, bufSize) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTIONS, buffer, bufSize, delimChar, sepChar, NULL)
 #define GET_COMPOUND_VALUE(element, delimChar, buffer, bufSize) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_COMPOUND, buffer, bufSize, delimChar, 0, NULL)
 #define GET_COMPOUND_VALUES(element, delimChar, sepChar, buffer, bufSize) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_COMPOUND_OPTS, buffer, bufSize, delimChar, sepChar, NULL)
-#define GET_MEMORY_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_MEM_VALUE, (char **)&optname, 0, 0, 0, &result)
-#define GET_INTEGER_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_INT_VALUE, (char **)&optname, 0, 0, 0, &result)
-#define GET_PERCENT_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_PRC_VALUE,(char **) &optname, 0, 0, 0, &result)
-#define GET_OPTION_OPTION(element, delimChar, delimChar2, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, element, GET_OPTION_OPT, resultPtr, 0, delimChar, delimChar2, NULL)
+#define GET_MEMORY_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_MEM_VALUE, (char **)&(optname), 0, 0, 0, &(result))
+#define GET_INTEGER_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_INT_VALUE, (char **)&(optname), 0, 0, 0, &(result))
+#define GET_PERCENT_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_PRC_VALUE,(char **) &(optname), 0, 0, 0, &(result))
+#define GET_OPTION_OPTION(element, delimChar, delimChar2, resultPtr) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_OPTION_OPT, (resultPtr), 0, (delimChar), (delimChar2), NULL)
+#define GET_DOUBLE_VALUE(element, optname, result) vm->internalVMFunctions->optionValueOperations(vm->portLibrary, vm->vmArgsArray, (element), GET_DBL_VALUE, (char **) &(optname), 0, 0, 0, &(result))
 #define HAS_MAPPING(args, element) (args->j9Options[element].mapping!=NULL)
 #define MAPPING_FLAGS(args, element) (args->j9Options[element].mapping->flags)
 #define MAPPING_J9NAME(args, element) (args->j9Options[element].mapping->j9Name)

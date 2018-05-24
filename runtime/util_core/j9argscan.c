@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,9 +20,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <math.h>
+#include "j9.h"
 #include "j9argscan.h"
 #include "j9port.h"
+#include "jvminit.h"
 #include "omrutil.h"
 
 /* Returns the trimmed input string, removing leading and trailing whitespace.
@@ -103,6 +108,29 @@ void scan_failed(J9PortLibrary * portLibrary, const char* module, const char *sc
 	j9tty_printf(PORTLIB, "<%s: unrecognized option --> '%s'>\n", module, scan_start);
 }
 
+uintptr_t scan_double(char **scan_start, double *result)
+{
+	char *endPtr = NULL;
+
+	*result = strtod(*scan_start, &endPtr);
+	if (ERANGE == errno) {
+		if ((HUGE_VAL == *result) || (-HUGE_VAL == *result)) {
+			/* overflow */
+			return OPTION_OVERFLOW;
+		} else {
+			/* underflow - value is so small that it cannot be represented as double.
+			 * treat it as zero.
+			*/
+			*result = 0.0;
+			return OPTION_OK;
+		}
+	} else if ((0.0 == *result) && (endPtr == *scan_start)) {
+		/* no conversion */
+		return OPTION_MALFORMED;
+	}
+	*scan_start = endPtr;
+	return OPTION_OK;
+}
 
 /* Scan the next unsigned number off of the argument string.
  * Store the result in *result

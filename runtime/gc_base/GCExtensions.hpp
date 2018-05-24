@@ -183,6 +183,9 @@ public:
 	MM_IdleGCManager* idleGCManager; /**< Manager which registers for VM Runtime State notification & manages free heap on notification */
 #endif
 
+	double maxRAMPercent; /**< Value of -XX:MaxRAMPercentage specified by the user */
+	double initialRAMPercent; /**< Value of -XX:InitialRAMPercentage specified by the user */
+
 protected:
 private:
 protected:
@@ -299,6 +302,8 @@ public:
 #if defined(J9VM_GC_IDLE_HEAP_MANAGER)
 		, idleGCManager(NULL)
 #endif
+		, maxRAMPercent(0.0) /* this would get overwritten by user specified value */
+		, initialRAMPercent(0.0) /* this would get overwritten by user specified value */
 	{
 		_typeId = __FUNCTION__;
 	}
