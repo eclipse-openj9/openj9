@@ -108,6 +108,7 @@ add_library(j9vm SHARED
 	swalk.c
 	threadhelp.cpp
 	threadpark.c
+	throwexception.c
 	visible.c
 	VMAccess.cpp
 	vmbootlib.c

@@ -24,13 +24,16 @@
 set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
 
 add_library(jsig SHARED
-    jsig.c
+	jsig.c
 )
 
 target_link_libraries(jsig
-    PRIVATE
-        omrutil
-        dl
+	PRIVATE
+		j9vm_interface
+
+		omrsig
+		omrutil
+		dl
 )
 
 target_include_directories(jsig PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
