@@ -80,6 +80,8 @@
 
 #define LARGE_STRING_BUF_SIZE 256
 
+static char * getStartOfOptionValue(J9VMInitArgs* j9vm_args, IDATA element, const char *optionName);
+
 IDATA
 findArgInVMArgs(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA match, const char* optionName, const char* optionValue, UDATA doConsumeArgs) {
 	UDATA optionCntr;
@@ -346,6 +348,8 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 	UDATA value, oldValue, done;
 	IDATA errorFound = 0;
 	UDATA mapType;
+	double dvalue = 0.0;
+	uintptr_t rc = 0;
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
 	if (element < 0) {			/* If invalid element... don't even try */
@@ -355,7 +359,7 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 	}
 
 	if (valuesBuffer) {
-		if ((action == GET_MEM_VALUE) || (action == GET_INT_VALUE) || (action == GET_PRC_VALUE)) {
+		if ((action == GET_MEM_VALUE) || (action == GET_INT_VALUE) || (action == GET_PRC_VALUE) || (action == GET_DBL_VALUE)) {
 			if (!(*valuesBuffer)) {
 				return OPTION_ERROR;					/* *valuesBuffer is an input value. Make sure it is not NULL. */
 			}
@@ -506,22 +510,26 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 				done = TRUE;
 				break;
 
+			case GET_DBL_VALUE:
+				*(double *)reserved = 0.0;
+				cursor = getStartOfOptionValue(j9vm_args, element, *valuesBuffer);
+				rc = scan_double(&cursor, &dvalue);
+				if (*cursor != '\0') {
+					return OPTION_MALFORMED;
+				}
+				if (OPTION_OK != rc) {
+					return rc;
+				}
+				*(double *)reserved = dvalue;
+				done = TRUE;
+				break;
+
 			case GET_MEM_VALUE :
 			case GET_INT_VALUE :
 			case GET_PRC_VALUE :
-				*((UDATA*)(reserved)) = 0;				/* Initialize the return value */
-				if ( HAS_MAPPING(j9vm_args, element) ) {
-					/* If we have a mapping, then we ignore the option name passed in. Instead we want the one that corresponds to the actual cmd line */
-					scanStart = &(j9vm_args->actualVMArgs->options[element].optionString[ strlen(MAPPING_MAPNAME(j9vm_args, element)) ]);
-				} else {
-					if (*valuesBuffer) {
-						scanStart = &(j9vm_args->actualVMArgs->options[element].optionString[ strlen(*valuesBuffer) ]);
-					} else {
-						return OPTION_ERROR;
-					}
-				}
+				*((UDATA*)(reserved)) = 0;
+				scanStart = getStartOfOptionValue(j9vm_args, element, *valuesBuffer);
 				cursor = scanStart;
-
 				if (scan_udata(&cursor, &value)) {
 					return OPTION_MALFORMED;
 				}
@@ -627,6 +635,23 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 	}			/* while */
 
 	return OPTION_OK;
+}
+
+static char * 
+getStartOfOptionValue(J9VMInitArgs* j9vm_args, IDATA element, const char *optionName)
+{
+	const char *option = optionName;
+	char *value = NULL;
+
+	if (HAS_MAPPING(j9vm_args, element)) {
+		option = MAPPING_MAPNAME(j9vm_args, element);
+	}
+
+	Assert_Util_true(NULL != option);
+	
+	value = j9vm_args->actualVMArgs->options[element].optionString + strlen(option);
+
+	return value;
 }
 
 static UDATA
