@@ -1552,8 +1552,12 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
             _bcIndex += 3;
             break;
             }
-
+            
          case J9BCgenericReturn:
+         case J9BCReturnC:
+         case J9BCReturnS:
+         case J9BCReturnB:
+         case J9BCReturnZ:
             _bcIndex = genReturn(method()->returnOpCode(), method()->isSynchronized());
             break;
 
@@ -7112,9 +7116,37 @@ TR_J9ByteCodeIlGenerator::genReturn(TR::ILOpCodes nodeop, bool monitorExit)
       }
 
    if (nodeop == TR::Return)
+      {
       genTreeTop(TR::Node::create(nodeop, 0));
+      }
    else
-      genTreeTop(TR::Node::create(nodeop, 1, pop()));
+      {
+      TR::Node* returnChild = pop();
+
+      switch (current())
+         {
+         case J9BCReturnC:
+            returnChild = TR::Node::create(TR::su2i, 1, TR::Node::create(TR::i2s, 1, returnChild));
+            break;
+            
+         case J9BCReturnS:
+            returnChild = TR::Node::create(TR::s2i, 1, TR::Node::create(TR::i2s, 1, returnChild));
+            break;
+            
+         case J9BCReturnB:
+            returnChild = TR::Node::create(TR::b2i, 1, TR::Node::create(TR::i2b, 1, returnChild));
+            break;
+            
+         case J9BCReturnZ:
+            returnChild = TR::Node::create(TR::iand, 2, returnChild, TR::Node::iconst(1));
+            break;
+
+         default:
+            break;
+         }
+
+      genTreeTop(TR::Node::create(nodeop, 1, returnChild));
+      }
 
    discardEntireStack();
 
