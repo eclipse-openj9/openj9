@@ -58,10 +58,8 @@ addons:
       - zip
 before_install:
   - jdk_switcher use oraclejdk8
-env:
-  global:
 before_script:
-  # - ccache -s -z
+  - ccache -s -z
   # Exit immediately if any unexpected error occurs.
   - set -e
   - if [ ! `wget https://ci.eclipse.org/openj9/userContent/freemarker-2.3.8.jar -O freemarker.jar` ]; then
@@ -85,9 +83,9 @@ script:
   # builds have 2 cores and 4 gigs of memory.  Attempt to double provision the number of cores for the make...
   # Limit number of jobs to work around g++ internal compiler error.
   - export UMA_WINDOWS_PARRALLEL_HACK=-j4
-  - bash configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=4 --with-num-cores=4
-  - make images
+  - bash configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=4 --with-num-cores=4 --enable-ccache --with-cmake --disable-ddr
+  - make images EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"
   # Minimal sniff test - ensure java -version works.
   - ./build/linux-x86_64-normal-server-release/images/jdk/bin/java -version
 after_script:
-  # - ccache -s
+  - ccache -s

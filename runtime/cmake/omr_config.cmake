@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2018, 2018 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,68 +20,8 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-add_library(j9gc SHARED
-	dllinit.c
-	gctable.c
+# Various config options we apply to OMR
 
-)
-
-if(OMR_TOOLCONFIG STREQUAL "gnu")
-	if(OMR_ARCH_X86)
-		target_compile_options(j9gc PRIVATE -fpeel-loops)
-	endif()
-elseif(OMR_TOOLCONFIG STREQUAL "msvc")
-	target_compile_options(j9gc PRIVATE /w34189)
-endif()
-
-target_link_libraries(j9gc
-	PRIVATE
-		j9vm_interface
-
-		j9util
-		j9utilcore
-		j9avl
-		j9thr
-		j9stackmap
-		j9pool
-		omrgc #LINKING HACK
-		j9hookable
-		j9gcbase
-		j9gcstructs
-		j9gcstats
-		j9gcapi
-		j9modronstartup
-		j9gctrc
-		j9gctrcstandard
-		j9gctrcvlhgc
-		j9staccato
-		j9realtime
-		j9gcvlhgc
-		omrgc
-
-		#TODO: this is hack to make linking work.
-		# Need to figure out why we need this in CMake but not UMA
-		j9modronstandard
-		j9gcbase
-		j9hashtable
-		j9gcbase
-		j9modronstandard
-		j9realtime
-		j9gcvlhgc
-		j9gcbase
-
-		j9thr
-		#TODO need to do based on platform
-		pthread
-		rt
-)
-
-target_include_directories(j9gc
-	PUBLIC
-		$<TARGET_PROPERTY:omrgc,INTERFACE_INCLUDE_DIRECTORIES>
-)
-
-install(
-	TARGETS j9gc
-	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
-)
+set(OMR_EXAMPLE OFF CACHE INTERNAL "")
+set(OMR_FVTEST OFF CACHE INTERNAL "")
+set(OMR_GC ON CACHE INTERNAL "")

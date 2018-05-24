@@ -29,6 +29,7 @@ cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 ###
 
 include(cmake/version.cmake)
+
 project(j9vm VERSION ${J9VM_VERSION} LANGUAGES CXX C)
 
 set(J9VM_OMR_DIR "${CMAKE_CURRENT_SOURCE_DIR}/omr" CACHE PATH "Path to the OMR directory")
@@ -68,6 +69,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_INSTALL_RPATH "\$ORIGIN")
 set(OMR_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "")
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "" FORCE)
+
+# Generic configuration for omr
+include(cmake/omr_config.cmake)
 
 
 #clean up the variables we used
