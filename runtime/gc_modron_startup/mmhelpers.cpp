@@ -37,11 +37,11 @@
 #include "omr.h"
 #include "VerboseGCInterface.h"
 
-#include "Collector.hpp"
 #if defined(J9VM_GC_FINALIZATION)
 #include "FinalizeListManager.hpp"
 #endif /* J9VM_GC_FINALIZATION */
 #include "GCExtensions.hpp"
+#include "GlobalCollector.hpp"
 #include "Heap.hpp"
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
