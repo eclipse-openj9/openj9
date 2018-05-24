@@ -45,11 +45,8 @@ timeout(time: 10, unit: 'HOURS') {
         buildfile.build_pr()
 
         // Test
-        archive_test = [:]
-        archive_test['Archive'] = { buildfile.archive() }
-        archive_test['Test'] = { testfile.test_all() }
+        testfile.test_all()
 
-        parallel archive_test
-        buildfile.git_clean()
+        cleanWs()
     }
 }
