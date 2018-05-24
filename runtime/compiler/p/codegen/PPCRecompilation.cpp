@@ -167,7 +167,7 @@ TR::Instruction *TR_PPCRecompilation::generatePrologue(TR::Instruction *cursor)
       else
          {
          // This only applies to JitProfiling, as JProfiling uses sampling
-         TR_ASSERT(_compilation->getProfilingMode() == JitProfiling, "JProfiling should use sampling to trigger recompilation");
+         //TR_ASSERT(_compilation->getProfilingMode() == JitProfiling, "JProfiling should use sampling to trigger recompilation");
 
          cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::cmpi4, firstNode, cr0, gr0,   0, cursor);
          // this is just padding for consistent code length

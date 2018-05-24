@@ -207,7 +207,8 @@ J9::Recompilation::beforeOptimization()
    //
    if (self()->isProfilingCompilation()) // this asks the bodyInfo
       {
-      _useSampling = _compilation->getProfilingMode() != JitProfiling;
+      //_useSampling = _compilation->getProfilingMode() != JitProfiling;
+      _useSampling = false;
       self()->findOrCreateProfileInfo()->setProfilingCount     (DEFAULT_PROFILING_COUNT);
       self()->findOrCreateProfileInfo()->setProfilingFrequency (DEFAULT_PROFILING_FREQUENCY);
       }
