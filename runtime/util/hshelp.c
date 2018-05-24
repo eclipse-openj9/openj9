@@ -419,13 +419,7 @@ fixJNIMethodID(J9VMThread *currentThread, J9Method *oldMethod, J9Method *newMeth
 			}
 		}
 		newJNIIDs[getMethodIndex(newMethod)] = oldMethodID;
-
-		if (extensionsUsed) {
-			vmFuncs->initializeMethodID(currentThread, oldMethodID, newMethod);
-		} else {
-			/* update only method, vtable index always remains the same */
-			oldMethodID->method = newMethod;
-		}
+		vmFuncs->initializeMethodID(currentThread, oldMethodID, newMethod);
 	}
 done:
 	return rc;
