@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,7 +92,22 @@ private:
    //
    int32_t      genGoto(int32_t);
    int32_t      genIf(TR::ILOpCodes, bool singleStackOp = false);
-   int32_t      genReturn(TR::ILOpCodes, bool);
+
+   /** \brief
+    *     Generates IL for a return bytecode.
+    *
+    *  \param nodeop
+    *     The IL opcode to use for the return.
+    *
+    *  \param monitorExit
+    *     Determines whether the method which contains this return is synchronized in which case <c>TR::monitorExit</c>
+    *     nodes may need to be generated.
+    *
+    *  \return
+    *     The index of the next bytecode to generate.
+    */
+   int32_t genReturn(TR::ILOpCodes nodeop, bool monitorExit);
+
    int32_t      genLookupSwitch();
    int32_t      genTableSwitch();
 
