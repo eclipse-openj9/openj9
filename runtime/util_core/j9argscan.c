@@ -327,6 +327,64 @@ uintptr_t scan_hex_caseflag(char **scan_start, BOOLEAN uppercaseAllowed, uintptr
 	return rc;
 }
 
+/**
+ * @Scan the hexadecimal uint64_t number and store the result in *result
+ * @param[in] scan_start The string to be scanned
+ * @param[in] uppercaseFalg Whether upper case letter is allowed
+ * @param[out] result The result
+ * @return the number of bits used to store the hexadecimal number or 0 on failure.
+ */
+uintptr_t
+scan_hex_u64(char **scan_start, uint64_t* result)
+{
+	return	scan_hex_caseflag_u64(scan_start, TRUE, result);
+}
+
+/**
+ * Scan the hexadecimal uint64_t number and store the result in *result 
+ * @param[in] scan_start The string to be scanned
+ * @param[in] uppercaseFalg Whether uppercase letter is allowed
+ * @param[out] result The result
+ * @return the number of bits used to store the hexadecimal number or 0 on failure.
+ */
+uintptr_t
+scan_hex_caseflag_u64(char **scan_start, BOOLEAN uppercaseAllowed, uint64_t* result)
+{
+	uint64_t total = 0;
+	uint64_t delta = 0;
+	char *hex = *scan_start;
+	uintptr_t bits = 0;
+
+	try_scan(&hex, "0x");
+
+	while (('\0' != *hex)
+			&& (bits <= 60)
+	) {
+		/*
+		 * Decode hex digit
+		 */
+		char x = *hex;
+		if (x >= '0' && x <= '9') {
+			delta = (x - '0');
+		} else if (x >= 'a' && x <= 'f') {
+			delta = 10 + (x - 'a');
+		} else if (x >= 'A' && x <= 'F' && uppercaseAllowed) {
+			delta = 10 + (x - 'A');
+		} else {
+			break;
+		}
+
+		total = (total << 4) + delta;
+		bits += 4;
+		hex++;
+	}
+
+	*scan_start = hex;
+	*result = total;
+
+	return bits;
+}
+
 
 /*
  * Print an error message indicating that an option was not recognized
