@@ -45,7 +45,7 @@
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "x/codegen/CheckFailureSnippet.hpp"
 #include "x/codegen/HelperCallSnippet.hpp"
 #include "x/codegen/X86Instruction.hpp"

@@ -42,7 +42,7 @@
 #include "il/DataTypes.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 #define DEFAULT_OBJECT_ALIGNMENT (8)
 

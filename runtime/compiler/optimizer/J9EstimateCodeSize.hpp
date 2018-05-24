@@ -24,10 +24,10 @@
 #define J9ESTIMATECS_INCL
 
 #include "il/Block.hpp"
-#include "trj9/ilgen/J9ByteCodeIterator.hpp"
+#include "ilgen/J9ByteCodeIterator.hpp"
 #include "compile/Compilation.hpp"
 #include "optimizer/Inliner.hpp"
-#include "trj9/optimizer/J9Inliner.hpp"
+#include "optimizer/J9Inliner.hpp"
 #include "il/Node.hpp"
 #include "infra/Stack.hpp"
 #include "il/TreeTop.hpp"

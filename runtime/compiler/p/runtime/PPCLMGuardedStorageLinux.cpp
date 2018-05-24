@@ -21,11 +21,11 @@
  *******************************************************************************/
 
 #include "j9cfg.h"
-#include "trj9/p/runtime/PPCLMGuardedStorage.hpp"
-#include "trj9/p/runtime/PPCHWProfilerPrivate.hpp"
+#include "p/runtime/PPCLMGuardedStorage.hpp"
+#include "p/runtime/PPCHWProfilerPrivate.hpp"
 #include "j9port_generated.h"
-#include "trj9/runtime/HWProfiler.hpp"
-#include "trj9/control/CompilationThread.hpp"
+#include "runtime/HWProfiler.hpp"
+#include "control/CompilationThread.hpp"
 
 #include <errno.h>
 #include <gnu/libc-version.h>

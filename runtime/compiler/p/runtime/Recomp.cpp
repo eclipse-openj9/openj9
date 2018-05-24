@@ -29,7 +29,7 @@
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
 #include "runtime/Runtime.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 extern "C" int32_t _tr_try_lock(int32_t *, int32_t, int32_t);
 extern void ppcCodeSync(uint8_t *, uint32_t);

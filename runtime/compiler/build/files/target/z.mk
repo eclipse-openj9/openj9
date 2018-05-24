@@ -55,28 +55,28 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/UnaryEvaluator.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/z/codegen/DFPTreeEvaluator.cpp \
-    compiler/trj9/z/codegen/ForceRecompilationSnippet.cpp \
-    compiler/trj9/z/codegen/InMemoryLoadStoreMarking.cpp \
-    compiler/trj9/z/codegen/J9AheadOfTimeCompile.cpp \
-    compiler/trj9/z/codegen/J9CodeGenPhase.cpp \
-    compiler/trj9/z/codegen/J9CodeGenerator.cpp \
-    compiler/trj9/z/codegen/J9Instruction.cpp \
-    compiler/trj9/z/codegen/J9Linkage.cpp \
-    compiler/trj9/z/codegen/J9MemoryReference.cpp \
-    compiler/trj9/z/codegen/J9S390CHelperLinkage.cpp \
-    compiler/trj9/z/codegen/J9S390PrivateLinkage.cpp \
-    compiler/trj9/z/codegen/J9S390Snippet.cpp \
-    compiler/trj9/z/codegen/J9S390SystemLinkage.cpp \
-    compiler/trj9/z/codegen/J9TreeEvaluator.cpp \
-    compiler/trj9/z/codegen/J9UnresolvedDataSnippet.cpp \
-    compiler/trj9/z/codegen/J9ZSnippet.cpp \
-    compiler/trj9/z/codegen/ReduceSynchronizedFieldLoad.cpp \
-    compiler/trj9/z/codegen/S390AOTRelocation.cpp \
-    compiler/trj9/z/codegen/S390J9CallSnippet.cpp \
-    compiler/trj9/z/codegen/S390Recompilation.cpp \
-    compiler/trj9/z/codegen/S390Register.cpp \
-    compiler/trj9/z/codegen/S390StackCheckFailureSnippet.cpp \
-    compiler/trj9/z/codegen/UncommonBCDCHKAddressNode.cpp \
-    compiler/trj9/z/env/J9CPU.cpp \
+    compiler/z/codegen/DFPTreeEvaluator.cpp \
+    compiler/z/codegen/ForceRecompilationSnippet.cpp \
+    compiler/z/codegen/InMemoryLoadStoreMarking.cpp \
+    compiler/z/codegen/J9AheadOfTimeCompile.cpp \
+    compiler/z/codegen/J9CodeGenPhase.cpp \
+    compiler/z/codegen/J9CodeGenerator.cpp \
+    compiler/z/codegen/J9Instruction.cpp \
+    compiler/z/codegen/J9Linkage.cpp \
+    compiler/z/codegen/J9MemoryReference.cpp \
+    compiler/z/codegen/J9S390CHelperLinkage.cpp \
+    compiler/z/codegen/J9S390PrivateLinkage.cpp \
+    compiler/z/codegen/J9S390Snippet.cpp \
+    compiler/z/codegen/J9S390SystemLinkage.cpp \
+    compiler/z/codegen/J9TreeEvaluator.cpp \
+    compiler/z/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/z/codegen/J9ZSnippet.cpp \
+    compiler/z/codegen/ReduceSynchronizedFieldLoad.cpp \
+    compiler/z/codegen/S390AOTRelocation.cpp \
+    compiler/z/codegen/S390J9CallSnippet.cpp \
+    compiler/z/codegen/S390Recompilation.cpp \
+    compiler/z/codegen/S390Register.cpp \
+    compiler/z/codegen/S390StackCheckFailureSnippet.cpp \
+    compiler/z/codegen/UncommonBCDCHKAddressNode.cpp \
+    compiler/z/env/J9CPU.cpp \
     omr/compiler/z/env/OMRDebugEnv.cpp

@@ -32,9 +32,9 @@
 #include "il/symbol/StaticSymbol.hpp"
 #include "ilgen/ByteCodeIterator.hpp"
 #include "infra/Link.hpp"
-#include "trj9/env/j9method.h"
-#include "trj9/env/VMJ9.h"
-#include "trj9/ilgen/J9ByteCode.hpp"
+#include "env/j9method.h"
+#include "env/VMJ9.h"
+#include "ilgen/J9ByteCode.hpp"
 
 class TR_J9ByteCodeIterator : public TR_ByteCodeIterator<TR_J9ByteCode, TR_ResolvedJ9Method>
    {

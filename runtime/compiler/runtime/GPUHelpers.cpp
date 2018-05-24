@@ -53,8 +53,8 @@
 
 #include "vmaccess.h"
 #include "codegen/CodeGenerator.hpp"
-#include "trj9/env/VMJ9.h"
-#include "trj9/infra/Monitor.hpp"
+#include "env/VMJ9.h"
+#include "infra/Monitor.hpp"
 #include "runtime/MethodMetaData.h"
 
 #define ERROR_CODE 1

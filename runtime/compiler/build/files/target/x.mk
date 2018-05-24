@@ -58,28 +58,28 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/x/codegen/XMMBinaryArithmeticAnalyser.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/x/codegen/AllocPrefetchSnippet.cpp \
-    compiler/trj9/x/codegen/CallSnippet.cpp \
-    compiler/trj9/x/codegen/CheckFailureSnippet.cpp \
-    compiler/trj9/x/codegen/ForceRecompilationSnippet.cpp \
-    compiler/trj9/x/codegen/GuardedDevirtualSnippet.cpp \
-    compiler/trj9/x/codegen/J9AheadOfTimeCompile.cpp \
-    compiler/trj9/x/codegen/J9CodeGenerator.cpp \
-    compiler/trj9/x/codegen/J9Linkage.cpp \
-    compiler/trj9/x/codegen/J9LinkageUtils.cpp \
-    compiler/trj9/x/codegen/J9Snippet.cpp \
-    compiler/trj9/x/codegen/J9TreeEvaluator.cpp \
-    compiler/trj9/x/codegen/J9UnresolvedDataSnippet.cpp \
-    compiler/trj9/x/codegen/J9X86Instruction.cpp \
-    compiler/trj9/x/codegen/JNIPauseSnippet.cpp \
-    compiler/trj9/x/codegen/PassJNINullSnippet.cpp \
-    compiler/trj9/x/codegen/RecompilationSnippet.cpp \
-    compiler/trj9/x/codegen/ScratchArgHelperCallSnippet.cpp \
-    compiler/trj9/x/codegen/WriteBarrierSnippet.cpp \
-    compiler/trj9/x/codegen/X86HelperLinkage.cpp \
-    compiler/trj9/x/codegen/X86PrivateLinkage.cpp \
-    compiler/trj9/x/codegen/X86Recompilation.cpp \
-    compiler/trj9/x/env/J9CPU.cpp \
+    compiler/x/codegen/AllocPrefetchSnippet.cpp \
+    compiler/x/codegen/CallSnippet.cpp \
+    compiler/x/codegen/CheckFailureSnippet.cpp \
+    compiler/x/codegen/ForceRecompilationSnippet.cpp \
+    compiler/x/codegen/GuardedDevirtualSnippet.cpp \
+    compiler/x/codegen/J9AheadOfTimeCompile.cpp \
+    compiler/x/codegen/J9CodeGenerator.cpp \
+    compiler/x/codegen/J9Linkage.cpp \
+    compiler/x/codegen/J9LinkageUtils.cpp \
+    compiler/x/codegen/J9Snippet.cpp \
+    compiler/x/codegen/J9TreeEvaluator.cpp \
+    compiler/x/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/x/codegen/J9X86Instruction.cpp \
+    compiler/x/codegen/JNIPauseSnippet.cpp \
+    compiler/x/codegen/PassJNINullSnippet.cpp \
+    compiler/x/codegen/RecompilationSnippet.cpp \
+    compiler/x/codegen/ScratchArgHelperCallSnippet.cpp \
+    compiler/x/codegen/WriteBarrierSnippet.cpp \
+    compiler/x/codegen/X86HelperLinkage.cpp \
+    compiler/x/codegen/X86PrivateLinkage.cpp \
+    compiler/x/codegen/X86Recompilation.cpp \
+    compiler/x/env/J9CPU.cpp \
     omr/compiler/x/env/OMRCPU.cpp \
     omr/compiler/x/env/OMRDebugEnv.cpp
 

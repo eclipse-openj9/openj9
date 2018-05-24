@@ -21,11 +21,11 @@
  *******************************************************************************/
 
 #include "j9cfg.h"
-#include "trj9/p/runtime/PPCHWProfiler.hpp"
-#include "trj9/p/runtime/PPCHWProfilerPrivate.hpp"
+#include "p/runtime/PPCHWProfiler.hpp"
+#include "p/runtime/PPCHWProfilerPrivate.hpp"
 #include "j9port_generated.h"
-#include "trj9/control/CompilationThread.hpp"
-#include "trj9/env/VMJ9.h"
+#include "control/CompilationThread.hpp"
+#include "env/VMJ9.h"
 
 #include <errno.h>
 #include <gnu/libc-version.h>

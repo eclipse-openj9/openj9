@@ -33,7 +33,7 @@
 #include "il/TreeTop_inlines.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 
 

@@ -51,7 +51,7 @@
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/RelocationRuntimeLogger.hpp"
 #include "runtime/RelocationTarget.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "control/rossa.h"
 
 // TODO: move this someplace common for RuntimeAssumptions.cpp and here

@@ -22,9 +22,9 @@
 
 #include "infra/Cfg.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "trj9/ilgen/J9ByteCodeIlGenerator.hpp"
-#include "trj9/ilgen/J9ByteCodeIterator.hpp"
-#include "trj9/ilgen/ClassLookahead.hpp"
+#include "ilgen/J9ByteCodeIlGenerator.hpp"
+#include "ilgen/J9ByteCodeIterator.hpp"
+#include "ilgen/ClassLookahead.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"
 #include "compile/ResolvedMethod.hpp"

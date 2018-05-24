@@ -67,7 +67,7 @@
 #include "p/codegen/PPCPrivateLinkage.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "runtime/CodeCache.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 #define AIX_NULL_ZERO_AREA_SIZE 256
 #define NUM_PICS 3

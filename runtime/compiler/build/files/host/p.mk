@@ -22,28 +22,28 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/p/runtime/VirtualGuardRuntime.spp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/p/runtime/CodeSync.cpp \
-    compiler/trj9/p/runtime/ebb.spp \
-    compiler/trj9/p/runtime/Emulation.c \
-    compiler/trj9/p/runtime/J9PPCArrayCmp.spp \
-    compiler/trj9/p/runtime/J9PPCArrayCopy.spp \
-    compiler/trj9/p/runtime/J9PPCArrayTranslate.spp \
-    compiler/trj9/p/runtime/J9PPCCRC32.spp \
-    compiler/trj9/p/runtime/J9PPCCRC32_wrapper.c \
-    compiler/trj9/p/runtime/J9PPCCompressString.spp \
-    compiler/trj9/p/runtime/J9PPCEncodeUTF16.spp \
-    compiler/trj9/p/runtime/Math.spp \
-    compiler/trj9/p/runtime/PPCHWProfiler.cpp \
-    compiler/trj9/p/runtime/PPCLMGuardedStorage.cpp \
-    compiler/trj9/p/runtime/PPCRelocationTarget.cpp \
-    compiler/trj9/p/runtime/PicBuilder.spp \
-    compiler/trj9/p/runtime/Recomp.cpp \
-    compiler/trj9/p/runtime/Recompilation.spp \
+    compiler/p/runtime/CodeSync.cpp \
+    compiler/p/runtime/ebb.spp \
+    compiler/p/runtime/Emulation.c \
+    compiler/p/runtime/J9PPCArrayCmp.spp \
+    compiler/p/runtime/J9PPCArrayCopy.spp \
+    compiler/p/runtime/J9PPCArrayTranslate.spp \
+    compiler/p/runtime/J9PPCCRC32.spp \
+    compiler/p/runtime/J9PPCCRC32_wrapper.c \
+    compiler/p/runtime/J9PPCCompressString.spp \
+    compiler/p/runtime/J9PPCEncodeUTF16.spp \
+    compiler/p/runtime/Math.spp \
+    compiler/p/runtime/PPCHWProfiler.cpp \
+    compiler/p/runtime/PPCLMGuardedStorage.cpp \
+    compiler/p/runtime/PPCRelocationTarget.cpp \
+    compiler/p/runtime/PicBuilder.spp \
+    compiler/p/runtime/Recomp.cpp \
+    compiler/p/runtime/Recompilation.spp \
     omr/compiler/p/runtime/OMRCodeCacheConfig.cpp
 
 ifeq ($(OS),aix)
-    PPC_HW_PROFILER=compiler/trj9/p/runtime/PPCHWProfilerAIX.cpp
-    PPC_LM_GUARDED_STORAGE=compiler/trj9/p/runtime/PPCLMGuardedStorageAIX.cpp
+    PPC_HW_PROFILER=compiler/p/runtime/PPCHWProfilerAIX.cpp
+    PPC_LM_GUARDED_STORAGE=compiler/p/runtime/PPCLMGuardedStorageAIX.cpp
 
     ifeq ($(I5_VERSION),I5_V6R1)
         PPC_HW_PROFILER=
@@ -56,8 +56,8 @@ ifeq ($(OS),aix)
 endif
 
 ifeq ($(OS),linux)
-    PPC_HW_PROFILER=compiler/trj9/p/runtime/PPCHWProfilerLinux.cpp
-    PPC_LM_GUARDED_STORAGE=compiler/trj9/p/runtime/PPCLMGuardedStorageLinux.cpp
+    PPC_HW_PROFILER=compiler/p/runtime/PPCHWProfilerLinux.cpp
+    PPC_LM_GUARDED_STORAGE=compiler/p/runtime/PPCLMGuardedStorageLinux.cpp
 endif
 
 JIT_PRODUCT_SOURCE_FILES+=$(PPC_HW_PROFILER)

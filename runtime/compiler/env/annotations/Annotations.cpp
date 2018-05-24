@@ -21,9 +21,9 @@
  *******************************************************************************/
 
 #include "j9.h"
-#include "trj9/env/j9method.h"
+#include "env/j9method.h"
 #include "vmaccess.h"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "runtime/MethodMetaData.h"
 
 #include "compile/Compilation.hpp"

@@ -41,7 +41,7 @@
 #include "il/ILOpCodes.hpp"
 #include "infra/Annotations.hpp"
 #include "optimizer/OptimizationStrategies.hpp"
-#include "trj9/env/J9SharedCache.hpp"
+#include "env/J9SharedCache.hpp"
 #include "infra/Array.hpp"
 #include "env/CompilerEnv.hpp"
 

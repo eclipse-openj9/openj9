@@ -29,8 +29,8 @@
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/TRMemory.hpp"
-#include "trj9/control/CompilationThread.hpp"
-#include "trj9/env/J9JitMemory.hpp"
+#include "control/CompilationThread.hpp"
+#include "env/J9JitMemory.hpp"
 
 J9JITConfig *jitConfig;
 

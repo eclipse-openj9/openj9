@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "trj9/env/J2IThunk.hpp"
+#include "env/J2IThunk.hpp"
 
 #include "env/CompilerEnv.hpp"
 #include "codegen/CodeGenerator.hpp"
@@ -28,8 +28,8 @@
 #include "infra/Monitor.hpp"
 #include "env/IO.hpp"
 #include "infra/CriticalSection.hpp"
-#include "trj9/env/j9method.h"
-#include "trj9/env/VMJ9.h"
+#include "env/j9method.h"
+#include "env/VMJ9.h"
 
 static int32_t
 computeSignatureLength(char *signature)

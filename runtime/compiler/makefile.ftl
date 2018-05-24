@@ -116,7 +116,7 @@ default:
 	@ echo "ENABLE_GPU:           $(ENABLE_GPU)"
 	@ echo "CUDA_HOME:            $(CUDA_HOME)"
 	@ echo "GDK_HOME:             $(GDK_HOME)"
-	$(MAKE) $(UMA_WINDOWS_PARRALLEL_HACK) -C $(JIT_SRCBASE)/compiler/trj9
+	$(MAKE) $(UMA_WINDOWS_PARRALLEL_HACK) -C $(JIT_SRCBASE)/compiler -f Makefile
 
 clean:
-	$(MAKE) $(UMA_WINDOWS_PARRALLEL_HACK) -C $(JIT_SRCBASE)/compiler/trj9 clean
+	$(MAKE) $(UMA_WINDOWS_PARRALLEL_HACK) -C $(JIT_SRCBASE)/compiler -f Makefile clean

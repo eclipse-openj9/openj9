@@ -33,7 +33,7 @@
 #define snprintf _snprintf
 #endif
 
-#include "trj9/control/CompilationThread.hpp"
+#include "control/CompilationThread.hpp"
 
 #include <exception>
 #include <limits.h>
@@ -82,13 +82,13 @@
 #include "runtime/J9VMAccess.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/J9Profiler.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/env/j9method.h"
-#include "trj9/env/J9SharedCache.hpp"
-#include "trj9/env/VMJ9.h"
-#include "trj9/env/annotations/AnnotationBase.hpp"
-#include "trj9/runtime/MethodMetaData.h"
-#include "trj9/env/J9JitMemory.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "env/j9method.h"
+#include "env/J9SharedCache.hpp"
+#include "env/VMJ9.h"
+#include "env/annotations/AnnotationBase.hpp"
+#include "runtime/MethodMetaData.h"
+#include "env/J9JitMemory.hpp"
 #include "env/J9SegmentCache.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
@@ -104,7 +104,7 @@ extern "C" {
    }
 static void printCompFailureInfo(TR::Compilation * comp, const char * reason);
 
-#include "trj9/env/ut_j9jit.h"
+#include "env/ut_j9jit.h"
 
 #if defined(TR_HOST_S390)
 #include <sys/time.h>
@@ -117,7 +117,7 @@ extern void  j2Prof_methodReport(TR_Method * vmMethod, TR::Compilation * comp);
 #endif
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
-#include "trj9/runtime/IProfiler.hpp"
+#include "runtime/IProfiler.hpp"
 #endif
 
 IDATA J9THREAD_PROC compilationThreadProc(void *jitconfig);
@@ -1241,7 +1241,7 @@ void TR::CompilationInfo::printMethodNameToVlog(J9Method *method)
    }
 
 //----------------------- Must hide these in TR::CompilationInfo ------
-#include "trj9/env/CpuUtilization.hpp"
+#include "env/CpuUtilization.hpp"
 #include "infra/Statistics.hpp"
 #undef STATS
 #ifdef STATS

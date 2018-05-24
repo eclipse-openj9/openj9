@@ -23,7 +23,7 @@
 #ifndef PPCHWPROFILER_INCL
 #define PPCHWPROFILER_INCL
 
-#include "trj9/runtime/HWProfiler.hpp"
+#include "runtime/HWProfiler.hpp"
 
 #include <stdint.h>
 #include "env/jittypes.h"

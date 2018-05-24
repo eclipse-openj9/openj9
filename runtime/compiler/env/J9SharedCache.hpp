@@ -23,7 +23,7 @@
 #ifndef J9SHARED_CACHE_HPP
 #define J9SHARED_CACHE_HPP
 
-#include "trj9/env/SharedCache.hpp"
+#include "compiler/env/SharedCache.hpp"
 
 #include <stdint.h>
 #include "env/TRMemory.hpp"

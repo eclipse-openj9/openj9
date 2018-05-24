@@ -25,7 +25,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include "env/jittypes.h"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "z/codegen/TRSystemLinkage.hpp"
 
 // Recompilation Support Runtime methods

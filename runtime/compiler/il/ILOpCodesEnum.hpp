@@ -23,7 +23,7 @@
 #ifndef ILOPCODES_ENUM_INCL
 #define ILOPCODES_ENUM_INCL
 
-#include "trj9/il/J9ILOpCodesEnum.hpp"
+#include "il/J9ILOpCodesEnum.hpp"
 
    FirstTROp = FirstOMROp,
    LastTROp = LastJ9Op,

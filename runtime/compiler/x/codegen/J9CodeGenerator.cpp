@@ -41,8 +41,8 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheTypes.hpp"
 #include "runtime/Runtime.hpp"
-#include "trj9/x/codegen/CallSnippet.hpp"
-#include "trj9/x/codegen/X86Recompilation.hpp"
+#include "x/codegen/CallSnippet.hpp"
+#include "x/codegen/X86Recompilation.hpp"
 #include "x/codegen/FPTreeEvaluator.hpp"
 #include "x/codegen/X86Instruction.hpp"
 

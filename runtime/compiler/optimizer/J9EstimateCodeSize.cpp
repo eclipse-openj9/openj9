@@ -30,9 +30,9 @@
 #include "il/symbol/ParameterSymbol.hpp"
 #include "optimizer/PreExistence.hpp"
 #include "ras/LogTracer.hpp"
-#include "trj9/env/VMJ9.h"
-#include "trj9/optimizer/J9CallGraph.hpp"
-#include "trj9/optimizer/J9EstimateCodeSize.hpp"
+#include "env/VMJ9.h"
+#include "optimizer/J9CallGraph.hpp"
+#include "optimizer/J9EstimateCodeSize.hpp"
 #include "runtime/J9Profiler.hpp"
 
 // Empirically determined value

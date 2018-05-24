@@ -23,7 +23,7 @@
 #ifndef ANNOTATIONNOSIDEFX_INCL
 #define ANNOTATIONNOSIDEFX_INCL
 
-#include "trj9/env/annotations/AnnotationBase.hpp"
+#include "env/annotations/AnnotationBase.hpp"
 
 class TR_NoSideFXAnnotation : public TR_AnnotationBase {
 public:

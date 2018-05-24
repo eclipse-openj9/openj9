@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
-#include "trj9/control/CompilationOperations.hpp"
+#include "control/CompilationOperations.hpp"
 
 extern "C" {
 struct J9VMThread;

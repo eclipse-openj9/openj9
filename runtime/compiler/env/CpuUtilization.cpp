@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "trj9/control/CompilationRuntime.hpp"
+#include "control/CompilationRuntime.hpp"
 
 #include <stdint.h>
 #include "jni.h"
@@ -28,7 +28,7 @@
 #include "j9port.h"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#include "trj9/env/CpuUtilization.hpp"
+#include "env/CpuUtilization.hpp"
 
 /*
  * Relevant port library API:

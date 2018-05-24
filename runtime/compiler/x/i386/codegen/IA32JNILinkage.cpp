@@ -42,7 +42,7 @@
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "x/codegen/CheckFailureSnippet.hpp"
 #include "x/codegen/HelperCallSnippet.hpp"
 #include "x/codegen/IA32LinkageUtils.hpp"

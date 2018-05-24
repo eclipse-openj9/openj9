@@ -37,7 +37,7 @@ namespace J9 { typedef J9::ARM::CodeGenerator CodeGeneratorConnector; }
 #endif
 
 
-#include "trj9/codegen/J9CodeGenerator.hpp"
+#include "compiler/codegen/J9CodeGenerator.hpp"
 #include "codegen/LinkageConventionsEnum.hpp"
 
 namespace TR { class Recompilation; }

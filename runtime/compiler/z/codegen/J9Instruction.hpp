@@ -34,7 +34,7 @@
    #error J9::Z::Instruction expected to be a primary connector, but a J9 connector is already defined
 #endif
 
-#include "trj9/codegen/J9Instruction.hpp"
+#include "compiler/codegen/J9Instruction.hpp"
 #include "z/codegen/S390AOTRelocation.hpp"
 
 namespace TR { class S390EncodingRelocation; }

@@ -33,7 +33,7 @@
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "x/codegen/X86Instruction.hpp"
 
 // An utility to manage real registers and their corresponding virtual registers

@@ -23,7 +23,7 @@
 #ifndef PPCLMGUARDEDSTORAGE_INCL
 #define PPCLMGUARDEDSTORAGE_INCL
 
-#include "trj9/runtime/LMGuardedStorage.hpp"
+#include "runtime/LMGuardedStorage.hpp"
 
 #include <stdint.h>
 #include "env/jittypes.h"

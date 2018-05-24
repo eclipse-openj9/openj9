@@ -23,7 +23,7 @@
 #ifndef TESTANNOTATION_INCL
 #define TESTANNOTATION_INCL
 
-#include "trj9/env/annotations/AnnotationBase.hpp"
+#include "env/annotations/AnnotationBase.hpp"
 
 /* used for testing annotation */
 class TR_TestAnnotation : public TR_AnnotationBase {

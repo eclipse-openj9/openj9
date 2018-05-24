@@ -29,7 +29,7 @@
 #include "il/Node_inlines.hpp"
 #include "runtime/CodeRuntime.hpp"
 #include "runtime/J9CodeCache.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 uint8_t *TR::X86AllocPrefetchSnippet::emitSnippetBody()
    {

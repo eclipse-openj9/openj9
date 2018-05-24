@@ -33,8 +33,8 @@
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "infra/Monitor.hpp"
 #include "runtime/CodeCacheManager.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/env/ut_j9jit.h"
+#include "control/CompilationRuntime.hpp"
+#include "env/ut_j9jit.h"
 #include "env/CompilerEnv.hpp"
 
 // NOTE: TR::CompilationController is actually defined in control/OptimizationPlan.hpp

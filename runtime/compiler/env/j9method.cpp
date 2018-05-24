@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "trj9/env/j9method.h"
+#include "env/j9method.h"
 
 #include <stddef.h>
 #include "bcnames.h"
@@ -54,11 +54,11 @@
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
-#include "trj9/env/VMJ9.h"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/control/CompilationThread.hpp"
-#include "trj9/ilgen/J9ByteCodeIlGenerator.hpp"
-#include "trj9/runtime/IProfiler.hpp"
+#include "env/VMJ9.h"
+#include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
+#include "ilgen/J9ByteCodeIlGenerator.hpp"
+#include "runtime/IProfiler.hpp"
 #include "ras/DebugCounter.hpp"
 
 #if defined(_MSC_VER)

@@ -21,9 +21,9 @@
  *******************************************************************************/
 
 #include "j9cfg.h"
-#include "trj9/p/runtime/PPCHWProfiler.hpp"
-#include "trj9/p/runtime/PPCHWProfilerPrivate.hpp"
-#include "trj9/control/CompilationThread.hpp"
+#include "p/runtime/PPCHWProfiler.hpp"
+#include "p/runtime/PPCHWProfilerPrivate.hpp"
+#include "control/CompilationThread.hpp"
 
 #include <dlfcn.h>
 #include <pmapi.h>

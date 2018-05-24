@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "trj9/env/J9SharedCache.hpp"
+#include "env/J9SharedCache.hpp"
 
 #include <algorithm>
 #include "j9cfg.h"
@@ -30,10 +30,10 @@
 #include "env/jittypes.h"
 #include "env/VMAccessCriticalSection.hpp"
 #include "runtime/CodeRuntime.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/env/VMJ9.h"
-#include "trj9/env/j9method.h"
-#include "trj9/runtime/IProfiler.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "env/VMJ9.h"
+#include "env/j9method.h"
+#include "runtime/IProfiler.hpp"
 
 #define   LOG(n,c) \
    if (_logLevel >= (3*n)) \

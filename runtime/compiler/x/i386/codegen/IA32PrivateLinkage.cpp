@@ -37,7 +37,7 @@
 #include "env/CompilerEnv.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "x/codegen/CallSnippet.hpp"
 #include "x/codegen/CheckFailureSnippet.hpp"
 #include "x/codegen/FPTreeEvaluator.hpp"

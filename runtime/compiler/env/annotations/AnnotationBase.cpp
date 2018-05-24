@@ -22,7 +22,7 @@
 
 #define J9_EXTERNAL_TO_VM
 #include "vmaccess.h"
-#include "trj9/env/annotations/AnnotationBase.hpp"
+#include "env/annotations/AnnotationBase.hpp"
 #include "il/Symbol.hpp"
 #include "il/symbol/LabelSymbol.hpp"
 #include "il/symbol/MethodSymbol.hpp"
@@ -33,11 +33,11 @@
 #include "il/SymbolReference.hpp"
 #include "env/CHTable.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/control/CompilationThread.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
-#include "trj9/env/J9JitMemory.hpp"
+#include "env/J9JitMemory.hpp"
 
 
 TR_AnnotationBase::TR_AnnotationBase(TR::Compilation *comp ):
@@ -550,7 +550,7 @@ bool TR_AnnotationBase::getEnumeration(TR::SymbolReference * symRef,const char *
 TR_AnnotationBase::AnnotationTable TR_AnnotationBase::recognizedAnnotations[] = {
 #undef ANNOT_ENTRY
 #define ANNOT_ENTRY(A,B) {B,sizeof(B)-1,NULL},
-#include "trj9/env/annotations/AnnotationTable.inc"
+#include "env/annotations/AnnotationTable.inc"
   {"kUnknown",0}
 };
 

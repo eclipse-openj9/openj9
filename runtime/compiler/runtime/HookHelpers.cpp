@@ -38,8 +38,8 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/DataCache.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
-#include "trj9/env/VMJ9.h"
-#include "trj9/env/j9method.h"
+#include "env/VMJ9.h"
+#include "env/j9method.h"
 
 namespace  {
 

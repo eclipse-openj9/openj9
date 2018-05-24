@@ -33,7 +33,7 @@
 #include "il/symbol/StaticSymbol.hpp"
 #include "codegen/X86Instruction.hpp"
 #include "x/codegen/J9LinkageUtils.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "codegen/Machine.hpp"
 #include "x/codegen/IA32LinkageUtils.hpp"
 #include "compile/ResolvedMethod.hpp"

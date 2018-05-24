@@ -26,7 +26,7 @@
 #include "compile/CompilationTypes.hpp"
 #include "control/OptimizationPlan.hpp"
 #include "runtime/CodeCacheManager.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 class TR_OptimizationPlan;
 struct TR_MethodToBeCompiled;

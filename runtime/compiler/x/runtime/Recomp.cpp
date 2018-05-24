@@ -28,7 +28,7 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/Runtime.hpp"
 #include "x/runtime/X86Runtime.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 #if defined(TR_HOST_X86) && defined(TR_HOST_64BIT)
 #define IS_32BIT_RIP(x,rip)  ((intptrj_t)(x) == (intptrj_t)(rip) + (int32_t)((intptrj_t)(x) - (intptrj_t)(rip)))

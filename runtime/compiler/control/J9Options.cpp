@@ -40,9 +40,9 @@
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
 #include "infra/SimpleRegex.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/control/CompilationThread.hpp"
-#include "trj9/runtime/IProfiler.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
+#include "runtime/IProfiler.hpp"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"

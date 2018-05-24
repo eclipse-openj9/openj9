@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 #include "j9cfg.h"
-#include "trj9/il/J9Node.hpp"
+#include "il/J9Node.hpp"
 
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
@@ -32,9 +32,9 @@
 #include "il/Symbol.hpp"
 #include "il/symbol/MethodSymbol.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
-#include "trj9/env/CHTable.hpp"
-#include "trj9/env/PersistentCHTable.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/CHTable.hpp"
+#include "env/PersistentCHTable.hpp"
+#include "env/VMJ9.h"
 
 #ifdef TR_TARGET_S390
 #include "z/codegen/S390Register.hpp"

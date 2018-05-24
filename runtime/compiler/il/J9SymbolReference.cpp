@@ -32,9 +32,9 @@
 #include "il/symbol/ParameterSymbol.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
-#include "trj9/env/CHTable.hpp"
-#include "trj9/env/PersistentCHTable.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/CHTable.hpp"
+#include "env/PersistentCHTable.hpp"
+#include "env/VMJ9.h"
 
 namespace J9
 {

@@ -34,7 +34,7 @@ namespace J9 { typedef J9::X86::CPU CPUConnector; }
 #error J9::X86::CPU expected to be a primary connector, but a J9 connector is already defined
 #endif
 
-#include "trj9/env/J9CPU.hpp"
+#include "compiler/env/J9CPU.hpp"
 
 namespace TR { class Compilation; }
 

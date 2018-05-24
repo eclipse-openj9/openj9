@@ -46,7 +46,7 @@
 #include "il/TreeTop_inlines.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
 #include "infra/SimpleRegex.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "x/codegen/X86Instruction.hpp"
 #include "x/codegen/CallSnippet.hpp"
 #include "x/codegen/FPTreeEvaluator.hpp"

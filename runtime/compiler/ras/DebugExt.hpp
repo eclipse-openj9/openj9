@@ -32,7 +32,7 @@
 #include "optimizer/Optimizations.hpp"   // for Optimizations
 #include "ras/Debug.hpp"
 #include "ras/InternalFunctionsExt.hpp"  // for TR_Malloc_t
-#include "trj9/env/VMJ9.h"               // for TR_J9VM
+#include "env/VMJ9.h"               // for TR_J9VM
 #include "ras/DebugExtSegmentProvider.hpp"  // for J9::DebugSegmentProvider
 #include "env/Region.hpp"
 

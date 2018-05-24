@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "trj9/z/codegen/J9S390SystemLinkage.hpp"
+#include "z/codegen/J9S390SystemLinkage.hpp"
 
 #include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
@@ -40,7 +40,7 @@
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
-#include "trj9/z/codegen/J9S390PrivateLinkage.hpp"
+#include "z/codegen/J9S390PrivateLinkage.hpp"
 #include "z/codegen/CallSnippet.hpp"
 #include "z/codegen/OpMemToMem.hpp"
 #include "z/codegen/S390Evaluator.hpp"

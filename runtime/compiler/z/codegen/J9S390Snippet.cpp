@@ -36,8 +36,8 @@
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "trj9/env/VMJ9.h"
-#include "trj9/z/codegen/J9S390PrivateLinkage.hpp"
+#include "env/VMJ9.h"
+#include "z/codegen/J9S390PrivateLinkage.hpp"
 #include "z/codegen/S390Instruction.hpp"
 #include "z/codegen/S390Snippets.hpp"
 

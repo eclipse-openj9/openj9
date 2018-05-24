@@ -28,9 +28,9 @@
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "trj9/env/j9method.h"
+#include "env/j9method.h"
 #include "cfreader.h"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 static char *getNameFromCP(int32_t &len, I_32 cpIndex, J9ROMClass *romClass)
    {

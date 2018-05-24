@@ -35,7 +35,7 @@ namespace J9 { typedef J9::X86::UnresolvedDataSnippet UnresolvedDataSnippetConne
 #endif
 
 
-#include "trj9/codegen/J9UnresolvedDataSnippet.hpp"
+#include "compiler/codegen/J9UnresolvedDataSnippet.hpp"
 
 #include <stdint.h>                                 // for uint8_t, int32_t, etc
 #include "codegen/CodeGenerator.hpp"                // for CodeGenerator

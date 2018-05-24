@@ -23,7 +23,7 @@
 #ifndef ANNOTATIONTROPT_INCL
 #define ANNOTATIONTROPT_INCL
 
-#include "trj9/env/annotations/AnnotationBase.hpp"
+#include "env/annotations/AnnotationBase.hpp"
 
 #include <stdint.h>
 #include "compile/CompilationTypes.hpp"

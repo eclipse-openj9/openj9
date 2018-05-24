@@ -29,8 +29,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
 
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/x/amd64/codegen/AMD64GuardedDevirtualSnippet.cpp \
-    compiler/trj9/x/amd64/codegen/AMD64J9SystemLinkage.cpp \
-    compiler/trj9/x/amd64/codegen/AMD64JNILinkage.cpp \
-    compiler/trj9/x/amd64/codegen/AMD64PrivateLinkage.cpp \
-    compiler/trj9/x/amd64/codegen/J9CodeGenerator.cpp
+    compiler/x/amd64/codegen/AMD64GuardedDevirtualSnippet.cpp \
+    compiler/x/amd64/codegen/AMD64J9SystemLinkage.cpp \
+    compiler/x/amd64/codegen/AMD64JNILinkage.cpp \
+    compiler/x/amd64/codegen/AMD64PrivateLinkage.cpp \
+    compiler/x/amd64/codegen/J9CodeGenerator.cpp

@@ -49,8 +49,8 @@
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/asmprotos.h"
 #include "runtime/codertinit.hpp"
-#include "trj9/env/VMJ9.h"
-#include "trj9/runtime/J9RuntimeAssumptions.hpp"
+#include "env/VMJ9.h"
+#include "runtime/J9RuntimeAssumptions.hpp"
 
 extern J9JITConfig *jitConfig;
 extern "C" int32_t _getnumRTHelpers();  /* 390 asm stub */

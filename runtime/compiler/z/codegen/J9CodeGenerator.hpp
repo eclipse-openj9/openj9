@@ -38,7 +38,7 @@ namespace J9 { typedef J9::Z::CodeGenerator CodeGeneratorConnector; }
 
 
 
-#include "trj9/codegen/J9CodeGenerator.hpp"
+#include "compiler/codegen/J9CodeGenerator.hpp"
 #include "j9cfg.h"
 namespace TR { class S390EyeCatcherDataSnippet; }
 

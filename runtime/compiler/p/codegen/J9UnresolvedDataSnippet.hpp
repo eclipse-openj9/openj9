@@ -34,7 +34,7 @@ namespace J9 { typedef J9::Power::UnresolvedDataSnippet UnresolvedDataSnippetCon
 #error J9::Power::UnresolvedDataSnippet expected to be a primary connector, but a J9 connector is already defined
 #endif
 
-#include "trj9/codegen/J9UnresolvedDataSnippet.hpp"
+#include "compiler/codegen/J9UnresolvedDataSnippet.hpp"
 
 #include <stdint.h>                                 // for int32_t, etc
 #include "codegen/Snippet.hpp"                      // for TR::PPCSnippet, etc

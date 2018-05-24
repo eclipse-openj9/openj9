@@ -45,11 +45,11 @@
 #include <tpf/c_cinfc.h>
 #endif
 
-#include "trj9/env/annotations/AnnotationBase.hpp"
+#include "env/annotations/AnnotationBase.hpp"
 
 #define J9_EXTERNAL_TO_VM
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/control/CompilationThread.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "runtime/ArtifactManager.hpp"
@@ -57,9 +57,9 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheReclamation.h"
 #include "runtime/codertinit.hpp"
-#include "trj9/runtime/IProfiler.hpp"
-#include "trj9/runtime/HWProfiler.hpp"
-#include "trj9/runtime/LMGuardedStorage.hpp"
+#include "runtime/IProfiler.hpp"
+#include "runtime/HWProfiler.hpp"
+#include "runtime/LMGuardedStorage.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/J2IThunk.hpp"
@@ -72,25 +72,25 @@
 
 /* Hardware Profiling */
 #if defined(TR_HOST_S390) && defined(BUILD_Z_RUNTIME_INSTRUMENTATION)
-#include "trj9/z/runtime/ZHWProfiler.hpp"
+#include "z/runtime/ZHWProfiler.hpp"
 #elif defined(TR_HOST_POWER)
-#include "trj9/p/runtime/PPCHWProfiler.hpp"
-#include "trj9/p/runtime/PPCLMGuardedStorage.hpp"
+#include "p/runtime/PPCHWProfiler.hpp"
+#include "p/runtime/PPCLMGuardedStorage.hpp"
 #endif
 
-#include "trj9/control/rossa.h"
+#include "control/rossa.h"
 #include "control/OptimizationPlan.hpp"
 #include "control/CompilationController.hpp"
-#include "trj9/runtime/IProfiler.hpp"
+#include "runtime/IProfiler.hpp"
 
 #define _UTE_STATIC_
-#include "trj9/env/ut_j9jit.h"
+#include "env/ut_j9jit.h"
 
 #include "jitprotos.h"
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
 #endif
-#include "trj9/env/J9SharedCache.hpp"
+#include "env/J9SharedCache.hpp"
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
 #include "runtime/Crypto.hpp"
@@ -104,7 +104,7 @@
 #include "jvminit.h"
 #include "j9port.h"
 #include "ras/DebugExt.hpp"
-#include "trj9/env/exports.h"
+#include "env/exports.h"
 
 extern "C" int32_t encodeCount(int32_t count);
 

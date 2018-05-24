@@ -23,7 +23,7 @@
 #ifndef TR_J9_X86_CODEGENERATORBASE_INCL
 #define TR_J9_X86_CODEGENERATORBASE_INCL
 
-#include "trj9/codegen/J9CodeGenerator.hpp"
+#include "compiler/codegen/J9CodeGenerator.hpp"
 
 namespace TR { class Recompilation; }
 

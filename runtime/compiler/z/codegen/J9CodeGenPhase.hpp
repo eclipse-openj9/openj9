@@ -35,7 +35,7 @@
 #error J9::Z::CodeGenPhase expected to be a primary connector, but a J9 connector is already defined
 #endif
 
-#include "trj9/codegen/J9CodeGenPhase.hpp"
+#include "compiler/codegen/J9CodeGenPhase.hpp"
 
 namespace J9
 {

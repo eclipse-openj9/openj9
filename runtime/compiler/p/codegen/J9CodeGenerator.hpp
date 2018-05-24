@@ -35,7 +35,7 @@ namespace J9 { typedef J9::Power::CodeGenerator CodeGeneratorConnector; }
 #endif
 
 #include "j9cfg.h"
-#include "trj9/codegen/J9CodeGenerator.hpp"
+#include "compiler/codegen/J9CodeGenerator.hpp"
 
 #include <stdint.h>
 #include "codegen/LinkageConventionsEnum.hpp"

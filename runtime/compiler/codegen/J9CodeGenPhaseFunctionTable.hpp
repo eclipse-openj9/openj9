@@ -27,7 +27,7 @@
 
 #include "codegen/OMRCodeGenPhaseFunctionTable.hpp"
 
-// The entries in this file must be kept in sync with trj9/codegen/J9CodeGenPhaseEnum.hpp
+// The entries in this file must be kept in sync with codegen/J9CodeGenPhaseEnum.hpp
    TR::CodeGenPhase::performAllocateLinkageRegistersPhase,                                   //AllocateLinkageRegisters
    TR::CodeGenPhase::performPopulateOSRBufferPhase,                                          //PopulateOSRBufferPhase
    TR::CodeGenPhase::performMoveUpArrayLengthStoresPhase,                                    //MoveUpArrayLengthStoresPhase

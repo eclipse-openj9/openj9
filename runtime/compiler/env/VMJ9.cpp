@@ -22,7 +22,7 @@
 
 #define J9_EXTERNAL_TO_VM
 
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 #include <algorithm>
 #include <ctype.h>
@@ -66,7 +66,7 @@
 #include "runtime/CodeCacheExceptions.hpp"
 #include "exceptions/JITShutDown.hpp"
 #include "exceptions/DataCacheError.hpp"
-#include "trj9/env/exports.h"
+#include "env/exports.h"
 #include "env/CompilerEnv.hpp"
 #include "env/CHTable.hpp"
 #include "env/ClassLoaderTable.hpp"
@@ -102,19 +102,19 @@
 #include "runtime/DataCache.hpp"
 #include "runtime/HookHelpers.hpp"
 #include "runtime/RelocationRuntime.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/control/CompilationThread.hpp"
-#include "trj9/control/MethodToBeCompiled.hpp"
-#include "trj9/env/J2IThunk.hpp"
-#include "trj9/env/j9fieldsInfo.h"
-#include "trj9/env/j9method.h"
-#include "trj9/env/ut_j9jit.h"
-#include "trj9/optimizer/J9EstimateCodeSize.hpp"
-#include "trj9/runtime/J9VMAccess.hpp"
-#include "trj9/runtime/IProfiler.hpp"
-#include "trj9/runtime/HWProfiler.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
+#include "control/MethodToBeCompiled.hpp"
+#include "env/J2IThunk.hpp"
+#include "env/j9fieldsInfo.h"
+#include "env/j9method.h"
+#include "env/ut_j9jit.h"
+#include "optimizer/J9EstimateCodeSize.hpp"
+#include "runtime/J9VMAccess.hpp"
+#include "runtime/IProfiler.hpp"
+#include "runtime/HWProfiler.hpp"
 #include "runtime/J9Profiler.hpp"
-#include "trj9/env/J9JitMemory.hpp"
+#include "env/J9JitMemory.hpp"
 #include "infra/Bit.hpp"               //for trailingZeroes
 
 #ifdef LINUX

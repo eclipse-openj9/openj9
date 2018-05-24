@@ -35,7 +35,7 @@ namespace J9 { typedef J9::X86::AMD64::TreeEvaluator TreeEvaluatorConnector; }
 #endif
 
 
-#include "trj9/x/codegen/J9TreeEvaluator.hpp"  // include parent
+#include "x/codegen/J9TreeEvaluator.hpp"  // include parent
 
 namespace J9
 {

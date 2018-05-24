@@ -20,9 +20,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "trj9/runtime/LMGuardedStorage.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/control/CompilationThread.hpp"
+#include "runtime/LMGuardedStorage.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
 
 TR_LMGuardedStorage::TR_LMGuardedStorage(J9JITConfig *jitConfig) :
    _jitConfig(jitConfig)

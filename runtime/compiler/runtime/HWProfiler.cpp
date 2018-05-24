@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "trj9/runtime/HWProfiler.hpp"
+#include "runtime/HWProfiler.hpp"
 
 #include "vmaccess.h"
 #include "codegen/CodeGenerator.hpp"
@@ -40,9 +40,9 @@
 #include "infra/Monitor.hpp"
 #include "optimizer/Inliner.hpp"
 #include "runtime/J9VMAccess.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/env/VMJ9.h"
-#include "trj9/env/j9method.h"
+#include "control/CompilationRuntime.hpp"
+#include "env/VMJ9.h"
+#include "env/j9method.h"
 
 uint32_t TR_HWProfiler::_STATS_TotalBuffersProcessed = 0;
 uint32_t TR_HWProfiler::_STATS_BuffersProcessedByAppThread = 0;

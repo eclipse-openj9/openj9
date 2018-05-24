@@ -48,7 +48,7 @@
 #include "infra/BitVector.hpp"                 // for TR_BitVector, etc
 #include "infra/List.hpp"                      // for List, ListIterator, etc
 #include "runtime/RuntimeAssumptions.hpp"
-#include "trj9/env/PersistentCHTable.hpp"
+#include "env/PersistentCHTable.hpp"
 
 J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation *c) :
    OMR::SymbolReferenceTableConnector(sizeHint, c),

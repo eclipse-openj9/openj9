@@ -25,9 +25,9 @@
  * Only valid static methods within CodeGenPhase class should be included.
  */
 
-#include "trj9/codegen/J9CodeGenPhaseFunctionTable.hpp"
+#include "compiler/codegen/J9CodeGenPhaseFunctionTable.hpp"
 
-// The entries in this file must be kept in sync with trj9/z/codegen/J9CodeGenPhaseEnum.hpp
+// The entries in this file must be kept in sync with z/codegen/J9CodeGenPhaseEnum.hpp
 
 TR::CodeGenPhase::performInMemoryLoadStoreMarkingPhase,
 TR::CodeGenPhase::performReduceSynchronizedFieldLoadPhase,

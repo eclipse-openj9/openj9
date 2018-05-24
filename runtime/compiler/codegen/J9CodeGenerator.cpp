@@ -57,7 +57,7 @@
 #include "ras/Delimiter.hpp"                   // for Delimiter
 #include "ras/DebugCounter.hpp"
 #include "env/CHTable.hpp"
-#include "trj9/env/PersistentCHTable.hpp"
+#include "env/PersistentCHTable.hpp"
 
 #define OPT_DETAILS "O^O CODE GENERATION: "
 

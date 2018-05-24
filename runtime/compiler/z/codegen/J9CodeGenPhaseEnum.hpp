@@ -25,9 +25,9 @@
  * Only enum values defined in CodeGenPhaseEnum.hpp are allowed.
  */
 
-#include "trj9/codegen/J9CodeGenPhaseEnum.hpp"
+#include "compiler/codegen/J9CodeGenPhaseEnum.hpp"
 
-// The entries in this file must be kept in sync with trj9/z/codegen/J9CodeGenPhaseFunctionTable.hpp
+// The entries in this file must be kept in sync with z/codegen/J9CodeGenPhaseFunctionTable.hpp
 
 InMemoryLoadStoreMarkingPhase,
 ReduceSynchronizedFieldLoadPhase,

@@ -33,7 +33,7 @@
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
-#include "trj9/env/PersistentCHTable.hpp"
+#include "env/PersistentCHTable.hpp"
 
 static
 void traceInstanceOfOrCheckCastProfilingInfo(TR::CodeGenerator *cg, TR::Node *node, TR_OpaqueClassBlock *castClass)

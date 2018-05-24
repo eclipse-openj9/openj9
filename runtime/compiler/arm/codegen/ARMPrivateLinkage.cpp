@@ -44,7 +44,7 @@
 #include "il/symbol/RegisterMappedSymbol.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/symbol/StaticSymbol.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 #define LOCK_R14
 // #define DEBUG_ARM_LINKAGE

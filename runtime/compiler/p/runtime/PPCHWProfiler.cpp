@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "trj9/p/runtime/PPCHWProfiler.hpp"
+#include "p/runtime/PPCHWProfiler.hpp"
 
 #include "j9cfg.h"
 #include "j9port_generated.h"
@@ -30,9 +30,9 @@
 #include "control/RecompilationInfo.hpp"
 #include "env/jittypes.h"
 #include "infra/Annotations.hpp"
-#include "trj9/env/VMJ9.h"
-#include "trj9/p/runtime/PPCHWProfilerPrivate.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
+#include "env/VMJ9.h"
+#include "p/runtime/PPCHWProfilerPrivate.hpp"
+#include "control/CompilationRuntime.hpp"
 
 static int32_t baseEventHandler(TR_PPCHWProfilerEBBContext *context);
 static int32_t methodHotnessEventHandler(TR_PPCHWProfilerEBBContext *context, int32_t pmu);

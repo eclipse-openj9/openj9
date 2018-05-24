@@ -34,7 +34,7 @@ namespace J9 { typedef J9::ARM::UnresolvedDataSnippet UnresolvedDataSnippetConne
 #error J9::ARM::UnresolvedDataSnippet expected to be a primary connector, but an J9 connector is already defined
 #endif
 
-#include "trj9/codegen/J9UnresolvedDataSnippet.hpp"
+#include "compiler/codegen/J9UnresolvedDataSnippet.hpp"
 
 #include "codegen/GCStackMap.hpp"
 #include "codegen/Snippet.hpp"

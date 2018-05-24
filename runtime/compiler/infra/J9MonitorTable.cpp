@@ -23,7 +23,7 @@
 #include "infra/MonitorTable.hpp"
 #include "infra/Monitor.hpp"
 #include "infra/CriticalSection.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
+#include "control/CompilationRuntime.hpp"
 
 #include "j9.h"
 #include "j9cfg.h"

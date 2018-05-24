@@ -49,22 +49,22 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/p/env/OMRCPU.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/p/codegen/CallSnippet.cpp \
-    compiler/trj9/p/codegen/DFPTreeEvaluator.cpp \
-    compiler/trj9/p/codegen/ForceRecompilationSnippet.cpp \
-    compiler/trj9/p/codegen/GenerateInstructions.cpp \
-    compiler/trj9/p/codegen/InterfaceCastSnippet.cpp \
-    compiler/trj9/p/codegen/J9AheadOfTimeCompile.cpp \
-    compiler/trj9/p/codegen/J9CodeGenerator.cpp \
-    compiler/trj9/p/codegen/J9PPCInstruction.cpp \
-    compiler/trj9/p/codegen/J9PPCSnippet.cpp \
-    compiler/trj9/p/codegen/J9TreeEvaluator.cpp \
-    compiler/trj9/p/codegen/J9UnresolvedDataSnippet.cpp \
-    compiler/trj9/p/codegen/PPCJNILinkage.cpp \
-    compiler/trj9/p/codegen/PPCPrivateLinkage.cpp \
-    compiler/trj9/p/codegen/PPCRecompilation.cpp \
-    compiler/trj9/p/codegen/PPCRecompilationSnippet.cpp \
-    compiler/trj9/p/codegen/StackCheckFailureSnippet.cpp \
-    compiler/trj9/p/codegen/Trampoline.cpp \
-    compiler/trj9/p/env/J9CPU.cpp \
+    compiler/p/codegen/CallSnippet.cpp \
+    compiler/p/codegen/DFPTreeEvaluator.cpp \
+    compiler/p/codegen/ForceRecompilationSnippet.cpp \
+    compiler/p/codegen/GenerateInstructions.cpp \
+    compiler/p/codegen/InterfaceCastSnippet.cpp \
+    compiler/p/codegen/J9AheadOfTimeCompile.cpp \
+    compiler/p/codegen/J9CodeGenerator.cpp \
+    compiler/p/codegen/J9PPCInstruction.cpp \
+    compiler/p/codegen/J9PPCSnippet.cpp \
+    compiler/p/codegen/J9TreeEvaluator.cpp \
+    compiler/p/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/p/codegen/PPCJNILinkage.cpp \
+    compiler/p/codegen/PPCPrivateLinkage.cpp \
+    compiler/p/codegen/PPCRecompilation.cpp \
+    compiler/p/codegen/PPCRecompilationSnippet.cpp \
+    compiler/p/codegen/StackCheckFailureSnippet.cpp \
+    compiler/p/codegen/Trampoline.cpp \
+    compiler/p/env/J9CPU.cpp \
     omr/compiler/p/env/OMRDebugEnv.cpp

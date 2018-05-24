@@ -26,7 +26,7 @@
 #include "j9.h"
 #include "codegen/FrontEnd.hpp"
 #include "infra/List.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 namespace TR { class CompilationInfo; }
 
@@ -63,7 +63,7 @@ typedef enum {
 typedef enum {
 #undef ANNOT_ENTRY
 #define ANNOT_ENTRY(A,B) A,
-#include "trj9/env/annotations/AnnotationTable.inc"
+#include "env/annotations/AnnotationTable.inc"
   kLastAnnotationSignature,
   kUnknownAnnotationSignature = kLastAnnotationSignature,
   } AnnotationSignature;

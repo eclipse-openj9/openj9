@@ -32,7 +32,7 @@ namespace J9 { namespace Z { class Snippet; } }
 namespace J9 { typedef J9::Z::Snippet SnippetConnector; }
 #endif
 
-#include "trj9/codegen/J9Snippet.hpp"
+#include "compiler/codegen/J9Snippet.hpp"
 #include "codegen/InstOpCode.hpp"
 
 namespace TR { class CodeGenerator; }

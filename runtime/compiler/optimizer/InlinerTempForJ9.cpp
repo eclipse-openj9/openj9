@@ -22,8 +22,8 @@
 #include <algorithm>
 #include "j9cfg.h"
 #include "optimizer/Inliner.hpp"
-#include "trj9/optimizer/J9Inliner.hpp"
-#include "trj9/optimizer/J9EstimateCodeSize.hpp"
+#include "optimizer/J9Inliner.hpp"
+#include "optimizer/J9EstimateCodeSize.hpp"
 
 #include "env/KnownObjectTable.hpp"
 #include "compile/OSRData.hpp"

@@ -38,7 +38,7 @@ namespace J9 { typedef J9::X86::AMD64::CodeGenerator CodeGeneratorConnector; }
 
 
 
-#include "trj9/x/codegen/J9CodeGenerator.hpp"
+#include "x/codegen/J9CodeGenerator.hpp"
 
 namespace J9
 {

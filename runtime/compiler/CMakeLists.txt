@@ -129,7 +129,7 @@ set(J9_INCLUDES
 	${omr_SOURCE_DIR}/thread
 	${omr_SOURCE_DIR}/gc/include
 	# endjitinclude.mk
-	../ # Frustratingly there are some #include "trj9/frob/baz.hpp" refs  which require this.
+	../ # Frustratingly there are some #include "frob/baz.hpp" refs in the compiler which require this.
 	${j9vm_SOURCE_DIR}/codert_vm
 	${j9vm_SOURCE_DIR}/gc_include
 	${j9vm_SOURCE_DIR}/gc_glue_java

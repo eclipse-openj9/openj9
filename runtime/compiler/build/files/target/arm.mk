@@ -48,17 +48,17 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/arm/env/OMRCompilerEnv.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/arm/codegen/ARMAOTRelocation.cpp \
-    compiler/trj9/arm/codegen/ARMHelperCallSnippet.cpp \
-    compiler/trj9/arm/codegen/ARMJNILinkage.cpp \
-    compiler/trj9/arm/codegen/ARMPrivateLinkage.cpp \
-    compiler/trj9/arm/codegen/ARMRecompilation.cpp \
-    compiler/trj9/arm/codegen/ARMRecompilationSnippet.cpp \
-    compiler/trj9/arm/codegen/CallSnippet.cpp \
-    compiler/trj9/arm/codegen/J9AheadOfTimeCompile.cpp \
-    compiler/trj9/arm/codegen/J9ARMEvaluator.cpp \
-    compiler/trj9/arm/codegen/J9ARMSnippet.cpp \
-    compiler/trj9/arm/codegen/J9CodeGenerator.cpp \
-    compiler/trj9/arm/codegen/J9TreeEvaluator.cpp \
-    compiler/trj9/arm/codegen/J9UnresolvedDataSnippet.cpp \
-    compiler/trj9/arm/env/J9CPU.cpp
+    compiler/arm/codegen/ARMAOTRelocation.cpp \
+    compiler/arm/codegen/ARMHelperCallSnippet.cpp \
+    compiler/arm/codegen/ARMJNILinkage.cpp \
+    compiler/arm/codegen/ARMPrivateLinkage.cpp \
+    compiler/arm/codegen/ARMRecompilation.cpp \
+    compiler/arm/codegen/ARMRecompilationSnippet.cpp \
+    compiler/arm/codegen/CallSnippet.cpp \
+    compiler/arm/codegen/J9AheadOfTimeCompile.cpp \
+    compiler/arm/codegen/J9ARMEvaluator.cpp \
+    compiler/arm/codegen/J9ARMSnippet.cpp \
+    compiler/arm/codegen/J9CodeGenerator.cpp \
+    compiler/arm/codegen/J9TreeEvaluator.cpp \
+    compiler/arm/codegen/J9UnresolvedDataSnippet.cpp \
+    compiler/arm/env/J9CPU.cpp

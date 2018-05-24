@@ -38,11 +38,11 @@
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "trj9/env/j9fieldsInfo.h"
-#include "trj9/env/VMJ9.h"
-#include "trj9/ilgen/ClassLookahead.hpp"
-#include "trj9/ilgen/J9ByteCode.hpp"
-#include "trj9/ilgen/J9ByteCodeIlGenerator.hpp"
+#include "env/j9fieldsInfo.h"
+#include "env/VMJ9.h"
+#include "ilgen/ClassLookahead.hpp"
+#include "ilgen/J9ByteCode.hpp"
+#include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "infra/Bit.hpp"               //for trailingZeroes
 
 #define BDCLASSLEN 20

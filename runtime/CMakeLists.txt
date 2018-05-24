@@ -396,7 +396,7 @@ if(J9VM_INTERP_NATIVE_SUPPORT)
 	if(OMR_HOST_ARCH STREQUAL "x86" OR OMR_HOST_ARCH STREQUAL "ppc")
 		#jit only does x86/ppc at the moment, and only with GCC
 		if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-			add_subdirectory(compiler/trj9)
+			add_subdirectory(compiler)
 		endif()
 	endif()
 endif()

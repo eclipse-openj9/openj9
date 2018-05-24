@@ -45,7 +45,7 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "infra/Bit.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 #ifdef J9VM_GC_ALIGN_OBJECTS
 #define OBJECT_ALIGNMENT 8

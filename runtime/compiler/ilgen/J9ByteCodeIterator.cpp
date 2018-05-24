@@ -20,9 +20,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "trj9/ilgen/J9ByteCodeIterator.hpp"
+#include "ilgen/J9ByteCodeIterator.hpp"
 #include "compile/Compilation.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "ras/Debug.hpp"
 #include "env/IO.hpp"
 

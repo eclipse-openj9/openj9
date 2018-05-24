@@ -31,13 +31,13 @@
 #include "j9protos.h"
 #include "jvminit.h"
 #include "jitprotos.h"
-#include "trj9/env/ut_j9jit.h"
+#include "env/ut_j9jit.h"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
 #endif
 
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/jittypes.h"

@@ -31,8 +31,8 @@
 
 #include <assert.h>
 #include "codegen/Relocation.hpp"
-#include "trj9/env/j9method.h"
-#include "trj9/runtime/HWProfiler.hpp"
+#include "env/j9method.h"
+#include "runtime/HWProfiler.hpp"
 #include "env/VMJ9.h"
 #include "env/J9CPU.hpp" // for TR_ProcessorFeatureFlags
 

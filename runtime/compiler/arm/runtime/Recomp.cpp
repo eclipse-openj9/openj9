@@ -28,7 +28,7 @@
 #include "control/RecompilationInfo.hpp"
 #include "env/jittypes.h"
 #include "runtime/Runtime.hpp"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 
 extern "C" int32_t _compareAndSwap(int32_t * addr, uint32_t oldInsn, uint32_t newInsn);
 extern "C" int32_t _compareAndSwapSMP(int32_t * addr, uint32_t oldInsn, uint32_t newInsn);

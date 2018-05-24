@@ -35,9 +35,9 @@
 #include "ras/InternalFunctions.hpp"
 #include "ras/InternalFunctionsExt.hpp"
 #include "runtime/MethodMetaData.h"
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "env/CompilerEnv.hpp"
-#include "trj9/env/j9method.h"
+#include "env/j9method.h"
 
 #if defined(TR_HOST_POWER)
 #define INTERNAL_PTR_REG_MASK 0x00040000

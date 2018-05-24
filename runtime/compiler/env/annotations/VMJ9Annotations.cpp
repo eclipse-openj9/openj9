@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "il/Symbol.hpp"
 #include "il/symbol/LabelSymbol.hpp"
 #include "il/symbol/MethodSymbol.hpp"
@@ -29,7 +29,7 @@
 #include "il/symbol/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "compile/Compilation.hpp"
-#include "trj9/env/annotations/TestAnnotation.hpp"
-#include "trj9/env/annotations/TROptAnnotation.hpp"
-#include "trj9/env/annotations/TRNoSideFXAnnotation.hpp"
+#include "env/annotations/TestAnnotation.hpp"
+#include "env/annotations/TROptAnnotation.hpp"
+#include "env/annotations/TRNoSideFXAnnotation.hpp"
 #include "compile/ResolvedMethod.hpp"

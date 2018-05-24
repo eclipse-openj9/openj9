@@ -62,12 +62,12 @@
 #include "runtime/CodeCache.hpp"
 #include "runtime/MethodMetaData.h"
 #include "runtime/asmprotos.h"
-#include "trj9/env/VMJ9.h"
-#include "trj9/env/j9fieldsInfo.h"
-#include "trj9/env/j9method.h"
-#include "trj9/control/CompilationThread.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/runtime/HWProfiler.hpp"
+#include "env/VMJ9.h"
+#include "env/j9fieldsInfo.h"
+#include "env/j9method.h"
+#include "control/CompilationThread.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "runtime/HWProfiler.hpp"
 
 TR_MetaDataStats metaDataStats;
 

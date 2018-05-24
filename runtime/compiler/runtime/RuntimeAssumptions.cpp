@@ -31,8 +31,8 @@
 #include "env/jittypes.h"
 #include "infra/Monitor.hpp"
 #include "infra/CriticalSection.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/env/VMJ9.h"
+#include "control/CompilationRuntime.hpp"
+#include "env/VMJ9.h"
 
 namespace TR { class Monitor; }
 

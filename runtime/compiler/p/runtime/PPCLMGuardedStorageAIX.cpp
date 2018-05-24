@@ -21,9 +21,9 @@
  *******************************************************************************/
 
 #include "j9cfg.h"
-#include "trj9/p/runtime/PPCLMGuardedStorage.hpp"
-#include "trj9/p/runtime/PPCHWProfilerPrivate.hpp"
-#include "trj9/runtime/HWProfiler.hpp"
+#include "p/runtime/PPCLMGuardedStorage.hpp"
+#include "p/runtime/PPCHWProfilerPrivate.hpp"
+#include "runtime/HWProfiler.hpp"
 
 #include <dlfcn.h>
 #include <pmapi.h>

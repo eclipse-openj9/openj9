@@ -40,7 +40,7 @@
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"
 #include "z/codegen/S390Register.hpp"
-#include "trj9/z/codegen/J9S390CHelperLinkage.hpp"
+#include "z/codegen/J9S390CHelperLinkage.hpp"
 
 #define OPT_DETAILS "O^O REDUCE SYNCHRONIZED FIELD LOAD: "
 

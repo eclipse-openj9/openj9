@@ -52,11 +52,11 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/asmprotos.h"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/env/J2IThunk.hpp"
-#include "trj9/env/j9method.h"
-#include "trj9/env/ut_j9jit.h"
-#include "trj9/runtime/IProfiler.hpp"
+#include "control/CompilationRuntime.hpp"
+#include "env/J2IThunk.hpp"
+#include "env/j9method.h"
+#include "env/ut_j9jit.h"
+#include "runtime/IProfiler.hpp"
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM)
 #include "codegen/PicHelpers.hpp"

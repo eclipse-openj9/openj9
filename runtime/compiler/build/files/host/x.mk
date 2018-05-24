@@ -22,14 +22,14 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/x/runtime/VirtualGuardRuntime.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/trj9/x/runtime/Recomp.cpp \
-    compiler/trj9/x/runtime/X86ArrayTranslate.asm \
-    compiler/trj9/x/runtime/X86Codert.asm \
-    compiler/trj9/x/runtime/X86EncodeUTF16.asm \
-    compiler/trj9/x/runtime/X86LockReservation.asm \
-    compiler/trj9/x/runtime/X86PicBuilder.pasm \
-    compiler/trj9/x/runtime/X86PicBuilderC.cpp \
-    compiler/trj9/x/runtime/X86RelocationTarget.cpp \
-    compiler/trj9/x/runtime/X86Unresolveds.pasm
+    compiler/x/runtime/Recomp.cpp \
+    compiler/x/runtime/X86ArrayTranslate.asm \
+    compiler/x/runtime/X86Codert.asm \
+    compiler/x/runtime/X86EncodeUTF16.asm \
+    compiler/x/runtime/X86LockReservation.asm \
+    compiler/x/runtime/X86PicBuilder.pasm \
+    compiler/x/runtime/X86PicBuilderC.cpp \
+    compiler/x/runtime/X86RelocationTarget.cpp \
+    compiler/x/runtime/X86Unresolveds.pasm
 
 include $(JIT_MAKE_DIR)/files/host/$(HOST_SUBARCH).mk

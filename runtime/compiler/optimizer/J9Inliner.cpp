@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 #include "optimizer/Inliner.hpp"
-#include "trj9/optimizer/J9Inliner.hpp"
+#include "optimizer/J9Inliner.hpp"
 
 #include <algorithm>
 #include "env/KnownObjectTable.hpp"

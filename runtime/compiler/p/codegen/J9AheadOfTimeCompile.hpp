@@ -29,7 +29,7 @@ namespace J9 { namespace Power { class AheadOfTimeCompile; } }
 namespace J9 { typedef J9::Power::AheadOfTimeCompile AheadOfTimeCompileConnector; }
 #endif // J9_AHEADOFTIMECOMPILE_CONNECTOR
 
-#include "trj9/codegen/J9AheadOfTimeCompile.hpp"
+#include "compiler/codegen/J9AheadOfTimeCompile.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "p/codegen/PPCAOTRelocation.hpp"
 

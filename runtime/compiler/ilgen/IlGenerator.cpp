@@ -34,8 +34,8 @@
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/Checklist.hpp"
-#include "trj9/env/VMJ9.h"
-#include "trj9/ilgen/J9ByteCodeIlGenerator.hpp"
+#include "env/VMJ9.h"
+#include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "ras/DebugCounter.hpp"
 
 #define OPT_DETAILS "O^O ILGEN: "

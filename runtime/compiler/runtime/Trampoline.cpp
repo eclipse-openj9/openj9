@@ -29,7 +29,7 @@
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeRuntime.hpp"
 #include "runtime/Runtime.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
+#include "control/CompilationRuntime.hpp"
 
 #define PPC_INSTRUCTION_LENGTH 4
 

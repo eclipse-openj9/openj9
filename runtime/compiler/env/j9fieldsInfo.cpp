@@ -26,9 +26,9 @@
 #include <stdlib.h>
 #endif
 
-#include "trj9/env/VMJ9.h"
+#include "env/VMJ9.h"
 #include "j9field.h"
-#include "trj9/env/j9fieldsInfo.h"
+#include "env/j9fieldsInfo.h"
 #include "env/IO.hpp"
 #include "env/CompilerEnv.hpp"
 

@@ -26,10 +26,10 @@
 #include "env/jittypes.h"
 #include "infra/Monitor.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
-#include "trj9/control/CompilationRuntime.hpp"
-#include "trj9/control/CompilationThread.hpp"
-#include "trj9/env/J9JitMemory.hpp"
-#include "trj9/env/VMJ9.h"
+#include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
+#include "env/J9JitMemory.hpp"
+#include "env/VMJ9.h"
 
 void preventAllocationOfBTLMemory(J9MemorySegment * &segment, J9JavaVM * javaVM, TR_AllocationKind segmentType, bool freeSegmentOverride)
    {

@@ -38,7 +38,7 @@
 #include "env/jittypes.h"
 #include "infra/Flags.hpp"
 #include "infra/Statistics.hpp"
-#include "trj9/control/rossa.h"
+#include "control/rossa.h"
 #include "runtime/RelocationRuntime.hpp"
 
 extern "C" {
