@@ -706,10 +706,20 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 
 		/* direct user to OpenJ9 build configurations to properly generate the requested build. */
 		if (DEFAULT_DIR == basePointer) {
-			fprintf(stdout, "Compile with configuration option --with-noncompressedrefs to generate a non-compressedrefs build.\n");
+			fprintf(stdout,
+					"This JVM package only includes the '-Xcompressedrefs' configuration. Please run "
+					"the VM without specifying the '-Xnocompressedrefs' option or by specifying the "
+					"'-Xcompressedrefs' option.\nTo compile the other configuration, please run configure "
+					"with '--with-noncompressedrefs.\n"
+			);
 		}
 		if (COMPRESSEDREFS_DIR == basePointer) {
-			fprintf(stdout, "Compile without configuration option --with-noncompressedrefs to generate a compressedrefs build.\n");
+			fprintf(stdout,
+					"This JVM package only includes the '-Xnocompressedrefs' configuration. Please run "
+					"the VM without specifying the '-Xcompressedrefs' option or by specifying the "
+					"'-Xnocompressedrefs' option.\nTo compile the other configuration, please run configure "
+					"without '--with-noncompressedrefs.\n"
+			);
 		}
 		exit(-1);
 	}
