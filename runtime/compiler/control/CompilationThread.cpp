@@ -8345,7 +8345,8 @@ TR::CompilationInfoPerThreadBase::compile(
       // will not be acquired/releases and we'll only release VMaccess when 
       // waiting for a reply from the server
       if (!compiler->getOption(TR_DisableNoVMAccess) &&
-         compiler->getPersistentInfo()->getJaasMode() != CLIENT_MODE)
+          !_methodBeingCompiled->_aotCodeToBeRelocated &&
+          compiler->getPersistentInfo()->getJaasMode() != CLIENT_MODE)
          {
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
          bool doAcquireClassUnloadMonitor = true;
