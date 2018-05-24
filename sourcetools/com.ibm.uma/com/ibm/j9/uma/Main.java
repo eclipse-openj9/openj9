@@ -224,9 +224,9 @@ public class Main {
 		dumpSplash();
 		
 		if ( jitVersionFile.equals("") ) {
-			File tempJitVersionFile = new File(rootDir + "/compiler/trj9/build/version.h");
+			File tempJitVersionFile = new File(rootDir + "/compiler/build/version.h");
 			if(tempJitVersionFile.exists() && !tempJitVersionFile.isDirectory()) {
-				jitVersionFile = rootDir + "/compiler/trj9/build/version.h";
+				jitVersionFile = rootDir + "/compiler/build/version.h";
 				System.out.print("Using version.h as the jitVersionFile\n");
 			} else {
 				tempJitVersionFile = new File(rootDir + "/jit.version");
