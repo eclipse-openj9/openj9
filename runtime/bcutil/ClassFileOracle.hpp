@@ -20,6 +20,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+
+// change 1
+// change 2
+// change 3
+// change 5
 /*
  * ClassFileOracle.hpp
  */
@@ -35,6 +40,8 @@
 #include "bcnames.h"
 
 #include "BuildResult.hpp"
+
+// change 4
 
 /*
  * It is not guaranteed that slot1 value for constantpool index=0 entry will be zero. 
