@@ -25,7 +25,7 @@
  * and enumerator definitions are permitted.
  */
 
-#include "compiler/optimizer/Optimizations.enum"
+#include "omr/compiler/optimizer/Optimizations.enum"
 
    OPTIMIZATION(profileGenerator)
    OPTIMIZATION(sequentialStoreSimplification)

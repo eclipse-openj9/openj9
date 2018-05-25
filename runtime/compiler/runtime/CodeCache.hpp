@@ -45,4 +45,4 @@ class OMR_EXTENSIBLE CodeCache : public J9::CodeCacheConnector
 #endif // !defined(TR_CODECACHE_INCL)
 
 // J9 doesn't override all CodeCache types; get the rest from OMR
-//#include "compiler/runtime/CodeCache.hpp"
+//#include "omr/compiler/runtime/CodeCache.hpp"

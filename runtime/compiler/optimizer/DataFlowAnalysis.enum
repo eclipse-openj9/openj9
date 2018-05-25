@@ -25,7 +25,7 @@
  * and enumerator definitions are permitted.
  */
 
-#include "compiler/optimizer/DataFlowAnalysis.enum"
+#include "omr/compiler/optimizer/DataFlowAnalysis.enum"
 
 FearPointAnalysis,
 HCRGuardAnalysis,

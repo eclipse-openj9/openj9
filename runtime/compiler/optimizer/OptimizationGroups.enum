@@ -25,7 +25,7 @@
  * and enumerator definitions are permitted.
  */
 
-#include "compiler/optimizer/OptimizationGroups.enum"
+#include "omr/compiler/optimizer/OptimizationGroups.enum"
 
    OPTIMIZATION(profilingGroup)
 

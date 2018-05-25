@@ -23,7 +23,7 @@
 #ifndef J9_OPCODEPROPERTIES_INCL
 #define J9_OPCODEPROPERTIES_INCL
 
-#include "compiler/il/ILOpCodeProperties.hpp"
+#include "omr/compiler/il/ILOpCodeProperties.hpp"
 
 // J9 specific opcode properties
 

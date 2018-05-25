@@ -31,7 +31,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
-#include "compiler/il/OMRTreeTop_inlines.hpp"
+#include "omr/compiler/il/OMRTreeTop_inlines.hpp"
 #include "env/IO.hpp"
 
 TR_ClassLookahead::TR_ClassLookahead(

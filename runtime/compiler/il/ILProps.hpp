@@ -23,7 +23,7 @@
 #ifndef J9_ILPROPS_INCL
 #define J9_ILPROPS_INCL
 
-#include "compiler/il/ILProps.hpp"
+#include "omr/compiler/il/ILProps.hpp"
 
 namespace ILTypeProp
    {

@@ -25,6 +25,6 @@
  * and enumerator definitions are permitted.
  */
 
-#include "compiler/codegen/LinkageConventions.enum"
+#include "omr/compiler/codegen/LinkageConventions.enum"
 
    TR_CHelper,

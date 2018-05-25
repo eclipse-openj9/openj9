@@ -25,7 +25,7 @@
  * Only Function Pointers are allowed.
  */
 
-#include "compiler/z/codegen/TreeEvaluatorTable.hpp"
+#include "omr/compiler/z/codegen/TreeEvaluatorTable.hpp"
 
    TR::TreeEvaluator::fconstEvaluator,      // TR::dfconst
    TR::TreeEvaluator::dconstEvaluator,      // TR::ddconst
