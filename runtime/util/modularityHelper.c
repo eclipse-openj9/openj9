@@ -69,7 +69,7 @@ isAllowedReadAccessToModule(J9VMThread *currentThread, J9Module *fromModule, J9M
 	BOOLEAN canRead = FALSE;
 	if ((fromModule == toModule) /* modules are the same, no need to check */
 		|| (toModule == vm->javaBaseModule) /* java.base is implicitly read by every module, no need to check */
-		|| (J9_IS_J9MODULE_UNNAMED(vm, fromModule)) /* unamed Modules can read all other modules */
+		|| (J9_IS_J9MODULE_UNNAMED(vm, fromModule)) /* unnamed Modules can read all other modules */
 	) {
 		canRead = TRUE;
 	} else if (isModuleDefined(currentThread, fromModule)) {
@@ -247,8 +247,8 @@ isPackageExportedToModuleHelper(J9VMThread *currentThread, J9Module *fromModule,
 	J9JavaVM *vm = currentThread->javaVM;
 	BOOLEAN isExported = FALSE;
 
-	if (J9_IS_J9MODULE_UNNAMED(vm, fromModule)) {
-		/* unnamed modules export all packages */
+	if (J9_IS_J9MODULE_UNNAMED(vm, fromModule) || J9_IS_J9MODULE_OPEN(fromModule)) {
+		/* unnamed & open modules export all packages */
 		isExported = TRUE;
 	} else if (NULL != j9package) {
 		/* First try the general export rules */
