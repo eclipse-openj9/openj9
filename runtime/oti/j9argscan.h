@@ -91,6 +91,23 @@ uintptr_t scan_hex_caseflag(char **scan_start, BOOLEAN uppercaseAllowed, uintptr
 * @param *result
 * @return uintptr_t
 */
+uintptr_t scan_hex_u64(char **scan_start, uint64_t* result);
+
+
+/**
+* @brief
+* @param **scan_start
+* @param *result
+* @return uintptr_t
+*/
+uintptr_t scan_hex_caseflag_u64(char **scan_start, BOOLEAN uppercaseAllowed, uint64_t* result);
+
+/**
+* @brief
+* @param **scan_start
+* @param *result
+* @return uintptr_t
+*/
 uintptr_t scan_idata(char **scan_start, intptr_t *result);
 
 

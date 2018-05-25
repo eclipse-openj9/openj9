@@ -862,7 +862,7 @@ SH_OSCache::initOSCacheHeader(OSCache_header_version_current* header, J9PortShcV
 	SRP_SET(header->dataStart, _dataStart);
 	header->dataLength = (U_32)_dataLength;
 	header->generation = (U_32)_activeGeneration;
-	header->buildID = J9UniqueBuildID;
+	header->buildID = getOpenJ9Sha();
 	header->cacheInitComplete = 0;
 
 	Trc_SHR_OSC_initOSCacheHeader_Exit();
@@ -922,9 +922,10 @@ SH_OSCache::checkOSCacheHeader(OSCache_header_version_current* header, J9PortShc
 		 */
 		return J9SH_OSCACHE_HEADER_DIFF_BUILDID;
 	}
-
-	if (_doCheckBuildID && (header->buildID != J9UniqueBuildID)) {
-		Trc_SHR_OSC_checkOSCacheHeader_wrongBuildID_2((U_64)J9UniqueBuildID, header->buildID);
+	
+	U_64 OpenJ9Sha = getOpenJ9Sha();
+	if (_doCheckBuildID && (header->buildID != OpenJ9Sha)) {
+		Trc_SHR_OSC_checkOSCacheHeader_wrongBuildID_3(OpenJ9Sha, header->buildID);
 		if (J9_ARE_ALL_BITS_SET(_runtimeFlags, J9SHR_RUNTIMEFLAG_RESTORE_CHECK)) {
 			OSC_ERR_TRACE(J9NLS_SHRC_OSCACHE_CORRUPT_CACHE_HEADER_INCORRECT_BUILDID);
 		}

@@ -2333,7 +2333,7 @@ TraceException=Trc_SHR_API_j9shr_stringTransaction_stop_ExitWriteMutex_Event Ove
 TraceException=Trc_SHR_API_j9shr_stringTransaction_start_SegMutex_Event Overhead=1 Level=1 Template="API j9shr_stringTransaction_start : Error: omrthread_monitor_enter(segmentMutex) failed"
 TraceException=Trc_SHR_API_j9shr_stringTransaction_start_WriteLock_Event Overhead=1 Level=1 Template="API j9shr_stringTransaction_start : Error: enterWriteMutex() failed"
 
-TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongBuildID_2 NoEnv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong build ID. VM build ID: %llu . Shared Cache build ID: %llu"
+TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongBuildID_2 NoEnv Obsolete Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong build ID. VM build ID: %llu . Shared Cache build ID: %llu"
 
 TraceException=Trc_SHR_CM_readCacheletHints_noManager Overhead=1 Level=1 Template="CM readCacheletHints no manager for type %zu"
 
@@ -2906,3 +2906,4 @@ TraceExit=Trc_SHR_CM_allocateROMClass_Exit3 Overhead=1 Level=3 Template="CM allo
 
 TraceEvent=Trc_SHR_INIT_isClassFromPatchedModule_ClassFromPatchedModule_Event Test Overhead=1 Level=3 Template="INIT isClassFromPatchedModule: Class (classname=%.*s) is from a patched module (URL=%.*s)."
 TraceEvent=Trc_SHR_INIT_hookFindSharedClass_classFromUnresolvedModule Overhead=1 Level=3 Template="INIT hookFindSharedClass: Class (classname=%.*s) is from an unresolved module. Returning NULL."
+TraceExit=Trc_SHR_OSC_checkOSCacheHeader_wrongBuildID_3 NoEnv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - wrong build ID. VM OpenJ9 SHA: %llx . Shared Cache OpenJ9 SHA: %llx"
