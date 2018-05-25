@@ -83,7 +83,7 @@ J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE.system_action=Processing continues.
 J9NLS_SHRC_CLCM_CANNOT_DESTROY_CACHE.user_response=Other messages may have been issued indicating the reason why the cache has not been destroyed.  Investigate these messages.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CLCM_NO_SHARE_CACHE=Neexistuje \u017e\u00e1dn\u00e1 mezipam\u011b\u0165 sd\u00edlen\u00fdch t\u0159\u00edd.
+J9NLS_SHRC_CLCM_NO_SHARE_CACHE=Neexistuje \u017e\u00e1dn\u00e1 sd\u00edlen\u00e1 mezipam\u011b\u0165 t\u0159\u00edd.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CLCM_NO_SHARE_CACHE.explanation=There are no shared class caches present on the system which can be processed by the command requested
 J9NLS_SHRC_CLCM_NO_SHARE_CACHE.system_action=Processing continues.
@@ -5389,7 +5389,7 @@ J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_V1.system_action=The JVM terminates, unless yo
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_V1.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_DISPLAY_SEMID=Prost\u0159ed\u00ed JVM se nepoda\u0159ilo p\u0159idru\u017eit sadu semafor\u016f (id=%d) k mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd.
+J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_DISPLAY_SEMID=Prost\u0159ed\u00ed JVM se nepoda\u0159ilo p\u0159idru\u017eit sadu semafor\u016f (id=%d) ke sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_DISPLAY_SEMID.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_DISPLAY_SEMID.explanation=This message displays the semaphore set id which the JVM failed to associate with the shared class cache due to error indicated in previous messages.
@@ -5397,7 +5397,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_DISPLAY_SEMID.system_action=The JVM contin
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_DISPLAY_SEMID.user_response=Remove the semaphore set indicated in the error message using "ipcrm" command if it still exists and is not in use.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_MEMORY_OPFAILED_DISPLAY_SHMID=Prost\u0159ed\u00ed JVM se nepoda\u0159ilo p\u0159idru\u017eit sd\u00edlenou pam\u011b\u0165 (id=%d) k mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd.
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_OPFAILED_DISPLAY_SHMID=Prost\u0159ed\u00ed JVM se nepoda\u0159ilo p\u0159idru\u017eit sd\u00edlenou pam\u011b\u0165 (id=%d) ke sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_OPFAILED_DISPLAY_SHMID.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_OPFAILED_DISPLAY_SHMID.explanation=This message displays the shared memory id which the JVM failed to associate with the shared class cache due to error indicated in previous messages.
@@ -5594,7 +5594,7 @@ J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT.system_action=The JVM continues witho
 J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT.user_response=Contact your service representative to understand the reason for failure to startup shared class cache. Previous error messages would possibly indicate the reason.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_STARTUP_CACHE_CREATION_NOT_ALLOWED_READONLY_MODE=P\u0159i spu\u0161t\u011bn\u00ed volby Xshareclasses:readonly nelze vytvo\u0159it novou sd\u00edlenou mezipam\u011b\u0165 t\u0159\u00eddy.
+J9NLS_SHRC_OSCACHE_STARTUP_CACHE_CREATION_NOT_ALLOWED_READONLY_MODE=P\u0159i spu\u0161t\u011bn\u00ed volby Xshareclasses:readonly nelze vytvo\u0159it novou sd\u00edlenou mezipam\u011b\u0165 t\u0159\u00edd.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_STARTUP_CACHE_CREATION_NOT_ALLOWED_READONLY_MODE.explanation=An error occurred during shared class cache startup. JVM cannot create a new shared class cache when running with -Xshareclasses:readonly option.
 J9NLS_SHRC_OSCACHE_STARTUP_CACHE_CREATION_NOT_ALLOWED_READONLY_MODE.system_action=The JVM terminates unless -Xshareclasses:nonfatal is specified in which case JVM will continue without shared class cache.
@@ -6145,6 +6145,7 @@ J9NLS_SHRC_OSCACHE_MMAP_SET_GROUPACCESS_FAILED.user_response=Check the umask set
 
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED=Nepoda\u0159ilo se nastavit p\u0159\u00edstupov\u00e1 opr\u00e1vn\u011bn\u00ed skupiny podle po\u017eadavku vyj\u00e1d\u0159en\u00e9ho d\u00edl\u010d\u00ed volbou groupAccess pro semafor nastaven\u00fd s ID semaforu %d p\u0159idru\u017een\u00fdm ke sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new semaphore with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new semaphore with group access.
@@ -6152,6 +6153,7 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_SET_GROUPACCESS_FAILED.user_response=Ensure the use
 
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED=Nepoda\u0159ilo se nastavit p\u0159\u00edstupov\u00e1 opr\u00e1vn\u011bn\u00ed skupiny podle po\u017eadavku vyj\u00e1d\u0159en\u00e9ho d\u00edl\u010d\u00ed volbou groupAccess pro sd\u00edlenou pam\u011b\u0165 s ID sd\u00edlen\u00e9 pam\u011bti %d p\u0159idru\u017een\u00e9 ke sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd.
 # START NON-TRANSLATABLE
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.explanation=Cannot set group access permission when creating the new shared memory with sub-option "groupAccess".
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_SET_GROUPACCESS_FAILED.user_response=Ensure the user has sufficient permission for creating the new shared memory with group access.
@@ -6405,28 +6407,28 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_SOFTMX_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_SOFTMX_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINAOT_EQUALS=Upravte minim\u00e1ln\u00ed prostor mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd vyhrazen\u00e9 pro data AOT na hodnotu <velikost>.
+J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINAOT_EQUALS=Upravte minim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd vyhrazen\u00e9 pro data AOT na hodnotu <velikost>.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINAOT_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINAOT_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINAOT_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXAOT_EQUALS=Upravte maxim\u00e1ln\u00ed prostor mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd povolen\u00e9 pro data AOT na hodnotu <velikost>.
+J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXAOT_EQUALS=Upravte maxim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd povolen\u00e9 pro data AOT na hodnotu <velikost>.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXAOT_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXAOT_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXAOT_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS=Upravte minim\u00e1ln\u00ed prostor mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd vyhrazen\u00e9 pro data JIT na hodnotu <velikost>.
+J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS=Upravte minim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd vyhrazen\u00e9 pro data JIT na hodnotu <velikost>.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXJIT_EQUALS=Upravte maxim\u00e1ln\u00ed prostor mezipam\u011bti sd\u00edlen\u00fdch t\u0159\u00edd povolen\u00e9 pro data JIT na hodnotu <velikost>.
+J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXJIT_EQUALS=Upravte maxim\u00e1ln\u00ed prostor sd\u00edlen\u00e9 mezipam\u011bti t\u0159\u00edd povolen\u00e9 pro data JIT na hodnotu <velikost>.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXJIT_EQUALS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXJIT_EQUALS.system_action=
@@ -6635,4 +6637,11 @@ J9NLS_SHRC_CC_INCORRECT_BUILDID=Nepoda\u0159ilo se spustit sd\u00edlenou mezipam
 J9NLS_SHRC_CC_INCORRECT_BUILDID.explanation=An error has occurred when starting up the cache. The build ID of the existing cache with the same name is different from that of the current JVM.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.system_action=The JVM fails to complete the requested operation.
 J9NLS_SHRC_CC_INCORRECT_BUILDID.user_response=Use a JVM which matches the build ID of the existing cache.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=Zak\u00e1\u017ee ukl\u00e1d\u00e1n\u00ed t\u0159\u00edd na\u010dten\u00fdch zav\u00e1d\u011bc\u00edm zavad\u011b\u010dem t\u0159\u00edd do mezipam\u011bti
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE
