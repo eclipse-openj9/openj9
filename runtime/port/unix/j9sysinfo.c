@@ -66,10 +66,10 @@
 #include "j9csrsi.h"
 #endif /* defined(J9ZOS390) */
 
-#if defined(LINUXPPC)
+#if (defined(LINUXPPC) || (defined(S390) && defined(LINUX)))
 #include "auxv.h"
 #include <strings.h>
-#endif /* defined(LINUXPPC) */
+#endif /* (defined(LINUXPPC) || (defined(S390) && defined(LINUX))) */
 
 #if defined(AIXPPC)
 #include <fcntl.h>
@@ -772,13 +772,18 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	if (J9_ARE_NO_BITS_SET(*(int*) 200, S390_STFLE_BIT)) {
 		return -1;
 	}
+#elif defined(LINUX) /* LINUX S390*/
+	/* Some s390 features require OS support on Linux, querying auxv for AT_HWCAP bit-mask of processor capabilities. */
+	unsigned long auxvFeatures = query_auxv(AT_HWCAP);
 #endif /* defined(J9ZOS390) */
 
-	/* GS hardwrae support */
+	/* GS hardware support */
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_GUARDED_STORAGE)) {
 #if defined(J9ZOS390)
 		/* GS OS support */
 		if (J9_ARE_ALL_BITS_SET(cvtgsf, 0x1)) /* CVTGSF bit is X'01' bit at byte X'17A' off CVT */
+#elif defined(LINUX) /* LINUX S390*/
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_GS))
 #endif /* defined(J9ZOS390) */
 		{
 			setFeature(desc, J9PORT_S390_FEATURE_GUARDED_STORAGE);
@@ -803,37 +808,82 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 #if defined(J9ZOS390)
 		/* TE OS support */
 		if (J9_ARE_ALL_BITS_SET(cvttxj, 0xC))
+#elif defined(LINUX) /* LINUX S390 */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_TE))
 #endif /* defined(J9ZOS390) */
 		{
 			setFeature(desc, J9PORT_S390_FEATURE_TE);
 		}
 	}
 
+#if (defined(S390) && defined(LINUX))
+	/* OS Support of HPAGE on Linux on Z */
+	if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_HPAGE)){
+		setFeature(desc, J9PORT_S390_FEATURE_HPAGE);
+	}
+#endif /* defined(S390) && defined(LINUX) */
+
 	/* HIGH_GPRS support */
 #if defined(OMR_ENV_DATA64)
-	setFeature(desc, J9PORT_S390_FEATURE_HIGH_GPRS);
+#if (defined(S390) && defined(LINUX))
+	/* OS Support for Linux on Z */
+	if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_HIGH_GPRS))
+#endif /* defined(S390) && defined(LINUX) */
+	{
+		setFeature(desc, J9PORT_S390_FEATURE_HIGH_GPRS);
+	}
 #endif /* defined(OMR_ENV_DATA64) */
 
 	/* Miscellaneous facility detection */
 
 	if (testSTFLE(portLibrary, 0)) {
-		setFeature(desc, J9PORT_S390_FEATURE_ESAN3);
+#if (defined(S390) && defined(LINUX))
+	/* OS Support for Linux on Z */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_ESAN3))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_ESAN3);
+		}
 	}
 
 	if (testSTFLE(portLibrary, 2)) {
-		setFeature(desc, J9PORT_S390_FEATURE_ZARCH);
+#if (defined(S390) && defined(LINUX))
+	/* OS Support for Linux on Z */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_ZARCH))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_ZARCH);
+		}
 	}
 
 	if (testSTFLE(portLibrary, 7)) {
-		setFeature(desc, J9PORT_S390_FEATURE_STFLE);
+#if (defined(S390) && defined(LINUX))
+	/* OS Support for Linux on Z */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_STFLE))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_STFLE);
+		}
 	}
 
 	if (testSTFLE(portLibrary, 17)) {
-		setFeature(desc, J9PORT_S390_FEATURE_MSA);
+#if (defined(S390) && defined(LINUX))
+	/* OS Support for Linux on Z */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_MSA))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_MSA);
+		}
 	}
 
 	if (testSTFLE(portLibrary, 42) && testSTFLE(portLibrary, 44)) {
-		setFeature(desc, J9PORT_S390_FEATURE_DFP);
+#if (defined(S390) && defined(LINUX))
+	/* OS Support for Linux on Z */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_DFP))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_DFP);
+		}
 	}
 
 	if (testSTFLE(portLibrary, 32)) {
@@ -874,15 +924,27 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	/* z990 facility and processor detection */
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_LONG_DISPLACEMENT)) {
-		setFeature(desc, J9PORT_S390_FEATURE_LONG_DISPLACEMENT);
+#if (defined(S390) && defined(LINUX))
+	/* OS Support for Linux on Z */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_LDISP))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_LONG_DISPLACEMENT);
 
-		desc->processor = PROCESSOR_S390_GP6;
+			desc->processor = PROCESSOR_S390_GP6;
+		}
 	}
 
 	/* z9 facility and processor detection */
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_EXTENDED_IMMEDIATE)) {
-		setFeature(desc, J9PORT_S390_FEATURE_EXTENDED_IMMEDIATE);
+#if (defined(S390) && defined(LINUX))
+	/* OS Support for Linux on Z */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_EIMM))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_EXTENDED_IMMEDIATE);
+		}
 	}
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_EXTENDED_TRANSLATION_3)) {
@@ -890,7 +952,13 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	}
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_ETF3_ENHANCEMENT)) {
-		setFeature(desc, J9PORT_S390_FEATURE_ETF3_ENHANCEMENT);
+#if (defined(S390) && defined(LINUX))
+	/* OS Support for Linux on Z */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_ETF3EH))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_ETF3_ENHANCEMENT);
+		}
 	}
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_EXTENDED_IMMEDIATE) &&
@@ -941,12 +1009,15 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 #if defined(J9ZOS390)
 		/* Vector facility requires hardware and OS support */
 		if (getS390zOS_supportsVectorFacility())
+#else
+		/* Vector facility requires hardware and OS support */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_VXRS))
 #endif
 		{
 			setFeature(desc, J9PORT_S390_FEATURE_VECTOR_FACILITY);
-		}
 
-		desc->processor = PROCESSOR_S390_GP11;
+			desc->processor = PROCESSOR_S390_GP11;
+		}
 	}
 
 	/* z14 facility and processor detection */
@@ -964,15 +1035,27 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	}
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL)) {
-		setFeature(desc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL);
+#if (defined(S390) && defined(LINUX))
+	/* OS Support for Linux on Z */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_VXRS_BCD))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL);
 
-		desc->processor = PROCESSOR_S390_GP12;
+			desc->processor = PROCESSOR_S390_GP12;
+		}
 	}
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_VECTOR_FACILITY_ENHANCEMENT_1)) {
-		setFeature(desc, J9PORT_S390_FEATURE_VECTOR_FACILITY_ENHANCEMENT_1);
+#if (defined(S390) && defined(LINUX))
+	/* OS Support for Linux on Z */
+		if (J9_ARE_ALL_BITS_SET(auxvFeatures, J9PORT_HWCAP_S390_VXRS_EXT))
+#endif /* defined(S390) && defined(LINUX) */
+		{
+			setFeature(desc, J9PORT_S390_FEATURE_VECTOR_FACILITY_ENHANCEMENT_1);
 
-		desc->processor = PROCESSOR_S390_GP12;
+			desc->processor = PROCESSOR_S390_GP12;
+		}
 	}
 
 	if (testSTFLE(portLibrary, J9PORT_S390_FEATURE_MSA_EXTENSION_8)) {

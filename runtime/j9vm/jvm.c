@@ -1472,9 +1472,9 @@ bail:
  * Attempt loading 'release' file, and get Java version info.
  * If the file is found, 'JAVA_VERSION' value is retrieved and decoded as following:
  * "1.8.0_xxx" --- Java 8, 'J2SE_18 | J2SE_SHAPE_OPENJDK';
- * "9"         --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
- * "10"        --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
- * "11"        --- Java 11, 'J2SE_V11 | J2SE_SHAPE_V11';
+ * "9[.x.x]"   --- Java 9, 'J2SE_19 | J2SE_SHAPE_B165';
+ * "10[.x.x]"  --- Java 10, 'J2SE_V10 | J2SE_SHAPE_V10';
+ * "11[.x.x]"  --- Java 11, 'J2SE_V11 | J2SE_SHAPE_V11';
  * Others      --- Latest Java, 'J2SE_LATEST | J2SE_SHAPE_LATEST'.
  * Otherwise, 0 is returned.
  *
@@ -1504,11 +1504,17 @@ getVersionFromReleaseFile(void)
 			if (!strncmp(version, JAVA_VERSION_8, sizeof(JAVA_VERSION_8) - 1)) {
 #undef   JAVA_VERSION_8
 				finalVersion = J2SE_18 | J2SE_SHAPE_OPENJDK;
-			} else if (!strcmp(version, "\"9\"")) {
+#define	 JAVA_VERSION_9 "\"9" /* its usual format is "9[.x.x]" */
+			} else if (!strncmp(version, JAVA_VERSION_9, sizeof(JAVA_VERSION_9) - 1)) {
+#undef   JAVA_VERSION_9
 				finalVersion = J2SE_19 | J2SE_SHAPE_B165;
-			} else if (!strcmp(version, "\"10\"")) {
+#define	 JAVA_VERSION_10 "\"10" /* its usual format is "10[.x.x]" */
+			} else if (!strncmp(version, JAVA_VERSION_10, sizeof(JAVA_VERSION_10) - 1)) {
+#undef   JAVA_VERSION_10			
 				finalVersion = J2SE_V10 | J2SE_SHAPE_V10;
-			} else if (!strcmp(version, "\"11\"")) {
+#define	 JAVA_VERSION_11 "\"11" /* its usual format is "11[.x.x]" */
+			} else if (!strncmp(version, JAVA_VERSION_11, sizeof(JAVA_VERSION_11) - 1)) {
+#undef   JAVA_VERSION_11
 				finalVersion = J2SE_V11 | J2SE_SHAPE_V11;
 			} else {
 				/* Assume latest Java version and shape */

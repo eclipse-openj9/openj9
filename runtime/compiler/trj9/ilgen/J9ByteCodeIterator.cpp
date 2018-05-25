@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -368,7 +368,7 @@ const TR_J9ByteCode TR_J9ByteCodeIterator::_opCodeToByteCodeEnum[] =
    /* 228 */ J9BCgenericReturn, J9BCgenericReturn, J9BCunknown, J9BCinvokeinterface2,
    /* 232 */ J9BCinvokehandle, J9BCinvokehandlegeneric,
    /* 234 */ J9BCinvokestaticsplit, J9BCinvokespecialsplit,
-   /* 236 */ J9BCunknown, J9BCunknown, J9BCunknown, J9BCunknown,
+   /* 236 */ J9BCReturnC, J9BCReturnS, J9BCReturnB, J9BCReturnZ,
    /* 240 */ J9BCunknown, J9BCunknown, J9BCunknown, J9BCunknown,
    /* 244 */ J9BCunknown, J9BCunknown, J9BCunknown, J9BCunknown, J9BCunknown,
    /* 249 */ J9BCldc2dw,
@@ -576,6 +576,10 @@ const uint8_t TR_J9ByteCodeIterator::_byteCodeFlags[] =
                              0x03, // J9BCinvokehandle
                              0x03, // J9BCinvokehandlegeneric
                              0x03, // J9BCinvokespecialsplit
+                             0x01, // J9BCReturnC
+                             0x01, // J9BCReturnS
+                             0x01, // J9BCReturnB
+                             0x01, // J9BCReturnZ
                              0x03, // J9BCinvokestaticsplit
                              0x01, // J9BCinvokeinterface2
                              0x03, // J9BCnew
@@ -792,6 +796,10 @@ const uint8_t TR_J9ByteCodeIterator::_estimatedCodeSize[] =
   20, // J9BCinvokehandle
   30, // J9BCinvokehandlegeneric
    6, // J9BCinvokespecialsplit
+  25, // J9BCReturnC
+  25, // J9BCReturnS
+  25, // J9BCReturnB
+  25, // J9BCReturnZ
    4, // J9BCinvokestaticsplit
    0, // J9BCinvokeinterface2
    1, // J9BCnew

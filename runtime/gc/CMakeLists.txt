@@ -76,6 +76,11 @@ target_link_libraries(j9gc
 		rt
 )
 
+target_include_directories(j9gc
+	PUBLIC
+		$<TARGET_PROPERTY:omrgc,INTERFACE_INCLUDE_DIRECTORIES>
+)
+
 install(
 	TARGETS j9gc
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

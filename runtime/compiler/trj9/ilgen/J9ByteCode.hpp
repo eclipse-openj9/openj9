@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,7 +79,29 @@ enum TR_J9ByteCode
    J9BCgenericReturn,
    J9BCgetstatic, J9BCputstatic,
    J9BCgetfield, J9BCputfield,
-   J9BCinvokevirtual, J9BCinvokespecial, J9BCinvokestatic, J9BCinvokeinterface, J9BCinvokedynamic, J9BCinvokehandle, J9BCinvokehandlegeneric,J9BCinvokespecialsplit, J9BCinvokestaticsplit, J9BCinvokeinterface2,
+   J9BCinvokevirtual, J9BCinvokespecial, J9BCinvokestatic, J9BCinvokeinterface, J9BCinvokedynamic, J9BCinvokehandle, J9BCinvokehandlegeneric,J9BCinvokespecialsplit, 
+
+   /** \brief
+    *      Pops 1 int32_t argument off the stack and truncates to a uint16_t.
+    */
+	J9BCReturnC,
+
+	/** \brief
+    *      Pops 1 int32_t argument off the stack and truncates to a int16_t.
+    */
+	J9BCReturnS,
+
+	/** \brief
+    *      Pops 1 int32_t argument off the stack and truncates to a int8_t.
+    */
+	J9BCReturnB,
+
+	/** \brief
+    *      Pops 1 int32_t argument off the stack returns the single lowest order bit.
+    */
+	J9BCReturnZ,
+
+	J9BCinvokestaticsplit, J9BCinvokeinterface2,
    J9BCnew, J9BCnewarray, J9BCanewarray, J9BCmultianewarray,
    J9BCarraylength,
    J9BCathrow,

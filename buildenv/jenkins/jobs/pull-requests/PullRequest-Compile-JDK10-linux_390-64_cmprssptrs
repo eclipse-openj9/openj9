@@ -26,7 +26,9 @@ SPEC = 'linux_390-64_cmprssptrs'
 timeout(time: 10, unit: 'HOURS') {
     node('master') {
         timestamps {
-            checkout scm
+            retry(5){
+                checkout scm
+            }
             variableFile = load 'buildenv/jenkins/common/variables-functions'
             variableFile.set_job_variables('build')
             buildfile = load 'buildenv/jenkins/common/build'

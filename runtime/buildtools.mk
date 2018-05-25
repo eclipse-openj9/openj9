@@ -101,7 +101,7 @@ TRACEGEN_DEFINITION_SENTINELS := $(patsubst %.tdf,%.tracesentinel,$(TRACEGEN_DEF
 
 # process TDF files to generate RAS tracing headers and C files
 trace_merge : buildtrace
-	@$(MAKE) -f buildtools.mk $(TRACEGEN_DEFINITION_SENTINELS)
+	@$(MAKE) -f buildtools.mk 'SPEC=$(SPEC)' $(TRACEGEN_DEFINITION_SENTINELS)
 	./tracemerge -majorversion 5 -minorversion 1 -root .
 	touch $@
 
@@ -123,7 +123,7 @@ HOOK_DEFINITION_SENTINELS := $(patsubst %.hdf,%.hooksentinel, $(HOOK_DEFINITION_
 	touch $@
 
 hooktool : buildhook
-	@$(MAKE) -f buildtools.mk $(HOOK_DEFINITION_SENTINELS)
+	@$(MAKE) -f buildtools.mk 'SPEC=$(SPEC)' $(HOOK_DEFINITION_SENTINELS)
 
 # run configure to generate makefile
 OMRGLUE = ../gc_glue_java

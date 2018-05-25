@@ -9747,6 +9747,21 @@ static TR::Register *VMinlineCompareAndSwap(
          }
       }
 
+   if (TR::Compiler->om.shouldGenerateReadBarriersForFieldLoads() && isObj)
+      {
+      TR::Register* tempReadBarrier = cg->allocateRegister();
+
+      auto guardedLoadMnemonic = usingCompressedPointers ? TR::InstOpCode::LLGFSG : TR::InstOpCode::LGG;
+
+      // Compare-And-Swap on object reference, while primarily is a store operation, it is also an implicit read (it 
+      // reads the existing value to be compared with a provided compare value, before the store itself), hence needs
+      // a read barrier
+      generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 1, 0, node);
+      generateRXYInstruction(cg, guardedLoadMnemonic, node, tempReadBarrier, generateS390MemoryReference(*casMemRef, 0, cg));
+
+      cg->stopUsingRegister(tempReadBarrier);
+      }
+
    // Compare and swap
    //
    generateRSInstruction(cg, casOp, node, oldVReg, newVReg, casMemRef);

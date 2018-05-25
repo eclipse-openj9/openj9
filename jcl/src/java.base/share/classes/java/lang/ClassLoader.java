@@ -935,24 +935,6 @@ public InputStream getResourceAsStream (String resName) {
 	return null;
 }
 
-/*[IF Sidecar19-SE]*/
-/**
- * Returns an input stream to a resource in a module defined to this class loader.
- * 
- * @param moduleName Name of the module
- * @param name Name of the resource
- * 
- * @return InputStream
- *			a stream on the resource or null.
- *
- * @throws IOException
- */
-InputStream getResourceAsStream(String moduleName, String name) throws IOException
-{
-	return null;
-}
-/*[ENDIF] Sidecar19-SE */
- 
 static void completeInitialization() {
 	/*[PR JAZZ 57622: Support -Dreflect.cache=boot option] -Dreflect.cache=boot causes deadlock (Details: CMVC 120695). Loading Void class explicitly will prevent possible deadlock during caching reflect classes/methods. */
 	@SuppressWarnings("unused")
@@ -2285,7 +2267,8 @@ ServicesCatalog getServicesCatalog() {
 /**
  * Answers an URL which can be used to access the resource
  * described by resName, using the class loader's resource lookup
- * algorithm. The default behavior is just to return null.
+ * algorithm. By default, return null, unless moduleName is null,
+ * in which case return findResource(resName).
  * This should be implemented by a ClassLoader.
  *
  * @return		URL
@@ -2295,8 +2278,13 @@ ServicesCatalog getServicesCatalog() {
  * @param		resName String
  *					the name of the resource to find.
  */
-protected URL findResource(String moduleName, String name) throws IOException {
-	return null;
+protected URL findResource(String moduleName, String resName) throws IOException {
+	URL result = null;
+	if (null == moduleName) {
+		/* Handle the default case for subclasses which do not implement this method */
+		result = findResource(resName);
+	}
+	return result;
 }
 
 Package definePackage(String name, Module module) {

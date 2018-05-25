@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -266,11 +266,6 @@ void
 MM_ConfigurationIncrementalGenerational::tearDown(MM_EnvironmentBase *env)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-
-	if (NULL != extensions->globalAllocationManager) {
-		extensions->globalAllocationManager->kill(env);
-		extensions->globalAllocationManager = NULL;
-	}
 
 	if (NULL != extensions->sweepPoolManagerBumpPointer) {
 		extensions->sweepPoolManagerBumpPointer->kill(env);

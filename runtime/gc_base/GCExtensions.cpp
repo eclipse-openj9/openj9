@@ -256,10 +256,8 @@ MM_GCExtensions::computeDefaultMaxHeap(MM_EnvironmentBase *env)
 
 #if defined(OMR_ENV_DATA64)
 	if (J2SE_VERSION((J9JavaVM *)getOmrVM()->_language_vm) >= J2SE_19) {
-		uint64_t usableMemory = omrsysinfo_get_addressable_physical_memory();
-
-		/* extend java default max memory to 25% of physical RAM */
-		memoryMax = OMR_MAX(memoryMax, usableMemory / 4);
+		/* extend java default max memory to 25% of usable RAM */
+		memoryMax = OMR_MAX(memoryMax, usablePhysicalMemory / 4);
 	}
 
 	/* limit maxheapsize up to MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS, then can set 3bit compressedrefs as the default */

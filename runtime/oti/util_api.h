@@ -2210,6 +2210,14 @@ setCurrentCacheVersion(J9JavaVM *vm, UDATA j2seVersion, J9PortShcVersion* result
 U_32
 getJVMFeature(J9JavaVM *vm);
 
+/**
+ * Get the OpenJ9 SHA
+ *
+ * @return uint64_t The OpenJ9 SHA
+ */
+uint64_t
+getOpenJ9Sha();
+
 /* ---------------- cphelp.c ---------------- */
 
 /**

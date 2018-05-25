@@ -437,54 +437,6 @@ bool TR_DataAccessAccelerator::isChildConst(TR::Node* node, int32_t child)
    return node->getChild(child)->getOpCode().isLoadConst();
    }
 
-TR::Node* TR_DataAccessAccelerator::calculateArrayElementAddress(TR::Node* callNode, TR::Node* byteArray, TR::Node* offset, int32_t headerSize, int32_t width)
-   {
-   TR_ASSERT(headerSize > 0, "Array header size must be >0.");
-
-   int32_t shiftAmount = TR::TransformUtil::convertWidthToShift(width);
-
-   TR::Node* shift = offset;
-   TR::Node* shiftConstNode;
-   TR::Node* i2lNode;
-
-   if (shiftAmount)
-      {
-      shiftConstNode = TR::Node::create(callNode, TR::iconst, 0, shiftAmount);
-      if (TR::Compiler->target.is64Bit())
-         {
-         i2lNode = TR::Node::create(TR::i2l, 1, shiftConstNode);
-         shift = TR::Node::create(TR::lshl, 2, i2lNode, offset);
-         }
-      else
-         {
-         shift = TR::Node::create(TR::ishl, 2, shiftConstNode, offset);
-         }
-      }
-
-   TR::Node* headerNode    = NULL;
-   TR::Node* headerAddNode = NULL;
-   TR::Node* resultNode    = NULL;
-   if (TR::Compiler->target.is64Bit())
-      {
-      headerNode = TR::Node::create(callNode, TR::lconst, 0);
-      headerNode->setLongInt((int64_t)headerSize);
-      if (!shiftAmount)
-         {
-         shift = TR::Node::create(TR::i2l, 1, offset);
-         }
-      headerAddNode = TR::Node::create(TR::ladd, 2, shift, headerNode);
-      resultNode = TR::Node::create(TR::aladd, 2, byteArray, headerAddNode);
-      }
-   else
-      {
-      headerNode = TR::Node::create(callNode, TR::iconst, 0, headerSize);
-      headerAddNode = TR::Node::create(TR::iadd, 2, headerNode, shift);
-      resultNode = TR::Node::create(TR::aiadd, 2, byteArray, headerAddNode);
-      }
-
-   return resultNode;
-   }
-
 TR::Node* TR_DataAccessAccelerator::insertDecimalGetIntrinsic(TR::TreeTop* callTreeTop, TR::Node* callNode, int32_t sourceNumBytes, int32_t targetNumBytes)
    {
    if (targetNumBytes != 4 && targetNumBytes != 8)
@@ -718,7 +670,6 @@ bool TR_DataAccessAccelerator::inlineCheckPackedDecimal(TR::TreeTop* callTreeTop
 
       TR::SymbolReference* packedDecimalSymbolReference = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::PackedDecimal, NULL, precisionSizeInNumberOfBytes, fe());
 
-      // TODO : Eliminate uses of constructAddressNode
       TR::Node* pdchkChild0Node = TR::Node::createWithSymRef(TR::pdloadi, 1, 1, constructAddressNode(callNode, byteArrayNode, offsetNode), packedDecimalSymbolReference);
 
       // The size argument passed to create an array shadow symbol reference is the size in number of bytes that this PackedDecimal represents.
@@ -1021,12 +972,13 @@ TR::Node* TR_DataAccessAccelerator::constructAddressNode(TR::Node* callNode, TR:
    TR::Node * pdBufAddressNode = NULL;
    TR::Node * pdBufPositionNode = NULL;
 
-   bool isByteBuffer = false;
 
    if (callNode->getSymbol()->getResolvedMethodSymbol())
       {
       if (callNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod())
          {
+         bool isByteBuffer = false;
+
          if ((callNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal_ByteBuffer_)
                || (callNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_convertLongToPackedDecimal_ByteBuffer_))
             {
@@ -1041,13 +993,14 @@ TR::Node* TR_DataAccessAccelerator::constructAddressNode(TR::Node* callNode, TR:
             pdBufAddressNode = callNode->getChild(4);
             pdBufPositionNode = callNode->getChild(6);
             }
+
+         if (isByteBuffer)
+            {
+            TR::Node* offset = TR::Node::create(TR::i2l, 1, TR::Node::create(TR::iadd, 2, pdBufPositionNode, offsetNode));
+            TR::Node* address = TR::Node::create(TR::ladd, 2, pdBufAddressNode, offset);
+            return TR::Node::create(TR::l2a, 1, address);
+            }
          }
-      }
-   if (isByteBuffer)
-      {
-      TR::Node* offset = TR::Node::create(TR::i2l, 1, TR::Node::create(TR::iadd, 2, pdBufPositionNode, offsetNode));
-      TR::Node* address = TR::Node::create(TR::ladd, 2, pdBufAddressNode, offset);
-      return TR::Node::create(TR::l2a, 1, address);
       }
 
    if (TR::Compiler->target.is64Bit())
@@ -2204,10 +2157,9 @@ bool TR_DataAccessAccelerator::genShiftLeftIntrinsic(TR::TreeTop* treeTop, TR::N
                                            TR::DebugCounter::debugCounterName(comp(),
                                                                               "DAA/inlined/shl"));
 
-   int32_t width = TR::Symbol::convertTypeToSize(TR::Int8);
-   TR::Node* srcAddrNode           = calculateArrayElementAddress(callNode, srcNode, srcOffsetNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), width);
-   TR::Node* outOfLineCopyBackAddr = calculateArrayElementAddress(callNode, dstNode, dstOffsetNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), width);
-   TR::Node* pdStoreAddrNode       = calculateArrayElementAddress(callNode, dstNode, dstOffsetNode, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), width);
+   TR::Node* srcAddrNode           = constructAddressNode(callNode, srcNode, srcOffsetNode);
+   TR::Node* outOfLineCopyBackAddr = constructAddressNode(callNode, dstNode, dstOffsetNode);
+   TR::Node* pdStoreAddrNode       = constructAddressNode(callNode, dstNode, dstOffsetNode);
 
    //pdload:
    TR::Node * pdload = TR::Node::create(TR::pdloadi, 1, srcAddrNode);
