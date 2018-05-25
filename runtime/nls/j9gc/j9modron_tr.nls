@@ -107,7 +107,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_PARSING_COMMAND_LINE.user_response=Check that all 
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS=Birim eklentileri kullan\u0131ma haz\u0131rlanamad\u0131
+J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS=Mod\u00fcl eklentileri kullan\u0131ma haz\u0131rlanamad\u0131
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.system_action=The JVM will terminate
@@ -951,5 +951,4 @@ J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN=z/OS \u00fczerinde 
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.explanation=The JVM was started with the -Xgc:preferredHeapBase option, which has no effect on z/OS.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.system_action=The JVM ignores the -Xgc:preferredHeapBase option.
 J9NLS_GC_OPTIONS_PREFERREDHEAPBASE_NOT_SUPPORTED_ON_ZOS_WARN.user_response=Refer to the IBM SDK documentation.
-
 # END NON-TRANSLATABLE

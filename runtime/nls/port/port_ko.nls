@@ -107,7 +107,6 @@ J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.user_response=Contact your service repre
 
 # dead, OSX
 J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE=\uacf5\uc720 \ub77c\uc774\ube0c\ub7ec\ub9ac\ub97c \ub85c\ub4dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.
-
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE.explanation=NOTISSUED
 J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE.system_action=
