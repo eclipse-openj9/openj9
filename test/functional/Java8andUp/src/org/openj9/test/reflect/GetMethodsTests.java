@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import org.openj9.resources.reflect.B;
 
 public class GetMethodsTests {
 	/* contrived method names which have the same String.hashCode(). */
@@ -326,6 +327,22 @@ public class GetMethodsTests {
 		System.arraycopy(jlobjectMethods, 0, result, methodList.length, jlobjectMethods.length);
 		Arrays.sort(result);
 		return result;
+	}
+
+	@Test(groups = { "level.sanity" })
+	public void testGetMethodsAfterNewInstance() throws NoSuchMethodException {
+		try {
+			B.class.newInstance();
+		} catch (ExceptionInInitializerError e) {
+		} catch (Exception e) {
+		} finally {
+			Method method = B.class.getMethod("m");
+			Method[] methods = B.class.getMethods();
+			int expectedMethodsListSize = 10;
+			int declaredMethodsListSize = methods.length;
+			Assert.assertEquals(expectedMethodsListSize, declaredMethodsListSize, "wrong methods list size");
+			Assert.assertTrue(Arrays.asList(methods).contains(method));
+		}
 	}
 
 }
