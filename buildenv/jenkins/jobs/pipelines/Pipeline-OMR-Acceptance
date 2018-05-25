@@ -40,7 +40,7 @@ def ALL_SHAS = [:]
 
 def SLACK_CHANNEL
 
-timeout(time: 6, unit: 'HOURS') {
+timeout(time: 8, unit: 'HOURS') {
     node('worker') {
         timestamps {
             checkout scm
