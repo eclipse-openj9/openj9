@@ -339,7 +339,7 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service represent
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE=Le param\u00e8tre %s \"%s\" indique que le clich\u00e9 du processus core doit \u00eatre dirig\u00e9 vers un programme externe.  Tentative de renommage du processus core ou core.%d.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE=Le param\u00e8tre %s \"%s\" indique que le vidage core doit \u00eatre dirig\u00e9 vers un programme externe.  Tentative de renommage du processus core ou core.%d.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/libexec/abrt-hook-ccpp /var/spool/abrt %p %s %u %c
@@ -385,7 +385,7 @@ J9NLS_PORT_ZOS_SHMEM_STORAGE_KEY_MISMATCH.system_action=No action required. This
 J9NLS_PORT_ZOS_SHMEM_STORAGE_KEY_MISMATCH.user_response=Check for other error messages.
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_MALLOC31_FAILURE=__malloc31 n'a pas r\u00e9ussi \u00e0 allouer de la m\u00e9moire tampon sur z/OS
+J9NLS_PORT_MALLOC31_FAILURE=__malloc31 n'a pas r\u00e9ussi \u00e0 allouer de tampon sous z/OS
 # START NON-TRANSLATABLE
 J9NLS_PORT_MALLOC31_FAILURE.explanation=__malloc31 failed to allocate buffer
 J9NLS_PORT_MALLOC31_FAILURE.system_action=The JVM will continue, but no hypervisor related information will be provided.
