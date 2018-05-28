@@ -40,7 +40,11 @@
 	<exclude id="gts001" platform="all" shouldFix="true">
 		<reason>Test is not very robust at the moment. Time dependency might cause it to fail</reason>
 	</exclude>
-
+	
+	<exclude id="mt001" platform="latest" shouldFix="true">
+		<reason>Test doesn't work for b149 and later. Issue: </reason>
+	</exclude>
+	
 	<exclude id="fer001" platform="all" shouldFix="true">
 		<reason>Testcase deadlocks due to bogus locking, replaced by fer003. keep fer001 for component debugging</reason>
 	</exclude>
@@ -54,4 +58,5 @@
 		<reason>Nestmates are not enabled on java10</reason>
 	</exclude>
 	
+
 </suite>

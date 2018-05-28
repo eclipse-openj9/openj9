@@ -42,7 +42,6 @@
 			<then>
 				<subant target="">
 					<fileset dir="." includes="*/build.xml">
-						<exclude name="jvmtitests/build.xml" />
 						<exclude name="proxyFieldAccess/build.xml" />
 					</fileset>
 				</subant>
