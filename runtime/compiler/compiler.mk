@@ -101,7 +101,7 @@ endif
 # Personally, I feel it's best to default to out-of-tree build but who knows, there may be
 # differing opinions on that.
 #
-JIT_SRCBASE?=../..
+JIT_SRCBASE?=..
 JIT_OBJBASE?=../objs/compiler_$(BUILD_CONFIG)
 JIT_DLL_DIR?=$(JIT_OBJBASE)
 
