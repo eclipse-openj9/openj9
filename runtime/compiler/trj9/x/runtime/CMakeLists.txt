@@ -21,7 +21,7 @@
 ################################################################################
 
 j9jit_files(
-	${OMR_ROOT}/compiler/x/runtime/VirtualGuardRuntime.cpp
+	${omr_SOURCE_DIR}/compiler/x/runtime/VirtualGuardRuntime.cpp
 	x/runtime/Recomp.cpp
 	x/runtime/X86ArrayTranslate.asm 
 	x/runtime/X86Codert.asm 

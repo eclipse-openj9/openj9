@@ -56,5 +56,5 @@ j9jit_files(
 # These files are added from OMR, because they're not part
 # of the default list provided by create_omr_compiler_library
 j9jit_files(
-	${OMR_ROOT}/compiler/runtime/OMRRuntimeAssumptions.cpp
+	${omr_SOURCE_DIR}/compiler/runtime/OMRRuntimeAssumptions.cpp
 )
