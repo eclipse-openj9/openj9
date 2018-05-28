@@ -37,6 +37,7 @@ TR_ResolvedJ9JITaaSServerMethod::getRemoteROMClass(J9Class *clazz, JITaaS::J9Ser
 
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedJ9Method(fe, owningMethod)
+   _remoteROMStringsCache(decltype(_remoteROMStringsCache)::allocator_type(trMemory->heapMemoryRegion()))
    {
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(j9fe->getJ9JITConfig());
@@ -53,6 +54,7 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
 
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedJ9Method(fe, owningMethod)
+   _remoteROMStringsCache(decltype(_remoteROMStringsCache)::allocator_type(trMemory->heapMemoryRegion()))
    {
    // Mirror has already been created, its parameters are passed in methodInfo
    TR_J9VMBase *j9fe = (TR_J9VMBase *)fe;
@@ -474,14 +476,31 @@ TR_ResolvedJ9JITaaSServerMethod::inROMClass(void * address)
 char *
 TR_ResolvedJ9JITaaSServerMethod::getRemoteROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
    {
-   size_t offsetFromROMClass = (uint8_t*) basePtr - (uint8_t*) romClassPtr();
+   auto offsetFirst = *offsets.begin();
+   auto offsetSecond = (offsets.size() == 2) ? *(offsets.begin() + 1) : 0;
+
+   TR_ASSERT(offsetFirst < (1 << 16) && offsetSecond < (1 << 16), "Offsets are larger than 16 bits");
+   TR_ASSERT(offsets.size() <= 2, "Number of offsets is greater than 2"); 
+
+   // create a key for hashing into a table of strings
+   TR_RemoteROMStringKey key;
+   uint32_t offsetKey = (offsetFirst << 16) + offsetSecond;
+   key.basePtr = basePtr;
+   key.offsets = offsetKey;
+
+   // only make a query if a string hasn't been cached
+   auto got =_remoteROMStringsCache.find(key);
+   if(got == _remoteROMStringsCache.end())
+      {
+      size_t offsetFromROMClass = (uint8_t*) basePtr - (uint8_t*) romClassPtr();
    std::string offsetsStr((char*) offsets.begin(), offsets.size() * sizeof(size_t));
    _stream->write(JITaaS::J9ServerMessageType::ResolvedMethod_getRemoteROMString, _remoteMirror, offsetFromROMClass, offsetsStr);
-   std::string str = std::get<0>(_stream->read<std::string>());
+      auto newStr = std::get<0>(_stream->read<std::string>());
+      got = _remoteROMStringsCache.insert({key, newStr}).first;
+      }
+   std::string &str = got->second;
    len = str.length();
-   char *chars = new (TR::comp()->trHeapMemory()) char[len];
-   memcpy(chars, &str[0], len);
-   return chars;
+   return &str[0];
    }
 
 // Takes a pointer to some data which is placed statically relative to the rom class,

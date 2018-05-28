@@ -2,6 +2,7 @@
 #define J9METHODSERVER_H
 
 #include "env/j9method.h"
+#include "env/PersistentCollections.hpp"
 
 struct
 TR_ResolvedJ9JITaaSServerMethodInfoStruct
@@ -24,6 +25,30 @@ TR_ResolvedJ9JITaaSServerMethodInfoStruct
 
 // The last 2 strings are serialized versions of jittedBodyInfo and persistentMethodInfo
 typedef std::tuple<TR_ResolvedJ9JITaaSServerMethodInfoStruct, std::string, std::string> TR_ResolvedJ9JITaaSServerMethodInfo;
+
+struct
+TR_RemoteROMStringKey
+   {
+   void *basePtr;
+   uint32_t offsets;
+   bool operator==(const TR_RemoteROMStringKey &other) const
+      {
+      return (basePtr == other.basePtr) && (offsets == other.offsets);
+      }
+   };
+
+namespace std {
+  template <>
+  struct hash<TR_RemoteROMStringKey>
+  {
+    std::size_t operator()(const TR_RemoteROMStringKey& k) const
+    {
+      // Compute a hash for the table of ROM strings by hashing basePtr and offsets 
+      // separately and then XORing them
+      return (std::hash<void *>()(k.basePtr)) ^ (std::hash<uint32_t>()(k.offsets));
+    }
+  };
+}
 
 class TR_ResolvedJ9JITaaSServerMethod : public TR_ResolvedJ9Method
    {
@@ -110,6 +135,7 @@ private:
    bool _virtualMethodIsOverridden; // cached information coming from client
    TR_PersistentJittedBodyInfo *_bodyInfo; // cached info coming from the client; uses heap memory
                                            // If method is not yet compiled this is null
+   UnorderedMap<TR_RemoteROMStringKey, std::string> _remoteROMStringsCache; // cached strings from the client
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);

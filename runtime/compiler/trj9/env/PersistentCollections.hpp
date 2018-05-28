@@ -20,4 +20,10 @@ using PersistentUnorderedMapAllocator = TR::typed_allocator<std::pair<const T, U
 template<typename T, typename U>
 using PersistentUnorderedMap = std::unordered_map<T, U, std::hash<T>, std::equal_to<T>, PersistentUnorderedMapAllocator<T, U>>;
 
+template<typename T, typename U>
+using UnorderedMapAllocator = TR::typed_allocator<std::pair<const T, U>, TR::Region&>;
+template<typename T, typename U>
+using UnorderedMap = std::unordered_map<T, U, std::hash<T>, std::equal_to<T>, UnorderedMapAllocator<T, U>>;
+
+
 #endif
