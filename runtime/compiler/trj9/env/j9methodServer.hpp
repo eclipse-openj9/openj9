@@ -22,13 +22,14 @@ TR_ResolvedJ9JAASServerMethodInfoStruct
    J9ClassLoader *classLoader;
    }; 
 
+// The last 2 strings are serialized versions of jittedBodyInfo and persistentMethodInfo
 typedef std::tuple<TR_ResolvedJ9JAASServerMethodInfoStruct, std::string, std::string> TR_ResolvedJ9JAASServerMethodInfo;
 
 class TR_ResolvedJ9JAASServerMethod : public TR_ResolvedJ9Method
    {
 public:
    TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
-   TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedJ9JAASServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
+   TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, const TR_ResolvedJ9JAASServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
    static J9ROMClass * getRemoteROMClass(J9Class *, JAAS::J9ServerStream *stream, TR_Memory *trMemory, J9Method **methods, TR_OpaqueClassBlock ** baseClass, int32_t *numDims);
    static J9ROMClass * romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory);
 
@@ -50,7 +51,7 @@ public:
    virtual TR_ResolvedMethod * getResolvedStaticMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP) override;
    virtual TR_ResolvedMethod * getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP) override;
    virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats) override;
-   virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, TR_ResolvedJ9JAASServerMethodInfo &methodInfo);
+   virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JAASServerMethodInfo &methodInfo);
    virtual uint32_t classCPIndexOfMethod(uint32_t methodCPIndex) override;
    virtual bool fieldAttributes(TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override;
    virtual void * startAddressForJittedMethod() override;
@@ -113,7 +114,7 @@ private:
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
-   void setAttributes(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, TR_ResolvedJ9JAASServerMethodInfo &methodInfo);
+   void setAttributes(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JAASServerMethodInfo &methodInfo);
    };
 
 #endif // J9METHODSERVER_H

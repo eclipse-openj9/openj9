@@ -51,7 +51,7 @@ TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBloc
    setAttributes(aMethod, fe, trMemory, vTableSlot, threadCompInfo, methodInfo);
    }
 
-TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedJ9JAASServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
+TR_ResolvedJ9JAASServerMethod::TR_ResolvedJ9JAASServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, const TR_ResolvedJ9JAASServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedJ9Method(fe, owningMethod)
    {
    // Mirror has already been created, its parameters are passed in methodInfo
@@ -322,7 +322,7 @@ TR_ResolvedJ9JAASServerMethod::createResolvedMethodFromJ9Method( TR::Compilation
    }
 
 TR_ResolvedMethod *
-TR_ResolvedJ9JAASServerMethod::createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, TR_ResolvedJ9JAASServerMethodInfo &methodInfo)
+TR_ResolvedJ9JAASServerMethod::createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JAASServerMethodInfo &methodInfo)
    {
    return new (comp->trHeapMemory()) TR_ResolvedJ9JAASServerMethod((TR_OpaqueMethodBlock *) j9Method, _fe, comp->trMemory(), methodInfo, this, vTableSlot);
    }
@@ -896,7 +896,7 @@ TR_ResolvedJ9JAASServerMethod::createResolvedJ9MethodMirror(TR_ResolvedJ9JAASSer
    }
 
 void
-TR_ResolvedJ9JAASServerMethod::setAttributes(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, TR_ResolvedJ9JAASServerMethodInfo &methodInfo)
+TR_ResolvedJ9JAASServerMethod::setAttributes(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JAASServerMethodInfo &methodInfo)
    {
    auto methodInfoStruct = std::get<0>(methodInfo);
    
