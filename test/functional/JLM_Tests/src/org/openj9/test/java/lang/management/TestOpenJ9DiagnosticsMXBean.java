@@ -33,11 +33,11 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.FileReader;
 import java.io.UnsupportedEncodingException;
+import java.io.FileNotFoundException;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.management.JMX;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
@@ -49,6 +49,7 @@ import javax.management.remote.JMXServiceURL;
 
 import com.ibm.lang.management.*;
 import openj9.lang.management.*;
+import org.openj9.test.management.ProcessLocking;
 
 /**
  * Class for testing the APIs that are provided as part of OpenJ9DiagnosticsMXBean
@@ -59,13 +60,15 @@ import openj9.lang.management.*;
 @Test(groups = { "level.extended" })
 public class TestOpenJ9DiagnosticsMXBean {
 	private static Logger logger = Logger.getLogger(TestOpenJ9DiagnosticsMXBean.class);
+	private static String os = System.getProperty("os.name");
 	private static Process remoteServer;
-	private static Watchdog watchdog;
 	private ObjectName mxbeanName = null;
 	private OpenJ9DiagnosticsMXBean diagBean = null;
 	private OpenJ9DiagnosticsMXBean diagBeanRemote = null;
 	List<String> initialDumpOptions = new ArrayList<String>();
 	private JMXConnector connector = null;
+	private static ProcessLocking lock;
+	private static String tmpFileName;
 
 	@BeforeClass
 	public void setUp() throws Exception {
@@ -88,40 +91,32 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 * Function to get the dump options. 
 	 *
 	 */
-	private List<String> getDumpOptions() {
+	private List<String> getDumpOptions() throws IOException {
 		List<String> list = new ArrayList<String>();
-		try {
-			String javaExec = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-			ProcessBuilder builder = new ProcessBuilder(javaExec, "-Xdump:what", "-version");
-			Process process = builder.start();
-			builder.redirectErrorStream(true);
+		String javaExec = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+		ProcessBuilder builder = new ProcessBuilder(javaExec, "-Xdump:what", "-version");
+		Process process = builder.start();
+		builder.redirectErrorStream(true);
 	
-			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			String line;
-			while(null != (line = reader.readLine())) {
-				logger.info(line);
-				list.add(line);
-			}
-		} catch (Exception e) {
-			Assert.fail("Unexpected Exception occurred");
+		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+		String line;
+		while(null != (line = reader.readLine())) {
+			logger.info(line);
+			list.add(line);
 		}
 		return list;
 	}
 
 	private void getLocalMXBean() {
 		MBeanServer mbeanServer = null;
-		try {
-			mbeanServer = ManagementFactory.getPlatformMBeanServer();
-			boolean registered = mbeanServer.isRegistered(mxbeanName);
-			Assert.assertTrue(registered, "OpenJ9DiagnosticsMXBean is not registered. Cannot Proceed.");
+		mbeanServer = ManagementFactory.getPlatformMBeanServer();
+		boolean registered = mbeanServer.isRegistered(mxbeanName);
+		Assert.assertTrue(registered, "OpenJ9DiagnosticsMXBean is not registered. Cannot Proceed.");
 
-			diagBean = JMX.newMXBeanProxy(mbeanServer, mxbeanName, OpenJ9DiagnosticsMXBean.class);
-		} catch (Exception e) {
-			Assert.fail("Exception occurred in setting up local environment.");
-		} 
+		diagBean = JMX.newMXBeanProxy(mbeanServer, mxbeanName, OpenJ9DiagnosticsMXBean.class);
 	} 
 
-	private void getRemoteMXBean() {
+	private void getRemoteMXBean() throws IOException, InterruptedException {
 		int retryCounter = 0;
 		boolean isConnected = false;
 		JMXServiceURL urlForRemoteMachine = null;
@@ -133,7 +128,6 @@ public class TestOpenJ9DiagnosticsMXBean {
 		 */
 		if (null == remoteServer) {
 			startRemoteServer();
-			watchdog = new Watchdog(remoteServer);
 		}
 
 		/* Try connecting to the server; retry until limit reached. */
@@ -177,8 +171,6 @@ public class TestOpenJ9DiagnosticsMXBean {
 					ie.printStackTrace();
 					Assert.fail("Exception occurred while sleeping thread: " + ie.getMessage());
 				}
-			} catch (Exception e) {
-				Assert.fail("Exception occurred in setting up remote environment.");
 			}
 		}
 		Assert.assertNotNull(diagBeanRemote, "OpenJ9DiagnosticsMXBean instance on a remote server could not be obtained");
@@ -188,6 +180,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	public void tearDown() throws Exception {
 		try {
 			connector.close();
+			lock.notifyEvent("closed JMX connection");
 		} catch (Throwable t) {
 			t.printStackTrace();
 			Assert.fail("Failed to close JMX connection");
@@ -205,6 +198,11 @@ public class TestOpenJ9DiagnosticsMXBean {
 			}
 			fdir.delete();
 		}
+
+		/* Cleanup the temp file */
+		File file = new File(tmpFileName);
+		boolean ret = file.delete();
+		Assert.assertTrue(ret, "Deleting " + tmpFileName + " Failed!");
 	}
 
 	/**
@@ -212,7 +210,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 */
 	@Test	
-	private void testLocal_triggerDump() {
+	private void testLocal_triggerDump() throws FileNotFoundException, IOException {
 		triggerDump(diagBean);
 	}
 
@@ -221,7 +219,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 */	
 	@Test
-	private void testLocal_triggerDumpToFile() {
+	private void testLocal_triggerDumpToFile() throws InvalidOptionException, FileNotFoundException, IOException {
 		triggerDumpToFile(diagBean, "local");
 	}
 
@@ -231,8 +229,8 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 */
 	@Test	
-	private void testLocal_resetDumpOptions() {
-		resetDumpOptions(diagBean);			
+	private void testLocal_resetDumpOptions() throws IOException, InvalidOptionException, ConfigurationUnavailableException {
+		resetDumpOptions(diagBean);
 	}
 
 	/**
@@ -240,7 +238,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 */	
 	@Test
-	private void testLocal_triggerClassicHeapDump() {
+	private void testLocal_triggerClassicHeapDump() throws InvalidOptionException, FileNotFoundException, IOException {
 		triggerClassicHeapDump(diagBean);
 	}
 
@@ -249,33 +247,44 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 */	
 	@Test
-	private void testLocal_setDumpOptions() {
+	private void testLocal_setDumpOptions() throws InvalidOptionException, ConfigurationUnavailableException, FileNotFoundException, IOException {
 		boolean found = false;
 		String dir = "." + File.separator + "local";
 		String dumpFileName = "javacore_alloc.txt";
 		String dumpFilePath = dir + File.separator + dumpFileName;
-		try {
-			diagBean.resetDumpOptions();
-			diagBean.setDumpOptions("java:events=allocation,filter=#1k,range=1..1,file=" + dumpFilePath);			
-			int[] a = new int[1024 * 1024];
-		} catch (Exception e) {
-			Assert.fail("Unexpected Exception thrown : " + e.getMessage());
-			e.printStackTrace();
-		}		
+		diagBean.resetDumpOptions();
+		diagBean.setDumpOptions("java:events=allocation,filter=#1k,range=1..1,file=" + dumpFilePath);
+		int[] a = new int[1024 * 1024];
+
+		dumpFileName = "javacore_unsupported.txt";
+		dumpFilePath = dir + File.separator + dumpFileName;
+		int counter = 1;
+		while(true) {
+			try {
+				diagBean.setDumpOptions("java:events=catch,filter=java/io/UnsupportedEncodingException,range=1..1,file=" + dumpFilePath);
+				break;
+			} catch (ConfigurationUnavailableException e) {
+				// Ignore exception and try setting options again
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException ie) {
+					// Do nothing - the outer loop will retry if required
+				}
+				// Only attempt this 20 times before failing the test
+				if (counter == 20) {
+					e.printStackTrace();
+					Assert.fail("Unable to update the dump options: " + e.getMessage());
+				}
+				counter++;
+			}
+		}
 
 		try {
-			dumpFileName = "javacore_unsupported.txt";
-			dumpFilePath = dir + File.separator + dumpFileName;
-			diagBean.resetDumpOptions();
-			diagBean.setDumpOptions("java:events=catch,filter=java/io/UnsupportedEncodingException,range=1..1,file=" + dumpFilePath);
 			new String("hello").getBytes("Unsupported");
+			Assert.fail("Expected Exception - UnsupportedEncodingException did not occur!");
 		} catch (UnsupportedEncodingException e) {
 			/* Received the expected UnsupportedEncodingException */
-		} catch (Exception e) {
-			Assert.fail("Unexpected Exception thrown : " + e.getMessage());
-			e.printStackTrace();
 		}
-		
 		found = findAndDeleteFile(dir, dumpFileName);
 		Assert.assertTrue(found, "Fail - Set Dump Options failed as " + dumpFileName + " was not found");
 
@@ -288,17 +297,17 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 * Function to test if the requested dumps are triggered on a remote application.
 	 *
 	 */
-	@Test	
-	private void testRemote_triggerDump() {
+	@Test
+	private void testRemote_triggerDump() throws FileNotFoundException, IOException {
 		triggerDump(diagBeanRemote);
 	}
 
 	/**
 	 * Function to test if the requested dumps are triggered to the specified file names.
 	 *
-	 */	
+	 */
 	@Test
-	private void testRemote_triggerDumpToFile() {
+	private void testRemote_triggerDumpToFile() throws InvalidOptionException, FileNotFoundException, IOException {
 		triggerDumpToFile(diagBeanRemote, "remote");
 	}
 
@@ -307,7 +316,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 */
 	@Test	
-	private void testRemote_resetDumpOptions() {
+	private void testRemote_resetDumpOptions() throws IOException, InvalidOptionException, ConfigurationUnavailableException, FileNotFoundException {
 		resetDumpOptions(diagBeanRemote);			
 	}
 
@@ -316,7 +325,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 */	
 	@Test
-	private void testRemote_triggerClassicHeapDump() {
+	private void testRemote_triggerClassicHeapDump() throws InvalidOptionException, FileNotFoundException, IOException {
 		triggerClassicHeapDump(diagBeanRemote);
 	}
 
@@ -325,63 +334,20 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 */	
 	@Test
-	private void testRemote_setDumpOptions() {
+	private void testRemote_setDumpOptions() throws InvalidOptionException, ConfigurationUnavailableException, InterruptedException, FileNotFoundException, IOException {
 		boolean found = false;
 		String dir = "." + File.separator + "remote";
 		String dumpFileName = "javacore_alloc.txt";
 		String dumpFilePath = dir + File.separator + dumpFileName;
-		try {
-			diagBeanRemote.resetDumpOptions();
-			diagBeanRemote.setDumpOptions("java:events=allocation,filter=#1k,range=1..1,file=" + dumpFilePath);			
-		} catch (Exception e) {
-			Assert.fail("Unexpected Exception thrown : " + e.getMessage());
-			e.printStackTrace();
-		}		
-
-		try {
-			dumpFileName = "javacore_unsupported.txt";
-			dumpFilePath = dir + File.separator + dumpFileName;
-			diagBeanRemote.setDumpOptions("java:events=catch,filter=java/io/UnsupportedEncodingException,range=1..1,file=" + dumpFilePath);
-		} catch	(Exception e) {
-			Assert.fail("Unexpected Exception thrown : " + e.getMessage());
-			e.printStackTrace();
-		}
-		
-		String currentDir = System.getProperty("user.dir");
-
-		String filePath = currentDir + File.separator + "catch.txt";
-		File file = new File(filePath);
-		boolean exists = false;
-		for (int i = 0; i < 20; i++) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			exists = file.exists();
-			if (exists) {
-				break;
-			}
-		}
-
-		Assert.assertTrue(exists, "Fail - " + filePath + " was not found");
-		/* Sleep for a while for the events to occur before checking for the dumps */
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
-		String filename = "." + File.separator + "catch.txt";
-		file = new File(filename);
-		found = file.exists();
-		Assert.assertTrue(found, "Fail - File " + filename + "does not exist");
-
-		boolean res = file.delete();
-		Assert.assertTrue(res, "Failed to delete the file " + filename);
+		diagBeanRemote.resetDumpOptions();
+		diagBeanRemote.setDumpOptions("java:events=allocation,filter=#1k,range=1..1,file=" + dumpFilePath);
+		dumpFileName = "javacore_unsupported.txt";
+		dumpFilePath = dir + File.separator + dumpFileName;
+		diagBeanRemote.setDumpOptions("java:events=catch,filter=java/io/UnsupportedEncodingException,range=1..1,file=" + dumpFilePath);
+		lock.notifyEvent("dump settings done");
+		lock.waitForEvent("events occurred");
 
 		/* Check for the presence of java core files after the remote server has stopped */
-		dir = "." + File.separator + "remote";
 		dumpFileName = "javacore_alloc.txt";
 
 		found = findAndDeleteFile(dir, dumpFileName);
@@ -397,7 +363,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 * @param diagBean OpenJ9DiagnosticsMXBean instance that has already been initialized.
 	 */
-	private void triggerDump(OpenJ9DiagnosticsMXBean diagBean) {
+	private void triggerDump(OpenJ9DiagnosticsMXBean diagBean) throws FileNotFoundException, IOException {
 		boolean found = false;
 		String[] dumpAgents = { "java", "heap", "snap", "system", "stack" };
 		String[] files = { "javacore", "heapdump", "Snap", "core" };
@@ -407,8 +373,12 @@ public class TestOpenJ9DiagnosticsMXBean {
 			try {
 				diagBean.triggerDump(agent);
 				if (!(agent.equals("stack"))) {
-					found = findAndDeleteFile(".", files[index]);
-					Assert.assertTrue(found, files[index] + " not found");
+					if (isZOSSystemAgent(agent)) {
+						/* checking for dataset presence will be included later */
+					} else {
+						found = findAndDeleteFile(".", files[index]);
+						Assert.assertTrue(found, files[index] + " not found");
+					}
 				}
 			} catch (java.lang.IllegalArgumentException e) {
 				/* stack agent is not supported by the trigger method */
@@ -417,9 +387,6 @@ public class TestOpenJ9DiagnosticsMXBean {
 				} else {
 					Assert.fail("Unexpected IllegalArgumentException : " + e.getMessage());
 				}
-			} catch (Exception e) {
-				Assert.fail("Unexpected Exception thrown : " + e.getMessage());
-				e.printStackTrace();
 			}
 			index++;
 		}
@@ -431,22 +398,30 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 * @param diagBean OpenJ9DiagnosticsMXBean instance that has already been initialized.
 	 * @param test indicates if itis a local or remote test
 	 */	
-	private void triggerDumpToFile(OpenJ9DiagnosticsMXBean diagBean, String test) {
+	private void triggerDumpToFile(OpenJ9DiagnosticsMXBean diagBean, String test) throws InvalidOptionException, FileNotFoundException, IOException {
 		boolean found = false;
 		String[] dumpAgents = { "java", "heap", "snap", "system", "stack" };
 		String[] files = { "javacore.%Y%m%d.%H%M%S", "heapdump.%H%M%S", "Snap.%pid.trc", "core.%pid.dmp", "stack.%seq.txt" };
 		int index = 0;
 		String dir = "." + File.separator + test + "_dumps";
 
+
 		for (String agent : dumpAgents) {
 			try {
 				String filePath = dir + File.separator + files[index];
+				if (isZOSSystemAgent(agent)) {
+					filePath = "%uid.MYJVM.%job.D%y%m%d.T%H%M%S";
+				}
 				String fileName = diagBean.triggerDumpToFile(agent, filePath);
 				File dumpFile = new File(fileName);
 
 				if (!(agent.equals("stack"))) {
-					found = findAndDeleteFile(dir, dumpFile.getName());
-					Assert.assertTrue(found, fileName + " not found");
+					if (isZOSSystemAgent(agent)) {
+						/* checking for dataset presence will be included later */
+					} else {
+						found = findAndDeleteFile(dir, dumpFile.getName());
+						Assert.assertTrue(found, fileName + " not found");
+					}
 				} 
 			} catch (java.lang.IllegalArgumentException e) {
 				/* stack agent is not supported by the trigger method */
@@ -455,9 +430,6 @@ public class TestOpenJ9DiagnosticsMXBean {
 				} else {
 					Assert.fail("Unexpected IllegalArgumentException : " + e.getMessage());
 				}
-			} catch (Exception e) {
-				Assert.fail("Unexpected Exception thrown : " + e.getMessage());
-				e.printStackTrace();
 			}
 			index++;
 		}
@@ -468,16 +440,11 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 * @param diagBean OpenJ9DiagnosticsMXBean instance that has already been initialized.
 	 */	
-	private void triggerClassicHeapDump(OpenJ9DiagnosticsMXBean diagBean) {
-		try {
-			boolean found = false;
-			String fileName = diagBean.triggerClassicHeapDump();
-			found = findAndDeleteFile(".", new File(fileName).getName());
-			Assert.assertTrue(found, fileName + " not found");
-		} catch (Exception e) {
-			Assert.fail("Unexpected Exception thrown : " + e.getMessage());
-			e.printStackTrace();
-		}
+	private void triggerClassicHeapDump(OpenJ9DiagnosticsMXBean diagBean) throws InvalidOptionException, FileNotFoundException, IOException {
+		boolean found = false;
+		String fileName = diagBean.triggerClassicHeapDump();
+		found = findAndDeleteFile(".", new File(fileName).getName());
+		Assert.assertTrue(found, fileName + " not found");
 	}	
 
 	/**
@@ -485,18 +452,9 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 * @param diagBean OpenJ9DiagnosticsMXBean instance that has already been initialized.
 	 */	
-	private void resetDumpOptions(OpenJ9DiagnosticsMXBean diagBean) {
-		try {
-			diagBean.setDumpOptions("java+heap+system:events=vmstop");			
-		} catch (Exception e) {
-			Assert.fail("Unexpected Exception thrown : " + e.getMessage());
-		}		
-		
-		try {	
-			diagBean.resetDumpOptions();
-		} catch (Exception e) {
-			Assert.fail("Unexpected Exception thrown : " + e.getMessage());
-		}
+	private void resetDumpOptions(OpenJ9DiagnosticsMXBean diagBean) throws IOException, InvalidOptionException, ConfigurationUnavailableException {
+		diagBean.setDumpOptions("java+heap+system:events=vmstop");
+		diagBean.resetDumpOptions();
 
 		List<String> newDumpOptions = getDumpOptions();
 		boolean res = initialDumpOptions.equals(newDumpOptions);
@@ -511,7 +469,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 * @param fileName Dump file name.
 	 * @return a boolean indicating if the file was found or not.
 	 */	
-	private static boolean findAndDeleteFile(String dirPath, String fileName) {
+	private static boolean findAndDeleteFile(String dirPath, String fileName) throws FileNotFoundException, IOException {
 		BufferedReader reader = null;
 		boolean found = false;
 		File dir = new File(dirPath);
@@ -520,80 +478,75 @@ public class TestOpenJ9DiagnosticsMXBean {
 		for (File f : files) {
 			found = f.getName().startsWith(fileName);
 			if (found) {
-				try {
-					reader = new BufferedReader(new FileReader(f));
-					reader.close();
-					boolean res = f.delete();	
-					Assert.assertTrue(res, "Failed to delete the file");
-					break;
-				} catch (java.io.FileNotFoundException e) {
-					Assert.fail("Unexpected FileNotFoundException : " + e.getMessage());
-				} catch (java.io.IOException e) {
-					Assert.fail("Unexpected IOException : " + e.getMessage());
-				}
+				reader = new BufferedReader(new FileReader(f));
+				reader.close();
+				boolean res = f.delete();
+				Assert.assertTrue(res, "Failed to delete the file");
+				break;
 			}
 		}
 		return found;
 	}
 
 	/**
+	 * Function to check if it is zOS and system dump agent.
+	 *
+	 * @param agent Indicates the dump agent.
+	 * @return a boolean indicating if it is zOS and system dump agent
+	 */
+	private static boolean isZOSSystemAgent(String agent) {
+		if ("z/OS".equalsIgnoreCase(os) && "system".equals(agent)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
 	 * Internal function: Starts a remote server to connect to.
 	 */
-	private static void startRemoteServer() {
-		logger.info("Start Remote Server!");
+	private static void startRemoteServer() throws IOException {
+		logger.info("Starting Remote Server to Monitor!");
+		char fs = File.separatorChar;
+		/* Set up a randomly named file and pass this to child process. Parent keeps checking
+		* for its existence on the file-system. When this goes missing, it implies the child
+		* process is up and running.
+		*/
+		File file = File.createTempFile("tmp", ".lock");
+		tmpFileName = file.getAbsolutePath();
 		String classpath = System.getProperty("java.class.path");
+		String jmxremoteOptions = System.getProperty("remote.server.option");
 		String javaExec = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
 
-		try {
-			ProcessBuilder builder = new ProcessBuilder(javaExec, "-Xdump:dynamic", "-classpath", classpath, "-Dcom.sun.management.jmxremote.port=9999", 
-									"-Dcom.sun.management.jmxremote.authenticate=false", 
-									"-Dcom.sun.management.jmxremote.ssl=false", RemoteProcess.class.getName());
+		List<String> processArgs = new ArrayList<String>();
+		processArgs.add(javaExec);
+		processArgs.add("-Xdump:dynamic");
+		processArgs.add("-classpath");
+		processArgs.add(classpath);
 
-			remoteServer = builder.start();
-		} catch (IOException e) {
-			e.printStackTrace();
-			Assert.fail("Failed to launch child process " + remoteServer);
+		Assert.assertNotNull(jmxremoteOptions, "Error: -Dremote.server.option system property cannot be null");
+		String[] options = jmxremoteOptions.trim().split("\\s+");
+		for (String opt : options) {
+			processArgs.add(opt);
 		}
+		/* The lock file that the parent and child processes use for event based synchronization. */
+		processArgs.add("-Djava.lock.file=" + tmpFileName);
+		processArgs.add(RemoteProcess.class.getName());
+		ProcessBuilder builder = new ProcessBuilder(processArgs);
+		logger.info(builder.command());
+		lock = new ProcessLocking(tmpFileName);
+		remoteServer = builder.start();
 
-		try {
-			Thread.sleep(10);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		lock.waitForEvent("child started");
+		logger.info("Staring remote server finished");
 	} 
 
 	/**
 	 * Internal function: Stops a remote server.
 	 */
-	private static void stopRemoteServer() {
-		try {
-			watchdog.interrupt();
-			remoteServer.destroy();
-			remoteServer.waitFor();
-		} catch (InterruptedException e) {
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	private static void stopRemoteServer() throws InterruptedException {
+		remoteServer.destroy();
+		remoteServer.waitFor();
 	} 
 }
-
-class Watchdog extends Thread {
-	Process child;
-
-	public Watchdog(Process child) {
-		super();
-		this.child = child;
-	}
-
-	@Override
-	public void run() {
-		try {
-			sleep(30000);
-			child.destroy();
-			System.err.println("Child Hung");
-		} catch (InterruptedException e) {
-			return;
-		}
-	}
-} 
 

@@ -21,11 +21,15 @@
  *******************************************************************************/
 
 package org.openj9.test.java.lang.management;
-import java.io.File;
+
+import org.testng.Assert;
+import org.testng.log4testng.Logger;
 import java.io.UnsupportedEncodingException;
+import org.openj9.test.management.ProcessLocking;
 
 public class RemoteProcess {
-
+	public static final Logger logger = Logger.getLogger(RemoteProcess.class);
+	private static ProcessLocking lock;
 	/**
 	 * Start the RemoteProcess with jmx enabled, for example:
 	 * -Dcom.sun.management.jmxremote.port=9999
@@ -33,28 +37,27 @@ public class RemoteProcess {
 	 * -Dcom.sun.management.jmxremote.ssl=false
 	 */
 	public static void main(String[] args) {
-		System.out.println("=========RemoteProcess Starts!=========");
-		for (int i = 0; i < 60; i++) {
-			try {
-				int[] a = new int[1024 * 1024];
-				new String("hello").getBytes("Unsupported");
-			} catch (UnsupportedEncodingException e) {
-				/* Expected exception from getBytes() hence ignored */
-			}
-
-			try {
-				String currentDir = System.getProperty("user.dir");
-				File file = new File(currentDir + File.separator + "catch.txt");
-				if (!file.exists()) {
-					if (!file.createNewFile()) {
-						System.out.println("Creating of catch.txt failed!");
-					}
-				}
-				Thread.sleep(1000);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		logger.info("=========RemoteProcess Starts!=========");
+		String lockFile = System.getProperty("java.lock.file");
+		Assert.assertNotNull(lockFile, "lockFile from -Djava.lock.file is null ");
+		lock = new ProcessLocking(lockFile);
+		lock.notifyEvent("child started");
+		lock.waitForEvent("dump settings done");
+		try {
+			int[] a = new int[1024 * 1024];
+			new String("hello").getBytes("Unsupported");
+			Assert.fail("Expected Exception - UnsupportedEncodingException did not occur!");
+		} catch (UnsupportedEncodingException e) {
+			/* Expected exception from getBytes() hence ignored */
 		}
-		System.out.println("RemoteProcess Stops!");
-	}
+
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			Assert.fail("Exception occurred while sleepping" + e.getMessage());
+		}
+		lock.notifyEvent("events occurred");
+		lock.waitForEvent("closed JMX connection");
+		logger.info("========RemoteProcess Complete=========");
+        }
 }
