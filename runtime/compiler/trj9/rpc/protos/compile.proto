@@ -45,7 +45,7 @@ enum J9ServerMessageType
    ResolvedMethod_classCPIndexOfMethod = 113;
    ResolvedMethod_startAddressForJittedMethod = 114;
    ResolvedMethod_localName = 115;
-   ResolvedMethod_getResolvedVirtualMethod = 116;
+   ResolvedMethod_getResolvedVirtualMethodAndMirror = 116;
    ResolvedMethod_virtualMethodIsOverridden = 117;
    ResolvedMethod_getResolvedInterfaceMethod_2 = 118; // arity 2
    ResolvedMethod_getResolvedInterfaceMethod_3 = 119; // arity 3

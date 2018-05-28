@@ -13,6 +13,7 @@
 #include "runtime/IProfiler.hpp"               // for TR_IProfiler
 #include "runtime/JaasIProfiler.hpp"           // for TR_ContiguousIPMethodHashTableEntry
 #include "j9port.h" // for j9time_current_time_millis
+#include "env/j9methodServer.hpp"
 
 uint32_t serverMsgTypeCount[JAAS::J9ServerMessageType_ARRAYSIZE] = {};
 
@@ -902,39 +903,10 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          TR_OpaqueMethodBlock *method = std::get<0>(recv);
          auto *owningMethod = std::get<1>(recv);
          uint32_t vTableSlot = std::get<2>(recv);
-         TR_ResolvedJ9Method *resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9Method(method, fe, trMemory, owningMethod, vTableSlot);
-         if (!resolvedMethod) throw std::bad_alloc();
-
-         J9RAMConstantPoolItem *literals = (J9RAMConstantPoolItem *)(J9_CP_FROM_METHOD(resolvedMethod->ramMethod()));
-         J9Class *cpHdr = J9_CLASS_FROM_CP(literals);
-
-         J9Method *j9method = (J9Method *)method;
-         const uint64_t methodIndex = getMethodIndexUnchecked(j9method);
-
-         uintptrj_t jniProps = resolvedMethod->getJNIProperties();
-         void *jniTargetAddr = resolvedMethod->getJNITargetAddress();
-         bool isInterpreted = resolvedMethod->isInterpreted();
-         bool isMethodInValidLibrary = resolvedMethod->isMethodInValidLibrary();
-         TR::RecognizedMethod mandatoryRm = resolvedMethod->getMandatoryRecognizedMethod();
-         TR::RecognizedMethod rm = ((TR_ResolvedMethod*)resolvedMethod)->getRecognizedMethod();
-         void * startAddressForJittedMethod = TR::CompilationInfo::isCompiled(resolvedMethod->ramMethod()) ?
-                                                 resolvedMethod->startAddressForJittedMethod() : NULL;
-         bool virtualMethodIsOverridden = resolvedMethod->virtualMethodIsOverridden();
-         void *addressContainingIsOverriddenBit = resolvedMethod->addressContainingIsOverriddenBit();
-         J9ClassLoader *classLoader = resolvedMethod->getClassLoader();
-
-         TR_PersistentJittedBodyInfo *bodyInfo = nullptr;
-         // Method may not have been compiled
-         if (!resolvedMethod->isInterpreted() && !resolvedMethod->isJITInternalNative())
-            {
-            bodyInfo = resolvedMethod->getExistingJittedBodyInfo();
-            }
-         std::string jbi = bodyInfo ? std::string((char*)bodyInfo, sizeof(TR_PersistentJittedBodyInfo)) : std::string();
-         std::string methodInfo = bodyInfo ? std::string((char*)bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
+         TR_ResolvedJ9JAASServerMethodInfo methodInfo; 
+         TR_ResolvedJ9JAASServerMethod::createResolvedJ9MethodMirror(methodInfo, method, vTableSlot, owningMethod, fe, trMemory);
          
-         client->write(resolvedMethod, literals, cpHdr, methodIndex, jniProps, jniTargetAddr, isInterpreted, isMethodInValidLibrary, 
-                       mandatoryRm, rm, startAddressForJittedMethod, virtualMethodIsOverridden, addressContainingIsOverriddenBit,
-                       classLoader, jbi, methodInfo);
+         client->write(methodInfo);
          }
          break;
       case J9ServerMessageType::ResolvedMethod_getRemoteROMClassAndMethods:
@@ -1064,13 +1036,16 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
          client->write(method->startAddressForJittedMethod());
          }
          break;
-      case J9ServerMessageType::ResolvedMethod_getResolvedVirtualMethod:
+      case J9ServerMessageType::ResolvedMethod_getResolvedVirtualMethodAndMirror:
          {
-         auto recv = client->getRecvData<J9RAMConstantPoolItem*, I_32>();
-         auto literals = std::get<0>(recv);
+         // 1. resolve method
+         auto recv = client->getRecvData<TR_ResolvedMethod *, J9RAMConstantPoolItem *, I_32>();
+         auto *owningMethod = std::get<0>(recv);
+         auto literals = std::get<1>(recv);
          J9ConstantPool *cp = (J9ConstantPool*)literals;
-         I_32 cpIndex = std::get<1>(recv);
+         I_32 cpIndex = std::get<2>(recv);
          bool resolvedInCP = false;
+         
          // only call the resolve if unresolved
          J9Method * ramMethod = 0;
          UDATA vTableIndex = (((J9RAMVirtualMethodRef*) literals)[cpIndex]).methodIndexAndArgCount;
@@ -1089,7 +1064,21 @@ bool handleServerMessage(JAAS::J9ClientStream *client, TR_J9VM *fe)
             ramMethod = *(J9Method **)((char *)classObject + vTableIndex);
             resolvedInCP = true;
             }
-         client->write(ramMethod, vTableIndex, resolvedInCP);
+
+         // 2. mirror the resolved method on the client
+         if (vTableIndex)
+            {
+            TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) ramMethod;
+           
+            TR_ResolvedJ9JAASServerMethodInfo methodInfo; 
+            TR_ResolvedJ9JAASServerMethod::createResolvedJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, owningMethod, fe, trMemory);
+                        
+            client->write(ramMethod, vTableIndex, resolvedInCP, methodInfo);
+            }
+         else
+            {
+            client->write(ramMethod, vTableIndex, resolvedInCP, TR_ResolvedJ9JAASServerMethodInfo());
+            }
          }
          break;
       case J9ServerMessageType::ResolvedMethod_virtualMethodIsOverridden:
