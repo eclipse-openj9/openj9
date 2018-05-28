@@ -43,8 +43,8 @@ endif()
 j9jit_files(
 	p/runtime/${PPC_HW_PROFILER}
 	p/runtime/${PPC_LM_GUARDED_STORAGE}
-	${OMR_ROOT}/compiler/p/runtime/VirtualGuardRuntime.spp
-	${OMR_ROOT}/compiler/p/runtime/OMRCodeCacheConfig.cpp
+	${omr_SOURCE_DIR}/compiler/p/runtime/VirtualGuardRuntime.spp
+	${omr_SOURCE_DIR}/compiler/p/runtime/OMRCodeCacheConfig.cpp
 	p/runtime/J9PPCArrayCopy.spp
 	p/runtime/J9PPCArrayCmp.spp
 	p/runtime/J9PPCArrayTranslate.spp

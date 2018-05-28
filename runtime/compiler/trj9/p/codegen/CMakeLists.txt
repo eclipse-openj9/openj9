@@ -40,5 +40,5 @@ j9jit_files(
 	p/codegen/PPCRecompilation.cpp
 	p/codegen/PPCRecompilationSnippet.cpp
 	p/codegen/Trampoline.cpp
-	${OMR_ROOT}/compiler/p/env/OMRDebugEnv.cpp
+	${omr_SOURCE_DIR}/compiler/p/env/OMRDebugEnv.cpp
 )

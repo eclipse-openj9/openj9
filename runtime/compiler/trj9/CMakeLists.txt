@@ -38,21 +38,11 @@ add_custom_command(
 )
 add_custom_target(j9jit_tracegen DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h)
 
-set(J9SRC   ../../)
-# Absolutize the J9SRC mostly to make it easier to read the paths.
-get_filename_component(J9SRC ${J9SRC} ABSOLUTE)
+#TODO We should get rid of this, but its still requred by the compiler_support module in omr
+set(J9SRC  ${j9vm_SOURCE_DIR})
 
 
-# The Makefiles specified the OMR in the VM tree, and this does the same
-# does the same.
-set(OMR_ROOT ${omr_SOURCE_DIR})
-# Absolutize the OMR_ROOT, which is required
-# for MASM2GAS.
-get_filename_component(OMR_ROOT ${OMR_ROOT} ABSOLUTE)
-
-set(CMAKE_MODULE_PATH "${OMR_ROOT}/cmake/modules" ${CMAKE_MODULE_PATH})
-
-#include(${OMR_ROOT}/cmake/compiler_support.cmake)
+#include compiler support module from OMR
 include(OmrCompilerSupport)
 
 # Override masm2gas with J9JIT version until we've
@@ -101,24 +91,24 @@ endif()
 # Some files in OMR provide duplicate or extra functionality not needed
 # in J9, so we need to remove them
 set(REMOVED_OMR_FILES
-	${OMR_ROOT}/compiler/control/CompileMethod.cpp
-	${OMR_ROOT}/compiler/control/CompilationController.cpp
-	${OMR_ROOT}/compiler/env/FEBase.cpp
-	${OMR_ROOT}/compiler/optimizer/FEInliner.cpp
-	${OMR_ROOT}/compiler/env/JitConfig.cpp
-	${OMR_ROOT}/compiler/env/PersistentAllocator.cpp
-	${OMR_ROOT}/compiler/env/SystemSegmentProvider.cpp
-	${OMR_ROOT}/compiler/infra/OMRMonitor.cpp
-	${OMR_ROOT}/compiler/runtime/Trampoline.cpp
-	${OMR_ROOT}/compiler/runtime/Runtime.cpp
-	${OMR_ROOT}/compiler/ilgen/IlBuilder.cpp
-	${OMR_ROOT}/compiler/ilgen/IlValue.cpp
-	${OMR_ROOT}/compiler/ilgen/IlInjector.cpp
-	${OMR_ROOT}/compiler/ilgen/MethodBuilder.cpp
-	${OMR_ROOT}/compiler/ilgen/BytecodeBuilder.cpp
-	${OMR_ROOT}/compiler/ilgen/TypeDictionary.cpp
-	${OMR_ROOT}/compiler/ilgen/ThunkBuilder.cpp
-	${OMR_ROOT}/compiler/ilgen/VirtualMachineOperandStack.cpp
+	${omr_SOURCE_DIR}/compiler/control/CompileMethod.cpp
+	${omr_SOURCE_DIR}/compiler/control/CompilationController.cpp
+	${omr_SOURCE_DIR}/compiler/env/FEBase.cpp
+	${omr_SOURCE_DIR}/compiler/optimizer/FEInliner.cpp
+	${omr_SOURCE_DIR}/compiler/env/JitConfig.cpp
+	${omr_SOURCE_DIR}/compiler/env/PersistentAllocator.cpp
+	${omr_SOURCE_DIR}/compiler/env/SystemSegmentProvider.cpp
+	${omr_SOURCE_DIR}/compiler/infra/OMRMonitor.cpp
+	${omr_SOURCE_DIR}/compiler/runtime/Trampoline.cpp
+	${omr_SOURCE_DIR}/compiler/runtime/Runtime.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/IlBuilder.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/IlValue.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/IlInjector.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/MethodBuilder.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/BytecodeBuilder.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/TypeDictionary.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/ThunkBuilder.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/VirtualMachineOperandStack.cpp
 )
 
 # Extra defines not provided by the create_omr_compiler_library call
@@ -140,17 +130,16 @@ set(J9_INCLUDES
 	${omr_SOURCE_DIR}/gc/include
 	# endjitinclude.mk
 	../ # Frustratingly there are some #include "trj9/frob/baz.hpp" refs  which require this.
-	${J9SRC}/codert_vm
-	${J9SRC}/gc_include
-	${J9SRC}/gc_glue_java
-	${J9SRC}/jit_vm
-	${J9SRC}/nls
-	${J9SRC}/oti
-	${J9SRC}/include
-	${J9SRC}/util
+	${j9vm_SOURCE_DIR}/codert_vm
+	${j9vm_SOURCE_DIR}/gc_include
+	${j9vm_SOURCE_DIR}/gc_glue_java
+	${j9vm_SOURCE_DIR}/jit_vm
+	${j9vm_SOURCE_DIR}/nls
+	${j9vm_SOURCE_DIR}/oti
+	${j9vm_SOURCE_DIR}/include
+	${j9vm_SOURCE_DIR}/util
 	${j9vm_BINARY_DIR}
 	${omr_BINARY_DIR}
-	${CMAKE_CURRENT_BINARY_DIR}/../../omr
 	${CMAKE_CURRENT_BINARY_DIR}
 )
 # Platform specific list of flags, derived directly from the
