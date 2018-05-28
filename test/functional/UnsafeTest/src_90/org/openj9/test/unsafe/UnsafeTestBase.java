@@ -2075,6 +2075,9 @@ public class UnsafeTestBase implements ITest {
 				myUnsafe.putCharRelease(null, pointers[i], modelChar[i]);
 
 			} else if (method.equals(UNALIGNED)) {
+				/* do not run this test at end of array to avoid corrupting memory we don't own */
+				if (i == (modelChar.length - 1)) continue;
+				
 				int sizeOfChar = 2; // bytes
 
 				for (long uOffset = (pointers[i] + sizeOfChar); uOffset >= pointers[i]; --uOffset) {
@@ -2144,6 +2147,9 @@ public class UnsafeTestBase implements ITest {
 				myUnsafe.putShortRelease(null, pointers[i], modelShort[i]);
 
 			} else if (method.equals(UNALIGNED)) {
+				/* do not run this test at end of array to avoid corrupting memory we don't own */
+				if (i == (modelShort.length - 1)) continue;
+				
 				int sizeOfShort = 2; // bytes
 
 				for (long uOffset = (pointers[i] + sizeOfShort); uOffset >= pointers[i]; --uOffset) {
@@ -2216,6 +2222,9 @@ public class UnsafeTestBase implements ITest {
 				myUnsafe.putIntRelease(null, pointers[i], modelInt[i]);
 
 			} else if (method.equals(UNALIGNED)) {
+				/* do not run this test at end of array to avoid corrupting memory we don't own */
+				if (i == (modelInt.length - 1)) continue;
+				
 				int sizeOfInt = 4; // bytes
 
 				for (long uOffset = (pointers[i] + sizeOfInt); uOffset >= pointers[i]; --uOffset) {
@@ -2289,6 +2298,9 @@ public class UnsafeTestBase implements ITest {
 				myUnsafe.putLongRelease(null, pointers[i], modelLong[i]);
 
 			} else if (method.equals(UNALIGNED)) {
+				/* do not run this test at end of array to avoid corrupting memory we don't own */
+				if (i == (modelLong.length - 1)) continue;
+				
 				int sizeOfLong = 8; // bytes
 
 				for (long uOffset = (pointers[i] + sizeOfLong); uOffset >= pointers[i]; --uOffset) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 
+/* note: size of test array is one more than model so we can put and
+ * get memory unaligned outside the model array without corrupting 
+ * memory.
+ */
 @Test(groups = { "level.sanity" })
 public class TestUnsafeAccessUnaligned extends UnsafeTestBase {
 	private static Logger logger = Logger.getLogger(TestUnsafeAccessUnaligned.class);
@@ -50,19 +54,19 @@ public class TestUnsafeAccessUnaligned extends UnsafeTestBase {
 
 	// tests for testArrayPutXXXXUnaligned
 	public void testArrayPutCharUnaligned() throws Exception {
-		testChar(new char[modelChar.length], UNALIGNED);
+		testChar(new char[modelChar.length + 1], UNALIGNED);
 	}
 
 	public void testArrayPutShortUnaligned() throws Exception {
-		testShort(new short[modelShort.length], UNALIGNED);
+		testShort(new short[modelShort.length + 1], UNALIGNED);
 	}
 
 	public void testArrayPutIntUnaligned() throws Exception {
-		testInt(new int[modelInt.length], UNALIGNED);
+		testInt(new int[modelInt.length + 1], UNALIGNED);
 	}
 
 	public void testArrayPutLongUnaligned() throws Exception {
-		testLong(new long[modelLong.length], UNALIGNED);
+		testLong(new long[modelLong.length + 1], UNALIGNED);
 	}
 
 	// tests for testObjectNullPutXXXXUnaligned
@@ -84,18 +88,18 @@ public class TestUnsafeAccessUnaligned extends UnsafeTestBase {
 
 	// tests for testArrayGetXXXXUnaligned
 	public void testArrayGetCharUnaligned() throws Exception {
-		testGetChar(new char[modelChar.length], UNALIGNED);
+		testGetChar(new char[modelChar.length + 1], UNALIGNED);
 	}
 
 	public void testArrayGetShortUnaligned() throws Exception {
-		testGetShort(new short[modelShort.length], UNALIGNED);
+		testGetShort(new short[modelShort.length + 1], UNALIGNED);
 	}
 
 	public void testArrayGetIntUnaligned() throws Exception {
-		testGetInt(new int[modelInt.length], UNALIGNED);
+		testGetInt(new int[modelInt.length + 1], UNALIGNED);
 	}
 
 	public void testArrayGetLongUnaligned() throws Exception {
-		testGetLong(new long[modelLong.length], UNALIGNED);
+		testGetLong(new long[modelLong.length + 1], UNALIGNED);
 	}
 }
