@@ -324,7 +324,7 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
          if (len == 22 && !strncmp(className, "java/lang/StringBuffer",  22))
             {
             if (trace())
-               printf("--stringbuffer-- in %s\n", comp()->signature());
+               traceMsg(comp(), "--stringbuffer-- in %s\n", comp()->signature());
 
             TR::TreeTop *newTree = detectPattern(block, tt, true);
             if (newTree)
@@ -333,7 +333,7 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
          else if (len == 23 && !strncmp(className, "java/lang/StringBuilder", 23))
             {
             if (trace())
-               printf("--stringbuilder-- in %s\n", comp()->signature());
+               traceMsg(comp(), "--stringbuilder-- in %s\n", comp()->signature());
 
             TR::TreeTop *newTree = detectPattern(block, tt, false);
             if (newTree)
@@ -2064,7 +2064,7 @@ TR::SymbolReference *TR_StringPeepholes::findSymRefForValueOf(const char *sig, i
    ListIterator<TR_ResolvedMethod> it(&stringMethods);
 
    for (TR_ResolvedMethod *method = it.getCurrent(); method; method = it.getNext())
-      if (!strncmp(method->nameChars(), "valueOf", 7) && !strncmp(method->signatureChars(), sig, len))
+      if (!strncmp(method->nameChars(), "valueOf", 7) && method->nameLength() == 7 && !strncmp(method->signatureChars(), sig, len))
          return getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1, method, TR::MethodSymbol::Static);
    return 0;
    }
