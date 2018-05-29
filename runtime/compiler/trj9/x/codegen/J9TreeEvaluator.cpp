@@ -13563,7 +13563,7 @@ inlineIsAssignableFrom(
       {
       TR::SymbolReference *thisClassSymRef = thisClass->getFirstChild()->getSymbolReference();
 
-      if (thisClassSymRef->isClassInterface(comp) || thisClassSymRef->isClassAbstract(comp))
+      if (thisClassSymRef->isClassInterface(comp))
          {
          return false;
          }

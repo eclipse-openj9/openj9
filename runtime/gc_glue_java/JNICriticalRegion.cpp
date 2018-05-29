@@ -115,7 +115,7 @@ MM_JNICriticalRegion::releaseAccess(J9VMThread* vmThread, UDATA* accessMask)
 			}
 		}
 		if(shouldRespond) {
-			VM_VMAccess::respondToExclusiveRequest(vmThread, vm, PORTLIB, timeNow);
+			VM_VMAccess::respondToExclusiveRequest(vmThread, vm, PORTLIB, timeNow, J9_EXCLUSIVE_SLOW_REASON_JNICRITICAL);
 		}
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);
 	}

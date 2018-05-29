@@ -256,6 +256,7 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMSlowExclusiveEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 		<data type="UDATA" name="timeTaken" description="time in ms it took this thread to respond" />
+		<data type="UDATA" name="reason" description="the cause of slow" />
 	</event>
 
 	<event>
