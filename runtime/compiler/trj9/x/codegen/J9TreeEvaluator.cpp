@@ -15435,6 +15435,7 @@ J9::X86::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::LabelSymbol *persistentFailureLabel = persistentFailureNode->getBranchDestination()->getNode()->getLabel();
    TR::LabelSymbol *fallBackPathLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *fallThroughLabel = fallThroughNode->getBranchDestination()->getNode()->getLabel();
+   TR::LabelSymbol *intermediateLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
    TR::Register *objReg = cg->evaluate(objNode);
    TR::Register *accReg = cg->allocateRegister();
@@ -15444,6 +15445,7 @@ J9::X86::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::RegisterDependencyConditions *fallThroughConditions = NULL;
    TR::RegisterDependencyConditions *persistentConditions = NULL;
    TR::RegisterDependencyConditions *transientConditions = NULL;
+   TR::RegisterDependencyConditions *intermediateLabelConditions = NULL;
 
    if (fallThroughNode->getNumChildren() != 0)
       {
@@ -15535,6 +15537,12 @@ J9::X86::TreeEvaluator::tstartEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    endLabelConditions = generateRegisterDependencyConditions((uint8_t)0, 1, cg);
    endLabelConditions->addPostCondition(accReg, TR::RealRegister::eax, cg);
    endLabelConditions->stopAddingConditions();
+
+   intermediateLabelConditions = generateRegisterDependencyConditions((uint8_t)0, 1, cg);
+   intermediateLabelConditions->addPostCondition(accReg, TR::RealRegister::eax, cg);
+   intermediateLabelConditions->stopAddingConditions();
+
+   generateLabelInstruction(LABEL, node, intermediateLabel, intermediateLabelConditions, cg);
 
    // test eax, 0x2
    generateRegImmInstruction(TEST1AccImm1, node, accReg, 0x2, cg);
