@@ -50,6 +50,8 @@ import javax.management.remote.JMXServiceURL;
 import com.ibm.lang.management.*;
 import openj9.lang.management.*;
 import org.openj9.test.management.ProcessLocking;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Class for testing the APIs that are provided as part of OpenJ9DiagnosticsMXBean
@@ -69,6 +71,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	private JMXConnector connector = null;
 	private static ProcessLocking lock;
 	private static String tmpFileName;
+	private final static boolean zOS = "z/OS".equalsIgnoreCase(os);
 
 	@BeforeClass
 	public void setUp() throws Exception {
@@ -219,10 +222,9 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 */	
 	@Test
-	private void testLocal_triggerDumpToFile() throws InvalidOptionException, FileNotFoundException, IOException {
+	private void testLocal_triggerDumpToFile() throws Exception {
 		triggerDumpToFile(diagBean, "local");
 	}
-
 
 	/**
 	 * Function to test if the dump options were reset to what it was at JVM initialization on a local application.
@@ -307,7 +309,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 */
 	@Test
-	private void testRemote_triggerDumpToFile() throws InvalidOptionException, FileNotFoundException, IOException {
+	private void testRemote_triggerDumpToFile() throws Exception {
 		triggerDumpToFile(diagBeanRemote, "remote");
 	}
 
@@ -397,14 +399,13 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 * @param diagBean OpenJ9DiagnosticsMXBean instance that has already been initialized.
 	 * @param test indicates if itis a local or remote test
-	 */	
-	private void triggerDumpToFile(OpenJ9DiagnosticsMXBean diagBean, String test) throws InvalidOptionException, FileNotFoundException, IOException {
+	 */
+	private void triggerDumpToFile(OpenJ9DiagnosticsMXBean diagBean, String test) throws Exception {
 		boolean found = false;
 		String[] dumpAgents = { "java", "heap", "snap", "system", "stack" };
 		String[] files = { "javacore.%Y%m%d.%H%M%S", "heapdump.%H%M%S", "Snap.%pid.trc", "core.%pid.dmp", "stack.%seq.txt" };
 		int index = 0;
 		String dir = "." + File.separator + test + "_dumps";
-
 
 		for (String agent : dumpAgents) {
 			try {
@@ -414,15 +415,26 @@ public class TestOpenJ9DiagnosticsMXBean {
 				}
 				String fileName = diagBean.triggerDumpToFile(agent, filePath);
 				File dumpFile = new File(fileName);
-
 				if (!(agent.equals("stack"))) {
 					if (isZOSSystemAgent(agent)) {
-						/* checking for dataset presence will be included later */
+						/* Since the jzos ZFile API is only available at present in Java8, using it only on Java8 to check for presence of system dump dataset */
+						/* Once it is available on other higher java versions, we can remove this version check */
+						String actual_dsn = "";
+						logger.info("Dataset name returned by triggerDumpToFile = " + fileName);
+						if (fileName.endsWith("X&DS")) {
+							logger.info("Replacing X&DS with X001 in system dump dataset name");
+							actual_dsn = fileName.substring(0, fileName.length() - 4) + "X001";
+						} else {
+							logger.info("Dataset name does not contain X&DS");
+							actual_dsn = fileName;
+						}
+						found = findAndDeleteDataset(actual_dsn);
+						Assert.assertTrue(found, actual_dsn + " not found");
 					} else {
 						found = findAndDeleteFile(dir, dumpFile.getName());
 						Assert.assertTrue(found, fileName + " not found");
 					}
-				} 
+				}
 			} catch (java.lang.IllegalArgumentException e) {
 				/* stack agent is not supported by the trigger method */
 				if (agent.equals("stack")) {
@@ -434,7 +446,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 			index++;
 		}
 	}
-
+	
 	/**
 	 * Function to test if a classic heap dump is created.
 	 *
@@ -489,13 +501,40 @@ public class TestOpenJ9DiagnosticsMXBean {
 	}
 
 	/**
+	 * Function to check if the specified system dump dataset is present
+	 *
+	 * @param actual_dsn System dump data set name
+	 * @return a boolean indicating if the system dump data set was found or not.
+	 */
+	private static boolean findAndDeleteDataset(String actual_dsn) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+		boolean found = false;
+		if (zOS) {
+			try {
+				Class<?> zfileClass = Class.forName("com.ibm.jzos.ZFile");
+				Method zfile_getSlashSlashQuotedDSN = zfileClass.getMethod("getSlashSlashQuotedDSN", String.class, Boolean.TYPE);
+				String quoted_dsn = (String) zfile_getSlashSlashQuotedDSN.invoke(null, actual_dsn, true);
+				Method zfile_exists = zfileClass.getMethod("exists", String.class);
+				found = (boolean) zfile_exists.invoke(null, quoted_dsn);
+				if (found) {
+					Method zfile_remove = zfileClass.getMethod("remove", String.class);
+					zfile_remove.invoke(null, quoted_dsn);
+				}
+			} catch (ClassNotFoundException e) {
+				logger.info("Warning - com.ibm.jzos.ZFile class not found" + e.getMessage());
+				found = true;
+			}
+		}
+		return found;
+	}
+
+        /**
 	 * Function to check if it is zOS and system dump agent.
 	 *
 	 * @param agent Indicates the dump agent.
 	 * @return a boolean indicating if it is zOS and system dump agent
 	 */
 	private static boolean isZOSSystemAgent(String agent) {
-		if ("z/OS".equalsIgnoreCase(os) && "system".equals(agent)) {
+		if (zOS && "system".equals(agent)) {
 			return true;
 		} else {
 			return false;
@@ -538,7 +577,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 		remoteServer = builder.start();
 
 		lock.waitForEvent("child started");
-		logger.info("Staring remote server finished");
+		logger.info("Starting remote server finished");
 	} 
 
 	/**
