@@ -103,7 +103,7 @@ J9NLS_JIT_OUT_OF_MEMORY.system_action=TODO
 J9NLS_JIT_OUT_OF_MEMORY.user_response=TODO
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_XLP_UNRECOGNIZED_OPTION=A rendszerkonfigur\u00e1ci\u00f3 nem t\u00e1mogatja a(z) '%.*s' param\u00e9ter haszn\u00e1lat\u00e1t az '-Xlp' be\u00e1ll\u00edt\u00e1sban
+J9NLS_JIT_OPTIONS_XLP_UNRECOGNIZED_OPTION=A rendszerkonfigur\u00e1ci\u00f3 nem t\u00e1mogatja a(z) '%s' param\u00e9ter haszn\u00e1lat\u00e1t az '-Xlp' be\u00e1ll\u00edt\u00e1sban
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_XLP_UNRECOGNIZED_OPTION.explanation=Specified parameter is not recognized in -Xlp option
 J9NLS_JIT_OPTIONS_XLP_UNRECOGNIZED_OPTION.system_action=The JVM will terminate

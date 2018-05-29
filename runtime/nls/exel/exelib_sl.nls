@@ -640,7 +640,7 @@ J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.system_action=
 J9NLS_EXELIB_INTERNAL_HELP_XSHARECLASSES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       nastavi velikost novega predpomnilnika razreda v skupni rabi na <x>
+J9NLS_EXELIB_INTERNAL_HELP_XSCMX=\  -Xscmx<x>       nastavi velikost novega predpomnilnika razredov v skupni rabi na <x>
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_XSCMX.system_action=

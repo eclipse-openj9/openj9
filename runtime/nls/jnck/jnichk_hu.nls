@@ -996,7 +996,7 @@ J9NLS_JNICHK_NON_ARRAY_REQUIRED.system_action=If -Xcheck:jni:nonfatal has been s
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.user_response=Check and correct the JNI application code.
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS=JNI tan\u00e1cs %1$s belsej\u00e9ben: Ez a funkci\u00f3 nem haszn\u00e1lhat\u00f3 t\u00f6m\u00f6r\u00edtett objektumokn\u00e1l. Haszn\u00e1lja helyette a k\u00f6vetkez\u0151t: %2$s
+J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS=JNI tan\u00e1cs a k\u00f6vetkez\u0151ben: %1$s: Ez a f\u00fcggv\u00e9ny csomagolt objektumokkal nem haszn\u00e1lhat\u00f3. Haszn\u00e1lja helyette a k\u00f6vetkez\u0151t: %2$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_1=GetPrimitiveArrayCritical
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_2=GetPackedArrayElements
