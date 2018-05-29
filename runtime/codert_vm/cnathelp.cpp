@@ -1505,6 +1505,8 @@ retry:
 		}
 		goto retry;
 	}
+	// TODO: Future work required to support private/Object in the JIT
+	Assert_CodertVM_true(J9_ARE_NO_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_TAG_BITS));
 	indexAndLiteralsEA[2] = (UDATA)interfaceClass;
 	indexAndLiteralsEA[3] = methodIndexAndArgCount >> 8; /* remove argCount */
 	JIT_RETURN_UDATA(1);

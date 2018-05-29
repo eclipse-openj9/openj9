@@ -228,11 +228,12 @@ extern _ENTRY globalLeConditionHandlerENTRY;
 static VMINLINE J9Method*
 mapVirtualMethod(J9VMThread *currentThread, J9Method *method, UDATA vTableIndex, J9Class *receiverClass)
 {
+	/* J9_JNI_MID_INTERFACE will be set only for iTable methods.  Private interface methods
+	 * and Object methods will not have the tag.
+	 */
 	if (J9_ARE_ANY_BITS_SET(vTableIndex, J9_JNI_MID_INTERFACE)) {
 		UDATA iTableIndex = vTableIndex & ~(UDATA)J9_JNI_MID_INTERFACE;
 		J9Class *interfaceClass = J9_CLASS_FROM_METHOD(method);
-		// TODO: should this code be handling Object methods?
-		// refactor VMHelpers convertITableIndexToVTableIndex to take NAS?
 		vTableIndex = 0;
 		J9ITable * iTable = receiverClass->lastITable;
 		if (interfaceClass == iTable->interfaceClass) {

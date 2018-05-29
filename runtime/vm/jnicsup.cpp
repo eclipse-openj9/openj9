@@ -2106,7 +2106,8 @@ initializeMethodID(J9VMThread * currentThread, J9JNIMethodID * methodID, J9Metho
 {
 	UDATA vTableIndex = 0;
 
-	if ((J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccStatic) == 0) {
+	/* The vTable does not contain private or static methods */
+	if (J9_ARE_NO_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccStatic | J9AccPrivate)) {
 		J9Class * declaringClass = J9_CLASS_FROM_METHOD(method);
 
 		if (declaringClass->romClass->modifiers & J9AccInterface) {
@@ -2114,9 +2115,12 @@ initializeMethodID(J9VMThread * currentThread, J9JNIMethodID * methodID, J9Metho
 			 * always use the declaring class of the interface method.  Pass NULL here to allow
 			 * for methodIDs to be created on obsolete classes for HCR purposes.
 			 */
-			vTableIndex = getITableIndexForMethod(method, NULL) | J9_JNI_MID_INTERFACE;
+			vTableIndex = getITableIndexForMethod(method, NULL);
+			Assert_VM_false(J9_ARE_ANY_BITS_SET(vTableIndex, J9_JNI_MID_INTERFACE));
+			vTableIndex |= J9_JNI_MID_INTERFACE;
 		} else {
 			vTableIndex = getVTableIndexForMethod(method, declaringClass, currentThread);
+			Assert_VM_false(J9_ARE_ANY_BITS_SET(vTableIndex, J9_JNI_MID_INTERFACE));
 		}
 	}
 

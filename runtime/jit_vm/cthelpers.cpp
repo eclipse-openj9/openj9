@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,6 +72,10 @@ jitGetInterfaceITableIndexFromCP(J9VMThread *currentThread, J9ConstantPool *cons
 		}
 		interfaceClass = (J9Class*)localEntry.interfaceClass;
 		methodIndexAndArgCount = localEntry.methodIndexAndArgCount;
+	}
+	// TODO: Future work required to support private/Object in the JIT
+	if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_TAG_BITS)) {
+		interfaceClass = NULL;
 	}
 	*pITableIndex = methodIndexAndArgCount >> 8;
 done:

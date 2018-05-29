@@ -817,6 +817,24 @@ extern "C" {
 #define J9_CLASSLOADER_TYPE_BOOT		1
 #define J9_CLASSLOADER_TYPE_PLATFORM	2
 
+/* Tag bits for J9RAMInterfaceMethodRef->methodIndexAndArgCount:
+ *
+ *	J9_ITABLE_INDEX_METHOD_INDEX - index represents a direct method index
+ *	J9_ITABLE_INDEX_OBJECT		 - use Object rather than the targetted interfaceClass
+ *
+ * Private methods in interface will have only J9_ITABLE_INDEX_METHOD_INDEX set, indicating that
+ * the underlying index is a method index into the interfaceClass of the ref.
+ *
+ * vTable methods in Object will have only J9_ITABLE_INDEX_OBJECT set, indicating that
+ * the underlying index is a vTable index in Object.
+ *
+ * Non-vTable methods in Object will have J9_ITABLE_INDEX_OBJECT and J9_ITABLE_INDEX_METHOD_INDEX set,
+ * indicating that the underlying index is a method index in Object.
+ */
+#define J9_ITABLE_INDEX_METHOD_INDEX	((UDATA)1 << ((8 * sizeof(UDATA)) - 1))
+#define J9_ITABLE_INDEX_OBJECT			((UDATA)1 << ((8 * sizeof(UDATA)) - 2))
+#define J9_ITABLE_INDEX_TAG_BITS		(J9_ITABLE_INDEX_METHOD_INDEX | J9_ITABLE_INDEX_OBJECT)
+
 #ifdef __cplusplus
 }
 #endif
