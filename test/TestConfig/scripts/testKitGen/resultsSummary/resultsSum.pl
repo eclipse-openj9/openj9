@@ -23,6 +23,8 @@
 use strict;
 use warnings;
 use Data::Dumper;
+use File::Basename;
+use File::Path qw/make_path/;
 
 my $resultFile;
 my $failuremkarg;
@@ -119,15 +121,17 @@ sub resultReporter {
 		}
 
 		close $fhIn;
-
-		#generate tap output
-		if ($tapFile) {
-			open(my $fhOut, '>', $tapFile) or die "Cannot open file $tapFile!";
-			print $fhOut "1.." . $numOfTotal . "\n";
-			print $fhOut $tapString;
-			close $fhOut;
-		}
 	}
+
+	my $dir = dirname($tapFile);
+	if (!(-e $dir and -d $dir)) {
+		make_path($dir);
+	}
+	#generate tap output
+	open(my $fhOut, '>', $tapFile) or die "Cannot open file $tapFile!";
+	print $fhOut "1.." . $numOfTotal . "\n";
+	print $fhOut $tapString;
+	close $fhOut;
 
 	#generate console output
 	print "TEST TARGETS SUMMARY\n";
