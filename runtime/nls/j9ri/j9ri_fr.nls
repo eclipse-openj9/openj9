@@ -133,7 +133,7 @@ J9NLS_RI_GETRASINFO_CANT_ALLOCATE_COMP_BIT_MAP.user_response=Investigate process
 # END NON-TRANSLATABLE
 
 # RasInfo is not translatable
-J9NLS_RI_GETRASINFO_UNSUPPORTED_FIELD_TYPE=L'une des zones de type de la structure RasInfo n'est pas prise en charge.
+J9NLS_RI_GETRASINFO_UNSUPPORTED_FIELD_TYPE=L'un des champs de type de la structure RasInfo n'est pas pris en charge.
 # START NON-TRANSLATABLE
 J9NLS_RI_GETRASINFO_UNSUPPORTED_FIELD_TYPE.explanation=The request type in the RasInfo structure supplied as parameter to a JVMRI GetRasInfo call is invalid.
 J9NLS_RI_GETRASINFO_UNSUPPORTED_FIELD_TYPE.system_action=No action, JNI_EINVAL is returned.
@@ -149,7 +149,7 @@ J9NLS_RI_RELEASERASINFO_NULL_INFO_STRUCTURE.user_response=Correct the JVMRI Rele
 # END NON-TRANSLATABLE
 
 # jvmri->ReleaseRasInfo is not translatable
-J9NLS_RI_RELEASERASINFO_UNSUPPORTED_FIELD_TYPE=jvmri->ReleaseRasInfo : structure poss\u00e9dant une zone de type non prise en charge.
+J9NLS_RI_RELEASERASINFO_UNSUPPORTED_FIELD_TYPE=jvmri->ReleaseRasInfo : structure ayant un champ de type non pris en charge.
 # START NON-TRANSLATABLE
 J9NLS_RI_RELEASERASINFO_UNSUPPORTED_FIELD_TYPE.explanation=The request type in the RasInfo structure supplied as parameter to a JVMRI ReleaseRasInfo call is invalid.
 J9NLS_RI_RELEASERASINFO_UNSUPPORTED_FIELD_TYPE.system_action=No action, JNI_EINVAL is returned.
