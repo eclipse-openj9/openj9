@@ -144,8 +144,12 @@ public class AttachHandler extends Thread {
 		/*[PR Jazz 59196 LIR: Disable attach API by default on z/OS (31972)]*/
 		boolean enableAttach = true;
 		String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
-		if ((null != osName) && (osName.equalsIgnoreCase("z/OS"))) { //$NON-NLS-1$
-			enableAttach = false;
+		if (null != osName) {
+			if (osName.equalsIgnoreCase("z/OS")) { //$NON-NLS-1$
+				enableAttach = false;
+			} else if (osName.startsWith("Windows")) { //$NON-NLS-1$
+				IPC.isWindows = true;
+			}
 		}
 		/* the system property overrides the default */
 		String enableAttachProp = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("com.ibm.tools.attach.enable");  //$NON-NLS-1$
@@ -335,7 +339,9 @@ public class AttachHandler extends Thread {
 	 * @throws IOException if there is a problem reading the reply file.
 	 */
 	public Attachment connectToAttacher() throws IOException {
-		Reply attacherReply = Reply.readReply(TargetDirectory.getTargetDirectoryPath(AttachHandler.getVmId()));
+		String targetDirectoryPath = TargetDirectory.getTargetDirectoryPath(AttachHandler.getVmId());
+		IPC.checkOwnerAccessOnly(targetDirectoryPath);
+		Reply attacherReply = Reply.readReply(targetDirectoryPath);
 		Attachment at = null;
 		if (null != attacherReply) {
 			int portNumber = attacherReply.getPortNumber();

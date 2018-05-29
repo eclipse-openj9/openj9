@@ -189,7 +189,7 @@ public final class Advertisement {
 	 * This is called during initialization or after successful initialization only.
 	 * @param vmId ID of this VM
 	 * @param displayName display name of this VM
-	 * @throws IOException if cannot open the advertisement file
+	 * @throws IOException if cannot open the advertisement file or cannot delete an existing one
 	 */
 	static void createAdvertisementFile(String vmId, String displayName) throws IOException {
 
@@ -198,13 +198,13 @@ public final class Advertisement {
 			return;
 		}
 		File advertFile = TargetDirectory.getAdvertisementFileObject();
-		IPC.createFileWithPermissions(advertFile.getAbsolutePath(), TargetDirectory.ADVERTISEMENT_FILE_PERMISSIONS);
 		/* AttachHandler.terminate() will delete this file on shutdown */ 
-		FileOutputStream advertOutputStream = new FileOutputStream(advertFile);
-		try {
+		IPC.createNewFileWithPermissions(advertFile, TargetDirectory.ADVERTISEMENT_FILE_PERMISSIONS);
+		/* we have a brand new, empty file with correct ownership and permissions */
+		try (FileOutputStream advertOutputStream = new FileOutputStream(advertFile);){
 			StringBuilder advertContent = createAdvertContent(vmId, displayName);
 			if (null == advertContent) {
-				IPC.logMessage("createAdvertisementFile failed to create advertisement file : file objects null"); //$NON-NLS-1$
+				IPC.logMessage("createAdvertisementFile failed to create advertisement file : file object is null"); //$NON-NLS-1$
 				return;
 			}
 			
@@ -212,8 +212,6 @@ public final class Advertisement {
 			if (IPC.loggingEnabled ) {
 				IPC.logMessage("createAdvertisementFile ", advertFile.getAbsolutePath()); //$NON-NLS-1$
 			}
-		} finally {
-			advertOutputStream.close(); /* cleanup from findbugs */
 		}
 	}
 	
