@@ -20,7 +20,97 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+class Buildspec {
+    private List parents;
+    private my_def;
+    private String sdk_ver
+
+    private static boolean IsMap(x){
+        switch(x){
+        case Map:
+            return true
+        default:
+            return false
+        }
+    }
+    private GetNestedField(String full_name){
+        def names = full_name.split("\\.")
+        def value = my_def
+        // note we dont really want to find, but we use this as a verson of .each which we can abort
+        if (names.size() == 0){
+            return null
+        }
+        names.find { element_name ->
+            if (value.containsKey(element_name)){
+                value = value[element_name]
+                return false // continue iterating the list
+            } else {
+                value = null
+                return true // abort processing
+            }
+        }
+        return value
+    }
+
+    public GetScalarField(name){
+        def field = GetNestedField(name)
+        if(field == null){
+            field = parents.findResult {it.GetScalarField(name)}
+        }
+
+        // Does this entry specify different values for different sdk versions?
+        if (null != field && IsMap(field)){
+            // If we have an sdk specific value use that
+            if (field.containsKey(sdk_ver as int)){
+                field = field[sdk_ver as int]
+            } else {
+                //else fall back to the "all" key
+                field = field['all']
+            }
+        }
+        return field
+    }
+
+
+    public List GetVectorField(name) {
+        def field_value = []
+        parents.each { parent ->
+            field_value += parent.GetVectorField(name);
+        }
+        def my_value = GetNestedField(name)
+        if (my_value != null){
+            // Doe we specify different values for different SDK versions?
+            if (IsMap(my_value)){
+                // If there is an "all" definition put that first
+                if (my_value.containsKey('all')){
+                    field_value += my_value['all']
+                }
+                // If we have an SDK specific value, add that as well
+                if (my_value.containsKey(sdk_ver as int)) {
+                    field_value += my_value[sdk_ver as int]
+                }
+            } else {
+                field_value += my_value
+            }
+        }
+        return field_value
+    }
+
+    public Buildspec(build_defs, name, sdk){
+        sdk_ver = sdk
+        my_def = build_defs[name]
+        parents = []
+
+        if(my_def.containsKey('extends')) {
+            my_def['extends'].each { parent_name ->
+                parents << new Buildspec(build_defs, parent_name, sdk_ver)
+            }
+        }
+    }
+}
+
 def VARIABLES
+Buildspec BUILDSPEC
 
 /*
 * Parses the Jenkins job variables file and populates the VARIABLES collection.
@@ -45,6 +135,7 @@ def parse_variables_file(){
 
     echo "Using variables file: ${VARIABLE_FILE}"
     VARIABLES = readYaml file: "${VARIABLE_FILE}"
+    BUILDSPEC = new Buildspec(VARIABLES['buildspecs'], SPEC, SDK_VERSION)
 }
 
 /*
@@ -199,7 +290,7 @@ def get_user_credentials_id(KEY) {
 */
 def set_node(job_type) {
     // fetch labels for given platform/spec
-    NODE = (!params.NODE) ? get_value(VARIABLES."${SPEC}".node_labels."${job_type}", SDK_VERSION) : params.NODE
+    NODE = BUILDSPEC.GetScalarField("node_labels.${job_type}")
     if (!NODE) {
         error("Cannot find label value matching JOB_TYPE:'${job_type}' SPEC:'${SPEC}' and SDK_VERSION:'${SDK_VERSION}'")
     }
@@ -209,7 +300,7 @@ def set_node(job_type) {
 * Set the RELEASE variable with the value provided in the variables file.
 */
 def set_release() {
-    RELEASE = get_value(VARIABLES."${SPEC}".release, SDK_VERSION)
+    RELEASE = BUILDSPEC.GetScalarField('release')
 }
 
 /*
@@ -227,10 +318,10 @@ def set_build_variables() {
     set_repos_variables()
 
     // fetch values per spec and Java version from the variables file
-    BOOT_JDK = get_value(VARIABLES."${SPEC}".boot_jdk, SDK_VERSION)
-    FREEMARKER = VARIABLES."${SPEC}".freemarker
-    EXTRA_CONFIGURE_OPTIONS = get_value(VARIABLES."${SPEC}".extra_configure_options, SDK_VERSION)
-    OPENJDK_REFERENCE_REPO = VARIABLES."${SPEC}".openjdk_reference_repo
+    BOOT_JDK = BUILDSPEC.GetScalarField('boot_jdk')
+    FREEMARKER = BUILDSPEC.GetScalarField('freemarker')
+    EXTRA_CONFIGURE_OPTIONS = BUILDSPEC.GetVectorField('extra_configure_options').join(' ')
+    OPENJDK_REFERENCE_REPO = BUILDSPEC.GetScalarField('openjdk_reference_repo')
     set_release()
     set_jdk_folder()
 

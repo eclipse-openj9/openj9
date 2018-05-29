@@ -44,170 +44,122 @@ slack_channel: '#jenkins'
 build_job_prefix: 'Build-JDK-'
 sanity_job_prefix: 'Sanity-JDK-'
 extended_job_prefix: 'Extended-JDK-'
-#========================================#
-# Linux PPCLE 64bits Compressed Pointers
-#========================================#
-linux_ppc-64_cmprssptrs_le:
-  boot_jdk:
-    8: '/usr/lib/jvm/java-7-openjdk-ppc64el'
-    9: '/usr/lib/jvm/adoptojdk-java-ppc64le-80'
-    10: '/usr/lib/jvm/adoptojdk-java-ppc64le-90'
-  release:
-    8: 'linux-ppc64-normal-server-release'
-    9: 'linux-ppc64le-normal-server-release'
-    10: 'linux-ppc64le-normal-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'ppcle'
-      9: 'ppcle'
-      10: 'ppcle'
-    test:
-      8: 'ppcle'
-      9: 'ppcle'
-      10: 'ppcle'
-#========================================#
-# Linux PPCLE 64bits Compressed Pointers Valhalla Nestmates
-#========================================#
-linux_ppc-64_cmprssptrs_le_valhalla_nestmates:
-  boot_jdk:
-    10: '/usr/lib/jvm/adoptojdk-java-ppc64le-90'
-  release:
-    10: 'linux-ppc64le-normal-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      10: 'ppcle'
-    test:
-      10: 'ppcle'
-#========================================#
-# Linux S390 64bits Compressed Pointers
-# Note: boot_jdk 8 must use an Adopt JDK8 build rather than an 
-# IBM 7 for the bootJDK or compiling corba will fail to find Object.
-#========================================#
-linux_390-64_cmprssptrs:
-  boot_jdk:
-    8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
-    9: '/usr/lib/jvm/adoptojdk-java-s390x-80'
-    10: '/usr/lib/jvm/adoptojdk-java-s390x-90'
-  release:
-    8: 'linux-s390x-normal-server-release'
-    9: 'linux-s390x-normal-server-release'
-    10: 'linux-s390x-normal-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: '390'
-      9: '390'
-      10: '390'
-    test:
-      8: '390'
-      9: '390'
-      10: '390'
-#========================================#
-# AIX PPC 64bits Compressed Pointers
-#========================================#
-aix_ppc-64_cmprssptrs:
-  boot_jdk:
-    8: '/usr/java7'
-    9: '/usr/java8_64'
-    10: '/usr/java9_64'
-  release:
-    8: 'aix-ppc64-normal-server-release'
-    9: 'aix-ppc64-normal-server-release'
-    10: 'aix-ppc64-normal-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'aix'
-      9: 'aix'
-      10: 'aix'
-    test:
-      8: 'aix'
-      9: 'aix'
-      10: 'aix'
-  extra_configure_options:
-    8: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-ccache --with-jobs=8'
-    9: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
-    10: '--with-cups-include=/opt/freeware/include --with-extra-ldflags=-lpthread --with-extra-cflags=-lpthread --with-extra-cxxflags=-lpthread DF=/usr/sysv/bin/df --disable-warnings-as-errors --with-jobs=8'
-#========================================#
-# Linux x86 64bits Compressed Pointers
-#========================================#
-linux_x86-64_cmprssptrs:
-  boot_jdk:
-    8: '/usr/lib/jvm/java-7-openjdk-amd64'
-    9: '/usr/lib/jvm/adoptojdk-java-80'
-    10: '/usr/lib/jvm/adoptojdk-java-90'
-  release:
-    8: 'linux-x86_64-normal-server-release'
-    9: 'linux-x86_64-normal-server-release'
-    10: 'linux-x86_64-normal-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
-    test:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
-#========================================#
-# Linux x86 64bits Large Heap
-#========================================#
-linux_x86-64:
-  boot_jdk:
-    8: '/usr/lib/jvm/java-7-openjdk-amd64'
-    9: '/usr/lib/jvm/adoptojdk-java-80'
-    10: '/usr/lib/jvm/adoptojdk-java-90'
-  release:
-    8: 'linux-x86_64-normal-server-release'
-    9: 'linux-x86_64-normal-server-release'
-    10: 'linux-x86_64-normal-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
-    test:
-      8: 'hw.arch.x86 && sw.os.ubuntu.16'
-      9: 'hw.arch.x86 && sw.os.ubuntu.16'
-      10: 'hw.arch.x86 && sw.os.ubuntu.16'
-  extra_configure_options:
-    8: '--with-noncompressedrefs'
-    9: '--with-noncompressedrefs'
-    10: '--with-noncompressedrefs'
-#========================================#
-# Windows x86 64bits Compressed Pointers
-#========================================#
-win_x86-64_cmprssptrs:
-  boot_jdk:
-    8: '/cygdrive/c/openjdk/jdk7'
-    9: '/cygdrive/c/openjdk/jdk8'
-    10: '/cygdrive/c/openjdk/jdk9'
-  release:
-    8: 'windows-x86_64-normal-server-release'
-    9: 'windows-x86_64-normal-server-release'
-    10: 'windows-x86_64-normal-server-release'
-  freemarker: '/cygdrive/c/openjdk/freemarker.jar'
-  openjdk_reference_repo: 'C:\openjdk\openjdk_cache'
-  extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache'
-    9: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
-    10: '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-toolchain-version=2013 --disable-ccache'
-  node_labels:
-    build:
-      8: 'hw.arch.x86 && sw.os.windows'
-      9: 'hw.arch.x86 && sw.os.windows'
-      10: 'hw.arch.x86 && sw.os.windows'
-    test:
-      8: 'hw.arch.x86 && sw.os.windows'
-      9: 'hw.arch.x86 && sw.os.windows'
-      10: 'hw.arch.x86 && sw.os.windows'
+buildspecs:
+  base:
+    freemarker: '/home/jenkins/freemarker.jar'
+    openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  largeheap:
+    extra_configure_options:
+      - '--with-noncompressedrefs'
+  #========================================#
+  # Linux PPCLE 64bits Compressed Pointers
+  #========================================#
+  linux_ppc-64_cmprssptrs_le:
+    extends:
+      - 'base'
+    boot_jdk:
+      8: '/usr/lib/jvm/java-7-openjdk-ppc64el'
+      9: '/usr/lib/jvm/adoptojdk-java-ppc64le-80'
+      10: '/usr/lib/jvm/adoptojdk-java-ppc64le-90'
+    release:
+      8: 'linux-ppc64-normal-server-release'
+      9: 'linux-ppc64le-normal-server-release'
+      10: 'linux-ppc64le-normal-server-release'
+    node_labels:
+      build: 'ppcle'
+      test: 'ppcle'
+  #========================================#
+  # Linux PPCLE 64bits Compressed Pointers Valhalla Nestmates
+  #========================================#
+  linux_ppc-64_cmprssptrs_le_valhalla_nestmates:
+    extends:
+      - 'linux_ppc-64_cmprssptrs_le'
+  #========================================#
+  # Linux S390 64bits Compressed Pointers
+  # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
+  # IBM 7 for the bootJDK or compiling corba will fail to find Object.
+  #========================================#
+  linux_390-64_cmprssptrs:
+    extends:
+      - 'base'
+    boot_jdk:
+      8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
+      9: '/usr/lib/jvm/adoptojdk-java-s390x-80'
+      10: '/usr/lib/jvm/adoptojdk-java-s390x-90'
+    release: 'linux-s390x-normal-server-release'
+    node_labels:
+      build: '390'
+      test: '390'
+  #========================================#
+  # AIX PPC 64bits Compressed Pointers
+  #========================================#
+  aix_ppc-64_cmprssptrs:
+    boot_jdk:
+      8: '/usr/java7'
+      9: '/usr/java8_64'
+      10: '/usr/java9_64'
+    release: 'aix-ppc64-normal-server-release'
+    node_labels:
+      build: 'aix'
+      test: 'aix'
+    extra_configure_options:
+      all:
+        - '--with-cups-include=/opt/freeware/include'
+        - '-with-extra-ldflags=-lpthread'
+        - '--with-extra-cxxflags=-lpthread'
+        - 'DF=/usr/sysv/bin/df'
+        - '--with-jobs=8'
+      8:
+        - '--disable-ccache'
+      9:
+        - '--disable-warnings-as-errors'
+      10:
+        - '--disable-warnings-as-errors'
+  #========================================#
+  # Linux x86 64bits Compressed Pointers
+  #========================================#
+  linux_x86-64_cmprssptrs:
+    extends:
+      - 'base'
+    boot_jdk:
+      8: '/usr/lib/jvm/java-7-openjdk-amd64'
+      9: '/usr/lib/jvm/adoptojdk-java-80'
+      10: '/usr/lib/jvm/adoptojdk-java-90'
+    release: 'linux-x86_64-normal-server-release'
+    node_labels:
+      build: 'hw.arch.x86 && sw.os.ubuntu.16'
+      test: 'hw.arch.x86 && sw.os.ubuntu.16'
+  #========================================#
+  # Linux x86 64bits Large Heap
+  #========================================#
+  linux_x86-64:
+    extends:
+      - 'linux_x86-64_cmprssptrs'
+      - 'largeheap'
+  #========================================#
+  # Windows x86 64bits Compressed Pointers
+  #========================================#
+  win_x86-64_cmprssptrs:
+    extends:
+      - 'base'
+    boot_jdk:
+      8: '/cygdrive/c/openjdk/jdk7'
+      9: '/cygdrive/c/openjdk/jdk8'
+      10: '/cygdrive/c/openjdk/jdk9'
+    release: 'windows-x86_64-normal-server-release'
+    freemarker: '/cygdrive/c/openjdk/freemarker.jar'
+    extra_configure_options:
+      all:
+        - '--disable-ccache'
+      8:
+        - '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include'
+        - '--with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64'
+      9:
+        - '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3'
+        - '--with-toolchain-version=2013'
+      10:
+        - '--with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3'
+        - '--with-toolchain-version=2013'
+    node_labels:
+      build: 'hw.arch.x86 && sw.os.windows'
+      test: 'hw.arch.x86 && sw.os.windows'
