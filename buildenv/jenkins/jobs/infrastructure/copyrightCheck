@@ -85,7 +85,7 @@ timeout(time: 6, unit: 'HOURS') {
                                      }
 
                                      if (!item.contains(".")){
-                                         regexsElm = regexsElm + ".*"
+                                         regexsElm = regexsElm + /\// + ".*" + /|$/
                                      }
 
                                  } else if (!item.startsWith("/") && item.lastIndexOf("/")!=0 && item.contains("/")){
