@@ -1155,36 +1155,6 @@ J9::PersistentInfo::ensureUnloadedAddressSetsAreInitialized()
       _unloadedClassAddresses  = new (PERSISTENT_NEW) TR_AddressSet(_persistentMemory, maxUnloadedAddressRanges);
       _unloadedMethodAddresses = new (PERSISTENT_NEW) TR_AddressSet(_persistentMemory, maxUnloadedAddressRanges);
 
-      static const char *testUnloadedAddressRanges = feGetEnv("TR_testUnloadedAddressRanges");
-      if (testUnloadedAddressRanges)
-         {
-         ::FILE *input = fopen(testUnloadedAddressRanges, "r");
-
-         uint32_t classAddress, methodsStart, methodsSize;
-         int numFields;
-         while (EOF != (numFields = fscanf(input, "%x %x %d;\n", &classAddress, &methodsStart, &methodsSize)))
-            {
-            switch (numFields)
-               {
-               case 3:
-                  addUnloadedClass((TR_OpaqueClassBlock*)(uintptr_t)classAddress, methodsStart, methodsSize);
-                  break;
-               case 1:
-                  fprintf(stderr, "UAR TEST: 0x%08X %c%c\n", classAddress,
-                     isUnloadedClass((void*)classAddress, true)? 'C':'-',
-                     isInUnloadedMethod(classAddress)?           'M':'-');
-                  fscanf(input, "%*s;\n"); // Eat until the next semicolon
-                  break;
-               default:
-                  fprintf(stderr, "UAR TEST: Error scanning line; fscanf returned %d\n", numFields);
-                  fscanf(input, "%*s;\n"); // Eat until the next semicolon
-                  break;
-               }
-            }
-
-         fclose(input);
-         }
-
       return _unloadedClassAddresses && _unloadedMethodAddresses;
       }
    }
