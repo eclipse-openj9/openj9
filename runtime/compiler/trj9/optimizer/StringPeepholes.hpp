@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,7 +89,7 @@ class TR_StringPeepholes : public TR::Optimization
    TR::TreeTop *detectBDPattern(TR::Block *block, TR::TreeTop *tt, TR::Node *node);
    TR::TreeTop *detectFormatPattern(TR::TreeTop *tt, TR::TreeTop *exit, TR::Node *node);
    TR::TreeTop *detectSubMulSetScalePattern(TR::TreeTop *tt, TR::TreeTop *exit, TR::Node *node);
-   TR::SymbolReference *findSymRefForValueOf(const char *sig, int len);
+   TR::SymbolReference *findSymRefForValueOf(const char *sig);
 
    bool checkMethodSignature(TR::SymbolReference *symRef, const char *sig);
    TR::TreeTop *searchForStringAppend(const char *sig, TR::TreeTop *tt, TR::TreeTop *exitTree,

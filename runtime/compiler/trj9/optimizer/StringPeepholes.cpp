@@ -324,7 +324,7 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
          if (len == 22 && !strncmp(className, "java/lang/StringBuffer",  22))
             {
             if (trace())
-               printf("--stringbuffer-- in %s\n", comp()->signature());
+               traceMsg(comp(), "--stringbuffer-- in %s\n", comp()->signature());
 
             TR::TreeTop *newTree = detectPattern(block, tt, true);
             if (newTree)
@@ -333,7 +333,7 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
          else if (len == 23 && !strncmp(className, "java/lang/StringBuilder", 23))
             {
             if (trace())
-               printf("--stringbuilder-- in %s\n", comp()->signature());
+               traceMsg(comp(), "--stringbuilder-- in %s\n", comp()->signature());
 
             TR::TreeTop *newTree = detectPattern(block, tt, false);
             if (newTree)
@@ -1740,7 +1740,7 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
             {
             pattern[stringCount] = 'I';
             if (!_valueOfISymRef)  // try to find the symbol ref for String.valueOf
-               _valueOfISymRef = findSymRefForValueOf("(I)", 3);
+               _valueOfISymRef = findSymRefForValueOf("(I)Ljava/lang/String;");
             valueOfSymRef[stringCount] = _valueOfISymRef;
             }
          else if (strncmp(m->signatureChars(), "(Ljava/lang/String;)", 20) == 0)
@@ -1761,35 +1761,35 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
                {
                pattern[stringCount] = 'C';
                if (!_valueOfCSymRef)  // try to find the symbol ref for String.valueOf
-                  _valueOfCSymRef = findSymRefForValueOf("(C)", 3);
+                  _valueOfCSymRef = findSymRefForValueOf("(C)Ljava/lang/String;");
                symRefForValueOf = _valueOfCSymRef;
                }
             else if (sig[1]=='I' && sig[2]==')')
                {
                pattern[stringCount] = 'I';
                if (!_valueOfISymRef)  // try to find the symbol ref for String.valueOf
-                  _valueOfISymRef = findSymRefForValueOf("(I)", 3);
+                  _valueOfISymRef = findSymRefForValueOf("(I)Ljava/lang/String;");
                symRefForValueOf = _valueOfISymRef;
                }
             else if (strncmp(sig, "(Ljava/lang/Object;)", 20)==0)
                {
                pattern[stringCount] = 'O';
                if (!_valueOfOSymRef)  // try to find the symbol ref for String.valueOf
-                  _valueOfOSymRef = findSymRefForValueOf("(Ljava/lang/Object;)", 20);
+                  _valueOfOSymRef = findSymRefForValueOf("(Ljava/lang/Object;)Ljava/lang/String;");
                symRefForValueOf = _valueOfOSymRef;
                }
             else if (sig[1]=='Z' && sig[2]==')')
                {
                pattern[stringCount] = 'Z';
                if (!_valueOfZSymRef)  // try to find the symbol ref for String.valueOf
-                  _valueOfZSymRef = findSymRefForValueOf("(Z)", 3);
+                  _valueOfZSymRef = findSymRefForValueOf("(Z)Ljava/lang/String;");
                symRefForValueOf = _valueOfZSymRef;
                }
             else if (sig[1]=='J' && sig[2]==')')
                {
                pattern[stringCount] = 'J';
                if (!_valueOfJSymRef)  // try to find the symbol ref for String.valueOf
-                  _valueOfJSymRef = findSymRefForValueOf("(J)", 3);
+                  _valueOfJSymRef = findSymRefForValueOf("(J)Ljava/lang/String;");
                symRefForValueOf = _valueOfJSymRef;
                }
             else // some other type of append
@@ -2054,19 +2054,13 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
    }
 
 
-TR::SymbolReference *TR_StringPeepholes::findSymRefForValueOf(const char *sig, int len)
+TR::SymbolReference *TR_StringPeepholes::findSymRefForValueOf(const char *sig)
    {
    // try to find the symbol ref for String.valueOf
-   TR_OpaqueClassBlock *stringClass = comp()->getStringClassPointer();//comp()->fej9()->getClassFromSignature("java/lang/String", 16, comp()->getCurrentMethod());
+   TR_OpaqueClassBlock *stringClass = comp()->getStringClassPointer();
    TR_ASSERT(stringClass, "stringClass cannot be 0 because we did this before in init\n");
-   TR_ScratchList<TR_ResolvedMethod> stringMethods(trMemory());
-   comp()->fej9()->getResolvedMethods(trMemory(), stringClass, &stringMethods);
-   ListIterator<TR_ResolvedMethod> it(&stringMethods);
-
-   for (TR_ResolvedMethod *method = it.getCurrent(); method; method = it.getNext())
-      if (!strncmp(method->nameChars(), "valueOf", 7) && !strncmp(method->signatureChars(), sig, len))
-         return getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1, method, TR::MethodSymbol::Static);
-   return 0;
+   TR_ResolvedMethod *method = comp()->fej9()->getResolvedMethodForNameAndSignature(trMemory(), stringClass, "valueOf", sig);
+   return method ? getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1, method, TR::MethodSymbol::Static) : NULL;
    }
 
 

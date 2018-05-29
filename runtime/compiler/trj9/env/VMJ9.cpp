@@ -6508,7 +6508,7 @@ TR_J9VMBase::getByteCodeName(uint8_t opcode)
 void
 TR_J9VMBase::getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass)
    {
-   TR::VMAccessCriticalSection getResolvedMethods(this);
+   TR::VMAccessCriticalSection getResolvedMethods(this); // Prevent HCR
    J9Method * resolvedMethods = (J9Method *) getMethods(classPointer);
    uint32_t i;
    uint32_t numMethods = getNumMethods(classPointer);
@@ -6517,6 +6517,43 @@ TR_J9VMBase::getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * clas
       resolvedMethodsInClass->add(createResolvedMethod(trMemory, (TR_OpaqueMethodBlock *) &(resolvedMethods[i]), 0));
       }
    }
+
+
+TR_ResolvedMethod *
+TR_J9VMBase::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer,
+                                                  const char* methodName, const char *signature)
+   {
+   TR::VMAccessCriticalSection vmCS(this); // Prevent HCR
+   TR_ResolvedMethod *rm = NULL;
+   size_t nameLength = strlen(methodName);
+   size_t sigLength = strlen(signature);
+
+   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(classPointer);
+   J9Method *j9Methods = (J9Method *)getMethods(classPointer);
+   uint32_t numMethods = getNumMethods(classPointer);
+
+   J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
+
+   // Iterate over all romMethods until the desired one is found
+   for (uint32_t i = 0; i < numMethods; i++)
+      {
+      J9UTF8 *mName = J9ROMMETHOD_GET_NAME(romClass, romMethod);
+      J9UTF8 *mSig = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+      if (J9UTF8_LENGTH(mName) == nameLength &&
+         J9UTF8_LENGTH(mSig) == sigLength &&
+         memcmp(utf8Data(mName), methodName, nameLength) == 0 &&
+         memcmp(utf8Data(mSig), signature, sigLength) == 0)
+         {
+         rm = createResolvedMethod(trMemory, (TR_OpaqueMethodBlock *)(j9Methods + i), 0);
+         break;
+         }
+      romMethod = nextROMMethod(romMethod);
+      }
+
+   return rm;
+   }
+
+
 
 void *
 TR_J9VMBase::getMethods(TR_OpaqueClassBlock * classPointer)
@@ -8694,6 +8731,20 @@ TR_J9SharedCacheVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock 
    if (((TR_ResolvedRelocatableJ9Method *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
       TR_J9VM::getResolvedMethods(trMemory, classPointer, resolvedMethodsInClass);
    }
+
+
+TR_ResolvedMethod *
+TR_J9SharedCacheVM::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer,
+                                                         const char* methodName, const char *signature)
+   {
+   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+   if (((TR_ResolvedRelocatableJ9Method *)comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *)classPointer))
+      return TR_J9VM::getResolvedMethodForNameAndSignature(trMemory, classPointer, methodName, signature);
+   else
+      return NULL;
+   }
+
 
 TR_OpaqueMethodBlock *
 TR_J9SharedCacheVM::getMethodFromName(char *className, char *methodName, char *signature, TR_OpaqueMethodBlock *callingMethod)
