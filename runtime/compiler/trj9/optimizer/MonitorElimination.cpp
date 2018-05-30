@@ -1474,7 +1474,7 @@ void TR::MonitorElimination::transformMonitorsIntoTMRegions()
          TR::Node *monentNode = nullChkNode->getFirstChild();
          TR::Node *passThroughNode = TR::Node::create(nullChkNode, TR::PassThrough, 1, monentNode->getFirstChild());
          TR::TreeTop *nullchkTree = TR::TreeTop::create(comp(), nullChkNode);
-         nullChkNode->setFirst(passThroughNode);
+         nullChkNode->setAndIncChild(0, passThroughNode);
          monitor->getMonitorTree()->insertBefore(nullchkTree);
          debugTrace(tracer(), "\tMoving monent to TT and dec ref count", nullchkTree, nullchkTree->getNode());
          monitor->getMonitorTree()->setNode(monentNode);
