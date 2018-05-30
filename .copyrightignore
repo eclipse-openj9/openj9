@@ -24,7 +24,7 @@
 **/jobs/**#comment
 /doc
 *job*
-*.ignore
+#*.ignore
 /*.ignore
 /debugtools/**/*.ignore
 **/jobs/**/pipelines/
