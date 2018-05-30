@@ -628,7 +628,20 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
       TR_ASSERT(node->getSecondChild()->getOpCode().isLoadConst(), "Expecting const child \n");
 
       int32_t arrayClassIndex = node->getSecondChild()->getInt();
-      clazz = (J9Class *)self()->fej9()->getClassFromNewArrayType(arrayClassIndex);
+
+      // TEMP HACK: getClassFromNewArrayType returns null under AOT because primitive array classes
+      // are not in the SCC. However, here we require that the array class is actually resolved.
+      // VP requires that getClassFromNewArrayType returns null under AOT for some reason so we cannot
+      // just always resolve it.
+      if (TR::CompilationInfo::getStream())
+         {
+         clazz = (J9Class *)self()->fej9()->getClassFromNewArrayType(arrayClassIndex);
+         }
+      else
+         {
+         struct J9Class ** arrayClasses = &self()->fej9()->getJ9JITConfig()->javaVM->booleanArrayClass;
+         clazz = arrayClasses[arrayClassIndex - 4];
+         }
 
       if (node->getFirstChild()->getOpCodeValue() != TR::iconst)
          {
