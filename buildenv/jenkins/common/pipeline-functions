@@ -112,7 +112,7 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
     }
 }
 
-def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE) {
+def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, OPENJ9_SHA) {
     stage ("${JOB_NAME}") {
         return build_with_slack(JOB_NAME,
             [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME),
@@ -121,7 +121,8 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VA
             string(name: 'VENDOR_REPO', value: VENDOR_REPO),
             string(name: 'VENDOR_BRANCH', value: VENDOR_BRANCH),
             string(name: 'VENDOR_CREDENTIALS_ID', value: VENDOR_CREDENTIALS_ID),
-            string(name: 'NODE', value: NODE)])
+            string(name: 'NODE', value: NODE),
+            string(name: 'OPENJ9_SHA', value: OPENJ9_SHA)])
     }
 }
 
@@ -160,24 +161,49 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
     echo "JOB: ${BUILD_JOB_NAME} PASSED in: ${jobs['build'].getDurationString()}"
 
     if (TESTS_TARGETS.trim() != "none") {
-        def TEST_JOB_NAME
-        levels = TESTS_TARGETS.split(",")
-        levels.each { level ->
-            switch (level.trim().toLowerCase()) {
+        def testjobs = [:]
+        def TARGET_NAMES = [:]
+
+        def targets = TESTS_TARGETS.split(",")
+        targets.each { target ->
+            switch (target.trim().toLowerCase()) {
+                // Due to the following reason, OpenJ9 test pipelines are still used temporarily: 
+                //  - waiting for wins machine configuration to be finalized (https://github.com/AdoptOpenJDK/openjdk-tests/issues/407)
+                //  - there is no need to enable JDK9 as it is not supported anymore (https://github.com/eclipse/openj9/issues/2020)
+                //  - switch to use AdoptOpenJDK test pipelines for JDK8 and we will switch for JDK10 next step
+                //  - OpenJ9 test pipelines will be completely removed once we switch to use AdoptOpenJDK test pipelines
                 case "_sanity":
-                    TEST_JOB_NAME = "Test-Sanity-JDK${SDK_VERSION}-${SPEC}"
+                    if (SPEC.contains("win") || SDK_VERSION == "9") || SDK_VERSION == "10") {
+                        TARGET_NAMES = ["Sanity"]
+                    } else {
+                        TARGET_NAMES = ["Sanity", "sanity.functional", "sanity.system"]
+                    }
                     break
                 case "_extended":
-                    TEST_JOB_NAME = "Test-Extended-JDK${SDK_VERSION}-${SPEC}"
+                    if (SPEC.contains("win") || SDK_VERSION == "9" || SDK_VERSION == "10") {
+                        TARGET_NAMES = ["Extended"]
+                    } else {
+                        TARGET_NAMES = ["Extended", "extended.functional"]
+                    }
+                    break
+                // temporary for OMR acceptance. This should be removed once we completely switch to AdoptOpenJDK test Jenkins file
+                case "_sanity.tmp":
+                    TARGET_NAMES = ["Sanity"]
                     break
                 default:
-                    error("Unknown test target: ${level}")
+                    TARGET_NAMES = ["${target}"]
             }
 
-            // run tests against the SDK build in the upstream job: Build-JDK${SDK_VERSION}-${SPEC}
-            jobs["${level}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE)
-            echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[level].getDurationString()}"
+            for ( name in TARGET_NAMES ) {
+                def TEST_JOB_NAME = "Test-${name}-JDK${SDK_VERSION}-${SPEC}"
+                testjobs["${TEST_JOB_NAME}"] = {
+                    // run tests against the SDK build in the upstream job: Build-JDK${SDK_VERSION}-${SPEC}
+                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, SHAS['OPENJ9'])
+                    echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[${TEST_JOB_NAME}].getDurationString()}"
+                }
+            }
         }
+        parallel testjobs
     }
 
     // return jobs for further reference

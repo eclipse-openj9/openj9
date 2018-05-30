@@ -33,7 +33,7 @@ def OPENJ9_BRANCH = 'master'
 def OMR_REPO = 'https://github.com/eclipse/openj9-omr.git'
 def OMR_BRANCH = 'master'
 
-TESTS_TARGETS = '_sanity'
+TESTS_TARGETS = '_sanity.tmp'
 
 def JOBS = [:]
 def ALL_SHAS = [:]
