@@ -4351,7 +4351,20 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
          {
          TR_ASSERT(allocationNode->getSecondChild()->getOpCode().isLoadConst(), "Expecting const child \n");
          int32_t arrayClassIndex = allocationNode->getSecondChild()->getInt();
-         ramClass = getClassFromNewArrayType(arrayClassIndex);
+
+         // TEMP HACK: getClassFromNewArrayType returns null under AOT because primitive array classes
+         // are not in the SCC. However, here we require that the array class is actually resolved.
+         // VP requires that getClassFromNewArrayType returns null under AOT for some reason so we cannot
+         // just always resolve it.
+         if (TR::CompilationInfo::getStream())
+            {
+            ramClass = getClassFromNewArrayType(arrayClassIndex);
+            }
+         else
+            {
+            struct J9Class ** arrayClasses = &getJ9JITConfig()->javaVM->booleanArrayClass;
+            ramClass = (TR_OpaqueClassBlock*) arrayClasses[arrayClassIndex - 4];
+            }
          }
          break;
 
@@ -8735,7 +8748,8 @@ TR_J9SharedCacheVM::getClassFromNewArrayType(int32_t arrayType)
    // TODO: This needs to return null because for some reason VP depends on it.
    // It may be that this is just done because rememberClass is broken and can't 
    // handle arrays of primitives.
-   // If you change this, please update the TEMP HACK in J9Compilation.cpp as well.
+   // If you change this, please update the TEMP HACK in J9Compilation.cpp
+   // and in initializeLocalArrayHeader as well.
    return NULL;
    }
 
