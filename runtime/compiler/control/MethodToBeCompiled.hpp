@@ -118,6 +118,8 @@ struct TR_MethodToBeCompiled
    bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
    uint8_t                _jitStateWhenQueued;
    JITaaS::J9ServerStream  *_stream; // a non-NULL field denotes a remote compilation request
+   char                  *_clientOptions;
+   size_t                _clientOptionsSize;
    }; // TR_MethodToBeCompiled
 
 

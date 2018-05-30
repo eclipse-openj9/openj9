@@ -2232,14 +2232,14 @@ J9::Options::fePostProcessJIT(void * base)
       self()->setOption(TR_DisableOSR);
       self()->setOption(TR_DisableProfiling); // JITaaS limitation, JIT profiling data is not available to remote compiles yet
       self()->setOption(TR_DisableEDO); // JITaaS limitation, EDO counters are not relocatable yet
+      self()->setOption(TR_DisableKnownObjectTable);
+      self()->setOption(TR_DisableMethodIsCold); // shady heuristic; better to disable to reduce client/server traffic
+
       if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
          {
-         self()->setOption(TR_DisableKnownObjectTable);
          // The server can compile with VM access in hand because GC is not a factor here
          // For the same reason we don't have to use TR_EnableYieldVMAccess
          self()->setOption(TR_DisableNoVMAccess); 
-
-         self()->setOption(TR_DisableMethodIsCold); // shady heuristic; better to disable to reduce client/server traffic
          }
       }
 
@@ -2623,6 +2623,107 @@ J9::Options::printPID()
    ((TR_J9VMBase *)_fe)->printPID();
    }
 
+// Packs a TR::Options object into a std::string to be transfered to the server
+std::string
+J9::Options::packOptions(TR::Options *origOptions)
+   {
+   size_t logFileNameLength = 0;
+   size_t suffixLogsFormatLength = 0;
+   size_t blockShufflingSequenceLength = 0;
+   size_t induceOSRLength = 0;
+
+   if (origOptions->_logFileName)
+      logFileNameLength = strlen(origOptions->_logFileName) + 1;
+   if (origOptions->_suffixLogsFormat)
+      suffixLogsFormatLength = strlen(origOptions->_suffixLogsFormat) + 1;
+   if (origOptions->_blockShufflingSequence)
+      blockShufflingSequenceLength = strlen(origOptions->_blockShufflingSequence) + 1;
+   if (origOptions->_induceOSR)
+      induceOSRLength = strlen(origOptions->_induceOSR) + 1;
+
+   size_t totalSize = sizeof(TR::Options) + logFileNameLength + suffixLogsFormatLength + blockShufflingSequenceLength + induceOSRLength;
+
+   std::string optionsStr(totalSize, '\0');
+   TR::Options * options = (TR::Options *)optionsStr.data();
+   memcpy(options, origOptions, sizeof(TR::Options));
+
+   options->_optionSets = NULL;
+   options->_startOptions = NULL;
+   options->_envOptions = NULL;
+   options->_logFile = NULL;
+   options->_optFileName = NULL;
+   options->_customStrategy = NULL;
+   options->_customStrategySize = 0;
+   options->_countString = NULL;
+   options->_traceForCodeMining = NULL;
+   options->_disabledOptTransformations = NULL;
+   options->_disabledInlineSites = NULL;
+   options->_disabledOpts = NULL;
+   options->_optsToTrace = NULL;
+   options->_dontInline = NULL;
+   options->_onlyInline = NULL;
+   options->_tryToInline = NULL;
+   options->_slipTrap = NULL;
+   options->_lockReserveClass = NULL;
+   options->_breakOnOpts = NULL;
+   options->_breakOnCreate = NULL;
+   options->_debugOnCreate = NULL;
+   options->_breakOnThrow = NULL;
+   options->_breakOnPrint = NULL;
+   options->_enabledStaticCounterNames = NULL;
+   options->_enabledDynamicCounterNames = NULL;
+   options->_counterHistogramNames = NULL;
+   options->_verboseOptTransformationsRegex = NULL;
+   options->_packedTest = NULL;
+   options->_memUsage = NULL;
+   options->_classesWithFolableFinalFields = NULL;
+   options->_disabledIdiomPatterns = NULL;
+   options->_osVersionString = NULL;
+   options->_logListForOtherCompThreads = NULL;
+   options->_objectFileName = NULL;
+
+
+   uint8_t *curPos = ((uint8_t *)options) + sizeof(TR::Options);
+   curPos = appendContent(options->_logFileName, curPos, logFileNameLength);
+   curPos = appendContent(options->_suffixLogsFormat, curPos, suffixLogsFormatLength);
+   curPos = appendContent(options->_blockShufflingSequence, curPos, blockShufflingSequenceLength);
+   curPos = appendContent(options->_induceOSR, curPos, induceOSRLength);
+
+   return optionsStr;
+   }
+
+TR::Options *
+J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Memory *trMemory)
+   {
+   TR::Options *options = (TR::Options *)trMemory->allocateHeapMemory(clientOptionsSize);
+   memcpy(options, clientOptions, clientOptionsSize);
+
+   // convert relative pointers to absolute pointers
+   // pointer = address of field + offset
+   if (options->_logFileName)
+      options->_logFileName = (char *)((uint8_t *)&(options->_logFileName) + (ptrdiff_t)options->_logFileName);
+   if (options->_suffixLogsFormat)
+      options->_suffixLogsFormat = (char *)((uint8_t *)&(options->_suffixLogsFormat) + (ptrdiff_t)options->_suffixLogsFormat);
+   if (options->_blockShufflingSequence)
+      options->_blockShufflingSequence = (char *)((uint8_t *)&(options->_blockShufflingSequence) + (ptrdiff_t)options->_blockShufflingSequence);
+   if (options->_induceOSR)
+      options->_induceOSR = (char *)((uint8_t *)&(options->_induceOSR) + (ptrdiff_t)options->_induceOSR);
+
+   return options;
+   }
+
+uint8_t *
+J9::Options::appendContent(char * &charPtr, uint8_t * curPos, size_t length)
+   {
+   if (charPtr == NULL)
+      return curPos;
+   // copies charPtr's content to the location pointed by curPos
+   memcpy(curPos, charPtr, length);
+   // then compute the offset from address of charPtr to curPos and store it to charPtr
+   charPtr = (char *)(curPos - (uint8_t *)&(charPtr));
+   // update current position
+   return curPos += length;
+   }
 
 #if 0
 char*

@@ -313,6 +313,11 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static char *inlinefileOption(char *option, void *, TR::OptionTable *entry);
    static char *limitfileOption(char *option, void *, TR::OptionTable *entry);
    static char *versionOption(char *option, void *, TR::OptionTable *entry);
+
+   static std::string packOptions(TR::Options *origOptions);
+   static TR::Options *unpackOptions(char *clientOptions, size_t clientOptionsSize, TR_Memory *trMemory);
+   static uint8_t *appendContent(char * &charPtr, uint8_t * curPos, size_t length);
+
    bool  fePreProcess(void *base);
    bool  fePostProcessAOT(void *base);
    bool  fePostProcessJIT(void *base);

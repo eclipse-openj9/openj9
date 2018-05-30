@@ -27,6 +27,7 @@
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "j9.h"
 #include "rpc/J9Server.hpp" // for _stream
+#include "control/CompilationThread.hpp"
 
 int16_t TR_MethodToBeCompiled::_globalIndex = 0;
 
@@ -81,6 +82,8 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
 
    _stream = nullptr;
    _methodIsInSharedCache = TR_maybe;
+   _clientOptions = nullptr;
+   _clientOptionsSize = 0;
 
    TR_ASSERT_FATAL(_freeTag & ENTRY_IN_POOL_FREE, "initializing an entry which is not free");
 
@@ -90,6 +93,14 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
 void
 TR_MethodToBeCompiled::shutdown()
    {
+   // JITaaS: clean up c-style string client options which was allocated using persistent allocator
+   if (_clientOptions)
+      {
+      _compInfoPT->getCompilationInfo()->persistentMemory()->freePersistentMemory((void *)_clientOptions);
+      _clientOptions = NULL;
+      _clientOptionsSize = 0;
+      }
+
    TR::MonitorTable *table = TR::MonitorTable::get();
    if (!table) return;
    table->removeAndDestroy(_monitor);

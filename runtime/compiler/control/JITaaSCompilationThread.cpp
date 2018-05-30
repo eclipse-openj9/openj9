@@ -1989,6 +1989,7 @@ remoteCompile(
    J9Method *methodsOfClass = (J9Method*) compiler->fej9vm()->getMethods((TR_OpaqueClassBlock*) clazz);
    int32_t numDims = 0;
    TR_OpaqueClassBlock *baseComponentClass = compiler->fej9vm()->getBaseComponentClass((TR_OpaqueClassBlock *)clazz, numDims);
+   std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
 
    JITaaS::J9ClientStream client(compInfo->getPersistentInfo()->getJITaaSServerAddress(),
                                  compInfo->getPersistentInfo()->getJITaaSServerPort(),
@@ -2007,7 +2008,7 @@ remoteCompile(
 
       client.buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romClassStr, romMethodOffset, 
                                  method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), 
-                                 unloadedClasses, methodsOfClass, baseComponentClass, numDims);
+                                 unloadedClasses, methodsOfClass, baseComponentClass, numDims, optionsStr);
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
       if (compInfoPT->compilationShouldBeInterrupted())

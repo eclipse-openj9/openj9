@@ -37,7 +37,8 @@ static void doRemoteCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
    J9Method* ramMethod, J9Class *clazz, JITaaS::J9ServerStream *rpc, TR_Hotness optLevel,
    TR::IlGeneratorMethodDetails *clientDetails,
    J9::IlGeneratorMethodDetailsType methodDetailsType,
-   J9Method *methodsOfClass)
+   J9Method *methodsOfClass,
+   char *clientOptions, size_t clientOptionsSize)
    {
    J9UTF8 *methodNameUTF = J9ROMNAMEANDSIGNATURE_NAME(&romMethod->nameAndSignature);
    std::string methodNameStr((const char*)methodNameUTF->data, (size_t)methodNameUTF->length);
@@ -78,7 +79,7 @@ static void doRemoteCompile(J9JITConfig* jitConfig, J9VMThread* vmThread,
          TR::IlGeneratorMethodDetails details;
          *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
          TR::IlGeneratorMethodDetails &remoteDetails = details.createRemoteMethodDetails(*clientDetails, methodDetailsType, ramMethod, romClass, romMethod, clazz, methodsOfClass);
-         result = (IDATA)compInfo->compileRemoteMethod(vmThread, remoteDetails, romMethod, romClass, 0, &compErrCode, &queued, plan, rpc);
+         result = (IDATA)compInfo->compileRemoteMethod(vmThread, remoteDetails, romMethod, romClass, 0, &compErrCode, &queued, plan, rpc, clientOptions, clientOptionsSize);
 
          if (newPlanCreated)
             {
@@ -136,7 +137,7 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
       {
       auto req = stream->read<uint64_t, std::string, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string, 
                               J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>, J9Method*,
-                              TR_OpaqueClassBlock *, int32_t>();
+                              TR_OpaqueClassBlock *, int32_t, std::string>();
 
       PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
       TR_J9VMBase *fej9 = TR_J9VMBase::get(_jitConfig, _vmThread);
@@ -158,6 +159,12 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
       J9Method *methodsOfClass = std::get<9>(req);
       TR_OpaqueClassBlock *baseComponentClass = std::get<10>(req);
       int32_t numDims = std::get<11>(req);
+      std::string clientOptionsStr = std::get<12>(req);
+
+      size_t clientOptionsSize = clientOptionsStr.size();
+      char * clientOptions = new (PERSISTENT_NEW) char[clientOptionsSize];
+      memcpy(clientOptions, clientOptionsStr.data(), clientOptionsSize);
+
       // If new classes have been unloaded at the client, 
       // delete relevant entries from the persistent caches we hold per client
       //if (unloadedClasses.size() != 0)
@@ -177,7 +184,7 @@ void J9CompileDispatcher::compile(JITaaS::J9ServerStream *stream)
             }
          }
 
-      doRemoteCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType, methodsOfClass);
+      doRemoteCompile(_jitConfig, _vmThread, romClass, romMethod, ramMethod, clazz, stream, opt, details, detailsType, methodsOfClass, clientOptions, clientOptionsSize);
       }
    catch (const JITaaS::StreamFailure &e)
       {

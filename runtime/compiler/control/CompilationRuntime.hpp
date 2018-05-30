@@ -620,7 +620,7 @@ public:
    TR_MethodToBeCompiled *requestExistsInCompilationQueue(TR::IlGeneratorMethodDetails & details, TR_FrontEnd *fe);
 
    TR_MethodToBeCompiled *addMethodToBeCompiled(TR::IlGeneratorMethodDetails &details, void *pc, CompilationPriority priority,
-      bool async, TR_OptimizationPlan *optPlan, bool *queued, TR_YesNoMaybe methodIsInSharedCache, void *extra = nullptr);
+      bool async, TR_OptimizationPlan *optPlan, bool *queued, TR_YesNoMaybe methodIsInSharedCache, void *extra = nullptr, char *clientOptions = nullptr, size_t clientOptionsSize = 0);
 
    void                   queueEntry(TR_MethodToBeCompiled *entry);
    void                   recycleCompilationEntry(TR_MethodToBeCompiled *cur);
@@ -653,7 +653,7 @@ public:
    void *compileRemoteMethod(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details,
                              const J9ROMMethod *romMethod, const J9ROMClass* romClass,
                              void *oldStartPC, TR_CompilationErrorCode *compErrCode,
-                             bool *queued, TR_OptimizationPlan * optimizationPlan, void *extra);
+                             bool *queued, TR_OptimizationPlan * optimizationPlan, void *extra, char *clientOptions, size_t clientOptionsSize);
    void *compileOnApplicationThread(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
                                     TR_CompilationErrorCode *,
                                     TR_OptimizationPlan *optPlan);
