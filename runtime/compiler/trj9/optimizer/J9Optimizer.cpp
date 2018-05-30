@@ -713,6 +713,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead anchors created by check/store removal
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead RegStores produced by previous deadTrees pass
+   { OMR::redundantGotoElimination,                  OMR::IfEnabledAndNotJitProfiling }, // dead store and dead tree elimination may have left empty blocks
    { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by profilingGroup
    { OMR::globalLiveVariablesForGC                                              },
    { OMR::profilingGroup,                            OMR::IfProfiling                },

@@ -323,6 +323,19 @@ public:
    virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL);
 
    virtual void getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *);
+   /**
+   * @brief Create a TR_ResolvedMethod given a class, method name and signature
+   *
+   * The function will scan all methods from the given class until a match for
+   * the method name and signature is found
+   *
+   * @param trMemory     Pointer to TR_Memory object used for memory allocation
+   * @param classPointer The j9class that is searched for method name/signature
+   * @param methodName   Null terminated string denoting the method name we are looking for
+   * @param signature    Null terminated string denoting the signature of the method we want
+   * @return             A pointer to a TR_ResolvedMethod for the indicated j9method, or null if not found
+   */
+   virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature);
    virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, int32_t cpIndex, bool ignoreReResolve = true);
    virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
 
@@ -1133,6 +1146,7 @@ public:
    virtual bool               methodsCanBeInlinedEvenIfEventHooksEnabled();
    virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method);
    virtual void               getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *);
+   virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature);
    virtual void               scanClassForReservation(TR_OpaqueClassBlock *,  TR::Compilation *comp);
    virtual uint32_t           getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName,
                                                      uint32_t fieldLen, char * sig, uint32_t sigLen, UDATA options);
