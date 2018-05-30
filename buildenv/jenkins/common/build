@@ -259,7 +259,13 @@ def build_all() {
                 archive()
             }
         } finally {
-            cleanWs()
+            try {
+		cleanWs()
+	    } catch(e) {
+		echo e.toString()
+		echo e.printStackTrace()
+		sh "ps -ef"
+	    }
         }
     }
 }

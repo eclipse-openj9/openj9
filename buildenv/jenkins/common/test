@@ -128,9 +128,8 @@ def test_all() {
             *  holding open the file(s).
             */
             echo e.toString()
-            if (SPEC.startsWith("win_")) {
-                sh "ps -W"
-            }
+            echo e.printStackTrace()
+            sh "ps -ef"
         }
     }
 }
