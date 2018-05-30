@@ -670,6 +670,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::loopReduction                                                              },
    { OMR::blockShuffling                                                             },
 #endif
+   { OMR::localCSE,                                  OMR::IfLoopsAndNotProfiling     },
    { OMR::idiomRecognition,                          OMR::IfLoopsAndNotProfiling     },
    { OMR::blockSplitter                                                         },
    { OMR::treeSimplification                                                    }, // revisit; not really required ?
