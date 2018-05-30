@@ -3847,7 +3847,49 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 		return string;
 	}
-	/*[ENDIF] Java11*/
+
+	/**
+	 * Returns a string whose value is the concatenation of this string repeated
+	 * count times. 
+	 * 
+	 * @param count
+	 *            a positive integer indicating the number of times to be repeated
+	 * @return a string whose value is the concatenation of this string repeated count times
+	 * @throws IllegalArgumentException
+	 *             if the count is negative
+	 * @since 11
+	 */
+	public String repeat(int count) {
+		if (count < 0) {
+			throw new IllegalArgumentException();
+		} else if (count == 0 || isEmpty()) {
+			return "";
+		} else if (count == 1) {
+			return this;
+		}
+
+		int length = lengthInternal();
+		int repeatlen = length * count;
+
+		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
+			byte[] buffer = new byte[repeatlen];
+
+			for (int i = 0; i < count; i++) {
+				compressedArrayCopy(value, 0, buffer, i * length, length);				
+			}
+
+			return new String(buffer, LATIN1);
+		} else {
+			byte[] buffer = new byte[repeatlen * 2];
+
+			for (int i = 0; i < count; i++) {
+				decompressedArrayCopy(value, 0, buffer, i * length, length);				
+			}
+				
+			return new String(buffer, UTF16);
+		}
+	}
+	/*[ENDIF] Java11 */
 
 /*[ELSE] Sidecar19-SE*/
 	// DO NOT CHANGE OR MOVE THIS LINE
