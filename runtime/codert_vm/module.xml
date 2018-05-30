@@ -59,7 +59,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="j9gcinclude"/>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
 
-			<include path="../compiler/trj9/runtime" type="relativepath"/>
+			<include path="../compiler/runtime" type="relativepath"/>
 		</includes>
 
 		<makefilestubs>

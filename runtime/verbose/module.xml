@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-	Copyright (c) 2006, 2017 IBM Corp. and others
+	Copyright (c) 2006, 2018 IBM Corp. and others
 
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,10 +93,7 @@
 			<include path="../compiler" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
-			<include path="../compiler/trj9/runtime" type="relativepath">
-				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
-			</include>
-			<include path="../compiler/trj9" type="relativepath">
+			<include path="../compiler/runtime" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
 		</includes>
@@ -114,7 +111,7 @@
 			<vpath pattern="jswalk.c" path="j9codert_vm" augmentObjects="true">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</vpath>
-			<vpath pattern="MethodMetaData.c" path="../compiler/trj9/runtime" augmentObjects="true" type="relativepath">
+			<vpath pattern="MethodMetaData.c" path="../compiler/runtime" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</vpath>
 			<vpath pattern="ctsupport.c" path="j9jit_vm" augmentObjects="true"/>

@@ -57,8 +57,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</dependencies>
 
 		<commands>
-			<command line="$(MAKE) -C compiler clean" type="clean"/>
-			<command line="$(MAKE) -C compiler" type="all"/>
+			<command line="$(MAKE) -C compiler -f makefile clean" type="clean"/>
+			<command line="$(MAKE) -C compiler -f makefile" type="all"/>
 		</commands>
 	</artifact>
 </module>
