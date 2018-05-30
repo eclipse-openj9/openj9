@@ -35,21 +35,21 @@ add_library(j9vrb SHARED
 	
 	${j9vm_SOURCE_DIR}/codert_vm/jswalk.c #IF J9VM_INTERP_NATIVE_SUPPORT
 	${j9vm_SOURCE_DIR}/jit_vm/ctsupport.c #IF J9VM_INTERP_USE_SPLIT_SIDE_TABLES
-	${j9vm_SOURCE_DIR}/compiler/trj9/runtime/MethodMetaData.c
+	${j9vm_SOURCE_DIR}/compiler/runtime/MethodMetaData.c
 	
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vrb.c
 )
 
 #TODO this is platform specific
-set_property(SOURCE ../tr.source/trj9/runtime/MethodMetaData.c APPEND_STRING PROPERTY COMPILE_FLAGS  " -std=gnu89")
+set_property(SOURCE ../compiler/runtime/MethodMetaData.c APPEND_STRING PROPERTY COMPILE_FLAGS  " -std=gnu89")
 target_include_directories(j9vrb
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}
-		${j9vm_SOURCE_DIR}/compiler/trj9/runtime
-		${j9vm_SOURCE_DIR}/compiler/trj9/codegen
+		${j9vm_SOURCE_DIR}/compiler/runtime
+		${j9vm_SOURCE_DIR}/compiler/codegen
 		${omr_SOURCE_DIR}/compiler/codegen
 		${omr_SOURCE_DIR}/compiler
-		${j9vm_SOURCE_DIR}/compiler/trj9
+		${j9vm_SOURCE_DIR}/compiler
 		${j9vm_SOURCE_DIR}/shared_common/include
 )
 

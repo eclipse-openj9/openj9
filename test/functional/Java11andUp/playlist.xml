@@ -24,32 +24,9 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
-		<testCaseName>StringvalueOfCodePoint_JDK11_CompactStrings_Enabled</testCaseName>
+		<testCaseName>String_CompactStrings</testCaseName>
 		<variations>
 			<variation>-XX:+CompactStrings</variation>
-		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Test_String \
-			-groups $(TEST_GROUP) \
-			-excludegroups $(DEFAULT_EXCLUDE); \
-			$(TEST_STATUS)
-		</command>
-		<levels>
-			<level>sanity</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<subsets>
-			<subset>SE110</subset>
-		</subsets>
-	</test>
-
-	<test>
-		<testCaseName>StringvalueOfCodePoint_JDK11_CompactStrings_Disabled</testCaseName>
-		<variations>
-			<variation>-XX:-CompactStrings</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \

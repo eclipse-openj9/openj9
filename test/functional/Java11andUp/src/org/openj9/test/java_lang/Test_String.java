@@ -63,4 +63,41 @@ public class Test_String {
 			// Expected exception
 		}
 	}
+
+	/*
+	 * Test Java 11 method String.repeat(count)
+	 */
+	@Test(groups = { "level.sanity" })
+	public void testRepeat() {
+		String empty = "";
+		String latin1 = "abc123";
+		String nonLatin1 = "abc\u0153";
+		String str;
+
+		// Verify that correct strings are produced under normal conditions
+		Assert.assertTrue(latin1.repeat(3).equals("abc123abc123abc123"), "Repeat failed to produce correct string (LATIN1)");
+		Assert.assertTrue(nonLatin1.repeat(3).equals("abc\u0153abc\u0153abc\u0153"), "Repeat failed to produce correct string (non-LATIN1)");
+
+		Assert.assertTrue(empty.repeat(0) == empty, "Failed to return identical empty string - empty base (0)");
+		Assert.assertTrue(empty.repeat(2) == empty, "Failed to return identical empty string - empty base (2)");
+		Assert.assertTrue(latin1.repeat(0) == empty, "Failed to return identical empty string - nonempty base (0)");
+
+		// Verify that IllegalArgumentException is thrown for count < 0
+		try {
+			str = empty.repeat(-1);
+			Assert.fail("Failed to detect invalid count -1");
+		} catch (IllegalArgumentException e) {
+			// Expected exception
+		}
+
+		try {
+			str = latin1.repeat(-3);
+			Assert.fail("Failed to detect invalid count -3");
+		} catch (IllegalArgumentException e) {
+			// Expected exception
+		}
+
+		// Verify that a reference to the instance that called the function is returned for count == 1
+		Assert.assertTrue(latin1.repeat(1) == latin1, "Should be identical on count 1");
+	}
 }
