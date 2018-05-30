@@ -88,6 +88,34 @@ You can also request a Pull Request build from the extensions repos or openj9-om
 - To trigger a Copyright Check
    - `Jenkins copyright check`
 
+##### PullRequest Trigger Regexes
+Having a complicated regex in the pull request trigger is what allows us to launch exactly the right combination of builds we need without having to make several trigger comments. The following are examples of what regexes we use in the various jobs.
+
+- Openj9 Repo
+    - Compile
+        - Any platform
+            - jdk8/10
+                - `.*\bjenkins\s+compile\b\s*($|\n|depends\s+.*|(all|([a-z]+,)*win(,[a-z]+)*)\s*($|\n|depends\s+.*|all|(jdk[0-9]+,)*jdk8(,jdk[0-9]+)*)(\s+depends.*)?)`
+            - jdk9
+                - `.*\bjenkins\s+compile\b\s*(all|([a-z]+,)*win(,[a-z]+)*\s*(jdk[0-9]+,)*jdk9(,jdk[0-9]+)*(\s+depends.*)?)`
+
+    - Sanity/Extended
+        - Any platform
+            - jdk8/10
+                - `.*\bjenkins\s+test\s+(all|sanity)\b\s*($|\n|depends\s+.*|(all|([a-z]+,)*xlinux(,[a-z]+)*)\s*($|\n|depends\s+.*|all|(jdk[0-9]+,)*jdk9(,jdk[0-9]+)*)(\s+depends.*)?)`
+            - jdk9
+                - `.*\bjenkins\s+test\s+(all|sanity)\b\s*(all|([a-z]+,)*xlinux(,[a-z]+)*\s*(jdk[0-9]+,)*jdk9(,jdk[0-9]+)*(\s+depends.*)?)`
+
+- OpenJDK Extensions repos
+    - Compile
+        - Any Platform
+            - `.*\bjenkins\s+compile\b\s*($|\n|depends\s+.*|(all|([a-z]+,)*aix(,[a-z]+)*)\s*($|\n|depends\s+.*|all|jdk10)(\s+depends.*)?)`
+    - Sanity/Extended
+        - Any Platform
+            - `.*\bjenkins\s+test\s+(all|sanity)\b\s*($|\n|depends\s+.*|(all|([a-z]+,)*aix(,[a-z]+)*)\s*($|\n|depends\s+.*|all|jdk10)(\s+depends.*)?)`
+
+##### Note: JDK9 is different because we don't include them in the `all` trigger anymore. You must request it explicitly
+
 ### Overview of Builds
 
 #### Build
