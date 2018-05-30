@@ -327,7 +327,7 @@ static BOOLEAN librariesLoaded(void);
 #define J9_SIG_IGNORED 1
 
 #define J9_PRE_DEFINED_HANDLER_CHECK 2
-#define J9_OLDHANDLER_SAME_AS_NEWHANDLER 2
+#define J9_USE_OLD_JAVA_SIGNAL_HANDLER 2
 
 #define J9_SIG_PREFIX "SIG"
 
@@ -4606,8 +4606,17 @@ JVM_RaiseSignal(jint sigNum)
  *
  * If handler has the special value of J9_PRE_DEFINED_HANDLER_CHECK (2),
  * then the predefinedHandlerWrapper is registered with asynchSignalReporterThread
- * in OMR. If the old handler is same as the new handler, then a special value,
- * J9_OLDHANDLER_SAME_AS_NEWHANDLER (2) is returned.
+ * in OMR. masterASynchSignalHandler notifies asynchSignalReporterThread whenever a
+ * signal is received. If the old OS handler is a master signal handler, then a
+ * Java signal handler was previously registered with the signal. In this case,
+ * J9_USE_OLD_JAVA_SIGNAL_HANDLER must be returned. sun.misc.Signal.handle(...) or
+ * jdk.internal.misc.Signal.handle(...) will return the old Java signal handler if
+ * JVM_RegisterSignal returns J9_USE_OLD_JAVA_SIGNAL_HANDLER. Otherwise, an instance
+ * of NativeHandler is returned with oldHandler's address stored in
+ * NativeHandler.handler.
+ *
+ * Java 8 - NativeHandler is sun.misc.NativeSignalHandler
+ * Java 9 - NativeHandler is jdk.internal.misc.Signal.NativeHandler
  *
  * @param sigNum Integer value of the signal to be sent to the
  *                  calling process or thread
@@ -4624,6 +4633,8 @@ JVM_RegisterSignal(jint sigNum, void *handler)
 	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
 	J9VMThread *currentThread = vmFuncs->currentVMThread(javaVM);
 	BOOLEAN isShutdownSignal = isSignalUsedForShutdown(sigNum);
+
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	Trc_SC_RegisterSignal_Entry(currentThread, sigNum, handler);
 
@@ -4655,11 +4666,16 @@ JVM_RegisterSignal(jint sigNum, void *handler)
 		}
 	}
 
-	if ((NULL != oldHandler)
-		&& ((void *)J9_SIG_ERR != oldHandler)
-		&& (handler == oldHandler)
-	) {
-		oldHandler = (void *)J9_OLDHANDLER_SAME_AS_NEWHANDLER;
+	/* If oldHandler is a master handler, then a Java signal handler was previously registered with
+	 * the signal. sun.misc.Signal.handle(...) or jdk.internal.misc.Signal.handle(...) will return
+	 * the old Java signal handler if JVM_RegisterSignal returns J9_USE_OLD_JAVA_SIGNAL_HANDLER.
+	 * Otherwise, an instance of NativeHandler is returned with the oldHandler's address stored in
+	 * NativeHandler.handler. In Java 8, NativeHandler.handle() will invoke JVM_RegisterSignal using
+	 * NativeHandler.handler, which represents the address of the native signal handler function. In
+	 * Java 9, NativeHandler.handle() will throw UnsupportedOperationException.
+	 */
+	if (j9sig_is_master_signal_handler(oldHandler)) {
+		oldHandler = (void *)J9_USE_OLD_JAVA_SIGNAL_HANDLER;
 	}
 
 exit:
