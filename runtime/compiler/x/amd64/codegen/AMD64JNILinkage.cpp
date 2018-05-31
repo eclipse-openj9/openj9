@@ -1130,6 +1130,7 @@ void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
    TR::LabelSymbol *longReleaseSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longReleaseRestartLabel = generateLabelSymbol(cg());
 
+   TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
    generateRegImmInstruction(CMP4RegImm4, callNode, scratchReg1, J9_PUBLIC_FLAGS_VM_ACCESS, cg());
    generateLabelInstruction(JNE4, callNode, longReleaseSnippetLabel, cg());
 
@@ -1185,6 +1186,7 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
    TR::LabelSymbol *longAcquireSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longAcquireRestartLabel = generateLabelSymbol(cg());
 
+   TR_ASSERT_FATAL(J9_PUBLIC_FLAGS_VM_ACCESS <= 0x7fffffff, "VM access bit must be immediate");
    generateRegImmInstruction(CMP4RegImm4, callNode, scratchReg1, J9_PUBLIC_FLAGS_VM_ACCESS, cg());
    generateLabelInstruction(JNE4, callNode, longAcquireSnippetLabel, cg());
 
