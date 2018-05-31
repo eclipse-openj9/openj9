@@ -69,6 +69,7 @@ extern J9_CFUNC void J9WriteBarrierBatchStore(J9VMThread *vmThread, j9object_t d
 extern J9_CFUNC IDATA j9gc_objaccess_indexableReadI16(J9VMThread *vmThread, J9IndexableObject *srcObject, I_32 index, UDATA isVolatile);
 extern J9_CFUNC void J9WriteBarrierStore(J9VMThread *vmThread, j9object_t destinationObject, j9object_t storedObject);
 extern J9_CFUNC UDATA j9gc_heap_total_memory(J9JavaVM *javaVM);
+extern J9_CFUNC UDATA j9gc_is_garbagecollection_disabled(J9JavaVM *javaVM);
 extern J9_CFUNC UDATA j9gc_allsupported_memorypools(J9JavaVM* javaVM);
 extern J9_CFUNC UDATA j9gc_allsupported_garbagecollectors(J9JavaVM* javaVM);
 extern J9_CFUNC const char* j9gc_pool_name(J9JavaVM* javaVM, UDATA poolID);

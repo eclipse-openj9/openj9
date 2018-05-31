@@ -36,6 +36,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	allocateMemoryForSublistFragment,
 	j9gc_heap_free_memory,
 	j9gc_heap_total_memory,
+	j9gc_is_garbagecollection_disabled,
 	j9gc_allsupported_memorypools,
 	j9gc_allsupported_garbagecollectors,
 	j9gc_pool_name,

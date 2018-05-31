@@ -68,6 +68,7 @@ public final class VM {
 	public static final int J9_GC_POLICY_GENCON;
 	public static final int J9_GC_POLICY_BALANCED;
 	public static final int J9_GC_POLICY_METRONOME;
+	public static final int J9_GC_POLICY_NOGC;
 	
 	public static final int J9CLASS_INSTANCESIZE_OFFSET;
 	public static final int J9CLASS_INSTANCE_DESCRIPTION_OFFSET;
@@ -150,6 +151,7 @@ public final class VM {
 		J9_GC_POLICY_GENCON = 0;
 		J9_GC_POLICY_BALANCED = 0;
 		J9_GC_POLICY_METRONOME = 0;
+		J9_GC_POLICY_NOGC = 0;
 		
 		J9CLASS_INSTANCESIZE_OFFSET = 0;
 		J9CLASS_INSTANCE_DESCRIPTION_OFFSET = 0;

@@ -109,6 +109,7 @@ typedef enum gc_policy{
 	GC_POLICY_GENCON,
 	GC_POLICY_BALANCED,
 	GC_POLICY_METRONOME,
+	GC_POLICY_NOGC
 } gc_policy;
 
 #ifdef LINUX
@@ -538,6 +539,12 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 		int i = 0;
 
 		gcPolicyString = findStartOfMostRightOption(envOptions, gcPolicyOption);
+		if (NULL == gcPolicyString) {
+			if (hasEnvOption(envOptions, "-XX:+UseNoGC")) {
+				gcPolicyString = "nogc";
+			}
+		}
+
 		if (NULL != gcPolicyString) {
 			parseGCPolicy(gcPolicyString + gcPolicyOptionLength, &gcPolicy);
 		}
@@ -1515,6 +1522,7 @@ static BOOLEAN parseGCPolicy(char *buffer, int *value)
 			"gencon",
 			"balanced",
 			"metronome",
+			"nogc",
 			NULL,
 	};
 
