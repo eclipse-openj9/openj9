@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -352,13 +352,7 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
           method == TR::java_util_concurrent_ConcurrentHashMap_tmPut ||
           method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer ||
           method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll ||
-          method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled ||
-          method == TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordCAS ||
-          method == TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordSet ||
-          method == TR::java_util_concurrent_atomic_AtomicStampedReference_tmEnabled ||
-          method == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordCAS ||
-          method == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordSet ||
-          method == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmEnabled)
+          method == TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled)
           {
           return true;
           }

@@ -889,21 +889,6 @@
    java_util_concurrent_atomic_AtomicLongFieldUpdater_lazySet,
    java_util_concurrent_atomic_AtomicReferenceFieldUpdater_lazySet,
 
-   java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS,
-   java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCASSupported,
-   java_util_concurrent_atomic_AtomicMarkableReference_setDoubleWordCASSupported,
-   java_util_concurrent_atomic_AtomicMarkableReference_setDoubleWordSetSupported,
-   java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSetSupported,
-   java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet,
-
-
-   java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS,
-   java_util_concurrent_atomic_AtomicStampedReference_doubleWordCASSupported,
-   java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordCASSupported,
-   java_util_concurrent_atomic_AtomicStampedReference_setDoubleWordSetSupported,
-   java_util_concurrent_atomic_AtomicStampedReference_doubleWordSetSupported,
-   java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet,
-
    java_util_concurrent_ConcurrentHashMap_addCount,
    java_util_concurrent_ConcurrentHashMap_tryPresize,
    java_util_concurrent_ConcurrentHashMap_transfer,
@@ -926,13 +911,6 @@
    java_util_concurrent_ConcurrentLinkedQueue_tmOffer,
    java_util_concurrent_ConcurrentLinkedQueue_tmPoll,
    java_util_concurrent_ConcurrentLinkedQueue_tmEnabled,
-
-   java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordCAS,
-   java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordSet,
-   java_util_concurrent_atomic_AtomicMarkableReference_tmEnabled,
-   java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordCAS,
-   java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordSet,
-   java_util_concurrent_atomic_AtomicStampedReference_tmEnabled,
 
    wcode_ppc_dcbt,
    wcode_ppc_dcbz,

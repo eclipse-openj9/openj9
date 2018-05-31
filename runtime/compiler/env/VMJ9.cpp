@@ -394,19 +394,6 @@ int32_t * TR_J9VMBase::staticDFPHWAvailField = NULL;
 
 int32_t * TR_J9VMBase::staticStringEnableCompressionFieldAddr = NULL;
 
-bool TR_J9VMBase::cachedStaticAMRDCASAvailField = false;
-int32_t * TR_J9VMBase::staticAMRDCASAvailField = NULL;
-
-bool TR_J9VMBase::cachedStaticAMRDSetAvailField = false;
-int32_t * TR_J9VMBase::staticAMRDSetAvailField = NULL;
-
-bool TR_J9VMBase::cachedStaticASRDCASAvailField = false;
-int32_t * TR_J9VMBase::staticASRDCASAvailField = NULL;
-
-bool TR_J9VMBase::cachedStaticASRDSetAvailField = false;
-int32_t *  TR_J9VMBase::staticASRDSetAvailField = NULL;
-
-
 bool
 TR_J9VMBase::releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(TR::Compilation *comp, bool *hadClassUnloadMonitor)
    {
@@ -3034,17 +3021,6 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
          case TR::java_math_BigDecimal_slowAddAddMulSetScale:
          case TR::java_math_BigDecimal_slowMulSetScale:
             if (comp->cg()->getSupportsBDLLHardwareOverflowCheck())
-               dontInlineRecognizedMethod = true;
-            break;
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCASSupported:
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
-         case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSetSupported:
-         case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
-         case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCASSupported:
-         case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet:
-         case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSetSupported:
-            if (comp->cg()->getSupportsDoubleWordCAS())
                dontInlineRecognizedMethod = true;
             break;
          case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndDecrement:

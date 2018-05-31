@@ -681,21 +681,6 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
             childrenToBeLowered.set(4);
             self()->lowerCompressedRefs(treeTop, parent, visitCount, &childrenToBeLowered);
             }
-         else if ((methodSymbol->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS) ||
-               (methodSymbol->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS))
-            {
-            TR_BitVector childrenToBeLowered(parent->getNumChildren(), self()->comp()->trMemory(), stackAlloc);
-            childrenToBeLowered.set(1);
-            childrenToBeLowered.set(2);
-            self()->lowerCompressedRefs(treeTop, parent, visitCount, &childrenToBeLowered);
-            }
-         else if ((methodSymbol->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet) ||
-               (methodSymbol->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet))
-            {
-            TR_BitVector childrenToBeLowered(parent->getNumChildren(), self()->comp()->trMemory(), stackAlloc);
-            childrenToBeLowered.set(1);
-            self()->lowerCompressedRefs(treeTop, parent, visitCount, &childrenToBeLowered);
-            }
          }
       }
 
