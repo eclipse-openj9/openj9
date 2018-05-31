@@ -4267,6 +4267,7 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *allocateMemoryForSublistFragment)(void *vmThread, J9VMGC_SublistFragment *fragmentPrimitive) ;
 	UDATA  ( *j9gc_heap_free_memory)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_heap_total_memory)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_is_garbagecollection_disabled)(struct J9JavaVM *javaVM) ;
 	UDATA ( *j9gc_allsupported_memorypools)(struct J9JavaVM* javaVM);
 	UDATA ( *j9gc_allsupported_garbagecollectors)(struct J9JavaVM* javaVM);
 	const char* ( *j9gc_pool_name)(struct J9JavaVM* javaVM, UDATA poolID);
