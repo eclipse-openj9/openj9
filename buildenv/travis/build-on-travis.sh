@@ -60,7 +60,13 @@ if test "x$RUN_LINT" = "xyes"; then
 
 
   # create stub const pool files so cmake wont complain
-  touch jcl/j9vmconstantpool_se7_basic.c jcl/j9vmconstantpool_se9.c jcl/j9vmconstantpool_se9_before_b165.c
+  touch \
+    jcl/j9vmconstantpool_se7_basic.c \
+    jcl/j9vmconstantpool_se9.c \
+    jcl/j9vmconstantpool_se9_before_b165.c \
+    jcl/j9vmconstantpool_se10.c \
+    jcl/j9vmconstantpool_se11.c
+
 
   # generate cmake buildsystem so that we can run trace/hookgen
   # also the cachefile is needed for cptool
@@ -76,7 +82,7 @@ if test "x$RUN_LINT" = "xyes"; then
   # run cptool
   java -cp "$J9VMCP_JAR:$OM_JAR" com.ibm.oti.VMCPTool.Main \
     -rootDir "${J9SRC}" -outputDir "$PWD" -cmakeCache "$PWD/parsed_cache.txt" \
-    -jcls se7_basic,se9,se9_before_b165
+    -jcls se7_basic,se9,se9_before_b165,se10,se11
 
   # Now we can build the linter plugin
   cd $OMRCHECKER_DIR
