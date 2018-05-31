@@ -33,9 +33,12 @@ use File::Path qw(make_path);
 my $path;
 #define task
 my $task = "default";
+#define os
+my $os;
 
 GetOptions ("path=s"	=>	\$path,
-			"task=s"	=>	\$task)
+			"task=s"	=>	\$task,
+			"os=s"		=>	\$os)
 or die("Error in command line arguments\n");
 
 if (not defined $path) {
@@ -47,12 +50,17 @@ if ( ! -d $path ) {
 	my $isCreated = make_path($path, {chmod => 0777, verbose => 1,});
 }
 
+if (not defined $os) {
+	die "ERROR: os not defined! \n"
+}
+
 #define directory path separator
 my $sep = File::Spec->catfile('', '');
 
 print "-------------------------------------------- \n";
 print "path is set to $path \n";
 print "task is set to $task \n";
+print "os is set to $os \n";
 
 # Define a a hash for each dependent jar
 # Contents in the hash should be: url => , fname =>, sha1 =>
@@ -125,7 +133,12 @@ if ( $task eq "default" ) {
 			print "$filename exits, skip downloading \n"
 		} else {
 			print "downloading $url \n";
-			my $output = qx{wget --no-check-certificate --quiet --output-document=$filename $url 2>&1};
+			my $output;
+			if ($os eq 'os.zos') {
+				$output = qx{curl -k -o $filename $url 2>&1};
+			} else {
+				$output = qx{wget --no-check-certificate --quiet --output-document=$filename $url 2>&1};
+			}
 			if ($? == 0 ) {
 				print "--> file downloaded to $filename \n";
 			} else {
