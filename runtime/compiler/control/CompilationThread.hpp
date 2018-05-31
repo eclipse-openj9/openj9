@@ -236,7 +236,8 @@ class CompilationInfoPerThreadBase
    uintptr_t              getTimeWhenCompStarted() const { return _timeWhenCompStarted; }
    void                   setTimeWhenCompStarted(UDATA t) { _timeWhenCompStarted = t; }
 
-   TR_RelocationRuntime  *reloRuntime() { return _reloRuntime; }
+   TR_RelocationRuntime  *reloRuntime();
+
    static TR::FILE *getPerfFile() { return _perfFile; } // used on Linux for perl tool support
    static void setPerfFile(TR::FILE *f) { _perfFile = f; }
 
@@ -248,7 +249,8 @@ class CompilationInfoPerThreadBase
 
    TR::CompilationInfo &        _compInfo;
    J9JITConfig * const          _jitConfig;
-   TR_RelocationRuntime *       _reloRuntime;
+   TR_SharedCacheRelocationRuntime _sharedCacheReloRuntime;
+   TR_JITaaSRelocationRuntime      _remoteCompileReloRuntime;
    int32_t const                _compThreadId; // unique number starting from 0; Only used for compilation on separate thread
    bool const                   _onSeparateThread;
 

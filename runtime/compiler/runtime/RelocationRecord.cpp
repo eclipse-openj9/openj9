@@ -54,6 +54,8 @@
 #include "env/VMJ9.h"
 #include "control/rossa.h"
 #include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
+#include "control/MethodToBeCompiled.hpp"
 
 // TODO: move this someplace common for RuntimeAssumptions.cpp and here
 #if defined(__IBMCPP__) && !defined(AIXPPC) && !defined(LINUXPPC)
@@ -1694,7 +1696,7 @@ TR_RelocationRecordBodyInfo::applyRelocation(TR_RelocationRuntime *reloRuntime, 
    {
    J9JITExceptionTable *exceptionTable = reloRuntime->exceptionTable();
    reloTarget->storeAddress((uint8_t *) exceptionTable->bodyInfo, reloLocation);
-   fixPersistentMethodInfo((void *)exceptionTable, reloRuntime->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE);
+   fixPersistentMethodInfo((void *)exceptionTable, !reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isAotLoad());
    return 0;
    }
 
@@ -1727,8 +1729,8 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
    uintptr_t cpIndex,
    uint8_t *reloLocation)
    {
-   // XXX: Currently all thinks are batch-relocated elsewhere for JITaaS
-   if (reloRuntime->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+   // XXX: Currently all thunks are batch-relocated elsewhere for JITaaS
+   if (reloRuntime->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && !reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isAotLoad())
       {
       return 0;
       }

@@ -857,7 +857,7 @@ public:
    bool compTracingEnabled() const { return _compilationTracingFacility.isInitialized(); }
    void addCompilationTraceEntry(J9VMThread * vmThread, TR_CompilationOperations op, uint32_t otherData=0);
 
-   TR_RelocationRuntime  *reloRuntime() { return &_reloRuntime; }
+   TR_SharedCacheRelocationRuntime  *reloRuntime() {  return &_sharedCacheReloRuntime; }
 
    int32_t incNumSeriousFailures() { return ++_numSeriousFailures; } // no atomicity guarantees for the increment
 
@@ -1133,7 +1133,7 @@ private:
    TR::CompilationTracingFacility _compilationTracingFacility; // Must be intialized before using
    TR_CpuEntitlement _cpuEntitlement;
    TR_JitSampleInfo  _jitSampleInfo;
-   TR_SharedCacheRelocationRuntime _reloRuntime;
+   TR_SharedCacheRelocationRuntime _sharedCacheReloRuntime;
    uintptr_t _vmStateOfCrashedThread; // Set by Jit Dump; used by diagnostic thread
 #if defined(J9VM_OPT_SHARED_CLASSES)
    J9SharedClassJavacoreDataDescriptor _javacoreData;

@@ -151,6 +151,15 @@ void setThreadAffinity(unsigned _int64 handle, unsigned long mask)
    }
 #endif
 
+TR_RelocationRuntime*
+TR::CompilationInfoPerThreadBase::reloRuntime()
+   {
+   if (_methodBeingCompiled->isAotLoad() ||
+       _compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE)
+      return static_cast<TR_RelocationRuntime*>(&_sharedCacheReloRuntime);
+   return static_cast<TR_RelocationRuntime*>(&_remoteCompileReloRuntime);
+   }
+
 void
 TR::CompilationInfoPerThreadBase::setCompilation(TR::Compilation *compiler)
    {
@@ -808,6 +817,8 @@ TR::FILE *TR::CompilationInfoPerThreadBase::_perfFile = NULL; // used on Linux f
 TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool onSeparateThread) :
    _compInfo(compInfo),
    _jitConfig(jitConfig),
+   _sharedCacheReloRuntime(jitConfig),
+   _remoteCompileReloRuntime(jitConfig),
    _compThreadId(id),
    _onSeparateThread(onSeparateThread),
    _vm(NULL),
@@ -825,14 +836,6 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _cachedClientDataPtr(nullptr)
    {
    TR_ASSERT(_compThreadId < MAX_TOTAL_COMP_THREADS, "Cannot have a compId greater than MAX_TOTAL_COMP_THREADS");
-   if (compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE)
-      {
-      _reloRuntime = new (PERSISTENT_NEW) TR_SharedCacheRelocationRuntime(jitConfig);
-      }
-   else
-      {
-      _reloRuntime = new (PERSISTENT_NEW) TR_JITaaSRelocationRuntime(jitConfig);
-      }
    }
 
 TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
@@ -921,7 +924,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
 
 TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _persistentMemory(pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment)),
-   _reloRuntime(jitConfig),
+   _sharedCacheReloRuntime(jitConfig),
    _samplingThreadWaitTimeInDeepIdleToNotifyVM(-1)
    {
    // The object is zero-initialized before this method is called
@@ -1387,7 +1390,7 @@ TR::CompilationInfo::disableAOTCompilations()
 bool TR::CompilationInfo::isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)
    {
    J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
-   return _reloRuntime.isRomClassForMethodInSharedCache(method, javaVM) ? true : false;
+   return _sharedCacheReloRuntime.isRomClassForMethodInSharedCache(method, javaVM) ? true : false;
    }
 
 TR_YesNoMaybe TR::CompilationInfo::isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)
@@ -5143,7 +5146,7 @@ void *TR::CompilationInfo::compileRemoteMethod(J9VMThread * vmThread, TR::IlGene
                static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
                || (
                   static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-                  && _reloRuntime.validateAOTHeader(javaVM, fe, vmThread)
+                  && _sharedCacheReloRuntime.validateAOTHeader(javaVM, fe, vmThread)
                   )
                )
                {
@@ -5659,7 +5662,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
                static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
                || (
                   static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-                  && _reloRuntime.validateAOTHeader(javaVM, fe, vmThread)
+                  && _sharedCacheReloRuntime.validateAOTHeader(javaVM, fe, vmThread)
                   )
                )
                {
@@ -6041,7 +6044,7 @@ void *TR::CompilationInfo::compileOnApplicationThread(J9VMThread * vmThread, TR:
             static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
             || (
                static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-               && _reloRuntime.validateAOTHeader(jitConfig->javaVM, fe, vmThread)
+               && _sharedCacheReloRuntime.validateAOTHeader(jitConfig->javaVM, fe, vmThread)
                )
             )
             {
@@ -6720,7 +6723,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 
       eligibleForRemoteCompile = true; // Everything, yay!
 
-      if (!entry->isRemoteCompReq()) {
+      if (_compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE) {
          eligibleForRelocatableCompile =
             TR::Options::sharedClassCache() &&
             !details.isNewInstanceThunk() &&
@@ -7201,7 +7204,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
            || canDoRelocatableCompile
            || entry->isAotLoad()
           )
-          && (_compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE || eligibleForRemoteCompile)
+          && (_compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE || (entry->isAotLoad() || eligibleForRemoteCompile))
 #if defined(TR_HOST_ARM)
           && !TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)
 #endif
@@ -8436,7 +8439,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
       intptr_t rtn = 0;
 
-      if (_compInfo.getPersistentInfo()->getJITaaSMode() != CLIENT_MODE)
+      if (_compInfo.getPersistentInfo()->getJITaaSMode() != CLIENT_MODE || _methodBeingCompiled->isAotLoad())
          {
          if (!_methodBeingCompiled->isAotLoad())
             {

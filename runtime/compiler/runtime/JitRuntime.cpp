@@ -1324,6 +1324,7 @@ void fixPersistentMethodInfo(void *table, bool isJITaaS)
    TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)exceptionTable->bodyInfo;
    void *vmMethodInfo = (void *)exceptionTable->ramMethod;
    TR_PersistentMethodInfo *methodInfo;
+
    if (!isJITaaS)
       {
       methodInfo = (TR_PersistentMethodInfo *)((char *)bodyInfo + sizeof(TR_PersistentJittedBodyInfo));
@@ -1331,6 +1332,7 @@ void fixPersistentMethodInfo(void *table, bool isJITaaS)
       }
    else
       methodInfo = bodyInfo->getMethodInfo();
+
    methodInfo->setMethodInfo(vmMethodInfo);
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR))
@@ -1338,13 +1340,14 @@ void fixPersistentMethodInfo(void *table, bool isJITaaS)
       createClassRedefinitionPicSite(vmMethodInfo, (void *)methodInfo->getAddressOfMethodInfo(), sizeof(UDATA), 0, (OMR::RuntimeAssumption**)(&exceptionTable->runtimeAssumptionList));
       }
 
+   bodyInfo->setStartCount(TR::Recompilation::globalSampleCount);
+   bodyInfo->setOldStartCountDelta(TR::Options::_sampleThreshold);
+   bodyInfo->setHotStartCountDelta(0);
+   bodyInfo->setSampleIntervalCount(0);
+   bodyInfo->setProfileInfo(NULL);
+
    if (!isJITaaS)
       {
-      bodyInfo->setStartCount(TR::Recompilation::globalSampleCount);
-      bodyInfo->setOldStartCountDelta(TR::Options::_sampleThreshold);
-      bodyInfo->setHotStartCountDelta(0);
-      bodyInfo->setSampleIntervalCount(0);
-      bodyInfo->setProfileInfo(NULL);
       bodyInfo->setIsAotedBody(true);
       }
    }
