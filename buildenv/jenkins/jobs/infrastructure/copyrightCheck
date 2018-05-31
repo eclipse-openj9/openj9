@@ -65,37 +65,37 @@ timeout(time: 6, unit: 'HOURS') {
                         def readinFiles = readFile("${env.WORKSPACE}/.copyrightignore")
                         def READLIST = readinFiles.split("\\r?\\n")
                         for (item in READLIST) {
-                             regexsElm = item
+                            regexsElm = item
 
-                             if (item.contains("#")) {
-                                 def location = regexsElm.indexOf("#")
-                                 regexsElm = regexsElm.substring(0,location)
-                             }
+                            if (item.contains("#")) {
+                                def location = regexsElm.indexOf("#")
+                                regexsElm = regexsElm.substring(0,location)
+                            }
 
-                             if (regexsElm != "") {
-                                 if (item.contains("*")) {
-                                     regexsElm = regexsElm.replaceAll(/[*]/, /\.\*/)
-                                 }
+                            if (regexsElm != "") {
+                                if (item.contains("*")) {
+                                    regexsElm = regexsElm.replaceAll(/[*]/, /\.\*/)
+                                }
 
-                                 if (item.startsWith("/") && item.lastIndexOf("/")==0 ) {
-                                     regexsElm = regexsElm.replaceAll("[/]","");
-                                     if (item.contains("*.")) {
-                                         regexsElm = regexsElm.replaceAll("[*]","");
-                                         regexsElm =  "[A-Za-z0-9[^/]+]+" + regexsElm
-                                     }
+                                if (item.startsWith("/") && item.lastIndexOf("/")==0 ) {
+                                    regexsElm = regexsElm.replaceAll("[/]","");
+                                    if (item.contains("*.")) {
+                                        regexsElm = regexsElm.replaceAll("[*]","");
+                                        regexsElm =  "[A-Za-z0-9[^/]+]+" + regexsElm
+                                    }
 
-                                     if (!item.contains(".")){
-                                         regexsElm = regexsElm + /\// + ".*" + /|$/
-                                     }
+                                    if (!item.contains(".")){
+                                        regexsElm = regexsElm + /\// + ".*" + /|$/
+                                    }
 
-                                 } else if (!item.startsWith("/") && item.lastIndexOf("/")!=0 && item.contains("/")){
-                                   regexsElm = regexsElm.replaceAll(/\//,/\/+/)
-                                   if (!item.contains(".")){
-                                         regexsElm = regexsElm + ".*"
-                                   }
-                                 } else {
-                                   regexsElm = regexsElm.replaceAll("[/]","");
-                                 }
+                                } else if (!item.startsWith("/") && item.lastIndexOf("/")!=0 && item.contains("/")){
+                                    regexsElm = regexsElm.replaceAll(/\//,/\/+/)
+                                    if (!item.contains(".")){
+                                        regexsElm = regexsElm + ".*"
+                                    }
+                                } else {
+                                    regexsElm = regexsElm.replaceAll("[/]","");
+                                }
                             }
                             if (regexsElm.contains ("/+.*.*")) {
                                 regexsElm = regexsElm.replace("/+.*.*","/*.*.*");

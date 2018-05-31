@@ -19,7 +19,15 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 # *******************************************************************************/
 # *******************************************************************************
-# TODO README ON COPYRIGHT WHITELIST
+#  THE FOLLOWING ARE EXAMPLES OF SYNTAXES copyrightCheck SUPPORTS:
+#  1.**/jobs/**# path contains "jobs" folder, but not root directory
+#  2./doc#root root level directory and file named "doc"
+#  3./debugtools/**/*.ignore# all .ignore file in the root directory debugtools
+#  4./*.ignore #all root directory .ignore files
+#  5.**/jobs/pipelines/#pipeline folder follows closely with jobs not in root directory
+#  6.*.ignore#all ignore files only
+#  7.**/jobs/**/pipelines/#directory path contains both jobs and pipelines not root directory
+#  8.*job* all things at contains characters in between stars
 # *******************************************************************************/
 **/jobs/**#comment
 /doc
