@@ -938,18 +938,6 @@ public:
 
    static int32_t *       staticStringEnableCompressionFieldAddr;
 
-   static bool            cachedStaticAMRDCASAvailField;
-   static int32_t *       staticAMRDCASAvailField;
-
-   static bool            cachedStaticAMRDSetAvailField;
-   static int32_t *       staticAMRDSetAvailField;
-
-   static bool            cachedStaticASRDCASAvailField;
-   static int32_t *       staticASRDCASAvailField;
-
-   static bool            cachedStaticASRDSetAvailField;
-   static int32_t *       staticASRDSetAvailField;
-
    static char            x86VendorID[13];
    static bool            x86VendorIDInitialized;
 

@@ -128,11 +128,6 @@ J9::Z::CodeGenerator::CodeGenerator() :
    // Still being set in the S390CodeGenerator constructor, as zLinux sTR requires this.
    //cg->setSupportsJavaFloatSemantics();
 
-   // Temporarily disable until object header changes are settled.
-   // We need to remove the padding field in the class lib. See: CMVC 181364
-   //cg->setSupportsDoubleWordCAS();
-   //cg->setSupportsDoubleWordSet();
-
    // Enable this only on Java, as there is a possibility that optimizations driven by this
    // flag will generate calls to helper routines.
    cg->setSupportsArrayTranslateAndTest();

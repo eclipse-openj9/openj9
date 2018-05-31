@@ -9203,65 +9203,6 @@ static TR::Register *inlineDoublePrecisionFPTrg1Src2(TR::Node *node, TR::InstOpC
    return targetRegister;
    }
 
-static TR::Register *inlineDoubleWordCASOrSetSupported(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR::Register *resultReg = cg->allocateRegister();
-
-   // Replace this call with TRUE if running 64-bit compressed pointers, FALSE otherwise
-   if (TR::Compiler->target.is64Bit() && cg->comp()->useCompressedPointers())
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 1);
-   else
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
-
-   cg->decReferenceCount(node->getChild(0));
-   node->setRegister(resultReg);
-   return resultReg;
-   }
-
-static void checkFieldOrderForDCASOrSet(TR::CodeGenerator *cg, bool isAMR, bool *isRefFirst, int32_t *firstFieldOffset)
-   {
-   TR::Compilation * comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
-   TR_OpaqueClassBlock * classBlock = NULL;
-   char *fieldName;
-   int32_t fieldNameLen;
-   char *fieldSig;
-   int32_t fieldSigLen;
-   int32_t intOrBoolOffset;
-
-   if (isAMR)
-      {
-      classBlock = fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicMarkableReference$ReferenceBooleanPair;", 74, comp->getCurrentMethod(), true);
-      fieldName = "bit";
-      fieldNameLen = 3;
-      fieldSig = "Z";
-      fieldSigLen = 1;
-
-      intOrBoolOffset = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, fieldName, fieldNameLen, fieldSig, fieldSigLen);
-      }
-   else
-      {
-      classBlock = fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference$ReferenceIntegerPair;", 73, comp->getCurrentMethod(), true);
-      fieldName = "integer";
-      fieldNameLen = 7;
-      fieldSig = "I";
-      fieldSigLen = 1;
-
-      intOrBoolOffset = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, fieldName, fieldNameLen, fieldSig, fieldSigLen);
-      }
-
-   fieldName = "reference";
-   fieldNameLen = 9;
-   fieldSig = "Ljava/lang/Object;";
-   fieldSigLen = 18;
-
-   int32_t referenceOffset = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, fieldName, fieldNameLen, fieldSig, fieldSigLen);
-
-   *isRefFirst = (referenceOffset == (intOrBoolOffset - 4));
-   *firstFieldOffset = (*isRefFirst) ? referenceOffset : intOrBoolOffset;
-
-   }
-
 static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg, TR::MethodSymbol *method)
    {
    TR::Node *firstChild = NULL;
@@ -9302,9 +9243,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
    bool isGetAndOp = false;
    bool isCAS = false;
    bool isSetOnly = false;
-   bool isAMRASR = false;
    bool isWeak = false;
-   bool isHalfCAS = false;
    bool isRefFirst = false;
    bool isUnsafe = false;
 
@@ -9371,23 +9310,6 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
 
    switch (currentMethod)
       {
-   case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
-   case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet:
-      isSetOnly = true;
-   case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-   case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
-      isAddOp = false;
-      isAMRASR = true;
-      break;
-      }
-
-   switch (currentMethod)
-      {
-   case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-   case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
-      isAddOp = false;
-      isCAS = true;
-      break;
    case TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet:
    case TR::java_util_concurrent_atomic_AtomicInteger_getAndSet:
    case TR::java_util_concurrent_atomic_AtomicIntegerArray_getAndSet:
@@ -9419,9 +9341,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
       break;
       }
 
-   isHalfCAS = isAMRASR && !isSetOnly && !isCAS;
    isDeltaImplied = isAddOp && !isDelta;
-   isRefWrite = isRefWrite || (isAMRASR && !isHalfCAS);
 
    if (isDeltaImplied)
       {
@@ -9441,20 +9361,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
          }
       }
 
-   if (isAMRASR)
-      {
-      TR_ASSERT(TR::Compiler->target.is32Bit() || comp->useCompressedPointers(), "JUC AMR/ASR methods can only be used in 64-bit compressed.");
-      firstChild = node->getChild(0);
-      valueChild = node->getChild(1);
-      newRefChild = (isCAS || isSetOnly) ? node->getChild(2) : NULL;
-      newValChild = (isCAS) ? node->getChild(4) : node->getChild(3);
-      expValChild = (isCAS) ? node->getChild(5) : NULL;
-      if (!isSetOnly)
-         {
-         expRefChild = (isCAS) ? node->getChild(3) : node->getChild(2);
-         }
-      }
-   else if (isUnsafe && isCAS)
+   if (isUnsafe && isCAS)
       {
       firstChild = node->getChild(0);
       valueChild = node->getChild(1);
@@ -9498,20 +9405,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
    valueReg = cg->evaluate(valueChild);
    objReg = valueReg;
 
-   if (isAMRASR)
-      {
-      switch (currentMethod)
-         {
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
-         checkFieldOrderForDCASOrSet(cg, false, &isRefFirst, &fieldOffset);
-         break;
-      default:
-         checkFieldOrderForDCASOrSet(cg, true, &isRefFirst, &fieldOffset);
-         break;
-         }
-      }
-   else if (isUnsafe)
+   if (isUnsafe)
       {
       if (indexChild->getOpCode().isLoadConst() && indexChild->getRegister() == NULL && TR::Compiler->target.is32Bit())
          {
@@ -9645,96 +9539,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, fieldOffsetReg, fieldOffsetReg, fieldOffset);
       }
 
-   if (isAMRASR)
-      {
-      newValReg = cg->evaluate(newValChild);
-      numDeps++;
-      if (!isHalfCAS)
-         {
-         newRefReg = cg->evaluate(newRefChild);
-         numDeps++;
-         overNewNode = !isRefFirst ? newRefChild : newValChild;
-         newComposedReg = !isRefFirst ? newRefReg : newValReg;
-         }
-      if (!isSetOnly)
-         {
-         expRefReg = cg->evaluate(expRefChild);
-         numDeps++;
-         if (!isHalfCAS)
-            {
-            expValReg = cg->evaluate(expValChild);
-            numDeps++;
-            overExpNode = !isRefFirst ? expRefChild : expValChild;
-            expComposedReg = !isRefFirst ? expRefReg : expValReg;
-            }
-         }
-      else
-         {
-         // AMR/ASR.set requires no internal control flow
-         if (TR::Compiler->target.is64Bit())
-            {
-            /*
-             * AMR/ASR.set (64-bit compressed references)
-             * mr newComposedReg, newRefReg/newValReg ;depends on order of fields
-             *                                        ;may not be necessary if no reuse
-             *                                        ;then just use newRefReg or newValReg
-             *                                        ;instead of newComposedReg
-             * rldimi newComposedReg, newValReg/newRefReg, 32, 0xFFFFFFFF00000000
-             * lwsync
-             * std newComposedReg, fieldOffset(valueReg)
-             * sync
-             */
-            if (overNewNode->getReferenceCount() > 1 || newComposedReg == valueReg)
-               {
-               TR::Register *tmpReg = newComposedReg;
-               stopNewComposedCopy = true;
-               newComposedReg = cg->allocateRegister();
-               generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, newComposedReg, tmpReg);
-               }
-            generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, newComposedReg, (!isRefFirst ? newValReg : newRefReg), 32, CONSTANT64(0xFFFFFFFF00000000));
-            generateInstruction(cg, TR::InstOpCode::lwsync, node);
-            generateMemSrc1Instruction(cg, TR::InstOpCode::std, node, new (cg->trHeapMemory()) TR::MemoryReference(valueReg, fieldOffset, 8, cg), newComposedReg);
-            generateInstruction(cg, TR::InstOpCode::sync, node);
-            if (stopNewComposedCopy)
-               {
-               cg->stopUsingRegister(newComposedReg);
-               }
-            }
-         else
-            {
-            /*
-             * AMR/ASR.set (32-bit)
-             * stw newValReg/newRefReg, 0(temp)
-             * stw newRefReg/newValReg, 4(temp)
-             * lwsync
-             * lfd fr1, 0(temp)
-             * stfd fr1, fieldOffset(valueReg)
-             * sync
-             */
-            TR::Register *doubleReg = cg->allocateRegister(TR_FPR);
-            TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(valueReg, fieldOffset, 8, cg);
-            TR_BackingStore *location;
-            location = cg->allocateSpill(8, false, NULL);
-            TR::MemoryReference *tempMRStore1 = new (cg->trHeapMemory()) TR::MemoryReference(node, location->getSymbolReference(), 4, cg);
-            TR::MemoryReference *tempMRStore2 = new (cg->trHeapMemory()) TR::MemoryReference(node, *tempMRStore1, 4, 4, cg);
-            generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, tempMRStore1, (!isRefFirst ? newValReg : newRefReg));
-            generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, tempMRStore2, (!isRefFirst ? newRefReg : newValReg));
-            generateInstruction(cg, TR::InstOpCode::lwsync, node);
-            generateTrg1MemInstruction(cg, TR::InstOpCode::lfd, node, doubleReg, new (cg->trHeapMemory()) TR::MemoryReference(node, location->getSymbolReference(), 8, cg));
-            generateMemSrc1Instruction(cg, TR::InstOpCode::stfd, node, tempMR, doubleReg);
-            generateInstruction(cg, TR::InstOpCode::sync, node);
-            cg->stopUsingRegister(doubleReg);
-            cg->freeSpill(location, 8, 0);
-            }
-         cg->decReferenceCount(node->getChild(0));
-         cg->decReferenceCount(valueChild);
-         cg->decReferenceCount(newValChild);
-         cg->decReferenceCount(newRefChild);
-         node->setRegister(NULL);
-         return NULL;
-         }
-      }
-   else if (isUnsafe)
+   if (isUnsafe)
       {
       //right now not checking for ref, just doing long!
       if (isRefWrite)
@@ -9763,7 +9568,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
          }
       }
 
-   if (isCAS || isHalfCAS)
+   if (isCAS)
       {
       TR::LabelSymbol *rsvFailLabel;
       cndReg = cg->allocateRegister(TR_CCR);
@@ -9774,16 +9579,10 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
       doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
       //allow spurious failures
-      rsvFailLabel = (isWeak || isHalfCAS) ? failLabel : startLabel;
+      rsvFailLabel = isWeak ? failLabel : startLabel;
 
       startLabel->setStartInternalControlFlow();
-
-      if (isCAS && isAMRASR && TR::Compiler->target.is64Bit())
-         {
-         // compose new and expected
-         }
-      // Expected value
-
+      
       if (fieldOffsetReg == NULL)
          {
          numDeps++;
@@ -9805,27 +9604,20 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
 
       if (size == 8 && TR::Compiler->target.is32Bit())
          {
-         if (isAMRASR)
+         if (!isArgImm && expValReg->getRegisterPair())
             {
-            // compose new and expected
+            generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, expValReg->getLowOrder(), expValReg->getHighOrder(), 32, CONSTANT64(0xFFFFFFFF00000000));
+            expPair = true;
+            numDeps++;
             }
-         else
+         if (newValReg->getRegisterPair())
             {
-            if (!isArgImm && expValReg->getRegisterPair())
+            if (newValReg != expValReg)
                {
-               generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, expValReg->getLowOrder(), expValReg->getHighOrder(), 32, CONSTANT64(0xFFFFFFFF00000000));
-               expPair = true;
-               numDeps++;
+               generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, newValReg->getLowOrder(), newValReg->getHighOrder(), 32, CONSTANT64(0xFFFFFFFF00000000));
                }
-            if (newValReg->getRegisterPair())
-               {
-               if (newValReg != expValReg)
-                  {
-                  generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, newValReg->getLowOrder(), newValReg->getHighOrder(), 32, CONSTANT64(0xFFFFFFFF00000000));
-                  }
-               numDeps++;
-               newPair = true;
-               }
+            numDeps++;
+            newPair = true;
             }
          }
 
@@ -9871,7 +9663,7 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
       generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
       generateLabelInstruction(cg, TR::InstOpCode::label, node, failLabel);
 
-      if (!isWeak && !isHalfCAS && size == 8 && TR::Compiler->target.is32Bit())
+      if (!isWeak && size == 8 && TR::Compiler->target.is32Bit())
          {
          /* store original current value conditionally
           * if it succeeds, then this was a true failure, if it
@@ -9949,26 +9741,6 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
                }
             numDeps--;
             }
-         }
-      }
-   if (isAMRASR)
-      {
-      addDependency(conditions, newValReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      numDeps--;
-      if (!isHalfCAS)
-         {
-         addDependency(conditions, newRefReg, TR::RealRegister::NoReg, TR_GPR, cg);
-         numDeps--;
-         }
-      if (!isSetOnly)
-         {
-         addDependency(conditions, expRefReg, TR::RealRegister::NoReg, TR_GPR, cg);
-         numDeps--;
-         }
-      if (isCAS)
-         {
-         addDependency(conditions, expValReg, TR::RealRegister::NoReg, TR_GPR, cg);
-         numDeps--;
          }
       }
 
@@ -10404,500 +10176,6 @@ static TR::Register *andORStringEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->setHasCall();
    return (resultReg);
    }
-
-/*
- * 1) JCL need to finalize the pair field (is it pair (Java 8) OR atomicRef (Java 7)).
- * 2) Should load the volatile pair field inside TX so will abort if another non-TM sucessfully did a atomicRef.compareAndSet
- *         ReferenceBooleanPair<V> current = atomicRef.get();
- *         if (doubleWordCASSupported(current))
- *            return doubleWordCAS(current, newReference, expectedReference, newMark, expectedMark);
- *
- *         if (tmEnabled())
- *            {
- *            int ret = tmDoubleWordCAS(expectedReference,newReference,expectedMark,newMark);
- *            if (0 != ret)
- *               return (2==ret)? true : false;
- *            }
- *         return (expectedReference == current.reference && expectedMark == current.bit) &&
- *             ((newReference == current.reference && newMark == current.bit) ||
- *             atomicRef.compareAndSet(current, new ReferenceBooleanPair<V>(newReference, newMark)));
- */
-
-static TR::Register *inlineTMDoubleWordCASOrSet(TR::Node *node, TR::CodeGenerator *cg, TR::MethodSymbol *method)
-   {
-   TR::Compilation * comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *) (comp->fe());
-   TR_ASSERT(TR::Compiler->target.is64Bit() && !comp->useCompressedPointers(), "inlineTMDoubleWordCASOrSet() can only be used in 64-bit non-compressed.");
-   TR::RecognizedMethod currentMethod = method->getRecognizedMethod();
-
-   int32_t addressFieldSize = TR::Compiler->om.sizeofReferenceField();
-   TR::InstOpCode::Mnemonic loadOpCode = (addressFieldSize == 8) ? TR::InstOpCode::ld : TR::InstOpCode::lwz;
-   TR::InstOpCode::Mnemonic storeOpCode = (addressFieldSize == 8) ? TR::InstOpCode::std : TR::InstOpCode::stw;
-
-   bool isAMR = ((currentMethod == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordCAS)
-         || (currentMethod == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordSet));
-   bool isCAS = ((currentMethod == TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordCAS)
-         || (currentMethod == TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordCAS));
-
-   TR::Register *resultReg = cg->allocateRegister();
-   TR::Register *pairReg = cg->allocateRegister();
-   TR::Register *rTmp = cg->allocateRegister();
-   TR::Register *retryCountReg = cg->allocateRegister();
-   TR::Register *cndReg = cg->allocateRegister(TR_CCR);
-   TR::Register *rTmp2 = cg->allocateRegister();
-   TR::Register *temp4Reg = cg->allocateRegister();
-
-   TR_OpaqueClassBlock * classBlock =
-         isAMR ? (fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicMarkableReference$Pair;", 58, comp->getCurrentMethod())) :
-               (fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference$Pair;", 57, comp->getCurrentMethod()));
-
-   int32_t offsetReference = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, "reference", 9, "Ljava/lang/Object;", 18);
-   int32_t offsetBoolOrInt =
-         isAMR ? fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, "mark", 4, "Z", 1) :
-               fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, "stamp", 5, "I", 1);
-
-   classBlock =
-         isAMR ? (fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicMarkableReference;", 53, comp->getCurrentMethod())) :
-               (fej9->getClassFromSignature("Ljava/util/concurrent/atomic/AtomicStampedReference;", 52, comp->getCurrentMethod()));
-
-   int32_t offsetPair =
-         isAMR ? fej9->getObjectHeaderSizeInBytes()
-               + fej9->getInstanceFieldOffset(classBlock, "pair", 4, "Ljava/util/concurrent/atomic/AtomicMarkableReference$Pair;", 58) :
-               fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock, "pair", 4, "Ljava/util/concurrent/atomic/AtomicStampedReference$Pair;", 57);
-
-   TR::Node *newReferenceNode, *expectedReferenceNode;
-   TR::Node *newMarkOrStampNode, *expectedMarkOrStampNode;
-   TR::Register *newReferenceReg, *expectedReferenceReg;
-   TR::Register *newMarkOrStampReg, *expectedMarkOrStampReg;
-   TR::Node *receiverNode = node->getFirstChild();
-   TR::Register *receiverReg = cg->evaluate(receiverNode);
-
-   if (isCAS)
-      {
-      expectedReferenceNode = node->getChild(1);
-      expectedReferenceReg = cg->evaluate(expectedReferenceNode);
-      newReferenceNode = node->getChild(2);
-      newReferenceReg = cg->evaluate(newReferenceNode);
-      expectedMarkOrStampNode = node->getChild(3);
-      expectedMarkOrStampReg = cg->evaluate(expectedMarkOrStampNode);
-      newMarkOrStampNode = node->getChild(4);
-      newMarkOrStampReg = cg->evaluate(newMarkOrStampNode);
-
-      TR::LabelSymbol * loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * failureLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * returnLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * doSetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * returnFalseLabal = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-
-      TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(12, 12, cg->trMemory());
-
-      addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(conditions, pairReg, TR::RealRegister::NoReg, TR_GPR, cg); // dstReg for wrtbar
-      addDependency(conditions, rTmp, TR::RealRegister::NoReg, TR_GPR, cg); // temp1Reg for wrtbar
-      addDependency(conditions, rTmp2, TR::RealRegister::NoReg, TR_GPR, cg); // temp2Reg for wrtbar
-      addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
-      addDependency(conditions, retryCountReg, TR::RealRegister::NoReg, TR_GPR, cg); // temp3Reg for wrtbar
-      addDependency(conditions, temp4Reg, TR::RealRegister::NoReg, TR_GPR, cg); // temp4Reg for wrtbar
-      addDependency(conditions, receiverReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(conditions, expectedReferenceReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(conditions, newReferenceReg, TR::RealRegister::NoReg, TR_GPR, cg); // srcReg for wrtbar
-      addDependency(conditions, expectedMarkOrStampReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(conditions, newMarkOrStampReg, TR::RealRegister::NoReg, TR_GPR, cg);
-
-      static char * debugTM = feGetEnv("TR_DebugTM");
-      static char * disableTMDCAS = feGetEnv("TR_DisableAtomicDCAS");
-      if (disableTMDCAS)
-         {
-         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
-         generateLabelInstruction(cg, TR::InstOpCode::b, node, returnLabel);
-         }
-
-      if (debugTM)
-         {
-         printf("\nTM: use TM DCAS in %s (%s)", comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
-         fflush (stdout);
-         }
-
-      static const char *s = feGetEnv("TR_TMDCASRetry");
-      static uint16_t TMDCASRetry = s ? atoi(s) : 5;
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, retryCountReg, TMDCASRetry);
-
-      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel, conditions);
-
-      generateInstruction(cg, TR::InstOpCode::tbegin_r, node);
-
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, PPCOpProp_BranchUnlikely, node, failureLabel, cndReg);
-
-      generateTrg1MemInstruction(cg, loadOpCode, node, pairReg, new (cg->trHeapMemory()) TR::MemoryReference(receiverReg, offsetPair, addressFieldSize, cg));
-
-      generateMemSrc1Instruction(cg, storeOpCode, node, new (cg->trHeapMemory()) TR::MemoryReference(pairReg, offsetReference, addressFieldSize, cg), newReferenceReg);
-      generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, new (cg->trHeapMemory()) TR::MemoryReference(pairReg, offsetBoolOrInt, 4, cg), newMarkOrStampReg);
-      // tend
-      generateInstruction(cg, TR::InstOpCode::tend_r, node);
-
-      // resultReg = 2; // Tx success, will return true
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 2);
-
-      TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-      bool doWrtBar = (gcMode == TR_WrtbarRealTime || gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways
-            || TR::Options::getCmdLineOptions()->realTimeGC());
-      bool doCrdMrk = ((gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental) && (!node->getOpCode().isWrtBar() || !node->isNonHeapObjectWrtBar()));
-      if (doWrtBar)
-         {
-         if (doCrdMrk)
-            {
-            conditions->getPostConditions()->getRegisterDependency(3)->setExcludeGPR0(); //3=temp2Reg
-            }
-         VMnonNullSrcWrtBarCardCheckEvaluator(node, newReferenceReg, pairReg, cndReg, rTmp, rTmp2, retryCountReg, temp4Reg, returnLabel, conditions, NULL, false, false, cg, false);
-         }
-      else if (doCrdMrk)
-         {
-         conditions->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0(); //1=dstReg
-         conditions->getPostConditions()->getRegisterDependency(2)->setExcludeGPR0(); //2=temp1Reg
-
-         VMCardCheckEvaluator(node, pairReg, cndReg, rTmp, rTmp2, retryCountReg, conditions, cg);
-         }
-
-      generateLabelInstruction(cg, TR::InstOpCode::b, node, returnLabel);
-
-      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, failureLabel, conditions);
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addic_r, node, retryCountReg, retryCountReg, -1);
-      // ALG: if retryCount != 0, goto loopLabel
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, loopLabel, cndReg);
-      // ALG: exceeds retry count, res := 0 // Tx failure, will try slow path
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
-
-      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, returnLabel, conditions);
-
-      cg->decReferenceCount(node->getFirstChild());
-      cg->decReferenceCount(node->getSecondChild());
-      cg->decReferenceCount(node->getChild(2));
-      cg->decReferenceCount(node->getChild(3));
-      cg->decReferenceCount(node->getChild(4));
-      }
-   else
-      {
-      newReferenceNode = node->getChild(1);
-      newReferenceReg = cg->evaluate(newReferenceNode);
-      newMarkOrStampNode = node->getChild(2);
-      newMarkOrStampReg = cg->evaluate(newMarkOrStampNode);
-
-      TR::LabelSymbol * loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * failureLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * returnLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol * doSetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-
-      TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(10, 10, cg->trMemory());
-
-      addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(conditions, pairReg, TR::RealRegister::NoReg, TR_GPR, cg); // dstReg for wrtbar
-      addDependency(conditions, rTmp, TR::RealRegister::NoReg, TR_GPR, cg); // temp1Reg for wrtbar
-      addDependency(conditions, rTmp2, TR::RealRegister::NoReg, TR_GPR, cg); // temp2Reg for wrtbar
-      addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
-      addDependency(conditions, retryCountReg, TR::RealRegister::NoReg, TR_GPR, cg); // temp3Reg for wrtbar
-      addDependency(conditions, temp4Reg, TR::RealRegister::NoReg, TR_GPR, cg); // temp4Reg for wrtbar
-      addDependency(conditions, receiverReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      addDependency(conditions, newReferenceReg, TR::RealRegister::NoReg, TR_GPR, cg); // srcReg for wrtbar
-      addDependency(conditions, newMarkOrStampReg, TR::RealRegister::NoReg, TR_GPR, cg);
-
-      static char * debugTM = feGetEnv("TR_DebugTM");
-      static char * disableTMDSET = feGetEnv("TR_DisableAtomicDSET");
-      if (disableTMDSET)
-         {
-         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
-         generateLabelInstruction(cg, TR::InstOpCode::b, node, returnLabel);
-         }
-
-      if (debugTM)
-         {
-         printf("\nTM: use TM DSET in %s (%s)", comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
-         fflush (stdout);
-         }
-
-      static const char *s = feGetEnv("TR_TMDSetRetry");
-      static uint16_t TMDSetRetry = s ? atoi(s) : 5;
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, retryCountReg, TMDSetRetry);
-
-      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel, conditions);
-
-      generateInstruction(cg, TR::InstOpCode::tbegin_r, node);
-
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, PPCOpProp_BranchUnlikely, node, failureLabel, cndReg);
-
-      generateTrg1MemInstruction(cg, loadOpCode, node, pairReg, new (cg->trHeapMemory()) TR::MemoryReference(receiverReg, offsetPair, addressFieldSize, cg));
-      // pairReg.reference = newReferenceReg
-      generateMemSrc1Instruction(cg, storeOpCode, node, new (cg->trHeapMemory()) TR::MemoryReference(pairReg, offsetReference, addressFieldSize, cg), newReferenceReg);
-      // pairReg.mark(stamp) = newMarkOrStampReg;
-      generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node, new (cg->trHeapMemory()) TR::MemoryReference(pairReg, offsetBoolOrInt, 4, cg), newMarkOrStampReg);
-      // tend
-      generateInstruction(cg, TR::InstOpCode::tend_r, node);
-      // resultReg = 1;
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 1);
-
-      // wrtbar for pairReg.reference = newReferenceReg
-      TR_WriteBarrierKind gcMode = comp->getOptions()->getGcMode();
-      bool doWrtBar = (gcMode == TR_WrtbarRealTime || gcMode == TR_WrtbarOldCheck || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarAlways
-            || TR::Options::getCmdLineOptions()->realTimeGC());
-      bool doCrdMrk = ((gcMode == TR_WrtbarCardMark || gcMode == TR_WrtbarCardMarkAndOldCheck || gcMode == TR_WrtbarCardMarkIncremental) && (!node->getOpCode().isWrtBar() || !node->isNonHeapObjectWrtBar()));
-      if (doWrtBar)
-         {
-         if (doCrdMrk)
-            {
-            conditions->getPostConditions()->getRegisterDependency(3)->setExcludeGPR0(); //3=temp2Reg
-            }
-         VMnonNullSrcWrtBarCardCheckEvaluator(node, newReferenceReg, pairReg, cndReg, rTmp, rTmp2, retryCountReg, temp4Reg, returnLabel, conditions, NULL, false, false, cg, false);
-         }
-      else if (doCrdMrk)
-         {
-         conditions->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0(); //1=dstReg
-         conditions->getPostConditions()->getRegisterDependency(2)->setExcludeGPR0(); //2=temp1Reg
-
-         VMCardCheckEvaluator(node, pairReg, cndReg, rTmp, rTmp2, retryCountReg, conditions, cg);
-         }
-
-      // goto returnLabel
-      generateLabelInstruction(cg, TR::InstOpCode::b, node, returnLabel);
-
-      // *** failureLabel
-      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, failureLabel, conditions);
-      // retryCount-=1
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addic_r, node, retryCountReg, retryCountReg, -1);
-      // ALG: if retryCount != 0, goto loopLabel
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, loopLabel, cndReg);
-      // ALG: exceeds retry count, res := 0 failure
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
-
-      // *** returnLabel
-      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, returnLabel, conditions);
-
-      cg->decReferenceCount(node->getFirstChild());
-      cg->decReferenceCount(node->getSecondChild());
-      cg->decReferenceCount(node->getChild(2));
-      }
-
-   cg->stopUsingRegister(pairReg);
-   cg->stopUsingRegister(rTmp);
-   cg->stopUsingRegister(rTmp2);
-   cg->stopUsingRegister(retryCountReg);
-   cg->stopUsingRegister(temp4Reg);
-   cg->stopUsingRegister(cndReg);
-
-   node->setRegister(resultReg);
-   return resultReg;
-   }
-
-static TR::Register *inlineDoubleWordCAS(TR::Node *node, TR::CodeGenerator *cg, TR::MethodSymbol *method)
-   {
-   TR::Compilation * comp = cg->comp();
-   TR_ASSERT(TR::Compiler->target.is64Bit() && comp->useCompressedPointers(), "inlineDoubleWordCAS() can only be used in 64-bit compressed.");
-
-   TR::RecognizedMethod currentMethod = method->getRecognizedMethod();
-   TR::Register *resultReg = cg->allocateRegister();
-   TR::Register *tmpReg;
-   TR::Register *resCndReg;
-   TR::Node *currentPairNode = node->getChild(1);
-   TR::Register *currentPairReg = cg->evaluate(currentPairNode);
-   TR::Node *newReferenceNode, *expectedReferenceNode;
-   TR::Node *newMarkOrStampNode, *expectedMarkOrStampNode;
-
-   TR::Node *overNewNode, *overExpectedNode;
-
-   TR::Register *fieldOffsetReg;
-
-   TR::Register *newReferenceReg, *expectedReferenceReg;
-   TR::Register *newMarkOrStampReg, *expectedMarkOrStampReg;
-
-   // Just use as pointers to referenceReg or MarkOrStampReg for varying order of reference and int/bool in class
-   TR::Register *expectedComposedReg, *newComposedReg;
-
-   // If the lower-order member registers for new and expected values are the same, need to copy one to avoid overwrite
-   TR::Register *tmpCopyReg;
-
-   bool isBoolNotInt = false;
-   bool isSetOnly = false;
-   bool isConstantNewMarkOrStamp = false;
-   bool isConstantExpectedMarkOrStamp = false;
-   bool isRefFirst;
-   bool needNewRegCopy = false;
-   bool needExpectedRegCopy = false;
-   int32_t offsetOfFirstField;
-
-   switch (currentMethod)
-      {
-   case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
-      isSetOnly = true;
-   case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-      isBoolNotInt = true;
-      break;
-   case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet:
-      isSetOnly = true;
-   case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
-      isBoolNotInt = false;
-      break;
-      }
-
-   // check for ordering of reference and int/bool to do register composing in correct order
-   checkFieldOrderForDCASOrSet(cg, isBoolNotInt, &isRefFirst, &offsetOfFirstField);
-
-   // in doubleWordSet, the new reference pair is in nodes 2 and 3
-   // for doubleWordCompareAndSet, the new reference pair is in nodes 2 and 4
-   newReferenceNode = node->getChild(2);
-   newMarkOrStampNode = (isSetOnly) ? node->getChild(3) : node->getChild(4);
-
-   newReferenceReg = cg->evaluate(newReferenceNode);
-
-   /* Check if new Mark or Stamp is a constant */
-   if (newMarkOrStampNode->getOpCode().isLoadConst() && !newMarkOrStampNode->getRegister())
-      {
-      int32_t newMarkOrStampVal = (int32_t)(newMarkOrStampNode->getInt());
-      isConstantNewMarkOrStamp = true;
-      newMarkOrStampReg = cg->allocateRegister();
-      loadConstant(cg, node, newMarkOrStampVal, newMarkOrStampReg);
-      }
-   else
-      newMarkOrStampReg = cg->evaluate(newMarkOrStampNode);
-
-   /* Coalesce the reference and mark/stamp into a single 64-bit register */
-   newComposedReg = !isRefFirst ? newReferenceReg : newMarkOrStampReg;
-   overNewNode = !isRefFirst ? newReferenceNode : newMarkOrStampNode;
-
-   if (isSetOnly)
-      {
-      /* set method can write directly to the location without reservation */
-      if (overNewNode->getReferenceCount() > 1)
-         {
-         needNewRegCopy = true;
-         tmpCopyReg = newComposedReg;
-         newComposedReg = cg->allocateRegister();
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, newComposedReg, tmpCopyReg);
-         }
-
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, newComposedReg, (!isRefFirst ? newMarkOrStampReg : newReferenceReg), 32, CONSTANT64(0xFFFFFFFF00000000));
-      generateInstruction(cg, TR::InstOpCode::lwsync, node);
-      generateMemSrc1Instruction(cg, TR::InstOpCode::std, node, new (cg->trHeapMemory()) TR::MemoryReference(currentPairReg, offsetOfFirstField, 8, cg), newComposedReg);
-      generateInstruction(cg, TR::InstOpCode::sync, node);
-      }
-   else
-      {
-      fieldOffsetReg = cg->allocateRegister();
-      tmpReg = cg->allocateRegister();
-      resCndReg = cg->allocateRegister(TR_CCR);
-      TR::LabelSymbol *loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-
-      loopLabel->setStartInternalControlFlow();
-
-      // expected reference pair is in nodes 3 and 5
-      expectedReferenceNode = node->getChild(3);
-      expectedMarkOrStampNode = node->getChild(5);
-
-      expectedReferenceReg = cg->evaluate(expectedReferenceNode);
-
-      /* check if Mark or Stamp is a constant */
-      if (expectedMarkOrStampNode->getOpCode().isLoadConst() && !expectedMarkOrStampNode->getRegister())
-         {
-         int32_t expectedMarkOrStampVal = (int32_t)(expectedMarkOrStampNode->getInt());
-         isConstantExpectedMarkOrStamp = true;
-         expectedMarkOrStampReg = cg->allocateRegister();
-         loadConstant(cg, node, expectedMarkOrStampVal, expectedMarkOrStampReg);
-         }
-      else
-         expectedMarkOrStampReg = cg->evaluate(expectedMarkOrStampNode);
-
-      /* Coalesce the reference and mark/stamp into a single 64-bit register */
-      expectedComposedReg = !isRefFirst ? expectedReferenceReg : expectedMarkOrStampReg;
-      overExpectedNode = !isRefFirst ? expectedReferenceNode : expectedMarkOrStampNode;
-
-      if (expectedComposedReg == newComposedReg || overNewNode->getReferenceCount() > 1)
-         {
-         needNewRegCopy = true;
-         tmpCopyReg = newComposedReg;
-         newComposedReg = cg->allocateRegister();
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, newComposedReg, tmpCopyReg);
-         }
-
-      if (overExpectedNode->getReferenceCount() > 2 || (expectedComposedReg != newComposedReg && overExpectedNode->getReferenceCount() > 1))
-         {
-         needExpectedRegCopy = true;
-         tmpCopyReg = expectedComposedReg;
-         expectedComposedReg = cg->allocateRegister();
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, expectedComposedReg, tmpCopyReg);
-         }
-
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, newComposedReg, (!isRefFirst ? newMarkOrStampReg : newReferenceReg), 32, CONSTANT64(0xFFFFFFFF00000000));
-
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldimi, node, expectedComposedReg, (!isRefFirst ? expectedMarkOrStampReg : expectedReferenceReg), 32,
-            CONSTANT64(0xFFFFFFFF00000000));
-
-      /* store offset into object for ldarx/stdcx instructions */
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, fieldOffsetReg, offsetOfFirstField);
-
-      /* Load FALSE as output of inlined function (default) */
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
-
-      generateInstruction(cg, TR::InstOpCode::lwsync, node);
-
-      /* start of loop for failing stdcx. */
-      generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
-
-      /* Perform reservation load of current reference pair */
-      generateTrg1MemInstruction(cg, TR::InstOpCode::ldarx, node, tmpReg, new (cg->trHeapMemory()) TR::MemoryReference(currentPairReg, fieldOffsetReg, 8, cg));
-
-      /* Compare with expected pair, branch to failure if not the same */
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, resCndReg, tmpReg, expectedComposedReg);
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, doneLabel, resCndReg);
-
-      /* If current pair matches expected pair, conditional store new pair */
-      generateMemSrc1Instruction(cg, TR::InstOpCode::stdcx_r, node, new (cg->trHeapMemory()) TR::MemoryReference(currentPairReg, fieldOffsetReg, 8, cg), newComposedReg);
-
-      /* Expect store to be successful, so this branch is usually not taken */
-      if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, resCndReg);
-      else
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, loopLabel, resCndReg);
-
-      generateInstruction(cg, TR::InstOpCode::sync, node);
-
-      // Expected pair matched current pair, new pair atomically stored into the object.
-      // Load TRUE as output of inlined function and jump to end of inlined code
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 1);
-
-      // If we branch over this (take the bne to doneLabel), resultReg is already 0
-
-      doneLabel->setEndInternalControlFlow();
-      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
-      }
-
-   cg->decReferenceCount(node->getChild(0));
-   cg->decReferenceCount(currentPairNode);
-   cg->decReferenceCount(newReferenceNode);
-   cg->decReferenceCount(newMarkOrStampNode);
-   if (isConstantNewMarkOrStamp)
-      cg->stopUsingRegister(newMarkOrStampReg);
-
-   if (needNewRegCopy)
-      cg->stopUsingRegister(newComposedReg);
-
-   if (!isSetOnly)
-      {
-      cg->decReferenceCount(expectedReferenceNode);
-      cg->decReferenceCount(expectedMarkOrStampNode);
-      if (isConstantExpectedMarkOrStamp)
-         cg->stopUsingRegister(expectedMarkOrStampReg);
-
-      if (needExpectedRegCopy)
-         cg->stopUsingRegister(expectedComposedReg);
-
-      cg->stopUsingRegister(fieldOffsetReg);
-      cg->stopUsingRegister(resCndReg);
-      cg->stopUsingRegister(tmpReg);
-      }
-
-   node->setRegister(resultReg);
-
-   return resultReg;
-   }
-
 
 static TR::Register *inlineConcurrentHashMapTmPut(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -12587,17 +11865,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          break;
          }
 
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordCAS:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_tmDoubleWordSet:
-      case TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordCAS:
-      case TR::java_util_concurrent_atomic_AtomicStampedReference_tmDoubleWordSet:
-         if (cg->getSupportsTM() && cg->getSupportsTMDoubleWordCASORSet())
-            {
-            resultReg = inlineTMDoubleWordCASOrSet(node, cg, methodSymbol);
-            return true;
-            }
-         break;
-
       case TR::sun_misc_Unsafe_copyMemory:
          if (comp->canTransformUnsafeCopyToArrayCopy() &&
              performTransformation(comp,
@@ -12905,28 +12172,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
             resultReg = VMinlineCompareAndSwapObject(node, cg);
-            return true;
-            }
-         break;
-
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCASSupported:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSetSupported:
-      case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCASSupported:
-      case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSetSupported:
-         if (!disableDCAS && TR::Compiler->target.is64Bit() && comp->useCompressedPointers())
-            {
-            resultReg = inlineDoubleWordCASOrSetSupported(node, cg);
-            return true;
-            }
-         break;
-
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordCAS:
-      case TR::java_util_concurrent_atomic_AtomicMarkableReference_doubleWordSet:
-      case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordCAS:
-      case TR::java_util_concurrent_atomic_AtomicStampedReference_doubleWordSet:
-         if (!disableDCAS && TR::Compiler->target.is64Bit() && comp->useCompressedPointers())
-            {
-            resultReg = inlineDoubleWordCAS(node, cg, methodSymbol);
             return true;
             }
          break;

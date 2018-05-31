@@ -267,9 +267,6 @@ private:
    TR::Node            *genVectorLogDouble(TR::Node *node);
    TR::Node            *genVectorAddress(TR::Node *node, TR::ILOpCodes op);
 
-   void
-       genDCASOrSetAvailable(TR::RecognizedMethod recognizedMethod);
-
    TR::Node     *genNewInstanceImplCall(TR::Node *classNode);
    //TR::Node *  transformNewInstanceImplCall(TR::TreeTop *, TR::Node *);
 
