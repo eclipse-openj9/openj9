@@ -78,17 +78,15 @@ jint computeFullVersionString(J9JavaVM* vm)
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
 	J9JITConfig *jitConfig = vm->jitConfig;
+	jitEnabled = "dis";
+	aotEnabled = "dis";
 
 	if (NULL != jitConfig) {
 		if (J9_ARE_ALL_BITS_SET(jitConfig->runtimeFlags, J9JIT_JIT_ATTACHED)) {
 			jitEnabled = "en";
-		} else {
-			jitEnabled = "dis";
 		}
 		if (J9_ARE_ALL_BITS_SET(jitConfig->runtimeFlags, J9JIT_AOT_ATTACHED)) {
 			aotEnabled = "en";
-		} else {
-			aotEnabled = "dis";
 		}
 	}
 	#define JIT_INFO " (JIT %sabled, AOT %sabled)\nOpenJ9   - "
